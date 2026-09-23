@@ -1,0 +1,9 @@
+-- The query all three CMC engines used, against the provisioned table:
+
+ERROR:  column "method_name" does not exist
+LINE 1: SELECT method_name, method_type, purpose, validation_status ...
+               ^
+HINT:  Perhaps you meant to reference the column "analytical_methods.method_code".
+
+-- What public.analytical_methods actually has:
+id, organization_id, method_code, title, purpose, analyte, matrix, technique, status, ich_q2_parameters, system_suitability, acceptance_criteria, robustness_data, validation_date, developed_by, validated_by, created_at, updated_at

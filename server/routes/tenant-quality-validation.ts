@@ -12,6 +12,7 @@ import { authMiddleware } from '../auth';
 import { requireOrganizationContext } from '../middleware/tenantContext';
 import { getDb } from '../db/tenantDbHelper';
 import { createScopedLogger } from '../utils/logger';
+import { neverSaved } from '../services/qms/governed-qms-write';
 
 const logger = createScopedLogger('quality-validation-api');
 
@@ -23,11 +24,6 @@ function orgIdOf(req: Request): number {
   if (v === undefined || v === null || v === '') {
     throw new Error('organization context required');
   }
-  return typeof v === 'string' ? parseInt(v, 10) : v;
-}
-function userIdOf(req: Request): number | undefined {
-  const v = req.tenantContext?.userId;
-  if (v === undefined || v === null || v === '') return undefined;
   return typeof v === 'string' ? parseInt(v, 10) : v;
 }
 const router = Router();
@@ -197,97 +193,21 @@ router.post('/validate-section', authMiddleware, requireOrganizationContext, asy
 });
 
 /**
- * Request quality override/waiver for a gating rule
+ * Request quality override/waiver for a gating rule — not available.
+ *
+ * Until 2026-09-23 this wrote nothing, invented a waiver
+ * `{ id: Date.now(), status: 'pending', … }` and answered 201 "Quality waiver
+ * request submitted successfully". There is no waiver table and no route that
+ * approves one, so the "pending" request existed only in that response. It now
+ * refuses before reading or writing anything. Pinned by
+ * server/routes/__tests__/qms-subrouters-governed.test.ts.
  */
-router.post('/request-waiver', authMiddleware, requireOrganizationContext, async (req, res) => {
-  try {
-    const organizationId = orgIdOf(req); const userId = userIdOf(req);
-
-    // Validate request payload
-    const waiverSchema = z.object({
-      qmpId: z.number(),
-      sectionCode: z.string(),
-      justification: z.string().min(10),
-      factorIds: z.array(z.number()).optional(),
-      customRuleIds: z.array(z.string()).optional(),
-      expirationDate: z.string().datetime().optional(),
-    });
-
-    const validationResult = waiverSchema.safeParse(req.body);
-    if (!validationResult.success) {
-      return res.status(400).json({
-        error: 'Invalid waiver request',
-        details: validationResult.error.format(),
-      });
-    }
-
-    const { qmpId, sectionCode, justification, factorIds, customRuleIds, expirationDate } =
-      validationResult.data;
-
-    // Check if the gating rule exists
-    const gatingRules = await getDb(req)
-      .select()
-      .from(qmpSectionGating)
-      .where(
-        and(
-          eq(qmpSectionGating.organizationId, organizationId),
-          eq(qmpSectionGating.qmpId, qmpId),
-          eq(qmpSectionGating.sectionKey, sectionCode)
-        )
-      );
-
-    if (gatingRules.length === 0) {
-      return res.status(404).json({ error: 'No quality gating rule found for this section' });
-    }
-
-    // Confirm the QMP exists.
-    const qmps = await getDb(req)
-      .select()
-      .from(qualityManagementPlans)
-      .where(
-        and(
-          eq(qualityManagementPlans.organizationId, organizationId),
-          eq(qualityManagementPlans.id, qmpId)
-        )
-      )
-      .limit(1);
-
-    if (qmps.length === 0) {
-      return res.status(404).json({ error: 'Quality Management Plan not found' });
-    }
-
-    // Waivers are gated per section via the rule's override allowance, since
-    // the QMP itself carries no global waiver flag.
-    if (gatingRules[0].allowOverride === false) {
-      return res.status(403).json({ error: 'Quality waivers are not allowed for this section' });
-    }
-
-    // This would normally insert a new waiver record
-    // For now, we'll just return a successful response
-    const waiver = {
-      id: Date.now(), // This would be a generated ID in a real system
-      qmpId,
-      sectionCode,
-      organizationId,
-      requestedById: userId,
-      requestedDate: new Date().toISOString(),
-      justification,
-      factorIds: factorIds || [],
-      customRuleIds: customRuleIds || [],
-      status: 'pending',
-      expirationDate: expirationDate || null,
-    };
-
-    return res.status(201).json({
-      success: true,
-      message: 'Quality waiver request submitted successfully',
-      waiver,
-    });
-  } catch (error) {
-    logger.error('Error requesting quality waiver', error);
-    return res.status(500).json({ error: 'Failed to request quality waiver' });
-  }
-});
+router.post(
+  '/request-waiver',
+  authMiddleware,
+  requireOrganizationContext,
+  neverSaved('Quality waiver requests are not available: a waiver request is not recorded anywhere and nothing can approve one. Nothing was submitted.')
+);
 
 /**
  * Get all quality validation statistics for a QMP

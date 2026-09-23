@@ -1,6 +1,6 @@
 {
   "$comment": "Per-document-type extraction/generation eval tasks. `input` is the source a model is given; `requiredSections` and `forbiddenPatterns` are the ground truth it is scored against (case-insensitive substring, so patterns are multi-word to avoid matching inside other words). `candidateContent`/`candidateExtraction` are CAPTURED model outputs, which let server/eval/doc-quality/run-eval.ts score offline; tasks added to reach the PQ sample floor carry none, because no output had been captured for them and inventing one would fabricate the evidence the bank exists to provide. run-eval.ts skips a generation task with no captured candidate; server/eval/pq/run-pq.ts ignores captured candidates entirely and generates with the pinned model, so the floor in pq-protocol.json (minTasksPerDocType) is measured against these tasks.",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "tasks": [
     {
       "id": "510k-se-summary-generate",
@@ -47,7 +47,8 @@
         "fda",
         "510k",
         "metadata"
-      ]
+      ],
+      "input": "510(k) SUMMARY\nSubmitter: Acme Diagnostics, Inc., 100 Industrial Way, Boston MA.\nDate prepared: 14 March 2026.\nTrade name: Acme Analyzer 2000. Common name: clinical chemistry analyzer.\nClassification name: analyzer, chemistry (automated). Regulation number: 21 CFR 862.1345.\nProduct code: JJX. Device class: II. Review panel: Clinical Chemistry.\nPredicate device: Acme Analyzer 1000, cleared under K123456.\nIndications for use: quantitation of analyte X in human serum and plasma."
     },
     {
       "id": "cer-clinical-eval-generate",
@@ -92,7 +93,8 @@
         "eu-mdr",
         "cer",
         "metadata"
-      ]
+      ],
+      "input": "CLINICAL EVALUATION REPORT — SECTION 2, DEVICE UNDER EVALUATION\nDevice name: CardioWidget implant. Manufacturer: Acme Medical BV. Basic UDI-DI: 5060000000017AB.\nRisk class: Class IIb per Regulation (EU) 2017/745 Annex VIII, rule 8 (implantable, short term).\nIntended purpose: long-term management of condition Y in adults for whom pharmacological therapy is inadequate.\nNotified body: 0123. This evaluation follows MEDDEV 2.7/1 rev 4 and MDR Annex XIV Part A."
     },
     {
       "id": "ind-m2-summary-generate",
@@ -1016,6 +1018,199 @@
         "pediatric",
         "ipsp",
         "pread"
+      ]
+    },
+    {
+      "id": "510k-indications-extract",
+      "docType": "510k",
+      "taskType": "extraction",
+      "input": "INDICATIONS FOR USE\n510(k) Number (if known): K259911.\nDevice Name: Acme Rapid Strep Test.\nIndications for Use: qualitative detection of Group A Streptococcus antigen from throat swab specimens from patients with signs and symptoms of pharyngitis. For prescription use only.\nType of Use: Prescription Use (Part 21 CFR 801 Subpart D).\nCLIA categorisation: waived.",
+      "expectedFields": {
+        "device_name": "Acme Rapid Strep Test",
+        "k_number": "K259911",
+        "specimen_type": "throat swab",
+        "prescription_status": "Prescription Use",
+        "clia_category": "waived"
+      },
+      "tags": [
+        "fda",
+        "510k",
+        "indications-for-use",
+        "extraction"
+      ]
+    },
+    {
+      "id": "510k-performance-extract",
+      "docType": "510k",
+      "taskType": "extraction",
+      "input": "PERFORMANCE DATA SUMMARY\nPrecision was evaluated per CLSI EP05-A3 across 20 days, 2 runs per day, 2 replicates. Within-laboratory CV was 3.4% at the medical decision level.\nLinearity per CLSI EP06 was demonstrated across 5 to 500 mg/dL.\nMethod comparison per CLSI EP09 against the predicate gave a Deming slope of 0.98 and r = 0.995 over 120 specimens.\nLimit of detection was 2.1 mg/dL per CLSI EP17.",
+      "expectedFields": {
+        "precision_standard": "EP05",
+        "precision_cv": "3.4",
+        "linearity_range": "5 to 500 mg/dL",
+        "comparison_slope": "0.98",
+        "correlation": "0.995"
+      },
+      "tags": [
+        "fda",
+        "510k",
+        "performance",
+        "clsi",
+        "extraction"
+      ]
+    },
+    {
+      "id": "510k-sterilization-extract",
+      "docType": "510k",
+      "taskType": "extraction",
+      "input": "STERILISATION AND SHELF LIFE\nMethod of sterilisation: ethylene oxide (EO).\nValidation: ISO 11135, overkill half-cycle approach. Sterility assurance level: 10^-6.\nEO and ethylene chlorohydrin residuals were within the limits of ISO 10993-7.\nPackaging validated to ISO 11607-1 and ISO 11607-2. Labelled shelf life: 3 years, supported by accelerated ageing per ASTM F1980.",
+      "expectedFields": {
+        "sterilization_method": "ethylene oxide",
+        "validation_standard": "ISO 11135",
+        "sal": "10^-6",
+        "packaging_standard": "ISO 11607",
+        "shelf_life": "3 years"
+      },
+      "tags": [
+        "fda",
+        "510k",
+        "sterilization",
+        "extraction"
+      ]
+    },
+    {
+      "id": "cer-literature-extract",
+      "docType": "cer",
+      "taskType": "extraction",
+      "input": "CLINICAL EVALUATION REPORT — SECTION 5, LITERATURE\nDatabases searched: Embase, MEDLINE via PubMed, and Cochrane CENTRAL.\nSearch period: 2014-01-01 to 2026-06-30. Records retrieved: 1284. After de-duplication: 1102.\nFull texts screened: 148. Studies included: 37.\nAppraisal method: MEDDEV 2.7/1 rev 4 Appendix A6, two independent reviewers.\nPooled 10-year survivorship across the included registry cohorts was 96.2%.",
+      "expectedFields": {
+        "databases": "Embase",
+        "search_period": "2014-01-01 to 2026-06-30",
+        "records_retrieved": "1284",
+        "studies_included": "37",
+        "appraisal_method": "Appendix A6"
+      },
+      "tags": [
+        "eu-mdr",
+        "cer",
+        "literature",
+        "extraction"
+      ]
+    },
+    {
+      "id": "cer-pms-extract",
+      "docType": "cer",
+      "taskType": "extraction",
+      "input": "CLINICAL EVALUATION REPORT — SECTION 8, POST-MARKET SURVEILLANCE INPUTS\nReporting period: 01 July 2025 to 30 June 2026. Units placed on the market: 41206.\nComplaints received: 87. Complaint rate: 0.21%.\nSerious incidents reported under Article 87: 12. Field safety corrective actions: none.\nTrend reporting under Article 88: no statistically significant increase.\nA Periodic Safety Update Report for the period is on file.",
+      "expectedFields": {
+        "units_sold": "41206",
+        "complaints": "87",
+        "complaint_rate": "0.21",
+        "serious_incidents": "12",
+        "fsca": "none"
+      },
+      "tags": [
+        "eu-mdr",
+        "cer",
+        "pms",
+        "vigilance",
+        "extraction"
+      ]
+    },
+    {
+      "id": "cer-benefit-risk-extract",
+      "docType": "cer",
+      "taskType": "extraction",
+      "input": "CLINICAL EVALUATION REPORT — SECTION 9, BENEFIT-RISK\nPrimary benefit measure: Harris Hip Score, mean improvement 42 points at 24 months.\nAseptic loosening at 10 years: 1.8%. Periprosthetic fracture: 0.9%. Dislocation: 1.4%. Deep infection: 0.7%.\nState-of-the-art benchmark for all-cause revision at 10 years: at or below 5%.\nDetermination: the benefit-risk profile is acceptable and consistent with the state of the art.",
+      "expectedFields": {
+        "benefit_measure": "Harris Hip Score",
+        "benefit_magnitude": "42",
+        "aseptic_loosening": "1.8",
+        "infection_rate": "0.7",
+        "benchmark": "5%"
+      },
+      "tags": [
+        "eu-mdr",
+        "cer",
+        "benefit-risk",
+        "extraction"
+      ]
+    },
+    {
+      "id": "ind-cover-extract",
+      "docType": "ind",
+      "taskType": "extraction",
+      "input": "FORM FDA 1571 — INVESTIGATIONAL NEW DRUG APPLICATION\nName of sponsor: Acme Therapeutics, Inc.\nDate of submission: 12 May 2026.\nName of drug: ACM-101. IND number: 165432.\nIndication: moderate-to-severe rheumatoid arthritis.\nPhase of clinical investigation to be conducted: Phase 1.\nSerial number: 0000.",
+      "expectedFields": {
+        "sponsor": "Acme Therapeutics",
+        "drug_name": "ACM-101",
+        "ind_number": "165432",
+        "phase": "Phase 1",
+        "indication": "rheumatoid arthritis"
+      },
+      "tags": [
+        "fda",
+        "ind",
+        "form-1571",
+        "extraction"
+      ]
+    },
+    {
+      "id": "ind-tox-summary-extract",
+      "docType": "ind",
+      "taskType": "extraction",
+      "input": "NONCLINICAL TOXICOLOGY SUMMARY\nRepeat-dose studies: 28-day GLP toxicology in Sprague-Dawley rat and beagle dog, oral gavage.\nRat NOAEL: 30 mg/kg/day. Dog NOAEL: 10 mg/kg/day.\nTarget organs: bone marrow and liver.\nGenotoxicity: negative in Ames, in vitro micronucleus and in vivo rat micronucleus.\nSafety factor at the proposed starting dose of 1 mg: 52-fold over the dog NOAEL on an AUC basis.",
+      "expectedFields": {
+        "study_duration": "28-day",
+        "species": "dog",
+        "rat_noael": "30 mg/kg/day",
+        "dog_noael": "10 mg/kg/day",
+        "target_organs": "bone marrow"
+      },
+      "tags": [
+        "fda",
+        "ind",
+        "nonclinical",
+        "toxicology",
+        "extraction"
+      ]
+    },
+    {
+      "id": "ind-protocol-synopsis-extract",
+      "docType": "ind",
+      "taskType": "extraction",
+      "input": "PROTOCOL SYNOPSIS\nProtocol number: ACM-101-101.\nTitle: a randomised, double-blind, placebo-controlled single-ascending-dose study of ACM-101 in healthy volunteers.\nNumber of subjects: 40, in 5 cohorts of 8 (6 active : 2 placebo).\nDose levels: 1, 3, 10, 30 and 60 mg.\nPrimary objective: safety and tolerability.\nRoute of administration: oral.",
+      "expectedFields": {
+        "protocol_number": "ACM-101-101",
+        "design": "double-blind",
+        "subjects": "40",
+        "dose_levels": "1, 3, 10, 30 and 60 mg",
+        "primary_objective": "safety and tolerability"
+      },
+      "tags": [
+        "fda",
+        "ind",
+        "protocol",
+        "extraction"
+      ]
+    },
+    {
+      "id": "ind-cmc-extract",
+      "docType": "ind",
+      "taskType": "extraction",
+      "input": "CHEMISTRY, MANUFACTURING AND CONTROLS SUMMARY\nDrug substance: ACM-101 free base. Polymorph: Form A, confirmed by XRPD.\nDrug substance assay specification: 98.0 to 102.0 percent by HPLC.\nAny individual impurity: not more than 0.15 percent. Total impurities: not more than 0.5 percent.\nDrug product: immediate-release film-coated tablet, 5 mg and 10 mg.\nDissolution specification: not less than 80 percent in 30 minutes.",
+      "expectedFields": {
+        "polymorph": "Form A",
+        "assay_range": "98.0 to 102.0",
+        "individual_impurity": "0.15",
+        "dosage_form": "immediate-release",
+        "dissolution": "80 percent in 30 minutes"
+      },
+      "tags": [
+        "fda",
+        "ind",
+        "cmc",
+        "extraction"
       ]
     }
   ]

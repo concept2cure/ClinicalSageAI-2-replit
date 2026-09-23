@@ -91,7 +91,10 @@ beforeAll(async () => {
       critical_process_parameters jsonb, process_controls jsonb, validation_status text);
     CREATE TABLE cmc_source_objects (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id int, project_id uuid,
-      source_type text, source_payload jsonb, source_key text);
+      source_type text, source_payload jsonb, source_key text,
+      -- The readers order by these to take the latest row per source_key, as
+      -- cmc-write-through's "latest wins" upsert does.
+      version int DEFAULT 1, updated_at timestamptz DEFAULT now());
     CREATE TABLE cmc_module3_sections (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id int, project_id uuid,
       section_key text, approval_state text, stale boolean, narrative_text text);
@@ -103,9 +106,17 @@ beforeAll(async () => {
     INSERT INTO quality_specifications (tenant_id, project_id, material_type, material_name, test_parameters)
       VALUES (${THEIRS}, '${THEIR_PROJECT}', 'drug_substance', 'THEIR SECRET API', '["assay"]'::jsonb),
              (${MINE},   '${MY_PROJECT}',    'drug_substance', 'My API',           '["assay"]'::jsonb);
-    INSERT INTO analytical_methods (organization_id, project_id, method_name, method_type, purpose, validation_status)
-      VALUES (${THEIRS}, '${THEIR_PROJECT}', 'THEIR HPLC METHOD', 'chromatographic', 'assay', 'validated'),
-             (${MINE},   '${MY_PROJECT}',    'My HPLC',           'chromatographic', 'assay', 'validated');
+    -- Analytical methods live in the canonical source-object store, NOT in
+    -- public.analytical_methods. The rows below used to be seeded into the
+    -- cmc-schema shape of that table — a shape no provisioned database has, so
+    -- this test proved tenant scoping over a query that raised 42703 in
+    -- production. They are seeded where writeThroughAnalyticalMethod actually
+    -- puts them, so the scoping assertions now bind to the read that runs.
+    INSERT INTO cmc_source_objects (organization_id, project_id, source_type, source_key, source_payload)
+      VALUES (${THEIRS}, '${THEIR_PROJECT}', 'method', 'method:their-1',
+              '{"methodName":"THEIR HPLC METHOD","methodType":"chromatographic","purpose":"assay","validationStatus":"validated"}'::jsonb),
+             (${MINE},   '${MY_PROJECT}',    'method', 'method:mine-1',
+              '{"methodName":"My HPLC","methodType":"chromatographic","purpose":"assay","validationStatus":"validated"}'::jsonb);
     INSERT INTO drug_substances (organization_id, project_id, substance_name)
       VALUES (${THEIRS}, '${THEIR_PROJECT}', 'THEIR SUBSTANCE'),
              (${MINE},   '${MY_PROJECT}',    'My substance');
@@ -167,8 +178,22 @@ describe('analyzeQbdFromSources — QbD analyzer', () => {
     expect(out.inputs.methodCount, "another sponsor's analytical methods were counted").toBe(0);
     expect(out.inputs.drugSubstanceCount, "another sponsor's drug substances were counted").toBe(0);
     expect(out.inputs.processCount, "another sponsor's manufacturing processes were counted").toBe(0);
-    // A zero reached by a BROKEN read is not isolation. Every read must have run.
-    expect(out.unevaluatedInputs, 'a read failed, so the zeros above prove nothing').toEqual([]);
+    /* A zero reached by a BROKEN read is not isolation, so every read that CAN
+       answer must have run. `methods` is the one that cannot, and says so.
+
+       For this (organization, project) pair the canonical source-object store
+       holds nothing of ANY type — which is what "handed another sponsor's
+       project id" means — so a zero-method answer would not be a fact about
+       methods, it would be a fact about the id. analytical-method-source.ts
+       reports that as not-evaluable rather than as "this project records no
+       analytical methods", and that distinction is the point: the count below
+       is still 0, so nothing leaked, and the report does not additionally
+       assert a clean ICH Q2 result it has no basis for. */
+    expect(
+      out.unevaluatedInputs.filter(u => u.input !== 'methods'),
+      'a read failed, so the zeros above prove nothing',
+    ).toEqual([]);
+    expect(out.unevaluatedInputs.map(u => u.input)).toEqual(['methods']);
   });
 
   it("still counts the caller's own records — the fix is not 'scope everything to nothing'", async () => {
