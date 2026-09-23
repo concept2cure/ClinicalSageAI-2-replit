@@ -527,56 +527,10 @@ export async function deriveGovernedTargetBinding(
         };
       }
       case 'protocol-document':
-      case 'protocol-review-assignment': {
-        // A disposition is a signature over the protocol the reviewer read, so
-        // it binds that protocol's content, not the assignment row.
-        //
-        // CONTENT ONLY. No version, no workflow status, no timestamps: finalize
-        // bumps the version and moves section status, and a reviewer's
-        // signature taken before that must still re-derive afterwards when no
-        // content changed (the ectd-sequence lesson in the case above). And ALL
-        // of the content, not just the prose: the cover page, synopsis,
-        // objectives, eligibility, schedule of visits, schedule of assessments
-        // and study team are what a reviewer approves too.
-        if (!/^\d+$/.test(rest)) return ledgerFallback('malformed protocol pointer');
-        let docId = rest;
-        if (prefix === 'protocol-review-assignment') {
-          const a = await client.query(
-            `SELECT protocol_document_id FROM protocol_review_assignments
-              WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL
-              LIMIT 1`,
-            [rest, orgId],
-          );
-          if (a.rows.length === 0) return ledgerFallback('review assignment not readable at signing time');
-          docId = String(a.rows[0].protocol_document_id);
-        }
-        const doc = await client.query(
-          `SELECT id, protocol_kind, protocol_number, title, design_type, phase, therapeutic_area,
-                  synopsis, sponsor, principal_investigator
-             FROM protocol_documents
-            WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL
-            LIMIT 1`,
-          [docId, orgId],
-        );
-        if (doc.rows.length === 0) return ledgerFallback('protocol document not readable at signing time');
-        const rows = async (sql: string) => (await client.query(sql, [docId, orgId])).rows;
-        const live = 'protocol_document_id = $1::int AND organization_id = $2';
-        const content = {
-          protocol: doc.rows[0],
-          sections: await rows(`SELECT section_key, title, content, required, order_index FROM protocol_sections WHERE ${live} AND deleted_at IS NULL ORDER BY order_index, section_key`),
-          objectives: await rows(`SELECT objective_type, objective, endpoint, timepoint, order_index FROM protocol_objectives WHERE ${live} AND deleted_at IS NULL ORDER BY order_index, id`),
-          eligibility: await rows(`SELECT kind, criterion, order_index FROM protocol_eligibility_criteria WHERE ${live} AND deleted_at IS NULL ORDER BY kind, order_index, id`),
-          visits: await rows(`SELECT id, visit_name, timepoint, procedures, order_index FROM protocol_schedule_visits WHERE ${live} AND deleted_at IS NULL ORDER BY order_index, id`),
-          assessments: await rows(`SELECT id, name, category, order_index FROM protocol_soa_assessments WHERE ${live} AND deleted_at IS NULL ORDER BY order_index, id`),
-          cells: await rows(`SELECT assessment_id, visit_id, required, notes FROM protocol_soa_cells WHERE ${live} ORDER BY assessment_id, visit_id`),
-          team: await rows(`SELECT member_name, role, responsibilities, personnel_id, user_id FROM protocol_team_members WHERE ${live} AND deleted_at IS NULL ORDER BY id`),
-        };
-        return {
-          digest: sha256Hex(canonicalJson(content)),
-          basis: BINDING_BASIS.PROTOCOL_DOCUMENT_CONTENT,
-          note: `sha256 over the protocol's content at signing time: cover page and synopsis (protocol_documents), ${content.sections.length} section(s), ${content.objectives.length} objective(s), ${content.eligibility.length} eligibility criteria, ${content.visits.length} visit(s), ${content.assessments.length} SoA assessment(s) and ${content.cells.length} cell(s), ${content.team.length} team member(s). No version, workflow status or timestamp is bound.`,
-        };
-      }
+      case 'protocol-review-assignment':
+        // `return await`, not `return`: the helper's queries must reject INSIDE
+        // this try so a 42P01 still falls back to the ledger basis below.
+        return await protocolContentBinding(client, prefix, rest, orgId, ledgerFallback);
       default:
         return ledgerFallback(`no content-digest derivation implemented for target type '${prefix}'`);
     }
@@ -589,6 +543,68 @@ export async function deriveGovernedTargetBinding(
     // Any other DB error is real — fail closed (roll back the whole sign).
     throw err;
   }
+}
+
+/**
+ * The protocol-document / protocol-review-assignment case of
+ * deriveGovernedTargetBinding. Errors propagate to that function's catch,
+ * which owns the 42P01 ledger fallback and the fail-closed rethrow.
+ */
+async function protocolContentBinding(
+  client: SignatureDbClient,
+  prefix: 'protocol-document' | 'protocol-review-assignment',
+  rest: string,
+  orgId: number,
+  ledgerFallback: (why: string) => GovernedBinding,
+): Promise<GovernedBinding> {
+  // A disposition is a signature over the protocol the reviewer read, so
+  // it binds that protocol's content, not the assignment row.
+  //
+  // CONTENT ONLY. No version, no workflow status, no timestamps: finalize
+  // bumps the version and moves section status, and a reviewer's
+  // signature taken before that must still re-derive afterwards when no
+  // content changed (the ectd-sequence lesson in deriveGovernedTargetBinding).
+  // And ALL of the content, not just the prose: the cover page, synopsis,
+  // objectives, eligibility, schedule of visits, schedule of assessments
+  // and study team are what a reviewer approves too.
+  if (!/^\d+$/.test(rest)) return ledgerFallback('malformed protocol pointer');
+  let docId = rest;
+  if (prefix === 'protocol-review-assignment') {
+    const a = await client.query(
+      `SELECT protocol_document_id FROM protocol_review_assignments
+        WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL
+        LIMIT 1`,
+      [rest, orgId],
+    );
+    if (a.rows.length === 0) return ledgerFallback('review assignment not readable at signing time');
+    docId = String(a.rows[0].protocol_document_id);
+  }
+  const doc = await client.query(
+    `SELECT id, protocol_kind, protocol_number, title, design_type, phase, therapeutic_area,
+            synopsis, sponsor, principal_investigator
+       FROM protocol_documents
+      WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL
+      LIMIT 1`,
+    [docId, orgId],
+  );
+  if (doc.rows.length === 0) return ledgerFallback('protocol document not readable at signing time');
+  const rows = async (sql: string) => (await client.query(sql, [docId, orgId])).rows;
+  const live = 'protocol_document_id = $1::int AND organization_id = $2';
+  const content = {
+    protocol: doc.rows[0],
+    sections: await rows(`SELECT section_key, title, content, required, order_index FROM protocol_sections WHERE ${live} AND deleted_at IS NULL ORDER BY order_index, section_key`),
+    objectives: await rows(`SELECT objective_type, objective, endpoint, timepoint, order_index FROM protocol_objectives WHERE ${live} AND deleted_at IS NULL ORDER BY order_index, id`),
+    eligibility: await rows(`SELECT kind, criterion, order_index FROM protocol_eligibility_criteria WHERE ${live} AND deleted_at IS NULL ORDER BY kind, order_index, id`),
+    visits: await rows(`SELECT id, visit_name, timepoint, procedures, order_index FROM protocol_schedule_visits WHERE ${live} AND deleted_at IS NULL ORDER BY order_index, id`),
+    assessments: await rows(`SELECT id, name, category, order_index FROM protocol_soa_assessments WHERE ${live} AND deleted_at IS NULL ORDER BY order_index, id`),
+    cells: await rows(`SELECT assessment_id, visit_id, required, notes FROM protocol_soa_cells WHERE ${live} ORDER BY assessment_id, visit_id`),
+    team: await rows(`SELECT member_name, role, responsibilities, personnel_id, user_id FROM protocol_team_members WHERE ${live} AND deleted_at IS NULL ORDER BY id`),
+  };
+  return {
+    digest: sha256Hex(canonicalJson(content)),
+    basis: BINDING_BASIS.PROTOCOL_DOCUMENT_CONTENT,
+    note: `sha256 over the protocol's content at signing time: cover page and synopsis (protocol_documents), ${content.sections.length} section(s), ${content.objectives.length} objective(s), ${content.eligibility.length} eligibility criteria, ${content.visits.length} visit(s), ${content.assessments.length} SoA assessment(s) and ${content.cells.length} cell(s), ${content.team.length} team member(s). No version, workflow status or timestamp is bound.`,
+  };
 }
 
 // ── Governed sign composition ────────────────────────────────────────────────

@@ -122,11 +122,19 @@ describe('assembleTechnicalFileFromCore — a vault leaf by document_uuid', () =
       sequenceId: 2, organizationId: ORG, userId: USER, regulation: 'mdr', applicationId: 'TF-2',
     });
     try {
-      // The slot counts as present in the manifest (a leaf is placed there)...
+      // 2026-09-23 (W5/D7, round-2 skeptic): this asserted manifest.ready ===
+      // true — it pinned the defect: the ZIP's own manifest.json said ready
+      // and listed the CER 'present' while the ZIP did not hold it. The ZIP's
+      // manifest is now reconciled with the plan, so it agrees with r.ready.
       const zip = await JSZip.loadAsync(await fs.readFile(r.bundle.path));
       const manifest = JSON.parse(await zip.file('manifest.json')!.async('string'));
-      expect(manifest.ready).toBe(true);
-      // ...but its source is not there, so the ZIP does not hold it.
+      expect(manifest.ready).toBe(false);
+      expect(manifest.entries.find((e: any) => e.id === 'clinical-evaluation')).toMatchObject({
+        status: 'missing',
+        sources: [],
+        unresolvedSources: ['II.6.1.g'],
+      });
+      // The leaf's source is not there, so the ZIP does not hold it.
       expect(r.unresolvedLeaves.map((u) => u.documentUuid)).toEqual([MISSING_VAULT_DOC]);
       expect(r.skipped).toEqual([
         { sectionId: 'clinical-evaluation', source: 'II.6.1.g', reason: 'no resolvable source file for the leaf document' },

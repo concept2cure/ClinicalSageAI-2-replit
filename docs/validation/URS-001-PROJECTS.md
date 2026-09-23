@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | URS-001 |
-| Version | 0.3 |
+| Version | 0.4 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 |
 | Verified by | OQ-001 (`tests/validation/oq/projects/run.mjs`) |
@@ -17,6 +17,7 @@
 | 0.1 | 2026-09-21 | W3a | Drafted from `server/routes/c2c/projects.ts`, `server/routes/c2c/project-intake.ts`, `server/routes/taskManagement.routes.ts`, `server/routes/program-journey.routes.ts`, `server/services/entitlements/navigation-entitlements.ts` and the `Projects`, `ProjectHome`, `TaskBoard`, `FilingsCatalog` surfaces. |
 | 0.2 | 2026-09-23 | W3 | URS-PROJ-010 added. Under RLS no sign-in reached the audit trail, and no requirement asked for it, so no OQ step could see it (VSR-001 §13, F-19). |
 | 0.3 | 2026-09-23 | W3 | URS-PROJ-011 added. Logout answered "Tokens invalidated." while the token went on opening the API, the session check and the collaboration socket for the rest of its lifetime. No requirement asked that signing out end anything, so no OQ step could see it (VSR-001 §13.9, F-21). |
+| 0.4 | 2026-09-23 | W3 | URS-PROJ-012 added. An account taken out of use (suspended by an administrator, or deprovisioned by the organisation's identity provider) signed in, signed, and kept every session it held: nothing read `users.status` but the release signature, and no requirement asked that it be read (VSR-001 §16, F-28, F-29). |
 
 ## 1. Intended use
 
@@ -39,12 +40,14 @@ Column key — *Part 11*: §11.10(d) access control · §11.10(e) audit trail ·
 | URS-PROJ-009 | A program id that does not belong to the caller's organisation (or does not exist) answers 404 — never 200 with another tenant's data, never 500. | §11.10(d) | high | `server/routes/c2c/projects.ts:849`, `server/routes/c2c/project-vault.ts:828-845` |
 | URS-PROJ-010 | Every sign-in attempt by a user of an organisation is entered in that organisation's hash-chained audit log and shown on its audit ledger: a wrong password, the second-factor challenge a correct password receives, a wrong code, and the session a verified code opens. A refused attempt reads as refused, never as a sign-in. | §11.10(e) | high | `server/routes/auth.ts`, `server/services/audit/auth-event-audit.ts`, `server/routes/audit-trail-ledger.routes.ts` |
 | URS-PROJ-011 | Signing out ends the session. Once a user signs out, the token that session used opens nothing for the rest of its lifetime: the API refuses it with 401 and the session check reports the user signed out. The sign-out is entered in the organisation's hash-chained audit log and shown on its audit ledger. | §11.10(d) §11.10(e) | high | `server/routes/auth.ts` (`/logout`), `server/services/token-revocation.ts` (`verifyLiveToken`), `server/middleware/auth.ts`, `server/auth.ts` |
+| URS-PROJ-012 | An account taken out of use can do nothing. Once a platform administrator suspends it, or the organisation's identity provider deprovisions it, it cannot sign in (refused after its password, with no second-factor challenge issued), cannot apply an electronic signature, and every session it already holds is refused on its next request, with the reason. The refused sign-in is entered in the organisation's hash-chained audit log and shown on its audit ledger. | §11.10(d) §11.300(b) | high | `server/services/account-standing.ts`, `server/routes/auth.ts` (`/login`, `/mfa/verify`, `/refresh`, `/session`), `server/auth.ts`, `server/middleware/auth.ts`, `server/services/token-revocation.ts` (`verifyLiveToken`), `server/services/part11/reverify-signer.ts` |
 
 ## 3. Assumptions and constraints
 
 - Full tenant isolation (RLS on a non-superuser role) is qualified under row D3 against staging; URS-PROJ-009 checks only the application-layer scoping.
 - The Program Journey store is provisioned by the migration set; on an installation where the runtime role lacks the grant (IQ-DEV-001) URS-PROJ-007 cannot be verified.
 - URS-PROJ-011 is verified through the HTTP API (OQ-PROJ-17). Two further refusals of a signed-out token are proven by automated tests, not by this protocol: the realtime collaboration channels (`server/services/collab/__tests__/collab-governance.pglite.integration.test.ts`), and a server instance other than the one that signed the session out, which learns of it only from the database (`tests/db/sign-in-audit-trail.dbtest.ts`).
+- URS-PROJ-012 needs an identity that can take an account out of use: a platform administrator, or the identity provider through SCIM. OQ-PROJ-18 is therefore credentialed (`OQ_PLATFORM_ADMIN_*`, `OQ_STANDING_*`) and is recorded as not executed without them. The refusal at signing, the refusal of a challenge issued before the suspension, the refresh token, the per-router gate and a deprovisioning by SCIM's statement are proven by an automated test on real PostgreSQL as the non-superuser runtime role, not by this protocol (`tests/db/account-standing.dbtest.ts`); each of those checks was shown to catch its own removal (`docs/evidence/W3/2026-09-23b/red/F-28-F-29/mutations.txt`).
 
 ## Approval
 

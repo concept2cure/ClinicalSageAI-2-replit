@@ -7,9 +7,16 @@
 -- Preventive Action (CAPA) items through to verified closure. A deviation may
 -- only be closed once every linked CAPA action is completed/verified.
 --
--- Soft-links to protocol_documents(id) via protocol_document_id. Reportability
--- timeliness follows 45 CFR 46.108(a)(4) and ICH E6(R2) §4.5.3/§5.20. CHECK-
+-- Soft-links to protocol_documents(id) via protocol_document_id. CHECK-
 -- constrained enums; governed/audited.
+--
+-- 2026-09-22, amended in place (Rule 1): the header cited 45 CFR 46.108(a)(4)
+-- and ICH E6(R2) §4.5.3/§5.20 as a reporting-timeliness basis, which they are
+-- not; and severity / category / is_reportable were NOT NULL with defaults
+-- ('minor' / 'other' / false) that stored an unassessed deviation as minor
+-- and not reportable. They are now nullable with no default (NULL = not
+-- assessed). Existing databases are converged, and the assessment columns
+-- added, by migrations/20260922f_protocol_deviation_assessment.sql.
 --
 -- Schema:  shared/schema/protocol-deviations.ts
 -- Service: server/services/protocol-deviations/*
@@ -22,9 +29,9 @@ CREATE TABLE IF NOT EXISTS protocol_deviations (
   protocol_document_id integer NOT NULL REFERENCES protocol_documents(id),
   deviation_number     text,
   description          text NOT NULL,
-  category             text NOT NULL DEFAULT 'other' CHECK (category IN ('enrollment','consent','procedure','safety','data','other')),
-  severity             text NOT NULL DEFAULT 'minor' CHECK (severity IN ('minor','major','critical')),
-  is_reportable        boolean NOT NULL DEFAULT false,
+  category             text CHECK (category IN ('enrollment','consent','procedure','safety','data','other')),
+  severity             text CHECK (severity IN ('minor','major','critical')),
+  is_reportable        boolean,
   root_cause           text,
   discovered_date      date,
   status               text NOT NULL DEFAULT 'open' CHECK (status IN ('open','under_review','capa_pending','closed')),

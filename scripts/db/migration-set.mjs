@@ -2540,6 +2540,29 @@ export const C2C_MIGRATION_FILES = [
   // select().from(users) expands to every declared column — the C-20 mode).
   'migrations/20260923_users_mfa_totp_last_step.sql',
 
+  // ── An approval does not outlive the status that carries it (W5/D7) ──────
+  // Registered 2026-09-23 (final pass). A BEFORE INSERT OR UPDATE trigger on
+  // concept2cure_artifacts clears approved_version_id and published_version_id
+  // whenever the status is not approved/locked, so a revoked approval
+  // (approved → review, locked → draft, → archived) cannot be resurrected by a
+  // later arrival at 'approved' that is not the governed approval act, plus a
+  // backfill of rows that already break that rule. No DROP: the trigger is
+  // created only when absent (the 20260921_audit_logs_chain_seq idiom). No new
+  // table, nothing for the sweep. concept2cure_artifacts is a push-provisioned
+  // base table; the file NOTICE-skips where it is absent.
+  'migrations/20260923b_artifact_approval_follows_status.sql',
+
+  // ── Protocol deviations: unassessed is NOT ASSESSED, not "minor" ─────────
+  // Registered 2026-09-22. severity / category / is_reportable were NOT NULL
+  // with defaults that stored an unassessed deviation as minor and not
+  // reportable. DROP NOT NULL + DROP DEFAULT, plus ADD COLUMN IF NOT EXISTS for
+  // affects_safety and the assessment record. No DROP of any object, no
+  // backfill: legacy rows keep their values and read as "assessment required"
+  // because affects_safety is NULL. The creator, 20260629_protocol_deviations,
+  // is install-fresh-only and was amended in place to match. Guarded on
+  // to_regclass; above the final pair, which ci:migration-set-order pins last.
+  'migrations/20260922f_protocol_deviation_assessment.sql',
+
   // ── C-48 Stage 1: unify the two org-uuid identity spaces ─────────────────
   // Backfills identity.organizations from public.organizations.uuid (the
   // canonical per-tenant uuid) + a forward-sync trigger, so a single

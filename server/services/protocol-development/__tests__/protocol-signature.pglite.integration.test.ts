@@ -288,7 +288,7 @@ describe('who may sign a disposition, and as what', () => {
   it('the assigned reviewer, as review', async () => {
     const { docId } = await protocol();
     const aid = await assignment(docId, REVIEWER);
-    const r = await setDispositionTx(client, ORG, aid, 'approve', REVIEWER, 'review');
+    const r = await setDispositionTx(client, ORG, aid, { disposition: 'approve', signerId: REVIEWER, meaning: 'review' });
     expect(r).toMatchObject({ disposition: 'approve', protocolDocumentId: docId, onBehalfOf: null });
     const row = (await q(`SELECT disposition, status FROM protocol_review_assignments WHERE id = $1`, [aid])).rows[0];
     expect(row).toEqual({ disposition: 'approve', status: 'completed' });
@@ -297,7 +297,7 @@ describe('who may sign a disposition, and as what', () => {
   it('not someone else, and nothing is recorded', async () => {
     const { docId } = await protocol();
     const aid = await assignment(docId, REVIEWER);
-    await expect(setDispositionTx(client, ORG, aid, 'approve', STRANGER, 'review')).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(setDispositionTx(client, ORG, aid, { disposition: 'approve', signerId: STRANGER, meaning: 'review' })).rejects.toMatchObject({ code: 'FORBIDDEN' });
     const row = (await q(`SELECT disposition FROM protocol_review_assignments WHERE id = $1`, [aid])).rows[0];
     expect(row.disposition).toBeNull();
   });
@@ -305,16 +305,16 @@ describe('who may sign a disposition, and as what', () => {
   it('a reviewer with no account can only have their decision recorded under responsibility', async () => {
     const { docId } = await protocol();
     const aid = await assignment(docId, null);
-    await expect(setDispositionTx(client, ORG, aid, 'reject', STRANGER, 'review')).rejects.toBeInstanceOf(ProtocolReviewError);
-    const r = await setDispositionTx(client, ORG, aid, 'reject', STRANGER, 'responsibility');
+    await expect(setDispositionTx(client, ORG, aid, { disposition: 'reject', signerId: STRANGER, meaning: 'review' })).rejects.toBeInstanceOf(ProtocolReviewError);
+    const r = await setDispositionTx(client, ORG, aid, { disposition: 'reject', signerId: STRANGER, meaning: 'responsibility' });
     expect(r.onBehalfOf).toBe('Dr. Reviewer');
   });
 
   it('a signed disposition is final: a second signing is refused and the decision stands', async () => {
     const { docId } = await protocol();
     const aid = await assignment(docId, REVIEWER);
-    await setDispositionTx(client, ORG, aid, 'approve', REVIEWER, 'review');
-    await expect(setDispositionTx(client, ORG, aid, 'reject', REVIEWER, 'review')).rejects.toMatchObject({ code: 'INVALID_STATE' });
+    await setDispositionTx(client, ORG, aid, { disposition: 'approve', signerId: REVIEWER, meaning: 'review' });
+    await expect(setDispositionTx(client, ORG, aid, { disposition: 'reject', signerId: REVIEWER, meaning: 'review' })).rejects.toMatchObject({ code: 'INVALID_STATE' });
     const row = (await q(`SELECT disposition FROM protocol_review_assignments WHERE id = $1`, [aid])).rows[0];
     expect(row.disposition).toBe('approve');
   });
@@ -322,7 +322,7 @@ describe('who may sign a disposition, and as what', () => {
   it('another tenant\'s assignment is not found', async () => {
     const { docId } = await protocol(OTHER_ORG);
     const aid = await assignment(docId, REVIEWER, OTHER_ORG);
-    await expect(setDispositionTx(client, ORG, aid, 'approve', REVIEWER, 'review')).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await expect(setDispositionTx(client, ORG, aid, { disposition: 'approve', signerId: REVIEWER, meaning: 'review' })).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 });
 
@@ -460,7 +460,7 @@ describe('who a review can be assigned to', () => {
     const { docId } = await protocol();
     await q(`UPDATE protocol_documents SET version = '0.4' WHERE id = $1`, [docId]);
     const aid = await assignment(docId, REVIEWER);
-    const r = await setDispositionTx(client, ORG, aid, 'approve', REVIEWER, 'review');
+    const r = await setDispositionTx(client, ORG, aid, { disposition: 'approve', signerId: REVIEWER, meaning: 'review' });
     expect(r.protocolVersion).toBe('0.4');
   });
 });

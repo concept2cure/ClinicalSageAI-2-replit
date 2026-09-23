@@ -80,22 +80,51 @@ export async function assignReviewerTx(
   return { id: Number(rows[0].id), role };
 }
 
+/** The signed act: the decision, who signs it, and the meaning they declare. */
+export interface DispositionAct {
+  disposition: string;
+  signerId: number;
+  meaning: string;
+}
+
 /**
- * Record a reviewer's disposition; marks the assignment completed. It is signed
- * (routes/protocol-reviews.ts), so who may sign it, and with which meaning,
- * depends on who the assignment names:
+ * Who may sign a disposition, and with which meaning, depends on who the
+ * assignment names:
  *   - a user account: only that user, signing as `review` or `approval`;
  *   - a name with no account: anyone may record that person's decision, but only
  *     by taking `responsibility` for the record. A `review` signature from them
  *     would claim a review they did not do.
+ * Pure: throws the refusal, returns nothing when the signer may sign.
+ */
+function assertMaySignDisposition(
+  assignment: { assignedTo: number | null; reviewerName: string },
+  act: Pick<DispositionAct, 'signerId' | 'meaning'>,
+): void {
+  const { assignedTo } = assignment;
+  if (assignedTo !== null && assignedTo !== act.signerId) {
+    throw new ProtocolReviewError('FORBIDDEN', 'This review is assigned to another user. Only they can sign its disposition. Nothing was recorded.');
+  }
+  if (assignedTo === act.signerId && act.meaning !== 'review' && act.meaning !== 'approval') {
+    throw new ProtocolReviewError('BAD_INPUT', 'Sign your own review as "review" or "approval". Nothing was recorded.');
+  }
+  if (assignedTo === null && act.meaning !== 'responsibility') {
+    throw new ProtocolReviewError(
+      'BAD_INPUT',
+      `${assignment.reviewerName} has no account here, so their decision can only be recorded by someone taking responsibility for the record. Sign as "responsibility". Nothing was recorded.`,
+    );
+  }
+}
+
+/**
+ * Record a reviewer's disposition; marks the assignment completed. It is signed
+ * (routes/protocol-reviews.ts), so assertMaySignDisposition decides who may sign
+ * it, and with which meaning.
  */
 export async function setDispositionTx(
   client: Queryable,
   orgId: number,
   assignmentId: number,
-  disposition: string,
-  signerId: number,
-  meaning: string,
+  act: DispositionAct,
 ): Promise<{
   id: number;
   disposition: string;
@@ -104,6 +133,7 @@ export async function setDispositionTx(
   reviewerName: string;
   onBehalfOf: string | null;
 }> {
+  const { disposition } = act;
   if (!DISPOSITIONS.includes(disposition)) throw new ProtocolReviewError('BAD_INPUT', `Invalid disposition "${disposition}".`);
   const a = await client.query(
     `SELECT id, protocol_document_id, reviewer_name, reviewer_user_id, status, disposition
@@ -121,18 +151,7 @@ export async function setDispositionTx(
     throw new ProtocolReviewError('INVALID_STATE', 'A disposition is already signed for this review. Nothing was recorded.');
   }
   const assignedTo = row.reviewer_user_id == null ? null : Number(row.reviewer_user_id);
-  if (assignedTo !== null && assignedTo !== signerId) {
-    throw new ProtocolReviewError('FORBIDDEN', 'This review is assigned to another user. Only they can sign its disposition. Nothing was recorded.');
-  }
-  if (assignedTo === signerId && meaning !== 'review' && meaning !== 'approval') {
-    throw new ProtocolReviewError('BAD_INPUT', 'Sign your own review as "review" or "approval". Nothing was recorded.');
-  }
-  if (assignedTo === null && meaning !== 'responsibility') {
-    throw new ProtocolReviewError(
-      'BAD_INPUT',
-      `${row.reviewer_name} has no account here, so their decision can only be recorded by someone taking responsibility for the record. Sign as "responsibility". Nothing was recorded.`,
-    );
-  }
+  assertMaySignDisposition({ assignedTo, reviewerName: row.reviewer_name }, act);
   await client.query(
     `UPDATE protocol_review_assignments SET disposition = $3, status = 'completed', updated_at = now() WHERE id = $1 AND organization_id = $2`,
     [assignmentId, orgId, disposition],

@@ -118,6 +118,7 @@ export function artifactApproval(a: ArtifactApprovalFacts): ArtifactApproval {
   const approved = versionOf(a.approvedVersionId);
   const lockedAt = locked ? versionOf(a.publishedVersionId) : null;
   const current = versionOf(a.version);
+  const currentLabel = `v${current ?? '?'}`;
   if (approved == null || (locked && lockedAt == null)) {
     const kind = approved == null ? 'approved' : 'locked';
     return {
@@ -125,7 +126,7 @@ export function artifactApproval(a: ArtifactApprovalFacts): ArtifactApproval {
       reason: 'no-approved-version',
       problem:
         `its status is '${a.status}' but no ${kind} version is recorded, so its current content ` +
-        `(v${current ?? '?'}) cannot be shown to be the content that was ${kind}`,
+        `(${currentLabel}) cannot be shown to be the content that was ${kind}`,
       remedy,
     };
   }
@@ -134,7 +135,7 @@ export function artifactApproval(a: ArtifactApprovalFacts): ArtifactApproval {
       filable: false,
       reason: 'edited-after-approval',
       problem:
-        `it was edited after approval — the current content is v${current ?? '?'}, the approved version is ` +
+        `it was edited after approval — the current content is ${currentLabel}, the approved version is ` +
         `v${approved}, and it was locked at v${lockedAt} — so the locked content is not the content that was ` +
         `approved and what would ship is unreviewed`,
       remedy,
@@ -145,7 +146,7 @@ export function artifactApproval(a: ArtifactApprovalFacts): ArtifactApproval {
       filable: false,
       reason: 'edited-after-approval',
       problem:
-        `it was edited after approval — the current content is v${current ?? '?'}, the approved version is v${approved} — ` +
+        `it was edited after approval — the current content is ${currentLabel}, the approved version is v${approved} — ` +
         `so the approved version was edited since approval and what would ship is unreviewed`,
       remedy,
     };

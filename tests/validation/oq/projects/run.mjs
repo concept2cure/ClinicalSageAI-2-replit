@@ -6,6 +6,7 @@
  * Writes docs/evidence/W3/<date>/OQ-PROJECTS/{result.json, OQ-001-execution-record.md, steps/*}.
  */
 import { createRun, devLogin, helpers, passwordLogin, runCredential } from '../../lib/harness.mjs';
+import { ACCOUNT_STANDING_TEXT, accountStandingStep } from './account-standing.mjs';
 import { freshTotp, totp, TOTP_PERIOD_SECONDS } from '../../lib/totp.mjs';
 
 const run = await createRun({
@@ -484,6 +485,8 @@ await step(
     return `own session (${own.method}): projects ${openBefore}; logout ${logout.status}; afterwards projects ${openAfter}, session check ${signedInAfter ? 'signed in' : 'signed out'}; newest new ledger entry for ${target}: "${added[0].event}", chained`;
   },
 );
+
+await step({ id: 'OQ-PROJ-18', urs: ['URS-PROJ-012'], ...ACCOUNT_STANDING_TEXT }, accountStandingStep);
 
 const result = await run.finish();
 process.exit(result.counts.fail > 0 ? 1 : 0);

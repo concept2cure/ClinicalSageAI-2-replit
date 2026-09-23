@@ -67,6 +67,8 @@ function store(opts: { len: number | null; spans?: Record<string, unknown>[] }) 
   });
 }
 
+const SECTION = '6f1c2d3e-4a5b-4c6d-8e7f-9a0b1c2d3e4f';
+
 function sourceSpan(start: number, end: number) {
   return {
     id: `s-${start}`,
@@ -139,6 +141,33 @@ describe('GET /api/data-origins/document', () => {
     expect(res.body.error.code).toBe('NOT_FOUND');
     // Nothing that could be rendered as an assessed document.
     expect(res.body.summary).toBeUndefined();
+  });
+
+  /*
+   * The Authoring editor (DocumentWorkbench) asks about authoring_sections, the
+   * only table it asks about, and the route refused it: every section showed no
+   * coverage figure at all (task #27; OQ-003's record shows the 400). Its lineage
+   * is recorded against the saved `content`, the column read here; its tenant
+   * column is `tenant_id`, not `organization_id`.
+   */
+  it('reports the partition for an Authoring section, the table the editor asks about', async () => {
+    store({ len: 100, spans: [{ ...sourceSpan(0, 40), document_table: 'authoring_sections', document_id: SECTION }] });
+
+    const res = await request(app()).get(url({ documentTable: 'authoring_sections', documentId: SECTION }));
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.summary.contentLength).toBe(100);
+    expect(res.body.summary.byKind.fromSources).toBe(40);
+  });
+
+  it("scopes an Authoring section's length read by its own tenant column", async () => {
+    store({ len: 100, spans: [] });
+    await request(app(7)).get(url({ documentTable: 'authoring_sections', documentId: SECTION }));
+
+    const lengthCall = query.mock.calls.find((c) => /char_length/i.test(c[0] as string));
+    expect(lengthCall, 'the section was refused before its length was read').toBeDefined();
+    expect(lengthCall![0] as string).toMatch(/FROM authoring_sections\s+WHERE id::text = \$1 AND tenant_id = \$2/);
+    expect(lengthCall![1]).toEqual([SECTION, 7]);
   });
 
   it('refuses a table it cannot locate text in, by name', async () => {

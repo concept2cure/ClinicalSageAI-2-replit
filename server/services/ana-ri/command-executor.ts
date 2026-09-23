@@ -18,6 +18,12 @@ import { getPool } from '../../db';
 import { logGeneration, validateArtifactQuality } from './enforcement.js';
 import { executeGovernedAnaOperation } from '../governed-ana-execution.js';
 import { recordArtifactProvenanceBestEffort } from '../provenance/artifact-provenance';
+import { artifactApproval } from '../ectd/package-content-fingerprint';
+import {
+  approvalRecordedOnlyByGovernedAct,
+  GOVERNED_LOCK_ACTION,
+  lockRecordedOnlyByGovernedAct,
+} from '../artifact-approval-act';
 
 // Lazy pool access. Acquiring the pool at module load (`getPool()` at
 // top level) throws "Database connection not available" when this module
@@ -681,7 +687,8 @@ export async function updateArtifactStatus(
   try {
     // Load current artifact to validate transition
     const existing = await pool.query(
-      `SELECT artifact_id, title, status, ctd_section
+      `SELECT artifact_id, title, status, ctd_section,
+              version, approved_version_id, published_version_id
        FROM concept2cure_artifacts
        WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3`,
       [params.artifactId, params.projectId, ctx.organizationId]
@@ -732,14 +739,65 @@ export async function updateArtifactStatus(
       };
     }
 
+    // Guard: a lock must cover the approval.
+    // 2026-09-23 (W5/D7, residual repair): an approved v1 edited to v2 (status
+    // stays 'approved') could be locked here over content no one reviewed. The
+    // verdict is the filing rule's own (artifactApproval, imported — not a
+    // second rule), as the status route (server/routes/c2c/artifacts.ts PUT
+    // …/status) and authoring-actions lock-artifact apply it: lockable only
+    // when filable as approved (version = approved_version_id); an approval
+    // that recorded no version fails closed.
+    if (toStatus === 'locked') {
+      const approval = artifactApproval({
+        status: fromStatus,
+        version: current.version,
+        approvedVersionId: current.approved_version_id,
+        publishedVersionId: current.published_version_id,
+      });
+      // 2026-09-23 (W5/D7, final pass, repair): the refusal gave the filing
+      // rule's status-route remedy ("approved → review, then review →
+      // approved, which records the version approved"); done through this
+      // command, which records no version, the next lock was refused with the
+      // same words. It names the governed act and says this command records
+      // none.
+      if (!approval.filable) {
+        return {
+          success: false,
+          action: 'update_artifact_status',
+          message:
+            `"${current.title}" cannot be locked: ${approval.problem}. ` +
+            `${approvalRecordedOnlyByGovernedAct('command')} Lock it after that through ${GOVERNED_LOCK_ACTION}, ` +
+            'which records the version locked; this command records none.',
+          data: {
+            artifactId: params.artifactId,
+            currentStatus: fromStatus,
+            requestedStatus: toStatus,
+            reason: approval.reason,
+          },
+        };
+      }
+    }
+
     // Guard: warn about approved → draft regression (but allow it)
     const isRegression =
       fromStatus === 'approved' && (toStatus === 'draft' || toStatus === 'review');
 
-    await pool.query(
+    // 2026-09-23 (W5/D7, final pass): this command is not the approval act. It
+    // writes the status and records no approved or locked version (HEAD
+    // behaviour; the residual-repair rounds' recording here was reverted — it
+    // recorded approvals for roles the status route refuses and locks without
+    // the route's role check or attestation). Only the governed act (the
+    // status route's review → approved, authoring-actions approve-artifact)
+    // records one. Leaving approved/locked clears any recorded version in this
+    // same write (the trigger in
+    // migrations/20260923b_artifact_approval_follows_status.sql), so an
+    // approval revoked earlier is not resurrected here. RETURNING reads what
+    // was written, so the message below is judged on it.
+    const written = await pool.query(
       `UPDATE concept2cure_artifacts
        SET status = $4, updated_at = NOW()
-       WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3`,
+       WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3
+       RETURNING status, version, approved_version_id, published_version_id`,
       [params.artifactId, params.projectId, ctx.organizationId, toStatus]
     );
 
@@ -748,6 +806,7 @@ export async function updateArtifactStatus(
     const regressionWarning = isRegression
       ? ' ⚠ This reverses approval and will require re-review before the document can be approved again.'
       : '';
+    const filingNote = notFilableNote(toStatus, written.rows[0]);
 
     return {
       success: true,
@@ -759,7 +818,7 @@ export async function updateArtifactStatus(
         title: current.title,
         isRegression,
       },
-      message: `"${current.title}"${sectionLabel} status changed: ${transitionLabel}.${regressionWarning}`,
+      message: `"${current.title}"${sectionLabel} status changed: ${transitionLabel}.${regressionWarning}${filingNote}`,
     };
   } catch (err: unknown) {
     return {
@@ -771,6 +830,35 @@ export async function updateArtifactStatus(
       error: err instanceof Error ? err.message : String(err),
     };
   }
+}
+
+/**
+ * The truthful filing note for a status this command wrote: empty unless the
+ * row it wrote is approved/locked and the filing rule (artifactApproval) still
+ * refuses it — in which case it says why and which governed act files it. 2026-09-23 (W5/D7,
+ * final pass). A row that could not be read back is reported as not filable
+ * (fail closed), never as filable.
+ */
+function notFilableNote(
+  toStatus: string,
+  row: { status?: string; version?: number; approved_version_id?: number | null; published_version_id?: number | null } | undefined
+): string {
+  if (toStatus !== 'approved' && toStatus !== 'locked') return '';
+  if (!row) return ' It cannot be shown to be filable: the written row could not be read back.';
+  const approval = artifactApproval({
+    status: row.status ?? null,
+    version: row.version ?? null,
+    approvedVersionId: row.approved_version_id ?? null,
+    publishedVersionId: row.published_version_id ?? null,
+  });
+  if (approval.filable) return '';
+  // 2026-09-23 (W5/D7, final pass, repair): the remedy names the governed act
+  // and says this command records none (it said "approval through review" and,
+  // for a lock, the status route's transitions — neither records anything
+  // when done here).
+  return toStatus === 'approved'
+    ? ` It cannot be filed yet: ${approval.problem}. ${approvalRecordedOnlyByGovernedAct('command')}`
+    : ` It cannot be filed yet: ${approval.problem}. ${lockRecordedOnlyByGovernedAct('command')}`;
 }
 
 /** Place artifact in CTD dossier section */

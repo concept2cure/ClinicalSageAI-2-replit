@@ -579,6 +579,42 @@ export async function writeMutation(
   }
 }
 
+/**
+ * The answer to a separation-of-duties refusal, or null for any other error.
+ * One mapping for every route that runs the check (this handler, and
+ * POST /api/c2c/documents/:id/lock), so they cannot answer it differently.
+ */
+export function separationOfDutiesRefusal(
+  err: unknown,
+  label: string,
+): { status: number; body: { error: string; detail: string } } | null {
+  if (err instanceof SeparationOfDutiesError) {
+    return { status: 403, body: { error: err.code, detail: err.message } };
+  }
+  if (err instanceof SeparationOfDutiesAuthorUnresolvedError) {
+    // The check ran, but the record has no recorded author (or its type has
+    // none modelled), so independence cannot be shown. A retry will not fix it.
+    return { status: 409, body: { error: err.code, detail: err.message } };
+  }
+  if (err instanceof SeparationOfDutiesUnverifiedError) {
+    // The check did not run, which is not the same as the check refusing.
+    // 503, not 403: the user is not the problem, and a retry may succeed.
+    // The error's own message carries the failed lookup's cause, which is
+    // internal; it goes to the log, and the caller gets an authored
+    // sentence (ci:server-error-leaks, 2026-09-23).
+    console.error(`[${label}]`, err.message);
+    return {
+      status: 503,
+      body: {
+        error: err.code,
+        detail:
+          'Separation of duties could not be verified, so nothing was signed. Try again; if this continues, contact your administrator.',
+      },
+    };
+  }
+  return null;
+}
+
 // ── Request handler factory ───────────────────────────────────────────────────
 
 function makeHandler(command: Command) {
@@ -678,27 +714,8 @@ function makeHandler(command: Command) {
           detail: g.reason,
         });
       }
-      if (err instanceof SeparationOfDutiesError) {
-        return res.status(403).json({ error: err.code, detail: err.message });
-      }
-      if (err instanceof SeparationOfDutiesAuthorUnresolvedError) {
-        // The check ran, but the record has no recorded author (or its type has
-        // none modelled), so independence cannot be shown. A retry will not fix it.
-        return res.status(409).json({ error: err.code, detail: err.message });
-      }
-      if (err instanceof SeparationOfDutiesUnverifiedError) {
-        // The check did not run, which is not the same as the check refusing.
-        // 503, not 403: the user is not the problem, and a retry may succeed.
-        // The error's own message carries the failed lookup's cause, which is
-        // internal; it goes to the log, and the caller gets an authored
-        // sentence (ci:server-error-leaks, 2026-09-23).
-        console.error(`[c2c/actions/${command}]`, err.message);
-        return res.status(503).json({
-          error: err.code,
-          detail:
-            'Separation of duties could not be verified, so nothing was signed. Try again; if this continues, contact your administrator.',
-        });
-      }
+      const sod = separationOfDutiesRefusal(err, `c2c/actions/${command}`);
+      if (sod) return res.status(sod.status).json(sod.body);
       if (err instanceof SignatureRevocationUnresolvedError) {
         // Nothing was written (the transaction rolled back). Say so plainly
         // rather than returning an opaque 500 that reads as "maybe it worked".

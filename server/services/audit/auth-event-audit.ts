@@ -59,6 +59,7 @@ const EVENT_DESCRIPTIONS: Readonly<Record<string, string>> = {
   'user_login|success|dev_mfa_skipped': 'Signed in on a development server: second factor skipped',
   'user_login|failure|unknown_email': 'Sign-in refused: no account for this address',
   'user_login|failure|account_locked': 'Sign-in refused: account locked',
+  'user_login|failure|account_inactive': 'Sign-in refused: the account is not active (suspended or deprovisioned)',
   'user_login|failure|wrong_password': 'Sign-in refused: wrong password',
   'user_login|failure|wrong_password_threshold_exceeded': 'Sign-in refused: wrong password; the account is now locked',
   'user_login_mfa_challenge|success|mfa_challenge_totp': 'Password verified: authenticator code requested',

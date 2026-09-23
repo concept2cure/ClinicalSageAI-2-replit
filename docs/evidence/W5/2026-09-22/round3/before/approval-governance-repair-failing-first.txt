@@ -1,0 +1,101 @@
+=== server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > review → approved succeeds but records no approved version, is not filable, and the message says so 2377ms
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > archived → approved records no approved version, is not filable, and the message says so 1849ms
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > superseded → approved records no approved version, is not filable, and the message says so 1723ms
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > rejected → approved records no approved version, is not filable, and the message says so 1758ms
+ ✓ server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > an artifact the governed act approved stays filable through approved → approved, and the message claims nothing 1752ms
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > approved → approved does not re-stamp the approval over an unreviewed edit 1732ms
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status: a lock must cover the approval, and records no lock version > approved (governed, at v1) → locked succeeds, records no locked version, and says it cannot be filed yet 1849ms
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status: a lock must cover the approval, and records no lock version > approved → locked after an unreviewed edit is REFUSED, writes nothing, and asks for re-approval 1778ms
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status: a lock must cover the approval, and records no lock version > approved → locked when no approved version was ever recorded is refused (fail closed) 1724ms
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status: a lock must cover the approval, and records no lock version > following the message through this command does not go round in a circle: every step names the governed act 1778ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > review → approved succeeds but records no approved version, is not filable, and the message says so
+AssertionError: expected '"Drug Substance Spec" (section 3.2.S)…' to match /An approved version is recorded only …/
+- Expected:
++ Received:
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > archived → approved records no approved version, is not filable, and the message says so
+AssertionError: expected '"Drug Substance Spec" (section 3.2.S)…' to match /An approved version is recorded only …/
+- Expected:
++ Received:
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > superseded → approved records no approved version, is not filable, and the message says so
+AssertionError: expected '"Drug Substance Spec" (section 3.2.S)…' to match /An approved version is recorded only …/
+- Expected:
++ Received:
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > rejected → approved records no approved version, is not filable, and the message says so
+AssertionError: expected '"Drug Substance Spec" (section 3.2.S)…' to match /An approved version is recorded only …/
+- Expected:
++ Received:
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status sets the status and records no approval > approved → approved does not re-stamp the approval over an unreviewed edit
+AssertionError: expected '"Drug Substance Spec" (section 3.2.S)…' to match /An approved version is recorded only …/
+- Expected:
++ Received:
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status: a lock must cover the approval, and records no lock version > approved (governed, at v1) → locked succeeds, records no locked version, and says it cannot be filed yet
+AssertionError: expected '"Drug Substance Spec" (section 3.2.S)…' to match /A locked version is recorded only by …/
+- Expected:
++ Received:
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status: a lock must cover the approval, and records no lock version > approved → locked after an unreviewed edit is REFUSED, writes nothing, and asks for re-approval
+AssertionError: expected '"Drug Substance Spec" cannot be locke…' to match /An approved version is recorded only …/
+- Expected:
++ Received:
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status: a lock must cover the approval, and records no lock version > approved → locked when no approved version was ever recorded is refused (fail closed)
+AssertionError: expected '"Drug Substance Spec" cannot be locke…' to match /An approved version is recorded only …/
+- Expected:
++ Received:
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status: a lock must cover the approval, and records no lock version > following the message through this command does not go round in a circle: every step names the governed act
+AssertionError: expected '"Drug Substance Spec" (section 3.2.S)…' to match /An approved version is recorded only …/
+- Expected:
++ Received:
+ Test Files  1 failed (1)
+      Tests  9 failed | 1 passed (10)
+=== server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts
+ × server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > a approver promoting from review: status approved, no approved version, not filable, and the warning says so 2294ms
+ × server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > a editor promoting from review: status approved, no approved version, not filable, and the warning says so 28ms
+ × server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > a regulatory promoting from review: status approved, no approved version, not filable, and the warning says so 28ms
+ × server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > a super_admin promoting from review: status approved, no approved version, not filable, and the warning says so 32ms
+ × server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > promoting a DRAFT nobody reviewed records no approved version, and the warning says so 32ms
+ × server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > promoting an artifact approved at v1 and edited to v2 does not re-stamp v2 (stays edited-after-approval) 34ms
+ ✓ server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > promoting an artifact the governed act approved at its current version keeps it filable and claims nothing else 24ms
+ ✓ server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > the human-approval gate is unchanged: no reason/confirmation, no approval and no version recorded 17ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > a approver promoting from review: status approved, no approved version, not filable, and the warning says so
+ FAIL  server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > a editor promoting from review: status approved, no approved version, not filable, and the warning says so
+ FAIL  server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > a regulatory promoting from review: status approved, no approved version, not filable, and the warning says so
+ FAIL  server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > a super_admin promoting from review: status approved, no approved version, not filable, and the warning says so
+AssertionError: expected 'It cannot be filed yet: its status is…' to match /An approved version is recorded only …/
+- Expected:
++ Received:
+ FAIL  server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > promoting a DRAFT nobody reviewed records no approved version, and the warning says so
+AssertionError: expected 'Artifact was still in draft status — …' to match /An approved version is recorded only …/
+- Expected:
++ Received:
+ FAIL  server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records no approved version > promoting an artifact approved at v1 and edited to v2 does not re-stamp v2 (stays edited-after-approval)
+AssertionError: expected 'It cannot be filed yet: it was edited…' to match /An approved version is recorded only …/
+- Expected:
++ Received:
+ Test Files  1 failed (1)
+      Tests  6 failed | 2 passed (8)
+=== server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts
+ ✓ server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > 20260923b_artifact_approval_follows_status.sql > is registered in C2C_MIGRATION_FILES above the final pair 2217ms
+ ✓ server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > 20260923b_artifact_approval_follows_status.sql > carries no DROP (RULE 1) 28ms
+ ✓ server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > review → approved through the status route records v1 and is filable 28ms
+ × server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > approved → review clears the approval; promote_artifact back to approved is NOT filable 64ms
+ × server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > archived by markObjectSuperseded, then restored to approved by AnA, is NOT filable 39ms
+ ✓ server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > approve → lock at the same version keeps the approval: still filable 23ms
+ ✓ server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > locked → draft (unlock) clears both the approval and the lock; re-approval records the new version 29ms
+ ✓ server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > the status comparison is case-insensitive 23ms
+ ✓ server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > an INSERT of a non-approved row carries no approval 20ms
+ ✓ server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > replay safety and the existing rows > clears a stale approval left on a non-approved row before the trigger existed 1856ms
+ ✓ server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > replay safety and the existing rows > applies twice: one trigger, and an approved row written between the runs keeps its approval 33ms
+ ✓ server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > replay safety and the existing rows > NOTICE-skips on a database without concept2cure_artifacts (the set-only blank replay) 1748ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > approved → review clears the approval; promote_artifact back to approved is NOT filable
+AssertionError: expected 'It cannot be filed yet: its status is…' to match /recorded only by the review workflow'…/
+- Expected:
++ Received:
+ FAIL  server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts > an approval does not outlive the status that carries it > archived by markObjectSuperseded, then restored to approved by AnA, is NOT filable
+AssertionError: expected '"Clinical Overview" (section 2.5) sta…' to match /recorded only by the review workflow'…/
+- Expected:
++ Received:
+ Test Files  1 failed (1)
+      Tests  2 failed | 10 passed (12)

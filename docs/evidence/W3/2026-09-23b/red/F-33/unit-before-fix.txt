@@ -1,0 +1,67 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+ × server/middleware/__tests__/redisRateLimiter-counts-once.test.ts > a request is one request to a limiter, whatever router answers it > counts one per request when the third router of three answers it 61ms
+   → expected 429 to be 200 // Object.is equality
+ × server/middleware/__tests__/redisRateLimiter-counts-once.test.ts > a request is one request to a limiter, whatever router answers it > refuses the request after the limit, not after the limit divided by the router's position 37ms
+   → expected [ 200, 200, 429, 429, 429, 429, 429 ] to deeply equal [ 200, 200, 200, 200, 200, 200, 429 ]
+ ✓ server/middleware/__tests__/redisRateLimiter-counts-once.test.ts > a request is one request to a limiter, whatever router answers it > two limiters are two policies: each still counts the request once 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/middleware/__tests__/redisRateLimiter-counts-once.test.ts > a request is one request to a limiter, whatever router answers it > counts one per request when the third router of three answers it
+AssertionError: expected 429 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 429
+
+ ❯ server/middleware/__tests__/redisRateLimiter-counts-once.test.ts:53:26
+     51|     for (let i = 0; i < 3; i++) {
+     52|       const res = await request(app).get('/api/stack/thing');
+     53|       expect(res.status).toBe(200);
+       |                          ^
+     54|       remaining.push(Number(res.headers['x-ratelimit-remaining']));
+     55|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/middleware/__tests__/redisRateLimiter-counts-once.test.ts > a request is one request to a limiter, whatever router answers it > refuses the request after the limit, not after the limit divided by the router's position
+AssertionError: expected [ 200, 200, 429, 429, 429, 429, 429 ] to deeply equal [ 200, 200, 200, 200, 200, 200, 429 ]
+
+- Expected
++ Received
+
+  [
+    200,
+    200,
+-   200,
+-   200,
+-   200,
+-   200,
++   429,
++   429,
++   429,
++   429,
+    429,
+  ]
+
+ ❯ server/middleware/__tests__/redisRateLimiter-counts-once.test.ts:63:22
+     61|     const statuses: number[] = [];
+     62|     for (let i = 0; i < LIMIT + 1; i++) statuses.push((await request(a…
+     63|     expect(statuses).toEqual([...Array(LIMIT).fill(200), 429]);
+       |                      ^
+     64|   });
+     65|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  16:07:59
+   Duration  605ms (transform 141ms, setup 81ms, import 239ms, tests 111ms, environment 0ms)
+

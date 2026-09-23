@@ -123,7 +123,15 @@ export async function checkPasswordHistory(
 // ─── Account Lockout ────────────────────────────────────────────────────────
 
 /**
- * Check if account is locked
+ * Check if account is locked.
+ *
+ * Throws when the lockout cannot be read. It answered { locked: false } on any
+ * error until 2026-09-23 (VSR-001 F-30), so a lost connection or the lockout
+ * columns missing (ledger C-20) silently disabled the lockout: sign-in consults
+ * this before comparing a password, and the signing ceremony's wiring
+ * (part11/reverify-signer-deps.ts) before every signature. Every caller now
+ * fails closed on the throw: sign-in answers 500, the signing dialog's check
+ * answers not valid, and the ceremony refuses ACCOUNT_STATE_UNKNOWN.
  */
 export async function isAccountLocked(userId: number): Promise<{
   locked: boolean;
@@ -167,7 +175,8 @@ export async function isAccountLocked(userId: number): Promise<{
     };
   } catch (error) {
     logger.error('Failed to check account lockout', error);
-    return { locked: false };
+    // An unreadable lockout is not an unlocked account.
+    throw error;
   }
 }
 
