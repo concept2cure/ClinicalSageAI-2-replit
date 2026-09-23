@@ -44,8 +44,9 @@ import { fileURLToPath } from 'node:url';
 const TAG = '[ci:db-test-isolation]';
 
 /**
- * A MODULE SPECIFIER ending in `/setup`: `from '../setup'`, the bare
- * side-effect `import '../setup'`, `import('../setup')` and `require('../setup')`.
+ * A MODULE SPECIFIER ending in `/setup`: in a from-clause, a bare side-effect
+ * import, a dynamic import() or a require() call. (Written without a quoted
+ * specifier: ci:untracked-imports reads this file and would resolve one.)
  * Only a specifier: this matched any quoted string ending in `/setup`, so a
  * database test that exercised a route such as '/api/auth/mfa/setup' was
  * reported as importing the pg mock (2026-09-23; two real-database files
@@ -55,13 +56,17 @@ const TAG = '[ci:db-test-isolation]';
 const IMPORTS_MOCKING_SETUP = /(?:\bfrom|\bimport|\brequire\s*\(|\bimport\s*\()\s*['"][^'"]*\/setup['"]/;
 
 if (process.argv.includes('--self-test')) {
+  // Specifiers are spliced in so that ci:untracked-imports, which reads this
+  // file, does not take the fixtures for imports of files that do not exist.
+  const setup = "'../" + "setup'";
+  const setupDb = "'../" + "setup.db'";
   const cases = [
-    ["import { x } from '../setup';", true],
-    ["import '../setup';", true],
-    ["await import('../setup');", true],
-    ["const s = require('../setup');", true],
-    ["export * from '../setup';", true],
-    ["import { databaseUrl } from '../setup.db';", false],
+    [`import { x } from ${setup};`, true],
+    [`import ${setup};`, true],
+    [`await import(${setup});`, true],
+    [`const s = require(${setup});`, true],
+    [`export * from ${setup};`, true],
+    [`import { databaseUrl } from ${setupDb};`, false],
     ["await request(app).post('/api/auth/mfa/setup').send({});", false],
     ["const path = '/api/setup';", false],
   ];
