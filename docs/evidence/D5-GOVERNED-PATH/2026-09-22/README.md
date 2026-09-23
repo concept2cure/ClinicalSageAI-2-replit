@@ -350,6 +350,105 @@ that version. Before signature, through change control:
 factors, section gating, quality validation, batch validate) have no authority
 gate and no ledger row. They are the same gap, and they are outside this item.
 
+## QMS beyond the plan: fabricated successes, and an ungoverned delete
+
+Found when P2's reviewers reported the rest of the QMS router as ungated. A
+read-only map was made, and this session verified the key claim in code:
+`getDb(req)` is a plain Drizzle instance, so `tenantDb.insert(table, values)` is
+never executed.
+
+**What was there.** Nothing in the client calls any of this, but all of it is
+mounted, twice.
+
+- **Fabricated success.**
+  - CTQ-factor create answered `201`, and change and batch update-status
+    answered `200`. None of them ever ran SQL.
+  - Batch clone-template returned `[undefined…]`.
+  - The waiver request invented a pending waiver `{id: Date.now()}` and answered
+    `201`. There is no waiver table and no approval route anywhere.
+- **A live, ungoverned destructive route.** `tenant-section-gating.ts` carried a
+  second CTQ-factor writer, reachable at
+  `/api/tenant-section-gating/api/tenant-ctq-factors/:id`. Any member, a viewer
+  included, could hard-delete a factor, with no reason and no ledger row, on the
+  shared pool.
+- **A landmine.** The canonical CTQ delete always answered 500: its in-use check
+  dropped its parameters and named a nonexistent column. Its delete passed the
+  `WHERE` as an ignored argument, so fixing the check would have run `DELETE FROM
+  ctq_factors` with no `WHERE`.
+- **Blind gates.**
+  - `ci:regulated-delete-audit` did not list `ctq_factors` or
+    `quality_management_plans`.
+  - Two API references documented all of the above as working, plus endpoints
+    that were never routed.
+
+**The fix.** Written test-first, read by three independent reviewers and
+repaired, then verified here.
+
+- **Fail closed, not built out** (RULE 2). Every write that never saved anything
+  answers `501 NOT_AVAILABLE`, with a sentence saying nothing was saved. That
+  covers CTQ create, change and batch, the section-gating rule update and the
+  waiver request.
+- **One governed CTQ-factor delete:**
+  `DELETE /api/{tenant-ctq-factors|quality/ctq-factors}/:tenantId/ctq-factors/:factorId`.
+  - Gated by `requireEditorAccess` plus the existing administrator check; the
+    path organization must be the caller's.
+  - A reason is required.
+  - One transaction: lock the row, refuse if a traceability row or an org-scoped
+    gating rule references the factor, delete by id and organization, ledger
+    `delete ctq-factor:<id>` with a full snapshot, COMMIT.
+- **One helper, not two.** The transaction uses P2's plan machinery, extracted
+  to `server/services/qms/governed-qms-write.ts` (`governedQmsWrite`) and shared.
+  The plan suite passes unmodified.
+- **The duplicate writer is removed** from `tenant-section-gating.ts`. Its
+  delete's replacement is the canonical route above, proven reachable through
+  both mounts. Its create never saved anything (always 500 on the real DDL:
+  `mitigation_strategy` does not exist, `qmp_id` was omitted). A history search
+  found no earlier deletions of these routes. The only other caller of any of
+  them is `server/test/quality-api-test.ts`, a manual script no runner includes
+  (`unreferenced-modules-baseline.json`).
+- **The gate.** `ci:regulated-delete-audit` now lists `quality_management_plans`,
+  `ctq_factors` and `qmp_section_gating`. It skips comment lines, and treats a
+  delete inside a `governedQmsWrite(…)` callback as audited: that helper writes
+  the ledger row on the delete's own transaction, beyond the 25-line window.
+- **Docs.** `quality-gating-api-reference.md` is rewritten to the code, known
+  read defects included. `QUALITY_API_REFERENCE.md` now states the truth and
+  points to it rather than repeating it.
+
+**Proof.** The new suite and the unmodified plan suite were run against the
+HEAD route files: red 29 failed / 29 passed of 58 (`qms-red.txt`). The 24 plan
+cases pass either way. Green 58/58 (`qms-green.txt`).
+
+The extended gate:
+
+- against the HEAD routes, fails on exactly the two defects,
+  `tenant-ctq-factors.ts:356` (the no-`WHERE` delete) and
+  `tenant-section-gating.ts:286` (the viewer-reachable delete)
+  (`qms-gate-red.txt`);
+- with governed-span recognition removed, fails on the two governed deletes;
+- with the comment skip removed, fails on a comment;
+- on the fix, passes (`qms-gate-green.txt`).
+
+Mutations here:
+
+- the fabricated `201` restored: 2 failed;
+- the delete's viewer gate removed: 14 failed.
+
+The implementer's and repairer's mutations (the in-use check, `FOR UPDATE`,
+the 23503 mapping shared with plans, the organization predicates on the delete
+and on the gating check) each failed too. Other gates:
+`ci:server-error-leaks`, `ci:discarded-audit-write`,
+`ci:tenant-isolation:no-regression`, `check:security-patterns`,
+`ci:internals-in-copy`, `ci:fabricated-identity`. Scoped typecheck: no errors in
+the changed files.
+
+**Open, known.** These now answer honest 500s, not fabrications, and no launch
+surface reaches them. Repairing them is new work, outside RULE 2 until a surface
+needs it:
+
+- the CTQ-factor list read;
+- the section-gating reads;
+- `validate-section` and `batch-validate` whenever a rule lists a factor.
+
 ## P3: resolving a contradiction
 
 **The defect.** Resolving a contradiction finding takes it off the submission
