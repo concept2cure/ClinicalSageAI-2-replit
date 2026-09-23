@@ -1547,6 +1547,32 @@ router.post('/mfa/resend', mfaLimiter, async (req: Request, res: Response) => {
 });
 
 /**
+ * A change to the account's second factor, recorded against the account
+ * (§11.10(e), §11.300): an enrolment started or refused, the factor switched on
+ * or off, a wrong code at either. None of the three routes below recorded
+ * anything, so an attempt to replace a factor left no trace (VSR-001 F-26).
+ * The tenant is the organisation in the server-signed access token.
+ */
+function recordSecondFactorChange(
+  req: Request,
+  account: { userId: string; email: string; organizationId?: string | number | null },
+  action: 'user_mfa_setup' | 'user_mfa_enable' | 'user_mfa_disable',
+  outcome: 'success' | 'failure',
+  reason?: string,
+): Promise<void> {
+  return recordAuthEvent({
+    action,
+    userId: Number(account.userId),
+    tenantId: account.organizationId ?? null,
+    email: account.email,
+    outcome,
+    reason,
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'],
+  });
+}
+
+/**
  * POST /api/auth/mfa/setup
  * Generate a TOTP secret and QR code URL for the authenticated user.
  * Requires a valid JWT (user must be logged in).
@@ -1566,6 +1592,7 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
     const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
+      organizationId?: string | number | null;
       type?: string;
       role?: string | null;
       mfaPending?: boolean;
@@ -1582,7 +1609,24 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
 
     if (!requireDb(res)) return;
 
-    const result = await mfaService.generateSecret(parseInt(decoded.userId), decoded.email);
+    let result: mfaService.MfaSetupResult;
+    try {
+      result = await mfaService.generateSecret(parseInt(decoded.userId), decoded.email);
+    } catch (err) {
+      if (!(err instanceof mfaService.MfaAlreadyEnabledError)) throw err;
+      // Replacing an enrolled factor is the owner's act, with a current code:
+      // /mfa/disable, then enrol again. A session alone is not the owner.
+      await recordSecondFactorChange(req, decoded, 'user_mfa_setup', 'failure', 'already_enrolled');
+      return res.status(409).json({
+        success: false,
+        error: {
+          code: 'MFA_ALREADY_ENABLED',
+          message:
+            'Two-step verification is already on for this account. To use a different authenticator, turn it off with a current code first.',
+        },
+      });
+    }
+    await recordSecondFactorChange(req, decoded, 'user_mfa_setup', 'success', 'secret_issued');
 
     res.json({
       success: true,
@@ -1625,6 +1669,7 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
     const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
+      organizationId?: string | number | null;
       type?: string;
       role?: string | null;
       mfaPending?: boolean;
@@ -1652,6 +1697,7 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
     const result = await mfaService.enableMfa(parseInt(decoded.userId), code);
 
     if (!result.success) {
+      await recordSecondFactorChange(req, decoded, 'user_mfa_enable', 'failure', 'invalid_code');
       return res.status(401).json({
         success: false,
         error: {
@@ -1660,6 +1706,8 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
         },
       });
     }
+
+    await recordSecondFactorChange(req, decoded, 'user_mfa_enable', 'success');
 
     res.json({
       success: true,
@@ -1700,6 +1748,7 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
     const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
+      organizationId?: string | number | null;
       type?: string;
       role?: string | null;
       mfaPending?: boolean;
@@ -1727,11 +1776,14 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
     const disabled = await mfaService.disableMfa(parseInt(decoded.userId), code);
 
     if (!disabled) {
+      await recordSecondFactorChange(req, decoded, 'user_mfa_disable', 'failure', 'invalid_code');
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_004', message: 'Invalid verification code' },
       });
     }
+
+    await recordSecondFactorChange(req, decoded, 'user_mfa_disable', 'success');
 
     res.json({
       success: true,
