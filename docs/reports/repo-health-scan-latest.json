@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T04:03:27.404Z",
+  "generatedAt": "2026-09-23T04:16:26.408Z",
   "git": {
-    "sha": "50ecbb6889b43782298e799b8b486a6be0a7d5f3",
+    "sha": "c0897d9730e1a99493011b6dcd9060c421c802b8",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2326,7 +2326,7 @@
       },
       {
         "file": "server/routes/auth.ts",
-        "lines": 2187
+        "lines": 2195
       },
       {
         "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
