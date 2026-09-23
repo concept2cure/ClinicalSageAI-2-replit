@@ -20,6 +20,8 @@ function deps(over: Partial<ReverifySignerDeps> = {}): ReverifySignerDeps {
     comparePassword: async () => true,
     isMfaEnabled: async () => false,
     verifyMfaToken: async () => true,
+    isAccountLocked: async () => false,
+    recordFailedAttempt: async () => {},
     warn: () => {},
     ...over,
   };
@@ -152,5 +154,69 @@ describe('what gets persisted is what was checked', () => {
       deps({ isMfaEnabled: async () => false }),
     );
     expect(r).toEqual({ ok: true, authenticationMethod: 'password', secondFactorVerified: false });
+  });
+});
+
+describe("the account's allowance (F-27): the sign-in's lockout", () => {
+  it('refuses a locked account before comparing anything, and counts nothing', async () => {
+    const compare = vi.fn(async () => true);
+    const counted = vi.fn(async () => {});
+    const r = await reverifySigner(
+      USER,
+      { password: 'right' },
+      deps({ isAccountLocked: async () => true, comparePassword: compare, recordFailedAttempt: counted }),
+    );
+    expect(r).toMatchObject({ ok: false, status: 423, code: 'ACCOUNT_LOCKED' });
+    expect(compare).not.toHaveBeenCalled();
+    expect(counted).not.toHaveBeenCalled();
+  });
+
+  it('refuses when the lockout cannot be read, rather than signing unmetered', async () => {
+    const r = await reverifySigner(
+      USER,
+      { password: 'right' },
+      deps({ isAccountLocked: async () => { throw new Error('users unreadable'); } }),
+    );
+    expect(r).toMatchObject({ ok: false, status: 401, code: 'ACCOUNT_STATE_UNKNOWN' });
+  });
+
+  it('counts a wrong password', async () => {
+    const counted = vi.fn(async () => {});
+    await reverifySigner(USER, { password: 'wrong' }, deps({ comparePassword: async () => false, recordFailedAttempt: counted }));
+    expect(counted).toHaveBeenCalledWith(USER);
+  });
+
+  it('counts a wrong code once the password is right', async () => {
+    const counted = vi.fn(async () => {});
+    const r = await reverifySigner(
+      USER,
+      { password: 'p', mfaToken: '123456' },
+      deps({ isMfaEnabled: async () => true, verifyMfaToken: async () => false, recordFailedAttempt: counted }),
+    );
+    expect(r).toMatchObject({ ok: false, code: 'MFA_VERIFICATION_FAILED' });
+    expect(counted).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not count a missing or malformed factor: nothing was guessed', async () => {
+    const counted = vi.fn(async () => {});
+    await reverifySigner(USER, {}, deps({ recordFailedAttempt: counted }));
+    await reverifySigner(USER, { password: 'p', mfaToken: '12' }, deps({ isMfaEnabled: async () => true, recordFailedAttempt: counted }));
+    expect(counted).not.toHaveBeenCalled();
+  });
+
+  it('does not count a signature that verifies', async () => {
+    const counted = vi.fn(async () => {});
+    const r = await reverifySigner(USER, { password: 'p' }, deps({ recordFailedAttempt: counted }));
+    expect(r).toMatchObject({ ok: true });
+    expect(counted).not.toHaveBeenCalled();
+  });
+
+  it('still refuses when the failure cannot be counted', async () => {
+    const r = await reverifySigner(
+      USER,
+      { password: 'wrong' },
+      deps({ comparePassword: async () => false, recordFailedAttempt: async () => { throw new Error('write refused'); } }),
+    );
+    expect(r).toMatchObject({ ok: false, code: 'PASSWORD_VERIFICATION_FAILED' });
   });
 });
