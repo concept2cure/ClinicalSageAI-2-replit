@@ -56,6 +56,7 @@ export interface SignerRefused {
     | 'MFA_TOKEN_REQUIRED'
     | 'MFA_VERIFICATION_FAILED'
     | 'MFA_STATE_UNKNOWN'
+    | 'ACCOUNT_INACTIVE'
     | 'ACCOUNT_LOCKED'
     | 'ACCOUNT_STATE_UNKNOWN';
   error: string;
@@ -72,6 +73,11 @@ export interface ReverifySignerDeps {
   isMfaEnabled: (userId: number) => Promise<boolean>;
   /** Verify a TOTP/backup code for this signer. */
   verifyMfaToken: (userId: number, token: string) => Promise<boolean>;
+  /**
+   * Whether the account is in use: not suspended by an administrator, not
+   * deprovisioned by the identity provider (services/account-standing.ts).
+   */
+  isAccountActive: (userId: number) => Promise<boolean>;
   /**
    * Whether the account is locked after repeated failed attempts: the sign-in's
    * lockout (auth-security-service), so the account has one allowance.
@@ -96,15 +102,21 @@ const SIX_DIGITS = /^\d{6}$/;
  * it asks for a code (POST /api/esignature/verify-password). One implementation,
  * so a guess counts the same wherever it is made (F-27).
  *
- * Checks the lockout before comparing anything: a locked account's guesses are
- * neither compared nor counted.
+ * Checks the account's standing and then its lockout before comparing
+ * anything: the guesses of an account that is suspended, deprovisioned or
+ * locked are neither compared nor counted.
  */
 export async function verifySignerPassword(
   userId: number,
   password: unknown,
   deps: Pick<
     ReverifySignerDeps,
-    'loadPasswordHash' | 'comparePassword' | 'isAccountLocked' | 'recordFailedAttempt' | 'warn'
+    | 'loadPasswordHash'
+    | 'comparePassword'
+    | 'isAccountActive'
+    | 'isAccountLocked'
+    | 'recordFailedAttempt'
+    | 'warn'
   >,
 ): Promise<{ ok: true } | SignerRefused> {
   const warn = deps.warn ?? ((m: string) => console.warn(m));
@@ -114,6 +126,31 @@ export async function verifySignerPassword(
       status: 400,
       code: 'PASSWORD_REQUIRED',
       error: 'password is required to sign (21 CFR Part 11 §11.200).',
+    };
+  }
+
+  // ── The account's standing, before anything is compared ───────────────────
+  // A suspended or deprovisioned account signs nothing, and a guess against it
+  // is neither compared nor counted: it is not an oracle for its password
+  // (VSR-001 F-28). Until 2026-09-23 only the release signature asked this.
+  let active: boolean;
+  try {
+    active = await deps.isAccountActive(userId);
+  } catch (err: unknown) {
+    warn(`[part11] account status check failed during sign: ${errText(err)}`);
+    return {
+      ok: false,
+      status: 401,
+      code: 'ACCOUNT_STATE_UNKNOWN',
+      error: 'Signature rejected: unable to verify the account (§11.200).',
+    };
+  }
+  if (!active) {
+    return {
+      ok: false,
+      status: 401,
+      code: 'ACCOUNT_INACTIVE',
+      error: 'Signature rejected: this account is not active (§11.10(d)).',
     };
   }
 
@@ -184,6 +221,12 @@ export async function verifySignerPassword(
  * (tests/db/signing-lockout.dbtest.ts). §11.300(d). The count is the sign-in's
  * own, so the account has one allowance wherever its password is guessed. A
  * missing or malformed factor is not a guess and is not counted.
+ *
+ * An account that is not in use cannot sign (VSR-001 F-28): an administrator's
+ * suspension and the identity provider's deprovisioning both take it out of
+ * use, and neither stopped a signature here. The one signing path that did
+ * refuse it, the submission release, had its own password check, which this
+ * replaced (tests/db/account-standing.dbtest.ts). §11.10(d), §11.300(b).
  */
 export async function reverifySigner(
   userId: number,

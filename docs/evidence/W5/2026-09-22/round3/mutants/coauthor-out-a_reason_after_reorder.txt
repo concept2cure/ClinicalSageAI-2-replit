@@ -1,0 +1,117 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > deletes and audits in one transaction
+{
+  "timestamp": "2026-09-23T09:48:03.540Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > fails closed — an audit failure rolls the delete back (500)
+{
+  "timestamp": "2026-09-23T09:48:03.749Z",
+  "level": "error",
+  "message": "[ectd-documents] Delete error",
+  "context": {
+    "err": "audit_events insert failed"
+  }
+}
+
+stderr | server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > fails closed — an audit failure rolls the delete back (500)
+{
+  "timestamp": "2026-09-23T09:48:03.837Z",
+  "level": "error",
+  "message": "[coauthor] Delete document error",
+  "context": {
+    "err": "audit_events insert failed"
+  }
+}
+
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > deletes and audits in one transaction 2829ms
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > fails closed — an audit failure rolls the delete back (500) 6ms
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > 404 when the document is absent performs no audit 4ms
+ × server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > writes the deleted event with its reason, actor and Part 11 flags 13ms
+   → expected { organization_id: 7, …(13) } to match object { organization_id: 7, …(9) }
+(4 matching properties omitted from actual)
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > deletes and audits in one transaction 65ms
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > fails closed — an audit failure rolls the delete back (500) 5ms
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > 404 when the document is absent performs no audit 3ms
+ × server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > writes the deleted event with its reason, actor and Part 11 flags 8ms
+   → expected { organization_id: 7, …(13) } to match object { organization_id: 7, …(9) }
+(4 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > writes the deleted event with its reason, actor and Part 11 flags
+AssertionError: expected { organization_id: 7, …(13) } to match object { organization_id: 7, …(9) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -2,11 +2,11 @@
+    "entity_id": 42,
+    "entity_type": "coauthor_document",
+    "event_type": "coauthor_document.deleted",
+    "gxp_relevant": true,
+    "organization_id": 7,
+-   "reason": "eCTD coauthor document deleted",
++   "reason": "x",
+    "regulatory_significant": true,
+    "user_id": 1,
+    "user_name": "Author",
+    "user_role": "regulatory-author",
+  }
+
+ ❯ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts:141:55
+    139|     expect(res.status).toBe(200);
+    140|     expect(audits).toHaveLength(1);
+    141|     expect(auditRow(audits[0].sql, audits[0].params)).toMatchObject({
+       |                                                       ^
+    142|       organization_id: 7,
+    143|       event_type: 'coauthor_document.deleted',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > writes the deleted event with its reason, actor and Part 11 flags
+AssertionError: expected { organization_id: 7, …(13) } to match object { organization_id: 7, …(9) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -2,11 +2,11 @@
+    "entity_id": 42,
+    "entity_type": "coauthor_document",
+    "event_type": "coauthor_document.deleted",
+    "gxp_relevant": true,
+    "organization_id": 7,
+-   "reason": "coauthor document deleted",
++   "reason": "x",
+    "regulatory_significant": true,
+    "user_id": 1,
+    "user_name": "Author",
+    "user_role": "regulatory-author",
+  }
+
+ ❯ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts:141:55
+    139|     expect(res.status).toBe(200);
+    140|     expect(audits).toHaveLength(1);
+    141|     expect(auditRow(audits[0].sql, audits[0].params)).toMatchObject({
+       |                                                       ^
+    142|       organization_id: 7,
+    143|       event_type: 'coauthor_document.deleted',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+   Start at  09:48:00
+   Duration  3.66s (transform 1.79s, setup 90ms, import 175ms, tests 2.94s, environment 0ms)
+

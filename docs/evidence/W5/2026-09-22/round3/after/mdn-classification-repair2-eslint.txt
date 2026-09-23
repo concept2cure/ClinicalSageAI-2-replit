@@ -1,0 +1,31 @@
+
+/home/user/ClinicalSageAI-2-replit/server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts
+  159:3  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-var-requires')
+  228:7  warning  'setImmediate' is not defined                                                                          no-undef
+
+/home/user/ClinicalSageAI-2-replit/server/services/submission-gateways/fda-esg.ts
+  863:1  warning  File has too many lines (602). Maximum allowed is 500  max-lines
+
+✖ 3 problems (0 errors, 3 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+
+## HEAD baselines
+### HEAD:server/services/submission-gateways/as2-transport.ts
+### HEAD:server/services/submission-gateways/fda-esg.ts
+
+/home/user/ClinicalSageAI-2-replit/server/services/submission-gateways/fda-esg.ts
+  806:1  warning  File has too many lines (530). Maximum allowed is 500  max-lines
+
+✖ 1 problem (0 errors, 1 warning)
+
+### HEAD:server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts
+
+/home/user/ClinicalSageAI-2-replit/server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts
+  158:3  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-var-requires')
+  221:7  warning  'setImmediate' is not defined                                                                          no-undef
+
+✖ 2 problems (0 errors, 2 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+
+### HEAD:server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts
+### HEAD:server/services/ind-lifecycle/icsr-gateway-transport.ts

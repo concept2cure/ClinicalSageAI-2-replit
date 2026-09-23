@@ -1,0 +1,1303 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > refuses the freeze when a leaf is placed while the gate is assembling
+{
+  "timestamp": "2026-09-23T08:18:20.865Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > refuses the freeze when a leaf is removed while the gate is assembling
+{
+  "timestamp": "2026-09-23T08:18:20.983Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > refuses the freeze when a leaf is placed while the gate is assembling 151ms
+stdout | server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > refuses the freeze when a leaf is removed while the gate is assembling
+{
+  "timestamp": "2026-09-23T08:18:21.045Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > refuses the freeze when a leaf is removed while the gate is assembling
+{
+  "timestamp": "2026-09-23T08:18:21.052Z",
+  "level": "info",
+  "message": "[submission-service] Governed sequence transition applied",
+  "context": {
+    "id": 2,
+    "toStatus": "frozen",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses a dependent freeze while a lower sequence is dispatched but not sent — as an ordering refusal, not a package defect
+{
+  "timestamp": "2026-09-23T08:18:21.108Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > refuses the freeze when a leaf is removed while the gate is assembling 168ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > upsertLeaf re-checks the status under the sequence row lock, not only before it 7ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > TOCTOU: the gate is bound to the leaf manifest it assembled > removeLeaf re-checks the status under the sequence row lock, not only before it 5ms
+stdout | server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses a dependent freeze while a lower sequence is dispatched but not sent — as an ordering refusal, not a package defect
+{
+  "timestamp": "2026-09-23T08:18:21.182Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 12,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses a dependent freeze while a lower sequence is dispatched but not sent — as an ordering refusal, not a package defect
+{
+  "timestamp": "2026-09-23T08:18:21.189Z",
+  "level": "info",
+  "message": "[submission-service] Governed sequence transition applied",
+  "context": {
+    "id": 12,
+    "toStatus": "frozen",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > does not refuse a sequence of only new leaves that shares no section with the unsent lower one
+{
+  "timestamp": "2026-09-23T08:18:21.245Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 13,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > does not refuse a sequence of only new leaves that shares no section with the unsent lower one
+{
+  "timestamp": "2026-09-23T08:18:21.252Z",
+  "level": "info",
+  "message": "[submission-service] Governed sequence transition applied",
+  "context": {
+    "id": 13,
+    "toStatus": "frozen",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses a dependent freeze while a lower sequence is dispatched but not sent — as an ordering refusal, not a package defect 125ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > does not refuse a sequence of only new leaves that shares no section with the unsent lower one 63ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses a new leaf in a section the unsent lower sequence files (its operation derives from that filing) 10ms
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses dispatch on the same rule 10ms
+stdout | server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses to freeze a lower sequence whose filing would move the inventory a frozen higher sequence was judged against
+{
+  "timestamp": "2026-09-23T08:18:21.312Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 21,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses to freeze a lower sequence whose filing would move the inventory a frozen higher sequence was judged against
+{
+  "timestamp": "2026-09-23T08:18:21.375Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 23,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses to freeze a lower sequence whose filing would move the inventory a frozen higher sequence was judged against
+{
+  "timestamp": "2026-09-23T08:18:21.382Z",
+  "level": "info",
+  "message": "[submission-service] Governed sequence transition applied",
+  "context": {
+    "id": 23,
+    "toStatus": "frozen",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses to freeze a lower sequence whose filing would move the inventory a frozen higher sequence was judged against
+{
+  "timestamp": "2026-09-23T08:18:21.431Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 23,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses to freeze a lower sequence whose filing would move the inventory a frozen higher sequence was judged against
+{
+  "timestamp": "2026-09-23T08:18:21.438Z",
+  "level": "info",
+  "message": "[submission-service] Governed sequence transition applied",
+  "context": {
+    "id": 23,
+    "toStatus": "dispatched",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses to freeze a lower sequence whose filing would move the inventory a frozen higher sequence was judged against
+{
+  "timestamp": "2026-09-23T08:18:21.511Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 22,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses to freeze a lower sequence whose filing would move the inventory a frozen higher sequence was judged against
+{
+  "timestamp": "2026-09-23T08:18:21.522Z",
+  "level": "info",
+  "message": "[submission-service] Governed sequence transition applied",
+  "context": {
+    "id": 22,
+    "toStatus": "frozen",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts > the filed inventory the gate judges against cannot move after the lock > refuses to freeze a lower sequence whose filing would move the inventory a frozen higher sequence was judged against 249ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > renders a coauthor_documents leaf to a real PDF (unchanged path) 57ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > counts a materialized-but-draft source as unfinalized (approved is not counted) 16ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > renders a unified_documents leaf (latest version content) to a real PDF 9ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > reports a coauthor_documents leaf with no content as UNRESOLVED, not a title-only leaf 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > reports a unified_documents leaf with no version rows as UNRESOLVED, not a title-only leaf 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > reports an external vault_documents leaf as UNRESOLVED, never silently dropped 1ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > treats a prototype-key document_table as unknown, not as an external store 1ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > materializes a PDF ctd_onboarding_documents upload AS the leaf (real bytes, real md5) 11ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a NON-PDF upload unresolved (no binary→PDF conversion) 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a PDF-mime-but-not-PDF-bytes upload unresolved (magic-byte guard) 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a PDF upload whose file is missing unresolved (fail closed) 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a cross-tenant ctd_onboarding upload unresolved (org-scoped lookup) 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > reports a cross-tenant unified_documents leaf as UNRESOLVED (not dropped) 1ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > resolves a MIXED set: coauthor + unified rendered, vault unresolved 10ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > deduplicates repeated table:id references (renders once) 6ms
+stdout | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > ships the vault-backed leaf in the package instead of skipping it
+{
+  "timestamp": "2026-09-23T08:18:29.915Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > reports the draft leaf as a transmit blocker
+{
+  "timestamp": "2026-09-23T08:18:30.014Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > ships the vault-backed leaf in the package instead of skipping it 190ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembleSequence — vault leaf by uuid, and what transmit must refuse > reports the draft leaf as a transmit blocker 89ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > is empty only when nothing was left out and nothing is unapproved 0ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > names every leaf left out of the package 0ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts > assembledTransmitBlockers > never reads an un-itemised unapproved count as nothing 0ms
+stdout | server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > packages the authored MDR sections into a real ZIP and returns the bytes
+{
+  "timestamp": "2026-09-23T08:18:33.857Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "regulatory_program",
+    "resourceId": "5b0f2f0e-9a7d-4a2e-8c3f-2d1e6f7a8b9c",
+    "organizationId": 8,
+    "regulation": "mdr",
+    "materialized": 4,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > packages the authored MDR sections into a real ZIP and returns the bytes 160ms
+ ✓ server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > refuses honestly when the program has no authored content in the caller organization 4ms
+ ✓ server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > filters by the requested regulation — an mdr-only program has no ivdr technical file 2ms
+stdout | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace the diff cannot bind, instead of filing it as new
+{
+  "timestamp": "2026-09-23T08:18:37.803Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > files a declared append as an append, pointing at the filed leaf
+{
+  "timestamp": "2026-09-23T08:18:37.881Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 4,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace when no filed prior is on record, instead of shipping a replace of nothing
+{
+  "timestamp": "2026-09-23T08:18:37.917Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 6,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace the diff cannot bind, instead of filing it as new 107ms
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > files a declared append as an append, pointing at the filed leaf 67ms
+stdout | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace in a first sequence
+{
+  "timestamp": "2026-09-23T08:18:37.939Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 7,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > ships no bytes of its own, even when its row still names the document
+{
+  "timestamp": "2026-09-23T08:18:37.963Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 9,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > is recorded in the leaf manifest, so the sequence after it no longer holds the withdrawn leaf on file
+{
+  "timestamp": "2026-09-23T08:18:37.981Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 9,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace when no filed prior is on record, instead of shipping a replace of nothing 36ms
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace in a first sequence 20ms
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > ships no bytes of its own, even when its row still names the document 25ms
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > is recorded in the leaf manifest, so the sequence after it no longer holds the withdrawn leaf on file 19ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > materializes the vault copy, staging the RAW bytes 13ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > fetches the bytes with the CALLER organization 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > gives two vault leaves DISTINCT keys 7ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a LEGACY vault leaf addressed by an integer says an integer cannot name one 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a leaf with NEITHER pointer is skipped here and reported by the dispatch gate 0ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a malformed uuid is refused rather than raising 22P02 across the whole assembly 0ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > another organization vault document is not found 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a row that predates the storage provider names the backfill that fixes it 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes the provider will not return for this org are refused 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes that do not match the recorded hash are REFUSED, not staged 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a vault document that is not a PDF is refused on its BYTES, not its mime 3ms
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > withdraws a document now under revision without an approval refusal, shipping none of it
+{
+  "timestamp": "2026-09-23T08:18:45.341Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > materializeLeafSources — approval tally and key space > does not count a document referenced only by a delete toward unfinalized 79ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > materializeLeafSources — approval tally and key space > keys every unresolved entry exactly as the ref it came from 4ms
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a named withdrawal by its document identity when the derived file name changed since filing
+{
+  "timestamp": "2026-09-23T08:18:45.411Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 4,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > withdraws a document now under revision without an approval refusal, shipping none of it 91ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a named withdrawal by its document identity when the derived file name changed since filing 62ms
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly
+{
+  "timestamp": "2026-09-23T08:18:45.458Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 6,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section
+{
+  "timestamp": "2026-09-23T08:18:45.499Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 8,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal
+{
+  "timestamp": "2026-09-23T08:18:45.539Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly 47ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section 41ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal 39ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf
+{
+  "timestamp": "2026-09-23T08:18:45.571Z",
+  "level": "warn",
+  "message": "[assemble-from-core] Assemble dropped no leaf silently, but some sources could not be materialized",
+  "context": {
+    "sequenceId": 15,
+    "organizationId": 7,
+    "unresolved": [
+      {
+        "documentTable": "coauthor_documents",
+        "documentId": 9999,
+        "documentUuid": null,
+        "reason": "coauthor_documents row not found in this organization"
+      }
+    ]
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf
+{
+  "timestamp": "2026-09-23T08:18:45.571Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 15,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section
+{
+  "timestamp": "2026-09-23T08:18:45.620Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 13,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf 33ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section 55ms
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > still binds a row that names no document by its unambiguous section
+{
+  "timestamp": "2026-09-23T08:18:45.680Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 17,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > still binds a row that names no document by its unambiguous section 56ms
+stderr | tests/golden-journeys/submission-export-validation.journey.test.ts > eCTD export → reopen → external-validator qualification > assembles a real package, reopens it, re-verifies checksums, and qualifies it externally
+{
+  "timestamp": "2026-09-23T08:18:49.523Z",
+  "level": "warn",
+  "message": "[assemble-from-core] Assemble dropped no leaf silently, but some sources could not be materialized",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 42,
+    "unresolved": [
+      {
+        "documentTable": "coauthor_documents",
+        "documentId": 300,
+        "documentUuid": null,
+        "reason": "coauthor_documents row not found in this organization"
+      }
+    ]
+  }
+}
+
+stdout | tests/golden-journeys/submission-export-validation.journey.test.ts > eCTD export → reopen → external-validator qualification > assembles a real package, reopens it, re-verifies checksums, and qualifies it externally
+{
+  "timestamp": "2026-09-23T08:18:49.524Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 42,
+    "materialized": 2,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+ ✓ tests/golden-journeys/submission-export-validation.journey.test.ts > eCTD export → reopen → external-validator qualification > assembles a real package, reopens it, re-verifies checksums, and qualifies it externally 249ms
+stdout | server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts > assembleSequence staging > writes the bundle inside the submission-bundle root, where the gateways accept it
+{
+  "timestamp": "2026-09-23T08:18:54.921Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts > assembleSequence staging > writes the bundle inside the submission-bundle root, where the gateways accept it 130ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > materializes the filed bytes and carries the md5 recorded at render time 18ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses another organization's rendered file — it reads as absent, not as content 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses bytes that no longer match the digest recorded at render time 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses a non-PDF render — the ICSR XML is transmitted, never shipped as a leaf 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses when the object is gone — an unretrievable file is a gap, never an empty leaf 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses bytes whose digest matches but which are not a PDF 2ms
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > puts the vault CER in the technical-file ZIP instead of skipping it
+{
+  "timestamp": "2026-09-23T08:19:04.135Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "organizationId": 7,
+    "regulation": "mdr",
+    "materialized": 8,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP
+{
+  "timestamp": "2026-09-23T08:19:04.230Z",
+  "level": "warn",
+  "message": "[assemble-technical-file] Technical-file assemble could not materialize some leaf sources (not dropped silently)",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 2,
+    "organizationId": 7,
+    "regulation": "mdr",
+    "unresolved": [
+      {
+        "documentTable": "vault_documents",
+        "documentId": null,
+        "documentUuid": "44444444-4444-4444-8444-444444444444",
+        "reason": "vault document not found in this organization"
+      }
+    ]
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP
+{
+  "timestamp": "2026-09-23T08:19:04.231Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 2,
+    "organizationId": 7,
+    "regulation": "mdr",
+    "materialized": 7,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > puts the vault CER in the technical-file ZIP instead of skipping it 211ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP 80ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts > coauthor leaf lineage by identity > reports the alias table as absent, not the leaf as sourceless 59ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts > coauthor leaf lineage by identity > reports a row that was never aliased as canonicalId null 37ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts > coauthor leaf lineage by identity > names the authoring document a snapshot represents 12ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts > coauthor leaf lineage by identity > never crosses the tenant: another organization sees no alias for the same row 8ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-governed-sections.test.ts > materializeLeafSources — c2c_document_sections > renders approved, locked and drafted sections to real PDFs; flags the draft as unfinalized 64ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-governed-sections.test.ts > materializeLeafSources — c2c_document_sections > never materializes an empty section — it is unresolved with an honest reason 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-governed-sections.test.ts > materializeLeafSources — c2c_document_sections > never renders a section whose parent document belongs to another organization 2ms
+stdout | server/services/ectd/__tests__/lifecycle-from-core.test.ts > lifecycle from the canonical spine (submission-id keyed) > sequence 0001 ships a delete (for the dropped 0000 leaf) + a new leaf
+{
+  "timestamp": "2026-09-23T08:19:16.033Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/lifecycle-from-core.test.ts > lifecycle from the canonical spine (submission-id keyed) > sequence 0001 ships a delete (for the dropped 0000 leaf) + a new leaf 206ms
+stderr | server/services/ectd/__tests__/assemble-from-core.multisource.test.ts > assembleSequence multi-source resolution > materializes coauthor + unified leaves and surfaces the vault leaf as unresolved
+{
+  "timestamp": "2026-09-23T08:19:20.714Z",
+  "level": "warn",
+  "message": "[assemble-from-core] Assemble dropped no leaf silently, but some sources could not be materialized",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "unresolved": [
+      {
+        "documentTable": "vault_documents",
+        "documentId": 900,
+        "documentUuid": null,
+        "reason": "vault leaf carries no document_uuid — a vault document is uuid-keyed and cannot be addressed by an integer document_id"
+      }
+    ]
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.multisource.test.ts > assembleSequence multi-source resolution > materializes coauthor + unified leaves and surfaces the vault leaf as unresolved
+{
+  "timestamp": "2026-09-23T08:19:20.716Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.multisource.test.ts > assembleSequence multi-source resolution > materializes coauthor + unified leaves and surfaces the vault leaf as unresolved 160ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v3.2.2 qualification > generates a well-formed, checksum-verified FDA package with a working lifecycle 219ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v3.2.2 qualification > qualifies region ema (well-formed + checksums) 96ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v3.2.2 qualification > qualifies region pmda (well-formed + checksums) 74ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v3.2.2 qualification > qualifies region ca (well-formed + checksums) 99ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v4.0 qualification > generates a well-formed RPS package, verifies checksums + in-message integrity, and a lifecycle revise 51ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > runQualification (full suite, preserved reports) > runs FDA v3 + v4 and writes reports with exact spec versions 145ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > vendored-artifact integrity covers the stylesheets too > refuses a vendored stylesheet that checksums.txt does not record 108ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > vendored-artifact integrity covers the stylesheets too > refuses a manifest entry whose agency artifact is GONE from the drop point 121ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > vendored-artifact integrity covers the stylesheets too > the v4.0 schema drop point has the same three fault classes 65ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > vendored-artifact integrity covers the stylesheets too > POSITIVE CONTROL: a recorded stylesheet verifies clean 140ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > DTD validity activates per region, not all-or-nothing > skips (does not fail) a region whose regional DTD is absent from a partial drop 111ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > DTD validity activates per region, not all-or-nothing > states the AMENDMENT package's skip too, not only the original sequence's 101ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > DTD validity activates per region, not all-or-nothing > POSITIVE CONTROL: with no drop-point at all, every backbone is skipped and none fails 111ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > FAILS a backbone with no DOCTYPE at all (it must not vanish from the report) 12ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > FAILS a backbone whose DOCTYPE carries no parseable SYSTEM identifier 21ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > FAILS a backbone whose DOCTYPE points OUTSIDE the package (not self-contained) 14ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > FAILS an unreadable backbone rather than reporting nothing about its DTD 8ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > STILL skips (does not fail) when the DOCTYPE is right but the DTD is unvendored 10ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > POSITIVE CONTROL: a real generated package declares and validates its DTDs > emits an xmllint DTD row for every backbone when the drop-point is complete 167ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — encrypted leaves > refuses to package a leaf that carries an /Encrypt dictionary, naming the leaf 387ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — encrypted leaves > packages the same set without the secured leaf 38ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — leaf security judged on the bytes > refuses a secured 540 KB leaf (trailer past the head window, before the tail window) 9ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — leaf security judged on the bytes > refuses secured PDF bytes shipped under a non-.pdf name 3ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — leaf security judged on the bytes > packages a filled official Form FDA 1571 at m1.1 byte-for-byte, as FDA issued it 498ms
+stdout | server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts
+{
+  "timestamp": "2026-09-23T08:19:28.991Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T08:19:28.992Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts
+{
+  "timestamp": "2026-09-23T08:19:28.993Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > does not require source_path, and offers modified_file 5ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > packages a delete declared by modified_file, shipping no bytes for it 833ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > refuses a delete that still carries a source_path, naming the leaf 2ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > refuses a non-delete leaf with no source_path instead of reading an empty path 1ms
+ ✓ server/services/ana/__tests__/package-ectd-for-region-withdrawal.test.ts > package_ectd_for_region — withdrawal > refuses a delete in sequence 0000, naming the leaf 2ms
+stderr | tests/routes/ectd-compile-spine.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-spine.test.ts
+{
+  "timestamp": "2026-09-23T08:19:32.659Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > assembles the sequence and returns the package's REAL index.xml + rendered-leaf count
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > refuses submission-ready while placed leaves cannot be materialized
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 1 leaf file(s) rendered, 1 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > a placed leaf with no document behind it does not satisfy its required section
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 1 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces a DTD-incomplete package as a blocker, never as ready
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces an assembly refusal as a structured failed compilation, not a 500
+[eCTD Compile] Program BX-204: spine-backed failed | sequence 0000 | 0 leaf file(s) rendered, 0 unresolved
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > records the compilation with the real sequence identity (continuity gate feed)
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > stamps the RECORDED agency application number when the program has one
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > falls back to the program code when no agency number is recorded — never invents one
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > says "unassigned" when the program has neither a number nor a code
+[eCTD Compile] Program 2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > an empty or whitespace application_number is not a recorded number
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > returns every file the package holds, the FDA regional backbone and the MD5 index
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a package whose PDFs were not converted to PDF/A is not ready, and names them
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > an FDA form shipped as FDA issued is named as such — neither converted nor a PDF/A failure
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a compilation that could not be recorded says so — its manifest is what the next sequence is diffed against
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stderr | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a compilation that could not be recorded says so — its manifest is what the next sequence is diffed against
+[eCTD Compile] could not record spine compilation for Program BX-204: column "leaf_manifest" of relation "ectd_compilations" does not exist
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a recorded compilation says so
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a form filed at 1.1 satisfies the pack's per-form requirement by its form type
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 1 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > accepts the sequence's own region however it is spelled
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stderr | tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/history — which sequence, and whether it can anchor the next one > a history that could not be read is an error, never an empty history
+[eCTD History] query failed for Program BX-204: relation "ectd_compilations" does not exist
+
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > assembles the sequence and returns the package's REAL index.xml + rendered-leaf count 309ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > refuses submission-ready while placed leaves cannot be materialized 5ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > a placed leaf with no document behind it does not satisfy its required section 4ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces a DTD-incomplete package as a blocker, never as ready 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces an assembly refusal as a structured failed compilation, not a 500 2ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > records the compilation with the real sequence identity (continuity gate feed) 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/validate — spine-backed programs validate leaf placement > reports placement findings from the sequence's leaves, not the empty section store 2ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/status — spine leaf state drives the blockers > names the placed-document count and defers readiness to compile-time verification 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > stamps the RECORDED agency application number when the program has one 4ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > falls back to the program code when no agency number is recorded — never invents one 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > says "unassigned" when the program has neither a number nor a code 5ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > an empty or whitespace application_number is not a recorded number 8ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > returns every file the package holds, the FDA regional backbone and the MD5 index 8ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a package whose PDFs were not converted to PDF/A is not ready, and names them 4ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > an FDA form shipped as FDA issued is named as such — neither converted nor a PDF/A failure 5ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a compilation that could not be recorded says so — its manifest is what the next sequence is diffed against 12ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a recorded compilation says so 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a form filed at 1.1 satisfies the pack's per-form requirement by its form type 8ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > refuses a region that is not the region the sequence was created for 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > accepts the sequence's own region however it is spelled 3ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/history — which sequence, and whether it can anchor the next one > names the sequence each compilation covered and whether it carries a leaf manifest 1ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/history — which sequence, and whether it can anchor the next one > a history that could not be read is an error, never an empty history 2ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/status — a program's readiness comes from what is placed > counts required sections covered by placed leaves, and names the sequence and its region 9ms
+stderr | tests/routes/ectd-compile-vault-uuid.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-vault-uuid.test.ts
+{
+  "timestamp": "2026-09-23T08:19:34.351Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > is placed and rendered, not "could not be materialized"
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 3 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > an unresolved vault leaf is still named, by its own uuid — a resolved one beside it is not
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 3 leaf file(s) rendered, 1 unresolved | sha256 aaaaaaaaaaaa…
+
+ ✓ tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > is placed and rendered, not "could not be materialized" 320ms
+ ✓ tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > an unresolved vault leaf is still named, by its own uuid — a resolved one beside it is not 6ms
+ ✓ tests/routes/ectd-compile-vault-uuid.test.ts > GET /:projectIdent/status — a vault leaf is a placed document > counts the required section a vault leaf covers 2ms
+stdout | server/services/submission-gateways/__tests__/regional-backbone-referenced.test.ts
+{
+  "timestamp": "2026-09-23T08:19:36.233Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T08:19:36.235Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/submission-gateways/__tests__/regional-backbone-referenced.test.ts
+{
+  "timestamp": "2026-09-23T08:19:36.235Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/submission-gateways/__tests__/regional-backbone-referenced.test.ts
+[database] Database connection successful
+
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-referenced.test.ts > index.xml references the regional Module 1 backbone > fda: a leaf under the ICH Module 1 heading points at m1/us/us-regional.xml with its real MD5 52ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-referenced.test.ts > index.xml references the regional Module 1 backbone > ema: a leaf under the ICH Module 1 heading points at m1/eu/eu-regional.xml with its real MD5 29ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-referenced.test.ts > index.xml references the regional Module 1 backbone > pmda: a leaf under the ICH Module 1 heading points at m1/jp/jp-regional.xml with its real MD5 27ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-referenced.test.ts > index.xml references the regional Module 1 backbone > ca: a leaf under the ICH Module 1 heading points at m1/ca/ca-regional.xml with its real MD5 25ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-referenced.test.ts > index.xml references the regional Module 1 backbone > the in-repo DTD-conformance layer accepts the referenced backbone 24ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > refuses to file a 510(k) as a New Drug Application 23ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > refuses pma, de_novo, maa and cta for the same reason 25ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > never emits fdaat1 for anything that is not actually an NDA 91ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > an original IND is not declared an IND Safety Report 13ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > a follow-up sequence does not guess that it is an original 10ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > both refusals are ValidationErrors — the type every caller branches on to show the reason 12ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > the unresolved-submission-type refusal names terms that actually resolve 6ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > the resolver itself distinguishes one level from two (the check is not vacuous) 2ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > fda: m1/us/us-regional.xml points its DTD at util/dtd/us-regional-v3-3.dtd 52ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > ema: m1/eu/eu-regional.xml points its DTD at util/dtd/eu-regional.dtd 28ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > pmda: m1/jp/jp-regional.xml points its DTD at util/dtd/jp-regional.dtd 30ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > ca: m1/ca/ca-regional.xml points its DTD at util/dtd/ca-regional.dtd 37ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > the ICH index.xml at the root references util/dtd/ directly 23ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > stylesheet references resolve to the bundled util/style/ folder > fda: m1/us/us-regional.xml points its stylesheet at util/style/us-regional.xsl 19ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > stylesheet references resolve to the bundled util/style/ folder > the ICH index.xml carries a stylesheet PI that resolves to util/style/ectd-2-0.xsl 20ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > stylesheet references resolve to the bundled util/style/ folder > bundles vendored *.xsl into util/style/ and checksums them into the MD5 index 22ms
+stdout | server/services/submission-gateways/__tests__/pre-transmit-check.test.ts
+{
+  "timestamp": "2026-09-23T08:19:38.758Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T08:19:38.759Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/submission-gateways/__tests__/pre-transmit-check.test.ts
+{
+  "timestamp": "2026-09-23T08:19:38.759Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/submission-gateways/__tests__/pre-transmit-check.test.ts
+[database] Database connection successful
+
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > always blocks a package over the gateway size limit 3ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > clears a small package with no flags set 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > blocks unconverted PDF/A only in production when ECTD_REQUIRE_PDFA is set 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > blocks a non-self-contained DTD package only when ECTD_REQUIRE_DTD is set in production 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > names the absent STYLESHEETS when the self-containment gap is stylesheet-only 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > never renders a non-self-contained package as a blocker that names nothing 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > treats a non-boolean selfContained as UNPROVEN, never as cleared 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > treats a non-array missing list as un-itemised, not as "nothing missing" 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > warns (does not block) when a required flag is set but the bundle has no evidence 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > HARD-blocks a bundle built for another region (backbone region ≠ transmit target), in every environment 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > region identity holds WITHOUT backbone evidence: an eSTAR built for FDA is refused by PMDA and EMA, and a descriptor-declared region is honoured 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > a bundle built for the target region passes the region-identity checks 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > a PDF/A grade with no fields is NOT evidence: under ECTD_REQUIRE_PDFA in production it warns "cannot prove", never passes 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > folds the external gate when enforceExternal is on (route layer) 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > guarded transmit > refuses to transmit an over-limit package (before hitting the gateway) 2ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > guarded transmit > still refuses without authorization (auth gate precedes the package gate) 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > packager → pre-transmit: the stylesheet gap survives the bundle > carries the absent stylesheets from the packager into the transmit blocker 112ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > packager → pre-transmit: the stylesheet gap survives the bundle > POSITIVE CONTROL: a complete drop-point clears the same gate 79ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > emits new/replace/delete with modified-file, and omits the deleted leaf from the ZIP 61ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > every modified-file RESOLVES to a file the prior sequence actually shipped — Module 1 included 55ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > exposes a per-sequence leafManifest that round-trips into prior leaves for lifecycle diffing 11ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > hashes the shipped bytes for the manifest, ignoring a wrong caller-supplied leaf.md5 8ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > writes the ICH-required root index-md5.txt = MD5(index.xml) on the canonical packager 18ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > packages a bytes-less delete (empty sourcePath) without crashing and ships no file for it 10ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > package layout — Module 1 leaves reach the regional backbone > ships an m1.1 leaf under m1/us and a precise 3.2.S.4.2 leaf at full depth 19ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > an original IND sequence is an Original Application, sub-type original 2ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > a sequence with no type recorded is treated as an original 0ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > an amendment / response sequence is an Original Application, sub-type amendment 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > a withdrawal sequence is refused, never coded as an Original Application 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > an annual sequence is an Annual Report 0ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > a sequence carrying a safety-report leaf is an IND Safety Report, whatever its type says 0ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > every derived value resolves to the us-regional code the FDA vocabulary defines 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > buildPackagerInputFromCore — the fda admin block > carries the application type and the sequence-derived submission type for an FDA sequence 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > buildPackagerInputFromCore — the fda admin block > codes an annual sequence as an annual report 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > buildPackagerInputFromCore — the fda admin block > adds no fda block for a non-FDA sequence 0ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > us-regional.xml — the emitted submission-type follows the sequence > without the fda block an original IND is no longer coded as an IND safety report 43ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > us-regional.xml — the emitted submission-type follows the sequence > an original IND sequence is emitted as fdaat4 / fdast1 / fdasst1 19ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > us-regional.xml — the emitted submission-type follows the sequence > an amendment is emitted as fdast1 with sub-type fdasst4; an annual report as fdast5 49ms
+ ✓ server/services/submission-gateways/__tests__/cross-reference-packaging.test.ts > cross-reference enforcement in packageEctdSubmission > resolves a valid reference and reports it on the bundle 50ms
+ ✓ server/services/submission-gateways/__tests__/cross-reference-packaging.test.ts > cross-reference enforcement in packageEctdSubmission > flags a dangling reference (TARGET_NOT_FOUND) but does not block by default 32ms
+ ✓ server/services/submission-gateways/__tests__/cross-reference-packaging.test.ts > cross-reference enforcement in packageEctdSubmission > flags a reference to a withdrawn (delete) target as TARGET_DELETED 24ms
+ ✓ server/services/submission-gateways/__tests__/cross-reference-packaging.test.ts > cross-reference enforcement in packageEctdSubmission > blocks a production build with a broken reference when ECTD_REQUIRE_XREF=true 23ms
+ ✓ server/services/submission-gateways/__tests__/cross-reference-packaging.test.ts > cross-reference enforcement in packageEctdSubmission > is a no-op when no cross-references are declared 31ms
+ ✓ server/services/submission-gateways/__tests__/stf-packaging.test.ts > helpers > slugifies study ids to folder-safe names 3ms
+ ✓ server/services/submission-gateways/__tests__/stf-packaging.test.ts > helpers > computes the common directory of package paths 1ms
+ ✓ server/services/submission-gateways/__tests__/stf-packaging.test.ts > STF cross-linking in packageEctdSubmission > generates a per-study stf.xml in each study folder, cross-linked to that study's leaves 104ms
+ ✓ server/services/submission-gateways/__tests__/stf-packaging.test.ts > STF cross-linking in packageEctdSubmission > is a no-op when there are no study leaves (bundle.stf undefined) 31ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > refuses a delete that carries a sourcePath, naming the leaf (the AnA tool mapping) 15ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > refuses a delete in a follow-up sequence that names no modified-file 4ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > packages a backbone-only delete with a modified-file: no file, no checksum line, href at the filed copy 55ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > refuses any delete in sequence 0000, where nothing is on file to withdraw 5ms
+stderr | tests/routes/ectd-backbone-leaf-honesty.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-backbone-leaf-honesty.test.ts
+{
+  "timestamp": "2026-09-23T08:19:42.334Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-backbone-leaf-honesty.test.ts > the backbone makes no claim about files it did not write > emits no leaf-file checksum at all
+[eCTD Compile] Project 42: failed | 0/5 modules complete | 18 errors, 1 warnings
+
+stdout | tests/routes/ectd-backbone-leaf-honesty.test.ts > the backbone makes no claim about files it did not write > declares no leaf path, because no leaf file is rendered
+[eCTD Compile] Project 42: failed | 0/5 modules complete | 18 errors, 1 warnings
+
+stdout | tests/routes/ectd-backbone-leaf-honesty.test.ts > the backbone makes no claim about files it did not write > marks the envelope as a draft backbone, not a sequence
+[eCTD Compile] Project 42: failed | 0/5 modules complete | 18 errors, 1 warnings
+
+stdout | tests/routes/ectd-backbone-leaf-honesty.test.ts > the backbone makes no claim about files it did not write > counts sections with content, never files on disk
+[eCTD Compile] Project 42: failed | 0/5 modules complete | 18 errors, 1 warnings
+
+stdout | tests/routes/ectd-backbone-leaf-honesty.test.ts > the content hash it does publish is real > is the sha256 of the exact stored content
+[eCTD Compile] Project 42: failed | 0/5 modules complete | 18 errors, 1 warnings
+
+stdout | tests/routes/ectd-backbone-leaf-honesty.test.ts > the content hash it does publish is real > changes when the content changes
+[eCTD Compile] Project 42: failed | 0/5 modules complete | 18 errors, 1 warnings
+
+stdout | tests/routes/ectd-backbone-leaf-honesty.test.ts > the content hash it does publish is real > changes when the content changes
+[eCTD Compile] Project 42: failed | 0/5 modules complete | 18 errors, 1 warnings
+
+stdout | tests/routes/ectd-backbone-leaf-honesty.test.ts > the content hash it does publish is real > publishes nothing rather than a hash of nothing
+[eCTD Compile] Project 42: failed | 0/5 modules complete | 19 errors, 1 warnings
+
+stdout | tests/routes/ectd-backbone-leaf-honesty.test.ts > submission readiness > is false while no leaf files exist, even with clean content
+[eCTD Compile] Project 42: completed | 5/5 modules complete | 0 errors, 0 warnings
+
+stdout | tests/routes/ectd-backbone-leaf-honesty.test.ts > submission readiness > says why, rather than leaving the user to infer it
+[eCTD Compile] Project 42: completed | 5/5 modules complete | 0 errors, 0 warnings
+
+stdout | tests/routes/ectd-backbone-leaf-honesty.test.ts > submission readiness > still reports the backbone compile as completed
+[eCTD Compile] Project 42: completed | 5/5 modules complete | 0 errors, 0 warnings
+
+stdout | tests/routes/ectd-backbone-leaf-honesty.test.ts > submission readiness > lists content errors alongside the packaging blocker
+[eCTD Compile] Project 42: failed | 0/5 modules complete | 18 errors, 2 warnings
+
+ ✓ tests/routes/ectd-backbone-leaf-honesty.test.ts > the backbone makes no claim about files it did not write > emits no leaf-file checksum at all 5ms
+ ✓ tests/routes/ectd-backbone-leaf-honesty.test.ts > the backbone makes no claim about files it did not write > declares no leaf path, because no leaf file is rendered 2ms
+ ✓ tests/routes/ectd-backbone-leaf-honesty.test.ts > the backbone makes no claim about files it did not write > marks the envelope as a draft backbone, not a sequence 1ms
+ ✓ tests/routes/ectd-backbone-leaf-honesty.test.ts > the backbone makes no claim about files it did not write > counts sections with content, never files on disk 1ms
+ ✓ tests/routes/ectd-backbone-leaf-honesty.test.ts > the content hash it does publish is real > is the sha256 of the exact stored content 1ms
+ ✓ tests/routes/ectd-backbone-leaf-honesty.test.ts > the content hash it does publish is real > changes when the content changes 3ms
+ ✓ tests/routes/ectd-backbone-leaf-honesty.test.ts > the content hash it does publish is real > publishes nothing rather than a hash of nothing 1ms
+ ✓ tests/routes/ectd-backbone-leaf-honesty.test.ts > submission readiness > is false while no leaf files exist, even with clean content 1ms
+ ✓ tests/routes/ectd-backbone-leaf-honesty.test.ts > submission readiness > says why, rather than leaving the user to infer it 2ms
+ ✓ tests/routes/ectd-backbone-leaf-honesty.test.ts > submission readiness > still reports the backbone compile as completed 1ms
+ ✓ tests/routes/ectd-backbone-leaf-honesty.test.ts > submission readiness > lists content errors alongside the packaging blocker 1ms
+ ✓ tests/routes/ectd-backbone-leaf-honesty.test.ts > submission readiness > applies the same rule to the readiness endpoint 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > readFiledSequences > reads a well-formed history oldest-first 11ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > readFiledSequences > DROPS an entry it cannot fully read, rather than reconstructing a partial prior state 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > readFiledSequences > is empty for a package that has filed nothing, or whose metadata is unreadable 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > foldFiledState > is the fold of every sequence, not the last one: a later filing supersedes, an untouched leaf survives, and each carries the sequence that HOLDS it 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > foldFiledState > a withdrawn leaf drops out — it is no longer on file 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > foldFiledState > folds in sequence order however the history is ordered 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > 0000 is an original: every leaf is new, and no prior state is consulted 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a follow-up REPLACES what changed, keeps what is new as new, and OMITS what is byte-identical 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a leaf on file but absent from this assembly stays on file — absence is not withdrawal 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a follow-up when nothing has been transmitted: an assembled-but-unsent 0000 is not on file 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a sequence number already transmitted, for 0000 and for a follow-up alike 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a follow-up that does not say what it is filing — only 0000 is an original by definition 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a term the region has no code for, and says which terms it does — an unfilable type is not a 500 out of the packager 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > checks the vocabulary on 0000 too — a term the backbone cannot carry is unfilable whatever it diffs to 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > accepts what the region accepts, and names its terms when it asks for one 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a region with no vocabulary takes the operator at their word — the list is not invented 0ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a gap and a backfill alike — the only ordering this knows is the sequence number 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a sequence in which nothing changed — a filing that files nothing consumes a sequence number to say nothing 1ms
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > diffs against the FOLD, not the last sequence: a leaf untouched since 0000 is still compared to 0000 0ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > folds EVERY preceding sequence, not just the most recent 11ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > a later filing of the same leaf supersedes the earlier one 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > a withdrawn leaf drops out of the effective state 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > each surviving leaf remembers the sequence that actually holds it 0ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > reports the most recent prior sequence number 0ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > does NOT read only a single prior compilation 0ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > lifecycle diff over the folded prior state > supersedes a leaf last filed two sequences back as REPLACE pointing at that sequence 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > lifecycle diff over the folded prior state > still emits new for a genuinely first-time leaf 0ms
+ ✓ server/services/submission-gateways/__tests__/ectd-package-file-names.test.ts > validateEctdPackage — file names > reports a leaf name over 64 characters as an error 12ms
+ ✓ server/services/submission-gateways/__tests__/ectd-package-file-names.test.ts > validateEctdPackage — file names > reports an uppercase or underscore name as an error 8ms
+ ✓ server/services/submission-gateways/__tests__/ectd-package-file-names.test.ts > validateEctdPackage — file names > raises no file-name error for a conformant name 2ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > reports zero errors for a clean, resolvable sequence 4ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags an empty sequence as an error 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > treats a sequence of only deletes as empty (error) 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags a non-delete leaf with no document as UNRESOLVED_DOCUMENT 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > does NOT flag a delete leaf with no document 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags an invalid lifecycle operation 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > reports missing required sections as non-blocking warnings (not errors) 1ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > matches required sections across module-prefix/format differences 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > a true sub-section satisfies a required parent section 1ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > a numerically-adjacent section does NOT satisfy a required section 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > emits an info for duplicate "new" leaves in one section without erroring 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > warnings and infos never inflate the authoritative error count 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags replace/append/delete in an ORIGINAL sequence as errors 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > allows new leaves in an original sequence (no lifecycle error) 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > does NOT apply the original-sequence rule to amendments 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > says a follow-up's declared acts were not bound here, rather than reading clean (2026-09-22 W5/D7) 2ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > accepts a valid 4-digit sequence number 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags a malformed sequence number as an error 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > flags a leaf whose document_table no resolver can materialize 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > does NOT flag the tables the assembler can resolve 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > has no external table today, and the vault leaf it used to flag now reads clear 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > flags an invented document_table on a DELETE leaf — the completeness exemption is not a pointer exemption 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > still exempts a delete leaf that carries NO pointer — that is the legitimate shape 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > does not double-report a delete leaf that points at a table the assembler CAN resolve 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > a uuid-keyed vault leaf (documentId null) is a complete pointer — no UNRESOLVED_DOCUMENT 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > an integer-keyed leaf still resolves 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > a vault leaf carrying only an integer names nothing — UNRESOLVED_DOCUMENT 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > an integer-keyed table carrying only a uuid names nothing — UNRESOLVED_DOCUMENT 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > hasCompleteDocumentPointer: uuid for the vault, integer elsewhere, either for an unknown table 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a resolved leaf whose pin matches carries no error 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > an unpinned leaf says its content was not verified, rather than reading like a match (2026-09-22 W5/D7) 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a pinned hash that differs from the stored document is DOCUMENT_CONTENT_MISMATCH — its own code, never silently passed 1ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a document the resolver could not find stays UNRESOLVED_DOCUMENT, naming the pointer 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a missing document on a DELETE leaf is not a completeness error (a delete ships no file) 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses when no environment is named — it never defaults to production 4ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses an environment outside staging|production 1ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses when no application number is recorded 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses an UNASSIGNED placeholder application number 1ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses a whitespace-only application number 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > resendRefusal — a transmitted sequence is not sent again > refuses sent and acknowledged, allows pending and rejected 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — in-flight is not re-sendable > refuses a resend while a transmit is in flight 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — in-flight is not re-sendable > still allows the states that were always re-sendable 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — in-flight is not re-sendable > still refuses the terminal states 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > claims the slot with a compare-and-set on the value it read 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > takes the claim BEFORE the package is assembled 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > resolves the attempt with a write predicated on that claim 0ms
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > never releases the claim after the bytes may have left 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > toPackagerRegion > maps core regions to publisher regions 2ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > toPackagerRegion > throws on an unsupported region 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > mapCoreLeafToEctdLeaf > maps fields and prefers the resolved md5 over the leaf checksum 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > mapCoreLeafToEctdLeaf > never adopts the DB leaf.checksum as the manifest md5 — leaves it undefined for byte-hashing downstream 0ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > mapCoreLeafToEctdLeaf > refuses an unrecognised lifecycle op instead of filing it as new 0ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > mapCoreLeafToEctdLeaf > reads a differently-cased operation as itself 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > buildPackagerInputFromCore > builds a PackagerInput from core rows, mapping region and metadata 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > buildPackagerInputFromCore > skips leaves whose document does not resolve to a file, and reports them 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > buildPackagerInputFromCore > handles an empty product name 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafIdSlug > drops the extension, lowercases, and dashes non-alphanumerics 6ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafIdSlug > falls back to "file" for an empty slug 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > createLeafIdAssigner > gives leaves in the SAME section distinct IDs (the duplicate-ID bug) 2ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > createLeafIdAssigner > dedupes a true collision with a deterministic numeric suffix 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > createLeafIdAssigner > always produces a valid XML ID token 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > buildMd5Index > sorts by codepoint, not locale (stable across environments) 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > buildMd5Index > emits "md5  relPath" lines 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > files an m-prefixed Module 1 leaf under the regional folder, not "mm/" 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > spells a Module 1 leaf the same way whichever form the caller stored 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > keeps a precise Module 3 section precise — 3.2.S.4.2 is not 3.2.S 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > gives one CTD section one folder, whatever case it was typed in 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > a Module 2-5 leaf resolves against the root backbone, not a regional one 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > keeps the per-study subfolder for a study report 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > follows the region for Module 1 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > isModule1Section — which backbone a leaf is written into > recognises the m-prefixed form every Module 1 filing path writes 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > isModule1Section — which backbone a leaf is written into > recognises the bare form too 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > isModule1Section — which backbone a leaf is written into > is false for Modules 2-5, so they are not swept into the regional backbone 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > isModule1Section — which backbone a leaf is written into > an unparseable section belongs to no module — leafPackagePath refuses it by name 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > marks a leaf absent from prior as new 3ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > marks a changed leaf (different checksum) as replace by default 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > honors appendOnChange to emit append instead of replace 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > omits an unchanged leaf (same checksum) by default 2ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > surfaces unchanged as a no-op append when includeUnchanged is set 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > a prior leaf the new sequence does not mention is unchanged, NOT withdrawn 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > a DECLARED withdrawal is a delete carrying the prior leaf's identity and checksum 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > refuses to withdraw a leaf that was never filed 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > uses an explicit leafKey identity over ctdSection/fileName (rename within same leaf) 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > handles a mixed sequence: new + replace + delete + unchanged together 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > throws on ambiguous duplicate identity in the desired set 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > a new leaf carries NO modified-file 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > a replace points modified-file at the prior published href, prefixed to the prior sequence 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > an append also carries modified-file at the leaf it extends 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > a delete points modified-file at the withdrawn prior leaf 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > preserves a #leafId fragment and normalizes a leading slash on the prior href 1ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > with no prefix, emits the bare prior href (ungrouped / same-root lifecycle) 0ms
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > omits modified-file (rather than guessing) when the prior href is unknown 0ms
+stdout | server/services/ana/__tests__/gateway-region-enum-parity.test.ts
+{
+  "timestamp": "2026-09-23T08:19:46.696Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T08:19:46.698Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/gateway-region-enum-parity.test.ts
+{
+  "timestamp": "2026-09-23T08:19:46.698Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/gateway-region-enum-parity.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/gateway-region-enum-parity.test.ts > advertised tool enums match the region/gateway constants > package_ectd_for_region advertises all twelve regions 2ms
+ ✓ server/services/ana/__tests__/gateway-region-enum-parity.test.ts > advertised tool enums match the region/gateway constants > transmit_submission advertises all twelve regions 1ms
+ ✓ server/services/ana/__tests__/gateway-region-enum-parity.test.ts > advertised tool enums match the region/gateway constants > transmit_submission advertises all thirteen gateways 0ms
+ ✓ server/services/ana/__tests__/gateway-region-enum-parity.test.ts > the constants match the gateway registry > binds at least one gateway for every advertised region 0ms
+ ✓ server/services/ana/__tests__/gateway-region-enum-parity.test.ts > the constants match the gateway registry > advertises every region the registry binds 0ms
+ ✓ server/services/ana/__tests__/gateway-region-enum-parity.test.ts > the constants match the gateway registry > advertises exactly the gateway names the registry binds 0ms
+ ✓ server/services/ana/__tests__/gateway-region-enum-parity.test.ts > tool descriptions name every jurisdiction > package_ectd_for_region names each region agency 1ms
+ ✓ server/services/ana/__tests__/gateway-region-enum-parity.test.ts > tool descriptions name every jurisdiction > transmit_submission names the eight jurisdictions its enum used to hide 0ms
+ ✓ server/services/ana/__tests__/gateway-region-enum-parity.test.ts > the handlers accept what the schema now advertises > package_ectd_for_region does not refuse a previously hidden region 2ms
+ ✓ server/services/ana/__tests__/gateway-region-enum-parity.test.ts > the handlers accept what the schema now advertises > package_ectd_for_region refuses an unknown region, listing all twelve 1ms
+ ✓ server/services/ana/__tests__/gateway-region-enum-parity.test.ts > the handlers accept what the schema now advertises > transmit_submission refuses an unknown gateway, listing all thirteen 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadPriorSequenceManifest > returns the prior sequence leaves as PriorLeaf[] 3ms
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadPriorSequenceManifest > ALWAYS scopes the query by organization_id (never cross-tenant) 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadPriorSequenceManifest > returns [] when no matching compilation exists (a first sequence has no prior) 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadPriorSequenceManifest > returns [] without touching the DB when an identifier is missing 2ms
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadPriorSequenceManifest > tolerates a NULL/garbage stored manifest without throwing 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > a sequence's own withdrawals > loadPriorSequenceManifest leaves a withdrawn leaf out 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > a sequence's own withdrawals > loadLatestPriorManifest leaves a withdrawn leaf out 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadLatestPriorManifest > finds the most recent sequence BEFORE the current one, org-scoped 3ms
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadLatestPriorManifest > returns an empty prior for a first sequence (no earlier compilation) 1ms
+ ✓ server/services/ectd/__tests__/cross-reference-resolver.test.ts > resolveCrossReferences > resolves a reference by CTD section code 3ms
+ ✓ server/services/ectd/__tests__/cross-reference-resolver.test.ts > resolveCrossReferences > resolves a reference by filename 1ms
+ ✓ server/services/ectd/__tests__/cross-reference-resolver.test.ts > resolveCrossReferences > resolves a reference by relative href tail 1ms
+ ✓ server/services/ectd/__tests__/cross-reference-resolver.test.ts > resolveCrossReferences > flags a missing target as TARGET_NOT_FOUND 0ms
+ ✓ server/services/ectd/__tests__/cross-reference-resolver.test.ts > resolveCrossReferences > flags a link to a deleted leaf as TARGET_DELETED 0ms
+ ✓ server/services/ectd/__tests__/cross-reference-resolver.test.ts > resolveCrossReferences > resolves by explicit leafKey identity 0ms
+ ✓ server/services/ectd/__tests__/cross-reference-resolver.test.ts > resolveCrossReferences > partitions a mixed batch into resolved + broken and echoes ref ids 0ms
+ ✓ server/services/ectd/__tests__/cross-reference-resolver.test.ts > resolveCrossReferences > treats an empty reference set as ok 0ms
+ ✓ server/services/ectd/__tests__/cross-reference-resolver.test.ts > resolveCrossReferences > does not let a href tail substring-match a shorter filename 1ms
+ ✓ server/services/ectd/__tests__/cross-reference-resolver.test.ts > resolveCrossReferences > flags a href whose tail only substring-matches as TARGET_NOT_FOUND 0ms
+ ✓ server/services/ectd/__tests__/prior-sequence-transmitted-only.test.ts > prior state counts only sequences that actually reached the agency > a compiled-but-never-transmitted sequence is not on file 3ms
+ ✓ server/services/ectd/__tests__/prior-sequence-transmitted-only.test.ts > prior state counts only sequences that actually reached the agency > and sequence 0002 therefore SHIPS the documents rather than calling them unchanged 2ms
+ ✓ server/services/ectd/__tests__/prior-sequence-transmitted-only.test.ts > prior state counts only sequences that actually reached the agency > an acknowledged sequence is on file just as a sent one is 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-transmitted-only.test.ts > prior state counts only sequences that actually reached the agency > a QUEUED sequence is not on file — pending is not sent 0ms
+ ✓ server/services/ectd/__tests__/prior-sequence-transmitted-only.test.ts > prior state counts only sequences that actually reached the agency > nothing transmitted yet means an empty prior state, not a fabricated one 0ms
+ ✓ server/services/ectd/__tests__/completeness.test.ts > eCTD submission-completeness gate > computeEctdCompleteness > reports a fully authored package as complete 3ms
+ ✓ server/services/ectd/__tests__/completeness.test.ts > eCTD submission-completeness gate > computeEctdCompleteness > treats draft/review (unfinalized) leaves as incomplete, distinct from placeholders 1ms
+ ✓ server/services/ectd/__tests__/completeness.test.ts > eCTD submission-completeness gate > computeEctdCompleteness > a package whose every leaf is a draft is NOT submission-complete (the reported hole) 1ms
+ ✓ server/services/ectd/__tests__/completeness.test.ts > eCTD submission-completeness gate > computeEctdCompleteness > clamps unfinalized to the leaves left after placeholders 1ms
+ ✓ server/services/ectd/__tests__/completeness.test.ts > eCTD submission-completeness gate > computeEctdCompleteness > reports a package with placeholder leaves as incomplete with a percentage 1ms
+ ✓ server/services/ectd/__tests__/completeness.test.ts > eCTD submission-completeness gate > computeEctdCompleteness > treats an empty dossier (no leaves) as incomplete, not vacuously complete 0ms
+ ✓ server/services/ectd/__tests__/completeness.test.ts > eCTD submission-completeness gate > computeEctdCompleteness > clamps a placeholder count that exceeds the leaf count 0ms
+ ✓ server/services/ectd/__tests__/completeness.test.ts > eCTD submission-completeness gate > assertEctdSubmissionComplete > passes silently for a complete package 2ms
+ ✓ server/services/ectd/__tests__/completeness.test.ts > eCTD submission-completeness gate > assertEctdSubmissionComplete > throws EctdCompletenessError carrying the report when placeholders remain 1ms
+ ✓ server/services/ectd/__tests__/completeness.test.ts > eCTD submission-completeness gate > assertEctdSubmissionComplete > throws when the only shortfall is draft/review (unfinalized) content 1ms
+ ✓ server/services/ectd/__tests__/completeness.test.ts > eCTD submission-completeness gate > assertEctdSubmissionComplete > throws with an "nothing to file" message for an empty dossier 1ms
+
+ Test Files  43 passed (43)
+      Tests  385 passed (385)
+   Start at  08:18:15
+   Duration  93.32s (transform 7.99s, setup 770ms, import 31.86s, tests 52.64s, environment 5ms)
+
+
+=== round-3 skeptic probes (verify-r3b/withdrawal) on the fixed tree ===
+[A] delete leaf: 
+[A] skipped: [{"sectionCode":"m3.2.s.2","reason":"withdrawal of 3-2-coauthor-documents-107.pdf: no filed leaf in m3.2.s.2 is this document (coauthor_documents:107) — it was never filed there, or has already been withdrawn; no other filed document is withdrawn in its place"}] | blockers: ["1 placed leaf/leaves could not be packaged (m3.2.s.2: withdrawal of 3-2-coauthor-documents-107.pdf: no filed leaf in m3.2.s.2 is this document (coauthor_documents:107) — it was never filed there, or has already been withdrawn; no other filed document is withdrawn in its place)"]
+[B] delete leaf: 
+[B] skipped: [{"sectionCode":"m3.2.s.2","reason":"withdrawal of 3-2-coauthor-documents-107.pdf: no filed leaf in m3.2.s.2 is this document (coauthor_documents:107) — it was never filed there, or has already been withdrawn; no other filed document is withdrawn in its place"}] | blockers: ["1 placed leaf/leaves could not be packaged (m3.2.s.2: withdrawal of 3-2-coauthor-documents-107.pdf: no filed leaf in m3.2.s.2 is this document (coauthor_documents:107) — it was never filed there, or has already been withdrawn; no other filed document is withdrawn in its place)"]
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/withdrawal/wrong-bind.probe.test.ts > named delete fallback > A: delete naming never-filed doc 107 must not withdraw doc 104 133ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/withdrawal/wrong-bind.probe.test.ts > named delete fallback > B: stale re-withdrawal of already-withdrawn doc 107 must not withdraw doc 104 61ms
+[database] Database connection successful
+[0000] result: {"error":"package_ectd_for_region failed: Leaf 'ghost.pdf' (section 3.2.S.2) is a delete in sequence 0000. A first sequence has nothing on file to withdraw, so there is no filed leaf this delete could name."}
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/withdrawal/seq0000-delete.probe.test.ts > AnA delete in 0000 with no modified_file 927ms
+      Tests  3 passed (3)
+
+=== round-2 probes (verify-r2c/withdrawal-bytes) on the fixed tree ===
+delete in backbone: true | pdf files shipped: ["m3/3-2-p-1/m3-2-p-1-coauthor-documents-301.pdf"]
+skipped: [] | unfinalized: 0 []
+transmit blockers: []
+delete leaf xml: <leaf operation="delete" modified-file="../0000/m3/3-2-p-8-1/m3-2-p-8-1-coauthor-documents-300.pdf" checksum="343a6c129f7f81311a89114907ff75a6" checksum-type="md5" xlink:href="../0000/m3/3-2-p-8-1/m3-2-p-8-1-coauthor-documents-300.pdf" xlink:type="simple" ID="leaf-m3-2-p-8-1-m3-2-p-8-1-coauthor-documents-300">
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r2c/withdrawal-bytes/delete-counts-unfinalized.probe.test.ts > withdrawal of a document now under revision > is refused as "not approved" although no bytes of it ship 224ms
+[database] Database connection successful
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r2c/withdrawal-bytes/packager-sink.probe.test.ts > delete leaf with a source_path, as package_ectd_for_region maps it 13ms
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r2c/withdrawal-bytes/assemble-fixed.probe.test.ts > fixed operator > withdrawal of a named document: zip entries + delete leaf
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r2c/withdrawal-bytes/assemble-fixed.probe.test.ts > fixed operator > withdrawal of a named document: zip entries + delete leaf
+[fixed] files: [ 'm1/us/1-2/1-2-coauthor-documents-105.pdf' ]
+[fixed] delete leaf: <leaf operation="delete" modified-file="../0000/m3/3-2-s-2/3-2-coauthor-documents-104.pdf" checksum="cccccccccccccccccccccccccccccccc" checksum-type="md5" xlink:href="../0000/m3/3-2-s-2/3-2-coauthor-documents-104.pdf" xlink:type="simple" ID="leaf-m3-2-s-2-3-2-coauthor-documents-104">
+[fixed] skipped: []
+[fixed] rename withdrawal: ok skipped=[]
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r2c/withdrawal-bytes/assemble-fixed.probe.test.ts > fixed operator > withdrawal of a named document: zip entries + delete leaf 156ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r2c/withdrawal-bytes/assemble-fixed.probe.test.ts > fixed operator > withdrawal of a document whose module_number changed since filing 79ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected +0 to be 1 // Object.is equality
+ValidationError: Leaf 'old-manufacture.pdf' (section 3.2.S.2) is a delete that carries a source file (/tmp/probe-del-KizQpM/old-manufacture.pdf). A withdrawal ships no content: it names the filed leaf it withdraws through modified-file and carries no bytes, so the package will not read, ship or checksum them. Remove the source path from the delete.
+    772|         throw new ValidationError(
+Serialized Error: { findings: [ { ruleId: 'LEAF-DELETE-CARRIES-BYTES', severity: 'error', filePath: 'old-manufacture.pdf' } ], errorClass: 'validation' }
+      Tests  2 failed | 2 passed (4)
+
+=== round-2 probe (verify-r2c/uuid-projection) ===
+    "materialized": 8,
+    "materialized": 11,
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r2c/uuid-projection/tf-ready.probe.test.ts > PROBE: technical-file ready > complete MDR program (all required slots) WITHOUT IV.* -> control 167ms
+    "materialized": 10,
+    "materialized": 7,
+stdout | ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r2c/uuid-projection/tf-ready.probe.test.ts > PROBE: technical-file ready > key mismatch: an integer-table leaf carrying a document_uuid is unresolved under a different key
+[KEY] unresolved= [{"documentTable":"coauthor_documents","documentId":8888,"documentUuid":"12345678-1234-4234-8234-123456789abc","reason":"coauthor_documents row not found in this organization"}] | unresolvedKeys= [ 'coauthor_documents:12345678-1234-4234-8234-123456789abc' ] | compile lookup key= coauthor_documents:12345678-1234-4234-8234-123456789abc | compile would call it materialized: false
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r2c/uuid-projection/tf-ready.probe.test.ts > PROBE: technical-file ready > complete MDR program WITH the outline-mandatory IV.1/IV.3/IV.5 authored 100ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r2c/uuid-projection/tf-ready.probe.test.ts > PROBE: technical-file ready > complete IVDR program with the outline-mandatory II.6.3.a stability section 50ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r2c/uuid-projection/tf-ready.probe.test.ts > PROBE: technical-file ready > sequence path: CER leaf unresolved -> delivered ZIP manifest.json still says ready 44ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r2c/uuid-projection/tf-ready.probe.test.ts > PROBE: technical-file ready > key mismatch: an integer-table leaf carrying a document_uuid is unresolved under a different key 3ms
+      Tests  5 passed (5)
+   Duration  5.46s (transform 947ms, setup 105ms, import 1.73s, tests 3.46s, environment 0ms)

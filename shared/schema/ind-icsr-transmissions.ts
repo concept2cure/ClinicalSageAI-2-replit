@@ -2,8 +2,8 @@
  * IND ICSR transmissions — durable, per-submission safety-message records.
  *
  * Persists each E2B(R3) ICSR transmission to a safety gateway (FDA FAERS / EMA
- * EudraVigilance) and tracks it through its lifecycle: prepared → transmitted →
- * acknowledged/rejected. The composed message, transmit-readiness, and the
+ * EudraVigilance) and tracks it through its lifecycle: prepared → transmitting
+ * → transmitted (or transmission_unconfirmed) → acknowledged/rejected. The composed message, transmit-readiness, and the
  * parsed acknowledgment (AA/AE/AR) are stored so an RA/PV team has an auditable
  * record of what was sent, when, and how the agency responded.
  *
@@ -44,7 +44,25 @@ export const indIcsrTransmissions = pgTable(
     senderId: text('sender_id').notNull(),
     receiverId: text('receiver_id').notNull(),
 
-    /** prepared | transmitted | acknowledged | rejected. */
+    /**
+     * prepared | transmitting | transmitted | transmission_unconfirmed |
+     * acknowledged | rejected.
+     *
+     * 'transmitting' (2026-09-23, W5/D7, MDN final pass, repair): claimed by
+     * one transmit, with a conditional UPDATE from 'prepared', before a byte is
+     * sent; a second transmit is refused. It returns to 'prepared' only when
+     * the attempt cannot have reached the agency. A row left 'transmitting' (a
+     * process that died mid-send, or a receipt that could not be recorded) is
+     * locked; no release path exists yet.
+     *
+     * 'transmission_unconfirmed' (2026-09-23, W5/D7, MDN final pass): the
+     * message was sent and the agency may hold it, but its receipt is not
+     * proven (a 2xx not tied to this message, a 5xx, or a failure after the
+     * whole message reached an authenticated gateway). The service refuses to
+     * transmit it again and accepts the agency ACK from it. TEXT with no CHECK
+     * constraint (migrations/20260615_ind_icsr_transmissions.sql), so neither
+     * new value needs a migration.
+     */
     status: text('status').notNull().default('prepared'),
     /** Whether the composed ICSR had no mandatory-element gaps at prepare time. */
     transmitReady: boolean('transmit_ready').notNull().default(false),
@@ -54,6 +72,9 @@ export const indIcsrTransmissions = pgTable(
      * Transport-layer receipt id the gateway returned. Written only from a real
      * (non-simulated) receipt, in the same update that sets status
      * 'transmitted'; null until then. Migration 20260902.
+     * On a 'transmission_unconfirmed' row it holds the AS2 / transport message
+     * id this platform SENT (there is no receipt) — what the agency files the
+     * message under, for confirming it there (2026-09-23, MDN final pass).
      */
     transportReceiptId: text('transport_receipt_id'),
     acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }),

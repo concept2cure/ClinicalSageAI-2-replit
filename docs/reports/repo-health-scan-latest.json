@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T10:48:07.872Z",
+  "generatedAt": "2026-09-23T11:21:55.637Z",
   "git": {
-    "sha": "6e644a20b13c8271d2876353b658b1db3e6be92e",
+    "sha": "34fe0a37529bad35a9d88fff8ef7507b023117e6",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,10 +12,10 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 208,
+    "duplicateBasenames": 207,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 43,
+    "largeFilesByBytes": 44,
     "largeFilesByLines": 105
   },
   "findings": {
@@ -1231,14 +1231,6 @@
         ]
       },
       {
-        "basename": "governed-action-signoff.test",
-        "count": 2,
-        "paths": [
-          "client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx",
-          "server/services/ana-ri/__tests__/governed-action-signoff.test.ts"
-        ]
-      },
-      {
         "basename": "grants",
         "count": 2,
         "paths": [
@@ -1979,7 +1971,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1054844
+        "bytes": 1056057
       },
       {
         "file": "shared/schema.ts",
@@ -1995,7 +1987,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 277720
+        "bytes": 279311
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2079,7 +2071,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 128728
+        "bytes": 130267
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
@@ -2148,12 +2140,16 @@
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
         "bytes": 105559
+      },
+      {
+        "file": "server/services/submission-service/submission-service.ts",
+        "bytes": 101987
       }
     ],
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 20419
+        "lines": 20439
       },
       {
         "file": "shared/schema.ts",
@@ -2165,7 +2161,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6382
+        "lines": 6405
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2249,7 +2245,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2828
+        "lines": 2844
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2326,6 +2322,10 @@
       {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
         "lines": 2155
+      },
+      {
+        "file": "server/services/submission-service/submission-service.ts",
+        "lines": 2150
       },
       {
         "file": "server/services/precedent-engine.ts",
@@ -2460,10 +2460,6 @@
         "lines": 1813
       },
       {
-        "file": "server/services/submission-service/submission-service.ts",
-        "lines": 1811
-      },
-      {
         "file": "server/routes/c2c/ai-editing.ts",
         "lines": 1809
       },
@@ -2577,8 +2573,8 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 406,
-      "largeByBytes": 33,
+      "duplicateGroups": 405,
+      "largeByBytes": 34,
       "largeByLines": 84
     },
     {
@@ -2595,7 +2591,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 56,
+      "duplicateGroups": 55,
       "largeByBytes": 5,
       "largeByLines": 13
     },

@@ -41,8 +41,14 @@ const REGULATED = [
 
 // Require an actual call/statement, not a bare word in a comment, so a comment
 // mentioning "auditService" near an unaudited delete cannot mask the gap.
+// 2026-09-23 (W5/D7, co-author final pass): recordCoauthorDocumentEvent
+// (server/services/coauthor/coauthor-audit.ts) is the one writer of a
+// coauthor_documents audit_events row; both coauthor DELETE handlers call it,
+// in the delete's transaction, instead of the inline INSERT this gate used to
+// see there. server/__tests__/security/coauthor-document-delete-audit.contract.test.ts
+// pins the row it writes (event type, reason, flags) for both.
 const AUDIT_RE =
-  /\b(writeMutation|logAuditEntry|recordGovernedAction|logAuditEvent|recordGovernedDecision|logRegulatedDeletion)\s*\(|\bauditService\.|INSERT\s+INTO\s+audit_events\b/i;
+  /\b(writeMutation|logAuditEntry|recordGovernedAction|logAuditEvent|recordGovernedDecision|logRegulatedDeletion|recordCoauthorDocumentEvent)\s*\(|\bauditService\.|INSERT\s+INTO\s+audit_events\b/i;
 
 // Operator-tracked unaudited regulated deletes (PRODUCT_QC_REVIEW Part 11).
 // Empty — every regulated-table delete is now positively audited. New entries

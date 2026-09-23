@@ -72,7 +72,8 @@ import {
   buildRiskReview, renderRiskReviewMarkdown, buildAttentionFeed,
 } from '../services/rbm/risk-report';
 import { loadRiskReviewInput } from '../services/rbm/risk-report-data';
-import { verifySignerCredentials, defaultSignoffDeps } from '../services/ana-ri/governed-action-signoff';
+import { reverifySigner } from '../services/part11/reverify-signer';
+import { signerReverificationDeps } from '../services/part11/reverify-signer-deps';
 
 const router = Router();
 const log = createScopedLogger('mdx-rbm');
@@ -938,7 +939,8 @@ router.get('/rbm-site-risk', async (req, res) => {
 
 // Approval is a 21 CFR Part 11 e-signature: the reason-for-change plus the
 // signer's re-authentication credentials (password, and TOTP when the signer
-// has MFA enabled), verified server-side via verifySignerCredentials.
+// has MFA enabled), verified server-side by the platform's one signing ceremony
+// (services/part11/reverify-signer.ts), which also keeps the account's lockout.
 const approveBody = z.object({
   reason: z.string().min(3).max(2000),
   password: z.string().min(1),
@@ -955,8 +957,8 @@ router.post('/rbm-assessments/:id/approve', async (req, res) => {
   if (!parsed.success) return clientError(res, 422, 'A reason for change is required', parsed.error.flatten().fieldErrors);
   const signerId = getUserId(req);
   if (signerId === null) return clientError(res, 401, 'An authenticated signer is required to approve');
-  const signoff = await verifySignerCredentials(defaultSignoffDeps, { userId: signerId, password: parsed.data.password, mfaToken: parsed.data.mfaToken });
-  if (!signoff.verified) return clientError(res, 401, signoff.error ?? 'Signer verification failed (21 CFR 11.200)', signoff.code ? { code: signoff.code } : undefined);
+  const signoff = await reverifySigner(signerId, { password: parsed.data.password, mfaToken: parsed.data.mfaToken }, signerReverificationDeps());
+  if (!signoff.ok) return clientError(res, signoff.status, signoff.error, { code: signoff.code });
   // 21 CFR Part 11 §11.10(g): identity is not authority. A fully re-authenticated
   // signer (password + MFA above) may still apply a signature only if their
   // organization role carries signing authority. The policy is the one every
@@ -1085,8 +1087,8 @@ router.post('/rbm-monitoring-plans/:id/approve', async (req, res) => {
   if (!parsed.success) return clientError(res, 422, 'A reason for change is required', parsed.error.flatten().fieldErrors);
   const signerId = getUserId(req);
   if (signerId === null) return clientError(res, 401, 'An authenticated signer is required to approve');
-  const signoff = await verifySignerCredentials(defaultSignoffDeps, { userId: signerId, password: parsed.data.password, mfaToken: parsed.data.mfaToken });
-  if (!signoff.verified) return clientError(res, 401, signoff.error ?? 'Signer verification failed (21 CFR 11.200)', signoff.code ? { code: signoff.code } : undefined);
+  const signoff = await reverifySigner(signerId, { password: parsed.data.password, mfaToken: parsed.data.mfaToken }, signerReverificationDeps());
+  if (!signoff.ok) return clientError(res, signoff.status, signoff.error, { code: signoff.code });
   // 21 CFR Part 11 §11.10(g): identity is not authority. A fully re-authenticated
   // signer (password + MFA above) may still apply a signature only if their
   // organization role carries signing authority. The policy is the one every

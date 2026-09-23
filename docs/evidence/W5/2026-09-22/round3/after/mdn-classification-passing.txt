@@ -1,0 +1,102 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport fail-closed > refuses to transmit a not-ready message (readiness gating) in any env 5ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport fail-closed > refuses a not-ready message even in production 1ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport fail-closed > throws in production with no gateway configured (never fakes an ACK) 1ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport fail-closed > audits a production refusal as not-configured 1ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport fail-closed > returns a deterministic simulated receipt outside production 1ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport fail-closed > does not use Date.now() for the asserted timestamp (injectable clock) 1ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport fail-closed > with a gateway configured, no longer refuses as not-implemented: the real call is attempted 5ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > puts the E2B message on the wire as a signed AS2 envelope and reports transmitted only on an accepting MDN 16ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > signs the body with the sponsor key (a real RSA-SHA256 signature, verifiable with the public key) 3ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > refuses — typed, audited — when the agency answers non-2xx 3ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > refuses a 2xx whose MDN rejects the message — a 200 is not an acceptance 2ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > an accepting MDN for a different message is receipt-unproven, not gateway-rejected 2ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > refuses an accepting MDN that names no message — it cannot be tied to what was sent (2026-09-22 W5/D7) 2ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > a 2xx with no MDN disposition at all is receipt-unproven, not gateway-rejected 2ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > surfaces a socket failure as a transport-stage refusal, audited 2ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > with an AS2 config missing its key or agency AS2 id, refuses BEFORE any network call and names the variables 1ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 MDN folding and an MDN that names no message > accepts an MDN whose Original-Message-ID is folded onto a continuation line 2ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 MDN folding and an MDN that names no message > accepts an MDN whose Disposition is folded after its action mode 2ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 MDN folding and an MDN that names no message > an accepting MDN that names no message is receipt-unproven, not gateway-rejected, and the audit keeps the MDN 5ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 MDN folding and an MDN that names no message > an accepting MDN with an empty Original-Message-ID is receipt-unproven, not gateway-rejected 2ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 MDN folding and an MDN that names no message > an accepting MDN with an empty msg-id "<>" is receipt-unproven, not gateway-rejected 2ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 MDN folding and an MDN that names no message > an accepting MDN with a whitespace-only folded Original-Message-ID is receipt-unproven, not gateway-rejected 2ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 MDN folding and an MDN that names no message > a receipt-unproven MDN says delivery is unconfirmed and forbids a blind resend, never "NOT transmitted" 2ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 MDN folding and an MDN that names no message > accepts an MDN whose msg-id carries a folded trailing comment 2ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 MDN folding and an MDN that names no message > an explicit failed disposition is gateway-rejected 3ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — HTTPS Basic upload > is selected when only a password is configured, sends Basic auth, and reports the gateway receipt id 1ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — HTTPS Basic upload > refuses a 2xx that carries no receipt identifier — delivery it cannot cite is not recorded 0ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — HTTPS Basic upload > refuses a non-2xx 0ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — HTTPS Basic upload > a password config with no username refuses before the wire and names the variable 0ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > resolveGatewayConfig > returns null when no URL is set 0ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > resolveGatewayConfig > returns null when a URL is set but no credentials 0ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > resolveGatewayConfig > returns config when URL + password are present 0ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > resolveGatewayConfig > returns config when URL + cert path are present 0ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > resolveGatewayConfig > carries the AS2 identity variables and an explicit protocol override 0ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > resolveGatewayConfig > ignores an unrecognised protocol value rather than guessing a third transport 0ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 2 — raw MDN persistence > persists the raw MDN body on the AS2 receipt UPDATE 8ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 2 — raw MDN persistence > downloadAcknowledgment returns the persisted raw MDN verbatim when present 9ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 2 — raw MDN persistence > falls back to a LABELLED platform record for pre-fix rows (mdn_raw=NULL) 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > checkStatus — says where the status came from > reports source=stored: FDA ESG re-reads its own row and does not ask the agency 0ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > SFTP path — the application number is required, never invented > refuses an over-1GB bundle with no application number before any transmittal row exists 2ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > SFTP path — the application number is required, never invented > refuses an UNASSIGNED placeholder application number 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > a failed disposition records the transmittal rejected, keeps the raw MDN, and throws 3ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > processed/error is a rejection; processed/warning is an acceptance 3ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > an accepting MDN with a folded Original-Message-ID is the receipt of the message sent 2ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > an accepting MDN with a folded Disposition is the receipt of the message sent 2ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > an accepting MDN whose msg-id carries a folded trailing comment is the receipt of the message sent 2ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > an accepting MDN that names no message stays inside the duplicate-send lock with its transmission id, and throws 4ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > an empty Original-Message-ID (trailing space only) is delivered-unconfirmed: in transit inside the lock, never rejected 2ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > an empty msg-id "<>" is delivered-unconfirmed: in transit inside the lock, never rejected 2ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > an Original-Message-ID folded onto a whitespace-only line is delivered-unconfirmed: in transit inside the lock, never rejected 2ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > an accepting MDN naming a different message is delivered-unconfirmed: in transit inside the lock, never rejected 2ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > a body with no disposition at all is delivered-unconfirmed: in transit inside the lock, never rejected 2ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > an empty 2xx body is delivered-unconfirmed: in transit inside the lock, never rejected 2ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 6 — rollbackTransmittal governed action > flips status to rolled_back AND records a transmittal_rollback governed action 2ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 6 — rollbackTransmittal governed action > refuses with RollbackNotPermittedError when the row has not shipped (pending) 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 6 — rollbackTransmittal governed action > refuses with RollbackNotPermittedError when the row is already rolled_back 0ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 7 — findActiveTransmittal lookup > returns the existing active row for (org, package_id, bundle_sha256) 0ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 7 — findActiveTransmittal lookup > returns null when no active row exists in THIS tenant (cross-tenant double-transmit allowed) 0ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 7 — findActiveTransmittal lookup > returns null when no packageId is supplied (lock surface only covers packaged transmits) 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > parseMdn — RFC 5322 folded fields are unfolded before they are read > reads an Original-Message-ID folded onto a CRLF continuation line 3ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > parseMdn — RFC 5322 folded fields are unfolded before they are read > reads an Original-Message-ID folded with a bare LF and a tab 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > parseMdn — RFC 5322 folded fields are unfolded before they are read > reads a Disposition folded after its action mode 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > parseMdn — RFC 5322 folded fields are unfolded before they are read > a folded processed/error modifier is a rejection 2ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > parseMdn — RFC 5322 folded fields are unfolded before they are read > does not join a following field that is not a continuation 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > Original-Message-ID that names no message — unconfirmed, never a rejection > a field whose value is only a trailing space names no message 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > Original-Message-ID that names no message — unconfirmed, never a rejection > a field folded onto a whitespace-only continuation names no message 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > Original-Message-ID that names no message — unconfirmed, never a rejection > an empty msg-id "<>" names no message 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > Original-Message-ID that names no message — unconfirmed, never a rejection > a field absent altogether names no message 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > Original-Message-ID that names no message — unconfirmed, never a rejection > a value carrying no angle-bracketed msg-id cannot be tied to the message sent 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > Original-Message-ID that names no message — unconfirmed, never a rejection > a value carrying two msg-ids cannot be tied to the message sent, even when one of them is ours 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > RFC 5322 comments (CFWS) do not change what an MDN says > accepts our msg-id followed by a comment folded onto a continuation line 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > RFC 5322 comments (CFWS) do not change what an MDN says > accepts our msg-id followed by a comment on the same line 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > RFC 5322 comments (CFWS) do not change what an MDN says > accepts our msg-id preceded by a comment that itself contains an angle-bracketed id 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > RFC 5322 comments (CFWS) do not change what an MDN says > a folded "(no failure)" comment after processed is not a failure modifier 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > RFC 5322 comments (CFWS) do not change what an MDN says > a nested comment mentioning error after processed is not an error modifier 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > RFC 5322 comments (CFWS) do not change what an MDN says > a /error modifier folded onto a continuation line after processed is a rejection 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > mdnRefusal — only an explicit non-accepting disposition is a rejection > a failed disposition is a rejection, even when it names no message 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > mdnRefusal — only an explicit non-accepting disposition is a rejection > processed/error is a rejection 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > mdnRefusal — only an explicit non-accepting disposition is a rejection > processed/failure is a rejection 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > mdnRefusal — only an explicit non-accepting disposition is a rejection > processed/warning is an acceptance even when its description text contains the word failure 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > mdnRefusal — only an explicit non-accepting disposition is a rejection > an accepting MDN for a different message is delivered-unconfirmed, not a rejection 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > mdnRefusal — only an explicit non-accepting disposition is a rejection > a 2xx body with no disposition is delivered-unconfirmed, not a rejection 5ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > mdnRefusal — only an explicit non-accepting disposition is a rejection > a disposition type that is neither processed nor failed is delivered-unconfirmed, not a rejection 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > mdnRefusal — only an explicit non-accepting disposition is a rejection > a notification carrying two conflicting Disposition fields is delivered-unconfirmed 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > fields are read only from the message/disposition-notification part > case L: a folded Original-Message-ID in a text/plain part does not override the notification part naming another message 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > fields are read only from the message/disposition-notification part > case K: an accepting Disposition in a text/plain part does not override a failed notification part 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > fields are read only from the message/disposition-notification part > in a multipart/report, the text/plain part naming our message does not override a notification naming another 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > fields are read only from the message/disposition-notification part > in a multipart/report, the notification part naming our message with processed is the receipt 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > fields are read only from the message/disposition-notification part > a multipart body with no notification part is never read from its text/plain part 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > fields are read only from the message/disposition-notification part > a single-part text/plain body is not read as a notification 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > fields are read only from the message/disposition-notification part > a bare notification with no MIME structure is read as the notification fields 0ms
+ ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts > fields are read only from the message/disposition-notification part > a notification part nested inside a multipart/signed wrapper is found 0ms
+
+ Test Files  3 passed (3)
+      Tests  92 passed (92)
+   Start at  05:58:17
+   Duration  1.68s (transform 506ms, setup 136ms, import 605ms, tests 201ms, environment 0ms)
+

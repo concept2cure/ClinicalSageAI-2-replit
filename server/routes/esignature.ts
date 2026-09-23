@@ -33,6 +33,7 @@ import { buildVersionBindingDigest } from '../services/part11/version-binding.js
 import { isSigningAuthorized } from '../services/part11/signing-authority';
 import { reverifySigner, verifySignerPassword } from '../services/part11/reverify-signer.js';
 import { signerReverificationDeps } from '../services/part11/reverify-signer-deps.js';
+import { ACCOUNT_INACTIVE_MESSAGE } from '../services/account-standing.js';
 import {
   persistElectronicSignature,
   BINDING_BASIS,
@@ -99,6 +100,10 @@ router.post('/verify-password', signerCheckLimiter('password'), async (req: Requ
         message: 'This account is locked after repeated failed attempts. Try again later.',
       });
     }
+    // Suspended or deprovisioned (F-28): refused before its password is compared.
+    if (first.code === 'ACCOUNT_INACTIVE') {
+      return res.status(403).json({ valid: false, error: 'ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE });
+    }
     return res.json({ valid: false });
   }
   const valid = true;
@@ -133,6 +138,10 @@ router.post('/verify-mfa', signerCheckLimiter('mfa'), async (req: Request, res: 
     // The account's allowance, as the signing path keeps it (F-27): a locked
     // account's code is not checked, and a wrong code counts.
     const allowance = signerReverificationDeps();
+    // An account out of use has no code to check (F-28), as at signing.
+    if (!(await allowance.isAccountActive(userId))) {
+      return res.status(403).json({ valid: false, error: 'ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE });
+    }
     if (await allowance.isAccountLocked(userId)) {
       return res.status(423).json({
         valid: false,
