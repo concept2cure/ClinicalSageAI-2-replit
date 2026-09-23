@@ -135,11 +135,11 @@ resource "aws_ecs_task_definition" "api" {
       protocol      = "tcp"
     }]
 
-    environment = [
+    environment = concat([
       { name = "NODE_ENV", value = "production" },
       { name = "PORT", value = tostring(var.api_container_port) },
       { name = "TRUST_PROXY_HOPS", value = tostring(var.trust_proxy_hops) },
-    ]
+    ], var.api_environment)
 
     secrets = [for s in var.api_secrets : {
       name      = s.name
@@ -183,9 +183,9 @@ resource "aws_ecs_task_definition" "worker" {
     image     = var.worker_image
     essential = true
 
-    environment = [
+    environment = concat([
       { name = "NODE_ENV", value = "production" },
-    ]
+    ], var.worker_environment)
 
     secrets = [for s in var.worker_secrets : {
       name      = s.name

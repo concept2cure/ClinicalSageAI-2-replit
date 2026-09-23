@@ -105,6 +105,24 @@ variable "api_secrets" {
   default     = []
 }
 
+variable "api_environment" {
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  default     = []
+  description = "Plain (non-secret) environment variables for the API container, after the module's own."
+}
+
+variable "worker_environment" {
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  default     = []
+  description = "Plain (non-secret) environment variables for the worker container, after NODE_ENV."
+}
+
 variable "worker_secrets" {
   type = list(object({
     name       = string

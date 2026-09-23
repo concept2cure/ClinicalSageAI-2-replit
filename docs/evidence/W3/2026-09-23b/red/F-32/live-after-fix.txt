@@ -1,0 +1,14 @@
+Live, after the fix: a server started at 2dd78265d in the same posture, the same probes.
+Each open endpoint now reaches its own handler. The webhook answers 500 "Webhook not
+configured" because this server has no Stripe webhook secret: the handler ran, and with a
+secret it verifies the signature. The drafting route is refused by the public API's own
+X-API-Key check before it; the other two controls by the global /api gate.
+
+POST /api/billing/webhooks/stripe -> 500 {"error":"Webhook not configured"}
+GET /api/billing/dtc-pricing -> 200 {"tiers":[{"name":"Researcher","tier":"free","priceMonthly":0,"annualDiscountPct":0,"maxUsers":1,"maxProjects":2,"maxStorageGB":1,"deepResearchCredits
+GET /api/v1/health -> 200 {"status":"healthy","service":"ClinicalSageAI Public API","version":"v1","timestamp":"2026-09-23T16:05:57.467Z","endpoints":7}
+GET /api/cortex/health -> 200 {"status":"healthy","timestamp":"2026-09-23T16:05:57.479Z","service":"cortex-unified-api","version":"2.0.0","modules":["advisory","management","query"
+# controls
+GET /api/510k/1/documents -> 401 {"error":"Bearer token required"}
+POST /api/v1/drafting/start_task -> 401 {"error":"API key required","message":"Provide your API key in the X-API-Key header","docs":"/api/v1/docs"}
+GET /api/c2c/projects -> 401 {"error":"Bearer token required"}

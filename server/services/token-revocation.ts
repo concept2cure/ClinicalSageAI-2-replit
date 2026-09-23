@@ -19,6 +19,11 @@
 import { createHash } from 'crypto';
 import { createScopedLogger } from '../utils/logger';
 import { runWithPreAuthScope } from '../db/tenantStore';
+import {
+  ACCOUNT_INACTIVE_MESSAGE,
+  accountIdOfClaims,
+  isAccountActiveBeforeTenant,
+} from './account-standing';
 import { verifyJwtWithRotation, type JwtVerifyOptions } from '../utils/jwtVerify';
 
 const log = createScopedLogger('token-revocation');
@@ -176,11 +181,18 @@ export async function isTokenRevoked(token: string): Promise<boolean> {
   return memoryBlacklist.has(hash);
 }
 
-/** A signed, unexpired token that was revoked: the session was signed out. */
+/**
+ * A signed, unexpired token whose session is over: it was signed out, or its
+ * account was taken out of use (suspended or deprovisioned, VSR-001 F-29).
+ * One error for both, so every caller that already answers a signed-out
+ * session with 401 answers an account out of use the same way.
+ */
 export class SessionEndedError extends Error {
-  constructor() {
-    super('This session has ended. Sign in again.');
+  readonly reason: 'signed-out' | 'account-inactive';
+  constructor(reason: 'signed-out' | 'account-inactive' = 'signed-out') {
+    super(reason === 'account-inactive' ? ACCOUNT_INACTIVE_MESSAGE : 'This session has ended. Sign in again.');
     this.name = 'SessionEndedError';
+    this.reason = reason;
   }
 }
 
@@ -196,10 +208,20 @@ export class SessionEndedError extends Error {
  * Throws what verifyJwtWithRotation throws for a bad or expired token, and
  * SessionEndedError for a revoked one. Callers that already answer 401 for any
  * verification error need no other change.
+ *
+ * Also SessionEndedError('account-inactive') for a token whose account has been
+ * suspended or deprovisioned since it was issued (VSR-001 F-29): the session
+ * probe, the users routes, the enterprise routes and the collaboration server
+ * all verify here, and each kept serving such an account until the token
+ * expired. A standing that cannot be read throws, and the caller refuses.
  */
 export async function verifyLiveToken<T = unknown>(token: string, options?: JwtVerifyOptions): Promise<T> {
   const decoded = verifyJwtWithRotation<T>(token, options);
   if (await isTokenRevoked(token)) throw new SessionEndedError();
+  const accountId = accountIdOfClaims(decoded);
+  if (accountId !== null && !(await isAccountActiveBeforeTenant(accountId))) {
+    throw new SessionEndedError('account-inactive');
+  }
   return decoded;
 }
 

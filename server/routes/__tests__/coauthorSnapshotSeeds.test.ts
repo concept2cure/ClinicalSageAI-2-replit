@@ -173,14 +173,20 @@ async function expectRouterSeal(docId: string): Promise<void> {
 const place = (docId: string, moduleNumber: string) =>
   request(app).post('/api/coauthor/documents').send({ moduleNumber, sourceAuthoringDocId: docId });
 
+/** The authoring document a seed wrote, found by the title it gives it. */
+async function docByTitle(title: string): Promise<{ id: string; status: string }> {
+  return (
+    await h.pglite.query<{ id: string; status: string }>(
+      'SELECT id, status FROM authoring_documents WHERE title = $1',
+      [title],
+    )
+  ).rows[0];
+}
+
 describe('GA demo seeds produce documents "Place into filing" accepts', () => {
   it('112-ind-authoring-doc: the IND demo document is sealed and files as approved (201)', async () => {
     await seed112(client, ctx);
-    const doc = (
-      await h.pglite.query<{ id: string; status: string }>(
-        "SELECT id, status FROM authoring_documents WHERE title = 'Control of Drug Substance (CTD 3.2.S.4)'",
-      )
-    ).rows[0];
+    const doc = await docByTitle('Control of Drug Substance (CTD 3.2.S.4)');
     expect(doc, 'seed 112 did not run').toBeTruthy();
     expect(doc.status).toBe('APPROVED');
     await expectRouterSeal(doc.id);
@@ -212,11 +218,7 @@ describe('GA demo seeds produce documents "Place into filing" accepts', () => {
    * probe (verify-r4/coauthor/regression, Q2) runs the literal previous file.
    */
   it('112 on a database the previous seed populated (APPROVED, no seal): a re-run seals it and it files as approved', async () => {
-    const doc = (
-      await h.pglite.query<{ id: string }>(
-        "SELECT id FROM authoring_documents WHERE title = 'Control of Drug Substance (CTD 3.2.S.4)'",
-      )
-    ).rows[0];
+    const doc = await docByTitle('Control of Drug Substance (CTD 3.2.S.4)');
     await h.pglite.query('DELETE FROM frozen_documents WHERE document_id = $1', [doc.id]);
     const before = await place(doc.id, '3.2.S.4.2');
     expect(before.status).toBe(409);
@@ -240,11 +242,7 @@ describe('GA demo seeds produce documents "Place into filing" accepts', () => {
   });
 
   it('112 does not seal an unsealed APPROVED document whose sections are not the text it seeded', async () => {
-    const doc = (
-      await h.pglite.query<{ id: string }>(
-        "SELECT id FROM authoring_documents WHERE title = 'Control of Drug Substance (CTD 3.2.S.4)'",
-      )
-    ).rows[0];
+    const doc = await docByTitle('Control of Drug Substance (CTD 3.2.S.4)');
     const sec = (
       await h.pglite.query<{ id: string; content: string }>(
         "SELECT id, content FROM authoring_sections WHERE doc_id = $1 AND code = '3.2.S.4.2'",
@@ -271,11 +269,7 @@ describe('GA demo seeds produce documents "Place into filing" accepts', () => {
   });
 
   it('112 does not seal an unsealed document that is no longer APPROVED', async () => {
-    const doc = (
-      await h.pglite.query<{ id: string }>(
-        "SELECT id FROM authoring_documents WHERE title = 'Control of Drug Substance (CTD 3.2.S.4)'",
-      )
-    ).rows[0];
+    const doc = await docByTitle('Control of Drug Substance (CTD 3.2.S.4)');
     await h.pglite.query('DELETE FROM frozen_documents WHERE document_id = $1', [doc.id]);
     await h.pglite.query("UPDATE authoring_documents SET status = 'DRAFT' WHERE id = $1", [doc.id]);
     try {
@@ -294,11 +288,7 @@ describe('GA demo seeds produce documents "Place into filing" accepts', () => {
 
   it('99-doc-journey: the doc-journey document is sealed in the router format and files as approved (201)', async () => {
     await seed99(client, ctx);
-    const doc = (
-      await h.pglite.query<{ id: string; status: string }>(
-        "SELECT id, status FROM authoring_documents WHERE title = 'Clinical Overview (CTD Module 2.5)'",
-      )
-    ).rows[0];
+    const doc = await docByTitle('Clinical Overview (CTD Module 2.5)');
     expect(doc, 'seed 99 did not run').toBeTruthy();
     expect(doc.status).toBe('APPROVED');
     await expectRouterSeal(doc.id);

@@ -468,12 +468,26 @@ export function createRedisRateLimiter(config: Partial<RateLimitConfig> = {}) {
   const rules = { ...DEFAULT_RULES, ...config.rules };
   const keyPrefix = config.keyPrefix || '';
   const perOrganization = config.perOrganization ?? true;
+  /*
+   * One request is one request to this limiter (VSR-001 F-33). A limiter a
+   * router applies with router.use runs for every request that enters that
+   * router, and register-concept2cure-routes.ts stacks fifteen routers that
+   * share one limiter at /api/concept2cure: a request answered by the
+   * fifteenth was counted fifteen times against the same key, so the
+   * 600-a-minute bucket allowed forty. The mark is this instance's own, so
+   * two limiters remain two policies.
+   */
+  const counted = Symbol('rate-limit-counted');
 
   return async function redisRateLimiterMiddleware(
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
+    const marks = req as unknown as Record<symbol, true | undefined>;
+    if (marks[counted]) return next();
+    marks[counted] = true;
+
     // In development, never throttle interactive auth entry points.
     // This prevents local/demo lockouts while keeping production controls intact.
     if (

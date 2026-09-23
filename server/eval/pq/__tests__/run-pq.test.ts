@@ -129,7 +129,9 @@ describe('run-pq live path', () => {
     const r = await runPq({ modelId: 'claude-opus-4', gateway: stub('claude-opus-5').gateway });
     expect(r.reasons.join(' ')).not.toMatch(/floor of/);
   });
+});
 
+describe('run-pq live path', () => {
   it('the extraction component runs, and every task goes to the pinned model', async () => {
     // It could not run at all before: no extraction task carried an input, so
     // there was nothing to give a model, and the protocol recorded the

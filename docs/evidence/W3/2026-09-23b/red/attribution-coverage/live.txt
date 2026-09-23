@@ -1,0 +1,8 @@
+Live, the run identity's session, one Authoring section saved by an earlier OQ-003 run
+(content 24 characters; one author_assertion span 0-24 in document_span_lineage).
+
+Before the fix: a server started at c16c3cb6d.
+GET /api/data-origins/document?documentTable=authoring_sections&documentId=2ec3e8e3-775c-4ef5-85a1-86104026b67d -> 400 {"error":{"code":"UNSUPPORTED_DOCUMENT_TABLE","message":"Attribution coverage is not available for \"authoring_sections\"."}}
+
+After the fix: a server started on the working tree committed with this file.
+GET /api/data-origins/document?documentTable=authoring_sections&documentId=2ec3e8e3-775c-4ef5-85a1-86104026b67d -> 200 {"success":true,"summary":{"documentTable":"authoring_sections","documentId":"2ec3e8e3-775c-4ef5-85a1-86104026b67d","contentLength":24,"attributedChars":24,"unattributedChars":0,"byKind":{"fromSources":0,"authorAsserted":24,"machineDrafted":0,"machineDraftedUnaccepted":0},"staleChars":0,"spans":[{"charStart":0,"charEnd":24,"provenanceKind":"author_assertion","usage":"asserted","sourceTitle":null,"stale":false}],"generatedAt":"2026-09-23T16:13:00.182Z"}}

@@ -11,7 +11,8 @@ import type { Request, Response, NextFunction } from 'express';
 import { verifyJwtWithRotation } from '../utils/jwtVerify';
 import { isTokenRevoked } from '../services/token-revocation';
 import { nonAccessTokenReason, requireAccessTokenReason } from './tokenType';
-import { enforceOrgMembership, invalidateOrgMembershipCache } from './orgMembership';
+import { enforceOrgMembership, invalidateOrgMembershipCache, parseFiniteInt } from './orgMembership';
+import { ACCOUNT_INACTIVE_MESSAGE, isAccountActiveBeforeTenant } from '../services/account-standing';
 import { establishRequestTenantScope } from './establishRequestTenantScope';
 import { enforceTenantLifecycle } from './tenantLifecycleGuard';
 import { enforceStorageQuota } from './storageQuotaGuard';
@@ -159,10 +160,23 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
     // signed-out token kept the full /api surface for the rest of its 24 hours.
     // Checked before a user is attached or membership is resolved. A lookup
     // that fails outright answers 503, never a pass.
-    isTokenRevoked(token).then(
-      (revoked) => {
+    //
+    // VSR-001 F-29: so is the account's standing. An account suspended by an
+    // administrator or deprovisioned by the identity provider opens nothing,
+    // whenever its token was issued; nothing read it before. A subject that is
+    // not an integer names no account row, and has no standing to read.
+    const accountId = parseFiniteInt(subject);
+    Promise.all([
+      isTokenRevoked(token),
+      accountId === null ? Promise.resolve(true) : isAccountActiveBeforeTenant(accountId),
+    ]).then(
+      ([revoked, active]) => {
         if (revoked) {
           res.status(401).json({ error: { code: 'SESSION_ENDED', message: 'This session has ended. Sign in again.' } });
+          return;
+        }
+        if (!active) {
+          res.status(401).json({ error: { code: 'ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE } });
           return;
         }
         admitLiveSession(req, res, next, decoded, subject);

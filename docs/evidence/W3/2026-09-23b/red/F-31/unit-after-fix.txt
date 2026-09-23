@@ -1,0 +1,38 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+stderr | server/routes/__tests__/admin-security.test.ts > GET /api/admin/security-health > returns 500 when the check runner throws
+{
+  "timestamp": "2026-09-23T15:41:14.694Z",
+  "level": "error",
+  "message": "[admin-security] Security-health endpoint threw",
+  "context": {
+    "err": "catastrophic"
+  }
+}
+
+ ✓ server/routes/__tests__/admin-security.test.ts > GET /api/admin/security-health > returns 200 with the report when overall is healthy 41ms
+ ✓ server/routes/__tests__/admin-security.test.ts > GET /api/admin/security-health > returns 200 (degraded ops still serve) when overall is degraded 5ms
+ ✓ server/routes/__tests__/admin-security.test.ts > GET /api/admin/security-health > returns 503 (page on this) when overall is failing 6ms
+ ✓ server/routes/__tests__/admin-security.test.ts > GET /api/admin/security-health > writes an audit event with the overall status (SOC visibility) 15ms
+ ✓ server/routes/__tests__/admin-security.test.ts > GET /api/admin/security-health > returns 500 when the check runner throws 9ms
+ ✓ server/routes/__tests__/admin-security.test.ts > GET /api/admin/security-health > serves the scheduler cache when fresh, skipping a full panel run 7ms
+ ✓ server/routes/__tests__/admin-security.test.ts > GET /api/admin/security-health > bypasses cache when ?fresh=1 is passed 6ms
+ ✓ server/routes/__tests__/admin-security.test.ts > GET /api/admin/security-health > re-runs the panel when the cache is stale 5ms
+ ✓ server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > finds the routers production mounts under /api/admin 3ms
+ ✓ server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > a request for /api/admin/scim-tenants reaches its own router, whatever the caller's organisation role 1890ms
+ ✓ server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > a request for /api/admin/audit reaches its own router, whatever the caller's organisation role 8ms
+ ✓ server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > a request for /api/admin/scim-ip-allowlist reaches its own router, whatever the caller's organisation role 8ms
+ ✓ server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > a request for /api/admin/master reaches its own router, whatever the caller's organisation role 6ms
+ ✓ server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > a request for /api/admin/business reaches its own router, whatever the caller's organisation role 5ms
+ ✓ server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > a request for /api/admin/access reaches its own router, whatever the caller's organisation role 5ms
+ ✓ server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > the security-health endpoint still refuses a caller who is not an organisation admin 3ms
+ ✓ server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > the security-health endpoint still refuses a request with no session 3ms
+ ✓ server/routes/__tests__/admin-prefix-gate.test.ts > /api/admin: the security-health gate is its own route's, not the prefix's > the security-health endpoint answers an organisation admin 3ms
+
+ Test Files  2 passed (2)
+      Tests  18 passed (18)
+   Start at  15:41:13
+   Duration  2.56s (transform 1.30s, setup 222ms, import 554ms, tests 2.04s, environment 0ms)
+
