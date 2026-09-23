@@ -406,7 +406,15 @@ export function createMiscInlineRoutes(pool: Pool, authMiddleware: any): Router 
   });
 
   // POST /api/v1/drafting/start_task — creates drafting task (DB-persisted)
-  router.post('/v1/drafting/start_task', async (req: Request, res: Response) => {
+  //
+  // Both /v1/drafting routes sit under /api/v1, which the global /api gate
+  // leaves to the public API's X-API-Key check (routes/public-api.ts runs it
+  // first). Neither handler filters by tenant, so each also requires a
+  // session, here. Until 2026-09-23 a session was required only because the
+  // Doc Orchestration gate covered every /api path; that gate now covers its
+  // own paths (VSR-001 F-32), and this keeps what these two accept unchanged
+  // (audit finding API-01).
+  router.post('/v1/drafting/start_task', authMiddleware as any, async (req: Request, res: Response) => {
     try {
       const { project_id, ectd_section, document_title, template } = req.body;
 
@@ -459,7 +467,7 @@ export function createMiscInlineRoutes(pool: Pool, authMiddleware: any): Router 
   });
 
   // GET /api/v1/drafting/task_status/:task_id — DB-backed with in-memory fallback
-  router.get('/v1/drafting/task_status/:task_id', async (req: Request, res: Response) => {
+  router.get('/v1/drafting/task_status/:task_id', authMiddleware as any, async (req: Request, res: Response) => {
     try {
       const task_id = String(req.params.task_id);
 
