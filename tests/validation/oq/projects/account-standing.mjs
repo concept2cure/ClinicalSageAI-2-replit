@@ -14,7 +14,7 @@ export const ACCOUNT_STANDING_TEXT = {
     'Credentialed. Sign in as the standing subject (OQ_STANDING_EMAIL: password and authenticator code) and GET /api/c2c/projects with that session. As the platform administrator (OQ_PLATFORM_ADMIN_EMAIL), PATCH /api/admin/master/users/:subjectId/status {status:"suspended", reason}. With the subject\'s session: GET /api/c2c/projects and GET /api/auth/session; then POST /api/auth/login as the subject. Read the ledger (GET /api/audit-trail/ledger?limit=50) with the run session before and after. Then PATCH {status:"active", reason} and read projects with the subject\'s session again',
   expected:
     'Projects 200 before; the suspension 200. Suspended: the subject\'s session reads projects 401 ACCOUNT_INACTIVE; the session check answers authenticated=false with AUTH_ACCOUNT_INACTIVE; the password step answers 403 AUTH_ACCOUNT_INACTIVE and issues no challenge; the newest ledger entry the step added for the subject reads "Sign-in refused: the account is not active (suspended or deprovisioned)", hash-chained. Restored: the same session reads projects 200. Without the two credentials the step is recorded "not executed — credential not supplied"',
-  note: 'Until VSR-001 F-28 and F-29 (2026-09-23) nothing read users.status except the release signature: a suspended or deprovisioned account signed in, signed, and kept every session it held. Taking an account out of use needs a platform administrator or the identity provider, so the step needs a platform administrator\'s credential; the account it suspends is one no other step uses, and it is restored in every outcome. A restored account\'s unexpired sessions work again: the check reads the standing, it does not revoke (VSR-001 §16). The platform administrator is a member, not an administrator, of its organisation, and the record names its role: Master Administration admits the platform role alone (VSR-001 F-31).',
+  note: 'Until VSR-001 F-28 and F-29 (2026-09-23) nothing read users.status except the release signature: a suspended or deprovisioned account signed in, signed, and kept every session it held. Taking an account out of use needs a platform administrator or the identity provider, so the step needs a platform administrator\'s credential; the account it suspends is one no other step uses, and it is restored in every outcome. A restored account\'s unexpired sessions work again: the check reads the standing, it does not revoke (VSR-001 §16). The platform administrator is a member, not an administrator, of its organisation, and the record says so: Master Administration admits the platform role alone (VSR-001 F-31).',
 };
 
 const REFUSAL = 'Sign-in refused: the account is not active (suspended or deprovisioned)';
@@ -46,8 +46,11 @@ function caller(baseUrl) {
 
 const codeOf = (json) => json?.code ?? json?.error?.code ?? null;
 
-/** The account's organisation role, as its session reports it. */
-const organisationRole = (session) => (session.user.roles ?? []).find((r) => r !== 'user') ?? 'user';
+/** Whether a session is an organisation admin's, with the roles it reports (the session reports a member as "user"). */
+function organisationStanding(session) {
+  const roles = session.user.roles ?? [];
+  return `${roles.includes('admin') ? 'an organisation admin' : 'not an organisation admin'}; session roles: ${roles.join(', ') || 'none'}`;
+}
 
 /** What the suspended account's session, and its password, are answered. No factor reaches a record. */
 async function whileSuspended({ call, baseUrl, subject, creds }) {
@@ -69,12 +72,12 @@ async function whileSuspended({ call, baseUrl, subject, creds }) {
  * may have suspended the account.
  */
 async function suspendObserveRestore(ctx) {
-  const { expect, setStatus, adminRole } = ctx;
+  const { expect, setStatus, adminStanding } = ctx;
   let findings = null;
   let failure = null;
   const suspended = await setStatus('suspended');
   try {
-    expect(suspended.status === 200, `the platform administrator (organisation role ${adminRole}) could not suspend the subject (${suspended.status})`, suspended.json);
+    expect(suspended.status === 200, `the platform administrator (${adminStanding}) could not suspend the subject (${suspended.status})`, suspended.json);
     findings = await whileSuspended(ctx);
   } catch (err) {
     failure = err;
@@ -127,13 +130,13 @@ export async function accountStandingStep({ api, expect, deviation, baseUrl }) {
   // Recorded, not required: a platform administrator who is not also an
   // organisation admin shows Master Administration admits the platform role
   // alone (VSR-001 F-31).
-  const adminRole = organisationRole(admin);
+  const adminStanding = organisationStanding(admin);
   const openBefore = (await call(subject.accessToken, 'GET', PROJECTS)).status;
   expect(openBefore === 200, `the subject's session could not read projects before the suspension (${openBefore})`);
 
   const setStatus = (to) =>
     call(admin.accessToken, 'PATCH', `/api/admin/master/users/${subjectId}/status`, { status: to, reason: `OQ-PROJ-18: account standing (${to})` });
-  const { suspended, read, probe, signIn } = await suspendObserveRestore({ expect, setStatus, adminRole, call, baseUrl, subject, creds });
+  const { suspended, read, probe, signIn } = await suspendObserveRestore({ expect, setStatus, adminStanding, call, baseUrl, subject, creds });
   expectRefused(expect, { read, probe, signIn });
   const entry = await expectRefusalOnLedger({ api, expect }, seen, subjectId);
 
@@ -141,7 +144,7 @@ export async function accountStandingStep({ api, expect, deviation, baseUrl }) {
   expect(reopened === 200, `the restored subject's session read projects ${reopened}`);
   return (
     `subject user:${subjectId} (${subject.method}): projects ${openBefore}; suspended by the platform administrator user:${admin.user.id} ` +
-    `(organisation role ${adminRole}), ${suspended.status}; its session read projects ${read.status} ${codeOf(read.json)}, session check ` +
+    `(${adminStanding}), ${suspended.status}; its session read projects ${read.status} ${codeOf(read.json)}, session check ` +
     `${probe.status} ${codeOf(probe.json)}, password step ${signIn.status} ${signIn.code}, no challenge; newest new ledger entry ` +
     `"${entry.event}", chained; restored, the same session read projects ${reopened}`
   );
