@@ -174,7 +174,14 @@ describe('POST /documents/:id/finalize is a real electronic signature', () => {
     ]);
     expect(verifyReauth).toHaveBeenCalledWith(11, REAUTH);
     expect(assertSignerIsNotAuthor).toHaveBeenCalledWith('protocol-document:5', 2, 11, { command: 'sign', meaning: 'authorship' });
-    const ledger = recordGovernedAction.mock.calls[0][1] as { payload: Record<string, unknown>; reason: string };
+    /* Through `unknown`: the mock's inferred call-argument type is narrower
+       than the real one, so a direct assertion is a TS2352 and turned tsc red
+       on the shared branch. The sibling assertion below already takes this
+       route for persistGovernedSignSignature. */
+    const ledger = recordGovernedAction.mock.calls[0][1] as unknown as {
+      payload: Record<string, unknown>;
+      reason: string;
+    };
     expect(ledger.payload.meaning).toBe('authorship');
     expect(ledger.reason).toBe(REASON);
     const sig = persistGovernedSignSignature.mock.calls[0] as unknown as [unknown, Record<string, unknown>];
