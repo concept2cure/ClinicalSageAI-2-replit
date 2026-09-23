@@ -203,3 +203,99 @@ describe('one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the fir
     }
   });
 });
+
+/*
+ * 2026-09-23 (W5/D7, round-2 skeptic): the declared format is a claim about a
+ * file whose name the agency reads. It narrowed the not-a-PDF check (a .pdf
+ * declared 'DOCX' with non-PDF bytes was only a warning) and widened
+ * acceptance (payload.exe declared 'PDF' was 'conformant'); and a type judged
+ * from the declaration alone, with no byte read, counted as assessed.
+ */
+describe('the file name decides the type; the declared format is checked against it', () => {
+  const usEstar = getMarketSpec('us-estar')!;
+  const zipBytes = Buffer.from('PK\x03\x04' + 'x'.repeat(200), 'latin1');
+  const typeFindings = (r: ReturnType<typeof validateLeavesAgainstMarketSpec>) =>
+    r.findings.filter((f) => f.rule === 'ACCEPTED_FILE_TYPES');
+
+  it('a .pdf whose bytes are not a PDF is an error whatever format is declared', async () => {
+    for (const fileFormat of ['DOCX', 'XPT', undefined]) {
+      const m = await measureLeafFile(
+        { fileName: 'report.pdf', filePath: 'attachments/report.pdf', ...(fileFormat ? { fileFormat } : {}), bytes: zipBytes },
+        'us',
+      );
+      const r = validateLeavesAgainstMarketSpec(usEstar, [m]);
+      expect(r.verdict, String(fileFormat)).toBe('nonconformant');
+      expect(typeFindings(r).some((f) => f.severity === 'error' && /not a PDF/.test(f.message)), String(fileFormat)).toBe(true);
+    }
+  });
+
+  it('a file whose extension is not accepted is flagged even when declared as an accepted format', async () => {
+    const m = await measureLeafFile({ fileName: 'payload.exe', filePath: 'attachments/payload.exe', fileFormat: 'PDF', bytes: plainPdf }, 'us');
+    const r = validateLeavesAgainstMarketSpec(usEstar, [m]);
+    expect(r.verdict).not.toBe('conformant');
+    const found = typeFindings(r);
+    expect(found.some((f) => /\(exe\) is not among the accepted formats/.test(f.message))).toBe(true);
+    expect(found.some((f) => /declared PDF but its extension is \.exe/.test(f.message))).toBe(true);
+  });
+
+  it('a declared format that disagrees with an accepted extension is flagged', () => {
+    const r = validateLeavesAgainstMarketSpec(usEctd, [{ fileName: 'x.pdf', fileFormat: 'XPT' }]);
+    expect(typeFindings(r).map((f) => f.message)).toEqual([expect.stringMatching(/declared XPT but its extension is \.pdf/)]);
+  });
+
+  it('a declared format that agrees with the extension is not flagged', () => {
+    const r = validateLeavesAgainstMarketSpec(usEstar, [{ fileName: 'x.pdf', fileFormat: 'PDF attachments' }]);
+    expect(typeFindings(r)).toEqual([]);
+    expect(r.notAssessed.some((n) => n.rule === 'ACCEPTED_FILE_TYPES')).toBe(false);
+  });
+
+  it('an unread file with no extension, judged only by its declared format, is not assessed for type', () => {
+    const r = validateLeavesAgainstMarketSpec(usEstar, [{ fileName: 'payload', fileFormat: 'PDF' }]);
+    expect(typeFindings(r)).toEqual([]);
+    expect(r.notAssessed.find((n) => n.rule === 'ACCEPTED_FILE_TYPES')).toMatchObject({ leaves: ['payload'] });
+    expect(r.verdict).toBe('not_assessed');
+  });
+
+  it('an unread file with no extension declared as a format that is not accepted is still reported', () => {
+    const r = validateLeavesAgainstMarketSpec(usEstar, [{ fileName: 'payload', fileFormat: 'EXE' }]);
+    expect(typeFindings(r)).toHaveLength(1);
+  });
+
+  it('a read file with no extension whose bytes are a PDF is judged', async () => {
+    const m = await measureLeafFile({ fileName: 'payload', filePath: 'attachments/payload', fileFormat: 'PDF', bytes: plainPdf }, 'us');
+    const r = validateLeavesAgainstMarketSpec(usEstar, [m]);
+    expect(r.notAssessed.some((n) => n.rule === 'ACCEPTED_FILE_TYPES')).toBe(false);
+    expect(typeFindings(r)).toEqual([]);
+  });
+
+  /* 2026-09-23 (W5/D7, round-2 skeptic, second pass): whatever followed the
+     last dot was taken as the extension, so 'Cover letter v1.2' had the
+     "extension" '2' and a real PDF declared PDF drew two warnings. A suffix is
+     an extension only when it looks like one: 1–5 letters/digits with at least
+     one letter, and no space. */
+  it('a dotted name whose suffix is not an extension is judged by its declared format', async () => {
+    const m = await measureLeafFile(
+      { fileName: 'Cover letter v1.2', filePath: 'attachments/Cover letter v1.2', fileFormat: 'PDF', bytes: plainPdf },
+      'us',
+    );
+    const r = validateLeavesAgainstMarketSpec(usEstar, [m]);
+    expect(typeFindings(r)).toEqual([]);
+    expect(r.verdict).toBe('conformant');
+    const spaced = validateLeavesAgainstMarketSpec(usEstar, [{ fileName: 'Section 1.3.4 overview', fileFormat: 'EXE' }]);
+    expect(typeFindings(spaced).map((f) => f.message)).toEqual([expect.stringMatching(/\(EXE\) is not among the accepted formats/)]);
+  });
+
+  /* 2026-09-23 (W5/D7, residual repair): the 1–5 character limit read a real
+     longer extension as none — 'dm.sas7bdat' (a SAS dataset, which FDA does
+     not accept in place of .xpt) and 'report.numbers' were judged by their
+     declared format instead of the name the agency reads. */
+  it('a real extension is still read: letters, digits, letter-digit mixes and longer extensions', () => {
+    for (const [fileName, e] of [
+      ['payload.exe', 'exe'], ['clip.mp4', 'mp4'], ['arc.7z', '7z'],
+      ['dm.sas7bdat', 'sas7bdat'], ['report.numbers', 'numbers'],
+    ] as const) {
+      const r = validateLeavesAgainstMarketSpec(usEstar, [{ fileName, fileFormat: 'PDF' }]);
+      expect(typeFindings(r).some((f) => f.message.includes(`extension is .${e}`)), fileName).toBe(true);
+    }
+  });
+});

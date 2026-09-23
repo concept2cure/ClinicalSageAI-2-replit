@@ -116,17 +116,20 @@ protocol helper. `scripts/ci/check-sign-ceremony.mjs` now requires every such
 site's handler to both re-verify the signer (`verifyReauth` / `verifySigningPin`)
 and write the signature row.
 
-- The **28 remaining** sites are baselined per file in
+- The **28 remaining** sites were baselined per file (19 after the AnA fix
+  below) in
   `scripts/ci/sign-ceremony-baseline.json`, each with a written reason. The
   baseline may only shrink, and an entry without a reason fails.
 - **Two** of the 28 are a proof the gate cannot see across a function boundary
   (eSTAR filing, governed transmit). Both reasons were checked in code; the AnA
   transmit caller is taken from its documented contract and marked as not
   re-traced.
-- **The other 26 are real defects**, all outside the launch catalog: research
-  administration, CMC, BLA, and nine AnA tools that sign from a chat turn. No
-  launch surface calls any of them. They must be fixed before those modules are
-  enabled.
+- **The other 26 are real defects.** Seventeen are in modules outside the launch
+  catalog (research administration, CMC, BLA): no launch surface calls them, and
+  they must be fixed before those modules are enabled. The other nine are AnA
+  tools that sign from a chat turn. The census first assumed these were
+  unreachable too; the trace below proved they were reachable in every
+  organization, and they are fixed.
 
 Where it runs: in `.husky/pre-push`, and as a step in the per-commit `ci.yml`
 Lint job, selftest first.
@@ -138,6 +141,53 @@ Lint job, selftest first.
 - Scanning the committed pre-fix files from git flags both routes:
   `protocol-development.ts:483` and `protocol-reviews.ts:148`, with
   `reauth:false, signatureRow:false`.
+
+## AnA cannot sign: nine more tools, live in every organization
+
+The census baselined nine AnA tools that write a `sign` ledger row. A trace on
+2026-09-23 (static, file:line) showed they are reachable in production:
+
+- **Reachable everywhere.** Nothing on AnA's tool path consults the launch
+  catalog or module entitlements. `governedToolsetFor` applies only a tenant
+  deny-list, and `selectToolsForTurn` keeps any tool whose name matches the
+  request. Dispatch classifies them `UNGOVERNED`.
+- **No safeguards on the write.** There is no approval step, no password and no
+  `electronic_signatures` row. When the user gives no reason, a canned one is
+  used ("DMS plan finalized via AnA").
+- **Two further holes:**
+  - `finalize_committee_determination` skipped the approve privilege its HTTP
+    route enforces.
+  - In `approve_no_cost_extension`, the model supplied the `authority` that
+    decides whether sponsor prior approval applies.
+
+The tools: `finalize_dms_plan`, `certify_other_support`, `finalize_biosketch`,
+`finalize_export_control_determination`, `execute_research_agreement`,
+`finalize_committee_determination`, `finalize_grant_closeout`,
+`execute_subaward`, `approve_no_cost_extension`.
+
+**The fix.** All nine now call one helper, `refuseSignatureInChat`
+(`AnaToolExecutor.ts`), which returns
+`{ ok: false, signatureRequired: true, message }` and writes nothing. Their
+descriptions now say "AnA cannot sign", so the model does not promise the act.
+This also closes both holes, because the service is never called.
+
+**Capability removed.** AnA can no longer perform these nine acts. That is
+deliberate, and it is a product change for the founder to see. The remaining
+path is each module's own HTTP route, which is itself baselined in
+`ci:sign-ceremony` as lacking the ceremony, in modules that are off in
+production. When those modules ship, the acts should be signed there, as the
+protocol acts now are.
+
+**Evidence:**
+
+- `server/services/ana/__tests__/ana-cannot-sign.test.ts`, 18 cases: red
+  18/18 (`ana-sign-red.txt`), green 18/18 (`ana-sign-green.txt`).
+- Three `grants-tools.test.ts` cases that asserted the old input validation of
+  these tools were rewritten to the refusal.
+- The `ci:sign-ceremony` baseline drops from 28 to 19 sites, with the
+  `AnaToolExecutor.ts` entry removed.
+- ESLint on `AnaToolExecutor.ts` shows 0 errors and 102 warnings, the same as
+  HEAD.
 
 ## T1–T4, P2, P3
 
