@@ -258,6 +258,35 @@ function assertSourcesScoped(
   }
 }
 
+/**
+ * Tenant-scoping precondition on the input. Sources MAY carry tenant tags;
+ * when they do, we verify they all match the request context. When a source
+ * lacks the tag we refuse to send it to the LLM — that would amount to an
+ * untenanted AI call attributed to one org under the audit row.
+ */
+function assertCanonicalSourcesScoped(
+  sources: CanonicalSource[],
+  organizationId: number,
+  projectId: number,
+): void {
+  for (let i = 0; i < sources.length; i++) {
+    const s = sources[i];
+    if (s.organizationId === undefined || s.projectId === undefined) {
+      throw new Error(
+        `module3-narrative-builder: source [${i}] (id=${s.id}, type=${s.sourceType}) ` +
+          `is missing organizationId/projectId. Tenant tags are required when useAI=true.`,
+      );
+    }
+    if (s.organizationId !== organizationId || s.projectId !== projectId) {
+      throw new Error(
+        `module3-narrative-builder: source [${i}] (id=${s.id}, type=${s.sourceType}) ` +
+          `is scoped to (${s.organizationId}, ${s.projectId}) but request context is ` +
+          `(${organizationId}, ${projectId}). Refusing to assemble cross-tenant sources.`,
+      );
+    }
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Prompt construction
 // ─────────────────────────────────────────────────────────────────────────────
@@ -518,32 +547,6 @@ async function mapWithConcurrency<T, R>(
 }
 
 /**
- * Tenant-scoping precondition on the input when sources go to the LLM. Sources
- * MAY carry tenant tags; when they do, we verify they all match the request
- * context. When a source lacks the tag we refuse to send it to the LLM — that
- * would amount to an untenanted AI call attributed to one org under the audit
- * row.
- */
-function assertSourcesInTenant(sources: CanonicalSource[], organizationId: number, projectId: number): void {
-  for (let i = 0; i < sources.length; i++) {
-    const s = sources[i];
-    if (s.organizationId === undefined || s.projectId === undefined) {
-      throw new Error(
-        `module3-narrative-builder: source [${i}] (id=${s.id}, type=${s.sourceType}) ` +
-          `is missing organizationId/projectId. Tenant tags are required when useAI=true.`,
-      );
-    }
-    if (s.organizationId !== organizationId || s.projectId !== projectId) {
-      throw new Error(
-        `module3-narrative-builder: source [${i}] (id=${s.id}, type=${s.sourceType}) ` +
-          `is scoped to (${s.organizationId}, ${s.projectId}) but request context is ` +
-          `(${organizationId}, ${projectId}). Refusing to assemble cross-tenant sources.`,
-      );
-    }
-  }
-}
-
-/**
  * Compose Module 3 from canonical sources, then optionally upgrade each
  * section's narrative via the AI gateway. The deterministic composer is
  * the single source of truth — when `useAI=false` or refinement fails for
@@ -578,7 +581,9 @@ export async function buildModule3WithNarrative(
     );
   }
 
-  if (options.useAI) assertSourcesInTenant(sources, organizationId, projectId);
+  if (options.useAI) {
+    assertCanonicalSourcesScoped(sources, organizationId, projectId);
+  }
 
   const sections = composeModule3FromCanonicalSources(sources);
 

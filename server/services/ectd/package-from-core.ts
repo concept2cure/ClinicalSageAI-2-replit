@@ -22,7 +22,7 @@ import { packageEctdSubmission } from '../submission-gateways/regional-packager'
 import type { SubmissionBundle } from '../submission-gateways/types';
 import { buildPackagerInputFromCore, coreLeafFromSubmissionLeaf, type LeafFileResolver } from './core-to-packager';
 import { loadLatestPriorManifestBySubmission } from './prior-sequence-loader';
-import { computeLifecycleOperations, type DesiredLeaf } from './lifecycle-operator';
+import { computeLifecycleOperations, type DesiredLeaf, type PriorLeaf } from './lifecycle-operator';
 import { computeSequencePrefix } from './sequence-manifest';
 import { leafFileCarriesKey, leafSourceKey } from './leaf-source-resolver';
 import auditService from '../auditService';
@@ -78,43 +78,88 @@ function dropUnbindableLifecycle(
   input.leaves = kept as typeof input.leaves;
 }
 
+/** Record a leaf's declared replace/append, keyed as the lifecycle operator keys it. */
+function recordDeclaredAct(
+  declared: Map<string, 'replace' | 'append'>,
+  leaf: { ctdSection: string; fileName: string },
+  operation: string,
+): void {
+  if (operation === 'replace' || operation === 'append') declared.set(`${leaf.ctdSection}/${leaf.fileName}`, operation);
+}
+
 /**
- * The filed leaf a declared delete withdraws, or why it cannot be bound (the
- * binding rules are stated where packageSequenceFromCore calls this).
+ * A declared delete binds to the filed leaf it withdraws. A row that
+ * names a document binds by that document's IDENTITY: the filed leaf
+ * with its current derived name, else the one filed leaf in the
+ * section whose name carries its source key (the label part of a leaf
+ * name — module_number or title — can change after filing; the key
+ * cannot). Only a row that names no document binds by section, and
+ * only when that is unambiguous. Nothing is bound by guessing.
  *
- * `key` is the source key of the document the delete row names (null: it names
- * none); `inSection` is what is on file in the delete's section. A named row
- * binds by identity — its current file name, else the one filed leaf whose name
- * carries its key — or not at all; an unnamed row binds to the section's only
- * filed leaf, or not at all.
+ * 2026-09-23 (W5/D7, round-2 skeptic): the section binding used to be
+ * tried only when the row named no document, so a document whose name
+ * changed after filing matched no prior leaf and the lifecycle
+ * operator threw "nothing on file to delete" out of the whole assembly.
+ * 2026-09-23 (W5/D7, round-2 skeptic, second pass): the first repair
+ * fell back to the SECTION for a named row too, which bound it to the
+ * section's only filed leaf whatever document that was — a withdrawal
+ * of a document never filed there, or a stale re-withdrawal of one
+ * already withdrawn, filed a transmit-clear delete of a different,
+ * still-current document. A named row now binds by identity or not at
+ * all; an unbindable one is reported in `skipped` (which blocks
+ * transmit) and the rest of the sequence still assembles.
+ * 2026-09-23 (W5/D7, residual repair): the source of a document the
+ * sequence only withdraws is no longer read (materializeLeafSources),
+ * so `leaf.fileName` is empty unless another leaf of this sequence
+ * ships the same document. Nothing here needs the source row: the
+ * binding is by key against the filed manifest. When the key is
+ * carried by no filed leaf, or by more than one, the withdrawal is
+ * reported in `skipped` — never guessed, never dropped.
+ *
+ * Returns the bound filed leaf's name, or null when the withdrawal was
+ * reported in `skipped` instead.
  */
-function bindWithdrawal(
-  section: string,
-  fileName: string,
-  key: string | null,
-  inSection: readonly { fileName: string }[],
-): { fileName: string } | { refused: string } {
-  if (key) {
-    if (fileName && inSection.some((pl) => pl.fileName === fileName)) return { fileName };
-    const mine = inSection.filter((pl) => leafFileCarriesKey(pl.fileName, key));
-    if (mine.length === 1) return { fileName: mine[0].fileName };
-    // Named by its source key, the one identity it always has.
-    const subject = `withdrawal of ${key}`;
-    return {
-      refused:
-        mine.length === 0
-          ? `${subject}: no filed leaf in ${section} is this document — it was never filed ` +
-            'there, or has already been withdrawn; no other filed document is withdrawn in its place'
-          : `${subject} is ambiguous: ${mine.length} filed leaves in ${section} carry document ${key}`,
-    };
+function bindWithdrawalToFiledLeaf(
+  leaf: { ctdSection: string; fileName: string },
+  ref: { key: string | null },
+  priorLeaves: readonly PriorLeaf[],
+  skipped: Array<{ sectionCode: string; reason: string }>,
+): string | null {
+  const inSection = priorLeaves.filter((pl) => pl.ctdSection === leaf.ctdSection);
+  let fileName = leaf.fileName;
+  if (ref.key) {
+    const byName = !!fileName && inSection.some((pl) => pl.fileName === fileName);
+    if (!byName) {
+      const key = ref.key;
+      const mine = inSection.filter((pl) => leafFileCarriesKey(pl.fileName, key));
+      if (mine.length !== 1) {
+        // Named by its source key, the one identity it always has.
+        const subject = `withdrawal of ${key}`;
+        skipped.push({
+          sectionCode: leaf.ctdSection,
+          reason:
+            mine.length === 0
+              ? `${subject}: no filed leaf in ${leaf.ctdSection} is this document — it was never filed ` +
+                'there, or has already been withdrawn; no other filed document is withdrawn in its place'
+              : `${subject} is ambiguous: ${mine.length} filed leaves in ${leaf.ctdSection} carry document ${key}`,
+        });
+        return null;
+      }
+      fileName = mine[0].fileName;
+    }
+  } else if (inSection.length === 1) {
+    fileName = inSection[0].fileName;
+  } else {
+    skipped.push({
+      sectionCode: leaf.ctdSection,
+      reason:
+        inSection.length === 0
+          ? 'withdrawal names a section with no leaf in the prior sequence'
+          : `withdrawal is ambiguous: ${inSection.length} prior leaves share section ${leaf.ctdSection}`,
+    });
+    return null;
   }
-  if (inSection.length === 1) return { fileName: inSection[0].fileName };
-  return {
-    refused:
-      inSection.length === 0
-        ? 'withdrawal names a section with no leaf in the prior sequence'
-        : `withdrawal is ambiguous: ${inSection.length} prior leaves share section ${section}`,
-  };
+  return fileName;
 }
 
 /**
@@ -238,36 +283,9 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
         const { operation, ...rest } = leaf;
         if (operation !== 'delete') {
           desired.push({ ...rest, md5: leaf.md5 ?? '', ...(operation === 'append' ? { appendOnChange: true } : {}) });
-          if (operation === 'replace' || operation === 'append') declared.set(`${leaf.ctdSection}/${leaf.fileName}`, operation);
+          recordDeclaredAct(declared, leaf, operation);
           continue;
         }
-        // A declared delete binds to the filed leaf it withdraws. A row that
-        // names a document binds by that document's IDENTITY: the filed leaf
-        // with its current derived name, else the one filed leaf in the
-        // section whose name carries its source key (the label part of a leaf
-        // name — module_number or title — can change after filing; the key
-        // cannot). Only a row that names no document binds by section, and
-        // only when that is unambiguous. Nothing is bound by guessing.
-        //
-        // 2026-09-23 (W5/D7, round-2 skeptic): the section binding used to be
-        // tried only when the row named no document, so a document whose name
-        // changed after filing matched no prior leaf and the lifecycle
-        // operator threw "nothing on file to delete" out of the whole assembly.
-        // 2026-09-23 (W5/D7, round-2 skeptic, second pass): the first repair
-        // fell back to the SECTION for a named row too, which bound it to the
-        // section's only filed leaf whatever document that was — a withdrawal
-        // of a document never filed there, or a stale re-withdrawal of one
-        // already withdrawn, filed a transmit-clear delete of a different,
-        // still-current document. A named row now binds by identity or not at
-        // all; an unbindable one is reported in `skipped` (which blocks
-        // transmit) and the rest of the sequence still assembles.
-        // 2026-09-23 (W5/D7, residual repair): the source of a document the
-        // sequence only withdraws is no longer read (materializeLeafSources),
-        // so `leaf.fileName` is empty unless another leaf of this sequence
-        // ships the same document. Nothing here needs the source row: the
-        // binding is by key against the filed manifest. When the key is
-        // carried by no filed leaf, or by more than one, the withdrawal is
-        // reported in `skipped` — never guessed, never dropped.
         const ref = deleteRefs[deleteIndex++];
         if (!ref || ref.sectionCode !== leaf.ctdSection) {
           throw new Error(
@@ -275,17 +293,8 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
               '— refusing to bind a withdrawal to an unknown document.',
           );
         }
-        const bound = bindWithdrawal(
-          leaf.ctdSection,
-          leaf.fileName,
-          ref.key,
-          prior.leaves.filter((pl) => pl.ctdSection === leaf.ctdSection),
-        );
-        if ('refused' in bound) {
-          skipped.push({ sectionCode: leaf.ctdSection, reason: bound.refused });
-          continue;
-        }
-        const { fileName } = bound;
+        const fileName = bindWithdrawalToFiledLeaf(leaf, ref, prior.leaves, skipped);
+        if (fileName === null) continue;
         if (desired.some((d) => d.withdraw && d.ctdSection === leaf.ctdSection && d.fileName === fileName)) {
           // Two declared deletes bound to the same filed leaf — the operator
           // would throw on the duplicate identity.

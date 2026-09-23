@@ -138,6 +138,12 @@ afterAll(async () => {
   await h?.close();
 });
 
+const freeze = (docId: string) =>
+  request(app)
+    .post(`/api/authoring/docs/${docId}/freeze`)
+    .set('Authorization', `Bearer ${token()}`)
+    .send({ reason: 'seal for filing' });
+
 /** A DRAFT authoring document with one section, frozen through the real router. */
 async function frozenDocument(docId: string, sectionId: string, text: string): Promise<void> {
   await h.pglite.query(
@@ -150,15 +156,7 @@ async function frozenDocument(docId: string, sectionId: string, text: string): P
      VALUES ($1, $2, '3.2.P.5', 'Control of Drug Product', $3, 0, $4)`,
     [sectionId, docId, text, ORG],
   );
-  await freeze(docId);
-}
-
-/** Freeze through the real router: the seal it writes is the one a verdict copy is held to. */
-async function freeze(docId: string): Promise<void> {
-  const fz = await request(app)
-    .post(`/api/authoring/docs/${docId}/freeze`)
-    .set('Authorization', `Bearer ${token()}`)
-    .send({ reason: 'seal for filing' });
+  const fz = await freeze(docId);
   expect(fz.status, JSON.stringify(fz.body)).toBe(200);
 }
 
@@ -283,7 +281,8 @@ describe('sections sharing an order_index: editor, seal and filing agree', () =>
     const editorSections = (editor.body.sections ?? editor.body.data ?? editor.body) as Array<{ code: string }>;
     expect(editorSections.map((x) => x.code)).toEqual(['1.1', '1.2']);
 
-    await freeze(DOC);
+    const fz = await freeze(DOC);
+    expect(fz.status, JSON.stringify(fz.body)).toBe(200);
     const sealed = JSON.parse(
       (await h.pglite.query<{ frozen_content: string }>('SELECT frozen_content FROM frozen_documents WHERE document_id = $1', [DOC]))
         .rows[0].frozen_content,
@@ -330,7 +329,8 @@ describe('sections sharing an order_index: editor, seal and filing agree', () =>
     const editor = await request(app).get(`/api/authoring/docs/${DOC}/sections`).set('Authorization', `Bearer ${token()}`);
     const editorSections = (editor.body.sections ?? editor.body.data ?? editor.body) as Array<{ code: string }>;
     expect(editorSections.map((x) => x.code)).toEqual(['1.1', '1.2']);
-    await freeze(DOC);
+    const fz = await freeze(DOC);
+    expect(fz.status, JSON.stringify(fz.body)).toBe(200);
 
     const res = await place(DOC);
 
