@@ -142,6 +142,7 @@ const R = new JourneyRecorder(
     // regulatory_programs.application_number (WO-9 Click 1): the column the
     // create handler now writes; replayed here for the same reason 20260524 is.
     'migrations/20260907_regulatory_programs_application_number.sql',
+    'db/migrations/20260725_users_signing_lockout_columns.sql',
     'migrations/20260528_phase9_document_schema.sql',
     'migrations/20260529_phase9_backfill.sql',
     'migrations/20260604_shadow_review.sql',
@@ -208,6 +209,12 @@ beforeAll(async () => {
       'db/migrations/20260725_esig_gate_columns_port.sql',
       'migrations/20260813d_esignature_governed_unification.sql',
       'migrations/20260814_projects_regulatory_program_anchor.sql',
+      // users.mfa_enabled (and the other signing-lockout columns): the governed
+      // `sign` re-verifies the signer through services/part11/reverify-signer
+      // since 828faf8 (2026-09-23), which reads the MFA enrolment and refuses
+      // with REAUTH_MFA_STATE_UNKNOWN when it cannot — so without the column the
+      // freeze is refused before its own gate is reached.
+      'db/migrations/20260725_users_signing_lockout_columns.sql',
     ],
   });
   h.db = jdb.db;

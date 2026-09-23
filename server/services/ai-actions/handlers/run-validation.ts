@@ -81,11 +81,17 @@ const handler: AIActionHandler = {
         (payload.agency as string) || undefined
       );
     } catch (err) {
-      // If validation service is unavailable, run basic structural validation
+      // If the validation service is unavailable, run the basic structural
+      // checks so the author still gets their findings — but a regex for
+      // placeholder text and an introduction heading is not a validation, so
+      // it can never make the target 'validated'. Until 2026-09-23 it could, and
+      // the next action offered was "Validation passed — promote".
       console.warn('[AI Actions] RealTimeValidationService unavailable, falling back to basic validation:', err);
       validationResult = runBasicValidation(content, documentType || 'regulatory_submission');
       validationResult._degraded = true;
+      validationResult.isValid = false;
     }
+
 
     // 3. Map to standard ValidationFinding format
     const findings: ValidationFinding[] = mapToFindings(validationResult);
@@ -139,10 +145,7 @@ const handler: AIActionHandler = {
           status: validationResult.isValid ? 'validated' : 'needs_review',
         },
       ],
-      warnings: [
-        ...(validationResult._degraded ? ['Validation ran in degraded mode (basic fallback) — AI-powered validation service was unavailable'] : []),
-        ...(validationResult.isValid ? [] : [`${findings.length} validation finding(s) detected`]),
-      ],
+      warnings: validationWarnings(validationResult, findings.length),
       errors: [],
       provenance: {
         actionId: ctx.actionId,
@@ -278,6 +281,30 @@ function runBasicValidation(content: string, documentType: string): any {
     issues,
     suggestions: [],
   };
+}
+
+/**
+ * What the author is told about a result that is not a clean pass.
+ *
+ * The AI analysis must have covered the whole content for a pass; the service
+ * already folds that into isValid, and its coverage note is surfaced here so a
+ * clean-looking result that is NOT 'validated' says why.
+ */
+function validationWarnings(
+  result: { isValid: boolean; _degraded?: boolean; aiAnalysis?: { status?: string; note?: string } },
+  findingCount: number,
+): string[] {
+  const warnings: string[] = [];
+  if (result._degraded) {
+    warnings.push(
+      'Only the basic structural checks ran — the validation service was unavailable, so this is not a validation and the content was not marked validated.',
+    );
+  }
+  if (result.aiAnalysis && result.aiAnalysis.status !== 'complete' && result.aiAnalysis.note) {
+    warnings.push(result.aiAnalysis.note);
+  }
+  if (!result.isValid && findingCount > 0) warnings.push(`${findingCount} validation finding(s) detected`);
+  return warnings;
 }
 
 // ---------------------------------------------------------------------------

@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | TM-001 |
-| Version | generated 2026-09-23T02:56:23.987Z |
+| Version | generated 2026-09-23T03:34:32.900Z |
 | Status | DRAFT — UNSIGNED — GENERATED, DO NOT EDIT |
 | Generator | `scripts/validation/build-traceability.mjs` (`npm run validation:traceability`) |
 | Sources | URS-001…006 requirement tables · RA-001 rows · docs/evidence/W3/2026-09-23/OQ-*/result.json · IQ/iq-results.json |
@@ -12,13 +12,13 @@
 
 ## Summary
 
-- Requirements: **67** — pass 66 · partial 1 · fail 0 · open 0 · uncovered 0
+- Requirements: **68** — pass 66 · partial 1 · fail 0 · open 0 · uncovered 1
 - OQ steps executed: **96** — pass 95 · fail 0 · deviation 1 · not-executed 0
 - IQ-001: 12 pass · 0 fail · 3 deviation (executed 2026-09-23T02:48:41.548Z)
 
 | App | Requirements | Pass | Partial | Fail | Open | Uncovered |
 |---|---|---|---|---|---|---|
-| Projects | 9 | 9 | 0 | 0 | 0 | 0 |
+| Projects | 10 | 9 | 0 | 0 | 0 | 1 |
 | Vault | 10 | 10 | 0 | 0 | 0 | 0 |
 | Authoring | 15 | 14 | 1 | 0 | 0 | 0 |
 | Submission Center | 12 | 12 | 0 | 0 | 0 | 0 |
@@ -49,6 +49,7 @@
 | URS-PROJ-007 | The Program Journey read model and the Filings Catalog surface answer honestly for a new organisation (empty state or explained unavailability; never fixture data, never a silent 500). | none | low | ad-hoc | OQ-PROJ-11 (pass)<br>OQ-PROJ-12 (pass) | **pass** |
 | URS-PROJ-008 | With launch scope enforced, the navigation payload marks every out-of-catalog surface as not entitled with source `launch-scope`, the six launch apps are entitled, and a deep link to an out-of-catalog surface renders the "not in this release" gate rather than the surface. | §11.10(d) | medium | scripted | OQ-PROJ-13 (pass)<br>OQ-PROJ-14 (pass) | **pass** |
 | URS-PROJ-009 | A program id that does not belong to the caller's organisation (or does not exist) answers 404 — never 200 with another tenant's data, never 500. | §11.10(d) | high | scripted | OQ-PROJ-15 (pass) | **pass** |
+| URS-PROJ-010 | Every sign-in attempt by a user of an organisation is entered in that organisation's hash-chained audit log and shown on its audit ledger: a wrong password, the second-factor challenge a correct password receives, a wrong code, and the session a verified code opens. A refused attempt reads as refused, never as a sign-in. | §11.10(e) | high | scripted | — | **uncovered** |
 | URS-VAULT-001 | Vault read, search, download, ingest and filing endpoints require an authenticated organisation member; anonymous requests are refused. | §11.10(d) | high | scripted | OQ-VAULT-01 (pass) | **pass** |
 | URS-VAULT-002 | Ingest accepts a multipart upload with `programId` (UUID of a program the organisation owns), `documentCode`, `documentTitle` and `documentType` from the controlled vocabulary, stores one `vault.documents` row with the file's SHA-256 (`contentHash`) and answers 201 with the document and its initial filing. | §11.10(e) | high | scripted | OQ-VAULT-03 (pass) | **pass** |
 | URS-VAULT-003 | Ingest refuses a file whose extension is outside the allowed set (`.pdf .docx .doc .txt .rtf .xlsx .xls .csv .md`) and files over 50 MB with a 4xx and a message; nothing is stored. | none | medium | scripted | OQ-VAULT-02 (pass) | **pass** |

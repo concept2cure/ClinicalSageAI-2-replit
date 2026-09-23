@@ -27,7 +27,7 @@ vi.mock('../../auditService', () => {
   return { default: { logAction }, logAction };
 });
 
-import { recordAuthEvent } from '../auth-event-audit';
+import { describeAuthEvent, recordAuthEvent } from '../auth-event-audit';
 
 const EVENT = { action: 'user_login_mfa_challenge', userId: 17, email: 'u@example.test', outcome: 'success' as const };
 
@@ -80,5 +80,33 @@ describe('a write that is not persisted', () => {
     await expect(
       runWithPreAuthScope('auth:POST /login', () => recordAuthEvent({ ...EVENT, tenantId: 1 })),
     ).resolves.toBeUndefined();
+  });
+});
+
+describe('what the audit ledger shows for an event', () => {
+  // The ledger surface shows a row's `description`, and falls back to the action
+  // name, so a refused sign-in and a successful one must not share a sentence.
+  it('never shows a refused sign-in the way it shows a successful one', () => {
+    const refused = describeAuthEvent({ action: 'user_login', outcome: 'failure', reason: 'wrong_password' });
+    const signedIn = describeAuthEvent({ action: 'user_login', outcome: 'success', reason: 'mfa_verified' });
+    expect(refused).toBe('Sign-in refused: wrong password');
+    expect(signedIn).toBe('Signed in: password and second factor verified');
+  });
+
+  it('states the outcome even for an event it has no sentence for', () => {
+    expect(describeAuthEvent({ action: 'user_session_probe', outcome: 'failure', reason: 'odd' })).toBe(
+      'user session probe: failure (odd)',
+    );
+  });
+
+  it('is written into the row the ledger reads', async () => {
+    const auditService = (await import('../../auditService')).default as unknown as {
+      logAction: { mock: { calls: Array<[Record<string, any>]> } };
+    };
+    await runWithPreAuthScope('auth:POST /mfa/verify', () =>
+      recordAuthEvent({ action: 'user_login_mfa_failed', userId: 17, tenantId: 1, outcome: 'failure', reason: 'invalid_code' }),
+    );
+    const row = auditService.logAction.mock.calls.at(-1)![0];
+    expect(row.details.description).toBe('Second factor refused: wrong code');
   });
 });

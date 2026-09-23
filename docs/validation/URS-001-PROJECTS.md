@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | URS-001 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 |
 | Verified by | OQ-001 (`tests/validation/oq/projects/run.mjs`) |
@@ -15,6 +15,7 @@
 | Version | Date | Author | Change |
 |---|---|---|---|
 | 0.1 | 2026-09-21 | W3a | Drafted from `server/routes/c2c/projects.ts`, `server/routes/c2c/project-intake.ts`, `server/routes/taskManagement.routes.ts`, `server/routes/program-journey.routes.ts`, `server/services/entitlements/navigation-entitlements.ts` and the `Projects`, `ProjectHome`, `TaskBoard`, `FilingsCatalog` surfaces. |
+| 0.2 | 2026-09-23 | W3 | URS-PROJ-010 added. Under RLS no sign-in reached the audit trail, and no requirement asked for it, so no OQ step could see it (VSR-001 §13, F-19). |
 
 ## 1. Intended use
 
@@ -35,6 +36,7 @@ Column key — *Part 11*: §11.10(d) access control · §11.10(e) audit trail ·
 | URS-PROJ-007 | The Program Journey read model and the Filings Catalog surface answer honestly for a new organisation (empty state or explained unavailability; never fixture data, never a silent 500). | none | low | `server/routes/program-journey.routes.ts:51`, `client/src/concept2cure/v2/surfaces/FilingsCatalog.tsx` |
 | URS-PROJ-008 | With launch scope enforced, the navigation payload marks every out-of-catalog surface as not entitled with source `launch-scope`, the six launch apps are entitled, and a deep link to an out-of-catalog surface renders the "not in this release" gate rather than the surface. | §11.10(d) | medium | `shared/constants/launch-scope.ts`, `server/services/entitlements/navigation-entitlements.ts:259`, `client/src/concept2cure/v2/LaunchScopeGate.tsx` |
 | URS-PROJ-009 | A program id that does not belong to the caller's organisation (or does not exist) answers 404 — never 200 with another tenant's data, never 500. | §11.10(d) | high | `server/routes/c2c/projects.ts:849`, `server/routes/c2c/project-vault.ts:828-845` |
+| URS-PROJ-010 | Every sign-in attempt by a user of an organisation is entered in that organisation's hash-chained audit log and shown on its audit ledger: a wrong password, the second-factor challenge a correct password receives, a wrong code, and the session a verified code opens. A refused attempt reads as refused, never as a sign-in. | §11.10(e) | high | `server/routes/auth.ts`, `server/services/audit/auth-event-audit.ts`, `server/routes/audit-trail-ledger.routes.ts` |
 
 ## 3. Assumptions and constraints
 
