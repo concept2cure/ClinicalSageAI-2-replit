@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T08:57:32.205Z",
+  "generatedAt": "2026-09-23T09:01:59.523Z",
   "git": {
-    "sha": "712993b0ba5b811b86b5e481de0b9b947b5e97c8",
+    "sha": "ad5c643fe5b2e1752d27ed3a26c04d83ee846c2f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 43,
-    "largeFilesByLines": 103
+    "largeFilesByLines": 104
   },
   "findings": {
     "duplicateBasenames": [
@@ -2030,12 +2030,12 @@
         "bytes": 156838
       },
       {
-        "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
-        "bytes": 150437
+        "file": "server/services/module3Composer.ts",
+        "bytes": 155947
       },
       {
-        "file": "server/services/module3Composer.ts",
-        "bytes": 148269
+        "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
+        "bytes": 150437
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
@@ -2228,6 +2228,10 @@
         "lines": 3119
       },
       {
+        "file": "server/services/module3Composer.ts",
+        "lines": 3118
+      },
+      {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
         "lines": 3116
       },
@@ -2238,10 +2242,6 @@
       {
         "file": "server/routes/concept2cure.ts",
         "lines": 3007
-      },
-      {
-        "file": "server/services/module3Composer.ts",
-        "lines": 2949
       },
       {
         "file": "server/src/routes/stability.router.ts",
@@ -2308,12 +2308,12 @@
         "lines": 2278
       },
       {
-        "file": "server/routes/c2c/reviews.ts",
-        "lines": 2240
+        "file": "server/routes/auth.ts",
+        "lines": 2245
       },
       {
-        "file": "server/routes/auth.ts",
-        "lines": 2226
+        "file": "server/routes/c2c/reviews.ts",
+        "lines": 2240
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
@@ -2480,12 +2480,12 @@
         "lines": 1785
       },
       {
-        "file": "server/services/ana/submission-chat-handler.ts",
-        "lines": 1756
+        "file": "server/services/cmc-write-through.ts",
+        "lines": 1773
       },
       {
-        "file": "server/services/cmc-write-through.ts",
-        "lines": 1753
+        "file": "server/services/ana/submission-chat-handler.ts",
+        "lines": 1756
       },
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
@@ -2536,8 +2536,16 @@
         "lines": 1587
       },
       {
+        "file": "server/services/module3-extensions.ts",
+        "lines": 1557
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
         "lines": 1544
+      },
+      {
+        "file": "server/routes/c2c/project-vault.ts",
+        "lines": 1543
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
@@ -2556,10 +2564,6 @@
         "lines": 1506
       },
       {
-        "file": "server/routes/c2c/project-vault.ts",
-        "lines": 1503
-      },
-      {
         "file": "server/services/grdhe/grdheService.ts",
         "lines": 1501
       }
@@ -2571,7 +2575,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 406,
       "largeByBytes": 33,
-      "largeByLines": 82
+      "largeByLines": 83
     },
     {
       "owner": "Unassigned (TBD)",
