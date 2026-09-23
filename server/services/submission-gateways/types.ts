@@ -114,6 +114,8 @@ export interface SubmissionBundle {
     href: string;
     md5: string;
     operation?: string;
+    /** For replace/append/delete: the filed leaf acted on, from this sequence's root. */
+    modifiedFile?: string;
     title?: string;
   }>;
   /** Optional human-readable display name. */

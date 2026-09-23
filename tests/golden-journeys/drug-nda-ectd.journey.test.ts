@@ -179,6 +179,11 @@ beforeAll(async () => {
     migrations: [
       // The Part 11 tamper-evident store (ledger L145) — cross-cutting.
       'db/migrations/20260813_audit_tamper_proof_log.sql',
+      // users.mfa_enabled and the signing-lockout columns. The governed sign
+      // reads the signer's MFA enrolment (367a4b135); without the column the
+      // read failed and every freeze/dispatch signature answered
+      // REAUTH_MFA_STATE_UNKNOWN. The real migration, not a hand copy.
+      'db/migrations/20260725_users_signing_lockout_columns.sql',
       'migrations/20260527_mutation_primitives.sql',
       'migrations/20260609_audit_hmac_seal.sql',
       'migrations/20260524_program_workbench_schema.sql',
