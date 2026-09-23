@@ -145,6 +145,28 @@ first round (above). Six were not, and one of those undid a first-round fix.
 | The two signing routes each built their own limiter under one scope name. Each had its own count, so a signer got 20 guesses per window where the scope promised 10. | One limiter instance per scope. | Limiter suite: attempts at finalize and disposition share one budget. Removing the memo fails it. |
 | **The gate missed a sign command chosen by a ternary**: `governed(req, res, approved ? 'sign' : 'resolve', …)`. That hid four live sign writes, with no re-authentication and no signature row: IRB, IBC and IACUC approvals, and RIM label approval. | The gate parses a helper's first three arguments and a `command:` value, and finds `'sign'` bare, in a ternary or as a template literal. `callSpan` skips parentheses inside strings. The four sites are baselined as defects, with reasons. All four are in modules outside the launch catalog. | Selftest 13/13. The new ternary case failed before the change. The live scan finds exactly the four named sites and no others. |
 
+### The reviewer signs their own review
+
+Until this change, every disposition recorded in the UI was a `responsibility`
+signature. *Request a review* took only a typed name, so no review was ever
+assigned to an account. The path where the reviewer signs their own review
+(`review` or `approval`) existed on the server but could not be reached from the
+product.
+
+*Request a review* now has a **Reviewer account** select. It lists the
+organization's members from `GET /api/tenant-users/:orgId`, the member-readable
+list, and leaves out viewers, whom the server refuses as assignees. Choosing an
+account sends `reviewerUserId`, and the listed name defaults to the account's
+name. "No account here" keeps the on-behalf path. If the member list cannot be
+read, the drawer says so and still allows a reviewer without an account; a
+failed read is never shown as an organization with nobody in it. With neither an
+account nor a name, nothing is sent.
+
+Proof: `protocolDevSurfaceWrites.test.tsx`. Red 4/20 against the previous
+surface (`picker-red.txt`; the existing request case fails on the renamed
+field). Green 20/20 (`picker-green.txt`). The protocol client suites and UI
+contracts pass 153/153.
+
 ## The class: `ci:sign-ceremony`
 
 The census found **30 `sign` ledger write sites**. Two were already correct
@@ -238,12 +260,6 @@ adversarially reviewed; this section is filled in when they land.*
 
 Open items, left as they are on purpose:
 
-- **Every disposition recorded in the UI is a `responsibility` signature.** The
-  request-review form takes a reviewer's name and has no user picker. So the
-  path where the assigned reviewer signs their own review (`review` or
-  `approval`) can be reached only through the API or AnA's assign tool with a
-  `reviewerUserId`. The server enforces both paths correctly. The picker is the
-  next piece of this workstream.
 - **Two signing-authority policies exist.** One is the writer roles plus the
   `GOVERNANCE_RBAC_ENFORCE` gate: the canonical `makeHandler` path, which
   protocol signing follows. The other is `isSigningAuthorized` (admin, approver,
