@@ -3727,7 +3727,9 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
 
     // Get all sections
     const sectionsResult = await pool.query(
-      'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
+      // 2026-09-23 (W5/D7, co-author final pass): the seal's section order is the editor's
+      // (order_index, created_at; id makes it total), the order the filing copy assembles in.
+      'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index, created_at, id',
       [docId, tenantId]
     );
 
@@ -4039,7 +4041,9 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
           [docId, tenantId]
         );
         const approvedSections = await client.query(
-          'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
+          // 2026-09-23 (W5/D7, co-author final pass): the seal's section order is the editor's
+          // (order_index, created_at; id makes it total), the order the filing copy assembles in.
+          'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index, created_at, id',
           [docId, tenantId]
         );
         const frozenContent = JSON.stringify({
@@ -4751,6 +4755,23 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
     const txClient = await pool.connect();
     try {
     await txClient.query('BEGIN');
+    /* 2026-09-23 (W5/D7, co-author final pass): the lock. Every other section
+       writer consults document-lock.ts; this one did not, so any org member
+       could overwrite (or add to) the sections of an APPROVED or FROZEN
+       document — its seal then no longer matched and it could never be filed
+       or re-sealed again. The document row is locked for the transaction, so
+       a freeze or approval cannot land between this check and the writes. */
+    await txClient.query(
+      'SELECT id FROM authoring_documents WHERE id = $1 AND tenant_id = $2 FOR UPDATE',
+      [req.params.docId, tenantId]
+    );
+    const lock = await checkDocumentWritable(txClient, String(req.params.docId), tenantId);
+    if (!lock.writable) {
+      await txClient.query('ROLLBACK');
+      return lock.code === 'DOCUMENT_FROZEN'
+        ? res.status(403).json({ error: 'DOCUMENT_FROZEN', message: lock.reason })
+        : res.status(404).json({ error: 'Document not found' });
+    }
     // Apply template sections
     for (const section of template.sections || []) {
       const existing = existingMap.get(section.code);
@@ -5349,7 +5370,9 @@ async function approveAndFreezeDocument(args: {
     [docId, tenantId]
   );
   const approvedSections = await client.query(
-    'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
+    // 2026-09-23 (W5/D7, co-author final pass): the seal's section order is the editor's
+    // (order_index, created_at; id makes it total), the order the filing copy assembles in.
+    'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index, created_at, id',
     [docId, tenantId]
   );
   const frozenContent = JSON.stringify({

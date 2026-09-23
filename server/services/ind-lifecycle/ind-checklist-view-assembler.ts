@@ -68,6 +68,15 @@ const sectionKey = (code: string): string => {
   return canonical ? `m${canonical}` : code;
 };
 
+/* 2026-09-23 (W5/D7, co-author final pass): coauthor 'finalized' maps to
+   'locked', not 'signed'. 'finalized' is what a FROZEN authoring document
+   files as (services/coauthor/coauthor-snapshot.ts snapshotStatusFor), and
+   freezing needs no signature — any org member may freeze. Reporting it as
+   'signed' said a Form 1571 had been signed when nobody signed it. 'locked' is
+   the surface's own complete-but-unsigned state: the content is sealed and
+   locked, and nothing more is claimed. 'signed' is kept only for a stored
+   'signed'. Whether an unsigned freeze should count as complete at all is a
+   founder decision and is unchanged here: 'locked' is still COMPLETE. */
 /** coauthor_documents.status (real, coarse) → the surface's SectionStatus vocabulary. */
 const STATUS_MAP: Record<string, string> = {
   draft: 'drafting',
@@ -75,17 +84,22 @@ const STATUS_MAP: Record<string, string> = {
   in_progress: 'drafting',
   review: 'qa_review',
   approved: 'approved',
-  finalized: 'signed',
+  finalized: 'locked',
   signed: 'signed',
   locked: 'locked',
 };
 /** A document exists, so the floor is "drafting" — never not_started (that means no doc). */
 const mapStatus = (raw: unknown): string => STATUS_MAP[str(raw).toLowerCase()] ?? 'drafting';
 
-/** Ordering used to keep the most-advanced status when two docs land on one section. */
+/** Ordering used to keep the most-advanced status when two docs land on one section.
+ *  2026-09-23 (W5/D7, co-author final pass): among the complete states, a bare
+ *  lock ranks BELOW the ones that record a sign-off — every 'locked' here comes
+ *  from coauthor_documents, where it (and 'finalized', now mapped to it)
+ *  records no signature — so a section holding an approved or signed copy and
+ *  a frozen one shows the approval, never less than the truth. */
 const RANK: Record<string, number> = {
   not_started: 0, data_gathering: 1, drafting: 2, revision: 3, internal_review: 3,
-  qa_review: 4, approved: 5, signed: 6, locked: 7,
+  qa_review: 4, locked: 5, approved: 6, signed: 7,
 };
 const COMPLETE = new Set(['approved', 'signed', 'locked']);
 
