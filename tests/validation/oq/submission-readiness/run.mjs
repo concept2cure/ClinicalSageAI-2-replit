@@ -293,7 +293,7 @@ await step(
     action: 'GET /api/module-subscriptions/navigation; open /concept2cure/orchestration and /concept2cure/inconsistency',
     expected:
       'launchScope.enforced=true; "orchestration" and "inconsistency" are not entitled, source "launch-scope", while "dispatch-readiness" is entitled; each deep link explains the board is not in this release',
-    note: 'OQ-005 v0.5. Until then this ad-hoc step rendered both boards. In every organisation signup creates, the Orchestration board found no program and the Inconsistency board refused the program\'s id: both read the integer project spine, which a program reaches only through an anchor signup never creates (VSR-001 §14.3; decided §15).',
+    note: 'OQ-005 v0.5. Until then this ad-hoc step rendered both boards. In every organisation signup creates, the Orchestration board found no program and the Inconsistency board refused the program\'s id: both read the integer project spine, which a program reaches only through an anchor signup never creates (VSR-001 §14.3; decided §16).',
   },
   async (ctx) => {
     const { api, expect } = ctx;
