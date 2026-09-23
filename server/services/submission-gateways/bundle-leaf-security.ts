@@ -11,9 +11,14 @@
  * A marker saying "the gate ran" would certify those bundles too: it records
  * that a gate ran, not what the gate could see. So this re-establishes the fact
  * from the bytes being sent — the sha256-verified bundle — with the one rule the
- * packager uses (leaf-pdf-security). It runs for every eCTD format and in every
- * environment: 'staging' is the agency's test system, which is still a transmit
- * to an agency, and it is the environment launch row D7 is judged in.
+ * packager uses (leaf-pdf-security). It runs for every bundle format and in
+ * every environment: 'staging' is the agency's test system, which is still a
+ * transmit to an agency, and it is the environment launch row D7 is judged in.
+ *
+ * Every format, not only eCTD (review fix, 2026-09-22): the format label is
+ * chosen at assembly, so an IND package labelled 'estar' skipped the check and
+ * reached FDA ESG unexamined. The official eSTAR is itself an FDA form and
+ * passes as one when it carries FDA's own security (leaf-pdf-security).
  *
  * @module server/services/submission-gateways/bundle-leaf-security
  */
@@ -24,9 +29,6 @@ import { ValidationError, type Region, type SubmissionBundle } from './types';
 import { hasPdfHeader } from '../ectd/pdfa-detect';
 import { assessLeafPdfSecurity } from '../ectd/leaf-pdf-security';
 
-/** The bundle formats whose content is eCTD leaves. */
-const ECTD_FORMATS: ReadonlySet<string> = new Set(['ectd', 'pmda_ectd']);
-
 export interface BundleLeafSecurityReport {
   /** PDF entries judged (by name or by %PDF- header). */
   pdfEntries: number;
@@ -35,17 +37,14 @@ export interface BundleLeafSecurityReport {
 }
 
 /**
- * Refuse a transmit whose signed eCTD bundle contains a secured PDF. Returns
- * what was judged; a non-eCTD format is not judged here and returns null.
- * Throws ValidationError when the bundle cannot be read or opened — a package
- * whose leaves cannot be examined is never reported as clear.
+ * Refuse a transmit whose signed bundle contains a secured PDF. Returns what
+ * was judged. Throws ValidationError when the bundle cannot be read or opened —
+ * a package whose leaves cannot be examined is never reported as clear.
  */
 export async function assertBundleLeafSecurity(
   bundle: SubmissionBundle,
   region: Region,
-): Promise<BundleLeafSecurityReport | null> {
-  if (!ECTD_FORMATS.has(bundle.format)) return null;
-
+): Promise<BundleLeafSecurityReport> {
   const buf = await readVerifiedBundle(bundle);
   let zip: JSZip;
   try {

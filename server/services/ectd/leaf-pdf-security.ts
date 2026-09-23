@@ -52,6 +52,7 @@ import * as path from 'path';
 import { createHash } from 'crypto';
 import { pdfNameOffsets } from './pdfa-detect';
 import { indFormTemplatesDir } from '../ind-forms/template-locations';
+import { listVendoredTemplates, resolveEstarTemplateDir } from '../pathway-engines/estar/estar-template-registry';
 
 export type LeafPdfSecurity =
   /** No /Encrypt entry anywhere in the file. */
@@ -123,42 +124,61 @@ const templateCache = new Map<string, Promise<SecuredFormTemplate[]>>();
  */
 async function loadSecuredFdaFormTemplates(): Promise<SecuredFormTemplate[]> {
   const dir = indFormTemplatesDir();
-  let cached = templateCache.get(dir);
+  const estarDir = resolveEstarTemplateDir();
+  const key = `${dir}|${estarDir}`;
+  let cached = templateCache.get(key);
   if (!cached) {
     cached = (async () => {
-      let names: string[];
+      // Every FDA-issued form the platform vendors, each verified against its
+      // own pin: the IND forms by their manifest's sha256, the eSTAR templates
+      // by assets/estar-templates/checksums.txt (2026-09-22: an eSTAR bundle is
+      // an FDA ESG transmit too, and the official eSTAR is FDA-secured).
+      const candidates: Array<{ formId: string; edition: string | null; bytes: Buffer }> = [];
+      let names: string[] = [];
       try {
         names = await fs.readdir(dir);
       } catch {
-        return [];
+        names = [];
       }
-      const out: SecuredFormTemplate[] = [];
       for (const name of names.filter((n) => /^FDA_.+\.pdf$/i.test(n)).sort()) {
         try {
           const manifest = JSON.parse(await fs.readFile(path.join(dir, `${name}.manifest.json`), 'utf8'));
           const bytes = await fs.readFile(path.join(dir, name));
           const sha256 = createHash('sha256').update(bytes).digest('hex');
           if (typeof manifest?.sha256 !== 'string' || manifest.sha256.toLowerCase() !== sha256) continue;
-          const refs = pdfNameOffsets(bytes, 'Encrypt').map((o) => encryptRefAt(bytes, o));
-          if (refs.length === 0 || refs.some((r) => r === null)) continue;
-          const reader = await openAsReader(bytes);
-          if (!reader.ok) continue;
-          out.push({
+          candidates.push({
             formId: typeof manifest.formId === 'string' ? manifest.formId : name.replace(/\.pdf$/i, ''),
             edition: typeof manifest.edition === 'string' ? manifest.edition : null,
-            length: bytes.length,
-            sha256,
-            head: bytes.subarray(0, 1024),
-            encryptRefs: new Set(refs as string[]),
-            reader: { permissions: reader.permissions, fingerprint: reader.fingerprint },
+            bytes,
           });
         } catch {
           // No manifest, unreadable, or not JSON: not a verified FDA form.
         }
       }
+      for (const t of await listVendoredTemplates(estarDir)) {
+        if (t.integrity !== 'verified') continue;
+        candidates.push({ formId: `eSTAR ${t.fileName.replace(/\.pdf$/i, '')}`, edition: null, bytes: Buffer.from(t.bytes) });
+      }
+
+      const out: SecuredFormTemplate[] = [];
+      for (const c of candidates) {
+        const refs = pdfNameOffsets(c.bytes, 'Encrypt').map((o) => encryptRefAt(c.bytes, o));
+        if (refs.length === 0 || refs.some((r) => r === null)) continue;
+        const reader = await openAsReader(c.bytes);
+        if (!reader.ok) continue;
+        out.push({
+          formId: c.formId,
+          edition: c.edition,
+          length: c.bytes.length,
+          sha256: createHash('sha256').update(c.bytes).digest('hex'),
+          head: c.bytes.subarray(0, 1024),
+          encryptRefs: new Set(refs as string[]),
+          reader: { permissions: reader.permissions, fingerprint: reader.fingerprint },
+        });
+      }
       return out;
     })();
-    templateCache.set(dir, cached);
+    templateCache.set(key, cached);
   }
   return cached;
 }

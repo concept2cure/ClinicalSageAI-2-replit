@@ -81,3 +81,26 @@ describe('transmit guard — leaf security from the signed bundle', () => {
     await expect(getGateway('fda', 'esg').transmit(request(b, 'staging'))).rejects.not.toThrow(/encrypted\/secured/);
   });
 });
+
+/* Review fix, 2026-09-22: the format label is chosen at assembly, so a package
+   labelled 'estar' skipped the check and reached FDA ESG unexamined. Every
+   format is judged now; the official eSTAR passes as the FDA form it is. */
+describe('transmit guard — every bundle format, eSTAR included', () => {
+  it('refuses a secured leaf in a bundle labelled estar', async () => {
+    const b = await bundleOf({ 'm3/32s3/secured.pdf': secured }, 'estar');
+    await expect(getGateway('fda', 'esg').transmit(request(b, 'staging'))).rejects.toThrow(/encrypted\/secured/);
+  });
+
+  it('lets a filled official eSTAR — FDA-secured, as FDA issued it — past the security check', async () => {
+    const { fillEstarSubmission } = await import('../../pathway-engines/estar/estar-fill');
+    const { readFileSync } = await import('fs');
+    const { resolveEstarTemplateDir } = await import('../../pathway-engines/estar/estar-template-registry');
+    const template = readFileSync(path.join(resolveEstarTemplateDir(), 'eSTAR-510k-non-ivd.pdf'));
+    const r = await fillEstarSubmission({
+      type: '510k', variant: 'device', data: { deviceName: 'Acme Monitor', deviceTradeName: 'Acme', applicantName: 'C2C' }, templateBytes: new Uint8Array(template),
+    } as never);
+    expect(r.filled).toBe(true);
+    const b = await bundleOf({ 'eSTAR-510k.pdf': Buffer.from(r.pdfBytes!) }, 'estar');
+    await expect(getGateway('fda', 'esg').transmit(request(b, 'staging'))).rejects.not.toThrow(/encrypted\/secured/);
+  });
+});
