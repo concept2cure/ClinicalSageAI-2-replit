@@ -28,6 +28,7 @@
 import { describe, it, expect } from 'vitest';
 import { deriveVaultKpis, selectVaultFiles } from '../hooks/useVault';
 import { completionOf, toDocStatus } from '../surfaces/VaultSurface';
+import { averageAssessedCompletion } from '../components/DocumentsPanel';
 import type { VaultFile, VaultFileStatus } from '../data/vault';
 
 const file = (over: Partial<VaultFile> = {}): VaultFile => ({
@@ -140,5 +141,24 @@ describe('completion is null for a document nobody assessed', () => {
     expect(toDocStatus('final')).toBe('ready');
     expect(toDocStatus('locked')).toBe('locked');
     expect(toDocStatus('draft')).toBe('draft');
+  });
+});
+
+describe('averageAssessedCompletion — one definition for every surface average', () => {
+  const doc = (completion: number | null) => ({ completion }) as never;
+
+  it('leaves unassessed documents out of both the sum and the count', () => {
+    // Counting the null as 0 would give 33; the honest mean of what was
+    // assessed is 50.
+    expect(averageAssessedCompletion([doc(40), doc(60), doc(null)])).toBe(50);
+  });
+
+  it('is null — not 0 — when nothing was assessed', () => {
+    expect(averageAssessedCompletion([])).toBeNull();
+    expect(averageAssessedCompletion([doc(null), doc(null)])).toBeNull();
+  });
+
+  it('rounds the mean of assessed values', () => {
+    expect(averageAssessedCompletion([doc(64), doc(88), doc(100)])).toBe(84);
   });
 });

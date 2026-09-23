@@ -55,6 +55,30 @@ export interface KitDocument {
   anomalies?: number;
 }
 
+/**
+ * Mean completion over the documents whose completion was ASSESSED, or null
+ * when none was.
+ *
+ * One definition for every surface that shows an average — Engineering and UDI
+ * each carried their own copy of `documents.reduce((s, d) => s + d.completion,
+ * 0) / documents.length`. Two properties that copy did not have:
+ *
+ *  - An unassessed document (completion null — an uploaded file has no
+ *    sections to be part-way through) is left OUT of both the sum and the
+ *    count. Counting it as 0 would drag the mean down for a file that is
+ *    finished; counting it as 100 would lift it for one nobody reviewed.
+ *  - Nothing assessed yields null, not 0. The copy returned 0 for an empty
+ *    list, which renders "avg 0%" — a claim that documents exist and are
+ *    unstarted, made about documents that do not exist.
+ */
+export function averageAssessedCompletion(docs: readonly KitDocument[]): number | null {
+  const assessed = docs
+    .map((d) => d.completion)
+    .filter((c): c is number => typeof c === 'number' && Number.isFinite(c));
+  if (assessed.length === 0) return null;
+  return Math.round(assessed.reduce((s, c) => s + c, 0) / assessed.length);
+}
+
 export interface KitDocFramework {
   id: string;
   label: string;
