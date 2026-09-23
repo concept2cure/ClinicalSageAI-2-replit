@@ -633,13 +633,20 @@ Each item was written test-first and closed.
 - `ci:requestdb-coverage --strict-no-regression`: 229/229.
 - Scoped typecheck: no errors in the changed files.
 
+**Closed after the push: a link failed on every real database.** The Drizzle
+model declared `cross_module_task_links.updated_at`, which no applier creates.
+Drizzle names every modelled column in `INSERT … RETURNING`, so
+`POST /api/regulatory/tasks/:id/link` answered 500 on any database built from
+the migration set. It failed honestly, and nothing was written. Nothing read the
+column, so it is removed from the model (`shared/schema.ts`, with a dated note);
+no migration changes. The PGlite suite used to add the column itself. It now
+builds the table exactly as the migration set does:
+- against the old model: red, 2 failed of 21 (`link-red.txt`);
+- with the fix: green, 77/77 across both unified-task suites (`link-green.txt`).
+
 **Still open.**
 - The AnA command executor calls the cascade with no transaction, so the
   dependents it unblocks there have no ledger row.
-- `cross_module_task_links.updated_at` is declared in the Drizzle model, but no
-  migration creates it. `POST /api/regulatory/tasks/:id/link` therefore answers
-  500 on a real database. It fails honestly and records nothing. The PGlite
-  suite adds the column itself.
 - A dependency link racing a completion of the same pair can deadlock.
   Postgres aborts one side (40P01), which rolls back and is answered as a
   failure.
