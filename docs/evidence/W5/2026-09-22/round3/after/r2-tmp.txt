@@ -1,0 +1,188 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/coauthorSnapshotSeal.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/coauthorSnapshotSeal.test.ts
+{
+  "timestamp": "2026-09-23T08:12:21.613Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/coauthorSnapshotSeal.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > reads the seal the router writes: a frozen document places as finalized with its text
+{
+  "timestamp": "2026-09-23T08:12:23.163Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 0c000000-0000-4000-8000-0000000000e1 by member@org.test",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > reads the seal the router writes: a frozen document places as finalized with its text
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > refuses to file sections apply-template rewrote after the seal, and creates nothing
+{
+  "timestamp": "2026-09-23T08:12:23.228Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 0c000000-0000-4000-8000-0000000000f1 by member@org.test",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > refuses to re-take an existing sealed copy from rewritten sections, and the copy is untouched
+{
+  "timestamp": "2026-09-23T08:12:23.277Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 0c000000-0000-4000-8000-0000000000a1 by member@org.test",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > reads the seal the router writes: a frozen document places as finalized with its text 148ms
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > refuses to file sections apply-template rewrote after the seal, and creates nothing 50ms
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > refuses to re-take an existing sealed copy from rewritten sections, and the copy is untouched 61ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > an APPROVED source files its own saved text and title — a forged body is not what gets approved 65ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > a FROZEN source likewise files its sealed text as finalized 23ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > refuses a source with no saved sections — there is nothing to file — and creates nothing 19ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > still refuses another organization's source with 404 12ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > leaves an unsourced POST as it was: the body is the text, and it is a draft 14ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > follows FINALIZED_DOCUMENT_READ_ONLY end to end: place, refused edit, place again 37ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a source that has moved on (draft, then approved) re-takes its copy with the approved text 36ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a copy whose text drifted from its approved source is restored to the source by placing again 28ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a deleted copy can be placed again, under the identity the alias map still records 41ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > placing an unchanged source again writes nothing 27ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a first placement after the approved sections were rewritten, and creates nothing 11ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a re-placement over an existing approved copy, and leaves the copy exactly as it was 25ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a section added after the seal (apply-template merge mode) 12ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a document renamed after its seal: the copy would carry a title nobody approved 10ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses an APPROVED source with no sealed record: what was approved cannot be established 9ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a source whose only seal is the old approval stub, which holds no sections 11ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a seal whose bytes no longer match its own hash 12ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > holds the copy to the LATEST seal (approval after freeze) 18ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > a draft source is not held to a seal (it has none), and still files as a draft 10ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the server holds a source to the same "has saved content" rule as the placement dialog > refuses a source whose sections are headings with no text — the body would be empty 10ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the server holds a source to the same "has saved content" rule as the placement dialog > refuses whitespace-only sections the same way 8ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the two refusals round 3 never showed failing > SOURCE_CHANGED: a source approved between the first read and the lock is refused, and nothing is written 11ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the two refusals round 3 never showed failing > DOCUMENT_ALIAS_CONFLICT: an alias naming another organization's row is refused, and neither row nor alias changes 16ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > a re-take that changes the copy writes one audit event with the text it replaced — even saved co-author edits 25ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > an unchanged re-take writes no audit event (and nothing else) 26ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > re-creating a deleted copy is recorded against the same id 27ms
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > an APPROVED document files as approved — the case that was impossible
+{
+  "timestamp": "2026-09-23T08:12:29.215Z",
+  "level": "warn",
+  "message": "[coauthor] Document alias map absent; snapshot created without cross-store identity",
+  "context": {
+    "coauthorDocumentId": 101,
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > a FROZEN document files as finalized
+{
+  "timestamp": "2026-09-23T08:12:29.227Z",
+  "level": "warn",
+  "message": "[coauthor] Document alias map absent; snapshot created without cross-store identity",
+  "context": {
+    "coauthorDocumentId": 101,
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > a DRAFT document still files as a draft, and still fails completeness
+{
+  "timestamp": "2026-09-23T08:12:29.231Z",
+  "level": "warn",
+  "message": "[coauthor] Document alias map absent; snapshot created without cross-store identity",
+  "context": {
+    "coauthorDocumentId": 101,
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > an unrecognised state files as a draft, never as something better
+{
+  "timestamp": "2026-09-23T08:12:29.235Z",
+  "level": "warn",
+  "message": "[coauthor] Document alias map absent; snapshot created without cross-store identity",
+  "context": {
+    "coauthorDocumentId": 101,
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > a source with no status at all files as a draft
+{
+  "timestamp": "2026-09-23T08:12:29.240Z",
+  "level": "warn",
+  "message": "[coauthor] Document alias map absent; snapshot created without cross-store identity",
+  "context": {
+    "coauthorDocumentId": 101,
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the caller cannot award the status itself > ignores a status sent in the body
+{
+  "timestamp": "2026-09-23T08:12:29.244Z",
+  "level": "warn",
+  "message": "[coauthor] Document alias map absent; snapshot created without cross-store identity",
+  "context": {
+    "coauthorDocumentId": 101,
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the caller cannot award the status itself > ignores a status even with no source document named
+{
+  "timestamp": "2026-09-23T08:12:29.248Z",
+  "level": "warn",
+  "message": "[coauthor] Document alias map absent; snapshot created without cross-store identity",
+  "context": {
+    "coauthorDocumentId": 101,
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > provenance > records which document the status came from
+{
+  "timestamp": "2026-09-23T08:12:29.257Z",
+  "level": "error",
+  "message": "[coauthor] Create document error",
+  "context": {
+    "err": "Document alias requires a canonical uuid"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > provenance > leaves an unsourced snapshot with no provenance claim
+{
+  "timestamp": "2026-09-23T08:12:29.261Z",
+  "level": "warn",
+  "message": "[coauthor] Document alias map absent; snapshot created without cross-store identity",
+  "context": {
+    "coauthorDocumentId": 101,
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > an APPROVED document files as approved — the case that was impossible 34ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > a FROZEN document files as finalized 5ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > a DRAFT document still files as a draft, and still fails completeness 4ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > an unrecognised state files as a draft, never as something better 4ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > a source with no status at all files as a draft 5ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the caller cannot award the status itself > ignores a status sent in the body 3ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the caller cannot award the status itself > ignores a status even with no source document named 3ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the caller cannot award the status itself > refuses a source document that is not this organization's 4ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > provenance > records which document the status came from 7ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > provenance > leaves an unsourced snapshot with no provenance claim 3ms
+
+ Test Files  3 passed (3)
+      Tests  39 passed (39)
+   Start at  08:12:16
+   Duration  13.27s (transform 2.13s, setup 121ms, import 4.51s, tests 8.01s, environment 0ms)
+

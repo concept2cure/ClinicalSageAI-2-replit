@@ -1,0 +1,36 @@
+
+/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/coauthorSnapshotFromSource.test.ts
+  639:1   warning  File has too many lines (756). Maximum allowed is 500            max-lines
+  765:73  warning  Arrow function has too many lines (127). Maximum allowed is 100  max-lines-per-function
+
+/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/coauthorSnapshotSeal.test.ts
+  255:79  warning  Arrow function has too many lines (103). Maximum allowed is 100  max-lines-per-function
+
+/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/coauthorSnapshotSeeds.test.ts
+  176:76  warning  Arrow function has too many lines (113). Maximum allowed is 100  max-lines-per-function
+
+/home/user/ClinicalSageAI-2-replit/server/services/coauthor/coauthor-snapshot.ts
+  180:1   warning  Async function 'checkAgainstSeal' has a complexity of 17. Maximum allowed is 15          complexity
+  244:8   warning  Async function 'takeAuthoringSnapshot' has too many lines (148). Maximum allowed is 100  max-lines-per-function
+  270:62  warning  Async arrow function has too many lines (124). Maximum allowed is 100                    max-lines-per-function
+  270:62  warning  Async arrow function has a complexity of 22. Maximum allowed is 15                       complexity
+
+✖ 8 problems (0 errors, 8 warnings)
+
+eslint exit 0
+
+/home/user/ClinicalSageAI-2-replit/scripts/seed/ga-demo.d/112-ind-authoring-doc.mjs
+  105:5  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  109:5  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  127:5  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  134:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  145:7  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  154:5  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  165:5  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  185:5  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  211:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+✖ 9 problems (0 errors, 9 warnings)
+
+eslint --no-ignore seed112 exit 0
+node --check seed112 ok

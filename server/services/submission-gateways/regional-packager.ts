@@ -743,21 +743,63 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   const refByLeaf = new Map<EctdLeaf, LeafRef>();
   for (const leaf of input.leaves) {
 
-    // Backbone-only lifecycle delete: when the withdrawn document lives in a
-    // PRIOR sequence, the delete leaf carries no new bytes (empty sourcePath) —
+    // A lifecycle delete is ALWAYS backbone-only: the withdrawn document lives
+    // in a PRIOR sequence, so the delete leaf carries no bytes of its own —
     // exactly what computeLifecycleOperations emits. Render it as
     // operation="delete" pointing at the prior file (modified-file, also used as
-    // the xlink:href), but do NOT read a file, write it into this package, or
-    // add a checksum line. A delete that DOES carry a sourcePath falls through
-    // and is packaged normally (some callers ship superseding bytes with it).
-    if (leaf.operation === 'delete' && !leaf.sourcePath) {
-      const { href: fallbackHref, backboneDir: deleteBackboneDir } = leafPackagePath(leaf, region);
+    // the xlink:href), and never read a file, write it into this package, or
+    // add a checksum line.
+    //
+    // 2026-09-23 (W5/D7, round-2 skeptic): this is the one sink every path
+    // reaches, so the invariant is enforced HERE. A delete that carried a
+    // sourcePath used to fall through and be packaged as an ordinary file: the
+    // withdrawn document's bytes shipped in the withdrawing sequence, checksummed,
+    // under an href into THIS sequence and with no modified-file — the AnA tool
+    // package_ectd_for_region built exactly that for every withdrawal. Both
+    // shapes are now refused, naming the leaf: a delete with a sourcePath, and
+    // a delete with no modified-file pointer at the leaf it withdraws.
+    //
+    // 2026-09-23 (W5/D7, round-2 skeptic, second pass): sequence 0000 was exempt
+    // from the modified-file rule, so a delete in a first sequence — where
+    // nothing is on file to withdraw — packaged with checksum="" and an
+    // xlink:href at a file absent from the zip (reachable through the AnA tool,
+    // whose schema no longer requires source_path). Every delete in 0000 is now
+    // refused, and every other delete must name its modified-file.
+    // package-from-core already reports a 0000 delete in `skipped`, so the
+    // canonical spine never reaches this.
+    if (leaf.operation === 'delete') {
+      if (leaf.sourcePath) {
+        throw new ValidationError(
+          `Leaf '${leaf.fileName}' (section ${leaf.ctdSection}) is a delete that carries a source file ` +
+            `(${leaf.sourcePath}). A withdrawal ships no content: it names the filed leaf it withdraws ` +
+            `through modified-file and carries no bytes, so the package will not read, ship or checksum them. ` +
+            `Remove the source path from the delete.`,
+          [{ ruleId: 'LEAF-DELETE-CARRIES-BYTES', severity: 'error', filePath: leaf.fileName }],
+        );
+      }
+      if (input.sequence.trim() === '0000') {
+        throw new ValidationError(
+          `Leaf '${leaf.fileName}' (section ${leaf.ctdSection}) is a delete in sequence 0000. A first sequence ` +
+            `has nothing on file to withdraw, so there is no filed leaf this delete could name.`,
+          [{ ruleId: 'LEAF-DELETE-IN-FIRST-SEQUENCE', severity: 'error', filePath: leaf.fileName }],
+        );
+      }
+      if (!leaf.modifiedFile) {
+        throw new ValidationError(
+          `Leaf '${leaf.fileName}' (section ${leaf.ctdSection}) is a delete in sequence ${input.sequence} with no ` +
+            `modified-file. A withdrawal must name the filed leaf it withdraws (its path in the prior sequence, ` +
+            `e.g. ../0000/m3/…/file.pdf); without it the agency cannot tell which document is withdrawn.`,
+          [{ ruleId: 'LEAF-DELETE-NO-MODIFIED-FILE', severity: 'error', filePath: leaf.fileName }],
+        );
+      }
+      const { backboneDir } = leafPackagePath(leaf, region);
       // A withdrawal has no bytes of its own, so its href IS the pointer at the
       // prior sequence — and therefore needs the same rebasing onto the
-      // backbone that carries it.
-      const backboneDir = deleteBackboneDir;
+      // backbone that carries it. (2026-09-23, second pass: every delete that
+      // reaches here names its modified-file, so there is no in-sequence
+      // fallback href to a file that is not in the package.)
       refByLeaf.set(leaf, {
-        href: leaf.modifiedFile ? rebaseToBackbone(leaf.modifiedFile, backboneDir) : fallbackHref,
+        href: rebaseToBackbone(leaf.modifiedFile, backboneDir),
         md5: leaf.md5 ?? '',
         backboneDir,
       });

@@ -63,6 +63,7 @@ import {
   persistGovernedSignatureRevocation,
   SignatureRevocationUnresolvedError,
 } from '../../services/part11/signature-persistence.js';
+import { clientIpOf } from '../../utils/client-ip';
 
 const router = Router();
 
@@ -266,6 +267,9 @@ const REAUTH_ERROR: Record<SignerRefused['code'], string> = {
   MFA_TOKEN_REQUIRED: 'REAUTH_TOTP_REQUIRED',
   MFA_VERIFICATION_FAILED: 'REAUTH_TOTP_INVALID',
   MFA_STATE_UNKNOWN: 'REAUTH_MFA_STATE_UNKNOWN',
+  ACCOUNT_INACTIVE: 'REAUTH_ACCOUNT_INACTIVE',
+  ACCOUNT_LOCKED: 'REAUTH_ACCOUNT_LOCKED',
+  ACCOUNT_STATE_UNKNOWN: 'REAUTH_ACCOUNT_STATE_UNKNOWN',
 };
 
 /**
@@ -657,10 +661,7 @@ function makeHandler(command: Command) {
         {
           // Honest attribution on the Part 11 signature row a `sign` persists:
           // the real client IP when resolvable, null otherwise (never fabricated).
-          ipAddress:
-            (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
-            req.socket?.remoteAddress ||
-            null,
+          ipAddress: clientIpOf(req),
         },
       );
       return res.json(result);

@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-003 |
-| Version | 0.3 |
+| Version | 0.4 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §5; requirements URS-003 |
 | Runner (the executable protocol) | `tests/validation/oq/authoring/run.mjs` — `npm run validation:oq -- authoring` |
@@ -16,10 +16,11 @@
 | 0.1 | 2026-09-21 | W3a | First protocol; executed locally (see record). |
 | 0.2 | 2026-09-21 | WF | VSR-001 §8.3 P-1: the comment recorded in OQ-AUTH-09 is resolved through the comment-resolution API (new OQ-AUTH-11b, audited) before the freeze; the refusal of a freeze over an open comment is kept as the negative case (new OQ-AUTH-11a); the `acknowledgeUnresolved` confirm flag is not the happy path. OQ-AUTH-15/16 moved before the freeze (a FROZEN document refuses every edit-class route with 409, which answered the AI-draft check for the wrong reason). Re-executed locally (§5). |
 | 0.3 | 2026-09-22 | W3 | §5 records the 2026-09-22 execution under the production posture (RLS enforcing, non-owner runtime role, credentialed second signer); earlier results are kept below it as superseded. No step changed. |
+| 0.4 | 2026-09-23 | W3 | OQ-AUTH-12 to 14 rewritten for the signing ceremony that replaces the PIN (URS-003 v0.2, URS-AUTH-010): the PIN route is gone and a PIN signs nothing (12); a wrong password, a missing code and a wrong meaning are refused with nothing stored (13); the review signature re-verifies the run identity's password and authenticator code and records that method (14). §1 updated. |
 
 ## 1. Method
 
-As OQ-001 §1. The signing PIN is enrolled by the runner through the product's own endpoint for the test identity (`VALIDATION_SIGNING_PIN`, default `246813`); PIN values are redacted from every record. Steps execute in the order below: review/submit precede freeze because submit requires DRAFT; the AI-draft steps precede freeze because a FROZEN document refuses every edit-class route; the comment from OQ-AUTH-09 is resolved through the product's comment-resolution API (OQ-AUTH-11b) before the freeze, after the refusal of a freeze over an open comment has been observed (OQ-AUTH-11a). The freeze confirm flag `acknowledgeUnresolved` is never sent.
+As OQ-001 §1. The e-signature steps (OQ-AUTH-13, 14) re-authenticate the run identity with its own password and, when it has an authenticator enrolled, a current code the harness computes and never reuses (`VALIDATION_USER_PASSWORD`, `VALIDATION_USER_TOTP_SECRET`; `tests/validation/lib/totp.mjs`). Neither value appears in any record. Without the password (a dev-login run) those steps are recorded as deviations with that reason. Until v0.4 the steps enrolled and used a separate signing PIN, which the product no longer has. Steps execute in the order below: review/submit precede freeze because submit requires DRAFT; the AI-draft steps precede freeze because a FROZEN document refuses every edit-class route; the comment from OQ-AUTH-09 is resolved through the product's comment-resolution API (OQ-AUTH-11b) before the freeze, after the refusal of a freeze over an open comment has been observed (OQ-AUTH-11a). The freeze confirm flag `acknowledgeUnresolved` is never sent.
 
 ## 2. Pre-conditions
 
@@ -47,9 +48,9 @@ IQ-001 executed; a program created by OQ-AUTH-00. The AI-provider steps expect `
 | OQ-AUTH-11a | URS-AUTH-009, 007 | scripted (negative) | Freeze v1.0 while the OQ-AUTH-09 comment is open; read frozen | 409 `DOCUMENT_NOT_SETTLED` counting 1 open comment; nothing frozen |
 | OQ-AUTH-11b | URS-AUTH-007, 008 | scripted | `PATCH /api/authoring/comments/:id {status:"resolved", resolution_note}`; list comments; read audit | 200; status resolved with `resolved_by` = actor and `resolved_at`; audit event `comment_resolved` naming the comment |
 | OQ-AUTH-11 | URS-AUTH-009 | scripted | Freeze v1.0 (document settled); read frozen; freeze again | Frozen record with content hash; second freeze 400 |
-| OQ-AUTH-12 | URS-AUTH-010 | scripted | Enrol the PIN (or rotate with `old_pin` if already enrolled) | 2xx; change without current PIN refused |
-| OQ-AUTH-13 | URS-AUTH-010 | scripted | e-sign with wrong PIN; with meaning `WHATEVER` | 401; 400; no signature stored |
-| OQ-AUTH-14 | URS-AUTH-010, 011 | scripted | e-sign REVIEWER with PIN and intent; list signatures | One signature: actor, REVIEWER, `pin_verified`, digest, covered freeze hash |
+| OQ-AUTH-12 | URS-AUTH-010 | scripted | `POST /api/authoring/users/pin`; e-sign with a PIN and no password | 404; 400 `PASSWORD_REQUIRED`; no signature stored |
+| OQ-AUTH-13 | URS-AUTH-010 | scripted | e-sign with a wrong password; with the right password and no code (when the identity has an authenticator enrolled); with meaning `WHATEVER` | 401 `PASSWORD_VERIFICATION_FAILED`; 400 `MFA_TOKEN_REQUIRED`; 400; no signature stored |
+| OQ-AUTH-14 | URS-AUTH-010, 011 | scripted | e-sign REVIEWER with the password, the current code and intent; list signatures | One signature: actor, REVIEWER, method `password+mfa` (`password` for an identity with no authenticator), `pin_verified` false, digest, covered freeze hash |
 | OQ-AUTH-18 | URS-AUTH-014 | ad-hoc | Template stores | 200 / 200 |
 | OQ-AUTH-19 | URS-AUTH-015 | unscripted (browser) | Open `/concept2cure/document-authoring` | Document title visible; screenshot |
 | OQ-AUTH-20 | URS-AUTH-013, 015 | ad-hoc (browser) | Open `/concept2cure/review` | Renders; screenshot |

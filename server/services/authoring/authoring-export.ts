@@ -15,6 +15,7 @@
 
 import crypto from 'crypto';
 import type { Queryable } from './authoring-evidence';
+import { describeSignatureMethod } from '../../../shared/part11/signature-method';
 
 export type ExportFormat = 'docx' | 'pdf' | 'xml';
 export const EXPORT_FORMATS: readonly ExportFormat[] = ['docx', 'pdf', 'xml'];
@@ -106,7 +107,8 @@ export function signatureManifestLines(sigs: SignatureRow[]): string[][] {
       `Executed: ${when}`,
     ];
     if (s.reason) lines.push(`Reason: ${s.reason}`);
-    lines.push(`Method: ${s.method ?? 'Not recorded'}${s.pin_verified ? ' (PIN verified)' : ''}`);
+    // §11.200: how the signer was authenticated, in the product's one wording.
+    lines.push(`Method: ${describeSignatureMethod(s.method, s.pin_verified)}`);
     // §11.70 — which record this signature is linked to.
     lines.push(
       s.covered_freeze_version

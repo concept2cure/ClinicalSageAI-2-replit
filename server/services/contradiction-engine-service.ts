@@ -27,6 +27,7 @@ import { pool } from '../db.js';
 import { createScopedLogger } from '../utils/logger';
 import { assumptionRegistryService, type AssumptionRecord } from './assumption-registry-service';
 import { decisionRecordService } from './decision-record-service';
+import { setTenantContextTx } from './tenant/governed-tenant-context';
 
 const log = createScopedLogger('contradiction-engine');
 
@@ -69,6 +70,63 @@ export type ReviewState =
   | 'reviewed'
   | 'approved_resolution'
   | 'superseded';
+
+export const REVIEW_STATES: readonly ReviewState[] = [
+  'unresolved',
+  'under_review',
+  'reviewed',
+  'approved_resolution',
+  'superseded',
+];
+
+/** The states that take a finding off the submission gate (checkPromotionBlocked). */
+const GATE_CLEARING_STATES: ReadonlySet<ReviewState> = new Set(['approved_resolution', 'superseded']);
+
+export function isReviewState(value: unknown): value is ReviewState {
+  return typeof value === 'string' && (REVIEW_STATES as readonly string[]).includes(value);
+}
+
+/** Shortest reason accepted for a review transition — the same bar the revalue route sets. */
+export const REVIEW_REASON_MIN = 8;
+
+/**
+ * A review transition refused before anything was written. The route maps
+ * these to 4xx (409 for REVIEW_STATE_UNCHANGED); any other throw from
+ * transitionReviewState means the transaction rolled back.
+ */
+export class ContradictionReviewRefusal extends Error {
+  constructor(
+    public readonly code: 'REVIEW_STATE_INVALID' | 'REASON_REQUIRED' | 'ACTOR_REQUIRED' | 'REVIEW_STATE_UNCHANGED',
+    message: string,
+  ) {
+    super(message);
+    this.name = 'ContradictionReviewRefusal';
+  }
+}
+
+/**
+ * COMMIT itself failed: the transaction may or may not have landed. Never
+ * reported as "nothing was changed"; the caller is told to re-read.
+ */
+export class ContradictionReviewOutcomeUnknown extends Error {
+  readonly code = 'OUTCOME_UNKNOWN';
+  constructor(cause: unknown) {
+    super(`The review decision could not be confirmed: ${cause instanceof Error ? cause.message : String(cause)}`);
+    this.name = 'ContradictionReviewOutcomeUnknown';
+  }
+}
+
+export interface GovernedReviewTransition {
+  finding: ContradictionFinding;
+  previousReviewState: ReviewState;
+  governance: {
+    command: 'resolve' | 'reopen' | 'transition';
+    actionId: string;
+    auditId: string;
+    sha256Chain: string;
+  };
+}
+
 export type ConsequenceType =
   | 'contradiction_memo'
   | 'review_thread'
@@ -728,28 +786,134 @@ class ContradictionEngineService {
   }
 
   /**
-   * Transition a finding's review state (§2 distinguishable states)
+   * Transition a finding's review state (§2 distinguishable states) — a
+   * governed write.
+   *
+   * Moving a finding to approved_resolution / superseded takes it off the
+   * submission gate, so this was a governed decision recorded as a bare UPDATE
+   * on the shared pool: no reason, no ledger row. The UPDATE and
+   * recordGovernedAction now run on ONE transaction client and commit or roll
+   * back together; null (not found in this org) and any throw leave the finding
+   * exactly as it was.
+   *
+   * resolved_by / resolved_at describe a resolution, so they are set on a
+   * gate-clearing transition and cleared on any other. A reopened finding that
+   * kept its old resolved_at was still counted as resolved by readers that key
+   * on it (pdev-contradiction-bridge). The history lives in the ledger.
    */
   async transitionReviewState(
     findingId: string,
     organizationId: number,
     newState: ReviewState,
-    reviewedBy: string,
-    notes?: string
-  ): Promise<ContradictionFinding | null> {
-    const result = await pool!.query(
-      `
-      UPDATE contradiction_findings
-      SET review_state = $1, resolved_by = $2, resolution_notes = $3,
-          resolved_at = CASE WHEN $1 IN ('approved_resolution', 'superseded') THEN NOW() ELSE resolved_at END,
-          updated_at = NOW()
-      WHERE id = $4 AND organization_id = $5
-      RETURNING *
-    `,
-      [newState, reviewedBy, notes ?? null, findingId, organizationId]
-    );
+    reviewedBy: string | number,
+    reason: string
+  ): Promise<GovernedReviewTransition | null> {
+    if (!isReviewState(newState)) {
+      throw new ContradictionReviewRefusal(
+        'REVIEW_STATE_INVALID',
+        `reviewState must be one of: ${REVIEW_STATES.join(', ')}.`,
+      );
+    }
+    const why = typeof reason === 'string' ? reason.trim() : '';
+    if (why.length < REVIEW_REASON_MIN) {
+      throw new ContradictionReviewRefusal(
+        'REASON_REQUIRED',
+        `A reason of at least ${REVIEW_REASON_MIN} characters is required — it is recorded on the audit trail with the decision.`,
+      );
+    }
+    // The ledger row names a person. 'system' or a missing session is refused
+    // rather than written against an invented actor.
+    const actorId = Number(reviewedBy);
+    if (!Number.isInteger(actorId) || actorId <= 0) {
+      throw new ContradictionReviewRefusal(
+        'ACTOR_REQUIRED',
+        'A signed-in user is required to change a finding’s review state.',
+      );
+    }
 
-    return result.rows.length ? this.mapFinding(result.rows[0]) : null;
+    // Loaded here, not at module top: the ledger primitive's import chain
+    // (bcrypt, MFA, the Part 11 signature store, the database bootstrap) is
+    // needed only by this write, and every scan/detect caller of the engine
+    // would otherwise pay for it at import.
+    const { recordGovernedAction } = await import('../routes/c2c/actions');
+    const clears = GATE_CLEARING_STATES.has(newState);
+    const client = await pool!.connect();
+    try {
+      await client.query('BEGIN');
+      await setTenantContextTx(client, organizationId);
+      const current = await client.query(
+        'SELECT review_state FROM contradiction_findings WHERE id = $1 AND organization_id = $2 FOR UPDATE',
+        [findingId, organizationId],
+      );
+      if (!current.rows.length) {
+        await client.query('ROLLBACK');
+        return null;
+      }
+      const from = current.rows[0].review_state as ReviewState;
+      // Read under the row lock, so this is the committed state. A repeat of the
+      // decision already on the record (a stale board, a re-submitted form)
+      // would add a second ledger row and re-stamp resolved_by with someone who
+      // only repeated it. The catch below rolls back.
+      if (from === newState) {
+        throw new ContradictionReviewRefusal(
+          'REVIEW_STATE_UNCHANGED',
+          `This finding is already ${newState} — a repeated decision is not recorded again.`,
+        );
+      }
+
+      const updated = await client.query(
+        `
+        UPDATE contradiction_findings
+        SET review_state = $1, resolution_notes = $2,
+            resolved_by = CASE WHEN $3::boolean THEN $4 ELSE NULL END,
+            resolved_at = CASE WHEN $3::boolean THEN NOW() ELSE NULL END,
+            updated_at = NOW()
+        WHERE id = $5 AND organization_id = $6
+        RETURNING *
+      `,
+        [newState, why, clears, String(actorId), findingId, organizationId],
+      );
+      if (!updated.rows.length) {
+        // Locked a moment ago, so this should not happen; if it does, nothing
+        // is ledgered for an update that did not land.
+        throw new Error(`contradiction finding ${findingId} was not updated`);
+      }
+      // Mapped before COMMIT: anything that can throw does so while the
+      // transaction can still roll back, so "not recorded" is always true.
+      const finding = this.mapFinding(updated.rows[0]);
+
+      // 'reopen' is the reverse counterpart of 'resolve' in the governed
+      // command set; every other move between open states is a 'transition'.
+      const command: GovernedReviewTransition['governance']['command'] = clears
+        ? 'resolve'
+        : GATE_CLEARING_STATES.has(from)
+          ? 'reopen'
+          : 'transition';
+      const gov = await recordGovernedAction(client, {
+        orgId: organizationId,
+        userId: actorId,
+        command,
+        target: `contradiction-finding:${findingId}`,
+        reason: why,
+        payload: { from, to: newState },
+        domain: 'governed_intelligence',
+      });
+      try {
+        await client.query('COMMIT');
+      } catch (commitErr) {
+        throw new ContradictionReviewOutcomeUnknown(commitErr);
+      }
+      return {
+        finding,
+        previousReviewState: from,
+        governance: { command, ...gov },
+      };
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw err;
+    } finally {
+      client.release();
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════════════════

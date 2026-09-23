@@ -162,6 +162,15 @@ describe('MFA Service', () => {
       expect(setCall.mfaSecret).toMatch(/^[a-f0-9]+:[a-f0-9]+:[a-f0-9]+$/);
     });
 
+    it('refuses, and returns no secret, when an authenticator is already enabled', async () => {
+      // The conditional UPDATE matched nothing, and the account exists: mfa_enabled was true.
+      mockReturning.mockResolvedValueOnce([]);
+      mockSelectLimit.mockResolvedValueOnce([{ id: 42 }]);
+      await expect(mfaModule.generateSecret(42, 'admin@corp.com')).rejects.toBeInstanceOf(
+        mfaModule.MfaAlreadyEnabledError,
+      );
+    });
+
     it('draws the QR code itself: a data: URL, never an address that carries the secret', async () => {
       // It was https://api.qrserver.com/...?data=<otpauth URI with secret=...>:
       // displaying it sent the TOTP seed to a third party.

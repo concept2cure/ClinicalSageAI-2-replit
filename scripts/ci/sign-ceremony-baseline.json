@@ -1,5 +1,5 @@
 {
-  "$note": "Per-file COUNT of `sign` ledger writes whose handler does not both re-verify the signer (verifyReauth / verifySigningPin) and write the electronic_signatures row. Written 2026-09-23 from the census in docs/evidence/D5-GOVERNED-PATH/2026-09-22/. Shrink only. Every entry is a DEFECT or a proof the gate cannot see across a function boundary; the reason says which. None of these is reachable from a launch-catalog surface except where the reason says so.",
+  "$note": "Per-file COUNT of `sign` ledger writes whose handler does not both re-verify the signer (verifyReauth / reverifySigner) and write the electronic_signatures row. Written 2026-09-23 from the census in docs/evidence/D5-GOVERNED-PATH/2026-09-22/. Shrink only. Every entry is a DEFECT or a proof the gate cannot see across a function boundary; the reason says which. None of these is reachable from a launch-catalog surface except where the reason says so.",
   "files": {
     "server/api/cmc/batchRecordRoutes.ts": {
       "count": 1,
@@ -45,13 +45,21 @@
       "count": 3,
       "reason": "DEFECT, outside the launch catalog (research administration). Award closeout finalize and two other grant sign-offs: sign ledger rows, no re-authentication, no signature row. Same remedy as biosketch.ts."
     },
+    "server/routes/iacuc.ts": {
+      "count": 1,
+      "reason": "DEFECT, outside the launch catalog (IACUC). Same shape as irb.ts: an 'approved' outcome writes a sign ledger row with no re-authentication and no signature row. Same fix."
+    },
+    "server/routes/ibc.ts": {
+      "count": 1,
+      "reason": "DEFECT, outside the launch catalog (IBC). Same shape as irb.ts: an 'approved' outcome writes a sign ledger row with no re-authentication and no signature row. Same fix."
+    },
+    "server/routes/irb.ts": {
+      "count": 1,
+      "reason": "DEFECT, outside the launch catalog (IRB). Recording an 'approved' IRB review writes a sign ledger row (governed(req, res, outcome === 'approved' ? 'sign' : 'resolve', \u2026)) with no re-authentication and no electronic_signatures row. Found 2026-09-23 when the gate learned ternary commands. Fix: run the approval through the ceremony (protocol-signature.ts is the pattern), or record it under a command that does not claim a signature."
+    },
     "server/routes/other-support.ts": {
       "count": 1,
       "reason": "DEFECT, outside the launch catalog (research administration). Other Support certification: sign ledger row, no re-authentication, no signature row. Same remedy as biosketch.ts."
-    },
-    "server/routes/research-agreements.ts": {
-      "count": 1,
-      "reason": "DEFECT, outside the launch catalog (research administration). Agreement execution: sign ledger row, no re-authentication, no signature row. Same remedy as biosketch.ts."
     },
     "server/routes/protocol-consent.ts": {
       "count": 1,
@@ -60,6 +68,14 @@
     "server/routes/protocol-deviations.ts": {
       "count": 1,
       "reason": "DEFECT. Deviation close: sign ledger row, no re-authentication, no signature row. No launch surface calls it (grep of client/src, 2026-09-23). Route it through protocol-signature.ts, or record it as a non-sign closure, before any surface does."
+    },
+    "server/routes/research-agreements.ts": {
+      "count": 1,
+      "reason": "DEFECT, outside the launch catalog (research administration). Agreement execution: sign ledger row, no re-authentication, no signature row. Same remedy as biosketch.ts."
+    },
+    "server/routes/rim.ts": {
+      "count": 1,
+      "reason": "DEFECT, outside the launch catalog (RIM). Adding a label with status 'approved' writes a sign ledger row (status === 'approved' ? 'sign' : 'update') with no re-authentication and no signature row. Same fix as irb.ts."
     },
     "server/services/pathway-engines/estar/estar-submission-service.ts": {
       "count": 1,

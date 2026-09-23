@@ -165,7 +165,7 @@ export default async function seed(client, { org, admin }) {
       tags: ['BX-099', 'stability', 'amendment'],
       // Shape is server/services/tasking/task-signoff.ts SignoffManifestation,
       // written into approval_history by taskManagement.routes.ts:364. Meaning
-      // is drawn from TASK_SIGNATURE_MEANINGS (part11/pin-verification.ts:99).
+      // is drawn from TASK_SIGNATURE_MEANINGS (part11/signature-meanings.ts).
       approvalHistory: [
         {
           signedById: null, // filled in below with the real user id

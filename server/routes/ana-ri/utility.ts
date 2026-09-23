@@ -25,10 +25,8 @@ import {
   requiresEsignature,
   MIN_REASON_FOR_CHANGE_LEN,
 } from '../../services/ana-ri/part11-governance.js';
-import {
-  verifySignerCredentials,
-  defaultSignoffDeps,
-} from '../../services/ana-ri/governed-action-signoff.js';
+import { reverifySigner } from '../../services/part11/reverify-signer.js';
+import { signerReverificationDeps } from '../../services/part11/reverify-signer-deps.js';
 import {
   readPendingApproval,
   recordApprovalDecision,
@@ -45,6 +43,7 @@ import {
   isDatabaseAvailable,
   extractRequestContext,
 } from './shared.js';
+import { clientIpOf } from '../../utils/client-ip';
 
 const log = createScopedLogger('ana-ri/utility');
 
@@ -450,9 +449,9 @@ export function mountUtilityRoutes(router: Router): void {
     // transmission's `reauthVerifiedAt`, so it must be a real observation.
     let signatureVerifiedAt: Date | undefined;
     if (eSignRequired) {
-      const verification = await verifySignerCredentials(defaultSignoffDeps, { userId, password, mfaToken });
-      if (!verification.verified) {
-        return sendError(res, 401, verification.error || 'Signature verification failed', { code: verification.code }, 'SIGNATURE_REJECTED');
+      const verification = await reverifySigner(userId, { password, mfaToken }, signerReverificationDeps());
+      if (!verification.ok) {
+        return sendError(res, verification.status, verification.error, { code: verification.code }, 'SIGNATURE_REJECTED');
       }
       secondFactorVerified = verification.secondFactorVerified;
       signatureVerifiedAt = new Date();
@@ -477,7 +476,7 @@ export function mountUtilityRoutes(router: Router): void {
       action: eSignRequired ? 'ana.governed_action.esign' : 'ana.governed_action.reason',
       resourceType: 'ana_command',
       resourceId: command,
-      ipAddress: (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() || req.socket?.remoteAddress || undefined,
+      ipAddress: clientIpOf(req) ?? undefined,
       userAgent: req.headers['user-agent'] as string | undefined,
       details: { command, reasonForChange, eSignRequired, secondFactorVerified },
     });

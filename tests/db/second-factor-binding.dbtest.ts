@@ -23,7 +23,7 @@
  * clock (Date only) is set, so each case presents the step it names.
  *
  * ── Isolation ───────────────────────────────────────────────────────────────
- * Lane "dbsfb": organisation 91950 (range 91950–91999); every email starts
+ * Lane "dbsfb": organisation 92050 (range 92050–92099); every email starts
  * `dbsfb-`. Audit rows are removed through the documented archive door.
  */
 
@@ -44,7 +44,7 @@ import { totp } from '../validation/lib/totp.mjs';
 type Runtime = typeof import('../../server/db/runtime');
 type Mfa = typeof import('../../server/services/mfaService');
 
-const ORG = 91950;
+const ORG = 92050;
 const TAG = 'dbsfb';
 const RUN = `${process.pid}_${Date.now().toString(36)}`;
 const RUNTIME_PASSWORD = 'dbsfb-second-factor-runtime-password';

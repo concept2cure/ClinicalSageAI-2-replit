@@ -61,6 +61,13 @@ const hoisted = vi.hoisted(() => {
   };
 });
 
+// The signing ceremony reads the signer's account standing (VSR-001 F-28);
+// every signer here is active. Suspended and deprovisioned signers are pinned
+// by reverify-signer.test.ts and tests/db/account-standing.dbtest.ts.
+vi.mock('../../services/account-standing', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/account-standing')>()),
+  isAccountActive: async () => true,
+}));
 vi.mock('../../db.js', () => ({ pool: hoisted.makePool() }));
 vi.mock('../../db', () => ({ pool: hoisted.makePool() }));
 vi.mock('../../services/mfaService.js', () => ({

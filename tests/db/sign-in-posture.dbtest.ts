@@ -21,7 +21,7 @@
  * chosen rather than read off the wall clock.
  *
  * ── Isolation ───────────────────────────────────────────────────────────────
- * Lane "dbtsp": organisation 91950 (range 91950–91999); every email starts
+ * Lane "dbtsp": organisation 92100 (range 92100–92149); every email starts
  * `dbtsp-`. Audit rows are removed through the documented archive door.
  */
 
@@ -41,7 +41,7 @@ import { totp } from '../validation/lib/totp.mjs';
 type Runtime = typeof import('../../server/db/runtime');
 type Mfa = typeof import('../../server/services/mfaService');
 
-const ORG = 91950;
+const ORG = 92100;
 const TAG = 'dbtsp';
 const RUN = `${process.pid}_${Date.now().toString(36)}`;
 const RUNTIME_PASSWORD = 'dbtsp-sign-in-posture-runtime-password';
@@ -63,7 +63,7 @@ let owner: Pool;
 let runtime: Runtime;
 let mfa: Mfa;
 let app: express.Express;
-const members: Record<'totp' | 'email' | 'disabled', Member> = {} as never;
+const members: Record<'totp' | 'email' | 'disabled' | 'guarded', Member> = {} as never;
 
 const inScope = <T>(caller: string, fn: () => Promise<T>) =>
   runWithTenantScope({ tenantId: String(ORG), role: 'admin', source: 'test', caller: `dbtsp:${caller}` }, fn);
@@ -99,7 +99,7 @@ async function cleanup(): Promise<void> {
   }
 }
 
-async function addMember(key: string, factor: 'totp' | 'email' | 'disabled'): Promise<Member> {
+async function addMember(key: string, factor: 'totp' | 'email' | 'disabled' | 'guarded'): Promise<Member> {
   const email = `${TAG}-${key}-${RUN}@example.invalid`;
   const user = await owner.query(
     `INSERT INTO users (email, name, password_hash, default_organization_id)
@@ -201,6 +201,7 @@ beforeAll(async () => {
   members.totp = await addMember('totp', 'totp');
   members.email = await addMember('email', 'email');
   members.disabled = await addMember('disabled', 'disabled');
+  members.guarded = await addMember('guarded', 'guarded');
 }, 180_000);
 
 afterAll(async () => {
@@ -246,6 +247,7 @@ describe('the posture is the one production runs in', () => {
       ['email', false, expect.anything()],
       // disableMfa leaves mfa_method 'totp': why it is not read on its own.
       ['disabled', false, 'totp'],
+      ['guarded', true, 'totp'],
     ]);
   });
 });
@@ -315,5 +317,38 @@ describe('before any credential, every address gets the same answer', () => {
     expect(await ask(members.totp.email), 'check-email singled out the account with an authenticator').toEqual(unknown);
     // And what it says is true of every sign-in: a second factor follows the password.
     expect(unknown).toEqual({ authFlow: 'password', mfaRequired: true });
+  });
+});
+
+describe('the enterprise router refuses setup over an enrolled authenticator, and says so (F-26)', () => {
+  // mfaService.generateSecret refuses while a factor is enrolled (F-26,
+  // 0c912e67e; the password router's route and rotation are pinned by
+  // tests/db/second-factor-binding.dbtest.ts). The enterprise router's
+  // /mfa/setup reaches the same guard, and answered its refusal with a 500.
+  let bearer: { Authorization: string };
+
+  beforeAll(async () => {
+    const { activeJwtSecret } = await import('../../server/utils/jwtVerify');
+    const jwt = (await import('jsonwebtoken')).default;
+    const g = members.guarded;
+    bearer = {
+      Authorization: `Bearer ${jwt.sign(
+        { userId: String(g.id), email: g.email, organizationId: String(ORG), role: 'admin', type: 'access' },
+        activeJwtSecret(),
+        { algorithm: 'HS256', expiresIn: '1h' },
+      )}`,
+    };
+  });
+
+  it('409 MFA_ALREADY_ENABLED, no secret handed out, the enrolled secret untouched', async () => {
+    at(1);
+    const stored = async () =>
+      (await owner.query('SELECT mfa_secret, mfa_enabled FROM users WHERE id = $1', [members.guarded.id])).rows[0];
+    const before = await stored();
+    const res = await request(app).post('/api/auth/enterprise/mfa/setup').set(bearer).send({});
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.error).toBe('MFA_ALREADY_ENABLED');
+    expect(JSON.stringify(res.body)).not.toMatch(/otpauth|"secret"/);
+    expect(await stored()).toEqual(before);
   });
 });

@@ -1,0 +1,94 @@
+# git: 3aafaf809 + working tree (the fix)
+# npx vitest run tests/unit/submission-sign-release-route.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+stderr | tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > REGRESSION: a signature whose audit row cannot be written does not exist at all
+{
+  "timestamp": "2026-09-23T10:50:13.369Z",
+  "level": "error",
+  "message": "[submission-sign-release] createElectronicSignature failed",
+  "context": {
+    "organizationId": 100,
+    "runId": "run-123",
+    "signerId": 7,
+    "err": "relation \"audit_logs\" does not exist"
+  }
+}
+
+stderr | tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > surfaces 500 on a non-race createElectronicSignature failure
+{
+  "timestamp": "2026-09-23T10:50:13.390Z",
+  "level": "error",
+  "message": "[submission-sign-release] createElectronicSignature failed",
+  "context": {
+    "organizationId": 100,
+    "runId": "run-123",
+    "signerId": 7,
+    "err": "disk on fire"
+  }
+}
+
+stderr | tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — body schema enforcement > returns 400 on invalid signatureMeaning (closed enum, only "approval" allowed)
+{
+  "timestamp": "2026-09-23T10:50:13.395Z",
+  "level": "warn",
+  "message": "[submission-sign-release] Invalid sign-release body",
+  "context": {
+    "organizationId": 100,
+    "submissionId": "sub-1",
+    "issues": [
+      {
+        "path": [
+          "signatureMeaning"
+        ],
+        "code": "invalid_literal"
+      }
+    ]
+  }
+}
+
+stderr | tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — body schema enforcement > returns 400 on empty reason (§11.50 requires a meaning manifestation)
+{
+  "timestamp": "2026-09-23T10:50:13.398Z",
+  "level": "warn",
+  "message": "[submission-sign-release] Invalid sign-release body",
+  "context": {
+    "organizationId": 100,
+    "submissionId": "sub-1",
+    "issues": [
+      {
+        "path": [
+          "reason"
+        ],
+        "code": "too_small"
+      }
+    ]
+  }
+}
+
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — auth gating > returns 401 when no JWT principal is present 29ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — auth gating > returns 403 when JWT principal is present but org context is missing 4ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — run lookup + status checks > returns 404 when getRun returns null (collapsed miss-or-cross-org) 5ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — run lookup + status checks > returns 404 when URL submissionId does not match the run's submissionId 3ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — run lookup + status checks > returns 409 when run.status is not awaiting-signature 4ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > returns 401 when password verification fails (NEVER 200, no signature row) 4ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > creates a signature and persists bound_payload_digest on the happy path 5ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > REGRESSION: a signature whose audit row cannot be written does not exist at all 4ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > refuses the password alone from a signer with an authenticator enrolled (400, no signature) 5ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > signs with the password and the enrolled code, and records both 3ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > refuses an account that is not active (401), as the route always has, before comparing anything 2ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > refuses a locked account (423) before its password is compared 2ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > returns the existing signatureId without creating a duplicate when one already exists (idempotent) 3ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > resolves a concurrent-signing race idempotently on a 23505 unique violation 2ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > surfaces 500 on a non-race createElectronicSignature failure 3ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > returns 422 when no documentId anchor can be resolved (lineage unresolved) 2ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — body schema enforcement > returns 400 on invalid signatureMeaning (closed enum, only "approval" allowed) 3ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — body schema enforcement > returns 400 on empty reason (§11.50 requires a meaning manifestation) 2ms
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  10:50:12
+   Duration  553ms (transform 160ms, setup 80ms, import 225ms, tests 89ms, environment 0ms)
+

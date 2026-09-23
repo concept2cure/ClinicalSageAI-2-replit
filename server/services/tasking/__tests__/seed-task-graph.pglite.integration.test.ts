@@ -244,7 +244,7 @@ describe('archive + e-signature examples', () => {
       ['meaning', 'method', 'reason', 'signedAt', 'signedById', 'signedByName'].sort()
     );
     expect(history[0].method).toBe('pin');
-    // TASK_SIGNATURE_MEANINGS — part11/pin-verification.ts:99.
+    // TASK_SIGNATURE_MEANINGS — part11/signature-meanings.ts.
     expect(['APPROVED', 'REVIEWED', 'RESPONSIBILITY', 'AUTHORSHIP']).toContain(history[0].meaning);
     expect(String(history[0].reason).length).toBeGreaterThan(20);
     expect(Number.isNaN(Date.parse(String(history[0].signedAt)))).toBe(false);

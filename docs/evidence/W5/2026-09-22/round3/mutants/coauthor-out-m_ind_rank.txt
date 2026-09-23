@@ -1,0 +1,57 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > maps a full real IND into the IndLifecycle contract (placed-leaf path) 39ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > renders an honest empty section list (no org-wide fallback) when a submission has no placed leaves 11ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > does not leak one submission's org docs into a sibling submission with no leaves 21ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > returns [] for an org with no IND submission, and never crosses tenants 16ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > excludes soft-deleted submissions 14ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > ignores non-IND submissions 3ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > resolves the org's RECORDED target_submission_date by identity match 22ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > matches on the program name/code when product names differ 15ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > returns null when the matching program records no target date 29ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > returns null when no program matches the submission identity 22ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > never resolves across tenants, program type, or soft-deleted programs 18ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — sponsor-completed official form leaves > a placed form_3674 leaf backed by a retained file marks FDA 3674 complete; the others keep their authored state 37ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — sponsor-completed official form leaves > a leaf whose file belongs to another organisation does not complete the form 30ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — sponsor-completed official form leaves > a form leaf with no document behind it (awaiting the sponsor's file) does not complete the form 20ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a missing authoring store degrades sections, not the IND > still reports the IND, with honest empty sections, when coauthor_documents is absent 28ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > completes a form and enriches a blueprint section whatever the stored spelling 17ms
+ × server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > maps finalized to 'locked', never 'signed'; a signed or approved copy of the same section outranks it 36ms
+   → expected { 'm1.2': 'locked', …(2) } to deeply equal { 'm1.2': 'approved', …(2) }
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > two spellings of one section are one section, at the more advanced status 13ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > a section the blueprint does not model keeps the document’s own name, never an invented title 12ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > maps finalized to 'locked', never 'signed'; a signed or approved copy of the same section outranks it
+AssertionError: expected { 'm1.2': 'locked', …(2) } to deeply equal { 'm1.2': 'approved', …(2) }
+
+- Expected
++ Received
+
+  {
+-   "m1.2": "approved",
+-   "m2.3": "signed",
++   "m1.2": "locked",
++   "m2.3": "locked",
+    "m2.4": "locked",
+  }
+
+ ❯ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts:373:17
+    371|     const ind = (await assembleOrgIndChecklists(ORG))[0] as any;
+    372|     const sec = Object.fromEntries(ind.sections.map((x: any) => [x.cod…
+    373|     expect(sec).toEqual({ 'm1.2': 'approved', 'm2.3': 'signed', 'm2.4'…
+       |                 ^
+    374|     // Policy unchanged: a frozen form still counts complete (founder …
+    375|     const done = Object.fromEntries(ind.forms.map((f: any) => [f.id, f…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 18 passed (19)
+   Start at  09:12:27
+   Duration  4.75s (transform 353ms, setup 146ms, import 293ms, tests 3.86s, environment 0ms)
+

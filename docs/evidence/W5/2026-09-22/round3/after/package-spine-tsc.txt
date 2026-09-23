@@ -1,0 +1,1 @@
+server/routes/submission-ops.ts(2289,26): error TS2345: Argument of type '{ sectionDbId: number; sectionKey: string; sectionLabel: string; sortOrder: number; artifactDbId: null; title: null; version: null; ctdSection: null; contentSha256: null; }' is not assignable to parameter of type 'PackageContentRow'.

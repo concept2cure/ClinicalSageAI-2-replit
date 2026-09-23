@@ -1,0 +1,60 @@
+
+ RUN  v4.1.7 <repo>
+
+{"level":30,"time":"2026-09-23T09:39:45.398Z","pid":31629,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-23T09:39:45.401Z","pid":31629,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-23T09:39:45.401Z","pid":31629,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/signing-lockout.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-23T09:39:45.808Z', poolSize: 1 }
+
+stdout | tests/db/signing-lockout.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/signing-lockout.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/signing-lockout.dbtest.ts
+[mfa] MFA enabled for user 125
+
+stdout | tests/db/signing-lockout.dbtest.ts
+[mfa] MFA enabled for user 128
+
+{"level":40,"time":"2026-09-23T09:40:05.000Z","pid":31629,"hostname":"vm","context":{},"msg":"[auth-security] Account locked for user 124 after 5 failed attempts"}
+{"level":30,"time":"2026-09-23T09:40:05.000Z","pid":31629,"hostname":"vm","context":{"userId":124,"tenantId":92000,"resourceId":"124"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/signing-lockout.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 4ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > count against the account, and the fifth locks it 54ms
+{"level":40,"time":"2026-09-23T09:40:05.000Z","pid":31629,"hostname":"vm","context":{},"msg":"[auth-security] Account locked for user 125 after 5 failed attempts"}
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > lock the sign-in too: the account has one password and one allowance 52ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > while locked, refuse a signature even with the right password, without comparing it 3ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > unlock when the lockout has run out 12ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong codes at signing > count against the account once the password is right, and the fifth locks it 58ms
+{"level":30,"time":"2026-09-23T09:40:05.000Z","pid":31629,"hostname":"vm","context":{"userId":126,"tenantId":92000,"resourceId":"126"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+ ✓ tests/db/signing-lockout.dbtest.ts > below the allowance > a signer who mistypes and then gets it right signs 39ms
+ ✓ tests/db/signing-lockout.dbtest.ts > below the allowance > a successful sign-in clears the count, as it always has 30ms
+{"level":40,"time":"2026-09-23T09:40:05.000Z","pid":31629,"hostname":"vm","context":{},"msg":"[auth-security] Account locked for user 127 after 5 failed attempts"}
+{"level":40,"time":"2026-09-23T09:40:05.000Z","pid":31629,"hostname":"vm","context":{},"msg":"[auth-security] Account locked for user 128 after 5 failed attempts"}
+ ✓ tests/db/signing-lockout.dbtest.ts > the signing dialog's checks (POST /api/esignature/verify-password, /verify-mfa) > count a wrong password, and the fifth locks the account 104ms
+ ✓ tests/db/signing-lockout.dbtest.ts > the signing dialog's checks (POST /api/esignature/verify-password, /verify-mfa) > say the account is locked, and do not compare the password 10ms
+ ✓ tests/db/signing-lockout.dbtest.ts > the signing dialog's checks (POST /api/esignature/verify-password, /verify-mfa) > count a wrong code, and the fifth locks the account 70ms
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  09:39:42
+   Duration  5.17s (transform 1.86s, setup 73ms, import 346ms, tests 4.29s, environment 0ms)
+
+stderr | tests/db/signing-lockout.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stderr | tests/db/signing-lockout.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/signing-lockout.dbtest.ts > below the allowance > a successful sign-in clears the count, as it always has
+{
+  "timestamp": "2026-09-23T09:40:05.000Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — login OTP email not sent (dev)",
+  "context": {
+    "to": "dbslk-below-31629_mudww1vb@example.invalid"
+  }
+}
+

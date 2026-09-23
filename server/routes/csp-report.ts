@@ -33,17 +33,13 @@ const reportRateLimit = rateLimit({
   max: 120,
   standardHeaders: false,
   legacyHeaders: false,
-  validate: false,
   // Always respond 204 even when limited — a 429 would just have the
   // browser drop the report. The log noise is what we're optimizing for.
   handler: (_req: Request, res: Response) => {
     res.status(204).end();
   },
-  keyGenerator: (req: Request) => {
-    const forwarded = req.headers['x-forwarded-for'];
-    const ip = Array.isArray(forwarded) ? forwarded[0] : forwarded?.split(',')[0] || req.ip;
-    return ip || 'unknown';
-  },
+  // Keyed by the default, req.ip (trust proxy resolves it). It was the
+  // left-most X-Forwarded-For entry, which a sender picks freely (D6).
 });
 
 interface NormalizedReport {

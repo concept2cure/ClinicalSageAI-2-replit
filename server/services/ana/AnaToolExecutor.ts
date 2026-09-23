@@ -8535,6 +8535,19 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
   if (leaves.length === 0) {
     return JSON.stringify({ error: 'leaves[] is required and must be non-empty.' });
   }
+  // 2026-09-23 (W5/D7, round-2 skeptic): source_path is no longer required by
+  // the schema, because a delete has none. Every other leaf must still name the
+  // file it ships — refused here, by name, rather than read from an empty path.
+  const missingSource = leaves.filter(
+    (l) => String(l.operation) !== 'delete' && !(typeof l.source_path === 'string' && l.source_path.trim()),
+  );
+  if (missingSource.length > 0) {
+    return JSON.stringify({
+      error:
+        `package_ectd_for_region: a ${missingSource.map((l) => String(l.operation)).join(' / ')} leaf must carry source_path, ` +
+        `the file it ships (${missingSource.map((l) => String(l.file_name)).join(', ')}). Only a delete omits it.`,
+    });
+  }
   try {
     const { packageEctdSubmission } = await import('../submission-gateways/index.js');
     const path = await import('path');
@@ -8557,12 +8570,19 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
       sponsorId:     String(input.sponsor_id),
       sponsorName:   String(input.sponsor_name),
       productName:   String(input.product_name),
+      // A delete's source_path is passed through as given, never dropped: the
+      // packager refuses a delete that carries one, by name, instead of this
+      // mapping silently ignoring what the caller asked to ship. modified_file
+      // names the filed leaf a delete (or replace / append) acts on.
       leaves: leaves.map((l) => ({
         ctdSection: String(l.ctd_section),
         operation:  (String(l.operation) as 'new' | 'append' | 'replace' | 'delete'),
-        sourcePath: String(l.source_path),
+        sourcePath: typeof l.source_path === 'string' ? l.source_path : '',
         fileName:   String(l.file_name),
         title:      String(l.title),
+        ...(typeof l.modified_file === 'string' && l.modified_file.trim()
+          ? { modifiedFile: l.modified_file.trim() }
+          : {}),
       })),
       outputDir,
     });
@@ -10891,7 +10911,8 @@ registerToolHandler('add_protocol_review_comment', async (input, ctx) => {
   const comment = typeof input.comment === 'string' ? input.comment.trim() : '';
   if (!Number.isInteger(protocolDocumentId) || !comment) return JSON.stringify({ error: 'protocol_document_id and comment are required.' });
   const { addCommentTx } = await import('../protocol-reviews/protocol-reviews-service.js');
-  return governedPdev(ctx, 'update', `protocol-document:${protocolDocumentId}`, 'Review comment added via AnA', input, async (client) => {
+  // 'create', as the HTTP route records it: a comment is review, not an edit of the protocol.
+  return governedPdev(ctx, 'create', `protocol-document:${protocolDocumentId}`, 'Review comment added via AnA', input, async (client) => {
     const { id, severity } = await addCommentTx(client, ctx.organizationId!, ctx.userId!, protocolDocumentId, {
       comment, assignmentId: typeof input.assignment_id === 'number' ? input.assignment_id : null,
       sectionRef: typeof input.section_ref === 'string' ? input.section_ref : null, severity: typeof input.severity === 'string' ? input.severity : null,
@@ -11493,8 +11514,18 @@ registerToolHandler('finalize_protocol_document', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'finalize_protocol_document requires tenant context.' });
   const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
   if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
-  const { getCompleteness } = await import('../protocol-development/protocol-development-service.js');
+  const { getCompleteness, getProtocolDocument } = await import('../protocol-development/protocol-development-service.js');
   try {
+    const doc = await getProtocolDocument(ctx.organizationId, documentId);
+    if (!doc) return JSON.stringify({ error: `Protocol ${documentId} was not found in this organization.` });
+    if (doc.status === 'finalized' || doc.status === 'superseded') {
+      return JSON.stringify({
+        ok: false,
+        documentId,
+        status: doc.status,
+        message: `Protocol ${documentId} is already ${doc.status}${doc.version ? ` (version ${doc.version})` : ''}; there is nothing to finalize.`,
+      });
+    }
     const c = await getCompleteness(ctx.organizationId, documentId);
     return JSON.stringify({
       ok: false,

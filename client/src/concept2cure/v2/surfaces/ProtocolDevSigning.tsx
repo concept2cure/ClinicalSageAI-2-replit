@@ -2,12 +2,14 @@
  * Protocol development — the two acts that are electronic signatures.
  *
  * Finalizing a protocol and recording a reviewer's disposition both run the
- * shared Part 11 EsignModal: §11.50 meaning, reason, and §11.200 password
- * re-entry (TOTP when the signer has it). The password goes to the server once,
- * as `reauth`, where it is re-verified inside the same transaction that writes
- * the change, the ledger row and the electronic_signatures row. There is no
- * other path to either act; the reason-only drawers they used to have wrote a
- * `sign` ledger row nobody had signed.
+ * shared Part 11 EsignModal: §11.50 meaning, reason, and §11.200 re-entry of the
+ * password, plus the authenticator code when the signer has one enrolled. The
+ * modal pre-checks the password at /api/esignature/verify-password (rate
+ * limited); the signing request then carries the password and code as `reauth`,
+ * and the server re-verifies them inside the same transaction that writes the
+ * change, the ledger row and the electronic_signatures row. Nothing stores them.
+ * There is no other path to either act; the reason-only drawers they used to
+ * have wrote a `sign` ledger row nobody had signed.
  */
 import React from 'react';
 import { EsignModal, type EsigSignedManifest } from '../../_shared/components/EsignModal';
@@ -43,9 +45,13 @@ const DISPOSITION_LABEL: Record<string, string> = {
 
 export function ProtocolSignModal({ signing, documentId, documentTitle, onClose, onSigned }: ProtocolSignModalProps) {
   const authUser = useAuthUser();
-  const signer = authUser
-    ? { name: authUser.displayName || `${authUser.firstName} ${authUser.lastName ?? ''}`.trim() || authUser.email, email: authUser.email }
-    : undefined;
+  // After a reload the session may carry no display name or first name; never
+  // print "undefined" as the signer. The server records the real printed name.
+  const printed = [authUser?.displayName, [authUser?.firstName, authUser?.lastName].filter(Boolean).join(' '), authUser?.email]
+    .find((v) => typeof v === 'string' && v.trim().length > 0);
+  const signer = printed ? { name: printed.trim(), ...(authUser?.email ? { email: authUser.email } : {}) } : undefined;
+  // The server demands the code whenever one is enrolled; ask for it up front.
+  const requireMfa = authUser?.mfaEnabled === true;
 
   const onSign = async (input: { meaning: string; reason: string; password: string; totp?: string }): Promise<EsigSignedManifest> => {
     const result =
@@ -70,6 +76,7 @@ export function ProtocolSignModal({ signing, documentId, documentTitle, onClose,
         targetMeta="The completeness check runs first. Finalizing freezes a new version."
         defaultMeaning="authorship"
         signer={signer}
+        requireMfa={requireMfa}
         onClose={onClose}
         onSign={onSign}
       />
@@ -90,6 +97,7 @@ export function ProtocolSignModal({ signing, documentId, documentTitle, onClose,
       }
       defaultMeaning={onBehalf ? 'responsibility' : 'review'}
       signer={signer}
+      requireMfa={requireMfa}
       onClose={onClose}
       onSign={onSign}
     />

@@ -145,7 +145,7 @@ await step(
     title: 'CREDENTIALED: a second identity approves SOP A as an electronic signature; the approval is stamped, audited and signed; a second approval is refused',
     action: 'sign in as OQ_SIGNER_EMAIL with its password (and its authenticator code where the server requires MFA); when the signer has a second factor enrolled (OQ_SIGNER_TOTP_SECRET), first approve with {password} only; POST /api/mdx/qms/documents/:docA/approve {password, mfaToken?, meaning:"APPROVED", reason, effectiveDate}; approve again',
     expected:
-      'A signer with a second factor enrolled: the password-only approval is refused 401 MFA_TOKEN_REQUIRED, SOP A stays in review and no signature row is written (§11.200). HTTP 200: status effective, approver_id = signer (≠ author), approved_at set, meta.auditTrail {persisted, chained}, meta.signature {id, meaning APPROVED, boundPayloadDigest (sha256), bindingBasis qms-document-version-content-sha256}; metadata.approval.contentDigest equals the signature digest; second approve → 409 QMS_INVALID_STATE. Without OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD the step is recorded "not executed — credential not supplied".',
+      'A signer with a second factor enrolled: the password-only approval is refused 400 MFA_TOKEN_REQUIRED, SOP A stays in review and no signature row is written (§11.200). HTTP 200: status effective, approver_id = signer (≠ author), approved_at set, meta.auditTrail {persisted, chained}, meta.signature {id, meaning APPROVED, boundPayloadDigest (sha256), bindingBasis qms-document-version-content-sha256}; metadata.approval.contentDigest equals the signature digest; second approve → 409 QMS_INVALID_STATE. Without OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD the step is recorded "not executed — credential not supplied".',
     dependsOn: ['OQ-QMS-03'],
     note: 'VSR-001 §8.3 P-2 / F-3: approval is a signing act (§11.50, §11.200); the runner\'s dev-login session holds no password, so the signer is a tester-supplied identity (tests/validation/lib/credentials.mjs). The two-person rule (§11.10(d)) means the signer must not be the author of SOP A (the run identity).',
   },
@@ -164,12 +164,12 @@ await step(
         reason: 'OQ-006 step 05: a password-only approval must be refused',
         effectiveDate: inDays(0),
       });
-      expect(bare.status === 401 && errCode(bare) === 'MFA_TOKEN_REQUIRED', `a password-only approval by a signer with a second factor enrolled expected 401 MFA_TOKEN_REQUIRED, got ${bare.status}`, bare.json);
+      expect(bare.status === 400 && errCode(bare) === 'MFA_TOKEN_REQUIRED', `a password-only approval by a signer with a second factor enrolled expected 400 MFA_TOKEN_REQUIRED, got ${bare.status}`, bare.json);
       const g0 = await asSigner0('GET', `/api/mdx/qms/documents/${ctx.state.docA.id}`);
       expect(g0.json?.data?.status !== 'effective', 'SOP A became effective on the refused password-only approval', g0.json?.data);
       const s0 = await asSigner0('GET', `/api/part11/signatures/by-target?target=${encodeURIComponent(`qms-document:${ctx.state.docA.id}`)}`);
       expect(s0.status === 200 && (s0.json?.data ?? []).length === 0, 'a signature row exists for the refused password-only approval', s0.json);
-      secondFactor = 'password-only approval refused 401 MFA_TOKEN_REQUIRED with no row written; approved with password + TOTP';
+      secondFactor = 'password-only approval refused 400 MFA_TOKEN_REQUIRED with no row written; approved with password + TOTP';
     }
     const { response, document: d, signature: sig } = await approveSigned(ctx, ctx.state.docA.id, 'OQ-006 step 05: SOP approved for validation (signed)');
     ctx.state.docA = d;
@@ -273,7 +273,7 @@ await step(
     urs: ['URS-QMS-005'],
     title: 'CREDENTIALED: a wrong password is refused and nothing is signed',
     action: 'as the signer, POST /documents/:docB/approve {password:<wrong>, meaning:"APPROVED", reason}',
-    expected: 'HTTP 401 PASSWORD_INVALID; docB stays draft; no signature row for docB',
+    expected: 'HTTP 401 PASSWORD_VERIFICATION_FAILED; docB stays draft; no signature row for docB',
     dependsOn: ['OQ-QMS-05', 'OQ-QMS-06a'],
   },
   async ({ api, apiAs, expect, state }) => {
@@ -433,13 +433,21 @@ await step(
   {
     id: 'OQ-QMS-12',
     urs: ['URS-QMS-011'],
-    title: 'Quality Management Plan create and list',
-    action: 'POST /api/quality/plans {name, description}; GET /api/quality/plans',
-    expected: 'HTTP 201; plan listed with status draft',
+    title: 'Quality Management Plan create and list (governed: reason required)',
+    action: 'POST /api/quality/plans {name, description} with no reason; again with a reason of at least 8 characters; GET /api/quality/plans',
+    expected: 'Without a reason: HTTP 400 REASON_REQUIRED and no plan created. With it: HTTP 201; plan listed with status draft',
   },
   async ({ api, expect }) => {
     const name = `OQ-006 QMP ${stamp}`;
-    const r = await api('POST', '/api/quality/plans', { name, description: 'Validation exercise' });
+    // v0.5: creating a plan is a governed change (D5, 2026-09-23); a plan
+    // posted without a reason is refused and nothing is created.
+    const refused = await api('POST', '/api/quality/plans', { name, description: 'Validation exercise' });
+    expect(refused.status === 400, `expected 400 without a reason, got ${refused.status}`, refused.json);
+    expect(refused.json?.error === 'REASON_REQUIRED', 'expected REASON_REQUIRED', refused.json);
+    const before = await api('GET', '/api/quality/plans');
+    const beforeArr = Array.isArray(before.json) ? before.json : before.json?.data ?? [];
+    expect(!beforeArr.some((p) => p.name === name), 'a refused plan was created', beforeArr.map((p) => p.name));
+    const r = await api('POST', '/api/quality/plans', { name, description: 'Validation exercise', reason: 'OQ-006 validation exercise: QMP create' });
     expect(r.status === 201, `expected 201, got ${r.status}`, r.json);
     const l = await api('GET', '/api/quality/plans');
     const arr = Array.isArray(l.json) ? l.json : l.json?.data ?? [];

@@ -199,16 +199,27 @@ describe('ProtocolDev does not present unpersisted actions as filed', () => {
     expect(forms.indexOf('onDone(kind, result)')).toBeGreaterThan(forms.indexOf('await submitProtocolRegister'));
   });
 
-  it('offers no client-side e-signature — governed acts are audited server-side, not "signed" in the browser', () => {
+  it('builds no signature ceremony of its own — its two signed acts use the shared EsignModal, verified by the server', () => {
     // The deleted dialog's ceremony (esign flag, password re-auth, a claimed
-    // Part 11 signature with nothing behind it) must not come back in either
-    // polarity, in any file of the surface.
+    // Part 11 signature with nothing behind it) must not come back in any file
+    // of the surface: no local password field, no local esign flag.
     for (const f of protocolDevFamily()) {
       const src = code(f);
       expect(src, f).not.toMatch(/\besign\s*[:=]/);
       expect(src, f).not.toMatch(/type="password"/);
       expect(src, f).not.toMatch(/Part 11 e-signature/);
     }
+    // Since 2026-09-23 finalizing and a reviewer's disposition ARE electronic
+    // signatures (D5, finding P1). They run the shared EsignModal and nothing
+    // else, and the credentials it collects go to the server as `reauth`, where
+    // the signing transaction re-verifies them. A signature the browser alone
+    // vouched for would be the defect above in a new polarity.
+    const signing = code('client/src/concept2cure/v2/surfaces/ProtocolDevSigning.tsx');
+    expect(signing).toMatch(/import \{ EsignModal[^}]*\} from '\.\.\/\.\.\/_shared\/components\/EsignModal'/);
+    const writes = code('client/src/concept2cure/v2/surfaces/ProtocolDevWrites.ts');
+    expect(writes).toMatch(/reauth: \{ password: s\.password/);
+    expect(writes).toContain('/api/protocol-development/documents/${documentId}/finalize');
+    expect(writes).toContain('/api/protocol-reviews/assignments/${assignmentId}/disposition');
     // What IS offered instead: the SoA grid stays read-only until a governed
     // reason of at least 8 characters is given, and every tick posts to the
     // audited SoA router. (The grid lives in ProtocolDevSoa.tsx since the
