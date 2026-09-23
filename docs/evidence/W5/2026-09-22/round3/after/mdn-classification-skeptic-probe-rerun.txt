@@ -1,0 +1,24 @@
+== A empty OMID trailing space
+   NEW {"kind":"unconfirmed","reason":"Agency MDN names no Original-Message-ID, so it cannot be tied to the message sent."}
+== B empty OMID no space
+   NEW {"kind":"unconfirmed","reason":"Agency MDN names no Original-Message-ID, so it cannot be tied to the message sent."}
+== C OMID <>
+   NEW {"kind":"unconfirmed","reason":"Agency MDN names no Original-Message-ID, so it cannot be tied to the message sent."}
+== D folded-empty OMID (WSP-only continuation)
+   NEW {"kind":"unconfirmed","reason":"Agency MDN names no Original-Message-ID, so it cannot be tied to the message sent."}
+== E OMID + folded CFWS comment (RFC5322 msg-id [CFWS])
+   NEW null
+== F OMID + same-line comment
+   NEW null
+== G different message
+   NEW {"kind":"unconfirmed","reason":"Agency MDN acknowledges a different message (<other@X>)."}
+== H bare-CR line endings folded OMID
+   NEW null
+== I Disposition folded, then trailing comment with word failure
+   NEW null
+== J processed then folded /error modifier
+   NEW {"kind":"rejected","reason":"Agency MDN did not accept the message: automatic-action/MDN-sent-automatically; processed /error: x"}
+== K text/plain preamble containing indented Disposition-like text
+   NEW {"kind":"rejected","reason":"Agency MDN did not accept the message: automatic-action/MDN-sent-automatically; failed/failure: x"}
+== L folded OMID in text/plain before a real, different OMID
+   NEW {"kind":"unconfirmed","reason":"Agency MDN acknowledges a different message (<other@X>)."}

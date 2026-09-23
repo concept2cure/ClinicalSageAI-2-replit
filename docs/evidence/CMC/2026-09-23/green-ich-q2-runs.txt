@@ -1,0 +1,11 @@
+-- POST /api/cmc/ich-compliance on a real project, after the read moved to
+-- the canonical source-object store. Q2 ran for the first time.
+
+overallStatus : non_compliant
+Q2(R1) status : warning
+unevaluated   : ['drugSubs']
+
+Q2 finding: Q2_INCOMPLETE_VALIDATION | warning
+  message : Method "RP-HPLC Assay" is missing validation evidence: specificity, linearity, accuracy, precision.
+  evidence: ['Method type: HPLC', 'Purpose: assay']
+  citation: ICH Q2(R1) Table — Required validation characteristics for "assay".

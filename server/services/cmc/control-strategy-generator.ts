@@ -24,6 +24,11 @@ import { getPool } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
 import { analyzeQbdFromSources, type CqaItem, type CppItem } from './qbd-analyzer';
 import { loadProjectStabilityStudies } from './stability-source';
+import {
+  loadProjectAnalyticalMethods,
+  type AnalyticalMethodRecord,
+  type AnalyticalMethodSourceResult,
+} from './analytical-method-source';
 
 const log = createScopedLogger('cmc-control-strategy');
 
@@ -91,7 +96,8 @@ export async function generateControlStrategy(
   scope: 'drug_substance' | 'drug_product' | 'both' = 'both',
 ): Promise<ControlStrategyDocument> {
   const qbd = await analyzeQbdFromSources(orgId, projectId);
-  const methods = await loadMethods(orgId, projectId);
+  const methodResult = await loadMethods(orgId, projectId);
+  const methods = methodResult.methods;
   const stabilityPlan = await loadStabilityPlan(orgId, projectId);
 
   const controlElements: ControlElement[] = [];
@@ -122,7 +128,15 @@ export async function generateControlStrategy(
         : `${cqa.name} is identified as a CQA via ${cqa.source.replace('_', ' ')}; no validated method linked yet (ICH Q2(R1) gap).`,
     });
     if (!method) {
-      gaps.push(`No validated analytical method linked to CQA "${cqa.name}" (${cqa.materialType}). Required per ICH Q2(R1).`);
+      /* Only a gap when the method register was actually READ. With an
+         unavailable read there is no basis for saying a method is missing —
+         that was the defect: a 42703 became an ICH Q2(R1) finding against
+         every CQA in the project. */
+      gaps.push(
+        methodResult.available
+          ? `No validated analytical method linked to CQA "${cqa.name}" (${cqa.materialType}). Required per ICH Q2(R1).`
+          : `Analytical methods could not be read, so no method could be linked to CQA "${cqa.name}" (${cqa.materialType}). This is not a finding against the project: ${methodResult.reason}`,
+      );
     }
   }
 
@@ -222,44 +236,31 @@ export async function generateControlStrategy(
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-interface MethodRecord {
-  methodName: string;
-  purpose: string;
-  validationStatus: string;
-}
+/* One shape for a method, owned by the reader that produces it — a local
+   re-declaration would let this file and the source module drift on what a
+   method is. */
+type MethodRecord = AnalyticalMethodRecord;
 
 /**
- * The project's analytical methods, scoped to the caller's organization.
+ * The project's analytical methods, from the canonical source-object store.
  *
- * `orgId` was accepted and then not used: the read filtered on project_id
- * alone. cmc_projects.id is a uuid space shared across every tenant and the
- * project id reaches here from the caller, so another sponsor's methods —
- * names, purposes and ICH Q2 validation status — were matched to this
- * project's CQAs and written into its control strategy.
- * analytical_methods.organization_id is NOT NULL (migrations/0000_sweet_joseph
- * .sql:120), so the predicate drops nothing legitimate.
+ * This read used to target `public.analytical_methods` for
+ * `method_name`, `purpose` and `validation_status` scoped by `project_id` —
+ * an ORGANIZATION method library that has none of those columns and no
+ * project key, so the statement raised 42703 on every provisioned database.
+ * Its catch then returned `[]`, and every CQA was reported as having "no
+ * validated method linked yet (ICH Q2(R1) gap)": a guaranteed failed read
+ * rendered as a regulatory finding, which is the one thing this codebase does
+ * not do. See analytical-method-source.ts.
+ *
+ * The reader distinguishes "this project records no methods" from "this read
+ * could not be performed", and the caller now says which.
  */
-async function loadMethods(orgId: number, projectId: string): Promise<MethodRecord[]> {
-  const pool = getPool();
-  try {
-    const { rows } = await pool.query<{
-      methodName: string;
-      purpose: string;
-      validationStatus: string;
-    }>(`
-      SELECT method_name AS "methodName",
-             purpose,
-             validation_status AS "validationStatus"
-      FROM analytical_methods
-      WHERE project_id = $1::text::uuid AND organization_id = $2
-    `, [projectId, orgId]);
-    return rows;
-  } catch (err) {
-    log.warn('Failed to load analytical methods', {
-      error: err instanceof Error ? err.message : String(err),
-    });
-    return [];
-  }
+async function loadMethods(
+  orgId: number,
+  projectId: string,
+): Promise<AnalyticalMethodSourceResult> {
+  return loadProjectAnalyticalMethods(getPool(), orgId, projectId);
 }
 
 function matchMethodForCqa(cqa: CqaItem, methods: MethodRecord[]): MethodRecord | null {

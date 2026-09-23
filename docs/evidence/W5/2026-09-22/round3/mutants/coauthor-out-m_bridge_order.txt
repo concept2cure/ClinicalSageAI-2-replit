@@ -1,0 +1,166 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > an APPROVED source files its own saved text and title — a forged body is not what gets approved 95ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > a FROZEN source likewise files its sealed text as finalized 29ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > refuses a source with no saved sections — there is nothing to file — and creates nothing 22ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > still refuses another organization's source with 404 12ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > leaves an unsourced POST as it was: the body is the text, and it is a draft 10ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > follows FINALIZED_DOCUMENT_READ_ONLY end to end: place, refused edit, place again 50ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a source that has moved on (draft, then approved) re-takes its copy with the approved text 82ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a copy whose text drifted from its approved source is restored to the source by placing again 33ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a deleted copy can be placed again, under the identity the alias map still records 69ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > placing an unchanged source again writes nothing 82ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a first placement after the approved sections were rewritten, and creates nothing 43ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a re-placement over an existing approved copy, and leaves the copy exactly as it was 57ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a section added after the seal (apply-template merge mode) 16ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a document renamed after its seal: the copy would carry a title nobody approved 13ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses an APPROVED source with no sealed record: what was approved cannot be established 10ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a source whose only seal is the old approval stub, which holds no sections 11ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a seal whose bytes no longer match its own hash 11ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > holds the copy to the LATEST seal (approval after freeze) 19ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > a draft source is not held to a seal (it has none), and still files as a draft 13ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the server holds a source to the same "has saved content" rule as the placement dialog > refuses a source whose sections are headings with no text — the body would be empty 10ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the server holds a source to the same "has saved content" rule as the placement dialog > refuses whitespace-only sections the same way 10ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the two refusals round 3 never showed failing > SOURCE_CHANGED: a source approved between the first read and the lock is refused, and nothing is written 14ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the two refusals round 3 never showed failing > DOCUMENT_ALIAS_CONFLICT: an alias naming another organization's row is refused, and neither row nor alias changes 20ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > a re-take that changes the copy writes one audit event with the text it replaced — even saved co-author edits 48ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > an unchanged re-take writes no audit event (and nothing else) 40ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > re-creating a deleted copy is recorded against the same id 50ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > both events carry their reason and are flagged regulatory-significant and GxP-relevant 55ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (a) a section heading renamed after the seal, same text: 409, nothing written 17ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (b) a section code changed after the seal: 409, nothing written 11ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (c) two sections swapped in order after the seal, texts unchanged: 409, nothing written 19ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (d) another tenant's seal of the same document id does not seal this tenant's document: 409, nothing written 11ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > a seal without section ids (the shape seed 99 wrote) whose filed text matches is not reported as altered 17ms
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > files the editor order 39ms
+   → {"error":"SOURCE_ALTERED_SINCE_SEAL","message":"This document's saved sections or title are not the ones sealed when it was approved, so they cannot be filed as approved. Nothing was filed or changed."}: expected 409 to be 201 // Object.is equality
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > re-placing an unchanged approved source over the copy the pre-fix client filed writes nothing 23ms
+   → {"error":"SOURCE_ALTERED_SINCE_SEAL","message":"This document's saved sections or title are not the ones sealed when it was approved, so they cannot be filed as approved. Nothing was filed or changed."}: expected 409 to be 200 // Object.is equality
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the filed text is the text the seal check read > a section changed before the read and restored after it is refused, not filed 15ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > ["0a000000-0000-4000-8000-000000000001"] is refused 400 and nothing is written 5ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > {"id":"0a000000-0000-4000-8000-000000000001"} is refused 400 and nothing is written 5ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > 42 is refused 400 and nothing is written 5ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > true is refused 400 and nothing is written 3ms
+stderr | server/routes/__tests__/coauthorSnapshotSeal.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/coauthorSnapshotSeal.test.ts
+{
+  "timestamp": "2026-09-23T09:11:43.051Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/coauthorSnapshotSeal.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > reads the seal the router writes: a frozen document places as finalized with its text
+{
+  "timestamp": "2026-09-23T09:11:45.092Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 0c000000-0000-4000-8000-0000000000e1 by member@org.test",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > reads the seal the router writes: a frozen document places as finalized with its text
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > apply-template refuses a FROZEN document (403 DOCUMENT_FROZEN), writes nothing, and the document still files
+{
+  "timestamp": "2026-09-23T09:11:45.172Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 0c000000-0000-4000-8000-0000000000f1 by member@org.test",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > apply-template refuses an APPROVED document too, in merge mode, and adds no section
+{
+  "timestamp": "2026-09-23T09:11:45.224Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 0c000000-0000-4000-8000-0000000000a1 by member@org.test",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > reads the seal the router writes: a frozen document places as finalized with its text 197ms
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > apply-template refuses a FROZEN document (403 DOCUMENT_FROZEN), writes nothing, and the document still files 55ms
+stdout | server/routes/__tests__/coauthorSnapshotSeal.test.ts > sections sharing an order_index: editor, seal and filing agree > the real freeze seals, and the copy files, the editor's order — and re-placing it writes nothing
+{
+  "timestamp": "2026-09-23T09:11:45.335Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 0c000000-0000-4000-8000-0000000000c1 by member@org.test",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > apply-template refuses an APPROVED document too, in merge mode, and adds no section 80ms
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > a DRAFT document still takes a template (the lock is the refusal, not the route) 16ms
+ × server/routes/__tests__/coauthorSnapshotSeal.test.ts > sections sharing an order_index: editor, seal and filing agree > the real freeze seals, and the copy files, the editor's order — and re-placing it writes nothing 47ms
+   → {"error":"SOURCE_ALTERED_SINCE_SEAL","message":"This document's saved sections or title are not the ones sealed when it was finalized, so they cannot be filed as finalized. Nothing was filed or changed."}: expected 409 to be 201 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > files the editor order
+AssertionError: {"error":"SOURCE_ALTERED_SINCE_SEAL","message":"This document's saved sections or title are not the ones sealed when it was approved, so they cannot be filed as approved. Nothing was filed or changed."}: expected 409 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 409
+
+ ❯ server/routes/__tests__/coauthorSnapshotFromSource.test.ts:787:50
+    785|     await tied(SRC);
+    786|     const res = await place(SRC);
+    787|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                  ^
+    788|     expect((await row(res.body.document.id))?.content).toBe(EDITOR_ORD…
+    789|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > re-placing an unchanged approved source over the copy the pre-fix client filed writes nothing
+AssertionError: {"error":"SOURCE_ALTERED_SINCE_SEAL","message":"This document's saved sections or title are not the ones sealed when it was approved, so they cannot be filed as approved. Nothing was filed or changed."}: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ server/routes/__tests__/coauthorSnapshotFromSource.test.ts:807:50
+    805|     const res = await place(SRC);
+    806|
+    807|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    808|     const after = (
+    809|       await h.pglite.query<{ content: string; updated_at: Date }>('SEL…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/routes/__tests__/coauthorSnapshotSeal.test.ts > sections sharing an order_index: editor, seal and filing agree > the real freeze seals, and the copy files, the editor's order — and re-placing it writes nothing
+AssertionError: {"error":"SOURCE_ALTERED_SINCE_SEAL","message":"This document's saved sections or title are not the ones sealed when it was finalized, so they cannot be filed as finalized. Nothing was filed or changed."}: expected 409 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 409
+
+ ❯ server/routes/__tests__/coauthorSnapshotSeal.test.ts:293:50
+    291|
+    292|     const res = await place(DOC);
+    293|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                  ^
+    294|     const id = res.body.document.id;
+    295|     expect((await copy(id)).content).toBe('## 1.1 — Alpha\n\nalpha v2\…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 41 passed (44)
+   Start at  09:11:28
+   Duration  16.89s (transform 2.93s, setup 131ms, import 4.37s, tests 11.71s, environment 0ms)
+

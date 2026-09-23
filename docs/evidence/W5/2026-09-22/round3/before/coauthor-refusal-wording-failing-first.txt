@@ -1,0 +1,6 @@
+ × server/services/coauthor/__tests__/coauthor-status-write.test.ts > the read-only refusal states only what the status says > approved 1580ms
+ × server/services/coauthor/__tests__/coauthor-status-write.test.ts > the read-only refusal states only what the status says > finalized 112ms
+ × server/services/coauthor/__tests__/coauthor-status-write.test.ts > the read-only refusal states only what the status says > signed 111ms
+ × server/services/coauthor/__tests__/coauthor-status-write.test.ts > the read-only refusal states only what the status says > locked 142ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 5 skipped (9)

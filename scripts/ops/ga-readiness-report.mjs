@@ -757,6 +757,28 @@ for (const f of ENFORCEMENT_FLAGS) {
     }
   }
 
+  /**
+   * Which required PQ components still cannot execute, read from the protocol
+   * rather than listed here. Same reason as goldBankState: this line named "a
+   * live extraction path" after extraction became executable, and a dashboard
+   * that keeps naming finished work sends the next session to redo it.
+   */
+  function unexecutableComponentsState() {
+    try {
+      const protocol = JSON.parse(readFile('server/eval/pq/pq-protocol.json') ?? 'null');
+      const components = protocol?.components;
+      if (!components || typeof components !== 'object') return 'the components that cannot execute yet';
+      const blocked = Object.entries(components)
+        .filter(([, c]) => c?.required && !c?.executable)
+        .map(([name]) => name);
+      return blocked.length
+        ? `the required component(s) that still cannot execute: ${blocked.join(', ')}`
+        : 'every required component can execute';
+    } catch {
+      return 'the components that cannot execute yet';
+    }
+  }
+
   const approved = entries.filter((e) => e.approved);
   const passed = approved.filter((e) => e.pq === 'passed');
   const primaryPassed = passed.some((e) => e.id === 'claude-opus-4');
@@ -777,7 +799,7 @@ for (const f of ENFORCEMENT_FLAGS) {
     owner: 'Engineering (execute the PQ) + Ops (a product provider key)',
     unblock:
       'System owner approves server/eval/pq/pq-protocol.json (it is draft; a PQ against unapproved criteria cannot PASS). Engineering: ' +
-      `${goldBankState()}, a live extraction path, and a model parameter through ragQuery. ` +
+      `${goldBankState()}; ${unexecutableComponentsState()}. ` +
       'Ops: a product ANTHROPIC_API_KEY. Then `npm run pq:run -- --model claude-opus-4 --record` and cite the record as pq.reference — verifyPqClaim refuses anything but a PASS for that exact pinned version.',
   });
 }

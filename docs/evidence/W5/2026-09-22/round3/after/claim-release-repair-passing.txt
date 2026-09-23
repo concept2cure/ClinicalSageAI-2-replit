@@ -1,0 +1,76 @@
+# claim-release repair (round-3 skeptic) — AFTER the fix, 2026-09-23T08:15:49Z
+
+## 1. Skeptic probe sftp-strands (asserts the defect). Case 2 (CredentialError, no SFTP creds) must now FAIL (refusedBeforeWire=true). Case 3 (TransportError for the missing ssh2-sftp-client module) is still false: its throw site is in fda-esg.ts (deferred, one argument).
+ERR CredentialError | FDA esg (production) — missing credentials: FDA_ESG_SFTP_HOST, FDA_ESG_SFTP_USER, FDA_ESG_SFTP_KEY_PATH. See docs/runbooks/fda-esg-setup.md. | refusedBeforeWire= true | pool= ["INSERT INTO submission_gateway_credentials ( organization_id","INSERT INTO submission_transmittals ( organization_id, progr","INSERT INTO submission_gateway_credentials ( organization_id","UPDATE submission_transmittals SET status = $1, updated_at =","UPDATE submission_transmittals SET status = $1, error_class "]
+ERR2 TransportError | FDA ESG SFTP transport requires 'ssh2-sftp-client' package. Install it (npm install ssh2-sftp-client) and retry. | refusedBeforeWire= false
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/claim-release/sftp-strands.probe.test.ts > SFTP pre-connect refusal > isConfigured is true with AS2 creds only 3ms
+ × ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/claim-release/sftp-strands.probe.test.ts > SFTP pre-connect refusal > no SFTP creds: CredentialError before connect, refusedBeforeWire false 9ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/claim-release/sftp-strands.probe.test.ts > SFTP pre-connect refusal > SFTP creds set, ssh2-sftp-client absent: TransportError before connect, refusedBeforeWire false 12ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected true to be false // Object.is equality
+     56|     console.log('ERR', err?.name, '|', err?.message, '| refusedBeforeW…
+      Tests  1 failed | 2 passed (3)
+
+## 2. New/changed suites + neighbouring suites of every touched module (--no-file-parallelism)
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > transmit guard refusal before the wire > releases the claim, so the sequence is not left "in flight" when nothing was sent 1219ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a refusal inside the gateway that proves nothing was sent > releases the claim for the FDA NextGen REST refusal (UnverifiedTransportError) 4ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a refusal inside the gateway that proves nothing was sent > releases the claim for the requiredAgencyMetadata refusal raised by the gateway 3ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA SFTP branch refusing before connect (round-3 skeptic) > releases the claim when a >1 GiB sequence has no SFTP credentials (CredentialError) 7ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > TransportError keeps the claim at transmitting 2ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > GatewayError keeps the claim at transmitting 2ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — the guard refuses before the gateway > is true for a guard refusal, and the gateway is never called 5ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for TransportError raised by impl.transmit 7ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for GatewayError raised by impl.transmit 5ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for a plain Error raised by impl.transmit 3ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for an unmarked ValidationError raised by impl.transmit 3ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for an arbitrary error that merely carries transmitted === false (typed, not duck-typed) 2ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > is true for the FDA NextGen REST refusal (UnverifiedTransportError, transmitted === false) 2ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > is true for the requiredAgencyMetadata refusal raised before the transmittal row 2ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > requiredAgencyMetadata marks both of its refusals, and only those 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic) > is true for a CredentialError raised by a gateway's credential check (real MHRA transmit, no credentials) 4ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic) > is true for a TransportError only when its throw site passed NOTHING_TRANSMITTED 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic) > every `new CredentialError(` in server/ is at an audited pre-request site 288ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > test setup keeps staged bundles out of the repository > resolves the bundle root outside the working tree 0ms
+ Test Files  26 passed (26)
+      Tests  428 passed (428)
+
+## 3. Setup temp-root leak check
+c2c-test-bundles-* roots created during this run and still present: 0
+SETUP-LEAK-CHECK PASS
+
+## 4. eslint on the 5 changed files: exit 0
+
+## 5. Scoped tsc (tsconfig extending the repo's, files = the 5 changed files): errors in changed files:
+0
+all errors (pre-existing, optional @aws-sdk/client-kms):
+server/services/signature/kms-signer.ts(26,85): error TS2307: Cannot find module '@aws-sdk/client-kms' or its corresponding type declarations.
+server/services/signature/kms-signer.ts(165,26): error TS2307: Cannot find module '@aws-sdk/client-kms' or its corresponding type declarations.
+server/services/signature/kms-signer.ts(167,24): error TS2307: Cannot find module '@aws-sdk/client-kms' or its corresponding type declarations.
+
+## 6. Files in the run of section 2 (tests passed per file)
+  38 ✓ server/services/ana-ri/__tests__/mdx-command-handlers.test.ts
+  12 ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts
+   1 ✓ server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts
+  86 ✓ server/services/submission-gateways/__tests__/as2-mdn-folding.test.ts
+   5 ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts
+  33 ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts
+   9 ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts
+   2 ✓ server/services/submission-gateways/__tests__/fda-esg-sftp-ack.test.ts
+   7 ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts
+   3 ✓ server/services/submission-gateways/__tests__/governed-transmit-pretransmit-record.test.ts
+   3 ✓ server/services/submission-gateways/__tests__/governed-transmit-signature.test.ts
+   3 ✓ server/services/submission-gateways/__tests__/health-canada-gateway.test.ts
+   7 ✓ server/services/submission-gateways/__tests__/pmda-missing-receipt.test.ts
+  13 ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts
+  15 ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts
+   2 ✓ server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts
+   8 ✓ server/services/submission-gateways/__tests__/transmit-leaf-security.test.ts
+   5 ✓ server/services/submission-service/__tests__/gateway-selection.test.ts
+   6 ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts
+  13 ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts
+  18 ✓ tests/fda-submission-honesty.contract.test.ts
+  40 ✓ tests/mdx-submission-gateway-routes.test.ts
+  26 ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts
+   4 ✓ tests/submission-gateway-bundle-integrity.test.ts
+  20 ✓ tests/submission-gateway-bundle-namespace.test.ts
+  49 ✓ tests/submission-ops-assemble-routes.test.ts

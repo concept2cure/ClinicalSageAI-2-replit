@@ -1,0 +1,2 @@
+lines for changed files: 0
+total tsc error lines (other files): 43

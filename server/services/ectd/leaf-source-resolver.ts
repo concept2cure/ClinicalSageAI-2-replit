@@ -77,7 +77,12 @@ function looksLikePdf(buf: Buffer): boolean {
 export interface UnresolvedLeaf {
   documentTable: string | null;
   documentId: number | null;
-  /** Set instead of documentId when the leaf names a uuid-keyed store. */
+  /**
+   * The ref's uuid half, carried on every entry (null when the leaf has none),
+   * so `leafSourceKey(table, id, uuid)` of an unresolved entry equals the key
+   * of the leaf it came from. 2026-09-23 (W5/D7, round-2 skeptic): it used to
+   * be set only by the vault branch.
+   */
   documentUuid?: string | null;
   reason: string;
 }
@@ -90,6 +95,14 @@ export interface MaterializeLeafSourcesParams {
      *  (vault.documents); null for integer-keyed ones. See
      *  migrations/20260917b_submission_leaf_document_uuid.sql. */
     documentUuid?: string | null;
+    /**
+     * The leaf's lifecycle operation. A `delete` ships no content, so a
+     * document referenced ONLY by delete leaves is not read at all: it is not
+     * staged, not counted toward `unfinalized`, and not reported in
+     * `unresolved` (2026-09-23, W5/D7, residual repair). Absent → the leaf is
+     * treated as shipping, and every gate applies (fail closed).
+     */
+    lifecycleOp?: string | null;
   }>;
   organizationId: number;
   /** Directory the rendered PDF leaves are written to. */
@@ -97,9 +110,10 @@ export interface MaterializeLeafSourcesParams {
 }
 
 export interface MaterializeLeafSourcesResult {
-  /** Resolved files keyed by `${documentTable}:${documentId}`. */
+  /** Resolved files keyed by leafSourceKey(documentTable, documentId, documentUuid). */
   byKey: Map<string, ResolvedFile>;
-  /** Leaves whose source could not be materialized (external/missing). */
+  /** Leaves whose source could not be materialized (external/missing). A
+   *  document referenced only by deletes is never here: it is not read. */
   unresolved: UnresolvedLeaf[];
   /** Number of documents materialized to disk (deduplicated by table+id). */
   materialized: number;
@@ -107,7 +121,10 @@ export interface MaterializeLeafSourcesResult {
    * Number of MATERIALIZED leaves whose source document is NOT finalized (its
    * status is a draft/review artifact, not approved/finalized). These leaves DO
    * render into the package, but a submission-grade package must have zero of
-   * them — a draft rendered to PDF is not a submission-ready leaf.
+   * them — a draft rendered to PDF is not a submission-ready leaf. A document
+   * referenced only by `delete` leaves is not counted: a withdrawal ships none
+   * of its content (2026-09-23, W5/D7, round-2 skeptic), and since the
+   * residual repair of the same date it is not read at all.
    */
   unfinalized: number;
   /** The unfinalized leaves' section + source status, for the completeness report. */
@@ -198,11 +215,32 @@ function safeName(s: string, max = 40): string {
  */
 export function leafFileName(label: string, key: string): string {
   const ext = '.pdf';
-  const keyPart = key.replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'leaf';
+  const keyPart = leafFileKeyPart(key);
   const budget = 64 - ext.length - 1 - keyPart.length;
   const labelPart = budget >= 1 ? safeName(label, Math.min(40, budget)) : '';
   const name = labelPart ? `${labelPart}-${keyPart}${ext}` : `${keyPart}${ext}`;
   return name.slice(0, 64);
+}
+
+/** The unique, source-key part of a leaf file name (see leafFileName). */
+function leafFileKeyPart(key: string): string {
+  return key.replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'leaf';
+}
+
+/**
+ * Whether a file name was derived by leafFileName from this source key, under
+ * ANY label — the label (module_number or title) can change after filing, the
+ * key cannot. It is the document's identity in a filed leaf name.
+ *
+ * 2026-09-23 (W5/D7, round-2 skeptic, second pass): package-from-core binds a
+ * named withdrawal through this. It used to fall back to the section's only
+ * filed leaf when the current derived name matched nothing, which withdrew a
+ * different, still-current document whenever the named one was never filed in
+ * that section or had already been withdrawn.
+ */
+export function leafFileCarriesKey(fileName: string, key: string): boolean {
+  const keyPart = leafFileKeyPart(key);
+  return fileName === `${keyPart}.pdf`.slice(0, 64) || fileName.endsWith(`-${keyPart}.pdf`);
 }
 
 /**
@@ -299,8 +337,27 @@ export async function materializeLeafSources(
   let unfinalized = 0;
 
   // Deduplicate leaves by their polymorphic document reference.
-  const seen = new Set<string>();
-  const refs: Array<{ documentTable: string | null; documentId: number | null; documentUuid: string | null }> = [];
+  //
+  // 2026-09-23 (W5/D7, round-2 skeptic): a ref also records whether any leaf
+  // naming it SHIPS content. A withdrawn document's status is not an approval
+  // question: the withdrawal files none of its content. It used to be counted
+  // in `unfinalized`, so withdrawing a filed document that had been reopened
+  // for revision was refused at transmit as "not approved".
+  //
+  // 2026-09-23 (W5/D7, residual repair): the round-2 fix still MATERIALIZED a
+  // delete-only ref, saying package-from-core needed its staged file name. It
+  // does not — a named withdrawal binds by its source key against the filed
+  // manifest (leafFileCarriesKey). And when the source could no longer be read
+  // (row deleted, content emptied, upload bytes rotated, vault bytes missing)
+  // the ref landed in `unresolved`, so assembledTransmitBlockers refused a
+  // withdrawal whose backbone was correct while dispatch-readiness, which
+  // exempts a delete from UNRESOLVED_DOCUMENT, read it clear. A ref no leaf
+  // ships is now skipped before any read: nothing staged, nothing reported.
+  // Whether the withdrawal binds is package-from-core's to report, in
+  // `skipped` (which blocks transmit), never silently. A document another
+  // leaf in the sequence ships is still read and gated, and a leaf with no
+  // stated operation is treated as shipping.
+  const refByKey = new Map<string, { documentTable: string | null; documentId: number | null; documentUuid: string | null; shipsContent: boolean }>();
   for (const leaf of params.leaves) {
     const leafUuid = leaf.documentUuid ?? null;
     // A leaf needs a table AND one of the two key spaces. Integer-keyed stores
@@ -308,10 +365,15 @@ export async function materializeLeafSources(
     // documentUuid. Neither → no source, and the packager reports the gap.
     if (!leaf.documentTable || (!leaf.documentId && !leafUuid)) continue;
     const key = leafSourceKey(leaf.documentTable, leaf.documentId, leafUuid);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    refs.push({ documentTable: leaf.documentTable, documentId: leaf.documentId, documentUuid: leafUuid });
+    const shipsContent = (leaf.lifecycleOp ?? '').trim().toLowerCase() !== 'delete';
+    const existing = refByKey.get(key);
+    if (existing) {
+      existing.shipsContent ||= shipsContent;
+      continue;
+    }
+    refByKey.set(key, { documentTable: leaf.documentTable, documentId: leaf.documentId, documentUuid: leafUuid, shipsContent });
   }
+  const refs = [...refByKey.values()].filter((ref) => ref.shipsContent);
 
   const write = async (key: string, baseName: string, content: string, opts: { title?: string; sectionCode?: string }) => {
     const pdfBytes = await renderLeafPdf(content, opts);
@@ -332,6 +394,21 @@ export async function materializeLeafSources(
     const documentId = ref.documentId as number;
     const documentUuid = ref.documentUuid;
     const key = leafSourceKey(documentTable, documentId, documentUuid);
+    // Every unresolved entry carries the ref's uuid as well as its id, so it is
+    // keyed exactly as the ref (leafSourceKey prefers the uuid). 2026-09-23
+    // (W5/D7, round-2 skeptic): the non-vault branches pushed { table, id } only,
+    // so a leaf that also carried a document_uuid was unresolved under
+    // 'table:id' while the compile looked it up under 'table:uuid', and read it
+    // as materialized.
+    const miss = (reason: string): void => {
+      unresolved.push({ documentTable, documentId, documentUuid, reason });
+    };
+    // Every ref reaching here ships content (a delete-only ref was filtered
+    // out above, see the dedupe note), so its status is an approval question.
+    const noteUnfinalized = (sectionCode: string, status: string): void => {
+      unfinalized++;
+      unfinalizedSections.push({ sectionCode, status });
+    };
 
     if (documentTable === 'coauthor_documents') {
       const [doc] = await db
@@ -345,7 +422,7 @@ export async function materializeLeafSources(
         .where(and(eq(coauthorDocuments.id, documentId), eq(coauthorDocuments.organizationId, organizationId)))
         .limit(1);
       if (!doc) {
-        unresolved.push({ documentTable, documentId, reason: 'coauthor_documents row not found in this organization' });
+        miss('coauthor_documents row not found in this organization');
         continue;
       }
       // The body used to fall back to `doc.title`, so a row with no content
@@ -358,11 +435,7 @@ export async function materializeLeafSources(
       // rule the governed-section branch below already applies.
       const coauthorBody = (doc.content ?? '').trim();
       if (!coauthorBody) {
-        unresolved.push({
-          documentTable,
-          documentId,
-          reason: `coauthor document "${doc.title ?? documentId}" has no authored content — not materialized`,
-        });
+        miss(`coauthor document "${doc.title ?? documentId}" has no authored content — not materialized`);
         continue;
       }
       await write(key, doc.moduleNumber || doc.title, coauthorBody, {
@@ -376,8 +449,7 @@ export async function materializeLeafSources(
       const staged = byKey.get(key);
       if (staged) staged.lineage = await coauthorLineage(organizationId, documentId);
       if (!isFinalizedStatus(doc.status, 'coauthor_documents')) {
-        unfinalized++;
-        unfinalizedSections.push({ sectionCode: doc.moduleNumber || doc.title || `coauthor_documents:${documentId}`, status: doc.status ?? 'draft' });
+        noteUnfinalized(doc.moduleNumber || doc.title || `coauthor_documents:${documentId}`, doc.status ?? 'draft');
       }
       continue;
     }
@@ -389,12 +461,11 @@ export async function materializeLeafSources(
         .where(and(eq(unifiedDocuments.id, documentId), eq(unifiedDocuments.organizationId, organizationId)))
         .limit(1);
       if (!doc) {
-        unresolved.push({ documentTable, documentId, reason: 'unified_documents row not found in this organization' });
+        miss('unified_documents row not found in this organization');
         continue;
       }
       if (!isFinalizedStatus(doc.status, 'unified_documents')) {
-        unfinalized++;
-        unfinalizedSections.push({ sectionCode: doc.title || `unified_documents:${documentId}`, status: doc.status ?? 'draft' });
+        noteUnfinalized(doc.title || `unified_documents:${documentId}`, doc.status ?? 'draft');
       }
       // Body lives in workflow_document_versions; render the latest version's
       // content, falling back to the title when no version content exists.
@@ -416,11 +487,7 @@ export async function materializeLeafSources(
       // row at all, and that leaf then counted toward a complete package.
       const body = (version ? unifiedContentToText(version.content) : '').trim();
       if (!body) {
-        unresolved.push({
-          documentTable,
-          documentId,
-          reason: `document "${doc.title ?? documentId}" has no version content — not materialized`,
-        });
+        miss(`document "${doc.title ?? documentId}" has no version content — not materialized`);
         continue;
       }
       await write(key, doc.title, body, { title: doc.title ?? undefined });
@@ -442,15 +509,11 @@ export async function materializeLeafSources(
         .where(and(eq(ctdOnboardingDocuments.id, documentId), eq(ctdOnboardingDocuments.organizationId, organizationId)))
         .limit(1);
       if (!doc) {
-        unresolved.push({ documentTable, documentId, reason: 'ctd_onboarding_documents row not found in this organization' });
+        miss('ctd_onboarding_documents row not found in this organization');
         continue;
       }
       if ((doc.mimeType || '').toLowerCase() !== 'application/pdf') {
-        unresolved.push({
-          documentTable,
-          documentId,
-          reason: `uploaded file mime "${doc.mimeType || 'unknown'}" is not application/pdf — an eCTD leaf must be a PDF and no binary→PDF conversion is available`,
-        });
+        miss(`uploaded file mime "${doc.mimeType || 'unknown'}" is not application/pdf — an eCTD leaf must be a PDF and no binary→PDF conversion is available`);
         continue;
       }
       // storage_path is a server-generated multer disk path; read it via the
@@ -463,11 +526,11 @@ export async function materializeLeafSources(
         buf = null;
       }
       if (!buf || buf.length === 0) {
-        unresolved.push({ documentTable, documentId, reason: 'uploaded file bytes not readable at storage_path (missing/rotated) — cannot materialize leaf' });
+        miss('uploaded file bytes not readable at storage_path (missing/rotated) — cannot materialize leaf');
         continue;
       }
       if (!looksLikePdf(buf)) {
-        unresolved.push({ documentTable, documentId, reason: 'uploaded file is not a valid PDF (missing %PDF- header) — refusing to stage a non-conformant leaf' });
+        miss('uploaded file is not a valid PDF (missing %PDF- header) — refusing to stage a non-conformant leaf');
         continue;
       }
       // Stage the RAW PDF bytes (not re-rendered). The filename MUST end in .pdf
@@ -508,19 +571,13 @@ export async function materializeLeafSources(
       //   4. a real %PDF- header, verified on the bytes rather than trusted
       //      from the mime string, exactly as the upload branch does.
       if (!documentUuid) {
-        unresolved.push({
-          documentTable, documentId, documentUuid: null,
-          reason: 'vault leaf carries no document_uuid — a vault document is uuid-keyed and cannot be addressed by an integer document_id',
-        });
+        miss('vault leaf carries no document_uuid — a vault document is uuid-keyed and cannot be addressed by an integer document_id');
         continue;
       }
       if (!VAULT_UUID_RE.test(documentUuid)) {
         // Guard the ::uuid cast; a malformed value would otherwise raise 22P02
         // and fail the whole assembly rather than this one leaf.
-        unresolved.push({
-          documentTable, documentId, documentUuid,
-          reason: 'vault leaf document_uuid is not a uuid',
-        });
+        miss('vault leaf document_uuid is not a uuid');
         continue;
       }
 
@@ -542,10 +599,7 @@ export async function materializeLeafSources(
         | { storage_version_id: string | null; content_hash: string | null; file_name: string | null }
         | undefined;
       if (!vaultRow) {
-        unresolved.push({
-          documentTable, documentId, documentUuid,
-          reason: 'vault document not found in this organization',
-        });
+        miss('vault document not found in this organization');
         continue;
       }
       if (!vaultRow.storage_version_id) {
@@ -554,34 +608,22 @@ export async function materializeLeafSources(
         // provider — and reading the path here would be a second byte-reading
         // implementation of exactly the kind that was just consolidated away.
         // Say what makes it filable instead of guessing.
-        unresolved.push({
-          documentTable, documentId, documentUuid,
-          reason: 'vault document bytes are not on the storage provider yet (storage_version_id is null) — run scripts/backfill-vault-storage.mjs for this organization, then re-assemble',
-        });
+        miss('vault document bytes are not on the storage provider yet (storage_version_id is null) — run scripts/backfill-vault-storage.mjs for this organization, then re-assemble');
         continue;
       }
 
       const got = await getStorageProvider().get(vaultRow.storage_version_id, organizationId);
       if (!got) {
-        unresolved.push({
-          documentTable, documentId, documentUuid,
-          reason: 'vault document bytes not retrievable from the storage provider for this organization',
-        });
+        miss('vault document bytes not retrievable from the storage provider for this organization');
         continue;
       }
       const vaultSha = createHash('sha256').update(got.bytes).digest('hex');
       if (vaultRow.content_hash && vaultSha !== vaultRow.content_hash) {
-        unresolved.push({
-          documentTable, documentId, documentUuid,
-          reason: 'vault document bytes do not match the content hash recorded for them — refusing to stage a leaf whose source may have been altered',
-        });
+        miss('vault document bytes do not match the content hash recorded for them — refusing to stage a leaf whose source may have been altered');
         continue;
       }
       if (!looksLikePdf(got.bytes)) {
-        unresolved.push({
-          documentTable, documentId, documentUuid,
-          reason: 'vault document is not a valid PDF (missing %PDF- header) — refusing to stage a non-conformant leaf',
-        });
+        miss('vault document is not a valid PDF (missing %PDF- header) — refusing to stage a non-conformant leaf');
         continue;
       }
 
@@ -617,18 +659,14 @@ export async function materializeLeafSources(
         .where(and(eq(renderedLeafFiles.id, documentId), eq(renderedLeafFiles.organizationId, organizationId)))
         .limit(1);
       if (!row) {
-        unresolved.push({ documentTable, documentId, reason: 'rendered_leaf_files row not found in this organization' });
+        miss('rendered_leaf_files row not found in this organization');
         continue;
       }
       if ((row.mime || '').toLowerCase() !== 'application/pdf') {
         // The ICSR projection is stored as XML and transmitted through the
         // gateway, not shipped as an eCTD leaf; say so rather than staging a
         // non-conformant leaf.
-        unresolved.push({
-          documentTable,
-          documentId,
-          reason: `rendered file mime "${row.mime || 'unknown'}" is not application/pdf — an eCTD leaf must be a PDF`,
-        });
+        miss(`rendered file mime "${row.mime || 'unknown'}" is not application/pdf — an eCTD leaf must be a PDF`);
         continue;
       }
       let bytes: Buffer | null = null;
@@ -639,22 +677,18 @@ export async function materializeLeafSources(
         bytes = null;
       }
       if (!bytes || bytes.length === 0) {
-        unresolved.push({ documentTable, documentId, reason: 'rendered file bytes are not retrievable from storage — cannot materialize leaf' });
+        miss('rendered file bytes are not retrievable from storage — cannot materialize leaf');
         continue;
       }
       // The digest recorded at render time is the claim; bytes that no longer
       // match it are NOT the filed document, whatever the store returned.
       const actual = createHash('sha256').update(bytes).digest('hex');
       if (actual !== row.sha256) {
-        unresolved.push({
-          documentTable,
-          documentId,
-          reason: 'rendered file bytes do not match the sha256 recorded at render time — refusing to stage an altered document',
-        });
+        miss('rendered file bytes do not match the sha256 recorded at render time — refusing to stage an altered document');
         continue;
       }
       if (!looksLikePdf(bytes)) {
-        unresolved.push({ documentTable, documentId, reason: 'rendered file is not a valid PDF (missing %PDF- header) — refusing to stage a non-conformant leaf' });
+        miss('rendered file is not a valid PDF (missing %PDF- header) — refusing to stage a non-conformant leaf');
         continue;
       }
       const fileName = leafFileName(row.fileName || 'rendered', key);
@@ -682,7 +716,7 @@ export async function materializeLeafSources(
         | { section_key: string; label: string; status: string | null; content: unknown }
         | undefined;
       if (!row) {
-        unresolved.push({ documentTable, documentId, reason: 'c2c_document_sections row not found in this organization' });
+        miss('c2c_document_sections row not found in this organization');
         continue;
       }
       // jsonb arrives parsed from node-postgres and PGlite; tolerate a driver
@@ -694,11 +728,7 @@ export async function materializeLeafSources(
       const text = sectionPlainText(content).trim();
       if (!text) {
         // An empty section is a GAP in the package, never a blank leaf.
-        unresolved.push({
-          documentTable,
-          documentId,
-          reason: `section ${row.section_key} has no authored content — not materialized`,
-        });
+        miss(`section ${row.section_key} has no authored content — not materialized`);
         continue;
       }
       await write(key, row.section_key || row.label, text, {
@@ -706,24 +736,19 @@ export async function materializeLeafSources(
         sectionCode: row.section_key ?? undefined,
       });
       if (!isFinalizedStatus(row.status, 'c2c_document_sections')) {
-        unfinalized++;
-        unfinalizedSections.push({ sectionCode: row.section_key || `c2c_document_sections:${documentId}`, status: row.status ?? 'todo' });
+        noteUnfinalized(row.section_key || `c2c_document_sections:${documentId}`, row.status ?? 'todo');
       }
       continue;
     }
 
     const externalReason = externalDocumentTableReason(documentTable);
     if (externalReason) {
-      unresolved.push({ documentTable, documentId, reason: externalReason });
+      miss(externalReason);
       continue;
     }
 
     // An unknown document_table — surface it, never silently drop.
-    unresolved.push({
-      documentTable,
-      documentId,
-      reason: `unsupported document_table "${documentTable}" — no resolver registered`,
-    });
+    miss(`unsupported document_table "${documentTable}" — no resolver registered`);
   }
 
   return { byKey, unresolved, materialized, unfinalized, unfinalizedSections };

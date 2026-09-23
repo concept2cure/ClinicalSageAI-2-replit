@@ -1,0 +1,19 @@
+
+/home/user/ClinicalSageAI-2-replit/server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts
+  249:94  warning  Arrow function has too many lines (103). Maximum allowed is 100  max-lines-per-function
+
+/home/user/ClinicalSageAI-2-replit/server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts
+  159:3  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-var-requires')
+  226:7  warning  'setImmediate' is not defined                                                                          no-undef
+
+/home/user/ClinicalSageAI-2-replit/server/services/submission-gateways/as2-transport.ts
+  109:1  warning  Function 'stripComments' has a complexity of 16. Maximum allowed is 15  complexity
+  292:3  warning  Potential timing attack, left side: true                                security/detect-possible-timing-attacks
+  297:3  warning  Potential timing attack, left side: true                                security/detect-possible-timing-attacks
+
+/home/user/ClinicalSageAI-2-replit/server/services/submission-gateways/fda-esg.ts
+  836:1  warning  File has too many lines (549). Maximum allowed is 500  max-lines
+
+✖ 7 problems (0 errors, 7 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+

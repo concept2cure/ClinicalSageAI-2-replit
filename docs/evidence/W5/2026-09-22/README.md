@@ -13,6 +13,9 @@ came from the upstream merge (a PQ row for high-risk drafting models), not
 from this work. Every remaining row is a licensed agency artefact or a
 credential: the ICH/FDA DTDs and stylesheets, the PreSTAR PDFs, and the FDA
 ESG staging account and certificates. Code cannot supply them.
+Re-run 2026-09-23, after rounds 2 and 3: still 2/15 and 5/41
+(`round3/after/submission-preflight-2026-09-23.txt`,
+`round3/after/ga-readiness-report-2026-09-23.txt`).
 
 Base `e4a3f8981`. Commits, in order:
 - `937c9d0e2`
@@ -136,11 +139,15 @@ ECTD_TRANSMITTED audit row and in the response
 ### 10. An MDN that names no message was taken as FDA's receipt
 Such an MDN is now refused. The raw MDN is kept, and the sequence stays in
 flight for a human to confirm at the agency (`before/mdn-no-id-failing-first.txt`).
+*Superseded 2026-09-23 by round 3 (`62f57b83e`).* The first fix recorded the
+transmittal 'rejected', which is outside the duplicate-send lock. One
+classifier now decides every attempt, and an MDN that cannot be tied to our
+message is held 'in_transit' until confirmed at FDA.
 
 ## Adversarial review
 
 A five-lens review workflow ran over commits 1–4. **Only the security lens
-completed.** The other four (over-refusal, transmit/assembly, formatting
+completed** (the full review ran in rounds 2 and 3, below). The other four (over-refusal, transmit/assembly, formatting
 contract, completeness) and the verification pass stopped when the account
 reached its monthly usage limit, so those lenses were **not run**.
 
@@ -155,6 +162,87 @@ with failing-first tests (`before/fda-form-tamper-failing-first.txt`,
 | medium | An appended trailer carrying a changed or missing `/ID` |
 | low | A bundle labelled `estar`, which skipped the transmit check entirely |
 
+## Round 2 review (2026-09-23)
+
+The five-lens review re-ran over the whole D7 range, this time to
+completion. The lenses were security, over-refusal, transmit/assembly,
+formatting contract and completeness, and each had its own skeptic. Of 24
+verdicts, 18 were confirmed and 6 refuted.
+
+**Correction to the first version of this README.** It said every remaining
+D7 row was a licensed artefact or a credential. That was wrong: there was one
+code blocker. `transmitSequence` staged every package under `os.tmpdir()`.
+Outside development and test, every gateway refuses a bundle outside the
+submission-bundle root. So every staging and production transmit was refused,
+including one to FDA's test environment, and the sequence was left
+"transmitting". That was fixed in `4656e9619`. The claim is now true: every
+remaining preflight row is an artefact or a credential.
+
+Round-2 fixes, each with a test shown failing first
+(`round2/before/*-failing-first.txt`, `round2/after/*-passing.txt`):
+
+| Commit | What it fixed |
+|---|---|
+| `4656e9619` | staging inside the bundle root; a guard refusal before the wire frees the sequence |
+| `cd76c7b67` | freeze and dispatch refuse a package that transmit would refuse, while it can still be changed |
+| `59893f059` | a declared withdrawal ships no bytes |
+| `91cd596da` | package spine: an unapproved artifact is refused at transmit (LEAF-UNAPPROVED) |
+| `0d3535e13` | a declared format never narrows which formatting rules apply |
+| `3985d9852`, `b71f5bde4` | FDA-form exception: the section a conformant reader starts from; embedded files judged |
+| `678d935d9` | a vault leaf reaches the device technical file and the compile |
+| `52fa14b39` | governed transmit records the pre-transmit checks that failed without blocking |
+
+## Round 3: every round-2 fix re-checked by a skeptic (2026-09-23)
+
+Seven of the round-2 commits had never had an independent skeptic, and the
+first MDN and co-author fixes had been found unsound. Round 3 re-checked every
+one. Six of the seven came back with confirmed issues. Only the formatting fix
+was sound, and it still had three low findings. Each was fixed failing-first
+and re-checked, with up to three repair rounds. A skeptic's bounded acceptance
+counted only these as blocking:
+- a regression against HEAD;
+- a fail-open on a realistic input;
+- a broken documented flow;
+- a false statement;
+- a test that passes with its clause reverted.
+
+**Verification method.** No commit was verified only in the shared working
+tree. Each one was exported from HEAD (`git archive`, a plain copy, not a git
+worktree), only its own files were applied, and its suites and every suite
+importing the changed modules were run there.
+
+| Commit | What it closes | Isolated run |
+|---|---|---|
+| `d9fe27c1a` | package spine: an artifact is filed only at the version that was approved (and, when locked, locked); a revoked approval is drift; the guard sees the leaf manifest | 9 files, 130 tests |
+| `81eb9dc0b` | formatting: the file name decides the type; a `.pdf` must hold a PDF; extensions up to 10 characters | 27 files, 251 tests |
+| `24faac332` | co-author: a PUT cannot award a verdict status on either route; an approved copy cannot be edited (PUTs, batch-draft accept, apply-template); a sourced copy carries the sealed text, compared section by section; "finalized" reads "locked", not "signed"; the GA demo seeds write real seals | 60 files, 658 tests |
+| `62f57b83e` | FDA ESG and ICSR: one classifier decides received / refused / delivered-unconfirmed / not delivered; ambiguous sends are held, never freed; a refused client certificate frees the sequence; an unconfirmed ICSR is locked against a resend to FAERS | 48 files, 795 tests |
+| `760888fef` | freeze gate: bound to what is frozen; a sequence waits only for a sequence sharing a lifecycle key, so IND sequences freeze in parallel; classify places through the canonical upsertLeaf | 26 files, 427 tests |
+| `6fe72bae4` | withdrawal: the packager sink never ships a delete's bytes; a withdrawn document is not approval-counted or read; bound by identity | 239 files, 3517 tests |
+
+The before and after runs, and the mutant runs, are in `round3/before/`,
+`round3/after/` and `round3/mutants/`. Each `*-failing-first.txt` is a new
+test run against the code before its fix. Each mutant file shows a test
+failing when the clause it pins is reverted.
+
+**A skeptic reversed one of the lead's own instructions.** The MDN close
+pass asked for "a 5xx that arrives before the upload finishes counts as not
+delivered", keyed on Node's request `finish` event. The skeptic showed that
+`finish` can trail a write the server has already read in full. A
+separate-process server that reads the whole body and answers 502 while the
+client is busy was classed "not delivered", and the sequence was freed for a
+resend. The rule was withdrawn. Every 5xx/3xx, and every failure after an
+authenticated server accepted the client, is held for confirmation at FDA.
+
+### Founder decision, not made here
+Any organization member can freeze an authoring document without a
+signature, and a frozen document counts as finalized: filable at transmit,
+complete in the IND and NDA checklists (now shown "Locked", not "Signed").
+Options:
+1. derive "finalized" only when an authoring signature covers the sealed
+   version;
+2. keep freeze a member action and stop counting it as filable or complete.
+
 ## Evidence in this folder
 
 | File | What it shows |
@@ -167,14 +255,15 @@ with failing-first tests (`before/fda-form-tamper-failing-first.txt`,
 | `after/vitest-d7.txt` | the affected suites on the final merged tree |
 | `after/eslint-changed-files.txt` | 0 errors; warnings are the pre-existing size/complexity rules |
 | `after/tsc.txt` | `tsc --noEmit`: no errors in changed files; the remainder are modules absent from this checkout's `node_modules` |
+| `round2/before/`, `round2/after/` | round-2 fixes: each new test against the code before its fix, then passing |
+| `round3/before/`, `round3/after/`, `round3/mutants/` | round-3 fixes: failing-first runs, passing runs (including scoped tsc and eslint), and mutant runs |
 
 ## Not done, and why
 
 - **The licensed artefacts and credentials** (13 of 15 preflight items). These
   are for Procurement or Regulatory Ops to obtain, from a network-permitted
   machine.
-- **The unfinished review lenses.** Re-run the review workflow over the full
-  range before the first live transmit.
+- **The unfinished review lenses.** Done: rounds 2 and 3 above.
 - **A durable record of what each transmit filed.** Follow-up sequences bind
   declared acts against the preview-compile heuristic, so an act that cannot be
   bound is refused rather than mis-filed. The design critiques found blocking
@@ -184,6 +273,26 @@ with failing-first tests (`before/fda-form-tamper-failing-first.txt`,
   - "sent" treated as "accepted".
 - **AS2 receipt checks.** `Received-Content-MIC` and the MDN's own signature are
   not verified. Both need FDA's certificates and a UAT round trip.
+- **Held, never freed (by design):** these are held in transit until someone
+  confirms at FDA:
+  - a front end that answers 503 on the request head before reading the body;
+  - a network drop mid-upload;
+  - a TLS 1.3 server with no session tickets that refuses with a bare reset
+    after 2 s.
+  An operator confirms at FDA and rolls the transmittal back. An ICSR held
+  `transmission_unconfirmed` has no release route; its agency ACK is
+  accepted.
+- **`ssh2-sftp-client`** (the FDA SFTP path for bundles over 1 GiB) is
+  neither installed nor declared. A transmit on that path is refused before
+  any connection, and the sequence is freed.
+- **Filing order at transmit.** `transmitSequence` runs no filing-order
+  check. A legacy pair of dispatched, unsent sequences sharing a lifecycle
+  key can still be sent out of order.
+- **classifyDocument** can still change a verdict co-author row's
+  module_number.
+- **AnA package tool (low):** a first sequence written `0` is not read as
+  `0000`; an upper-case `DELETE` is not validated; a declared modified_file is
+  not checked against the filed manifest.
 - **Shadow Review coverage.** A run records no leaf manifest, so a run over an
   earlier leaf set still satisfies the gate.
 - **FDA Module 1 elements outside the published table** (e.g. `m1-13`). These
@@ -196,4 +305,5 @@ with failing-first tests (`before/fda-form-tamper-failing-first.txt`,
   - `pdfa-pipeline-ghostscript`: no sRGB ICC profile in this environment;
   - `sign-payload-kms-seam`: `@aws-sdk/client-kms` is not installed;
   - `markSubmissionReadyFailsClosed` and `authoringAiDraftNoProvider`: the
-    vitest mock lacks the `ModelNotApprovedError` export that upstream added.
+    vitest mock lacked the `ModelNotApprovedError` export that upstream added.
+    Both pass on 2026-09-23 HEAD (7/7); upstream fixed the mock.

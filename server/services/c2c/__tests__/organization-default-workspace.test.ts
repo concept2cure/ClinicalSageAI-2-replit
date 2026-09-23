@@ -21,6 +21,7 @@ function fakeStore(seed: Array<{ id: number; orgId: number; slug: string }> = []
   let nextId = Math.max(0, ...rows.map(r => r.id)) + 1;
 
   const store: WorkspaceStore = {
+    async enterOrganizationScope() {},
     async readWorkspaces(orgId) {
       const mine = rows.filter(r => r.orgId === orgId);
       return {
@@ -145,6 +146,7 @@ describe('ensureOrganizationDefaultWorkspace', () => {
     // connection inserted the same slug between the read and the write. The
     // organisation has its workspace; this call simply did not write it.
     const store: WorkspaceStore = {
+      async enterOrganizationScope() {},
       async readWorkspaces() {
         return { count: 0, firstWorkspaceId: null };
       },
@@ -177,6 +179,7 @@ describe('the mark on the row is what keeps a CRO anchoring', () => {
     // AMBIGUOUS_CLIENT_WORKSPACE for every program created afterwards.
     const rows: Array<Record<string, unknown>> = [];
     const store: WorkspaceStore = {
+      async enterOrganizationScope() {},
       async readWorkspaces() {
         return { count: 0, firstWorkspaceId: null };
       },
@@ -226,6 +229,19 @@ describe('every organisation creator writes the workspace', () => {
     expect(source).toMatch(CALL);
   });
 
+  it('is called by the organisation creators and no one else (it enters whatever tenant it is given)', () => {
+    const callers = execSync(
+      "grep -rlE '\\bensureOrganizationDefaultWorkspace\\s*\\(' --include=*.ts server/ | grep -v __tests__ | sort || true",
+      { cwd: process.cwd(), encoding: 'utf8' },
+    )
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean);
+    expect(callers).toEqual(
+      [...CREATORS.map((c) => c.file), 'server/services/c2c/organization-default-workspace.ts'].sort(),
+    );
+  });
+
   it('knows of no organisation creator that does not', () => {
     // If this fails, a new INSERT INTO organizations landed somewhere. Either
     // it calls the writer, or it is added to the exemptions with a reason.
@@ -248,5 +264,59 @@ describe('every organisation creator writes the workspace', () => {
     });
 
     expect(unguarded).toEqual([]);
+  });
+});
+
+/** A store that records the ORDER of what the rule asks of it. */
+function recordingStore(opts: { refuseScope?: boolean } = {}) {
+  const calls: string[] = [];
+  const store: WorkspaceStore = {
+    async enterOrganizationScope(orgId) {
+      calls.push(`scope:${orgId}`);
+      if (opts.refuseScope) throw new Error('set_config refused');
+    },
+    async readWorkspaces(orgId) {
+      calls.push(`read:${orgId}`);
+      return { count: 0, firstWorkspaceId: null };
+    },
+    async insertWorkspace(orgId) {
+      calls.push(`insert:${orgId}`);
+      return 1;
+    },
+  };
+  return { store, calls };
+}
+
+describe('the organisation\'s own tenant', () => {
+  it('enters the organisation\'s tenant BEFORE counting and BEFORE writing', async () => {
+    // Under a creator's pre-auth scope (tenant '0') RLS filters the count to
+    // zero silently and refuses the insert loudly; both must be judged as the
+    // organisation the row belongs to.
+    const { store, calls } = recordingStore();
+    await ensureOrganizationDefaultWorkspace(store, { orgId: 7, orgName: 'Acme Bio', userId: 1 });
+    expect(calls).toEqual(['scope:7', 'read:7', 'insert:7']);
+  });
+
+  it('enters it even when the organisation already has a workspace (the count is what it protects)', async () => {
+    const calls: string[] = [];
+    const store: WorkspaceStore = {
+      async enterOrganizationScope(orgId) { calls.push(`scope:${orgId}`); },
+      async readWorkspaces(orgId) { calls.push(`read:${orgId}`); return { count: 1, firstWorkspaceId: 3 }; },
+      async insertWorkspace() { calls.push('insert'); return 9; },
+    };
+    await ensureOrganizationDefaultWorkspace(store, { orgId: 7, orgName: 'Acme Bio' });
+    expect(calls).toEqual(['scope:7', 'read:7']);
+  });
+
+  it('fails closed: a refused scope reads nothing and writes nothing', async () => {
+    const { store, calls } = recordingStore({ refuseScope: true });
+    await expect(ensureOrganizationDefaultWorkspace(store, { orgId: 7, orgName: 'Acme Bio' })).rejects.toThrow('set_config refused');
+    expect(calls).toEqual(['scope:7']);
+  });
+
+  it.each([0, -1, Number.NaN, 1.5])('refuses orgId %s before touching the store', async (orgId) => {
+    const { store, calls } = recordingStore();
+    await expect(ensureOrganizationDefaultWorkspace(store, { orgId, orgName: 'Acme Bio' })).rejects.toThrow(/positive integer/);
+    expect(calls).toEqual([]);
   });
 });

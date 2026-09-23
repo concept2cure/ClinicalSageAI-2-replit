@@ -1,0 +1,96 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/submission-gateways/__tests__/refused-before-wire.test.ts
+{
+  "timestamp": "2026-09-23T06:14:25.830Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T06:14:25.831Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/submission-gateways/__tests__/refused-before-wire.test.ts
+{
+  "timestamp": "2026-09-23T06:14:25.831Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/submission-gateways/__tests__/refused-before-wire.test.ts
+[database] Database connection successful
+
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — the guard refuses before the gateway > is true for a guard refusal, and the gateway is never called 3ms
+ × server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for TransportError raised by impl.transmit 11ms
+   → expected true to be false // Object.is equality
+ × server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for GatewayError raised by impl.transmit 3ms
+   → expected true to be false // Object.is equality
+ × server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for a plain Error raised by impl.transmit 2ms
+   → expected true to be false // Object.is equality
+ × server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for an unmarked ValidationError raised by impl.transmit 2ms
+   → expected true to be false // Object.is equality
+ × server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for an arbitrary error that merely carries transmitted === false (typed, not duck-typed) 2ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > is true for the FDA NextGen REST refusal (UnverifiedTransportError, transmitted === false) 2ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > is true for the requiredAgencyMetadata refusal raised before the transmittal row 2ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > requiredAgencyMetadata marks both of its refusals, and only those 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > test setup keeps staged bundles out of the repository > resolves the bundle root outside the working tree 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for TransportError raised by impl.transmit
+ FAIL  server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for GatewayError raised by impl.transmit
+ FAIL  server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for a plain Error raised by impl.transmit
+ FAIL  server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for an unmarked ValidationError raised by impl.transmit
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/submission-gateways/__tests__/refused-before-wire.test.ts:108:36
+    106|     expect(wire).toHaveBeenCalledTimes(1);
+    107|     expect(err).toBe(thrown);
+    108|     expect(refusedBeforeWire(err)).toBe(false);
+       |                                    ^
+    109|   });
+    110|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for an arbitrary error that merely carries transmitted === false (typed, not duck-typed)
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/submission-gateways/__tests__/refused-before-wire.test.ts:115:36
+    113|     vi.spyOn(FdaEsgGateway.prototype, 'transmit').mockRejectedValue(th…
+    114|     const err = await failureOf(getGateway('fda', 'esg').transmit(requ…
+    115|     expect(refusedBeforeWire(err)).toBe(false);
+       |                                    ^
+    116|     expect(refusedBeforeWire({ transmitted: false })).toBe(false);
+    117|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 5 passed (10)
+   Start at  06:14:24
+   Duration  2.80s (transform 1.57s, setup 90ms, import 2.40s, tests 38ms, environment 0ms)
+

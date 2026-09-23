@@ -219,6 +219,53 @@ describe('ICH rules: unavailable input is reported, never asserted as absence', 
     expect(f[0].status).toBe('pass');
   });
 
+  /**
+   * ICH Q2 and a method with NO recorded validation status.
+   *
+   * Until the analytical-method read moved onto the canonical source-object
+   * store this case was unreachable — the read raised 42703 and Q2 never ran
+   * on any deployed database. Reachable now, and it is the one that must not
+   * fabricate: an absent validation status is not a failed validation. Saying
+   * so would put an ICH Q2(R1) finding on a project for a fact nobody entered.
+   */
+  it('reports a method with NO recorded validation status as not evaluated, not as unvalidated', () => {
+    const inp = emptyInputs();
+    inp.methods = [{ methodName: 'HPLC assay', purpose: 'identity' }];
+
+    const f = checkQ2(inp);
+
+    expect(f.some(x => x.ruleId === 'Q2_UNVALIDATED_METHODS')).toBe(false);
+    const notRecorded = f.find(x => x.ruleId === 'Q2_VALIDATION_STATUS_NOT_RECORDED');
+    expect(notRecorded?.status).toBe('not_evaluated');
+    expect(notRecorded?.evidence?.[0]).toMatch(/no validation status recorded/);
+  });
+
+  it('still fails a method whose RECORDED status is not a validated one', () => {
+    // The distinction has to cut both ways, or it is an amnesty.
+    const inp = emptyInputs();
+    inp.methods = [{ methodName: 'HPLC assay', purpose: 'identity', validationStatus: 'draft' }];
+
+    const f = checkQ2(inp);
+
+    const unvalidated = f.find(x => x.ruleId === 'Q2_UNVALIDATED_METHODS');
+    expect(unvalidated?.status).toBe('fail');
+    expect(f.some(x => x.ruleId === 'Q2_VALIDATION_STATUS_NOT_RECORDED')).toBe(false);
+  });
+
+  it('separates the two when a project holds one of each', () => {
+    const inp = emptyInputs();
+    inp.methods = [
+      { methodName: 'Validated HPLC', purpose: 'identity', validationStatus: 'validated' },
+      { methodName: 'Draft HPLC', purpose: 'identity', validationStatus: 'draft' },
+      { methodName: 'Unrecorded HPLC', purpose: 'identity' },
+    ];
+
+    const f = checkQ2(inp);
+
+    expect(f.find(x => x.ruleId === 'Q2_UNVALIDATED_METHODS')?.message).toMatch(/^1 method/);
+    expect(f.find(x => x.ruleId === 'Q2_VALIDATION_STATUS_NOT_RECORDED')?.message).toMatch(/^1 method/);
+  });
+
   it('leaves every rule untouched when no input is unavailable', () => {
     // Guards must be inert on the normal path.
     const inp = emptyInputs();
