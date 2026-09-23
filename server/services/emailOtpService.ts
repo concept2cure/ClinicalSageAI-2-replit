@@ -16,7 +16,8 @@
  * Security:
  *  - OTP is SHA-256 hashed before storage (plaintext never persisted)
  *  - 10-minute expiry window
- *  - Max 5 verification attempts per OTP (prevents brute force)
+ *  - Max 5 verification attempts per OTP (prevents brute force), counted and
+ *    consumed atomically so concurrent requests cannot share a code
  *  - Rate limited at the route level (reuses existing mfaLimiter)
  *
  * @compliance FDA 21 CFR Part 11.10(d) — Session controls
@@ -25,7 +26,7 @@
 
 import crypto from 'crypto';
 import { db } from '../db';
-import { eq } from 'drizzle-orm';
+import { and, eq, gt, isNotNull, sql } from 'drizzle-orm';
 import { users } from '../../shared/schema';
 
 // ---------------------------------------------------------------------------
@@ -81,63 +82,61 @@ export async function createEmailOtp(userId: number): Promise<string> {
 }
 
 /**
- * Verify a user-submitted OTP code.
- * Returns true if valid, false otherwise.
- * Automatically invalidates the OTP after max attempts or successful verify.
+ * Verify a user-submitted OTP code, consuming it. True if valid.
+ *
+ * Each step is one conditional UPDATE, so concurrent requests cannot share a
+ * code or an attempt (D6, the same class as the TOTP replay in VSR-001 §13.3
+ * item 1). Until 2026-09-23 this read the row, wrote the attempt count, compared,
+ * and cleared the code in separate statements: two concurrent requests carrying
+ * the right code could both pass before either cleared it, and concurrent wrong
+ * guesses could each read the same count and exceed MAX_ATTEMPTS together.
+ *
+ *   1. Count the attempt — only while a code is pending, unexpired and under the
+ *      limit — and read back the stored hash.
+ *   2. Compare in constant time.
+ *   3. Consume — only if the stored hash is still this code's. Of two concurrent
+ *      correct submissions exactly one gets the row.
  */
 export async function verifyEmailOtp(userId: number, code: string): Promise<boolean> {
   if (!code || code.length !== OTP_DIGITS || !/^\d+$/.test(code)) {
     return false;
   }
 
-  const [user] = await db
-    .select({
-      emailOtpHash: users.emailOtpHash,
-      emailOtpExpiresAt: users.emailOtpExpiresAt,
-      emailOtpAttempts: users.emailOtpAttempts,
-    } as any)
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
-
-  if (!user?.emailOtpHash) {
-    return false;
-  }
-
-  // Check expiry
-  if (user.emailOtpExpiresAt && new Date(user.emailOtpExpiresAt) < new Date()) {
-    // Expired — clear OTP
-    await clearOtp(userId);
-    return false;
-  }
-
-  // Check attempt limit
-  const attempts = (user.emailOtpAttempts || 0) + 1;
-  if (attempts > MAX_ATTEMPTS) {
-    await clearOtp(userId);
-    return false;
-  }
-
-  // Increment attempt counter
-  await db
+  const now = new Date();
+  const [pending] = await db
     .update(users)
-    .set({ emailOtpAttempts: attempts } as any)
-    .where(eq(users.id, userId));
+    .set({ emailOtpAttempts: sql`coalesce(${users.emailOtpAttempts}, 0) + 1` })
+    .where(
+      and(
+        eq(users.id, userId),
+        isNotNull(users.emailOtpHash),
+        gt(users.emailOtpExpiresAt, now),
+        sql`coalesce(${users.emailOtpAttempts}, 0) < ${MAX_ATTEMPTS}`
+      )
+    )
+    .returning({ storedHash: users.emailOtpHash });
 
-  // Constant-time comparison of hashes
-  const submittedHash = hashOtp(code);
-  const storedHash = user.emailOtpHash as string;
-
-  if (
-    submittedHash.length === storedHash.length &&
-    crypto.timingSafeEqual(Buffer.from(submittedHash), Buffer.from(storedHash))
-  ) {
-    // Valid — clear OTP so it can't be reused
+  if (!pending?.storedHash) {
+    // None pending, expired, or out of attempts: the code is dead either way.
     await clearOtp(userId);
-    return true;
+    return false;
   }
 
-  return false;
+  const submittedHash = hashOtp(code);
+  const storedHash = pending.storedHash;
+  const matches =
+    submittedHash.length === storedHash.length &&
+    crypto.timingSafeEqual(Buffer.from(submittedHash), Buffer.from(storedHash));
+  if (!matches) {
+    return false;
+  }
+
+  const consumed = await db
+    .update(users)
+    .set({ emailOtpHash: null, emailOtpExpiresAt: null, emailOtpAttempts: 0 })
+    .where(and(eq(users.id, userId), eq(users.emailOtpHash, storedHash)))
+    .returning({ id: users.id });
+  return consumed.length === 1;
 }
 
 /**

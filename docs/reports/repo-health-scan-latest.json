@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T08:34:26.907Z",
+  "generatedAt": "2026-09-23T08:52:52.417Z",
   "git": {
-    "sha": "e7b8a5213b5d073dfc737894be1dbbc75a5dbe25",
+    "sha": "b715e76562319aba20996ae966c0e8c08de3de2e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1979,11 +1979,11 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1062692
+        "bytes": 1063112
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 858926
+        "bytes": 859174
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2007,7 +2007,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 202559
+        "bytes": 202599
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2153,11 +2153,11 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 20530
+        "lines": 20538
       },
       {
         "file": "shared/schema.ts",
-        "lines": 20195
+        "lines": 20198
       },
       {
         "file": "server/statistics-service.ts",
@@ -2312,12 +2312,12 @@
         "lines": 2240
       },
       {
-        "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
-        "lines": 2197
+        "file": "server/routes/auth.ts",
+        "lines": 2226
       },
       {
-        "file": "server/routes/auth.ts",
-        "lines": 2195
+        "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
+        "lines": 2197
       },
       {
         "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
@@ -2328,12 +2328,12 @@
         "lines": 2155
       },
       {
-        "file": "server/services/biomarkers/biomarker-knowledge.ts",
-        "lines": 2093
+        "file": "server/services/precedent-engine.ts",
+        "lines": 2097
       },
       {
-        "file": "server/services/precedent-engine.ts",
-        "lines": 2082
+        "file": "server/services/biomarkers/biomarker-knowledge.ts",
+        "lines": 2093
       },
       {
         "file": "server/routes/510k-estar-routes.ts",
@@ -2504,12 +2504,16 @@
         "lines": 1698
       },
       {
-        "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
-        "lines": 1678
+        "file": "server/services/contradiction-engine-service.ts",
+        "lines": 1693
       },
       {
-        "file": "server/services/contradiction-engine-service.ts",
-        "lines": 1656
+        "file": "server/routes/c2c/projects.ts",
+        "lines": 1682
+      },
+      {
+        "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
+        "lines": 1678
       },
       {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
@@ -2546,10 +2550,6 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
         "lines": 1531
-      },
-      {
-        "file": "server/routes/c2c/projects.ts",
-        "lines": 1522
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",

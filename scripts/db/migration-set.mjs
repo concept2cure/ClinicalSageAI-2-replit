@@ -2514,6 +2514,15 @@ export const C2C_MIGRATION_FILES = [
   // to_regclass; above the final pair, which ci:migration-set-order pins last.
   'migrations/20260922e_amendment_declarations_nullable.sql',
 
+  // ── A TOTP code is accepted once (RFC 6238 §5.2; D6, VSR-001 §13.3 item 1) ─
+  // Registered 2026-09-23. users.mfa_totp_last_step: the time step of the last
+  // accepted code, compared-and-set by mfaService so a verified code cannot open
+  // a second session. ADD COLUMN IF NOT EXISTS only, nullable, no backfill.
+  // public.users has no tenant column and no policy, so nothing for the sweep.
+  // Must precede any server carrying shared/schema.ts's mfaTotpLastStep (bare
+  // select().from(users) expands to every declared column — the C-20 mode).
+  'migrations/20260923_users_mfa_totp_last_step.sql',
+
   // ── C-48 Stage 1: unify the two org-uuid identity spaces ─────────────────
   // Backfills identity.organizations from public.organizations.uuid (the
   // canonical per-tenant uuid) + a forward-sync trigger, so a single

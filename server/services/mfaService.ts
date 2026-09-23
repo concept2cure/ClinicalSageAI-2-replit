@@ -13,9 +13,10 @@
 
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
+import * as QRCode from 'qrcode';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { db } from '../db';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull, lt, or } from 'drizzle-orm';
 import { users } from '../../shared/schema';
 
 // ---------------------------------------------------------------------------
@@ -264,20 +265,55 @@ function getTimeCounter(timestamp?: number): number {
 }
 
 /**
- * Verify a TOTP token against a secret, with window tolerance.
+ * The time step a TOTP code matches within the ±TOTP_WINDOW tolerance, or null.
+ *
+ * Returns WHICH step matched, because acceptance is decided per step: a code is
+ * accepted once, and only for a step later than the last one accepted
+ * (consumeTotpStep). Until 2026-09-23 this returned a bare boolean and nothing
+ * recorded the step, so a verified code was accepted again until its window
+ * closed (VSR-001 §13.3 item 1).
  */
-function verifyTOTPToken(secret: Buffer, token: string): boolean {
+function matchTotpStep(secret: Buffer, token: string): number | null {
   const currentCounter = getTimeCounter();
 
   for (let i = -TOTP_WINDOW; i <= TOTP_WINDOW; i++) {
     const expected = generateTOTP(secret, currentCounter + i);
     // Constant-time comparison to prevent timing attacks
     if (expected.length === token.length && crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(token))) {
-      return true;
+      return currentCounter + i;
     }
   }
 
-  return false;
+  return null;
+}
+
+/**
+ * Accept `step` for the user if, and only if, it is later than the last step
+ * accepted — in one conditional UPDATE, so of two concurrent verifications of
+ * one code exactly one succeeds (the second re-checks the WHERE against the
+ * committed row and matches nothing). RFC 6238 §5.2: "the verifier MUST NOT
+ * accept the second attempt of the OTP after the successful validation has
+ * been issued for the first OTP".
+ *
+ * "Later than", not "different from": once step N+1 has been accepted, a code
+ * captured at step N is refused too. A consumed step stays consumed even if the
+ * action it authorised later fails; the retry takes the next code.
+ *
+ * public.users carries no RLS policy, so this runs in whatever scope the caller
+ * is in — the pre-auth scope at sign-in, the tenant scope when signing.
+ */
+async function consumeTotpStep(userId: number, step: number): Promise<boolean> {
+  const accepted = await db
+    .update(users)
+    .set({ mfaTotpLastStep: step })
+    .where(
+      and(
+        eq(users.id, userId),
+        or(isNull(users.mfaTotpLastStep), lt(users.mfaTotpLastStep, step))
+      )
+    )
+    .returning({ id: users.id });
+  return accepted.length === 1;
 }
 
 // ---------------------------------------------------------------------------
@@ -305,7 +341,7 @@ function hashBackupCode(code: string): string {
 export interface MfaSetupResult {
   secret: string;       // base32-encoded secret (for manual entry)
   otpauthUrl: string;   // otpauth:// URI for QR code generation
-  qrCodeDataUrl: string; // SVG-based QR code as a data URL
+  qrCodeDataUrl: string; // PNG QR code of otpauthUrl, as a data: URL drawn on this server
 }
 
 /**
@@ -334,10 +370,12 @@ export async function generateSecret(userId: number, userEmail: string): Promise
     })
     .where(eq(users.id, userId));
 
-  // Generate a simple text-based QR representation
-  // In production, the client can use a JS QR library (e.g., qrcode.react)
-  // to render the otpauthUrl. We provide the URL for client-side rendering.
-  const qrCodeDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(otpauthUrl)}`;
+  // The QR code is drawn HERE, as a data: URL. Until 2026-09-23 this returned
+  // an https://api.qrserver.com/... address whose query string carried the
+  // otpauth URI — the TOTP secret itself — so any client that displayed it as
+  // an image sent the seed of the user's second factor to a third party (D6).
+  // The secret leaves this server only in the response to the user enrolling.
+  const qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl, { margin: 1, width: 200 });
 
   return {
     secret: secretBase32,
@@ -346,109 +384,91 @@ export async function generateSecret(userId: number, userEmail: string): Promise
   };
 }
 
-/**
- * Verify a 6-digit TOTP token for a user.
- * Returns true if the token is valid.
- */
-export async function verifyToken(userId: number, token: string): Promise<boolean> {
-  if (!token || token.length !== TOTP_DIGITS || !/^\d+$/.test(token)) {
-    return false;
-  }
-
-  // Get encrypted secret from DB
+/** The user's TOTP secret, decrypted, and the last step accepted; null if none. */
+async function loadTotpState(
+  userId: number
+): Promise<{ secret: Buffer; lastStep: number | null } | null> {
   const [user] = await db
-    .select({
-      mfaSecret: users.mfaSecret,
-      mfaEnabled: users.mfaEnabled,
-      mfaBackupCodes: users.mfaBackupCodes,
-    })
+    .select({ mfaSecret: users.mfaSecret, mfaTotpLastStep: users.mfaTotpLastStep })
     .from(users)
     .where(eq(users.id, userId))
     .limit(1);
 
   if (!user?.mfaSecret) {
-    return false;
+    return null;
   }
 
-  // Decrypt and decode the secret
-  const secretBase32 = decrypt(user.mfaSecret);
-  const secretBuffer = base32Decode(secretBase32);
-
-  // Verify TOTP
-  if (verifyTOTPToken(secretBuffer, token)) {
-    return true;
-  }
-
-  // Check backup codes if MFA is enabled
-  if (user.mfaEnabled && user.mfaBackupCodes) {
-    const storedCodes = user.mfaBackupCodes as string[];
-    const tokenHash = hashBackupCode(token);
-    const codeIndex = storedCodes.findIndex(c => c === tokenHash);
-
-    if (codeIndex >= 0) {
-      // Remove used backup code
-      const updatedCodes = [...storedCodes];
-      updatedCodes.splice(codeIndex, 1);
-      await db
-        .update(users)
-        .set({ mfaBackupCodes: updatedCodes })
-        .where(eq(users.id, userId));
-      return true;
-    }
-  }
-
-  return false;
+  return {
+    secret: base32Decode(decrypt(user.mfaSecret)),
+    lastStep: user.mfaTotpLastStep ?? null,
+  };
 }
 
-export async function detectVerificationMethod(
-  userId: number,
-  token: string
-): Promise<'totp' | 'backup_code' | null> {
-  if (!token) {
+const isSixDigits = (token: string) =>
+  typeof token === 'string' && token.length === TOTP_DIGITS && /^\d+$/.test(token);
+
+/**
+ * Verify a second factor and CONSUME it: the one entry point every sign-in,
+ * enrolment and signing path goes through. Returns the method that verified,
+ * or null.
+ *
+ * Only a 6-digit TOTP code verifies. The recovery codes enableMfa issues have
+ * never been redeemable here — their XXXX-XXXX form fails the digit check, as
+ * tests/services/mfaService.test.ts pins — so the unreachable branch that would
+ * have consumed them was removed on 2026-09-23 rather than kept as dead code.
+ * Whether to make them redeemable (at the login challenge only) or stop issuing
+ * them is an open D6 decision (docs/evidence/D6/2026-09-23/README.md).
+ *
+ * Replaces detectVerificationMethod, which classified a code by verifying it
+ * WITHOUT consuming it, and was called just before this on the enterprise path.
+ */
+export async function verifySecondFactor(userId: number, token: string): Promise<'totp' | null> {
+  if (!isSixDigits(token)) {
     return null;
   }
 
-  const normalizedToken = token.replace(/-/g, '').toUpperCase();
-
-  // Backup codes are alphanumeric; TOTP codes are strictly numeric.
-  if (!/^\d+$/.test(token)) {
-    const [user] = await db
-      .select({
-        mfaEnabled: users.mfaEnabled,
-        mfaBackupCodes: users.mfaBackupCodes,
-      })
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
-
-    if (!user?.mfaEnabled || !user.mfaBackupCodes) {
-      return null;
-    }
-
-    const storedCodes = user.mfaBackupCodes as string[];
-    const tokenHash = hashBackupCode(normalizedToken);
-    return storedCodes.some(code => code === tokenHash) ? 'backup_code' : null;
-  }
-
-  const [user] = await db
-    .select({
-      mfaSecret: users.mfaSecret,
-    })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
-
-  if (!user?.mfaSecret) {
+  const state = await loadTotpState(userId);
+  if (!state) {
     return null;
   }
 
-  try {
-    const secretBase32 = decrypt(user.mfaSecret);
-    const secretBuffer = base32Decode(secretBase32);
-    return verifyTOTPToken(secretBuffer, token) ? 'totp' : null;
-  } catch {
+  const step = matchTotpStep(state.secret, token);
+  if (step === null) {
     return null;
   }
+
+  return (await consumeTotpStep(userId, step)) ? 'totp' : null;
+}
+
+/**
+ * Verify a 6-digit TOTP token for a user, consuming it. True if it verified.
+ */
+export async function verifyToken(userId: number, token: string): Promise<boolean> {
+  return (await verifySecondFactor(userId, token)) !== null;
+}
+
+/**
+ * Would this code be accepted right now? A check that does NOT consume it.
+ *
+ * For one caller only: the e-signature modal's pre-check
+ * (POST /api/esignature/verify-mfa), which checks the code and then sends the
+ * SAME code to the governed signing endpoint. If the pre-check consumed it, the
+ * signing endpoint would refuse it and every signature by an enrolled signer
+ * would fail. The signing endpoint consumes it (verifyToken via reverifySigner).
+ * Any other use would reopen the replay this service closes.
+ */
+export async function isTokenCurrentlyAcceptable(userId: number, token: string): Promise<boolean> {
+  if (!isSixDigits(token)) {
+    return false;
+  }
+
+  const state = await loadTotpState(userId);
+  if (!state) {
+    return false;
+  }
+
+  const step = matchTotpStep(state.secret, token);
+  return step !== null && (state.lastStep === null || step > state.lastStep);
 }
 
 /**

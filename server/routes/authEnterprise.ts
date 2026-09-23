@@ -486,13 +486,12 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
     let verifiedMethod: 'email' | 'totp' | 'backup_code' = 'email';
 
     if (!isValid) {
-      const detectedMethod = await mfaService.detectVerificationMethod(userId, code);
-      isValid = await mfaService.verifyToken(userId, code);
-      if (isValid && detectedMethod) {
-        verifiedMethod = detectedMethod;
-      } else if (isValid) {
-        verifiedMethod = 'totp';
-      }
+      // One call that verifies AND consumes the code, and says which method did.
+      // It was a non-consuming detectVerificationMethod followed by verifyToken:
+      // a second, independent verification of the same code (removed 2026-09-23).
+      const method = await mfaService.verifySecondFactor(userId, code);
+      isValid = method !== null;
+      if (method) verifiedMethod = method;
     }
 
     if (!isValid) {
@@ -509,7 +508,7 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
       });
       return res.status(401).json({
         error: 'INVALID_MFA_CODE',
-        message: 'Invalid or expired verification code. Please try again.',
+        message: 'Invalid or expired verification code. Each code works once; if you just used it, wait for the next.',
       });
     }
 
