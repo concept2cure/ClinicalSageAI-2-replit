@@ -206,19 +206,28 @@ async function protocolDocumentAuthors(db: AuthorshipReader, documentId: string,
      UNION SELECT created_by FROM protocol_schedule_visits       WHERE protocol_document_id = $1 AND organization_id = $2
      UNION SELECT created_by FROM protocol_soa_assessments       WHERE protocol_document_id = $1 AND organization_id = $2
      UNION SELECT created_by FROM protocol_soa_cells             WHERE protocol_document_id = $1 AND organization_id = $2
-     UNION SELECT created_by FROM protocol_team_members          WHERE protocol_document_id = $1 AND organization_id = $2
-     UNION SELECT created_by FROM protocol_versions              WHERE protocol_document_id = $1 AND organization_id = $2`,
+     UNION SELECT created_by FROM protocol_team_members          WHERE protocol_document_id = $1 AND organization_id = $2`,
     [docId, orgId],
   );
   set.add(content.rows, 'created_by', 'protocol content');
+  // Content edits only. On the document itself, 'update' also records review
+  // comments (AnA), budget parameters and version snapshots; none of them is
+  // authorship, and neither is a version row (finalize writes one under the
+  // signer's id). A payload `documentId` counts only on the protocol's own
+  // visit and SoA targets: other modules (Other Support) carry a documentId
+  // that is their own document's, not this protocol's. Anything unlisted that
+  // does land here is counted as authorship, which refuses a signer rather
+  // than admitting one.
   const edits = await db.query(
     `SELECT DISTINCT a.proposed_by
        FROM c2c_ana_actions a
       WHERE a.org_id = $2
         AND a.domain = 'protocol_development'
         AND a.command = 'update'
-        AND (a.target = $3
-             OR a.payload->>'documentId' = $4
+        AND ((a.target = $3
+              AND NOT (COALESCE(a.payload, '{}'::jsonb) ?| array['commentId','assignmentId','paramsId','itemId','version']))
+             OR ((a.target LIKE 'protocol-visit:%' OR a.target LIKE 'protocol-soa-assessment:%')
+                 AND a.payload->>'documentId' = $4)
              OR a.target IN (SELECT 'protocol-section:' || s.id FROM protocol_sections s
                               WHERE s.protocol_document_id = $1 AND s.organization_id = $2)
              OR a.target IN (SELECT 'protocol-soa-assessment:' || x.id FROM protocol_soa_assessments x

@@ -12,6 +12,8 @@
  */
 
 import { pool } from '../../db';
+// The roles that can sign here (routes/protocol-reviews.ts runs requireEditorAccess).
+import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
 import {
   summarizeReviewConsensus,
   evaluateReviewReadiness,
@@ -55,6 +57,21 @@ export async function assignReviewerTx(
   if (!input.reviewerName || !input.reviewerName.trim()) throw new ProtocolReviewError('BAD_INPUT', 'reviewer_name is required.');
   const role = input.role ?? 'general';
   if (!ROLES.includes(role)) throw new ProtocolReviewError('BAD_INPUT', `Invalid review role "${role}".`);
+  if (input.reviewerUserId != null) {
+    // Only the assigned user can sign the disposition, and nothing reassigns a
+    // review, so an assignment to someone who can never sign is a review that
+    // can never complete. Refuse it here.
+    const member = await client.query(
+      `SELECT role FROM organization_users WHERE organization_id = $1 AND user_id = $2 LIMIT 1`,
+      [orgId, input.reviewerUserId],
+    );
+    if (member.rows.length === 0) {
+      throw new ProtocolReviewError('BAD_INPUT', 'That reviewer is not a member of this organization. Assign a member, or name the reviewer without an account. Nothing was recorded.');
+    }
+    if (!GOVERNED_WRITE_ROLES.has(String(member.rows[0].role ?? '').toLowerCase())) {
+      throw new ProtocolReviewError('BAD_INPUT', `That reviewer's role (${member.rows[0].role}) cannot sign, so they could never record a disposition. Nothing was recorded.`);
+    }
+  }
   const { rows } = await client.query(
     `INSERT INTO protocol_review_assignments (organization_id, protocol_document_id, reviewer_name, reviewer_user_id, role, status, due_date, created_by)
      VALUES ($1,$2,$3,$4,$5,'assigned',$6,$7) RETURNING id`,
@@ -79,7 +96,14 @@ export async function setDispositionTx(
   disposition: string,
   signerId: number,
   meaning: string,
-): Promise<{ id: number; disposition: string; protocolDocumentId: number; reviewerName: string; onBehalfOf: string | null }> {
+): Promise<{
+  id: number;
+  disposition: string;
+  protocolDocumentId: number;
+  protocolVersion: string | null;
+  reviewerName: string;
+  onBehalfOf: string | null;
+}> {
   if (!DISPOSITIONS.includes(disposition)) throw new ProtocolReviewError('BAD_INPUT', `Invalid disposition "${disposition}".`);
   const a = await client.query(
     `SELECT id, protocol_document_id, reviewer_name, reviewer_user_id, status, disposition
@@ -106,17 +130,24 @@ export async function setDispositionTx(
   if (assignedTo === null && meaning !== 'responsibility') {
     throw new ProtocolReviewError(
       'BAD_INPUT',
-      `${row.reviewer_name} has no account here, so their decision can only be recorded by someone taking responsibility for the record. Sign as "responsibility", or reassign the review to a user. Nothing was recorded.`,
+      `${row.reviewer_name} has no account here, so their decision can only be recorded by someone taking responsibility for the record. Sign as "responsibility". Nothing was recorded.`,
     );
   }
   await client.query(
     `UPDATE protocol_review_assignments SET disposition = $3, status = 'completed', updated_at = now() WHERE id = $1 AND organization_id = $2`,
     [assignmentId, orgId, disposition],
   );
+  // The version reviewed, for the signature row: the binding covers content
+  // only, so the version is recorded beside it rather than inside it.
+  const doc = await client.query(
+    `SELECT version FROM protocol_documents WHERE id = $1 AND organization_id = $2 LIMIT 1`,
+    [row.protocol_document_id, orgId],
+  );
   return {
     id: assignmentId,
     disposition,
     protocolDocumentId: Number(row.protocol_document_id),
+    protocolVersion: doc.rows[0]?.version == null ? null : String(doc.rows[0].version),
     reviewerName: String(row.reviewer_name),
     onBehalfOf: assignedTo === null ? String(row.reviewer_name) : null,
   };

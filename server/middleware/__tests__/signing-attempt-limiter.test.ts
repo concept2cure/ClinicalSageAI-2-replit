@@ -33,4 +33,18 @@ describe('signingAttemptLimiter', () => {
     who = 602;
     expect((await request(shared).post('/sign')).status).toBe(401);
   });
+
+  it('one scope is one budget, even when two routers each build the limiter', async () => {
+    // protocol-development.ts and protocol-reviews.ts each call
+    // signingAttemptLimiter('protocol-sign', …); guesses at one route count
+    // against the other.
+    const build = () => signingAttemptLimiter('test-one-budget', { error: { code: 'TOO_MANY_ATTEMPTS' } });
+    const app = express();
+    app.use((req, _res, next) => { Object.assign(req, { userId: 701 }); next(); });
+    app.post('/finalize', build(), (_req, res) => res.status(401).end());
+    app.post('/disposition', build(), (_req, res) => res.status(401).end());
+    for (let i = 0; i < 10; i++) expect((await request(app).post(i % 2 ? '/finalize' : '/disposition')).status).toBe(401);
+    expect((await request(app).post('/finalize')).status).toBe(429);
+    expect((await request(app).post('/disposition')).status).toBe(429);
+  });
 });

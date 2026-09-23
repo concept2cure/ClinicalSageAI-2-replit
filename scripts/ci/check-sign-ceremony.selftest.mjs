@@ -104,6 +104,44 @@ router.post('/u', async (req, res) => {
   assert.deepEqual(scanSource(src), []);
 });
 
+test('a command chosen by a ternary is still a sign write (IRB approval, as it stood on 2026-09-23)', () => {
+  const src = `
+router.post('/submissions/:id/determination', async (req, res) => {
+  await governed(req, res, parsed.data.outcome === 'approved' ? 'sign' : 'resolve', parsed.data.reason, async (client, orgId, userId) => {
+    return { target: \`irb-submission:\${id}\`, body: {} };
+  });
+});`;
+  const f = failsWith(src);
+  assert.equal(f.length, 1);
+  assert.equal(f[0].sites[0].kind, 'governed-helper');
+});
+
+test('a ternary or template-literal command inside recordGovernedAction is a site', () => {
+  const ternary = `
+router.post('/t', async (req, res) => {
+  await recordGovernedAction(client, { orgId, userId, command: approved ? 'sign' : 'update', target, reason });
+});`;
+  assert.equal(failsWith(ternary).length, 1);
+  const template = `
+router.post('/t', async (req, res) => {
+  await governed(req, res, \`sign\`, reason, async () => ({}));
+});`;
+  assert.equal(failsWith(template).length, 1);
+});
+
+test('"sign" in a reason, a target or a callback is not a command', () => {
+  const src = `
+router.post('/r', async (req, res) => {
+  await governed(req, res, 'update', 'Ready to sign, pending review', async (client) => {
+    const kind = 'sign';
+    return { target: 'sign', body: {} };
+  });
+  await governedPdev(ctx, 'create', target, 'sign', input, async (client) => ({ command: 'sign' }));
+});
+async function governed(req: Request, res: Response, command: 'create' | 'update' | 'sign', reason: string) {}`;
+  assert.deepEqual(scanSource(src), []);
+});
+
 test('the baseline is a ceiling per file, not a pass', () => {
   const two = PRE_FIX_FINALIZE + PRE_FIX_FINALIZE.replace('/documents/:id/finalize', '/other');
   const reason = 'DEFECT, recorded so the population cannot grow while it is fixed.';

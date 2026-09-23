@@ -611,6 +611,14 @@ export interface GovernedSignParams {
   secondFactorVerified: boolean;
   ipAddress?: string | null;
   occurredAt: Date;
+  /**
+   * Extra manifest members, APPENDED after the shared ones. Appending (never
+   * interleaving) keeps the persisted manifest bytes — and therefore the
+   * §11.200 attribution hash — byte-identical for callers that pass none.
+   * Use it for what the signer decided when the target alone does not say
+   * (a reviewer's approve or reject), so the signature row states it itself.
+   */
+  extraManifest?: Record<string, unknown>;
 }
 
 /**
@@ -632,12 +640,6 @@ export interface GovernedActionSignatureParams extends GovernedSignParams {
   command?: string;
   /** Overrides the default §11 compliance statement. */
   complianceStatement?: string;
-  /**
-   * Extra manifest members, APPENDED after the shared ones. Appending (never
-   * interleaving) keeps the persisted manifest bytes — and therefore the
-   * §11.200 attribution hash — byte-identical for callers that pass none.
-   */
-  extraManifest?: Record<string, unknown>;
 }
 
 /**
