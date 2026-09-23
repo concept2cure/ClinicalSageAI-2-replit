@@ -2540,6 +2540,18 @@ export const C2C_MIGRATION_FILES = [
   // select().from(users) expands to every declared column — the C-20 mode).
   'migrations/20260923_users_mfa_totp_last_step.sql',
 
+  // ── An approval does not outlive the status that carries it (W5/D7) ──────
+  // Registered 2026-09-23 (final pass). A BEFORE INSERT OR UPDATE trigger on
+  // concept2cure_artifacts clears approved_version_id and published_version_id
+  // whenever the status is not approved/locked, so a revoked approval
+  // (approved → review, locked → draft, → archived) cannot be resurrected by a
+  // later arrival at 'approved' that is not the governed approval act, plus a
+  // backfill of rows that already break that rule. No DROP: the trigger is
+  // created only when absent (the 20260921_audit_logs_chain_seq idiom). No new
+  // table, nothing for the sweep. concept2cure_artifacts is a push-provisioned
+  // base table; the file NOTICE-skips where it is absent.
+  'migrations/20260923b_artifact_approval_follows_status.sql',
+
   // ── C-48 Stage 1: unify the two org-uuid identity spaces ─────────────────
   // Backfills identity.organizations from public.organizations.uuid (the
   // canonical per-tenant uuid) + a forward-sync trigger, so a single
