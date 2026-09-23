@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-001 |
-| Version | 0.4 |
+| Version | 0.5 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §5; requirements URS-001 |
 | Runner (the executable protocol) | `tests/validation/oq/projects/run.mjs` — `npm run validation:oq -- projects` |
@@ -17,6 +17,7 @@
 | 0.2 | 2026-09-22 | W3 | OQ-PROJ-06b checks what its expected result says: at least one entry carries record/previous hashes, and the server's chain verdict (`meta.chain`) is `ok = true`. v0.1 counted entries only, so an unchained entry or a broken chain passed. Shown on a deliberately tampered local chain: v0.1 passed OQ-PROJ-06b while OQ-PROJ-06 failed; v0.2 fails it (VSR-001 §12). §5 records the 2026-09-22 execution under the production posture (RLS enforcing, non-owner runtime role, credentialed second signer); earlier results are kept below it as superseded. No step changed. |
 | 0.3 | 2026-09-23 | W3 | OQ-PROJ-02 signs in through the form with email, password and the authenticator code when the run is credentialed. The Demo Access path it had used exists only on a development server with ALLOW_DEV_AUTH=1, which production must refuse (IQ-10), so the step could not execute on staging. The harness authenticates every protocol the same way (tests/validation/lib/harness.mjs passwordLogin; VSR-001 §13). §1 now describes that session method; it named dev-login only, which OQ-002…006 inherit through "As OQ-001 §1". |
 | 0.4 | 2026-09-23 | W3 | OQ-PROJ-16 (URS-PROJ-010): the step makes a wrong-password attempt, a wrong-code attempt and a sign-in, then reads them back on the audit ledger, in order and hash-chained. Only entries the step itself added count: an earlier run leaves the same five sentences, and the first draft of the step, which compared the newest five, passed against the unfixed code on those. Under RLS these events had never reached the trail (VSR-001 §13, F-19). On the code before that fix the step fails; after it the step passes (`docs/evidence/W3/2026-09-23/OQ-001-v0.4/`). |
+| 0.5 | 2026-09-23 | W3 | OQ-PROJ-17 (URS-PROJ-011): the step opens a session of its own, signs it out, and uses the same token again. Logout had answered "Tokens invalidated." while the token went on opening the API and the session check, and no step used a token after signing it out (VSR-001 §13.9, F-21). The step signs out its own session, not the run's, so the steps after it keep theirs. On the code before that fix the step fails; after it the step passes (`docs/evidence/W3/2026-09-23/OQ-001-v0.5/`). |
 
 ## 1. Method
 
@@ -47,6 +48,7 @@ IQ-001 executed on the same installation; `LAUNCH_SCOPE_ENFORCE=on`; a fresh or 
 | OQ-PROJ-14 | URS-PROJ-008 | scripted (browser) | Open `/concept2cure/rbm` | "Not in this release" gate; screenshot |
 | OQ-PROJ-15 | URS-PROJ-009 | scripted | `GET /api/c2c/projects/<random uuid>` | 404 |
 | OQ-PROJ-16 | URS-PROJ-010 | scripted | Credentialed run only (a dev-login run is a deviation). `POST /api/auth/login` with a wrong password. `POST /api/auth/login` with the password, then `POST /api/auth/mfa/verify` with a wrong code. `POST /api/auth/login` with the password, then `/mfa/verify` with the current code. The sign-in calls bypass the recorded API client, so no factor reaches the record. The ledger is read before and after (`GET /api/audit-trail/ledger?limit=50`) (v0.4) | 401; 200 then 401; 200 then 200 with a session. The ledger then holds exactly five entries for the run identity that it did not hold before the step. Newest first they read "Signed in: password and second factor verified", "Password verified: authenticator code requested", "Second factor refused: wrong code", "Password verified: authenticator code requested", "Sign-in refused: wrong password"; each is hash-chained, and the chain verdict is ok |
+| OQ-PROJ-17 | URS-PROJ-011 | scripted | Open a session of the step's own for the run identity: password and authenticator code on a credentialed run, dev-login on a development run. With it: `GET /api/c2c/projects`; `POST /api/auth/logout`; then, with the same token, `GET /api/c2c/projects` and `GET /api/auth/session`. The ledger is read with the run session before and after (`GET /api/audit-trail/ledger?limit=50`) (v0.5) | Projects 200 before; logout 200. Afterwards the projects API answers 401 and the session check reports `authenticated: false`. The newest ledger entry the step added for the run identity reads "Signed out" and is hash-chained |
 
 ## 4. Acceptance
 
