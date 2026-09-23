@@ -40,6 +40,7 @@ import {
 import { can } from '../governance/permissions';
 import { persistGovernedSignSignature } from '../part11/signature-persistence';
 import { setTenantContextTx } from '../tenant/governed-tenant-context';
+import { clientIpOf, type HasClientIp } from '../../utils/client-ip';
 
 export const PROTOCOL_SIGN_MEANINGS = ['authorship', 'review', 'approval', 'responsibility'] as const;
 export type ProtocolSignMeaning = (typeof PROTOCOL_SIGN_MEANINGS)[number];
@@ -214,8 +215,13 @@ export async function signProtocolAct(input: ProtocolSignatureInput): Promise<Re
   }
 }
 
-/** The client IP for the signature row when resolvable; null, never invented. */
-export function signerIpAddress(req: { headers: Record<string, unknown>; socket?: { remoteAddress?: string } }): string | null {
-  const forwarded = req.headers['x-forwarded-for'];
-  return (typeof forwarded === 'string' ? forwarded.split(',')[0]?.trim() : '') || req.socket?.remoteAddress || null;
+/**
+ * The client IP for the signature row when resolvable; null, never invented.
+ * It is the request's address as the trust-proxy hop count resolves it
+ * (server/utils/client-ip.ts). It read the left-most X-Forwarded-For entry,
+ * which the signer writes, so a signer could put any address in the row (D6;
+ * ci:client-ip-single-source).
+ */
+export function signerIpAddress(req: HasClientIp): string | null {
+  return clientIpOf(req);
 }

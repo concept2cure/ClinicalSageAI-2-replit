@@ -14,6 +14,7 @@ const log = createScopedLogger('audit-trail-routes');
 import type { Pool } from 'pg';
 import type { Request, Response } from 'express';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
+import { clientIpOf } from '../utils/client-ip';
 
 // ---------------------------------------------------------------------------
 // Helper: derive the acting principal from the AUTHENTICATED request only.
@@ -270,7 +271,9 @@ export function createAuditTrailRoutes(pool: Pool): Router {
           principal.userId,
           principal.userName,
           principal.userRole,
-          body.ipAddress || body.ip_address || req.ip || '',
+          // The request's own address, never one the body names: the caller
+          // could otherwise write any IP into the audit trail (D6).
+          clientIpOf(req) ?? '',
           reason,
           JSON.stringify(body.metadata || body.payload || {}),
           regulatorySignificant,

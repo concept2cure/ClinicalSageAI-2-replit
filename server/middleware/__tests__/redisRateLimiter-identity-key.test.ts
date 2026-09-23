@@ -30,6 +30,7 @@ import request from 'supertest';
 
 import { createRedisRateLimiter } from '../redisRateLimiter';
 import { RATE_LIMITS } from '../../config/platform-limits';
+import { resolveTrustProxy } from '../../config/trust-proxy';
 
 const PER_IP = 5;
 const PER_CREDENTIAL = 12;
@@ -38,7 +39,7 @@ const PER_IP_CREDENTIALED = 20;
 let n = 0;
 function app(opts: { verifiedUserId?: (req: express.Request) => number | null } = {}) {
   const a = express();
-  a.set('trust proxy', true);
+  a.set('trust proxy', resolveTrustProxy({ NODE_ENV: 'production' }).hops);
   if (opts.verifiedUserId) {
     a.use((req, _res, next) => {
       const id = opts.verifiedUserId!(req);

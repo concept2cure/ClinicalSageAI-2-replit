@@ -41,6 +41,7 @@ import {
   persistElectronicSignature,
   BINDING_BASIS,
 } from '../services/part11/signature-persistence.js';
+import { clientIpOf } from '../utils/client-ip.js';
 
 const router = Router();
 
@@ -298,10 +299,7 @@ router.post('/sign', async (req: Request, res: Response) => {
   }
 
   const signedAt = new Date();
-  const ipAddress: string | undefined =
-    (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
-    req.socket?.remoteAddress ||
-    undefined;
+  const ipAddress: string | undefined = clientIpOf(req) ?? undefined;
 
   // §11.70 content binding: the signature must be linked to the *bytes* of the
   // version being signed, not just its id. Load the version's content

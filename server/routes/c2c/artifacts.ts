@@ -36,7 +36,6 @@ import {
   type Artifact,
   calculateContentHash,
   concept2cureRateLimiter,
-  getClientIp,
   getOrganizationId,
   getUserId,
   logAuditEntry,
@@ -48,6 +47,7 @@ import {
   verifyIntegrityChain,
 } from './shared';
 import { verifyProjectAccess } from './project-access';
+import { clientIpKey } from '../../utils/client-ip';
 
 const logger = createScopedLogger('concept2cure-artifacts');
 const router = Router();
@@ -604,7 +604,7 @@ router.post(
           : 'Manual document creation',
         backendRoute: 'POST /api/concept2cure/projects/:projectId/artifacts',
         backendService: 'concept2cure',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
       });
 
       // RIM: capture artifact creation signal (non-blocking)
@@ -1012,7 +1012,7 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
         sourceDescription: `Updated from v${dbArtifact.version} to v${newVersion}`,
         backendRoute: 'PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId',
         backendService: 'concept2cure',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
       });
     }
 
@@ -1269,7 +1269,7 @@ router.put(
         } → ${toSection} — ${reason.trim()}`,
         backendRoute: 'PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement',
         backendService: 'concept2cure',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
       });
 
       logger.info('Artifact placement updated', {
@@ -2391,7 +2391,7 @@ router.post(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/audit-report/export`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: {
           exportedArtifactId: exportArtifactId,
           reportMode: 'detailed',
@@ -2840,7 +2840,7 @@ router.put(
                 previousStatus,
                 newStatus: status,
               },
-              ipAddress: getClientIp(req),
+              ipAddress: clientIpKey(req),
               deviceInfo: null,
               status: 'active',
               signedAt,
@@ -2926,7 +2926,7 @@ router.put(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/status`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: {
           previousStatus,
           newStatus: status,
@@ -3128,7 +3128,7 @@ router.put(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/ctd-section`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: { previousSection, newSection: ctdSection },
       });
 
@@ -3416,7 +3416,7 @@ router.post(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/rollback`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: {
           rolledBackFromVersion: artifact.version,
           targetVersion,
@@ -3523,7 +3523,7 @@ router.post(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/comments`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: { commentId, version: artifact.version },
       });
 
@@ -3814,7 +3814,7 @@ router.post(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/reviewers`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: {
           reviewerIds: numericIds,
           reviewRound,
@@ -4014,7 +4014,7 @@ router.delete(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/reviewers/${req.params.assignmentId}`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: { assignmentId: req.params.assignmentId, reviewerId: assignment.reviewerId },
       });
 
@@ -4274,7 +4274,7 @@ router.post(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/reviews/submit`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: {
           decisionId,
           decision,

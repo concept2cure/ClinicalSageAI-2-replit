@@ -104,6 +104,7 @@ import {
   InvalidChangeTransitionError, SegregationOfDutiesError,
   type ChangeState,
 } from '../services/qms/changeControl.service';
+import { clientIpOf } from '../utils/client-ip';
 
 const router = Router();
 const log = createScopedLogger('mdx-qms');
@@ -496,11 +497,7 @@ const approveBody = z.object({
 });
 
 function resolveIpAddress(req: Request): string | null {
-  return (
-    (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
-    req.socket?.remoteAddress ||
-    null
-  );
+  return clientIpOf(req);
 }
 
 /**

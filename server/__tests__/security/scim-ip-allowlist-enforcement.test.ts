@@ -3,7 +3,8 @@
  *
  * Confirms the opt-in / fail-closed network policy: no rows = unrestricted; an
  * enabled rule rejects a valid token from outside its CIDR (403) and admits one
- * inside it (200). req.ip is driven via X-Forwarded-For with trust proxy on.
+ * inside it (200). req.ip is driven via X-Forwarded-For with production's hop
+ * count (server/config/trust-proxy.ts): the load balancer's appended entry.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -17,6 +18,7 @@ vi.hoisted(() => {
 import express from 'express';
 import request from 'supertest';
 import { __resetScimDbTenantCache, __resetScimIpAllowlistCache } from '../../routes/scim';
+import { resolveTrustProxy } from '../../config/trust-proxy';
 
 const { queryMock, state } = vi.hoisted(() => ({
   queryMock: vi.fn(),
@@ -43,7 +45,9 @@ beforeEach(async () => {
   });
   const router = (await import('../../routes/scim')).default;
   app = express();
-  app.set('trust proxy', true); // req.ip = leftmost X-Forwarded-For
+  // Production's posture: one trusted hop, so req.ip is the entry the load
+  // balancer appended — never the left-most one, which the client writes.
+  app.set('trust proxy', resolveTrustProxy({ NODE_ENV: 'production' }).hops);
   app.use('/scim/v2', router);
 });
 
@@ -77,6 +81,17 @@ describe('SCIM IP allowlist enforcement', () => {
       .set('Authorization', `Bearer ${TOKEN}`)
       .set('X-Forwarded-For', '8.8.8.8');
     expect(res.status).toBe(200);
+  });
+
+  it('a leaked token cannot claim an allowlisted address: the load balancer\'s entry decides (403)', async () => {
+    // The client writes "10.1.2.3" itself; the load balancer appends the
+    // address it actually received the connection from, 8.8.8.8.
+    state.allowRows = [{ organization_id: 7, cidr: '10.0.0.0/8' }];
+    const res = await request(app)
+      .get('/scim/v2/Users')
+      .set('Authorization', `Bearer ${TOKEN}`)
+      .set('X-Forwarded-For', '10.1.2.3, 8.8.8.8');
+    expect(res.status).toBe(403);
   });
 
   it("another org's rule does not restrict this org (200)", async () => {

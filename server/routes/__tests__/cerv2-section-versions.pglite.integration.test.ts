@@ -81,6 +81,7 @@ vi.mock('../c2c/actions.js', () => ({
 }));
 
 import sectionsRouter from '../cerv2-sections';
+import { resolveTrustProxy } from '../../config/trust-proxy';
 
 // ── Real table shapes (shared/schema.ts) ─────────────────────────────────────
 const DDL = `
@@ -229,7 +230,7 @@ beforeAll(async () => {
 
   app = express();
   app.use(express.json());
-  app.set('trust proxy', true);
+  app.set('trust proxy', resolveTrustProxy({ NODE_ENV: 'production' }).hops);
   app.use('/api/cerv2/sections', sectionsRouter);
 }, 90_000);
 

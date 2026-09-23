@@ -24,6 +24,7 @@ import {
   mintPasswordSetupToken,
   passwordSetupUrl,
   resolveAppBaseUrl,
+  PublicOriginNotConfiguredError,
 } from '../services/password-setup-token';
 
 // Scoped logger — every log line flows through the redaction walker in
@@ -93,7 +94,6 @@ const loginLimiter = rateLimit({
     success: false,
     error: { code: 'RATE_LIMIT', message: 'Too many login attempts. Please try again later.' },
   },
-  validate: { xForwardedForHeader: false },
 });
 
 /** Signup: 5 per hour per IP */
@@ -106,7 +106,6 @@ const signupLimiter = rateLimit({
     success: false,
     error: { code: 'RATE_LIMIT', message: 'Too many signup attempts. Please try again later.' },
   },
-  validate: { xForwardedForHeader: false },
 });
 
 /** Password reset: 5 per hour per IP */
@@ -122,7 +121,6 @@ const passwordResetLimiter = rateLimit({
       message: 'Too many password reset requests. Please try again later.',
     },
   },
-  validate: { xForwardedForHeader: false },
 });
 
 /** MFA verify: 10 per 15 minutes per IP */
@@ -135,7 +133,6 @@ const mfaLimiter = rateLimit({
     success: false,
     error: { code: 'RATE_LIMIT', message: 'Too many MFA attempts. Please try again later.' },
   },
-  validate: { xForwardedForHeader: false },
 });
 
 // Development auth bypass fully removed — all authentication is enforced.
@@ -1827,6 +1824,25 @@ async function handleForgotPassword(req: Request, res: Response) {
 
     if (!requireDb(res)) return;
 
+    // The origin the reset link is built on, resolved BEFORE the account
+    // lookup: in production it is APP_URL or nothing, never the Host header
+    // (password-reset poisoning), and a deployment without it refuses every
+    // address the same way, which reveals nothing about which exist.
+    let appBaseUrl: string;
+    try {
+      appBaseUrl = resolveAppBaseUrl(req);
+    } catch (err) {
+      if (!(err instanceof PublicOriginNotConfiguredError)) throw err;
+      logger.error('Password reset refused: no public origin configured', { err: err.message });
+      return res.status(503).json({
+        success: false,
+        error: {
+          code: 'AUTH_011',
+          message: 'Password reset is unavailable: this deployment has no public address configured.',
+        },
+      });
+    }
+
     // Always return the same response to prevent email enumeration
     const successResponse = {
       success: true,
@@ -1873,7 +1889,7 @@ async function handleForgotPassword(req: Request, res: Response) {
       .where(eq(users.id, user[0].id));
 
     // Build the reset URL (frontend route)
-    const resetUrl = passwordSetupUrl(resolveAppBaseUrl(req), resetToken);
+    const resetUrl = passwordSetupUrl(appBaseUrl, resetToken);
 
     /* The reset email states "This request is logged per FDA 21 CFR Part
        11.10(e)". Until this call existed that sentence was false — the flow
