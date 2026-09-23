@@ -251,6 +251,40 @@ protocol acts now are.
 - ESLint on `AnaToolExecutor.ts` shows 0 errors and 102 warnings, the same as
   HEAD.
 
+## The request client could carry an open transaction to the next request
+
+Found by the P2 behaviour reviewer. It predates this work, and it is shared by
+every governed write that runs on the request-scoped connection:
+`governedScoped` in protocol development, and QMP plans.
+
+The middleware releases the request's connection on `res` `finish` **and**
+`close`, and a client abort fires `close` mid-handler. If that happened between
+`BEGIN` and `COMMIT`, `LazyRequestDbClient.release()` reset the session
+variables and handed the connection back to the pool, still inside the
+transaction. The handler's own `COMMIT` or `ROLLBACK` then threw "released", so
+nothing ended the transaction. The next request to take that connection ran
+inside it:
+
+- its `COMMIT` could commit the aborted request's half-written change, including
+  a domain write whose ledger row never landed: an unaudited change;
+- the resets are `set_config(…, false)`, which are transactional. A later
+  rollback therefore reverted the connection's tenant variables to the
+  **previous request's** tenant.
+
+**Fix** (`server/middleware/lazyRequestDbClient.ts`): after the resets, which
+queue behind any statement still in flight, `release()` reads node-postgres's
+`getTransactionStatus()`. A connection that is not idle is discarded, not pooled,
+and Postgres rolls its transaction back on disconnect. A normal release costs no
+extra round trip.
+
+**Proof:** `lazy-request-db-client.test.ts` with a client that models pg's
+transaction status. Red 2/13 (`request-client-tx-red.txt`): an open transaction
+and a failed one both went back to the pool. Green 13/13
+(`request-client-tx-green.txt`). A committed transaction still returns its
+connection. Both handlers that open transactions on this client (`governedScoped`
+and the QMP plan writes) commit before they respond, so a completed request is
+unaffected.
+
 ## T1–T4, P2, P3
 
 *In progress, not yet verified. These fixes are being written test-first and
