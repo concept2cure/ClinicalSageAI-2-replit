@@ -880,9 +880,28 @@ router.get('/download/:id', async (req, res) => {
  */
 router.get('/analytics/performance', async (req, res) => {
   try {
-    const allWorkflows = await db.select().from(projectWorkflows);
+    /* Both reads used to have NO tenant predicate at all, sitting between two
+       siblings in this same file that do (the listing at the top scopes
+       project_workflows through its parent cmc_projects row; the AI-command
+       reader scopes on organization_id). Under RLS_ENFORCE unset, off or
+       shadow — dev, staging, any non-production deploy — the policy's leading
+       disjunct is true and both returned EVERY tenant's rows: other sponsors'
+       workflow names, assignees and progress, and the unbounded
+       client-supplied `command` text of their AI runs, aggregated into one
+       response. Scoped exactly as those two siblings are. */
+    const orgId = getOrganizationId(req);
+    const allWorkflows = (
+      await db
+        .select()
+        .from(projectWorkflows)
+        .innerJoin(cmcProjects, eq(projectWorkflows.projectId, cmcProjects.id))
+        .where(eq(cmcProjects.organizationId, orgId))
+    ).map((row) => row.project_workflows);
     const pool = getPool();
-    const commandRes = await pool.query(`SELECT category, status, command FROM cmc_ai_command_results`);
+    const commandRes = await pool.query(
+      `SELECT category, status, command FROM cmc_ai_command_results WHERE organization_id = $1`,
+      [orgId]
+    );
     const allCommands = commandRes.rows;
 
     // Compute real metrics from workflow data

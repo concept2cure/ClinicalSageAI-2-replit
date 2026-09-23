@@ -245,15 +245,38 @@ describe('reviews — request a review and record a disposition', () => {
     expect(body).toMatchObject({ reviewerName: 'Dr Okafor', dueDate: '2026-10-15' });
   });
 
-  it('records a disposition against the assignment', async () => {
-    await openTab(/Reviews/);
-    fireEvent.click(await screen.findByRole('button', { name: /Record disposition for Dr Iyer/ }));
-    await completeDrawer({ Disposition: 'approve_with_changes', 'Reason for change': REASON }, /Record disposition/);
-    await waitFor(() => expect(lastWrite()).toBeTruthy());
-    const [method, path, body] = lastWrite();
-    expect(method).toBe('PATCH');
-    expect(path).toBe('/api/protocol-reviews/assignments/5/disposition');
-    expect(body).toMatchObject({ disposition: 'approve_with_changes', reason: REASON });
+  it('a disposition is signed, not submitted: nothing is sent until the signer re-authenticates', async () => {
+    /* It used to PATCH straight from a reason-only drawer, and the server wrote
+       a `sign` ledger row nobody had signed. Now the drawer picks the decision
+       and the shared EsignModal signs it (21 CFR 11.50 meaning, 11.200 password). */
+    const verify = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ valid: true }) }));
+    vi.stubGlobal('fetch', verify);
+    try {
+      await openTab(/Reviews/);
+      fireEvent.click(await screen.findByRole('button', { name: /Record disposition for Dr Iyer/ }));
+      await completeDrawer({ Disposition: 'approve_with_changes' }, /Continue to signature/);
+      expect(apiRequest.mock.calls.filter((c) => c[0] !== 'GET')).toHaveLength(0);
+
+      fireEvent.change(await screen.findByLabelText(/Reason for this action/), { target: { value: REASON } });
+      fireEvent.change(screen.getByLabelText(/Password/), { target: { value: 'correct horse' } });
+      fireEvent.click(screen.getByRole('button', { name: /Sign and commit/ }));
+
+      await waitFor(() => expect(lastWrite()).toBeTruthy());
+      expect(verify).toHaveBeenCalledWith('/api/esignature/verify-password', expect.anything());
+      const [method, path, body] = lastWrite();
+      expect(method).toBe('PATCH');
+      expect(path).toBe('/api/protocol-reviews/assignments/5/disposition');
+      // Dr Iyer has no account in this fixture, so the signer records the
+      // decision and takes responsibility for it; they do not claim the review.
+      expect(body).toEqual({
+        disposition: 'approve_with_changes',
+        reason: REASON,
+        meaning: 'responsibility',
+        reauth: { password: 'correct horse' },
+      });
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
 

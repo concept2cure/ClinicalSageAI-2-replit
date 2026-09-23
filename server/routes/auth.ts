@@ -45,6 +45,7 @@ import {
 } from '../services/industry-context/signup-profile';
 import { sendPasswordResetEmail, sendLoginOtpEmail } from '../services/emailService';
 import * as mfaService from '../services/mfaService';
+import { mfaEnrolmentOf, sessionMfaFields } from '../services/mfa-enrolment';
 import * as emailOtpService from '../services/emailOtpService';
 import {
   validatePasswordPolicy,
@@ -59,6 +60,10 @@ import { assertCanAdmitNewTenant } from '../db/tenantAdmission';
 import { config } from '../config/environment';
 import { isDevAuthAllowed, devAuthDenialReason } from '../auth/dev-auth-policy';
 import { provisionLaunchModules } from '../services/entitlements/launch-scope.js';
+import {
+  drizzleWorkspaceStore,
+  ensureOrganizationDefaultWorkspace,
+} from '../services/c2c/organization-default-workspace';
 import { runWithTenantScope } from '../db/tenantStore';
 
 const router = Router();
@@ -301,9 +306,10 @@ router.get('/session', async (req: Request, res: Response) => {
         permissions: [],
         organizationId: decoded.organizationId,
         organizationName: orgName,
-        mfaEnabled: false,
-        mfaMethods: [],
-        mustChangePassword: false,
+        // The account as it is. These were the literals false / [] / false for
+        // every account until 2026-09-23 (VSR-001 §13.3 item 4).
+        ...sessionMfaFields(userData),
+        mustChangePassword: userData.mustChangePassword === true,
       },
       session: {
         id: `session-${userData.id}`,
@@ -497,9 +503,10 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
 
     // ── Two-Factor Authentication ──────────────────────────────────────
     // Email OTP is the default 2FA method for all users (zero setup).
-    // Users with TOTP (authenticator app) enabled get that as primary.
-    const mfaMethod = (userData as any).mfaMethod || 'email';
-    const hasTotpSetup = userData.mfaEnabled === true && mfaMethod === 'totp';
+    // Users with TOTP (authenticator app) enabled get that as primary. The
+    // rule lives in mfa-enrolment.ts, which the session reads too.
+    const enrolment = mfaEnrolmentOf(userData);
+    const hasTotpSetup = enrolment.signInFactor === 'totp';
 
     // Dev-only MFA skip — gated behind isDevAuthAllowed() so it cannot be
     // reached in any environment that hasn't explicitly opted in via
@@ -554,9 +561,8 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
           organizationId: organizationId.toString(),
           organizationName: organization?.name || 'Organization',
           organizationUuid: organization?.uuid || null,
-          mfaEnabled: false,
-          mfaMethods: [],
-          mustChangePassword: false,
+          ...sessionMfaFields(userData),
+          mustChangePassword: userData.mustChangePassword === true,
         },
       });
     }
@@ -590,7 +596,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
         success: true,
         mfaRequired: true,
         challengeId: challengeToken,
-        mfaMethods: [{ type: 'totp', isEnabled: true, isPrimary: true }],
+        mfaMethods: enrolment.mfaMethods,
       });
     }
 
@@ -608,7 +614,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
         success: true,
         mfaRequired: true,
         challengeId: challengeToken,
-        mfaMethods: [{ type: 'email', isEnabled: true, isPrimary: true }],
+        mfaMethods: enrolment.mfaMethods,
         maskedEmail,
       });
     }
@@ -742,9 +748,8 @@ router.post('/dev-login', async (req: Request, res: Response) => {
         organizationId: organizationId.toString(),
         organizationName: organization?.name || 'Organization',
         organizationUuid: organization?.uuid || null,
-        mfaEnabled: false,
-        mfaMethods: [],
-        mustChangePassword: false,
+        ...sessionMfaFields(userData),
+        mustChangePassword: userData.mustChangePassword === true,
       },
     });
   } catch (error: any) {
@@ -872,6 +877,21 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
         organizationId: org.id,
         userId: user.id,
         role: 'admin',
+      });
+
+      // The organisation's own client workspace, SAME transaction.
+      // `projects.client_workspace_id` is NOT NULL, so without this row
+      // `ensureProgramProjectAnchor` skips with NO_CLIENT_WORKSPACE for every
+      // program this tenant ever creates, and its governed artifacts can never
+      // reach the registry (services/c2c/organization-default-workspace.ts).
+      // Inside the transaction, unlike provisionLaunchModules below: a module
+      // grant an administrator can re-run is not the same as the PM spine's
+      // NOT NULL parent, which every later write assumes.
+      await ensureOrganizationDefaultWorkspace(drizzleWorkspaceStore(tx), {
+        orgId: org.id,
+        orgName: org.name,
+        orgSlug: org.slug,
+        userId: user.id,
       });
 
       return { org, user };
@@ -1462,9 +1482,10 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
         organizationId: challenge.organizationId,
         organizationName: mfaOrgName,
         organizationUuid: challenge.organizationUuid,
-        mfaEnabled: true,
-        mfaMethods: [{ type: verificationMethod, isEnabled: true, isPrimary: true }],
-        mustChangePassword: false,
+        // The account's enrolment, not the request's claim: this said true for
+        // every account and echoed the `method` the request named.
+        ...sessionMfaFields(userData),
+        mustChangePassword: userData.mustChangePassword === true,
       },
       mfaRequired: false,
     });

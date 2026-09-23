@@ -44,6 +44,42 @@ export async function loadCanonicalSources(client: Queryable, orgId: number, pro
 }
 
 /**
+ * The 3.2.R region this project composes for, or null.
+ *
+ * ONE reader, because two callers need the same answer and a second
+ * implementation would let them disagree about which regional sections exist:
+ * the compile (which composes and persists them) and the build board (which
+ * has to list, score and offer for approval exactly what the compile wrote).
+ * The board used to enumerate core rules and appendices only, so a persisted
+ * 3.2.R.1.<region> row appeared on no surface while the export gate counted
+ * it — the board could report 100% ready against a gate that refuses.
+ *
+ * Null is a real answer: no linked submission spine, or a market with no
+ * generator. An honest gap beats a guessed region's regional form in a filing.
+ */
+export async function resolveProjectRegionCode(
+  client: Queryable,
+  orgId: number,
+  projectId: string,
+): Promise<'US' | 'EU' | 'JP' | 'CA' | null> {
+  const prog = await client.query(
+    `SELECT id, program_type AS "programType", product_name AS "productName", name, code
+       FROM regulatory_programs
+      WHERE id = $1 AND organization_id = $2`,
+    [projectId, orgId],
+  );
+  const p = prog.rows[0] as
+    | { id: string; programType: string | null; productName: string | null; name: string | null; code: string | null }
+    | undefined;
+  if (!p) return null;
+  const spine = await resolveSubmissionSpine(
+    { programId: p.id, programType: p.programType, productName: p.productName, title: p.name, programCode: p.code },
+    orgId,
+  );
+  return regionCodeForPrimaryRegion(spine?.primaryRegion);
+}
+
+/**
  * Compose every Module 3 section for the project from its canonical sources:
  * the core §3.2.S/§3.2.P/3.1/3.3 rules, the emittable 3.2.A appendices, and
  * 3.2.R for the region the linked submission records.
@@ -85,23 +121,8 @@ export async function composeProjectModule3(
      section writes that follow. */
   await client.query('SAVEPOINT m3_regional');
   try {
-    const prog = await client.query(
-      `SELECT id, program_type AS "programType", product_name AS "productName", name, code
-         FROM regulatory_programs
-        WHERE id = $1 AND organization_id = $2`,
-      [projectId, orgId],
-    );
-    const p = prog.rows[0] as
-      | { id: string; programType: string | null; productName: string | null; name: string | null; code: string | null }
-      | undefined;
-    if (p) {
-      const spine = await resolveSubmissionSpine(
-        { programId: p.id, programType: p.programType, productName: p.productName, title: p.name, programCode: p.code },
-        orgId,
-      );
-      const region = regionCodeForPrimaryRegion(spine?.primaryRegion);
-      if (region) sections = sections.concat(composeRegional(sources, region));
-    }
+    const region = await resolveProjectRegionCode(client, orgId, projectId);
+    if (region) sections = sections.concat(composeRegional(sources, region));
     await client.query('RELEASE SAVEPOINT m3_regional');
   } catch (regionalErr) {
     await client.query('ROLLBACK TO SAVEPOINT m3_regional').catch(() => undefined);

@@ -57,10 +57,13 @@ describe('run-pq live path', () => {
   });
 
   it('scores the model output — never the captured candidate stored in the gold bank', async () => {
-    // Every runnable task in the seed bank carries a captured candidate with
-    // full coverage. A model that answers with nothing must score zero, which it
-    // can only do if the captured text is ignored.
-    expect(generationTasks.every((t) => typeof t.candidateContent === 'string')).toBe(true);
+    // Some runnable tasks carry a captured candidate with full coverage. (Most
+    // no longer do: the tasks added to reach the protocol's sample floor carry
+    // none, because no output had been captured for them.) A model that answers
+    // with nothing must score zero on EVERY task — including the ones whose
+    // captured text would have scored full marks, which is what proves the
+    // captured text is ignored rather than merely absent.
+    expect(generationTasks.some((t) => typeof t.candidateContent === 'string')).toBe(true);
     const r = await runPq({ modelId: 'claude-opus-4', gateway: stub('claude-opus-5', () => 'I cannot help with that.').gateway });
     for (const g of r.generation) expect(g.sectionCoverage, g.taskId).toBe(0);
   });
@@ -80,13 +83,26 @@ describe('run-pq live path', () => {
     expect(r.generation.every((g) => !g.servedModelVerified)).toBe(true);
   });
 
-  it('on the current draft protocol and seed bank, a perfect model is INCOMPLETE — and the reasons say why', async () => {
+  it('on the current draft protocol, a perfect model is INCOMPLETE — and the reasons say why', async () => {
     const r = await runPq({ modelId: 'claude-opus-4', gateway: stub('claude-opus-5').gateway });
     expect(r.verdict).toBe('INCOMPLETE');
     const why = r.reasons.join(' ');
+    // What still blocks a PASS: two components cannot execute at all, and the
+    // protocol is a draft nobody has approved.
     expect(why).toMatch(/extraction/);
     expect(why).toMatch(/rag/);
-    expect(why).toMatch(/floor of 10/);
+  });
+
+  it('the sample floor is no longer one of those reasons — the bank reaches it', async () => {
+    // The bank sat at 1/1/2 generation tasks against a floor of 10, so every
+    // run was INCOMPLETE for that reason alone. It now reaches the floor, and
+    // this is the guard that it stays there: a run is expensive (a product
+    // provider key, real tokens against every task) and must not be spent
+    // discovering that someone trimmed the bank.
+    // server/eval/pq/__tests__/gold-bank-floor.test.ts checks the same property
+    // statically; this one proves the runner agrees.
+    const r = await runPq({ modelId: 'claude-opus-4', gateway: stub('claude-opus-5').gateway });
+    expect(r.reasons.join(' ')).not.toMatch(/floor of/);
   });
 
   it('an overclaim is a FAIL even on the draft protocol', async () => {

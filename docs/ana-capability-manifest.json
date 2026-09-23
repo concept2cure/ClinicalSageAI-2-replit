@@ -24573,9 +24573,9 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Finalize a protocol document. Gated on the deterministic completeness check (all required sections complete + objectives, plus eligibility/schedule for clinical/IRB); rejected with the gaps otherwise. On success it snapshots a major version. Governed + audited (signature).",
+      "description": "Check whether a protocol document can be finalized, against the deterministic completeness check (all required sections complete + objectives, plus eligibility/schedule for clinical/IRB), and return the gaps. This tool does not finalize: finalizing is an electronic signature and AnA cannot sign. Tell the user to finalize from the protocol workspace, where they enter their password.",
       "scope": "project",
-      "governed": true,
+      "governed": false,
       "renderer": "findings-list",
       "example": "",
       "inputs": [
@@ -27527,7 +27527,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Navigate the app to a screen/surface by its target id (from list_app_screens). Validates the target and any params against the governed navigation registry and returns a navigation directive the UI applies; refuses unknown targets or invalid/missing params rather than guessing. Use when the user asks to go somewhere, or to take them to the right surface to complete a task (e.g. open CMC, the dossier map, or the intelligence 'clinical' group). Project-scoped targets require an active project in context. Tell the user where you're taking them.",
+      "description": "Take the person to a screen of the app — go to, open, show, switch to, bring up — by its target id (from list_app_screens). Validates the target and any params against the governed navigation registry and returns a navigation directive the UI applies; refuses unknown targets, invalid params and screens closed to this workspace rather than guessing. Use whenever the person asks to go somewhere or see something, and to take them to the right screen to complete a task (e.g. open CMC, the Vault, the dossier map, the intelligence 'clinical' group, settings, billing). Project-scope screens show one program: pass `program` to open a specific one. Say where you are taking them.",
       "scope": "global",
       "governed": false,
       "renderer": "navigation",
@@ -27545,6 +27545,12 @@
           "type": "object",
           "required": false,
           "description": "Optional params for the target (e.g. { \"intelligenceTab\": \"clinical\" }, { \"sectionCode\": \"3.2.P.8\" })."
+        },
+        {
+          "name": "program",
+          "type": "string",
+          "required": false,
+          "description": "For a project-scope screen: the program to open there — its id, code (e.g. \"BX-301\") or name. Omit to use the program already open. When none is open and none is named, the tool answers with the workspace's programs to choose from."
         }
       ],
       "requiredInputs": [
