@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T15:20:50.821Z",
+  "generatedAt": "2026-09-23T15:43:17.107Z",
   "git": {
-    "sha": "6ef9ee220ba81132faf2149d2b48ecdc695de452",
+    "sha": "41b5b43e344cb4081a0d5bd2e5deec55f63cd47c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1971,7 +1971,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1056057
+        "bytes": 1056132
       },
       {
         "file": "shared/schema.ts",
@@ -2501,7 +2501,7 @@
       },
       {
         "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
-        "lines": 1698
+        "lines": 1699
       },
       {
         "file": "server/routes/c2c/projects.ts",
