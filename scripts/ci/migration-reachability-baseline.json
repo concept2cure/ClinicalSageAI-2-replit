@@ -1,5 +1,5 @@
 {
-  "_comment": "Tables the server queries whose ONLY creator is a migration on no durable apply path \u2014 they exist on no real database, so those endpoints 500. ci:unbacked-tables cannot see this class: it counts any .sql file as a creator regardless of whether an applier runs it. Anything NEW fails the build. Resolve an entry (put its migration on an applier, or delete the dead reference), then remove it here to ratchet down. Goal: 0.",
+  "_comment": "Tables the server queries whose ONLY creator is a migration on no durable apply path — they exist on no real database, so those endpoints 500. ci:unbacked-tables cannot see this class: it counts any .sql file as a creator regardless of whether an applier runs it. Anything NEW fails the build. Resolve an entry (put its migration on an applier, or delete the dead reference), then remove it here to ratchet down. Goal: 0.",
   "_durablePaths": [
     "migrations/meta/_journal.json (drizzle migrate)",
     "db/migrations/*_gcc_*.sql (CI psql loop)",
