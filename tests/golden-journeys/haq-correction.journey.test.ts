@@ -40,7 +40,7 @@ vi.mock('../../server/db', () => ({
     return h.pool;
   },
 }));
-// The raw-SQL services import from '../db.js' which resolves to the same module.
+// The raw-SQL services import the .js specifier of server/db, which resolves to the same module.
 
 import { assumptionRegistryService } from '../../server/services/assumption-registry-service';
 import { decisionRecordService } from '../../server/services/decision-record-service';
