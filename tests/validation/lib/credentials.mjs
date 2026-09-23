@@ -26,9 +26,20 @@
  * not-executed. Nothing is simulated.
  */
 import { TEST_USER_EMAIL, passwordLogin } from './harness.mjs';
+import { freshTotp } from './totp.mjs';
 
 export const CREDENTIAL_NOT_SUPPLIED =
   'not executed — credential not supplied: set OQ_SIGNER_EMAIL and OQ_SIGNER_PASSWORD to a second identity that holds signing authority (and is not the author) to execute this credentialed step.';
+
+/**
+ * A current code from the signer's authenticator, never one already presented,
+ * or undefined when no TOTP secret was supplied. Every signing endpoint requires
+ * it when the signer has a second factor enrolled (§11.200), so a supplied
+ * secret asserts that one is.
+ */
+export async function signerCode(signer) {
+  return signer.totpSecret ? freshTotp(signer.email, signer.totpSecret) : undefined;
+}
 
 /** The signer credential from the environment, or null when not supplied. */
 export function signerCredential() {

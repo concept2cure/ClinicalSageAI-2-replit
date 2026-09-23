@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-006 |
-| Version | 0.3 |
+| Version | 0.4 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §5; requirements URS-006 |
 | Runner (the executable protocol) | `tests/validation/oq/qms/run.mjs` — `npm run validation:oq -- qms` |
@@ -16,6 +16,7 @@
 | 0.1 | 2026-09-21 | W3a | First protocol; executed locally (see record). |
 | 0.2 | 2026-09-21 | WF | VSR-001 §8.3 P-2 / F-3 (fixed in the product 2026-09-21): approval is an electronic signature. OQ-QMS-05 is a CREDENTIALED step executed by a second identity supplied through `OQ_SIGNER_EMAIL` / `OQ_SIGNER_PASSWORD` (recorded *not executed — credential not supplied* when absent); new OQ-QMS-05b (signature row + §11.70 digest recomputation), OQ-QMS-06 tightened to 400 `ESIGNATURE_COMPONENT_MISSING`, new OQ-QMS-06b (401 wrong password), OQ-QMS-06c (403 self-approval), OQ-QMS-06d (signed approval of SOP B as the review-due/retire fixture). Re-executed locally (§3). |
 | 0.3 | 2026-09-22 | W3 | §3 records the 2026-09-22 execution under the production posture (RLS enforcing, non-owner runtime role, credentialed second signer); earlier results are kept below it as superseded. No step changed. |
+| 0.4 | 2026-09-23 | W3 | OQ-QMS-05 first shows that a password-only approval from a signer with a second factor enrolled is refused with no row written, then approves with the authenticator code; 05b checks the row records the verified second factor; 06c presents the code so its refusal is the two-person rule. The signer signs in with its password and code rather than dev-login (VSR-001 §13). |
 
 ## 1. Method
 
@@ -33,12 +34,12 @@ As OQ-001 §1. Two SOPs are created by the run identity (the author): A exercise
 | OQ-QMS-02 | URS-QMS-002 | scripted | create without `docType` | 422 with field errors |
 | OQ-QMS-03 | URS-QMS-002, 003 | scripted | create SOP A (`nextReviewDate` +10d); list; detail | 201 draft v1.0 with audit outcome; listed; readable |
 | OQ-QMS-04 | URS-QMS-002 | scripted | duplicate `docNumber` | 409 |
-| OQ-QMS-05 | URS-QMS-004, 005 | **credentialed** | as the signer: approve A `{password, meaning:"APPROVED", reason, effectiveDate}`; approve again | 200: effective, `approver_id` = signer ≠ author, `approved_at`, `meta.auditTrail {persisted, chained}`, `meta.signature {id, meaning APPROVED, boundPayloadDigest, bindingBasis qms-document-version-content-sha256}`; `metadata.approval.contentDigest` = signature digest; second approve 409 `QMS_INVALID_STATE` |
-| OQ-QMS-05b | URS-QMS-005 | scripted | read signatures by target; read A; recompute the §11.70 digest | exactly one row (signer, APPROVED, `qms-document-approval`, binding basis, valid); recomputed digest = signature = document |
+| OQ-QMS-05 | URS-QMS-004, 005 | **credentialed** | as the signer: when a second factor is enrolled, first approve A with `{password}` only (v0.4); approve A `{password, mfaToken?, meaning:"APPROVED", reason, effectiveDate}`; approve again | with a second factor enrolled the password-only approval is refused 401 `MFA_TOKEN_REQUIRED`, A stays in review, no row; 200: effective, `approver_id` = signer ≠ author, `approved_at`, `meta.auditTrail {persisted, chained}`, `meta.signature {id, meaning APPROVED, boundPayloadDigest, bindingBasis qms-document-version-content-sha256}`; `metadata.approval.contentDigest` = signature digest; second approve 409 `QMS_INVALID_STATE` |
+| OQ-QMS-05b | URS-QMS-005 | scripted | read signatures by target; read A; recompute the §11.70 digest | exactly one row (signer, APPROVED, `qms-document-approval`, binding basis, valid, `second_factor_verified` true when the signer has a second factor enrolled); recomputed digest = signature = document |
 | OQ-QMS-06a | URS-QMS-002 | prerequisite | create SOP B (`nextReviewDate` +5d) | 201 |
 | OQ-QMS-06 | URS-QMS-005 | scripted | approve B with `{}` (no password, meaning or reason) | 400 `ESIGNATURE_COMPONENT_MISSING`; `fieldErrors` name password, meaning, reason; B stays draft |
 | OQ-QMS-06b | URS-QMS-005 | **credentialed** | as the signer: approve B with a wrong password | 401; B stays draft; no signature row |
-| OQ-QMS-06c | URS-QMS-005 | **credentialed** | as the signer: create SOP C, approve it with the signer's own password | 403 `QMS_SELF_APPROVAL`; C stays draft; no signature row |
+| OQ-QMS-06c | URS-QMS-005 | **credentialed** | as the signer: create SOP C, approve it with the signer's own password (and code, so the refusal is the two-person rule, not the missing factor) | 403 `QMS_SELF_APPROVAL`; C stays draft; no signature row |
 | OQ-QMS-06d | URS-QMS-004 | **credentialed** | as the signer: approve B (signed) | 200 effective with `meta.signature`; one signature row |
 | OQ-QMS-07 | URS-QMS-006 | scripted | revise A without reason; with reason | 422; v2.0 draft, approval cleared, audited |
 | OQ-QMS-08 | URS-QMS-008 | scripted | training-ack on B; compliance report | 201 with `document_version`; 200 |

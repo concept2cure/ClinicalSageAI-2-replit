@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-001 |
-| Version | 0.2 |
+| Version | 0.3 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §5; requirements URS-001 |
 | Runner (the executable protocol) | `tests/validation/oq/projects/run.mjs` — `npm run validation:oq -- projects` |
@@ -15,6 +15,7 @@
 |---|---|---|---|
 | 0.1 | 2026-09-21 | W3a | First protocol; executed locally (see record). |
 | 0.2 | 2026-09-22 | W3 | OQ-PROJ-06b checks what its expected result says: at least one entry carries record/previous hashes, and the server's chain verdict (`meta.chain`) is `ok = true`. v0.1 counted entries only, so an unchained entry or a broken chain passed. Shown on a deliberately tampered local chain: v0.1 passed OQ-PROJ-06b while OQ-PROJ-06 failed; v0.2 fails it (VSR-001 §12). §5 records the 2026-09-22 execution under the production posture (RLS enforcing, non-owner runtime role, credentialed second signer); earlier results are kept below it as superseded. No step changed. |
+| 0.3 | 2026-09-23 | W3 | OQ-PROJ-02 signs in through the form with email, password and the authenticator code when the run is credentialed. The Demo Access path it had used exists only on a development server with ALLOW_DEV_AUTH=1, which production must refuse (IQ-10), so the step could not execute on staging. The harness authenticates every protocol the same way (tests/validation/lib/harness.mjs passwordLogin; VSR-001 §13). |
 
 ## 1. Method
 
@@ -29,7 +30,7 @@ IQ-001 executed on the same installation; `LAUNCH_SCOPE_ENFORCE=on`; a fresh or 
 | Step | URS | Kind | Action | Expected result |
 |---|---|---|---|---|
 | OQ-PROJ-01 | URS-PROJ-001 | scripted | `GET /api/c2c/projects` without Authorization | 401/403, no data |
-| OQ-PROJ-02 | URS-PROJ-001, 005 | scripted (browser) | Open `/concept2cure/login`; click *Demo Access*; observe redirect | Login page renders; the shell renders after Demo Access |
+| OQ-PROJ-02 | URS-PROJ-001, 005 | scripted (browser) | Open `/concept2cure/login`. Credentialed run (`VALIDATION_USER_PASSWORD`): enter email and password, then the current authenticator code when the server asks for it (v0.3). Development run: click *Demo Access*. Observe the redirect | Login page renders; the shell renders after sign-in |
 | OQ-PROJ-03 | URS-PROJ-002 | scripted | `POST /api/c2c/projects` without `name`; with `programType:"not-a-type"` | Both 400 naming the field |
 | OQ-PROJ-04 | URS-PROJ-002, 003 | scripted | Create an IND program | 201; UUID id; name echoed; intake reports scaffolded document and canonical submission |
 | OQ-PROJ-05 | URS-PROJ-003 | scripted | List programs; read by id | Listed; detail matches |
