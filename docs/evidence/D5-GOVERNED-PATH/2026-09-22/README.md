@@ -499,10 +499,12 @@ Open items, left as they are on purpose:
   reviewer), used by `/api/esignature/sign`, submission sign-release and
   MDx QMS. Choosing one is a policy decision for QA and the founder. It is not a
   change to make inside a defect fix.
-- **The signer IP on the signature row is the first `X-Forwarded-For` entry**,
-  which the client controls unless the edge overwrites it. The canonical handler
-  does the same thing. The fix is to use `req.ip` behind a correct
-  `trust proxy`, in both places, in one change.
+- ~~**The signer IP on the signature row is the first `X-Forwarded-For`
+  entry.**~~ Closed the same day by the D6 workstream:
+  `server/utils/client-ip.ts` (`clientIpOf`, which is `req.ip` behind the
+  configured `trust proxy`) is now the one source, and
+  `check-client-ip-single-source` keeps the header from being read anywhere
+  else. `signerIpAddress` in `protocol-signature.ts` delegates to it.
 - **The signing modal offers every meaning.** The server refuses a meaning the
   act cannot carry, with a 400, before it re-authenticates. The attempt still
   counts against the limiter.
