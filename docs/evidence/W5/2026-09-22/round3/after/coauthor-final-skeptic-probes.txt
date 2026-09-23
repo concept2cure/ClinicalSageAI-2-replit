@@ -1,0 +1,101 @@
+Skeptic probes re-run (2026-09-23, co-author final pass). BEFORE = current tree before this pass; AFTER = after it. Probes unmodified unless marked ADAPTED.
+
+######## BEFORE: r3-probes
+[P4] accept on approved -> 200 {"success":true,"data":{"documentId":1,"supersededVersion":1,"framework":null}} row: {"status":"approved","content":"Text nobody approved, written into an approved snapshot by an ordinary member."}
+[E4] ["0e000000-0000-4000-8000-000000000004"] -> 500 Failed to create document 
+[E4] "0E000000-0000-4000-8000-000000000004" -> 404 Source document not found 
+[E4] " 0e000000-0000-4000-8000-000000000004" -> 404 Source document not found 
+[E4] {"id":"0e000000-0000-4000-8000-000000000004"} -> 404 Source document not found 
+[E4] rows carrying FORGED: []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 3 passed (6)
+EXIT 1
+######## AFTER: r3-probes
+[E4] ["0e000000-0000-4000-8000-000000000004"] -> 400 INVALID_SOURCE_DOCUMENT_ID 
+[E4] "0E000000-0000-4000-8000-000000000004" -> 404 Source document not found 
+[E4] " 0e000000-0000-4000-8000-000000000004" -> 404 Source document not found 
+[E4] {"id":"0e000000-0000-4000-8000-000000000004"} -> 400 INVALID_SOURCE_DOCUMENT_ID 
+[E4] rows carrying FORGED: []
+[P4] accept on approved -> 409 {"success":false,"error":"FINALIZED_DOCUMENT_READ_ONLY","message":"This document is approved and read-only: it is the copy that was signed off for a filing, and changing it here would file text nobody approved. Its text comes from its source authoring document and changes only when that document is placed into the filing again, which re-takes this copy from the source's current text and status. Nothing was saved.","currentStatus":"approved","governedPath":"POST /api/coauthor/documents with sourceAuthoringDocId — re-takes this copy (status, title, text) from its source authoring document; an APPROVED source files as approved, FROZEN as finalized, only while its sections and title are the ones its seal (frozen_documents) recorded"} row: {"status":"approved","content":"<p>approved text</p>"}
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 2 passed (6)
+
+######## BEFORE: member-paths
+[F] (pre) placeholder leaf -> {"id":1,"sequenceId":1,"sectionCode":"m1.1.1","title":"Form 1571","granularity":null,"lifecycleOp":"new","documentTable"
+[F] member freeze -> 200 ; authoring_signatures on doc = 0
+[F] place -> 201 finalized {"docId":"0f000000-0000-4000-8000-0000000000d1","source":"authoring-document","status":"FROZEN","sealVersion":"v1.0.frozen","sealContentHash":"febdb5b13cea2722bf9f6e88625344af7ace88aeb6d12744d01f477128a71445"}
+[F] isFinalizedStatus(copy) = true
+[F] IND checklist FDA_1571 = {"id":"FDA_1571","title":"Form FDA 1571","label":"IND Application","ref":"21 CFR 312.23(a)(1)","done":true}
+[F] transmit blockers = []
+[S] freeze 200 ; apply-template on FROZEN 200 ; place 409 SOURCE_ALTERED_SINCE_SEAL ; rows 0 ; re-freeze 400 {"error":"Document is already frozen"}
+[W] freeze 200 ; place -> 201 finalized "## 1.1.3 — Form\n\nNOT-SEALED TEXT"
+      Tests  3 passed (3)
+EXIT 0
+######## AFTER: member-paths
+[F] (pre) placeholder leaf -> {"id":1,"sequenceId":1,"sectionCode":"m1.1.1","title":"Form 1571","granularity":null,"lifecycleOp":"new","documentTable"
+[F] member freeze -> 200 ; authoring_signatures on doc = 0
+   → Test timed out in 120000ms.
+   → Test timed out in 120000ms.
+   → Test timed out in 120000ms.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed (3)
+
+######## BEFORE: seed-regression
+[S1] seed112 doc status APPROVED ; seals {"n":0} ; place -> 409 {"error":"SOURCE_NOT_SEALED","message":"This document is marked approved, but there is no sealed record of the text that was approved, so a copy cannot be filed as approved. Nothing was filed or changed."}
+[S2] seed99 seal hash ok: true ; sealed (code,title,content) == live: true ; place -> 409 {"error":"SOURCE_ALTERED_SINCE_SEAL","message":"This document's saved sections or title are not the ones sealed when it was approved, so they cannot be filed as approved. Nothing was filed or changed."}
+[S3] legacy stub ->  409 {"error":"SOURCE_SEAL_INTEGRITY_FAILED","message":"The sealed record of this document does not match its own hash, so what was approved cannot be established from it. Nothing was filed or changed."}
+[S4] heading renamed after seal ->  409 SOURCE_ALTERED_SINCE_SEAL
+      Tests  4 passed (4)
+EXIT 0
+######## AFTER: seed-regression
+[S1] seed112 doc status APPROVED ; seals {"n":1} ; place -> 201 {"success":true,"document":{"id":1,"organizationId":7,"title":"Control of Drug Substance (CTD 3.2.S.4)","content":"## 3.2.S.4.1 — 3.2.S.4.1  Specification\n\nThe drug substance specification covers appearance, identity (IR, HPLC retention), assay (98.0–102.0% on the anhydrous basis), related substan
+[S2] seed99 seal hash ok: true ; sealed (code,title,content) == live: false ; place -> 201 {"success":true,"document":{"id":2,"organizationId":7,"title":"Clinical Overview (CTD Module 2.5)","content":"## 2.5.1 — 2.5.1  Product development rationale\n\nBX-204 (rezatinib) is developed for advanced RTK-X–overexpressing solid tumors under an accelerated-approval framework.\n\n## 2.5.4 — 2.5.4
+[S3] legacy stub ->  409 {"error":"SOURCE_NOT_SEALED","message":"This document is marked approved, but there is no sealed record of the text that was approved, so a copy cannot be filed as approved. Nothing was filed or changed."}
+[S4] heading renamed after seal ->  409 SOURCE_ALTERED_SINCE_SEAL
+      Tests  4 passed (4)
+
+######## BEFORE: regression-sealed
+R1a status 201 stored.status approved
+R1a client/editor order : "## 1.1 — Alpha\n\nalpha v2\n\n## 1.2 — Beta\n\nbeta"
+R1a server-filed order  : "## 1.2 — Beta\n\nbeta\n\n## 1.1 — Alpha\n\nalpha v2"
+R1a SAME? false
+R1b response 200 {"replaced":true}
+R1b before: "## 1.1 — Alpha\n\nalpha v2\n\n## 1.2 — Beta\n\nbeta"
+R1b after : "## 1.2 — Beta\n\nbeta\n\n## 1.1 — Alpha\n\nalpha v2" status approved updated_at 2026-09-23T08:51:37.909Z
+R1b approved row content changed? true | audit rows for it: 1
+R2 save in EctdCoauthor: 200 <p>edited in co-author</p>
+R2 re-place: 200 {"replaced":true} -> "## 1.3 — Letter\n\nsource text" | audit rows: 1
+R3 422 SOURCE_HAS_NO_SAVED_CONTENT undefined undefined
+R4 200 module_number now m1.2
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 5 passed (6)
+######## AFTER: regression-sealed
+R1a status 201 stored.status approved
+R1a client/editor order : "## 1.1 — Alpha\n\nalpha v2\n\n## 1.2 — Beta\n\nbeta"
+R1a server-filed order  : "## 1.1 — Alpha\n\nalpha v2\n\n## 1.2 — Beta\n\nbeta"
+R1a SAME? true
+R1b response 200 {"replaced":true}
+R1b before: "## 1.1 — Alpha\n\nalpha v2\n\n## 1.2 — Beta\n\nbeta"
+R1b after : "## 1.1 — Alpha\n\nalpha v2\n\n## 1.2 — Beta\n\nbeta" status approved updated_at 2026-09-01T00:00:00.000Z
+R1b approved row content changed? false | audit rows for it: 0
+R2 save in EctdCoauthor: 200 <p>edited in co-author</p>
+R2 re-place: 200 {"replaced":true} -> "## 1.3 — Letter\n\nsource text" | audit rows: 1
+R3 422 SOURCE_HAS_NO_SAVED_CONTENT undefined undefined
+R4 200 module_number now m1.2
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 5 passed (6)
+
+member-paths AFTER timed out: the probe's seam reads through the pool (h.pglite) while the placement now holds PGlite's single connection in its transaction (loadDocumentSnapshot runs on the transaction). ADAPTED copy (final-pass/probes-adapted/member-paths.adapted.test.ts) passes the transaction queryable through the seam and runs the W hook on it:
+[F] (pre) placeholder leaf -> {"id":1,"sequenceId":1,"sectionCode":"m1.1.1","title":"Form 1571","granularity":null,"lifecycleOp":"new","documentTable"
+[F] member freeze -> 200 ; authoring_signatures on doc = 0
+[F] place -> 201 finalized {"docId":"0f000000-0000-4000-8000-0000000000d1","source":"authoring-document","status":"FROZEN","sealVersion":"v1.0.frozen","sealContentHash":"8ca8b1e6dcae095c4e1a5d76cba823ae32805597ddaa1c25666ea92ae7aca445"}
+[F] isFinalizedStatus(copy) = true
+[F] IND checklist FDA_1571 = {"id":"FDA_1571","title":"Form FDA 1571","label":"IND Application","ref":"21 CFR 312.23(a)(1)","done":true}
+[F] transmit blockers = []
+[S] freeze 200 ; apply-template on FROZEN 403 ; place 201 undefined ; rows 1 ; re-freeze 400 {"error":"Document is already frozen"}
+[W] freeze 200 ; place -> 409 undefined undefined
+   → expected 403 to be 200 // Object.is equality
+   → expected 409 to be 201 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 1 passed (3)
+(the adapted probe's own assertions are those of the defects — 'apply-template 200', 'W 201' — so their failure is the fix.)

@@ -1,0 +1,5 @@
+read-no-reply small timeout finish-before= true
+read-no-reply small error ECONNRESET finish-before= true
+reset-after-read error ECONNRESET finish-before= true
+closed port error ECONNREFUSED finish-before= false
+no-read big 64MB timeout finish-before= false
