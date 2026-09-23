@@ -1,0 +1,613 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/mdx/qms/templates",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 10,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": [
+        {
+          "key": "quality_manual",
+          "label": "Quality manual",
+          "docType": "manual",
+          "family": "Quality system",
+          "numberPrefix": "QM-",
+          "category": "mgmt",
+          "description": "Top-level description of the quality management system and how it meets ISO 13485 and 21 CFR 820.",
+          "sections": [
+            {
+              "key": "purpose",
+              "label": "Purpose",
+              "order": 1,
+              "hint": "Why this document exists and what it governs."
+            },
+            {
+              "key": "scope",
+              "label": "Scope",
+              "order": 2,
+              "hint": "What and who it applies to, with explicit exclusions."
+            },
+            {
+              "key": "responsibilities",
+              "label": "Responsibilities",
+              "order": 3,
+              "hint": "Roles accountable for each step."
+            },
+            {
+              "key": "definitions",
+              "label": "Definitions",
+              "order": 4,
+              "hint": "Terms, abbreviations, and acronyms used."
+            },
+            {
+              "key": "procedure",
+              "label": "Procedure",
+              "order": 5,
+              "hint": "The step-by-step controlled process."
+            },
+            {
+              "key": "references",
+              "label": "References",
+              "order": 6,
+              "hint": "Regulations, standards, and linked documents."
+            },
+            {
+              "key": "attachments",
+              "label": "Attachments",
+              "order": 7,
+              "hint": "Forms, templates, and records this document produces."
+            },
+            {
+              "key": "revision_history",
+              "label": "Revision history",
+              "order": 8,
+              "hint": "Version, date, author, and a summary of each change."
+            },
+            {
+              "key": "approval",
+              "label": "Approval",
+              "order": 9,
+              "hint": "Author, reviewer, and approver signatures."
+            }
+          ]
+        },
+        {
+          "key": "policy",
+          "label": "Policy",
+          "docType": "policy",
+          "family": "Quality system",
+          "numberPrefix": "POL-",
+          "category": "mgmt",
+          "description": "A governing statement of intent — quality policy, data-integrity policy, or training policy.",
+          "sections": [
+            {
+              "key": "purpose",
+              "label": "Purpose",
+              "order": 1,
+              "hint": "Why this document exists and what it governs."
+            },
+            {
+              "key": "scope",
+              "label": "Scope",
+              "order": 2,
+              "hint": "What and who it applies to, with explicit exclusions."
+            },
+            {
+              "key": "responsibilities",
+              "label": "Responsibilities",
+              "order": 3,
+              "hint": "Roles accountable for each step."
+            },
+            {
+              "key": "definitions",
+              "label": "Definitions",
+              "order": 4,
+              "hint": "Terms, abbreviations, and acronyms used."
+            },
+            {
+              "key": "procedure",
+              "label": "Procedure",
+              "order": 5,
+              "hint": "The step-by-step controlled process."
+            },
+            {
+              "key": "references",
+              "label": "References",
+              "order": 6,
+              "hint": "Regulations, standards, and linked documents."
+            },
+            {
+              "key": "attachments",
+              "label": "Attachments",
+              "order": 7,
+              "hint": "Forms, templates, and records this document produces."
+            },
+            {
+              "key": "revision_history",
+              "label": "Revision history",
+              "order": 8,
+              "hint": "Version, date, author, and a summary of each change."
+            },
+            {
+              "key": "approval",
+              "label": "Approval",
+              "order": 9,
+              "hint": "Author, reviewer, and approver signatures."
+            }
+          ]
+        },
+        {
+          "key": "sop",
+          "label": "Standard operating procedure",
+          "docType": "sop",
+          "family": "Quality system",
+          "numberPrefix": "SOP-",
+          "category": "production",
+          "description": "A controlled, step-by-step procedure for a repeatable process.",
+          "sections": [
+            {
+              "key": "purpose",
+              "label": "Purpose",
+              "order": 1,
+              "hint": "Why this document exists and what it governs."
+            },
+            {
+              "key": "scope",
+              "label": "Scope",
+              "order": 2,
+              "hint": "What and who it applies to, with explicit exclusions."
+            },
+            {
+              "key": "responsibilities",
+              "label": "Responsibilities",
+              "order": 3,
+              "hint": "Roles accountable for each step."
+            },
+            {
+              "key": "definitions",
+              "label": "Definitions",
+              "order": 4,
+              "hint": "Terms, abbreviations, and acronyms used."
+            },
+            {
+              "key": "procedure",
+              "label": "Procedure",
+              "order": 5,
+              "hint": "The step-by-step controlled process."
+            },
+            {
+              "key": "references",
+              "label": "References",
+              "order": 6,
+              "hint": "Regulations, standards, and linked documents."
+            },
+            {
+              "key": "attachments",
+              "label": "Attachments",
+              "order": 7,
+              "hint": "Forms, templates, and records this document produces."
+            },
+            {
+              "key": "revision_history",
+              "label": "Revision history",
+              "order": 8,
+              "hint": "Version, date, author, and a summary of each change."
+            },
+            {
+              "key": "approval",
+              "label": "Approval",
+              "order": 9,
+              "hint": "Author, reviewer, and approver signatures."
+            }
+          ]
+        },
+        {
+          "key": "work_instruction",
+          "label": "Work instruction",
+          "docType": "wi",
+          "family": "Quality system",
+          "numberPrefix": "WI-",
+          "category": "production",
+          "description": "Task-level detail that supports an SOP — how to perform one step.",
+          "sections": [
+            {
+              "key": "purpose",
+              "label": "Purpose",
+              "order": 1,
+              "hint": "Why this document exists and what it governs."
+            },
+            {
+              "key": "scope",
+              "label": "Scope",
+              "order": 2,
+              "hint": "What and who it applies to, with explicit exclusions."
+            },
+            {
+              "key": "responsibilities",
+              "label": "Responsibilities",
+              "order": 3,
+              "hint": "Roles accountable for each step."
+            },
+            {
+              "key": "definitions",
+              "label": "Definitions",
+              "order": 4,
+              "hint": "Terms, abbreviations, and acronyms used."
+            },
+            {
+              "key": "procedure",
+              "label": "Procedure",
+              "order": 5,
+              "hint": "The step-by-step controlled process."
+            },
+            {
+              "key": "references",
+              "label": "References",
+              "order": 6,
+              "hint": "Regulations, standards, and linked documents."
+            },
+            {
+              "key": "attachments",
+              "label": "Attachments",
+              "order": 7,
+              "hint": "Forms, templates, and records this document produces."
+            },
+            {
+              "key": "revision_history",
+              "label": "Revision history",
+              "order": 8,
+              "hint": "Version, date, author, and a summary of each change."
+            },
+            {
+              "key": "approval",
+              "label": "Approval",
+              "order": 9,
+              "hint": "Author, reviewer, and approver signatures."
+            }
+          ]
+        },
+        {
+          "key": "form",
+          "label": "Form",
+          "docType": "form",
+          "family": "Quality system",
+          "numberPrefix": "FORM-",
+          "category": "misc",
+          "description": "A controlled template that captures a record when completed.",
+          "sections": [
+            {
+              "key": "purpose",
+              "label": "Purpose",
+              "order": 1,
+              "hint": "Why this document exists and what it governs."
+            },
+            {
+              "key": "scope",
+              "label": "Scope",
+              "order": 2,
+              "hint": "What and who it applies to, with explicit exclusions."
+            },
+            {
+              "key": "responsibilities",
+              "label": "Responsibilities",
+              "order": 3,
+              "hint": "Roles accountable for each step."
+            },
+            {
+              "key": "definitions",
+              "label": "Definitions",
+              "order": 4,
+              "hint": "Terms, abbreviations, and acronyms used."
+            },
+            {
+              "key": "procedure",
+              "label": "Procedure",
+              "order": 5,
+              "hint": "The step-by-step controlled process."
+            },
+            {
+              "key": "references",
+              "label": "References",
+              "order": 6,
+              "hint": "Regulations, standards, and linked documents."
+            },
+            {
+              "key": "attachments",
+              "label": "Attachments",
+              "order": 7,
+              "hint": "Forms, templates, and records this document produces."
+            },
+            {
+              "key": "revision_history",
+              "label": "Revision history",
+              "order": 8,
+              "hint": "Version, date, author, and a summary of each change."
+            },
+            {
+              "key": "approval",
+              "label": "Approval",
+              "order": 9,
+              "hint": "Author, reviewer, and approver signatures."
+            }
+          ]
+        },
+        {
+          "key": "validation_protocol",
+          "label": "Validation protocol",
+          "docType": "protocol",
+          "family": "Quality system",
+          "numberPrefix": "VP-",
+          "category": "design",
+          "description": "An IQ/OQ/PQ or process-validation protocol with acceptance criteria.",
+          "sections": [
+            {
+              "key": "purpose",
+              "label": "Purpose",
+              "order": 1,
+              "hint": "Why this document exists and what it governs."
+            },
+            {
+              "key": "scope",
+              "label": "Scope",
+              "order": 2,
+              "hint": "What and who it applies to, with explicit exclusions."
+            },
+            {
+              "key": "responsibilities",
+              "label": "Responsibilities",
+              "order": 3,
+              "hint": "Roles accountable for each step."
+            },
+            {
+              "key": "definitions",
+              "label": "Definitions",
+              "order": 4,
+              "hint": "Terms, abbreviations, and acronyms used."
+            },
+            {
+              "key": "procedure",
+              "label": "Procedure",
+              "order": 5,
+              "hint": "The step-by-step controlled process."
+            },
+            {
+              "key": "references",
+              "label": "References",
+              "order": 6,
+              "hint": "Regulations, standards, and linked documents."
+            },
+            {
+              "key": "attachments",
+              "label": "Attachments",
+              "order": 7,
+              "hint": "Forms, templates, and records this document produces."
+            },
+            {
+              "key": "revision_history",
+              "label": "Revision history",
+              "order": 8,
+              "hint": "Version, date, author, and a summary of each change."
+            },
+            {
+              "key": "approval",
+              "label": "Approval",
+              "order": 9,
+              "hint": "Author, reviewer, and approver signatures."
+            }
+          ]
+        },
+        {
+          "key": "change_control_sop",
+          "label": "Change-control procedure",
+          "docType": "sop",
+          "family": "Quality system",
+          "numberPrefix": "SOP-CC-",
+          "category": "capa",
+          "description": "The controlled procedure that governs how change requests are raised, assessed, approved, implemented and verified — aligned to ICH Q10 and EU GMP Annex 15.",
+          "sections": [
+            {
+              "key": "purpose",
+              "label": "Purpose",
+              "order": 1,
+              "hint": "Why this document exists and what it governs."
+            },
+            {
+              "key": "scope",
+              "label": "Scope",
+              "order": 2,
+              "hint": "What and who it applies to, with explicit exclusions."
+            },
+            {
+              "key": "responsibilities",
+              "label": "Responsibilities",
+              "order": 3,
+              "hint": "Roles accountable for each step."
+            },
+            {
+              "key": "definitions",
+              "label": "Definitions",
+              "order": 4,
+              "hint": "Terms, abbreviations, and acronyms used."
+            },
+            {
+              "key": "procedure",
+              "label": "Procedure",
+              "order": 5,
+              "hint": "The step-by-step controlled process."
+            },
+            {
+              "key": "references",
+              "label": "References",
+              "order": 6,
+              "hint": "Regulations, standards, and linked documents."
+            },
+            {
+              "key": "attachments",
+              "label": "Attachments",
+              "order": 7,
+              "hint": "Forms, templates, and records this document produces."
+            },
+            {
+              "key": "revision_history",
+              "label": "Revision history",
+              "order": 8,
+              "hint": "Version, date, author, and a summary of each change."
+            },
+            {
+              "key": "approval",
+              "label": "Approval",
+              "order": 9,
+              "hint": "Author, reviewer, and approver signatures."
+            }
+          ]
+        },
+        {
+          "key": "change_request_form",
+          "label": "Change-request form",
+          "docType": "form",
+          "family": "Quality system",
+          "numberPrefix": "CC-",
+          "category": "capa",
+          "description": "The controlled form used to raise a change request: description, justification, risk classification, impact assessment, implementation plan, independent approval and effectiveness verification.",
+          "sections": [
+            {
+              "key": "identification",
+              "label": "Change identification",
+              "order": 1,
+              "hint": "Change number, title, initiator, and date raised."
+            },
+            {
+              "key": "description",
+              "label": "Description of change",
+              "order": 2,
+              "hint": "Current state → proposed state, in concrete terms."
+            },
+            {
+              "key": "justification",
+              "label": "Reason / justification",
+              "order": 3,
+              "hint": "Why the change is needed and what triggered it."
+            },
+            {
+              "key": "classification",
+              "label": "Classification & risk",
+              "order": 4,
+              "hint": "Minor / major / critical, with the risk rationale."
+            },
+            {
+              "key": "impact",
+              "label": "Impact assessment",
+              "order": 5,
+              "hint": "Effect on product, process, equipment, validation state, and regulatory filings."
+            },
+            {
+              "key": "affected",
+              "label": "Affected documents & records",
+              "order": 6,
+              "hint": "SOPs, specifications, validation protocols, and linked deviations / CAPAs."
+            },
+            {
+              "key": "implementation",
+              "label": "Implementation plan",
+              "order": 7,
+              "hint": "Actions, owners, target dates, and any pre-approval conditions."
+            },
+            {
+              "key": "approval",
+              "label": "Approval",
+              "order": 8,
+              "hint": "Independent review and approval — the approver must differ from the initiator."
+            },
+            {
+              "key": "verification",
+              "label": "Implementation & verification",
+              "order": 9,
+              "hint": "Confirmation the change was implemented as approved and the effectiveness check."
+            },
+            {
+              "key": "closure",
+              "label": "Closure",
+              "order": 10,
+              "hint": "Final sign-off closing the change record."
+            }
+          ]
+        },
+        {
+          "key": "training_curriculum",
+          "label": "Training curriculum",
+          "docType": "curriculum",
+          "family": "Quality system",
+          "numberPrefix": "TC-",
+          "category": "training",
+          "description": "The role-based training plan that ties controlled documents to their required readers.",
+          "sections": [
+            {
+              "key": "purpose",
+              "label": "Purpose",
+              "order": 1,
+              "hint": "Why this document exists and what it governs."
+            },
+            {
+              "key": "scope",
+              "label": "Scope",
+              "order": 2,
+              "hint": "What and who it applies to, with explicit exclusions."
+            },
+            {
+              "key": "responsibilities",
+              "label": "Responsibilities",
+              "order": 3,
+              "hint": "Roles accountable for each step."
+            },
+            {
+              "key": "definitions",
+              "label": "Definitions",
+              "order": 4,
+              "hint": "Terms, abbreviations, and acronyms used."
+            },
+            {
+              "key": "procedure",
+              "label": "Procedure",
+              "order": 5,
+              "hint": "The step-by-step controlled process."
+            },
+            {
+              "key": "references",
+              "label": "References",
+              "order": 6,
+              "hint": "Regulations, standards, and linked documents."
+            },
+            {
+              "key": "attachments",
+              "label": "Attachments",
+              "order": 7,
+              "hint": "Forms, templates, and records this document produces."
+            },
+            {
+              "key": "revision_history",
+              "label": "Revision history",
+              "order": 8,
+              "hint": "Version, date, author, and a summary of each change."
+            },
+            {
+              "key": "approval",
+              "label": "Approval",
+              "order": 9,
+              "hint": "Author, reviewer, and approver signatures."
+            }
+          ]
+        }
+      ],
+      "meta": {
+        "count": 9
+      }
+    }
+  }
+}

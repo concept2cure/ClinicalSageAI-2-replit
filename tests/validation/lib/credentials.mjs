@@ -12,6 +12,10 @@
  *   OQ_SIGNER_EMAIL     the signing identity (must hold signing authority:
  *                       org role admin / approver / reviewer — §11.10(g))
  *   OQ_SIGNER_PASSWORD  that identity's password
+ *   OQ_SIGNER_TOTP_SECRET  the secret of the signer's enrolled TOTP factor, for a
+ *                       server that requires MFA at login (every server that is
+ *                       not a development one). The signer always signs in with
+ *                       its password (POST /api/auth/login), never dev-login.
  *   OQ_AUTHOR_EMAIL     optional; the identity that authored the fixtures
  *                       (defaults to the run identity, VALIDATION_USER_EMAIL).
  *                       The signer must differ from it — the two-person rule
@@ -21,10 +25,21 @@
  * CREDENTIAL_NOT_SUPPLIED as its reason, and every step depending on it is
  * not-executed. Nothing is simulated.
  */
-import { TEST_USER_EMAIL } from './harness.mjs';
+import { TEST_USER_EMAIL, passwordLogin, sharedSession } from './harness.mjs';
+import { freshTotp } from './totp.mjs';
 
 export const CREDENTIAL_NOT_SUPPLIED =
   'not executed — credential not supplied: set OQ_SIGNER_EMAIL and OQ_SIGNER_PASSWORD to a second identity that holds signing authority (and is not the author) to execute this credentialed step.';
+
+/**
+ * A current code from the signer's authenticator, never one already presented,
+ * or undefined when no TOTP secret was supplied. Every signing endpoint requires
+ * it when the signer has a second factor enrolled (§11.200), so a supplied
+ * secret asserts that one is.
+ */
+export async function signerCode(signer) {
+  return signer.totpSecret ? freshTotp(signer.email, signer.totpSecret) : undefined;
+}
 
 /** The signer credential from the environment, or null when not supplied. */
 export function signerCredential() {
@@ -32,16 +47,16 @@ export function signerCredential() {
   const password = process.env.OQ_SIGNER_PASSWORD || '';
   if (!email || !password) return null;
   const authorEmail = (process.env.OQ_AUTHOR_EMAIL || TEST_USER_EMAIL).trim().toLowerCase();
-  return { email, password, authorEmail };
+  return { email, password, totpSecret: process.env.OQ_SIGNER_TOTP_SECRET || '', authorEmail };
 }
 
 /**
  * Resolve the credentialed signer for a step: deviation when not supplied,
  * deviation when it is the author's own identity (the step could only observe
  * the two-person refusal, not the positive signature). Returns the credential
- * plus the signer's dev-login session.
+ * plus the signer's session, opened with its password.
  */
-export async function requireSigner({ deviation, expect }, devLogin, baseUrl, authorEmailOverride = null) {
+export async function requireSigner({ deviation, expect }, baseUrl, authorEmailOverride = null) {
   const cred = signerCredential();
   if (!cred) deviation(CREDENTIAL_NOT_SUPPLIED);
   const authorEmail = (authorEmailOverride ?? cred.authorEmail).toLowerCase();
@@ -52,7 +67,8 @@ export async function requireSigner({ deviation, expect }, devLogin, baseUrl, au
   }
   let session;
   try {
-    session = await devLogin(baseUrl, cred.email);
+    const shared = await sharedSession('signer', baseUrl);
+    session = shared && shared.user?.email?.toLowerCase() === cred.email ? shared : await passwordLogin(baseUrl, cred);
   } catch (e) {
     expect(false, `signer identity ${cred.email} could not open a session: ${e.message}`);
   }

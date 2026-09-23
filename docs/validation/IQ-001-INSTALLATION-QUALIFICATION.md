@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | IQ-001 |
-| Version | 0.3 |
+| Version | 0.4 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §5 |
 | Runner | `npm run validation:iq` → `scripts/validation/run-iq.mjs` |
@@ -16,6 +16,7 @@
 | 0.1 | 2026-09-21 | W3a | Derived from the deployment artefacts: `Dockerfile.optimized`, `docker-compose.yml`, `docker-compose.staging.yml`, `terraform/environments/{production,staging}`, `terraform/modules/*`, `.github/workflows/deploy-aws.yml`, `scripts/db/install-fresh.mjs`, `scripts/db/deploy-migrate.mjs`, `scripts/db/provision-app-role.mjs`, `server/startup/inline-endpoints.ts` (`/readyz`), `server/auth/dev-auth-policy.ts`, `server/middleware/enterprise-security.ts`, `.env.example`. |
 | 0.2 | 2026-09-22 | W3 | §3: the runner resolves the environment the way the server does, `.env.local` then `.env` with the process environment over both (`scripts/validation/env-files.mjs`, held equal to `server/config/load-env-files.ts`). It read `.env` alone, so on an installation brought up by `npm run up`, which writes the database to `.env.local`, IQ-05/07/08 qualified a different database from the one the server and the OQ protocols used. IQ-05 now names the database it qualified (host, port, name; never credentials). No check's expected result changed. |
 | 0.3 | 2026-09-22 | W3 | IQ-07 also records the RLS-enabled tables the runtime role **owns** without FORCE ROW LEVEL SECURITY, and raises IQ-DEV-006 when there are any: a table's owner is exempt from its policies whatever `rolsuper`/`rolbypassrls` say. v0.2 passed IQ-07 for the 2026-09-21 environment, whose role `c2c` owned 61 such tables including `vault.documents`, so the OQ set never evaluated those policies and a Vault defect under the non-owner runtime role went unseen (VSR-001 §12). It also passed IQ-07 for the superuser owner `postgres`. Both deviations are reported when both apply. |
+| 0.4 | 2026-09-23 | W3 | IQ-10 now passes wherever the refusal is observed, and fails wherever dev-login answers against its configuration. v0.3 did neither. A 404 from a server without development authentication was recorded as a deviation ("cannot be exercised on a development install"), so the check could not pass on staging. A 200 from a server whose configuration must refuse was recorded as the same deviation, so the check could not fail on the case it exists to catch. Both cases were executed on 2026-09-23 against one installation, by the v0.3 and v0.4 runners (`docs/evidence/W3/2026-09-23/IQ-falsification/`). IQ-11 now opens its session with a password sign-in that completes the TOTP challenge (§3), using the OQ harness's session opener, when dev-login is not a session source. v0.3 took the session from dev-login only, so launch scope could not be qualified on any server without development authentication. The expected results of IQ-01…09 and IQ-12…15 are unchanged. |
 
 ## 1. Purpose
 
@@ -41,7 +42,8 @@ Show that a given installation of Concept2Cure.RI is the artefact the repository
 
 - The repository checkout to be qualified, with `npm ci` done and `tests/validation` installed (`npm install` there).
 - A PostgreSQL reachable at `DATABASE_URL`, resolved as the server resolves it: the process environment, else `.env.local`, else `.env`. IQ-05 records which database that is.
-- The application running at `VALIDATION_BASE_URL` (default `http://localhost:5200`), booted from that checkout.
+- The application running at `VALIDATION_BASE_URL` (default `http://localhost:5200`), booted from that checkout. Run the runner with the environment the server was started with. IQ-10's expected answer is derived from `NODE_ENV` and `ALLOW_DEV_AUTH` as the runner resolves them, so a mismatch reads as a failure of the installation.
+- On a server without development authentication (staging, production, or a local server with `ALLOW_DEV_AUTH=0`), the run identity's credentials must be supplied in `VALIDATION_USER_EMAIL`, `VALIDATION_USER_PASSWORD` and `VALIDATION_USER_TOTP_SECRET`. The TOTP secret is that of the identity's enrolled factor. None of these values is written to a record. Without them IQ-11 records a deviation.
 - Chromium at `CHROMIUM_PATH` (for the OQ runners that follow).
 
 ## 4. Checks
@@ -57,8 +59,8 @@ Show that a given installation of Concept2Cure.RI is the artefact the repository
 | IQ-07 | Runtime role reaches every table | the `DATABASE_URL`/`APP_DATABASE_URL` role holds SELECT on every table in every schema; role attributes recorded; the role owns no table whose row-level security is not forced (otherwise IQ-DEV-006: its policies do not apply to their owner) | `db-role-denied-tables.json`, `db-grants-before.txt` |
 | IQ-08 | Tenant-isolation posture | `RLS_ENFORCE=on` with `APP_DATABASE_URL` on a non-superuser role (production); otherwise deviation | — |
 | IQ-09 | Boot and honest readiness | `/healthz` 200; `/readyz` names every dependency; database+schema ok; a missing AI provider reads `ana=down` (503), never hidden | `readyz.json` |
-| IQ-10 | Development authentication policy | dev-login answers only under `NODE_ENV=development` + `ALLOW_DEV_AUTH=1`; production must answer 404 | — |
-| IQ-11 | Launch scope enforced | `launchScope.enforced=true` in the navigation payload; verdict counts | `navigation-summary.json` |
+| IQ-10 | Development authentication policy | dev-login answers 200 only under `NODE_ENV=development` + `ALLOW_DEV_AUTH=1`, and 404 everywhere else, production included. A 404 where it must refuse is a **pass**; a 200 where it must refuse is a **fail**. A 200 on a development install configured for it is a deviation, since the refusal is qualified on a server without it. | — |
+| IQ-11 | Launch scope enforced | Session from dev-login where the configuration provides it, otherwise password + TOTP (§3). `launchScope.enforced=true` in the navigation payload; verdict counts. | `navigation-summary.json` |
 | IQ-12 | Security middleware active | CSP (enforced or, in development, report-only), `nosniff`, referrer policy; API rate-limit headers | `security-headers.json` |
 | IQ-13 | Vendored agency artefacts | eSTAR templates with `checksums.txt`, eCTD DTDs and schemas, FDA recognised standards | — |
 | IQ-14 | CI gates declared | `ci:migration-drop-safety`, `ci:migration-set-order`, `ci:launch-scope`, `ci:fixture-fallback`, `ci:no-mock-in-prod-routes` | — |
@@ -77,7 +79,7 @@ IQ-001 is accepted for an environment when no check reads **fail** and every **d
 | IQ-DEV-003 | IQ-08 | `RLS_ENFORCE=off`, `APP_DATABASE_URL` unset — not the D3 posture. | Qualified under D3 against staging. |
 | IQ-DEV-004 | IQ-09 | No AI provider: `/readyz` 503 with `ana=down`, `anaState=no_provider`; database and schema `ok`. Readiness fails closed correctly. | Configure a PQ-passed provider on staging; every model-dependent OQ step is a deviation until then. |
 | IQ-DEV-005 | IQ-12 | CSP is report-only and HSTS absent — development build behaviour (`enterprise-security.ts:165`). API responses carry `X-RateLimit-Limit: 60`. | Verify enforced CSP/HSTS on staging over HTTPS. |
-| — | IQ-10 | dev-login answered 200 (as configured). The production refusal cannot be exercised locally. | Verify 404 on staging with `NODE_ENV=production`. |
+| — | IQ-10 | dev-login answered 200 (as configured). The production refusal cannot be exercised locally. | Verify 404 on staging with `NODE_ENV=production`. *2026-09-23 (v0.4): the refusal was observed locally with `ALLOW_DEV_AUTH=0` (a pass). The `NODE_ENV=production` refusal is still qualified on staging.* |
 
 ## Signature block
 

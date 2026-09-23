@@ -619,7 +619,40 @@ ${m1Leaves}
 
 /* ─── M2-M5 common backbone (ICH M8) ──────────────────────────────── */
 
-function buildIndexXml(input: PackagerInput, m2to5: EctdLeaf[], resolve: (l: EctdLeaf) => LeafRef): string {
+/** The regional Module 1 backbone, as index.xml references it. */
+interface RegionalBackboneRef {
+  /** Package-relative path, e.g. m1/us/us-regional.xml. */
+  href: string;
+  /** MD5 of the regional XML bytes written into the package. */
+  md5: string;
+}
+
+/**
+ * index.xml's pointer to Module 1. Module 1 content lives in the regional
+ * backbone, and the ICH backbone reaches it through a leaf under
+ * m1-administrative-information-and-prescribing-information that names the
+ * regional XML with its MD5. Without it the regional file (an IND's Form FDA
+ * 1571 among its leaves) was in the package, in util/index-md5.txt, and
+ * referenced by nothing in index.xml — a reader of the ICH backbone saw a
+ * sequence with no Module 1 at all. Every sequence carries its own regional
+ * backbone, so the pointer is always operation="new".
+ */
+function regionalBackboneReference(ref: RegionalBackboneRef): string {
+  const file = ref.href.split('/').pop() ?? ref.href;
+  return `  <m1-administrative-information-and-prescribing-information>
+    <leaf operation="new" checksum="${ref.md5}" checksum-type="md5" xlink:href="${escapeXml(ref.href)}" xlink:type="simple" ID="leaf-m1-regional-backbone">
+      <title>Module 1 regional backbone (${escapeXml(file)})</title>
+    </leaf>
+  </m1-administrative-information-and-prescribing-information>
+`;
+}
+
+function buildIndexXml(
+  input: PackagerInput,
+  m2to5: EctdLeaf[],
+  resolve: (l: EctdLeaf) => LeafRef,
+  regional: RegionalBackboneRef | null,
+): string {
   // One assigner for the whole index.xml document (all of m2–m5 live here).
   const assignId = createLeafIdAssigner();
   // Fail loudly on any leaf that maps to no ICH module — otherwise it would be
@@ -650,7 +683,7 @@ function buildIndexXml(input: PackagerInput, m2to5: EctdLeaf[], resolve: (l: Ect
 <ectd:ectd xmlns:ectd="http://www.ich.org/ectd"
            xmlns:xlink="http://www.w3.org/1999/xlink"
            dtd-version="3.2">
-${moduleBlocks}
+${regional ? regionalBackboneReference(regional) : ''}${moduleBlocks}
 </ectd:ectd>`;
 }
 
@@ -849,11 +882,9 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   /* PASS 2 — write the regional Module 1 backbone (now that hrefs+md5s exist). */
   const regionalXml = backboneByRegion[region]();
   const regionalPath = backboneFileByRegion[region];
+  const regionalMd5 = createHash('md5').update(regionalXml).digest('hex');
   zip.file(regionalPath, regionalXml);
-  checksums.push({
-    relPath: regionalPath,
-    md5: createHash('md5').update(regionalXml).digest('hex'),
-  });
+  checksums.push({ relPath: regionalPath, md5: regionalMd5 });
 
   /* Write all finalized leaf bytes. */
   for (const p of prepared) {
@@ -939,7 +970,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   }
 
   /* Write the ICH M2-M5 index.xml + index-md5.txt. */
-  const indexXml = buildIndexXml(input, m2to5, resolve);
+  const indexXml = buildIndexXml(input, m2to5, resolve, { href: regionalPath, md5: regionalMd5 });
   const indexXmlMd5 = createHash('md5').update(indexXml).digest('hex');
   zip.file('index.xml', indexXml);
   checksums.push({ relPath: 'index.xml', md5: indexXmlMd5 });

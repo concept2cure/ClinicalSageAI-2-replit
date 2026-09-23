@@ -27,7 +27,7 @@ import { resolveSignerIdentity } from '../services/part11/resolve-signer-identit
 import bcrypt from 'bcryptjs';
 import { createHash } from 'crypto';
 import { pool } from '../db.js';
-import { verifyToken as verifyMfaToken } from '../services/mfaService.js';
+import { verifyToken as verifyMfaToken, isMfaEnabled } from '../services/mfaService.js';
 import { writeChainedAuditRow } from '../services/auditService';
 import { buildVersionBindingDigest } from '../services/part11/version-binding.js';
 import { isSigningAuthorized } from '../services/part11/signing-authority';
@@ -85,13 +85,21 @@ router.post('/verify-password', async (req: Request, res: Response) => {
     // Don't differentiate "no user" from "no hash" to outside callers.
     return res.json({ valid: false });
   }
+  let valid: boolean;
   try {
-    const valid = await bcrypt.compare(password, hash);
-    return res.json({ valid });
+    valid = await bcrypt.compare(password, hash);
   } catch (err: any) {
     console.warn('[esignature] bcrypt compare failed:', err?.message);
     return res.json({ valid: false });
   }
+  if (!valid) return res.json({ valid });
+  // Only after the password verified: whether the signer has a second factor
+  // enrolled, which every signing endpoint then requires (§11.200). The e-sign
+  // modal asks for the code on this answer instead of sending a signature the
+  // server will refuse. When the state cannot be read it is left out, and the
+  // signing endpoint refuses the signature on the same uncertainty.
+  const mfaRequired = await isMfaEnabled(userId).catch(() => undefined);
+  return res.json(mfaRequired === undefined ? { valid } : { valid, mfaRequired });
 });
 
 /**

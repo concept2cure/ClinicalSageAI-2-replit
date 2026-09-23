@@ -2,8 +2,8 @@
  * OQ-006 — Operational Qualification: QMS controlled documents.
  * Protocol: docs/validation/OQ-006-QMS.md. Requirements: docs/validation/URS-006-QMS.md.
  */
-import { createRun, devLogin, helpers } from '../../lib/harness.mjs';
-import { requireSigner } from '../../lib/credentials.mjs';
+import { createRun, helpers } from '../../lib/harness.mjs';
+import { requireSigner, signerCode } from '../../lib/credentials.mjs';
 import { computeQmsDocumentContentDigest, qmsDocumentDigestInput } from '../../lib/qms-digest.mjs';
 
 const run = await createRun({
@@ -118,8 +118,10 @@ async function approveSigned(ctx, docId, reason) {
   const { expect } = ctx;
   const signer = ctx.state.signer;
   const asSigner = ctx.apiAs(signer.session);
+  const mfaToken = await signerCode(signer);
   const r = await asSigner('POST', `/api/mdx/qms/documents/${docId}/approve`, {
     password: signer.password,
+    ...(mfaToken ? { mfaToken } : {}),
     meaning: 'APPROVED',
     reason,
     effectiveDate: inDays(0),
@@ -141,28 +143,47 @@ await step(
     id: 'OQ-QMS-05',
     urs: ['URS-QMS-004', 'URS-QMS-005'],
     title: 'CREDENTIALED: a second identity approves SOP A as an electronic signature; the approval is stamped, audited and signed; a second approval is refused',
-    action: 'dev-login as OQ_SIGNER_EMAIL; POST /api/mdx/qms/documents/:docA/approve {password, meaning:"APPROVED", reason, effectiveDate}; approve again',
+    action: 'sign in as OQ_SIGNER_EMAIL with its password (and its authenticator code where the server requires MFA); when the signer has a second factor enrolled (OQ_SIGNER_TOTP_SECRET), first approve with {password} only; POST /api/mdx/qms/documents/:docA/approve {password, mfaToken?, meaning:"APPROVED", reason, effectiveDate}; approve again',
     expected:
-      'HTTP 200: status effective, approver_id = signer (≠ author), approved_at set, meta.auditTrail {persisted, chained}, meta.signature {id, meaning APPROVED, boundPayloadDigest (sha256), bindingBasis qms-document-version-content-sha256}; metadata.approval.contentDigest equals the signature digest; second approve → 409 QMS_INVALID_STATE. Without OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD the step is recorded "not executed — credential not supplied".',
+      'A signer with a second factor enrolled: the password-only approval is refused 401 MFA_TOKEN_REQUIRED, SOP A stays in review and no signature row is written (§11.200). HTTP 200: status effective, approver_id = signer (≠ author), approved_at set, meta.auditTrail {persisted, chained}, meta.signature {id, meaning APPROVED, boundPayloadDigest (sha256), bindingBasis qms-document-version-content-sha256}; metadata.approval.contentDigest equals the signature digest; second approve → 409 QMS_INVALID_STATE. Without OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD the step is recorded "not executed — credential not supplied".',
     dependsOn: ['OQ-QMS-03'],
     note: 'VSR-001 §8.3 P-2 / F-3: approval is a signing act (§11.50, §11.200); the runner\'s dev-login session holds no password, so the signer is a tester-supplied identity (tests/validation/lib/credentials.mjs). The two-person rule (§11.10(d)) means the signer must not be the author of SOP A (the run identity).',
   },
   async (ctx) => {
     const { expect, auth, baseUrl } = ctx;
-    const signer = await requireSigner(ctx, devLogin, baseUrl, auth.user.email);
+    const signer = await requireSigner(ctx, baseUrl, auth.user.email);
     expect(signer.session.user.email !== auth.user.email, 'signer session resolved to the author identity', signer.session.user.email);
     ctx.state.signer = signer;
+    let secondFactor = 'no second factor enrolled';
+    if (signer.totpSecret) {
+      // §11.200: with a factor enrolled, the password alone must not sign.
+      const asSigner0 = ctx.apiAs(signer.session);
+      const bare = await asSigner0('POST', `/api/mdx/qms/documents/${ctx.state.docA.id}/approve`, {
+        password: signer.password,
+        meaning: 'APPROVED',
+        reason: 'OQ-006 step 05: a password-only approval must be refused',
+        effectiveDate: inDays(0),
+      });
+      expect(bare.status === 401 && errCode(bare) === 'MFA_TOKEN_REQUIRED', `a password-only approval by a signer with a second factor enrolled expected 401 MFA_TOKEN_REQUIRED, got ${bare.status}`, bare.json);
+      const g0 = await asSigner0('GET', `/api/mdx/qms/documents/${ctx.state.docA.id}`);
+      expect(g0.json?.data?.status !== 'effective', 'SOP A became effective on the refused password-only approval', g0.json?.data);
+      const s0 = await asSigner0('GET', `/api/part11/signatures/by-target?target=${encodeURIComponent(`qms-document:${ctx.state.docA.id}`)}`);
+      expect(s0.status === 200 && (s0.json?.data ?? []).length === 0, 'a signature row exists for the refused password-only approval', s0.json);
+      secondFactor = 'password-only approval refused 401 MFA_TOKEN_REQUIRED with no row written; approved with password + TOTP';
+    }
     const { response, document: d, signature: sig } = await approveSigned(ctx, ctx.state.docA.id, 'OQ-006 step 05: SOP approved for validation (signed)');
     ctx.state.docA = d;
     ctx.state.signatureA = sig;
     const asSigner = ctx.apiAs(signer.session);
+    const againToken = await signerCode(signer);
     const again = await asSigner('POST', `/api/mdx/qms/documents/${d.id}/approve`, {
       password: signer.password,
+      ...(againToken ? { mfaToken: againToken } : {}),
       meaning: 'APPROVED',
       reason: 'OQ-006 step 05: second approval must be refused',
     });
     expect(again.status === 409 && errCode(again) === 'QMS_INVALID_STATE', `second approve expected 409 QMS_INVALID_STATE, got ${again.status}`, again.json);
-    return `effective; author ${d.author_id} (${auth.user.email}) ≠ approver ${d.approver_id} (${signer.session.user.email}) at ${d.approved_at}; signature ${sig.id} meaning ${sig.meaning}, ${sig.authenticationMethod}, digest ${String(sig.boundPayloadDigest).slice(0, 12)}…; auditTrail=${JSON.stringify(response.json.meta.auditTrail)}; re-approve → 409 QMS_INVALID_STATE`;
+    return `${secondFactor}; effective; author ${d.author_id} (${auth.user.email}) ≠ approver ${d.approver_id} (${signer.session.user.email}) at ${d.approved_at}; signature ${sig.id} meaning ${sig.meaning}, ${sig.authenticationMethod}, digest ${String(sig.boundPayloadDigest).slice(0, 12)}…; auditTrail=${JSON.stringify(response.json.meta.auditTrail)}; re-approve → 409 QMS_INVALID_STATE`;
   },
 );
 
@@ -172,7 +193,7 @@ await step(
     urs: ['URS-QMS-005'],
     title: 'Exactly one electronic_signatures row is bound to the approval; the §11.70 content digest recomputes from the stored document',
     action: 'GET /api/part11/signatures/by-target?target=qms-document:<docA>; GET /api/mdx/qms/documents/:docA; recompute sha256(canonicalJson(version content)) (tests/validation/lib/qms-digest.mjs — a re-implementation of computeQmsDocumentContentDigest)',
-    expected: 'One row: signer_id = signer, signature_meaning APPROVED, signature_type qms-document-approval, binding_basis qms-document-version-content-sha256, is_valid true; the recomputed digest equals meta.signature.boundPayloadDigest and metadata.approval.contentDigest',
+    expected: 'One row: signer_id = signer, signature_meaning APPROVED, signature_type qms-document-approval, binding_basis qms-document-version-content-sha256, is_valid true, second_factor_verified true when the signer has a second factor enrolled; the recomputed digest equals meta.signature.boundPayloadDigest and metadata.approval.contentDigest',
     dependsOn: ['OQ-QMS-05'],
   },
   async ({ api, expect, state, attach }) => {
@@ -184,6 +205,11 @@ await step(
     const row = rows[0];
     expect(isApprovalRow(row, state.signer.session.user.id), 'signature row attributes wrong', row);
     expect(String(row.id) === String(state.signatureA.id), 'the stored row is not the signature the approval reported', { row: row.id, reported: state.signatureA.id });
+    expect(
+      row.second_factor_verified === Boolean(state.signer.totpSecret),
+      `the signature row records second_factor_verified=${row.second_factor_verified} although the signer ${state.signer.totpSecret ? 'presented' : 'has no'} second factor`,
+      row,
+    );
     const g = await api('GET', `/api/mdx/qms/documents/${state.docA.id}`);
     expect(g.status === 200, `document read expected 200, got ${g.status}`, g.json);
     const stored = g.json?.data ?? {};
@@ -200,7 +226,7 @@ await step(
     };
     attach('digest-recomputation.json', report);
     expect(report.match, 'recomputed §11.70 digest does not match the signature / the stored document', report);
-    return `1 row (id ${row.id}) by signer ${row.signer_id}, ${row.signature_meaning}, ${row.binding_basis}; recomputed digest ${recomputed.slice(0, 12)}… == signature == document (match true)`;
+    return `1 row (id ${row.id}) by signer ${row.signer_id}, ${row.signature_meaning}, ${row.binding_basis}, second_factor_verified ${row.second_factor_verified}; recomputed digest ${recomputed.slice(0, 12)}… == signature == document (match true)`;
   },
 );
 
@@ -280,8 +306,10 @@ await step(
     expect(c.status === 201, `create expected 201, got ${c.status}`, c.json);
     const docC = c.json.data;
     expect(String(docC.author_id) === String(state.signer.session.user.id), 'SOP C is not attributed to the signer', docC);
+    const selfToken = await signerCode(state.signer);
     const r = await asSigner('POST', `/api/mdx/qms/documents/${docC.id}/approve`, {
       password: state.signer.password,
+      ...(selfToken ? { mfaToken: selfToken } : {}),
       meaning: 'APPROVED',
       reason: 'OQ-006 step 06c: self-approval must be refused',
     });

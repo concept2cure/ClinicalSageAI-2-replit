@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T02:59:46.715Z",
+  "generatedAt": "2026-09-23T03:15:06.871Z",
   "git": {
-    "sha": "0eb2538089f583d5a1f9d6f8069307e5cecafec6",
+    "sha": "56103612e4af7fe04f7f4170ed09957dda7896bd",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 43,
-    "largeFilesByLines": 100
+    "largeFilesByLines": 101
   },
   "findings": {
     "duplicateBasenames": [
@@ -2533,6 +2533,10 @@
         "lines": 1602
       },
       {
+        "file": "server/routes/ectd-compile.ts",
+        "lines": 1574
+      },
+      {
         "file": "server/services/advancedRAGPipeline.ts",
         "lines": 1569
       },
@@ -2568,7 +2572,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 409,
       "largeByBytes": 33,
-      "largeByLines": 81
+      "largeByLines": 82
     },
     {
       "owner": "Unassigned (TBD)",
