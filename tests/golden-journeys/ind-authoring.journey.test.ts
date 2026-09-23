@@ -147,10 +147,13 @@ const PREREQ = `
   -- u.id::text = r.created_by, which matches either shape.
   --
   -- The account columns the signing ceremony reads and writes: the password,
-  -- whether a second factor is enrolled, and the lockout (shared/schema.ts).
+  -- whether a second factor is enrolled, whether the account is in use (its
+  -- status, as migrations/0000_sweet_joseph.sql defines it: VSR-001 F-28), and
+  -- the lockout (shared/schema.ts).
   CREATE TABLE users (
     id INTEGER PRIMARY KEY, name TEXT, email TEXT,
     password_hash TEXT,
+    status TEXT NOT NULL DEFAULT 'active',
     mfa_enabled BOOLEAN NOT NULL DEFAULT FALSE,
     failed_login_attempts INTEGER NOT NULL DEFAULT 0,
     last_failed_login TIMESTAMP,

@@ -26,6 +26,7 @@ function account(over: Partial<ReverifySignerDeps> & { mfa?: boolean } = {}) {
     comparePassword: vi.fn(async (plain: string) => plain === 'right-password'),
     isMfaEnabled: vi.fn(async () => mfa),
     verifyMfaToken: vi.fn(async (_id: number, token: string) => token === '135790'),
+    isAccountActive: vi.fn(async () => true),
     isAccountLocked: vi.fn(async () => false),
     recordFailedAttempt: vi.fn(async () => {}),
     warn: () => {},

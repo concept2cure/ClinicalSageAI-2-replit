@@ -11,6 +11,7 @@
  *   - wrong password                 → 401, counted against the account,
  *                                      nothing written
  *   - a locked account               → 423 before the password is compared
+ *   - a suspended account            → 401 ACCOUNT_INACTIVE, nothing compared (F-28)
  *   - an enrolled factor, no code    → 400 MFA_TOKEN_REQUIRED
  *   - author approving own document  → 403 QMS_SELF_APPROVAL, rolled back
  *   - a valid signing                → 200, ONE electronic_signatures write on
@@ -38,7 +39,7 @@ const H = vi.hoisted(() => ({
   release: vi.fn(),
   compare: vi.fn(),
   failures: vi.fn(),
-  account: { mfa: false, locked: false },
+  account: { mfa: false, locked: false, active: true },
   role: vi.fn(),
   recordGoverned: vi.fn(),
   persistSignature: vi.fn(),
@@ -59,6 +60,7 @@ vi.mock('../../services/part11/reverify-signer-deps', () => ({
     comparePassword: (plain: string, hash: string) => H.compare(plain, hash),
     isMfaEnabled: async () => H.account.mfa,
     verifyMfaToken: async (_id: number, token: string) => token === '123456',
+    isAccountActive: async () => H.account.active,
     isAccountLocked: async () => H.account.locked,
     recordFailedAttempt: (id: number) => H.failures(id),
     warn: () => {},
@@ -129,7 +131,7 @@ beforeEach(() => {
   H.release.mockReset();
   H.compare.mockReset();
   H.failures.mockReset();
-  H.account = { mfa: false, locked: false };
+  H.account = { mfa: false, locked: false, active: true };
   H.role.mockReset();
   H.recordGoverned.mockReset();
   H.persistSignature.mockReset();
@@ -187,6 +189,16 @@ describe('POST /api/mdx/qms/documents/:id/approve — electronic signature', () 
     const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
     expect(res.status).toBe(423);
     expect(res.body.details.code).toBe('ACCOUNT_LOCKED');
+    expect(H.compare).not.toHaveBeenCalled();
+    expect(H.txQuery).not.toHaveBeenCalled();
+    expect(H.persistSignature).not.toHaveBeenCalled();
+  });
+
+  it('refuses an account that is not active before its password is compared (F-28)', async () => {
+    H.account.active = false;
+    const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
+    expect(res.status, 'a suspended account approved a controlled document').toBe(401);
+    expect(res.body.details.code).toBe('ACCOUNT_INACTIVE');
     expect(H.compare).not.toHaveBeenCalled();
     expect(H.txQuery).not.toHaveBeenCalled();
     expect(H.persistSignature).not.toHaveBeenCalled();

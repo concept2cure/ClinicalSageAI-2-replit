@@ -65,6 +65,7 @@ vi.mock('../../services/part11/reverify-signer-deps', () => ({
     comparePassword: async (plain: string) => plain === 'right-password',
     isMfaEnabled: async () => h.mfaEnabled,
     verifyMfaToken: async (_id: number, token: string) => token === '135790',
+    isAccountActive: async () => true,
     isAccountLocked: async () => false,
     recordFailedAttempt: async () => {
       h.failures += 1;

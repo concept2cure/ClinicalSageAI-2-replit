@@ -35,6 +35,13 @@ import { createHash } from 'crypto';
 const queryFn = vi.fn();
 const connectFn = vi.fn();
 
+// The signing ceremony reads the signer's account standing (VSR-001 F-28);
+// every signer here is active. Suspended and deprovisioned signers are pinned
+// by reverify-signer.test.ts and tests/db/account-standing.dbtest.ts.
+vi.mock('../server/services/account-standing', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../server/services/account-standing')>()),
+  isAccountActive: async () => true,
+}));
 vi.mock('../server/db', () => ({
   pool: {
     query:   (...args: unknown[]) => queryFn(...args),

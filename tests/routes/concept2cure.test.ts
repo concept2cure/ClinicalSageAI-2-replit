@@ -237,6 +237,7 @@ vi.mock('../../server/services/part11/reverify-signer-deps', () => ({
     comparePassword: async (plain: string, hash: string) => plain === 'correct-horse-battery' && hash === 'stored-hash',
     isMfaEnabled: async () => false,
     verifyMfaToken: async () => false,
+    isAccountActive: async () => true,
     isAccountLocked: async () => false,
     recordFailedAttempt: async () => {},
     warn: () => {},

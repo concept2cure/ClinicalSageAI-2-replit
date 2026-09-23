@@ -40,6 +40,7 @@ vi.mock('../server/services/part11/reverify-signer-deps', () => ({
     comparePassword: async () => S.verify(),
     isMfaEnabled: async () => false,
     verifyMfaToken: async () => false,
+    isAccountActive: async () => true,
     isAccountLocked: async () => false,
     recordFailedAttempt: async () => {},
     warn: () => {},
