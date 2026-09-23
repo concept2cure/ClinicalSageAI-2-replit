@@ -47,6 +47,40 @@ export interface AuthAuditEvent {
   userAgent?: string;
 }
 
+/**
+ * The sentence the audit ledger shows for an event. The ledger surface reads
+ * `description` from a row's payload before it falls back to the action name
+ * (server/routes/audit-trail-ledger.routes.ts), and without one a refused
+ * sign-in and a successful one both read "User Login". Keyed by
+ * action | outcome | reason, the combinations routes/auth.ts records.
+ */
+const EVENT_DESCRIPTIONS: Readonly<Record<string, string>> = {
+  'user_login|success|mfa_verified': 'Signed in: password and second factor verified',
+  'user_login|success|dev_mfa_skipped': 'Signed in on a development server: second factor skipped',
+  'user_login|failure|unknown_email': 'Sign-in refused: no account for this address',
+  'user_login|failure|account_locked': 'Sign-in refused: account locked',
+  'user_login|failure|wrong_password': 'Sign-in refused: wrong password',
+  'user_login|failure|wrong_password_threshold_exceeded': 'Sign-in refused: wrong password; the account is now locked',
+  'user_login_mfa_challenge|success|mfa_challenge_totp': 'Password verified: authenticator code requested',
+  'user_login_mfa_challenge|success|mfa_challenge_email': 'Password verified: email code sent',
+  'user_login_mfa_failed|failure|invalid_code': 'Second factor refused: wrong code',
+  'user_login_mfa_failed|failure|invalid_or_expired_challenge': 'Second factor refused: invalid or expired challenge',
+  'user_logout|success|': 'Signed out',
+  'user_password_reset_requested|success|': 'Password reset requested',
+  'user_password_reset_requested|failure|no account for this address': 'Password reset requested for an address with no account',
+  'user_password_reset_failed|failure|reset token matched no account': 'Password reset refused: the reset link matched no account',
+  'user_password_reset_failed|failure|reset token had expired': 'Password reset refused: the reset link had expired',
+  'user_password_changed|success|password reset via emailed token': 'Password changed through an emailed reset link',
+};
+
+/** The ledger sentence for an event: its own when listed, otherwise one that still states the outcome. */
+export function describeAuthEvent(entry: Pick<AuthAuditEvent, 'action' | 'outcome' | 'reason'>): string {
+  return (
+    EVENT_DESCRIPTIONS[`${entry.action}|${entry.outcome}|${entry.reason ?? ''}`] ??
+    `${entry.action.replace(/_/g, ' ')}: ${entry.outcome}${entry.reason ? ` (${entry.reason})` : ''}`
+  );
+}
+
 /** The organisation an event records, when it names one: a positive integer id. */
 function recordedTenant(tenantId: AuthAuditEvent['tenantId']): number | null {
   if (tenantId === null || tenantId === undefined || tenantId === '') return null;
@@ -65,6 +99,7 @@ export async function recordAuthEvent(entry: AuthAuditEvent): Promise<void> {
       ipAddress: entry.ipAddress,
       userAgent: entry.userAgent,
       details: {
+        description: describeAuthEvent(entry),
         outcome: entry.outcome,
         reason: entry.reason,
         email: entry.email,
