@@ -21,6 +21,7 @@ import { eq, and, desc } from 'drizzle-orm';
 import crypto from 'crypto';
 import auditService from './auditService';
 import { buildVersionBindingDigest } from './part11/version-binding';
+import type { SignerReverified } from './part11/reverify-signer';
 import {
   BINDING_BASIS,
   drizzleSignatureClient,
@@ -73,7 +74,7 @@ class Part11ComplianceService {
     documentType,
     signatureReason,
     signatureMeaning,
-    password,
+    reverified,
     boundPayloadDigest: preboundPayloadDigest,
     signerRole,
     transactionalAuditEvent,
@@ -84,7 +85,16 @@ class Part11ComplianceService {
     documentType: string;
     signatureReason: string;
     signatureMeaning: string;
-    password: string;
+    /**
+     * What the platform's one signing ceremony verified for this signer
+     * (services/part11/reverify-signer.ts), which the caller runs before calling
+     * here. Recorded on the row as the authentication method and whether a
+     * second factor was verified. This took the password until 2026-09-23 and
+     * checked it with its own password-only verifier, so a release signature
+     * never asked for an enrolled second factor and always recorded
+     * authentication_method 'password', second_factor_verified false.
+     */
+    reverified: SignerReverified;
     /**
      * An audit event the CALLER needs committed with the signature, not after
      * it. Written on this transaction via `writeChainedAuditRow`, so it lands
@@ -107,9 +117,10 @@ class Part11ComplianceService {
   }) {
     try {
       const dbInstance = this.getDb();
-      const userVerified = await this.verifyUserCredentials(userId, password);
-      if (!userVerified) {
-        throw new Error('User authentication failed for electronic signature');
+      // The caller re-verified the signer; the type admits only a verified
+      // result, and this guards a caller that casts around it.
+      if (reverified?.ok !== true) {
+        throw new Error('Electronic signature refused: the signer was not re-verified (§11.200)');
       }
 
       // Snapshot ONLY the signer-display fields the signature record needs.
@@ -146,7 +157,7 @@ class Part11ComplianceService {
         timestamp: timestamp.toISOString(),
         reason: signatureReason,
         meaning: signatureMeaning,
-        authenticationMethod: 'password',
+        authenticationMethod: reverified.authenticationMethod,
       };
 
       // §11.70 content binding: resolve the latest version AND its content, and
@@ -232,9 +243,9 @@ class Part11ComplianceService {
         signerName: user.name,
         signerTitle: user.title,
         signerEmail: user.email,
-        authenticationMethod: 'password',
+        authenticationMethod: reverified.authenticationMethod,
         authenticationTimestamp: timestamp,
-        secondFactorVerified: false,
+        secondFactorVerified: reverified.secondFactorVerified,
         signatureHash: signature.hash,
         signatureMeaning,
         signatureManifest,
@@ -650,76 +661,12 @@ class Part11ComplianceService {
 
   // Helper methods
 
-  /**
-   * Verify user credentials against stored password hash.
-   * Required by 21 CFR Part 11 §11.200 — electronic signatures must
-   * be based on at least two distinct identification components
-   * (user ID + password).
-   */
-  async verifyUserCredentials(userId: number, password: string): Promise<boolean> {
-    if (!password || typeof password !== 'string' || password.length === 0) {
-      return false;
-    }
-
-    try {
-      const dbInstance = this.getDb();
-      const [user] = await dbInstance
-        .select({
-          id: users.id,
-          passwordHash: users.passwordHash,
-          status: users.status,
-          lockedUntil: users.lockedUntil,
-        })
-        .from(users)
-        .where(eq(users.id, userId))
-        .limit(1);
-
-      if (!user) {
-        return false;
-      }
-
-      // Check account status — suspended/inactive accounts cannot sign
-      if (user.status !== 'active') {
-        return false;
-      }
-
-      // Check account lockout
-      if (user.lockedUntil && new Date(user.lockedUntil) > new Date()) {
-        return false;
-      }
-
-      // Verify password against stored bcrypt hash
-      if (!user.passwordHash) {
-        return false;
-      }
-
-      const bcrypt = await import('bcryptjs');
-      const isValid = await bcrypt.compare(password, user.passwordHash);
-
-      if (!isValid) {
-        // Increment failed login attempts for lockout tracking
-        try {
-          const { failedLoginAttempts } = users;
-          await dbInstance
-            .update(users)
-            .set({
-              failedLoginAttempts: (user as any).failedLoginAttempts
-                ? (user as any).failedLoginAttempts + 1
-                : 1,
-              lastFailedLogin: new Date(),
-            })
-            .where(eq(users.id, userId));
-        } catch {
-          // Non-blocking — audit trail will capture the failure separately
-        }
-      }
-
-      return isValid;
-    } catch (error) {
-      console.error('[Part11] Credential verification error:', error);
-      return false;
-    }
-  }
+  // verifyUserCredentials lived here until 2026-09-23: a password-only check
+  // with its own lockout counting, used by the submission release signature and
+  // by createElectronicSignature. The release now re-verifies with the platform's
+  // one signing ceremony (services/part11/reverify-signer.ts), which also
+  // requires an enrolled second factor and keeps the sign-in's lockout, and this
+  // service records what that ceremony verified (VSR-001 §15).
 
   /**
    * Generate cryptographic signature

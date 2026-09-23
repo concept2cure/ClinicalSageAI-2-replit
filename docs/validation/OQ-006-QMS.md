@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-006 |
-| Version | 0.5 |
+| Version | 0.6 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §5; requirements URS-006 |
 | Runner (the executable protocol) | `tests/validation/oq/qms/run.mjs` — `npm run validation:oq -- qms` |
@@ -18,6 +18,7 @@
 | 0.3 | 2026-09-22 | W3 | §3 records the 2026-09-22 execution under the production posture (RLS enforcing, non-owner runtime role, credentialed second signer); earlier results are kept below it as superseded. No step changed. |
 | 0.4 | 2026-09-23 | W3 | OQ-QMS-05 first shows that a password-only approval from a signer with a second factor enrolled is refused with no row written, then approves with the authenticator code; 05b checks the row records the verified second factor; 06c presents the code so its refusal is the two-person rule. The signer signs in with its password and code rather than dev-login (VSR-001 §13). |
 | 0.5 | 2026-09-23 | D5 | Creating, changing and deleting a Quality Management Plan became governed changes (weekly review 2026-09-22, P2; `docs/evidence/D5-GOVERNED-PATH/2026-09-22/`): a reason of at least 8 characters is required and the ledger row commits with the plan. OQ-QMS-12 first shows a plan posted without a reason is refused 400 `REASON_REQUIRED` and not created, then creates it with a reason. The same change also made these behaviour changes, which no step exercises yet: a `viewer` is refused 403 on create, change and delete; the active plan cannot be deleted (409 `PLAN_ACTIVE`; archive it through the governed change first); a plan other quality records still reference is refused 409 `PLAN_IN_USE`; the ledger row carries the whole row on create and delete and every changed field's before and after on change. **Not yet executed at this version**; the 2026-09-23b record ran v0.4. Owed before signature, through change control: steps for the viewer refusal, the active-plan delete refusal and the ledger row; URS-QMS-011 restated as a governed change; its RA-001 classification (still `low`, `none`) re-assessed; TM-001 updated; then re-execution. |
+| 0.6 | 2026-09-23 | W3 | The approval re-verifies the signer with the platform's one signing ceremony (`server/services/part11/reverify-signer.ts`) instead of a second implementation of it, and so answers with the ceremony's responses: OQ-QMS-05's password-only refusal is 400 `MFA_TOKEN_REQUIRED` (was 401), OQ-QMS-06b's wrong password is 401 `PASSWORD_VERIFICATION_FAILED` (was `PASSWORD_INVALID`). A wrong password now counts against the account's lockout (VSR-001 F-27). |
 
 ## 1. Method
 
@@ -35,11 +36,11 @@ As OQ-001 §1. Two SOPs are created by the run identity (the author): A exercise
 | OQ-QMS-02 | URS-QMS-002 | scripted | create without `docType` | 422 with field errors |
 | OQ-QMS-03 | URS-QMS-002, 003 | scripted | create SOP A (`nextReviewDate` +10d); list; detail | 201 draft v1.0 with audit outcome; listed; readable |
 | OQ-QMS-04 | URS-QMS-002 | scripted | duplicate `docNumber` | 409 |
-| OQ-QMS-05 | URS-QMS-004, 005 | **credentialed** | as the signer: when a second factor is enrolled, first approve A with `{password}` only (v0.4); approve A `{password, mfaToken?, meaning:"APPROVED", reason, effectiveDate}`; approve again | with a second factor enrolled the password-only approval is refused 401 `MFA_TOKEN_REQUIRED`, A stays in review, no row; 200: effective, `approver_id` = signer ≠ author, `approved_at`, `meta.auditTrail {persisted, chained}`, `meta.signature {id, meaning APPROVED, boundPayloadDigest, bindingBasis qms-document-version-content-sha256}`; `metadata.approval.contentDigest` = signature digest; second approve 409 `QMS_INVALID_STATE` |
+| OQ-QMS-05 | URS-QMS-004, 005 | **credentialed** | as the signer: when a second factor is enrolled, first approve A with `{password}` only (v0.4); approve A `{password, mfaToken?, meaning:"APPROVED", reason, effectiveDate}`; approve again | with a second factor enrolled the password-only approval is refused 400 `MFA_TOKEN_REQUIRED`, A stays in review, no row; 200: effective, `approver_id` = signer ≠ author, `approved_at`, `meta.auditTrail {persisted, chained}`, `meta.signature {id, meaning APPROVED, boundPayloadDigest, bindingBasis qms-document-version-content-sha256}`; `metadata.approval.contentDigest` = signature digest; second approve 409 `QMS_INVALID_STATE` |
 | OQ-QMS-05b | URS-QMS-005 | scripted | read signatures by target; read A; recompute the §11.70 digest | exactly one row (signer, APPROVED, `qms-document-approval`, binding basis, valid, `second_factor_verified` true when the signer has a second factor enrolled); recomputed digest = signature = document |
 | OQ-QMS-06a | URS-QMS-002 | prerequisite | create SOP B (`nextReviewDate` +5d) | 201 |
 | OQ-QMS-06 | URS-QMS-005 | scripted | approve B with `{}` (no password, meaning or reason) | 400 `ESIGNATURE_COMPONENT_MISSING`; `fieldErrors` name password, meaning, reason; B stays draft |
-| OQ-QMS-06b | URS-QMS-005 | **credentialed** | as the signer: approve B with a wrong password | 401; B stays draft; no signature row |
+| OQ-QMS-06b | URS-QMS-005 | **credentialed** | as the signer: approve B with a wrong password | 401 `PASSWORD_VERIFICATION_FAILED`; B stays draft; no signature row |
 | OQ-QMS-06c | URS-QMS-005 | **credentialed** | as the signer: create SOP C, approve it with the signer's own password (and code, so the refusal is the two-person rule, not the missing factor) | 403 `QMS_SELF_APPROVAL`; C stays draft; no signature row |
 | OQ-QMS-06d | URS-QMS-004 | **credentialed** | as the signer: approve B (signed) | 200 effective with `meta.signature`; one signature row |
 | OQ-QMS-07 | URS-QMS-006 | scripted | revise A without reason; with reason | 422; v2.0 draft, approval cleared, audited |

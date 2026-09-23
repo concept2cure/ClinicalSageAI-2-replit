@@ -86,6 +86,11 @@ const REAUTH_MESSAGE: Record<string, string> = {
   REAUTH_TOTP_REQUIRED: 'Your account has an authenticator enrolled: enter its current code to sign. Nothing was signed.',
   REAUTH_TOTP_INVALID: 'The authenticator code was not accepted. Nothing was signed.',
   REAUTH_MFA_STATE_UNKNOWN: 'Your second factor could not be checked, so the signature was refused. Try again. Nothing was signed.',
+  // The account's own refusals (VSR-001 F-27, F-28). Without them a locked
+  // signer was told to re-enter a password that would not be compared.
+  REAUTH_ACCOUNT_LOCKED: 'The account is locked after repeated failed attempts. Try again later. Nothing was signed.',
+  REAUTH_ACCOUNT_STATE_UNKNOWN: 'Your account could not be checked, so the signature was refused. Try again. Nothing was signed.',
+  REAUTH_ACCOUNT_INACTIVE: 'This account is not active. Contact your administrator. Nothing was signed.',
 };
 
 function asReauth(raw: unknown): { password?: string; totp?: string } | undefined {

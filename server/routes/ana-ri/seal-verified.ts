@@ -16,10 +16,8 @@
 
 import type { Request, Response } from 'express';
 
-import {
-  verifySignerCredentials,
-  defaultSignoffDeps,
-} from '../../services/ana-ri/governed-action-signoff.js';
+import { reverifySigner } from '../../services/part11/reverify-signer.js';
+import { signerReverificationDeps } from '../../services/part11/reverify-signer-deps.js';
 import {
   sealVerifiedVersion,
   SealBlockedError,
@@ -107,9 +105,9 @@ export async function handleSealVerifiedVersion(req: Request, res: Response): Pr
   // a manifested electronic signature, so credentials are always required.
   const password = typeof body.password === 'string' ? body.password : '';
   const mfaToken = typeof body.mfaToken === 'string' ? body.mfaToken : undefined;
-  const credentials = await verifySignerCredentials(defaultSignoffDeps, { userId, password, mfaToken });
-  if (!credentials.verified) {
-    return sendError(res, 401, credentials.error || 'Signature verification failed', { code: credentials.code }, 'SIGNATURE_REJECTED');
+  const credentials = await reverifySigner(userId, { password, mfaToken }, signerReverificationDeps());
+  if (!credentials.ok) {
+    return sendError(res, credentials.status, credentials.error, { code: credentials.code }, 'SIGNATURE_REJECTED');
   }
 
   // §11.10(g): identity is not authority. Sealing a verified version applies a

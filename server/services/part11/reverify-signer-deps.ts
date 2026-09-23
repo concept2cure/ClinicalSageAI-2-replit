@@ -13,6 +13,7 @@ import bcrypt from 'bcryptjs';
 import { pool } from '../../db.js';
 import { verifyToken as verifyMfaToken, isMfaEnabled } from '../mfaService.js';
 import { isAccountLocked, recordFailedLogin } from '../auth-security-service.js';
+import { isAccountActive } from '../account-standing.js';
 import type { ReverifySignerDeps } from './reverify-signer.js';
 
 /**
@@ -49,6 +50,8 @@ export function signerReverificationDeps(): ReverifySignerDeps {
     comparePassword: (plain, hash) => bcrypt.compare(plain, hash),
     isMfaEnabled,
     verifyMfaToken,
+    // Suspended or deprovisioned: the one reading of users.status (F-28).
+    isAccountActive,
     // The sign-in's lockout: one count, one threshold, one duration per account.
     isAccountLocked: async (userId) => (await isAccountLocked(userId)).locked,
     recordFailedAttempt: async (userId) => {

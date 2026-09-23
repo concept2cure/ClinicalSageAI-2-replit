@@ -36,10 +36,7 @@ vi.mock('../../db', () => ({
   pool: { query, connect: vi.fn(async () => ({ query, release: vi.fn() })) },
 }));
 vi.mock('../../services/part11/resolve-signer-role', () => ({ resolveSignerOrgRole: vi.fn() }));
-vi.mock('../../services/ana-ri/governed-action-signoff', () => ({
-  verifySignerCredentials: vi.fn(),
-  defaultSignoffDeps: {},
-}));
+vi.mock('../../services/part11/reverify-signer-deps', () => ({ signerReverificationDeps: vi.fn() }));
 
 import rbmRouter from '../mdx-rbm';
 

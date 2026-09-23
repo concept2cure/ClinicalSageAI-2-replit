@@ -9,24 +9,16 @@
  * session must present every signature component. This module routes the
  * approval through the platform's ONE electronic-signature write path.
  *
- * ── Which credential, and why ────────────────────────────────────────────────
- * Until 2026-09-23 two re-authentication mechanisms existed in the tree:
- *   - PIN (`server/services/part11/pin-verification.ts`, now deleted) — used by
- *     the authoring loop's `/docs/:docId/e-sign`, which writes
- *     `authoring_signatures`, a separate store for UUID-keyed authoring
- *     documents ("the two are different concepts that collided on a name",
- *     authoring.router.ts). The authoring loop now re-verifies with the
- *     password ceremony too (services/part11/reverify-signer.ts).
- *   - Password (+ TOTP when the signer has MFA enabled) — `verifySignerCredentials`
- *     (`server/services/ana-ri/governed-action-signoff.ts`). This is what the
- *     governed `sign` action (`verifyReauth` in c2c/actions.ts), the RBM
- *     approvals in the same /api/mdx family, and the client's
- *     GovernedActionSignoff component all use, and it is the factor set the
- *     `electronic_signatures` row records in `authentication_method`.
- * The password path is canonical for `electronic_signatures`; the PIN path is
- * canonical only for `authoring_signatures`. A QMS approval belongs in
- * `electronic_signatures` (it is the Part 11 table an inspector queries), so it
- * takes the password path.
+ * ── Which credential, and why ───────────────────────────────────────────────
+ * The platform's one signing ceremony (`server/services/part11/reverify-signer.ts`):
+ * the account password, the second factor whenever one is enrolled, and the
+ * account's lockout. The route runs it before this module is called, and the
+ * factors it verified are what the `electronic_signatures` row records in
+ * `authentication_method`. Until 2026-09-23 this route used a second
+ * implementation of the same policy (`ana-ri/governed-action-signoff.ts`, now
+ * deleted) that did not keep the lockout, and the authoring loop used a
+ * separate signing PIN (also retired). A QMS approval belongs in
+ * `electronic_signatures`, the Part 11 table an inspector queries.
  *
  * ── What one approval writes, on ONE transaction ─────────────────────────────
  *   1. the `qms_documents` UPDATE (status → effective, approver, approved_at,
@@ -140,7 +132,7 @@ export class QmsApprovalRefusedError extends Error {
 
 export interface ApproveQmsDocumentSignedParams {
   orgId: number;
-  /** The signer — already re-authenticated (verifySignerCredentials) and authorized (isSigningAuthorized). */
+  /** The signer — already re-authenticated (reverifySigner) and authorized (isSigningAuthorized). */
   userId: number;
   documentId: number;
   /** Reason for change, captured on the ledger, the signature and the document. */
@@ -149,7 +141,7 @@ export interface ApproveQmsDocumentSignedParams {
   meaning: string;
   /** Optional YYYY-MM-DD; defaults to the stored effective_date, else today. */
   effectiveDate: string | null;
-  /** The factors verifySignerCredentials actually verified — never more. */
+  /** The factors reverifySigner actually verified — never more. */
   authenticationMethod: 'password' | 'password+totp';
   secondFactorVerified: boolean;
   ipAddress: string | null;

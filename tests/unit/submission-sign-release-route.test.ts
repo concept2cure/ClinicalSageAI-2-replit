@@ -8,7 +8,12 @@
  *   - 404 collapse on missing-or-cross-org run (getRun returns null)
  *   - 404 when URL submissionId doesn't match the run's submissionId
  *   - 409 when run.status !== 'awaiting-signature'
- *   - 401 on password mismatch (NEVER 200)
+ *   - 401 on password mismatch (NEVER 200), counted against the account
+ *   - 400 when the signer has an authenticator enrolled and sends no code
+ *   - 423 when the account is locked, before the password is compared
+ *   - 401 when the account is suspended or deprovisioned, which the route's
+ *     own password check refused and the ceremony now refuses everywhere (F-28)
+ *   - the row records what the ceremony verified (password+mfa)
  *   - 200 happy path: signature row created + bound digest persisted
  *   - 200 idempotent: existing active signature returns its id without
  *     creating a duplicate row
@@ -16,7 +21,11 @@
  * The route depends on:
  *   - submission-package-orchestrator's getRun / findActiveReleaseSignature /
  *     loadSubmissionFkBySubmissionIdText
- *   - part11ComplianceService.verifyUserCredentials + createElectronicSignature
+ *   - the platform's one signing ceremony (services/part11/reverify-signer.ts),
+ *     which runs for real here with only its wiring (reverify-signer-deps)
+ *     replaced by the account's state; it replaced the password-only
+ *     part11ComplianceService.verifyUserCredentials (deleted)
+ *   - part11ComplianceService.createElectronicSignature
  *     (which now receives the orchestrator's bound digest + tenant scope and
  *     writes them AT INSERT TIME — no post-insert UPDATE exists any more,
  *     preserving the §11.70 append-only invariant)
@@ -34,7 +43,9 @@ const hoisted = vi.hoisted(() => ({
   getRun: vi.fn(),
   findActiveReleaseSignature: vi.fn(),
   loadSubmissionFkBySubmissionIdText: vi.fn(),
-  verifyUserCredentials: vi.fn(),
+  compare: vi.fn(),
+  failures: vi.fn(),
+  account: { mfa: false, locked: false, active: true },
   createElectronicSignature: vi.fn(),
   auditLogAction: vi.fn(),
   // Drizzle update().set().where() — captured for assertion
@@ -70,19 +81,29 @@ vi.mock('../../server/services/submission-package-orchestrator', () => ({
 
 vi.mock('../../server/services/part11ComplianceService.js', () => ({
   default: {
-    verifyUserCredentials: (...args: unknown[]) =>
-      hoisted.verifyUserCredentials(...args),
     createElectronicSignature: (...args: unknown[]) =>
       hoisted.createElectronicSignature(...args),
   },
 }));
 vi.mock('../../server/services/part11ComplianceService', () => ({
   default: {
-    verifyUserCredentials: (...args: unknown[]) =>
-      hoisted.verifyUserCredentials(...args),
     createElectronicSignature: (...args: unknown[]) =>
       hoisted.createElectronicSignature(...args),
   },
+}));
+
+// The signing ceremony runs for real; its wiring is the account's state.
+vi.mock('../../server/services/part11/reverify-signer-deps.js', () => ({
+  signerReverificationDeps: () => ({
+    loadPasswordHash: async () => 'stored-hash',
+    comparePassword: (plain: string, hash: string) => hoisted.compare(plain, hash),
+    isMfaEnabled: async () => hoisted.account.mfa,
+    verifyMfaToken: async (_id: number, token: string) => token === '135790',
+    isAccountActive: async () => hoisted.account.active,
+    isAccountLocked: async () => hoisted.account.locked,
+    recordFailedAttempt: (id: number) => hoisted.failures(id),
+    warn: () => {},
+  }),
 }));
 
 // §11.10(g) signing-authority gate resolves the signer's org role from the
@@ -242,7 +263,11 @@ beforeEach(() => {
   hoisted.getRun.mockReset();
   hoisted.findActiveReleaseSignature.mockReset();
   hoisted.loadSubmissionFkBySubmissionIdText.mockReset();
-  hoisted.verifyUserCredentials.mockReset();
+  hoisted.compare.mockReset();
+  hoisted.compare.mockImplementation(async (plain: string) => plain === 'right-password');
+  hoisted.failures.mockReset();
+  hoisted.failures.mockResolvedValue(undefined);
+  hoisted.account = { mfa: false, locked: false, active: true };
   hoisted.createElectronicSignature.mockReset();
   hoisted.auditLogAction.mockReset();
   hoisted.poolQuery.mockReset();
@@ -264,31 +289,24 @@ beforeEach(() => {
 // TESTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** A well-formed release signature by the signer whose password this is. */
+const BODY = { runId: 'run-123', password: 'right-password', signatureMeaning: 'approval', reason: 'release' };
+
 describe('POST /api/submissions/:submissionId/sign-release — auth gating', () => {
   it('returns 401 when no JWT principal is present', async () => {
     const res = await request(makeApp({ organizationId: null, userId: null }))
       .post('/api/submissions/sub-1/sign-release')
-      .send({
-        runId: 'run-123',
-        password: 'pw',
-        signatureMeaning: 'approval',
-        reason: 'release',
-      });
+      .send(BODY)
 
     expect(res.status).toBe(401);
     expect(hoisted.getRun).not.toHaveBeenCalled();
-    expect(hoisted.verifyUserCredentials).not.toHaveBeenCalled();
+    expect(hoisted.compare).not.toHaveBeenCalled();
   });
 
   it('returns 403 when JWT principal is present but org context is missing', async () => {
     const res = await request(makeApp({ organizationId: null, userId: 7 }))
       .post('/api/submissions/sub-1/sign-release')
-      .send({
-        runId: 'run-123',
-        password: 'pw',
-        signatureMeaning: 'approval',
-        reason: 'release',
-      });
+      .send(BODY)
 
     expect(res.status).toBe(403);
     expect(hoisted.getRun).not.toHaveBeenCalled();
@@ -301,17 +319,12 @@ describe('POST /api/submissions/:submissionId/sign-release — run lookup + stat
 
     const res = await request(makeApp())
       .post('/api/submissions/sub-1/sign-release')
-      .send({
-        runId: 'run-123',
-        password: 'pw',
-        signatureMeaning: 'approval',
-        reason: 'release',
-      });
+      .send(BODY)
 
     expect(res.status).toBe(404);
     expect(res.body).toEqual({ error: 'run_not_found' });
     // CRITICAL: never reached credential verify on a 404
-    expect(hoisted.verifyUserCredentials).not.toHaveBeenCalled();
+    expect(hoisted.compare).not.toHaveBeenCalled();
     expect(hoisted.createElectronicSignature).not.toHaveBeenCalled();
   });
 
@@ -321,15 +334,10 @@ describe('POST /api/submissions/:submissionId/sign-release — run lookup + stat
 
     const res = await request(makeApp())
       .post('/api/submissions/sub-XXX/sign-release')
-      .send({
-        runId: 'run-123',
-        password: 'pw',
-        signatureMeaning: 'approval',
-        reason: 'release',
-      });
+      .send(BODY)
 
     expect(res.status).toBe(404);
-    expect(hoisted.verifyUserCredentials).not.toHaveBeenCalled();
+    expect(hoisted.compare).not.toHaveBeenCalled();
   });
 
   it('returns 409 when run.status is not awaiting-signature', async () => {
@@ -337,16 +345,11 @@ describe('POST /api/submissions/:submissionId/sign-release — run lookup + stat
 
     const res = await request(makeApp())
       .post('/api/submissions/sub-1/sign-release')
-      .send({
-        runId: 'run-123',
-        password: 'pw',
-        signatureMeaning: 'approval',
-        reason: 'release',
-      });
+      .send(BODY)
 
     expect(res.status).toBe(409);
     expect(res.body.error).toBe('run_not_awaiting_signature');
-    expect(hoisted.verifyUserCredentials).not.toHaveBeenCalled();
+    expect(hoisted.compare).not.toHaveBeenCalled();
   });
 });
 
@@ -354,19 +357,14 @@ describe('POST /api/submissions/:submissionId/sign-release — credential + sign
   it('returns 401 when password verification fails (NEVER 200, no signature row)', async () => {
     hoisted.getRun.mockResolvedValue(awaitingSignatureRun());
     hoisted.findActiveReleaseSignature.mockResolvedValue(null);
-    hoisted.verifyUserCredentials.mockResolvedValue(false);
 
     const res = await request(makeApp())
       .post('/api/submissions/sub-1/sign-release')
-      .send({
-        runId: 'run-123',
-        password: 'wrong-password',
-        signatureMeaning: 'approval',
-        reason: 'release',
-      });
+      .send({ ...BODY, password: 'wrong-password' })
 
     expect(res.status).toBe(401);
-    expect(res.body).toEqual({ error: 'invalid_credentials' });
+    expect(res.body).toEqual({ error: 'invalid_credentials', code: 'PASSWORD_VERIFICATION_FAILED' });
+    expect(hoisted.failures).toHaveBeenCalledWith(7);
     // CRITICAL: signature is NOT created on a credential failure.
     expect(hoisted.createElectronicSignature).not.toHaveBeenCalled();
     // Response body must NOT echo the password or digest.
@@ -377,7 +375,6 @@ describe('POST /api/submissions/:submissionId/sign-release — credential + sign
   it('creates a signature and persists bound_payload_digest on the happy path', async () => {
     hoisted.getRun.mockResolvedValue(awaitingSignatureRun());
     hoisted.findActiveReleaseSignature.mockResolvedValue(null);
-    hoisted.verifyUserCredentials.mockResolvedValue(true);
     hoisted.createElectronicSignature.mockResolvedValue({
       success: true,
       signatureId: 999,
@@ -389,12 +386,7 @@ describe('POST /api/submissions/:submissionId/sign-release — credential + sign
 
     const res = await request(makeApp())
       .post('/api/submissions/sub-1/sign-release')
-      .send({
-        runId: 'run-123',
-        password: 'right-password',
-        signatureMeaning: 'approval',
-        reason: 'release authorization',
-      });
+      .send({ ...BODY, reason: 'release authorization' })
 
     expect(res.status).toBe(200);
     expect(res.body.signatureId).toBe(999);
@@ -410,7 +402,6 @@ describe('POST /api/submissions/:submissionId/sign-release — credential + sign
       documentType: string;
       signatureReason: string;
       signatureMeaning: string;
-      password: string;
       boundPayloadDigest: string;
       signerRole: string;
     };
@@ -422,6 +413,13 @@ describe('POST /api/submissions/:submissionId/sign-release — credential + sign
     expect(callArgs.signatureReason).toBe('release authorization');
     expect(callArgs.boundPayloadDigest).toBe('a'.repeat(64));
     expect(callArgs.signerRole).toBe('approver');
+    // What the ceremony verified, never a password to check again.
+    expect(callArgs).not.toHaveProperty('password');
+    expect((callArgs as unknown as { reverified: unknown }).reverified).toEqual({
+      ok: true,
+      authenticationMethod: 'password',
+      secondFactorVerified: false,
+    });
 
     // §11.70 append-only: the row is complete at INSERT — the route must
     // NEVER issue a post-insert UPDATE against electronic_signatures.
@@ -463,19 +461,13 @@ describe('POST /api/submissions/:submissionId/sign-release — credential + sign
     // record; the route can now make that claim rather than apologise for it.
     hoisted.getRun.mockResolvedValue(awaitingSignatureRun());
     hoisted.findActiveReleaseSignature.mockResolvedValue(null);
-    hoisted.verifyUserCredentials.mockResolvedValue(true);
     hoisted.createElectronicSignature.mockRejectedValue(
       Object.assign(new Error('relation "audit_logs" does not exist'), { code: '42P01' }),
     );
 
     const res = await request(makeApp())
       .post('/api/submissions/sub-1/sign-release')
-      .send({
-        runId: 'run-123',
-        password: 'right-password',
-        signatureMeaning: 'approval',
-        reason: 'release authorization',
-      });
+      .send({ ...BODY, reason: 'release authorization' })
 
     expect(res.status).toBe(500);
     expect(res.body.error).toBe('signature_creation_failed');
@@ -485,6 +477,59 @@ describe('POST /api/submissions/:submissionId/sign-release — credential + sign
     expect(res.body.auditWriteFailed).toBeUndefined();
   });
 
+  it('refuses the password alone from a signer with an authenticator enrolled (400, no signature)', async () => {
+    hoisted.getRun.mockResolvedValue(awaitingSignatureRun());
+    hoisted.findActiveReleaseSignature.mockResolvedValue(null);
+    // Would succeed if reached, so a route that skips the factor answers 200.
+    hoisted.createElectronicSignature.mockResolvedValue({ success: true, signatureId: 1002, signedAt: new Date() });
+    hoisted.account.mfa = true;
+    const res = await request(makeApp())
+      .post('/api/submissions/sub-1/sign-release')
+      .send(BODY);
+    expect(res.status, 'a release was signed without the enrolled second factor').toBe(400);
+    expect(res.body.code).toBe('MFA_TOKEN_REQUIRED');
+    expect(hoisted.createElectronicSignature).not.toHaveBeenCalled();
+  });
+
+  it('signs with the password and the enrolled code, and records both', async () => {
+    hoisted.getRun.mockResolvedValue(awaitingSignatureRun());
+    hoisted.findActiveReleaseSignature.mockResolvedValue(null);
+    hoisted.account.mfa = true;
+    hoisted.createElectronicSignature.mockResolvedValue({ success: true, signatureId: 1001, signedAt: new Date() });
+    const res = await request(makeApp())
+      .post('/api/submissions/sub-1/sign-release')
+      .send({ ...BODY, mfaToken: '135790' });
+    expect(res.status).toBe(200);
+    const callArgs = hoisted.createElectronicSignature.mock.calls[0][0] as { reverified: unknown };
+    expect(callArgs.reverified).toEqual({ ok: true, authenticationMethod: 'password+mfa', secondFactorVerified: true });
+  });
+
+  it('refuses an account that is not active (401), as the route always has, before comparing anything', async () => {
+    hoisted.getRun.mockResolvedValue(awaitingSignatureRun());
+    hoisted.findActiveReleaseSignature.mockResolvedValue(null);
+    hoisted.account.active = false;
+    const res = await request(makeApp())
+      .post('/api/submissions/sub-1/sign-release')
+      .send(BODY);
+    expect(res.status, 'a suspended account signed a release').toBe(401);
+    expect(res.body).toEqual({ error: 'invalid_credentials', code: 'ACCOUNT_INACTIVE' });
+    expect(hoisted.compare).not.toHaveBeenCalled();
+    expect(hoisted.createElectronicSignature).not.toHaveBeenCalled();
+  });
+
+  it('refuses a locked account (423) before its password is compared', async () => {
+    hoisted.getRun.mockResolvedValue(awaitingSignatureRun());
+    hoisted.findActiveReleaseSignature.mockResolvedValue(null);
+    hoisted.account.locked = true;
+    const res = await request(makeApp())
+      .post('/api/submissions/sub-1/sign-release')
+      .send(BODY);
+    expect(res.status).toBe(423);
+    expect(res.body.code).toBe('ACCOUNT_LOCKED');
+    expect(hoisted.compare).not.toHaveBeenCalled();
+    expect(hoisted.createElectronicSignature).not.toHaveBeenCalled();
+  });
+
   it('returns the existing signatureId without creating a duplicate when one already exists (idempotent)', async () => {
     hoisted.getRun.mockResolvedValue(awaitingSignatureRun());
     // findActiveReleaseSignature reports a hit — same digest already signed.
@@ -492,18 +537,13 @@ describe('POST /api/submissions/:submissionId/sign-release — credential + sign
 
     const res = await request(makeApp())
       .post('/api/submissions/sub-1/sign-release')
-      .send({
-        runId: 'run-123',
-        password: 'pw',
-        signatureMeaning: 'approval',
-        reason: 'release',
-      });
+      .send(BODY)
 
     expect(res.status).toBe(200);
     expect(res.body.signatureId).toBe(555);
     expect(res.body.already_signed).toBe(true);
     // No new signature row, no password check (idempotent short-circuit).
-    expect(hoisted.verifyUserCredentials).not.toHaveBeenCalled();
+    expect(hoisted.compare).not.toHaveBeenCalled();
     expect(hoisted.createElectronicSignature).not.toHaveBeenCalled();
   });
 
@@ -514,7 +554,6 @@ describe('POST /api/submissions/:submissionId/sign-release — credential + sign
     // 23505. The route must re-read the winner and return its id as an
     // idempotent 200, NOT a 500 — OQ-3 held because exactly one row landed.
     hoisted.getRun.mockResolvedValue(awaitingSignatureRun());
-    hoisted.verifyUserCredentials.mockResolvedValue(true);
     // First findActiveReleaseSignature (pre-check) misses; the second (post
     // unique-violation re-read) finds the winner.
     hoisted.findActiveReleaseSignature
@@ -525,12 +564,7 @@ describe('POST /api/submissions/:submissionId/sign-release — credential + sign
 
     const res = await request(makeApp())
       .post('/api/submissions/sub-1/sign-release')
-      .send({
-        runId: 'run-123',
-        password: 'right-password',
-        signatureMeaning: 'approval',
-        reason: 'release',
-      });
+      .send(BODY)
 
     expect(res.status).toBe(200);
     expect(res.body.signatureId).toBe(777);
@@ -542,17 +576,11 @@ describe('POST /api/submissions/:submissionId/sign-release — credential + sign
   it('surfaces 500 on a non-race createElectronicSignature failure', async () => {
     hoisted.getRun.mockResolvedValue(awaitingSignatureRun());
     hoisted.findActiveReleaseSignature.mockResolvedValue(null);
-    hoisted.verifyUserCredentials.mockResolvedValue(true);
     hoisted.createElectronicSignature.mockRejectedValue(new Error('disk on fire'));
 
     const res = await request(makeApp())
       .post('/api/submissions/sub-1/sign-release')
-      .send({
-        runId: 'run-123',
-        password: 'right-password',
-        signatureMeaning: 'approval',
-        reason: 'release',
-      });
+      .send(BODY)
 
     expect(res.status).toBe(500);
     expect(res.body.error).toBe('signature_creation_failed');
@@ -562,17 +590,11 @@ describe('POST /api/submissions/:submissionId/sign-release — credential + sign
     // Run has no submissionFk, AND loadSubmissionFkBySubmissionIdText returns null.
     hoisted.getRun.mockResolvedValue(awaitingSignatureRun({ submissionFk: null }));
     hoisted.findActiveReleaseSignature.mockResolvedValue(null);
-    hoisted.verifyUserCredentials.mockResolvedValue(true);
     hoisted.loadSubmissionFkBySubmissionIdText.mockResolvedValue(null);
 
     const res = await request(makeApp())
       .post('/api/submissions/sub-1/sign-release')
-      .send({
-        runId: 'run-123',
-        password: 'pw',
-        signatureMeaning: 'approval',
-        reason: 'release',
-      });
+      .send(BODY)
 
     expect(res.status).toBe(422);
     expect(res.body.error).toBe('submission_lineage_unresolved');
@@ -601,12 +623,7 @@ describe('POST /api/submissions/:submissionId/sign-release — body schema enfor
   it('returns 400 on empty reason (§11.50 requires a meaning manifestation)', async () => {
     const res = await request(makeApp())
       .post('/api/submissions/sub-1/sign-release')
-      .send({
-        runId: 'run-123',
-        password: 'pw',
-        signatureMeaning: 'approval',
-        reason: '',
-      });
+      .send({ ...BODY, reason: '' })
 
     expect(res.status).toBe(400);
     expect(hoisted.getRun).not.toHaveBeenCalled();
