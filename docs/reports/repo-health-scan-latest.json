@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T03:16:57.753Z",
+  "generatedAt": "2026-09-23T03:18:01.642Z",
   "git": {
-    "sha": "3e2469146771cc3dbb5e7bf024b90ea7af1e038d",
+    "sha": "15914bdee6f3eb80ad620c909ab1075cf97b0442",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2056,7 +2056,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 141141
+        "bytes": 143353
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2213,12 +2213,12 @@
         "lines": 3549
       },
       {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 3398
+        "file": "server/services/ai-gateway/gateway.ts",
+        "lines": 3423
       },
       {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 3376
+        "file": "server/services/submission-package-orchestrator.ts",
+        "lines": 3398
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
