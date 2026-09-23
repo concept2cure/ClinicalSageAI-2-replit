@@ -123,10 +123,27 @@ describe('e-signature verify round-trip (§11.70 integrity)', () => {
     // reporting every genuine signature as COMPROMISED because it re-hashed an
     // identifier payload no writer produces. A real write followed by the real
     // verify is the only test that could have shown that.
+    //
+    // The organization is a REQUIRED argument since the tenant-boundary fix
+    // (auth-security-service.ts: electronic_signatures.id is a SERIAL, and a
+    // read on the id alone let any tenant count upwards through every other
+    // tenant's signatures). The live route passes the caller's org; so does
+    // this. Omitting it fails closed before any query — pinned below, so the
+    // positive verdict cannot be reached by a path that skips the boundary.
     const { verifySignatureIntegrity } = await import('../../server/services/auth-security-service');
-    const verdict = await verifySignatureIntegrity(created.signatureId);
+    const verdict = await verifySignatureIntegrity(created.signatureId, ORG);
+    expect(verdict.error).toBeUndefined();
     expect(verdict.details?.hashIntegrity).toBe('VERIFIED');
     expect(verdict.valid).toBe(true);
+
+    // The same genuine signature, read from another tenant or with no tenant:
+    // not found / refused, never a verdict.
+    const otherOrg = await verifySignatureIntegrity(created.signatureId, ORG + 1);
+    expect(otherOrg.valid).toBe(false);
+    expect(otherOrg.details).toBeUndefined();
+    const noOrg = await verifySignatureIntegrity(created.signatureId, null);
+    expect(noOrg.valid).toBe(false);
+    expect(noOrg.details).toBeUndefined();
   }, T);
 
   it('detects a manifest that does not match its hash — integrity is not vacuous', async () => {
@@ -150,7 +167,8 @@ describe('e-signature verify round-trip (§11.70 integrity)', () => {
     const forgedId = (r.rows[0] as { id: number }).id;
 
     const { verifySignatureIntegrity } = await import('../../server/services/auth-security-service');
-    const verdict = await verifySignatureIntegrity(forgedId);
+    const verdict = await verifySignatureIntegrity(forgedId, ORG);
+    expect(verdict.error).toBeUndefined();
     expect(verdict.valid).toBe(false);
     expect(verdict.details?.hashIntegrity).toBe('COMPROMISED');
   }, T);

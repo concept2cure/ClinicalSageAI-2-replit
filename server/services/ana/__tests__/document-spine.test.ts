@@ -6,6 +6,7 @@ import {
   type SpineDeps,
   type CanonicalRevisionRequest,
 } from '../document-spine.js';
+import { approvedToolHandler } from './support/approved-tool-handler';
 
 const SENTINEL_CLIENT = { __tx: true } as any;
 
@@ -153,14 +154,14 @@ describe('commit_document_revision — tool registration + guards', () => {
 
   it('refuses without tenant + user context', async () => {
     const out = JSON.parse(
-      await getToolHandler('commit_document_revision')!({ title: 'X', content: 'Y' }, {} as any),
+      await approvedToolHandler('commit_document_revision')!({ title: 'X', content: 'Y' }, {} as any),
     );
     expect(out.error).toMatch(/tenant \+ user context/);
   });
 
   it('requires title and content', async () => {
     const out = JSON.parse(
-      await getToolHandler('commit_document_revision')!(
+      await approvedToolHandler('commit_document_revision')!(
         { title: '' },
         { organizationId: 1, userId: 1 } as any,
       ),

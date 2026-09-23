@@ -20,7 +20,7 @@ import { db, pool } from '../../db';
 import { submissions, ectdSequences, submissionLeaves } from '../../../shared/schema';
 import { packageEctdSubmission } from '../submission-gateways/regional-packager';
 import type { SubmissionBundle } from '../submission-gateways/types';
-import { buildPackagerInputFromCore, type LeafFileResolver } from './core-to-packager';
+import { buildPackagerInputFromCore, coreLeafFromSubmissionLeaf, type LeafFileResolver } from './core-to-packager';
 import { loadLatestPriorManifestBySubmission } from './prior-sequence-loader';
 import { computeLifecycleOperations, type DesiredLeaf } from './lifecycle-operator';
 import { computeSequencePrefix } from './sequence-manifest';
@@ -42,20 +42,37 @@ export interface PackageFromCoreParams {
 export interface PackageFromCoreResult {
   bundle: SubmissionBundle;
   skipped: Array<{ sectionCode: string; reason: string }>;
+  /**
+   * The newest filed sequence the prior state folds up to — what this
+   * sequence's lifecycle acts were bound against. null for an original (0000),
+   * and for a follow-up with no filed sequence on record, where every declared
+   * act is refused.
+   */
+  priorSequence: string | null;
 }
 
+/** The author-declared lifecycle acts: each one acts ON a leaf already filed. */
+const DECLARED_ACTS: ReadonlySet<string> = new Set(['replace', 'append', 'delete']);
+
 /**
- * A declared delete with nothing on file to point at cannot ship as a backbone
- * leaf; it is reported rather than silently packaged as a delete of nothing.
+ * A declared lifecycle act with nothing on record to act on cannot ship. It is
+ * left out and reported in `skipped` — which transmit refuses on
+ * (assembledTransmitBlockers) — never shipped as an act on nothing.
+ *
+ * 2026-09-22 (W5/D7): this used to drop only deletes. A declared replace or
+ * append passed through and shipped as operation="replace" with NO
+ * modified-file — an act on nothing, reported as a clean assembly.
  */
-function dropUnshippableDeletes(
+function dropUnbindableLifecycle(
   input: { leaves: Array<{ ctdSection: string; operation?: string }> },
   skipped: Array<{ sectionCode: string; reason: string }>,
   reason: string,
 ): void {
-  const kept = input.leaves.filter((l) => l.operation !== 'delete');
+  const kept = input.leaves.filter((l) => !DECLARED_ACTS.has(String(l.operation)));
   for (const l of input.leaves) {
-    if (l.operation === 'delete') skipped.push({ sectionCode: l.ctdSection, reason });
+    if (DECLARED_ACTS.has(String(l.operation))) {
+      skipped.push({ sectionCode: l.ctdSection, reason: `declared ${l.operation}: ${reason}` });
+    }
   }
   input.leaves = kept as typeof input.leaves;
 }
@@ -113,16 +130,15 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
   const { input, skipped } = buildPackagerInputFromCore({
     sequence: { sequenceNumber: sequence.sequenceNumber, region: sequence.region, type: sequence.type },
     submission: { applicationType: submission.applicationType, productName: submission.productName },
-    leaves: leafRows.map((l) => ({
-      sectionCode: l.sectionCode,
-      title: l.title,
-      lifecycleOp: l.lifecycleOp,
-      checksum: l.checksum,
-      documentTable: l.documentTable,
-      documentId: l.documentId,
-      granularity: l.granularity,
-      documentType: l.documentType,
-    })),
+    // 2026-09-22 (W5/D7): the projection must carry the uuid half of the
+    // reference. Without it every vault-backed leaf reached resolveFile with
+    // documentId null and no uuid, resolved to nothing and landed in `skipped` —
+    // AFTER materialization had staged it, so it was never `unresolved` either,
+    // and transmit (which read only unresolvedLeaves) sent the sequence without
+    // the document. 2026-09-23 (W5/D7, round-2 review): the row is read through
+    // the one shared projection, so this packager and the device technical-file
+    // assembler cannot drift apart on it again.
+    leaves: leafRows.map(coreLeafFromSubmissionLeaf),
     resolveFile: params.resolveFile,
     applicationId: params.applicationId,
     sponsorId: params.sponsorId,
@@ -136,15 +152,27 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
   // (new/replace/append/delete) + ICH modified-file pointer — instead of the
   // all-`new` set that submission_leaves.lifecycle_op yields. Keyed on the stable
   // submission id (application_number was not reliable across sequences). Absent a
-  // prior manifest (first sequence, or none persisted yet) the leaves stay `new`.
+  // prior manifest (first sequence, or none persisted yet) leaves declared `new`
+  // stay new, and a declared replace/append/delete is refused — there is nothing
+  // on record for it to act on.
+  let priorSequence: string | null = null;
   if (sequence.sequenceNumber !== '0000') {
     const prior = await loadLatestPriorManifestBySubmission(pool, {
       organizationId,
       submissionId: submission.id,
       currentSequence: sequence.sequenceNumber,
     });
+    // A filed sequence can be on record with nothing left on file (every leaf
+    // it filed since withdrawn); it is still the state these acts meet.
+    priorSequence = prior.priorSequenceNumber || null;
     if (prior.leaves.length > 0) {
       const desired: DesiredLeaf[] = [];
+      // What the author declared for each non-delete leaf, keyed as the
+      // lifecycle operator keys it. 2026-09-22 (W5/D7): the declaration used to
+      // be thrown away before the diff, so a declared append was filed as a
+      // replace, and a declared replace the diff could not bind was filed as
+      // 'new' — the superseded version stayed current at the agency.
+      const declared = new Map<string, 'replace' | 'append'>();
       for (const leaf of input.leaves) {
         // The operator computes new/replace/append from the checksum diff. The
         // one operation it cannot compute is a WITHDRAWAL, which is the author's
@@ -154,7 +182,8 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
         // prior conservatively becomes `replace` (re-ships content).
         const { operation, ...rest } = leaf;
         if (operation !== 'delete') {
-          desired.push({ ...rest, md5: leaf.md5 ?? '' });
+          desired.push({ ...rest, md5: leaf.md5 ?? '', ...(operation === 'append' ? { appendOnChange: true } : {}) });
+          if (operation === 'replace' || operation === 'append') declared.set(`${leaf.ctdSection}/${leaf.fileName}`, operation);
           continue;
         }
         // A declared delete carries a section code and, when the row still
@@ -176,6 +205,8 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
             continue;
           }
         }
+        // A withdrawal ships no bytes: computeLifecycleOperations drops the
+        // resolved sourcePath from every delete it emits (2026-09-23, W5/D7).
         desired.push({ ...rest, fileName, md5: '', withdraw: true });
       }
       const life = computeLifecycleOperations(prior.leaves, desired, {
@@ -184,12 +215,54 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
       // life.leaves carries the declared withdrawals as backbone-only `delete`
       // leaves and OMITS unchanged leaves — exactly the delta the packager ships.
       // A prior leaf this sequence does not mention is still on file, unchanged.
-      input.leaves = life.leaves;
+      //
+      // Every act ON a filed leaf must say which one (modified-file), and a
+      // declared act must come out as that act. Anything else is left out and
+      // reported — which blocks transmit — rather than filed as something the
+      // author did not declare.
+      const emitted = new Set<string>();
+      const shippable: typeof life.leaves = [];
+      for (const l of life.leaves) {
+        const key = `${l.ctdSection}/${l.fileName}`;
+        emitted.add(key);
+        const intent = declared.get(key);
+        if (intent && l.operation === 'new') {
+          skipped.push({
+            sectionCode: l.ctdSection,
+            reason:
+              `declared ${intent}: no filed leaf named ${l.fileName} in this section to ${intent === 'replace' ? 'supersede' : 'append to'} ` +
+              '(filing it as new would leave the filed version current) — bind it to the filed file, or declare it new',
+          });
+          continue;
+        }
+        if (DECLARED_ACTS.has(l.operation) && !l.modifiedFile) {
+          skipped.push({
+            sectionCode: l.ctdSection,
+            reason: `${l.operation} of ${l.fileName}: the filed leaf it acts on has no recorded path, so the act cannot name it (no modified-file)`,
+          });
+          continue;
+        }
+        shippable.push(l);
+      }
+      for (const [key, intent] of declared) {
+        if (emitted.has(key)) continue;
+        skipped.push({
+          sectionCode: key.slice(0, key.lastIndexOf('/')),
+          reason: `declared ${intent}: the content is identical to the filed version, so there is nothing to ${intent === 'replace' ? 'supersede' : 'append'}`,
+        });
+      }
+      input.leaves = shippable;
     } else {
-      dropUnshippableDeletes(input, skipped, 'no prior sequence manifest to withdraw from');
+      dropUnbindableLifecycle(
+        input,
+        skipped,
+        priorSequence
+          ? `nothing is on file after sequence ${priorSequence} to act on`
+          : 'no filed prior sequence is on record to act on',
+      );
     }
   } else {
-    dropUnshippableDeletes(input, skipped, 'a first sequence has nothing on file to withdraw');
+    dropUnbindableLifecycle(input, skipped, 'a first sequence has nothing on file to act on');
   }
 
   const bundle = await packageEctdSubmission(input);
@@ -208,7 +281,7 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
     },
   });
 
-  return { bundle, skipped };
+  return { bundle, skipped, priorSequence };
 }
 
 export default { packageSequenceFromCore };

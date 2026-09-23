@@ -24,7 +24,6 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import os from 'os';
 import { eq, and, isNull, desc } from 'drizzle-orm';
 import { db } from '../../db';
 import { submissions, ectdSequences, submissionLeaves } from '../../../shared/schema';
@@ -38,6 +37,7 @@ import {
   type CompletenessReport,
   type IncompleteLeaf,
 } from './completeness';
+import { submissionBundleRoot } from '../submission-gateways/bundle-namespace';
 import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
 
@@ -58,7 +58,7 @@ export interface AssembleSequenceResult extends PackageFromCoreResult {
    * Remove the temp staging/output directory backing `bundle.path`. Call once
    * the bundle bytes are no longer needed (e.g. after transmit, or after an
    * assemble-only run has reported its metadata). Idempotent + best-effort;
-   * without this every assemble leaks a full staged package under os.tmpdir().
+   * without this every assemble leaks a full staged package under the bundle root's staging/.
    */
   cleanup: () => Promise<void>;
   /** Number of leaves materialized to disk (all locally-renderable tables). */
@@ -86,6 +86,54 @@ export interface AssembleSequenceResult extends PackageFromCoreResult {
    * integrity record for package governance/audit.
    */
   governanceManifestPath: string;
+}
+
+/**
+ * What, besides an unresolved source, stops an assembled sequence from being
+ * transmitted — one sentence per cause, in the words transmit refuses with.
+ * Empty means nothing here stops it. 2026-09-22 (W5/D7).
+ *
+ *  • `skipped`: a placed leaf the packaging step could not express and left out
+ *    of the ZIP. A leaf left out is a leaf missing from the filing.
+ *  • `unfinalized`: a leaf whose source is still a draft or in review. It is IN
+ *    the ZIP — the agency would receive a document no one approved.
+ *
+ * transmitSequence refuses on any of these; the assemble route reports them,
+ * so "assembled" is never read as "ready to send"; and the governed freeze and
+ * dispatch refuse on them too (2026-09-23), because once a sequence is frozen
+ * its leaves are immutable and a transmit-time refusal has no remedy. Unresolved
+ * leaves are included when the result carries them.
+ */
+export function assembledTransmitBlockers(
+  r: Pick<AssembleSequenceResult, 'skipped' | 'unfinalized' | 'unfinalizedSections'> &
+    Partial<Pick<AssembleSequenceResult, 'unresolvedLeaves'>>,
+): string[] {
+  const out: string[] = [];
+  const unresolved = r.unresolvedLeaves ?? [];
+  if (unresolved.length > 0) {
+    out.push(
+      `${unresolved.length} leaf source(s) could not be materialized into the package (` +
+        unresolved.map((u) => `${u.documentTable}:${u.documentId ?? u.documentUuid ?? '?'}`).join(', ') +
+        ')',
+    );
+  }
+  if (r.skipped.length > 0) {
+    out.push(
+      `${r.skipped.length} placed leaf/leaves could not be packaged (` +
+        r.skipped.map((l) => `${l.sectionCode}: ${l.reason}`).join('; ') +
+        ')',
+    );
+  }
+  if (r.unfinalized > 0) {
+    out.push(
+      `${r.unfinalized} leaf document(s) are not approved (` +
+        (r.unfinalizedSections.length > 0
+          ? r.unfinalizedSections.map((d) => `${d.sectionCode}: ${d.status}`).join('; ')
+          : 'not itemised') +
+        ')',
+    );
+  }
+  return out;
 }
 
 /**
@@ -156,7 +204,14 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
   //    unified_documents) is rendered via the same `renderLeafPdf` path (so the
   //    md5/checksum contract is unchanged); external/binary tables are collected
   //    as `unresolvedLeaves` rather than being silently dropped.
-  const outputDir = await fs.mkdtemp(path.join(os.tmpdir(), `ectd-assemble-${sequenceId}-`));
+  /* Staged INSIDE the submission-bundle root (2026-09-23, W5/D7). It was
+     os.tmpdir(), and outside a declared development/test environment every
+     gateway refuses a bundle outside that root (bundle-namespace.ts): each
+     canonical sequence transmit — FDA's test environment included — was refused
+     "outside the permitted submission-bundle storage namespace". */
+  const stagingRoot = path.join(submissionBundleRoot(), 'staging');
+  await fs.mkdir(stagingRoot, { recursive: true });
+  const outputDir = await fs.mkdtemp(path.join(stagingRoot, `ectd-assemble-${sequenceId}-`));
   const stageDir = path.join(outputDir, 'stage');
   await fs.mkdir(stageDir, { recursive: true });
 

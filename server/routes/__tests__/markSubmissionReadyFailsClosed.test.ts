@@ -54,12 +54,41 @@ const dbStub = () => ({
   ),
 });
 
-/* The router does `await import('../db.js')` from server/routes/, i.e.
-   server/db. vi.mock resolves relative to THIS file, so it is one level up
+/* The router dynamically imports the db module one level up from
+   server/routes/, i.e. server/db. vi.mock resolves relative to THIS file, so it is one level up
    again — a wrong specifier here silently mocks nothing and the test would
    pass for a reason unrelated to the fix. */
 vi.mock('../../db.js', () => ({ get db() { return dbStub(); } }));
 vi.mock('../../db', () => ({ get db() { return dbStub(); } }));
+
+/* The governance boundary is held OPEN here, deliberately.
+
+   When this test was written, boundary gates 3 (contradictions) and 4 (fabric
+   readiness) ended in an empty `catch {}`, so against this stub db they threw
+   and counted as passed, and the request reached the metadata block under
+   test. 0a40bc7 / 8817f24 (2026-09-22) made both gates fail closed and made
+   gate 4 read the artifact row itself — correct, and it means that against a
+   stub db the boundary now refuses first (200 `reason: 'blocked'`), so the
+   request never reaches the catch this file exists to pin. A test that stops
+   at the boundary proves nothing about that catch (see makeApp below).
+
+   The route's own guarantee does not depend on the boundary having caught the
+   missing artifact first: the artifact can be deleted between the boundary's
+   read and this one, and any other failure of the contract write lands in the
+   same catch. So the boundary is stubbed to allow, and the route alone must
+   refuse. The boundary's own "missing row fails closed" behaviour is its own
+   service's concern, not this route test's. */
+vi.mock('../../services/governance-boundary-service.js', () => ({
+  GovernanceBoundaryService: {
+    getInstance: () => ({
+      evaluateTransition: async () => ({
+        allowed: true,
+        blockedReasons: [] as string[],
+        transition: { id: 'gbt_test' },
+      }),
+    }),
+  },
+}));
 
 import router from '../authoring-actions';
 

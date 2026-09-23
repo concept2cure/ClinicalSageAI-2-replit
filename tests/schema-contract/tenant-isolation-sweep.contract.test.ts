@@ -114,6 +114,15 @@ async function baseSchemaFixture(): Promise<PGlite> {
   // fixture has to present the same starting state or it fails the set for a gap
   // of its own making.
   await safe(readMig('migrations/20260730_estar_submission.sql'));
+  // Fifth of the same class. public.submissions is created by
+  // migrations/20260604_submission_core_canonical.sql, before BATCH_START in the
+  // set (and by the drizzle push install-fresh runs, shared/schema/submissions.ts),
+  // not by the journal this fixture reads. 401be09 (2026-09-22) put
+  // migrations/20260610_irb_submissions.sql on the set, IN the batch, and its
+  // irb_submissions.submission_id REFERENCES submissions(id) — so pass 1 aborted
+  // there with `relation "submissions" does not exist` and no assertion below
+  // ran. A real deploy applies the creator first and is unaffected.
+  await safe(readMig('migrations/20260604_submission_core_canonical.sql'));
   return pg;
 }
 

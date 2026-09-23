@@ -307,6 +307,26 @@ jobs:
       # simply stops being mentioned and the row still renders. This gate makes
       # the citation load-bearing. The selftest shows each refusal on a
       # constructed case before the gate is trusted.
+      # AIGateway.evaluateModel runs one named model with no routing, no fallback
+      # and no high-risk approval check — what performance qualification needs,
+      # and anywhere else a way to have an unapproved model draft regulated
+      # content. Only server/eval/pq/ may call it.
+      - name: Guardrails — only the PQ runner calls evaluateModel (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: |
+          npm run ci:pq-evaluation-callers:selftest
+          npm run ci:pq-evaluation-callers
+
+      # A pin to a model not approved for high-risk work serves any request that
+      # is not declared high-risk, whatever it drafts. Every such pin in server
+      # code is listed with the reason it is safe; a new one, or one removed
+      # without tightening the list, fails.
+      - name: Guardrails — no new pin to an unapproved model (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: |
+          npm run ci:unapproved-model-pins:selftest
+          npm run ci:unapproved-model-pins
+
       - name: Guardrails — validation traceability resolves (with selftest)
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: |
@@ -1586,6 +1606,15 @@ jobs:
           AUDIT_HMAC_KEY: ci-boot-smoke-audit-hmac-key-min-32-chars-eee
           MFA_ENCRYPTION_KEY: ci-boot-smoke-mfa-encryption-key-min-32-chars-fff
           CONNECTOR_ENCRYPTION_KEY: ci-boot-smoke-connector-encryption-key-32-ggg
+          # server/services/signature/signer-mode.ts refuses to boot production
+          # without a signer posture (unset and `dev` are both refused). This
+          # throwaway container has no KMS key, so it takes the one other
+          # production-legal posture: the HMAC seal keyed by AUDIT_HMAC_KEY
+          # above, with the symmetric-seal risk accepted explicitly. It proves
+          # boot, not signer non-repudiation — a real deployment chooses kms or
+          # records the same acceptance (docs/SOP_KEY_MANAGEMENT.md).
+          CONCEPT2CURE_SIGNER_MODE: hmac
+          CONCEPT2CURE_SIGNER_ACCEPT_HMAC: 'true'
           # This job has no AI provider, and since /readyz gained its `ana`
           # dependency (startup/ana-readiness-state.ts) that is no longer a
           # silent condition: a process where AnA cannot answer refuses to

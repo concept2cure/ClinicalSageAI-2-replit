@@ -1,7 +1,7 @@
 {
   "$comment": "Tables a per-request server path reads that carry NO tenant column, so no RLS sweep in this repository can policy them. Each entry needs a reason whose first word is one of: global | derived | exempt | unreviewed. \"unreviewed\" is a DEFECT awaiting triage, not a category — three cross-tenant disclosures on 2026-09-10 were all tables that would have sat here as \"unreviewed\". Shrink this file; never grow it. See docs/work-orders/WO-13-grdhe-tenant-scoping.md.",
   "generatedAt": "2026-09-19T02:40:04.942Z",
-  "total": 110,
+  "total": 112,
   "entries": {
     "adversarial.regulatory_adversarial_precedents": "unreviewed — no one has classified this table yet",
     "ai_claim_citations": "unreviewed — no one has classified this table yet",
@@ -17,6 +17,7 @@
     "audit.tamper_proof_log": "unreviewed — WO-13 item 5. Hash-chained Part 11 event log; no tenant column at all (db/migrations/20260813_audit_tamper_proof_log.sql:64). auditService.getAuditLog's fallback now REFUSES a tenant-scoped read rather than answering it from here (15bac663d). Same decision owed.",
     "c2c_correspondence_issues": "unreviewed — no one has classified this table yet",
     "c2c_document_section_evidence": "unreviewed — no one has classified this table yet",
+    "c2c_document_section_versions": "derived — the per-section version ledger (migrations/20260528_phase9_document_schema.sql). Keyed through its parent chain: section_id bigint NOT NULL REFERENCES c2c_document_sections(id) -> document_id text NOT NULL REFERENCES c2c_documents(id) -> c2c_documents.org_id integer NOT NULL. Its one per-request reader, documentAuthors() in server/services/governance/separation-of-duties.ts (added by 610f687, 2026-09-22), joins exactly that chain and filters d.org_id = $2, where $2 is the caller's org from resolveOrgId(req) in server/routes/c2c/actions.ts (401 when absent), and it selects only author_id. The intermediate c2c_document_sections is itself still unreviewed here, so the tenant key is two joins away and no RLS policy covers either child: isolation rests on that predicate. Classified 2026-09-23.",
     "c2c_document_sections": "unreviewed — no one has classified this table yet",
     "c2c_milestone_sections": "unreviewed — no one has classified this table yet",
     "c2c_project_pinned_evidence": "unreviewed — no one has classified this table yet",
@@ -83,9 +84,10 @@
     "lumen.data_bindings": "unreviewed — no one has classified this table yet",
     "lumen.data_verifications": "unreviewed — no one has classified this table yet",
     "maud_algorithms": "unreviewed — no one has classified this table yet",
+    "mcp_oauth_clients": "global — the RFC 7591 dynamic client registry of the MCP connector's OAuth 2.1 authorization server (migrations/20260920_mcp_oauth.sql, whose Notes record the decision). Registration happens BEFORE any user authenticates, so there is no tenant to bind a row to; a row holds only the client's own metadata (client_id, redirect URIs, display name, optional client_secret) and nothing about any organisation. Read only by getClient() in server/mcp/auth/store.ts, by client_id, under runWithPreAuthScope — a tenant policy would hide every client from that pre-auth lookup. Tenant binding lives on the grant: mcp_oauth_authorization_codes and mcp_oauth_refresh_tokens carry organization_id INTEGER NOT NULL and a membership_id FK to organization_users, and are swept. Classified 2026-09-23.",
     "pdev_program_activities": "unreviewed — no one has classified this table yet",
     "pdev_readiness_snapshots": "unreviewed — no one has classified this table yet",
-    "platform_settings": "unreviewed — no one has classified this table yet",
+    "platform_settings": "global — one value per DEPLOYMENT, not per customer: governed platform settings (today only module_enforcement_mode, the off/report/enforce ladder for route entitlement enforcement). No customer content; identical for every tenant by construction; a per-organization mode would be a different table (see the SCOPE note in db/migrations/20260824_enforcement_mode_setting.sql). Must stay UNPOLICIED, not merely unkeyed: moduleEntitlementGate -> enforcement-mode.ts readStoredMode() reads it on the shared pool under whatever per-user tenant scope the request carries, so a tenant policy would hide the stored mode from every tenant request and silently fall back to the deployment env value. Written only by PATCH /api/admin/master/licensing/enforcement/mode (authMiddleware + requirePlatformAdmin, SYSTEM scope). Posture pinned on a provisioned DB by tests/db/entitlement-schema-posture.dbtest.ts. Classified 2026-09-22.",
     "predicate.fda_510k_clearances": "unreviewed — no one has classified this table yet",
     "predicate.fda_product_codes": "unreviewed — no one has classified this table yet",
     "predicate.predicate_safety_signals": "unreviewed — no one has classified this table yet",

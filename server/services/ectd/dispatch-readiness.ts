@@ -58,6 +58,7 @@
  * @module server/services/ectd/dispatch-readiness
  */
 
+import type { RuleView } from './validation-rule-corpus';
 import {
   documentTableKeyKind,
   externalDocumentTableReason,
@@ -129,6 +130,9 @@ export interface ReadinessFinding {
   code: string;
   sectionCode: string | null;
   message: string;
+  /** The corpus rule this finding is an instance of — attached by the
+   *  assessment (withRules); null when the corpus names no such rule. */
+  rule?: RuleView | null;
 }
 
 export interface DispatchReadinessReport {
@@ -249,6 +253,18 @@ function resolutionFindings(leaf: ReadinessLeaf, isDelete: boolean): ReadinessFi
         `${resolution.reason ? ` — ${resolution.reason}` : ''}. Re-file the leaf against the current document, or restore the filed content, before dispatch.`,
     });
   }
+  // 2026-09-22 (W5/D7): a resolved leaf with no pin used to produce nothing,
+  // so "content not verified" read exactly like "content matches".
+  if (!isDelete && resolution.status === 'resolved' && resolution.pin === 'unpinned') {
+    out.push({
+      severity: 'warning',
+      code: 'DOCUMENT_CONTENT_NOT_PINNED',
+      sectionCode: leaf.sectionCode,
+      message:
+        `Leaf "${leaf.title}" (${leaf.sectionCode}) points at ${pointerLabel(leaf)}, but no content hash was pinned when it was placed, ` +
+        'so whether the document still holds what was placed cannot be verified. Re-place the leaf to pin its content.',
+    });
+  }
   return out;
 }
 
@@ -366,6 +382,24 @@ export function computeDispatchReadiness(
         code: 'LIFECYCLE_OP_IN_ORIGINAL',
         sectionCode: leaf.sectionCode,
         message: `Leaf "${leaf.title}" uses lifecycle operation "${leaf.lifecycleOp}" in an original (0000) sequence — only "new" is valid; there is no prior content to ${leaf.lifecycleOp}.`,
+      });
+    }
+
+    // WARNING: a declared act on a filed leaf is NOT assessed here. It is bound
+    // to the filed inventory at assembly (package-from-core), and an act that
+    // cannot bind is refused there and at transmit. Saying so keeps a clean
+    // verdict from being read as covering it. 2026-09-22 (W5/D7).
+    if (
+      !opts.isOriginalSequence &&
+      (leaf.lifecycleOp === 'replace' || leaf.lifecycleOp === 'append' || leaf.lifecycleOp === 'delete')
+    ) {
+      findings.push({
+        severity: 'warning',
+        code: 'LIFECYCLE_BINDING_NOT_ASSESSED',
+        sectionCode: leaf.sectionCode,
+        message:
+          `Leaf "${leaf.title}" declares "${leaf.lifecycleOp}". Which filed leaf it acts on is established when the ` +
+          'sequence is assembled, not here; freeze and dispatch assemble it and refuse an act that cannot be bound.',
       });
     }
   }

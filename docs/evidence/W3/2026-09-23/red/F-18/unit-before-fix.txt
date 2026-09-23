@@ -1,0 +1,115 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+stdout | server/routes/c2c/__tests__/reauth-second-factor.test.ts
+{
+  "timestamp": "2026-09-23T02:54:59.640Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T02:54:59.642Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/reauth-second-factor.test.ts
+{
+  "timestamp": "2026-09-23T02:54:59.642Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ × server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with a second factor enrolled > cannot sign with the password alone 23ms
+   → expected { ok: true } to deeply equal { ok: false, …(1) }
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with a second factor enrolled > signs with the password and a current code 4ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with a second factor enrolled > is refused with a wrong code 3ms
+ × server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with a second factor enrolled > is refused, not waved through, when the enrolment state cannot be read 7ms
+   → expected { ok: true } to deeply equal { ok: false, …(1) }
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with no second factor enrolled > signs with the password alone 4ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with no second factor enrolled > is refused when it presents a code that does not verify — callers record a present code as verified 3ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > the first factor > is required 2ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > the first factor > must verify 4ms
+ × server/routes/c2c/__tests__/reauth-second-factor.test.ts > the first factor > is refused the same way when the signer has no stored password 3ms
+   → expected { ok: false, …(1) } to deeply equal { ok: false, …(1) }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with a second factor enrolled > cannot sign with the password alone
+AssertionError: expected { ok: true } to deeply equal { ok: false, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "error": "REAUTH_TOTP_REQUIRED",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ server/routes/c2c/__tests__/reauth-second-factor.test.ts:58:59
+     56|
+     57|   it('cannot sign with the password alone', async () => {
+     58|     expect(await verifyReauth(7, { password: PASSWORD })).toEqual({ ok…
+       |                                                           ^
+     59|   });
+     60|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with a second factor enrolled > is refused, not waved through, when the enrolment state cannot be read
+AssertionError: expected { ok: true } to deeply equal { ok: false, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "error": "REAUTH_MFA_STATE_UNKNOWN",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ server/routes/c2c/__tests__/reauth-second-factor.test.ts:71:78
+     69|   it('is refused, not waved through, when the enrolment state cannot b…
+     70|     h.mfaEnabled = new Error('users table unreachable');
+     71|     expect(await verifyReauth(7, { password: PASSWORD, totp: h.validCo…
+       |                                                                              ^
+     72|       ok: false,
+     73|       error: 'REAUTH_MFA_STATE_UNKNOWN',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/routes/c2c/__tests__/reauth-second-factor.test.ts > the first factor > is refused the same way when the signer has no stored password
+AssertionError: expected { ok: false, …(1) } to deeply equal { ok: false, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "error": "REAUTH_PASSWORD_INVALID",
++   "error": "REAUTH_USER_NOT_FOUND",
+    "ok": false,
+  }
+
+ ❯ server/routes/c2c/__tests__/reauth-second-factor.test.ts:100:59
+     98|   it('is refused the same way when the signer has no stored password',…
+     99|     h.hash = null;
+    100|     expect(await verifyReauth(7, { password: PASSWORD })).toEqual({ ok…
+       |                                                           ^
+    101|   });
+    102| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 6 passed (9)
+   Start at  02:54:57
+   Duration  2.02s (transform 927ms, setup 83ms, import 1.70s, tests 58ms, environment 0ms)
+

@@ -76,6 +76,15 @@ export interface RetrievalOptions {
   limit?: number;
   threshold?: number;
   useReranking?: boolean;
+  /**
+   * The rerank score will decide a governed verdict (a citation run's
+   * supported / gap status). The reranker then serves it only from a model
+   * approved for regulatory review, and a rerank that fails throws instead of
+   * silently keeping the embedding order — the verdict threshold is set for the
+   * blended score, so an embedding-only score would be judged on the wrong
+   * scale. See RerankOptions.governedVerdict in rag-reranker.ts.
+   */
+  governedVerdict?: boolean;
   useMmr?: boolean;
   mmrLambda?: number; // 0 = max diversity, 1 = max relevance
   /**
@@ -510,7 +519,7 @@ export class AdvancedRAGPipeline {
     // Step 2: reranking via the configured provider (LLM-judge by default,
     // cross-encoder when RAG_RERANKER_* is set).
     if (options.useReranking && candidates.length > 0) {
-      const rerankResult = await this.applyReranker(query, candidates);
+      const rerankResult = await this.applyReranker(query, candidates, options.governedVerdict === true);
       candidates = rerankResult.documents;
       tokensUsed += rerankResult.tokensUsed;
     }
@@ -643,7 +652,8 @@ export class AdvancedRAGPipeline {
    */
   private async applyReranker(
     query: string,
-    documents: RetrievedDocument[]
+    documents: RetrievedDocument[],
+    governedVerdict = false
   ): Promise<{ documents: RetrievedDocument[]; tokensUsed: number }> {
     if (documents.length === 0) {
       return { documents: [], tokensUsed: 0 };
@@ -653,10 +663,13 @@ export class AdvancedRAGPipeline {
     try {
       result = await this.reranker.score(
         query,
-        documents.map(d => ({ title: d.title, content: d.content }))
+        documents.map(d => ({ title: d.title, content: d.content })),
+        { governedVerdict }
       );
     } catch (error) {
-      // A reranker failure must never break retrieval — keep the embedding order.
+      // For a governed verdict the failure is the caller's to report.
+      if (governedVerdict) throw error;
+      // Otherwise a reranker failure must never break retrieval — keep the embedding order.
       console.warn(`[RAG] reranker "${this.reranker.name}" failed; keeping embedding order:`, error);
       return { documents, tokensUsed: 0 };
     }
@@ -664,6 +677,11 @@ export class AdvancedRAGPipeline {
     // Defensive: a provider that returns the wrong count can't be trusted to
     // align with documents, so fall back rather than mis-rank.
     if (result.scores.length !== documents.length) {
+      if (governedVerdict) {
+        throw new Error(
+          `reranker "${this.reranker.name}" returned ${result.scores.length} scores for ${documents.length} docs`
+        );
+      }
       console.warn(
         `[RAG] reranker "${this.reranker.name}" returned ${result.scores.length} scores for ${documents.length} docs; keeping embedding order`
       );

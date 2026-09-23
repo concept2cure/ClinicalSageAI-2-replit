@@ -47,6 +47,7 @@ import { dirname } from 'path';
 
 import { pool } from '../../db';
 import { getGateway } from './index';
+import { preTransmitFindings } from './pre-transmit-findings';
 import type { GatewayName, GatewayTransmitResult, Region, SubmissionBundle } from './types';
 import { findActiveTransmittal } from './fda-esg';
 import { getBundle } from '../submission-bundle-storage';
@@ -372,6 +373,16 @@ export interface GovernedTransmitOutcome {
     | 'no-sequence'          // not an eCTD sequence filing (or a dev/test client bundle)
     | 'no-usable-manifest'   // an eCTD sequence whose leaf inventory is absent or unreadable
     | 'write-failed';        // the append itself did not land
+  /**
+   * Package checks the transmit guard ran that FAILED without blocking (a
+   * flag-gated check not enforced here), as "name: detail", and the guard's
+   * warnings — the same facts transmitSequence records (preTransmitFindings).
+   * null = the guard reported nothing, which is not "all passed". Also on the
+   * sign ledger payload and the electronic-signature manifest.
+   * 2026-09-23 (W5/D7, round-2 review): this path kept them off its record.
+   */
+  preTransmitFailedChecks: string[] | null;
+  preTransmitWarnings: string[] | null;
 }
 
 /** Operator wording for a content change that landed during the send. */
@@ -608,6 +619,16 @@ export async function executeGovernedTransmit(
     },
   });
 
+  // What the guard checked on the package, including checks that FAILED
+  // without blocking: on the sign record and the outcome, as transmitSequence
+  // records them. 2026-09-23 (W5/D7, round-2 review) — a package that failed
+  // dtd-self-contained went out on this path with no transmit-time trace.
+  const pre = preTransmitFindings(result);
+  const preTransmitFacts = {
+    preTransmitFailedChecks: pre.failedChecks,
+    preTransmitWarnings: pre.warnings,
+  };
+
   // Re-assess the content AFTER the gateway accepted the bytes: the window
   // between the pre-transmit check and the send is evidenced, not assumed
   // closed (see GovernedTransmitOutcome.contentAfterTransmit).
@@ -691,6 +712,7 @@ export async function executeGovernedTransmit(
           transmittalId: result.transmittalId,
           transmissionId: result.transmissionId ?? null,
           ...filedSequenceFacts,
+          ...preTransmitFacts,
       };
       const recorded = await recordGovernedAction(client, {
         orgId: organizationId,
@@ -714,6 +736,7 @@ export async function executeGovernedTransmit(
             ? { assembled: provenAgainst.assembled, atTransmit: provenAgainst.atTransmit, afterTransmit: contentAfterTransmit }
             : null,
           ...filedSequenceFacts,
+          ...preTransmitFacts,
         },
         domain: 'mdx',
         surface: input.surface ?? 'submission-gateway',
@@ -743,8 +766,10 @@ export async function executeGovernedTransmit(
         },
         // In the attributed record itself, not only in the digest it is bound
         // to: the manifest is what an auditor reads, and "which eCTD sequence
-        // did this signature file" is not answerable from a hash.
-        extraManifest: filedSequenceFacts,
+        // did this signature file" is not answerable from a hash. Nor is
+        // "which package checks had failed when it was signed" (2026-09-23,
+        // W5/D7, round-2 review).
+        extraManifest: { ...filedSequenceFacts, ...preTransmitFacts },
         manifestKind: 'governed-transmit',
       });
       await client.query('COMMIT');
@@ -770,5 +795,6 @@ export async function executeGovernedTransmit(
     contentAfterTransmit,
     filedSequenceRecorded,
     filedSequenceReason,
+    ...preTransmitFacts,
   };
 }

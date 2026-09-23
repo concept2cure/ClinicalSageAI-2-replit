@@ -1,0 +1,4 @@
+HEAD e4a3f8981 (2026-09-22). Probe: generateIndForm('FDA_1571'|'FDA_3674', META) -> packageEctdSubmission (region fda, sequence 0000, leaf 1.1.1).
+FDA_1571 official true tlen 2919985 flen 2922047 prefixSame true suffix /Encrypt refs ["47 0 R"] suffix defines 47 0 obj false
+FDA_3674 official true tlen 3526775 flen 3528213 prefixSame true suffix /Encrypt refs ["47 0 R"] suffix defines 47 0 obj false
+HEAD packager, filled official 1571 as m1.1 leaf -> REFUSED: Leaf 'form-fda-1571.pdf' is an encrypted/secured PDF; the eCTD PDF specification prohibits security settings and the package cannot ship it.

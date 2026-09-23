@@ -28,6 +28,9 @@ import {
 
 import { config } from '../config/environment';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
+import { verifyLiveToken } from '../services/token-revocation';
+import { recordAuthEvent } from '../services/audit/auth-event-audit';
+import { runWithTenantScope } from '../db/tenantStore';
 import { requireAccessTokenReason } from '../middleware/tokenType';
 import { authMiddleware } from '../auth';
 import * as emailOtpService from '../services/emailOtpService';
@@ -128,15 +131,18 @@ const enterpriseAuthLimiter = rateLimit({
   validate: { xForwardedForHeader: false },
 });
 
-/** Helper: extract and verify JWT from Authorization header */
-function extractJwtUser(
+/**
+ * Helper: extract and verify JWT from Authorization header. A signed-out
+ * session (AUTH-03) is no identity, the same as a bad token.
+ */
+async function extractJwtUser(
   req: Request
-): { userId: string; email: string; organizationId?: string } | null {
+): Promise<{ userId: string; email: string; organizationId?: string } | null> {
   const authHeader = req.headers.authorization;
   const token = authHeader?.replace('Bearer ', '');
   if (!token) return null;
   try {
-    const decoded = verifyJwtWithRotation(token) as {
+    const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
       organizationId?: string;
@@ -277,6 +283,14 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
       .limit(1);
 
     if (!userResult.length) {
+      await recordAuthEvent({
+        action: 'user_login',
+        email: normalizedEmail,
+        outcome: 'failure',
+        reason: 'unknown_email',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(401).json({
         error: 'INVALID_CREDENTIALS',
         message: 'Invalid email or password',
@@ -288,6 +302,16 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
     // Check account lockout
     const lockStatus = await isAccountLocked(user.id);
     if (lockStatus.locked) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId: user.id,
+        tenantId: user.defaultOrganizationId,
+        email: user.email,
+        outcome: 'failure',
+        reason: 'account_locked',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(423).json({
         error: 'ACCOUNT_LOCKED',
         message: 'Account is temporarily locked due to too many failed attempts. Try again later.',
@@ -304,6 +328,16 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
     if (!passwordValid) {
       // Record failed attempt
       const failResult = await recordFailedLogin(user.id);
+      await recordAuthEvent({
+        action: 'user_login',
+        userId: user.id,
+        tenantId: user.defaultOrganizationId,
+        email: user.email,
+        outcome: 'failure',
+        reason: failResult?.locked ? 'wrong_password_threshold_exceeded' : 'wrong_password',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(401).json({
         error: 'INVALID_CREDENTIALS',
         message: 'Invalid email or password',
@@ -341,6 +375,18 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
     const mfaMethod = (user as any).mfaMethod || 'email';
     const hasTotpSetup = user.mfaEnabled === true && mfaMethod === 'totp';
     let maskedEmail: string | undefined;
+
+    // Password verified, second factor requested: the same event /api/auth/login records.
+    await recordAuthEvent({
+      action: 'user_login_mfa_challenge',
+      userId: user.id,
+      tenantId: user.defaultOrganizationId,
+      email: user.email,
+      outcome: 'success',
+      reason: hasTotpSetup ? 'mfa_challenge_totp' : 'mfa_challenge_email',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
 
     if (!hasTotpSetup) {
       // Email OTP — generate and send
@@ -405,6 +451,13 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
     try {
       decoded = verifyJwtWithRotation(partialToken) as any;
     } catch {
+      await recordAuthEvent({
+        action: 'user_login_mfa_failed',
+        outcome: 'failure',
+        reason: 'invalid_or_expired_challenge',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(401).json({
         error: 'TOKEN_EXPIRED',
         message: 'MFA session expired. Please re-enter your password.',
@@ -412,6 +465,13 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
     }
 
     if (!decoded.mfaPending) {
+      await recordAuthEvent({
+        action: 'user_login_mfa_failed',
+        outcome: 'failure',
+        reason: 'invalid_or_expired_challenge',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(400).json({
         error: 'INVALID_TOKEN',
         message: 'Token is not a valid MFA partial token',
@@ -436,6 +496,17 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
     }
 
     if (!isValid) {
+      // The organisation comes from the partial token this server signed.
+      await recordAuthEvent({
+        action: 'user_login_mfa_failed',
+        userId,
+        tenantId: decoded.organizationId,
+        email: decoded.email,
+        outcome: 'failure',
+        reason: 'invalid_code',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(401).json({
         error: 'INVALID_MFA_CODE',
         message: 'Invalid or expired verification code. Please try again.',
@@ -472,6 +543,18 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
       { expiresIn: '24h' }
     );
 
+    // The session is created here: the sign-in's success event.
+    await recordAuthEvent({
+      action: 'user_login',
+      userId,
+      tenantId: decoded.organizationId,
+      email: user?.email || decoded.email,
+      outcome: 'success',
+      reason: 'mfa_verified',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+
     res.json({
       success: true,
       mfaMethod: verifiedMethod,
@@ -503,7 +586,7 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
  */
 router.post('/mfa/setup', async (req: Request, res: Response) => {
   try {
-    const decoded = extractJwtUser(req);
+    const decoded = await extractJwtUser(req);
     if (!decoded) {
       return res.status(401).json({ error: 'Authentication required' });
     }
@@ -529,7 +612,7 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
  */
 router.post('/mfa/enable', async (req: Request, res: Response) => {
   try {
-    const decoded = extractJwtUser(req);
+    const decoded = await extractJwtUser(req);
     if (!decoded) {
       return res.status(401).json({ error: 'Authentication required' });
     }
@@ -570,7 +653,7 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
  */
 router.post('/mfa/disable', async (req: Request, res: Response) => {
   try {
-    const decoded = extractJwtUser(req);
+    const decoded = await extractJwtUser(req);
     if (!decoded) {
       return res.status(401).json({ error: 'Authentication required' });
     }
@@ -716,7 +799,7 @@ router.post('/select-organization', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = verifyJwtWithRotation(existingToken) as any;
+    const decoded = (await verifyLiveToken(existingToken)) as any;
     // SECURITY: a pre-MFA (mfaPending / mfa_challenge) or refresh token must not
     // be exchanged for a full 24h access token here — that would let a
     // password-only session skip MFA. Require a genuine access token.
@@ -789,25 +872,34 @@ router.post('/select-organization', async (req: Request, res: Response) => {
     // origin in metadata, because that is the direction a reviewer reads it from.
     // Fire-and-forget: an audit-sink outage must not break a legitimate switch,
     // and the failure is logged rather than swallowed.
+    //
+    // Written in the scope of the organisation being entered, with no role. The
+    // request runs in the pre-auth scope (tenant '0'), whose audit_logs policy
+    // refused this row under RLS like every other tenant-named auth event (F-19).
+    // Membership was validated above.
     void import('../services/audit/auditLogger')
       .then(({ logAuditEvent }) =>
-        logAuditEvent({
-          category: 'authorization',
-          severity: 'info',
-          action: 'organization_switch',
-          userId: String(userId),
-          organizationId: String(organizationId),
-          resourceType: 'organization',
-          resourceId: String(organizationId),
-          success: true,
-          metadata: {
-            fromOrganizationId: decoded.organizationId != null ? String(decoded.organizationId) : null,
-            toOrganizationId: String(organizationId),
-            roleInTarget: selectOrgRole,
-          },
-          ipAddress: req.ip,
-          userAgent: req.get('user-agent'),
-        })
+        runWithTenantScope(
+          { tenantId: String(organizationId), role: null, source: 'request', caller: 'auth audit: organization_switch' },
+          () =>
+            logAuditEvent({
+              category: 'authorization',
+              severity: 'info',
+              action: 'organization_switch',
+              userId: String(userId),
+              organizationId: String(organizationId),
+              resourceType: 'organization',
+              resourceId: String(organizationId),
+              success: true,
+              metadata: {
+                fromOrganizationId: decoded.organizationId != null ? String(decoded.organizationId) : null,
+                toOrganizationId: String(organizationId),
+                roleInTarget: selectOrgRole,
+              },
+              ipAddress: req.ip,
+              userAgent: req.get('user-agent'),
+            })
+        )
       )
       .catch(auditError => {
         console.warn(
@@ -827,7 +919,7 @@ router.post('/select-organization', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('[Enterprise Auth] select-organization error:', error);
 
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'SessionEndedError') {
       return res.status(401).json({
         error: 'TOKEN_EXPIRED',
         message: 'Session expired. Please log in again.',
@@ -857,7 +949,7 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
   }
 
   try {
-    const decoded = verifyJwtWithRotation(oldToken) as any;
+    const decoded = (await verifyLiveToken(oldToken)) as any;
 
     // SECURITY: this endpoint re-mints a full 24h access token. A pre-MFA
     // (mfaPending / mfa_challenge) or refresh token presented here would let a
@@ -917,7 +1009,7 @@ router.get('/session', async (req: Request, res: Response) => {
   }
 
   try {
-    const decoded = verifyJwtWithRotation(token) as any;
+    const decoded = (await verifyLiveToken(token)) as any;
     // SECURITY: a pre-MFA / refresh token is not an authenticated session.
     if (requireAccessTokenReason(decoded)) {
       return res.json({ authenticated: false });
@@ -940,11 +1032,12 @@ router.get('/session', async (req: Request, res: Response) => {
  * POST /logout
  * End user session
  */
-router.post('/logout', (req: Request, res: Response) => {
-  res.json({
-    success: true,
-    message: 'Logged out successfully',
-  });
+router.post('/logout', (_req: Request, res: Response) => {
+  // Answered by the canonical logout, which revokes the presented token (and a
+  // refresh token in the body) and records the event. This handler used to
+  // answer "Logged out successfully" and do neither (July 2026 audit, AUTH-03).
+  // A 307 keeps the method, the body and the Authorization header.
+  res.redirect(307, '/api/auth/logout');
 });
 
 export default router;

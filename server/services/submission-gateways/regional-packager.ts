@@ -38,7 +38,8 @@ import { ValidationError, resolveToRegistryEntry, getSubmissionTypeLabel } from 
 // also need its `Region` type, and the packager is their entry point.
 export type { Region } from './types';
 import { finalizePdfA } from '../ectd/pdfa-pipeline';
-import { classifyPdfA } from '../ectd/pdfa-detect';
+import { isPdfLeaf } from '../ectd/pdfa-detect';
+import { assessLeafPdfSecurity } from '../ectd/leaf-pdf-security';
 import {
   evaluateSubmissionGrade,
   pdfaRequiredFromEnv,
@@ -199,25 +200,51 @@ export function leafPackagePath(
 async function finalizeLeafBytes(
   buf: Buffer,
   fileName: string,
+  region: Region,
   skipPdfaConversion = false,
-): Promise<{ bytes: Buffer; md5Override?: string; isPdf: boolean; converted: boolean; encrypted: boolean }> {
-  const isPdf = fileName.toLowerCase().endsWith('.pdf');
-  if (!isPdf) return { bytes: buf, isPdf: false, converted: false, encrypted: false };
-  // An /Encrypt dictionary is detected here on every path, including the
-  // deterministic one that skips PDF/A. finalizePdfA used to note it only as
-  // a warning string the packager then discarded, so a secured leaf shipped
-  // indistinguishable from any other unconverted PDF.
-  const encrypted = classifyPdfA(buf).encrypted;
+): Promise<{
+  bytes: Buffer;
+  md5Override?: string;
+  isPdf: boolean;
+  converted: boolean;
+  encrypted: boolean;
+  securityReason?: string;
+  agencyFormAsIssued?: boolean;
+}> {
+  const namedPdf = fileName.toLowerCase().endsWith('.pdf');
+  /* 2026-09-22 (W5/D7): the security gate keys on the BYTES, not the name.
+     It ran only for a name ending .pdf, so secured PDF bytes under any other
+     name shipped unexamined. Conversion still keys on the declared type: a
+     PDF under a non-.pdf name is judged for security and shipped unchanged,
+     never rewritten by the PDF/A pipeline.
+     2026-09-23 (W5/D7, round-2 review): name .pdf OR %PDF- header is the one
+     shared predicate, pdfa-detect isPdfLeaf, not an inline copy. */
+  const pdfBytes = isPdfLeaf(fileName, buf);
+  if (!pdfBytes) return { bytes: buf, isPdf: false, converted: false, encrypted: false };
+  // Security is judged here on every path, including the deterministic one that
+  // skips PDF/A. finalizePdfA used to note it only as a warning string the
+  // packager then discarded, so a secured leaf shipped indistinguishable from
+  // any other unconverted PDF. One rule, shared with transmit: leaf-pdf-security.
+  const security = await assessLeafPdfSecurity(buf, region);
+  if (security.verdict === 'secured') {
+    return { bytes: buf, isPdf: namedPdf, converted: false, encrypted: true, securityReason: security.reason };
+  }
+  if (!namedPdf) return { bytes: buf, isPdf: false, converted: false, encrypted: false };
+  // An FDA form ships exactly as FDA issued it — never through Ghostscript,
+  // which would strip the XFA form and FDA's security settings.
+  if (security.verdict === 'fda-form-as-issued') {
+    return { bytes: buf, isPdf: true, converted: false, encrypted: false, agencyFormAsIssued: true };
+  }
   // Deterministic path: skip PDF/A normalization so the shipped bytes equal the
   // input bytes exactly. Used for validation-only assembly (e.g. the submission
   // orchestrator) where byte-determinism across re-renders matters more than
   // PDF/A-1b normalization — Ghostscript conversion embeds timestamps and is
   // non-deterministic, which would break a re-derive-and-compare drift check.
-  if (skipPdfaConversion || encrypted) return { bytes: buf, isPdf: true, converted: false, encrypted };
+  if (skipPdfaConversion) return { bytes: buf, isPdf: true, converted: false, encrypted: false };
   const result = await finalizePdfA(buf);
-  if (!result.converted) return { bytes: buf, isPdf: true, converted: false, encrypted };
+  if (!result.converted) return { bytes: buf, isPdf: true, converted: false, encrypted: false };
   const bytes = Buffer.from(result.pdfBytes);
-  return { bytes, md5Override: createHash('md5').update(bytes).digest('hex'), isPdf: true, converted: true, encrypted };
+  return { bytes, md5Override: createHash('md5').update(bytes).digest('hex'), isPdf: true, converted: true, encrypted: false };
 }
 
 export interface PackagerInput {
@@ -594,7 +621,40 @@ ${m1Leaves}
 
 /* ─── M2-M5 common backbone (ICH M8) ──────────────────────────────── */
 
-function buildIndexXml(input: PackagerInput, m2to5: EctdLeaf[], resolve: (l: EctdLeaf) => LeafRef): string {
+/** The regional Module 1 backbone, as index.xml references it. */
+interface RegionalBackboneRef {
+  /** Package-relative path, e.g. m1/us/us-regional.xml. */
+  href: string;
+  /** MD5 of the regional XML bytes written into the package. */
+  md5: string;
+}
+
+/**
+ * index.xml's pointer to Module 1. Module 1 content lives in the regional
+ * backbone, and the ICH backbone reaches it through a leaf under
+ * m1-administrative-information-and-prescribing-information that names the
+ * regional XML with its MD5. Without it the regional file (an IND's Form FDA
+ * 1571 among its leaves) was in the package, in util/index-md5.txt, and
+ * referenced by nothing in index.xml — a reader of the ICH backbone saw a
+ * sequence with no Module 1 at all. Every sequence carries its own regional
+ * backbone, so the pointer is always operation="new".
+ */
+function regionalBackboneReference(ref: RegionalBackboneRef): string {
+  const file = ref.href.split('/').pop() ?? ref.href;
+  return `  <m1-administrative-information-and-prescribing-information>
+    <leaf operation="new" checksum="${ref.md5}" checksum-type="md5" xlink:href="${escapeXml(ref.href)}" xlink:type="simple" ID="leaf-m1-regional-backbone">
+      <title>Module 1 regional backbone (${escapeXml(file)})</title>
+    </leaf>
+  </m1-administrative-information-and-prescribing-information>
+`;
+}
+
+function buildIndexXml(
+  input: PackagerInput,
+  m2to5: EctdLeaf[],
+  resolve: (l: EctdLeaf) => LeafRef,
+  regional: RegionalBackboneRef | null,
+): string {
   // One assigner for the whole index.xml document (all of m2–m5 live here).
   const assignId = createLeafIdAssigner();
   // Fail loudly on any leaf that maps to no ICH module — otherwise it would be
@@ -625,7 +685,7 @@ function buildIndexXml(input: PackagerInput, m2to5: EctdLeaf[], resolve: (l: Ect
 <ectd:ectd xmlns:ectd="http://www.ich.org/ectd"
            xmlns:xlink="http://www.w3.org/1999/xlink"
            dtd-version="3.2">
-${moduleBlocks}
+${regional ? regionalBackboneReference(regional) : ''}${moduleBlocks}
 </ectd:ectd>`;
 }
 
@@ -678,6 +738,8 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
      backbone is built. */
   interface PreparedLeaf { leaf: EctdLeaf; relPath: string; ref: LeafRef; bytes: Buffer; }
   const prepared: PreparedLeaf[] = [];
+  /** Backbone-only withdrawals: no bytes, but a filing act the manifest records. */
+  const withdrawn: EctdLeaf[] = [];
   const refByLeaf = new Map<EctdLeaf, LeafRef>();
   for (const leaf of input.leaves) {
 
@@ -699,16 +761,18 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
         md5: leaf.md5 ?? '',
         backboneDir,
       });
+      withdrawn.push(leaf);
       continue; // no bytes → no prepared entry, no ZIP file, no checksum line
     }
 
     const raw = await fs.readFile(leaf.sourcePath);
-    const { bytes, md5Override, isPdf, converted, encrypted } = await finalizeLeafBytes(raw, leaf.fileName, input.skipPdfaConversion);
-    grades.push({ fileName: leaf.fileName, isPdf, converted, encrypted });
+    const { bytes, md5Override, isPdf, converted, encrypted, securityReason, agencyFormAsIssued } =
+      await finalizeLeafBytes(raw, leaf.fileName, region, input.skipPdfaConversion);
+    grades.push({ fileName: leaf.fileName, isPdf, converted, encrypted, ...(agencyFormAsIssued ? { agencyFormAsIssued } : {}) });
     if (encrypted) {
       throw new ValidationError(
-        `Leaf '${leaf.fileName}' is an encrypted/secured PDF; the eCTD PDF specification prohibits security settings and the package cannot ship it.`,
-        [{ ruleId: 'LEAF-ENCRYPTED', severity: 'error', filePath: leaf.fileName }],
+        `Leaf '${leaf.fileName}' is an encrypted/secured PDF (${securityReason ?? 'it carries an /Encrypt entry'}); the package cannot ship it.`,
+        [{ ruleId: 'LEAF-ENCRYPTED', severity: 'error', filePath: leaf.fileName, message: securityReason }],
       );
     }
     // Hash the EXACT bytes about to be written into the zip — never a caller-
@@ -823,11 +887,9 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   /* PASS 2 — write the regional Module 1 backbone (now that hrefs+md5s exist). */
   const regionalXml = backboneByRegion[region]();
   const regionalPath = backboneFileByRegion[region];
+  const regionalMd5 = createHash('md5').update(regionalXml).digest('hex');
   zip.file(regionalPath, regionalXml);
-  checksums.push({
-    relPath: regionalPath,
-    md5: createHash('md5').update(regionalXml).digest('hex'),
-  });
+  checksums.push({ relPath: regionalPath, md5: regionalMd5 });
 
   /* Write all finalized leaf bytes. */
   for (const p of prepared) {
@@ -913,7 +975,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   }
 
   /* Write the ICH M2-M5 index.xml + index-md5.txt. */
-  const indexXml = buildIndexXml(input, m2to5, resolve);
+  const indexXml = buildIndexXml(input, m2to5, resolve, { href: regionalPath, md5: regionalMd5 });
   const indexXmlMd5 = createHash('md5').update(indexXml).digest('hex');
   zip.file('index.xml', indexXml);
   checksums.push({ relPath: 'index.xml', md5: indexXmlMd5 });
@@ -953,19 +1015,36 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   }
 
   // Per-sequence leaf manifest for cross-sequence lifecycle diffing: each shipped
-  // leaf's CTD section + final href + md5 (+ op/title). The NEXT sequence loads
+  // leaf's CTD section + final href + md5 (+ op/modified-file/title). The NEXT sequence loads
   // this (loadPriorSequenceManifest) and diffs against it to derive
   // replace/append/delete. Raw shape (not built via sequence-manifest) to keep
   // the packager free of an ectd/ import; the ectd-side caller runs
   // buildLeafManifest over it before persisting.
-  const leafManifest = prepared.map((p) => ({
-    ctdSection: p.leaf.ctdSection,
-    fileName: p.leaf.fileName,
-    href: p.relPath,
-    md5: p.ref.md5,
-    ...(p.leaf.operation ? { operation: p.leaf.operation } : {}),
-    ...(p.leaf.title ? { title: p.leaf.title } : {}),
-  }));
+  const leafManifest = [
+    ...prepared.map((p) => ({
+      ctdSection: p.leaf.ctdSection,
+      fileName: p.leaf.fileName,
+      href: p.relPath,
+      md5: p.ref.md5,
+      ...(p.leaf.operation ? { operation: p.leaf.operation } : {}),
+      ...(p.leaf.modifiedFile ? { modifiedFile: p.leaf.modifiedFile } : {}),
+      ...(p.leaf.title ? { title: p.leaf.title } : {}),
+    })),
+    // A withdrawal ships no file, but it is a filing act: the prior-state fold
+    // drops a leaf whose last operation is a delete, and it can only do that if
+    // the delete is recorded. Left out, the withdrawn leaf stayed on file for
+    // every later sequence. Its href is the pointer the backbone carries, from
+    // this sequence's root. 2026-09-23 (W5/D7).
+    ...withdrawn.map((leaf) => ({
+      ctdSection: leaf.ctdSection,
+      fileName: leaf.fileName,
+      href: leaf.modifiedFile ?? refByLeaf.get(leaf)?.href ?? '',
+      md5: leaf.md5 ?? '',
+      operation: 'delete' as const,
+      ...(leaf.modifiedFile ? { modifiedFile: leaf.modifiedFile } : {}),
+      ...(leaf.title ? { title: leaf.title } : {}),
+    })),
+  ];
 
   return {
     path:      outPath,

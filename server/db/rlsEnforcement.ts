@@ -145,7 +145,17 @@ export async function assessRlsCatalogPosture(pool: Pick<Pool, 'query'>): Promis
         JOIN information_schema.tables t
           ON t.table_schema = c.table_schema AND t.table_name = c.table_name
         WHERE c.table_schema = 'public' AND t.table_type = 'BASE TABLE'
-          AND c.column_name IN ('organization_id', 'org_id', 'tenant_id', 'client_id')
+          -- The canonical tenant columns: the same three the install-time and
+          -- deploy-time sweeps police (0021, 20260801), rls-coverage-check.sql
+          -- and deploy-smoke-assert.mjs use. This probe also listed client_id,
+          -- which no sweep polices, so it failed boot on a table the sweep
+          -- correctly leaves alone: mcp_oauth_clients, whose client_id is an
+          -- OAuth client identifier, not a tenant (a global, pre-auth registry
+          -- — scripts/ci/unkeyed-request-tables-baseline.json). On a
+          -- deploy-shaped database that was the only table keyed by client_id
+          -- alone; every other client_id table also carries organization_id.
+          -- (2026-09-23)
+          AND c.column_name IN ('organization_id', 'org_id', 'tenant_id')
       )
       SELECT tt.table_name, cls.relrowsecurity, cls.relforcerowsecurity,
              COUNT(pol.policyname)::int AS policy_count

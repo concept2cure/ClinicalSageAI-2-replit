@@ -1,0 +1,50 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/submissions/sequences/15/leaves",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 33,
+    "rateLimitRetries": 0,
+    "body": [
+      {
+        "id": 15,
+        "sequenceId": 15,
+        "sectionCode": "m1.2",
+        "title": "Cover letter",
+        "granularity": null,
+        "lifecycleOp": "new",
+        "documentTable": "vault_documents",
+        "documentId": null,
+        "documentUuid": "b51682c1-7538-4645-961d-14493099c909",
+        "documentType": null,
+        "leafGuid": null,
+        "parentLeafId": null,
+        "checksum": null,
+        "documentContentSha256": "895f643ddc4e2fb63db24b8d54c193bd3c7b49dd6458561222fbf3e7d598fadf",
+        "documentPinnedAt": "2026-09-23T05:20:15.957Z",
+        "organizationId": 1,
+        "createdBy": 17,
+        "createdAt": "2026-09-23T05:20:15.958Z",
+        "updatedAt": "2026-09-23T05:20:15.958Z",
+        "deletedAt": null,
+        "sourceDocument": {
+          "keyKind": "uuid",
+          "documentTable": "vault_documents",
+          "documentId": null,
+          "documentUuid": "b51682c1-7538-4645-961d-14493099c909",
+          "pinnedSha256": "895f643ddc4e2fb63db24b8d54c193bd3c7b49dd6458561222fbf3e7d598fadf",
+          "storedSha256": "895f643ddc4e2fb63db24b8d54c193bd3c7b49dd6458561222fbf3e7d598fadf",
+          "status": "resolved",
+          "pin": "[REDACTED]",
+          "reason": null
+        }
+      }
+    ]
+  }
+}

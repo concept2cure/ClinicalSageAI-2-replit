@@ -517,12 +517,15 @@ export function BuilderWorkspace({ seq }: { seq: SeqRow }) {
 
 // GET /sequences/:seqId/dispatch-readiness → assessSequenceDispatchReadiness
 // (server/services/ectd/assess-dispatch-readiness.ts). Server-computed inputs;
-// findings' `code` is the validation-rule id (traceable to /validation-rules).
+// Each finding arrives with the corpus rule it is an instance of (or null when
+// the corpus names none) — the same enriched shape the dispatch-readiness
+// surface renders, so the two views cannot tell a finding's rule differently.
 interface ReadinessFinding {
   severity: 'error' | 'warning' | 'info';
   code: string;
   sectionCode: string | null;
   message: string;
+  rule?: { id: string; title: string; regions: string[]; severity: string; enforcementStatement: string } | null;
 }
 interface ReadinessAssessment {
   sequenceId: number;
@@ -619,8 +622,8 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
               Sequence {seq.sequenceNumber} · {a.leafCount} {a.leafCount === 1 ? 'leaf' : 'leaves'} ·{' '}
               {a.readiness.errors} {a.readiness.errors === 1 ? 'error' : 'errors'} ·{' '}
               {a.readiness.warnings} {a.readiness.warnings === 1 ? 'warning' : 'warnings'} ·{' '}
-              {a.readiness.infos} info · computed server-side from the canonical leaves. Each
-              finding&#39;s code is a rule id in the validation corpus.
+              {a.readiness.infos} info · computed server-side from the canonical leaves, each
+              shown as the validation-corpus rule it is an instance of.
             </div>
             {findings.length === 0 ? (
               <EmptyState
@@ -642,6 +645,11 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
                             {I.dot} <span className="sc-mono">{f.sectionCode}</span>
                           </>
                         ) : null}
+                      </span>
+                      <span className="sp-row-s">
+                        {f.rule
+                          ? `${f.rule.title} · ${f.rule.regions.map((r) => r.toUpperCase()).join(' · ')} · ${f.rule.severity} · ${f.rule.enforcementStatement}`
+                          : 'Not in the rule corpus, so no rule stands behind this finding.'}
                       </span>
                       <span className="sp-row-s">{f.message}</span>
                     </span>

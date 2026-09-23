@@ -89,7 +89,9 @@ interface SearchResult {
 
 // Configuration
 const CONFIG = {
-  model: 'gpt-4o',
+  // No drafting model is configured here: the draft is routed as
+  // document_drafting and the gateway serves it with an approved model. It
+  // pinned 'gpt-4o' as a 'general' request, which no approval check sees.
   embeddingModel: 'text-embedding-3-small',
   embeddingDimensions: 1536,
   maxChunks: 15,
@@ -405,7 +407,8 @@ ${evidenceText}
 Generate a regulatory-grade response using the evidence above. Remember to output valid JSON with draft_text, reasoning_trace, and citations.`;
 
     const aiResult = await ai.chat({
-      model: CONFIG.model,
+      taskType: 'document_drafting',
+      callerModule: 'gcc-drafting.generate',
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: userPrompt },
@@ -443,7 +446,8 @@ Generate a regulatory-grade response using the evidence above. Remember to outpu
       reasoningTrace: parsed.reasoningTrace,
       citations: enrichedCitations,
       metadata: {
-        model: CONFIG.model,
+        // What served — recorded as model_used in the session's audit row.
+        model: aiResult.model,
         promptTokens: aiResult.usage?.inputTokens || 0,
         completionTokens: aiResult.usage?.outputTokens || 0,
         generationTimeMs: Date.now() - startTime,

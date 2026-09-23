@@ -300,7 +300,15 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'rocket',
     group: 'submission',
     uiKit: 'submission',
-    apiPrefixes: ['/api/submissions', '/api/submission-center', '/api/region-profiles'],
+    // `/api/submission-center` is NOT listed, deliberately. That router is
+    // unmounted (server/bootstrap/register-governance-routes.ts) because it
+    // carried no tenant column in any handler and its tables have no RLS
+    // backstop — an unscoped cross-tenant write API with no consumer. This
+    // field is contracted to be grounded in the mount table, so advertising it
+    // here would point the next reader at a capability that was removed for
+    // exactly that reason. The surface reads /api/submissions,
+    // /api/region-profiles, /api/510k/estar/* and /api/c2c/projects.
+    apiPrefixes: ['/api/submissions', '/api/region-profiles', '/api/510k/estar', '/api/c2c/projects'],
     anaToolFamilies: ['plan_submission', 'validate_submission'],
     sharedContract: '@shared/types/submission-ui',
     discoveryCatalog: 'SUBMISSION_WORKSPACES (shared/types/submission-ui.ts)',

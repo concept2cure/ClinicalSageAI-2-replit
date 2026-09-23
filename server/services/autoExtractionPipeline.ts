@@ -437,39 +437,42 @@ async function extractTables(
 ): Promise<ExtractedTableData[]> {
   if (!content || content.length < 50) return [];
 
-  try {
-    // Use AI to detect and extract tables from text
-    const aiResult = await ai.chat({
-      model: process.env.OPENAI_MODEL || 'gpt-4o',
-      temperature: 0.1,
-      response_format: { type: 'json_object' },
-      messages: [
-        {
-          role: 'system',
-          content: `Extract structured tables from the text. For each table, provide:
+  // The model transcribes table cells that are stored as extracted evidence
+  // in concept2cure_artifacts: document_drafting, so only a model approved
+  // for high-risk regulatory drafting writes them. It defaulted to gpt-4o as
+  // a 'general' request, which the gateway's approval check never sees.
+  const aiResult = await ai.chat({
+    taskType: 'document_drafting',
+    callerModule: 'autoExtraction.extractTables',
+    temperature: 0.1,
+    response_format: { type: 'json_object' },
+    messages: [
+      {
+        role: 'system',
+        content: `Extract structured tables from the text. For each table, provide:
 - title: table title/caption
 - headers: column headers
 - rows: 2D array of cell values
 - confidence: 0-1 extraction confidence
 Return JSON: {"tables": [{"title": "...", "headers": [...], "rows": [[...]], "confidence": 0.9}]}
 Return empty tables array if no tables found.`,
-        },
-        { role: 'user', content: content.slice(0, 8000) },
-      ],
-    });
+      },
+      { role: 'user', content: content.slice(0, 8000) },
+    ],
+  });
 
-    const parsed = JSON.parse(aiResult.content || '{"tables":[]}');
-    return (parsed.tables || []).map((t: any, i: number) => ({
-      id: crypto.randomUUID(),
-      title: t.title || `Table ${i + 1}`,
-      headers: t.headers || [],
-      rows: t.rows || [],
-      confidence: t.confidence || 0.5,
-      sourceHash: crypto.createHash('md5').update(JSON.stringify(t)).digest('hex'),
-    }));
-  } catch {
-    return [];
-  }
+  // A failure is the job's failure (processJob marks it failed): until
+  // 2026-09-23 a bare catch, and an empty reply, both read as "0 tables".
+  const parsed = JSON.parse(aiResult.content ?? '');
+  if (!Array.isArray(parsed?.tables)) throw new Error('table extraction reply had no tables list');
+  return parsed.tables.map((t: any, i: number) => ({
+    id: crypto.randomUUID(),
+    title: t.title || `Table ${i + 1}`,
+    headers: t.headers || [],
+    rows: t.rows || [],
+    confidence: t.confidence || 0.5,
+    sourceHash: crypto.createHash('md5').update(JSON.stringify(t)).digest('hex'),
+  }));
 }
 
 async function classifyAndEnrich(
@@ -480,79 +483,80 @@ async function classifyAndEnrich(
   sections: DetectedSection[];
   entities: ExtractedEntity[];
 }> {
-  try {
-    const aiResult = await ai.chat({
-      model: process.env.OPENAI_MODEL || 'gpt-4o',
-      temperature: 0.1,
-      response_format: { type: 'json_object' },
-      messages: [
-        {
-          role: 'system',
-          content: `Classify this regulatory document and extract metadata.
+  // Which CTD module and document type a regulatory document is, and where
+  // its sections are, is stored as the artifact's type and section rows:
+  // regulatory_review, so only an approved model decides it.
+  const aiResult = await ai.chat({
+    taskType: 'regulatory_review',
+    callerModule: 'autoExtraction.classifyAndEnrich',
+    temperature: 0.1,
+    response_format: { type: 'json_object' },
+    messages: [
+      {
+        role: 'system',
+        content: `Classify this regulatory document and extract metadata.
 
 Return JSON:
 {
-  "metadata": {
-    "documentType": "CSR|IB|Protocol|CMC|CER|Label|Briefing|Guidance|Literature|Other",
-    "submissionModule": "M1|M2|M3|M4|M5|null",
-    "therapeuticArea": "Oncology|Cardiology|...|null",
-    "compoundName": "name or null",
-    "studyId": "study ID or null",
-    "phase": "1|2|3|4|null",
-    "language": "en|...",
-    "regulatoryContext": "FDA|EMA|PMDA|Health Canada|null"
-  },
-  "sections": [
-    {"code": "2.7.1", "title": "Summary of Biopharmaceutic Studies", "charStart": 0, "charEnd": 100}
-  ],
-  "entities": [
-    {"text": "entity", "type": "drug|disease|endpoint|biomarker|organization|study|standard", "confidence": 0.9}
-  ]
+"metadata": {
+  "documentType": "CSR|IB|Protocol|CMC|CER|Label|Briefing|Guidance|Literature|Other",
+  "submissionModule": "M1|M2|M3|M4|M5|null",
+  "therapeuticArea": "Oncology|Cardiology|...|null",
+  "compoundName": "name or null",
+  "studyId": "study ID or null",
+  "phase": "1|2|3|4|null",
+  "language": "en|...",
+  "regulatoryContext": "FDA|EMA|PMDA|Health Canada|null"
+},
+"sections": [
+  {"code": "2.7.1", "title": "Summary of Biopharmaceutic Studies", "charStart": 0, "charEnd": 100}
+],
+"entities": [
+  {"text": "entity", "type": "drug|disease|endpoint|biomarker|organization|study|standard", "confidence": 0.9}
+]
 }`,
-        },
-        {
-          role: 'user',
-          content: `File: ${fileName}\n\nContent (first 6000 chars):\n${content.slice(0, 6000)}`,
-        },
-      ],
-    });
+      },
+      {
+        role: 'user',
+        content: `File: ${fileName}\n\nContent (first 6000 chars):\n${content.slice(0, 6000)}`,
+      },
+    ],
+  });
 
-    const parsed = JSON.parse(aiResult.content || '{}');
-
-    const metadata: DocumentMetadata = {
-      documentType: parsed.metadata?.documentType || 'Other',
-      submissionModule: parsed.metadata?.submissionModule,
-      therapeuticArea: parsed.metadata?.therapeuticArea,
-      compoundName: parsed.metadata?.compoundName,
-      studyId: parsed.metadata?.studyId,
-      phase: parsed.metadata?.phase,
-      language: parsed.metadata?.language || 'en',
-      regulatoryContext: parsed.metadata?.regulatoryContext,
-    };
-
-    const sections: DetectedSection[] = (parsed.sections || []).map((s: any) => ({
-      code: s.code || '',
-      title: s.title || '',
-      charStart: s.charStart || 0,
-      charEnd: s.charEnd || 0,
-      content: content.slice(s.charStart || 0, s.charEnd || 0).slice(0, 2000),
-    }));
-
-    const entities: ExtractedEntity[] = (parsed.entities || []).map((e: any) => ({
-      text: e.text,
-      type: e.type || 'study',
-      confidence: e.confidence || 0.5,
-      positions: findEntityPositions(content, e.text),
-    }));
-
-    return { metadata, sections, entities };
-  } catch {
-    return {
-      metadata: { documentType: 'Other', language: 'en' },
-      sections: [],
-      entities: [],
-    };
+  // An unreadable classification fails the job; it was stored as a
+  // documentType 'Other' artifact with no sections.
+  const parsed = JSON.parse(aiResult.content ?? '');
+  if (!parsed?.metadata || typeof parsed.metadata !== 'object') {
+    throw new Error('classification reply had no metadata');
   }
+
+  const metadata: DocumentMetadata = {
+    documentType: parsed.metadata?.documentType || 'Other',
+    submissionModule: parsed.metadata?.submissionModule,
+    therapeuticArea: parsed.metadata?.therapeuticArea,
+    compoundName: parsed.metadata?.compoundName,
+    studyId: parsed.metadata?.studyId,
+    phase: parsed.metadata?.phase,
+    language: parsed.metadata?.language || 'en',
+    regulatoryContext: parsed.metadata?.regulatoryContext,
+  };
+
+  const sections: DetectedSection[] = (parsed.sections || []).map((s: any) => ({
+    code: s.code || '',
+    title: s.title || '',
+    charStart: s.charStart || 0,
+    charEnd: s.charEnd || 0,
+    content: content.slice(s.charStart || 0, s.charEnd || 0).slice(0, 2000),
+  }));
+
+  const entities: ExtractedEntity[] = (parsed.entities || []).map((e: any) => ({
+    text: e.text,
+    type: e.type || 'study',
+    confidence: e.confidence || 0.5,
+    positions: findEntityPositions(content, e.text),
+  }));
+
+  return { metadata, sections, entities };
 }
 
 function detectFigureReferences(content: string): ExtractedFigureRef[] {
