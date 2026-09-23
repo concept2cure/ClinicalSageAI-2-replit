@@ -186,7 +186,12 @@ function mapDeviations(
   const at = (id: number) => capaByDev.get(str(id)) ?? [];
   return rows.map((dv) => ({
     id: str(dv.id), title: str(dv.description), sev: str(dv.severity), cat: str(dv.category),
-    reportable: bool(dv.is_reportable), status: str(dv.status),
+    // Assessed = severity AND safety impact recorded. Legacy rows (defaulted
+    // severity, no safety assessment) read as not assessed — which they were.
+    assessed: dv.severity != null && dv.affects_safety != null,
+    // true = prompt IRB report indicated; false = not indicated; null = not determined.
+    reportable: dv.is_reportable === null || dv.is_reportable === undefined ? null : bool(dv.is_reportable),
+    status: str(dv.status),
     capa: at(Number(dv.id)).map((c) => ({ id: str(c.deviation_id), action: str(c.action), status: str(c.status) })),
   }));
 }
@@ -407,7 +412,7 @@ export async function assembleOrgPdevDocs(orgId: number): Promise<Record<string,
        could not tell a CRITICAL deviation from a MINOR one — which is the 3-day
        versus 10-day reporting distinction — and open rendered identically to
        closed. */
-    q(`SELECT id, protocol_document_id, deviation_number, description, is_reportable, severity, category, status FROM protocol_deviations WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
+    q(`SELECT id, protocol_document_id, deviation_number, description, is_reportable, severity, affects_safety, category, status FROM protocol_deviations WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
     q(`SELECT id, protocol_document_id, category, description, unit_cost, quantity_per_subject FROM protocol_budget_items WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
     q(`SELECT protocol_document_id, target_enrollment, sponsor_payment_per_subject, indirect_rate_pct FROM protocol_budget_params WHERE protocol_document_id = ANY($1) AND organization_id = $2`),
     q(`SELECT id, protocol_document_id, reviewer_name, role, status, disposition, due_date FROM protocol_review_assignments WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),

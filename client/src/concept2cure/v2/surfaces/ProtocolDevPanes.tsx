@@ -162,7 +162,9 @@ export function AmendmentsTab({ doc, onAdd }: ListPaneProps) {
 }
 
 /* ---- Deviations & CAPA ---- */
-export function DeviationsTab({ doc, onAdd }: ListPaneProps) {
+export function DeviationsTab({ doc, onAdd, onEdit }: ListPaneProps & {
+  onEdit?: (kind: 'deviation-assess', target: { id: number; label: string }) => void;
+}) {
   const deviations = asRows(doc.deviations);
   return (
     <div className="pd-pane">
@@ -171,15 +173,24 @@ export function DeviationsTab({ doc, onAdd }: ListPaneProps) {
       {deviations.map((d) => (
         <div key={str(d.id)} className="pd-card">
           <div className="pd-card-h">
-            {/* `PG.SEV_TONE` is the canonical severity map — a hand-rolled one
-                here once put CRITICAL in the amber bucket and major in red,
-                inverting the 3-day / 10-day reporting distinction. */}
-            <span className="pg-badge" data-tone={PG.SEV_TONE[str(d.sev)] || 'warn'}>{PG.labelize(str(d.sev))}</span>
+            {/* `PG.SEV_TONE` is the canonical severity map. An unassessed deviation
+                shows no severity at all — it used to show a defaulted "Minor". */}
+            {d.assessed
+              ? <span className="pg-badge" data-tone={PG.SEV_TONE[str(d.sev)] || 'warn'}>{PG.labelize(str(d.sev))}</span>
+              : <span className="pg-badge" data-tone="warn">Assessment required</span>}
             <span className="pd-card-t">{str(d.title)}</span>
-            {Boolean(d.reportable) && <span className="pg-badge" data-tone="err">Reportable</span>}
+            {d.reportable === true && <span className="pg-badge" data-tone="err">Prompt IRB report indicated</span>}
             <PG.StatusBadge status={str(d.status)} />
           </div>
-          <div className="pd-card-sum"><span className="pd-chip">{str(d.cat)}</span></div>
+          <div className="pd-card-sum">
+            {str(d.cat) && <span className="pd-chip">{str(d.cat)}</span>}
+            {onEdit && d.status !== 'closed' && (
+              <button type="button" className="pde-rowbtn"
+                onClick={() => onEdit('deviation-assess', { id: Number(d.id), label: str(d.title) })}>
+                {d.assessed ? 'Re-assess' : 'Assess'}
+              </button>
+            )}
+          </div>
           {/* CAPA is a child register of the deviation: a deviation logged
               before any corrective action was agreed has none. */}
           <div className="pd-capa"><div className="pd-capa-h">CAPA actions</div>

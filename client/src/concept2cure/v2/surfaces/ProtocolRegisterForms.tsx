@@ -52,6 +52,14 @@ function declared(v: string | undefined): boolean | undefined {
   return v === 'yes' ? true : v === 'no' ? false : undefined;
 }
 
+/** '' (not assessed) is sent as absent; the deviation then reads "assessment required". */
+const SEVERITY_OPTIONS = [
+  { value: '', label: 'Not assessed' },
+  { value: 'minor', label: 'Minor' },
+  { value: 'major', label: 'Major' },
+  { value: 'critical', label: 'Critical' },
+];
+
 const FORMS: Record<RegisterKind, C2CFormConfig> = {
   risk: {
     eyebrow: 'Protocol · risk register', title: 'Add protocol risk',
@@ -98,12 +106,16 @@ const FORMS: Record<RegisterKind, C2CFormConfig> = {
   },
   deviation: {
     eyebrow: 'Protocol · deviations', title: 'Report deviation',
-    sub: 'ICH E6(R2) §4.5 — protocol compliance. Recorded as a governed action.',
+    sub: 'Every deviation is documented and explained (ICH E6(R2) 4.5.3). Severity and safety impact are your assessment — leave them "Not assessed" if you have not made one. Recorded as a governed action.',
     governed: true, submitLabel: 'Report deviation',
     fields: [
       { key: 'description', label: 'What happened', type: 'textarea', required: true, placeholder: 'Describe the deviation from the protocol' },
       { key: 'category', label: 'Category', type: 'select', options: ['enrollment', 'consent', 'procedure', 'safety', 'data', 'other'], default: 'procedure', half: true },
-      { key: 'severity', label: 'Severity', type: 'seg', options: ['minor', 'major', 'critical'], default: 'minor', half: true },
+      /* No preselected severity: a preselected "minor" submitted an assessment
+         the reporter never made. "Not assessed" is sent as absent. */
+      { key: 'severity', label: 'Severity', type: 'seg', options: SEVERITY_OPTIONS, half: true },
+      { key: 'affectsSafety', label: 'Affected subject safety?', type: 'seg', options: DECLARATION_OPTIONS, half: true,
+        desc: 'Safety, rights or welfare. Leave "Not assessed" if you have not assessed it — it is not the same as No.' },
       { key: 'rootCause', label: 'Root cause (if known)', type: 'textarea' },
       REASON_FIELD,
     ],
@@ -176,7 +188,11 @@ export async function submitProtocolRegister(
       break;
     case 'deviation':
       path = '/api/protocol-deviations/deviations';
-      body = { ...compact({ description: v.description, category: v.category, severity: v.severity, rootCause: v.rootCause, reason }), protocolDocumentId };
+      body = {
+        ...compact({ description: v.description, category: v.category, severity: v.severity, rootCause: v.rootCause, reason }),
+        protocolDocumentId,
+        ...(declared(v.affectsSafety) === undefined ? {} : { affectsSafety: declared(v.affectsSafety) }),
+      };
       break;
     case 'objective':
       path = `/api/protocol-development/documents/${protocolDocumentId}/objectives`;

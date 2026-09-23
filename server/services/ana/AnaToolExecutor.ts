@@ -10756,7 +10756,7 @@ registerToolHandler('report_protocol_deviation', async (input, ctx) => {
       affectsSafety: typeof input.affects_safety === 'boolean' ? input.affects_safety : undefined,
       rootCause: typeof input.root_cause === 'string' ? input.root_cause : null,
     });
-    return { deviationId: r.id, reportable: r.reportable, timelinessDays: r.timelinessDays };
+    return { deviationId: r.id, assessed: r.assessed, reportabilityStatus: r.status, reportable: r.reportable, basis: r.basis, conditionalClocks: r.conditionalClocks };
   });
 });
 

@@ -2490,6 +2490,17 @@ export const C2C_MIGRATION_FILES = [
   // to_regclass; above the final pair, which ci:migration-set-order pins last.
   'migrations/20260922e_amendment_declarations_nullable.sql',
 
+  // ── Protocol deviations: unassessed is NOT ASSESSED, not "minor" ─────────
+  // Registered 2026-09-22. severity / category / is_reportable were NOT NULL
+  // with defaults that stored an unassessed deviation as minor and not
+  // reportable. DROP NOT NULL + DROP DEFAULT, plus ADD COLUMN IF NOT EXISTS for
+  // affects_safety and the assessment record. No DROP of any object, no
+  // backfill: legacy rows keep their values and read as "assessment required"
+  // because affects_safety is NULL. The creator, 20260629_protocol_deviations,
+  // is install-fresh-only and was amended in place to match. Guarded on
+  // to_regclass; above the final pair, which ci:migration-set-order pins last.
+  'migrations/20260922f_protocol_deviation_assessment.sql',
+
   // ── C-48 Stage 1: unify the two org-uuid identity spaces ─────────────────
   // Backfills identity.organizations from public.organizations.uuid (the
   // canonical per-tenant uuid) + a forward-sync trigger, so a single

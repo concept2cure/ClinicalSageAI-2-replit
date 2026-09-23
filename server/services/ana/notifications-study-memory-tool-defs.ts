@@ -502,14 +502,15 @@ export const REVIEW_AMENDMENT: AnaTool = {
 export const REPORT_PROTOCOL_DEVIATION: AnaTool = {
   name: 'report_protocol_deviation',
   description:
-    "Report a protocol deviation. Category + severity (and whether it affects safety) drive the deterministic reportability + timeliness assessment (45 CFR 46.108 / ICH E6). Governed + audited.",
+    "Record a protocol deviation. Severity and affects_safety are a PERSON'S assessment: pass them only when the user has stated them — never propose, infer or default them yourself. Omitted, the deviation is recorded as NOT ASSESSED; it then reports 'assessment_required' and cannot be closed until a person assesses it on the deviation register. Returns what the assessment indicates (prompt IRB report indicated / not indicated / assessment required) with its basis, and the fixed regulatory clocks that apply only if their condition is separately determined (EU CTR Art. 52 serious breach, 7 days; 21 CFR 812.150(a)(4) device emergency deviation, 5 working days). There are no other fixed day counts — relay the status and basis as given. Governed + audited.",
   input_schema: {
     type: 'object',
     properties: {
       protocol_document_id: { type: 'number' }, description: { type: 'string' },
       category: { type: 'string', enum: ['enrollment', 'consent', 'procedure', 'safety', 'data', 'other'] },
-      severity: { type: 'string', enum: ['minor', 'major', 'critical'] },
-      affects_safety: { type: 'boolean' }, root_cause: { type: 'string' }, reason: { type: 'string' },
+      severity: { type: 'string', enum: ['minor', 'major', 'critical'], description: "Only the severity the user stated. Omit if they did not." },
+      affects_safety: { type: 'boolean', description: "Only if the user stated whether it affected subject safety. Omit if not." },
+      root_cause: { type: 'string' }, reason: { type: 'string' },
     },
     required: ['protocol_document_id', 'description'],
   },

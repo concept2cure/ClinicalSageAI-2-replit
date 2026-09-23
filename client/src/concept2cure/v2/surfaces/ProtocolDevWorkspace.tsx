@@ -230,7 +230,7 @@ function RegisterTabBody({ tab, doc, canWrite, onReg, onEdit }: BodyProps): Reac
     case 'milestones': return <MilestonesTab doc={doc} onAdd={() => onReg('milestone')} />;
     case 'budget': return <BudgetTab doc={doc} onEdit={canWrite ? onEdit : undefined} />;
     case 'amendments': return <AmendmentsTab doc={doc} onAdd={() => onReg('amendment')} />;
-    case 'deviations': return <DeviationsTab doc={doc} onAdd={() => onReg('deviation')} />;
+    case 'deviations': return <DeviationsTab doc={doc} onAdd={() => onReg('deviation')} onEdit={canWrite ? onEdit : undefined} />;
     case 'reviews': return <ReviewsTab doc={doc} onEdit={canWrite ? onEdit : undefined} />;
     case 'consent': return <ConsentTab doc={doc} />;
     default: return null;
@@ -416,6 +416,7 @@ const FORM_DONE: Record<PdevFormKind, string> = {
   'assessment-add': 'Assessment added — the schedule of assessments is re-read from the record.',
   'assessment-remove': 'Assessment removed — the schedule of assessments is re-read from the record.',
   'risk-residual': 'Residual rating recorded — the risk register is re-read from the record.',
+  'deviation-assess': 'Assessment recorded — what it indicates about reporting is the deviation engine’s.',
   'budget-item': 'Budget line added — the roll-up is the budget engine’s.',
   'budget-params': 'Feasibility parameters saved — the verdict is the budget engine’s.',
   'review-request': 'Review requested — the reviewer is on the record.',
