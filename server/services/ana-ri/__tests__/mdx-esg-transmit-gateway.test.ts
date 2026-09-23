@@ -469,3 +469,49 @@ describe('the package gate travels with the transmit, wherever it is invoked fro
     expect(httpsRequests).toHaveLength(0);
   });
 });
+
+/* 2026-09-23 (W5/D7, round-2 review). The transmit guard reports the package
+   checks that FAILED without blocking (a flag-gated check not enforced here).
+   This handler dropped them from both its audit row and its returned data, and
+   the shared governed transmit kept them off its sign record, so a 510(k) that
+   went out failing a check left no transmit-time trace of it. */
+describe('a check that failed without blocking is recorded, not dropped', () => {
+  it('carries the failed dtd-self-contained check and the guard warnings on the audit row, the sign ledger and the returned data', async () => {
+    configureEsgCredentials();
+    const savedDtd = process.env.ECTD_REQUIRE_DTD;
+    delete process.env.ECTD_REQUIRE_DTD; // report-only: the check fails, the send goes ahead
+    try {
+      storedBundle.value = {
+        ...(storedBundle.value as Record<string, unknown>),
+        dtdStatus: { selfContained: false, missing: ['ich-ectd-3-2.dtd'], missingStylesheets: [] },
+      };
+
+      const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
+      expect(r.success, `handler refused: ${r.message}`).toBe(true);
+      expect(httpsRequests).toHaveLength(1);
+
+      const failed = expect.arrayContaining([expect.stringMatching(/^dtd-self-contained: missing: ich-ectd-3-2\.dtd/)]);
+      // This descriptor records no built region, which the guard warns about.
+      const warned = expect.arrayContaining([expect.stringMatching(/region it was built for/)]);
+
+      // The returned data.
+      expect(r.data?.preTransmitFailedChecks).toEqual(failed);
+      expect(r.data?.preTransmitWarnings).toEqual(warned);
+
+      // The agent.ana.* audit row.
+      expect(audit.logAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'agent.ana.k510_workflow.transmit',
+          details: expect.objectContaining({ preTransmitFailedChecks: failed, preTransmitWarnings: warned }),
+        }),
+      );
+
+      // The governed `sign` ledger entry the shared transmit wrote.
+      const ledger = recordGovernedAction.mock.calls[0]![1] as any;
+      expect(ledger.payload.preTransmitFailedChecks).toEqual(failed);
+      expect(ledger.payload.preTransmitWarnings).toEqual(warned);
+    } finally {
+      if (savedDtd === undefined) delete process.env.ECTD_REQUIRE_DTD; else process.env.ECTD_REQUIRE_DTD = savedDtd;
+    }
+  });
+});
