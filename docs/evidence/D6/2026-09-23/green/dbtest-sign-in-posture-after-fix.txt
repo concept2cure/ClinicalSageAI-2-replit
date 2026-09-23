@@ -1,4 +1,4 @@
-# GREEN: tests/db/sign-in-posture.dbtest.ts on the final D6 tree merged with origin (F-26 guard in mfaService), 2026-09-23T10:01:04Z. Database: c2c_d6_repro
+# GREEN: tests/db/sign-in-posture.dbtest.ts on the final D6 tree (base 902c2607d + review follow-ups), 2026-09-23T10:37:03Z. Database: c2c_d6_repro
 
 
  RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
@@ -7,7 +7,7 @@ stderr | tests/db/sign-in-posture.dbtest.ts
 DATABASE_URL_DEV not found, using DATABASE_URL as fallback
 
 stdout | tests/db/sign-in-posture.dbtest.ts
-[database] Database connection successful { timestamp: '2026-09-23T10:01:06.803Z', poolSize: 1 }
+[database] Database connection successful { timestamp: '2026-09-23T10:37:06.599Z', poolSize: 1 }
 
 stdout | tests/db/sign-in-posture.dbtest.ts
 [database] Database connection successful
@@ -19,55 +19,55 @@ stdout | tests/db/sign-in-posture.dbtest.ts
 ✅ Platform health/auth routes mounted
 
 stdout | tests/db/sign-in-posture.dbtest.ts
-[mfa] MFA enabled for user 270
+[mfa] MFA enabled for user 426
 
 stdout | tests/db/sign-in-posture.dbtest.ts
-[mfa] MFA enabled for user 272
+[mfa] MFA enabled for user 428
 
 stdout | tests/db/sign-in-posture.dbtest.ts
-[mfa] MFA disabled for user 272
+[mfa] MFA disabled for user 428
 
 stdout | tests/db/sign-in-posture.dbtest.ts
-[mfa] MFA enabled for user 273
+[mfa] MFA enabled for user 429
 
- ✓ tests/db/sign-in-posture.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 4ms
  ✓ tests/db/sign-in-posture.dbtest.ts > the posture is the one production runs in > the three accounts are what their names say 2ms
 stderr | tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > email: the verified sign-in, the session and /api/users/me agree
 {
-  "timestamp": "2026-09-23T10:01:35.000Z",
+  "timestamp": "2026-09-23T10:37:35.000Z",
   "message": "[email-service] SMTP not configured — login OTP email not sent (dev)",
   "context": {
-    "to": "dbtsp-email-30218_mudxnirg@example.invalid"
+    "to": "dbtsp-email-6555_mudyxt2o@example.invalid"
   }
 }
 
+ ✓ tests/db/sign-in-posture.dbtest.ts > an account with an authenticator is told it has one (VSR-001 §13.3 item 4) > the challenge, the verified sign-in, the session and /api/users/me all say so 164ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > email: the verified sign-in, the session and /api/users/me agree 64ms
 stderr | tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > disabled: the verified sign-in, the session and /api/users/me agree
 {
-  "timestamp": "2026-09-23T10:01:35.000Z",
+  "timestamp": "2026-09-23T10:37:35.000Z",
   "message": "[email-service] SMTP not configured — login OTP email not sent (dev)",
   "context": {
-    "to": "dbtsp-disabled-30218_mudxnirg@example.invalid"
+    "to": "dbtsp-disabled-6555_mudyxt2o@example.invalid"
   }
 }
 
- ✓ tests/db/sign-in-posture.dbtest.ts > an account with an authenticator is told it has one (VSR-001 §13.3 item 4) > the challenge, the verified sign-in, the session and /api/users/me all say so 136ms
- ✓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > email: the verified sign-in, the session and /api/users/me agree 59ms
 stderr | tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > a password change the account owes is reported, not overwritten with false
 {
-  "timestamp": "2026-09-23T10:01:35.000Z",
+  "timestamp": "2026-09-23T10:37:35.000Z",
   "message": "[email-service] SMTP not configured — login OTP email not sent (dev)",
   "context": {
-    "to": "dbtsp-email-30218_mudxnirg@example.invalid"
+    "to": "dbtsp-email-6555_mudyxt2o@example.invalid"
   }
 }
 
- ✓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > disabled: the verified sign-in, the session and /api/users/me agree 52ms
- ✓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > a password change the account owes is reported, not overwritten with false 45ms
- ✓ tests/db/sign-in-posture.dbtest.ts > before any credential, every address gets the same answer > enterprise check-email does not tell an enrolled account from an unknown address 8ms
- ✓ tests/db/sign-in-posture.dbtest.ts > the enterprise router refuses setup over an enrolled authenticator, and says so (F-26) > 409 MFA_ALREADY_ENABLED, no secret handed out, the enrolled secret untouched 7ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > disabled: the verified sign-in, the session and /api/users/me agree 60ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > a password change the account owes is reported, not overwritten with false 66ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > before any credential, every address gets the same answer > enterprise check-email does not tell an enrolled account from an unknown address 12ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > the enterprise router refuses setup over an enrolled authenticator, and says so (F-26) > 409 MFA_ALREADY_ENABLED, no secret handed out, the enrolled secret untouched 11ms
 
  Test Files  1 passed (1)
       Tests  8 passed (8)
-   Start at  10:01:04
-   Duration  3.48s (transform 1.17s, setup 60ms, import 173ms, tests 3.01s, environment 0ms)
+   Start at  10:37:04
+   Duration  4.24s (transform 1.40s, setup 71ms, import 194ms, tests 3.67s, environment 0ms)
 

@@ -406,12 +406,15 @@ const createLimiter = (opts: {
   windowMs: number;
   max: number;
   keyGenerator?: (req: Request) => string;
+  /** Count only answers of 400 and above (see rateLimiters.auth). */
+  countFailuresOnly?: boolean;
 }) => {
   return rateLimit({
     windowMs: opts.windowMs,
     max: opts.max,
     standardHeaders: true,
     legacyHeaders: false,
+    ...(opts.countFailuresOnly ? { skipSuccessfulRequests: true } : {}),
     // Keyed by req.ip, express-rate-limit's default (IPv6 bucketed by /56),
     // unless a caller names a key. It was the left-most X-Forwarded-For entry
     // with validation off: a sign-in client that sent a new value each time got
@@ -436,7 +439,15 @@ export const rateLimiters = {
   global: createLimiter(config.rateLimits.global),
   api: createLimiter(config.rateLimits.api),
   ai: createLimiter(config.rateLimits.ai),
-  auth: createLimiter(config.rateLimits.auth),
+  // Every /api/auth request, at 5 per 15 minutes in production. With one
+  // trusted hop (server/config/trust-proxy.ts) a CloudFront-routed request's
+  // address is the CloudFront edge, so this budget is shared by everyone that
+  // edge serves until the load balancer accepts CloudFront alone and two hops
+  // reach the user (D1). Counting every request, a few SSO sign-ins (initiate
+  // plus callback), signups or metadata reads would refuse the next person at
+  // that edge for 15 minutes. It counts failures: the attempts it exists to
+  // slow. The per-account lockout and the sign-in route limits stand beside it.
+  auth: createLimiter({ ...config.rateLimits.auth, countFailuresOnly: true }),
   write: createLimiter(config.rateLimits.write),
   upload: createLimiter(config.rateLimits.upload),
   export: createLimiter(config.rateLimits.export),

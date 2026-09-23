@@ -11,6 +11,7 @@ import {
   mintPasswordSetupToken,
   passwordSetupUrl,
   resolveAppBaseUrl,
+  PublicOriginNotConfiguredError,
 } from '../services/password-setup-token';
 
 const log = createScopedLogger('tenant-users');
@@ -122,11 +123,9 @@ interface InvitationDelivery {
  */
 async function issueInvitation(
   req: any,
-  args: { userId: number; email: string; role: string; organizationId: number }
+  args: { userId: number; email: string; role: string; organizationId: number; appBaseUrl: string }
 ): Promise<InvitationDelivery> {
-  // First, so a deployment with no public origin (production without APP_URL:
-  // the Host header is never used for an emailed link) stores no token.
-  const appBaseUrl = resolveAppBaseUrl(req);
+  const { appBaseUrl } = args;
   const setup = mintPasswordSetupToken(INVITATION_TTL_MS);
   // tenant-isolation-safe: users is a global identity table; this id is the row atomicCreateUser just created for the organization the caller was verified to administer (authorizeOrgAccess), inside this same request.
   await pool.query(
@@ -427,6 +426,23 @@ router.post('/', async (req, res) => {
 
     if (!(await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }))) return;
 
+    // The origin a new member's activation link is built on, resolved BEFORE
+    // anything is created. In production it is APP_URL or nothing, never the
+    // Host header (D6). Creating the account and then failing to issue its link
+    // left a member who could not sign in, whose forgot-password was refused
+    // for the same reason, and who could not be invited again (USER_EXISTS).
+    let appBaseUrl: string;
+    try {
+      appBaseUrl = resolveAppBaseUrl(req);
+    } catch (err) {
+      if (!(err instanceof PublicOriginNotConfiguredError)) throw err;
+      log.error('Member creation refused: no public origin configured', err);
+      return res.status(503).json({
+        error: 'PUBLIC_ORIGIN_NOT_CONFIGURED',
+        message: 'Members cannot be added: this deployment has no public address configured (APP_URL), so no activation link can be sent.',
+      });
+    }
+
     // Seat-licensing gate: a new member/invitation consumes a purchased seat.
     // Report-only by default; blocks only when SEAT_LIMIT_ENFORCEMENT=enforce.
     {
@@ -530,6 +546,7 @@ router.post('/', async (req, res) => {
           email: validatedData.email,
           role: validatedData.role,
           organizationId,
+          appBaseUrl,
         });
       } catch (err) {
         log.error('Invitation could not be issued for the new member', err);
