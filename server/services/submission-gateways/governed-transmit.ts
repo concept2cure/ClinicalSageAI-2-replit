@@ -55,7 +55,7 @@ import { recordFiledSequence } from '../ectd/package-content-change';
 import { isFiledLeaf } from '../ectd/package-sequence-lifecycle';
 import {
   assessPackageContent,
-  isCurrentContentFingerprint,
+  isContentFingerprintOfAnyScheme,
   CONTENT_DRIFT_MESSAGE,
   unprovenMessage,
   type ContentAssessment,
@@ -141,9 +141,13 @@ export interface ResolvedBundle {
   // (device formats) too.
   builtRegion?: Region;
   // Fingerprint of the content (sections, mappings, declared placements,
-  // artifact content) the zip was built from, as the assemble route recorded
-  // it. Recomputed from the database at transmit; a difference refuses. Only
-  // a value from the CURRENT scheme is carried — anything else is unproven.
+  // artifact content, each artifact's approval) the zip was built from, as the
+  // assemble route recorded it. Recomputed from the database at transmit; a
+  // difference refuses. A well-formed value of ANY scheme is carried, and
+  // assessPackageContent reads an older scheme as unproven with the wording
+  // that is true of it (2026-09-23, W5/D7, round-2 skeptic: only the current
+  // scheme used to be carried, so an older one was refused as "records no
+  // fingerprint"); anything else is dropped and reads as absent.
   contentFingerprint?: string;
   /** The sequence this bundle files, what it declares itself to be, and the
    *  leaf inventory the packager published — the record the NEXT sequence
@@ -262,7 +266,7 @@ async function loadStoredBundle(
     dtdStatus: isDtdStatus(stored.dtdStatus) ? stored.dtdStatus : undefined,
     regionalBackbone: isRegionalBackbone(stored.regionalBackbone) ? stored.regionalBackbone : undefined,
     builtRegion: builtRegionOf(stored.region),
-    contentFingerprint: isCurrentContentFingerprint(stored.contentFingerprint) ? stored.contentFingerprint : undefined,
+    contentFingerprint: isContentFingerprintOfAnyScheme(stored.contentFingerprint) ? stored.contentFingerprint : undefined,
     sequence: typeof stored.sequence === 'string' && /^\d{4}$/.test(stored.sequence) ? stored.sequence : undefined,
     submissionType: typeof stored.submissionType === 'string' ? stored.submissionType : undefined,
     // Shape-checked with the SAME guard the reader applies, and dropped whole
@@ -521,14 +525,18 @@ export async function executeGovernedTransmit(
   }
 
   // Content integrity: the zip must still reflect the package. The descriptor
-  // carries the fingerprint of the sections, mappings, declared placements and
-  // artifact content it was built from; it is recomputed from the database
-  // here and any difference refuses. The mapping routes clear a stale bundle
-  // when a mapping changes, but an artifact edited after assembly changes
-  // nothing on the package row — only this comparison catches it. A stored
-  // descriptor without a fingerprint (assembled before it existed) is UNKNOWN,
-  // and UNKNOWN blocks wherever descriptor trust is enforced, exactly like
-  // missing structural-validation evidence.
+  // carries the fingerprint of the sections, mappings, declared placements,
+  // artifact content and each artifact's approval it was built from; it is
+  // recomputed from the database here and any difference refuses. The mapping
+  // routes clear a stale bundle when a mapping changes, but an artifact edited
+  // after assembly — or whose approval is revoked after assembly (2026-09-23,
+  // W5/D7, round-2 skeptic: the status route marks nothing on the package) —
+  // changes nothing on the package row; only this comparison catches it. A
+  // stored descriptor without a fingerprint, or with one from an older scheme
+  // (every bundle assembled before the current CONTENT_FINGERPRINT_VERSION),
+  // is UNKNOWN, and UNKNOWN blocks wherever descriptor trust is enforced,
+  // exactly like missing structural-validation evidence; the refusal names the
+  // recovery, re-assembling the package.
   // The assessment is the one the preflight route reports, so the two never
   // disagree about a bundle. A match is kept as evidence for the sign row.
   let provenAgainst: { assembled: string; atTransmit: string } | null = null;
@@ -604,6 +612,16 @@ export async function executeGovernedTransmit(
       dtdStatus: bundle.dtdStatus,
       regionalBackbone: bundle.regionalBackbone,
       builtRegion: bundle.builtRegion,
+      // The leaves that ship, so the guard judges THIS package as it does on
+      // the sequence spine (transmitSequence hands it the packager's whole
+      // bundle). 2026-09-23 (W5/D7, round-2 skeptic): it was left out, so the
+      // Module 3 regional gate — which reads the shipped CTD sections from
+      // here — recorded a failed module3-regional-section check for every
+      // region without an authored 3.2.R template (UK, CN, AU, CH, BR, IN, KR,
+      // SG) on a package that ships a 3.2.R leaf, and with
+      // M3_REQUIRE_REGIONAL_SECTION=true refused it in production. Pinned by
+      // __tests__/governed-transmit-leaf-manifest.test.ts.
+      leafManifest: bundle.leafManifest,
     },
     environment,
     submissionType: input.submissionType,

@@ -9,10 +9,15 @@
  * into a spurious refusal (or a spurious match). It also proves the SQL-side
  * digest equals the JS digest byte for byte, which is what lets transmit skip
  * transporting artifact content.
+ *
+ * 2026-09-23 (W5/D7, round-2 skeptic): each artifact's approval (status and the
+ * version the status route approved / locked) is read too, so an approval
+ * revoked after assembly — no content change — reads as drift at transmit.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import {
+  assessPackageContent,
   fingerprintPackageContent,
   readPackageContentRows,
   sha256Hex,
@@ -38,7 +43,10 @@ CREATE TABLE concept2cure_artifacts (
   content TEXT NOT NULL,
   content_hash TEXT,
   version INTEGER NOT NULL DEFAULT 1,
-  ctd_section TEXT
+  ctd_section TEXT,
+  status TEXT NOT NULL DEFAULT 'draft',
+  approved_version_id INTEGER,
+  published_version_id INTEGER
 );
 CREATE TABLE c2c_artifact_section_map (
   id SERIAL PRIMARY KEY,
@@ -71,11 +79,11 @@ beforeAll(async () => {
       (3, 'sec_3', ${ORG}, ${PKG}, 'cover-letter', 'Cover Letter', 0),
       (4, 'sec_4', ${ORG}, ${OTHER_PKG}, '2.5', 'Clinical Overview', 0),
       (5, 'sec_5', ${OTHER_ORG}, ${PKG}, 'labeling', 'Labeling', 3);
-    INSERT INTO concept2cure_artifacts (id, artifact_id, project_id, organization_id, title, content, version, ctd_section) VALUES
-      (1, 'artifact_co', 3, ${ORG}, 'Clinical overview', $$${TRICKY}$$, 1, NULL),
-      (2, 'artifact_desc', 3, ${ORG}, 'Description', 'Desc', 3, '3.2.P.1'),
-      (3, 'artifact_other', 3, ${OTHER_ORG}, 'Other org', 'Other content', 1, NULL),
-      (4, 'artifact_empty', 3, ${ORG}, 'Empty', '', 1, NULL);
+    INSERT INTO concept2cure_artifacts (id, artifact_id, project_id, organization_id, title, content, version, ctd_section, status, approved_version_id, published_version_id) VALUES
+      (1, 'artifact_co', 3, ${ORG}, 'Clinical overview', $$${TRICKY}$$, 1, NULL, 'approved', 1, NULL),
+      (2, 'artifact_desc', 3, ${ORG}, 'Description', 'Desc', 3, '3.2.P.1', 'locked', 3, 3),
+      (3, 'artifact_other', 3, ${OTHER_ORG}, 'Other org', 'Other content', 1, NULL, 'approved', 1, NULL),
+      (4, 'artifact_empty', 3, ${ORG}, 'Empty', '', 1, NULL, 'draft', NULL, NULL);
     INSERT INTO c2c_artifact_section_map (org_id, artifact_id, section_db_id) VALUES
       (${ORG}, 1, 1),        -- ours
       (${ORG}, 2, 2),        -- ours
@@ -92,11 +100,11 @@ afterAll(async () => {
 
 /** `sortOrder` mirrors the seeded sort_order of each section. */
 const expectedRows = (): PackageContentRow[] => [
-  { sectionDbId: 1, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 2, artifactDbId: 1, title: 'Clinical overview', version: 1, ctdSection: null, contentSha256: sha256Hex(TRICKY) },
-  { sectionDbId: 2, sectionKey: 'module3_cmc', sectionLabel: 'Module 3', sortOrder: 1, artifactDbId: 2, title: 'Description', version: 3, ctdSection: '3.2.P.1', contentSha256: sha256Hex('Desc') },
-  { sectionDbId: 2, sectionKey: 'module3_cmc', sectionLabel: 'Module 3', sortOrder: 1, artifactDbId: 4, title: 'Empty', version: 1, ctdSection: null, contentSha256: sha256Hex('') },
-  { sectionDbId: 3, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0, artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null },
-  { sectionDbId: 5, sectionKey: 'labeling', sectionLabel: 'Labeling', sortOrder: 3, artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null },
+  { sectionDbId: 1, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 2, artifactDbId: 1, title: 'Clinical overview', version: 1, ctdSection: null, contentSha256: sha256Hex(TRICKY), filable: true },
+  { sectionDbId: 2, sectionKey: 'module3_cmc', sectionLabel: 'Module 3', sortOrder: 1, artifactDbId: 2, title: 'Description', version: 3, ctdSection: '3.2.P.1', contentSha256: sha256Hex('Desc'), filable: true },
+  { sectionDbId: 2, sectionKey: 'module3_cmc', sectionLabel: 'Module 3', sortOrder: 1, artifactDbId: 4, title: 'Empty', version: 1, ctdSection: null, contentSha256: sha256Hex(''), filable: false },
+  { sectionDbId: 3, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0, artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null, filable: null },
+  { sectionDbId: 5, sectionKey: 'labeling', sectionLabel: 'Labeling', sortOrder: 3, artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null, filable: null },
 ];
 
 describe('readPackageContentRows on a real engine', () => {
@@ -124,5 +132,44 @@ describe('readPackageContentRows on a real engine', () => {
     const rows = await readPackageContentRows(client, PKG, OTHER_ORG);
     // The other org's mapping of artifact 3 into section 1 and of artifact 1 into section 5 are ITS content.
     expect(rows.map((r) => [r.sectionDbId, r.artifactDbId])).toEqual([[1, 3], [2, null], [3, null], [5, 1]]);
+  });
+
+  it('reads an approval revoked after assembly (no content change) as DRIFT, and a lock at the approved version as no change', async () => {
+    const assembled = fingerprintPackageContent(await readPackageContentRows(client, PKG, ORG));
+    expect((await assessPackageContent(client, PKG, ORG, assembled)).state).toBe('match');
+    // approved → review, as PUT …/status does: status only.
+    await pg.exec(`UPDATE concept2cure_artifacts SET status = 'review' WHERE id = 1`);
+    expect((await assessPackageContent(client, PKG, ORG, assembled)).state).toBe('drift');
+    // → draft.
+    await pg.exec(`UPDATE concept2cure_artifacts SET status = 'draft' WHERE id = 1`);
+    expect((await assessPackageContent(client, PKG, ORG, assembled)).state).toBe('drift');
+    // Re-approved at the same version: the content that ships is approved again.
+    await pg.exec(`UPDATE concept2cure_artifacts SET status = 'approved', approved_version_id = 1 WHERE id = 1`);
+    expect((await assessPackageContent(client, PKG, ORG, assembled)).state).toBe('match');
+    // approved → locked at that version (the post-approval publish lock): not a spurious drift.
+    await pg.exec(`UPDATE concept2cure_artifacts SET status = 'locked', published_version_id = 1 WHERE id = 1`);
+    expect((await assessPackageContent(client, PKG, ORG, assembled)).state).toBe('match');
+  });
+
+  /* 2026-09-23 (W5/D7, round-2 skeptic). approved → locked checks only status
+   * and records published_version_id = the current version, so an approved v1
+   * edited to v2 and then locked reads locked at v2 — never approved. On a real
+   * engine the row the transmit recompute reads must say NOT filable. */
+  it('an artifact approved at v1, edited to v2 and then locked at v2 reads NOT filable; re-approving v2 before the lock makes it filable', async () => {
+    const filableOf1 = async () =>
+      (await readPackageContentRows(client, PKG, ORG)).find((r) => r.artifactDbId === 1 && r.sectionDbId === 1)?.filable;
+    // Approved at v1 (the status route records approved_version_id = 1).
+    await pg.exec(`UPDATE concept2cure_artifacts SET status = 'approved', approved_version_id = 1, published_version_id = NULL WHERE id = 1`);
+    expect(await filableOf1()).toBe(true);
+    // PUT …/artifacts/:id edits it: version bumps, status stays 'approved'.
+    await pg.exec(`UPDATE concept2cure_artifacts SET version = 2, content = 'UNREVIEWED' WHERE id = 1`);
+    expect(await filableOf1()).toBe(false);
+    // approved → locked: published_version_id = the current version.
+    await pg.exec(`UPDATE concept2cure_artifacts SET status = 'locked', published_version_id = 2 WHERE id = 1`);
+    expect(await filableOf1()).toBe(false);
+    // The way back: locked → draft → review → approved (records v2) → locked (v2).
+    await pg.exec(`UPDATE concept2cure_artifacts SET status = 'approved', approved_version_id = 2 WHERE id = 1`);
+    await pg.exec(`UPDATE concept2cure_artifacts SET status = 'locked', published_version_id = 2 WHERE id = 1`);
+    expect(await filableOf1()).toBe(true);
   });
 });
