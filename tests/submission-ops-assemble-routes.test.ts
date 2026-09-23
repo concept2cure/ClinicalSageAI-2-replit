@@ -192,9 +192,16 @@ const lockedPkg = (metadata: Record<string, unknown> = { foo: 'bar', regulatory:
 /** A mapped artifact row. `status` is a real column (NOT NULL, default
  *  'draft'); the double used to omit it, which modelled a row the database
  *  cannot hold. A package that is meant to transmit holds approved artifacts,
- *  so that is the default here; the LEAF-UNAPPROVED cases pass one explicitly. */
+ *  so that is the default here; the LEAF-UNAPPROVED cases pass one explicitly.
+ *  2026-09-23 (W5/D7, round-2 skeptic): the row carries the version the status
+ *  route recorded when it approved (approvedVersionId) or locked
+ *  (publishedVersionId) the artifact — the current version, as that route
+ *  writes it. Status alone no longer makes an artifact filable; the cases that
+ *  edit an approved artifact override these. */
 const art = (n: string, ctdSection: string | null, id = 1, status = 'approved') => ({
   artifactDbId: id, artifactId: `artifact_${n}`, title: `Artifact ${n}`, content: `Real content ${n}`, version: 1, ctdSection, status,
+  approvedVersionId: status === 'approved' || status === 'locked' ? 1 : null,
+  publishedVersionId: status === 'locked' ? 1 : null,
 });
 /** Assembly is a governed transition: the operator's reason is REQUIRED. */
 const REASON = { reason: 'Assemble the locked package for agency transmit' };
@@ -425,8 +432,8 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(res.status).toBe(200);
     expect(dbState.updateSet.metadata.bundle.contentFingerprint).toBe(
       fingerprintPackageContent([
-        { sectionDbId: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 2, artifactDbId: 1, title: co.title, version: 1, ctdSection: null, contentSha256: sha256Hex(co.content) },
-        { sectionDbId: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description and Composition', sortOrder: 1, artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null },
+        { sectionDbId: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 2, artifactDbId: 1, title: co.title, version: 1, ctdSection: null, contentSha256: sha256Hex(co.content), filable: true },
+        { sectionDbId: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description and Composition', sortOrder: 1, artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null, filable: null },
       ]),
     );
   });
@@ -456,8 +463,8 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(res.body.data.bundle.format).toBe('estar');
     expect(dbState.updateSet.metadata.bundle.contentFingerprint).toBe(
       fingerprintPackageContent([
-        { sectionDbId: 21, sectionKey: 'device-description', sectionLabel: 'Device Description', sortOrder: 3, artifactDbId: 4, title: dd.title, version: 1, ctdSection: null, contentSha256: sha256Hex(dd.content) },
-        { sectionDbId: 22, sectionKey: 'labeling', sectionLabel: 'Labeling', sortOrder: 4, artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null },
+        { sectionDbId: 21, sectionKey: 'device-description', sectionLabel: 'Device Description', sortOrder: 3, artifactDbId: 4, title: dd.title, version: 1, ctdSection: null, contentSha256: sha256Hex(dd.content), filable: true },
+        { sectionDbId: 22, sectionKey: 'labeling', sectionLabel: 'Labeling', sortOrder: 4, artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null, filable: null },
       ]),
     );
   });
@@ -1083,6 +1090,118 @@ describe('only approved documents reach the agency on the package spine (LEAF-UN
     const refusal = await transmitStored();
     expect((refusal as GovernedTransmitRefusal).code).toBe('BUNDLE_VALIDATION_ERRORS');
     expect(gatewayTransmitFn).not.toHaveBeenCalled();
+  });
+
+  /* 2026-09-23 (W5/D7, round-2 skeptic). `status` alone does not say the
+   * content that ships was approved: PUT …/artifacts/:id refuses an edit only
+   * when the artifact is 'locked', and rollback, the AnA vault content update
+   * and the AnA draft-version store bump `version` without touching status. An
+   * approved v1 edited to v2 kept 'approved' and assembled with errorCount 0,
+   * so unreviewed content reached the agency labelled approved. */
+  it('an APPROVED artifact edited after approval (v2, approved v1) is LEAF-UNAPPROVED, and governed transmit refuses the stored bundle', async () => {
+    dbState.pkg = lockedPkg();
+    dbState.sections = [
+      { id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0 },
+      { id: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description and Composition', sortOrder: 1 },
+    ];
+    dbState.mappedByCall = [
+      [art('co', null, 1, 'approved')],
+      [{ ...art('dp', null, 2, 'approved'), version: 2, approvedVersionId: 1, content: 'UNREVIEWED EDIT after approval' }],
+    ];
+
+    const res = await post();
+    expect(res.status).toBe(200);
+    const f = unapproved(res);
+    expect(f).toHaveLength(1);
+    expect(f[0].severity).toBe('error');
+    expect(f[0].message).toMatch(/artifact_dp v2/);
+    expect(f[0].message).toMatch(/edited after approval/);
+    expect(f[0].message).toMatch(/v2.*v1/);
+    expect(f[0].message).not.toMatch(/artifact_co/);
+    expect(res.body.data.bundle.validation.errorCount).toBe(1);
+
+    const refusal = await transmitStored();
+    expect(refusal).toBeInstanceOf(GovernedTransmitRefusal);
+    expect((refusal as GovernedTransmitRefusal).code).toBe('BUNDLE_VALIDATION_ERRORS');
+    expect(gatewayTransmitFn).not.toHaveBeenCalled();
+  });
+
+  it('a LOCKED artifact is bound to the version it was locked at, and an approval that recorded no version is not proof', async () => {
+    dbState.pkg = lockedPkg();
+    dbState.sections = [{ id: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description and Composition', sortOrder: 0 }];
+    dbState.mappedByCall = [[
+      { ...art('lk', null, 2, 'locked'), version: 3, approvedVersionId: 3, publishedVersionId: 2 },
+      { ...art('nv', '3.2.S.1', 3, 'approved'), approvedVersionId: null },
+      art('ok', '3.2.S.2.2', 4, 'locked'),
+    ]];
+
+    const res = await post();
+    expect(res.status).toBe(200);
+    const f = unapproved(res);
+    expect(f.map((x) => x.message.match(/\(artifact_(\w+) v\d\)/)?.[1])).toEqual(['lk', 'nv']);
+    expect(f[0].message).toMatch(/edited after approval/);
+    expect(f[1].message).toMatch(/no approved version is recorded/);
+    expect(res.body.data.bundle.validation.errorCount).toBe(2);
+  });
+
+  /* 2026-09-23 (W5/D7, round-2 skeptic, round 3). The status route and the
+   * authoring-actions lock allow approved → locked checking only status, and
+   * record publishedVersionId = the CURRENT version. An approved v1 edited to v2
+   * (status stays 'approved') and then locked reads "locked at v2" — and the
+   * rule, judging a locked artifact by publishedVersionId alone, filed the
+   * never-reviewed v2 with no finding. The approval must cover the lock. */
+  it('approved v1, edited to v2, then LOCKED at v2 is LEAF-UNAPPROVED, names the way back, and governed transmit refuses', async () => {
+    dbState.pkg = lockedPkg();
+    dbState.sections = [{ id: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description and Composition', sortOrder: 0 }];
+    dbState.mappedByCall = [[
+      { ...art('lk', null, 2, 'locked'), version: 2, approvedVersionId: 1, publishedVersionId: 2, content: 'UNREVIEWED EDIT, then locked' },
+    ]];
+
+    const res = await post();
+    expect(res.status).toBe(200);
+    const f = unapproved(res);
+    expect(f).toHaveLength(1);
+    expect(f[0].severity).toBe('error');
+    expect(f[0].message).toMatch(/artifact_lk v2/);
+    expect(f[0].message).toMatch(/approved version is v1/);
+    expect(f[0].message).toMatch(/locked at v2/);
+    // A remedy the status route will accept: unlock, review, approve, lock.
+    expect(f[0].message).toMatch(/locked → draft/);
+    expect(f[0].message).toMatch(/review → approved/);
+    expect(res.body.data.bundle.validation.errorCount).toBe(1);
+
+    const refusal = await transmitStored();
+    expect(refusal).toBeInstanceOf(GovernedTransmitRefusal);
+    expect((refusal as GovernedTransmitRefusal).code).toBe('BUNDLE_VALIDATION_ERRORS');
+    expect(gatewayTransmitFn).not.toHaveBeenCalled();
+  });
+
+  /* 2026-09-23 (W5/D7, round-2 skeptic, round 3): 'approved → approved' is not
+   * a valid status transition, so the old remedy "approve it (again)" named no
+   * action the operator could take; it now names the demotion first. */
+  it('the remedy for an approved artifact edited after approval names approved → review, then review → approved', async () => {
+    dbState.pkg = lockedPkg();
+    dbState.sections = [{ id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0 }];
+    dbState.mappedByCall = [[{ ...art('co', null, 1, 'approved'), version: 2, approvedVersionId: 1 }]];
+    const res = await post();
+    const f = unapproved(res);
+    expect(f).toHaveLength(1);
+    expect(f[0].message).toMatch(/approved → review/);
+    expect(f[0].message).toMatch(/review → approved/);
+    expect(f[0].message).not.toMatch(/approve it \(again\)/);
+  });
+
+  it('the approval an artifact had at assembly is part of the content fingerprint (filable)', async () => {
+    dbState.pkg = lockedPkg();
+    dbState.sections = [{ id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0 }];
+    const co = { ...art('co', null, 1, 'approved'), version: 2, approvedVersionId: 1 };
+    dbState.mappedByCall = [[co]];
+    const res = await post();
+    expect(res.status).toBe(200);
+    const row = { sectionDbId: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0, artifactDbId: 1, title: co.title, version: 2, ctdSection: null, contentSha256: sha256Hex(co.content) };
+    expect(dbState.updateSet.metadata.bundle.contentFingerprint).toBe(fingerprintPackageContent([{ ...row, filable: false }]));
+    // …and that value is what distinguishes it: the same row, approved, is another package.
+    expect(dbState.updateSet.metadata.bundle.contentFingerprint).not.toBe(fingerprintPackageContent([{ ...row, filable: true }]));
   });
 
   it('describes the leaves that SHIP: a draft whose leaf is byte-identical to the one on file is not in the sequence, and is not a finding', async () => {
