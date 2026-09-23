@@ -337,6 +337,34 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
       // technical file as a US NDA is worse than filing nothing — but only if
       // the customer is told which of the two happened. Surfacing it is the
       // other half of routing those 33 registry rows to their true program type.
+      // The SAME silence, one field along. The server also reports when it
+      // created the program but declined the PM-spine anchor
+      // (meta.projectAnchorSkipped / projectAnchorDetail, from
+      // services/c2c/program-project-anchor.ts). Nothing read that either, so
+      // an unanchored program looked like a normal creation and surfaced weeks
+      // later as a permanently empty artifact registry: compile reports
+      // success, every section skips the bridge, and the Vault shows no
+      // Module 3 branch. Checked BEFORE the scaffold skip because it is the
+      // more consequential of the two — a scaffold can be added by hand, an
+      // anchor cannot.
+      const anchorSkipped = j?.meta?.projectAnchorSkipped as string | undefined;
+      if (anchorSkipped) {
+        const anchorDetail =
+          typeof j?.meta?.projectAnchorDetail === 'string' ? j.meta.projectAnchorDetail : '';
+        setOutcome({
+          kind: 'notice',
+          message: (
+            anchorDetail ||
+            'Project created without a project-management anchor, so governed exports cannot be ' +
+              'placed into the document registry for it.'
+          ).replace(/\s+/g, ' '),
+        });
+        setCreating(false);
+        // Same reasoning as the scaffold skip below: the project exists and is
+        // listed, and dropping the user into it is how this went unnoticed.
+        return;
+      }
+
       const skipped = j?.meta?.scaffoldSkipped as string | undefined;
       if (skipped) {
         const detail = typeof j?.meta?.scaffoldDetail === 'string' ? j.meta.scaffoldDetail : '';
