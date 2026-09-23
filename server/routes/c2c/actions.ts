@@ -63,6 +63,7 @@ import {
   persistGovernedSignatureRevocation,
   SignatureRevocationUnresolvedError,
 } from '../../services/part11/signature-persistence.js';
+import { clientIpOf } from '../../utils/client-ip';
 
 const router = Router();
 
@@ -659,10 +660,7 @@ function makeHandler(command: Command) {
         {
           // Honest attribution on the Part 11 signature row a `sign` persists:
           // the real client IP when resolvable, null otherwise (never fabricated).
-          ipAddress:
-            (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
-            req.socket?.remoteAddress ||
-            null,
+          ipAddress: clientIpOf(req),
         },
       );
       return res.json(result);

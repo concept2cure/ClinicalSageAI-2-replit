@@ -129,7 +129,6 @@ const enterpriseAuthLimiter = rateLimit({
       message: 'Too many authentication attempts. Please try again later.',
     },
   },
-  validate: { xForwardedForHeader: false },
 });
 
 /**
@@ -584,6 +583,11 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
       otpauthUrl: result.otpauthUrl,
     });
   } catch (error) {
+    // Refused by mfaService.generateSecret while a factor is enrolled (F-26);
+    // the enterprise router answered that refusal with this 500.
+    if (error instanceof mfaService.MfaAlreadyEnabledError) {
+      return res.status(409).json({ error: 'MFA_ALREADY_ENABLED', message: error.message });
+    }
     console.error('[Enterprise Auth] mfa/setup error:', error);
     res.status(500).json({ error: 'Failed to setup MFA' });
   }

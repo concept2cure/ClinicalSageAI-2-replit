@@ -101,7 +101,7 @@ export const UPDATE_GRANT_CLOSEOUT: AnaTool = {
 export const FINALIZE_GRANT_CLOSEOUT: AnaTool = {
   name: 'finalize_grant_closeout',
   description:
-    "Finalize a grant closeout. Gated: all four 2 CFR 200.344 items must be complete (final RPPR, final FFR, property inventory, invoice reconciliation); otherwise it is rejected with the outstanding items. On success the award is closed. Governed + audited (signature).",
+    "AnA cannot sign. Finalizing a grant closeout is an electronic signature and needs the user's password, so this tool does not finalize and writes nothing. Tell the user to finalize the closeout in the grant workspace.",
   input_schema: { type: 'object', properties: { award_id: { type: 'number' }, reason: { type: 'string' } }, required: ['award_id'] },
 };
 
@@ -135,7 +135,7 @@ export const SCREEN_SUBAWARD: AnaTool = {
 export const EXECUTE_SUBAWARD: AnaTool = {
   name: 'execute_subaward',
   description:
-    "Execute a subaward. Gated: rejected unless the subrecipient was screened CLEAR of SAM.gov exclusions and a risk assessment is recorded (2 CFR 200.214 / 200.332). Governed + audited (signature).",
+    "AnA cannot sign. Executing a subaward is an electronic signature and needs the user's password, so this tool does not execute it and writes nothing. Tell the user to execute it in the grant workspace.",
   input_schema: { type: 'object', properties: { subaward_id: { type: 'number' }, reason: { type: 'string' } }, required: ['subaward_id'] },
 };
 
@@ -198,7 +198,7 @@ export const REQUEST_NO_COST_EXTENSION: AnaTool = {
 export const APPROVE_NO_COST_EXTENSION: AnaTool = {
   name: 'approve_no_cost_extension',
   description:
-    "Approve a requested no-cost extension. Gated: grantee authority cannot self-approve an extension that requires sponsor prior approval (a second extension, or one over 12 months). On approval the award's period end moves out. Governed + audited (signature).",
+    "AnA cannot sign. Approving a no-cost extension is an electronic signature and needs the user's password, so this tool does not approve it and writes nothing. Tell the user to approve it in the grant workspace.",
   input_schema: { type: 'object', properties: { nce_id: { type: 'number' }, authority: { type: 'string', enum: ['grantee', 'sponsor'] }, reason: { type: 'string' } }, required: ['nce_id', 'authority'] },
 };
 

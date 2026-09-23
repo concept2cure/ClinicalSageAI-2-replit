@@ -27,7 +27,7 @@ import { resolveSignerIdentity } from '../services/part11/resolve-signer-identit
 import { createHash } from 'crypto';
 import { pool } from '../db.js';
 import { isTokenCurrentlyAcceptable, isMfaEnabled } from '../services/mfaService.js';
-import rateLimit from 'express-rate-limit';
+import { signingAttemptLimiter } from '../middleware/signing-attempt-limiter';
 import { writeChainedAuditRow } from '../services/auditService';
 import { buildVersionBindingDigest } from '../services/part11/version-binding.js';
 import { isSigningAuthorized } from '../services/part11/signing-authority';
@@ -37,6 +37,7 @@ import {
   persistElectronicSignature,
   BINDING_BASIS,
 } from '../services/part11/signature-persistence.js';
+import { clientIpOf } from '../utils/client-ip.js';
 
 const router = Router();
 
@@ -57,23 +58,13 @@ function resolveUserRole(req: Request): string {
 
 /**
  * The two pre-checks answer "is this credential right?" without signing
- * anything, so each is a guessing oracle for whoever holds the session — which
- * is exactly the person §11.200 re-authentication exists to stop. Each is
- * limited per signer (not per IP: behind the load balancer callers share
- * addresses, and the signer is the thing being guessed for), with its own
- * budget. 10 checks per 5 minutes is several attempts per signature with room
- * for typos. Until 2026-09-23 neither was limited beyond the global per-session
- * API budget (600 a minute).
+ * anything, so each is a guessing oracle for whoever holds the session. Each is
+ * limited per signer with its own budget (middleware/signing-attempt-limiter,
+ * shared with the protocol signing routes). Until 2026-09-23 neither was limited
+ * beyond the global per-session API budget (600 a minute).
  */
 function signerCheckLimiter(check: 'password' | 'mfa') {
-  return rateLimit({
-    windowMs: 5 * 60 * 1000,
-    max: 10,
-    standardHeaders: true,
-    legacyHeaders: false,
-    keyGenerator: (req: Request) => `esign-verify-${check}:user:${resolveUserId(req) ?? 'anonymous'}`,
-    message: { valid: false, error: 'TOO_MANY_ATTEMPTS' },
-  });
+  return signingAttemptLimiter(`esign-verify-${check}`, { valid: false, error: 'TOO_MANY_ATTEMPTS' });
 }
 
 /**
@@ -315,10 +306,7 @@ router.post('/sign', async (req: Request, res: Response) => {
   }
 
   const signedAt = new Date();
-  const ipAddress: string | undefined =
-    (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
-    req.socket?.remoteAddress ||
-    undefined;
+  const ipAddress: string | undefined = clientIpOf(req) ?? undefined;
 
   // §11.70 content binding: the signature must be linked to the *bytes* of the
   // version being signed, not just its id. Load the version's content

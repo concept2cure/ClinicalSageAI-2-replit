@@ -412,15 +412,11 @@ const createLimiter = (opts: {
     max: opts.max,
     standardHeaders: true,
     legacyHeaders: false,
-    validate: false,
-    keyGenerator:
-      opts.keyGenerator ||
-      ((req: Request) => {
-        // Use X-Forwarded-For for proxy setups, fallback to IP
-        const forwarded = req.headers['x-forwarded-for'];
-        const ip = Array.isArray(forwarded) ? forwarded[0] : forwarded?.split(',')[0] || req.ip;
-        return ip || 'unknown';
-      }),
+    // Keyed by req.ip, express-rate-limit's default (IPv6 bucketed by /56),
+    // unless a caller names a key. It was the left-most X-Forwarded-For entry
+    // with validation off: a sign-in client that sent a new value each time got
+    // a new allowance each time (D6, 2026-09-23).
+    ...(opts.keyGenerator ? { keyGenerator: opts.keyGenerator } : {}),
     handler: (req: Request, res: Response) => {
       console.warn(`[RATE_LIMIT] Rate limit exceeded for ${req.ip} on ${req.path}`);
       res.status(429).json({
@@ -1003,9 +999,11 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
 // COMBINED SECURITY MIDDLEWARE STACK
 // ============================================================================
 
-// HTTPS enforcement for production — redirects HTTP to HTTPS
+// HTTPS enforcement for production — redirects HTTP to HTTPS. req.protocol
+// takes X-Forwarded-Proto only from the trusted proxy (server/config/
+// trust-proxy.ts); the raw header this read is whatever the client sent.
 export function enforceHttps(req: Request, res: Response, next: NextFunction) {
-  if (config.isProduction && req.header('x-forwarded-proto') !== 'https') {
+  if (config.isProduction && req.protocol !== 'https') {
     return res.redirect(301, `https://${req.header('host')}${req.url}`);
   }
   next();

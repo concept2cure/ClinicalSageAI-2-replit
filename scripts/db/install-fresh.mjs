@@ -1643,8 +1643,14 @@ async function main() {
     if (runtimeRoleResult.mode === 'single-role') {
       console.log(
         `  • no runtime role distinct from the owner (${runtimeRoleResult.owner}). Production boot ` +
-          'will FAIL CLOSED if it connects as a superuser under RLS_ENFORCE=on — set ' +
-          'APP_SERVICE_DB_PASSWORD here and APP_DATABASE_URL for the runtime before going live.',
+          'will FAIL CLOSED under RLS_ENFORCE=on — not only for a superuser, but for ANY role ' +
+          'that owns the tables. Postgres exempts a table owner from its own policies unless ' +
+          'FORCE ROW LEVEL SECURITY is set, so on this database the policies on every ' +
+          'RLS-enabled, non-FORCE table are inert and its rows are readable across tenants. ' +
+          'Set APP_SERVICE_DB_PASSWORD here and APP_DATABASE_URL for the runtime before going ' +
+          'live. (The narrower "superuser" wording this line used to carry was true but ' +
+          'incomplete, and the boot gate it described could not see the owner case at all until ' +
+          'server/db/rlsEnforcement.ts learned to.)',
       );
     }
   });

@@ -28,6 +28,7 @@ import {
 import { sendError, sendSuccess, extractRequestContext } from './shared.js';
 import { isSigningAuthorized } from '../../services/part11/signing-authority.js';
 import { resolveSignerOrgRole } from '../../services/part11/resolve-signer-role.js';
+import { clientIpOf } from '../../utils/client-ip';
 
 /** Is E1 enabled? Mirrors the client ENABLE_ANA_DOCUMENT_STUDIO flag (off by
  * default) via an explicit env opt-in, so the route is inert until the studio
@@ -53,10 +54,7 @@ function buildSealInput(
           message: typeof body.verification.message === 'string' ? body.verification.message : undefined,
         }
       : { ok: false };
-  const ipAddress =
-    (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
-    req.socket?.remoteAddress ||
-    undefined;
+  const ipAddress = clientIpOf(req) ?? undefined;
 
   return {
     organizationId: numericOrgId,

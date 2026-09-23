@@ -57,7 +57,12 @@ export interface LeafFileDescriptor {
   filePath?: string;
   /** DECLARED file size in bytes — a claim; see `measured`. */
   fileSizeBytes?: number;
-  /** Format hint, e.g. "PDF". Inferred from the extension when omitted. */
+  /**
+   * DECLARED format, e.g. "PDF" — a claim. The file's extension decides its
+   * type when it has one (the agency reads the name); a declared format that
+   * disagrees with the extension is flagged. Used for the type only when the
+   * name has no extension.
+   */
   fileFormat?: string;
   /** DECLARED encryption — a claim; see `measured`. */
   encrypted?: boolean;
@@ -138,16 +143,45 @@ export interface FormattingReport {
 
 const MB = 1024 * 1024;
 
-/** Extract a lowercase extension token (without the dot), or '' when none. */
+/**
+ * Extract a lowercase extension token (without the dot), or '' when none.
+ *
+ * 2026-09-23 (W5/D7, round-2 skeptic, second pass): whatever followed the last
+ * dot was the extension, so 'Cover letter v1.2' had the extension '2' and a
+ * real PDF declared PDF drew a mismatch and a not-accepted warning. A suffix is
+ * an extension only when it looks like one — 1–10 letters/digits, at least one
+ * a letter ('exe', 'mp4', '7z', 'sas7bdat'); otherwise the name has none and the
+ * declared format is used.
+ * 2026-09-23 (W5/D7, residual repair): the limit was 5, so a real longer
+ * extension ('dm.sas7bdat', 'report.numbers') read as none and the type was
+ * judged from the declaration instead of the name the agency reads.
+ */
 function ext(fileName: string): string {
   const i = fileName.lastIndexOf('.');
-  return i >= 0 ? fileName.slice(i + 1).toLowerCase() : '';
+  if (i < 0) return '';
+  const suffix = fileName.slice(i + 1).toLowerCase();
+  return /^(?=[a-z0-9]*[a-z])[a-z0-9]{1,10}$/.test(suffix) ? suffix : '';
 }
 
-/** The leaf's format as given: declared, else the extension, else 'pdf' when the bytes are a PDF. */
-function leafFormat(leaf: LeafFileDescriptor): string {
-  return leaf.fileFormat || ext(leaf.fileName) || (leaf.measured?.isPdf ? 'pdf' : '');
+/**
+ * Where a leaf's type is judged from: its extension when it has one, else its
+ * declared format, else 'pdf' when its measured bytes are a PDF.
+ *
+ * 2026-09-23 (W5/D7, round-2 skeptic): the declared format came FIRST, so a
+ * declaration overrode the name the agency reads — payload.exe declared 'PDF'
+ * was 'conformant'. The extension now decides; the declaration is checked
+ * against it by the caller.
+ */
+function leafFormat(leaf: LeafFileDescriptor): { format: string; from: 'extension' | 'declared' | 'bytes' | null } {
+  const e = ext(leaf.fileName);
+  if (e) return { format: e, from: 'extension' };
+  if (leaf.fileFormat) return { format: leaf.fileFormat, from: 'declared' };
+  if (leaf.measured?.isPdf) return { format: 'pdf', from: 'bytes' };
+  return { format: '', from: null };
 }
+
+/** The name half of the one PDF-leaf predicate (pdfa-detect isPdfLeaf), for a leaf whose header is already known absent. */
+const NO_BYTES = new Uint8Array(0);
 
 /**
  * The canonical token of a format string — a spec's accepted-format entry or a
@@ -222,8 +256,37 @@ export function validateLeavesAgainstMarketSpec(
       }
     }
 
-    const format = leafFormat(leaf);
+    /* 2026-09-23 (W5/D7, round-2 skeptic): the type is judged from the file's
+       extension when it has one, and a declared format is a claim checked
+       against it — it no longer decides the type (payload.exe declared 'PDF'
+       was 'conformant') nor narrows the not-a-PDF check (report.pdf declared
+       'DOCX' with ZIP bytes was a warning, undeclared it was an error). A type
+       judged only from a declaration, with no byte read, is not assessed. */
+    const { format, from } = leafFormat(leaf);
     const token = canonicalFormat(format);
+    const declaredToken = leaf.fileFormat ? canonicalFormat(leaf.fileFormat) : '';
+    if (leaf.measured && !leaf.measured.isPdf && (isPdfLeaf(name, NO_BYTES) || declaredToken === 'pdf')) {
+      /* 2026-09-23 (W5/D7, round-2 review): a leaf named or declared PDF whose
+         bytes were read and are not a PDF was accepted by its extension. It is
+         an error, not the rule's usual warning: the warning covers a type the
+         datasheet may simply not list, whereas this file is not what it says
+         and will not open as one. Named .pdf (the name half of isPdfLeaf) OR
+         declared PDF — whatever else is declared. */
+      findings.push({
+        severity: 'error',
+        rule: 'ACCEPTED_FILE_TYPES',
+        leaf: name,
+        message: `File "${name}" is ${isPdfLeaf(name, NO_BYTES) ? 'named as a PDF' : `declared ${leaf.fileFormat}`} but its bytes are not a PDF (no %PDF- header in the first 1 KB).`,
+      });
+    }
+    if (from === 'extension' && leaf.fileFormat && declaredToken !== token) {
+      findings.push({
+        severity: 'warning',
+        rule: 'ACCEPTED_FILE_TYPES',
+        leaf: name,
+        message: `File "${name}" is declared ${leaf.fileFormat} but its extension is .${format}; the agency reads the extension.`,
+      });
+    }
     if (!format) {
       notJudged('ACCEPTED_FILE_TYPES', name, 'the file has no extension or declared format');
     } else if (!acceptedFormats.has(token)) {
@@ -233,18 +296,10 @@ export function validateLeavesAgainstMarketSpec(
         leaf: name,
         message: `File "${name}" (${format}) is not among the accepted formats: ${f.fileFormats.join(', ')}.`,
       });
-    } else if (token === 'pdf' && leaf.measured && !leaf.measured.isPdf) {
-      /* 2026-09-23 (W5/D7, round-2 review): a leaf named or declared PDF whose
-         bytes were read and are not a PDF was accepted by its extension. It is
-         an error, not the rule's usual warning: the warning covers a type the
-         datasheet may simply not list, whereas this file is not what it says
-         and will not open as one. */
-      findings.push({
-        severity: 'error',
-        rule: 'ACCEPTED_FILE_TYPES',
-        leaf: name,
-        message: `File "${name}" is ${leaf.fileFormat ? `declared ${leaf.fileFormat}` : 'named as a PDF'} but its bytes are not a PDF (no %PDF- header in the first 1 KB).`,
-      });
+    } else if (from === 'declared' && !leaf.measured) {
+      // An accepted declared format on a file with no extension and no byte
+      // read is a claimed clean value: it never makes the rule assessed.
+      notJudged('ACCEPTED_FILE_TYPES', name, 'the file has no extension and was not read; only its declared format was checked');
     }
 
     // Size: measured, or a claim. A claimed size over the limit is reported; a

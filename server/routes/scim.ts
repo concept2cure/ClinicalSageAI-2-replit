@@ -26,6 +26,7 @@ import { query, transaction } from '../db';
 import { createScopedLogger } from '../utils/logger';
 import { ipInAnyCidr } from '../utils/cidr';
 import { shouldProcessTenantInBackground } from '../services/tenant/tenant-lifecycle.js';
+import { clientIpOf } from '../utils/client-ip';
 
 const logger = createScopedLogger('scim');
 const router = Router();
@@ -43,7 +44,6 @@ const scimRateLimiter = rateLimit({
     status: '429',
     detail: 'Too many requests.',
   },
-  validate: { xForwardedForHeader: false },
 });
 router.use(scimRateLimiter);
 
@@ -179,11 +179,6 @@ async function loadIpAllowlist(): Promise<Map<number, string[]>> {
   return ipAllowlistCache.byOrg;
 }
 
-/** Best source IP for the request (Express derives req.ip from trust-proxy). */
-function clientIpOf(req: Request): string {
-  return req.ip || req.socket?.remoteAddress || '';
-}
-
 /**
  * Network access policy: true when `ip` is permitted for `orgId`. Opt-in — an
  * org with no enabled allowlist rows is always permitted. When rows exist, the
@@ -263,7 +258,7 @@ async function scimAuth(
     // Network access policy (opt-in, fail-closed): once a tenant configures an
     // IP allowlist, an otherwise-valid token is only accepted from its CIDRs —
     // a leaked token can't be replayed from outside the IdP's egress ranges.
-    const sourceIp = clientIpOf(req);
+    const sourceIp = clientIpOf(req) ?? '';
     if (!(await isIpAllowedForOrg(matchedOrgId, sourceIp))) {
       logger.warn('SCIM request from non-allowlisted IP', { orgId: matchedOrgId, sourceIp });
       return scimError(res, 403, 'Source IP not permitted for this tenant.');
@@ -320,10 +315,13 @@ interface UserRow {
   updated_at?: Date | string;
 }
 
+/**
+ * The origin of meta.location URLs. req.protocol honours X-Forwarded-Proto only
+ * from the trusted proxy (server/config/trust-proxy.ts); the raw
+ * X-Forwarded-Proto and X-Forwarded-Host headers it read were the client's own.
+ */
 function baseUrl(req: Request): string {
-  const proto = (req.headers['x-forwarded-proto'] as string) || req.protocol || 'https';
-  const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost';
-  return `${proto}://${host}`;
+  return `${req.protocol}://${req.get('host') ?? 'localhost'}`;
 }
 
 function toScimUser(req: Request, row: UserRow): Record<string, unknown> {

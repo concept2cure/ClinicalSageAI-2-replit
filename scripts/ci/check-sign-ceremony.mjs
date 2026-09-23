@@ -38,6 +38,25 @@
  * that the existing population is a number that can only fall. The baseline is
  * per file WITH A WRITTEN REASON; an entry without one fails.
  *
+ * ── Known limits (from the adversarial review, 2026-09-23) ─────────────────────
+ * A literal 'sign' is found bare, in a ternary, or as a template literal, in
+ * a `command:` property or in a governed helper's first three arguments.
+ * The scanner can miss a sign write that:
+ *   - passes the command as a variable or shorthand (`{ command }`), or a
+ *     constant rather than the literal 'sign';
+ *   - puts the command after the third positional argument of a helper;
+ *   - calls recordGovernedAction under an import alias;
+ *   - goes through a helper whose name does not start with `governed`;
+ *   - sits in routes nested inside one factory function, where one route's
+ *     verifyReauth makes an unceremonied sibling look covered (the "handler"
+ *     is the enclosing column-0 statement).
+ * It cannot see a proof handed across a function boundary (the eSTAR and
+ * governed-transmit baseline entries). These limits are why the baseline carries
+ * reasons and why each signing surface keeps its own behavioural tests.
+ *
+ * The baseline is exact: an entry above the current count fails too, so fixing a
+ * site means lowering its entry, and a freed allowance cannot absorb a new site.
+ *
  * Usage:
  *   node scripts/ci/check-sign-ceremony.mjs            # fail on new sites
  *   node scripts/ci/check-sign-ceremony.mjs --list     # every site, with verdict
@@ -100,11 +119,24 @@ export function stripComments(src) {
   return out;
 }
 
-/** The argument text of the call whose `(` is at `open`, balanced. */
+/** Index of the quote that closes the string literal opening at `i`. */
+function skipString(s, i) {
+  const q = s[i];
+  let j = i + 1;
+  while (j < s.length) {
+    if (s[j] === '\\') { j += 2; continue; }
+    if (s[j] === q) return j;
+    j += 1;
+  }
+  return j;
+}
+
+/** The argument text of the call whose `(` is at `open`, balanced; parentheses inside strings do not count. */
 function callSpan(code, open) {
   let depth = 0;
   for (let j = open; j < code.length; j++) {
     const ch = code[j];
+    if (ch === '"' || ch === "'" || ch === '`') { j = skipString(code, j); continue; }
     if (ch === '(') depth++;
     else if (ch === ')') {
       depth--;
@@ -114,6 +146,50 @@ function callSpan(code, open) {
   return code.slice(open);
 }
 
+/** A call's arguments (span includes its parens), split at top-level commas. */
+function topLevelArgs(span) {
+  const inner = span.slice(1, span.endsWith(')') ? -1 : undefined);
+  const args = [];
+  let depth = 0;
+  let start = 0;
+  for (let j = 0; j < inner.length; j++) {
+    const ch = inner[j];
+    if (ch === '"' || ch === "'" || ch === '`') { j = skipString(inner, j); continue; }
+    if ('([{'.includes(ch)) depth++;
+    else if (')]}'.includes(ch)) depth--;
+    else if (ch === ',' && depth === 0) { args.push(inner.slice(start, j)); start = j + 1; }
+  }
+  args.push(inner.slice(start));
+  return args.map((a) => a.trim());
+}
+
+/** Every value given to a `command:` property in `text`, up to its top-level `,` or closing brace. */
+function commandValues(text) {
+  const out = [];
+  const re = /\bcommand\s*:/g;
+  let m;
+  while ((m = re.exec(text))) {
+    const start = m.index + m[0].length;
+    let depth = 0;
+    let j = start;
+    for (; j < text.length; j++) {
+      const ch = text[j];
+      if (ch === '"' || ch === "'" || ch === '`') { j = skipString(text, j); continue; }
+      if ('([{'.includes(ch)) depth++;
+      else if (')]}'.includes(ch)) { if (depth === 0) break; depth--; }
+      else if (ch === ',' && depth === 0) break;
+    }
+    out.push(text.slice(start, j));
+  }
+  return out;
+}
+
+/** The literal 'sign' anywhere in an expression: bare, in a ternary, or as a template. */
+const SIGN_LITERAL = /(['"`])sign\1/;
+const CALLBACK = /=>|^(?:async\s+)?function\b/;
+/** A `function name(` declaration, whose parameter types may name 'sign' without writing it. */
+const isDeclaration = (code, index) => /\bfunction\s*\*?\s*$/.test(code.slice(Math.max(0, index - 40), index));
+
 const lineOf = (code, idx) => code.slice(0, idx).split('\n').length;
 
 /** Every sign-ledger write site in `code` (comment-stripped), as indices. */
@@ -122,12 +198,21 @@ export function findSignSites(code) {
   const rga = /\brecordGovernedAction\s*\(/g;
   let m;
   while ((m = rga.exec(code))) {
+    if (isDeclaration(code, m.index)) continue;
     const open = m.index + m[0].length - 1;
-    if (/\bcommand\s*:\s*['"]sign['"]/.test(callSpan(code, open))) sites.push({ index: m.index, kind: 'recordGovernedAction' });
+    if (commandValues(callSpan(code, open)).some((v) => SIGN_LITERAL.test(v))) sites.push({ index: m.index, kind: 'recordGovernedAction' });
   }
-  const helper = /\bgoverned\w*\s*\(\s*(?:[A-Za-z_$][\w$.]*\s*,\s*){1,2}['"]sign['"]/g;
-  while ((m = helper.exec(code))) sites.push({ index: m.index, kind: 'governed-helper' });
-  const wm = /\bwriteMutation\s*\(\s*['"]sign['"]/g;
+  // governed(req, res, 'sign', …), governedPdev(ctx, 'sign', …): the command is
+  // one of the leading positional arguments. A ternary there
+  // (`approved ? 'sign' : 'resolve'`) is a sign write on one branch.
+  const helper = /\bgoverned\w*\s*\(/g;
+  while ((m = helper.exec(code))) {
+    if (isDeclaration(code, m.index)) continue;
+    const open = m.index + m[0].length - 1;
+    const leading = topLevelArgs(callSpan(code, open)).slice(0, 3);
+    if (leading.some((a) => !CALLBACK.test(a) && SIGN_LITERAL.test(a))) sites.push({ index: m.index, kind: 'governed-helper' });
+  }
+  const wm = /\bwriteMutation\s*\(\s*(['"`])sign\1/g;
   while ((m = wm.exec(code))) sites.push({ index: m.index, kind: 'writeMutation' });
   return sites.sort((a, b) => a.index - b.index);
 }
@@ -249,12 +334,13 @@ function main() {
     console.error('[ci:sign-ceremony] FAIL — baseline entries with no written reason:');
     for (const f of unreasoned) console.error(`  ✗ ${f}`);
   }
-  if (failed) process.exit(1);
-  console.log(`[ci:sign-ceremony] OK — no new sign write without the ceremony. ${baselined} baselined site(s) remain; the baseline may only shrink.`);
   if (shrinkable.length) {
-    console.log('[ci:sign-ceremony] these baseline entries can be lowered:');
-    for (const s of shrinkable) console.log(`  ${s.file}: ${s.count} (baseline ${s.allowed})`);
+    failed = true;
+    console.error('[ci:sign-ceremony] FAIL — the baseline allows more than exists. Lower these entries (or remove them at 0) so the freed allowance cannot absorb a new site:');
+    for (const x of shrinkable) console.error(`  ✗ ${x.file}: ${x.count} now, baseline ${x.allowed}`);
   }
+  if (failed) process.exit(1);
+  console.log(`[ci:sign-ceremony] OK — no new sign write without the ceremony. ${baselined} baselined site(s) remain, exactly as baselined.`);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) main();

@@ -154,6 +154,7 @@ import {
 import { MAX_PAUSE_MS, type HumanControlEvent } from '../../services/ana/run-status.js';
 import { classifyToolCall } from '../../services/ana/governed-tool-gate.js';
 import { resolveOrgId, resolveUserId } from '../../types/auth-request.js';
+import { clientIpOf } from '../../utils/client-ip';
 
 // Thin facade over getPool() so the extracted body keeps its `dbPool.query(...)`
 // shape without needing to touch the original handler.
@@ -262,10 +263,7 @@ export function mountStreamRoute(router: Router): void {
           route: '/api/ana-ri/stream',
           threadId: thread_id,
           projectId: project_id || resolveProjectIdFromBody(req.body),
-          ipAddress:
-            (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
-            req.socket?.remoteAddress ||
-            undefined,
+          ipAddress: clientIpOf(req) ?? undefined,
           userAgent: req.headers['user-agent'] as string | undefined,
         });
       } catch (guardErr) {

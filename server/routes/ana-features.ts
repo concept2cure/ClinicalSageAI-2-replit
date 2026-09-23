@@ -24,6 +24,7 @@ import {
 import { createScopedLogger } from '../utils/logger';
 import { respondVerificationUnavailable } from '../lib/verification-outcome';
 import { serverError } from '../lib/api-response';
+import { clientIpOf } from '../utils/client-ip';
 
 const logger = createScopedLogger('ana-features');
 
@@ -2248,10 +2249,7 @@ router.post(
         userName: (req as any).user?.name ?? null,
         userEmail: (req as any).user?.email ?? null,
         userRole: (req as any).user?.role ?? 'regulatory',
-        ipAddress:
-          req.ip ||
-          (req.headers['x-forwarded-for'] as string | undefined) ||
-          'ip-not-captured',
+        ipAddress: clientIpOf(req),
         userAgent: (req.headers['user-agent'] as string | undefined) ?? null,
       });
       return res.json({

@@ -43,6 +43,8 @@ import {
   RATE_LIMIT_STORE,
   REDIS,
 } from '../config/platform-limits';
+import { ipKeyGenerator } from 'express-rate-limit';
+import { clientIpKey } from '../utils/client-ip';
 
 const logger = createScopedLogger('redis-rate-limiter');
 
@@ -366,9 +368,13 @@ export function getCategory(path: string): string {
   return 'api';
 }
 
-/** The client address, as the rest of the platform reads it. */
+/**
+ * The client address, as the rest of the platform reads it
+ * (server/utils/client-ip.ts), IPv6 bucketed by /56. It fell back to the
+ * left-most X-Forwarded-For entry, which every client writes (D6).
+ */
 function clientIp(req: Request): string {
-  return req.ip || (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || 'unknown';
+  return ipKeyGenerator(clientIpKey(req));
 }
 
 /**

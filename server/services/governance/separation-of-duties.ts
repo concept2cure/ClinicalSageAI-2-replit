@@ -133,14 +133,21 @@ class AuthorSet {
 
 const NOT_MODELLED: TargetAuthorship = { modelled: false, authors: [], sources: [] };
 
-async function documentAuthors(documentId: string, orgId: number, sectionKey: string | null): Promise<TargetAuthorship> {
+/**
+ * Where authorship is read. The pool by default; a caller signing inside its own
+ * transaction passes that client, so the check neither borrows a second
+ * connection while holding one nor reads around its own uncommitted write.
+ */
+export type AuthorshipReader = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
+
+async function documentAuthors(db: AuthorshipReader, documentId: string, orgId: number, sectionKey: string | null): Promise<TargetAuthorship> {
   const set = new AuthorSet();
   const sectionFilter = sectionKey === null ? '' : 'AND s.section_key = $3';
   const params = sectionKey === null ? [documentId, orgId] : [documentId, orgId, sectionKey];
 
   // Everyone who wrote a version of the content. Template scaffolds are not
   // authorship: creating an empty section from a rule pack writes no content.
-  const versions = await pool.query(
+  const versions = await db.query(
     `SELECT DISTINCT v.author_id
        FROM c2c_document_section_versions v
        JOIN c2c_document_sections s ON s.id = v.section_id
@@ -153,7 +160,7 @@ async function documentAuthors(documentId: string, orgId: number, sectionKey: st
   set.add(versions.rows, 'author_id', 'section version ledger');
 
   // Whoever adopted a drafted section is its human author of record.
-  const accepted = await pool.query(
+  const accepted = await db.query(
     `SELECT DISTINCT s.accepted_by
        FROM c2c_document_sections s
        JOIN c2c_documents d ON d.id = s.document_id
@@ -164,8 +171,8 @@ async function documentAuthors(documentId: string, orgId: number, sectionKey: st
 
   // The recorded owner adds to the set; it is never the only source.
   const owner = sectionKey === null
-    ? await pool.query(`SELECT owner_id FROM c2c_documents WHERE id = $1 AND org_id = $2 LIMIT 1`, [documentId, orgId])
-    : await pool.query(
+    ? await db.query(`SELECT owner_id FROM c2c_documents WHERE id = $1 AND org_id = $2 LIMIT 1`, [documentId, orgId])
+    : await db.query(
         `SELECT s.owner_id FROM c2c_document_sections s JOIN c2c_documents d ON d.id = s.document_id
           WHERE d.id = $1 AND d.org_id = $2 AND s.section_key = $3 LIMIT 1`,
         params,
@@ -175,40 +182,65 @@ async function documentAuthors(documentId: string, orgId: number, sectionKey: st
 }
 
 /**
- * A protocol's authors: its creator, and everyone who changed its content
- * through a governed edit. protocol_sections records no editor, so the ledger
- * is the edit history. Review activity is not authorship and is not counted:
- * assigning a reviewer and commenting are `create` actions, resolving a comment
- * targets the comment, and a disposition is `sign`.
+ * A protocol's authors: everyone who wrote its content. That is its creator, the
+ * creator of every live content row (sections, objectives, eligibility, visits,
+ * schedule-of-assessments rows and cells, team, version snapshots), and everyone
+ * who changed that content through a governed edit (protocol_sections and the
+ * other content tables record no editor, so the ledger is the edit history).
+ * Review activity writes none of these (assignments and comments live in their
+ * own tables, a disposition is `sign`), so a reviewer is not made an author.
  */
-async function protocolDocumentAuthors(documentId: string, orgId: number): Promise<TargetAuthorship> {
+async function protocolDocumentAuthors(db: AuthorshipReader, documentId: string, orgId: number): Promise<TargetAuthorship> {
   if (!/^\d+$/.test(documentId)) return new AuthorSet().result();
+  const docId = Number(documentId);
   const set = new AuthorSet();
-  const doc = await pool.query(
-    `SELECT created_by FROM protocol_documents WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-    [documentId, orgId],
+  const doc = await db.query(
+    `SELECT created_by FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+    [docId, orgId],
   );
   set.add(doc.rows, 'created_by', 'protocol creator');
-  const edits = await pool.query(
+  const content = await db.query(
+    `SELECT created_by FROM protocol_sections           WHERE protocol_document_id = $1 AND organization_id = $2
+     UNION SELECT created_by FROM protocol_objectives            WHERE protocol_document_id = $1 AND organization_id = $2
+     UNION SELECT created_by FROM protocol_eligibility_criteria  WHERE protocol_document_id = $1 AND organization_id = $2
+     UNION SELECT created_by FROM protocol_schedule_visits       WHERE protocol_document_id = $1 AND organization_id = $2
+     UNION SELECT created_by FROM protocol_soa_assessments       WHERE protocol_document_id = $1 AND organization_id = $2
+     UNION SELECT created_by FROM protocol_soa_cells             WHERE protocol_document_id = $1 AND organization_id = $2
+     UNION SELECT created_by FROM protocol_team_members          WHERE protocol_document_id = $1 AND organization_id = $2`,
+    [docId, orgId],
+  );
+  set.add(content.rows, 'created_by', 'protocol content');
+  // Content edits only. On the document itself, 'update' also records review
+  // comments (AnA), budget parameters and version snapshots; none of them is
+  // authorship, and neither is a version row (finalize writes one under the
+  // signer's id). A payload `documentId` counts only on the protocol's own
+  // visit and SoA targets: other modules (Other Support) carry a documentId
+  // that is their own document's, not this protocol's. Anything unlisted that
+  // does land here is counted as authorship, which refuses a signer rather
+  // than admitting one.
+  const edits = await db.query(
     `SELECT DISTINCT a.proposed_by
        FROM c2c_ana_actions a
       WHERE a.org_id = $2
         AND a.domain = 'protocol_development'
         AND a.command = 'update'
-        AND (a.target = $3
-             OR a.payload->>'documentId' = $1
-             OR a.target IN (SELECT 'protocol-section:' || s.id
-                               FROM protocol_sections s
-                              WHERE s.protocol_document_id = $4 AND s.organization_id = $2))`,
-    [documentId, orgId, `protocol-document:${documentId}`, Number(documentId)],
+        AND ((a.target = $3
+              AND NOT (COALESCE(a.payload, '{}'::jsonb) ?| array['commentId','assignmentId','paramsId','itemId','version']))
+             OR ((a.target LIKE 'protocol-visit:%' OR a.target LIKE 'protocol-soa-assessment:%')
+                 AND a.payload->>'documentId' = $4)
+             OR a.target IN (SELECT 'protocol-section:' || s.id FROM protocol_sections s
+                              WHERE s.protocol_document_id = $1 AND s.organization_id = $2)
+             OR a.target IN (SELECT 'protocol-soa-assessment:' || x.id FROM protocol_soa_assessments x
+                              WHERE x.protocol_document_id = $1 AND x.organization_id = $2))`,
+    [docId, orgId, `protocol-document:${documentId}`, documentId],
   );
   set.add(edits.rows, 'proposed_by', 'protocol edit ledger');
   return set.result();
 }
 
-async function single(sql: string, params: unknown[], column: string, source: string): Promise<TargetAuthorship> {
+async function single(db: AuthorshipReader, sql: string, params: unknown[], column: string, source: string): Promise<TargetAuthorship> {
   const set = new AuthorSet();
-  const r = await pool.query(sql, params);
+  const r = await db.query(sql, params);
   set.add(r.rows, column, source);
   return set.result();
 }
@@ -217,7 +249,7 @@ async function single(sql: string, params: unknown[], column: string, source: st
  * Resolve the authors of a governed target, org-scoped. THROWS when a lookup
  * fails — that is not an answer about authorship and must not be read as one.
  */
-export async function resolveTargetAuthors(target: string, orgId: number): Promise<TargetAuthorship> {
+export async function resolveTargetAuthors(target: string, orgId: number, db: AuthorshipReader = pool): Promise<TargetAuthorship> {
   const colonIdx = target.indexOf(':');
   if (colonIdx === -1) return NOT_MODELLED;
   const prefix = target.slice(0, colonIdx);
@@ -225,33 +257,33 @@ export async function resolveTargetAuthors(target: string, orgId: number): Promi
 
   switch (prefix) {
     case 'document':
-      return documentAuthors(rest, orgId, null);
+      return documentAuthors(db, rest, orgId, null);
     case 'section': {
       const parts = rest.split(':');
       if (parts.length < 2) return NOT_MODELLED;
       const [docId, ...keyParts] = parts;
-      return documentAuthors(docId, orgId, keyParts.join(':'));
+      return documentAuthors(db, docId, orgId, keyParts.join(':'));
     }
     case 'task':
-      return single(`SELECT owner_id FROM c2c_project_work_items WHERE id = $1 AND org_id = $2 LIMIT 1`, [rest, orgId], 'owner_id', 'recorded owner');
+      return single(db, `SELECT owner_id FROM c2c_project_work_items WHERE id = $1 AND org_id = $2 LIMIT 1`, [rest, orgId], 'owner_id', 'recorded owner');
     case 'blocker':
-      return single(`SELECT owner_user_id FROM c2c_blockers WHERE blocker_id = $1 AND org_id = $2 LIMIT 1`, [rest, orgId], 'owner_user_id', 'recorded owner');
+      return single(db, `SELECT owner_user_id FROM c2c_blockers WHERE blocker_id = $1 AND org_id = $2 LIMIT 1`, [rest, orgId], 'owner_user_id', 'recorded owner');
     case 'ectd-sequence':
       // The one target the Part 11 freeze/dispatch/transmit chain signs.
-      return single(`SELECT created_by FROM ectd_sequences WHERE id = $1 AND organization_id = $2 LIMIT 1`, [rest, orgId], 'created_by', 'sequence creator');
+      return single(db, `SELECT created_by FROM ectd_sequences WHERE id = $1 AND organization_id = $2 LIMIT 1`, [rest, orgId], 'created_by', 'sequence creator');
     case 'program':
-      return single(`SELECT created_by FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`, [rest, orgId], 'created_by', 'program creator');
+      return single(db, `SELECT created_by FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`, [rest, orgId], 'created_by', 'program creator');
     case 'protocol-document':
-      return protocolDocumentAuthors(rest, orgId);
+      return protocolDocumentAuthors(db, rest, orgId);
     case 'protocol-review-assignment': {
       // A reviewer signs over the protocol, so independence is from its authors.
       if (!/^\d+$/.test(rest)) return new AuthorSet().result();
-      const a = await pool.query(
+      const a = await db.query(
         `SELECT protocol_document_id FROM protocol_review_assignments WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
         [rest, orgId],
       );
       if (a.rows.length === 0) return new AuthorSet().result();
-      return protocolDocumentAuthors(String(a.rows[0].protocol_document_id), orgId);
+      return protocolDocumentAuthors(db, String(a.rows[0].protocol_document_id), orgId);
     }
     default:
       // submission (pma_submissions records no creator), specification, batch,
@@ -277,7 +309,7 @@ export async function assertSignerIsNotAuthor(
   target: string,
   orgId: number,
   signerId: number,
-  opts: { command?: 'sign' | 'lock'; meaning?: unknown } = {},
+  opts: { command?: 'sign' | 'lock'; meaning?: unknown; client?: AuthorshipReader } = {},
 ): Promise<SeparationOfDutiesResult> {
   if (!requiresIndependence(opts.command ?? 'sign', opts.meaning)) {
     return {
@@ -288,7 +320,7 @@ export async function assertSignerIsNotAuthor(
 
   let authorship: TargetAuthorship;
   try {
-    authorship = await resolveTargetAuthors(target, orgId);
+    authorship = await resolveTargetAuthors(target, orgId, opts.client);
   } catch (err: unknown) {
     const e = err as { code?: unknown; message?: unknown } | null;
     const cause = typeof e?.code === 'string' ? `database error ${e.code}` : 'owner lookup failed';
