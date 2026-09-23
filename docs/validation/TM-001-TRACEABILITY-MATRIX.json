@@ -1,20 +1,20 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-09-23T05:23:50.828Z",
+  "generatedAt": "2026-09-23T16:34:06.717Z",
   "generator": "scripts/validation/build-traceability.mjs",
-  "runDate": "2026-09-23b",
+  "runDate": "2026-09-23c",
   "summary": {
-    "requirements": 69,
-    "pass": 67,
-    "partial": 2,
+    "requirements": 70,
+    "pass": 69,
+    "partial": 1,
     "fail": 0,
     "open": 0,
     "uncovered": 0
   },
   "byApp": {
     "Projects": {
-      "requirements": 11,
-      "pass": 11,
+      "requirements": 12,
+      "pass": 12,
       "partial": 0,
       "fail": 0,
       "open": 0,
@@ -46,8 +46,8 @@
     },
     "Submission Readiness": {
       "requirements": 8,
-      "pass": 7,
-      "partial": 1,
+      "pass": 8,
+      "partial": 0,
       "fail": 0,
       "open": 0,
       "uncovered": 0
@@ -62,88 +62,88 @@
     }
   },
   "stepTotals": {
-    "pass": 97,
+    "pass": 100,
     "fail": 0,
-    "deviation": 2,
+    "deviation": 1,
     "not-executed": 0,
-    "steps": 99
+    "steps": 101
   },
   "protocols": [
     {
       "protocolId": "OQ-003",
       "app": "Authoring",
-      "executedAt": "2026-09-23T05:19:44.325Z",
+      "executedAt": "2026-09-23T16:29:16.569Z",
       "counts": {
         "pass": 23,
         "fail": 0,
         "deviation": 1,
         "not-executed": 0
       },
-      "evidence": "docs/evidence/W3/2026-09-23b/OQ-AUTHORING/"
+      "evidence": "docs/evidence/W3/2026-09-23c/OQ-AUTHORING/"
     },
     {
       "protocolId": "OQ-001",
       "app": "Projects",
-      "executedAt": "2026-09-23T05:18:00.578Z",
+      "executedAt": "2026-09-23T16:27:30.597Z",
       "counts": {
-        "pass": 18,
+        "pass": 19,
         "fail": 0,
         "deviation": 0,
         "not-executed": 0
       },
-      "evidence": "docs/evidence/W3/2026-09-23b/OQ-PROJECTS/"
+      "evidence": "docs/evidence/W3/2026-09-23c/OQ-PROJECTS/"
     },
     {
       "protocolId": "OQ-006",
       "app": "QMS controlled documents",
-      "executedAt": "2026-09-23T05:21:04.629Z",
+      "executedAt": "2026-09-23T16:30:38.882Z",
       "counts": {
         "pass": 20,
         "fail": 0,
         "deviation": 0,
         "not-executed": 0
       },
-      "evidence": "docs/evidence/W3/2026-09-23b/OQ-QMS/"
+      "evidence": "docs/evidence/W3/2026-09-23c/OQ-QMS/"
     },
     {
       "protocolId": "OQ-004",
       "app": "Submission Center",
-      "executedAt": "2026-09-23T05:20:12.334Z",
+      "executedAt": "2026-09-23T16:29:45.823Z",
       "counts": {
         "pass": 15,
         "fail": 0,
         "deviation": 0,
         "not-executed": 0
       },
-      "evidence": "docs/evidence/W3/2026-09-23b/OQ-SUBMISSION-CENTER/"
+      "evidence": "docs/evidence/W3/2026-09-23c/OQ-SUBMISSION-CENTER/"
     },
     {
       "protocolId": "OQ-005",
       "app": "Submission Readiness",
-      "executedAt": "2026-09-23T05:20:41.105Z",
+      "executedAt": "2026-09-23T16:30:14.457Z",
       "counts": {
-        "pass": 9,
+        "pass": 11,
         "fail": 0,
-        "deviation": 1,
+        "deviation": 0,
         "not-executed": 0
       },
-      "evidence": "docs/evidence/W3/2026-09-23b/OQ-SUBMISSION-READINESS/"
+      "evidence": "docs/evidence/W3/2026-09-23c/OQ-SUBMISSION-READINESS/"
     },
     {
       "protocolId": "OQ-002",
       "app": "Vault",
-      "executedAt": "2026-09-23T05:19:30.588Z",
+      "executedAt": "2026-09-23T16:29:02.394Z",
       "counts": {
         "pass": 12,
         "fail": 0,
         "deviation": 0,
         "not-executed": 0
       },
-      "evidence": "docs/evidence/W3/2026-09-23b/OQ-VAULT/"
+      "evidence": "docs/evidence/W3/2026-09-23c/OQ-VAULT/"
     }
   ],
   "iq": {
-    "executedAt": "2026-09-23T05:17:43.704Z",
+    "executedAt": "2026-09-23T16:27:14.289Z",
     "counts": {
       "pass": 12,
       "fail": 0,
@@ -476,6 +476,30 @@
         "risk": "high — a session that survives sign-out stays usable by whoever holds its token, on a shared machine or from a copied header, for up to 24 hours, and everything done with it is attributed to the user who signed out (§11.10(d)); F-21 showed logout answering success while ending nothing, and no step checked",
         "assurance": "scripted",
         "rationale": "a session opened by the step itself, refused by the API and the session check once it is signed out, and the sign-out read back on the ledger, hash-chained"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-PROJ-012",
+      "app": "Projects",
+      "doc": "URS-001-PROJECTS.md",
+      "requirement": "An account taken out of use can do nothing. Once a platform administrator suspends it, or the organisation's identity provider deprovisions it, it cannot sign in (refused after its password, with no second-factor challenge issued), cannot apply an electronic signature, and every session it already holds is refused on its next request, with the reason. The refused sign-in is entered in the organisation's hash-chained audit log and shown on its audit ledger.",
+      "part11": "§11.10(d) §11.300(b)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-001",
+          "step": "OQ-PROJ-18",
+          "status": "pass",
+          "evidenceDir": "OQ-PROJECTS",
+          "title": "An account taken out of use can do nothing, and works again when restored"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Refuse an account taken out of use",
+        "risk": "high — suspension and deprovisioning are how an organisation recalls a person's access (§11.10(d), §11.300(b)); F-28 and F-29 showed that neither changed anything the person could observe: the account signed in, signed, and kept every session it held, so offboarding in the identity provider revoked nothing",
+        "assurance": "scripted, credentialed (a platform administrator); automated on real PostgreSQL for what the OQ run cannot reach",
+        "rationale": "a dedicated account suspended through the product's own route, then refused by the API, the session check and sign-in, the refusal read back on the ledger, hash-chained, and the account restored; `tests/db/account-standing.dbtest.ts` for signing, the challenge, the refresh token, the per-router gate and SCIM's deprovisioning, each shown to catch its own removal"
       },
       "verdict": "pass"
     },
@@ -988,8 +1012,8 @@
       "id": "URS-AUTH-010",
       "app": "Authoring",
       "doc": "URS-003-AUTHORING.md",
-      "requirement": "An electronic signature requires the actor's PIN (a second component held only by the signer, enrolled and rotated only by the signer with the current PIN), a meaning from {AUTHOR, REVIEWER, APPROVER} and an intent; a wrong PIN answers 401 and an invalid meaning 400 with nothing stored; a valid signature stores signer, meaning, digest and the covered freeze version/hash and is listed with `pin_verified`.",
-      "part11": "§11.50 §11.70 §11.200",
+      "requirement": "An electronic signature re-verifies the signer at signing with the platform's one ceremony (`server/services/part11/reverify-signer.ts`): the account password, and the current code of the second factor when one is enrolled. It requires a meaning from {AUTHOR, REVIEWER, APPROVER} and an intent. A wrong password or code answers 401 and counts against the account's lockout; a missing code where a factor is enrolled answers 400 `MFA_TOKEN_REQUIRED`; an invalid meaning answers 400; nothing is stored on any refusal. A signing PIN signs nothing, and no route sets one (404). A valid signature stores signer, meaning, the method verified (`password` or `password+mfa`), digest and the covered freeze version/hash.",
+      "part11": "§11.50 §11.70 §11.200 §11.300",
       "risk": "high",
       "steps": [
         {
@@ -997,28 +1021,28 @@
           "step": "OQ-AUTH-12",
           "status": "pass",
           "evidenceDir": "OQ-AUTHORING",
-          "title": "Enrol the signing PIN for the authenticated actor"
+          "title": "A signing PIN signs nothing, and no route sets one"
         },
         {
           "protocol": "OQ-003",
           "step": "OQ-AUTH-13",
           "status": "pass",
           "evidenceDir": "OQ-AUTHORING",
-          "title": "E-signature refuses a wrong PIN and an invalid meaning"
+          "title": "E-signature refuses a wrong password, a missing code and an invalid meaning"
         },
         {
           "protocol": "OQ-003",
           "step": "OQ-AUTH-14",
           "status": "pass",
           "evidenceDir": "OQ-AUTHORING",
-          "title": "Apply a REVIEWER e-signature bound to the frozen snapshot"
+          "title": "Apply a REVIEWER e-signature, re-verified by the ceremony and bound to the frozen snapshot"
         }
       ],
       "ra": {
-        "intendedUse": "PIN-based e-signature with meaning and intent; refusals; binding to the frozen snapshot",
-        "risk": "high — §11.50/§11.70/§11.200",
+        "intendedUse": "E-signature re-verified by the platform ceremony (password, enrolled second factor, lockout) with meaning and intent; refusals; binding to the frozen snapshot",
+        "risk": "high — §11.50/§11.70/§11.200/§11.300",
         "assurance": "scripted",
-        "rationale": "wrong PIN, wrong meaning, valid signature listed with `pin_verified` and covered hash"
+        "rationale": "PIN refused and PIN route absent; wrong password, missing code, wrong meaning refused with nothing stored; valid signature listed with its verified method and covered hash"
       },
       "verdict": "pass"
     },
@@ -1035,7 +1059,7 @@
           "step": "OQ-AUTH-14",
           "status": "pass",
           "evidenceDir": "OQ-AUTHORING",
-          "title": "Apply a REVIEWER e-signature bound to the frozen snapshot"
+          "title": "Apply a REVIEWER e-signature, re-verified by the ceremony and bound to the frozen snapshot"
         }
       ],
       "ra": {
@@ -1593,7 +1617,7 @@
         {
           "protocol": "OQ-005",
           "step": "OQ-SRDY-05b",
-          "status": "deviation",
+          "status": "pass",
           "evidenceDir": "OQ-SUBMISSION-READINESS",
           "title": "The readiness review names the project it assessed"
         }
@@ -1604,29 +1628,36 @@
         "assurance": "scripted",
         "rationale": "a program id the engine cannot read must be refused or fail with the reason; an anchored project must be assessed and named"
       },
-      "verdict": "partial"
+      "verdict": "pass"
     },
     {
       "id": "URS-SRDY-006",
       "app": "Submission Readiness",
       "doc": "URS-005-SUBMISSION-READINESS.md",
-      "requirement": "A contradiction scan for a project returns a deterministic result (possibly zero findings) from the assumption and decision registries.",
+      "requirement": "A contradiction scan of a project the organisation holds returns a deterministic result (possibly zero findings) from the assumption and decision registries. A scan of a project the organisation does not hold, or of an id that is not a project id, is refused and never answered as clean.",
       "part11": "none",
-      "risk": "medium",
+      "risk": "high",
       "steps": [
         {
           "protocol": "OQ-005",
           "step": "OQ-SRDY-06",
           "status": "pass",
           "evidenceDir": "OQ-SUBMISSION-READINESS",
-          "title": "Contradiction (inconsistency) scan for a project"
+          "title": "A contradiction scan never reports a project it cannot read as clean"
+        },
+        {
+          "protocol": "OQ-005",
+          "step": "OQ-SRDY-06b",
+          "status": "pass",
+          "evidenceDir": "OQ-SUBMISSION-READINESS",
+          "title": "A contradiction scan of the program's project runs"
         }
       ],
       "ra": {
-        "intendedUse": "Contradiction scan deterministic",
-        "risk": "medium",
+        "intendedUse": "Contradiction scan reads the project it names, or refuses",
+        "risk": "high — a clean scan of a project nothing was read from is read by Authoring's preflights as \"no blocking contradictions\", and nothing on the record shows it (F-25)",
         "assurance": "scripted",
-        "rationale": "one scan call"
+        "rationale": "the program id and a project the organisation does not hold must be refused; an anchored project must be scanned"
       },
       "verdict": "pass"
     },
@@ -1658,23 +1689,23 @@
       "id": "URS-SRDY-008",
       "app": "Submission Readiness",
       "doc": "URS-005-SUBMISSION-READINESS.md",
-      "requirement": "The Orchestration and Inconsistency surfaces render; an unavailable store is shown as an error or empty state, never as data.",
-      "part11": "none",
-      "risk": "low",
+      "requirement": "The Orchestration and Inconsistency boards are not in this release: with launch scope enforced, the navigation payload marks both not entitled with source `launch-scope` while the dispatch gate's surface is entitled, and a deep link to either renders the launch-scope gate instead of the board.",
+      "part11": "§11.10(d)",
+      "risk": "medium",
       "steps": [
         {
           "protocol": "OQ-005",
           "step": "OQ-SRDY-08",
           "status": "pass",
           "evidenceDir": "OQ-SUBMISSION-READINESS",
-          "title": "Orchestration and Inconsistency surfaces render"
+          "title": "The Orchestration and Inconsistency boards are not in this release"
         }
       ],
       "ra": {
-        "intendedUse": "Orchestration / Inconsistency render honestly",
-        "risk": "low",
-        "assurance": "ad-hoc",
-        "rationale": "screenshots"
+        "intendedUse": "Keep the Orchestration and Inconsistency boards out of the release",
+        "risk": "medium — an out-of-scope board reachable in production shows users a board that cannot see their programs",
+        "assurance": "scripted",
+        "rationale": "payload verdicts plus both deep-link gates"
       },
       "verdict": "pass"
     },
@@ -1987,7 +2018,7 @@
           "step": "OQ-QMS-12",
           "status": "pass",
           "evidenceDir": "OQ-QMS",
-          "title": "Quality Management Plan create and list"
+          "title": "Quality Management Plan create and list (governed: reason required)"
         },
         {
           "protocol": "OQ-006",

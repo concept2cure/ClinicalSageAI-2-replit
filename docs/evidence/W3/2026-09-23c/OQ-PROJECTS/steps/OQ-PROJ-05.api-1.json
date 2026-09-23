@@ -1,0 +1,38 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/c2c/projects?limit=50",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 24,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": [
+        {
+          "id": "3522e8bb-dc9e-4f1c-ac5e-bb087ce19f93",
+          "title": "OQ-001 IND program 20260923162731",
+          "ws": "Biotech",
+          "code": "OIP2",
+          "stage": "Planning",
+          "readiness": 0,
+          "status": "active",
+          "lead": "JM Smith",
+          "blocker": null,
+          "due": "—",
+          "activity": "Updated Sep 23"
+        }
+      ],
+      "meta": {
+        "count": 1,
+        "limit": 50,
+        "offset": 0,
+        "hasMore": false
+      }
+    }
+  }
+}
