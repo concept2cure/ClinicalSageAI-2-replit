@@ -326,10 +326,12 @@ describe('Q1 — CTQ-factor writers that never saved anything refuse instead of 
 });
 
 /* ── Q2 ───────────────────────────────────────────────────────────────────── */
-describe('Q2 — DELETE /:tenantId/ctq-factors/:factorId, the one governed CTQ-factor delete', () => {
-  const del = (app: express.Express, id: number, body: Record<string, unknown> = { reason: REASON }, mount: string = MOUNTS[0], tenant = ORG) =>
-    request(app).delete(`${mount}/${tenant}/ctq-factors/${id}`).send(body);
+// One describe per concern; `del` is shared by all four, so it lives here.
+const Q2 = 'Q2 — DELETE /:tenantId/ctq-factors/:factorId, the one governed CTQ-factor delete';
+const del = (app: express.Express, id: number, body: Record<string, unknown> = { reason: REASON }, mount: string = MOUNTS[0], tenant = ORG) =>
+  request(app).delete(`${mount}/${tenant}/ctq-factors/${id}`).send(body);
 
+describe(`${Q2}: authority and input refusals`, () => {
   it('refuses a viewer 403 the way every governed write does, before anything is read', async () => {
     const res = await del(appAs(ORG, 'viewer'), factorA);
     expect(res.status).toBe(403);
@@ -378,7 +380,9 @@ describe('Q2 — DELETE /:tenantId/ctq-factors/:factorId, the one governed CTQ-f
     expect(recordGovernedAction).not.toHaveBeenCalled();
     expect(ceremony()).toEqual(['BEGIN', 'TENANT', 'ROLLBACK']);
   });
+});
 
+describe(`${Q2}: in-use refusals`, () => {
   it('refuses 409 FACTOR_IN_USE while the traceability matrix references the factor', async () => {
     await pg.query(
       `INSERT INTO qmp_traceability_matrix (organization_id, qmp_id, ctq_factor_id, requirement_id, requirement_text)
@@ -427,7 +431,9 @@ describe('Q2 — DELETE /:tenantId/ctq-factors/:factorId, the one governed CTQ-f
     expect(recordGovernedAction).not.toHaveBeenCalled();
     expect(ceremony()).toEqual(['BEGIN', 'TENANT', 'ROLLBACK']);
   });
+});
 
+describe(`${Q2}: the happy path and ledger`, () => {
   it("another organization's gating rule listing the same id neither blocks the delete nor leaks that rule's section", async () => {
     // Ids are one global sequence, so another organization's rule can carry
     // this factor's id in its JSON list. Its rule is not this organization's
@@ -485,7 +491,9 @@ describe('Q2 — DELETE /:tenantId/ctq-factors/:factorId, the one governed CTQ-f
       requirementType: 'mandatory', failureAction: 'block',
     });
   });
+});
 
+describe(`${Q2}: failure outcomes`, () => {
   it('keeps the factor and answers 500 AUDIT_WRITE_FAILED when the ledger write fails', async () => {
     recordGovernedAction.mockImplementation(async (client: { query: (s: string) => Promise<unknown> }) => {
       await client.query('SELECT 1 AS ledger_probe');
