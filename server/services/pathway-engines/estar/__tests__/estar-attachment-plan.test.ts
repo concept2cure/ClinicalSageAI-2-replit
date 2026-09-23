@@ -289,6 +289,43 @@ for (const t of TEMPLATES) {
       expect(plan.refused[0].reasons).toEqual(['Section "A.1" is authored but not finalized.']);
     });
 
+    // 2026-09-23 (W5/D7, round-2 review): a file embedded in the eSTAR is
+    // enciphered with the eSTAR's own key, so its own security settings are
+    // invisible to every later check of the filled form. The slot is where the
+    // file is still its own bytes, and where it is judged.
+    it('refuses a slot whose file is a secured PDF, by the canonical leaf rule', async () => {
+      const secured = Buffer.from(
+        '%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R/Encrypt 5 0 R>>\n%%EOF\n',
+        'latin1',
+      );
+      const plan = await planEstarAttachments({
+        templateBytes: bytes,
+        requests: [{ slot: COVER_LETTER, source: { kind: 'vault_document', documentId: 'd1' } }],
+        resolve: stubResolver(secured, 'Cover Letter.pdf'),
+        at: AT,
+      });
+      expect(plan.attachments).toEqual([]);
+      expect(plan.manifest).toBeNull();
+      expect(plan.refused).toHaveLength(1);
+      expect(plan.refused[0].fileName).toBe('Cover Letter.pdf');
+      expect(plan.refused[0].reasons.join(' ')).toMatch(/Cover Letter\.pdf.*security settings/);
+    });
+
+    it('judges the bytes, not the name: secured PDF bytes under another name are refused too', async () => {
+      const secured = Buffer.from(
+        '%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R/Encr#79pt 5 0 R>>\n%%EOF\n',
+        'latin1',
+      );
+      const plan = await planEstarAttachments({
+        templateBytes: bytes,
+        requests: [{ slot: COVER_LETTER, source: { kind: 'vault_document', documentId: 'd1' } }],
+        resolve: async () => ({ ok: true, bytes: secured, fileName: 'Cover Letter.docx', mimeType: 'application/octet-stream' }),
+        at: AT,
+      });
+      expect(plan.attachments).toEqual([]);
+      expect(plan.refused[0].reasons.join(' ')).toMatch(/security settings/);
+    });
+
     it("resolves the User Fee Form from the template's OWN jurisdiction radio, not a guess", async () => {
       // Both templates ship ApplicationType.ATRadioButton100 = "1" (FDA), so the
       // one conditional slot resolves to CH1.09 — the same computation FDA's
