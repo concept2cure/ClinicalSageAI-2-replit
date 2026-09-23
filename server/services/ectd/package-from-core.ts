@@ -21,7 +21,7 @@ import { submissions, ectdSequences, submissionLeaves } from '../../../shared/sc
 import { packageEctdSubmission } from '../submission-gateways/regional-packager';
 import type { SubmissionBundle } from '../submission-gateways/types';
 import { buildPackagerInputFromCore, type LeafFileResolver } from './core-to-packager';
-import { loadLatestPriorManifestBySubmission } from './prior-sequence-loader';
+import { loadLatestPriorManifestBySubmission, loadRehearsalPriorManifestBySubmission } from './prior-sequence-loader';
 import { computeLifecycleOperations, type DesiredLeaf } from './lifecycle-operator';
 import { computeSequencePrefix } from './sequence-manifest';
 import auditService from '../auditService';
@@ -37,7 +37,16 @@ export interface PackageFromCoreParams {
   /** Resolves each leaf's document to an on-disk file (storage-specific). */
   resolveFile: LeafFileResolver;
   emitUnzipped?: boolean;
+  /**
+   * What a follow-up sequence's lifecycle acts bind against. 'filed' (the
+   * default, and the only state transmit uses): sequences the agency received.
+   * 'rehearsal': the latest recorded compile of each earlier sequence, filed or
+   * not — for validation only; see loadRehearsalPriorManifestBySubmission.
+   */
+  priorState?: PriorState;
 }
+
+export type PriorState = 'filed' | 'rehearsal';
 
 export interface PackageFromCoreResult {
   bundle: SubmissionBundle;
@@ -49,6 +58,11 @@ export interface PackageFromCoreResult {
    * act is refused.
    */
   priorSequence: string | null;
+  /** The prior state the acts were bound against. */
+  priorState: PriorState;
+  /** Under a rehearsal, the earlier sequences bound against that were never
+   *  filed; always empty for 'filed'. */
+  unfiledPriorSequences: string[];
 }
 
 /** The author-declared lifecycle acts: each one acts ON a leaf already filed. */
@@ -162,13 +176,21 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
   // prior manifest (first sequence, or none persisted yet) leaves declared `new`
   // stay new, and a declared replace/append/delete is refused — there is nothing
   // on record for it to act on.
+  const priorState: PriorState = params.priorState ?? 'filed';
+  if (priorState === 'rehearsal' && sequence.sequenceNumber === '0000') {
+    throw new Error(
+      'A rehearsal binds a follow-up sequence against earlier ones; sequence 0000 has none.',
+    );
+  }
   let priorSequence: string | null = null;
+  let unfiledPriorSequences: string[] = [];
   if (sequence.sequenceNumber !== '0000') {
-    const prior = await loadLatestPriorManifestBySubmission(pool, {
-      organizationId,
-      submissionId: submission.id,
-      currentSequence: sequence.sequenceNumber,
-    });
+    const where = { organizationId, submissionId: submission.id, currentSequence: sequence.sequenceNumber };
+    const prior =
+      priorState === 'rehearsal'
+        ? await loadRehearsalPriorManifestBySubmission(pool, where)
+        : { ...(await loadLatestPriorManifestBySubmission(pool, where)), unfiledSequences: [] as string[] };
+    unfiledPriorSequences = prior.unfiledSequences;
     // A filed sequence can be on record with nothing left on file (every leaf
     // it filed since withdrawn); it is still the state these acts meet.
     priorSequence = prior.priorSequenceNumber || null;
@@ -265,7 +287,9 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
         skipped,
         priorSequence
           ? `nothing is on file after sequence ${priorSequence} to act on`
-          : 'no filed prior sequence is on record to act on',
+          : priorState === 'rehearsal'
+            ? 'no earlier sequence has a recorded compile to act on'
+            : 'no filed prior sequence is on record to act on',
       );
     }
   } else {
@@ -285,10 +309,12 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
       sequence: input.sequence,
       leafCount: input.leaves.length,
       skipped: skipped.length,
+      priorState,
+      unfiledPriorSequences,
     },
   });
 
-  return { bundle, skipped, priorSequence };
+  return { bundle, skipped, priorSequence, priorState, unfiledPriorSequences };
 }
 
 export default { packageSequenceFromCore };
