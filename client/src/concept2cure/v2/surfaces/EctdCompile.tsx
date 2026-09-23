@@ -71,6 +71,11 @@ interface StatusView {
   submissionBlockers?: string[];
   modules: ModuleReadiness[];
   requiredSectionSource?: RequiredSectionSource;
+  /** 'placed' — counted from documents placed in the program's sequence;
+   *  'approved' — from the section store's approved/locked/final statuses. */
+  readinessBasis?: 'placed' | 'approved';
+  /** The sequence a compile builds, with the region recorded on it. */
+  sequence?: { sequenceNumber: string; region: string; leafCount: number } | null;
   totalSections: number;
   totalRequired: number;
   totalCompleted: number;
@@ -100,8 +105,21 @@ interface CompileResult {
    *  the package-download endpoint needs. Absent on draft-backbone compiles. */
   submissionId?: number;
   sequenceNumber?: string;
+  /** The region recorded on the compiled sequence. */
+  region?: string;
+  /** Whether the compilation — and its leaf manifest — was written. */
+  recorded?: boolean;
+  /** What the assembled package holds (spine-backed compiles). */
+  package?: CompiledPackage;
   errors: string[];
   warnings: string[];
+}
+interface CompiledPackage {
+  sha256: string | null;
+  files: string[];
+  regionalBackbone: { path: string; xml: string } | null;
+  indexMd5: string | null;
+  pdfa: { pdfLeaves: number; pdfaConverted: number; allPdfA: boolean; notConverted: string[] } | null;
 }
 interface CompilationRow {
   id: number | string;
@@ -111,6 +129,8 @@ interface CompilationRow {
   version: string;
   compiled_at: string | null;
   created_at: string | null;
+  sequence_number?: string | null;
+  has_manifest?: boolean;
 }
 
 async function readJson<T = any>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<{ ok: boolean; status: number; body: T | null }> {
@@ -321,6 +341,134 @@ function isIntegrityFailure(code: string): boolean {
 
 const downloadXml = (name: string, text: string) => downloadText(name, text, 'application/xml');
 
+/* ── The compiled package, as a reviewer opens it ─────────────────────────────
+ * The ICH stylesheet is what renders index.xml as a navigable leaf hierarchy,
+ * and it cannot ship until the agency files are vendored. This reads the SAME
+ * two backbones the package holds — index.xml and the regional Module 1 file it
+ * points at — and shows their headings and leaves as the XML states them:
+ * element names, titles, lifecycle operations and paths. Nothing is inferred
+ * from the request that built them. */
+interface BackboneLeaf { title: string; href: string; operation: string; modifiedFile: string | null }
+interface BackboneNode { name: string; leaves: BackboneLeaf[]; children: BackboneNode[] }
+
+function readLeaf(el: Element): BackboneLeaf {
+  return {
+    title: el.getElementsByTagName('title')[0]?.textContent?.trim() || '(untitled leaf)',
+    href: el.getAttribute('xlink:href') ?? '',
+    operation: el.getAttribute('operation') ?? '',
+    modifiedFile: el.getAttribute('modified-file'),
+  };
+}
+
+/** A heading and everything beneath it that holds a leaf; null when nothing does. */
+function readBranch(el: Element): BackboneNode | null {
+  const leaves: BackboneLeaf[] = [];
+  const children: BackboneNode[] = [];
+  for (const child of Array.from(el.children)) {
+    if (child.localName === 'leaf') leaves.push(readLeaf(child));
+    else {
+      const branch = readBranch(child);
+      if (branch) children.push(branch);
+    }
+  }
+  return leaves.length || children.length ? { name: el.localName, leaves, children } : null;
+}
+
+/** Parse a backbone; null when it is not well-formed XML. */
+function backboneTree(xml: string): BackboneNode | null {
+  const doc = new DOMParser().parseFromString(xml, 'application/xml');
+  if (doc.getElementsByTagName('parsererror').length > 0 || !doc.documentElement) return null;
+  return readBranch(doc.documentElement);
+}
+
+function BackboneBranch({ node }: { node: BackboneNode }) {
+  return (
+    <details open style={{ marginLeft: 12 }}>
+      <summary className="mono" style={{ fontSize: 12, cursor: 'pointer' }}>{node.name}</summary>
+      <ul style={{ listStyle: 'none', margin: '2px 0 4px', paddingLeft: 12 }}>
+        {node.leaves.map((l, i) => (
+          <li key={`leaf-${i}`} style={{ fontSize: 12.5, padding: '2px 0' }}>
+            {l.title} <span className="rd-chip tone-dim">{l.operation || 'no operation'}</span>{' '}
+            <span className="mono" style={{ color: 'var(--text-400)' }}>{l.href}</span>
+            {l.modifiedFile && <> · supersedes <span className="mono">{l.modifiedFile}</span></>}
+          </li>
+        ))}
+        {node.children.map((c, i) => <li key={`branch-${i}`}><BackboneBranch node={c} /></li>)}
+      </ul>
+    </details>
+  );
+}
+
+function BackboneView({ label, xml }: { label: string; xml: string }) {
+  const tree = useMemo(() => backboneTree(xml), [xml]);
+  return (
+    <div style={{ marginBottom: 8 }}>
+      <div style={{ fontSize: 12, fontWeight: 600 }}>{label}</div>
+      {tree ? <BackboneBranch node={tree} /> : (
+        <div className="sp-tone-warn" style={{ fontSize: 12 }}>This backbone is not well-formed XML, so its hierarchy cannot be shown.</div>
+      )}
+    </div>
+  );
+}
+
+function PackageFacts({ result }: { result: CompileResult }) {
+  const pkg = result.package;
+  const pdfa = pkg?.pdfa;
+  return (
+    <ul style={{ margin: '0 0 10px', paddingLeft: 18, fontSize: 12.5 }}>
+      <li>
+        Sequence <span className="mono">{result.sequenceNumber ?? '—'}</span>
+        {result.region ? <> · region {result.region.toUpperCase()}</> : null}
+        {pkg?.sha256 ? <> · package SHA-256 <span className="mono">{pkg.sha256.slice(0, 16)}…</span></> : null}
+      </li>
+      {result.recorded === true && <li>Recorded — its leaf manifest is what the next sequence is diffed against.</li>}
+      {result.recorded === false && <li className="sp-tone-err">Not recorded — the next sequence has nothing to be diffed against.</li>}
+      {pdfa && (
+        <li className={pdfa.allPdfA ? undefined : 'sp-tone-warn'}>
+          {pdfa.pdfaConverted} of {pdfa.pdfLeaves} PDF leaves converted to PDF/A.
+        </li>
+      )}
+    </ul>
+  );
+}
+
+/** What the compile assembled: facts, the leaf hierarchy, the files, the two backbone artifacts. */
+function CompiledPackageView({ result, ident }: { result: CompileResult; ident: string }) {
+  const pkg = result.package;
+  if (!pkg) return null;
+  const regional = pkg.regionalBackbone;
+  const regionalName = regional?.path.split('/').pop() ?? 'regional.xml';
+  const stem = safeFileName(`ectd-${ident}-seq-${result.sequenceNumber ?? 'package'}`);
+  return (
+    <div style={{ marginTop: 10 }}>
+      <PackageFacts result={result} />
+      <section aria-label="Leaf hierarchy" style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', marginBottom: 10 }}>
+        <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 4 }}>Leaf hierarchy</div>
+        {result.xmlBackbone && <BackboneView label="index.xml — ICH backbone" xml={result.xmlBackbone} />}
+        {regional && <BackboneView label={`${regional.path} — regional Module 1`} xml={regional.xml} />}
+      </section>
+      <details style={{ marginBottom: 10 }}>
+        <summary style={{ fontSize: 12.5, cursor: 'pointer' }}>Files in this package ({pkg.files.length})</summary>
+        <ul className="mono" style={{ fontSize: 12, margin: '4px 0 0', paddingLeft: 18 }}>
+          {pkg.files.map((f) => <li key={f}>{f}</li>)}
+        </ul>
+      </details>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {regional && (
+          <button className="nda-open" onClick={() => downloadXml(`${stem}-${regionalName}`, regional.xml)}>
+            {I.download} Download {regionalName}
+          </button>
+        )}
+        {pkg.indexMd5 != null && (
+          <button className="nda-open" onClick={() => downloadText(`${stem}-index-md5.txt`, pkg.indexMd5!)}>
+            {I.download} Download index-md5.txt
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /**
  * The open program's identifier — a regulatory_programs UUID, a program code,
  * or a legacy numeric project id. The SERVER resolves whichever it is,
@@ -465,12 +613,19 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
 
   useEffect(() => { void loadStatus(); void loadHistory(); }, [loadStatus, loadHistory]);
 
+  /* A program whose sequence exists compiles for the region RECORDED on that
+     sequence; the server refuses a contradicting one. So the selector is
+     replaced by the recorded region and nothing is sent — a Region menu that
+     changed nothing told the user a choice existed that did not. */
+  const recordedRegion = status?.sequence?.region ?? null;
+  const regionBody = useMemo(() => (recordedRegion ? {} : { region }), [recordedRegion, region]);
+
   const doValidate = useCallback(async () => {
     if (identPath == null) return;
     setBusy('validate');
     try {
       const { ok, status: st, body } = await readJson<{ valid: boolean; results: ValidationResult[]; summary: { pass: number; warnings: number; errors: number } }>(
-        'POST', `/api/ectd-compile/${identPath}/validate`, { region },
+        'POST', `/api/ectd-compile/${identPath}/validate`, regionBody,
       );
       if (!ok || !body) {
         fireToast(st === 401 ? 'Sign in to your tenant to validate.' : `Validation didn’t run (HTTP ${st}).`, 'error');
@@ -482,7 +637,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
       setFindings(body.results ?? []);
       fireToast(`Validation: ${body.summary.errors} error(s), ${body.summary.warnings} warning(s).`);
     } finally { setBusy(null); }
-  }, [identPath, region, fireToast]);
+  }, [identPath, regionBody, fireToast]);
 
   /* The actual deliverable. The compile proves the package exists (leaf
      counts, sha256) — this hands the publisher its BYTES through the governed
@@ -495,7 +650,11 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
     if (subId == null) return;
     setBusy('export');
     try {
-      const res = await apiRequest('POST', `/api/ectd/export/${subId}`, { region });
+      // Pinned to the sequence this compile built, not whichever is latest now.
+      const res = await apiRequest('POST', `/api/ectd/export/${subId}`, {
+        ...regionBody,
+        ...(compileResult?.sequenceNumber ? { sequenceNumber: compileResult.sequenceNumber } : {}),
+      });
       if (!res.ok) {
         const pj = (await res.json().catch(() => null)) as { error?: string } | null;
         fireToast('The package was not returned — ' + (pj?.error ?? `HTTP ${res.status}`) + '.', 'error');
@@ -515,15 +674,19 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
     } finally {
       setBusy(null);
     }
-  }, [compileResult, region, ident, fireToast]);
+  }, [compileResult, regionBody, ident, fireToast]);
 
   const doCompile = useCallback(async () => {
     if (identPath == null) return;
     setBusy('compile');
     try {
-      const { ok, status: st, body } = await readJson<CompileResult>('POST', `/api/ectd-compile/${identPath}/compile`, { submissionType, region });
+      const { ok, status: st, body } = await readJson<CompileResult>('POST', `/api/ectd-compile/${identPath}/compile`, { submissionType, ...regionBody });
       if (!ok || !body) {
-        fireToast(st === 401 ? 'Sign in to your tenant to compile.' : `Compile failed (HTTP ${st}). Nothing was assembled.`, 'error');
+        const refusal = (body as { error?: { message?: string } } | null)?.error?.message;
+        fireToast(
+          st === 401 ? 'Sign in to your tenant to compile.' : `Compile refused (HTTP ${st}) — ${refusal ?? 'nothing was assembled'}.`,
+          'error',
+        );
         return;
       }
       setCompileResult(body);
@@ -543,7 +706,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
       );
       void loadStatus(); void loadHistory();
     } finally { setBusy(null); }
-  }, [identPath, submissionType, region, fireToast, loadStatus, loadHistory]);
+  }, [identPath, submissionType, regionBody, fireToast, loadStatus, loadHistory]);
 
   /* WHAT ANA SEES HERE. Published ABOVE the no-program early return, because
      `usePublishSurfaceContext` is a hook and a hook below a conditional return
@@ -675,10 +838,19 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
           </span>
         </div>
         <div className="pj-card-b" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <label style={{ fontSize: 12, color: 'var(--text-400)' }} htmlFor="ectd-region">Region</label>
-          <select id="ectd-region" className="c2c-input" style={{ height: 30 }} value={region} onChange={(e) => setRegion(e.target.value as any)}>
-            {REGIONS.map((r) => <option key={r} value={r}>{r === 'FDA' ? 'US · FDA' : 'EU · EMA'}</option>)}
-          </select>
+          {recordedRegion ? (
+            <span style={{ fontSize: 12.5 }}>
+              Region <b>{recordedRegion.toUpperCase()}</b>
+              <span style={{ color: 'var(--text-400)' }}> · recorded on sequence {status?.sequence?.sequenceNumber}</span>
+            </span>
+          ) : (
+            <>
+              <label style={{ fontSize: 12, color: 'var(--text-400)' }} htmlFor="ectd-region">Region</label>
+              <select id="ectd-region" className="c2c-input" style={{ height: 30 }} value={region} onChange={(e) => setRegion(e.target.value as any)}>
+                {REGIONS.map((r) => <option key={r} value={r}>{r === 'FDA' ? 'US · FDA' : 'EU · EMA'}</option>)}
+              </select>
+            </>
+          )}
           <label style={{ fontSize: 12, color: 'var(--text-400)' }} htmlFor="ectd-subtype">Submission</label>
           <select id="ectd-subtype" className="c2c-input" style={{ height: 30 }} value={submissionType} onChange={(e) => setSubmissionType(e.target.value as any)}>
             {SUB_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -697,7 +869,13 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
           {/* The chip reports CONTENT completeness, which is what this number
               measures. It used to read "submission-ready" at 100%, over a package
               with no leaf files — see the blockers panel below. */}
-          {status && (
+          {status && status.readinessBasis === 'placed' ? (
+            // Counted from documents PLACED in the sequence — placement, not
+            // approval, so it never borrows the "content complete" wording.
+            <span className={'rd-chip tone-' + (status.totalCompleted === status.totalRequired ? 'ok' : 'warn')}>
+              {status.totalCompleted} of {status.totalRequired} required sections placed
+            </span>
+          ) : status && (
             <span className={'rd-chip tone-' + ((status.contentComplete ?? status.overallReadiness === 100) ? 'ok' : 'warn')}>
               {status.overallReadiness}% · {(status.contentComplete ?? status.overallReadiness === 100) ? 'content complete' : 'incomplete'}
             </span>
@@ -808,6 +986,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
                 )}
               </>
             )}
+            <CompiledPackageView result={compileResult} ident={ident} />
           </div>
         </div>
       )}
@@ -846,10 +1025,13 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
           ) : history.length === 0 ? (
             <div style={{ padding: 16 }}><EmptyState icon={I.clock} title="No compilations yet" hint="Each Compile run is recorded here with its status and version." /></div>
           ) : (
-            <table className="reg-tbl"><thead><tr><th>Name</th><th>Type</th><th>Version</th><th>Status</th><th style={{ textAlign: 'right' }}>Compiled</th></tr></thead>
+            <table className="reg-tbl"><thead><tr><th>Name</th><th>Sequence</th><th>Leaf manifest</th><th>Type</th><th>Version</th><th>Status</th><th style={{ textAlign: 'right' }}>Compiled</th></tr></thead>
               <tbody>{history.map((h) => (
                 <tr key={String(h.id)}>
-                  <td>{h.compilation_name}</td><td>{h.compilation_type}</td><td className="mono">{h.version}</td>
+                  <td>{h.compilation_name}</td>
+                  <td className="mono">{h.sequence_number ?? '—'}</td>
+                  <td>{h.has_manifest ? 'manifest recorded' : 'no manifest — cannot anchor a lifecycle'}</td>
+                  <td>{h.compilation_type}</td><td className="mono">{h.version}</td>
                   <td><span className={'rd-chip tone-' + (h.status === 'completed' ? 'ok' : h.status === 'failed' ? 'err' : 'dim')}>{h.status}</span></td>
                   <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>{h.compiled_at ? new Date(h.compiled_at).toLocaleString() : '—'}</td>
                 </tr>))}</tbody></table>

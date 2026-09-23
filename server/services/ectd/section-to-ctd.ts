@@ -76,6 +76,46 @@ export function isPlaceableCtdCode(code: string | null | undefined, region: Plac
 }
 
 /**
+ * The IND forms a rule pack requires by name, and how a filed form proves it.
+ *
+ * FDA's Module 1 (v2.3) files every form at 1.1 and tells them apart by form
+ * type — it has no 1.1.1-1.1.3 headings, so module1HeadingForSectionKey files a
+ * form at 1.1. The ind:fda rule pack still keys each form's presence as its own
+ * requirement (1.1.1 Form FDA 1571, 1.1.2 Form FDA 1572, 1.1.3 Form FDA 3674).
+ * A form leaf therefore satisfies its requirement through the document_type the
+ * IND forms route records (`form_<number>`), not through its section code.
+ *
+ * ONE table: the compile's required-section check and the IND checklist both
+ * read it, so a form cannot be complete on one screen and missing on the other.
+ */
+export const IND_FORM_REQUIREMENTS: ReadonlyArray<{
+  /** The rule-pack requirement key (no 'm' prefix). */
+  requirement: string;
+  /** The forms engine id. */
+  formId: string;
+  /** submission_leaves.document_type of a filed copy of the form. */
+  documentType: string;
+}> = [
+  { requirement: '1.1.1', formId: 'FDA_1571', documentType: 'form_1571' },
+  { requirement: '1.1.2', formId: 'FDA_1572', documentType: 'form_1572' },
+  { requirement: '1.1.3', formId: 'FDA_3674', documentType: 'form_3674' },
+];
+
+/** The required IND form a leaf's document_type records, or null. */
+export function indFormForDocumentType(
+  documentType: string | null | undefined,
+): (typeof IND_FORM_REQUIREMENTS)[number] | null {
+  const t = String(documentType ?? '').trim().toLowerCase();
+  if (!t) return null;
+  return IND_FORM_REQUIREMENTS.find((f) => f.documentType === t) ?? null;
+}
+
+/** The requirement a filed form satisfies, from its leaf document_type; null otherwise. */
+export function formRequirementForDocumentType(documentType: string | null | undefined): string | null {
+  return indFormForDocumentType(documentType)?.requirement ?? null;
+}
+
+/**
  * Infer the FDA Module 1 HEADING for a loosely-keyed regional document, when
  * the key names one unambiguously. A section keyed 'form-1571' or 'cover-letter'
  * used to resolve to the bare module '1', which the packager nests under an

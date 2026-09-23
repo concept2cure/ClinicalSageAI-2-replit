@@ -41,6 +41,8 @@ import { Router, Request, Response } from 'express';
 import { pool } from '../db';
 import { resolveSubmissionSpine, type SubmissionSpine } from '../services/cmc/submission-spine';
 import { sectionMatches } from '../services/ectd/section-code-match';
+import { formRequirementForDocumentType } from '../services/ectd/section-to-ctd';
+import { toPackagerRegion } from '../services/ectd/core-to-packager';
 import { buildLeafManifest } from '../services/ectd/sequence-manifest';
 import {
   resolveRequiredSections,
@@ -381,8 +383,29 @@ interface CompilationResult {
   /** Leaf files actually rendered to disk: the materialized count on the
    *  spine-backed compile, 0 on the draft-backbone path. */
   leafFilesRendered?: number;
+  /** The region recorded on the compiled sequence — authoritative, never the
+   *  caller's selector. */
+  region?: string;
+  /** Whether the compilation (and the leaf manifest the NEXT sequence is
+   *  diffed against) was written to ectd_compilations. */
+  recorded?: boolean;
+  /** What the assembled package actually holds (spine-backed compiles only). */
+  package?: CompiledPackage;
   errors: string[];
   warnings: string[];
+}
+
+interface CompiledPackage {
+  sha256: string | null;
+  /** Every file in the package, by its path inside the ZIP, sorted. */
+  files: string[];
+  /** The regional Module 1 backbone index.xml points at, verbatim. */
+  regionalBackbone: { path: string; xml: string } | null;
+  /** index-md5.txt: the MD5 of index.xml, verbatim. */
+  indexMd5: string | null;
+  /** PDF/A conversion outcome over the package's PDF leaves; null when the
+   *  packager reported no grade. */
+  pdfa: { pdfLeaves: number; pdfaConverted: number; allPdfA: boolean; notConverted: string[] } | null;
 }
 
 interface ModuleCompilationStatus {
@@ -444,6 +467,30 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
     //    packager) — genuine rendered PDF leaves, real index.xml, real MD5s.
     const spine = await resolveSubmissionSpine(anchor, orgId);
     if (spine?.sequence && spine.sequence.leafCount > 0) {
+      // The sequence's recorded region decides the package; the selector only
+      // cross-checks it. A region that contradicts the record is refused, the
+      // same way the export route refuses it — a Region selector that silently
+      // built an FDA package after the user chose EMA told the user nothing.
+      if (req.body?.region != null && String(req.body.region).trim() !== '') {
+        let requested: string;
+        try {
+          requested = toPackagerRegion(String(req.body.region));
+        } catch (err) {
+          return res.status(400).json({
+            error: { code: 'REGION_UNSUPPORTED', message: err instanceof Error ? err.message : String(err) },
+          });
+        }
+        if (requested !== toPackagerRegion(spine.sequence.region)) {
+          return res.status(409).json({
+            error: {
+              code: 'REGION_MISMATCH',
+              message:
+                `Sequence ${spine.sequence.sequenceNumber} was created for region "${spine.sequence.region}"; ` +
+                `it cannot be compiled as "${req.body.region}". The sequence's recorded region decides the package.`,
+            },
+          });
+        }
+      }
       return await compileFromSpine(req, res, {
         orgId,
         anchor,
@@ -657,6 +704,32 @@ interface SpineLeafRow {
   lifecycle_op: string | null;
   document_table: string | null;
   document_id: number | null;
+  /** form_<number> for a filed FDA form; how a form proves its requirement. */
+  document_type?: string | null;
+}
+
+/** The sequence's placed (not deleted) leaves, org-scoped: the one read that
+ *  compile, validate and status share. */
+async function loadSpineLeaves(sequenceId: number, orgId: number): Promise<SpineLeafRow[]> {
+  const leafRes = await pool.query(
+    `SELECT section_code, title, lifecycle_op, document_table, document_id, document_type
+       FROM submission_leaves
+      WHERE sequence_id = $1 AND organization_id = $2 AND deleted_at IS NULL
+      ORDER BY section_code`,
+    [sequenceId, orgId],
+  );
+  return leafRes.rows as SpineLeafRow[];
+}
+
+/**
+ * Does this placed leaf satisfy a required section? By section (a leaf at or
+ * beneath the requirement), or — for an FDA form, which is filed at 1.1 and
+ * told apart by type — by the form requirement its document_type proves.
+ */
+function leafSatisfies(l: SpineLeafRow, requiredCode: string): boolean {
+  if (sectionMatches(l.section_code, requiredCode)) return true;
+  const formRequirement = formRequirementForDocumentType(l.document_type);
+  return formRequirement != null && sectionMatches(formRequirement, requiredCode);
 }
 
 /**
@@ -678,7 +751,7 @@ function leafPlacementFindings(
   const allRequired = opts.required.modules.flatMap((m) => m.requiredSections);
 
   for (const reqCode of allRequired) {
-    const found = leaves.find((l) => sectionMatches(l.section_code, reqCode));
+    const found = leaves.find((l) => leafSatisfies(l, reqCode));
     if (!found) {
       results.push({
         rule: 'REQUIRED_SECTION_UNPLACED',
@@ -713,7 +786,7 @@ function leafPlacementFindings(
     for (const l of leaves) {
       if (
         !opts.isMaterialized(l) &&
-        !allRequired.some((rc) => sectionMatches(l.section_code, rc))
+        !allRequired.some((rc) => leafSatisfies(l, rc))
       ) {
         results.push({
           rule: 'LEAF_SOURCE_UNRESOLVED',
@@ -743,7 +816,7 @@ function moduleStatusesFromLeaves(
       const digit = code.replace('m', '');
       const moduleLeaves = leaves.filter((l) => sectionMatches(l.section_code, digit));
       const completedRequired = def.requiredSections.filter((rs) =>
-        moduleLeaves.some((l) => sectionMatches(l.section_code, rs) && isMaterialized(l)),
+        moduleLeaves.some((l) => leafSatisfies(l, rs) && isMaterialized(l)),
       );
       return {
         moduleCode: code,
@@ -763,7 +836,7 @@ function moduleStatusesFromLeaves(
           title: String(l.title ?? l.section_code ?? ''),
           status: isMaterialized(l) ? 'rendered' : 'unresolved-source',
           hasContent: isMaterialized(l),
-          required: def.requiredSections.some((rs) => sectionMatches(l.section_code, rs)),
+          required: def.requiredSections.some((rs) => leafSatisfies(l, rs)),
         })),
       };
     });
@@ -795,14 +868,7 @@ async function compileFromSpine(
   const seq = spine.sequence!;
   const startedAt = new Date().toISOString();
 
-  const leafRes = await pool.query(
-    `SELECT section_code, title, lifecycle_op, document_table, document_id
-       FROM submission_leaves
-      WHERE sequence_id = $1 AND organization_id = $2 AND deleted_at IS NULL
-      ORDER BY section_code`,
-    [seq.id, orgId],
-  );
-  const leaves = leafRes.rows as SpineLeafRow[];
+  const leaves = await loadSpineLeaves(seq.id, orgId);
 
   // Canonical assembler (dynamic import keeps the draft-only path light and
   // lets route tests that stub the pool avoid loading the drizzle stack).
@@ -820,6 +886,10 @@ async function compileFromSpine(
   // Without this write-half, prior-sequence load always returned [] and every
   // leaf stayed `new` — no amendments/supplements were producible.
   let leafManifestJson: string | null = null;
+  // What the package actually holds, read from the same ZIP the backbone comes
+  // from: the file tree, the regional Module 1 backbone (index.xml only points
+  // at it, so an IND's forms are otherwise invisible) and the MD5 index.
+  let compiledPackage: CompiledPackage | null = null;
 
   try {
     const assembled = await assembleSequence({
@@ -848,6 +918,27 @@ async function compileFromSpine(
       );
       dtdSelfContained = assembled.bundle.dtdStatus?.selfContained ?? null;
       packageSha256 = assembled.bundle.sha256;
+      const files = Object.values(zip.files)
+        .filter((f) => !f.dir)
+        .map((f) => f.name)
+        .sort();
+      const regionalPath = assembled.bundle.regionalBackbone?.file ?? null;
+      const regionalXml = regionalPath ? await zip.file(regionalPath)?.async('string') : undefined;
+      const grade = assembled.bundle.submissionGrade;
+      compiledPackage = {
+        sha256: packageSha256,
+        files,
+        regionalBackbone: regionalPath && regionalXml != null ? { path: regionalPath, xml: regionalXml } : null,
+        indexMd5: (await zip.file('index-md5.txt')?.async('string'))?.trim() ?? null,
+        pdfa: grade
+          ? {
+              pdfLeaves: grade.pdfLeaves,
+              pdfaConverted: grade.pdfaConverted,
+              allPdfA: grade.allPdfA,
+              notConverted: [...grade.notConverted],
+            }
+          : null,
+      };
       // Snapshot this sequence's shipped leaves as its immutable manifest.
       const manifest = buildLeafManifest(assembled.bundle.leafManifest ?? []);
       leafManifestJson = manifest.length > 0 ? JSON.stringify(manifest) : null;
@@ -909,6 +1000,18 @@ async function compileFromSpine(
         'The package references eCTD DTDs that are not bundled under util/dtd/ — it is not self-contained. Vendor the ICH/regional DTDs before transmission.',
       );
     }
+    // The packager converts every PDF leaf to PDF/A when it can and ships the
+    // original bytes when it cannot (no Ghostscript on the host). It reported
+    // that grade; nothing read it, so a vanilla-PDF package compiled with no
+    // word said about it.
+    const pdfa = compiledPackage?.pdfa;
+    if (pdfa && !pdfa.allPdfA && pdfa.notConverted.length > 0) {
+      blockers.push(
+        `${pdfa.notConverted.length} of ${pdfa.pdfLeaves} PDF leaf file(s) were not converted to PDF/A ` +
+          `(${pdfa.notConverted.join(', ')}). The PDF/A toolchain did not run on this host; ` +
+          'the leaves ship as ordinary PDFs until it does.',
+      );
+    }
   }
 
   // Record the compilation (real backbone + recorded sequence identity, so this
@@ -916,6 +1019,7 @@ async function compileFromSpine(
   // path — a compilation the caller can download is worth more than a failed
   // request.
   const compilationName = `IND Compilation — ${anchor.label}`;
+  let recorded = false;
   try {
     await pool.query(
       `INSERT INTO ectd_compilations
@@ -940,9 +1044,17 @@ async function compileFromSpine(
         spine.submissionId,
       ],
     );
+    recorded = true;
   } catch (err: any) {
+    // Not a warning to swallow: this row carries the leaf manifest the NEXT
+    // sequence's replace/delete operations are computed from. Unrecorded, the
+    // package can still be exported, but it can anchor no lifecycle.
     console.warn(
       `[eCTD Compile] could not record spine compilation for ${anchor.label}: ${err?.message}`,
+    );
+    blockers.push(
+      `This compilation was not recorded (${err?.message ?? 'the write failed'}), so its leaf_manifest — ` +
+        'what the next sequence is diffed against — does not exist. Resolve the write and compile again.',
     );
   }
 
@@ -964,6 +1076,9 @@ async function compileFromSpine(
     leafFilesRendered: materialized,
     submissionId: spine.submissionId,
     sequenceNumber: seq.sequenceNumber,
+    region: seq.region,
+    recorded,
+    ...(compiledPackage ? { package: compiledPackage } : {}),
     errors,
     warnings: validationResults.filter((v) => v.severity === 'warning').map((v) => v.message),
   };
@@ -1003,23 +1118,42 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
       programType: anchor.programType,
       primaryAgency: anchor.primaryAgency,
     });
+
+    // The leaf-rendering half of readiness comes from the submission spine's
+    // REAL state (documents placed into the sequence), not a capability flag.
+    const spine = await resolveSubmissionSpine(anchor, orgId);
+    // A program has no linked section store, so for it the section-store count
+    // was always 0 of N — shown beside documents already placed in its
+    // sequence. Where the sequence carries leaves, readiness counts what is
+    // PLACED with a document behind it, and says so (`readinessBasis`), so a
+    // placed section is never read as an approved one.
+    const placedLeaves =
+      spine?.sequence && spine.sequence.leafCount > 0
+        ? (await loadSpineLeaves(spine.sequence.id, orgId)).filter((l) => l.document_table && l.document_id)
+        : null;
+
     const moduleReadiness = required.modules.map((def) => {
       const code = def.code;
+      const digit = code.replace('m', '');
       const moduleSections = sections.filter(
-        s => s.section_code?.startsWith(code.replace('m', '')) || s.module?.toLowerCase() === code
+        s => s.section_code?.startsWith(digit) || s.module?.toLowerCase() === code
       );
       const totalRequired = def.requiredSections.length;
-      const completedRequired = def.requiredSections.filter(rs =>
-        moduleSections.some(
-          ms =>
-            ms.section_code?.startsWith(rs) && ['approved', 'locked', 'final'].includes(ms.status)
-        )
-      ).length;
+      const completedRequired = placedLeaves
+        ? def.requiredSections.filter((rs) => placedLeaves.some((l) => leafSatisfies(l, rs))).length
+        : def.requiredSections.filter(rs =>
+            moduleSections.some(
+              ms =>
+                ms.section_code?.startsWith(rs) && ['approved', 'locked', 'final'].includes(ms.status)
+            )
+          ).length;
 
       return {
         moduleCode: code,
         moduleName: def.name,
-        totalSections: moduleSections.length,
+        totalSections: placedLeaves
+          ? placedLeaves.filter((l) => sectionMatches(l.section_code, digit)).length
+          : moduleSections.length,
         requiredSections: totalRequired,
         completedRequired,
         completionPct:
@@ -1031,10 +1165,6 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
     const totalRequired = moduleReadiness.reduce((a, m) => a + m.requiredSections, 0);
     const totalCompleted = moduleReadiness.reduce((a, m) => a + m.completedRequired, 0);
     const overallPct = totalRequired > 0 ? Math.round((totalCompleted / totalRequired) * 100) : 0;
-
-    // The leaf-rendering half of readiness comes from the submission spine's
-    // REAL state (documents placed into the sequence), not a capability flag.
-    const spine = await resolveSubmissionSpine(anchor, orgId);
 
     res.json({
       projectId: anchor.numericProjectId,
@@ -1054,6 +1184,13 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
         ? submissionBlockers([], anchor, spine)
         : ['Required sections are not all complete.', ...submissionBlockers([], anchor, spine)],
       modules: moduleReadiness,
+      /** 'placed' — counted from documents placed in the sequence; 'approved' —
+       *  from the section store's approved/locked/final statuses. */
+      readinessBasis: placedLeaves ? 'placed' : 'approved',
+      /** The sequence a compile would build, with its recorded region. */
+      sequence: spine?.sequence
+        ? { sequenceNumber: spine.sequence.sequenceNumber, region: spine.sequence.region, leafCount: spine.sequence.leafCount }
+        : null,
       requiredSectionSource: required.provenance,
       totalSections: sections.length,
       totalRequired,
@@ -1087,7 +1224,7 @@ router.get('/:projectIdent/history', async (req: Request, res: Response) => {
   const { orgId, anchor, ident } = resolved;
 
   try {
-    let compilations: any[] = [];
+    let compilations: any[];
     try {
       // Match the anchor label as a WHOLE token, not a bare substring. A
       // `LIKE '%Project 5%'` matched "Project 50", "Project 500", etc., so
@@ -1101,7 +1238,8 @@ router.get('/:projectIdent/history', async (req: Request, res: Response) => {
       const labelTokenPattern = `(^|[^A-Za-z0-9])${escapedLabel}($|[^A-Za-z0-9])`;
       const result = await pool.query(
         `SELECT id, compilation_name, compilation_type, status, version,
-                compiled_at, created_at
+                compiled_at, created_at, sequence_number,
+                leaf_manifest IS NOT NULL AS has_manifest
          FROM ectd_compilations
          WHERE organization_id = $1 AND compilation_name ~ $2
          ORDER BY created_at DESC
@@ -1110,7 +1248,12 @@ router.get('/:projectIdent/history', async (req: Request, res: Response) => {
       );
       compilations = result.rows;
     } catch (err: any) {
+      // An unreadable history is not an empty one: "never compiled" is a claim
+      // about this submission that a failed read cannot make.
       console.warn(`[eCTD History] query failed for ${anchor.label}: ${err?.message}`);
+      return res.status(503).json({
+        error: { code: 'HISTORY_UNAVAILABLE', message: 'Compilation history could not be read.' },
+      });
     }
 
     res.json({ projectId: anchor.numericProjectId, projectIdent: ident, programId: anchor.programId, compilations });
@@ -1143,13 +1286,7 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
     const spine = await resolveSubmissionSpine(anchor, orgId);
     let results: ValidationResult[];
     if (spine?.sequence && spine.sequence.leafCount > 0) {
-      const leafRes = await pool.query(
-        `SELECT section_code, title, lifecycle_op, document_table, document_id
-           FROM submission_leaves
-          WHERE sequence_id = $1 AND organization_id = $2 AND deleted_at IS NULL
-          ORDER BY section_code`,
-        [spine.sequence.id, orgId],
-      );
+      const leaves = await loadSpineLeaves(spine.sequence.id, orgId);
       results = [
         {
           rule: 'SUBMISSION_SPINE_LINKED',
@@ -1158,7 +1295,7 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
             `Validating the ${spine.sequence.leafCount} document(s) placed in the linked submission's ` +
             `eCTD sequence ${spine.sequence.sequenceNumber}; compile assembles and renders them into real leaf files.`,
         },
-        ...leafPlacementFindings(leafRes.rows as SpineLeafRow[], {
+        ...leafPlacementFindings(leaves, {
           initialSequence: spine.sequence.sequenceNumber === '0000',
           required,
         }),

@@ -105,7 +105,11 @@ import {
   type EntitlementEvaluation,
 } from '../services/entitlements/require-entitlement';
 import { getMarketSpec } from '../services/market-specs/market-submission-specs';
-import { validateLeavesAgainstMarketSpec, type LeafFileDescriptor } from '../services/market-specs/market-formatting-validator';
+import {
+  validateLeavesAgainstMarketSpec,
+  measureLeafFile,
+  type FormattingReport,
+} from '../services/market-specs/market-formatting-validator';
 
 const logger = createScopedLogger('510k-estar-routes');
 
@@ -589,21 +593,31 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
     // changes the produced ZIP or the 200 path — a real gate would be a separate,
     // deliberate flag-gated step. Any validator failure is swallowed so it can
     // never break a working build.
-    let formattingReport: unknown;
+    //
+    // 2026-09-22 (W5/D7): the check judges the BUILT bytes. It used to pass
+    // declared sizes and a hard-coded format, never the bytes, so encryption
+    // was never examined; and a check that failed or did not run was recorded
+    // as `formattingErrors: 0`. Now the facts are measured, and a check that did
+    // not run is recorded as not run.
+    let formattingReport: FormattingReport | null = null;
     try {
       const spec = getMarketSpec('us-estar');
       if (spec) {
-        const leaves: LeafFileDescriptor[] = [
-          ...entries.map((e) => ({
-            fileName: e.name,
-            fileFormat: e.name.toLowerCase().endsWith('.docx') ? 'DOCX' : 'PDF',
-            fileSizeBytes: e.buffer.length,
-          })),
-          ...attachments.map((a) => ({
-            fileName: sanitizeFilename(a.filename),
-            fileSizeBytes: Buffer.from(a.buffer, 'base64').length,
-          })),
-        ];
+        const leaves = await Promise.all([
+          ...entries.map((e) =>
+            measureLeafFile(
+              { fileName: e.name, filePath: e.name, fileFormat: e.name.toLowerCase().endsWith('.docx') ? 'DOCX' : undefined, bytes: e.buffer },
+              spec.market,
+            ),
+          ),
+          ...attachments.map((a) => {
+            const safe = sanitizeFilename(a.filename);
+            return measureLeafFile(
+              { fileName: safe, filePath: `attachments/${safe}`, bytes: Buffer.from(a.buffer, 'base64') },
+              spec.market,
+            );
+          }),
+        ]);
         formattingReport = validateLeavesAgainstMarketSpec(spec, leaves);
       }
     } catch (validationErr) {
@@ -631,8 +645,10 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
       sectionsRendered,
       officialEstarPdf: false,
       programId: anchor.programUuid ?? undefined,
-      formattingErrors: (formattingReport as { errors?: number } | undefined)?.errors ?? 0,
-      formattingWarnings: (formattingReport as { warnings?: number } | undefined)?.warnings ?? 0,
+      // null = the check did not run; never read as 0 errors.
+      formattingVerdict: formattingReport?.verdict ?? 'not_run',
+      formattingErrors: formattingReport ? formattingReport.errors : null,
+      formattingWarnings: formattingReport ? formattingReport.warnings : null,
     };
 
     if (anchor.anchorProjectId !== null) {
