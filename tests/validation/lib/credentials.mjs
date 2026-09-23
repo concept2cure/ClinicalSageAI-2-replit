@@ -25,7 +25,7 @@
  * CREDENTIAL_NOT_SUPPLIED as its reason, and every step depending on it is
  * not-executed. Nothing is simulated.
  */
-import { TEST_USER_EMAIL, passwordLogin } from './harness.mjs';
+import { TEST_USER_EMAIL, passwordLogin, sharedSession } from './harness.mjs';
 import { freshTotp } from './totp.mjs';
 
 export const CREDENTIAL_NOT_SUPPLIED =
@@ -67,7 +67,8 @@ export async function requireSigner({ deviation, expect }, baseUrl, authorEmailO
   }
   let session;
   try {
-    session = await passwordLogin(baseUrl, cred);
+    const shared = await sharedSession('signer', baseUrl);
+    session = shared && shared.user?.email?.toLowerCase() === cred.email ? shared : await passwordLogin(baseUrl, cred);
   } catch (e) {
     expect(false, `signer identity ${cred.email} could not open a session: ${e.message}`);
   }

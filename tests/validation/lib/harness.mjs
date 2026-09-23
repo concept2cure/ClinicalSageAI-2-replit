@@ -173,6 +173,24 @@ async function completeTotpChallenge(baseUrl, email, challenge, totpSecret) {
   return verified.body;
 }
 
+/**
+ * A session opened once by run-all.mjs and handed to every protocol process
+ * (VALIDATION_SESSIONS, in the environment only — never on disk or in a record),
+ * so a full run signs each identity in once, as a person does. Signing in once
+ * per protocol took about nine sign-ins per run from one address, and the
+ * server allows ten per fifteen minutes: a re-run inside that window was refused
+ * 429 part-way through the package. Re-validated before use.
+ */
+export async function sharedSession(role, baseUrl = BASE_URL) {
+  let session = null;
+  try {
+    session = JSON.parse(process.env.VALIDATION_SESSIONS || '{}')[role] ?? null;
+  } catch {
+    session = null;
+  }
+  return session?.accessToken ? validatedSession(baseUrl, session, session.method) : null;
+}
+
 /** The run identity's credential when one is supplied, else null (dev-login). */
 export function runCredential() {
   const password = process.env.VALIDATION_USER_PASSWORD || '';
@@ -361,7 +379,8 @@ export async function createRun({ app, appLabel, protocolId, protocolTitle, need
     .then(async (r) => ({ status: r.status, body: await r.json().catch(() => null) }))
     .catch((e) => ({ status: 0, body: { error: String(e) } }));
   const credential = runCredential();
-  const auth = credential ? await passwordLogin(BASE_URL, credential) : await devLogin();
+  const auth =
+    (await sharedSession('run')) ?? (credential ? await passwordLogin(BASE_URL, credential) : await devLogin());
 
   let browser = null;
   let context = null;
