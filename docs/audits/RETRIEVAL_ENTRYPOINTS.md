@@ -52,6 +52,16 @@ in Phase 7 will enforce that no new surface imports the deleted legacy files.
 | `server/brain/embeddings.json` | Static data file for the deleted indexer chain. |
 | `server/pipelines/bulk_import.js` | Bulk import pipeline for the nonexistent `study_document` table. Zero runtime references (not in package.json scripts, not in CI, not in cron). |
 | `server/pipelines/indexDocs.js` | Same as bulk_import.js — targeted a nonexistent table. |
+
+> **2026-09-22 — these three came back and were deleted again.** Deleted
+> 2026-04-22, `semanticSearch.js`, `bulk_import.js` and `indexDocs.js` returned
+> through merges from a stale ref in late August 2026 and were deleted again,
+> as a set, on 2026-09-22 (the pipelines already threw `ERR_MODULE_NOT_FOUND` on
+> a missing `docushare.js`). Semantic ingest is `POST /api/vault/ingest` →
+> `vault-ingest.service.ts` → `document-chunking.service.ts` →
+> `vault.document_chunks`; backlog indexing is `scripts/backfill-vault-chunks.mjs`.
+> A resurrection now fails `ci:unreferenced-modules`, `ci:gateway-bypass` and
+> `ci:tables-live-schema` (`study_document` is no longer baselined).
 | `server/test-retrieve-api.js` | Ad-hoc test script for `vaultRetriever`. Zero references. |
 
 The orphan directories `server/brain/` and `server/pipelines/` were removed by git as a result of the above deletions.

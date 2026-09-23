@@ -7,7 +7,6 @@ import aiRoutes from '../api/ai/routes';
 import phase3Routes from '../api/ai/phase3-routes.js';
 import { testAssemblyRoutes } from '../routes/test-assembly';
 import enterpriseRoutes from '../api/enterprise/routes.js';
-import rbacRoutes from '../api/enterprise/rbac-routes.js';
 import cmcProjectRoutes from '../api/cmc/projectRoutes';
 import cmcBlueprintRoutes from '../api/cmc/blueprintRoutes';
 import cmcAggregatorRoutes from '../api/cmc/index.js';
@@ -59,7 +58,12 @@ export function registerCoreRoutes({
   // above covers every route phase3Routes defines instead.
   app.use('/api', phase3Routes);
   app.use('/api/enterprise', enterpriseRoutes);
-  app.use('/api/enterprise/rbac', rbacRoutes);
+  // /api/enterprise/rbac removed 2026-09-22: a parallel role store (roles,
+  // user_roles — created only by the refused _consolidated/006_roles.sql) whose
+  // every data handler failed, with no client caller. Roles live on
+  // organization_users.role: listed by GET /api/mdx/admin (mdx-admin.ts,
+  // AdminAccess.tsx), assigned by POST/PATCH /api/tenant-users (tenant-users.ts)
+  // and SCIM (scim.ts). Custom-role creation never worked and has no replacement.
 
   try {
     app.use('/api/cmc', cmcCoreRoutes);

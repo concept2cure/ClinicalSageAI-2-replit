@@ -45,8 +45,7 @@ const ALLOWED_SHADOWS = new Set([
   //    importers to the literal .js file and will not fall back to .ts.
   'server/config/environment.js', // why: shim for auth.js + monitoring.js '.js' imports under vitest.
   'server/middleware/errorHandler.js', // why: shim for routes/folder-management.js under vitest.
-  'server/services/auditService.js', // why: shim for api/enterprise/rbac-routes.js under vitest.
-  'server/services/roleBasedAccess.js', // why: shim for api/enterprise/{rbac-routes,routes}.js under vitest.
+  'server/services/roleBasedAccess.js', // why: shim for api/enterprise/routes.js under vitest.
   'server/utils/authedOrgId.js', // why: shim for phase3-routes.js/enterprise routes '.js' imports under vitest.
   // why: shim for the '.js'-suffixed imports under vitest. Eight live importers,
   // among them server/middleware/tenantContext.ts, server/socketServer.ts and
@@ -80,13 +79,9 @@ const ALLOWED_ANCESTOR_SHADOWS = new Set([
   //      construction rather than by luck.
   'server/api/cmc/index.js',
   'server/api/validation/index.js',
-  // why: server/db.ts is the governed pool. Nothing in server/lib/ writes
-  //      './db' today (checked 2026-09-10), so the ambiguity is latent — but
-  //      this is the highest-consequence pair in the list, because a module
-  //      that got the wrong `db` would be querying outside the request-scoped
-  //      handle that carries tenant context. Resolve it by deleting or
-  //      renaming server/lib/db.js rather than by keeping this note forever.
-  'server/lib/db.js',
+  // (server/lib/db.js, the ancestor shadow of the governed server/db.ts pool,
+  //  was resolved as this note asked — deleted 2026-09-22 with its only two
+  //  importers, the dead refModel.js and events/eventBus.js.)
   // why: server/auth.ts vs server/middleware/auth.js. The .js is already an
   //      allowlisted same-directory shim (see above) for the ~26 routes that
   //      import '../middleware/auth.js' explicitly. Nothing in

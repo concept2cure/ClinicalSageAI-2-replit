@@ -38,13 +38,10 @@ blocks new instances, and fixes or records every existing one it found.
 | `server/services/csr-extractor-service.ts` read `csr_reports.nctrial_id/drug_name/file_path` and updated `csr_details.processed` (42703 at its first statement) | Deleted with its confidence-scores test and mapping template. Earlier notes called it "not a deletion candidate" because the test guards against fabricated confidence numbers; the guarded code could not run (no caller, absent from the production bundle, 42703 first), so guard and guarded code leave together and no path can emit a confidence figure. Canonical path: `csr-intelligence-library.ts` via `POST /api/corpus/extract` | production build + `ci:check-bundle-reachability` green; typecheck 0 |
 | `unifiedDocumentIngestion.js` `searchDocuments` read `unified_documents.text_content` (42703) | Deleted with `getProcessingStats` and the unused pool import; never user-facing. Canonical document search: `GET /api/c2c/project-vault/:id/search` (`server/routes/c2c/project-vault.ts`) | same |
 
-## Recorded, not yet fixed — each with a written reason in its baseline
+| The 16 tables read only from `.js` files that exist on no provisioned database | All seven files deleted after adversarial triage (investigator + reachability + resolution skeptic each, 27 agents): `routes/content-plan.js` and `routes/smart-blocks.js` (mounted, no caller since 7a144fd1e, 500 or fabricated content), `hooks/refModel.js`, `events/eventBus.js` (+ its only other import `lib/db.js`, the ancestor shadow of the governed pool), `services/enhancedFaersService.js` (+ `drugClassService.js`, `sql/faers_schema.sql`), `services/semanticSearch.js` + `pipelines/{indexDocs,bulk_import}.js`, `api/enterprise/rbac-routes.js` (+ the `/rbac/*` block of `enterprise/routes.js` and the now-unused `auditService.js` shim). Replacements named by path in the commit. Every baseline entry they held removed by hand: live-schema 58 → 42, table-reachability 1 → 0, unkeyed-request-tables −3, unreferenced-modules −6, gateway-bypass −1, server-error-leaks −3, referenced-tables −1 | `table-gate-roles-red-first.txt` (the table guard fails on `roles` with its entry removed, passes after the deletion); `ci:tables-live-schema` on the reference DB: 42 baselined, no stale entries |
 
-Two triage workflows (reachability + resolution-safety skeptic per item) are
-verifying these; each entry is removed when its fix lands.
+## Recorded, not fixed — with a written reason in its baseline
 
-- 16 absent tables read from `.js` files → `tables-live-schema-baseline.json`
-  (`newlyVisible_2026_09_22`), `roles` also in `migration-reachability-baseline.json`.
 - `ich-compliance-checker.ts` → `column-reachability-baseline.json`, decided:
   it fails honestly (Q2 not evaluated, overall "incomplete"). The obvious rewrite
   onto `cmc_source_objects` was refuted by two skeptics — it would fabricate
@@ -60,3 +57,12 @@ two guard contracts, submission-core reachability, unified-ingestion convergence
 and the MDX route contract; `npm run typecheck` 0 errors (after installing the two
 locked packages the local `node_modules` was missing); ESLint 0 errors on changed
 files.
+
+**Pre-existing reds, not from this work and not regenerated around:**
+`ci:unreferenced-modules` (server/eval/register/run-eval.ts,
+server/mcp/client-transcript.ts), `ci:unkeyed-request-tables`
+(mcp_oauth_clients, c2c_document_section_versions), `ci:server-error-leaks`
+(server/routes/c2c/actions.ts), `db/audit-referenced-tables --check` (parser
+phantoms). Each is red identically on the tree without these changes;
+regenerating any of those baselines would have absorbed another session's
+finding.

@@ -70,12 +70,6 @@ export { MonteCarloService as monteCarloService } from './monte-carlo-service';
 export { default as reportGeneratorService } from './report-generator-service';
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// DATA SERVICES
-// ═══════════════════════════════════════════════════════════════════════════════
-
-export * from './enhancedFaersService.js';
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // INFRASTRUCTURE SERVICES
 // ═══════════════════════════════════════════════════════════════════════════════
 

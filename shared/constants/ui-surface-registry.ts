@@ -809,7 +809,7 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'settings',
     group: 'admin',
     uiKit: null,
-    apiPrefixes: ['/api/setup', '/api/admin', '/api/users', '/api/enterprise/rbac', '/api/api-keys'],
+    apiPrefixes: ['/api/setup', '/api/admin', '/api/users', '/api/api-keys'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
