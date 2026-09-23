@@ -2,7 +2,8 @@
  * Every password-reset event reaches the audit trail.
  *
  * ── The defect ───────────────────────────────────────────────────────────────
- * `auth.ts` defines `auditAuthEvent`, and its docstring states the requirement
+ * `auth.ts` defined `auditAuthEvent` (now `recordAuthEvent`,
+ * server/services/audit/auth-event-audit.ts), and its docstring stated the requirement
  * exactly: "21 CFR Part 11 §11.10(e) requires an independent, tamper-evident
  * audit trail for every login attempt, logout, and CREDENTIAL-CHANGING EVENT."
  *

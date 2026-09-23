@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-001 |
-| Version | 0.3 |
+| Version | 0.4 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §5; requirements URS-001 |
 | Runner (the executable protocol) | `tests/validation/oq/projects/run.mjs` — `npm run validation:oq -- projects` |
@@ -16,6 +16,7 @@
 | 0.1 | 2026-09-21 | W3a | First protocol; executed locally (see record). |
 | 0.2 | 2026-09-22 | W3 | OQ-PROJ-06b checks what its expected result says: at least one entry carries record/previous hashes, and the server's chain verdict (`meta.chain`) is `ok = true`. v0.1 counted entries only, so an unchained entry or a broken chain passed. Shown on a deliberately tampered local chain: v0.1 passed OQ-PROJ-06b while OQ-PROJ-06 failed; v0.2 fails it (VSR-001 §12). §5 records the 2026-09-22 execution under the production posture (RLS enforcing, non-owner runtime role, credentialed second signer); earlier results are kept below it as superseded. No step changed. |
 | 0.3 | 2026-09-23 | W3 | OQ-PROJ-02 signs in through the form with email, password and the authenticator code when the run is credentialed. The Demo Access path it had used exists only on a development server with ALLOW_DEV_AUTH=1, which production must refuse (IQ-10), so the step could not execute on staging. The harness authenticates every protocol the same way (tests/validation/lib/harness.mjs passwordLogin; VSR-001 §13). §1 now describes that session method; it named dev-login only, which OQ-002…006 inherit through "As OQ-001 §1". |
+| 0.4 | 2026-09-23 | W3 | OQ-PROJ-16 (URS-PROJ-010): the step makes a wrong-password attempt, a wrong-code attempt and a sign-in, then reads them back on the audit ledger, in order and hash-chained. Only entries the step itself added count: an earlier run leaves the same five sentences, and the first draft of the step, which compared the newest five, passed against the unfixed code on those. Under RLS these events had never reached the trail (VSR-001 §13, F-19). On the code before that fix the step fails; after it the step passes (`docs/evidence/W3/2026-09-23/OQ-001-v0.4/`). |
 
 ## 1. Method
 
@@ -45,12 +46,15 @@ IQ-001 executed on the same installation; `LAUNCH_SCOPE_ENFORCE=on`; a fresh or 
 | OQ-PROJ-13 | URS-PROJ-008 | scripted | `GET /api/module-subscriptions/navigation` | `launchScope.enforced=true`; `rbm` locked by `launch-scope`; six launch surfaces entitled |
 | OQ-PROJ-14 | URS-PROJ-008 | scripted (browser) | Open `/concept2cure/rbm` | "Not in this release" gate; screenshot |
 | OQ-PROJ-15 | URS-PROJ-009 | scripted | `GET /api/c2c/projects/<random uuid>` | 404 |
+| OQ-PROJ-16 | URS-PROJ-010 | scripted | Credentialed run only (a dev-login run is a deviation). `POST /api/auth/login` with a wrong password. `POST /api/auth/login` with the password, then `POST /api/auth/mfa/verify` with a wrong code. `POST /api/auth/login` with the password, then `/mfa/verify` with the current code. The sign-in calls bypass the recorded API client, so no factor reaches the record. The ledger is read before and after (`GET /api/audit-trail/ledger?limit=50`) (v0.4) | 401; 200 then 401; 200 then 200 with a session. The ledger then holds exactly five entries for the run identity that it did not hold before the step. Newest first they read "Signed in: password and second factor verified", "Password verified: authenticator code requested", "Second factor refused: wrong code", "Password verified: authenticator code requested", "Sign-in refused: wrong password"; each is hash-chained, and the chain verdict is ok |
 
 ## 4. Acceptance
 
 All scripted steps pass; unscripted/ad-hoc observations reviewed and accepted by the reviewer; no `fail` without a change request (VMP-001 §6).
 
 ## 5. Result of the local execution (2026-09-23, production posture with production authentication — VSR-001 §13)
+
+*v0.4 (OQ-PROJ-16) was executed on its own at `5a53d2db2`, after the full set below. On a server still running the pre-F-19 authentication code: 16 pass, 1 fail (OQ-PROJ-16, 0 entries added). On the fixed code: 17 pass, 0 fail. Records: `docs/evidence/W3/2026-09-23/OQ-001-v0.4/`; VSR-001 §13.8.*
 
 **16 pass, 0 fail, 0 deviation, 0 not-executed** (record `docs/evidence/W3/2026-09-23/OQ-PROJECTS/`, executed 2026-09-23T02:49:00Z UTC at `0e2b3a971`). Same installation and RLS posture as the 2026-09-22 execution below: database `c2c_oq_w3_20260922b`, `RLS_ENFORCE=on`, runtime role `app_service`, no AI provider configured. It adds the authentication production requires. The server refuses dev-login (`ALLOW_DEV_AUTH=0`; IQ-10 pass, `docs/evidence/W3/2026-09-23/IQ/`). Every session was opened by a password sign-in that completed the TOTP challenge of the identity's enrolled factor, once per identity per run (OQ-001 §1; VSR-001 §13). Run identity: user 17 `oq-runner@validation.local`. Second signer: user 11 `oq-signer@validation.local`. Both enrolled their authenticator through the product's own enrolment endpoints. OQ-PROJ-02 (v0.3) signed in through the form with password and authenticator code, and landed on `/concept2cure`. OQ-PROJ-06: `verify-chain` ok over 213 rows. OQ-PROJ-06b: 50 ledger entries, all hash-chained; the server chain verdict is ok=true over 213 rows.
 

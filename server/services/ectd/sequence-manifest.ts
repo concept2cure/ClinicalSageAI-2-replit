@@ -34,6 +34,12 @@ export interface SequenceLeafManifestEntry {
   md5: string;
   /** Lifecycle operation this leaf carried in its own sequence. */
   operation?: string;
+  /**
+   * For replace/append/delete: the ICH modified-file pointer the backbone
+   * carried — the filed leaf this one acts on, from this sequence's root
+   * (e.g. '../0000/m3/…'). What an act was bound to is part of the record.
+   */
+  modifiedFile?: string;
   /** Optional display title. */
   title?: string;
 }
@@ -50,6 +56,7 @@ export interface PublishableLeaf {
   /** Optional filename; derived from href when absent. */
   fileName?: string;
   operation?: string;
+  modifiedFile?: string;
   title?: string;
 }
 
@@ -74,6 +81,7 @@ export function buildLeafManifest(leaves: PublishableLeaf[]): SequenceLeafManife
       href: l.href,
       md5: l.md5,
       ...(l.operation ? { operation: l.operation } : {}),
+      ...(l.modifiedFile ? { modifiedFile: l.modifiedFile } : {}),
       ...(l.title ? { title: l.title } : {}),
     });
   }

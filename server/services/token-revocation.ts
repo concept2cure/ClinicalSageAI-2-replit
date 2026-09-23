@@ -18,6 +18,8 @@
 
 import { createHash } from 'crypto';
 import { createScopedLogger } from '../utils/logger';
+import { runWithPreAuthScope } from '../db/tenantStore';
+import { verifyJwtWithRotation, type JwtVerifyOptions } from '../utils/jwtVerify';
 
 const log = createScopedLogger('token-revocation');
 
@@ -62,6 +64,18 @@ async function getPool() {
   return null;
 }
 
+/**
+ * revoked_tokens carries no row-level security and no tenant column: a token is
+ * revoked or not, for everyone. The lookup runs where no tenant is known yet
+ * (the /api gate checks it before membership is resolved), and under
+ * RLS_ENFORCE=on the pool refuses an unscoped query, so every DB check used to
+ * fail silently and fall through to this instance's memory set. The pre-auth
+ * scope marks the query as intentionally tenant-less and grants no role.
+ */
+function tenantless<T>(caller: string, fn: () => Promise<T>): Promise<T> {
+  return runWithPreAuthScope(`auth:token-revocation-${caller}`, async () => await fn());
+}
+
 // ── Write: write-through to all available backends ──────────────────────────
 
 /**
@@ -104,11 +118,13 @@ export async function revokeToken(token: string, reason = 'logout'): Promise<voi
   const pool = await getPool();
   if (pool) {
     try {
-      await pool.query(
-        `INSERT INTO revoked_tokens (token_hash, revoked_at, expires_at, reason)
-         VALUES ($1, NOW(), $2, $3)
-         ON CONFLICT (token_hash) DO NOTHING`,
-        [hash, expiresAt.toISOString(), reason],
+      await tenantless('write', () =>
+        pool.query(
+          `INSERT INTO revoked_tokens (token_hash, revoked_at, expires_at, reason)
+           VALUES ($1, NOW(), $2, $3)
+           ON CONFLICT (token_hash) DO NOTHING`,
+          [hash, expiresAt.toISOString(), reason],
+        ),
       );
       dbAvailable = true;
     } catch (err) {
@@ -145,9 +161,8 @@ export async function isTokenRevoked(token: string): Promise<boolean> {
   const pool = await getPool();
   if (pool) {
     try {
-      const result = await pool.query(
-        `SELECT 1 FROM revoked_tokens WHERE token_hash = $1 AND expires_at > NOW() LIMIT 1`,
-        [hash],
+      const result = await tenantless('check', () =>
+        pool.query(`SELECT 1 FROM revoked_tokens WHERE token_hash = $1 AND expires_at > NOW() LIMIT 1`, [hash]),
       );
       dbAvailable = true;
       if (result.rows.length > 0) return true;
@@ -159,6 +174,33 @@ export async function isTokenRevoked(token: string): Promise<boolean> {
 
   // Tier 3: Memory (emergency)
   return memoryBlacklist.has(hash);
+}
+
+/** A signed, unexpired token that was revoked: the session was signed out. */
+export class SessionEndedError extends Error {
+  constructor() {
+    super('This session has ended. Sign in again.');
+    this.name = 'SessionEndedError';
+  }
+}
+
+/**
+ * Verify a bearer token and refuse it when its session was signed out.
+ *
+ * POST /api/auth/logout revokes the token and answers "Tokens invalidated.",
+ * but no authenticator read the revocation list (July 2026 audit, AUTH-03), so
+ * a signed-out token kept opening the /api gate, the session check, the users
+ * routes and the enterprise route that mints a fresh token from it, for the rest
+ * of its 24 hours. Every bearer verification goes through here.
+ *
+ * Throws what verifyJwtWithRotation throws for a bad or expired token, and
+ * SessionEndedError for a revoked one. Callers that already answer 401 for any
+ * verification error need no other change.
+ */
+export async function verifyLiveToken<T = unknown>(token: string, options?: JwtVerifyOptions): Promise<T> {
+  const decoded = verifyJwtWithRotation<T>(token, options);
+  if (await isTokenRevoked(token)) throw new SessionEndedError();
+  return decoded;
 }
 
 /**

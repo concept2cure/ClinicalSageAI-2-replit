@@ -135,6 +135,21 @@ export function fieldExtractionScore(
 
 // ── Composite per-task scoring ────────────────────────────────────────────────
 
+/**
+ * The drafting prompt a generation task is given. One copy, here beside the
+ * scorer, so the PQ runner (server/eval/pq/run-pq.ts) and anything else that
+ * generates against the gold bank ask the same question the bank's expectations
+ * were written for.
+ */
+export function buildGenerationPrompt(task: GoldDocTask): string {
+  const sections = (task.requiredSections ?? []).join(', ');
+  return (
+    `You are drafting the "${task.docType}" document section below. Use only the source ` +
+    `material provided. Cover these sections where supported: ${sections}. Cite sources ` +
+    `inline. Do not overclaim.\n\nSource material:\n${task.input ?? ''}`
+  );
+}
+
 export interface GenerationScore {
   taskId: string;
   docType: string;

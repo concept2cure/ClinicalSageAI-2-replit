@@ -1,0 +1,19 @@
+  OQ-PROJ-01  pass
+  OQ-PROJ-02  pass
+  OQ-PROJ-03  pass
+  OQ-PROJ-04  pass
+  OQ-PROJ-05  pass
+  OQ-PROJ-06  pass
+  OQ-PROJ-06b  pass
+  OQ-PROJ-07  pass
+  OQ-PROJ-08  pass
+  OQ-PROJ-09  pass
+  OQ-PROJ-10  pass
+  OQ-PROJ-11  pass
+  OQ-PROJ-12  pass
+  OQ-PROJ-13  pass
+  OQ-PROJ-14  pass
+  OQ-PROJ-15  pass
+  OQ-PROJ-16  FAIL  (the sign-in attempts this step made added 0 ledger entr(ies) for user:17: [])
+
+OQ-001 Projects: 16 pass, 1 fail, 0 deviation, 0 not-executed → <scratch>/oqv04-before/OQ-PROJECTS

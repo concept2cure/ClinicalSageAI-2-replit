@@ -5,7 +5,8 @@
 **State:** D4 is **not green**. This set closes the last gap between local
 execution and staging on the authentication side: the harness now works
 against a server that refuses dev-login and challenges every sign-in. The
-execution exposed two Part 11 defects. F-18 is fixed. F-19 is open. What is
+execution exposed two Part 11 defects. Both are fixed: F-18 before this set was
+filed, F-19 after it (VSR-001 §13.7). What is
 still owed is listed in VSR-001 §13.6 and at the end of this file.
 
 ## What was executed
@@ -49,6 +50,11 @@ still owed is listed in VSR-001 §13.6 and at the end of this file.
 | `red/F-18/OQ-SUBC-08.password-only-sign.api-1.json`, `…signature-row.api-2.json` | F-18. Signer 11, who has a TOTP factor enrolled, signs `ectd-sequence:3` with `reauth: {password}` only → 200. The Part 11 row reads `second_factor_verified: false, is_valid: true` |
 | `red/F-18/OQ-QMS-05.password-only-refused.api-1.json` | The same signer at the same commit, refused by the QMS approval: 401 `MFA_TOKEN_REQUIRED` |
 | `red/F-18/unit-before-fix.txt`, `unit-after-fix.txt` | `server/routes/c2c/__tests__/reauth-second-factor.test.ts` against the `verifyReauth` of `9b77ee3d8`: 3 fail / 6 pass. The password-only signature is accepted; an unreadable enrolment state is waved through; a signer with no stored password gets `REAUTH_USER_NOT_FOUND`. At `828faf809`: 9 / 9 |
+| `red/F-19/dbtest-before-fix.txt`, `dbtest-after-fix.txt` | F-19. `tests/db/sign-in-audit-trail.dbtest.ts` drives production's route registration as a non-superuser role with RLS enforcing. Before the fix: 6 fail / 2 pass. The challenge, the wrong password and the logout are refused by the `audit_logs` policy (4 refusals); the wrong code and the session are never written. After: 8 / 8, 0 refusals |
+| `red/F-19/dbtest-scope-without-logout-check.txt` | F-19. The scope fix without `/logout` verifying its token: a token signed with a foreign key writes `user_logout` into the organisation's chain (3 fail). The final fix attributes a logout only from a token the server signed |
+| `red/F-19/unit-without-scope.txt`, `unit-after-fix.txt` | F-19. The scope rule, in the default CI job: 2 fail / 8 pass with the write unscoped; 10 / 10 with it |
+| `red/F-19/live-after-fix.json`, `live-logout-after-fix.json` | F-19. The fixed server, live: sign-in events recorded in org 1's chain, 0 refusals. On the final code, a forged-token logout is recorded as tenant 0, and the genuine logout as org 1 / user 17. The chain verifier reads `ok` (273 rows) |
+| `OQ-001-v0.4/before-F-19-fix/`, `after-F-19-fix/` | OQ-PROJ-16 (URS-PROJ-010), the step added after F-19, at `5a53d2db2`. On the pre-F-19 auth code: **fail**, 0 ledger entries added by 5 sign-in attempts. On the fixed code: 17 / 0 / 0 / 0. Its first draft passed on the unfixed code, because it read entries an earlier run had left (VSR-001 §13.8) |
 | `red/login-limit.transcript.txt` | P-9. A re-run inside 15 minutes. OQ-PROJ-02's sign-in through the form never reaches the code step. Every protocol after it fails to open its session: 429 `RATE_LIMIT` |
 | `IQ-falsification/v0.3-dev-login-closed/` | P-10. The v0.3 runner (`c33e43d26`) on this server records IQ-10 as a deviation, "cannot be exercised on a development install", while observing the refusal. IQ-11: "no session (IQ-10)" |
 | `IQ-falsification/v0.3-dev-login-open/` | P-10. The same runner on a server with dev-login open, configured to refuse it, also records a deviation: the check cannot fail |
@@ -64,7 +70,7 @@ run was discarded rather than redacted by hand. The harness was fixed
 
 | File | Shows |
 |---|---|
-| `observations/sign-in-audit-refused.log.txt` | F-19 (open). Every password sign-in logs `user_login_mfa_challenge`, then `new row violates row-level security policy for table "audit_logs"`, 6 of 6. `audit_logs` holds no such row. `/api/auth/mfa/verify` writes no audit event at all |
+| `observations/sign-in-audit-refused.log.txt` | F-19, before its fix. Every password sign-in logs `user_login_mfa_challenge`, then `new row violates row-level security policy for table "audit_logs"`, 6 of 6. `audit_logs` holds no such row. `/api/auth/mfa/verify` writes no audit event at all |
 | `observations/totp-replay.json` | D6. One TOTP code opens two sessions for one identity inside one time step. Only status codes are recorded, never the code |
 | `observations/login-limit-forwarded-for.txt` | D1/D6. Login attempts claiming twelve different clients in `X-Forwarded-For` share one rate-limit bucket. No `trust proxy` is set, so behind the ALB every user shares the proxy's bucket |
 
@@ -78,6 +84,7 @@ run was discarded rather than redacted by hand. The harness was fixed
 | `52e3acc94` | P-8. `mfaToken` is redacted |
 | `c33e43d26` | P-9. One sign-in per identity per run |
 | `0e2b3a971` | P-10. IQ-10 can pass and fail; IQ-11 signs in without dev-login |
+| the change that adds `red/F-19/` | F-19. Authentication events are written in the scope of the organisation they record (`server/services/audit/auth-event-audit.ts`). `/mfa/verify` records its outcome. `/logout` attributes only a token the server signed |
 
 ## Owed, and not closable by another local run
 
@@ -90,4 +97,4 @@ run was discarded rather than redacted by hand. The harness was fixed
 4. The qualified contractor's review. §11.5 item 5 now also covers the
    Authoring PIN signature (VSR-001 §13.3 item 3). Then signatures.
 5. **The F-15 decision** (VSR-001 §12.2).
-6. **F-19**, the sign-in audit trail under RLS (VSR-001 §13.2).
+6. A full execution that includes OQ-PROJ-16. This set predates the step, so TM-001 shows URS-PROJ-010 uncovered.

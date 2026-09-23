@@ -753,3 +753,135 @@ Product change in this section: `828faf809` (F-18). Validation-tooling changes:
 `9b77ee3d8`, `ebd0edd42`, `52e3acc94`, `c33e43d26`, `0e2b3a971`. No result was
 edited after execution. The runners wrote every record, and the matrix builder
 regenerated TM-001.
+
+### 13.7 Postscript: F-19 fixed, and its scope corrected
+
+**Scope correction to §13.2.** F-19 is not limited to users with a second
+factor. Outside development the login route challenges every password sign-in:
+email OTP by default, TOTP when enrolled (`server/routes/auth.ts`, "Always
+require 2FA"). So before this fix, under RLS, *every* sign-in left no audit
+record. The events §13.2 marked "from source, not yet observed live" have now
+been observed on real PostgreSQL:
+- a wrong password on a real account, which was refused;
+- a logout, which was refused;
+- the session `/mfa/verify` issues, which was never written at all.
+
+The login route's own comment pointed to a success audit "near `res.json({
+success: true, accessToken … })`". That call survives only on the development
+path; mandatory MFA moved session creation to `/mfa/verify`, and the audit
+call was not moved with it.
+
+**Fix.**
+- `recordAuthEvent` (`server/services/audit/auth-event-audit.ts`) replaces
+  the route-local helper at all eleven call sites.
+- For an event that names an organisation, it writes the row in a scope for
+  exactly that organisation, with no role, and around the write alone. The
+  request's own queries stay in the pre-auth scope.
+- An event that names no organisation is written as before, as tenant 0.
+- New-organisation provisioning at signup uses the same least-privilege
+  shape, fixed on trunk for the same cause.
+- `POST /api/auth/mfa/verify` now records its outcome:
+  - `user_login_mfa_failed` for a wrong code (against the organisation) or
+    for an invalid or expired challenge (tenant 0);
+  - `user_login` success, reason `mfa_verified`, for the session it issues.
+- A write that fails is still logged and does not fail the sign-in. That is
+  a deliberate policy, now no longer the steady state.
+
+**The source of the organisation is now a security boundary.** A row is
+written into whichever organisation the event names, so that name must come
+from the server: the user record, or the server-signed MFA challenge.
+`/logout` took it from a token it had only *decoded*. With the scope fix
+alone, a token signed with any key could write a `user_logout` row into any
+organisation's audit chain. Before the fix, RLS refused that row along with
+every other one. `/logout` now attributes a logout only when the token's
+signature verifies against the server's keys (expiry ignored, because a logout
+from an expired session is still an event). Anything else is recorded as an
+anonymous logout (tenant 0).
+
+**Shown failing first.** Evidence: `docs/evidence/W3/2026-09-23/red/F-19/`.
+
+| Check | Original code | Scope fix, `/logout` still decoding | Final |
+|---|---|---|---|
+| `tests/db/sign-in-audit-trail.dbtest.ts`: production route registration, a freshly minted non-superuser `NOBYPASSRLS` role, `app.rls_enforce=on` | 6 fail / 2 pass, with 4 policy refusals logged. The forged-token case passes only because RLS refused every tenant-named write | 3 fail / 5 pass. A token signed with a foreign key writes `user_logout` into the organisation's chain | 8 / 8, 0 refusals. The challenge, wrong code, session, wrong password and genuine logout are recorded against the organisation. The forged logout is not. The product's chain verifier reads the organisation's 5 rows `ok` |
+| `server/services/audit/__tests__/auth-event-audit.test.ts` (the scope rule, in the default CI job) | The write without its scope: 2 fail / 8 pass | — | 10 / 10 |
+| Live, the MFA-posture server, after the fix | §13.2: 6 of 6 challenge rows refused, 0 rows | — | Sign-in, wrong code, wrong password: 7 rows in org 1's chain, 0 refusals. On the final code, a forged-token logout is recorded as tenant 0, and the genuine logout as org 1 / user 17. The chain verifier reads `ok` over 273 rows in 2 tenants |
+
+§13.5 after this postscript: **F-19 closed** locally; the staging
+re-execution is owed with the rest. §13.6 no longer owes the F-19 fix.
+
+Prepared by the W3 Claude session (drafting and execution only; cannot sign).
+Product change: the one that files this note. No record in
+`docs/evidence/W3/2026-09-23/` was re-executed or edited. Those records were
+made before this fix; the OQ protocols do not exercise the audit trail of a
+sign-in. That gap is noted for the next URS/OQ revision.
+
+### 13.8 Postscript: the protocol set now covers the sign-in audit trail
+
+F-19 was found in a server log, not by a step. No requirement asked whether
+a sign-in reached the audit trail, so no step could fail when it did not.
+
+- **URS-001 v0.2, URS-PROJ-010** (§11.10(e), high). Every sign-in attempt by
+  a user of an organisation is entered in that organisation's hash-chained
+  audit log and shown on its audit ledger. A refused attempt reads as
+  refused, never as a sign-in. RA-001 v0.2 assesses it: high, scripted.
+- **OQ-001 v0.4, OQ-PROJ-16.** The step makes the attempts itself: a wrong
+  password; a correct password, then a wrong code; a correct password, then
+  the current code. It then requires exactly five new entries for the run
+  identity on the ledger, in order and hash-chained, and the server's chain
+  verdict. The sign-in calls bypass the recorded API client, so no password
+  or code reaches a record.
+- **The ledger's wording.** An authentication event was shown by its action
+  name, so a refused sign-in and a successful one both read "User Login".
+  `recordAuthEvent` now writes the sentence the ledger shows first, for
+  example "Sign-in refused: wrong password".
+
+**The check was first seen to pass when it should not have.** The first
+draft compared the *newest* five sign-in entries with the expected
+sentences. Run at `092718c9d` against a server still on the pre-F-19 auth
+code, it passed. None of that run's attempts had reached the trail; the
+newest five were identical sentences an earlier run had left. That record
+was overwritten by the corrected run and is not filed. The false pass is
+described here and in the commit that corrected the step (`5a53d2db2`). The step now counts only the
+entries it adds.
+
+| OQ-001 v0.4 at `5a53d2db2` | Result | OQ-PROJ-16 observed |
+|---|---|---|
+| Server on the pre-F-19 auth code | 16 pass / **1 fail** | "the sign-in attempts this step made added 0 ledger entr(ies) for user:17"; 5 policy refusals in that server's log |
+| Server on the fixed code | **17 / 0 / 0 / 0** | 401, 200, 401, 200, 200; 5 new entries, newest first "Signed in: password and second factor verified" … "Sign-in refused: wrong password"; all chained; chain verdict ok |
+
+Evidence: `docs/evidence/W3/2026-09-23/OQ-001-v0.4/`. TM-001 was regenerated
+from the 2026-09-23 set: 68 requirements, 66 pass, 1 partial, 1 uncovered
+(URS-PROJ-010). The uncovered row is true of that set, which was executed
+before the step existed. The next full execution, on staging, covers it.
+
+### 13.9 Postscript: three more sign-in defects, found by sweeping the pre-auth mounts after F-19
+
+F-19 was a pre-auth mount writing rows for a real organisation, and trunk
+fixed the same class in signup the same day. So every mount that runs
+before the `/api` gate was read for the same class: `/api/auth`,
+`/api/users` and `/api/user`, and `/api/auth/enterprise`. The sweep found
+three defects, each larger than a refused audit row. Each was reproduced on
+real PostgreSQL, as a freshly minted non-superuser `NOBYPASSRLS` role
+behind production's own route registration
+(`tests/db/sign-in-audit-trail.dbtest.ts`), before its fix, then verified
+live on the MFA-posture server.
+
+| Id | What | Shown failing first | State |
+|---|---|---|---|
+| **F-20** (product, §11.10(d), §11.300) | **A way around MFA for every account.** `POST /api/users/login` and `/api/user/login` checked the password alone and issued a 24-hour access token. There was no second factor, no lockout check, no failed-attempt count and no audit record, for users who had enrolled an authenticator. The same router's `/register` created an account with no organisation outside signup and gave it a token. Its `/logout` revoked nothing. Nothing called any of them. | Live, for the TOTP-enrolled run identity: both paths returned a token that read `/api/c2c/projects` (200) and that `/api/auth/session` called signed in. The dbtest reproduces all three (`red/F-20/`). | **Fixed** `a7d5478ca`. All three answer with a 307 to the canonical `/api/auth/login`, `/logout` and `/signup`, as the platform's `/api/login`, `/api/logout` and `/api/register` already did. The parallel handlers are deleted. The replacement is the page's `/api/v1/auth`, exercised by OQ-PROJ-02 and OQ-PROJ-16. |
+| **F-21** (product, §11.10(d); July 2026 audit **AUTH-03**, P1, blocks G2) | **Logout did not end the session.** `/api/auth/logout` revoked the token and answered "Tokens invalidated.", but nothing on the request path read the revocation list; only the refresh route did. Under RLS the revocation lookup itself ran unscoped and was refused silently, so it saw only this instance's memory. | Live, after logout, the same token still read projects and the audit ledger, and `/session` called it signed in. In the dbtest the `/api` gate, `/session`, `/api/users/me` and the enterprise re-mint answered 200 / signed in / 200 / a fresh token. A session revoked by another instance still opened the gate while the lookup was unscoped. On the unfixed Hocuspocus code, a signed-out token opened a collaborative editing session (`red/F-21/`). | **Fixed** `0d99ca0cf`. `verifyLiveToken` (signature, then revocation) runs at every entry point that accepts a session token: the `/api` gate, the route-level middleware, the `/api/auth` and `/api/users` bearer routes, the enterprise routes, and the Socket.IO, Hocuspocus and AnA transports. The revocation lookup runs tenant-less (`revoked_tokens` has no RLS). Enterprise `/logout` is a 307 to the canonical logout. Live after: 401 / signed out / 401. |
+| **F-22** (product, §11.10(e)) | **A second sign-in recorded nothing.** The enterprise router's `verify-password` → `verify-mfa` issues a 24-hour session. No client calls it, and it wrote no audit event in any posture. Its organisation-switch audit named the destination from the pre-auth scope and was refused under RLS. URS-PROJ-010 was false for this path. | The dbtest's enterprise cases: wrong password, challenge, wrong code, session and organisation switch each left no row (`red/F-22/`). | **Fixed** `c62ec4961`. The path records the canonical events through `recordAuthEvent`, and the switch is written in the entered organisation's scope. Whether to delete the router (its organisation switch has no other implementation) is left to the system owner. |
+
+After the three fixes the dbtest is 20 / 20. The organisation's 13 rows,
+from the canonical, enterprise and legacy paths, verify as one chain. 86
+unit test files that import the changed modules pass (825 tests), and the
+typecheck is clean.
+
+**Effect on the records above.** The OQ sets of §12 and §13 signed in
+through `/api/v1/auth/login` and `/mfa/verify`. Their verdicts stand. They
+could not have observed any of these defects, because no step used the
+legacy or enterprise paths or presented a signed-out token. A protocol step
+that signs out and then shows the session refused belongs in the next
+OQ-001 revision beside OQ-PROJ-16.
+
+Prepared by the W3 Claude session (drafting and execution only; cannot sign).

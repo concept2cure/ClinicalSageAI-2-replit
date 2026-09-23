@@ -78,6 +78,8 @@ const ICH_SPEC = 'ICH eCTD Specification (v3.2.2 / v4.0)';
 const FDA_CRIT = 'FDA eCTD Technical Conformance Guide; Specifications for eCTD Validation Criteria';
 const EU_CRIT = 'EU Module 1 eCTD Specification; EU eCTD Validation Criteria';
 const JP_SPEC = 'Japan/PMDA eCTD Notification & Specification';
+/** Rules that are this product's own dispatch policy say so, rather than borrowing an agency's authority. */
+const PRODUCT_POLICY = 'Concept2Cure dispatch policy (assess-dispatch-readiness) — not an agency criterion';
 const HC_SPEC = 'Health Canada eCTD: Preparation of Regulatory Activities in eCTD Format; CA Module 1 specification';
 const TGA_SPEC = 'TGA eCTD Specification and Validation Criteria (AU Module 1)';
 const SMC_SPEC = 'Swissmedic eCTD: CH Module 1 specification and validation criteria';
@@ -370,7 +372,10 @@ export const RULE_CORPUS: ValidationRule[] = [
     regions: ['fda', 'eu', 'jp', 'ca', 'au', 'ch'],
     severity: 'medium',
     rationale: 'Each region’s Module 1 mandates specific administrative documents; absence is surfaced (advisory at dispatch, decisive at agency intake).',
-    source: EU_CRIT,
+    // FDA's criteria as well as the EU's: an FDA IND is the sequence that trips
+    // this most, and a finding that cited only the EU family read as the wrong
+    // agency's rule.
+    source: `${FDA_CRIT}; ${EU_CRIT}`,
     enforcement: 'dispatch-readiness',
     findingCode: 'MISSING_REQUIRED_SECTION',
   },
@@ -440,7 +445,107 @@ export const RULE_CORPUS: ValidationRule[] = [
     source: SMC_SPEC,
     enforcement: 'packager',
   },
+  // ── Rules the assessment itself states ────────────────────────────────────
+  // UNKNOWN_REGION_PROFILE is added by assessSequenceDispatchReadiness, outside
+  // computeDispatchReadiness, so the scenario battery never produced it and no
+  // rule named it while the surface rendered it. The four gate rules name the
+  // composed dispatch verdict's parts, so a blocker is shown as the rule it
+  // enforces rather than as bare prose under a pass/fail icon. Where a gate is
+  // this product's own dispatch policy, its source says so rather than
+  // borrowing an agency's authority.
+  {
+    id: 'UNKNOWN_REGION_PROFILE',
+    title: 'The sequence’s region has a Module 1 profile, so its required sections can be checked',
+    category: 'content',
+    regions: ['ich'],
+    severity: 'medium',
+    rationale:
+      'Required Module 1 sections come from the region’s profile. With no profile registered, no required section is checked, and an absence of MISSING_REQUIRED_SECTION findings would mean nothing; this says so rather than reporting nothing missing.',
+    source: `${FDA_CRIT}; ${EU_CRIT}; ${JP_SPEC}`,
+    enforcement: 'dispatch-readiness',
+    findingCode: 'UNKNOWN_REGION_PROFILE',
+  },
+  {
+    id: 'STRUCTURAL_GATE_CLEAR',
+    title: 'No open error-severity finding, and no unacknowledged Shadow Review critical',
+    category: 'integrity',
+    regions: ['ich'],
+    severity: 'high',
+    rationale:
+      'The deterministic floor: an error-severity structural finding, or a critical Shadow Review finding nobody has acknowledged, stops dispatch. A count that could not be determined blocks as well — it is not a count of zero.',
+    source: `${ICH_SPEC} (error findings); ${PRODUCT_POLICY} (Shadow Review criticals)`,
+    enforcement: 'dispatch-readiness',
+    findingCode: 'STRUCTURAL_GATE_CLEAR',
+  },
+  {
+    id: 'SHADOW_REVIEW_COMPLETED',
+    title: 'At least one Shadow Review has completed for this sequence',
+    category: 'content',
+    regions: ['ich'],
+    severity: 'high',
+    rationale:
+      'Zero open criticals means the same thing whether the dossier is clean or was never reviewed. A sequence nobody has adversarially reviewed is blocked rather than read as clean.',
+    source: PRODUCT_POLICY,
+    enforcement: 'dispatch-readiness',
+    findingCode: 'SHADOW_REVIEW_COMPLETED',
+  },
+  {
+    id: 'EXTERNAL_VALIDATION_CLEAN',
+    title: 'The agency-grade validator’s report for this package carries no errors',
+    category: 'integrity',
+    regions: ['ich'],
+    severity: 'high',
+    rationale:
+      'Only the agency’s own validator (or a licensed equivalent) proves a package will pass intake. When its report is on file, an error in it blocks dispatch; when it is required and absent, that blocks too.',
+    source: FDA_CRIT,
+    enforcement: 'external',
+  },
+  {
+    id: 'RELEASE_SIGNATURE_VALID',
+    title: 'A valid release signature binds this sequence’s package (21 CFR 11.70)',
+    category: 'integrity',
+    regions: ['ich'],
+    severity: 'high',
+    rationale:
+      'Where the submission type requires one, a release signature bound to this sequence’s package must exist before dispatch; a signature that fails verification blocks every governed step, required or not.',
+    source: '21 CFR Part 11 §11.70 (signature/record linking); EU GMP Annex 11 §14 (electronic signature)',
+    enforcement: 'dispatch-readiness',
+    findingCode: 'RELEASE_SIGNATURE_VALID',
+  },
 ];
+
+/** The corpus rule each composed dispatch gate enforces. */
+export const DISPATCH_GATE_RULE_IDS = {
+  structural: 'STRUCTURAL_GATE_CLEAR',
+  shadowPresence: 'SHADOW_REVIEW_COMPLETED',
+  external: 'EXTERNAL_VALIDATION_CLEAN',
+  releaseSignature: 'RELEASE_SIGNATURE_VALID',
+} as const;
+
+// ── Where a rule is enforced, in words ──────────────────────────────────────
+
+const ENFORCEMENT_STATEMENT: Record<RuleEnforcement, string> = {
+  'dispatch-readiness': 'Enforced here — this assessment checks it every time it runs.',
+  'ectd-validator': 'Enforced here — the eCTD validator checks it when the package is compiled and exported.',
+  packager: 'Guaranteed by packager construction — the package cannot be built without it.',
+  external: 'Requires the agency validator — its report decides this; the product records the verdict, it does not reproduce the check.',
+};
+
+export function enforcementStatement(enforcement: RuleEnforcement): string {
+  return ENFORCEMENT_STATEMENT[enforcement];
+}
+
+/** A rule as a surface renders it: named, regioned, graded, and honest about who enforces it. */
+export interface RuleView {
+  id: string;
+  title: string;
+  category: RuleCategory;
+  regions: RuleRegion[];
+  severity: RuleSeverity;
+  source: string;
+  enforcement: RuleEnforcement;
+  enforcementStatement: string;
+}
 
 // ── Lookups (pure) ────────────────────────────────────────────────────────────
 
@@ -448,6 +553,22 @@ const BY_ID = new Map(RULE_CORPUS.map((r) => [r.id, r]));
 
 export function getRule(id: string): ValidationRule | undefined {
   return BY_ID.get(id);
+}
+
+/** The view of a rule for a finding or gate code; null when the corpus names no such rule. */
+export function ruleView(code: string): RuleView | null {
+  const r = BY_ID.get(code);
+  if (!r) return null;
+  return {
+    id: r.id,
+    title: r.title,
+    category: r.category,
+    regions: [...r.regions],
+    severity: r.severity,
+    source: r.source,
+    enforcement: r.enforcement,
+    enforcementStatement: ENFORCEMENT_STATEMENT[r.enforcement],
+  };
 }
 
 /** Rules that apply to a region (includes shared `ich` rules). */
