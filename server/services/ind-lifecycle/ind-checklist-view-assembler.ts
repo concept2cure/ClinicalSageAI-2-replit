@@ -193,13 +193,13 @@ async function resolveSponsorCompletedForms(
   const byId = new Map<number, Array<{ subId: number; formId: string }>>();
   for (const l of leaves) {
     if (l.document_table !== 'rendered_leaf_files' || l.document_id == null) continue;
-    const formId = indFormForDocumentType(l.document_type)?.formId ?? null;
-    if (!formId) continue;
+    const form = indFormForDocumentType(l.document_type);
+    if (!form) continue;
     const subId = seqToSub.get(Number(l.sequence_id));
     if (subId == null) continue;
     const docId = Number(l.document_id);
     const list = byId.get(docId) ?? [];
-    list.push({ subId, formId });
+    list.push({ subId, formId: form.formId });
     byId.set(docId, list);
   }
   const out = new Map<number, Set<string>>();

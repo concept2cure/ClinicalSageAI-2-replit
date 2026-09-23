@@ -473,6 +473,9 @@ describe('POST /:projectIdent/compile — the package, not just its backbone', (
     expect(payload.submissionBlockers.join(' ')).toMatch(/leaf_manifest/);
   });
 
+});
+
+describe('POST /:projectIdent/compile — the record, the forms, the region', () => {
   it('a recorded compilation says so', async () => {
     mockSpine();
     const { zipPath } = await makeFdaPackageZip();
