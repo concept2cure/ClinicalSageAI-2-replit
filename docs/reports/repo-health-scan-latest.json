@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T08:41:12.429Z",
+  "generatedAt": "2026-09-23T09:01:59.523Z",
   "git": {
-    "sha": "6774b16cddcf7b8da18daf15c19d0385f8d241de",
+    "sha": "ad5c643fe5b2e1752d27ed3a26c04d83ee846c2f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 43,
-    "largeFilesByLines": 103
+    "largeFilesByLines": 104
   },
   "findings": {
     "duplicateBasenames": [
@@ -1983,7 +1983,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 858926
+        "bytes": 859174
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2030,12 +2030,12 @@
         "bytes": 156838
       },
       {
-        "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
-        "bytes": 150437
+        "file": "server/services/module3Composer.ts",
+        "bytes": 155947
       },
       {
-        "file": "server/services/module3Composer.ts",
-        "bytes": 148269
+        "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
+        "bytes": 150437
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
@@ -2157,7 +2157,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "lines": 20195
+        "lines": 20198
       },
       {
         "file": "server/statistics-service.ts",
@@ -2228,6 +2228,10 @@
         "lines": 3119
       },
       {
+        "file": "server/services/module3Composer.ts",
+        "lines": 3118
+      },
+      {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
         "lines": 3116
       },
@@ -2240,16 +2244,12 @@
         "lines": 3007
       },
       {
-        "file": "server/services/module3Composer.ts",
-        "lines": 2949
+        "file": "server/src/routes/stability.router.ts",
+        "lines": 2849
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
         "lines": 2828
-      },
-      {
-        "file": "server/src/routes/stability.router.ts",
-        "lines": 2807
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2308,16 +2308,16 @@
         "lines": 2278
       },
       {
+        "file": "server/routes/auth.ts",
+        "lines": 2245
+      },
+      {
         "file": "server/routes/c2c/reviews.ts",
         "lines": 2240
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
         "lines": 2197
-      },
-      {
-        "file": "server/routes/auth.ts",
-        "lines": 2195
       },
       {
         "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
@@ -2480,12 +2480,12 @@
         "lines": 1785
       },
       {
-        "file": "server/services/ana/submission-chat-handler.ts",
-        "lines": 1756
+        "file": "server/services/cmc-write-through.ts",
+        "lines": 1773
       },
       {
-        "file": "server/services/cmc-write-through.ts",
-        "lines": 1753
+        "file": "server/services/ana/submission-chat-handler.ts",
+        "lines": 1756
       },
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
@@ -2506,6 +2506,10 @@
       {
         "file": "server/services/contradiction-engine-service.ts",
         "lines": 1693
+      },
+      {
+        "file": "server/routes/c2c/projects.ts",
+        "lines": 1682
       },
       {
         "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
@@ -2532,8 +2536,16 @@
         "lines": 1587
       },
       {
+        "file": "server/services/module3-extensions.ts",
+        "lines": 1557
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
         "lines": 1544
+      },
+      {
+        "file": "server/routes/c2c/project-vault.ts",
+        "lines": 1543
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
@@ -2548,16 +2560,8 @@
         "lines": 1531
       },
       {
-        "file": "server/routes/c2c/projects.ts",
-        "lines": 1522
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
         "lines": 1506
-      },
-      {
-        "file": "server/routes/c2c/project-vault.ts",
-        "lines": 1503
       },
       {
         "file": "server/services/grdhe/grdheService.ts",
@@ -2571,7 +2575,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 406,
       "largeByBytes": 33,
-      "largeByLines": 82
+      "largeByLines": 83
     },
     {
       "owner": "Unassigned (TBD)",

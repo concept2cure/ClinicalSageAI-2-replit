@@ -24,6 +24,8 @@ import { createSourceHash } from './cmc-module3-compiler';
 import {
   FINISHED_PRODUCT,
   NON_BATCH_SAMPLE_TYPES,
+  changeControlScopeOf,
+  impactedSectionsForChangeControl,
   impactedSectionsForSourceType,
   type CmcSourceType,
 } from './module3Composer';
@@ -568,6 +570,14 @@ export function mapChangeControlPayload(record: Record<string, any>): Record<str
     implementationDate: record.implementationDate || record.implementation_date || null,
     affectedSystems: record.affectedSystems || record.affected_systems || null,
     regulatoryImpact: record.regulatoryImpact || record.regulatory_impact || null,
+    /* Which SIDE of the dossier the change touches — the cmc_change_controls
+       column the SUPAC classifier already branches on. It never reached the
+       canonical payload, so Module 3 staleness could only key on the source
+       TYPE, which names 3.2.P.3 and nothing else: a drug-substance change left
+       3.2.S.2 reading 'approved and current'. Not defaulted — an unrecorded
+       scope is a real state, and impactedSectionsForChangeControl takes the
+       conservative side for it. */
+    affects: alias(record, 'affects'),
   };
 }
 
@@ -1499,11 +1509,21 @@ export async function writeThroughToCanonicalSource(input: WriteThroughInput): P
       ],
     );
 
-    // 3. Mark impacted Module 3 sections stale
-    const staleSections = impactedSectionsForSourceType(sourceType);
+    // 3. Mark impacted Module 3 sections stale.
+    //    A change control is the one source type whose impact depends on the
+    //    RECORD, not just its type: `affects` says whether it changed the drug
+    //    substance, the drug product or both, and the section set follows.
+    const changeScope = sourceType === 'change_control' ? changeControlScopeOf(sourcePayload) : null;
+    const staleSections =
+      sourceType === 'change_control'
+        ? impactedSectionsForChangeControl(changeScope)
+        : impactedSectionsForSourceType(sourceType);
 
     if (staleSections.length > 0) {
-      const staleReason = `Source data updated: ${sourceType} (${sourceKey})`;
+      const staleReason =
+        sourceType === 'change_control'
+          ? `Source data updated: change_control (${sourceKey}); affects ${changeScope ?? 'not recorded — both sides staled'}`
+          : `Source data updated: ${sourceType} (${sourceKey})`;
       await client.query(
         `UPDATE cmc_module3_sections
          SET stale = true,

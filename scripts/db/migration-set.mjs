@@ -2514,6 +2514,23 @@ export const C2C_MIGRATION_FILES = [
   // to_regclass; above the final pair, which ci:migration-set-order pins last.
   'migrations/20260922e_amendment_declarations_nullable.sql',
 
+  // ── Every organisation gets its own client workspace ─────────────────────
+  // The repair half of the fix for NO_CLIENT_WORKSPACE. The three organisation
+  // creators now write the workspace inside their own transaction
+  // (services/c2c/organization-default-workspace.ts); this sweep covers the
+  // organisations that already exist, including any a seed script wrote
+  // directly. Without it, projects.client_workspace_id — NOT NULL — has no
+  // value to take, ensureProgramProjectAnchor skips for EVERY program in that
+  // tenant, and its governed artifacts never reach concept2cure_artifacts.
+  //
+  // Creates no table, so it needs nothing from the isolation sweep below; it is
+  // placed before the final pair because it is a data repair, not a sweep. It
+  // writes only where an organisation has NO workspace: a second one would turn
+  // the anchor writer's unambiguous case into AMBIGUOUS_CLIENT_WORKSPACE and
+  // stop anchoring programs that anchor today. Its only prerequisites,
+  // organizations and client_workspaces, are far earlier in the set.
+  'migrations/20260923_organization_default_client_workspace.sql',
+
   // ── A TOTP code is accepted once (RFC 6238 §5.2; D6, VSR-001 §13.3 item 1) ─
   // Registered 2026-09-23. users.mfa_totp_last_step: the time step of the last
   // accepted code, compared-and-set by mfaService so a verified code cannot open
