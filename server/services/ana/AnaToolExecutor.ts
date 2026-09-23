@@ -14,6 +14,8 @@
  * - Literature search services
  */
 
+import { isGovernedContentWriteTool } from './governed-write-tools.js';
+import { isServedModelApprovedForHighRisk } from '../ai-governance/approved-models.js';
 import { getGateway } from '../ai-gateway/gateway';
 // Region + gateway taxonomy — shared with the tool schemas in
 // AnaToolDefinitions so an accepted value and an advertised one are the same
@@ -194,6 +196,13 @@ import { assertWithinDocumentWorkspace } from './document-workspace.js';
  * submission-twin, precedent-engine) read from this.
  */
 export interface ToolContext {
+  /**
+   * The model whose response produced this tool call, as the gateway reported
+   * it. A tool that stores model-authored text in a governed record refuses
+   * unless this model is approved for high-risk work; absent means refused.
+   * See server/services/ana/governed-write-tools.ts.
+   */
+  servingModel?: { provider?: string | null; model?: string | null } | null;
   organizationId?: number | null;
   userId?: number | null;
   projectId?: number | null;
@@ -285,6 +294,15 @@ function getRequiredInputKeys(tool: string): string[] {
 export function registerToolHandler(name: string, handler: ToolHandler): void {
   const instrumented: ToolHandler = async (input, ctx) => {
     const orgId = ctx?.organizationId ?? undefined;
+    /* Governed content is written only by an approved model. Wrapped HERE, at
+       registration, so every way of reaching the handler is covered: the
+       stream's dispatch, the agentic loop, and a tool that calls another
+       tool's handler directly. The refusal is a tool result the model reads
+       and relays, not a throw, so the turn continues honestly. */
+    if (isGovernedContentWriteTool(name) && !isServedModelApprovedForHighRisk(ctx?.servingModel)) {
+      recordToolOutcome(name, 'failure', 0, 'MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE', orgId);
+      return JSON.stringify(governedWriteRefusal(name, ctx?.servingModel));
+    }
     // Report-only contract check: note when the model omitted required fields.
     const missing = getRequiredInputKeys(name).filter(k => input?.[k] === undefined);
     if (missing.length > 0) recordContractViolation(name, orgId);
@@ -304,6 +322,30 @@ export function registerToolHandler(name: string, handler: ToolHandler): void {
     }
   };
   toolHandlers.set(name, instrumented);
+}
+
+/** The model a gateway response says served it, in the shape ToolContext.servingModel takes. */
+export function servedModelOf(
+  response: { provider?: string | null; model?: string | null } | null | undefined,
+): { provider: string | null; model: string | null } {
+  return { provider: response?.provider ?? null, model: response?.model ?? null };
+}
+
+/** What a governed-write tool returns instead of writing, when the model is not approved. */
+export function governedWriteRefusal(
+  tool: string,
+  served: { provider?: string | null; model?: string | null } | null | undefined,
+) {
+  const who = served?.model ? `${served.provider ?? 'unknown'}/${served.model}` : 'an unidentified model';
+  return {
+    error: 'MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE',
+    tool,
+    servedBy: served?.model ?? null,
+    message:
+      `${tool} was not run: it stores text the model wrote in a governed record, and this turn was answered by ` +
+      `${who}, which is not approved for regulatory drafting. Nothing was saved. Ask again with Thorough effort ` +
+      'to have an approved model draft it.',
+  };
 }
 
 /** Retrieve a registered tool handler, or undefined if the name is unknown. */
@@ -15313,7 +15355,14 @@ export async function executeAgenticLoop(
             errorMessage: 'no handler registered',
           };
         }
-        return runOneTool(handler, call, options?.toolContext, signal);
+        // The calls in this round came from finalResponse; the governed-write
+        // gate in registerToolHandler reads which model that was.
+        return runOneTool(
+          handler,
+          call,
+          { ...(options?.toolContext ?? {}), servingModel: servedModelOf(finalResponse) },
+          signal,
+        );
       },
       4,
     );

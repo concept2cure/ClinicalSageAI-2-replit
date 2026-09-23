@@ -51,7 +51,8 @@ import { planKernelExecution } from '../../services/kernel-router.js';
 import { getKernelPolicyHint } from '../../services/kernel-adaptive-policy.js';
 import { buildMemoryContextForChat } from '../../services/memory-context-assembler.js';
 import { governedToolsetFor } from '../../services/ana/governed-toolset.js';
-import { getToolHandler } from '../../services/ana/AnaToolExecutor.js';
+import { getToolHandler, servedModelOf } from '../../services/ana/AnaToolExecutor.js';
+import { requestsGovernedDraft } from '../../services/ana/governed-write-tools.js';
 import { getUnhealthyTools } from '../../services/ana/tool-telemetry.js';
 import {
   directiveFromToolResult,
@@ -1003,6 +1004,7 @@ export function mountStreamRoute(router: Router): void {
         intentConfidence: orchestration.detectedIntent.confidence,
         submissionType: orchestration.detectedSubmissionType,
         requestedMaxTokens: resolveOutputBudget(effortUsed),
+        requestsGovernedDraft: requestsGovernedDraft(message),
       });
 
       const policyHint = await getKernelPolicyHint({
@@ -1321,6 +1323,12 @@ export function mountStreamRoute(router: Router): void {
         },
         callerModule: 'ana-ri-stream',
       });
+      /* Which model produced the tool calls about to run. The governed-write
+         gate (registerToolHandler, server/services/ana/governed-write-tools.ts)
+         refuses to store model-authored text in a governed record unless this
+         model is approved for high-risk work. Updated after every round,
+         because each round's calls come from that round's response. */
+      let lastServedModel = servedModelOf(gwResponse);
       recordCacheUsage(gwResponse);
       streamGatewayMs = Date.now() - streamGatewayStart;
 
@@ -1639,6 +1647,7 @@ export function mountStreamRoute(router: Router): void {
                   // out a forty-second search.
                   resultStr = await Promise.race([
                     handler(toolUse.input, {
+                      servingModel: lastServedModel,
                       organizationId: orgId,
                       userId: userId || null,
                       projectId: streamProjectId ? Number(streamProjectId) || null : null,
@@ -2108,6 +2117,7 @@ export function mountStreamRoute(router: Router): void {
             res.write(`data: ${JSON.stringify({ type: 'text', content: roundText })}\n\n`);
           }
           recordCacheUsage(roundResponse);
+          lastServedModel = servedModelOf(roundResponse);
           const nextUses = (roundResponse as AnaGatewayResponse).toolUses;
           return { text: roundText, toolCalls: (nextUses ?? []).map(toToolCall) };
         };

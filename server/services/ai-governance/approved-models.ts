@@ -310,6 +310,23 @@ export function isApprovedForHighRisk(modelId: string): boolean {
   return APPROVED_FOR_HIGH_RISK.has(modelId);
 }
 
+/**
+ * Whether the model that SERVED a request is approved for high-risk work,
+ * identified the way a gateway response reports it: provider plus the wire
+ * model (the pinned version) or the registry id. Unknown → not approved.
+ */
+export function isServedModelApprovedForHighRisk(
+  served: { provider?: string | null; model?: string | null } | null | undefined,
+): boolean {
+  if (!served?.provider || !served.model) return false;
+  return APPROVED_MODELS.some(
+    (m) =>
+      m.approvedForHighRisk &&
+      m.provider === served.provider &&
+      (m.pinnedVersion === served.model || m.id === served.model),
+  );
+}
+
 /** Minimal fact about a model as it exists in the live gateway registry. */
 export interface RegistryModelFact {
   id: string;
