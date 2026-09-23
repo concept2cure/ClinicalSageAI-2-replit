@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-005 |
-| Version | 0.3 |
+| Version | 0.4 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §5; requirements URS-005 |
 | Runner (the executable protocol) | `tests/validation/oq/submission-readiness/run.mjs` — `npm run validation:oq -- submission-readiness` |
@@ -16,6 +16,7 @@
 | 0.1 | 2026-09-21 | W3a | First protocol; executed locally (see record). |
 | 0.2 | 2026-09-21 | WF | OQ-SRDY-03 rewritten for the deterministic dispatch-QC contract (VSR-001 F-9, fixed in the product 2026-09-21): the verdict must equal the `GET …/dispatch-readiness` gate; without a provider the step passes and the narrative is recorded as not executed. A gateway error on the route is now a fail, not a deviation. Re-executed locally (§3). |
 | 0.3 | 2026-09-22 | W3 | §3 records the 2026-09-22 execution under the production posture (RLS enforcing, non-owner runtime role, credentialed second signer); earlier results are kept below it as superseded. No step changed. |
+| 0.4 | 2026-09-23 | W3 | OQ-SRDY-05 is scripted and can fail. It had executed the readiness review for the program and passed on any 2xx, and this protocol called it unscripted while the record called it a scripted pass. The review completed for a program none of whose data it could read, with "No critical issues found" (VSR-001 F-23). The step now requires a program id the engine cannot read to be refused or to fail with the reason. OQ-SRDY-05b is new: the review of the program's anchored project must name the program; without an anchor it is a deviation naming the reason intake gave. On the code before F-23's fix OQ-SRDY-05 fails; after it, it passes (`docs/evidence/W3/2026-09-23b/OQ-005-v0.4/`). |
 
 ## 1. Method
 
@@ -30,7 +31,8 @@ As OQ-001 §1. OQ-SRDY-00 builds the fixture through the public API: program, va
 | OQ-SRDY-02 | URS-SRDY-002 | scripted | `GET /sequences/:id/dispatch-readiness` | numeric counts; `gate.cleared=false` with blockers for a fresh sequence |
 | OQ-SRDY-03 | URS-SRDY-003 | scripted | `POST /:id/dispatch-qc` with `sequenceId` and client zeros; `GET /sequences/:id/dispatch-readiness` | 200 `{clearedToDispatch, blockers, warnings, checklist, verdictSource:"assess-dispatch-readiness", narrative, narrativeUnavailable}`; `clearedToDispatch` and `blockers` equal the GET gate (client zeros do not clear it); with no provider `narrative` is `null` and `narrativeUnavailable.code` is `PROVIDER_UNAVAILABLE` — verdict **pass**, narrative recorded as *not executed — no provider*; with a provider the narrative is advisory prose and the verdict is unchanged |
 | OQ-SRDY-04 | URS-SRDY-004 | scripted | templates; execute without projectId | template with 5 steps; 400 |
-| OQ-SRDY-05 | URS-SRDY-005 | unscripted | execute readiness review; read execution | 2xx; status readable |
+| OQ-SRDY-05 | URS-SRDY-005 | scripted | `POST /api/orchestration/execute {templateId:"submission_readiness_review", projectId:<the program id>}`. The review reads `projects.id`; a program id is a uuid (v0.4) | refused with a 4xx and no run, or a run that ends failed and says why; never a completed review of a project the engine did not read |
+| OQ-SRDY-05b | URS-SRDY-005 | scripted | When intake anchored the program (`meta.projectAnchorId`): execute the review for the anchored project; `GET /executions/:id` (v0.4) | the run completes, its `inspect_project_state` step names the program, and the execution is readable. No anchor: deviation naming the reason intake gave |
 | OQ-SRDY-06 | URS-SRDY-006 | scripted | contradiction scan | 200 |
 | OQ-SRDY-07 | URS-SRDY-007 | scripted (browser) | Open `/concept2cure/dispatch-readiness` with the program selected | sequence `0000` and its gate visible |
 | OQ-SRDY-08 | URS-SRDY-008 | ad-hoc (browser) | Open `/concept2cure/orchestration`, `/concept2cure/inconsistency` | Render; screenshots |

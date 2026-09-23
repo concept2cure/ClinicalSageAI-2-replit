@@ -1,0 +1,17 @@
+  ✓ control — a full path that exists
+  ✓ control — a bare filename matching exactly one file
+  ✓ a cited path that does not exist
+  ✓ a bare filename that matches nothing
+  ✓ a bare filename that matches several files
+  ✓ a requirement citing no implementing file at all
+  ✓ a URS document declaring no requirements
+  ✓ one good row and one broken row — the broken one is still caught
+  ✓ prose in backticks is not mistaken for a missing file
+  ✓ control — scripted by default, unscripted declared
+  ✓ control — a credentialed step is scripted
+  ✓ an unscripted step the runner records as scripted
+  ✓ an ad-hoc step the runner records as unscripted
+  ✓ a step the protocol describes and the runner never executes
+  ✓ a step the runner executes and the protocol does not describe
+
+✓ self-test: 15 cases, every mutation caught and the controls clean

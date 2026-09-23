@@ -194,6 +194,7 @@ await step(
 await step(
   {
     id: 'OQ-PROJ-07',
+    kind: 'unscripted',
     urs: ['URS-PROJ-005'],
     title: 'Projects surface renders the program',
     action: 'Open /concept2cure/projects in Chromium (authenticated)',
@@ -212,6 +213,7 @@ await step(
 await step(
   {
     id: 'OQ-PROJ-08',
+    kind: 'unscripted',
     urs: ['URS-PROJ-005'],
     title: 'Project home renders for the open program',
     action: 'Open /concept2cure/project-home with the program selected in the shell',
@@ -257,6 +259,7 @@ await step(
 await step(
   {
     id: 'OQ-PROJ-10',
+    kind: 'unscripted',
     urs: ['URS-PROJ-006'],
     title: 'Tasks surface renders the task',
     action: 'Open /concept2cure/tasks',
@@ -275,6 +278,7 @@ await step(
 await step(
   {
     id: 'OQ-PROJ-11',
+    kind: 'ad-hoc',
     urs: ['URS-PROJ-007'],
     title: 'Program journey read model answers',
     action: 'GET /api/program-journey',
@@ -295,6 +299,7 @@ await step(
 await step(
   {
     id: 'OQ-PROJ-12',
+    kind: 'ad-hoc',
     urs: ['URS-PROJ-007'],
     title: 'Filings catalog surface renders',
     action: 'Open /concept2cure/filings-catalog',

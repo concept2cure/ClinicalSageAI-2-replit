@@ -16,7 +16,7 @@ const stamp = helpers.stamp();
 const PIN = process.env.VALIDATION_SIGNING_PIN || '246813';
 
 await step(
-  { id: 'OQ-AUTH-00', urs: [], title: 'Prerequisite: a program', action: 'POST /api/c2c/projects', expected: '201' },
+  { id: 'OQ-AUTH-00', urs: [], kind: 'prerequisite', title: 'Prerequisite: a program', action: 'POST /api/c2c/projects', expected: '201' },
   async ({ api, expect }) => {
     const p = await createProgram(api, expect, `OQ-003 Authoring program ${stamp}`);
     state.programId = p.id;
@@ -451,6 +451,7 @@ await step(
 await step(
   {
     id: 'OQ-AUTH-18',
+    kind: 'ad-hoc',
     urs: ['URS-AUTH-014'],
     title: 'Template stores answer',
     action: 'GET /api/c2c/templates (organisation); GET /api/authoring/templates (global reference)',
@@ -468,6 +469,7 @@ await step(
 await step(
   {
     id: 'OQ-AUTH-19',
+    kind: 'unscripted',
     urs: ['URS-AUTH-015'],
     title: 'Document Authoring surface renders the document',
     action: 'Open /concept2cure/document-authoring with the program selected',
@@ -486,6 +488,7 @@ await step(
 await step(
   {
     id: 'OQ-AUTH-20',
+    kind: 'ad-hoc',
     urs: ['URS-AUTH-013', 'URS-AUTH-015'],
     title: 'Review surface renders',
     action: 'Open /concept2cure/review',

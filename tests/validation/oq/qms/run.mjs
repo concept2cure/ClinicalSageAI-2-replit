@@ -233,6 +233,7 @@ await step(
 await step(
   {
     id: 'OQ-QMS-06a',
+    kind: 'prerequisite',
     urs: ['URS-QMS-002'],
     title: 'Create a second SOP (fixture for the credential refusals, training, review-due and retire steps)',
     action: 'POST /api/mdx/qms/documents {docNumber SOP-OQ-B-…, docType:"sop", nextReviewDate:+5d}',
@@ -451,6 +452,7 @@ await step(
 await step(
   {
     id: 'OQ-QMS-13',
+    kind: 'ad-hoc',
     urs: ['URS-QMS-013'],
     title: 'Quality-system templates are served',
     action: 'GET /api/mdx/qms/templates',
@@ -468,6 +470,7 @@ await step(
 await step(
   {
     id: 'OQ-QMS-14',
+    kind: 'unscripted',
     urs: ['URS-QMS-012'],
     title: 'Quality surface renders the SOP register and the Change control tab',
     action: 'Open /concept2cure/quality; find the SOP number; click the "Change control" tab',
@@ -492,6 +495,7 @@ await step(
 await step(
   {
     id: 'OQ-QMS-15',
+    kind: 'unscripted',
     urs: ['URS-QMS-011', 'URS-QMS-012'],
     title: 'QMP surface renders the plan',
     action: 'Open /concept2cure/qmp',
