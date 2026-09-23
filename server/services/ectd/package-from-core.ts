@@ -42,6 +42,13 @@ export interface PackageFromCoreParams {
 export interface PackageFromCoreResult {
   bundle: SubmissionBundle;
   skipped: Array<{ sectionCode: string; reason: string }>;
+  /**
+   * The newest filed sequence the prior state folds up to — what this
+   * sequence's lifecycle acts were bound against. null for an original (0000),
+   * and for a follow-up with no filed sequence on record, where every declared
+   * act is refused.
+   */
+  priorSequence: string | null;
 }
 
 /** The author-declared lifecycle acts: each one acts ON a leaf already filed. */
@@ -155,12 +162,16 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
   // prior manifest (first sequence, or none persisted yet) leaves declared `new`
   // stay new, and a declared replace/append/delete is refused — there is nothing
   // on record for it to act on.
+  let priorSequence: string | null = null;
   if (sequence.sequenceNumber !== '0000') {
     const prior = await loadLatestPriorManifestBySubmission(pool, {
       organizationId,
       submissionId: submission.id,
       currentSequence: sequence.sequenceNumber,
     });
+    // A filed sequence can be on record with nothing left on file (every leaf
+    // it filed since withdrawn); it is still the state these acts meet.
+    priorSequence = prior.priorSequenceNumber || null;
     if (prior.leaves.length > 0) {
       const desired: DesiredLeaf[] = [];
       // What the author declared for each non-delete leaf, keyed as the
@@ -201,6 +212,8 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
             continue;
           }
         }
+        // A withdrawal ships no bytes: computeLifecycleOperations drops the
+        // resolved sourcePath from every delete it emits (2026-09-23, W5/D7).
         desired.push({ ...rest, fileName, md5: '', withdraw: true });
       }
       const life = computeLifecycleOperations(prior.leaves, desired, {
@@ -247,7 +260,13 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
       }
       input.leaves = shippable;
     } else {
-      dropUnbindableLifecycle(input, skipped, 'no filed prior sequence is on record to act on');
+      dropUnbindableLifecycle(
+        input,
+        skipped,
+        priorSequence
+          ? `nothing is on file after sequence ${priorSequence} to act on`
+          : 'no filed prior sequence is on record to act on',
+      );
     }
   } else {
     dropUnbindableLifecycle(input, skipped, 'a first sequence has nothing on file to act on');
@@ -269,7 +288,7 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
     },
   });
 
-  return { bundle, skipped };
+  return { bundle, skipped, priorSequence };
 }
 
 export default { packageSequenceFromCore };

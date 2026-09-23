@@ -58,6 +58,7 @@
  * @module server/services/ectd/dispatch-readiness
  */
 
+import type { RuleView } from './validation-rule-corpus';
 import {
   documentTableKeyKind,
   externalDocumentTableReason,
@@ -129,6 +130,9 @@ export interface ReadinessFinding {
   code: string;
   sectionCode: string | null;
   message: string;
+  /** The corpus rule this finding is an instance of — attached by the
+   *  assessment (withRules); null when the corpus names no such rule. */
+  rule?: RuleView | null;
 }
 
 export interface DispatchReadinessReport {
@@ -395,7 +399,7 @@ export function computeDispatchReadiness(
         sectionCode: leaf.sectionCode,
         message:
           `Leaf "${leaf.title}" declares "${leaf.lifecycleOp}". Which filed leaf it acts on is established when the ` +
-          'sequence is assembled, not here — assemble before freezing; an act that cannot be bound blocks transmit.',
+          'sequence is assembled, not here; freeze and dispatch assemble it and refuse an act that cannot be bound.',
       });
     }
   }

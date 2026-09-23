@@ -736,6 +736,8 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
      backbone is built. */
   interface PreparedLeaf { leaf: EctdLeaf; relPath: string; ref: LeafRef; bytes: Buffer; }
   const prepared: PreparedLeaf[] = [];
+  /** Backbone-only withdrawals: no bytes, but a filing act the manifest records. */
+  const withdrawn: EctdLeaf[] = [];
   const refByLeaf = new Map<EctdLeaf, LeafRef>();
   for (const leaf of input.leaves) {
 
@@ -757,6 +759,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
         md5: leaf.md5 ?? '',
         backboneDir,
       });
+      withdrawn.push(leaf);
       continue; // no bytes → no prepared entry, no ZIP file, no checksum line
     }
 
@@ -1010,19 +1013,36 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   }
 
   // Per-sequence leaf manifest for cross-sequence lifecycle diffing: each shipped
-  // leaf's CTD section + final href + md5 (+ op/title). The NEXT sequence loads
+  // leaf's CTD section + final href + md5 (+ op/modified-file/title). The NEXT sequence loads
   // this (loadPriorSequenceManifest) and diffs against it to derive
   // replace/append/delete. Raw shape (not built via sequence-manifest) to keep
   // the packager free of an ectd/ import; the ectd-side caller runs
   // buildLeafManifest over it before persisting.
-  const leafManifest = prepared.map((p) => ({
-    ctdSection: p.leaf.ctdSection,
-    fileName: p.leaf.fileName,
-    href: p.relPath,
-    md5: p.ref.md5,
-    ...(p.leaf.operation ? { operation: p.leaf.operation } : {}),
-    ...(p.leaf.title ? { title: p.leaf.title } : {}),
-  }));
+  const leafManifest = [
+    ...prepared.map((p) => ({
+      ctdSection: p.leaf.ctdSection,
+      fileName: p.leaf.fileName,
+      href: p.relPath,
+      md5: p.ref.md5,
+      ...(p.leaf.operation ? { operation: p.leaf.operation } : {}),
+      ...(p.leaf.modifiedFile ? { modifiedFile: p.leaf.modifiedFile } : {}),
+      ...(p.leaf.title ? { title: p.leaf.title } : {}),
+    })),
+    // A withdrawal ships no file, but it is a filing act: the prior-state fold
+    // drops a leaf whose last operation is a delete, and it can only do that if
+    // the delete is recorded. Left out, the withdrawn leaf stayed on file for
+    // every later sequence. Its href is the pointer the backbone carries, from
+    // this sequence's root. 2026-09-23 (W5/D7).
+    ...withdrawn.map((leaf) => ({
+      ctdSection: leaf.ctdSection,
+      fileName: leaf.fileName,
+      href: leaf.modifiedFile ?? refByLeaf.get(leaf)?.href ?? '',
+      md5: leaf.md5 ?? '',
+      operation: 'delete' as const,
+      ...(leaf.modifiedFile ? { modifiedFile: leaf.modifiedFile } : {}),
+      ...(leaf.title ? { title: leaf.title } : {}),
+    })),
+  ];
 
   return {
     path:      outPath,

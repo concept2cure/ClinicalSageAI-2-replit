@@ -1595,12 +1595,7 @@ router.post('/sequences/:seqId/assemble', limiter, requireRole(AUTHOR), async (r
       // the package; transmit refuses it, so the response says so.
       unfinalized: result.unfinalized,
       unfinalizedSections: result.unfinalizedSections,
-      transmitBlockers: [
-        ...(result.unresolvedLeaves.length > 0
-          ? [`${result.unresolvedLeaves.length} leaf source(s) could not be materialized`]
-          : []),
-        ...assembledTransmitBlockers(result),
-      ],
+      transmitBlockers: assembledTransmitBlockers(result),
     });
   } catch (err) {
     fail(res, err);

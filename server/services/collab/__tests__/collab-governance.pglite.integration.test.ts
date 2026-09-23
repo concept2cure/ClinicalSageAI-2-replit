@@ -262,6 +262,17 @@ describe('authenticating a collaboration connection', () => {
     ).rejects.toMatchObject({ reason: 'invalid-token' });
   });
 
+  it('refuses a session that was signed out (AUTH-03)', async () => {
+    // Logout revokes the token; it must not open a live editing session either.
+    // Its own jti, so it is not byte-identical to a token another case uses.
+    const { revokeToken } = await import('../../token-revocation');
+    const signedOut = accessToken({ jti: 'collab-signed-out' });
+    await revokeToken(signedOut);
+    await expect(
+      authenticateCollabConnection({ token: signedOut, documentName: `authoring:${DOC_A}` })
+    ).rejects.toMatchObject({ reason: 'session-ended' });
+  });
+
   it.each([
     ['refresh', { type: 'refresh' }],
     ['mfa_challenge', { type: 'mfa_challenge' }],

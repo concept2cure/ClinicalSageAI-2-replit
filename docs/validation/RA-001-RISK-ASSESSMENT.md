@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | RA-001 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §3 |
 | Method | FDA CSA (Sept 2025 final; Feb 2026 update): identify intended use → determine risk (process risk and whether the feature can cause a quality/patient/data-integrity failure) → choose the least-burdensome assurance activity that gives confidence → record the result. Risk levels and activities are defined in VMP-001 §3.1. |
@@ -13,6 +13,7 @@
 | Version | Date | Author | Change |
 |---|---|---|---|
 | 0.1 | 2026-09-21 | W3a | One row per URS requirement; assurance chosen per CSA. |
+| 0.2 | 2026-09-23 | W3 | URS-PROJ-010 (the sign-in audit trail) assessed: high, scripted (VSR-001 §13, F-19). |
 
 ## 1. Risk model
 
@@ -35,6 +36,7 @@ The columns below are parsed by `scripts/validation/build-traceability.mjs`; kee
 | URS-PROJ-007 | Honest empty/unavailable states for journey and catalog | low — informational | ad-hoc | render and record; no fixture data may appear |
 | URS-PROJ-008 | Enforce the launch boundary | medium — an out-of-scope surface reachable in production would expose unvalidated functions | scripted | payload verdicts plus deep-link gate |
 | URS-PROJ-009 | Refuse foreign/unknown program ids | high — cross-tenant read | scripted | negative test; full RLS under D3 |
+| URS-PROJ-010 | Enter every sign-in attempt in the organisation's audit trail | high — without it an attack on an account, or a session opened on it, leaves no record an inspector can read (§11.10(e)); F-19 showed the trail empty under RLS while every other check passed | scripted | the attempts made by the step itself, read back on the ledger in order, hash-chained, with the server's chain verdict |
 | URS-VAULT-001 | Gate vault endpoints | high | scripted | Part 11 §11.10(d) |
 | URS-VAULT-002 | Ingest a document with a recorded SHA-256 | high — the hash is the identity of the evidence | scripted | hash recomputed locally and compared |
 | URS-VAULT-003 | Refuse disallowed file types | medium — a refused upload is visible; an accepted executable is a security defect | scripted | negative test with `.exe` |

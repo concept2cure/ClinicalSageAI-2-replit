@@ -8799,6 +8799,11 @@ export const ectdCompilations = pgTable(
     version: text('version').default('1.0'),
     changeLog: json('change_log'), // Track changes in compilation
     validationResults: json('validation_results'), // ICH validation results
+    // An agency-validator (LORENZ eValidator) report run OUTSIDE the product over
+    // this compilation's exported package, imported with who/when/sha256 and its
+    // findings. Nullable: no report imported. See
+    // db/migrations/20260923_ectd_compilations_external_validation.sql.
+    externalValidation: jsonb('external_validation'),
     lockReason: text('lock_reason'), // Reason for locking granules
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
