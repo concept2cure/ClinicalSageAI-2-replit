@@ -36,6 +36,7 @@ import { authMiddleware } from '../auth';
 import * as emailOtpService from '../services/emailOtpService';
 import { sendLoginOtpEmail } from '../services/emailService';
 import * as mfaService from '../services/mfaService';
+import { mfaEnrolmentOf } from '../services/mfa-enrolment';
 
 const router = Router();
 // SECURITY FIX: isDev variable and devUser removed — no more dev-mode auth bypasses.
@@ -214,34 +215,18 @@ router.post('/check-email', enterpriseAuthLimiter, async (req: Request, res: Res
     const { email } = parsed.data;
 
     const normalizedEmail = email.trim().toLowerCase();
-    console.log('[Enterprise Auth] Checking email:', normalizedEmail);
 
-    // SECURITY FIX: Dev-mode bypass removed. Always check database.
-
-    // Check if user exists in database
-    const userResult = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, normalizedEmail))
-      .limit(1);
-
-    // SECURITY: Always return the same shape regardless of user existence
-    // to prevent user enumeration attacks
-    if (!userResult.length) {
-      // SECURITY: Return same shape whether user exists or not to prevent enumeration
-      return res.json({
-        authFlow: 'password',
-        mfaRequired: false,
-        email: normalizedEmail,
-      });
-    }
-
-    const user = userResult[0];
-
-    // SECURITY: Do not expose 'exists' flag — prevents email enumeration
-    res.json({
+    // One answer for every address, and no lookup behind it. This read the
+    // account and answered `mfaRequired: user.mfaEnabled` — false for an
+    // unknown address, true only for a real account with an authenticator — so
+    // a caller with no credentials could tell enrolled accounts apart (D6,
+    // 2026-09-23). The truthful answer does not depend on the account: every
+    // enterprise sign-in asks for a second factor after the password
+    // (verify-password always answers requiresMfa), an emailed code when no
+    // authenticator is enrolled.
+    return res.json({
       authFlow: 'password',
-      mfaRequired: user.mfaEnabled === true,
+      mfaRequired: true,
       email: normalizedEmail,
     });
   } catch (error: any) {
@@ -372,8 +357,8 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
       { expiresIn: '5m' }
     );
 
-    const mfaMethod = (user as any).mfaMethod || 'email';
-    const hasTotpSetup = user.mfaEnabled === true && mfaMethod === 'totp';
+    // The rule the session reports too (mfa-enrolment.ts).
+    const hasTotpSetup = mfaEnrolmentOf(user).signInFactor === 'totp';
     let maskedEmail: string | undefined;
 
     // Password verified, second factor requested: the same event /api/auth/login records.
