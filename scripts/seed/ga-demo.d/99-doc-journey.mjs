@@ -15,8 +15,16 @@
  * tenant_id scoping, frozen_documents Part 11 snapshot). Idempotent (skips when the demo
  * document already exists for the org), org-scoped, created_by resolved from a real org
  * member, and each table is to_regclass-guarded. Grounded in the app's BX-204 program.
+ *
+ * 2026-09-23 (W5/D7, co-author final pass): the freeze snapshot was written in a
+ * shape of this seed's own — `document` a hand-picked subset, `sections` without
+ * id, doc_id, order_index or timestamps — so it was not the record the router
+ * writes, and "Place into filing" refused the document. It is now written by
+ * ../authoring-seal.mjs in the router's approval format (document = the row,
+ * sections = the rows, content_hash = sha256 of the stored bytes).
  */
 import crypto from 'node:crypto';
+import { sealAuthoringDocument } from '../authoring-seal.mjs';
 
 const REQUIRED = ['authoring_documents', 'authoring_sections', 'doc_revisions', 'authoring_comments', 'frozen_documents'];
 
@@ -126,19 +134,16 @@ export default async function seed(client, { org, admin }) {
     ],
   );
 
-  // 5. The immutable freeze snapshot (Part 11) the approval produced.
-  const frozenContent = JSON.stringify({
-    document: { id: docId, title: TITLE, version: VERSION, status: 'APPROVED' },
-    sections: SECTIONS.map((s) => ({ code: s.code, title: s.title, content: s.content })),
+  // 5. The immutable freeze snapshot (Part 11) the approval produced, in the router's format.
+  await sealAuthoringDocument(client, {
+    docId,
+    tenantId: org.id,
+    version: VERSION,
+    frozenBy,
+    reason: 'Approved and frozen',
     frozenAt: approvedAt,
+    approvedBy: frozenBy,
   });
-  const contentHash = crypto.createHash('sha256').update(frozenContent).digest('hex');
-  await client.query(
-    `INSERT INTO frozen_documents
-       (document_id, version, frozen_content, content_hash, frozen_by, frozen_reason, tenant_id, frozen_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-    [docId, VERSION, frozenContent, contentHash, frozenBy, 'Approved and frozen', org.id, approvedAt],
-  );
 
   console.log(`   ✓ doc journey: 1 document + ${SECTIONS.length} sections, 1 revision, 1 comment, 1 freeze seeded into the real authoring store (doc ${docId})`);
 }

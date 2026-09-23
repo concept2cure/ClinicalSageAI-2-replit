@@ -21,7 +21,7 @@
  * chosen rather than read off the wall clock.
  *
  * ── Isolation ───────────────────────────────────────────────────────────────
- * Lane "dbtsp": organisation 91950 (range 91950–91999); every email starts
+ * Lane "dbtsp": organisation 92100 (range 92100–92149); every email starts
  * `dbtsp-`. Audit rows are removed through the documented archive door.
  */
 
@@ -41,7 +41,7 @@ import { totp } from '../validation/lib/totp.mjs';
 type Runtime = typeof import('../../server/db/runtime');
 type Mfa = typeof import('../../server/services/mfaService');
 
-const ORG = 91950;
+const ORG = 92100;
 const TAG = 'dbtsp';
 const RUN = `${process.pid}_${Date.now().toString(36)}`;
 const RUNTIME_PASSWORD = 'dbtsp-sign-in-posture-runtime-password';

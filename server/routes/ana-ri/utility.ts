@@ -25,10 +25,8 @@ import {
   requiresEsignature,
   MIN_REASON_FOR_CHANGE_LEN,
 } from '../../services/ana-ri/part11-governance.js';
-import {
-  verifySignerCredentials,
-  defaultSignoffDeps,
-} from '../../services/ana-ri/governed-action-signoff.js';
+import { reverifySigner } from '../../services/part11/reverify-signer.js';
+import { signerReverificationDeps } from '../../services/part11/reverify-signer-deps.js';
 import {
   readPendingApproval,
   recordApprovalDecision,
@@ -451,9 +449,9 @@ export function mountUtilityRoutes(router: Router): void {
     // transmission's `reauthVerifiedAt`, so it must be a real observation.
     let signatureVerifiedAt: Date | undefined;
     if (eSignRequired) {
-      const verification = await verifySignerCredentials(defaultSignoffDeps, { userId, password, mfaToken });
-      if (!verification.verified) {
-        return sendError(res, 401, verification.error || 'Signature verification failed', { code: verification.code }, 'SIGNATURE_REJECTED');
+      const verification = await reverifySigner(userId, { password, mfaToken }, signerReverificationDeps());
+      if (!verification.ok) {
+        return sendError(res, verification.status, verification.error, { code: verification.code }, 'SIGNATURE_REJECTED');
       }
       secondFactorVerified = verification.secondFactorVerified;
       signatureVerifiedAt = new Date();

@@ -10,6 +10,11 @@ import { z } from 'zod';
 import { db, transaction } from '../db';
 import { coauthorDocuments } from '../../shared/schema';
 import { requireRole } from '../middleware/auth';
+import {
+  applyCoauthorDocumentPut,
+  planCoauthorStatusWrite,
+} from '../services/coauthor/coauthor-status-write.js';
+import { coauthorAuditActor, recordCoauthorDocumentEvent } from '../services/coauthor/coauthor-audit.js';
 import { createRateLimiter } from '../middleware/rateLimiter';
 import {
   classifyDocument,
@@ -231,58 +236,64 @@ router.put('/:id', requireRole('regulatory-author'), async (req: Request, res: R
     const organizationId = resolveOrganizationId(req);
     if (organizationId === null) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
 
-    const conditions: any[] = [eq(coauthorDocuments.id, docId)];
-    if (organizationId) {
-      conditions.push(eq(coauthorDocuments.organizationId, organizationId));
-    }
-
-    // Fetch current doc to merge metadata
-    const [existing] = await db
-      .select()
-      .from(coauthorDocuments)
-      .where(and(...conditions))
-      .limit(1);
-
-    if (!existing) {
-      return res.status(404).json({ error: 'eCTD document not found' });
-    }
-
     const { title, content, status, module: ectdModule, section, region } = req.body || {};
 
-    const currentMetadata = (existing.metadata as any) || {};
-    const updatedMetadata = { ...currentMetadata };
-    if (section !== undefined) updatedMetadata.section = section;
-    if (region !== undefined) updatedMetadata.region = region;
+    /* 2026-09-23 (W5/D7, round-3 review): this handler wrote `status` from the
+       body verbatim, behind requireRole('regulatory-author') — which
+       ORG_ROLE_FUNCTIONAL_GRANTS gives every org 'member' — so after round 2
+       closed PUT /api/coauthor/documents/:id, {"status":"approved"} sent HERE
+       still stamped a draft snapshot approved and cleared transmit's "only
+       approved documents" refusal (same column, coauthor_documents.status).
+       It also kept its own case-sensitive `approved || finalized` list to
+       bump metadata.version. Both are gone: the write goes through the one
+       rule in services/coauthor/coauthor-status-write.ts (working states
+       only; any other value is a no-op restate or 400; title / content /
+       module of a row carrying a verdict are frozen, 409), and the version
+       bump is deleted — no finalized status can be set here any more.
+       `module` is governed with title and content: moving an approved
+       document's module_number re-files its verdict against another section
+       of the IND checklist / NDA cockpit.
 
-    // Add lifecycle event
-    const lifecycle = updatedMetadata.lifecycle || [];
-    lifecycle.push({ event: 'updated', timestamp: new Date().toISOString() });
-    updatedMetadata.lifecycle = lifecycle;
+       Metadata (section, region, the lifecycle log) is written only when the
+       request changes something, so a restate stays a no-op, and in the same
+       write as the rest, so a refused request logs no 'updated' event.
+       2026-09-23 (W5/D7, round-3 review, repair 1): it merged onto a row read
+       here before the write, so a concurrent metadata change could be lost;
+       it now merges onto the row the shared rule holds FOR UPDATE (that read
+       also answers the 404 this handler's own pre-read used to). */
+    const changesSomething =
+      title !== undefined ||
+      content !== undefined ||
+      ectdModule !== undefined ||
+      section !== undefined ||
+      region !== undefined ||
+      planCoauthorStatusWrite(status).kind === 'set';
 
-    // Increment version on status change to approved/finalized
-    if (status && (status === 'approved' || status === 'finalized') && status !== existing.status) {
-      const currentVersion = parseInt(updatedMetadata.version || '0001', 10);
-      updatedMetadata.version = String(currentVersion + 1).padStart(4, '0');
-    }
-
-    const updateValues: Record<string, any> = {
-      updatedAt: new Date(),
-      metadata: updatedMetadata,
+    const mergeMetadata = (current: { metadata: unknown }) => {
+      if (!changesSomething) return {};
+      const updatedMetadata = { ...((current.metadata as any) || {}) };
+      if (section !== undefined) updatedMetadata.section = section;
+      if (region !== undefined) updatedMetadata.region = region;
+      const lifecycle = Array.isArray(updatedMetadata.lifecycle) ? [...updatedMetadata.lifecycle] : [];
+      lifecycle.push({ event: 'updated', timestamp: new Date().toISOString() });
+      updatedMetadata.lifecycle = lifecycle;
+      return { metadata: updatedMetadata };
     };
-    if (title !== undefined) updateValues.title = title;
-    if (content !== undefined) updateValues.content = content;
-    if (status !== undefined) updateValues.status = status;
-    if (ectdModule !== undefined) updateValues.moduleNumber = ectdModule;
 
-    const [doc] = await db
-      .update(coauthorDocuments)
-      .set(updateValues)
-      .where(and(...conditions))
-      .returning();
-
-    if (!doc) {
-      return res.status(404).json({ error: 'eCTD document not found' });
+    const outcome = await applyCoauthorDocumentPut({
+      documentId: docId,
+      organizationId,
+      status,
+      governed: { title, content, moduleNumber: ectdModule },
+      ungoverned: mergeMetadata,
+    });
+    if (!outcome.ok) {
+      const { httpStatus, body } = outcome.refusal;
+      return res
+        .status(httpStatus)
+        .json(httpStatus === 404 ? { error: 'eCTD document not found' } : body);
     }
+    const doc = outcome.document;
 
     const meta = (doc.metadata as any) || {};
 
@@ -318,13 +329,15 @@ router.delete('/:id', requireRole('regulatory-author'), async (req: Request, res
     const organizationId = resolveOrganizationId(req);
     if (organizationId === null) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
 
-    const u = (req as any).user || {};
-    const auditUserId = Number(u.id ?? u.userId) || null;
+    const actor = coauthorAuditActor(req);
 
     // 21 CFR Part 11 §11.10(e): delete the regulated eCTD document and record
     // the deletion in the hash-chained, append-only audit_events table IN THE
     // SAME TRANSACTION — atomic and fail-closed (an audit failure rolls the
     // delete back, so a regulated document is never removed unaudited).
+    // 2026-09-23 (W5/D7, round-3 review, repair 2): through the one writer of
+    // a coauthor document event, services/coauthor/coauthor-audit.ts, which
+    // coauthor.ts's DELETE and the filing-copy re-take also use.
     const deletedRow = await transaction(async (client: any) => {
       const delParams: unknown[] = [docId];
       let delSql = 'DELETE FROM coauthor_documents WHERE id = $1';
@@ -338,24 +351,13 @@ router.delete('/:id', requireRole('regulatory-author'), async (req: Request, res
       if (!del.rows.length) return null;
       const row = del.rows[0];
 
-      await client.query(
-        `INSERT INTO audit_events
-           (organization_id, event_type, entity_type, entity_id, user_id, user_name,
-            user_role, ip_address, timestamp, reason, metadata,
-            regulatory_significant, gxp_relevant, created_at)
-         VALUES ($1, 'coauthor_document.deleted', 'coauthor_document', $2, $3, $4, $5, $6,
-                 NOW(), $7, $8, true, true, NOW())`,
-        [
-          row.organization_id,
-          row.id,
-          auditUserId,
-          u.name ?? u.email ?? 'System',
-          u.role ?? 'user',
-          req.ip ?? '',
-          'eCTD coauthor document deleted',
-          JSON.stringify({}),
-        ],
-      );
+      await recordCoauthorDocumentEvent(client, {
+        organizationId: row.organization_id,
+        documentId: row.id,
+        eventType: 'coauthor_document.deleted',
+        actor,
+        reason: 'eCTD coauthor document deleted',
+      });
 
       return row;
     });

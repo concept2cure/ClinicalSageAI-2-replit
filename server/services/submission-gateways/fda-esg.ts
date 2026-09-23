@@ -21,9 +21,12 @@
  * RSA-SHA256 signature but it is NOT attached as an S/MIME `multipart/signed` or
  * `application/pkcs7-mime` part, and there is no PKCS#7 *encryption*. FDA ESG
  * (Axway/Cyclone AS2) requires an S/MIME PKCS#7-signed message, so a real FDA
- * endpoint would REJECT this envelope (a non-2xx, surfaced honestly as a
- * GatewayError — the success path below only runs on a 2xx, which a conformant
- * gateway will not return to a non-conformant message). Likewise the synchronous
+ * endpoint would REJECT this envelope (a 4xx or a refusing MDN, surfaced
+ * honestly as a GatewayError — the success path below only runs on a 2xx whose
+ * MDN accepts this very message, which a conformant gateway will not return to
+ * a non-conformant message; a 5xx is recorded in transit, since an
+ * intermediary may hold the bytes — classifyAs2Delivery, 2026-09-23 MDN final
+ * pass). Likewise the synchronous
  * MDN is persisted but NOT cryptographically verified, and checkStatus() does
  * not poll FDA for async ack1/ack2/ack3. Closing this needs a real CMS
  * implementation (a vendored ASN.1/CMS library) + MDN signature verification +
@@ -79,9 +82,11 @@ import { randomUUID } from 'crypto';
 import { pool } from '../../db';
 import { readVerifiedBundle } from './bundle-integrity';
 import { platformTransmittalRecord } from './acknowledgement';
-import { buildAs2Headers, signAs2Body, postAs2, parseMdn, mdnRefusal } from './as2-transport';
 import {
-  CredentialError, GatewayError, TransportError, UnverifiedTransportError,
+  attemptDelivery, buildAs2Headers, classifyAs2Delivery, postAs2, signAs2Body, type DeliveryOutcome,
+} from './as2-transport';
+import {
+  CredentialError, GatewayError, NOTHING_TRANSMITTED, TransportError, UnverifiedTransportError,
   resolveToRegistryEntry,
   type GatewayAcknowledgment, type GatewayStatusResult, type GatewayTransmitRequest,
   type GatewayTransmitResult, type SubmissionGateway, type SubmissionStatus,
@@ -316,18 +321,183 @@ async function updateTransmittal(
   );
 }
 
+/**
+ * Record an AS2 attempt that did not end RECEIVED, and return the error the
+ * transmit throws. The outcome comes from classifyAs2Delivery
+ * (./as2-transport.ts) — the one delivery rule FDA ESG and the ICSR transport
+ * share; nothing here re-derives it.
+ *
+ *   REFUSED_BY_AGENCY     'rejected' (errorClass 'gateway'), the HTTP status and
+ *                         the agency's body kept. FDA answered and refused.
+ *   DELIVERED_UNCONFIRMED 'in_transit' — inside the duplicate-send lock
+ *                         (findActiveTransmittal, sub_trans_active_lock_idx) —
+ *                         with the response's Message-ID or our AS2 Message-ID
+ *                         as the transmission id (checkStatus reports a row
+ *                         without one as never transmitted), the HTTP status and
+ *                         body when there was one, and an error telling the
+ *                         operator to confirm at FDA before any resend.
+ *   NOT_DELIVERED         thrown as a TransportError whose message says nothing
+ *                         reached FDA; transmit's catch records it 'rejected'
+ *                         (errorClass 'transport'). It carries the
+ *                         NOTHING_TRANSMITTED proof: the classifier's verdict
+ *                         IS the proof that nothing reached an authenticated
+ *                         FDA server, so refusedBeforeWire (index.ts) releases
+ *                         the caller's transmit claim — the row says rejected,
+ *                         and the sequence must not stay 'transmitting'.
+ *
+ * History, superseded by the rule above:
+ * 2026-09-23 (W5/D7, round-2 review): an accepting MDN that names no
+ * Original-Message-ID was recorded 'rejected' — outside the lock — so the same
+ * bundle could be transmitted again at once although FDA answered 2xx.
+ * 2026-09-23 (W5/D7, round-3 review, passes one to three): every MDN that
+ * could not be tied to our message, and every failure after Node's request
+ * 'finish', became 'in_transit'.
+ * 2026-09-23 (W5/D7, MDN final pass): a non-2xx was 'rejected' whatever it
+ * was, so a 502/504 from a proxy that may have forwarded the bundle freed a
+ * resend; and a TLS 1.3 refusal of our client certificate (which fires after
+ * 'finish') was 'in_transit' although FDA's application never saw a byte.
+ * Both now follow the classifier: 5xx held, TLS refusal NOT_DELIVERED.
+ * 2026-09-23 (W5/D7, MDN close): the NOT_DELIVERED TransportError carried no
+ * proof, so transmitSequence left the sequence claim 'transmitting' — read as
+ * "in flight, confirm at FDA" — after e.g. FDA refused our client certificate,
+ * while this row said 'rejected'. It now passes NOTHING_TRANSMITTED. Only
+ * this verdict may: a DELIVERED_UNCONFIRMED never does.
+ * 2026-09-23 (W5/D7, MDN close, repair): the verdict briefly rested on the
+ * order of Node's request 'finish' against the answer or failure, so a 502
+ * or a reset after FDA had read the whole bundle released the claim. The
+ * classifier no longer reads 'finish' (as2-transport.ts); NOT_DELIVERED is
+ * only a refusal proven before the request was released.
+ */
+async function recordAs2Outcome(
+  transmittalId: number,
+  outcome: Exclude<DeliveryOutcome, { kind: 'RECEIVED' }>,
+  messageId: string,
+): Promise<Error> {
+  if (outcome.kind === 'NOT_DELIVERED') {
+    return new TransportError(
+      `${outcome.reason}. Nothing reached FDA: the request was never released to an authenticated FDA ` +
+        `server (a DNS, connection or TLS handshake/certificate failure), or FDA's TLS layer refused it. ` +
+        `Transmittal ${transmittalId} is recorded rejected; correct the cause before sending again.`,
+      outcome.error,
+      NOTHING_TRANSMITTED,
+    );
+  }
+  if (outcome.kind === 'REFUSED_BY_AGENCY') {
+    await updateTransmittal(transmittalId, {
+      status: 'rejected', httpStatus: outcome.httpStatus,
+      errorClass: 'gateway', errorMessage: outcome.reason, mdnRaw: outcome.responseRaw,
+    });
+    return new GatewayError(outcome.reason, outcome.httpStatus, null, outcome.responseRaw);
+  }
+  return recordDeliveredUnconfirmed(transmittalId, outcome.reason, {
+    delivery: outcome.httpStatus === null
+      ? `The whole bundle was sent to an authenticated FDA endpoint (AS2 Message-ID ${messageId}) before the connection failed`
+      : `The bundle was delivered (HTTP ${outcome.httpStatus}, AS2 Message-ID ${messageId})`,
+    transmissionId: outcome.trackingId,
+    httpStatus: outcome.httpStatus ?? undefined,
+    mdnRaw: outcome.responseRaw ?? undefined,
+    errorClass: outcome.httpStatus === null ? 'transport' : 'gateway',
+  });
+}
+
+/** What left for FDA before a transmit failed, when FDA may hold the bundle. */
+interface SentBundle {
+  /** How the bundle left, for the operator: "The bundle was delivered (HTTP 200, …)". */
+  delivery: string;
+  transmissionId: string;
+  httpStatus?: number;
+  mdnRaw?: string;
+  errorClass: 'gateway' | 'transport';
+}
+
+/**
+ * Record a send FDA may hold as 'in_transit' — delivered, receipt unconfirmed,
+ * inside the duplicate-send lock — and return the error the transmit throws.
+ *
+ * 2026-09-23 (W5/D7, round-3 review, third pass): split out so every failure
+ * after the bytes left is recorded by one rule. A database failure after FDA
+ * answered 2xx went through transmit's catch and was written 'rejected' —
+ * outside findActiveTransmittal and sub_trans_active_lock_idx — so the same
+ * bundle could be sent again at once. (Which transport failures count as
+ * "after the bytes left" is classifyAs2Delivery's call — MDN final pass.)
+ * If this write fails too, the row keeps the 'in_transit' written before the
+ * send (still inside the lock), and the error says so.
+ */
+async function recordDeliveredUnconfirmed(transmittalId: number, reason: string, sent: SentBundle): Promise<GatewayError> {
+  let errorMessage =
+    `${reason} ${sent.delivery} and FDA may hold it: ` +
+    `transmittal ${transmittalId} is recorded in transit, not rejected. Confirm receipt at FDA before any resend.`;
+  try {
+    await updateTransmittal(transmittalId, {
+      status: 'in_transit', httpStatus: sent.httpStatus, transmissionId: sent.transmissionId,
+      errorClass: sent.errorClass, errorMessage, mdnRaw: sent.mdnRaw,
+    });
+  } catch (writeErr: unknown) {
+    errorMessage +=
+      ` Recording this failed (${writeErr instanceof Error ? writeErr.message : String(writeErr)}); ` +
+      `the row keeps the in_transit status written before the send.`;
+  }
+  return new GatewayError(errorMessage, sent.httpStatus ?? null, null, sent.mdnRaw ?? null);
+}
+
+/**
+ * Record why a transmit failed, and return the error it throws.
+ *
+ * 2026-09-23 (W5/D7, round-3 review, third pass): moved out of transmit's
+ * catch, which wrote 'rejected' for every failure that was not a GatewayError
+ * — including a database failure after FDA answered 2xx. Once FDA may hold the
+ * bundle (`sent`), the failure is recorded delivered-unconfirmed instead.
+ * 'rejected' is kept for failures before the bundle left, and for an explicit
+ * refusal of this message.
+ * 2026-09-23 (W5/D7, MDN final pass): the AS2 transport failure is no longer
+ * classified here (a RequestSentTransportError branch read Node's 'finish' as
+ * delivery); recordAs2Outcome records every AS2 attempt from the classifier,
+ * and a NOT_DELIVERED TransportError reaches this function only to be written
+ * 'rejected'.
+ */
+async function recordTransmitFailure(
+  transmittalId: number,
+  err: unknown,
+  sent: SentBundle | null,
+): Promise<unknown> {
+  const cause = err instanceof Error ? err.message : String(err);
+  if (sent && !(err instanceof GatewayError)) {
+    return recordDeliveredUnconfirmed(transmittalId, `Transmit failed after the bundle left: ${cause}.`, sent);
+  }
+  if (err instanceof CredentialError) {
+    await updateTransmittal(transmittalId, {
+      status: 'rejected', errorClass: 'auth', errorMessage: err.message,
+    });
+  } else if (err instanceof TransportError) {
+    await updateTransmittal(transmittalId, {
+      status: 'rejected', errorClass: 'transport', errorMessage: err.message,
+    });
+  } else if (!(err instanceof GatewayError)) {
+    /* A GatewayError's status was already updated where it was raised. */
+    await updateTransmittal(transmittalId, {
+      status: 'rejected', errorClass: 'gateway', errorMessage: cause,
+    });
+  }
+  return err;
+}
+
 /* ─── SFTP fallback ──────────────────────────────────────────────── */
 
 async function transmitViaSftp(
   creds: FdaEsgCredentials,
+  environment: 'staging' | 'production',
   bundlePath: string,
   applicationId: string,
   sequence: string,
 ): Promise<{ transmissionId: string; transport: 'sftp' }> {
   if (!creds.sftpHost || !creds.sftpUser || !creds.sftpKeyPem) {
+    // 2026-09-23 (W5/D7, MDN close): named 'production' and the non-STAGING
+    // variables whatever environment the credentials were resolved for, so a
+    // staging operator was told to set FDA_ESG_SFTP_*. `environment` is the
+    // one loadFdaCredentials resolved `creds` for.
     throw new CredentialError(
-      'fda', 'esg', 'production',
-      ['FDA_ESG_SFTP_HOST', 'FDA_ESG_SFTP_USER', 'FDA_ESG_SFTP_KEY_PATH'],
+      'fda', 'esg', environment,
+      [envVarName(environment, 'SFTP_HOST'), envVarName(environment, 'SFTP_USER'), envVarName(environment, 'SFTP_KEY_PATH')],
     );
   }
   /* SFTP transport uses `ssh2-sftp-client` — kept as a dynamic import so
@@ -340,9 +510,17 @@ async function transmitViaSftp(
     const moduleName = 'ssh2-sftp-client';
     sftpModule = await import(/* @vite-ignore */ moduleName) as { default: new () => unknown };
   } catch {
+    // 2026-09-23 (W5/D7, MDN close; the round-3 skeptic's deferred change):
+    // refused before any connection is opened, so it carries the typed
+    // transmitted:false proof and refusedBeforeWire releases the caller's
+    // claim; recordTransmitFailure still records the row rejected/transport.
+    // The connect()/put() failure below must NOT carry it: a partial upload is
+    // possible there.
     throw new TransportError(
-      "FDA ESG SFTP transport requires 'ssh2-sftp-client' package. " +
+      "FDA ESG SFTP transport requires 'ssh2-sftp-client' package; nothing was sent. " +
       "Install it (npm install ssh2-sftp-client) and retry.",
+      undefined,
+      NOTHING_TRANSMITTED,
     );
   }
   const Client = sftpModule.default as new () => {
@@ -427,6 +605,12 @@ export class FdaEsgGateway implements SubmissionGateway {
       requiredAgencyMetadata(normalizedReq);
     }
     const transmittalId = await createTransmittalRow(normalizedReq, transport);
+    /* 2026-09-23 (W5/D7, round-3 review, third pass): what has left for FDA,
+       once FDA may hold it. The catch below records any failure after that
+       point (a database write after FDA answered) as delivered-unconfirmed
+       ('in_transit', inside the lock), never 'rejected' — see
+       recordDeliveredUnconfirmed. */
+    let sent: SentBundle | null = null;
 
     try {
       const creds = await loadFdaCredentials(req.organizationId, req.environment);
@@ -442,7 +626,11 @@ export class FdaEsgGateway implements SubmissionGateway {
         // Verify the on-disk bytes match the signed descriptor before SFTP
         // streams the file by path.
         await readVerifiedBundle(req.bundle);
-        const result = await transmitViaSftp(creds, req.bundle.path, applicationId, sequence);
+        const result = await transmitViaSftp(creds, req.environment, req.bundle.path, applicationId, sequence);
+        sent = {
+          delivery: `The bundle was deposited over SFTP (${result.transmissionId})`,
+          transmissionId: result.transmissionId, errorClass: 'transport',
+        };
         // An SFTP PUT only deposits the bundle in FDA's /incoming/ directory —
         // it is NOT an acknowledgment. FDA picks the file up asynchronously and
         // emits ack1/ack2/ack3 over /outgoing/ later (see the ack notes at the
@@ -475,68 +663,42 @@ export class FdaEsgGateway implements SubmissionGateway {
         signaturePem: signAs2Body(body, creds.clientKeyPem),
       });
 
-      const response = await postAs2({
+      /* 2026-09-23 (W5/D7, MDN final pass): one attempt, one outcome from the
+         shared classifier — see recordAs2Outcome. The HTTP Content-Type goes
+         to parseMdn inside it (an unsigned multipart/report's boundary is not
+         in the body; round-3 review, second pass). */
+      const outcome = classifyAs2Delivery(await attemptDelivery(() => postAs2({
         endpoint: creds.endpointUrl, headers, body,
         clientCertPem: creds.clientCertPem, clientKeyPem: creds.clientKeyPem,
         agencyCertPem: creds.fdaCertPem, errorPrefix: 'ESG AS2 POST',
-      });
-      // The MDN's own Message-ID when FDA sends one; otherwise the AS2 message
-      // the MDN is verified (below) to acknowledge.
-      const mdnId =
-        (response.headers['message-id'] as string | undefined) ?? messageId;
+      })), messageId);
+      if (outcome.kind !== 'RECEIVED') throw await recordAs2Outcome(transmittalId, outcome, messageId);
 
-      if (response.httpStatus < 200 || response.httpStatus >= 300) {
-        await updateTransmittal(transmittalId, {
-          status: 'rejected', httpStatus: response.httpStatus,
-          errorClass: 'gateway', errorMessage: `HTTP ${response.httpStatus}: ${response.body.toString('utf8').slice(0, 500)}`,
-        });
-        throw new GatewayError(
-          `FDA ESG AS2 returned HTTP ${response.httpStatus}`,
-          response.httpStatus, null, response.body.toString('utf8'),
-        );
-      }
       /* Persist the raw MDN body verbatim alongside the message-id. The
          §11.10(e) audit trail needs the agency's response as it arrived on
          the wire, not a kit-side reconstruction (per FDA ESG production UAT
          §11). downloadAcknowledgment() returns this string when present and
-         falls back to synthesised text for pre-migration rows. */
-      const mdnRaw = response.body.toString('utf8');
-      const refusal = mdnRefusal(parseMdn(mdnRaw), messageId);
-      if (refusal) {
-        await updateTransmittal(transmittalId, {
-          status: 'rejected', httpStatus: response.httpStatus,
-          errorClass: 'gateway', errorMessage: refusal, mdnRaw,
-        });
-        throw new GatewayError(refusal, response.httpStatus, null, mdnRaw);
-      }
+         falls back to synthesised text for pre-migration rows. The MDN's own
+         Message-ID when FDA sends one; otherwise the AS2 message it was
+         verified to acknowledge. */
+      const mdnRaw = outcome.responseRaw;
+      const mdnId = outcome.receiptId;
+      sent = {
+        delivery: `The bundle was delivered (HTTP ${outcome.httpStatus}, AS2 Message-ID ${messageId})`,
+        transmissionId: mdnId, httpStatus: outcome.httpStatus, mdnRaw, errorClass: 'gateway',
+      };
       await updateTransmittal(transmittalId, {
         status: 'received', transmissionId: mdnId,
-        httpStatus: response.httpStatus, ackReceivedAt: new Date(),
+        httpStatus: outcome.httpStatus, ackReceivedAt: new Date(),
         mdnRaw,
       });
       return {
         transmittalId, transmissionId: mdnId, status: 'received', transport: 'as2',
-        httpStatus: response.httpStatus, ackReceivedAt: new Date(),
+        httpStatus: outcome.httpStatus, ackReceivedAt: new Date(),
         message: `FDA ESG AS2 transmit accepted. MDN: ${mdnId}.`,
       };
     } catch (err: unknown) {
-      if (err instanceof CredentialError) {
-        await updateTransmittal(transmittalId, {
-          status: 'rejected', errorClass: 'auth', errorMessage: err.message,
-        });
-      } else if (err instanceof TransportError) {
-        await updateTransmittal(transmittalId, {
-          status: 'rejected', errorClass: 'transport', errorMessage: err.message,
-        });
-      } else if (err instanceof GatewayError) {
-        /* status already updated above */
-      } else {
-        await updateTransmittal(transmittalId, {
-          status: 'rejected', errorClass: 'gateway',
-          errorMessage: err instanceof Error ? err.message : String(err),
-        });
-      }
-      throw err;
+      throw await recordTransmitFailure(transmittalId, err, sent);
     }
   }
 
@@ -598,6 +760,12 @@ export class FdaEsgGateway implements SubmissionGateway {
         transmissionId: r.transmission_id,
         contentType: 'message/disposition-notification',
         buffer: Buffer.from(r.mdn_raw, 'utf8'),
+        /* 2026-09-23 (W5/D7, round-3 review) — RESIDUAL, not fixed here: a row
+           that is not 'received' (an explicit rejection, or an in_transit row
+           whose MDN could not be tied to the message) has no ack_received_at,
+           so this falls back to the download time. It should be null, but
+           GatewayAcknowledgment.receivedAt is `Date` (types.ts) and the same
+           fallback is in platformTransmittalRecord (acknowledgement.ts). */
         receivedAt: r.ack_received_at ?? new Date(),
         // The only genuine agency artefact the platform holds: FDA's own MDN,
         // stored verbatim at transmit time. Everything else served from this

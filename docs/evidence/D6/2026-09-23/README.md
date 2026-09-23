@@ -21,37 +21,46 @@ says which files that was.
 
 | # | Defect | Before the fix (red) | After the fix (green) | Commit |
 |---|---|---|---|---|
-| 1 | **A TOTP code was accepted more than once** (§13.3 item 1). It was accepted again until its ±1-step window closed, on every path that verifies one: password sign-in, enterprise sign-in, and every signature (`reverifySigner`). RFC 6238 §5.2. | 15 of 16 cases fail. The same code opened two sessions (200/200). Two concurrent sign-ins with one code both opened. A code used on one sign-in path opened a session on the other. `red/dbtest-one-time-credentials-before-fix.txt` | 17 of 17 pass. `users.mfa_totp_last_step`; a code is accepted only for a later step, compared and set in one `UPDATE … WHERE … RETURNING`. `green/dbtest-one-time-credentials-after-fix.txt` | `a689ad680` |
+| 1 | **A TOTP code was accepted more than once** (§13.3 item 1). It was accepted again until its ±1-step window closed, on every path that verifies one: password sign-in, enterprise sign-in, and every signature (`reverifySigner`). RFC 6238 §5.2. | 15 of 16 cases fail. The same code opened two sessions (200/200). Two concurrent sign-ins with one code both opened. A code used on one sign-in path opened a session on the other. `red/dbtest-one-time-credentials-before-fix.txt` | 20 of 20 pass. `users.mfa_totp_last_step`; a code is accepted only for a later step, compared and set in one `UPDATE … WHERE … RETURNING`. `green/dbtest-one-time-credentials-after-fix.txt` | `a689ad680` |
 | 1a | The e-sign modal's pre-check (`/api/esignature/verify-mfa`) would have spent the code the signature then needs. | (new behaviour) | The pre-check uses the non-consuming `isTokenCurrentlyAcceptable`. Checking twice leaves the code unused; the signature uses it; after that it neither checks nor signs. | `a689ad680` |
-| 1b | The e-sign pre-checks (`/verify-password` and `/verify-mfa`) were guessing oracles, limited only by the 600-a-minute session budget. | The limiter case fails (no 429). | Each is limited per signer: 10 per 5 minutes, on separate budgets. **Not closed:** the signing endpoints (`/api/esignature/sign`, the `verifyReauth` routes) answer the same credential question and are still unlimited per signer (§4 item 3). | `a689ad680` |
-| 1c | **The emailed sign-in code** was read, compared and cleared in separate statements. | 3 of 8 concurrent requests with one code were accepted. 12 concurrent wrong guesses left the right code usable. | Counting and consuming are conditional UPDATEs: exactly 1 of 8 is accepted, and the 5-attempt limit holds under concurrency. | `a689ad680` |
+| 1b | The e-sign pre-checks (`/verify-password` and `/verify-mfa`) were guessing oracles, limited only by the 600-a-minute session budget. | The limiter case fails (no 429). | Each is limited per signer: 10 per 5 minutes, on separate budgets. The signing endpoints (`/api/esignature/sign`, the `verifyReauth` routes) answer the same credential question; F-27 meters them, and these checks, by the account's lockout (§4 item 3). | `a689ad680`; F-27 added the account lockout to both |
+| 1c | **The emailed sign-in code** was read, compared and cleared in separate statements. | In the filed run, 6 of 8 concurrent requests with one code were accepted (a race count varies between runs). 12 concurrent wrong guesses left the right code usable. | Counting and consuming are conditional UPDATEs: exactly 1 of 5 concurrent requests is accepted, and the 5-attempt limit holds, under concurrency and at its boundary (4 wrong then right: accepted; 5: refused). | `a689ad680` |
 | 1d | **The password-reset token** was read, then written by account id alone, with a bcrypt hash in between. | Two resets with one token both reported success (200/200); the later password won silently. | The password is written only while the token is still this account's and unexpired: 200/400, and the reported password is the stored one. | `a689ad680` |
 | 1e | **The TOTP secret was sent to a third party.** The enrolment QR code was an `https://api.qrserver.com/…?data=otpauth://…secret=…` address, so any client that displayed it disclosed the seed. | (unit) | Drawn on the server as a `data:image/png` URL, which never contains the secret. | `a689ad680` |
 | 4 | **The session misstated the account** (§13.3 item 4). `/api/auth/session` reported `mfaEnabled:false, mfaMethods:[], mustChangePassword:false` for every account. `/mfa/verify` reported `true` for every account and echoed the request's `method`. `/api/users/me` reported `mfaMethods:[]`. | 4 of 6 fail. `red/dbtest-sign-in-posture-item4-before-fix.txt` | One reading of the account (`server/services/mfa-enrolment.ts`), the one the sign-in challenge uses, now serves the challenge, session, `/mfa/verify`, dev-login and `/api/users/me`. | `75d3069a2` |
 | 4a | Enterprise `check-email` answered `mfaRequired` from the account before any credential, which singled out enrolled accounts. | Enrolled ≠ unknown. `red/dbtest-check-email-before-fix.txt` | One answer for every address, with no lookup. | `75d3069a2` |
-| 4b | **A session alone replaced an enrolled authenticator.** `/mfa/setup` overwrote the secret of an enabled factor, with no current code asked for. A stolen session could make its own authenticator the account's second factor, at sign-in and on every signature. | Both routers answered 200. After two setup calls the owner's own code could no longer remove the factor (401). `red/dbtest-mfa-setup-over-live-factor-before-fix.txt` | **Fixed by F-26** (`0c912e67e`, W3 session; found in parallel): `generateSecret` refuses while a factor is enrolled, in one statement, and `/api/auth/mfa/setup` answers 409 (pinned by `tests/db/second-factor-binding.dbtest.ts`). This session's part: the enterprise router's `/mfa/setup` reached the same refusal and answered it with a 500; it now answers 409 `MFA_ALREADY_ENABLED` (`tests/db/sign-in-posture.dbtest.ts`). | F-26; item-2 commit |
+| 4b | **A session alone replaced an enrolled authenticator.** `/mfa/setup` overwrote the secret of an enabled factor, with no current code asked for. A stolen session could make its own authenticator the account's second factor, at sign-in and on every signature. | Before F-26 both routers answered 200, and after two setup calls the owner's own code could no longer remove the factor (401): `red/dbtest-mfa-setup-over-live-factor-before-fix.txt` (the defect; that file's cases were later narrowed to the enterprise route). With F-26's guard but without this session's catch, the enterprise route answered 500: `red/dbtest-enterprise-setup-500-before-fix.txt`. | **Fixed by F-26** (`0c912e67e`, W3 session; found in parallel): `generateSecret` refuses while a factor is enrolled, in one statement, and `/api/auth/mfa/setup` answers 409 (pinned by `tests/db/second-factor-binding.dbtest.ts`). This session's part: the enterprise router's `/mfa/setup` reached the same refusal and answered it with a 500; it now answers 409 `MFA_ALREADY_ENABLED` (`tests/db/sign-in-posture.dbtest.ts`). | F-26; item-2 commit |
 | 2 | **The client address was forgeable** (§13.3 item 2, second half). About 20 sites read X-Forwarded-For by hand and took the left-most entry, which the client writes. Affected: `electronic_signatures`, QMS approvals, financial-disclosure signatures, the §11.10(e) trail observer, c2c `sign`, 27 c2c audit rows via `getClientIp`, EULA clickwrap, and the enterprise `/api/auth` limit's key. The collapse half (no `trust proxy`) was fixed by F-24, `eefac757b`, in another session. | `ci:client-ip-single-source` finds 26 sites on the pre-sweep tree (`red/gate-client-ip-single-source-before-sweep.txt`). The enterprise limit is escaped by claiming a new address each attempt (`red/unit-enterprise-auth-limiter-key-before-fix.txt`). | One reader, `server/utils/client-ip.ts` (`req.ip`, as the trust-proxy hop count resolves it). `getClientIp` is deleted. The limiters key by `req.ip`, with IPv6 bucketed by /56. The gate (CI and pre-push, 17-case self-test) forbids reading forwarding headers and forbids `trust proxy` outside `server/index.ts`. | item-2 commit |
 | 2a | An audit route took the IP from the request body (`body.ipAddress \|\| req.ip`). | (by reading) | It takes the request's own address. | item-2 commit |
 | 2b | **Password-reset poisoning.** Without `APP_URL`, reset and invitation links were built on the request's Host header. The load balancer accepts direct connections, so `POST /forgot-password` naming a victim with `Host: attacker.example` emailed the victim a live token on the attacker's domain. | The emailed link carries the attacker's Host (`red/unit-reset-link-origin-before-fix.txt`). | In production the link origin is an https `APP_URL` or nothing. Without one, reset refuses every address alike (503) and stores no token. The deploy preflight requires `APP_URL`. | item-2 commit |
 | 2c | SCIM `meta.location`, `security.txt` and `enforceHttps` read raw `X-Forwarded-Proto` / `X-Forwarded-Host`. | (gate) | They use `req.protocol` and `req.get('host')`. | item-2 commit |
-| 2d | **The gate's comment stripper was blind after a `/*` inside a string.** A CSP source such as `'https://*.neon.tech'` opened a "comment" that hid everything up to the next `*/`: 859 lines across 10 server files, the security middleware among them. Found by the adversarial review. | A read inserted into `enterprise-security.ts` at line 260 was not reported (`red/gate-comment-stripper-before-fix.txt`). | `scripts/ci/lib/strip-comments.mjs` is string-, template- and escape-aware and is used by this gate and `ci:unapproved-model-pins`; the self-test gained three cases. 23 other gate scripts still use the old regex (§4 item 8). | review commit |
-| 1f | **A new authenticator's first code was refused because of the old one's last step.** `mfa_totp_last_step` survived disable and re-setup, so a code the new secret had never presented, in the same 30 s as the disable, read as used. Found by the adversarial review. | Mutant M10 (the reset removed) fails the re-enrolment case. | `generateSecret` clears the last step together with storing a new secret; the enable refusals say a code works once. | review commit |
-| 1g | The emailed code's concurrency test bounded the attempts below 12, not at 5. Found by the adversarial review. | Mutant M11 (six attempts) passed the old test. | Boundary cases: the right code is accepted after 4 wrong guesses and refused after 5. M11 is killed. | review commit |
+| 2d | **The gate's comment stripper was blind after a `/*` inside a string.** A CSP source such as `'https://*.neon.tech'` opened a "comment" that hid everything up to the next `*/`: 859 lines across 10 server files, the security middleware among them. Found by the adversarial review. | A read inserted into `enterprise-security.ts` at line 260 was not reported (`red/gate-comment-stripper-before-fix.txt`). | `scripts/ci/lib/strip-comments.mjs` is string-, template- and escape-aware and is used by this gate and `ci:unapproved-model-pins`; the self-test gained three cases. 23 other gate scripts still use the old regex (§4 item 8). | `a3af85f43` |
+| 1f | **A new authenticator's first code was refused because of the old one's last step.** `mfa_totp_last_step` survived disable and re-setup, so a code the new secret had never presented, in the same 30 s as the disable, read as used. Found by the adversarial review. | Mutant M10 (the reset removed) fails the re-enrolment case. | `generateSecret` clears the last step together with storing a new secret; the enable refusals say a code works once. | `a3af85f43` |
+| 2e | **The enterprise `/api/auth` limit counted every request against a per-edge budget.** With one hop, CloudFront-routed users share the edge's address, so a few SSO sign-ins (initiate plus callback), signups or metadata reads at one edge refused the next user there for 15 minutes. Found by the adversarial review; the move off the forgeable key made it bite. | Successful SSO steps from many viewers behind one edge were refused (`red/unit-auth-limiter-counts-successes.txt`). | It counts failed requests only, the attempts it exists to slow. Residual until two hops: five failures at one edge still close it for everyone there for 15 minutes (§4 item 2). | follow-up commit |
+| 2f | **An invitation in production without `APP_URL` created the account, then failed to link it.** The member could not sign in, reset, or be invited again. Found by the adversarial review. | 201 with a dead account (`red/unit-invite-without-app-url-before-fix.txt`). | The origin is resolved before anything is created; without one, 503 `PUBLIC_ORIGIN_NOT_CONFIGURED` and nothing is written. The deploy preflight accepts `APP_URL` from `environment` (value checked, trimmed, case-insensitive) or `secrets` (name only): `green/preflight-app-url-cases.txt`. | follow-up commit |
+| 1g | The emailed code's concurrency test bounded the attempts below 12, not at 5. Found by the adversarial review. | Mutant M11 (six attempts) passed the old test. | Boundary cases: the right code is accepted after 4 wrong guesses and refused after 5. M11 is killed. | `a3af85f43` |
 
 ## 2. Mutation checks
 
 `green/mutations-one-time-credentials.txt`: every fix of item 1 was mutated
-one at a time and the real-database suite run.
-- 12 of 13 mutants are killed (M10 and M11 were added after the review). Among them: accepting the same step, a
-  read-then-write instead of compare-and-set, a consuming pre-check, email
-  consumption not conditional on the stored code, an unbounded attempt count,
-  both pre-check limiters removed, and the pre-fix reset write.
-- The read-then-write mutant is killed only by the eight-way race, 5 of 5
-  times. The two-request HTTP race serialises too much to catch it, which is
-  why the eight-way case exists.
+one at a time and the 20-case real-database suite run, all 13 mutants in one
+run.
+- 12 of 13 are killed. They cover: accepting the same step again;
+  read-then-write instead of compare-and-set; the pre-check accepting the last
+  step, or consuming the code; the matched step reported wrongly; email
+  consumption not conditional on the stored code; the attempt count unbounded,
+  or bounded at six; each pre-check limiter removed (M8, M8b); the pre-fix
+  reset write (M9b); and a new secret keeping the old secret's last step (M10).
+- The read-then-write mutant (M2) is killed only by the eight-way TOTP race,
+  5 of 5 times. The two-request HTTP race serialises too much to catch it,
+  which is why the eight-way case exists.
 - The survivor, M9, drops the token condition from the reset write while
   keeping the expiry condition. It is equivalent under every interleaving the
   suite can force; the file says why.
+- An earlier run recorded the email race case failing under M3, a mutant of
+  code that path never calls. That was the race test's own flakiness: eight
+  racers against a five-attempt limit. The case now races five, and the final
+  run has no such kill.
 
 ## 3. Tests added or changed
 
@@ -93,8 +102,9 @@ These were found while mapping, and each needs a decision rather than a patch:
    - With one trusted hop (F-24), CloudFront-routed requests record the
      CloudFront edge, not the user.
    - Every limiter keyed by `req.ip` counts CloudFront-routed users per edge
-     address: F-24's sign-in and MFA limits (10 per 15 minutes), and now the
-     enterprise `/api/auth` limit (5 per 15 minutes in production). Its old key,
+     address: F-24's sign-in and MFA limits (10 per 15 minutes), and the
+     enterprise `/api/auth` limit (5 per 15 minutes in production), which now
+     counts failures only (row 2e). Its old key,
      the left-most entry, was per user but written by the client, so anyone
      could escape it. The forgeable key is not a safe interim answer, and a
      shared per-edge budget can be used up by one person for everyone at that
@@ -110,10 +120,10 @@ These were found while mapping, and each needs a decision rather than a patch:
        CloudFront cannot validate against the app certificate.
      - The `/api/*` behaviour uses legacy `forwarded_values`, so CloudFront
        replaces `User-Agent` in every audit row and drops headers not listed.
-3. **The signing endpoints are not limited per signer**: `/api/esignature/sign` and the
-   `verifyReauth` routes answer the same credential question as the limited
-   pre-checks. They need the same budget, counted on failed checks only, in a
-   shared store.
+3. **The signing endpoints are now metered by the account's lockout.** Found
+   in parallel and fixed as F-27 (`c3e891bba`, W3 session): every signing path
+   and both pre-checks count a wrong password or code toward the sign-in's
+   allowance, 5 per 30-minute lock.
    **Rate limits are per task.** Every `express-rate-limit` instance uses the
    in-process store, and production runs two tasks. A per-user attempt budget
    needs the shared (Redis) store. The sign-in code limit is also per IP only;

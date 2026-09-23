@@ -7,9 +7,9 @@
  *
  * Route-level over HTTP against the REAL router, with the REAL services behind
  * it — the orchestrator run store, `resolveSignerOrgRole`, the §11.10(g) policy,
- * bcrypt credential re-verification, and `part11ComplianceService`'s §11.70
- * version-content binding all execute. Nothing about the security path is
- * stubbed.
+ * the platform's signing ceremony (account standing, lockout, bcrypt, second
+ * factor), and `part11ComplianceService`'s §11.70 version-content binding all
+ * execute. Nothing about the security path is stubbed.
  *
  * The schema is REAL DDL lifted from the migrations that define it
  * (`extractTableDdl`), not hand-mirrored columns — plus
@@ -139,9 +139,9 @@ beforeAll(async () => {
       'db/migrations/20260813_audit_tamper_proof_log.sql',
       'db/migrations/20260725_submission_orchestrator_store_port.sql',
       'db/migrations/20260725_esig_gate_columns_port.sql',
-      // Without this, verifyUserCredentials' SELECT of users.locked_until throws
-      // and every signature attempt — correct password or not — reports
-      // invalid_credentials (ledger C-20).
+      // Without this, the signing ceremony's lockout read of users.locked_until
+      // throws and every signature attempt — correct password or not — is
+      // refused (ledger C-20, which found it in the route's former verifier).
       'db/migrations/20260725_users_signing_lockout_columns.sql',
       // Run-ledger hardening: getRun now SELECTs workflow_version +
       // dependency_graph_digest (schema-shape errors are fatal by design), and
@@ -322,9 +322,14 @@ describe('Journey B phase 2 — the Part 11 release-signature gate', () => {
         const res = await asUser(APPROVER)(
           request(app).post(`/api/submissions/${SUBMISSION_ID}/sign-release`),
         ).send(signBody());
-        // Correct password, locked account → §11.300(d): credentials refused.
-        // Indistinguishable from a wrong password to the caller.
-        return { blocked: res.status === 401, status: res.status, error: res.body.error };
+        // Correct password, locked account → §11.300(d): refused before the
+        // password is compared, and said to be locked — the sign-in's answer
+        // (423), which the account holder already has (VSR-001 F-27).
+        return {
+          blocked: res.status === 423 && res.body.code === 'ACCOUNT_LOCKED',
+          status: res.status,
+          code: res.body.code,
+        };
       } finally {
         await jdb.pool.query(`UPDATE users SET locked_until = NULL WHERE id = $1`, [APPROVER.id]);
       }
@@ -337,7 +342,13 @@ describe('Journey B phase 2 — the Part 11 release-signature gate', () => {
         const res = await asUser(APPROVER)(
           request(app).post(`/api/submissions/${SUBMISSION_ID}/sign-release`),
         ).send(signBody());
-        return { blocked: res.status === 401, status: res.status, error: res.body.error };
+        // Refused by the one signing ceremony, which every signing surface now
+        // shares; this route's own check was the only one that did (F-28).
+        return {
+          blocked: res.status === 401 && res.body.code === 'ACCOUNT_INACTIVE',
+          status: res.status,
+          code: res.body.code,
+        };
       } finally {
         await jdb.pool.query(`UPDATE users SET status = 'active' WHERE id = $1`, [APPROVER.id]);
       }
@@ -473,7 +484,7 @@ describe('Journey B phase 2 — the Part 11 release-signature gate', () => {
       'Schema comes from extractTableDdl against the real migrations (0000_sweet_joseph for the baseline tables, 0018_submission_orchestrator for the run store) plus the C-17 port. FK constraints, which that baseline applies via separate ALTER statements, are not extracted — this journey seeds only the tables it needs.',
       'run.submission_id_fk is seeded to the documents.id used as the §11.70 anchor, which is what the route consumes. The loadSubmissionFkBySubmissionIdText fallback path (and the public.submissions table) is therefore not exercised here.',
       'The orchestrator RESUME path after signing — which re-derives the digest and drift-checks it — is out of scope; this journey ends at a durable, payload-bound signature.',
-      'MFA/second-factor beyond the password re-verification is not modelled; §11.200 here is the user-id + password pair the route enforces.',
+      'No journey account has an authenticator enrolled, so the second factor the route now requires of one (the platform signing ceremony, services/part11/reverify-signer.ts) is exercised by tests/unit/submission-sign-release-route.test.ts, not here.',
     );
 
     const m = R.manifest();

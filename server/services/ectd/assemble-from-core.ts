@@ -228,7 +228,20 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
     unfinalized,
     unfinalizedSections,
   } = await materializeLeafSources({
-    leaves: leaves.map((l) => ({ documentTable: l.documentTable, documentId: l.documentId, documentUuid: l.documentUuid ?? null })),
+    // The lifecycle op is carried so a document this sequence only WITHDRAWS is
+    // not counted as unfinalized: a delete ships none of its content, so the
+    // approval gate does not apply to it (2026-09-23, W5/D7, round-2 skeptic).
+    // 2026-09-23 (W5/D7, residual repair): nor is its source read at all — an
+    // unreadable one used to land in unresolvedLeaves and refuse at transmit a
+    // withdrawal that dispatch-readiness read clear. package-from-core binds
+    // the withdrawal by the document's key against the filed manifest, and
+    // reports in `skipped` one it cannot bind.
+    leaves: leaves.map((l) => ({
+      documentTable: l.documentTable,
+      documentId: l.documentId,
+      documentUuid: l.documentUuid ?? null,
+      lifecycleOp: l.lifecycleOp,
+    })),
     organizationId,
     stageDir,
   });

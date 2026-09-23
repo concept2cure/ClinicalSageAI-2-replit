@@ -10,7 +10,7 @@
  * without a database.
  */
 import { describe, it, expect, vi } from 'vitest';
-import { reverifySigner, type ReverifySignerDeps } from '../reverify-signer';
+import { reverifySigner, verifySignerPassword, type ReverifySignerDeps } from '../reverify-signer';
 
 const USER = 7;
 
@@ -20,6 +20,7 @@ function deps(over: Partial<ReverifySignerDeps> = {}): ReverifySignerDeps {
     comparePassword: async () => true,
     isMfaEnabled: async () => false,
     verifyMfaToken: async () => true,
+    isAccountActive: async () => true,
     isAccountLocked: async () => false,
     recordFailedAttempt: async () => {},
     warn: () => {},
@@ -218,5 +219,41 @@ describe("the account's allowance (F-27): the sign-in's lockout", () => {
       deps({ comparePassword: async () => false, recordFailedAttempt: async () => { throw new Error('write refused'); } }),
     );
     expect(r).toMatchObject({ ok: false, code: 'PASSWORD_VERIFICATION_FAILED' });
+  });
+});
+
+describe("the account's standing (F-28): a suspended or deprovisioned account cannot sign", () => {
+  it('refuses an account that is not active before comparing anything, and counts nothing', async () => {
+    const compare = vi.fn(async () => true);
+    const counted = vi.fn(async () => {});
+    const r = await reverifySigner(
+      USER,
+      { password: 'right', mfaToken: '123456' },
+      deps({ isAccountActive: async () => false, comparePassword: compare, recordFailedAttempt: counted }),
+    );
+    expect(r, 'an account that is not active signed').toMatchObject({ ok: false, status: 401, code: 'ACCOUNT_INACTIVE' });
+    expect(compare).not.toHaveBeenCalled();
+    expect(counted).not.toHaveBeenCalled();
+  });
+
+  it("refuses when the account's standing cannot be read, rather than assuming it is active", async () => {
+    const r = await reverifySigner(
+      USER,
+      { password: 'right' },
+      deps({ isAccountActive: async () => { throw new Error('users unreadable'); } }),
+    );
+    expect(r).toMatchObject({ ok: false, status: 401, code: 'ACCOUNT_STATE_UNKNOWN' });
+  });
+
+  it("the signing dialog's password check refuses it too: it is the same first factor", async () => {
+    const compare = vi.fn(async () => true);
+    const r = await verifySignerPassword(USER, 'right', deps({ isAccountActive: async () => false, comparePassword: compare }));
+    expect(r).toMatchObject({ ok: false, status: 401, code: 'ACCOUNT_INACTIVE' });
+    expect(compare).not.toHaveBeenCalled();
+  });
+
+  it('a request without a password is still a request without a password', async () => {
+    const r = await reverifySigner(USER, {}, deps({ isAccountActive: async () => false }));
+    expect(r).toMatchObject({ ok: false, status: 400, code: 'PASSWORD_REQUIRED' });
   });
 });

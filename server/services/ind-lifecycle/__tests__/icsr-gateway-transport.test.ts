@@ -312,18 +312,26 @@ describe('ICSR gateway transport — AS2 (configured gateway attempts the real t
     expect(audit).toHaveBeenCalledWith(expect.objectContaining({ outcome: 'refused', reason: 'gateway-rejected' }));
   });
 
+  /* 2026-09-23 (W5/D7, round-3 review, second pass): this MDN named no message and was pinned
+     'gateway-rejected'; a refusal naming none is now receipt-unproven (below), so it names ours. */
   it('refuses a 2xx whose MDN rejects the message — a 200 is not an acceptance', async () => {
-    wire.body = 'Disposition: automatic-action/MDN-sent-automatically; processed/error: unexpected-processing-error\r\n';
+    wire.body = 'Original-Message-ID: {{MESSAGE_ID}}\r\nDisposition: automatic-action/MDN-sent-automatically; processed/error: unexpected-processing-error\r\n';
     const err = await transmitIcsr(readyMessage(), { now: fixedClock, config: as2Config() }).catch((e) => e);
     expect(err).toBeInstanceOf(IcsrGatewayTransmitError);
     expect(err.message).toMatch(/MDN did not accept/);
+    expect(err.stage).toBe('gateway-rejected');
   });
 
-  it('refuses a 2xx whose MDN acknowledges a different message', async () => {
+  /* 2026-09-23 (W5/D7, round-3 review): this and the no-disposition test
+     below asserted only that the send was refused, and it was refused as
+     'gateway-rejected' — a rejection, although the agency answered 2xx and may
+     hold the bytes. They now pin the stage: delivered, receipt unproven. */
+  it('an accepting MDN for a different message is receipt-unproven, not gateway-rejected', async () => {
     wire.body = 'Disposition: automatic-action/MDN-sent-automatically; processed\r\nOriginal-Message-ID: <someone-else@x>\r\n';
     const err = await transmitIcsr(readyMessage(), { now: fixedClock, config: as2Config() }).catch((e) => e);
     expect(err).toBeInstanceOf(IcsrGatewayTransmitError);
     expect(err.message).toMatch(/different message/);
+    expect(err.stage).toBe('receipt-unproven');
   });
 
   it('refuses an accepting MDN that names no message — it cannot be tied to what was sent (2026-09-22 W5/D7)', async () => {
@@ -331,13 +339,6 @@ describe('ICSR gateway transport — AS2 (configured gateway attempts the real t
     const err = await transmitIcsr(readyMessage(), { now: fixedClock, config: as2Config() }).catch((e) => e);
     expect(err).toBeInstanceOf(IcsrGatewayTransmitError);
     expect(err.message).toMatch(/names no Original-Message-ID/);
-  });
-
-  it('refuses a 2xx with no MDN disposition at all', async () => {
-    wire.body = '';
-    const err = await transmitIcsr(readyMessage(), { now: fixedClock, config: as2Config() }).catch((e) => e);
-    expect(err).toBeInstanceOf(IcsrGatewayTransmitError);
-    expect(err.message).toMatch(/no MDN disposition/);
   });
 
   it('surfaces a socket failure as a transport-stage refusal, audited', async () => {
@@ -360,6 +361,129 @@ describe('ICSR gateway transport — AS2 (configured gateway attempts the real t
     expect(err.missing).toEqual(['ICSR_GATEWAY_KEY_PATH', 'ICSR_GATEWAY_AS2_TO']);
     expect(httpsRequests).toHaveLength(0);
     expect(audit).toHaveBeenCalledWith(expect.objectContaining({ outcome: 'refused', reason: 'not-configured' }));
+  });
+});
+
+describe('ICSR gateway transport — AS2 MDN folding and an MDN that names no message', () => {
+  beforeEach(() => {
+    process.env.NODE_ENV = 'production';
+    httpsRequests.length = 0;
+    wire.statusCode = 200;
+    wire.headers = { 'message-id': '<mdn-1@esg.fda.example>' };
+    wire.error = null;
+  });
+
+  /* 2026-09-23 (W5/D7, round-2 review). RFC 5322 §2.2.3 folding — a field
+     body continued on a line that begins with WSP — made an accepting MDN
+     parse as naming no message, or as carrying no disposition. */
+  it('accepts an MDN whose Original-Message-ID is folded onto a continuation line', async () => {
+    wire.body = 'Original-Message-ID:\r\n {{MESSAGE_ID}}\r\nDisposition: automatic-action/MDN-sent-automatically; processed\r\n';
+    const receipt = await transmitIcsr(readyMessage(), { now: fixedClock, config: as2Config() });
+    expect(receipt.status).toBe('transmitted');
+  });
+
+  it('accepts an MDN whose Disposition is folded after its action mode', async () => {
+    wire.body = 'Original-Message-ID: {{MESSAGE_ID}}\r\nDisposition: automatic-action/MDN-sent-automatically;\r\n\tprocessed\r\n';
+    const receipt = await transmitIcsr(readyMessage(), { now: fixedClock, config: as2Config() });
+    expect(receipt.status).toBe('transmitted');
+  });
+
+  it('an accepting MDN that names no message is receipt-unproven, not gateway-rejected, and the audit keeps the MDN', async () => {
+    wire.body = 'Disposition: automatic-action/MDN-sent-automatically; processed\r\n';
+    const audit = vi.fn();
+    const err = await transmitIcsr(readyMessage(), { now: fixedClock, audit, config: as2Config() }).catch((e) => e);
+    expect(err).toBeInstanceOf(IcsrGatewayTransmitError);
+    expect(err.stage).toBe('receipt-unproven');
+    expect(err.agencyResponseRaw).toBe(wire.body);
+    expect(audit).toHaveBeenCalledWith(expect.objectContaining({
+      outcome: 'refused', reason: 'receipt-unproven', agencyResponseRaw: wire.body,
+    }));
+    expect(audit).not.toHaveBeenCalledWith(expect.objectContaining({ reason: 'gateway-rejected' }));
+  });
+
+  /* 2026-09-23 (W5/D7, round-3 review): an empty, whitespace-only or `<>`
+     Original-Message-ID read as naming a DIFFERENT message and was
+     'gateway-rejected'; a msg-id with a trailing RFC 5322 comment was refused
+     outright. And the error said "NOT transmitted" for a send the agency
+     answered 2xx and may hold. */
+  it.each([
+    ['an empty Original-Message-ID', 'Original-Message-ID: \r\nDisposition: automatic-action/MDN-sent-automatically; processed\r\n'],
+    ['an empty msg-id "<>"', 'Original-Message-ID: <>\r\nDisposition: automatic-action/MDN-sent-automatically; processed\r\n'],
+    ['a whitespace-only folded Original-Message-ID', 'Original-Message-ID:\r\n \r\nDisposition: automatic-action/MDN-sent-automatically; processed\r\n'],
+  ])('an accepting MDN with %s is receipt-unproven, not gateway-rejected', async (_label, body) => {
+    wire.body = body;
+    const err = await transmitIcsr(readyMessage(), { now: fixedClock, config: as2Config() }).catch((e) => e);
+    expect(err).toBeInstanceOf(IcsrGatewayTransmitError);
+    expect(err.stage).toBe('receipt-unproven');
+    expect(err.message).toMatch(/names no Original-Message-ID/);
+  });
+
+  it('a receipt-unproven MDN says delivery is unconfirmed and forbids a blind resend, never "NOT transmitted"', async () => {
+    wire.body = 'Original-Message-ID: <someone-else@x>\r\nDisposition: automatic-action/MDN-sent-automatically; processed\r\n';
+    const err = await transmitIcsr(readyMessage(), { now: fixedClock, config: as2Config() }).catch((e) => e);
+    expect(err.stage).toBe('receipt-unproven');
+    expect(err.message).not.toMatch(/NOT transmitted/);
+    expect(err.message).toMatch(/may hold it/);
+    expect(err.message).toMatch(/before any resend/);
+  });
+
+  it('accepts an MDN whose msg-id carries a folded trailing comment', async () => {
+    wire.body = 'Original-Message-ID: {{MESSAGE_ID}}\r\n (FDA ESG)\r\nDisposition: automatic-action/MDN-sent-automatically; processed\r\n';
+    const receipt = await transmitIcsr(readyMessage(), { now: fixedClock, config: as2Config() });
+    expect(receipt.status).toBe('transmitted');
+  });
+
+  it('an explicit failed disposition is gateway-rejected', async () => {
+    wire.body = 'Original-Message-ID: {{MESSAGE_ID}}\r\nDisposition: automatic-action/MDN-sent-automatically; failed/failure: sender-unauthorized\r\n';
+    const err = await transmitIcsr(readyMessage(), { now: fixedClock, config: as2Config() }).catch((e) => e);
+    expect(err.stage).toBe('gateway-rejected');
+  });
+});
+
+/* 2026-09-23 (W5/D7, round-3 review, second pass): an unknown or failure-named
+   modifier (`processed/failed`, `processed/superseded`) and an unclosed comment
+   were 'transmitted'; a refusal naming another message, or none, was
+   'gateway-rejected'; the HTTP Content-Type boundary was not read. The
+   no-disposition test moved here (the block above exceeded max-lines-per-function). */
+describe('ICSR gateway transport — AS2 MDN dispositions and the message they name', () => {
+  beforeEach(() => {
+    process.env.NODE_ENV = 'production';
+    wire.statusCode = 200;
+    wire.headers = { 'message-id': '<mdn-1@esg.fda.example>' };
+    wire.error = null;
+  });
+  const stageFor = async (body: string) => {
+    wire.body = body;
+    const out = await transmitIcsr(readyMessage(), { now: fixedClock, config: as2Config() }).catch((e) => e);
+    return out instanceof IcsrGatewayTransmitError ? out.stage : (out as { status: string }).status;
+  };
+
+  it('a 2xx with no MDN disposition at all is receipt-unproven, not gateway-rejected', async () => {
+    wire.body = '';
+    const err = await transmitIcsr(readyMessage(), { now: fixedClock, config: as2Config() }).catch((e) => e);
+    expect(err).toBeInstanceOf(IcsrGatewayTransmitError);
+    expect(err.message).toMatch(/no MDN disposition/);
+    expect(err.stage).toBe('receipt-unproven');
+  });
+
+  it.each([
+    ['processed/failed: signature check failed', 'Original-Message-ID: {{MESSAGE_ID}}\r\nDisposition: automatic-action/MDN-sent-automatically; processed/failed: signature check failed\r\n', 'gateway-rejected'],
+    ['processed/superseded', 'Original-Message-ID: {{MESSAGE_ID}}\r\nDisposition: automatic-action/MDN-sent-automatically; processed/superseded\r\n', 'receipt-unproven'],
+    ['an unclosed comment', 'Original-Message-ID: {{MESSAGE_ID}}\r\nDisposition: automatic-action/MDN-sent-automatically; processed (see /error: x\r\n', 'receipt-unproven'],
+    ['failed for a different message', 'Original-Message-ID: <someone-else@x>\r\nDisposition: automatic-action/MDN-sent-automatically; failed/failure: x\r\n', 'receipt-unproven'],
+    ['failed naming no message', 'Disposition: automatic-action/MDN-sent-automatically; failed/failure: x\r\n', 'receipt-unproven'],
+  ])('an MDN with %s is never transmitted', async (_label, body, stage) => {
+    expect(await stageFor(body)).toBe(stage);
+  });
+
+  it('reads the MIME boundary from the HTTP Content-Type of an unsigned multipart/report', async () => {
+    wire.headers = { ...wire.headers, 'content-type': 'multipart/report; report-type=disposition-notification; boundary="outer"' };
+    expect(await stageFor(
+      '--outer\r\nContent-Type: text/plain\r\n\r\nquoted:\r\n--fake\r\nContent-Type: message/disposition-notification\r\n\r\n' +
+      'Original-Message-ID: <other@x>\r\nDisposition: automatic-action/MDN-sent-automatically; processed\r\n' +
+      '--outer\r\nContent-Type: message/disposition-notification\r\n\r\nOriginal-Message-ID: {{MESSAGE_ID}}\r\n' +
+      'Disposition: automatic-action/MDN-sent-automatically; failed/failure: x\r\n\r\n--outer--\r\n',
+    )).toBe('gateway-rejected');
   });
 });
 

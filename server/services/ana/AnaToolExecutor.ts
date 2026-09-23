@@ -8535,6 +8535,19 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
   if (leaves.length === 0) {
     return JSON.stringify({ error: 'leaves[] is required and must be non-empty.' });
   }
+  // 2026-09-23 (W5/D7, round-2 skeptic): source_path is no longer required by
+  // the schema, because a delete has none. Every other leaf must still name the
+  // file it ships — refused here, by name, rather than read from an empty path.
+  const missingSource = leaves.filter(
+    (l) => String(l.operation) !== 'delete' && !(typeof l.source_path === 'string' && l.source_path.trim()),
+  );
+  if (missingSource.length > 0) {
+    return JSON.stringify({
+      error:
+        `package_ectd_for_region: a ${missingSource.map((l) => String(l.operation)).join(' / ')} leaf must carry source_path, ` +
+        `the file it ships (${missingSource.map((l) => String(l.file_name)).join(', ')}). Only a delete omits it.`,
+    });
+  }
   try {
     const { packageEctdSubmission } = await import('../submission-gateways/index.js');
     const path = await import('path');
@@ -8557,12 +8570,19 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
       sponsorId:     String(input.sponsor_id),
       sponsorName:   String(input.sponsor_name),
       productName:   String(input.product_name),
+      // A delete's source_path is passed through as given, never dropped: the
+      // packager refuses a delete that carries one, by name, instead of this
+      // mapping silently ignoring what the caller asked to ship. modified_file
+      // names the filed leaf a delete (or replace / append) acts on.
       leaves: leaves.map((l) => ({
         ctdSection: String(l.ctd_section),
         operation:  (String(l.operation) as 'new' | 'append' | 'replace' | 'delete'),
-        sourcePath: String(l.source_path),
+        sourcePath: typeof l.source_path === 'string' ? l.source_path : '',
         fileName:   String(l.file_name),
         title:      String(l.title),
+        ...(typeof l.modified_file === 'string' && l.modified_file.trim()
+          ? { modifiedFile: l.modified_file.trim() }
+          : {}),
       })),
       outputDir,
     });

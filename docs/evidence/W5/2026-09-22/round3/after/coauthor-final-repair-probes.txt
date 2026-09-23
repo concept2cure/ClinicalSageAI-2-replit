@@ -1,0 +1,30 @@
+## skeptic probes, final repaired tree. verify-r4/coauthor/regression (Q1, Q1b, Q2, Q3)
+exit 0
+[Q1] editor order: ["1.1","1.2"]
+[Q1] freeze -> 200
+[Q1] sealed order: [["1.1","2026-01-01T00:00:00.000Z","ffffffff-0000-4000-8000-0000000000a1"],["1.2","2026-01-01T00:00:00.000Z","00000000-0000-4000-8000-0000000000b1"]]
+[Q1] place -> 201 {"success":true,"document":{"id":1,"organizationId":7,"title":"Legacy","content":"## 1.1 — Alpha\n\nalpha\n\n## 1.2 — Beta\n\nbeta","sections":null,"status":"finalized","templateId":null,"createdBy":"3","clientWorkspace":null,"completionPercentage":null,"regul
+[Q1] copies written: 1
+ ✓ regression probes > Q1: tied order_index, created_at in the same millisecond (different microseconds): real freeze, then place 166ms
+[Q1b] docs with same-ms ties: 0 ; false SOURCE_ALTERED_SINCE_SEAL: 0 of 30
+[Q2] docs 1 status APPROVED seals after re-seed 1
+[Q2] place -> 201 {"success":true,"document":{"id":32,"organizationId":7,"title":"Control of Drug Substance (CTD 3.2.S.4)","content":"## 3.2.S.4.1 — 3.2.S.4.1  Specification\n\nThe drug substance specification covers appearance, identity 
+[Q3] place -> 201 approved {"success":true,"document":{"id":33,"organizationId":7,"title":"Clinical Overview (CTD Module 2.5)","content":"## 2.5.1 — 2.5.1  Product development rationale\n\nBX-204 (rezatinib) is developed for ad
+ ✓ regression probes > Q1b: sections added through the real POST /sections (order_index 0, as an explicit client would), frozen, placed 2419ms
+ ✓ regression probes > Q2: demo DB seeded by HEAD seed 112, re-seeded by current seed 112, then Place into filing 56ms
+ ✓ regression probes > Q3: demo DB seeded by HEAD seed 99 (old seal shape), then Place into filing 40ms
+      Tests  4 passed (4)
+## verify-r4/coauthor/fail-open (S5, S6, T1, T1-control)
+exit 0
+[S5] after HEAD seed: status APPROVED seals 0
+[S5] after new seed re-run: seals 1 ; place -> 201 {"success":true,"document":{"id":1,"organizationId":7,"title":"Control of Drug Substance (CTD 3.2.S.4)","content":"## 3.2.S.4.1 — 3.2.S.4.1  Specification\n\nThe drug substance specification covers appearance, identity (IR, HPLC retention), assay 
+[S6] place -> 201 {"success":true,"document":{"id":2,"organizationId":7,"title":"Clinical Overview (CTD Module 2.5)","content":"## 2.5.1 — 2.5.1  Product development rationale\n\nBX-204 (rezatinib) is developed for adv
+[T1] sealed order (router query): [ '1.1', '1.2' ] created_at in seal: [ '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z' ]
+[T1] live/editor order: [ '1.1', '1.2' ]
+[T1] place -> 201 {"success":true,"document":{"id":3,"organizationId":7,"title":"Tied legacy","content":"## 1.1 — First created\n\nfirst\n\n## 1.2 — Second created\n\nsecond","sections":null,"status":"approved","templateId":null,"createdBy":"3","clientWorkspace":null,"completionPercentage":null,
+[T1c] place -> 201 {"success":true,"document":{"id":4,"organizationId":7,"title":"Tied legacy","content":"## 1.1 — First created\n\nfirst\n\n## 1.2 — Second created\n\nsecond","sections":null,"status":"approved","templa
+ ✓ fail-open lens r4 probes > S5: a demo DB seeded by HEAD seed 112, re-seeded with the new seed 112, then Place into filing 125ms
+ ✓ fail-open lens r4 probes > S6: a demo DB seeded by HEAD seed 99, re-seeded with the new seed 99, then Place into filing 39ms
+ ✓ fail-open lens r4 probes > T1: tied order_index, created_at differ by 800 microseconds inside ONE millisecond, nothing altered after the seal 24ms
+ ✓ fail-open lens r4 probes > T1-control: same, created_at 2 ms apart 17ms
+      Tests  4 passed (4)

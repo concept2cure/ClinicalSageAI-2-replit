@@ -1,0 +1,324 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | tests/submission-ops-preflight-routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/submission-ops-preflight-routes.test.ts
+{
+  "timestamp": "2026-09-23T07:29:03.870Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > 404s when the package is not in the tenant 70ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > 409s when the package has no metadata.bundle 11ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > returns 200 with internal findings and unconfigured agency validators (no network) 20ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > reports CONTENT DRIFT as a blocking finding when an artifact was edited after assembly — the same assessment transmit refuses on 9ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > a bundle with NO content fingerprint is UNPROVEN: a warning where descriptor trust is relaxed, a blocking error where transmit would refuse it 32ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > a bundle fingerprinted under an OLDER scheme says so, rather than claiming it records none 38ms
+stderr | tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > still returns the computed findings when the metadata persist fails
+[submission-ops] preflight-persist-failed simulated metadata write failure
+
+stderr | tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > when the lock cannot be taken after the bundle was superseded, the findings are NOT returned as the package’s (409, not 200 persisted:false)
+[submission-ops] preflight-persist-failed pool exhausted
+
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > a content read that fails is an error, never a pass 51ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > marks blocking:true when the stored validation has an error 38ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > still returns the computed findings when the metadata persist fails 6ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > REFUSES to persist a run whose bundle was cleared or replaced meanwhile, and never writes its pre-run snapshot over the row 8ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > cannot identify a bundle without a sha256: such a run is superseded, never stored against whatever is there now 3ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > when the lock cannot be taken after the bundle was superseded, the findings are NOT returned as the package’s (409, not 200 persisted:false) 8ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > persists against the LOCKED row: a change that landed while the validator ran is kept, not reverted 11ms
+stderr | tests/submission-ops-section-routes.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/submission-ops-section-routes.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-23T07:29:06.188Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ tests/submission-ops-section-routes.pglite.integration.test.ts > section routes — tenant boundaries on a real engine > PATCH reaches only a section of the caller’s own package, by numeric id and by sec_ id alike 4865ms
+ ✓ tests/submission-ops-section-routes.pglite.integration.test.ts > section routes — tenant boundaries on a real engine > REFUSES another org’s section — through their package id, and through OUR package id 62ms
+ ✓ tests/submission-ops-section-routes.pglite.integration.test.ts > section routes — tenant boundaries on a real engine > REFUSES a section of a SIBLING package of the same org 77ms
+ ✓ tests/submission-ops-section-routes.pglite.integration.test.ts > section routes — tenant boundaries on a real engine > DELETE is bounded the same way, and refuses a section a mapping still points at — whatever org the MAPPING row carries 167ms
+ ✓ tests/submission-ops-section-routes.pglite.integration.test.ts > section routes — tenant boundaries on a real engine > REFUSES a section a milestone still gates, and names the collateral when it does remove one 84ms
+ ✓ tests/submission-ops-section-routes.pglite.integration.test.ts > section routes — tenant boundaries on a real engine > POST adds only to the caller’s own package 45ms
+ ✓ server/services/ectd/__tests__/package-content-change.pglite.integration.test.ts > mapArtifactToSection tenant boundaries, on a real engine > maps into a section of THIS org, clearing the stale bundle and its preflight summary in one transaction 6396ms
+ ✓ server/services/ectd/__tests__/package-content-change.pglite.integration.test.ts > mapArtifactToSection tenant boundaries, on a real engine > REFUSES a section belonging to another org, and writes nothing at all 33ms
+ ✓ server/services/ectd/__tests__/package-content-change.pglite.integration.test.ts > mapArtifactToSection tenant boundaries, on a real engine > REFUSES an artifact belonging to another org 69ms
+ ✓ server/services/ectd/__tests__/package-content-change.pglite.integration.test.ts > mapArtifactToSection tenant boundaries, on a real engine > answers a repeat with the existing row and changes nothing 86ms
+ ✓ server/services/ectd/__tests__/package-content-change.pglite.integration.test.ts > markPackagesContentChangedForArtifact tenant boundaries, on a real engine > follows only mappings whose SECTION belongs to the acting org — a cross-tenant row never clears another tenant’s bundle 38ms
+ ✓ server/services/ectd/__tests__/package-content-change.pglite.integration.test.ts > markPackagesContentChangedForArtifact tenant boundaries, on a real engine > an artifact mapped only into another tenant’s section invalidates nothing 75ms
+stdout | server/services/ectd/__tests__/package-content-fingerprint.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-23T07:29:21.694Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T07:29:21.703Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/package-content-fingerprint.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-23T07:29:21.703Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/package-content-fingerprint.pglite.integration.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ectd/__tests__/package-content-fingerprint.pglite.integration.test.ts > readPackageContentRows on a real engine > yields exactly the rows assemble builds: this package’s sections, this org’s mappings joined to their artifacts, unmapped sections as null rows, and a database digest equal to the JS digest 19ms
+ ✓ server/services/ectd/__tests__/package-content-fingerprint.pglite.integration.test.ts > readPackageContentRows on a real engine > CHANGES when the sections are reordered — that changes the order the leaves appear in the backbone — and when an artifact is cascade-deleted 11ms
+ ✓ server/services/ectd/__tests__/package-content-fingerprint.pglite.integration.test.ts > readPackageContentRows on a real engine > is scoped to the org: another tenant asking about the same package sees only its own mappings 2ms
+ ✓ server/services/ectd/__tests__/package-content-fingerprint.pglite.integration.test.ts > readPackageContentRows on a real engine > reads an approval revoked after assembly (no content change) as DRIFT, and a lock at the approved version as no change 16ms
+stderr | tests/submission-ops-assemble-routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/submission-ops-assemble-routes.test.ts
+{
+  "timestamp": "2026-09-23T07:29:30.056Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ tests/submission-ops-assemble-routes.test.ts > package identity: one id contract across the package API > GET /packages/:packageId resolves the numeric row id as well as the pkg_ text id (tenant-scoped either way) 31ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > 404s when the package is not in the tenant 13ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > 409s when the package is not locked 5ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REQUIRES the operator’s reason — no placeholder is ever written into the audit row 13ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > assembles for Health Canada (the gate’s own remediation for a CA transmit) 48ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES to store a bundle whose identifiers changed while it was being assembled (STALE_ASSEMBLY), and never reverts the newer metadata 26ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES to store a bundle whose CONTENT changed while it was being assembled: a mapping added or removed meanwhile bumps the package’s content revision 14ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > captures the revision BEFORE reading content: a mapping change that lands during the content read discards the zip too 47ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > stores the new bundle WITHOUT the previous bundle’s preflight summary (a summary that outlives its bundle is aggregated as current) 35ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a package that never recorded a content revision is protected too: the first mapping change during assembly discards the bundle 28ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > records the CONTENT FINGERPRINT the bundle was built from (sections, mappings, declared placements, artifact content) so the transmit gate can prove the zip still reflects the package 21ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > walks the sections in a DETERMINISTIC order: the row id breaks a tie on sortOrder, so identical content cannot assemble to different bytes 14ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > records the content fingerprint for a DEVICE format too (eSTAR), where the leaf model differs 17ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a discarded stale assembly removes its durable (S3) copy too, and says so 13ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > merges the descriptor onto the package’s CURRENT metadata, not the pre-assembly snapshot 12ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > assembles ONE LEAF PER ARTIFACT at each artifact's own CTD section, persists, and returns the descriptor 50ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > FAILS CLOSED on an unplaceable section: LEAF-UNPLACED error, leaf excluded, counts match what shipped 18ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REJECTS a declared code that is not a real heading (3.foo) instead of nesting it under a container 18ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > SURFACES a module disagreement (CSR section, artifact filed under Module 3) instead of filing it silently 17ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > ships an artifact mapped twice (duplicate row, or into two sections) as ONE leaf and surfaces the duplicate mapping 12ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > the same document at two DIFFERENT sections (a reference cited from 4.3 and 5.4) is two leaves, not a duplicate 19ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > composes leaf file names inside the 64-character eCTD rule, keeping the artifact discriminator 23ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > BLOCKS when the package records no agency identifiers — never ships an internal id as the application number 16ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REJECTS a malformed application number (it becomes a filesystem path component) 11ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > 400s on a sequence that is not four digits (path-traversal vector) and never reaches the packager 3ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > accepts a four-digit sequence and passes it through, once there is a filing for it to follow 23ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES a submission type the region has no code for — 'amendment' reached the packager and 500'd 9ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > names the accepted terms when a follow-up declares no submission type at all 10ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a changed leaf reaches the PACKAGER as a replace, pointing at the sequence that holds the version it supersedes 14ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a leaf byte-identical to the one on file is NOT handed to the packager — a sequence carries what changed 38ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > the descriptor and its validation describe the leaves that SHIPPED, not the ones the drop removed 60ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES a follow-up in which nothing changed rather than storing a leafless bundle as transmittable 23ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES a gap and a backfill: a sequence out of order is diffed against filings made after it 19ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > stores the leaf manifest on the descriptor — the inventory the NEXT sequence diffs against 9ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > assembling does NOT file the sequence: only a successful transmit puts a leaf on file 9ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > assembles the same content to the same bytes twice — the lifecycle diff and the signed digest both depend on it 1146ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES a follow-up sequence on a package that has transmitted nothing — an assembled-but-unsent bundle is not on file 22ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > 400s when region and format disagree (FDA + pmda_ectd) 5ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a packager REFUSAL answers 422 with its findings persisted and clears the stale bundle — never a bare 500 with an old zip left transmittable 28ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > 400s a region override that contradicts a DEVICE family (510k is an FDA eSTAR; PMDA cannot be its region) 8ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a PMDA region override re-derives the format, and the descriptor records the format the packager BUILT 23ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > a DRAFT artifact in an IND package assembles with an error-severity LEAF-UNAPPROVED finding, and governed transmit refuses the stored bundle 40ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > an all-approved package (approved and locked) has no LEAF-UNAPPROVED finding and no error 31ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > every non-approved status counts (review, and a status outside the vocabulary), one finding per artifact 38ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > applies to a DEVICE format too: a review artifact in a 510(k) eSTAR bundle is refused at transmit 16ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > an APPROVED artifact edited after approval (v2, approved v1) is LEAF-UNAPPROVED, and governed transmit refuses the stored bundle 32ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > a LOCKED artifact is bound to the version it was locked at, and an approval that recorded no version is not proof 21ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > the approval an artifact had at assembly is part of the content fingerprint (filable) 12ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > describes the leaves that SHIP: a draft whose leaf is byte-identical to the one on file is not in the sequence, and is not a finding 41ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > the simulating second ESG transport stays deleted > server/services/ESGSubmissionService.ts does not exist 6ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > the simulating second ESG transport stays deleted > nothing under server/ imports it 593ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > the simulating second ESG transport stays deleted > no server code mints a simulated ESG transaction or acknowledgement 745ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > there is exactly one path from the platform to an agency gateway > only the governed transmit and the eCTD spine invoke a gateway transmit 430ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > there is exactly one path from the platform to an agency gateway > the product's 510(k) transmit handler runs the shared governed transmit 1ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > there is exactly one path from the platform to an agency gateway > the HTTP transmit route runs the same shared governed transmit 0ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > the governed transmit cannot be reached without a named human gate > the 510(k) transmit handler requires a verified Part 11 signature unconditionally 1ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > the governed transmit cannot be reached without a named human gate > the handler refuses rather than synthesising a re-authentication time 0ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > the governed transmit cannot be reached without a named human gate > transmit is in the Part 11 e-signature tier, so only the governed-action route can dispatch it 1ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > the governed transmit cannot be reached without a named human gate > the gateway registry still refuses any transmit that names no human gate 0ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > the governed transmit cannot be reached without a named human gate > the governed transmit never invents the verification instant itself 1ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > a missing credential is a refusal that names the configuration > the FDA ESG gateway raises CredentialError listing every missing variable 0ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > a missing credential is a refusal that names the configuration > CredentialError renders the missing names into its message 0ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > a missing credential is a refusal that names the configuration > the 510(k) handler surfaces it as a refusal, never as a transmission 0ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > the 510(k) endpoint does not claim a transmission it never made > does not record the package as submitted to FDA 0ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > the 510(k) endpoint does not claim a transmission it never made > reports transmitted: false rather than success 0ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > the 510(k) endpoint does not claim a transmission it never made > does not stamp an HTTP status code for a call that was never made 0ms
+ ✓ tests/fda-submission-honesty.contract.test.ts > the 510(k) endpoint does not claim a transmission it never made > points the caller at the path that does transmit 0ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > puts the assembled bundle bytes on the wire with a real AS2 envelope 1294ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > signs the AS2 body with the sponsor key rather than a placeholder 7ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records a rejected transmittal — never an acknowledgement — on an agency HTTP error 4ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > names every missing FDA_ESG_* variable and transmits nothing 4ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > is the same refusal for staging — no environment quietly simulates 2ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest with REST credentials → TRANSPORT_NOT_VERIFIED, nothing on the wire, no identifier 2ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest without REST credentials → GATEWAY_NOT_CONFIGURED naming the REST variables 2ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a package whose descriptor carries no structural-validation evidence 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a package with error-severity structural findings 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a descriptor pointing outside the submission-bundle namespace 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses when the package has never been assembled 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > a check that failed without blocking is recorded, not dropped > carries the failed dtd-self-contained check and the guard warnings on the audit row, the sign ledger and the returned data 5ms
+ ✓ tests/artifact-change-invalidates-bundles.contract.test.ts > artifact routes invalidate the bundles built from what they change > imports the CANONICAL invalidation, not a local copy of the rule 2ms
+ ✓ tests/artifact-change-invalidates-bundles.contract.test.ts > artifact routes invalidate the bundles built from what they change > PUT /projects/:projectId/artifacts/:artifactId invalidates every package the artifact is mapped into, with cause 'content' 1ms
+ ✓ tests/artifact-change-invalidates-bundles.contract.test.ts > artifact routes invalidate the bundles built from what they change > PUT .../artifacts/:artifactId/placement invalidates every package the artifact is mapped into, with cause 'placement' 1ms
+ ✓ tests/artifact-change-invalidates-bundles.contract.test.ts > artifact routes invalidate the bundles built from what they change > PUT .../artifacts/:artifactId/ctd-section invalidates every package the artifact is mapped into, with cause 'placement' 0ms
+ ✓ tests/artifact-change-invalidates-bundles.contract.test.ts > artifact routes invalidate the bundles built from what they change > POST .../artifacts/:artifactId/rollback invalidates every package the artifact is mapped into, with cause 'rollback' 0ms
+ ✓ tests/artifact-change-invalidates-bundles.contract.test.ts > every writer of a fingerprint-covered artifact column is accounted for > is exactly the wired routes plus the baselined backstop-only writers 287ms
+ ✓ tests/artifact-change-invalidates-bundles.contract.test.ts > every writer of a fingerprint-covered artifact column is accounted for > the package section list is written ONLY by the governed routes that invalidate 314ms
+stderr | tests/submission-ops-section-routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/submission-ops-section-routes.test.ts
+{
+  "timestamp": "2026-09-23T07:29:41.525Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/submission-ops-section-routes.test.ts > POST /api/submission-ops/packages/:packageId/sections > a failure AFTER the insert rolls the row back with it
+{
+  "timestamp": "2026-09-23T07:29:42.020Z",
+  "level": "error",
+  "message": "[submission-ops] adding a package section failed",
+  "context": {
+    "err": "lock write failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ tests/submission-ops-section-routes.test.ts > POST /api/submission-ops/packages/:packageId/sections > adds a section, clears the bundle the old list produced, and records a governed action — row and bump in ONE transaction 43ms
+ ✓ tests/submission-ops-section-routes.test.ts > POST /api/submission-ops/packages/:packageId/sections > REQUIRES a reason and a key (governed change), and touches nothing without them 13ms
+ ✓ tests/submission-ops-section-routes.test.ts > POST /api/submission-ops/packages/:packageId/sections > 404s for a package outside the tenant 4ms
+ ✓ tests/submission-ops-section-routes.test.ts > POST /api/submission-ops/packages/:packageId/sections > a failure AFTER the insert rolls the row back with it 8ms
+ ✓ tests/submission-ops-section-routes.test.ts > PATCH /api/submission-ops/packages/:packageId/sections/:sectionId > renames a section, invalidating the bundle placed by the OLD key 6ms
+ ✓ tests/submission-ops-section-routes.test.ts > PATCH /api/submission-ops/packages/:packageId/sections/:sectionId > a REORDER invalidates too — it changes the order the leaves appear in the backbone 13ms
+ ✓ tests/submission-ops-section-routes.test.ts > PATCH /api/submission-ops/packages/:packageId/sections/:sectionId > a NO-OP changes nothing, invalidates nothing and records nothing 4ms
+stderr | tests/submission-ops-section-routes.test.ts > DELETE /api/submission-ops/packages/:packageId/sections/:sectionId > reports a ledger outage instead of pretending the removal was audited
+[package-content-change] governed-action-ledger-write-failed audit db down
+
+ ✓ tests/submission-ops-section-routes.test.ts > PATCH /api/submission-ops/packages/:packageId/sections/:sectionId > decides against the LOCKED row, never the one read before it: a rename that commits in between is not reverted 7ms
+ ✓ tests/submission-ops-section-routes.test.ts > PATCH /api/submission-ops/packages/:packageId/sections/:sectionId > a patch whose target value the LOCKED row already holds is a no-op, not a bundle-destroying write 5ms
+ ✓ tests/submission-ops-section-routes.test.ts > PATCH /api/submission-ops/packages/:packageId/sections/:sectionId > a section that vanished before the lock is a 404, not a write against nothing 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > PATCH /api/submission-ops/packages/:packageId/sections/:sectionId > NULL and 0 are the same sort order, so setting 0 on a NULL row is a no-op 5ms
+ ✓ tests/submission-ops-section-routes.test.ts > PATCH /api/submission-ops/packages/:packageId/sections/:sectionId > TRIMS a padded key rather than storing it — the key becomes a leaf path component — and a trimmed no-op is still a no-op 7ms
+ ✓ tests/submission-ops-section-routes.test.ts > PATCH /api/submission-ops/packages/:packageId/sections/:sectionId > REFUSES an empty change and a missing reason, and 404s a section outside the package 9ms
+ ✓ tests/submission-ops-section-routes.test.ts > DELETE /api/submission-ops/packages/:packageId/sections/:sectionId > REFUSES to remove a section that still holds artifacts — the cascade would unmap them with no record of its own 4ms
+ ✓ tests/submission-ops-section-routes.test.ts > DELETE /api/submission-ops/packages/:packageId/sections/:sectionId > counts UNDER the lock: a mapping created after the request began is still refused, never cascaded away 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > DELETE /api/submission-ops/packages/:packageId/sections/:sectionId > REFUSES a section a milestone still gates — that link cascades too, and is not an artifact mapping 4ms
+ ✓ tests/submission-ops-section-routes.test.ts > DELETE /api/submission-ops/packages/:packageId/sections/:sectionId > NAMES the collateral the cascade takes — derived readiness rows removed, blockers unlinked — instead of losing it 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > DELETE /api/submission-ops/packages/:packageId/sections/:sectionId > removes an EMPTY section, invalidating the bundle that shipped its placeholder leaf 4ms
+ ✓ tests/submission-ops-section-routes.test.ts > DELETE /api/submission-ops/packages/:packageId/sections/:sectionId > a section that vanished between the check and the delete is a 404 with nothing bumped 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > DELETE /api/submission-ops/packages/:packageId/sections/:sectionId > reports a ledger outage instead of pretending the removal was audited 4ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/packages is refused for a read-only viewer 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/packages/5/sections is refused for a read-only viewer 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > patch /api/submission-ops/packages/5/sections/11 is refused for a read-only viewer 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > delete /api/submission-ops/packages/5/sections/11 is refused for a read-only viewer 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/artifact-section-map is refused for a read-only viewer 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > delete /api/submission-ops/artifact-section-map/3 is refused for a read-only viewer 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/packages/5/milestones is refused for a read-only viewer 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/policies is refused for a read-only viewer 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > put /api/submission-ops/policies/1 is refused for a read-only viewer 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > delete /api/submission-ops/policies/1 is refused for a read-only viewer 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > patch /api/submission-ops/blockers/1 is refused for a read-only viewer 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/automation/run is refused for a read-only viewer 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/packages/5/publish is refused for a read-only viewer 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > put /api/submission-ops/packages/5/regulatory-identifiers is refused for a read-only viewer 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/packages/5/assemble is refused for a read-only viewer 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/packages is not refused for a member 3ms
+stderr | tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/policies is not refused for a member
+{
+  "timestamp": "2026-09-23T07:29:42.199Z",
+  "level": "error",
+  "message": "[submission-ops] saving policies failed",
+  "context": {
+    "err": "__vite_ssr_import_6__.db.insert is not a function",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > put /api/submission-ops/policies/1 is not refused for a member
+{
+  "timestamp": "2026-09-23T07:29:42.205Z",
+  "level": "error",
+  "message": "[submission-ops] updating policies failed",
+  "context": {
+    "err": "__vite_ssr_import_6__.db.update is not a function",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > delete /api/submission-ops/policies/1 is not refused for a member
+{
+  "timestamp": "2026-09-23T07:29:42.208Z",
+  "level": "error",
+  "message": "[submission-ops] deleting policies failed",
+  "context": {
+    "err": "__vite_ssr_import_6__.db.delete is not a function",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > patch /api/submission-ops/blockers/1 is not refused for a member
+{
+  "timestamp": "2026-09-23T07:29:42.218Z",
+  "level": "error",
+  "message": "[submission-ops] updating blockers failed",
+  "context": {
+    "err": "__vite_ssr_import_6__.db.update is not a function",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/digests/1/read stays open to a viewer — it writes nothing
+{
+  "timestamp": "2026-09-23T07:29:42.246Z",
+  "level": "error",
+  "message": "[submission-ops] marking read digests failed",
+  "context": {
+    "err": "__vite_ssr_import_6__.db.update is not a function",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/packages/5/sections is not refused for a member 6ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > patch /api/submission-ops/packages/5/sections/11 is not refused for a member 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > delete /api/submission-ops/packages/5/sections/11 is not refused for a member 17ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/artifact-section-map is not refused for a member 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > delete /api/submission-ops/artifact-section-map/3 is not refused for a member 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/packages/5/milestones is not refused for a member 10ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/policies is not refused for a member 10ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > put /api/submission-ops/policies/1 is not refused for a member 4ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > delete /api/submission-ops/policies/1 is not refused for a member 4ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > patch /api/submission-ops/blockers/1 is not refused for a member 9ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/automation/run is not refused for a member 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/packages/5/publish is not refused for a member 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > put /api/submission-ops/packages/5/regulatory-identifiers is not refused for a member 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/packages/5/assemble is not refused for a member 10ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/policies/resolve stays open to a viewer — it writes nothing 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/packages/5/preflight stays open to a viewer — it writes nothing 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/digests/1/read stays open to a viewer — it writes nothing 3ms

@@ -1,0 +1,38 @@
+# git: 3aafaf809 + working tree (the ceremony fix, F-28)
+# npx vitest run server/services/part11/__tests__/reverify-signer.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > first factor > refuses when no password is supplied 3ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > first factor > refuses an empty password rather than treating it as absent-but-fine 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > first factor > refuses a non-string password (a JSON object cannot be bcrypt-compared) 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > first factor > refuses when the password does not match 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > first factor > refuses a signer with no stored hash, and never calls compare 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > first factor > refuses when the comparison itself throws, rather than propagating a 500 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > accepts password alone when the signer has no MFA enrolled 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > requires a token when MFA is enrolled 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > rejects a token that is not six digits before spending a verify call 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > refuses when the token does not verify 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > refuses when verification throws 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > REFUSES when the MFA enrolment state cannot be read 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > accepts and reports password+mfa when both factors verify 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > what gets persisted is what was checked > never reports a second factor that was not verified 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > what gets persisted is what was checked > takes no authentication claim from its caller 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's allowance (F-27): the sign-in's lockout > refuses a locked account before comparing anything, and counts nothing 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's allowance (F-27): the sign-in's lockout > refuses when the lockout cannot be read, rather than signing unmetered 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's allowance (F-27): the sign-in's lockout > counts a wrong password 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's allowance (F-27): the sign-in's lockout > counts a wrong code once the password is right 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's allowance (F-27): the sign-in's lockout > does not count a missing or malformed factor: nothing was guessed 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's allowance (F-27): the sign-in's lockout > does not count a signature that verifies 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's allowance (F-27): the sign-in's lockout > still refuses when the failure cannot be counted 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's standing (F-28): a suspended or deprovisioned account cannot sign > refuses an account that is not active before comparing anything, and counts nothing 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's standing (F-28): a suspended or deprovisioned account cannot sign > refuses when the account's standing cannot be read, rather than assuming it is active 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's standing (F-28): a suspended or deprovisioned account cannot sign > the signing dialog's password check refuses it too: it is the same first factor 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's standing (F-28): a suspended or deprovisioned account cannot sign > a request without a password is still a request without a password 0ms
+
+ Test Files  1 passed (1)
+      Tests  26 passed (26)
+   Start at  11:16:21
+   Duration  305ms (transform 91ms, setup 77ms, import 42ms, tests 19ms, environment 0ms)
+

@@ -1,0 +1,110 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > maps a full real IND into the IndLifecycle contract (placed-leaf path) 65ms
+   → expected { code: 'm1.2', …(5) } to match object { title: 'Cover Letter', …(3) }
+(2 matching properties omitted from actual)
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > renders an honest empty section list (no org-wide fallback) when a submission has no placed leaves 11ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > does not leak one submission's org docs into a sibling submission with no leaves 18ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > returns [] for an org with no IND submission, and never crosses tenants 15ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > excludes soft-deleted submissions 17ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > ignores non-IND submissions 3ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > resolves the org's RECORDED target_submission_date by identity match 17ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > matches on the program name/code when product names differ 12ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > returns null when the matching program records no target date 29ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > returns null when no program matches the submission identity 14ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — targetReceiptDate (regulatory_programs) > never resolves across tenants, program type, or soft-deleted programs 15ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — sponsor-completed official form leaves > a placed form_3674 leaf backed by a retained file marks FDA 3674 complete; the others keep their authored state 25ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — sponsor-completed official form leaves > a leaf whose file belongs to another organisation does not complete the form 20ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — sponsor-completed official form leaves > a form leaf with no document behind it (awaiting the sponsor's file) does not complete the form 23ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a missing authoring store degrades sections, not the IND > still reports the IND, with honest empty sections, when coauthor_documents is absent 23ms
+ × server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > completes a form and enriches a blueprint section whatever the stored spelling 23ms
+   → expected { code: 'm1.2', …(5) } to match object { title: 'Cover Letter', …(2) }
+(3 matching properties omitted from actual)
+ × server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > maps finalized to 'locked', never 'signed'; a signed or approved copy of the same section outranks it 23ms
+   → expected { 'm1.2': 'signed', …(2) } to deeply equal { 'm1.2': 'approved', …(2) }
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > two spellings of one section are one section, at the more advanced status 9ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > a section the blueprint does not model keeps the document’s own name, never an invented title 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > maps a full real IND into the IndLifecycle contract (placed-leaf path)
+AssertionError: expected { code: 'm1.2', …(5) } to match object { title: 'Cover Letter', …(3) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ai": true,
+    "module": "M1",
+-   "status": "locked",
++   "status": "signed",
+    "title": "Cover Letter",
+  }
+
+ ❯ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts:133:25
+    131|     // 2026-09-23 (W5/D7, co-author final pass): finalized (frozen) → …
+    132|     // not signed — no e-signature is implied by a freeze.
+    133|     expect(sec['m1.2']).toMatchObject({ title: 'Cover Letter', module:…
+       |                         ^
+    134|     expect(sec['m1.2'].ref).toContain('312.23');
+    135|     expect(sec['m1.6.2'].status).toBe('qa_review');   // review → qa_r…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > completes a form and enriches a blueprint section whatever the stored spelling
+AssertionError: expected { code: 'm1.2', …(5) } to match object { title: 'Cover Letter', …(2) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "module": "M1",
+-   "status": "locked",
++   "status": "signed",
+    "title": "Cover Letter",
+  }
+
+ ❯ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts:350:25
+    348|     // Shown under the blueprint's own spelling, with the blueprint's …
+    349|     // reference — not as an unrecognised code titled by its file name.
+    350|     expect(sec['m1.2']).toMatchObject({ title: 'Cover Letter', module:…
+       |                         ^
+    351|     expect(sec['m3.2.S.4']).toMatchObject({ title: 'Control of Drug Su…
+    352|     // A form's section is the form, not a stray section beside it.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > maps finalized to 'locked', never 'signed'; a signed or approved copy of the same section outranks it
+AssertionError: expected { 'm1.2': 'signed', …(2) } to deeply equal { 'm1.2': 'approved', …(2) }
+
+- Expected
++ Received
+
+  {
+-   "m1.2": "approved",
++   "m1.2": "signed",
+    "m2.3": "signed",
+-   "m2.4": "locked",
++   "m2.4": "signed",
+  }
+
+ ❯ server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts:373:17
+    371|     const ind = (await assembleOrgIndChecklists(ORG))[0] as any;
+    372|     const sec = Object.fromEntries(ind.sections.map((x: any) => [x.cod…
+    373|     expect(sec).toEqual({ 'm1.2': 'approved', 'm2.3': 'signed', 'm2.4'…
+       |                 ^
+    374|     // Policy unchanged: a frozen form still counts complete (founder …
+    375|     const done = Object.fromEntries(ind.forms.map((f: any) => [f.id, f…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 16 passed (19)
+   Start at  09:12:20
+   Duration  5.07s (transform 456ms, setup 156ms, import 399ms, tests 4.09s, environment 0ms)
+

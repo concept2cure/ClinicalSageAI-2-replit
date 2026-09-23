@@ -456,13 +456,17 @@ describe('signing: the pre-check does not use the code, the signature does', () 
 describe('the email one-time code is used once, and its attempts are counted once each', () => {
   const emailOtp = () => import('../../server/services/emailOtpService');
 
-  it('eight verifiers racing one emailed code: exactly one accepts it', async () => {
+  it('five verifiers racing one emailed code: exactly one accepts it', async () => {
+    // Five, the attempt limit, so every racer is counted and the race is only
+    // about consuming the code. With more, a racer over the limit clears the
+    // code and can do so before the winner consumes it: zero winners, which is
+    // safe but not what this case pins (the limit has its own cases below).
     at(0);
     const { createEmailOtp, verifyEmailOtp } = await emailOtp();
     const e = members.e;
     const outcomes = await inScope('email-race', async () => {
       const sent = await createEmailOtp(e.id);
-      return Promise.all(Array.from({ length: 8 }, () => verifyEmailOtp(e.id, sent)));
+      return Promise.all(Array.from({ length: 5 }, () => verifyEmailOtp(e.id, sent)));
     });
     expect(outcomes.filter(Boolean)).toHaveLength(1);
   });
