@@ -114,6 +114,20 @@ Full record: `docs/evidence/D5-AUDIT-OUTCOMES/2026-09-24/README.md`.
 4. **QMS owner:** `server/routes/qms.ts` is a second QMS document-control API
    (create, transition) that no client calls. The launch QMS surfaces use
    `/api/mdx/qms/*` and `/api/quality`.
+5. **W1 / D2 (launch catalog):** launch scope is enforced in navigation only.
+   `applyLaunchScope` locks the rail, the Apps catalog and deep links. The one
+   API-level check, `server/middleware/moduleEntitlementGate.ts`, never reads
+   launch scope. It defaults to `MODULE_ENFORCEMENT=off` (`.env.example:369`,
+   `enforcement-mode.ts:142`), and even in `enforce` a path that no
+   `UI_SURFACES[].apiPrefixes` entry names passes untouched
+   (`if (!modules || modules.size === 0) return next()`). The measurement in
+   `docs/evidence/D5-AUDIT-OUTCOMES/2026-09-24/launch-path-classification.json`
+   found 118 audited write sites reachable only as API or from non-launch
+   surfaces, among them the whole legacy `/api/concept2cure/*` namespace, which
+   no `apiPrefixes` entry names. D2 reads "every other surface behind a flag
+   that is off in production". Whether that covers the API is the row owner's
+   call. As built, a signed-in organisation in production can call every one of
+   those write routes.
 
 ### Found by the IND eCTD demo lane (`…01TtwRHm`) — not fixed, not this lane's to decide
 
