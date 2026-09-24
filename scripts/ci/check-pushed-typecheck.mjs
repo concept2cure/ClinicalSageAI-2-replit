@@ -31,7 +31,16 @@
  *     default of ACMR is overridden here;
  *   - a .json file under an included root, because tsconfig sets
  *     resolveJsonModule and imported JSON is typed;
- *   - any tsconfig*.json, package.json or package-lock.json.
+ *   - any tsconfig*.json or package-lock.json;
+ *   - package.json, but only when a field that can reach a type changed —
+ *     dependencies, devDependencies, optional/peer dependencies, overrides,
+ *     `type`, `types`/`typings`, `exports`, `imports`, `typesVersions`, `main`.
+ *     Measured before this was narrowed: of the last 38 commits touching
+ *     package.json, 33 changed ONLY `scripts`. Each of those ran a typecheck
+ *     that could not find anything, and on a branch this busy a slower hook is
+ *     not free — it widens the window in which another session's push lands
+ *     first and this one is rejected (`cannot lock ref`), which is exactly what
+ *     happened four times in a row to the push that introduced this gate.
  * A push of docs or SQL alone skips it and says so. A push whose changed files
  * cannot be determined RUNS it: this is a whole-tree check, and "could not tell
  * what changed" is not evidence that nothing did.
@@ -45,7 +54,7 @@
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { changedSince, resolvePushBase } from './lib/push-range.mjs';
+import { changedSince, git, resolvePushBase } from './lib/push-range.mjs';
 
 const TAG = '[ci:pushed-typecheck]';
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -59,9 +68,55 @@ export function isTypeRelevant(file) {
   if (/\.(?:[cm]?tsx?)$/.test(f)) return true;
   const base = f.split('/').pop();
   if (/^tsconfig[\w.-]*\.json$/.test(base)) return true;
-  if (f === 'package.json' || f === 'package-lock.json') return true;
+  // package.json is handled by packageJsonChangesTypes(), not here: most edits to
+  // it are `scripts`, which no type can see.
+  if (f === 'package-lock.json') return true;
   if (f.endsWith('.json') && INCLUDED_ROOTS.some(r => f.startsWith(r))) return true;
   return false;
+}
+
+/** package.json fields that can change what tsc resolves or how. */
+const TYPE_FIELDS = [
+  'dependencies',
+  'devDependencies',
+  'optionalDependencies',
+  'peerDependencies',
+  'overrides',
+  'type',
+  'types',
+  'typings',
+  'exports',
+  'imports',
+  'typesVersions',
+  'main',
+];
+
+/**
+ * Whether package.json changed in a way a type can see, between the merge-base
+ * with `base` and HEAD. Unknown — git failed, either side unparseable — counts as
+ * YES: this decides whether a check runs, and "could not tell" must run it.
+ */
+export function packageJsonChangesTypes(base, readAt = readJsonAt) {
+  const mergeBase = git(['merge-base', base, 'HEAD']);
+  if (!mergeBase) return true;
+  const before = readAt(mergeBase);
+  const after = readAt('HEAD');
+  if (before === undefined || after === undefined) return true; // unreadable
+  if (before === null || after === null) return before !== after; // added/removed
+  return TYPE_FIELDS.some(k => JSON.stringify(before[k]) !== JSON.stringify(after[k]));
+}
+
+/** package.json at a revision: the object, null when absent, undefined when unreadable. */
+function readJsonAt(rev) {
+  const exists = git(['cat-file', '-e', `${rev}:package.json`]);
+  if (exists === null) return null;
+  const text = git(['show', `${rev}:package.json`]);
+  if (text === null) return undefined;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
 }
 
 function main(argv) {
@@ -79,6 +134,9 @@ function main(argv) {
       reason = `git diff against ${base} failed, so the pushed files are unknown — running the whole-tree check`;
     } else {
       const relevant = changed.filter(isTypeRelevant);
+      if (changed.includes('package.json') && packageJsonChangesTypes(base)) {
+        relevant.push('package.json');
+      }
       if (relevant.length === 0) {
         console.log(
           `${TAG} skipped — none of the ${changed.length} file(s) changed against ${base} can change a type.`

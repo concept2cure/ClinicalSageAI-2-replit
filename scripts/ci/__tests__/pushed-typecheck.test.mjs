@@ -87,7 +87,6 @@ test('isTypeRelevant: source, config and dependency manifests count', () => {
     'shared/types/e.d.ts',
     'tsconfig.json',
     'tsconfig.beta-slice.json',
-    'package.json',
     'package-lock.json',
     'shared/data/regions.json', // resolveJsonModule
     'server/fixtures/x.json',
@@ -152,6 +151,70 @@ test('a typed JSON file under an included root RUNS; one outside does not', t =>
   outRoot.write('docs/data.json', '{"a":1}\n');
   outRoot.commit('untyped json');
   assert.match(decide(outRoot.dir, outRoot.base).out, SKIPPED);
+});
+
+test('package.json: a scripts-only change SKIPS — the common case, measured at 33 of 38', t => {
+  const repo = scratchRepo();
+  t.after(repo.cleanup);
+  repo.write(
+    'package.json',
+    JSON.stringify({ name: 'x', scripts: { a: 'echo a' }, dependencies: { zod: '3.0.0' } })
+  );
+  repo.commit('add package.json');
+  const base = sh(repo.dir, 'git', ['rev-parse', 'HEAD']);
+  repo.write(
+    'package.json',
+    JSON.stringify({
+      name: 'x',
+      scripts: { a: 'echo a', b: 'echo b' },
+      dependencies: { zod: '3.0.0' },
+    })
+  );
+  repo.commit('add an npm script');
+  const r = decide(repo.dir, base);
+  assert.match(r.out, SKIPPED);
+  assert.doesNotMatch(r.out, WOULD_RUN);
+});
+
+test('package.json: a dependency change RUNS', t => {
+  const repo = scratchRepo();
+  t.after(repo.cleanup);
+  repo.write('package.json', JSON.stringify({ name: 'x', dependencies: { zod: '3.0.0' } }));
+  repo.commit('add package.json');
+  const base = sh(repo.dir, 'git', ['rev-parse', 'HEAD']);
+  repo.write('package.json', JSON.stringify({ name: 'x', dependencies: { zod: '3.25.0' } }));
+  repo.commit('bump zod');
+  const r = decide(repo.dir, base);
+  assert.match(r.out, WOULD_RUN);
+  assert.match(r.out, /package\.json/);
+});
+
+test('package.json: a change to `type` or `exports` RUNS — resolution, not just versions', t => {
+  for (const [field, before, after] of [
+    ['type', 'commonjs', 'module'],
+    ['exports', { '.': './a.js' }, { '.': './b.js' }],
+    ['overrides', {}, { zod: '3.0.0' }],
+  ]) {
+    const repo = scratchRepo();
+    t.after(repo.cleanup);
+    repo.write('package.json', JSON.stringify({ name: 'x', [field]: before }));
+    repo.commit('base pkg');
+    const base = sh(repo.dir, 'git', ['rev-parse', 'HEAD']);
+    repo.write('package.json', JSON.stringify({ name: 'x', [field]: after }));
+    repo.commit(`change ${field}`);
+    assert.match(decide(repo.dir, base).out, WOULD_RUN, field);
+  }
+});
+
+test('package.json: unparseable RUNS — could not tell is not "unchanged"', t => {
+  const repo = scratchRepo();
+  t.after(repo.cleanup);
+  repo.write('package.json', JSON.stringify({ name: 'x' }));
+  repo.commit('base pkg');
+  const base = sh(repo.dir, 'git', ['rev-parse', 'HEAD']);
+  repo.write('package.json', '{ this is not json');
+  repo.commit('broken');
+  assert.match(decide(repo.dir, base).out, WOULD_RUN);
 });
 
 test('an unresolvable base RUNS — unknown is not "nothing changed"', t => {
