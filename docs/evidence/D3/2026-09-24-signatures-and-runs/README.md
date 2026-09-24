@@ -1,0 +1,137 @@
+# D3 — signed approvals and Submission Center runs inside the two-tenant contract
+
+**Row:** D3 (Tenant isolation proven), `docs/LAUNCH_DEFINITION_OF_DONE.md`.
+**Date:** 2026-09-24. **Database:** PostgreSQL 16, provisioned from an empty
+database by `scripts/db/provision-test-db.sh` (install-fresh + deploy-migrate)
+at `0521402e`, script exit 0, 973 public tables. The runtime connects as
+`app_service` — not superuser, no BYPASSRLS — with `app.rls_enforce=on`. Both
+tables below have RLS enabled **and** FORCEd, are owned by `postgres`, and carry
+`tenant_isolation_policy` keyed on `organization_id`. See `posture.txt`, read
+from the catalog after every mutation was reverted.
+
+**What this is not:** the row's closing evidence. D3 closes on the contract
+passing against staging with the production image, which is owed with D1. This
+is the same contract, on a from-blank local install, in the same posture.
+
+## What was added, and why these two
+
+`tests/db/two-tenant-application-rls.dbtest.ts` is the contract D3 names; its
+header calls its domain list "the coverage number". Two launch-catalog stores
+were missing from it:
+
+| Domain | Table | Why it matters |
+|---|---|---|
+| `signatures` | `public.electronic_signatures` | 21 CFR Part 11 §11.50/§11.70. A cross-tenant read here is another company's signed approvals — the most consequential table in the contract. |
+| `orchestrator_runs` | `public.submission_orchestrator_runs` | Submission Center: every sequence build. Keyed on `run_id`, not `id`. |
+
+Each gets the contract's three shapes: list/filter/read/existence probe hides
+tenant B from A; update and delete of B's row are an indistinguishable 404;
+`WITH CHECK` refuses a row planted into B without leaking details. 23 → 29.
+
+## Why signatures had been left out, and how they are in now
+
+On 2026-09-19 signatures were deliberately excluded, on the record. The
+`esign_block_mutation()` trigger refuses UPDATE and DELETE with no archive door
+(unlike `audit_logs`, whose trigger allows `app.audit_archive_bypass`). A
+fixture signature can therefore never be removed, and it pins its organization
+and signer through foreign keys, so the teardown's user and org deletes failed
+with 23503 and stranded every fixture after them.
+
+The obstacle still holds. It is designed around, not worked around:
+
+- each fixture org has a **permanent signer** (fixed email, NULL
+  `default_organization_id`, so the users-by-org delete never reaches it);
+- each org has **one fixture signature**, looked up before it is inserted;
+- teardown **no longer deletes the two reserved organization rows**, which the
+  signatures reference. `beforeAll` already upserted them on every run, and no
+  other file uses ids 90301/90302 (checked).
+
+**Nothing disables the trigger.** §11.70 is enforced against this contract
+exactly as against the product.
+
+Repeat runs are stable: after runs 1, 2 and 3 there were exactly 2 fixture
+signatures and 2 signers, 0 orchestrator runs and 0 per-run users left behind
+(`green/contract-29-of-29-run2.txt`, `-run3.txt`).
+
+## The evidence
+
+| File | What it shows |
+|---|---|
+| `posture.txt` | Role flags, RLS/FORCE/owner and the policy expression for both tables, the §11.70 trigger enabled, and the permanent rows that exist by design. |
+| `green/contract-29-of-29-run2.txt`, `-run3.txt` | **29 of 29**, twice in a row, proving the fixtures are reused rather than accumulated. |
+| `red/mutation-A-rls-disabled-on-electronic_signatures.txt` | RLS off on that one table. **4 fail, 25 pass.** A lists B's signature (`expected [ '1', '2' ] to not include '2'`); a forged signature lands in B (`got 201`); update/delete return **500**. |
+| `red/mutation-B-rls-disabled-on-submission_orchestrator_runs.txt` | RLS off on that one table. **4 fail, 25 pass.** A lists B's run; update/delete return **204** — A really modified and deleted B's run; a forged run lands in B (`got 201`). |
+| `red/mutation-C-old-bare-else-forge-is-blind.txt` | The forge handler put back to its old shape, signatures' RLS off. **"signatures: WITH CHECK rejects planting a row" PASSES** while signatures have no RLS at all. See below. |
+| `green/contract-29-of-29-after-mutations.txt` | **29 of 29** after every mutation was reverted and the posture re-read. |
+| `green/contract-43-of-43-combined-with-report-os.txt` | **43 of 43**: this change merged with the concurrent Report OS cases, run together before landing. |
+
+`npm run test:db` on the same database after the change: 44 files, 572 tests,
+all passing.
+
+**Combined with a concurrent extension.** While this was being filed, another
+D3 session landed 14 Report OS cases in the same file (`b4a22a78`,
+`docs/evidence/D3/2026-09-24-report-os-tenant/`), taking it to 37. The two
+auto-merged, and the combination had never run, so it was run before landing:
+**43 of 43** (`green/contract-43-of-43-combined-with-report-os.txt`), with the
+teardown still leaving 0 per-run users and 0 orchestrator runs behind. One
+migration reached trunk after this database was provisioned,
+`db/migrations/059_gcc_vector_embeddings.sql`; it touches neither table added
+here, but the database is `0521402e` plus nothing, and that is stated rather
+than implied.
+
+### Why mutation A's 500 is itself evidence
+
+The trigger is row-level, so it fires only on a row the statement can **see**.
+In the green run, A's DELETE of B's signature matches zero rows — RLS hides it —
+and the trigger never fires: 404. With the policy off, the same DELETE reaches
+B's row and the trigger refuses it: 500. So the green run's 404 is the policy
+at work, not the immutability trigger answering on its behalf. Without that
+distinction a signature test could pass for the wrong reason.
+
+### A defect in the contract itself: the forge handler could test the wrong table
+
+The `POST /proof/:domain` handler had explicit branches for five domains and a
+bare `else` that **forged a risk item**. A domain added to the list without its
+own branch would have planted a row into `risk_items`, been refused by *that*
+table's policy, answered 404 — and passed, having tested nothing about its own
+table.
+
+Mutation C shows this happens. Under the old handler, with RLS removed from
+`electronic_signatures`, the signatures `WITH CHECK` case passes. Under the new
+handler it fails with a 201 (mutation A). Every domain now has an explicit
+branch, and an unhandled domain answers 500 `UNHANDLED_DOMAIN`, which fails its
+test instead of passing it.
+
+## Permanent rows this work left in the scratch database, stated plainly
+
+The local `c2c_d3` database now permanently holds **3** signatures in the
+fixture orgs: the 2 fixtures, and 1 that mutation A planted into org B through
+the disabled policy. §11.70 makes it undeletable, which is the trigger working.
+It is a scratch database, dropped and rebuilt by the next
+`provision-test-db.sh`. Tenant B's list does return that row, but no assertion
+depends on it: every check names a specific fixture id. Nothing was planted
+anywhere else. Mutations B and C planted nothing that survived teardown (0
+orchestrator runs left in the fixture orgs).
+
+## Still asserted, not proven
+
+- **Staging.** The row closes there, with the production image, owed with D1.
+- **`capa_records`, `complaints`, `mdr_events`, `capa_actions`,
+  `vigilance_events`** carry no `organization_id` and no RLS. Their isolation is
+  service-layer only: every query in `capaMdr.service.ts` joins
+  `regulatory_programs` and filters on organization (all 24 query sites checked
+  on 2026-09-19). That is asserted, and cannot enter this contract without a
+  policy that joins through the parent. The CAPA surface is not in the launch
+  catalog, so it is recorded here rather than worked on.
+- Three other tables named `electronic_signatures` exist in non-public schemas
+  (`cognitive_audit`, `compliance`, `regulatory_harmonization`; read from
+  `pg_tables` on this database). This contract covers
+  `public.electronic_signatures`. That is the table the canonical writer
+  reaches: `server/services/part11/signature-persistence.ts` issues an
+  **unqualified** `INSERT INTO electronic_signatures`, and as `app_service` that
+  name resolves to `public` — `search_path` is `"$user", public`, no role or
+  database setting overrides it, there is no `app_service` schema, and the
+  server sets no `search_path` at runtime (the one mention in `server/` says so).
+  An unqualified name is only as safe as that search path; a schema named
+  `app_service`, or a role-level `search_path` change, would silently point
+  signing at another table.

@@ -48,32 +48,62 @@ const FIXTURE_ORGS = [ORG_A, ORG_B];
  *                    file — the DHF surface's only store
  *   risk_items       public.risk_items           ISO 14971 hazard analysis
  *
- * public.electronic_signatures was the third candidate and is DELIBERATELY NOT
- * here, which is worth writing down because it is the most consequential table
- * in the set. Its Part 11 trigger `esign_block_mutation()` refuses DELETE
- * outright — "rows cannot be deleted. Insert a superseding signature instead."
- * — and unlike audit_logs, whose immutability trigger provides the documented
- * `app.audit_archive_bypass` door this file's own cleanup uses, it provides no
- * door at all. So a fixture signature is permanent: every run would leak a row
- * pair, and `electronic_signatures.signer_id`'s FK to users then makes the
- * users cleanup fail with 23503 and leaks every fixture after it (observed,
- * which is how this was found). Covering it needs a fixture strategy that does
- * not require deletion — a dedicated signer whose rows are expected to
- * accumulate, or a superseding-insert cleanup — not a trigger-disable recipe
- * copied out of a test. Recorded for whoever owns Part 11.
+ * Extended again 2026-09-24 (D3, docs/evidence/D3/2026-09-24-signatures-and-runs/)
+ * with the two launch-catalog stores this file had left out:
  *
- * A table whose primary key is not `id` needs `idColumnFor` below; all six of
- * these key on `id`, so `submission_orchestrator_runs` (run_id) is the next
- * one to add and the reason that map exists.
+ *   signatures        public.electronic_signatures   21 CFR Part 11 §11.50/§11.70
+ *                     — the most consequential table here: a cross-tenant read
+ *                     is another company's signed approvals
+ *   orchestrator_runs public.submission_orchestrator_runs  Submission Center —
+ *                     every sequence build, keyed on run_id (not id), which is
+ *                     why idColumnFor exists
+ *
+ * Signatures were excluded on 2026-09-19 for a reason that still holds and is
+ * now designed around rather than worked around. `esign_block_mutation()`
+ * refuses UPDATE and DELETE outright, with no archive door (unlike audit_logs'
+ * `app.audit_archive_bypass`), so a signature fixture can never be removed, and
+ * it pins its organization and its signer through foreign keys. So:
+ *
+ *   - each fixture org has a PERMANENT signer (fixed email, NULL
+ *     default_organization_id, so the users-by-org delete never reaches it);
+ *   - each org has ONE fixture signature, looked up before it is inserted, so a
+ *     database accumulates two rows in total, not two per run;
+ *   - teardown no longer deletes the two reserved organization rows, which the
+ *     signatures reference. They were already upserted on every run.
+ *
+ * Nothing disables the trigger, and nothing in this file could: §11.70 is
+ * enforced against this probe exactly as it is against the product. A
+ * cross-tenant UPDATE or DELETE still answers 404, and that is itself evidence
+ * about RLS: the trigger is row-level, so it only fires on a row the statement
+ * can see. With the policy hiding B's signature from A, A's DELETE matches zero
+ * rows and never reaches the trigger; with the policy off, it reaches it and
+ * the answer is a 500. The mutation runs filed with this change show both.
  */
-type Domain = 'projects' | 'documents' | 'audit_logs' | 'design_controls' | 'risk_items';
-const domains: Domain[] = ['projects', 'documents', 'audit_logs', 'design_controls', 'risk_items'];
+type Domain =
+  | 'projects'
+  | 'documents'
+  | 'audit_logs'
+  | 'design_controls'
+  | 'risk_items'
+  | 'signatures'
+  | 'orchestrator_runs';
+const domains: Domain[] = [
+  'projects',
+  'documents',
+  'audit_logs',
+  'design_controls',
+  'risk_items',
+  'signatures',
+  'orchestrator_runs',
+];
 const tableFor: Record<Domain, string> = {
   projects: 'public.projects',
   documents: 'public.documents',
   audit_logs: 'public.audit_logs',
   design_controls: 'public.c2c_design_controls',
   risk_items: 'public.risk_items',
+  signatures: 'public.electronic_signatures',
+  orchestrator_runs: 'public.submission_orchestrator_runs',
 };
 /** The column the generic handlers address a row by. */
 const idColumnFor: Record<Domain, string> = {
@@ -82,6 +112,8 @@ const idColumnFor: Record<Domain, string> = {
   audit_logs: 'id',
   design_controls: 'id',
   risk_items: 'id',
+  signatures: 'id',
+  orchestrator_runs: 'run_id',
 };
 /**
  * A non-key column the PATCH probe writes, per domain. Replaces an inline
@@ -94,6 +126,10 @@ const updateColumnFor: Record<Domain, string> = {
   audit_logs: 'action',
   design_controls: 'req',
   risk_items: 'status',
+  // §11.70: the trigger refuses this for any row the statement can see.
+  signatures: 'signature_purpose',
+  // Not `status`: its CHECK would refuse 'TAMPERED' and mask the RLS result.
+  orchestrator_runs: 'application_number',
 };
 let owner: Pool;
 let app: express.Express;
@@ -101,6 +137,9 @@ let tokenA: string;
 let tokenB: string;
 let userA: number;
 let userB: number;
+/** Permanent: a signature can never be deleted, so neither can its signer. */
+let signerA: number;
+let signerB: number;
 let workspaceA: number;
 let workspaceB: number;
 const ids = { A: {} as Record<Domain, string>, B: {} as Record<Domain, string> };
@@ -228,6 +267,23 @@ beforeAll(async () => {
   );
   [savedQueryA, savedQueryB] = savedQueries.rows.map(r => r.id);
 
+  /* Permanent signers — see the header. ON CONFLICT (email) makes this a
+     lookup after the first run on a database; DO UPDATE (not NOTHING) so
+     RETURNING yields the id either way. NULL default_organization_id keeps them
+     out of the teardown's users-by-org delete, which a signature's FK to its
+     signer would otherwise turn into a 23503 that strands every fixture after
+     it (observed on 2026-09-19, which is how signatures came to be excluded). */
+  const signers = await owner.query(
+    `INSERT INTO users (email,name,password_hash)
+     VALUES ('wo03-fixture-signer-a@example.invalid','WO03 signer A','not-a-real-password'),
+            ('wo03-fixture-signer-b@example.invalid','WO03 signer B','not-a-real-password')
+     ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name
+     RETURNING id, email`
+  );
+  const signerByEmail = new Map(signers.rows.map(r => [r.email as string, Number(r.id)]));
+  signerA = signerByEmail.get('wo03-fixture-signer-a@example.invalid')!;
+  signerB = signerByEmail.get('wo03-fixture-signer-b@example.invalid')!;
+
   for (const [side, org, user, workspace] of [
     ['A', ORG_A, userA, workspaceA],
     ['B', ORG_B, userB, workspaceB],
@@ -276,6 +332,45 @@ beforeAll(async () => {
       [org, `${TAG}-hazard-${side}`, `fixture-body-${side}`]
     );
     ids[side].risk_items = String(ri.rows[0].id);
+
+    /* ── The two domains added 2026-09-24 ────────────────────────────────── */
+    // One fixture signature per org, reused for the life of the database:
+    // looked up first, inserted only when absent, never deleted (§11.70).
+    const sigHash = `wo03-fixture-signature-${side}`;
+    const signer = side === 'A' ? signerA : signerB;
+    const found = await owner.query(
+      `SELECT id FROM electronic_signatures
+        WHERE organization_id=$1 AND signature_hash=$2 ORDER BY id LIMIT 1`,
+      [org, sigHash]
+    );
+    const sig =
+      found.rows[0] ??
+      (
+        await owner.query(
+          `INSERT INTO electronic_signatures
+             (organization_id,signature_type,signature_purpose,signer_id,signer_name,signer_email,
+              authentication_method,authentication_timestamp,signature_hash,signed_target)
+           VALUES ($1,'approval',$2,$3,$4,$5,'password',NOW(),$6,$7) RETURNING id`,
+          [
+            org,
+            `fixture-body-${side}`,
+            signer,
+            `WO03 signer ${side}`,
+            `wo03-fixture-signer-${side.toLowerCase()}@example.invalid`,
+            sigHash,
+            `wo03-fixture-target-${side}`,
+          ]
+        )
+      ).rows[0];
+    ids[side].signatures = String(sig.id);
+
+    const run = await owner.query(
+      `INSERT INTO submission_orchestrator_runs
+         (run_id,organization_id,submission_id,application_number,region,submission_type,started_at,status)
+       VALUES (gen_random_uuid(),$1,$2,$3,'US','IND',NOW(),'complete') RETURNING run_id`,
+      [org, `${TAG}-submission-${side}`, `fixture-body-${side}`]
+    );
+    ids[side].orchestrator_runs = String(run.rows[0].run_id);
   }
 
   tokenA = accessToken(userA, ORG_A);
@@ -352,12 +447,42 @@ beforeAll(async () => {
            VALUES ($1,$2,'performance','forged')`,
           [`${TAG}-forged-dc`, foreignOrg]
         );
-      } else {
+      } else if (domain === 'risk_items') {
         await requestPgClient(req).query(
           `INSERT INTO risk_items (organization_id,hazard,harm,severity,probability)
            VALUES ($1,$2,'forged',3,2)`,
           [foreignOrg, `${TAG}-forged-hazard`]
         );
+      } else if (domain === 'signatures') {
+        // Signed by A's PERMANENT signer: if the policy ever lets this through,
+        // the row it plants can never be deleted, and a per-run signer would
+        // then fail the teardown's users delete on the FK.
+        await requestPgClient(req).query(
+          `INSERT INTO electronic_signatures
+             (organization_id,signature_type,signature_purpose,signer_id,signer_name,signer_email,
+              authentication_method,authentication_timestamp,signature_hash,signed_target)
+           VALUES ($1,'approval','forged',$2,'forged',$3,'password',NOW(),$4,$5)`,
+          [
+            foreignOrg,
+            signerA,
+            'wo03-fixture-signer-a@example.invalid',
+            `${TAG}-forged-signature`,
+            `${TAG}-forged-target`,
+          ]
+        );
+      } else if (domain === 'orchestrator_runs') {
+        await requestPgClient(req).query(
+          `INSERT INTO submission_orchestrator_runs
+             (run_id,organization_id,submission_id,application_number,region,submission_type,started_at,status)
+           VALUES (gen_random_uuid(),$1,$2,'forged','US','IND',NOW(),'running')`,
+          [foreignOrg, `${TAG}-forged-submission`]
+        );
+      } else {
+        /* This was a bare `else` that forged a RISK ITEM. A domain added to the
+           list without its own branch would have planted into risk_items, been
+           refused by risk_items' policy, answered 404 — and passed, for the
+           wrong table. An unhandled domain now fails its test. */
+        return res.status(500).json({ error: { code: 'UNHANDLED_DOMAIN' } });
       }
       return res.sendStatus(201);
     } catch (error) {
@@ -465,6 +590,10 @@ afterAll(async () => {
         await cleanup.query('DELETE FROM decision_records WHERE organization_id=ANY($1::int[])', [
           FIXTURE_ORGS,
         ]);
+        await cleanup.query(
+          'DELETE FROM submission_orchestrator_runs WHERE organization_id=ANY($1::int[])',
+          [FIXTURE_ORGS]
+        );
         await cleanup.query('DELETE FROM risk_items WHERE organization_id=ANY($1::int[])', [
           FIXTURE_ORGS,
         ]);
@@ -485,7 +614,11 @@ afterAll(async () => {
         await cleanup.query('DELETE FROM users WHERE default_organization_id=ANY($1::int[])', [
           FIXTURE_ORGS,
         ]);
-        await cleanup.query('DELETE FROM organizations WHERE id=ANY($1::int[])', [FIXTURE_ORGS]);
+        /* The two organization rows are NOT deleted, as of 2026-09-24. Each
+           carries a fixture signature, which §11.70 makes permanent and which
+           references its organization, so this delete could only ever fail with
+           23503. beforeAll upserts both ids on every run, so leaving them costs
+           nothing; every row that hangs off them is removed above. */
       } finally {
         cleanup.release();
       }
@@ -706,7 +839,7 @@ describe('WO-03 governed decisions under RLS (D3, 2026-09-24)', () => {
   /** The recorder is fire-and-forget; give it time before judging a count. */
   const settle = () => new Promise(r => setTimeout(r, 1500));
 
-  it('the recording evaluator persists the caller\'s own decision through the app role', async () => {
+  it("the recording evaluator persists the caller's own decision through the app role", async () => {
     const before = (await fabricRows(ORG_A)).length;
     // Exactly the production call: the synchronous evaluator, whose recording
     // is an un-awaited promise. The tenant scope has to survive that hop.
@@ -715,9 +848,10 @@ describe('WO-03 governed decisions under RLS (D3, 2026-09-24)', () => {
     );
     await settle();
     const after = await fabricRows(ORG_A);
-    expect(after.length, 'a decision recorded for the caller\'s own org must persist under RLS').toBe(
-      before + 1
-    );
+    expect(
+      after.length,
+      "a decision recorded for the caller's own org must persist under RLS"
+    ).toBe(before + 1);
     // One identity: the id the fabric hands back is the row's id.
     expect(after[after.length - 1].id).toBe(after[after.length - 1].governed_id);
   });
@@ -733,7 +867,7 @@ describe('WO-03 governed decisions under RLS (D3, 2026-09-24)', () => {
     await settle();
     expect(
       (await fabricRows(ORG_B)).length,
-      'a decision filed for tenant B from tenant A\'s session must not land'
+      "a decision filed for tenant B from tenant A's session must not land"
     ).toBe(before);
   });
 
@@ -769,9 +903,10 @@ describe('WO-03 governed decisions under RLS (D3, 2026-09-24)', () => {
     const detailA = await request(cp)
       .get(`/api/control-plane/governed/decisions/${listedId}`)
       .set(auth(tokenA));
-    expect(detailA.status, 'tenant A must be able to fetch its own decision by the id it was given').toBe(
-      200
-    );
+    expect(
+      detailA.status,
+      'tenant A must be able to fetch its own decision by the id it was given'
+    ).toBe(200);
 
     const listB = await request(cp)
       .get(`/api/control-plane/governed/decisions?projectId=${GD_PROJECT}`)
