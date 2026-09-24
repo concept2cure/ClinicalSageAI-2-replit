@@ -1,0 +1,152 @@
+name: Provision database (first run)
+
+# The first provision of an EMPTY production database: `npm run db:provision`
+# (install-fresh, then the C2C migration set, then the readiness contract as
+# the app role), run once, from inside the VPC.
+#
+# Why this exists (2026-09-24, launch row D1): deploy-aws.yml's migrate step
+# refuses an empty database (deploy-migrate exits 3), and its old remedy, "run
+# install-fresh from a checkout", could not work: RDS admits only the ECS
+# tasks' security group, and the production image has neither drizzle-kit nor
+# psql, both pruned or never installed. So nothing could turn the database
+# Terraform creates into one the app can serve from, and the first deploy
+# stopped at migrate.
+#
+# This builds Dockerfile.optimized's `provision` target (the builder stage plus
+# psql and the RDS CA), then runs it through scripts/ops/ecs-one-off-task.sh,
+# the same runner the migration uses: a task derived from the API task
+# definition, on the API service's own network, against a deadline, with its log
+# printed and its exit code as this job's. Proven end to end against an
+# RDS-shaped (non-superuser CREATEROLE) owner in
+# docs/evidence/W2/2026-09-23b/rds-shaped-provision-e2e.txt.
+#
+# Safe to re-run: every step of db:provision is idempotent on a provisioned
+# database. It is still a production write, so it needs a typed confirmation
+# and the production environment's approval.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "provision production database" to run'
+        required: true
+        type: string
+
+permissions:
+  id-token: write # OIDC for AWS
+  contents: read
+
+concurrency:
+  # Never two provisions at once, and never cancel one halfway.
+  group: provision-database
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  ECR_API_REPO: c2c-prod-api
+  ECS_CLUSTER: c2c-production
+  ECS_API_SERVICE: c2c-production-api
+  ECS_API_TASK_FAMILY: c2c-production-api
+  ECS_API_CONTAINER_NAME: api
+  ECS_PROVISION_TASK_FAMILY: c2c-production-provision
+
+jobs:
+  provision:
+    name: Provision the database (one-off ECS task)
+    if: ${{ github.event.inputs.confirm == 'provision production database' }}
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64 # v2
+
+      - name: Build and push the provision image (pinned by digest)
+        id: image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        # The repository's tags are IMMUTABLE, so a re-run on the same commit
+        # reuses the digest already pushed instead of failing at push.
+        run: |
+          set -euo pipefail
+          TAG="provision-${GITHUB_SHA::12}"
+          DIGEST=$(aws ecr describe-images --repository-name "$ECR_API_REPO" --image-ids imageTag="$TAG" \
+            --query 'imageDetails[0].imageDigest' --output text 2>/dev/null || true)
+          if [[ "$DIGEST" != sha256:* ]]; then
+            docker build -f Dockerfile.optimized --target provision -t "$ECR_REGISTRY/$ECR_API_REPO:$TAG" .
+            docker push "$ECR_REGISTRY/$ECR_API_REPO:$TAG"
+            DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$ECR_REGISTRY/$ECR_API_REPO:$TAG" | cut -d'@' -f2)
+          else
+            echo "Reusing $TAG, already pushed at $DIGEST"
+          fi
+          if [[ "$DIGEST" != sha256:* ]]; then
+            echo "::error::Could not resolve a sha256 digest for the provision image."
+            exit 1
+          fi
+          echo "image=$ECR_REGISTRY/$ECR_API_REPO@$DIGEST" >> "$GITHUB_OUTPUT"
+
+      - name: The API task definition carries what provisioning reads
+        id: source
+        # Provisioning reads the owner URL, the app URL and the password it
+        # mints app_service with, all from the API definition Terraform renders.
+        # Checked by name before anything runs; the ARN is pinned so the task is
+        # derived from exactly the revision checked.
+        run: |
+          set -euo pipefail
+          aws ecs describe-task-definition --task-definition "$ECS_API_TASK_FAMILY" --no-cli-pager \
+            --query 'taskDefinition' > /tmp/api-td.json
+          ARN=$(jq -r '.taskDefinitionArn' /tmp/api-td.json)
+          SECRETS=$(jq -c --arg c "$ECS_API_CONTAINER_NAME" \
+            '[.containerDefinitions[] | select(.name == $c) | .secrets[]?]' /tmp/api-td.json)
+          MISSING=""
+          for NAME in DATABASE_URL APP_DATABASE_URL APP_SERVICE_DB_PASSWORD; do
+            jq -e --arg n "$NAME" 'any(.[]; .name == $n)' <<<"$SECRETS" >/dev/null || MISSING="$MISSING $NAME"
+          done
+          if [[ -n "$MISSING" ]]; then
+            echo "::error::$ARN lacks secret(s):$MISSING. Apply terraform/environments/production first."
+            exit 1
+          fi
+          # db:provision takes the owner connection as DATABASE_OWNER_URL; it is
+          # the same secret the API reads as DATABASE_URL.
+          OWNER=$(jq -c '[.[] | select(.name == "DATABASE_URL") | {name: "DATABASE_OWNER_URL", valueFrom}]' <<<"$SECRETS")
+          echo "arn=$ARN" >> "$GITHUB_OUTPUT"
+          echo "extra_secrets=$OWNER" >> "$GITHUB_OUTPUT"
+          echo "Provisioning derives from $ARN"
+
+      - name: Provision — one-off task in the VPC
+        env:
+          SOURCE_TD_ARN: ${{ steps.source.outputs.arn }}
+          EXTRA_SECRETS_JSON: ${{ steps.source.outputs.extra_secrets }}
+          IMAGE: ${{ steps.image.outputs.image }}
+        run: |
+          set -uo pipefail
+          CONTAINER_NAME="$ECS_API_CONTAINER_NAME" \
+          FAMILY="$ECS_PROVISION_TASK_FAMILY" \
+          COMMAND_JSON='["npm", "run", "db:provision"]' \
+          LABEL=provision \
+          STARTED_BY="provision-${GITHUB_RUN_ID}" \
+          DEADLINE_SECONDS=3600 \
+            bash scripts/ops/ecs-one-off-task.sh
+          EXIT_CODE=$?
+          # scripts/db/provision.mjs exit codes, named so the job says which.
+          case "$EXIT_CODE" in
+            0) echo "Database provisioned; the /readyz schema contract holds as the app role. Deploy with deploy-aws.yml." ;;
+            2) echo "::error::Configuration refused (URLs missing or mismatched, or psql absent). Nothing was written." ;;
+            4) echo "::error::pgvector is not available on the server. Nothing was written." ;;
+            5) echo "::error::The owner cannot provision (no CREATEROLE, or cannot create vector). Nothing was written." ;;
+            6) echo "::error::install-fresh did not complete. An incomplete install is repaired only on an EMPTY database; read its log above before re-running." ;;
+            7) echo "::error::The C2C migration set failed after install-fresh completed." ;;
+            8) echo "::error::Provisioned, but the readiness contract failed as the app role." ;;
+            124) echo "::error::Provisioning outlived its 60-minute deadline and was stopped." ;;
+            *) echo "::error::Provisioning failed (exit $EXIT_CODE). Its log is above; scripts/db/provision.mjs names each exit code." ;;
+          esac
+          exit "$EXIT_CODE"

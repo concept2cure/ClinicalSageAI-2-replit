@@ -15,7 +15,6 @@ import { activeJwtSecret } from '../../server/utils/jwtVerify';
 import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
 import { authenticateToken } from '../../server/middleware/auth';
-import { requestPgClient } from '../../server/db/requestDb';
 import { getPool } from '../../server/db/runtime';
 import { invalidateOrgMembershipCache } from '../../server/middleware/orgMembership';
 import { runWithTenantScope } from '../../server/db/tenantStore';
@@ -24,6 +23,7 @@ import savedPrecedentQueriesRouter from '../../server/routes/saved-precedent-que
 import controlPlaneRouter from '../../server/src/routes/control-plane.router';
 import { evaluateGovernedDocument } from '../../server/src/control-plane/governed-document-evaluator';
 import { GOVERNED_FABRIC_KIND } from '../../server/services/governed-decision-repository';
+import { domains, tableFor, mountTenantProofRoutes, type Domain } from './tenant-proof-routes';
 import reportOsRouter from '../../server/routes/report-os';
 
 const TAG = `wo03_${process.pid}_${Date.now().toString(36)}`;
@@ -34,67 +34,9 @@ const ORG_B = 90302;
    that borrowed them would be deleted with the fixtures. */
 const FIXTURE_ORGS = [ORG_A, ORG_B];
 
-/**
- * The domains this probe proves isolation FOR. Everything outside this list is
- * asserted, not proven — that distinction is the whole status of WO-3, so the
- * list is the coverage number and adding to it is the work.
- *
- * Extended 2026-09-19 from three tables to six. The three added are regulated
- * stores, chosen because each carries the canonical `tenant_isolation_policy`
- * keyed on an integer `organization_id` (verified on the provisioned database,
- * not assumed) and each is read by a shipping surface:
- *
- *   design_controls  public.c2c_design_controls  21 CFR 820.30 design history
- *                    file — the DHF surface's only store
- *   risk_items       public.risk_items           ISO 14971 hazard analysis
- *
- * public.electronic_signatures was the third candidate and is DELIBERATELY NOT
- * here, which is worth writing down because it is the most consequential table
- * in the set. Its Part 11 trigger `esign_block_mutation()` refuses DELETE
- * outright — "rows cannot be deleted. Insert a superseding signature instead."
- * — and unlike audit_logs, whose immutability trigger provides the documented
- * `app.audit_archive_bypass` door this file's own cleanup uses, it provides no
- * door at all. So a fixture signature is permanent: every run would leak a row
- * pair, and `electronic_signatures.signer_id`'s FK to users then makes the
- * users cleanup fail with 23503 and leaks every fixture after it (observed,
- * which is how this was found). Covering it needs a fixture strategy that does
- * not require deletion — a dedicated signer whose rows are expected to
- * accumulate, or a superseding-insert cleanup — not a trigger-disable recipe
- * copied out of a test. Recorded for whoever owns Part 11.
- *
- * A table whose primary key is not `id` needs `idColumnFor` below; all six of
- * these key on `id`, so `submission_orchestrator_runs` (run_id) is the next
- * one to add and the reason that map exists.
- */
-type Domain = 'projects' | 'documents' | 'audit_logs' | 'design_controls' | 'risk_items';
-const domains: Domain[] = ['projects', 'documents', 'audit_logs', 'design_controls', 'risk_items'];
-const tableFor: Record<Domain, string> = {
-  projects: 'public.projects',
-  documents: 'public.documents',
-  audit_logs: 'public.audit_logs',
-  design_controls: 'public.c2c_design_controls',
-  risk_items: 'public.risk_items',
-};
-/** The column the generic handlers address a row by. */
-const idColumnFor: Record<Domain, string> = {
-  projects: 'id',
-  documents: 'id',
-  audit_logs: 'id',
-  design_controls: 'id',
-  risk_items: 'id',
-};
-/**
- * A non-key column the PATCH probe writes, per domain. Replaces an inline
- * ternary whose two `status` branches were identical, which made it read as a
- * per-domain decision when it was not.
- */
-const updateColumnFor: Record<Domain, string> = {
-  projects: 'status',
-  documents: 'status',
-  audit_logs: 'action',
-  design_controls: 'req',
-  risk_items: 'status',
-};
+/* The domains this probe proves isolation FOR, and why each is on the list (and
+   why electronic_signatures is not), are in ./tenant-proof-routes.ts with the
+   /proof surface that addresses them. */
 let owner: Pool;
 let app: express.Express;
 let tokenA: string;
@@ -138,10 +80,6 @@ function accessToken(userId: number, organizationId: number): string {
 
 function auth(token: string) {
   return { Authorization: `Bearer ${token}` };
-}
-
-function safeDomain(value: string): Domain | null {
-  return domains.includes(value as Domain) ? (value as Domain) : null;
 }
 
 // The setup intentionally keeps provisioning and the representative request
@@ -288,107 +226,7 @@ beforeAll(async () => {
   // regulatory-query service entry points, not test-owned replicas.
   app.use('/actual/mdx', authenticateToken, industryContextRouter);
   app.use('/actual/saved-precedent-queries', authenticateToken, savedPrecedentQueriesRouter);
-  app.use('/proof', authenticateToken);
-  app.get('/proof/:domain', async (req, res) => {
-    const domain = safeDomain(req.params.domain);
-    if (!domain) return res.status(404).json({ error: { code: 'NOT_FOUND' } });
-    const q = String(req.query.q || '');
-    const result = await requestPgClient(req).query(
-      `SELECT ${idColumnFor[domain]}::text AS id FROM ${tableFor[domain]}
-        WHERE ($1 = '' OR ${idColumnFor[domain]}::text = $1) ORDER BY 1`,
-      [q]
-    );
-    return res.json({ ids: result.rows.map(r => r.id) });
-  });
-  // Register HEAD before GET. Express otherwise derives HEAD from GET and the
-  // explicit existence-probe implementation would never execute.
-  app.head('/proof/:domain/:id', async (req, res) => {
-    const domain = safeDomain(req.params.domain);
-    if (!domain) return res.sendStatus(404);
-    const result = await requestPgClient(req).query(
-      `SELECT 1 FROM ${tableFor[domain]} WHERE ${idColumnFor[domain]}::text=$1`,
-      [req.params.id]
-    );
-    return res.sendStatus(result.rows.length ? 204 : 404);
-  });
-  app.get('/proof/:domain/:id', async (req, res) => {
-    const domain = safeDomain(req.params.domain);
-    if (!domain) return res.status(404).json({ error: { code: 'NOT_FOUND' } });
-    const result = await requestPgClient(req).query(
-      `SELECT ${idColumnFor[domain]}::text AS id FROM ${tableFor[domain]} WHERE ${idColumnFor[domain]}::text=$1`,
-      [req.params.id]
-    );
-    return result.rows.length
-      ? res.json({ id: result.rows[0].id })
-      : res.status(404).json({ error: { code: 'NOT_FOUND' } });
-  });
-  app.post('/proof/:domain', async (req, res) => {
-    const domain = safeDomain(req.params.domain);
-    if (!domain) return res.status(404).json({ error: { code: 'NOT_FOUND' } });
-    const foreignOrg = Number(req.body?.organizationId);
-    try {
-      if (domain === 'projects') {
-        await requestPgClient(req).query(
-          `INSERT INTO projects (organization_id,client_workspace_id,name,type,created_by_id)
-           VALUES ($1,$2,$3,'regulatory',$4)`,
-          [foreignOrg, workspaceB, `${TAG}-forged-project`, userA]
-        );
-      } else if (domain === 'documents') {
-        await requestPgClient(req).query(
-          `INSERT INTO documents
-           (organization_id,client_workspace_id,document_code,title,document_type,owner_id,created_by_id)
-           VALUES ($1,$2,$3,$4,'REGULATORY',$5,$5)`,
-          [foreignOrg, workspaceB, `${TAG}-FORGED`, `${TAG}-forged-document`, userA]
-        );
-      } else if (domain === 'audit_logs') {
-        await requestPgClient(req).query(
-          `INSERT INTO audit_logs (tenant_id,user_id,action,table_name,record_id)
-           VALUES ($1,$2,'FORGED','wo03',$3)`,
-          [foreignOrg, userA, `${TAG}-forged-audit`]
-        );
-      } else if (domain === 'design_controls') {
-        await requestPgClient(req).query(
-          `INSERT INTO c2c_design_controls (id,organization_id,cat,req)
-           VALUES ($1,$2,'performance','forged')`,
-          [`${TAG}-forged-dc`, foreignOrg]
-        );
-      } else {
-        await requestPgClient(req).query(
-          `INSERT INTO risk_items (organization_id,hazard,harm,severity,probability)
-           VALUES ($1,$2,'forged',3,2)`,
-          [foreignOrg, `${TAG}-forged-hazard`]
-        );
-      }
-      return res.sendStatus(201);
-    } catch (error) {
-      // Do not serialize the PostgreSQL error: it may contain schema or row
-      // details. RLS WITH CHECK denial follows the same opaque contract as a
-      // cross-tenant id probe.
-      if ((error as { code?: string }).code === '42501') {
-        return res.status(404).json({ error: { code: 'NOT_FOUND' } });
-      }
-      return res.status(500).json({ error: { code: 'INTERNAL_ERROR' } });
-    }
-  });
-  app.patch('/proof/:domain/:id', async (req, res) => {
-    const domain = safeDomain(req.params.domain);
-    if (!domain) return res.sendStatus(404);
-    const result = await requestPgClient(req).query(
-      `UPDATE ${tableFor[domain]} SET ${updateColumnFor[domain]}=$1
-         WHERE ${idColumnFor[domain]}::text=$2 RETURNING ${idColumnFor[domain]}`,
-      ['TAMPERED', req.params.id]
-    );
-    return result.rows.length ? res.sendStatus(204) : res.sendStatus(404);
-  });
-  app.delete('/proof/:domain/:id', async (req, res) => {
-    const domain = safeDomain(req.params.domain);
-    if (!domain) return res.sendStatus(404);
-    const result = await requestPgClient(req).query(
-      `DELETE FROM ${tableFor[domain]} WHERE ${idColumnFor[domain]}::text=$1 RETURNING ${idColumnFor[domain]}`,
-      [req.params.id]
-    );
-    return result.rows.length ? res.sendStatus(204) : res.sendStatus(404);
-  });
+  mountTenantProofRoutes(app, { tag: TAG, foreignWorkspace: workspaceB, actingUser: userA });
 }, 60_000);
 
 afterAll(async () => {
@@ -634,6 +472,53 @@ describe('WO-03 two-tenant application isolation', () => {
   });
 });
 
+// ── Governed decisions: the fixtures the cases below share ─────────────────
+
+const GD_PROJECT = 903010;
+
+const scope = (org: number, caller: string) => ({
+  tenantId: String(org),
+  role: 'member',
+  source: 'test' as const,
+  caller,
+});
+
+const evaluation = (org: number, artifactId: string) => ({
+  context: {
+    organizationId: String(org),
+    projectId: String(GD_PROJECT),
+    actorId: `${TAG}-actor`,
+    intendedAction: 'promote' as const,
+    artifactId,
+  },
+  documentState: {
+    hasContent: true,
+    hasEvidence: false,
+    hasBeenReviewed: false,
+    hasApproval: false,
+    hasPlacement: false,
+    placementValid: false,
+    hasProvenance: false,
+    unresolvedContradictionCount: 0,
+    criticalContradictionCount: 0,
+  },
+});
+
+const fabricRows = async (org: number) =>
+  (
+    await owner.query(
+      `SELECT id::text AS id, decision_context->>'governedDecisionId' AS governed_id,
+              notes::jsonb->>'artifactId' AS artifact
+         FROM decision_records
+        WHERE organization_id = $1 AND project_id = $2 AND decision_context->>'kind' = $3
+        ORDER BY created_at`,
+      [org, GD_PROJECT, GOVERNED_FABRIC_KIND]
+    )
+  ).rows as Array<{ id: string; governed_id: string; artifact: string }>;
+
+/** The recorder is fire-and-forget; give it time before judging a count. */
+const settle = () => new Promise(r => setTimeout(r, 1500));
+
 /**
  * Governed decisions — added 2026-09-24 (launch row D3).
  *
@@ -653,7 +538,6 @@ describe('WO-03 two-tenant application isolation', () => {
  * app would look exactly like a row that was never written.
  */
 describe('WO-03 governed decisions under RLS (D3, 2026-09-24)', () => {
-  const GD_PROJECT = 903010;
   let cp: express.Express;
 
   beforeAll(() => {
@@ -662,49 +546,6 @@ describe('WO-03 governed decisions under RLS (D3, 2026-09-24)', () => {
     cp.use(express.json());
     cp.use('/api/control-plane', authenticateToken, controlPlaneRouter);
   });
-
-  const scope = (org: number, caller: string) => ({
-    tenantId: String(org),
-    role: 'member',
-    source: 'test' as const,
-    caller,
-  });
-
-  const evaluation = (org: number, artifactId: string) => ({
-    context: {
-      organizationId: String(org),
-      projectId: String(GD_PROJECT),
-      actorId: `${TAG}-actor`,
-      intendedAction: 'promote' as const,
-      artifactId,
-    },
-    documentState: {
-      hasContent: true,
-      hasEvidence: false,
-      hasBeenReviewed: false,
-      hasApproval: false,
-      hasPlacement: false,
-      placementValid: false,
-      hasProvenance: false,
-      unresolvedContradictionCount: 0,
-      criticalContradictionCount: 0,
-    },
-  });
-
-  const fabricRows = async (org: number) =>
-    (
-      await owner.query(
-        `SELECT id::text AS id, decision_context->>'governedDecisionId' AS governed_id,
-                notes::jsonb->>'artifactId' AS artifact
-           FROM decision_records
-          WHERE organization_id = $1 AND project_id = $2 AND decision_context->>'kind' = $3
-          ORDER BY created_at`,
-        [org, GD_PROJECT, GOVERNED_FABRIC_KIND]
-      )
-    ).rows as Array<{ id: string; governed_id: string; artifact: string }>;
-
-  /** The recorder is fire-and-forget; give it time before judging a count. */
-  const settle = () => new Promise(r => setTimeout(r, 1500));
 
   it('the recording evaluator persists the caller\'s own decision through the app role', async () => {
     const before = (await fabricRows(ORG_A)).length;
