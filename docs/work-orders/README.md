@@ -41,6 +41,7 @@ to one line; edit only your own row to limit merge conflicts.
 | **D6 — tenant offboarding: the purge.** The "→ tenant offboarding, unclaimed (D6)" findings in `server/services/tenant/tenant-offboarding.ts` and the receipt write in `tenant-full-export.service.ts` / `routes/tenant-export.ts`: the purge's transaction on a Pool; a truncated export authorizing a full purge; no legal hold consulted; stored object bytes left behind. Proof on a deploy-shaped PostgreSQL 16. Not the data return's missing bytes (a design question, reported). Evidence `docs/evidence/D6/2026-09-24-purge/` | `…session_01AiwZKGaEFjD9AfVvkYExci` | **released** 2026-09-24 — done, each shown failing first (3/11 → 11/11): one transaction on one client (a part-way failure had already destroyed the vault records), legal holds refuse, only a complete export authorizes, the bytes are erased after commit. Open: the data return's bytes (founder), legacy-path and rendered-leaf bytes |
 | **D4 / D2 — retrieval returns rows.** The "→ Retrieval, unclaimed" findings: `search_atoms_hybrid` fails on every from-blank install (json vs jsonb), so every Authoring AI draft is ungrounded; `enhancedEmbeddingService.searchHybrid`'s argument order. The creating migrations are amended in place (Rule 1); the callers are read, not rewritten. Proof on a deploy-shaped PostgreSQL 16 + pgvector. Evidence `docs/evidence/D4/2026-09-24-atom-search/` | `…session_01AiwZKGaEFjD9AfVvkYExci` | **released** 2026-09-24 — done: both findings, plus a third found behind them (project crowd-out), each shown failing first |
 | **W2 / D1 — vault bytes outlive a task.** The "→ W2 (D1)" findings below: the storage provider (`S3StorageProvider.get` past 1000 keys; an unrecognised `STORAGE_PROVIDER` falling back to local), the byte reader's recorded-provider handling, the preflight requiring durable storage, and the vault bucket + task env in `terraform/stack` (new `vault_storage.tf`; the `ecs` env block only). Not the OIDC role or pipeline outputs (`…013CtPf8`). Earlier today, unclaimed and now recorded here: B8 staging stack, RDS CA bundle, document-fidelity F-34..F-40 | `…session_01AiwZKGaEFjD9AfVvkYExci` | **released** 2026-09-24 — row **D1**. Done, each shown failing first (`docs/evidence/W2/2026-09-24-vault-storage/`): S3 could not load in the ESM bundle; lookup stopped at 1000 keys and read errors as missing; an unknown provider fell back to local; production booted with no durable store; the stack had no bucket and the preflight required none. `/readyz` reports the store; readers open the store each row recorded (`getStorageProviderFor`), to …01KnUGoX's spec. Open, not done: the backfill script in the image |
+| **W2 / D1 — a blank database installs again.** `scripts/db/install-fresh.mjs`, and `019_gcc_idempotency_ratelimit.sql` (amended in place): the installer's closing coverage gate flagged the child tables that `20260813_child_table_parent_scoped_rls.sql` scopes, and only `deploy-migrate` applied that file. Every install from blank has exited 1 since `2ddbfb6a6`: 80 tables, and 83 after `d46d52515`. CI Blank DB, Integration Tests and Boot Smoke provision that way | `…session_01AiwZKGaEFjD9AfVvkYExci` | **released** 2026-09-24 — row **D1**. Done: the installer applies the uuid half of the final sweep pair, then the child scope, each from its own file. The dead `audit.request_correlations` is no longer created. Red exit 1 at both trunk heads, green exit 0, and the final policies in every schema are identical to trunk's path (`docs/evidence/W2/2026-09-24-install-child-scope/`). Four findings handed on below |
 | **W1 / D2 — AnA's progress and output record, one in every host.** `client/src/concept2cure/v2/{AnaWorkPanel,AnaWorkSections,anaWorkModel,AnaActivity,AnaOutputs,workDock}.tsx?`, `components/ana/{anaProgress,useAnaChat*}`, `server/services/ana/{turn-plan,turn-context-used}.ts`; also `hooks/useChatUpload.ts` (`composeTurn`), `server/services/ana/tool-trace.ts` (`refusalOf`). Evidence: `docs/evidence/W1/2026-09-24-ana-progress/` (live run in `live/`) | `…session_01T2wooCZu46W7msw4TJuuzr` | **claimed** 2026-09-24 — pushed: the record in all five hosts, the plan persisted with the turn, five in-catalog AI waits; third pass: uploads by id from every composer, auditor fixes, a refused tool no longer reported as success, all verified on the running app. PDF bytes still gated by `ANA_ENABLE_PDF_INTAKE` (founder's call) |
 
 If you are one of the sessions above, correct your own row. If a lane you want
@@ -164,6 +165,47 @@ with a self-test). What those three guards still accept as created is the 14
 baselined files in `scripts/ci/runtime-ddl-baseline.json`. Whether to stop
 counting them is your call: doing so surfaces the latent EULA and `ai_feedback`
 tables as unbacked. Evidence: `docs/evidence/W1/2026-09-24-launch-reach/`.
+
+### Handed on by the install child-scope change (`…01AiwZKG`), not edited
+
+1. **To the D3 lane: a blank database's first deploy leaves
+   `regulatory_harmonization.export_job_audit_log` unscoped (L203's table).** The
+   set creates its parent `export_jobs`, and the uuid half of the final sweep
+   pair policies it. The child scope runs before that pair, logs "the parent is
+   not scoped … skipping", and so the child is scoped only on the second deploy.
+   The installer cannot close this, because the table does not exist at install
+   time. CI cannot see it: its coverage step runs after the idempotency re-run.
+   A coverage check between CI's first and second `deploy-migrate` would catch
+   this case and the whole class. Measured: after install, 0 rows; after one
+   deploy, this 1; after two, 0.
+2. **To the W2 schema-guards lane: the same shape in
+   `20260828_drop_orphaned_org_guc_policies.sql`.** It drops an orphaned
+   `*_org_policy` only where `tenant_isolation_policy` already exists, and on
+   four of its five tables the final sweep adds that policy later in the same
+   set. The first deploy logs "keeping … canonical tenant_isolation_policy is
+   absent" four times, and the second drops all five. The policies are inert,
+   so this widens nothing, but the empty-string cast the file exists to defuse
+   stays armed until the second deploy.
+3. **To the audit-trail lane (unclaimed): the system audit chain forked once in
+   four full real-database runs.** Tenant 0's `audit_logs` rows `chain_seq` 44
+   (`user_password_reset_failed`, 20:43:00) and 45 (`module_packaging`, 20:43:11,
+   the first `licensing-history` write) both commit to 43, so
+   `verifyAuditChain({tenantId: 0})` reports broken and
+   `tests/db/licensing-history.dbtest.ts` fails its three integrity cases.
+   `chain_seq` is a global sequence, so 44 was inserted first. Both writers use
+   `auditService.logAction` (`BEGIN`, per-tenant advisory lock, head read,
+   insert, `COMMIT`), and the policy is all-or-nothing per tenant. So either
+   the writers did not take the same lock, or row 44's transaction stayed open
+   past row 45's head read. The run shared the CPU with a second database
+   install. The schemas were identical to the passing runs (`pg_dump -s`). A
+   forked chain is a Part 11 §11.10(e) finding, not a flake. Evidence:
+   `docs/evidence/W2/2026-09-24-install-child-scope/README.md`.
+4. **To the D3 lane: `atom-search` is green.** L201 and L202 report 53/54 and
+   656/661, with `tests/db/atom-search.dbtest.ts` failing on "the pre-existing
+   `search_atoms_hybrid` defect". That was fixed in `881680d73`, an ancestor of
+   both commits. On a database built from blank at trunk it passes 5/5. The
+   database behind those numbers predates the fix. A from-blank rebuild would
+   also have shown the installer failure above.
 
 ### Handed to the AnA / council lane (`…01DiJJAk`) — found, not fixed, by the schema-authority lane
 

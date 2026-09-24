@@ -9,6 +9,18 @@
 --   3. Automatic cleanup of expired keys
 --
 -- Enterprise pattern: Prevents duplicate operations from retries
+--
+-- AMENDED 2026-09-24 (install child-scope change, W2/D1): section C, which
+-- created audit.request_correlations and its four indexes, is removed.
+-- Nothing reads or writes that table; 20260901_drop_dead_audit_tables.sql
+-- drops it on every deploy (ledger L13, ci:dead-audit-tables). Created here
+-- and dropped there, it existed only between install-fresh and deploy-migrate:
+-- a child of core.programs with row security off. That window is where
+-- install-fresh's own tenant-coverage gate looks, so it failed every install
+-- from blank once the gate learned to flag children (L201). Removed at the
+-- creator, per CLAUDE.md Rule 1, rather than scoped or carved out: a dead
+-- table needs no policy. The drop stays as it is, for databases installed
+-- before this change.
 -- =============================================================================
 
 BEGIN;
@@ -148,54 +160,6 @@ BEGIN
   RETURN deleted_count;
 END;
 $$;
-
--- =============================================================================
--- C) Request Correlation Table (for distributed tracing)
--- =============================================================================
-
-CREATE TABLE IF NOT EXISTS audit.request_correlations (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  
-  -- Correlation chain
-  request_id TEXT NOT NULL UNIQUE,            -- X-Request-ID header
-  parent_request_id TEXT,                     -- Parent request (for nested calls)
-  trace_id TEXT,                              -- Distributed trace ID (OpenTelemetry)
-  span_id TEXT,                               -- Span ID
-  
-  -- Request metadata
-  actor TEXT NOT NULL,
-  program_id UUID REFERENCES core.programs(id),
-  route TEXT NOT NULL,
-  method TEXT NOT NULL,
-  
-  -- Timing
-  started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  completed_at TIMESTAMPTZ,
-  duration_ms INT,
-  
-  -- Result
-  status_code INT,
-  error_type TEXT,
-  error_message TEXT,
-  
-  -- Context (for debugging)
-  context JSONB NOT NULL DEFAULT '{}'::jsonb
-);
-
-COMMENT ON TABLE audit.request_correlations IS 
-  'Request correlation for distributed tracing and debugging';
-
-CREATE INDEX IF NOT EXISTS request_correlations_request_id_idx 
-  ON audit.request_correlations (request_id);
-
-CREATE INDEX IF NOT EXISTS request_correlations_trace_idx 
-  ON audit.request_correlations (trace_id);
-
-CREATE INDEX IF NOT EXISTS request_correlations_actor_idx 
-  ON audit.request_correlations (actor, started_at DESC);
-
-CREATE INDEX IF NOT EXISTS request_correlations_started_idx 
-  ON audit.request_correlations (started_at DESC);
 
 -- =============================================================================
 -- D) Rate Limiting Table (token bucket)
