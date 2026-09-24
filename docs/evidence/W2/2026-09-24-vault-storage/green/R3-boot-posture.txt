@@ -1,0 +1,8 @@
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > assertDurableStorageForProduction > refuses production with no STORAGE_PROVIDER 2ms
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > assertDurableStorageForProduction > refuses a provider it does not implement 0ms
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > assertDurableStorageForProduction > refuses S3 without a bucket, and accepts it with one 1ms
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > assertDurableStorageForProduction > refuses local disk unless the operator states it is durable 0ms
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > assertDurableStorageForProduction > is a no-op outside production 0ms
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > the server configuration fires it on import > refuses to load production configuration that names no vault store 200ms
+ ✓ server/services/storage/__tests__/storage-posture.test.ts > the server configuration fires it on import > loads it once the store is named 207ms
+      Tests  7 passed (7)
