@@ -322,6 +322,13 @@ router.get('/by-run/:runId/signed', async (req: Request, res: Response) => {
       payloadDigest: d.payloadDigest,
       signatureId: d.signatureId,
       sealVerdict: d.sealVerdict,
+      // §11.50 manifestation. Null means the signature row does not hold it;
+      // the client says so rather than filling it in.
+      signerId: d.signerId,
+      signerName: d.signerName,
+      signerTitle: d.signerTitle,
+      signatureMeaning: d.signatureMeaning,
+      signedAt: d.signedAt,
     },
     // The signed manifest. Checksums are the content fingerprint a transmit
     // hop must re-verify rendered bytes against.

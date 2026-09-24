@@ -1,0 +1,14 @@
+F-36 — GREEN: the same tests against 893a4750f as committed
+The plain-text fallback PDF carried nothing saying it was not the formatted document
+
+vitest exit code: 0
+
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > keeps table cells, list numbering, figures and entities readable 173ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > renders a placeholder rather than an empty page for empty input 12ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > is deterministic for identical input 15ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > says on the page that it is a plain-text rendering 8ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > puts the notice before the content, not after it 8ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > does not alter the content it is warning about 7ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > is the renderer actually in use unless a Puppeteer driver is installed 13ms
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
