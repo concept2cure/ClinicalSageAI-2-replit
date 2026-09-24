@@ -25,8 +25,9 @@ import type { Request } from 'express';
 type RequestWithAuthContext = Request & {
   organizationId?: number | string;
   tenantId?: number | string;
-  tenantContext?: { organizationId?: number | string | null };
-  user?: { id?: number | string; organizationId?: number | string };
+  userRole?: string;
+  tenantContext?: { organizationId?: number | string | null; role?: string };
+  user?: { id?: number | string; organizationId?: number | string; role?: string };
 };
 
 /**
@@ -57,4 +58,19 @@ export function resolveUserId(req: Request): number | null {
   if (raw === undefined || raw === null) return null;
   const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
   return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Resolve the caller's organization role, lowercased, or '' when none is
+ * attached. Server-derived from the authenticated request — a signing route
+ * must never take the signer's role from the request body.
+ *
+ * Moved here from server/routes/esignature.ts, where it was private, so the
+ * document-lifecycle signing path decides signing authority from the same
+ * reading rather than a copy.
+ */
+export function resolveUserRole(req: Request): string {
+  const authReq = req as RequestWithAuthContext;
+  const raw = authReq.userRole ?? authReq.user?.role ?? authReq.tenantContext?.role ?? '';
+  return String(raw).trim().toLowerCase();
 }

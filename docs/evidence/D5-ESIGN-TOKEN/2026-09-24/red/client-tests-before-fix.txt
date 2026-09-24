@@ -1,0 +1,16 @@
+# RED — tests run with these files as at HEAD e0e42ec4 (before the fix), fixed copies restored afterwards:
+#   client/src/concept2cure/hooks/useEsignature.ts
+#   client/src/concept2cure/pdev/hooks/usePdevData.ts
+#   client/src/concept2cure/pdev/surfaces/EvidencePicker.tsx
+
+ × client/src/concept2cure/pdev/__tests__/pdevSendsAuth.test.tsx > PDEV writes send the bearer token /api/pdev requires > evidence attach (one of the nine mutations sharing postJson) authenticates 49ms
+   → expected undefined to be 'Bearer test-token' // Object.is equality
+ × client/src/concept2cure/hooks/__tests__/useEsignature.sendsAuth.test.tsx > useEsignature authenticates every call it makes > verifyPassword sends the bearer token 36ms
+   → expected undefined to be 'Bearer test-token' // Object.is equality
+ × client/src/concept2cure/hooks/__tests__/useEsignature.sendsAuth.test.tsx > useEsignature authenticates every call it makes > verifyMfa sends the bearer token 8ms
+   → expected undefined to be 'Bearer test-token' // Object.is equality
+ × client/src/concept2cure/hooks/__tests__/useEsignature.sendsAuth.test.tsx > useEsignature authenticates every call it makes > keeps the JSON content type and the org header 6ms
+   → expected undefined to be '7' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  4 failed (4)
