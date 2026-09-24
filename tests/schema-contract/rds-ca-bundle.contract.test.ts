@@ -57,6 +57,25 @@ describe('the image trusts the RDS certificate authority', () => {
     expect(reaching, `.dockerignore rules that could drop the bundle: ${reaching.join(', ')}`).toEqual([]);
   });
 
+  // existsSync above passes on a working tree that holds an UNTRACKED file. That
+  // is how 63fbf452f shipped: .gitignore's `*.pem` silently dropped the bundle,
+  // the test passed where the file had been fetched, and trunk named a file
+  // that no checkout contains. Ask git, which is what the image build copies.
+  it('is tracked by git, not merely present in this working tree', () => {
+    const rel = path.relative(REPO_ROOT, imagePathToRepoPath(envMatch![1]));
+    expect(() =>
+      execFileSync('git', ['ls-files', '--error-unmatch', rel], { cwd: REPO_ROOT, stdio: 'pipe' }),
+    ).not.toThrow();
+  });
+
+  // libpq (psql, pg_dump in the image) does not read NODE_EXTRA_CA_CERTS; with
+  // sslmode=verify-full it needs a root file of its own.
+  it('points PGSSLROOTCERT at the same bundle, for libpq', () => {
+    const pg = /^ENV\s+PGSSLROOTCERT=(\S+)\s*$/m.exec(DOCKERFILE);
+    expect(pg, 'Dockerfile.optimized must set ENV PGSSLROOTCERT').not.toBeNull();
+    expect(pg![1]).toBe(envMatch![1]);
+  });
+
   it('matches the SHA-256 recorded in checksums.txt', () => {
     const repoPath = imagePathToRepoPath(envMatch![1]);
     const manifest = fs.readFileSync(path.join(path.dirname(repoPath), 'checksums.txt'), 'utf8');

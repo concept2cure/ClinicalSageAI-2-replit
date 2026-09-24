@@ -1,0 +1,13 @@
+# Does the Terraform validation of ai_provider_placement_approvals agree with the app?
+# Oracle: the app's own assertSensitivePlacementConfiguration (server/services/ai-gateway/
+# sensitive-placement-policy.ts), run on every value tests/boot_contract.tftest.hcl uses.
+# Each 'terraform: refuse' must be REFUSES here, and each 'terraform: accept' must be BOOTS.
+$ npx tsx approvals-oracle.ts
+(file-level variables) (terraform: accept)                                       BOOTS
+refuses_placement_approvals_that_are_not_a_json_object (terraform: refuse)       REFUSES: AI_PROVIDER_PLACEMENT_APPROVALS must be a JSON object
+refuses_phi_approval_without_zero_retention (terraform: refuse)                  REFUSES: [ai-sensitive-placement] contradictory sensitive-data approval for anthropic: zero retenti
+refuses_an_unknown_data_class (terraform: refuse)                                REFUSES: AI_PROVIDER_PLACEMENT_APPROVALS has an invalid approval for anthropic
+refuses_a_non_boolean_zero_retention_flag (terraform: refuse)                    REFUSES: AI_PROVIDER_PLACEMENT_APPROVALS has an invalid approval for anthropic
+refuses_a_non_string_intended_use (terraform: refuse)                            REFUSES: AI_PROVIDER_PLACEMENT_APPROVALS has an invalid approval for anthropic
+refuses_a_missing_region (terraform: refuse)                                     REFUSES: AI_PROVIDER_PLACEMENT_APPROVALS has an invalid approval for anthropic
+accepts_the_fail_closed_interim_approvals (terraform: accept)                    BOOTS

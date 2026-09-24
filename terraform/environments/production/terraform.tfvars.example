@@ -38,4 +38,5 @@ acm_certificate_arn       = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/REPLAC
 cloudfront_certificate_arn = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/REPLACE_ME"
 # Required: the API is reachable through CloudFront alone, and CloudFront checks
 # the ALB's certificate against these names, so acm_certificate_arn must cover them too.
+# The first alias is also APP_URL and ALLOWED_ORIGINS (the origin sign-in is accepted from).
 domain_aliases             = ["app.example.com"] # REPLACE_ME

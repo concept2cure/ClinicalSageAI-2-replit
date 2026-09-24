@@ -1,0 +1,10 @@
+# provision-database.yml's source step, run verbatim against the rendered task definition
+## As written
+[terraform-preflight-proof] ok — terraform test: 17 passed, 0 failed, 0 errored
+[terraform-preflight-proof] ok — provision-database.yml accepts the rendered task definition and passes the owner URL from the same secret
+[terraform-preflight-proof] every check holds.
+
+## Mutation: the owner URL handed over under the wrong name (DATABASE_URL instead of DATABASE_OWNER_URL)
+[terraform-preflight-proof] ok — terraform test: 17 passed, 0 failed, 0 errored
+[terraform-preflight-proof] FAIL — provision source must add DATABASE_OWNER_URL from DATABASE_URL's secret; got [{"name":"DATABASE_URL","valueFrom":"<mock arn>"}]
+[terraform-preflight-proof] 1 check(s) failed.

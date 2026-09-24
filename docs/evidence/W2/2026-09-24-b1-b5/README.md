@@ -1,5 +1,12 @@
 # D1: B1, B2, B3 and B5 — the production task definition can boot, 2026-09-24
 
+> **Reconciled 2026-09-24** with a parallel implementation of the same lane
+> (`docs/evidence/W2/2026-09-23b/README.md`, section "Reconciliation"). Two things
+> recorded here no longer hold on trunk: the container health check probes `/healthz`,
+> not `/readyz`, and `tests/boot_contract.tftest.hcl` is the merged suite. The vendored
+> RDS bundle this lane added had been dropped by `.gitignore` and is now committed.
+
+
 **Launch row:** D1 hosted production (`docs/LAUNCH_DEFINITION_OF_DONE.md`).
 **Brief:** `docs/evidence/W2/2026-09-23/README.md`, items B1, B2, B3 and B5, in
 the order the brief's "Order of work" section gives. The B9 session left

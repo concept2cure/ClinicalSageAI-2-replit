@@ -6,280 +6,48 @@
  * surface below; tenant identity and database session security are production
  * implementations.  The CI job supplies APP_DATABASE_URL for the real
  * app_service role provisioned by install-fresh.
+ *
+ * The two tenants come from ./two-tenant-fixture.ts, which other tenant
+ * contracts share (report-os-tenant-from-session.dbtest.ts). A new contract
+ * gets its own file on that fixture rather than another describe here.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import express from 'express';
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
-import { activeJwtSecret } from '../../server/utils/jwtVerify';
-import { Pool } from 'pg';
-import { databaseUrl } from '../setup.db';
 import { authenticateToken } from '../../server/middleware/auth';
-import { requestPgClient } from '../../server/db/requestDb';
 import { getPool } from '../../server/db/runtime';
-import { invalidateOrgMembershipCache } from '../../server/middleware/orgMembership';
 import { runWithTenantScope } from '../../server/db/tenantStore';
 import industryContextRouter from '../../server/routes/mdx-industry-context';
 import savedPrecedentQueriesRouter from '../../server/routes/saved-precedent-queries';
 import controlPlaneRouter from '../../server/src/routes/control-plane.router';
 import { evaluateGovernedDocument } from '../../server/src/control-plane/governed-document-evaluator';
 import { GOVERNED_FABRIC_KIND } from '../../server/services/governed-decision-repository';
+import { domains, tableFor, mountTenantProofRoutes } from './tenant-proof-routes';
+import {
+  TAG,
+  ORG_A,
+  ORG_B,
+  owner,
+  tokenA,
+  tokenB,
+  userA,
+  workspaceB,
+  ids,
+  programA,
+  programB,
+  savedQueryA,
+  savedQueryB,
+  auth,
+  provisionTwoTenantFixture,
+  teardownTwoTenantFixture,
+} from './two-tenant-fixture';
 
-const TAG = `wo03_${process.pid}_${Date.now().toString(36)}`;
-const APP_ROLE = process.env.APP_SERVICE_DB_ROLE || 'app_service';
-const ORG_A = 90301;
-const ORG_B = 90302;
-/* Reserved for this probe alone. Teardown deletes by these ids, so anything else
-   that borrowed them would be deleted with the fixtures. */
-const FIXTURE_ORGS = [ORG_A, ORG_B];
-
-/**
- * The domains this probe proves isolation FOR. Everything outside this list is
- * asserted, not proven — that distinction is the whole status of WO-3, so the
- * list is the coverage number and adding to it is the work.
- *
- * Extended 2026-09-19 from three tables to six. The three added are regulated
- * stores, chosen because each carries the canonical `tenant_isolation_policy`
- * keyed on an integer `organization_id` (verified on the provisioned database,
- * not assumed) and each is read by a shipping surface:
- *
- *   design_controls  public.c2c_design_controls  21 CFR 820.30 design history
- *                    file — the DHF surface's only store
- *   risk_items       public.risk_items           ISO 14971 hazard analysis
- *
- * public.electronic_signatures was the third candidate and is DELIBERATELY NOT
- * here, which is worth writing down because it is the most consequential table
- * in the set. Its Part 11 trigger `esign_block_mutation()` refuses DELETE
- * outright — "rows cannot be deleted. Insert a superseding signature instead."
- * — and unlike audit_logs, whose immutability trigger provides the documented
- * `app.audit_archive_bypass` door this file's own cleanup uses, it provides no
- * door at all. So a fixture signature is permanent: every run would leak a row
- * pair, and `electronic_signatures.signer_id`'s FK to users then makes the
- * users cleanup fail with 23503 and leaks every fixture after it (observed,
- * which is how this was found). Covering it needs a fixture strategy that does
- * not require deletion — a dedicated signer whose rows are expected to
- * accumulate, or a superseding-insert cleanup — not a trigger-disable recipe
- * copied out of a test. Recorded for whoever owns Part 11.
- *
- * A table whose primary key is not `id` needs `idColumnFor` below; all six of
- * these key on `id`, so `submission_orchestrator_runs` (run_id) is the next
- * one to add and the reason that map exists.
- */
-type Domain = 'projects' | 'documents' | 'audit_logs' | 'design_controls' | 'risk_items';
-const domains: Domain[] = ['projects', 'documents', 'audit_logs', 'design_controls', 'risk_items'];
-const tableFor: Record<Domain, string> = {
-  projects: 'public.projects',
-  documents: 'public.documents',
-  audit_logs: 'public.audit_logs',
-  design_controls: 'public.c2c_design_controls',
-  risk_items: 'public.risk_items',
-};
-/** The column the generic handlers address a row by. */
-const idColumnFor: Record<Domain, string> = {
-  projects: 'id',
-  documents: 'id',
-  audit_logs: 'id',
-  design_controls: 'id',
-  risk_items: 'id',
-};
-/**
- * A non-key column the PATCH probe writes, per domain. Replaces an inline
- * ternary whose two `status` branches were identical, which made it read as a
- * per-domain decision when it was not.
- */
-const updateColumnFor: Record<Domain, string> = {
-  projects: 'status',
-  documents: 'status',
-  audit_logs: 'action',
-  design_controls: 'req',
-  risk_items: 'status',
-};
-let owner: Pool;
 let app: express.Express;
-let tokenA: string;
-let tokenB: string;
-let userA: number;
-let userB: number;
-let workspaceA: number;
-let workspaceB: number;
-const ids = { A: {} as Record<Domain, string>, B: {} as Record<Domain, string> };
-const programA = '90301000-0000-4000-8000-000000000001';
-const programB = '90302000-0000-4000-8000-000000000002';
-let savedQueryA: number;
-let savedQueryB: number;
-
-/**
- * Mint an access token with the SAME secret the server will verify it against.
- *
- * This signed with `process.env.JWT_SECRET` directly, which is not necessarily
- * the secret the verifier resolves. Both getJwtSecret (server/config/
- * environment.ts, the signing side) and currentSecret (server/utils/
- * jwtVerify.ts, the verifying side) read `JWT_SECRET_<SUFFIX>` FIRST and only
- * fall back to `JWT_SECRET` — and NODE_ENV=test maps to the DEV suffix. config
- * resolves once at module import; the verifier resolves on every call. A .env
- * load between those two moments makes them disagree, and on this repo's own
- * .env (which sets JWT_SECRET_DEV) they did: every request in this file came
- * back 401 "invalid signature", so the twelve isolation assertions below
- * reported an auth failure instead of the cross-tenant result they exist to
- * prove. CI has no .env, so both resolved to JWT_SECRET there and the suite was
- * green — which is why this only ever failed locally.
- *
- * activeJwtSecret() resolves the secret the same way, at the same moment, as
- * the verifier that will check the token, so the two cannot drift.
- */
-function accessToken(userId: number, organizationId: number): string {
-  return jwt.sign(
-    { type: 'access', userId, organizationId: String(organizationId), role: 'member' },
-    activeJwtSecret(),
-    { expiresIn: '5m' }
-  );
-}
-
-function auth(token: string) {
-  return { Authorization: `Bearer ${token}` };
-}
-
-function safeDomain(value: string): Domain | null {
-  return domains.includes(value as Domain) ? (value as Domain) : null;
-}
 
 // The setup intentionally keeps provisioning and the representative request
 // surface in one lifecycle hook so partial setup cannot escape cleanup.
-// eslint-disable-next-line max-lines-per-function
 beforeAll(async () => {
-  if (!process.env.APP_DATABASE_URL) {
-    throw new Error(
-      '[wo03] APP_DATABASE_URL is required; owner execution is not an isolation proof'
-    );
-  }
-  owner = new Pool({ connectionString: databaseUrl, max: 2 });
-
-  const runtimeIdentity = await runWithTenantScope(
-    { tenantId: String(ORG_A), role: 'member', source: 'test', caller: 'wo03-role-posture' },
-    () =>
-      getPool().query(`SELECT current_user AS role,
-            current_setting('is_superuser')::boolean AS superuser,
-            r.rolbypassrls,
-            current_setting('app.rls_enforce', true) AS enforcement
-       FROM pg_roles r WHERE r.rolname = current_user`)
-  );
-  expect(runtimeIdentity.rows).toEqual([
-    { role: APP_ROLE, superuser: false, rolbypassrls: false, enforcement: 'on' },
-  ]);
-
-  for (const [id, suffix] of [
-    [ORG_A, 'a'],
-    [ORG_B, 'b'],
-  ] as const) {
-    await owner.query(
-      `INSERT INTO organizations (id, name, slug, status)
-       VALUES ($1,$2,$3,'active') ON CONFLICT (id) DO UPDATE SET status='active'`,
-      [id, `${TAG}-${suffix}`, `${TAG}-${suffix}`]
-    );
-  }
-  const users = await owner.query(
-    `INSERT INTO users (email,name,password_hash,default_organization_id)
-     VALUES ($1,'WO03 A','not-a-real-password',$3),($2,'WO03 B','not-a-real-password',$4)
-     RETURNING id`,
-    [`${TAG}-a@example.invalid`, `${TAG}-b@example.invalid`, ORG_A, ORG_B]
-  );
-  [userA, userB] = users.rows.map(r => r.id);
-  await owner.query(
-    `INSERT INTO organization_users (organization_id,user_id,role)
-     VALUES ($1,$2,'member'),($3,$4,'member')`,
-    [ORG_A, userA, ORG_B, userB]
-  );
-  const workspaces = await owner.query(
-    `INSERT INTO client_workspaces (organization_id,name,slug,created_by_id)
-     VALUES ($1,$2,$3,$4),($5,$6,$7,$8) RETURNING id`,
-    [
-      ORG_A,
-      `${TAG}-workspace-a`,
-      `${TAG}-wa`,
-      userA,
-      ORG_B,
-      `${TAG}-workspace-b`,
-      `${TAG}-wb`,
-      userB,
-    ]
-  );
-  [workspaceA, workspaceB] = workspaces.rows.map(r => r.id);
-
-  await owner.query(
-    `INSERT INTO project_industry_profiles
-       (program_id,organization_id,vertical,product_type,updated_by)
-     VALUES ($1,$2,'biopharma',$3,$4),($5,$6,'biopharma',$7,$8)`,
-    [programA, ORG_A, `${TAG}-profile-A`, userA, programB, ORG_B, `${TAG}-profile-B`, userB]
-  );
-  const savedQueries = await owner.query(
-    `INSERT INTO saved_precedent_queries (organization_id,user_id,label,query)
-     VALUES ($1,$2,$3,$4),($5,$6,$7,$8) RETURNING id`,
-    [
-      ORG_A,
-      userA,
-      `${TAG}-saved-A`,
-      `${TAG}-query-A`,
-      ORG_B,
-      userB,
-      `${TAG}-saved-B`,
-      `${TAG}-query-B`,
-    ]
-  );
-  [savedQueryA, savedQueryB] = savedQueries.rows.map(r => r.id);
-
-  for (const [side, org, user, workspace] of [
-    ['A', ORG_A, userA, workspaceA],
-    ['B', ORG_B, userB, workspaceB],
-  ] as const) {
-    const p = await owner.query(
-      `INSERT INTO projects (organization_id,client_workspace_id,name,type,description,created_by_id)
-       VALUES ($1,$2,$3,'regulatory',$4,$5) RETURNING id`,
-      [org, workspace, `${TAG}-project-${side}`, `fixture-body-${side}`, user]
-    );
-    ids[side].projects = String(p.rows[0].id);
-    const d = await owner.query(
-      `INSERT INTO documents
-       (organization_id,client_workspace_id,document_code,title,document_type,owner_id,created_by_id,description)
-       VALUES ($1,$2,$3,$4,'REGULATORY',$5,$5,$6) RETURNING id`,
-      [
-        org,
-        workspace,
-        `${TAG}-DOC-${side}`,
-        `${TAG}-document-${side}`,
-        user,
-        `fixture-body-${side}`,
-      ]
-    );
-    ids[side].documents = String(d.rows[0].id);
-    const a = await owner.query(
-      `INSERT INTO audit_logs (tenant_id,user_id,action,table_name,record_id,new_values)
-       VALUES ($1,$2,'READ','wo03',$3,$4::json) RETURNING id`,
-      [org, user, `${TAG}-${side}`, JSON.stringify({ confidential: `fixture-body-${side}` })]
-    );
-    ids[side].audit_logs = String(a.rows[0].id);
-
-    /* ── The three domains added 2026-09-19 ────────────────────────────────
-       Seeded through the OWNER pool, like every fixture above: the point of
-       the probe is that the app_service role cannot reach the other tenant's
-       row, which requires the row to exist in the first place. */
-    const dc = await owner.query(
-      `INSERT INTO c2c_design_controls (id, organization_id, cat, req)
-       VALUES ($1,$2,'performance',$3) RETURNING id`,
-      [`${TAG}-dc-${side}`, org, `fixture-body-${side}`]
-    );
-    ids[side].design_controls = String(dc.rows[0].id);
-
-    const ri = await owner.query(
-      `INSERT INTO risk_items (organization_id, hazard, harm, severity, probability, status)
-       VALUES ($1,$2,$3,3,2,'open') RETURNING id`,
-      [org, `${TAG}-hazard-${side}`, `fixture-body-${side}`]
-    );
-    ids[side].risk_items = String(ri.rows[0].id);
-  }
-
-  tokenA = accessToken(userA, ORG_A);
-  tokenB = accessToken(userB, ORG_B);
-  invalidateOrgMembershipCache();
+  await provisionTwoTenantFixture();
 
   app = express();
   app.use(express.json());
@@ -287,186 +55,11 @@ beforeAll(async () => {
   // regulatory-query service entry points, not test-owned replicas.
   app.use('/actual/mdx', authenticateToken, industryContextRouter);
   app.use('/actual/saved-precedent-queries', authenticateToken, savedPrecedentQueriesRouter);
-  app.use('/proof', authenticateToken);
-  app.get('/proof/:domain', async (req, res) => {
-    const domain = safeDomain(req.params.domain);
-    if (!domain) return res.status(404).json({ error: { code: 'NOT_FOUND' } });
-    const q = String(req.query.q || '');
-    const result = await requestPgClient(req).query(
-      `SELECT ${idColumnFor[domain]}::text AS id FROM ${tableFor[domain]}
-        WHERE ($1 = '' OR ${idColumnFor[domain]}::text = $1) ORDER BY 1`,
-      [q]
-    );
-    return res.json({ ids: result.rows.map(r => r.id) });
-  });
-  // Register HEAD before GET. Express otherwise derives HEAD from GET and the
-  // explicit existence-probe implementation would never execute.
-  app.head('/proof/:domain/:id', async (req, res) => {
-    const domain = safeDomain(req.params.domain);
-    if (!domain) return res.sendStatus(404);
-    const result = await requestPgClient(req).query(
-      `SELECT 1 FROM ${tableFor[domain]} WHERE ${idColumnFor[domain]}::text=$1`,
-      [req.params.id]
-    );
-    return res.sendStatus(result.rows.length ? 204 : 404);
-  });
-  app.get('/proof/:domain/:id', async (req, res) => {
-    const domain = safeDomain(req.params.domain);
-    if (!domain) return res.status(404).json({ error: { code: 'NOT_FOUND' } });
-    const result = await requestPgClient(req).query(
-      `SELECT ${idColumnFor[domain]}::text AS id FROM ${tableFor[domain]} WHERE ${idColumnFor[domain]}::text=$1`,
-      [req.params.id]
-    );
-    return result.rows.length
-      ? res.json({ id: result.rows[0].id })
-      : res.status(404).json({ error: { code: 'NOT_FOUND' } });
-  });
-  app.post('/proof/:domain', async (req, res) => {
-    const domain = safeDomain(req.params.domain);
-    if (!domain) return res.status(404).json({ error: { code: 'NOT_FOUND' } });
-    const foreignOrg = Number(req.body?.organizationId);
-    try {
-      if (domain === 'projects') {
-        await requestPgClient(req).query(
-          `INSERT INTO projects (organization_id,client_workspace_id,name,type,created_by_id)
-           VALUES ($1,$2,$3,'regulatory',$4)`,
-          [foreignOrg, workspaceB, `${TAG}-forged-project`, userA]
-        );
-      } else if (domain === 'documents') {
-        await requestPgClient(req).query(
-          `INSERT INTO documents
-           (organization_id,client_workspace_id,document_code,title,document_type,owner_id,created_by_id)
-           VALUES ($1,$2,$3,$4,'REGULATORY',$5,$5)`,
-          [foreignOrg, workspaceB, `${TAG}-FORGED`, `${TAG}-forged-document`, userA]
-        );
-      } else if (domain === 'audit_logs') {
-        await requestPgClient(req).query(
-          `INSERT INTO audit_logs (tenant_id,user_id,action,table_name,record_id)
-           VALUES ($1,$2,'FORGED','wo03',$3)`,
-          [foreignOrg, userA, `${TAG}-forged-audit`]
-        );
-      } else if (domain === 'design_controls') {
-        await requestPgClient(req).query(
-          `INSERT INTO c2c_design_controls (id,organization_id,cat,req)
-           VALUES ($1,$2,'performance','forged')`,
-          [`${TAG}-forged-dc`, foreignOrg]
-        );
-      } else {
-        await requestPgClient(req).query(
-          `INSERT INTO risk_items (organization_id,hazard,harm,severity,probability)
-           VALUES ($1,$2,'forged',3,2)`,
-          [foreignOrg, `${TAG}-forged-hazard`]
-        );
-      }
-      return res.sendStatus(201);
-    } catch (error) {
-      // Do not serialize the PostgreSQL error: it may contain schema or row
-      // details. RLS WITH CHECK denial follows the same opaque contract as a
-      // cross-tenant id probe.
-      if ((error as { code?: string }).code === '42501') {
-        return res.status(404).json({ error: { code: 'NOT_FOUND' } });
-      }
-      return res.status(500).json({ error: { code: 'INTERNAL_ERROR' } });
-    }
-  });
-  app.patch('/proof/:domain/:id', async (req, res) => {
-    const domain = safeDomain(req.params.domain);
-    if (!domain) return res.sendStatus(404);
-    const result = await requestPgClient(req).query(
-      `UPDATE ${tableFor[domain]} SET ${updateColumnFor[domain]}=$1
-         WHERE ${idColumnFor[domain]}::text=$2 RETURNING ${idColumnFor[domain]}`,
-      ['TAMPERED', req.params.id]
-    );
-    return result.rows.length ? res.sendStatus(204) : res.sendStatus(404);
-  });
-  app.delete('/proof/:domain/:id', async (req, res) => {
-    const domain = safeDomain(req.params.domain);
-    if (!domain) return res.sendStatus(404);
-    const result = await requestPgClient(req).query(
-      `DELETE FROM ${tableFor[domain]} WHERE ${idColumnFor[domain]}::text=$1 RETURNING ${idColumnFor[domain]}`,
-      [req.params.id]
-    );
-    return result.rows.length ? res.sendStatus(204) : res.sendStatus(404);
-  });
+  mountTenantProofRoutes(app, { tag: TAG, foreignWorkspace: workspaceB, actingUser: userA });
 }, 60_000);
 
-afterAll(async () => {
-  invalidateOrgMembershipCache();
-  if (owner) {
-    // Session GUCs and cleanup statements must use one checked-out connection;
-    // consecutive pool.query calls are not guaranteed to use the same session.
-    const cleanup = await owner.connect().catch(() => null);
-    if (cleanup) {
-      try {
-        await cleanup.query("SELECT set_config('app.rls_enforce','off',false)");
-        // audit_logs is append-only on the deploy path: trg_audit_logs_no_delete
-        // (20260617_audit_logs_immutability.sql) aborts a bare DELETE with
-        // P0A02, which would kill every remaining cleanup statement and leak
-        // the fixtures. Use the trigger's authorized archive door, SET LOCAL so
-        // the bypass dies with this transaction — the same pattern the sibling
-        // dbtest suites adopted after hitting exactly this failure.
-        await cleanup.query('BEGIN');
-        try {
-          await cleanup.query("SET LOCAL app.audit_archive_bypass = 'on'");
-          await cleanup.query('DELETE FROM audit_logs WHERE record_id LIKE $1', [`${TAG}%`]);
-          await cleanup.query('COMMIT');
-        } catch (err) {
-          // ROLLBACK so the connection leaves the aborted transaction and the
-          // remaining fixture deletes below still run instead of all dying.
-          // Not rethrown: unlike the sibling suites (audit delete last), nine
-          // deletes follow this one — orgs, users, documents — and leaking all
-          // of them to report a failed audit-row sweep inverts the priority.
-          // The tagged audit rows are inert and LIKE-scoped if they survive.
-          await cleanup.query('ROLLBACK');
-          console.warn('[wo-03] audit_logs teardown skipped:', err);
-        }
-        await cleanup.query('DELETE FROM documents WHERE document_code LIKE $1', [`${TAG}%`]);
-        await cleanup.query('DELETE FROM projects WHERE name LIKE $1', [`${TAG}%`]);
-        await cleanup.query('DELETE FROM saved_precedent_queries WHERE label LIKE $1', [`${TAG}%`]);
-        /* Everything below is scoped by the two reserved fixture org ids rather
-           than by ids captured in memory during the seed, and that is the point.
-           TAG carries a pid and a timestamp, so it is unique per run: a run that
-           dies part-way through beforeAll leaves rows no LATER run's TAG can
-           match, and because these tables are the FK spine (org_users → users →
-           organizations) the leak does not stay quiet — it makes the organizations
-           delete fail with 23503 for every subsequent run, forever, until someone
-           cleans the database by hand. Observed twice while this file was being
-           extended, both times costing a manual psql pass. ORG_A/ORG_B are
-           constants reserved for this probe and nothing else may use them, so
-           org-scoped deletes are safe AND idempotent: each run now also clears
-           whatever its predecessors stranded. Domains whose own rows carry no
-           organization_id are matched through the orgs instead. */
-        await cleanup.query('DELETE FROM decision_records WHERE organization_id=ANY($1::int[])', [
-          FIXTURE_ORGS,
-        ]);
-        await cleanup.query('DELETE FROM risk_items WHERE organization_id=ANY($1::int[])', [
-          FIXTURE_ORGS,
-        ]);
-        await cleanup.query(
-          'DELETE FROM c2c_design_controls WHERE organization_id=ANY($1::int[])',
-          [FIXTURE_ORGS]
-        );
-        await cleanup.query(
-          'DELETE FROM project_industry_profiles WHERE organization_id=ANY($1::int[])',
-          [FIXTURE_ORGS]
-        );
-        await cleanup.query('DELETE FROM client_workspaces WHERE organization_id=ANY($1::int[])', [
-          FIXTURE_ORGS,
-        ]);
-        await cleanup.query('DELETE FROM organization_users WHERE organization_id=ANY($1::int[])', [
-          FIXTURE_ORGS,
-        ]);
-        await cleanup.query('DELETE FROM users WHERE default_organization_id=ANY($1::int[])', [
-          FIXTURE_ORGS,
-        ]);
-        await cleanup.query('DELETE FROM organizations WHERE id=ANY($1::int[])', [FIXTURE_ORGS]);
-      } finally {
-        cleanup.release();
-      }
-    }
-    await owner.end();
-  }
-});
+afterAll(teardownTwoTenantFixture);
+
 
 // One describe keeps the posture, product-entry, attack, reset, and negative
 // controls visibly part of the same proof contract.
@@ -608,6 +201,53 @@ describe('WO-03 two-tenant application isolation', () => {
   });
 });
 
+// ── Governed decisions: the fixtures the cases below share ─────────────────
+
+const GD_PROJECT = 903010;
+
+const scope = (org: number, caller: string) => ({
+  tenantId: String(org),
+  role: 'member',
+  source: 'test' as const,
+  caller,
+});
+
+const evaluation = (org: number, artifactId: string) => ({
+  context: {
+    organizationId: String(org),
+    projectId: String(GD_PROJECT),
+    actorId: `${TAG}-actor`,
+    intendedAction: 'promote' as const,
+    artifactId,
+  },
+  documentState: {
+    hasContent: true,
+    hasEvidence: false,
+    hasBeenReviewed: false,
+    hasApproval: false,
+    hasPlacement: false,
+    placementValid: false,
+    hasProvenance: false,
+    unresolvedContradictionCount: 0,
+    criticalContradictionCount: 0,
+  },
+});
+
+const fabricRows = async (org: number) =>
+  (
+    await owner.query(
+      `SELECT id::text AS id, decision_context->>'governedDecisionId' AS governed_id,
+              notes::jsonb->>'artifactId' AS artifact
+         FROM decision_records
+        WHERE organization_id = $1 AND project_id = $2 AND decision_context->>'kind' = $3
+        ORDER BY created_at`,
+      [org, GD_PROJECT, GOVERNED_FABRIC_KIND]
+    )
+  ).rows as Array<{ id: string; governed_id: string; artifact: string }>;
+
+/** The recorder is fire-and-forget; give it time before judging a count. */
+const settle = () => new Promise(r => setTimeout(r, 1500));
+
 /**
  * Governed decisions — added 2026-09-24 (launch row D3).
  *
@@ -627,7 +267,6 @@ describe('WO-03 two-tenant application isolation', () => {
  * app would look exactly like a row that was never written.
  */
 describe('WO-03 governed decisions under RLS (D3, 2026-09-24)', () => {
-  const GD_PROJECT = 903010;
   let cp: express.Express;
 
   beforeAll(() => {
@@ -636,49 +275,6 @@ describe('WO-03 governed decisions under RLS (D3, 2026-09-24)', () => {
     cp.use(express.json());
     cp.use('/api/control-plane', authenticateToken, controlPlaneRouter);
   });
-
-  const scope = (org: number, caller: string) => ({
-    tenantId: String(org),
-    role: 'member',
-    source: 'test' as const,
-    caller,
-  });
-
-  const evaluation = (org: number, artifactId: string) => ({
-    context: {
-      organizationId: String(org),
-      projectId: String(GD_PROJECT),
-      actorId: `${TAG}-actor`,
-      intendedAction: 'promote' as const,
-      artifactId,
-    },
-    documentState: {
-      hasContent: true,
-      hasEvidence: false,
-      hasBeenReviewed: false,
-      hasApproval: false,
-      hasPlacement: false,
-      placementValid: false,
-      hasProvenance: false,
-      unresolvedContradictionCount: 0,
-      criticalContradictionCount: 0,
-    },
-  });
-
-  const fabricRows = async (org: number) =>
-    (
-      await owner.query(
-        `SELECT id::text AS id, decision_context->>'governedDecisionId' AS governed_id,
-                notes::jsonb->>'artifactId' AS artifact
-           FROM decision_records
-          WHERE organization_id = $1 AND project_id = $2 AND decision_context->>'kind' = $3
-          ORDER BY created_at`,
-        [org, GD_PROJECT, GOVERNED_FABRIC_KIND]
-      )
-    ).rows as Array<{ id: string; governed_id: string; artifact: string }>;
-
-  /** The recorder is fire-and-forget; give it time before judging a count. */
-  const settle = () => new Promise(r => setTimeout(r, 1500));
 
   it('the recording evaluator persists the caller\'s own decision through the app role', async () => {
     const before = (await fabricRows(ORG_A)).length;

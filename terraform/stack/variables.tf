@@ -124,6 +124,17 @@ variable "domain_aliases" {
     condition     = length(var.domain_aliases) > 0
     error_message = "The API is routed through CloudFront, which needs a custom domain that the ALB's certificate (acm_certificate_arn) also covers."
   }
+
+  # The first alias becomes APP_URL and ALLOWED_ORIGINS (main.tf app_origin).
+  # csrfProtection compares the browser's Origin header by string equality,
+  # and a browser sends the host lowercased with no trailing dot, so
+  # "App.example.com" would boot, pass /readyz, and 403 every sign-in.
+  validation {
+    condition = alltrue([
+      for d in var.domain_aliases : can(regex("^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$", d))
+    ])
+    error_message = "Each domain alias must be a lowercase hostname with no scheme, port, path or trailing dot, e.g. app.example.com."
+  }
 }
 
 variable "cloudfront_origin_secret" {
@@ -203,8 +214,35 @@ variable "ai_provider_placement_approvals" {
   type        = string
   description = "AI_PROVIDER_PLACEMENT_APPROVALS: a JSON object. The founder's decision (D1 brief B4); record the value and date in the D1 evidence."
   validation {
-    condition     = can(keys(jsondecode(var.ai_provider_placement_approvals)))
-    error_message = "ai_provider_placement_approvals must be a JSON object (server/services/ai-gateway/sensitive-placement-policy.ts refuses anything else)."
+    # try(), not can() && …: Terraform evaluates both sides of &&.
+    condition     = length(try(keys(jsondecode(var.ai_provider_placement_approvals)), [])) > 0
+    error_message = "ai_provider_placement_approvals must be a non-empty JSON object keyed by provider (server/services/ai-gateway/sensitive-placement-policy.ts refuses anything else, '{}' included)."
+  }
+  validation {
+    # The shape readProviderPlacementApprovals accepts, and the one rule
+    # assertSensitivePlacementConfiguration adds. Each is a refusal at import
+    # time, so a value that fails here would crash-loop every task instead of
+    # failing the plan. Per provider: region a non-blank string;
+    # zeroRetentionApproved a boolean; approvedDataClasses a list of only
+    # "pii"/"phi"; approvedIntendedUses a list of non-blank strings; and a
+    # non-empty approvedDataClasses requires zeroRetentionApproved = true.
+    # `tostring(x) == x` is a string test: == never converts, so it is false
+    # for a number or a bool. `can(concat(x, []))` is a list test.
+    condition = alltrue([
+      for provider, a in try(jsondecode(var.ai_provider_placement_approvals), {}) : try(
+        trimspace(provider) != ""
+        && can(keys(a))
+        && tostring(a.region) == a.region && trimspace(a.region) != ""
+        && (a.zeroRetentionApproved == true || a.zeroRetentionApproved == false)
+        && can(concat(a.approvedDataClasses, []))
+        && alltrue([for c in a.approvedDataClasses : c == "pii" || c == "phi"])
+        && can(concat(a.approvedIntendedUses, []))
+        && alltrue([for u in a.approvedIntendedUses : tostring(u) == u && trimspace(u) != ""])
+        && (length(a.approvedDataClasses) == 0 || a.zeroRetentionApproved == true),
+        false
+      )
+    ])
+    error_message = "Each ai_provider_placement_approvals entry must be {region: non-blank string, zeroRetentionApproved: bool, approvedDataClasses: [\"pii\"|\"phi\"...], approvedIntendedUses: [non-blank strings]}, and approving pii or phi requires zeroRetentionApproved = true. The app refuses to boot on anything else."
   }
 }
 

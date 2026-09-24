@@ -212,7 +212,7 @@ jobs:
         # its own pinned digest), which is the deterministic shape ECR /
         # ECS support.
         run: |
-          docker build -f Dockerfile.optimized \
+          docker build -f Dockerfile.optimized --target production \
             -t "$ECR_REGISTRY/$ECR_API_REPO:$IMAGE_TAG" \
             .
           docker push "$ECR_REGISTRY/$ECR_API_REPO:$IMAGE_TAG"
@@ -256,8 +256,15 @@ jobs:
     needs: build-push
     runs-on: ubuntu-latest
     environment: production
+    outputs:
+      # The exact API revision the preflight checked. deploy-api derives from
+      # it, not from "the family's latest" (see the preflight's last lines).
+      api_td_arn: ${{ steps.preflight.outputs.api_td_arn }}
 
     steps:
+      # For scripts/ops/ecs-one-off-task.sh, the runner the migration uses.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
@@ -268,206 +275,18 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64 # v2
 
-      - name: Register migration task definition (pinned to the deploying image)
-        id: register-migrate-td
-        env:
-          IMAGE_DIGEST: ${{ needs.build-push.outputs.api_digest }}
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        # Derived from the API task def so the migration runs with the identical
-        # DATABASE_URL secret, execution role and log configuration the app uses.
-        # Deliberate differences from the API definition:
-        #   • only the app container is kept — log routers / APM sidecars would
-        #     keep a batch task alive after the migration exits;
-        #   • portMappings + healthCheck are dropped — a one-off task registers
-        #     with no load balancer and must not be killed by an HTTP probe;
-        #   • command is the migration entrypoint.
-        run: |
-          set -euo pipefail
-
-          if [[ -z "$IMAGE_DIGEST" || "$IMAGE_DIGEST" != sha256:* ]]; then
-            echo "::error::No API image digest available, so there is no image to migrate from."
-            echo "::error::A deploy that skips the API image cannot migrate the schema. Re-run with deploy_api enabled,"
-            echo "::error::or run 'npm run db:migrate:deploy' out of band before deploying."
-            exit 1
-          fi
-
-          PINNED_IMAGE="$ECR_REGISTRY/$ECR_API_REPO@$IMAGE_DIGEST"
-          echo "Migration task image: $PINNED_IMAGE"
-
-          aws ecs describe-task-definition \
-            --task-definition "$ECS_API_TASK_FAMILY" \
-            --no-cli-pager \
-            --query 'taskDefinition' > /tmp/api-td.json
-
-          jq --arg img "$PINNED_IMAGE" \
-             --arg api_container "$ECS_API_CONTAINER_NAME" \
-             --arg family "$ECS_MIGRATE_TASK_FAMILY" \
-             '
-             {taskRoleArn, executionRoleArn, networkMode, containerDefinitions, volumes, placementConstraints, requiresCompatibilities, cpu, memory, runtimePlatform, ipcMode, pidMode, proxyConfiguration, ephemeralStorage}
-             | with_entries(select(.value != null))
-             | .family = $family
-             | .containerDefinitions = (
-                 .containerDefinitions
-                 | map(select(.name == $api_container))
-                 | map(
-                     .image = $img
-                     | .command = ["npm", "run", "db:migrate:deploy"]
-                     | .essential = true
-                     | del(.portMappings, .healthCheck)
-                     # Inter-container wiring that can only refer to the sidecars
-                     # dropped above. Left in place, register-task-definition
-                     # rejects the whole revision for naming a container that is
-                     # no longer in the definition.
-                     | del(.dependsOn, .links, .volumesFrom)
-                   )
-               )
-             ' /tmp/api-td.json > /tmp/migrate-td.json
-
-          if [[ "$(jq '.containerDefinitions | length' /tmp/migrate-td.json)" != "1" ]]; then
-            echo "::error::Container '$ECS_API_CONTAINER_NAME' not found in task def '$ECS_API_TASK_FAMILY'."
-            exit 1
-          fi
-
-          TD_ARN=$(aws ecs register-task-definition \
-            --cli-input-json file:///tmp/migrate-td.json \
-            --no-cli-pager \
-            --query 'taskDefinition.taskDefinitionArn' \
-            --output text)
-          # `--output text` yields the literal "None" when the query misses,
-          # which is a string the next step would happily pass to run-task.
-          # Catch it here, where the cause is still visible.
-          if [[ -z "$TD_ARN" || "$TD_ARN" == "None" ]]; then
-            echo "::error::register-task-definition returned no ARN for family '$ECS_MIGRATE_TASK_FAMILY'."
-            exit 1
-          fi
-          echo "Registered migration task def: $TD_ARN"
-          echo "task_def_arn=$TD_ARN" >> "$GITHUB_OUTPUT"
-
-          # Log location for the failure tail below — read off the definition so
-          # it stays correct if the API's log config changes.
-          jq -r '.containerDefinitions[0].logConfiguration.options["awslogs-group"] // ""' \
-            /tmp/migrate-td.json > /tmp/log-group
-          jq -r '.containerDefinitions[0].logConfiguration.options["awslogs-stream-prefix"] // ""' \
-            /tmp/migrate-td.json > /tmp/log-prefix
-
-      - name: Run migration task and wait for it to finish
-        env:
-          TD_ARN: ${{ steps.register-migrate-td.outputs.task_def_arn }}
-        # Network configuration is read off the running API service rather than
-        # hard-coded: the migration must land on the same subnets and security
-        # groups that are already allowed through to RDS, and duplicating those
-        # IDs here would be a second place to get them wrong.
-        run: |
-          set -euo pipefail
-
-          NETWORK_CONFIG=$(aws ecs describe-services \
-            --cluster "$ECS_CLUSTER" \
-            --services "$ECS_API_SERVICE" \
-            --no-cli-pager \
-            --query 'services[0].networkConfiguration' \
-            --output json)
-
-          if [[ -z "$NETWORK_CONFIG" || "$NETWORK_CONFIG" == "null" ]]; then
-            echo "::error::Could not read networkConfiguration from service '$ECS_API_SERVICE'."
-            echo "::error::Without it the migration task would launch outside the VPC that can reach the database."
-            exit 1
-          fi
-          # The service runs tasks with a public IP disabled/enabled per its own
-          # config; reuse it verbatim so the migration has the same egress path
-          # (NAT / VPC endpoints) the app has for Secrets Manager and ECR.
-          echo "$NETWORK_CONFIG" | jq '{awsvpcConfiguration: .awsvpcConfiguration}' > /tmp/netcfg.json
-
-          TASK_ARN=$(aws ecs run-task \
-            --cluster "$ECS_CLUSTER" \
-            --task-definition "$TD_ARN" \
-            --launch-type FARGATE \
-            --network-configuration file:///tmp/netcfg.json \
-            --started-by "deploy-${GITHUB_RUN_ID}" \
-            --no-cli-pager \
-            --query 'tasks[0].taskArn' \
-            --output text)
-
-          if [[ -z "$TASK_ARN" || "$TASK_ARN" == "None" ]]; then
-            echo "::error::run-task returned no task ARN — the migration never started."
-            aws ecs run-task \
-              --cluster "$ECS_CLUSTER" \
-              --task-definition "$TD_ARN" \
-              --launch-type FARGATE \
-              --network-configuration file:///tmp/netcfg.json \
-              --no-cli-pager \
-              --query 'failures' --output json || true
-            exit 1
-          fi
-          echo "Migration task: $TASK_ARN"
-          echo "$TASK_ARN" > /tmp/task-arn
-
-          # `wait tasks-stopped` polls for up to 10 minutes. A migration that runs
-          # longer than that is itself a problem worth failing the deploy on.
-          aws ecs wait tasks-stopped --cluster "$ECS_CLUSTER" --tasks "$TASK_ARN"
-
-          EXIT_CODE=$(aws ecs describe-tasks \
-            --cluster "$ECS_CLUSTER" --tasks "$TASK_ARN" --no-cli-pager \
-            --query "tasks[0].containers[?name=='${ECS_API_CONTAINER_NAME}'].exitCode | [0]" \
-            --output text)
-          STOPPED_REASON=$(aws ecs describe-tasks \
-            --cluster "$ECS_CLUSTER" --tasks "$TASK_ARN" --no-cli-pager \
-            --query 'tasks[0].stoppedReason' --output text)
-
-          echo "Migration task exit code: $EXIT_CODE (stoppedReason: $STOPPED_REASON)"
-
-          # Always surface the migration's own output — it is the only place the
-          # per-file apply log and the readiness-contract verification appear.
-          LOG_GROUP=$(cat /tmp/log-group)
-          LOG_PREFIX=$(cat /tmp/log-prefix)
-          if [[ -n "$LOG_GROUP" && -n "$LOG_PREFIX" ]]; then
-            TASK_ID="${TASK_ARN##*/}"
-            echo "── migration log ──────────────────────────────────────────────"
-            aws logs get-log-events \
-              --log-group-name "$LOG_GROUP" \
-              --log-stream-name "${LOG_PREFIX}/${ECS_API_CONTAINER_NAME}/${TASK_ID}" \
-              --no-cli-pager --query 'events[].message' --output text || \
-              echo "(log stream not available)"
-            echo "───────────────────────────────────────────────────────────────"
-          fi
-
-          case "$EXIT_CODE" in
-            0)
-              echo "Schema migration succeeded — services may roll."
-              ;;
-            3)
-              echo "::error::The database has never been provisioned (deploy-migrate.mjs exit 3)."
-              echo "::error::Run the one-time from-scratch installer against it before deploying:"
-              echo "::error::  DATABASE_URL='…' node scripts/db/install-fresh.mjs"
-              exit 1
-              ;;
-            *)
-              echo "::error::Schema migration failed (exit ${EXIT_CODE}). Services were NOT rolled."
-              exit 1
-              ;;
-          esac
-
-  # ── Deploy API to ECS ────────────────────────────────────────────────────
-  deploy-api:
-    name: Deploy API → ECS
-    # `migrate` is a hard gate: rolling the API onto a schema whose migration
-    # failed is exactly the outcome this deploy path is meant to prevent.
-    needs: [build-push, migrate]
-    runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.deploy_api != 'false' }}
-    environment: production
-
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
-        with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64 # v2
-
+      # WHERE this runs (2026-09-23): in `migrate`, before the migration task
+      # definition is registered. It used to be the first step of deploy-api,
+      # which needs migrate — so the production DDL migration ran from a task
+      # definition derived from the API one BEFORE anything checked that task
+      # definition, and a definition missing RLS_ENFORCE or APP_DATABASE_URL
+      # migrated the schema first and was refused second. deploy-api needs
+      # migrate and rolls only the revision this step checked (its ARN is this
+      # job's output), so this one check gates both. Proven against the task
+      # definition production Terraform renders by
+      # scripts/ops/terraform-preflight-proof.mjs.
       - name: Preflight — task definition must carry the production boot contract
+        id: preflight
         # The app fails CLOSED on a missing production env var: it exits at boot
         # rather than serving degraded. Rolling a task def that omits one turns a
         # config gap into a crash-loop that ECS reports as "deployment failed"
@@ -588,7 +407,100 @@ jobs:
           fi
           [[ "$FAIL" -eq 0 ]] || exit 1
 
-          echo "Production boot contract satisfied by $ECS_API_TASK_FAMILY."
+          # Hand the EXACT revision checked here to everything that derives a
+          # task definition from it — the migration below and deploy-api —
+          # rather than let each re-read "the family's latest". deploy-api runs
+          # after the migration and a production approval, and a `terraform
+          # apply` in between registers a new latest revision (the services
+          # ignore task_definition changes, so nothing else rolls it). Without
+          # the ARN, deploy-api rolled a revision this step never saw
+          # (review findings SEC-5 / PIPE-2, 2026-09-24).
+          CHECKED_ARN=$(jq -r '.taskDefinitionArn // empty' /tmp/api-td-preflight.json)
+          if [[ ! "$CHECKED_ARN" =~ ^arn:aws[a-z-]*:ecs:[a-z0-9-]+:[0-9]{12}:task-definition/${ECS_API_TASK_FAMILY}:[0-9]+$ ]]; then
+            echo "::error::describe-task-definition returned no usable revision ARN ('$CHECKED_ARN'); cannot pin the revision that was checked."
+            exit 1
+          fi
+          echo "api_td_arn=$CHECKED_ARN" >> "$GITHUB_OUTPUT"
+          echo "Production boot contract satisfied by $CHECKED_ARN."
+
+      - name: Migrate — one-off task derived from the checked API revision
+        id: migrate-task
+        env:
+          IMAGE_DIGEST: ${{ needs.build-push.outputs.api_digest }}
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          CHECKED_API_TD_ARN: ${{ steps.preflight.outputs.api_td_arn }}
+        # scripts/ops/ecs-one-off-task.sh derives the task from the revision the
+        # preflight above CHECKED (same execution role, secrets, logs; sidecars,
+        # ports and the health check dropped), runs it on the API service's own
+        # subnets and security groups (the only ones RDS admits), waits against
+        # a deadline that stops the task when it passes, prints its log, and
+        # exits with its exit code. The same runner starts the first provision
+        # (provision-database.yml). It replaced two inline steps here whose
+        # `aws ecs wait` gave up silently after ten minutes and which, when no
+        # task started, called run-task a second time to see why.
+        run: |
+          set -uo pipefail
+
+          if [[ -z "$IMAGE_DIGEST" || "$IMAGE_DIGEST" != sha256:* ]]; then
+            echo "::error::No API image digest available, so there is no image to migrate from."
+            echo "::error::A deploy that skips the API image cannot migrate the schema. Re-run with deploy_api enabled."
+            exit 1
+          fi
+          if [[ -z "$CHECKED_API_TD_ARN" ]]; then
+            echo "::error::The preflight published no checked revision ARN; refusing to derive the migration from an unchecked one."
+            exit 1
+          fi
+
+          SOURCE_TD_ARN="$CHECKED_API_TD_ARN" \
+          CONTAINER_NAME="$ECS_API_CONTAINER_NAME" \
+          FAMILY="$ECS_MIGRATE_TASK_FAMILY" \
+          IMAGE="$ECR_REGISTRY/$ECR_API_REPO@$IMAGE_DIGEST" \
+          COMMAND_JSON='["npm", "run", "db:migrate:deploy"]' \
+          LABEL=migration \
+          STARTED_BY="deploy-${GITHUB_RUN_ID}" \
+          DEADLINE_SECONDS=1800 \
+            bash scripts/ops/ecs-one-off-task.sh
+          EXIT_CODE=$?
+
+          case "$EXIT_CODE" in
+            0)
+              echo "Schema migration succeeded — services may roll."
+              ;;
+            3)
+              echo "::error::The database has never been provisioned (deploy-migrate.mjs exit 3)."
+              echo "::error::Run the 'Provision database (first run)' workflow (provision-database.yml) once, then deploy again."
+              exit 1
+              ;;
+            124)
+              echo "::error::The migration outlived its 30-minute deadline and was stopped. Services were NOT rolled."
+              exit 1
+              ;;
+            *)
+              echo "::error::Schema migration failed (exit ${EXIT_CODE}). Services were NOT rolled."
+              exit 1
+              ;;
+          esac
+
+  # ── Deploy API to ECS ────────────────────────────────────────────────────
+  deploy-api:
+    name: Deploy API → ECS
+    # `migrate` is a hard gate: rolling the API onto a schema whose migration
+    # failed is exactly the outcome this deploy path is meant to prevent.
+    needs: [build-push, migrate]
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.deploy_api != 'false' }}
+    environment: production
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64 # v2
 
       - name: Register pinned task definition revision (API)
         id: register-api-td
@@ -599,6 +511,8 @@ jobs:
           IMAGE_TAG: ${{ needs.build-push.outputs.image_tag }}
           IMAGE_DIGEST: ${{ needs.build-push.outputs.api_digest }}
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          # The revision migrate's preflight checked; see that step.
+          CHECKED_API_TD_ARN: ${{ needs.migrate.outputs.api_td_arn }}
         # The deterministic shape ECS supports: pull the current task def,
         # patch the API container image to <repo>@sha256:<digest> (the
         # digest the build-push job captured), register it as a new
@@ -608,19 +522,40 @@ jobs:
         # guarantee the right image was used because it only re-pulls
         # whatever the existing task def already references.
         run: |
+          set -euo pipefail
+
           if [[ -z "$IMAGE_DIGEST" || "$IMAGE_DIGEST" != sha256:* ]]; then
             echo "::error::API image digest missing or malformed: '$IMAGE_DIGEST'. Refusing to deploy without a pinned digest."
+            exit 1
+          fi
+
+          # Roll only the revision the preflight checked. If the family has
+          # moved since (a terraform apply, or an earlier attempt of this job
+          # registering its own revision), the new latest was never checked,
+          # and rolling the old one would silently discard whatever changed.
+          # Either way the answer is a fresh run, which checks the latest.
+          if [[ -z "$CHECKED_API_TD_ARN" ]]; then
+            echo "::error::migrate published no checked API revision; refusing to roll an unchecked one."
+            exit 1
+          fi
+          LATEST_API_TD_ARN=$(aws ecs describe-task-definition \
+            --task-definition "$ECS_API_TASK_FAMILY" \
+            --no-cli-pager \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          if [[ "$LATEST_API_TD_ARN" != "$CHECKED_API_TD_ARN" ]]; then
+            echo "::error::The API task definition moved after the preflight checked it (checked $CHECKED_API_TD_ARN, latest now $LATEST_API_TD_ARN). Re-run the whole workflow so the latest revision is checked before it rolls."
             exit 1
           fi
 
           PINNED_IMAGE="$ECR_REGISTRY/$ECR_API_REPO@$IMAGE_DIGEST"
           echo "Pinning API task def to: $PINNED_IMAGE"
 
-          # Get current task def, strip metadata that's not allowed on
+          # Get the checked task def, strip metadata that's not allowed on
           # register-task-definition input, patch the API container image,
           # register the new revision.
           aws ecs describe-task-definition \
-            --task-definition "$ECS_API_TASK_FAMILY" \
+            --task-definition "$CHECKED_API_TD_ARN" \
             --no-cli-pager \
             --query 'taskDefinition' > /tmp/api-td.json
 
@@ -637,6 +572,10 @@ jobs:
             --no-cli-pager \
             --query 'taskDefinition.taskDefinitionArn' \
             --output text)
+          if [[ -z "$NEW_TD_ARN" || "$NEW_TD_ARN" == "None" ]]; then
+            echo "::error::register-task-definition returned no ARN for the API family."
+            exit 1
+          fi
 
           echo "Registered API task def: $NEW_TD_ARN"
           echo "task_def_arn=$NEW_TD_ARN" >> "$GITHUB_OUTPUT"

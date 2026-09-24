@@ -28,6 +28,9 @@
  *      record of who put it there is not evidence a tenant can defend
  *   4. the document and its audit row are ATOMIC — neither can exist alone
  *   5. a caller from another organization is refused and writes nothing
+ *   6. an upload refused AFTER its bytes were stored leaves no copy in the
+ *      tenant's storage — the refusal says nothing was changed or saved, and
+ *      a copy under no record is one no surface can list or delete
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
@@ -327,5 +330,127 @@ describe('POST /api/vault/ingest — another tenant cannot write into your progr
       [otherProgramId],
     );
     expect(after.rows[0].n).toBe(before.rows[0].n);
+  });
+});
+
+describe('POST /api/vault/ingest — a refused upload leaves no bytes behind', () => {
+  /* Each refusal below happens after the provider has already written the
+     bytes. Listed through the provider — the same seam the product stores
+     through — so the assertion is about what the tenant's storage holds, not
+     about a path this suite guesses at. */
+  async function storedVersionIds(): Promise<Set<string>> {
+    const { getStorageProvider } = await import('../../server/services/storage/index');
+    return new Set((await getStorageProvider().list(orgId, programId)).map((o) => o.vaultVersionId));
+  }
+  /* Bytes that differ from PDF_BYTES but still carry the PDF signature. */
+  const revised = (tag: string) => Buffer.concat([PDF_BYTES, Buffer.from(`% ${tag}\n`, 'utf8')]);
+
+  it('different bytes at an occupied code and version: 409, and no new object in storage', async () => {
+    const before = await storedVersionIds();
+    const res = await request(app)
+      .post('/api/vault/ingest')
+      .field('programId', programId)
+      .field('documentCode', PROBE_CODE)
+      .field('documentTitle', 'A different file under the same code')
+      .field('documentType', 'OTHER')
+      .attach('file', revised('version-conflict'), 'dhf-extract.pdf');
+
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe('VERSION_CONTENT_CONFLICT');
+    expect([...(await storedVersionIds())].filter((id) => !before.has(id))).toEqual([]);
+  });
+
+  it('the same bytes under a second code: 409, no new object, and the original still reads back', async () => {
+    const before = await storedVersionIds();
+    const res = await request(app)
+      .post('/api/vault/ingest')
+      .field('programId', programId)
+      .field('documentCode', `${PROBE_CODE}-DUP`)
+      .field('documentTitle', 'The same file filed twice')
+      .field('documentType', 'OTHER')
+      .attach('file', PDF_BYTES, 'dhf-extract-copy.pdf');
+
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe('DUPLICATE_CONTENT');
+    expect([...(await storedVersionIds())].filter((id) => !before.has(id))).toEqual([]);
+
+    /* The discard removes the refused attempt's OWN version — a fresh id per
+       put — so the admitted record's bytes, which are the same bytes, are
+       untouched. */
+    const { rows } = await owner.query(
+      `SELECT storage_version_id FROM vault.documents WHERE document_code = $1`,
+      [PROBE_CODE],
+    );
+    const { getStorageProvider } = await import('../../server/services/storage/index');
+    const got = await getStorageProvider().get(String(rows[0].storage_version_id), orgId);
+    expect(got, 'the admitted document must still be readable').toBeTruthy();
+    expect(createHash('sha256').update(got!.bytes).digest('hex')).toBe(PDF_SHA256);
+  });
+
+  it('a folder outside the program taxonomy: 400, and no new object in storage', async () => {
+    const before = await storedVersionIds();
+    const res = await request(app)
+      .post('/api/vault/ingest')
+      .field('programId', programId)
+      .field('documentCode', `${PROBE_CODE}-FOLDER`)
+      .field('documentTitle', 'Filed into a folder that does not exist')
+      .field('documentType', 'OTHER')
+      .field('folderId', 'dbtest-no-such-folder')
+      .attach('file', revised('invalid-folder'), 'misfiled.pdf');
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('INVALID_FOLDER');
+    expect([...(await storedVersionIds())].filter((id) => !before.has(id))).toEqual([]);
+  });
+
+  it('the reference check the discard relies on sees an admitted record, as the runtime role', async () => {
+    /* The discard deletes only after asking whether a record points at the
+       version. Under RLS a query that cannot see the row answers "no", so a
+       blinded check would turn the safeguard into a deletion of a record's
+       bytes. Asked here in the tenant's own scope, as app_service. */
+    const { rows } = await owner.query(
+      `SELECT storage_version_id FROM vault.documents WHERE document_code = $1`,
+      [PROBE_CODE],
+    );
+    const admitted = String(rows[0].storage_version_id);
+    const { storedVersionIsReferenced } = await import(
+      '../../server/services/vault/vault-ingest-discard'
+    );
+    const { runWithTenantScope } = await import('../../server/db/tenantStore');
+    const scope = {
+      tenantId: String(orgId),
+      orgUuid,
+      role: 'admin',
+      source: 'request' as const,
+      caller: 'tests/db/vault-ingest.dbtest.ts',
+    };
+    expect(await runWithTenantScope(scope, () => storedVersionIsReferenced(admitted, orgId))).toBe(true);
+    expect(
+      await runWithTenantScope(scope, () =>
+        storedVersionIsReferenced('00000000-0000-4000-8000-000000000000', orgId),
+      ),
+    ).toBe(false);
+    /* The organization filter is part of the answer: the same version asked
+       for under another organization is not held. */
+    expect(await runWithTenantScope(scope, () => storedVersionIsReferenced(admitted, otherOrgId))).toBe(false);
+  });
+
+  it('an admitted upload still stores exactly one object — the one its record names', async () => {
+    const before = await storedVersionIds();
+    const res = await request(app)
+      .post('/api/vault/ingest')
+      .field('programId', programId)
+      .field('documentCode', `${PROBE_CODE}-NEW`)
+      .field('documentTitle', 'A second, different document')
+      .field('documentType', 'OTHER')
+      .attach('file', revised('admitted'), 'second.pdf');
+
+    expect(res.status).toBe(201);
+    const added = [...(await storedVersionIds())].filter((id) => !before.has(id));
+    const { rows } = await owner.query(
+      `SELECT storage_version_id FROM vault.documents WHERE document_code = $1`,
+      [`${PROBE_CODE}-NEW`],
+    );
+    expect(added).toEqual([String(rows[0].storage_version_id)]);
   });
 });

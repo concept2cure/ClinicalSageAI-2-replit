@@ -40,7 +40,11 @@ module "ecr" {
 # verbatim, and the app reads DATABASE_URL as a connection string, so no task
 # could connect.
 #
-#   DATABASE_URL      the owner role (c2c_admin). Migrations run as it.
+#   DATABASE_URL      the owner role (c2c_admin). Migrations run as it, and so
+#                     does the API at boot: ensureCoreTables / ensureAuthTables
+#                     run DDL on it, and server/routes/tenants-simple.ts serves
+#                     routes through a client on it, outside RLS. A known
+#                     exposure (docs/evidence/W2/2026-09-23b/README.md).
 #   APP_DATABASE_URL  app_service, LOGIN NOSUPERUSER NOBYPASSRLS. The runtime
 #                     connects as it; under RLS_ENFORCE=on the boot posture probe
 #                     refuses a superuser or BYPASSRLS role.
@@ -48,6 +52,8 @@ module "ecr" {
 # deploy-migrate mints app_service from APP_SERVICE_DB_PASSWORD
 # (scripts/db/provision-app-role.mjs), and the migrate task is derived from the
 # API task definition, so that password rides in the API task's secrets too.
+# The mint works as the RDS master (not a superuser) and sends the server only
+# the password's SCRAM verifier: RDS logs DDL to CloudWatch.
 #
 # Alphanumeric, so the passwords need no URL-encoding (40 characters, about 238
 # bits). sslmode=verify-full makes every consumer of the URL require TLS and
@@ -147,7 +153,31 @@ locals {
     { name = "AI_PROVIDER_PLACEMENT_APPROVALS", value = var.ai_provider_placement_approvals },
     # Reset and invitation links are built on APP_URL and never on the Host
     # header. The public origin is the CloudFront custom domain.
-    { name = "APP_URL", value = "https://${var.domain_aliases[0]}" },
+    { name = "APP_URL", value = local.app_origin },
+    # In production csrfProtection refuses every state-changing browser request
+    # (sign-in included) whose Origin is not in ALLOWED_ORIGINS or a short
+    # hardcoded list (server/middleware/enterprise-security.ts). Without this, a
+    # deployment on any other domain boots, reports ready, and nobody can sign
+    # in. domain_aliases are validated to be lowercase hostnames (variables.tf).
+    { name = "ALLOWED_ORIGINS", value = local.app_origin },
+  ]
+
+  # The deployment's public origin: the first CloudFront alias. One input, so
+  # APP_URL and ALLOWED_ORIGINS cannot disagree with the domain browsers use.
+  app_origin = "https://${var.domain_aliases[0]}"
+
+  # What every container of this image needs to boot. The API and the worker
+  # run the same image and the same import-time refusals, so they share it.
+  boot_secrets = [
+    { name = "DATABASE_URL", value_from = module.secrets.secret_arns["database_url"] },
+    { name = "APP_DATABASE_URL", value_from = module.secrets.secret_arns["app_database_url"] },
+    { name = "JWT_SECRET", value_from = module.secrets.secret_arns["jwt_secret"] },
+    { name = "REFRESH_TOKEN_SECRET", value_from = module.secrets.secret_arns["refresh_token_secret"] },
+    { name = "MFA_ENCRYPTION_KEY", value_from = module.secrets.secret_arns["mfa_encryption_key"] },
+    { name = "AUDIT_HMAC_KEY", value_from = module.secrets.secret_arns["audit_hmac_key"] },
+    { name = "AUDIT_HMAC_SECRET", value_from = module.secrets.secret_arns["audit_hmac_secret"] },
+    { name = "CONNECTOR_ENCRYPTION_KEY", value_from = module.secrets.secret_arns["connector_encryption_key"] },
+    { name = "OPENAI_API_KEY", value_from = module.secrets.secret_arns["openai_api_key"] },
   ]
 }
 
@@ -188,7 +218,14 @@ module "alb" {
 # ── Compute (ECS Fargate) ───────────────────────────────────────────────────
 
 module "ecs" {
-  source                = "../modules/ecs-fargate"
+  source = "../modules/ecs-fargate"
+  # The api service registers with the ALB's target group, and ECS refuses
+  # CreateService until a listener attaches that group to a load balancer. The
+  # module sees only the target group's ARN, so without this a first apply can
+  # create the service while the ALB is still provisioning. The mocked apply
+  # cannot observe it; this orders it (docs/evidence/W2/2026-09-23b/terraform-apply-ordering.txt).
+  depends_on = [module.alb]
+
   cluster_name          = local.long
   region                = var.region
   vpc_id                = module.vpc.vpc_id
@@ -220,32 +257,22 @@ module "ecs" {
 
   # Every name deploy-aws.yml's preflight requires, so the task definition this
   # renders is the one it accepts (tests/boot_contract.tftest.hcl reads the
-  # preflight's list and checks it against this output).
-  api_secrets = [
-    { name = "DATABASE_URL", value_from = module.secrets.secret_arns["database_url"] },
-    { name = "APP_DATABASE_URL", value_from = module.secrets.secret_arns["app_database_url"] },
+  # preflight's list and checks it against both containers). The API adds
+  # APP_SERVICE_DB_PASSWORD: the migrate task is cloned from its definition and
+  # re-aligns app_service from it (provision-app-role.mjs sends only its SCRAM
+  # verifier). The API never mints; APP_DATABASE_URL already holds the password.
+  api_secrets = concat(local.boot_secrets, [
     { name = "APP_SERVICE_DB_PASSWORD", value_from = module.secrets.secret_arns["app_service_db_password"] },
-    { name = "JWT_SECRET", value_from = module.secrets.secret_arns["jwt_secret"] },
-    { name = "REFRESH_TOKEN_SECRET", value_from = module.secrets.secret_arns["refresh_token_secret"] },
-    { name = "MFA_ENCRYPTION_KEY", value_from = module.secrets.secret_arns["mfa_encryption_key"] },
-    { name = "AUDIT_HMAC_KEY", value_from = module.secrets.secret_arns["audit_hmac_key"] },
-    { name = "AUDIT_HMAC_SECRET", value_from = module.secrets.secret_arns["audit_hmac_secret"] },
-    { name = "CONNECTOR_ENCRYPTION_KEY", value_from = module.secrets.secret_arns["connector_encryption_key"] },
-    { name = "OPENAI_API_KEY", value_from = module.secrets.secret_arns["openai_api_key"] },
-  ]
+  ])
 
-  # The worker's DATABASE_URL was the same JSON secret. Whether a worker exists
-  # at all is a founder decision (D1 brief B7); its database wiring is fixed
-  # here regardless.
-  worker_secrets = [
-    { name = "DATABASE_URL", value_from = module.secrets.secret_arns["database_url"] },
-    { name = "APP_DATABASE_URL", value_from = module.secrets.secret_arns["app_database_url"] },
-    { name = "OPENAI_API_KEY", value_from = module.secrets.secret_arns["openai_api_key"] },
-  ]
+  # The worker runs the same image, so the same import-time refusals: with less
+  # than the full contract it exits at boot. Whether a worker exists at all is
+  # a founder decision (B6+B7); while it does, it can start.
+  worker_secrets = local.boot_secrets
 
   # The release signer (release_signing.tf) and the boot contract's plain values.
   api_environment    = concat(local.signer_environment, local.boot_environment)
-  worker_environment = concat(local.signer_environment, [{ name = "RLS_ENFORCE", value = "on" }])
+  worker_environment = concat(local.signer_environment, local.boot_environment)
 
   tags = var.tags
 }

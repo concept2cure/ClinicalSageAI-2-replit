@@ -1,0 +1,67 @@
+# The production image can load its server bundle again (2026-09-24).
+
+## 1. A real image-shaped dependency tree: the Dockerfile's own install command
+$ cp package.json package-lock.json <dir> && npm ci --legacy-peer-deps --omit=dev --no-audit --no-fund
+added 1474 packages in 1m
+exit=0
+  vite                         absent
+  @vitejs/plugin-react         absent
+  drizzle-kit                  absent
+  express                      present
+  @modelcontextprotocol/sdk    present
+  @aws-sdk/client-kms          present
+# Each bundle is booted from <dir>/{before,after}/dist/index.js with <dir>/node_modules the only
+# node_modules on any ancestor path (checked; an unrelated scratch node_modules higher up had
+# first made both boots resolve vite, and was moved aside).
+# Environment: throwaway values for the whole boot contract, database on a closed port
+# (127.0.0.1:1), CONCEPT2CURE_SIGNER_MODE=hmac with ACCEPT_HMAC so no AWS call is needed.
+
+## 2. BEFORE — server/vite.ts at 897d79579
+$ node dist/index.js
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'vite' imported from /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/a31e8db3-71ba-5df6-bbeb-4317a7f01972/scratchpad/prunedimg/before/dist/index.js
+exit=1
+
+## 3. AFTER — vite imported inside setupVite(); shutdown exits 1 on a crash
+$ node dist/index.js
+{"level":30,"context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+[database] Initial connection test failed: connect ECONNREFUSED 127.0.0.1:1
+UNCAUGHT EXCEPTION: Error: connect ECONNREFUSED 127.0.0.1:1
+exit=1
+# Every import-time refusal (MFA, RLS, audit seal and chain, AI placement, JWT, refresh,
+# connector, signer) passed; the process ran application code up to the database connect.
+# Exit 1, not 0: before this change the same crash exited 0 (server/startup/shutdown.ts).
+
+## 4. The gate, on the fixed bundle
+$ node scripts/build-server.mjs && node scripts/ci/check-server-bundle-prod-imports.mjs
+[server-bundle-prod-imports] ok — dist/index.js: all 62 packages imported at load time are shipped by npm ci --omit=dev; 20 imported at run time, 2 of them not shipped, each by written exception:
+  ssh2-sftp-client — ssh2-sftp-client (dynamic-import): server/services/submission-gateways/fda-esg.ts SFTP transport. Not in package.json at all, so the image cannot send over SFTP: absence is refused before any connection, with a TransportError carrying NOTHING_TRANSMITTED. Whether production ships it is the ESG lane's decision (D7); this entry records that it does not today.
+  citation-js — citation-js (dynamic-import): server/integrations/citationjs/client.ts — optional citation normalization. Absence logs "Citation.js normalization unavailable" and returns no normalization, never a made-up one.
+exit=0
+
+## 5. The gate's self-test (each cut must fail, the intact bundle must pass)
+$ node scripts/ci/check-server-bundle-prod-imports.selftest.mjs
+ok   — intact bundle passes (exit 0)
+ok   — a devDependency imported at load time (the vite defect): exit 1, 1 finding(s)
+ok   — a devDependency imported at run time, with no written exception: exit 1, 1 finding(s)
+ok   — a phantom package the lockfile does not know: exit 1, 1 finding(s)
+ok   — a package installed only nested, unresolvable from dist/: exit 1, 1 finding(s)
+ok   — a written RUN-time exception imported at LOAD time: exit 1, 1 finding(s)
+
+[server-bundle-prod-imports:selftest] the gate fails on all 5 cuts and passes the intact bundle.
+exit=0
+
+## 6. The dev path still works: setupVite() under tsx, as npm run dev runs it
+$ npx tsx dev-vite-probe.mts   # express + http server, setupVite, then two requests
+GET / -> index.html transformed by vite (main.tsx?v= present)
+GET /src/main.tsx -> 200 text/javascript
+
+## 7. Crash exit code, unit level (server/startup/__tests__/shutdown-exit-code.test.ts)
+### against HEAD's shutdown.ts
+ × server/startup/__tests__/shutdown-exit-code.test.ts > process exit codes > an uncaught exception exits 1 after a drain that completes
+ ✓ server/startup/__tests__/shutdown-exit-code.test.ts > process exit codes > a requested stop (SIGTERM) still exits 0
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 1 passed (2)
+### against this change
+ ✓ server/startup/__tests__/shutdown-exit-code.test.ts > process exit codes > an uncaught exception exits 1 after a drain that completes
+ ✓ server/startup/__tests__/shutdown-exit-code.test.ts > process exit codes > a requested stop (SIGTERM) still exits 0
+      Tests  2 passed (2)
