@@ -19,6 +19,92 @@ database.
 
 ---
 
+## 0. Re-baseline, 2026-09-24 — what held and what did not
+
+Nineteen days and several hundred commits after this was written, every checkable claim in
+§1–§12 was re-verified against trunk: one verifier per section, an adversarial skeptic over
+every claim the verifiers overturned, and a sweep of the 394 commits since, looking for work
+that changed a claim without touching this file. The corrections are made **in place**, dated,
+with the original text kept where a reader might have acted on it.
+
+| Verdict | Claims | Meaning |
+|---|---:|---|
+| Closed | 63 | Fixed and reachable at HEAD |
+| Partly closed | 38 | Fixed in part; the remainder is named where the claim sits |
+| Still true | 165 | Holds at HEAD |
+| Changed | 15 | The code moved; the substance holds or shifted |
+| **Was wrong** | **31** | **False when written** |
+| Unverifiable | 5 | Cannot be decided from code (mostly claims about Veeva) |
+
+About 95 gaps this document never named were found as well. They are on the work-order board
+(`docs/work-orders/README.md`, "Found by the vault re-baseline"), each handed to the lane
+that owns the file, not fixed from here.
+
+**Thirty-one claims were false when written.** A document that tells a founder which gaps are
+closed is only useful if "closed" is true, and too many of this one's were not. The ones that
+mattered, each corrected where it sits:
+
+1. **"A vault document can be filed and assembled — CLOSED 2026-09-17"** (§4.5, §11). False
+   when written: a vault leaf could be placed, then the assembler skipped it silently and it
+   could never clear dispatch. It is closed at HEAD by later commits, for PDFs uploaded after
+   the storage move. Filing into a non-CTD submission was judged against the CTD vocabulary
+   and refused, and a non-PDF could be placed that the packager would refuse. Both fixed
+   2026-09-24 (`2b869304`).
+2. **"`GET /api/v1/documents` — CLOSED"** (§5 API). A root-mounted gate put
+   `authenticateToken` on every `/api` path registered after it, so every key-only call was
+   refused 401 in every environment until F-32 (`2dd78265`, `e482106b`). The endpoint also
+   reported `processingStatus: PENDING` for every document (removed, `e4ecfb26`), and the test
+   said to make the defect class "unable to recur silently" compared `/docs` with itself
+   (now calls every endpoint, `5157a08c`).
+3. **"The purge … CLOSED TWICE"** (§5 API). The records closed; the stored bytes did not, and
+   the purge's own code said so. Open under tenant offboarding (D6), behind a legal-hold check
+   the purge does not make.
+4. **"A row stays readable after a backend change" / "the fix is now a one-variable change"**
+   (§5 Storage). The reader never consults the recorded provider; S3 could not be selected in
+   any production build until `647b71e3`; `S3StorageProvider.get` fails past 1000 keys; the
+   backfill script could not start until `eaedc4d1` and is not in the production image. Owned
+   by the D1 storage lane.
+5. **"Sell today … the per-document hash-chained audit"** (§1, §2). The canonical chain has no
+   client caller, and its verifier does not catch an edited actor, reason or stage.
+6. **"A live, client-reachable … guarded state machine"** (§2 QMS). The guard sits on a router
+   no client calls; the QMS backend the client does call writes status unguarded.
+7. **"Refusals surface as a 409 … never a 500"** (§5 Lifecycle). Only the binding's; the leaf
+   writer's own refusals were 500s (`4df7e138`). The same route recorded Part 11 signatures
+   without re-verifying the signer (`adaba0fb`).
+8. **"One missing write, not a missing subsystem"** (§5 Data room). Under production RLS an
+   external caller sees nothing even with a grant row. It needs the non-tenant principal §7
+   designs.
+9. **"Layer 1 … is now inert"** (§5). The public API exposed it — see item 2.
+10. **The `credentials: 'include'` sweep** (§5). The string search missed three call sites that
+    could not authenticate anywhere, including the shared e-signature modal. Fixed with a gate,
+    `ci:unauthenticated-fetch` (`94066bc3`).
+
+Seven of these ten (1, 2, 3, 4, 7, 9, 10) were this assessment grading its own author's
+fixes. The pattern in all of them: **a claim was checked against the change that was meant to
+close it, not against the path a user or integrator takes**. The corrections were verified on
+that path, and every fix this lane made above was shown failing on its case first
+(`docs/evidence/D2-VAULT-FILING/`, `D5-ESIGN-TOKEN/`, `D5-LIFECYCLE-SIGNING/`,
+`D6-API-SCOPES/`, `D6-EXPORT-COVERS-PURGE/`, all dated 2026-09-24).
+
+**Scorecard (§3), revised in place.** *Data room* stays 0: a fail-closed portal shell exists,
+but no one can be granted into it. *Publishing* "4, AT PARITY" was overstated when written.
+index.xml never referenced Module 1, a withdrawal shipped the withdrawn bytes, transmit was
+unreachable for every release-signature type, and one region's signature cleared another's
+sequence. The D7 lanes fixed these between 2026-09-20 and 2026-09-24; a new score is theirs to
+evidence. *Validation* "2, FAR" is stale: IQ and six OQs were executed locally in the
+production posture (`docs/evidence/W3/`), and VSR-001 is unsigned (D4).
+
+**What CLAUDE.md RULE 2 changes about §6–§12.** This roadmap predates the launch definition
+(`docs/LAUNCH_DEFINITION_OF_DONE.md`, rows D1–D10). Until those rows are green, nothing here
+that adds a capability outside the launch catalog gets a session. That covers the data room
+(§7), eTMF, the MDX document vault and Veeva migration: they ship behind flags that are off in
+production. Read §6–§8 as design notes, not a queue. The work that remains in scope is what a
+launch row names: the Vault as a catalog surface (D2), tenant isolation including `FORCE` on
+`vault.*` (D3), Part 11 (D5), security posture and tenant offboarding (D6), and one real
+sequence (D7).
+
+---
+
 ## 1. The bottom line
 
 The engineering here is better than the product is. There is an unusual amount of genuinely
@@ -40,6 +126,14 @@ The gap is not evenly distributed, and that is the useful part of this assessmen
 - **A quarter of real work:** the document spine (identity, version, tenant, lifecycle).
 - **A quarter more:** the data room, which does not exist in any form.
 
+*(Corrected 2026-09-24, see §0. "Sell today … the per-document hash-chained audit" was wrong
+when written: that chain has no client caller, and its verifier misses an edited actor, reason
+or stage. Vault search closed on 2026-09-19. "Does not exist in any form" was wrong: a
+fail-closed portal existed. What does not exist is a way to grant anyone into it, any document
+in it, or a principal that could pass production RLS from outside the tenant. `vault.documents`
+now has a tenant column, but it is nullable and there is no `FORCE`. That is attribution, not
+isolation.)*
+
 **Do not start differentiation work until §4 is closed.** Nothing else matters if the vault
 leaks across tenants or cannot publish a submission.
 
@@ -53,18 +147,19 @@ cases genuinely ahead of the incumbent.
 | Capability | Where | Assessment |
 |---|---|---|
 | **Deterministic eCTD packager** | `server/services/ectd/leaf-pdf-renderer.ts`, `orchestrator-real-package.ts:164` | Real XML backbone, real leaf rendering, md5+sha256, verifies the actual PDF magic number rather than trusting the DB mime string (`leaf-source-resolver.ts:65`). Publishing alone would score **4/5** against Veeva. |
-| **Hash-chained per-document audit** | `server/services/regulatory/canonicalDocumentStore.ts:171-203`, `shared/regulatory/document-lifecycle.ts:247-253` | Tamper-evident chain with a verifier, `chainValid` returned on read. Veeva's audit trail is not hash-chained. **Ahead.** |
+| **Hash-chained per-document audit** | `server/services/regulatory/canonicalDocumentStore.ts:171-203`, `shared/regulatory/document-lifecycle.ts:247-253` | Tamper-evident chain with a verifier, `chainValid` returned on read. Veeva's audit trail is not hash-chained. **Ahead.** *(Corrected 2026-09-24: the verifier checks linkage only. An event whose actor, reason or stage was edited, with its hash fields left alone, still reads `chainValid`. The chain also has no client caller. It is not ahead until both are fixed.)* |
 | **Correct Part 11 e-signature service** | `server/routes/esignature.ts:97` (bcrypt re-auth), `:305-311` (`SIGNER_NOT_ATTRIBUTABLE`), `:322-360` (§11.70 content binding) | Genuinely compliant. The problem is that a second, non-compliant signature route also exists — see §4.3. |
-| **QMS / controlled documents** | `server/services/qms/qms.service.ts:21` (`DOC_TRANSITIONS`), `:75` (effective date on approval), `:87-118` (training records + compliance), `server/routes/mdx-qms.ts:338-353` (periodic review due), `client/src/concept2cure/quality/SopRegister.tsx` | **The review's parity scorecard missed this entirely; the completeness critic caught it.** A live, client-reachable, QualityDocs-shaped module: guarded state machine, effective dates, periodic review, training assignment, change control, suppliers, audits, NC. Score it **3/5, CLOSE** — not 0. |
+| **QMS / controlled documents** | `server/services/qms/qms.service.ts:21` (`DOC_TRANSITIONS`), `:75` (effective date on approval), `:87-118` (training records + compliance), `server/routes/mdx-qms.ts:338-353` (periodic review due), `client/src/concept2cure/quality/SopRegister.tsx` | **The review's parity scorecard missed this entirely; the completeness critic caught it.** A live, client-reachable, QualityDocs-shaped module: guarded state machine, effective dates, periodic review, training assignment, change control, suppliers, audits, NC. Score it **3/5, CLOSE** — not 0. *(Corrected 2026-09-24: the guarded state machine cited is on a router no client calls. The QMS backend the client does call has no guard on status writes, and its approval path is unsigned. There are two backends; the board hands this to the QMS lane.)* |
 | **Ingest safety** | `server/routes/vault-ingest.ts:1-30` (documented pipeline), magic-byte + ClamAV verification, storage failure is fatal rather than a partial success | Better than most competitors' upload paths. |
 | **Download integrity** | `server/routes/c2c/project-vault.ts:892-905` | Re-hashes the bytes and refuses to serve on mismatch, with an honest error. Veeva does not do this. **Ahead.** |
 | **Immutable authored versions** | `server/services/ana/artifactVersionStore.ts:243-353` | `FOR UPDATE`, SHA-256 de-dupe, `max(version)+1` append, refuses a null author on Part 11 grounds. The strongest versioning code in the repo — it just does not govern the Vault. |
 | **Section-level version ledger enforced in the database** | `migrations/20260528_phase9_document_schema.sql:125-142`, `:186-190` | A `BEFORE UPDATE` trigger that raises rather than writing an unattributed change. No application path can bypass it. **Ahead** — Veeva enforces this in the application layer. |
-| **Default-deny auth boundary** | `server/middleware/authBoundary.ts:60-119`, `server/middleware/tenantContext.ts:93-134` | Exact-match allowlist over `/api`; a forged `x-org-id` is logged as an impersonation attempt. |
+| **Default-deny auth boundary** | `server/middleware/authBoundary.ts:60-119`, `server/middleware/tenantContext.ts:93-134` | Allowlist over `/api`, exact and segment-prefix entries *(this said "exact-match" until 2026-09-24)*; a forged `x-org-id` is logged as an impersonation attempt. |
 | **AI agent layer over the corpus** | `server/services/ana/` | Nothing comparable in Veeva. This is the wedge — see §9. |
 
 The honesty culture is itself an asset. `shared/schema/vault.ts:9-11` declares its own inactive
-tables. `server/services/ectd/leaf-source-resolver.ts:78-88` documents the exact reason a vault
+tables *(corrected 2026-09-24: the markings were false when this praised them, and the file
+has since corrected itself)*. `server/services/ectd/leaf-source-resolver.ts:78-88` documents the exact reason a vault
 document cannot become a submission leaf rather than silently dropping it. That candour is why
 this assessment could be written at all.
 
@@ -84,14 +179,14 @@ this assessment could be written at all.
 | Metadata / taxonomy / controlled vocabularies | 2 | FAR |
 | eTMF (DIA reference model) | 1 | FAR |
 | **QMS / QualityDocs** *(added on correction)* | **3** | **CLOSE** |
-| RIM: registrations, submissions, publishing | 3 | FAR overall; publishing alone 4, **AT PARITY** |
+| RIM: registrations, submissions, publishing | 3 | FAR overall; publishing alone 4, **AT PARITY** — *overstated when written (§0); the D7 lanes' evidence re-scores it* |
 | Search & retrieval | **3** *(was 1; re-verified 2026-09-19)* | Functional — FTS + passage search, both wired. FAR to parity: no saved searches, facets or VQL |
-| External collaboration / data room | **0** | **ABSENT** |
+| External collaboration / data room | **0** | **ABSENT** as a capability: a fail-closed portal shell exists, nobody can be granted in *(§0)*. Out of launch scope under RULE 2 |
 | Bulk ops & migration | 1 | FAR |
 | Storage & scale | 1 | FAR |
 | Reporting & analytics | 2 | FAR |
 | API & integrations | 1 | FAR |
-| Validation package (IQ/OQ/PQ, CSV) | 2 | FAR |
+| Validation package (IQ/OQ/PQ, CSV) | 2 | FAR — *stale: IQ and six OQs executed locally in the production posture; VSR-001 unsigned (D4, `docs/evidence/W3/`)* |
 
 **Would win an evaluation on:** the AI authoring/agent layer, the packager's integrity
 guarantees, the hash-chained audit.
@@ -252,8 +347,17 @@ regardless; (c) only then `FORCE`.
 > Deliberately NOT done here for that reason. (c) is now a two-line change with a stated
 > order, rather than an unquantified risk.
 
-### 4.5 A vault document can never become a submission — **CLOSED 2026-09-17**
+### 4.5 A vault document can never become a submission — closed later than this said
 
+> **Corrected 2026-09-24.** This was marked CLOSED on 2026-09-17, and it was not. A vault leaf
+> could be placed, but the assembler skipped it silently, and it could never clear dispatch.
+> "Nothing is lost and nothing is silent" (below) was false on the day it was written. It is
+> closed at HEAD by later commits: fail-closed at freeze, dispatch and transmit, for PDFs
+> uploaded after the storage move. Filing into a non-CTD submission, and refusing a non-PDF
+> before placement, landed on 2026-09-24 (`2b869304`). The backfill command below could not
+> start until `eaedc4d1` (2026-09-24), and it is not in the production image (the D1 storage
+> lane has it). What follows is the 2026-09-17 text.
+>
 > **This gap is closed.** A vault document can now be filed into a submission and
 > assembled into a package. What it took, in order:
 >
@@ -359,13 +463,17 @@ The binding refuses rather than guesses in three places — no `sequenceId` on t
 (`registryId` is an application *type*, and an org can hold several submissions each with a
 sequence 0000), no source the assembler can materialise, and a key-space mismatch where the
 STORE's declared id kind governs rather than the ref's claim. Refusals surface as a 409 in the
-orchestrator's own shape, never a 500.
+orchestrator's own shape, never a 500. *(Corrected 2026-09-24: true only of those three. The
+leaf writer's own refusals, such as a frozen or dispatched sequence or a missing one, returned
+500. They now keep the canonical route's status (`4df7e138`). The same route also recorded
+Part 11 signatures without re-verifying the signer, took the signer's role from the request
+body, and cited whatever `signatureRef` the body sent; fixed in `adaba0fb`.)*
 
 It works for vault documents specifically because `document_uuid` landed earlier this session:
 `SOURCE_ID_KIND` already declared `vault_documents` uuid-keyed, so the model had anticipated
 this seam before there was a column for it.
 
-**Still open here:** `packaged` remains unwired (`ASSEMBLY_BINDING_NOT_WIRED`). The assembler
+**Still open here:** `packaged` remains unwired (`PACKAGING_BINDING_NOT_WIRED`, the code's name; this said `ASSEMBLY_…` until 2026-09-24). The assembler
 exists, but wiring it makes an HTTP transition build a real eCTD package — an architecture
 decision about where that work runs, not the mechanical injection `placed` needed. And
 `vault.documents` still has no stage column of its own; the lifecycle runs over the canonical
@@ -498,6 +606,10 @@ flight upstream fixes two MDX hooks on the same diagnosis — see
 wrong.** It read, in part: *"A repo-wide sweep of `fetch('/api/…')` across `client/src` found
 one more real instance"* (`useSubmissions.ts`, fixed), *"The other 13 hits … are false
 positives"* (that part was right), and *"No CI gate is proposed for this class"*.
+The `useSubmissions.ts` description was wrong too. On a failed read the surface did not show
+"no gate"; it showed a **passing** Validation gate, a failure rendered as clean. It still does
+for any non-ok readiness response, because the hook sets `error: null`. That item is on the
+work-order board, handed to the Submission Center lane.
 
 The sweep searched for the **string** `/api/`. Three more call sites of this defect reach
 `fetch()` in a form that string search cannot see, and all three fail in **every** environment
@@ -567,11 +679,21 @@ default is not.)*
   the handle, the read path is a dual read (rows predating the provider are still addressed by
   `s3_key`), and `scripts/backfill-vault-storage.mjs` moves the backlog without deleting
   originals.
+  *(Corrected 2026-09-24: a row does **not** stay readable after a backend change. The
+  recorded provider is never consulted on read, so switching `STORAGE_PROVIDER` sends every
+  local-minted row to the S3 provider, and each reads as `STORED_FILE_MISSING`. The backfill
+  script failed at its first import from the day it was written until `eaedc4d1`, and it is
+  not in the production image. The D1 storage lane owns both.)*
 - **STILL OPEN, and now a configuration problem rather than a code one.**
   `STORAGE_PROVIDER` defaults to `local` (`storage/index.ts:29`), and
   `infra/k8s/bff-with-predicate-shadow.yaml:18` still runs `replicas: 2` with no shared volume.
   A deployment that does not set `STORAGE_PROVIDER=s3` still has two pods with private disks.
   The fix is now a one-variable change instead of a rewrite, which is the part that moved.
+  *(Corrected 2026-09-24: it was not one variable. S3 could not be selected in any production
+  build (the ESM bundle broke the SDK's `require`) until `647b71e3`, and an unrecognised
+  value fell back to local disk. `S3StorageProvider.get` cannot find objects past the first
+  1000 keys, rows minted locally would be orphaned, and the deploy preflight did not require
+  durable storage. D1 lane.)*
 - **STILL OPEN.** Uploads are buffered fully in memory (`multer.memoryStorage()`,
   `vault-ingest.ts:47`), capped at 50 MB.
 - **`processing_status` is written `PENDING` and never advanced — still true**, and worth more
@@ -602,7 +724,10 @@ percentage (rendered as an em dash), the counts are counted rather than inferred
 subtraction, and the same reasoning is already written down twice in this codebase — beside
 `uploaded` in `v2/fixtures/vault-data.ts`, and beside `assessed: false` in
 `readinessEvaluator.ts`. Layer 1 remains open and is now inert: nothing user-facing reads
-`processing_status` as a lifecycle any more.
+`processing_status` as a lifecycle any more. *(Corrected 2026-09-24: not inert. The public
+API reported it as `processingStatus` and offered it as a filter, so every document read
+PENDING and a filter on INDEXED returned nothing. The API no longer reports it, and refuses the
+filter by name (`e4ecfb26`).)*
 
 **Project management.** The PM read-model is unreachable from the product: two id-spaces, the
 numeric `projects` spine and the UUID `regulatory_programs` spine, with
@@ -634,6 +759,12 @@ What does not exist, at all:
   `migrations/` or `db/`. So a workspace can be created and the portal will scope correctly to
   it, and no human being can ever be granted access to one. The external path is complete on
   the read side and absent on the grant side — one missing write, not a missing subsystem.
+  *(Corrected 2026-09-24: more than one write. Under production RLS, a caller whose token
+  names another organization sees zero `client_access`, `client_workspaces`, `projects` and
+  `documents` rows even when a grant row exists. A member of the owning tenant can resolve
+  them, but that member's token already opens tenant-wide routes. Serving a genuinely
+  external principal needs the non-tenant principal §7 designs. The grant path is a founder
+  decision, and under RULE 2 the data room gets no sessions until the launch rows are green.)*
 - The portal serves a single route, `GET /overview`. No document objects reach it.
 
 Still true from the original finding: no code path sets a document to a client-visible status,
@@ -669,6 +800,12 @@ loads. Closing a hole is not parity.
   Tenancy is enforced by joining through `regulatory_programs`, not by trusting the nullable
   `vault.documents.organization_id`. A test asserts that **every scope `/docs` advertises is
   required by some endpoint `/docs` lists**, so this class of defect cannot recur silently.
+  *(Corrected 2026-09-24, three ways. The test compared `/docs` with itself, so a route that
+  dropped its scope, or a listed path no route served, still passed. It now calls every
+  listed endpoint (`5157a08c`). The endpoints were not reachable as written either: until F-32
+  (`2dd78265`, `e482106b`) a root-mounted gate refused every key-only `/api` call with 401, in
+  every environment. And the read model reported `processingStatus: PENDING` for every
+  document; that field is removed (`e4ecfb26`).)*
 - ~~The tenant data export cannot see the `vault` schema.~~ **CLOSED** earlier in this pass:
   `EXPORT_SCHEMAS` is `['public', 'vault']` (`tenant-full-export.service.ts:70`).
 - ~~The purge it gates silently skips vault documents, so a GDPR erasure request leaves the
@@ -684,6 +821,12 @@ loads. Closing a hole is not parity.
   it) unioned with the column: `VAULT_DOCUMENT_TENANCY` in `tenant-offboarding.ts`. Proven
   against real Postgres, including a test that runs the *old* predicate and asserts it leaves
   the row behind.
+  *(Corrected 2026-09-24: the rows are closed; the bytes are not, and "leaves the bytes" is
+  the half struck through above. The purge erases records and chunks, and its own code says it
+  does not delete the stored object bytes (`tenant-offboarding.ts`, "HONEST SCOPE"). A GDPR
+  erasure still leaves every document file in storage. Open under tenant offboarding (D6,
+  unclaimed). Erasing regulated documents first needs the legal-hold check the purge does not
+  make, and no hold can be placed through the product.)*
 - **`VaultSyncService` (the Veeva-migration story) has no importer outside its own file.**
   **STILL OPEN** — re-verified 2026-09-19. The only references anywhere are its own definition
   (`server/integrations/veeva-vault/vault-sync-service.ts`) and its own test. No route, service
@@ -883,7 +1026,9 @@ ALL SEVEN SHIPPED**, each verified by making the check fail first.
 
 ~~Still open from §4: a vault document has a tenant now but still cannot become a submission
 leaf (§4.5).~~ **CLOSED 2026-09-17.** The storage seam (the real blocker) and the leaf id
-space were both closed; a vault document can be filed and assembled. Remaining: backfill
+space were both closed; a vault document can be filed and assembled. *(Corrected 2026-09-24:
+false when written, because assembly skipped vault leaves. It is closed at HEAD by later
+commits; see §0 and §4.5.)* Remaining: backfill
 pre-existing rows onto the provider, and build the UI affordance. See §4.5.
 
 **Weeks 2–4 — make the vault usable**
