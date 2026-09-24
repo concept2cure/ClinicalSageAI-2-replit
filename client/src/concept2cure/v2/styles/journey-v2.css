@@ -134,8 +134,8 @@
 /* Intelligence column */
 .c2c-v2 .pj-intel{display:flex;flex-direction:column;gap:16px;}
 .c2c-v2 .pj-mods{display:flex;flex-direction:column;gap:9px;}
-.c2c-v2 .pj-mod{display:grid;grid-template-columns:26px 1fr 40px;gap:10px;align-items:center;width:100%;text-align:left;transition:opacity var(--dur);}
-.c2c-v2 .pj-mod:hover{opacity:.7;}
+.c2c-v2 .pj-mod{display:grid;grid-template-columns:26px 1fr 40px;gap:10px;align-items:center;width:100%;text-align:left;transition:background var(--dur);}
+.c2c-v2 .pj-mod:hover{background:var(--bg-050);}
 .c2c-v2 .pj-mod-n{font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--text-400);}
 .c2c-v2 .pj-mod-b{min-width:0;}
 .c2c-v2 .pj-mod-l{font-size:11.5px;color:var(--text-200);line-height:1.3;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
