@@ -15,8 +15,32 @@
  */
 
 import { resolveToRegistryEntry } from '../../../shared/regulatory/submission-type-bridge.js';
+import type { CanonicalRegion } from '../../../shared/regulatory/region-identity.js';
 
-export type RegulatoryRegion = 'US' | 'EU' | 'JP' | 'CA' | 'CN' | 'KR' | 'UK' | 'AU' | 'CH' | 'BR' | 'IN' | 'SG';
+/**
+ * The twelve jurisdictions, aliased to the canonical type rather than restated.
+ *
+ * This was its own twelve-member union — the same twelve as
+ * shared/regulatory/region-identity's CanonicalRegion, in the same order, in a
+ * codebase where that module exists specifically to end parallel region
+ * vocabularies and whose header asks callers not to write another table. The two
+ * agreeing was only ever verified by the fact that assignments between them
+ * happened to compile.
+ *
+ * Kept as a named alias rather than replaced at the ~47 reference sites: the name
+ * reads correctly at a gateway-rules call site, and this is the one edit that
+ * makes it impossible for the two lists to diverge. An alias also means adding a
+ * thirteenth jurisdiction to REGION_IDENTITY reaches the gateway rules by
+ * compiler error rather than by silence.
+ *
+ * NOTE for anyone following the name: TWO OTHER unrelated things are also called
+ * `RegulatoryRegion` — an agency-name union in
+ * server/services/compliance/pharmacovigilanceService.ts ('FDA' | 'EMA' | …) and
+ * an enum in server/huggingface-service.ts. They are different vocabularies with
+ * the same name and are deliberately untouched here; this alias is only for the
+ * eCTD gateway-rules one.
+ */
+export type RegulatoryRegion = CanonicalRegion;
 export type RegionalSeverity = 'error' | 'warning' | 'info';
 
 export interface RegionalRule {
@@ -123,14 +147,16 @@ export const REGIONAL_RULES: RegionalRule[] = [
   {
     id: 'EMA-CESP-002',
     region: 'EU',
-    description: 'Application number must follow EU format: EMEA/H/C/[6-digit] for the centralised procedure, or [country]/H/[number]/[year] for MRP/DCP',
+    description:
+      'Application number must follow EU format: EMEA/H/C/[6-digit] for the centralised procedure, or [country]/H/[number]/[year] for MRP/DCP',
     severity: 'error',
     citation: 'EU eCTD Specification v3.2.2 §3.1',
   },
   {
     id: 'EMA-CESP-003',
     region: 'EU',
-    description: 'M1.3.1 SmPC, labeling, and PIL must be included for procedures requiring product information',
+    description:
+      'M1.3.1 SmPC, labeling, and PIL must be included for procedures requiring product information',
     severity: 'warning',
     citation: 'EU eCTD Specification v3.2.2 §M1.3',
   },
@@ -144,7 +170,8 @@ export const REGIONAL_RULES: RegionalRule[] = [
   {
     id: 'EMA-CESP-005',
     region: 'EU',
-    description: 'Filenames must use only lowercase a-z, 0-9, hyphens and periods (max 64 chars incl. extension); the total folder path must not exceed 180 characters',
+    description:
+      'Filenames must use only lowercase a-z, 0-9, hyphens and periods (max 64 chars incl. extension); the total folder path must not exceed 180 characters',
     severity: 'error',
     citation: 'EU eCTD Specification v3.2.2 §4.1',
   },
@@ -160,7 +187,8 @@ export const REGIONAL_RULES: RegionalRule[] = [
   {
     id: 'PMDA-002',
     region: 'JP',
-    description: 'Application number must follow PMDA format (8-digit reception number for original applications)',
+    description:
+      'Application number must follow PMDA format (8-digit reception number for original applications)',
     severity: 'error',
     citation: 'PMDA Notification 0926 §3.1',
   },
@@ -181,7 +209,8 @@ export const REGIONAL_RULES: RegionalRule[] = [
   {
     id: 'PMDA-005',
     region: 'JP',
-    description: 'Risk Management Plan (J-RMP / 医薬品リスク管理計画) required for new drug applications; the J-RMP draft is submitted at CTD Module 1.11',
+    description:
+      'Risk Management Plan (J-RMP / 医薬品リスク管理計画) required for new drug applications; the J-RMP draft is submitted at CTD Module 1.11',
     severity: 'warning',
     citation: 'MHLW Risk Management Plan Guidance (April 2012); JP CTD Module 1 structure',
   },
@@ -190,35 +219,40 @@ export const REGIONAL_RULES: RegionalRule[] = [
   {
     id: 'NMPA-CDE-001',
     region: 'CN',
-    description: 'eCTD submission must conform to the NMPA eCTD specification (XML backbone v1.0/v1.1), including the M1 regional backbone file',
+    description:
+      'eCTD submission must conform to the NMPA eCTD specification (XML backbone v1.0/v1.1), including the M1 regional backbone file',
     severity: 'error',
     citation: 'NMPA eCTD技术规范 V1.0 (2019); eCTD验证标准 V1.0',
   },
   {
     id: 'NMPA-CDE-002',
     region: 'CN',
-    description: 'All PDFs must be PDF/A, text-searchable, with working bookmarks and hyperlinks and embedded fonts (including Simplified Chinese fonts)',
+    description:
+      'All PDFs must be PDF/A, text-searchable, with working bookmarks and hyperlinks and embedded fonts (including Simplified Chinese fonts)',
     severity: 'error',
     citation: 'NMPA eCTD技术规范 V1.0 (2019)',
   },
   {
     id: 'NMPA-CDE-003',
     region: 'CN',
-    description: 'Dossier must be in Simplified Chinese: Module 1 administrative/product-information documents and Module 3 quality and manufacturing content require Chinese; English may be included only as a secondary copy',
+    description:
+      'Dossier must be in Simplified Chinese: Module 1 administrative/product-information documents and Module 3 quality and manufacturing content require Chinese; English may be included only as a secondary copy',
     severity: 'error',
     citation: 'NMPA M4 Module 1 (2019 No. 17); NMPA eCTD技术规范 V1.0',
   },
   {
     id: 'NMPA-CDE-004',
     region: 'CN',
-    description: 'The eCTD must include the NMPA stylesheet (ectd-2-0.xsl for Modules 2–5) and the valid-value definition files defined by the NMPA eCTD specification',
+    description:
+      'The eCTD must include the NMPA stylesheet (ectd-2-0.xsl for Modules 2–5) and the valid-value definition files defined by the NMPA eCTD specification',
     severity: 'warning',
     citation: 'NMPA eCTD技术规范 V1.0 (2019)',
   },
   {
     id: 'NMPA-CDE-005',
     region: 'CN',
-    description: 'File and folder names must follow the NMPA regional naming conventions defined in the eCTD technical specification',
+    description:
+      'File and folder names must follow the NMPA regional naming conventions defined in the eCTD technical specification',
     severity: 'warning',
     citation: 'NMPA eCTD技术规范 V1.0 (2019)',
   },
@@ -227,28 +261,32 @@ export const REGIONAL_RULES: RegionalRule[] = [
   {
     id: 'MFDS-KR-001',
     region: 'KR',
-    description: 'eCTD must conform to the KR eCTD specification (KR eCTD v1.0 DTD / KR v1.0 Validation Criteria), including the M1 regional backbone file',
+    description:
+      'eCTD must conform to the KR eCTD specification (KR eCTD v1.0 DTD / KR v1.0 Validation Criteria), including the M1 regional backbone file',
     severity: 'error',
     citation: 'MFDS KR eCTD v1.0 Validation Criteria',
   },
   {
     id: 'MFDS-KR-002',
     region: 'KR',
-    description: 'Module 1 administrative and product-information documents must be in Korean (K-CTD)',
+    description:
+      'Module 1 administrative and product-information documents must be in Korean (K-CTD)',
     severity: 'error',
     citation: 'MFDS K-CTD guidance (의약품 국제공통기술문서)',
   },
   {
     id: 'MFDS-KR-003',
     region: 'KR',
-    description: 'Clinical study datasets should be CDISC-compliant per the MFDS adoption of CDISC standards',
+    description:
+      'Clinical study datasets should be CDISC-compliant per the MFDS adoption of CDISC standards',
     severity: 'warning',
     citation: 'MFDS CDISC adoption (2021 regulatory amendment)',
   },
   {
     id: 'MFDS-KR-004',
     region: 'KR',
-    description: 'File and folder names must follow the KR eCTD ASCII naming convention (Korean belongs in document content, not file names)',
+    description:
+      'File and folder names must follow the KR eCTD ASCII naming convention (Korean belongs in document content, not file names)',
     severity: 'warning',
     citation: 'MFDS KR eCTD v1.0 Validation Criteria',
   },
@@ -285,7 +323,7 @@ export const REGIONAL_RULES: RegionalRule[] = [
   // unchecked for these regions and should be encoded as proper validator
   // packs (MHRA / TGA / Swissmedic / ANVISA / CDSCO / HSA) when their
   // specifications are landed.
-  ...(['UK', 'AU', 'CH', 'BR', 'IN', 'SG'] as const).flatMap<RegionalRule>((region) => [
+  ...(['UK', 'AU', 'CH', 'BR', 'IN', 'SG'] as const).flatMap<RegionalRule>(region => [
     {
       id: `${region}-REG-001`,
       region,
@@ -296,7 +334,8 @@ export const REGIONAL_RULES: RegionalRule[] = [
     {
       id: `${region}-REG-002`,
       region,
-      description: 'Filenames must follow the eCTD ASCII naming convention (lowercase a-z, 0-9, hyphens, periods; max 64 chars)',
+      description:
+        'Filenames must follow the eCTD ASCII naming convention (lowercase a-z, 0-9, hyphens, periods; max 64 chars)',
       severity: 'warning',
       citation: 'eCTD specification — universal file-naming convention',
     },
@@ -369,7 +408,7 @@ function requireBackbone(
   findings: RegionalFinding[]
 ): void {
   const path = REGIONAL_BACKBONE[region];
-  if (!leaves.some((l) => l.filePath.endsWith(path))) {
+  if (!leaves.some(l => l.filePath.endsWith(path))) {
     const file = path.split('/').pop();
     const dir = path.slice(0, path.lastIndexOf('/') + 1);
     findings.push({
@@ -392,7 +431,12 @@ function checkAsciiFilenames(
   leaves: RegionalLeafRef[],
   region: RegulatoryRegion,
   findings: RegionalFinding[],
-  opts: { ruleId: string; severity: RegionalSeverity; makeMessage: (filename: string) => string; fix: string }
+  opts: {
+    ruleId: string;
+    severity: RegionalSeverity;
+    makeMessage: (filename: string) => string;
+    fix: string;
+  }
 ): void {
   for (const leaf of leaves) {
     const filename = leaf.filePath.split('/').pop() || '';
@@ -496,7 +540,8 @@ function validateFDAPackage(
       ruleId: 'FDA-ESG-003',
       region: 'US',
       severity: 'warning',
-      message: 'Package size could not be verified against the FDA ESG 4 GB gateway limit (totalSizeBytes not supplied)',
+      message:
+        'Package size could not be verified against the FDA ESG 4 GB gateway limit (totalSizeBytes not supplied)',
       fix: 'Supply totalSizeBytes so the gateway size limit can be checked',
       scope: 'package',
     });
@@ -505,17 +550,27 @@ function validateFDAPackage(
       ruleId: 'FDA-ESG-003',
       region: 'US',
       severity: 'error',
-      message: `Package size ${(context.totalSizeBytes / 1024 / 1024 / 1024).toFixed(2)} GB exceeds FDA ESG 4 GB gateway limit`,
+      message: `Package size ${(context.totalSizeBytes / 1024 / 1024 / 1024).toFixed(
+        2
+      )} GB exceeds FDA ESG 4 GB gateway limit`,
       fix: 'Split the submission into multiple sequences',
       scope: 'package',
     });
   }
 
-  requireBackbone(leaves, 'US', 'FDA-ESG-004', 'Generate and include the US regional XML at /m1/us/us-regional.xml', findings);
+  requireBackbone(
+    leaves,
+    'US',
+    'FDA-ESG-004',
+    'Generate and include the US regional XML at /m1/us/us-regional.xml',
+    findings
+  );
 
   // STF check for M4/M5 study leaves
   const studyLeaves = leaves.filter(
-    l => /^m[45]\./.test(l.sectionCode) && (l.sectionCode.includes('5.3.5') || l.sectionCode.includes('4.2'))
+    l =>
+      /^m[45]\./.test(l.sectionCode) &&
+      (l.sectionCode.includes('5.3.5') || l.sectionCode.includes('4.2'))
   );
   for (const leaf of studyLeaves) {
     if (!leaf.studyId) {
@@ -553,7 +608,8 @@ function validateEMAPackage(
       ruleId: 'EMA-CESP-004',
       region: 'EU',
       severity: 'warning',
-      message: 'Package size could not be verified against the CESP 600 MB recommended limit (totalSizeBytes not supplied)',
+      message:
+        'Package size could not be verified against the CESP 600 MB recommended limit (totalSizeBytes not supplied)',
       fix: 'Supply totalSizeBytes so the CESP size limit can be checked',
       scope: 'package',
     });
@@ -562,19 +618,27 @@ function validateEMAPackage(
       ruleId: 'EMA-CESP-004',
       region: 'EU',
       severity: 'warning',
-      message: `Package size ${(context.totalSizeBytes / 1024 / 1024).toFixed(0)} MB exceeds CESP 600 MB recommended limit`,
+      message: `Package size ${(context.totalSizeBytes / 1024 / 1024).toFixed(
+        0
+      )} MB exceeds CESP 600 MB recommended limit`,
       fix: 'Consider splitting the submission across multiple CESP transmissions',
       scope: 'package',
     });
   }
 
-  requireBackbone(leaves, 'EU', 'EMA-CESP-001', 'Generate and include the EU regional XML at /m1/eu/eu-regional.xml', findings);
+  requireBackbone(
+    leaves,
+    'EU',
+    'EMA-CESP-001',
+    'Generate and include the EU regional XML at /m1/eu/eu-regional.xml',
+    findings
+  );
 
   // Filename strictness (EU treats violations as errors)
   checkAsciiFilenames(leaves, 'EU', findings, {
     ruleId: 'EMA-CESP-005',
     severity: 'error',
-    makeMessage: (filename) =>
+    makeMessage: filename =>
       `Filename "${filename}" violates EU naming rules (lowercase a-z, 0-9, hyphens, periods only; max 64 chars)`,
     fix: 'Rename to match EU eCTD specification §4.1',
   });
@@ -601,7 +665,8 @@ function validatePMDAPackage(
       ruleId: 'PMDA-003',
       region: 'JP',
       severity: 'warning',
-      message: 'Package size could not be verified against the PMDA 1 GB recommended limit (totalSizeBytes not supplied)',
+      message:
+        'Package size could not be verified against the PMDA 1 GB recommended limit (totalSizeBytes not supplied)',
       fix: 'Supply totalSizeBytes so the PMDA size limit can be checked',
       scope: 'package',
     });
@@ -610,19 +675,30 @@ function validatePMDAPackage(
       ruleId: 'PMDA-003',
       region: 'JP',
       severity: 'warning',
-      message: `Package size ${(context.totalSizeBytes / 1024 / 1024).toFixed(0)} MB exceeds PMDA 1 GB recommended limit`,
+      message: `Package size ${(context.totalSizeBytes / 1024 / 1024).toFixed(
+        0
+      )} MB exceeds PMDA 1 GB recommended limit`,
       fix: 'Consider splitting across multiple submissions',
       scope: 'package',
     });
   }
 
-  requireBackbone(leaves, 'JP', 'PMDA-001', 'Generate and include the JP regional XML at /m1/jp/jp-regional.xml', findings);
+  requireBackbone(
+    leaves,
+    'JP',
+    'PMDA-001',
+    'Generate and include the JP regional XML at /m1/jp/jp-regional.xml',
+    findings
+  );
 
   const hasJpClinical = leaves.some(l => l.sectionCode.startsWith('m1.13'));
   const bridgeEntry = resolveToRegistryEntry(context.submissionType);
-  const resolvedType = bridgeEntry?.applicationType?.toLowerCase() ?? context.submissionType.toLowerCase();
-  const submissionRequiresJpClinical = resolvedType.includes('nda') ||
-    resolvedType.includes('jnda') || resolvedType.includes('marketing approval');
+  const resolvedType =
+    bridgeEntry?.applicationType?.toLowerCase() ?? context.submissionType.toLowerCase();
+  const submissionRequiresJpClinical =
+    resolvedType.includes('nda') ||
+    resolvedType.includes('jnda') ||
+    resolvedType.includes('marketing approval');
   if (submissionRequiresJpClinical && !hasJpClinical) {
     findings.push({
       ruleId: 'PMDA-004',
@@ -651,7 +727,13 @@ function validateHCPackage(
     });
   }
 
-  requireBackbone(leaves, 'CA', 'HC-REP-001', 'Generate and include the CA regional XML at /m1/ca/ca-regional.xml', findings);
+  requireBackbone(
+    leaves,
+    'CA',
+    'HC-REP-001',
+    'Generate and include the CA regional XML at /m1/ca/ca-regional.xml',
+    findings
+  );
 }
 
 function validateNMPAPackage(
@@ -660,14 +742,20 @@ function validateNMPAPackage(
   findings: RegionalFinding[]
 ): void {
   // NMPA-CDE-001: the M1 regional backbone file must be present.
-  requireBackbone(leaves, 'CN', 'NMPA-CDE-001', 'Generate and include the NMPA M1 regional XML at /m1/cn/cn-regional.xml', findings);
+  requireBackbone(
+    leaves,
+    'CN',
+    'NMPA-CDE-001',
+    'Generate and include the NMPA M1 regional XML at /m1/cn/cn-regional.xml',
+    findings
+  );
 
   // NMPA-CDE-005: file/folder names follow the eCTD ASCII naming convention. The
   // dossier content is Simplified Chinese, but eCTD file names remain ASCII.
   checkAsciiFilenames(leaves, 'CN', findings, {
     ruleId: 'NMPA-CDE-005',
     severity: 'warning',
-    makeMessage: (filename) =>
+    makeMessage: filename =>
       `Filename "${filename}" does not follow the NMPA eCTD ASCII naming convention (lowercase a-z, 0-9, hyphens, periods)`,
     fix: 'Rename to ASCII per the NMPA eCTD技术规范 file-naming rules (Chinese belongs in document content, not file names)',
   });
@@ -679,14 +767,20 @@ function validateMFDSPackage(
   findings: RegionalFinding[]
 ): void {
   // MFDS-KR-001: the M1 regional backbone file must be present.
-  requireBackbone(leaves, 'KR', 'MFDS-KR-001', 'Generate and include the KR eCTD M1 regional XML at /m1/kr/kr-regional.xml', findings);
+  requireBackbone(
+    leaves,
+    'KR',
+    'MFDS-KR-001',
+    'Generate and include the KR eCTD M1 regional XML at /m1/kr/kr-regional.xml',
+    findings
+  );
 
   // MFDS-KR-004: file/folder names follow the KR eCTD ASCII naming convention. The
   // dossier content is Korean (K-CTD), but eCTD file names remain ASCII.
   checkAsciiFilenames(leaves, 'KR', findings, {
     ruleId: 'MFDS-KR-004',
     severity: 'warning',
-    makeMessage: (filename) =>
+    makeMessage: filename =>
       `Filename "${filename}" does not follow the KR eCTD ASCII naming convention (lowercase a-z, 0-9, hyphens, periods)`,
     fix: 'Rename to ASCII per the KR eCTD v1.0 file-naming rules (Korean belongs in document content, not file names)',
   });
@@ -715,14 +809,16 @@ function validateGenericRegionPackage(
     leaves,
     context.region,
     `${context.region}-REG-001`,
-    `Generate and include the ${context.region} M1 regional XML at /${REGIONAL_BACKBONE[context.region]}`,
-    findings,
+    `Generate and include the ${context.region} M1 regional XML at /${
+      REGIONAL_BACKBONE[context.region]
+    }`,
+    findings
   );
 
   checkAsciiFilenames(leaves, context.region, findings, {
     ruleId: `${context.region}-REG-002`,
     severity: 'warning',
-    makeMessage: (filename) =>
+    makeMessage: filename =>
       `Filename "${filename}" does not follow the eCTD ASCII naming convention (lowercase a-z, 0-9, hyphens, periods)`,
     fix: 'Rename per the eCTD file-naming rules (ASCII only, max 64 chars, no spaces)',
   });
@@ -740,13 +836,20 @@ export function getRulesForRegion(region: RegulatoryRegion): RegionalRule[] {
  */
 export function getGatewaySizeLimit(region: RegulatoryRegion): number {
   switch (region) {
-    case 'US': return FDA_GATEWAY_LIMIT_BYTES;
-    case 'EU': return EMA_CESP_LIMIT_BYTES;
-    case 'JP': return PMDA_LIMIT_BYTES;
-    case 'CA': return FDA_GATEWAY_LIMIT_BYTES;
-    case 'CN': return NMPA_LIMIT_BYTES;
-    case 'KR': return MFDS_LIMIT_BYTES;
+    case 'US':
+      return FDA_GATEWAY_LIMIT_BYTES;
+    case 'EU':
+      return EMA_CESP_LIMIT_BYTES;
+    case 'JP':
+      return PMDA_LIMIT_BYTES;
+    case 'CA':
+      return FDA_GATEWAY_LIMIT_BYTES;
+    case 'CN':
+      return NMPA_LIMIT_BYTES;
+    case 'KR':
+      return MFDS_LIMIT_BYTES;
     // ICH-aligned agencies: conservative 1 GB default pending published specs
-    default: return PMDA_LIMIT_BYTES;
+    default:
+      return PMDA_LIMIT_BYTES;
   }
 }
