@@ -334,6 +334,11 @@ export async function teardownTwoTenantFixture(): Promise<void> {
           'project_intelligence_profiles',
           'report_runs',
           'report_program_groups',
+          // traceability-update-boundary.dbtest.ts. No cascades among these
+          // three, so the matrix goes first.
+          'qmp_traceability_matrix',
+          'ctq_factors',
+          'quality_management_plans',
         ]) {
           await cleanup.query(`DELETE FROM ${table} WHERE organization_id=ANY($1::int[])`, [
             FIXTURE_ORGS,

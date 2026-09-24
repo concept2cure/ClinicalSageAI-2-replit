@@ -158,6 +158,7 @@ deletes by slug matches `dbtsi-%`.
 
 | File | What it shows |
 |---|---|
+| `green/contract-45-of-45-every-suite-on-the-fixture.txt` | After `6ea13fd7` added a third suite on the same fixture (`traceability-update-boundary.dbtest.ts`) and three tables to its teardown: all three suites together, **45 of 45** (29 + 14 + 2), with the two org rows kept. |
 | `green/contract-43-of-43-on-shared-fixture-two-files.txt` | Both files on the shared fixture: **43 of 43** (29 + 14), all six new cases present; afterwards 0 per-run users, 0 runs, 0 memberships left in the fixture orgs. ESLint ratchet `--since`: no file changed its warning count. |
 
 ## Permanent rows this work left in the scratch database, stated plainly

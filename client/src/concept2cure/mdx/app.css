@@ -136,7 +136,7 @@
 .mdx-shell .readiness {
   height: 3px; background: var(--bg-200); border-radius: 99px; overflow: hidden;
 }
-.mdx-shell .readiness-fill { height: 100%; background: var(--success); border-radius: 99px; transition: width var(--dur) var(--ease); }
+.mdx-shell .readiness-fill { height: 100%; background: var(--success); border-radius: 99px; transition: background var(--dur) var(--ease); }
 .mdx-shell .readiness-fill.warn { background: var(--warning); }
 .mdx-shell .readiness-fill.err  { background: var(--error); }
 
@@ -1077,7 +1077,7 @@
 .mdx-shell .ed-gutter {
   position: absolute; left: 0; top: 4px; bottom: 4px;
   width: 2px; border-radius: 2px;
-  transition: background var(--dur) var(--ease), width var(--dur) var(--ease);
+  transition: background var(--dur) var(--ease);
 }
 .mdx-shell .ed-block[data-conf="hi"]  .ed-gutter { background: var(--accent-100); opacity: 0.7; }
 .mdx-shell .ed-block[data-conf="med"] .ed-gutter { background: var(--accent-100); opacity: 0.38; }
@@ -1678,7 +1678,10 @@
   display: block; height: 100%;
   background: var(--accent-100); opacity: 0.6;
   border-radius: 999px;
-  transition: width var(--dur) var(--ease);
+  /* Width is the document's completion, set inline from data. A layout
+     property must never animate, and a figure that moves while it is read is
+     worse than useless, so only the fill colour (the blocker flip) transitions. */
+  transition: background var(--dur) var(--ease);
 }
 .mdx-shell .docs-row[data-blocker="true"] .docs-progress-fill { background: var(--error); }
 .mdx-shell .docs-pct { color: var(--text-300); font-weight: 600; }
@@ -2404,7 +2407,7 @@
 .mdx-shell .ph-secbar-count { color: var(--text-100); font-weight: 500; font-variant-numeric: tabular-nums; }
 .mdx-shell .ph-secbar-total { color: var(--text-400); font-weight: 400; }
 .mdx-shell .ph-secbar-track { height: 4px; background: var(--bg-200); border-radius: 99px; overflow: hidden; }
-.mdx-shell .ph-secbar-fill  { height: 100%; border-radius: 99px; transition: width 600ms var(--ease); }
+.mdx-shell .ph-secbar-fill  { height: 100%; border-radius: 99px; transition: background var(--dur) var(--ease); }
 .mdx-shell .ph-secbar-fill.tone-ok    { background: var(--success); }
 .mdx-shell .ph-secbar-fill.tone-warn  { background: var(--warning); }
 .mdx-shell .ph-secbar-fill.tone-err   { background: var(--error); }
@@ -3873,7 +3876,7 @@
   background: var(--accent-100);
   opacity: 0.4;
   border-radius: var(--radius-md);
-  transition: width var(--dur) var(--ease);
+  transition: background var(--dur) var(--ease);
 }
 .mdx-shell .anl-ana-bar-lbl {
   position: absolute;
