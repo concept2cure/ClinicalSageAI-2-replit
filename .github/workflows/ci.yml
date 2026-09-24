@@ -1840,12 +1840,13 @@ jobs:
           format: table
 
       - name: Trivy config scan (Dockerfile/IaC)
-        # Advisory (continue-on-error) for now: the IaC estate has a pre-existing
-        # backlog of HIGH/CRITICAL misconfigs (e.g. AVD-AWS-0164 public-IP-on-launch
-        # in modules/vpc-secure) that must be baselined before this can block.
-        # TODO(security): baseline existing findings into .trivyignore, then flip
-        # this to a blocking gate (exit-code 1, no continue-on-error). The
-        # filesystem scan above (deps + secrets) remains blocking.
+        # The same scan the deploy workflow's security-gate runs, blocking,
+        # before build-push. TRIVY-01 (2026-09-24,
+        # docs/evidence/W2/2026-09-24-trivy/) fixed or excepted, at the resource
+        # with a reason, every finding it had. Still advisory for one reason:
+        # terraform/stack/vault_storage.tf (added the same day) has AWS-0132 x2
+        # and belongs to the vault-storage lane. When this step passes, delete
+        # the next line so it blocks here too.
         continue-on-error: true
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
