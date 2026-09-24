@@ -93,9 +93,42 @@ Each of the 148 sites was classified by one agent: the route or trigger that
 reaches it, its mount chain, its client callers, and the surface that renders
 them. A second agent then independently re-derived each classification and
 tried to refute it, working hardest on any "not on a launch path" verdict.
-*Results are filed below when the last verification batches report.*
+All 148 were verified. The verifier agreed with 147. It moved one site down,
+`defense-packet-staleness.service.ts:257`, from shell to out-of-scope. Per-site
+routes, mount chains, client callers and both agents' evidence are in
+`launch-path-classification.json`.
 
-<!-- measurement tables are appended when the verification completes -->
+| Class | Sites | Converted here | Left |
+|---|---:|---:|---:|
+| **Launch app**: a launch-app surface's client reaches it | 8 | 2 (Template Library, Shadow Review) | 6: eCTD compile ×3, AnA QMS change control ×3, all in files another lane is working |
+| **Launch shell**: Setup, Onboarding, Billing, access requests, master licensing, AnA | 17 | 5 | 12 |
+| Cross-cutting: middleware for every tenant | 2 | 0 | 2 (a CSRF refusal record, an API-key expiry) |
+| Unreachable: mounted, but the line cannot run, or nothing reaches it | 3 | 0 | 3 |
+| Out of scope: reachable only as API, or only from non-launch surfaces | 118 | 1 (project industry profile, same file) | 117 |
+
+**The answer to the review's question: 25 of the 148 (17%) are on
+launch-catalog write paths; 7 of those are converted here.** The rest are
+mostly API surface no launch client calls. The largest block is the legacy
+`/api/concept2cure/*` namespace (`concept2cure.ts`, `c2c/artifacts.ts`,
+`c2c/exports.ts`, knowledge sources, conversations), which launch surfaces
+replaced with `/api/c2c/*`. They still matter. The module entitlement gate
+defaults to `off` (`server/middleware/moduleEntitlementGate.ts`), so any
+signed-in organisation can call them. They are not what a launch customer's
+UI exercises.
+
+Findings the measurement surfaced beyond its question (recorded, not acted on):
+
+- `server/routes/qms.ts` is a second QMS document-control API, with create and
+  transition, that no client calls. The launch QMS surfaces use
+  `/api/mdx/qms/*` and `/api/quality`. This violates the zero-duplication rule.
+  Deleting it is a decision for its owner.
+- `AdminConsole` in `client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx`
+  (the platform role-grant UI) is rendered by nothing. `admin-console` maps to
+  `AdminAccess`. `/api/admin/access/grants` is therefore API-only.
+- `enterprise-security.ts:584`: `validateTenantContext` runs before anything
+  sets `req.user`, so its impersonation branch cannot execute. The
+  `req.organizationId` it claims to set (per `server/utils/authedOrgId.ts:29`)
+  is never set either.
 
 ## Not done here, and why
 
