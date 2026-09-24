@@ -1,0 +1,3 @@
+# terraform validate, environments/staging, after this change (Terraform 1.9.8, hashicorp/aws 5.70.0, init -backend=false)
+Success! The configuration is valid.
+

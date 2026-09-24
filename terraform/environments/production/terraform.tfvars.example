@@ -1,6 +1,7 @@
 # Production tfvars — do NOT commit secrets here.
 # Pass secrets via: terraform apply -var="jwt_secret=..." -var="openai_api_key=..."
 # Or use TF_VAR_jwt_secret and TF_VAR_openai_api_key environment variables.
+# cloudfront_origin_secret likewise, e.g. TF_VAR_cloudfront_origin_secret="$(openssl rand -hex 32)".
 
 region          = "us-east-1"
 vpc_cidr        = "10.10.0.0/16"
@@ -17,4 +18,6 @@ worker_desired_count = 1
 # Replace with your actual ACM certificate ARN
 acm_certificate_arn       = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/REPLACE_ME"
 cloudfront_certificate_arn = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/REPLACE_ME"
-domain_aliases             = []
+# Required: the API is reachable through CloudFront alone, and CloudFront checks
+# the ALB's certificate against these names, so acm_certificate_arn must cover them too.
+domain_aliases             = ["app.example.com"] # REPLACE_ME
