@@ -21,6 +21,7 @@
  */
 import express from 'express';
 import request from 'supertest';
+import { timingSafeEqual } from 'node:crypto';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createIndPgliteDb, type IndPgliteDb } from '../../server/db/pglite-harness';
 import { createDocumentLifecycleRouter } from '../../server/routes/document-lifecycle';
@@ -41,7 +42,10 @@ async function reverify(_userId: number, creds: SignerCredentials): Promise<Sign
   if (typeof creds.password !== 'string' || creds.password.length === 0) {
     return { ok: false, status: 400, code: 'PASSWORD_REQUIRED', error: 'password is required to sign' };
   }
-  if (creds.password !== PASSWORD) {
+  const given = Buffer.from(creds.password);
+  const expected = Buffer.from(PASSWORD);
+  // Constant-time, as the real ceremony's bcrypt compare is.
+  if (given.length !== expected.length || !timingSafeEqual(given, expected)) {
     return { ok: false, status: 401, code: 'PASSWORD_VERIFICATION_FAILED', error: 'invalid credentials' };
   }
   return { ok: true, authenticationMethod: 'password', secondFactorVerified: false };
