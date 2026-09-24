@@ -1,0 +1,21 @@
+$ terraform test   # AWS provider mocked; no account, no credentials
+tests/boot_contract.tftest.hcl... in progress
+  run "renders_the_boot_contract"... pass
+  run "refuses_a_refresh_secret_equal_to_the_jwt_secret"... pass
+  run "refuses_a_short_audit_chain_secret"... pass
+  run "refuses_an_app_url_that_is_not_an_https_origin"... pass
+  run "refuses_placement_approvals_that_are_not_a_json_object"... pass
+  run "refuses_equal_audit_seal_and_chain_keys"... pass
+  run "refuses_an_app_url_with_a_trailing_slash"... pass
+  run "refuses_an_app_url_with_uppercase"... pass
+  run "refuses_phi_approval_without_zero_retention"... pass
+  run "refuses_an_unknown_data_class"... pass
+  run "refuses_a_non_boolean_zero_retention_flag"... pass
+  run "refuses_a_non_string_intended_use"... pass
+  run "refuses_a_missing_region"... pass
+  run "accepts_the_fail_closed_interim_approvals"... pass
+tests/boot_contract.tftest.hcl... tearing down
+tests/boot_contract.tftest.hcl... pass
+
+Success! 14 passed, 0 failed.
+exit=0

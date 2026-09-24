@@ -155,3 +155,12 @@ eslint-report.json
 # completed, signed FDA forms — so it must never be committable by accident.
 # `storage/ir-packs/` is tracked on purpose and is unaffected.
 storage/vault/
+
+# Terraform working state. `.terraform/` is the provider cache `terraform init`
+# writes (hundreds of MB); state files hold secrets in plaintext and belong only
+# in the encrypted S3 backend. `.terraform.lock.hcl` is deliberately NOT ignored:
+# it pins the exact provider builds the configuration was tested with.
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log

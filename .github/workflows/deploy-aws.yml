@@ -256,6 +256,10 @@ jobs:
     needs: build-push
     runs-on: ubuntu-latest
     environment: production
+    outputs:
+      # The exact API revision the preflight checked. deploy-api derives from
+      # it, not from "the family's latest" (see the preflight's last lines).
+      api_td_arn: ${{ steps.preflight.outputs.api_td_arn }}
 
     steps:
       - name: Configure AWS credentials (OIDC)
@@ -268,11 +272,160 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64 # v2
 
+      # WHERE this runs (2026-09-23): in `migrate`, before the migration task
+      # definition is registered. It used to be the first step of deploy-api,
+      # which needs migrate — so the production DDL migration ran from a task
+      # definition derived from the API one BEFORE anything checked that task
+      # definition, and a definition missing RLS_ENFORCE or APP_DATABASE_URL
+      # migrated the schema first and was refused second. deploy-api needs
+      # migrate and rolls only the revision this step checked (its ARN is this
+      # job's output), so this one check gates both. Proven against the task
+      # definition production Terraform renders by
+      # scripts/ops/terraform-preflight-proof.mjs.
+      - name: Preflight — task definition must carry the production boot contract
+        id: preflight
+        # The app fails CLOSED on a missing production env var: it exits at boot
+        # rather than serving degraded. Rolling a task def that omits one turns a
+        # config gap into a crash-loop that ECS reports as "deployment failed"
+        # minutes later, with the real cause buried in CloudWatch. Assert the
+        # names are present (in `environment` or `secrets`) BEFORE registering a
+        # revision, so the deploy stops with the missing variable named.
+        #
+        # Values are never read here — only names. The env set is derived from
+        # the boot-time assertions in the app and mirrors the CI production boot
+        # smoke in ci.yml ("Boot in production mode and require /readyz=200"):
+        #   RLS_ENFORCE              server/db/rlsEnforcement.ts — production
+        #                            accepts ONLY the literal `on`.
+        #   DATABASE_URL             server/startup/env.ts — owner role; migrations.
+        #   APP_DATABASE_URL         server/db/getDatabaseUrl.ts — the non-superuser
+        #                            runtime role. Under RLS_ENFORCE=on the boot
+        #                            posture probe (server/index.ts →
+        #                            assertRlsCatalogPosture) refuses a superuser
+        #                            or BYPASSRLS runtime role, so falling back to
+        #                            DATABASE_URL is not a viable production shape.
+        #   JWT_SECRET               server/config/environment.ts (>=32 chars).
+        #   REFRESH_TOKEN_SECRET     server/config/environment.ts — required in
+        #                            staging/prod, >=32, must differ from JWT_SECRET.
+        #   MFA_ENCRYPTION_KEY       server/config/environment.ts (>=32 chars).
+        #   AUDIT_HMAC_KEY           server/services/audit/auditSealPosture.ts.
+        #   AUDIT_HMAC_SECRET        server/lib/tamper-proof-audit.ts.
+        #   CONNECTOR_ENCRYPTION_KEY server/services/connectors/connector-registry.ts
+        #                            — module-level throw in production.
+        #   CONCEPT2CURE_SIGNER_MODE server/services/signature/signer-mode.ts —
+        #                            refused at boot in production when unset or
+        #                            `dev`. kms needs ..._SIGNER_KMS_KEY_ID; hmac
+        #                            needs ..._SIGNER_ACCEPT_HMAC=true. Which one is
+        #                            an operator decision (SOP_KEY_MANAGEMENT.md);
+        #                            this check only refuses a task definition that
+        #                            has made none, before it rolls rather than at
+        #                            boot (2026-09-23).
+        run: |
+          set -euo pipefail
+
+          aws ecs describe-task-definition \
+            --task-definition "$ECS_API_TASK_FAMILY" \
+            --no-cli-pager \
+            --query 'taskDefinition' > /tmp/api-td-preflight.json
+
+          PRESENT=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+            .containerDefinitions[] | select(.name == $c)
+            | ((.environment // []) + (.secrets // [])) | map(.name) | .[]
+          ' /tmp/api-td-preflight.json | sort -u)
+
+          MISSING=""
+          for VAR in RLS_ENFORCE DATABASE_URL APP_DATABASE_URL JWT_SECRET \
+                     REFRESH_TOKEN_SECRET MFA_ENCRYPTION_KEY AUDIT_HMAC_KEY \
+                     AUDIT_HMAC_SECRET CONNECTOR_ENCRYPTION_KEY \
+                     AI_SENSITIVE_DATA_POLICY_MODE AI_PROVIDER_PLACEMENT_APPROVALS \
+                     CONCEPT2CURE_SIGNER_MODE; do
+            if ! grep -qx "$VAR" <<< "$PRESENT"; then MISSING="$MISSING $VAR"; fi
+          done
+
+          # NODE_ENV must be exactly `production` and RLS_ENFORCE exactly `on`;
+          # both are plain (non-secret) values, so their values are checkable.
+          NODE_ENV_VALUE=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+            .containerDefinitions[] | select(.name == $c)
+            | (.environment // []) | map(select(.name == "NODE_ENV")) | .[0].value // ""
+          ' /tmp/api-td-preflight.json)
+          RLS_VALUE=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+            .containerDefinitions[] | select(.name == $c)
+            | (.environment // []) | map(select(.name == "RLS_ENFORCE")) | .[0].value // ""
+          ' /tmp/api-td-preflight.json)
+
+          FAIL=0
+          if [[ -n "$MISSING" ]]; then
+            echo "::error::Task definition $ECS_API_TASK_FAMILY (container $ECS_API_CONTAINER_NAME) is missing required production env:$MISSING"
+            echo "::error::The app refuses to boot without each of these. Add them to the task definition (terraform/environments/production) before deploying."
+            FAIL=1
+          fi
+          if [[ "$NODE_ENV_VALUE" != "production" ]]; then
+            echo "::error::NODE_ENV must be exactly 'production' in the task definition; got '${NODE_ENV_VALUE:-<unset>}'."
+            FAIL=1
+          fi
+          if [[ "$RLS_VALUE" != "on" ]]; then
+            echo "::error::RLS_ENFORCE must be exactly 'on' in the task definition; got '${RLS_VALUE:-<unset>}'. Aliases (true/1/enforce) are rejected by the production kill-switch."
+            FAIL=1
+          fi
+          # assertSensitivePlacementConfiguration refuses any production boot
+          # without mode=enforce; catch it here instead of as a crash-loop.
+          POLICY_MODE_VALUE=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+            .containerDefinitions[] | select(.name == $c)
+            | (.environment // []) | map(select(.name == "AI_SENSITIVE_DATA_POLICY_MODE")) | .[0].value // ""
+          ' /tmp/api-td-preflight.json)
+          if [[ -n "$POLICY_MODE_VALUE" && "$POLICY_MODE_VALUE" != "enforce" ]]; then
+            echo "::error::AI_SENSITIVE_DATA_POLICY_MODE must be exactly 'enforce' in production; got '$POLICY_MODE_VALUE'."
+            FAIL=1
+          fi
+          # APP_URL is the only origin emailed reset and invitation links are
+          # built on in production (server/services/password-setup-token.ts).
+          # Without it those flows refuse every request rather than put the
+          # request's Host header in front of a live token (password-reset
+          # poisoning, D6). The server boots; no account could be recovered.
+          # A plain value is checked here, as the server checks it (trimmed, an
+          # https URL). A value from `secrets` cannot be read here; its name is
+          # enough, and the server refuses reset and invitation requests if it
+          # is not an https origin.
+          APP_URL_VALUE=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+            .containerDefinitions[] | select(.name == $c)
+            | (.environment // []) | map(select(.name == "APP_URL")) | .[0].value // ""
+          ' /tmp/api-td-preflight.json | tr -d '[:space:]')
+          APP_URL_SECRET=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+            .containerDefinitions[] | select(.name == $c)
+            | (.secrets // []) | map(select(.name == "APP_URL")) | length
+          ' /tmp/api-td-preflight.json)
+          if [[ -n "$APP_URL_VALUE" ]]; then
+            if [[ ! "${APP_URL_VALUE,,}" =~ ^https://[^/]+ ]]; then
+              echo "::error::APP_URL must be the deployment's public https origin (password-reset and invitation links are built on it, never on the Host header); got '$APP_URL_VALUE'."
+              FAIL=1
+            fi
+          elif [[ "$APP_URL_SECRET" == "0" ]]; then
+            echo "::error::APP_URL is missing from the task definition (environment or secrets). Password-reset and invitation links are built on it in production, never on the Host header."
+            FAIL=1
+          fi
+          [[ "$FAIL" -eq 0 ]] || exit 1
+
+          # Hand the EXACT revision checked here to everything that derives a
+          # task definition from it — the migration below and deploy-api —
+          # rather than let each re-read "the family's latest". deploy-api runs
+          # after the migration and a production approval, and a `terraform
+          # apply` in between registers a new latest revision (the services
+          # ignore task_definition changes, so nothing else rolls it). Without
+          # the ARN, deploy-api rolled a revision this step never saw
+          # (review findings SEC-5 / PIPE-2, 2026-09-24).
+          CHECKED_ARN=$(jq -r '.taskDefinitionArn // empty' /tmp/api-td-preflight.json)
+          if [[ ! "$CHECKED_ARN" =~ ^arn:aws[a-z-]*:ecs:[a-z0-9-]+:[0-9]{12}:task-definition/${ECS_API_TASK_FAMILY}:[0-9]+$ ]]; then
+            echo "::error::describe-task-definition returned no usable revision ARN ('$CHECKED_ARN'); cannot pin the revision that was checked."
+            exit 1
+          fi
+          echo "api_td_arn=$CHECKED_ARN" >> "$GITHUB_OUTPUT"
+          echo "Production boot contract satisfied by $CHECKED_ARN."
+
       - name: Register migration task definition (pinned to the deploying image)
         id: register-migrate-td
         env:
           IMAGE_DIGEST: ${{ needs.build-push.outputs.api_digest }}
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          CHECKED_API_TD_ARN: ${{ steps.preflight.outputs.api_td_arn }}
         # Derived from the API task def so the migration runs with the identical
         # DATABASE_URL secret, execution role and log configuration the app uses.
         # Deliberate differences from the API definition:
@@ -294,8 +447,12 @@ jobs:
           PINNED_IMAGE="$ECR_REGISTRY/$ECR_API_REPO@$IMAGE_DIGEST"
           echo "Migration task image: $PINNED_IMAGE"
 
+          if [[ -z "$CHECKED_API_TD_ARN" ]]; then
+            echo "::error::The preflight published no checked revision ARN; refusing to derive the migration from an unchecked one."
+            exit 1
+          fi
           aws ecs describe-task-definition \
-            --task-definition "$ECS_API_TASK_FAMILY" \
+            --task-definition "$CHECKED_API_TD_ARN" \
             --no-cli-pager \
             --query 'taskDefinition' > /tmp/api-td.json
 
@@ -467,129 +624,6 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64 # v2
 
-      - name: Preflight — task definition must carry the production boot contract
-        # The app fails CLOSED on a missing production env var: it exits at boot
-        # rather than serving degraded. Rolling a task def that omits one turns a
-        # config gap into a crash-loop that ECS reports as "deployment failed"
-        # minutes later, with the real cause buried in CloudWatch. Assert the
-        # names are present (in `environment` or `secrets`) BEFORE registering a
-        # revision, so the deploy stops with the missing variable named.
-        #
-        # Values are never read here — only names. The env set is derived from
-        # the boot-time assertions in the app and mirrors the CI production boot
-        # smoke in ci.yml ("Boot in production mode and require /readyz=200"):
-        #   RLS_ENFORCE              server/db/rlsEnforcement.ts — production
-        #                            accepts ONLY the literal `on`.
-        #   DATABASE_URL             server/startup/env.ts — owner role; migrations.
-        #   APP_DATABASE_URL         server/db/getDatabaseUrl.ts — the non-superuser
-        #                            runtime role. Under RLS_ENFORCE=on the boot
-        #                            posture probe (server/index.ts →
-        #                            assertRlsCatalogPosture) refuses a superuser
-        #                            or BYPASSRLS runtime role, so falling back to
-        #                            DATABASE_URL is not a viable production shape.
-        #   JWT_SECRET               server/config/environment.ts (>=32 chars).
-        #   REFRESH_TOKEN_SECRET     server/config/environment.ts — required in
-        #                            staging/prod, >=32, must differ from JWT_SECRET.
-        #   MFA_ENCRYPTION_KEY       server/config/environment.ts (>=32 chars).
-        #   AUDIT_HMAC_KEY           server/services/audit/auditSealPosture.ts.
-        #   AUDIT_HMAC_SECRET        server/lib/tamper-proof-audit.ts.
-        #   CONNECTOR_ENCRYPTION_KEY server/services/connectors/connector-registry.ts
-        #                            — module-level throw in production.
-        #   CONCEPT2CURE_SIGNER_MODE server/services/signature/signer-mode.ts —
-        #                            refused at boot in production when unset or
-        #                            `dev`. kms needs ..._SIGNER_KMS_KEY_ID; hmac
-        #                            needs ..._SIGNER_ACCEPT_HMAC=true. Which one is
-        #                            an operator decision (SOP_KEY_MANAGEMENT.md);
-        #                            this check only refuses a task definition that
-        #                            has made none, before it rolls rather than at
-        #                            boot (2026-09-23).
-        run: |
-          set -euo pipefail
-
-          aws ecs describe-task-definition \
-            --task-definition "$ECS_API_TASK_FAMILY" \
-            --no-cli-pager \
-            --query 'taskDefinition' > /tmp/api-td-preflight.json
-
-          PRESENT=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
-            .containerDefinitions[] | select(.name == $c)
-            | ((.environment // []) + (.secrets // [])) | map(.name) | .[]
-          ' /tmp/api-td-preflight.json | sort -u)
-
-          MISSING=""
-          for VAR in RLS_ENFORCE DATABASE_URL APP_DATABASE_URL JWT_SECRET \
-                     REFRESH_TOKEN_SECRET MFA_ENCRYPTION_KEY AUDIT_HMAC_KEY \
-                     AUDIT_HMAC_SECRET CONNECTOR_ENCRYPTION_KEY \
-                     AI_SENSITIVE_DATA_POLICY_MODE AI_PROVIDER_PLACEMENT_APPROVALS \
-                     CONCEPT2CURE_SIGNER_MODE; do
-            if ! grep -qx "$VAR" <<< "$PRESENT"; then MISSING="$MISSING $VAR"; fi
-          done
-
-          # NODE_ENV must be exactly `production` and RLS_ENFORCE exactly `on`;
-          # both are plain (non-secret) values, so their values are checkable.
-          NODE_ENV_VALUE=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
-            .containerDefinitions[] | select(.name == $c)
-            | (.environment // []) | map(select(.name == "NODE_ENV")) | .[0].value // ""
-          ' /tmp/api-td-preflight.json)
-          RLS_VALUE=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
-            .containerDefinitions[] | select(.name == $c)
-            | (.environment // []) | map(select(.name == "RLS_ENFORCE")) | .[0].value // ""
-          ' /tmp/api-td-preflight.json)
-
-          FAIL=0
-          if [[ -n "$MISSING" ]]; then
-            echo "::error::Task definition $ECS_API_TASK_FAMILY (container $ECS_API_CONTAINER_NAME) is missing required production env:$MISSING"
-            echo "::error::The app refuses to boot without each of these. Add them to the task definition (terraform/environments/production) before deploying."
-            FAIL=1
-          fi
-          if [[ "$NODE_ENV_VALUE" != "production" ]]; then
-            echo "::error::NODE_ENV must be exactly 'production' in the task definition; got '${NODE_ENV_VALUE:-<unset>}'."
-            FAIL=1
-          fi
-          if [[ "$RLS_VALUE" != "on" ]]; then
-            echo "::error::RLS_ENFORCE must be exactly 'on' in the task definition; got '${RLS_VALUE:-<unset>}'. Aliases (true/1/enforce) are rejected by the production kill-switch."
-            FAIL=1
-          fi
-          # assertSensitivePlacementConfiguration refuses any production boot
-          # without mode=enforce; catch it here instead of as a crash-loop.
-          POLICY_MODE_VALUE=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
-            .containerDefinitions[] | select(.name == $c)
-            | (.environment // []) | map(select(.name == "AI_SENSITIVE_DATA_POLICY_MODE")) | .[0].value // ""
-          ' /tmp/api-td-preflight.json)
-          if [[ -n "$POLICY_MODE_VALUE" && "$POLICY_MODE_VALUE" != "enforce" ]]; then
-            echo "::error::AI_SENSITIVE_DATA_POLICY_MODE must be exactly 'enforce' in production; got '$POLICY_MODE_VALUE'."
-            FAIL=1
-          fi
-          # APP_URL is the only origin emailed reset and invitation links are
-          # built on in production (server/services/password-setup-token.ts).
-          # Without it those flows refuse every request rather than put the
-          # request's Host header in front of a live token (password-reset
-          # poisoning, D6). The server boots; no account could be recovered.
-          # A plain value is checked here, as the server checks it (trimmed, an
-          # https URL). A value from `secrets` cannot be read here; its name is
-          # enough, and the server refuses reset and invitation requests if it
-          # is not an https origin.
-          APP_URL_VALUE=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
-            .containerDefinitions[] | select(.name == $c)
-            | (.environment // []) | map(select(.name == "APP_URL")) | .[0].value // ""
-          ' /tmp/api-td-preflight.json | tr -d '[:space:]')
-          APP_URL_SECRET=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
-            .containerDefinitions[] | select(.name == $c)
-            | (.secrets // []) | map(select(.name == "APP_URL")) | length
-          ' /tmp/api-td-preflight.json)
-          if [[ -n "$APP_URL_VALUE" ]]; then
-            if [[ ! "${APP_URL_VALUE,,}" =~ ^https://[^/]+ ]]; then
-              echo "::error::APP_URL must be the deployment's public https origin (password-reset and invitation links are built on it, never on the Host header); got '$APP_URL_VALUE'."
-              FAIL=1
-            fi
-          elif [[ "$APP_URL_SECRET" == "0" ]]; then
-            echo "::error::APP_URL is missing from the task definition (environment or secrets). Password-reset and invitation links are built on it in production, never on the Host header."
-            FAIL=1
-          fi
-          [[ "$FAIL" -eq 0 ]] || exit 1
-
-          echo "Production boot contract satisfied by $ECS_API_TASK_FAMILY."
-
       - name: Register pinned task definition revision (API)
         id: register-api-td
         env:
@@ -599,6 +633,8 @@ jobs:
           IMAGE_TAG: ${{ needs.build-push.outputs.image_tag }}
           IMAGE_DIGEST: ${{ needs.build-push.outputs.api_digest }}
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          # The revision migrate's preflight checked; see that step.
+          CHECKED_API_TD_ARN: ${{ needs.migrate.outputs.api_td_arn }}
         # The deterministic shape ECS supports: pull the current task def,
         # patch the API container image to <repo>@sha256:<digest> (the
         # digest the build-push job captured), register it as a new
@@ -608,19 +644,40 @@ jobs:
         # guarantee the right image was used because it only re-pulls
         # whatever the existing task def already references.
         run: |
+          set -euo pipefail
+
           if [[ -z "$IMAGE_DIGEST" || "$IMAGE_DIGEST" != sha256:* ]]; then
             echo "::error::API image digest missing or malformed: '$IMAGE_DIGEST'. Refusing to deploy without a pinned digest."
+            exit 1
+          fi
+
+          # Roll only the revision the preflight checked. If the family has
+          # moved since (a terraform apply, or an earlier attempt of this job
+          # registering its own revision), the new latest was never checked,
+          # and rolling the old one would silently discard whatever changed.
+          # Either way the answer is a fresh run, which checks the latest.
+          if [[ -z "$CHECKED_API_TD_ARN" ]]; then
+            echo "::error::migrate published no checked API revision; refusing to roll an unchecked one."
+            exit 1
+          fi
+          LATEST_API_TD_ARN=$(aws ecs describe-task-definition \
+            --task-definition "$ECS_API_TASK_FAMILY" \
+            --no-cli-pager \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          if [[ "$LATEST_API_TD_ARN" != "$CHECKED_API_TD_ARN" ]]; then
+            echo "::error::The API task definition moved after the preflight checked it (checked $CHECKED_API_TD_ARN, latest now $LATEST_API_TD_ARN). Re-run the whole workflow so the latest revision is checked before it rolls."
             exit 1
           fi
 
           PINNED_IMAGE="$ECR_REGISTRY/$ECR_API_REPO@$IMAGE_DIGEST"
           echo "Pinning API task def to: $PINNED_IMAGE"
 
-          # Get current task def, strip metadata that's not allowed on
+          # Get the checked task def, strip metadata that's not allowed on
           # register-task-definition input, patch the API container image,
           # register the new revision.
           aws ecs describe-task-definition \
-            --task-definition "$ECS_API_TASK_FAMILY" \
+            --task-definition "$CHECKED_API_TD_ARN" \
             --no-cli-pager \
             --query 'taskDefinition' > /tmp/api-td.json
 
@@ -637,6 +694,10 @@ jobs:
             --no-cli-pager \
             --query 'taskDefinition.taskDefinitionArn' \
             --output text)
+          if [[ -z "$NEW_TD_ARN" || "$NEW_TD_ARN" == "None" ]]; then
+            echo "::error::register-task-definition returned no ARN for the API family."
+            exit 1
+          fi
 
           echo "Registered API task def: $NEW_TD_ARN"
           echo "task_def_arn=$NEW_TD_ARN" >> "$GITHUB_OUTPUT"
