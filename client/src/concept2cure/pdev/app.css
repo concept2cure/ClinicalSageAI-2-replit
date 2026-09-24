@@ -334,8 +334,8 @@
 }
 .pdev-readiness-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent-100) 0%, var(--accent-200) 100%);
-  transition: width var(--pdev-dur) var(--pdev-ease);
+  background: var(--accent-100);
+  transition: background var(--pdev-dur) var(--pdev-ease);
 }
 
 /* ── Workstream rollup strip ────────────────────────────────────── */
