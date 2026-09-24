@@ -125,6 +125,12 @@ function getUserId(req: Request): number | null {
 
 const DOC_TYPE = ['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol', 'curriculum'] as const;
 const DOC_STATUS = ['draft', 'in_review', 'effective', 'superseded', 'retired'] as const;
+/* The statuses a create or an edit may set. 'effective' is reached only by the
+   signed approval below (VSR-001 F-3); 'superseded' and 'retired' only by the
+   revise and retire routes. The schemas admitted all five, so a create or a
+   PATCH could make an SOP effective with no signature (new-code audit
+   2026-09-24, finding 1). */
+const EDITABLE_DOC_STATUS = ['draft', 'in_review'] as const;
 const CRITICALITY = ['critical', 'major', 'minor'] as const;
 const SUPPLIER_STATUS = ['pending', 'approved', 'conditional', 'revoked'] as const;
 const AUDIT_STATUS = ['planned', 'in_progress', 'closed', 'cancelled'] as const;
@@ -149,7 +155,7 @@ const docCreate = z.object({
   docType:          z.enum(DOC_TYPE),
   category:         z.string().max(60).optional().nullable(),
   version:          z.string().max(20).optional(),
-  status:           z.enum(DOC_STATUS).optional(),
+  status:           z.enum(EDITABLE_DOC_STATUS).optional(),
   effectiveDate:    z.string().date().optional().nullable(),
   nextReviewDate:   z.string().date().optional().nullable(),
   artifactId:       z.number().int().positive().optional().nullable(),
@@ -457,13 +463,31 @@ router.patch('/qms/documents/:id', async (req: Request, res: Response) => {
   setFrags.push(`updated_at = NOW()`);
   args.push(id, orgId);
   try {
+    /* Only a draft or in-review document is edited in place. An approved one is
+       bound by its signature to a digest over this row (document-approval-
+       signature.ts), and an edit here left it effective while no longer matching
+       what was signed. It changes through a revision, which returns it to draft
+       for review and a new signature. */
     const { rows } = await pool.query(
       `UPDATE qms_documents SET ${setFrags.join(', ')}
         WHERE id = $${args.length - 1} AND organization_id = $${args.length} AND deleted_at IS NULL
+          AND status IN ('draft','in_review')
         RETURNING *`,
       args,
     );
-    if (rows.length === 0) return notFoundInTenant(res, 'Document');
+    if (rows.length === 0) {
+      const cur = await pool.query<{ status: string }>(
+        `SELECT status FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+        [id, orgId],
+      );
+      if (cur.rows.length === 0) return notFoundInTenant(res, 'Document');
+      return clientError(
+        res,
+        409,
+        `This document is ${cur.rows[0].status}. An approved document changes only through a revision, which returns it to draft for review and a new signature. Nothing was changed.`,
+        { code: 'QMS_DOCUMENT_CONTROLLED' },
+      );
+    }
     /* Editing a controlled document — including its status, effective date and
        next review date — recorded no §11.10(e) row, while approve / revise /
        retire on the same document each record one. Found by the review of the
