@@ -137,8 +137,8 @@ Full record: `docs/evidence/D5-AUDIT-OUTCOMES/2026-09-24/README.md`.
    autocomplete reopens that gate. Two more private copies:
    `ectd-packager/ich-headings.ts:160` and `ectd/dispatch-readiness.ts:162` (which
    lower-cases where the shared one upper-cases).
-3. **The BX-204 dossier-map seed files three of its four Module 1 rows under codes
-   that mean something else** (`scripts/seed/ga-demo.d/105-dossier-map.mjs:30-33`,
+3. ~~**The BX-204 dossier-map seed files three of its four Module 1 rows under codes
+   that mean something else**~~ **Done 2026-09-24 (`…01AiwZKG`):** Draft Labeling is `m1.14.1.3`, Meeting Materials `m1.6.2`, Financial Disclosure `m1.3.4`, each read from `CV_CONTEXT_OF_USE`. The seed deletes the three misfiled `(code, title)` rows for its own project before inserting, so a database seeded before the fix is corrected on reseed, not only a fresh one (checked on a local database with the old rows planted: re-seed leaves `m1.1`, `m1.14.1.3`, `m1.3.4`, `m1.6.2`, once each). `tests/schema-contract/dossier-map-seed-module1-codes.contract.test.ts` requires every Module 1 row's code to exist in the FDA table and its FDA meaning to match the title (red 3/5 before, green 5/5 after). Originally: (`scripts/seed/ga-demo.d/105-dossier-map.mjs:30-33`,
    checked against the vendored FDA table `controlled-vocab/cv-v4-data.ts`): Draft
    Labeling at `m1.3.1` (FDA: 1.14.1.x), Meeting Materials at `m1.14.1` (FDA: 1.6.x),
    Financial Disclosure at `m1.12.4` (FDA: 1.3.4; FDA's 1.12.4 is "request for comments
