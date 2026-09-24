@@ -39,6 +39,9 @@ const base: ModelConfig = {
   enabled: true,
   thinkingMode: 'adaptive',
   supportsSamplingParams: false,
+  // Declared, as the real Opus 5 entry does. Effort support is per entry and
+  // undeclared means none, so a fixture exercising effort has to say so.
+  maxApiEffort: 'max',
 };
 
 const CONSTRAINS: ModelConfig = { ...base, supportsStructuredOutputs: true };

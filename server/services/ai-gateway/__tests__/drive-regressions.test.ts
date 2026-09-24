@@ -23,7 +23,8 @@
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
 
-import { AIGateway, resetGateway, fillEmptyBodyMessages } from '../gateway';
+import { AIGateway, resetGateway, fillEmptyBodyMessages, DEFAULT_MODELS } from '../gateway';
+import { CLOUD_MODELS } from '../providers/cloud-models';
 import { apiEffortForModel } from '../effort';
 import type { GatewayConfig, GatewayMessage, GatewayRequest, ModelConfig } from '../types';
 
@@ -87,38 +88,68 @@ describe('fillEmptyBodyMessages — no request is refused over a blank turn', ()
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('apiEffortForModel — only a level the model accepts', () => {
-  it.each(['claude-haiku-4-5', 'claude-haiku-4-5-20251001', 'claude-sonnet-4-5', 'claude-opus-4-1'])(
-    'sends no effort to %s, which rejects it',
-    model => {
-      for (const level of ['low', 'medium', 'high', 'max'] as const) {
-        expect(apiEffortForModel(model, level), `${model} would 400 on effort=${level}`).toBeUndefined();
-      }
-    },
-  );
+  // The model table below used to live in the function, as regexes over the
+  // wire name. It now lives on each registry entry as `maxApiEffort`, and the
+  // function only applies it. So the table is asserted in two halves: the
+  // clamp, given a declared ceiling; and the registry, declaring the right
+  // ceiling for every entry it serves.
 
-  it('lowers max to high on Opus 4.5 and passes the rest through — never raises', () => {
-    expect(apiEffortForModel('claude-opus-4-5', 'max')).toBe('high');
-    expect(apiEffortForModel('claude-opus-4-5', 'high')).toBe('high');
-    expect(apiEffortForModel('claude-opus-4-5', 'medium')).toBe('medium');
-    expect(apiEffortForModel('claude-opus-4-5', 'low')).toBe('low');
+  it('sends nothing to an entry whose ceiling is null — Haiku 4.5, Sonnet 4.5, Opus 4.1', () => {
+    for (const level of ['low', 'medium', 'high', 'max'] as const) {
+      expect(apiEffortForModel({ maxApiEffort: null }, level), `would 400 on effort=${level}`).toBeUndefined();
+    }
   });
 
-  it.each(['claude-opus-4-6', 'claude-opus-4-7', 'claude-sonnet-5', 'claude-opus-5', 'claude-opus-5-5', 'claude-fable-5-1'])(
-    'passes every level through on %s',
-    model => {
-      for (const level of ['low', 'medium', 'high', 'max'] as const) {
-        expect(apiEffortForModel(model, level)).toBe(level);
-      }
-    },
-  );
+  it('lowers max to high on a high ceiling (Opus 4.5) and passes the rest through — never raises', () => {
+    expect(apiEffortForModel({ maxApiEffort: 'high' }, 'max')).toBe('high');
+    expect(apiEffortForModel({ maxApiEffort: 'high' }, 'high')).toBe('high');
+    expect(apiEffortForModel({ maxApiEffort: 'high' }, 'medium')).toBe('medium');
+    expect(apiEffortForModel({ maxApiEffort: 'high' }, 'low')).toBe('low');
+  });
 
-  it('leaves non-Claude model ids alone', () => {
-    expect(apiEffortForModel('gpt-4o', 'high')).toBe('high');
-    expect(apiEffortForModel('kimi-k2', 'max')).toBe('max');
+  it('passes every level through on a max ceiling (Opus 4.6+, Sonnet 4.6+, Claude 5)', () => {
+    for (const level of ['low', 'medium', 'high', 'max'] as const) {
+      expect(apiEffortForModel({ maxApiEffort: 'max' }, level)).toBe(level);
+    }
+  });
+
+  it('sends nothing to an entry that declares no ceiling', () => {
+    // Undeclared is none, the same rule as every other capability flag. A
+    // missing declaration costs a turn its effort hint; sending a level the
+    // model rejects costs the turn its first call.
+    expect(apiEffortForModel({}, 'high')).toBeUndefined();
   });
 
   it('sends nothing when nothing was asked for', () => {
-    expect(apiEffortForModel('claude-opus-5', undefined)).toBeUndefined();
+    expect(apiEffortForModel({ maxApiEffort: 'max' }, undefined)).toBeUndefined();
+  });
+
+  it('A BEDROCK HAIKU GETS NO EFFORT — the case the name rule got wrong', () => {
+    // The name rule began `if (!m.startsWith('claude-')) return effort;`, and a
+    // Bedrock id is `anthropic.claude-haiku-4-5`. So it skipped every check and
+    // sent Haiku the very parameter this function exists to withhold. Same
+    // weights, different substrate naming. Declared per entry, it cannot miss.
+    const bedrockHaiku = { model: 'anthropic.claude-haiku-4-5', maxApiEffort: null } as const;
+    expect(apiEffortForModel(bedrockHaiku, 'high')).toBeUndefined();
+  });
+
+  it('every Claude registry entry declares the ceiling its model takes', () => {
+    // This is where the model table now lives. Each entry is checked against
+    // the documented support for the model it serves, so an entry added with
+    // the wrong declaration — or none — fails here rather than in production.
+    const expected = (wire: string): 'high' | 'max' | null => {
+      const m = wire.replace(/^(?:[a-z]+\.)?anthropic\./, '');
+      if (/^claude-haiku-4-5|^claude-sonnet-4-5|^claude-opus-4-1/.test(m)) return null;
+      if (/^claude-opus-4-5/.test(m)) return 'high';
+      return 'max';
+    };
+    const claude = [...DEFAULT_MODELS, ...CLOUD_MODELS].filter(e =>
+      ['anthropic', 'bedrock', 'vertex'].includes(e.provider),
+    );
+    expect(claude.length).toBeGreaterThan(4);
+    for (const entry of claude) {
+      expect(entry.maxApiEffort, `${entry.id} (${entry.model})`).toBe(expected(entry.model));
+    }
   });
 });
 
@@ -126,7 +157,17 @@ describe('apiEffortForModel — only a level the model accepts', () => {
 // The params that actually reach Anthropic
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * The REAL registry entry for a wire model when there is one.
+ *
+ * Effort support is declared per entry (`maxApiEffort`), so a hand-built
+ * fixture would test the fixture. Resolving the actual entry makes these cases
+ * prove that the registry's own declarations produce the right wire params —
+ * which is the thing that has to be true in production.
+ */
 function modelConfig(model: string): ModelConfig {
+  const real = [...DEFAULT_MODELS, ...CLOUD_MODELS].find(e => e.model === model);
+  if (real) return real;
   return {
     id: model,
     provider: 'anthropic',
