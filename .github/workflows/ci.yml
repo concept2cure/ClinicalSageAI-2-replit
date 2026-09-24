@@ -123,6 +123,16 @@ jobs:
         # Baseline entries need a written reason.
         run: npm run ci:column-reachability
 
+      - name: Guardrails — server code runs no DDL on the runtime connection
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # Production connects as a non-owner role with no CREATE on public, and
+        # PostgreSQL refuses CREATE/ALTER … IF NOT EXISTS for it even when the
+        # object exists — while a superuser dev server succeeds. So runtime DDL
+        # passes every local run and fails only in production: the enterprise
+        # onboarding intake lost every request that way. Baseline entries need
+        # a written reason; the selftest shows each failure branch firing.
+        run: npm run ci:runtime-ddl && npm run ci:runtime-ddl:selftest
+
       - name: Guardrails — server SQL references a table nothing creates
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # The C-8/C-10/C-11/C-12/C-14 class: shipped code with no storage. Unit

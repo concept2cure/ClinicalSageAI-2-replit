@@ -173,6 +173,8 @@
     "ci:migration-prefix-collisions:strict": "node scripts/ci/check-migration-prefix-collisions.mjs --strict",
     "ci:migration-prefix-collisions:write-baseline": "node scripts/ci/check-migration-prefix-collisions.mjs --write-baseline",
     "ci:rls-allowlist-sync": "node scripts/ci/check-rls-allowlist-sync.mjs",
+    "ci:runtime-ddl": "node scripts/ci/check-runtime-ddl.mjs",
+    "ci:runtime-ddl:selftest": "node scripts/ci/check-runtime-ddl.selftest.mjs",
     "ci:session-scoped-rls-bypass": "node scripts/ci/check-session-scoped-rls-bypass.mjs",
     "ci:server-error-leaks": "node scripts/ci/check-server-error-leaks.mjs",
     "ci:server-error-leaks:list": "node scripts/ci/check-server-error-leaks.mjs --list",

@@ -171,6 +171,25 @@ if ! npm run --silent ci:column-reachability 2>&1; then
 fi
 echo "   ✅ Column reachability passed."
 
+# Schema is created by an applier, never by a request. Production's runtime role
+# cannot CREATE in public and owns no table, and PostgreSQL checks that BEFORE
+# IF NOT EXISTS — so a runtime CREATE TABLE is refused in production even when
+# the table exists, and succeeds on every developer machine. That is how the
+# enterprise onboarding intake lost every request in production. Reads files
+# only, no database (~1.5s).
+echo "   Validating server code runs no DDL on the runtime connection..."
+if ! npm run --silent ci:runtime-ddl 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Runtime DDL check FAILED."
+  echo "   Server code issues DDL that production's runtime role cannot run."
+  echo "   Create the object in a migration listed in C2C_MIGRATION_FILES"
+  echo "   (CLAUDE.md RULE 1); where a table might be missing, verify it with"
+  echo "   to_regclass and fail loudly. Never create schema at request time."
+  echo ""
+  exit 1
+fi
+echo "   ✅ No runtime DDL."
+
 # The third migration invariant, and the only one nothing was enforcing: every
 # .sql file in db/migrations must appear in migrations_manifest.json, which is
 # what orders them for the appliers that read it. `db:sync-manifest:check`

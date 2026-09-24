@@ -178,3 +178,97 @@ It is recorded rather than fixed, because nothing reaches it:
 So there is no in-app acceptance in the product, and the commercial terms do not
 need one for launch. If in-app acceptance is ever wanted, it needs a durable
 creator and read paths that fail closed. Building it is new capability.
+
+## The class behind the intake defect — and the gate that closes it
+
+The intake defect was not a one-off. It is one instance of a class that is
+**invisible everywhere except production, by construction.**
+
+### The fact the class rests on
+
+PostgreSQL checks CREATE on the schema, and ownership of the table, **before**
+it looks at `IF NOT EXISTS`. Production's runtime role (`app_service`) has
+neither. So on the runtime connection each of these is refused **even when the
+object already exists** — including the core `organizations` table
+(`runtime-ddl-refused-on-existing-objects.txt`, PostgreSQL 16, as `app_service`):
+
+| Statement (object exists) | Result as `app_service` |
+|---|---|
+| `CREATE TABLE IF NOT EXISTS license_requests (…)` | `permission denied for schema public` |
+| `CREATE TABLE IF NOT EXISTS organizations (…)` | `permission denied for schema public` |
+| `CREATE INDEX IF NOT EXISTS … ON license_requests` | `must be owner of table license_requests` |
+| `ALTER TABLE license_requests ADD COLUMN IF NOT EXISTS …` | `must be owner of table license_requests` |
+
+On a developer machine the server connects as a superuser and every one
+succeeds.
+
+### It had bitten before, and been fixed by hand each time
+
+`tests/db/gdpr-service-runtime-role.dbtest.ts` records three earlier instances:
+
+- the GDPR service threw on its first call in every process;
+- the AI provenance ledger reported success and wrote nothing;
+- `audit.tamper_proof_log` also reported success and wrote nothing.
+
+Each was fixed where it was found. Nothing stopped the next one, and
+`license_requests` was the fourth.
+
+Worse, three guards vouch for runtime DDL as a way a table gets created:
+
+- `ci:unbacked-tables` calls it one of *"three real provisioning paths"*;
+- `ci:column-reachability` counts it as a creator;
+- `ci:migration-reachability` calls it *"a real (if discouraged) provisioning path"*.
+
+That is why `license_requests` never appeared in `ci:unbacked-tables`' baseline.
+The guard counted the table as created by the very statement production refuses.
+Only the live-database guard, run against a real provisioned database, saw it
+missing.
+
+### Every site, triaged at HEAD (15 files → 14 in scope)
+
+| Disposition | Files |
+|---|---|
+| Launch-reached and broken in production — **fixed above** | `routes/auth.ts` → `license_requests` |
+| Latent, in a mounted API nothing calls | `services/licensing/eula-service.ts` (read paths fail **open**: `hasAcceptedAll()` answers true); `routes/c2c/context-intelligence.ts` (`ai_feedback`, answers `recorded: true` with nothing stored) |
+| Reached but harmless — caught, and the tables (and seed) come from the applier | `services/chat-thread-helpers.ts` (AnA chat; `20260728_chat_thread_store.sql`); `services/innovation/submission-readiness-twin-service.ts` (AnA tool `get_submission_readiness_twin`; `072_gcc_innovation_platform_core.sql`, 14 criteria rows present) |
+| Boot, on the **owner** connection — safe | `db/ensureCoreTables.ts` (called with `DATABASE_URL`); `db/bootstrap/auth-schema.ts` (`ensureAuthTables` opens the owner pool when the role is split) |
+| Dead — no importer, or no caller | `db/tenantRls.ts`, `utils/database-optimizer.ts`, `services/integrations/credentialVault.ts`, `db/setupLiterature.ts` (its only importer `initDatabase.ts` is itself unimported), `services/ai/openai-orchestrator.ts` (`initializeFactsGraph`, no caller) |
+| Unmounted, gated, or test infrastructure | `routes/cognitive-ecosystem.ts` (retired, #844), `routes/test-assembly.ts` (`testRoutesEnabled` only), `db/pglite-harness.ts` (imported only by tests) |
+| False positive, excluded by the pattern | `services/module-intelligence.ts:407` — a prompt quoting *"Create Table 2.7.4.1-1"*, an ICH E3 caption |
+
+### `ci:runtime-ddl` — server code runs no DDL on the runtime connection
+
+`scripts/ci/check-runtime-ddl.mjs` matches SQL-shaped DDL in runtime server code,
+with comments stripped. The object keyword must be followed by an identifier, so
+prose passes.
+
+`scripts/ci/runtime-ddl-baseline.json` pins each of the 14 files above to its
+exact statement count, and **every entry carries its written reason** — an entry
+without one fails. So does a new file with DDL, or a baselined file that gains a
+statement. There is deliberately no `--write-baseline`.
+
+It is wired into `.husky/pre-push` and `.github/workflows/ci.yml` (with its
+self-test), and runs in about 1.5 s with no database.
+
+Shown failing, not just passing:
+
+| Proof | Result | File |
+|---|---|---|
+| Self-test: 17 cases — seven DDL forms caught (lower case included), prose / comments / tests / migrations passed, a grown count caught, a missing reason caught, `--strict` on an overstated baseline | **17 / 17** | `runtime-ddl-selftest-and-mutant.txt` |
+| Mutant gate whose pattern can never match | self-test **9 / 17**, exit 1 | same |
+| **The real tree with the genuine pre-fix `auth.ts` (`254f502da~1`) restored in place** | exit 1, naming `server/routes/auth.ts:2342  CREATE TABLE IF NOT EXISTS l` | `runtime-ddl-gate-catches-prefix-auth.txt` |
+
+A note on that last proof, since the first attempt at it was wrong. I first
+restored `dfc52bd5c~1`. `dfc52bd5c` is a merge, so its first parent is the
+**fixed** `auth.ts`, and the gate rightly passed. Found by checking that the
+restored file actually contained the statement, which it did not. Redone
+against `254f502da~1`, the commit before the fix.
+
+### For `…01KiDof7` (W2 schema guards) — recorded, not edited
+
+`ci:unbacked-tables`, `ci:column-reachability` and `ci:migration-reachability`
+count runtime DDL as a creator. On production's connection it creates nothing.
+With `ci:runtime-ddl` in place, no new runtime creator can land, so what that
+path now vouches for is only the 14 baselined files. Whether to stop counting
+them — which would surface the latent EULA and `ai_feedback` tables as unbacked —
+is that lane's call. It was not changed from here.

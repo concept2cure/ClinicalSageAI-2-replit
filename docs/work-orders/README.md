@@ -62,6 +62,22 @@ is claimed, take the next unclaimed finding in §3 rather than duplicating it.
    and advice"). It is a BLA, not on the IND demo path. `ON CONFLICT DO NOTHING` means a
    corrected code reaches only a freshly seeded database.
 
+### Handed to the W2 schema-guards lane (`…01KiDof7`) — found by `…01E2moDu`, not edited
+
+`ci:unbacked-tables`, `ci:column-reachability` and `ci:migration-reachability`
+each count **runtime DDL in server code** as a way a table gets created. On
+production's connection it creates nothing. PostgreSQL refuses `CREATE … IF NOT
+EXISTS` to the non-owner runtime role **even when the object exists**, because it
+checks privilege first. That is how `license_requests` passed `ci:unbacked-tables`
+while no provisioned database had it, and lost every enterprise onboarding
+request in production. It is fixed now.
+
+New runtime DDL is now blocked at the source by `ci:runtime-ddl` (pre-push and CI,
+with a self-test). What those three guards still accept as created is the 14
+baselined files in `scripts/ci/runtime-ddl-baseline.json`. Whether to stop
+counting them is your call: doing so surfaces the latent EULA and `ai_feedback`
+tables as unbacked. Evidence: `docs/evidence/W1/2026-09-24-launch-reach/`.
+
 ### Handed to the AnA / council lane (`…01DiJJAk`) — found, not fixed, by the schema-authority lane
 
 Two findings surfaced inside that lane's files. Reported rather than edited,
