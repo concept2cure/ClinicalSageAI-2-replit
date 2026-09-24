@@ -44,7 +44,7 @@
   .pg-gate-status{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;margin-top:3px;color:var(--warning);}
   .pg-gate-status[data-ready="true"]{color:var(--success);}
   .pg-gate-bar{height:5px;border-radius:3px;background:var(--bg-200);overflow:hidden;}
-  .pg-gate-fill{height:100%;background:var(--warning);transition:width var(--dur) var(--ease);}
+  .pg-gate-fill{height:100%;background:var(--warning);transition:background var(--dur) var(--ease);}
   .pg-gate-fill[data-ready="true"]{background:var(--success);}
 
   /* audit trail */
@@ -316,7 +316,7 @@
   /* consent */
   .pd-consent-meter{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
   .pd-consent-bar{flex:1;min-width:160px;height:7px;background:var(--bg-200);border-radius:3px;overflow:hidden;}
-  .pd-consent-fill{height:100%;background:var(--success);border-radius:3px;transition:width var(--dur) var(--ease);}
+  .pd-consent-fill{height:100%;background:var(--success);border-radius:3px;transition:background var(--dur) var(--ease);}
   .pd-consent-pct{font-size:12px;font-weight:600;color:var(--text-200);}
   .pd-consent-list{display:flex;flex-direction:column;gap:2px;}
   .pd-consent-row{display:grid;grid-template-columns:auto 1fr;gap:11px;align-items:center;padding:9px 12px;border-radius:var(--radius-md);font-size:12.5px;color:var(--text-200);}
