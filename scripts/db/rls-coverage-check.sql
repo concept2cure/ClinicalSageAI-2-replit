@@ -134,12 +134,21 @@ WHERE c.table_schema NOT IN ('pg_catalog', 'information_schema')
 -- the canonical way a child gets the first; its spec list is where a child is
 -- added. The carve-out below lists the children not yet covered, each with its
 -- reason. It may only shrink.
+--
+-- Every schema, not only public (ledger L203): a child outside public is the
+-- same shape, and that migration's chained list takes schema-qualified names.
+-- An edge into identity.users does not count. A row that names a user is
+-- that user's, not a tenant's, and those children (cognitive_audit.*,
+-- federated_ml.*) are recorded, not policied.
 UNION ALL
-SELECT DISTINCT 'public.' || c.relname || ' (child of ' || p.relname || ', row security off)'
+SELECT DISTINCT cn.nspname || '.' || c.relname || ' (child of ' || pn.nspname || '.' || p.relname || ', row security off)'
 FROM pg_class c
+JOIN pg_namespace cn ON cn.oid = c.relnamespace
 JOIN pg_constraint k ON k.conrelid = c.oid AND k.contype = 'f'
 JOIN pg_class p ON p.oid = k.confrelid
-WHERE c.relnamespace = 'public'::regnamespace
+JOIN pg_namespace pn ON pn.oid = p.relnamespace
+WHERE cn.nspname NOT IN ('pg_catalog', 'information_schema')
+  AND NOT (pn.nspname = 'identity' AND p.relname = 'users')
   AND c.relkind = 'r'
   AND p.relrowsecurity
   AND NOT EXISTS (

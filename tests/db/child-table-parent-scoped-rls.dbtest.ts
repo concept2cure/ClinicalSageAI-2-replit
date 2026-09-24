@@ -330,6 +330,43 @@ const ALL_CHILD_TABLES = [
 ];
 
 /**
+ * Children OUTSIDE public, scoped by the chained list's schema-qualified entries
+ * (ledger L203). A bare CI database has none of these schemas, so this list is
+ * asserted only for the tables that exist. A provisioned database has all of
+ * them, and that is where the assertion bites.
+ */
+const NON_PUBLIC_CHILD_TABLES = [
+  'ai.risk_assessments', 'audit.config_bundles', 'audit.dataset_snapshots',
+  'audit.idempotency_keys', 'audit.purge_requests', 'audit.purge_approvals', 'audit.tombstones',
+  'core.entities', 'ectd.project_folders',
+  'global_dossier.content_versions', 'global_dossier.dossier_branches',
+  'global_dossier.dossier_sync_events', 'global_dossier.regulatory_comments',
+  'manufacturing.rtrt_predictions', 'precedent.csr_precedent_links',
+  'regulatory_harmonization.export_job_audit_log',
+];
+
+/** Row security, FORCE and the policy, for each schema-qualified table named. */
+const NON_PUBLIC_PROTECTION_SQL = `
+  SELECT n.nspname || '.' || c.relname AS table_name, c.relrowsecurity, c.relforcerowsecurity,
+         EXISTS (SELECT 1 FROM pg_policies p
+                  WHERE p.schemaname = n.nspname AND p.tablename = c.relname
+                    AND p.policyname = 'tenant_isolation_policy') AS policied
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname || '.' || c.relname = ANY($1::text[])`;
+
+function expectProtected(
+  rows: Array<{ table_name: string; relrowsecurity: boolean; relforcerowsecurity: boolean; policied: boolean }>,
+): void {
+  for (const row of rows) {
+    expect(row.policied, `${row.table_name} has no tenant_isolation_policy`).toBe(true);
+    expect(row.relrowsecurity, `${row.table_name} has RLS disabled`).toBe(true);
+    // Without FORCE the table OWNER skips the policy entirely.
+    expect(row.relforcerowsecurity, `${row.table_name} is not FORCEd`).toBe(true);
+  }
+}
+
+/**
  * Deliberately NOT covered by the migration, so they must still have no policy.
  * Each needs a nested predicate through a second parent, and none is referenced
  * by server code. Asserted explicitly rather than left implicit: if a later
@@ -552,6 +589,11 @@ describe('child tables are scoped to their parent row’s tenant', () => {
       expect(row.relforcerowsecurity, `${row.table_name} is not FORCEd`).toBe(true);
     }
     expect(rows.length).toBeGreaterThan(0);
+  });
+
+  it('every non-public child the chained list names that exists ends up policied, enabled and FORCEd', async () => {
+    const { rows } = await scratch.ownerPool.query(NON_PUBLIC_PROTECTION_SQL, [NON_PUBLIC_CHILD_TABLES]);
+    expectProtected(rows);
   });
 
   for (const c of CASES) {

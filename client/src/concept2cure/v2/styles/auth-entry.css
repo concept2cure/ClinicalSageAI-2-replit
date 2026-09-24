@@ -6,7 +6,7 @@
 
 .c2c-v2 .auth-brand{position:relative;overflow:hidden;background:var(--bg-100);border-right:1px solid var(--border);padding:56px 64px;display:flex;flex-direction:column;justify-content:space-between;}
 .c2c-v2 .auth-brand-top{display:flex;align-items:center;gap:11px;position:relative;z-index:1;}
-.c2c-v2 .auth-brand-top img{width:34px;height:34px;border-radius:8px;}
+.c2c-v2 .auth-brand-top img{width:34px;height:34px;border-radius:var(--radius-lg);}
 .c2c-v2 .auth-brand-top b{font-size:16px;font-weight:600;letter-spacing:-.01em;}
 .c2c-v2 .auth-brand-top b span{color:var(--accent-100);font-weight:500;}
 .c2c-v2 .auth-brand-mid{position:relative;z-index:1;max-width:440px;}
@@ -80,7 +80,7 @@
 .c2c-v2 .ob-card{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-2xl);padding:32px;box-shadow:var(--shadow-md);animation:authIn var(--dur) var(--ease);}
 .c2c-v2 .ob-feats{display:flex;flex-direction:column;gap:14px;margin:20px 0 24px;}
 .c2c-v2 .ob-feat{display:flex;gap:12px;align-items:flex-start;}
-.c2c-v2 .ob-feat .ico{width:30px;height:30px;border-radius:8px;background:var(--accent-000);color:var(--accent-100);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.c2c-v2 .ob-feat .ico{width:30px;height:30px;border-radius:var(--radius-lg);background:var(--accent-000);color:var(--accent-100);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
 .c2c-v2 .ob-feat b{font-size:13.5px;display:block;}
 .c2c-v2 .ob-feat span{font-size:12.5px;color:var(--text-300);line-height:1.45;}
 .c2c-v2 .ob-chips{display:flex;flex-wrap:wrap;gap:7px;}
@@ -95,7 +95,7 @@
 .c2c-v2 .ob-nav{display:flex;gap:10px;margin-top:8px;}
 .c2c-v2 .ob-nav .auth-btn{flex:1;}
 .c2c-v2 .ob-nav .auth-btn.ghost{flex:0 0 96px;}
-.c2c-v2 .ob-done{width:54px;height:54px;border-radius:50%;background:var(--success);color:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 18px;}
+.c2c-v2 .ob-done{width:54px;height:54px;border-radius:50%;background:var(--success);color:var(--on-success);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 18px;}
 
 /* ── Client portal ── */
 .c2c-v2 .cp{min-height:100vh;background:var(--bg-000);}

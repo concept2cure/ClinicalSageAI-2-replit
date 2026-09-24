@@ -183,6 +183,18 @@ const AUDITABLE_TABLE_SCOPES = {
  * caller cannot retry a 409, and an operator reading it would go looking for a
  * missing tenant column that is not missing.
  */
+/**
+ * No export job in this session's tenant has the id. A status change or a
+ * completion answers this instead of writing an audit row for a job it did not
+ * update (ledger L203).
+ */
+export class ExportJobNotFoundError extends Error {
+  constructor(jobId: string) {
+    super(`Export job ${jobId} not found`);
+    this.name = 'ExportJobNotFoundError';
+  }
+}
+
 export class AuditScopeError extends Error {
   constructor(
     readonly code: 'AUDIT_TENANT_REQUIRED' | 'AUDIT_TABLE_UNCLASSIFIED' | 'AUDIT_NOT_TENANT_SCOPABLE',
@@ -1000,7 +1012,7 @@ export class GRDHEService {
   ): Promise<void> {
     const userId = getCurrentUserId();
 
-    await db.execute(sql`
+    const updated = await db.execute(sql`
       UPDATE regulatory_harmonization.export_jobs
       SET 
         status = ${status}::regulatory_harmonization.export_status,
@@ -1012,7 +1024,13 @@ export class GRDHEService {
         completed_at = CASE WHEN ${status} IN ('completed', 'failed', 'cancelled') THEN NOW() ELSE NULL END,
         updated_at = NOW()
       WHERE id = ${jobId}::uuid
+      RETURNING id
     `);
+    // Row security filters the UPDATE to the caller's tenant, so another
+    // tenant's job matched nothing. But the audit insert below ran regardless,
+    // and the audit log's foreign key does not consult row security, so it
+    // filed an entry against that job (ledger L203).
+    if (updated.rows.length === 0) throw new ExportJobNotFoundError(jobId);
 
     // Log the status change
     await this.logExportJobAudit(jobId, 'status_change', 'status_change', `Status changed to ${status}`, {
@@ -1036,7 +1054,7 @@ export class GRDHEService {
     const outputHash = computeHash(outputContent);
     const outputSize = Buffer.byteLength(outputContent, 'utf8');
 
-    await db.execute(sql`
+    const completed = await db.execute(sql`
       UPDATE regulatory_harmonization.export_jobs
       SET 
         status = 'completed'::regulatory_harmonization.export_status,
@@ -1051,7 +1069,10 @@ export class GRDHEService {
         completion_signature_hash = ${computeHash(outputFilePath + '|' + userId + '|' + new Date().toISOString())},
         updated_at = NOW()
       WHERE id = ${jobId}::uuid
+      RETURNING id
     `);
+    // As in updateExportJobStatus: no audit row for a job this session did not update.
+    if (completed.rows.length === 0) throw new ExportJobNotFoundError(jobId);
 
     await this.logExportJobAudit(jobId, 'job_completed', 'status_change', 'Export job completed successfully', {
       output_file: outputFilePath,

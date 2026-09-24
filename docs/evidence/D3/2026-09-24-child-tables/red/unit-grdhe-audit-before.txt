@@ -1,0 +1,61 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/grdhe/__tests__/export-job-audit-scope.test.ts > an export job audit row is written only for a job this session updated (L203) > a status change to a job the session cannot see writes no audit row, and says not found 8ms
+   → promise resolved "undefined" instead of rejecting
+ × server/services/grdhe/__tests__/export-job-audit-scope.test.ts > an export job audit row is written only for a job this session updated (L203) > completing a job the session cannot see writes no audit row, and says not found 2ms
+   → promise resolved "undefined" instead of rejecting
+ ✓ server/services/grdhe/__tests__/export-job-audit-scope.test.ts > an export job audit row is written only for a job this session updated (L203) > the session's own job still gets its status change and its audit row 1ms
+ ✓ server/services/grdhe/__tests__/export-job-audit-scope.test.ts > an export job audit row is written only for a job this session updated (L203) > the session's own job is still completed with its audit row 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/grdhe/__tests__/export-job-audit-scope.test.ts > an export job audit row is written only for a job this session updated (L203) > a status change to a job the session cannot see writes no audit row, and says not found
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/grdhe/__tests__/export-job-audit-scope.test.ts:50:93
+     48| describe('an export job audit row is written only for a job this sessi…
+     49|   it('a status change to a job the session cannot see writes no audit …
+     50|     await expect(grdheService.updateExportJobStatus(JOB, 'cancelled', …
+       |                                                                                             ^
+     51|       ExportJobNotFoundError
+     52|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/grdhe/__tests__/export-job-audit-scope.test.ts > an export job audit row is written only for a job this session updated (L203) > completing a job the session cannot see writes no audit row, and says not found
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/grdhe/__tests__/export-job-audit-scope.test.ts:59:5
+     57|     await expect(
+     58|       grdheService.completeExportJob(JOB, '/exports/t/out.xml', '<xml/…
+     59|     ).rejects.toBeInstanceOf(ExportJobNotFoundError);
+       |     ^
+     60|     expect(auditInserts()).toEqual([]);
+     61|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  20:32:58
+   Duration  932ms (transform 165ms, setup 99ms, import 476ms, tests 15ms, environment 0ms)
+

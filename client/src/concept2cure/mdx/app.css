@@ -35,16 +35,16 @@
 
   /* Status/severity tone pairs for the ported mdx surfaces — see the
      "Ported surfaces" deviation notes further down. */
-  --mdx-tone-ok-bg:   #ecf1e4;  --mdx-tone-ok-fg:   #4d6235;  --mdx-tone-ok-line:   #cfd9bd;
-  --mdx-tone-warn-bg: #f6e9cf;  --mdx-tone-warn-fg: #7e5510;  --mdx-tone-warn-line: #e2c98c;
-  --mdx-tone-err-bg:  #f3d6d2;  --mdx-tone-err-fg:  #7c1f1f;  --mdx-tone-err-line:  #dca5a0;
-  --mdx-tone-info-bg: #e2e8f5;  --mdx-tone-info-fg: #355270;
-  --mdx-tone-alt-bg:  #ece9f7;  --mdx-tone-alt-fg:  #544698;
+  --mdx-tone-ok-bg:   var(--success-muted);  --mdx-tone-ok-fg:   var(--success);  --mdx-tone-ok-line:   color-mix(in srgb, var(--success) 30%, var(--success-muted));
+  --mdx-tone-warn-bg: var(--warning-muted);  --mdx-tone-warn-fg: var(--warning);  --mdx-tone-warn-line: color-mix(in srgb, var(--warning) 30%, var(--warning-muted));
+  --mdx-tone-err-bg:  var(--error-muted);    --mdx-tone-err-fg:  var(--error);    --mdx-tone-err-line:  color-mix(in srgb, var(--error) 30%, var(--error-muted));
+  --mdx-tone-info-bg: var(--info-muted);     --mdx-tone-info-fg: var(--info);
+  --mdx-tone-alt-bg:  var(--accent-pro-000);  --mdx-tone-alt-fg:  var(--accent-pro-200);
   /* Muted variants — the ISO 14971 heat map's zero-count cells, which carry a
      tone (the cell's risk band) with no count to print. */
-  --mdx-tone-ok-bg-muted:   #f5f6ef;  --mdx-tone-ok-line-muted:   #e6e9d8;
-  --mdx-tone-warn-bg-muted: #f8efde;  --mdx-tone-warn-line-muted: #e9d6a8;
-  --mdx-tone-err-bg-muted:  #f6e6e3;  --mdx-tone-err-line-muted:  #ecbeb6;
+  --mdx-tone-ok-bg-muted:   color-mix(in srgb, var(--success-muted) 45%, var(--bg-000));  --mdx-tone-ok-line-muted:   color-mix(in srgb, var(--success) 15%, var(--bg-000));
+  --mdx-tone-warn-bg-muted: color-mix(in srgb, var(--warning-muted) 45%, var(--bg-000));  --mdx-tone-warn-line-muted: color-mix(in srgb, var(--warning) 15%, var(--bg-000));
+  --mdx-tone-err-bg-muted:  color-mix(in srgb, var(--error-muted) 45%, var(--bg-000));    --mdx-tone-err-line-muted:  color-mix(in srgb, var(--error) 15%, var(--bg-000));
 }
 
 /* ─── Reset ─── */
@@ -374,9 +374,9 @@
   position: relative; z-index: 1; border: 1.5px solid var(--bg-050);
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.mdx-shell .stage-node.complete .stage-dot { background: var(--success); color: var(--text-000); border-color: var(--bg-050); }
+.mdx-shell .stage-node.complete .stage-dot { background: var(--success); color: var(--on-success); border-color: var(--bg-050); }
 .mdx-shell .stage-node.active .stage-dot   { background: var(--accent-strong); color: var(--accent-on-strong); border-color: var(--bg-050); box-shadow: 0 0 0 3px var(--accent-000); }
-.mdx-shell .stage-node.blocked .stage-dot  { background: var(--warning); color: var(--text-000); border-color: var(--bg-050); box-shadow: 0 0 0 3px var(--warning-muted); }
+.mdx-shell .stage-node.blocked .stage-dot  { background: var(--warning); color: var(--on-warning); border-color: var(--bg-050); box-shadow: 0 0 0 3px var(--warning-muted); }
 .mdx-shell .stage-node.idle .stage-dot     { background: var(--bg-200); color: var(--text-200); }
 .mdx-shell .stage-node.active { font-weight: 500; }
 .mdx-shell .stage-label { font-size: 11px; color: var(--text-200); line-height: 1.3; max-width: 100px; }
@@ -1365,7 +1365,7 @@
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
-.mdx-shell .ed-comment-avatar.ai { background: var(--ai); color: var(--text-000); }
+.mdx-shell .ed-comment-avatar.ai { background: var(--ai-muted); color: var(--ai); }
 .mdx-shell .ed-comment-avatar.ai svg { width: 10px; height: 10px; }
 .mdx-shell .ed-comment-role { color: var(--text-300); }
 .mdx-shell .ed-comment-when { color: var(--text-400); }
@@ -1652,7 +1652,7 @@
   letter-spacing: 0.04em; font-weight: 600;
 }
 .mdx-shell .docs-framework {
-  padding: 1px 6px; border-radius: 4px; font-size: 10px;
+  padding: 1px 6px; border-radius: var(--radius-sm); font-size: 10px;
   text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;
 }
 .mdx-shell .docs-fw-820   { background: var(--mdx-tone-info-bg); color: var(--mdx-tone-info-fg); }
@@ -1709,14 +1709,14 @@
 .mdx-shell .docs-blocker-note {
   display: flex; gap: 6px; align-items: center;
   margin-top: 8px; padding: 6px 10px;
-  background: #fbeae6;
+  background: var(--error-muted);
   border-radius: var(--radius-md);
-  font-size: 11px; color: var(--error-text);
+  font-size: 11px; color: var(--error);
 }
 .mdx-shell .docs-blocker-note .ico svg { width: 12px; height: 12px; color: var(--error); }
 .mdx-shell .docs-flags { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
 .mdx-shell .docs-flag {
-  padding: 1px 6px; background: var(--bg-100); border-radius: 4px;
+  padding: 1px 6px; background: var(--bg-100); border-radius: var(--radius-sm);
   font-size: 10px; color: var(--text-300);
 }
 .mdx-shell .docs-actions {
@@ -2976,7 +2976,7 @@
 .mdx-shell .ana-draft-error {
   flex-basis: 100%;
   font-size: 12px;
-  color: var(--error-text, #b91c1c);
+  color: var(--error);
   margin-top: 4px;
 }
 .mdx-shell .ana-draft-banner,
@@ -3307,7 +3307,7 @@
   margin-left: auto;
   padding: 1px 6px;
   background: var(--bg-100);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--text-200);
 }
 .mdx-shell .eng-risk-harm {
@@ -3354,7 +3354,7 @@
 .mdx-shell .udi-mri {
   display: inline-block;
   padding: 1px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -3936,7 +3936,7 @@
 .mdx-shell .eng-blocker-kind {
   padding: 1px 6px;
   background: var(--bg-100);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--text-300);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -4165,7 +4165,7 @@
 
 /* ── Q-Sub type chip ────────────────────────────────────────── */
 .mdx-shell .ps-type {
-  padding: 1px 6px; border-radius: 4px;
+  padding: 1px 6px; border-radius: var(--radius-sm);
   font-size: 10px; font-weight: 600; letter-spacing: 0.04em;
   text-transform: uppercase; white-space: nowrap;
   background: var(--bg-100); color: var(--text-300);
@@ -4312,7 +4312,7 @@
 .mdx-shell .ps-meeting-when { font-size: 11.5px; font-weight: 500; color: var(--text-100); }
 .mdx-shell .ps-meeting-meta { font-size: 10.5px; color: var(--text-300); margin-top: 1px; }
 .mdx-shell .ps-meeting-state {
-  padding: 1px 6px; border-radius: 4px; flex-shrink: 0;
+  padding: 1px 6px; border-radius: var(--radius-sm); flex-shrink: 0;
   font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
 }
 .mdx-shell .ps-meeting-state.ok   { background: var(--mdx-tone-ok-bg);   color: var(--mdx-tone-ok-fg); }
@@ -4364,7 +4364,7 @@
   font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--text-100);
 }
 .mdx-shell .ps-q-status {
-  padding: 1px 6px; border-radius: 4px;
+  padding: 1px 6px; border-radius: var(--radius-sm);
   font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
   background: var(--bg-100); color: var(--text-300);
 }
@@ -4427,7 +4427,7 @@
 .mdx-shell .ps-q-commit-link .ico svg { width: 12px; height: 12px; }
 .mdx-shell .ps-q-commit-state,
 .mdx-shell .ps-commit-state {
-  padding: 1px 6px; border-radius: 4px; white-space: nowrap;
+  padding: 1px 6px; border-radius: var(--radius-sm); white-space: nowrap;
   font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
   background: var(--bg-100); color: var(--text-300);
 }
@@ -4494,9 +4494,9 @@
    `banner-warn` (IVD, 510(k): fixture/preview notice) and `banner-ok` (Vault:
    confirmation) were inline style objects on two surfaces and nothing at all
    on the third; `empty-state` (Overview) likewise. Ledger L139. */
-.mdx-shell .banner-warn, .mdx-shell .banner-ok{ margin:12px 0; padding:10px 14px; background:var(--bg-050); border:1px solid var(--border); border-left:3px solid var(--accent-100); border-radius:6px; font-size:12px; color:var(--text-200); display:flex; gap:8px; align-items:center; }
+.mdx-shell .banner-warn, .mdx-shell .banner-ok{ margin:12px 0; padding:10px 14px; background:var(--bg-050); border:1px solid var(--border); border-left:3px solid var(--accent-100); border-radius:var(--radius-md); font-size:12px; color:var(--text-200); display:flex; gap:8px; align-items:center; }
 .mdx-shell .banner-ok{ border-left-color:var(--success); }
 .mdx-shell .banner-ic{ color:var(--accent-100); display:inline-flex; flex-shrink:0; }
-.mdx-shell .empty-state{ padding:40px 24px; text-align:center; background:var(--bg-050); border:1px dashed var(--border); border-radius:8px; color:var(--text-200); }
+.mdx-shell .empty-state{ padding:40px 24px; text-align:center; background:var(--bg-050); border:1px dashed var(--border); border-radius:var(--radius-lg); color:var(--text-200); }
 .mdx-shell .empty-state-t{ font-size:14px; font-weight:600; color:var(--text-100); margin-bottom:6px; }
 .mdx-shell .empty-state-s{ font-size:12px; margin-bottom:14px; }
