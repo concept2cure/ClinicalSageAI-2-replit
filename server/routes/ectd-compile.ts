@@ -41,6 +41,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
 import { writeChainedAuditRow } from '../services/auditService';
+import type { AuditRowOutcome } from '../services/audit/audit-write-outcome';
 import { parseEvalidatorJsonReport } from '../services/ectd/external-validator/lorenz-adapter';
 import { tallyFindings, type ExternalValidationFinding } from '../services/ectd/external-validator/types';
 import { resolveSubmissionSpine, type SubmissionSpine } from '../services/cmc/submission-spine';
@@ -355,6 +356,13 @@ function withAnchorFindings(results: ValidationResult[], anchor: CompileAnchor):
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface CompilationResult {
+  /**
+   * Whether the assembly's §11.10(e) rows were written (ECTD_PACKAGED_FROM_CORE
+   * and ECTD_ASSEMBLED, or ECTD_ASSEMBLE_BLOCKED for a refusal). Absent only
+   * when no assembly was attempted. The client transport shows "Saved, but the
+   * audit trail did not record it" when a row was lost (WO-16C).
+   */
+  auditTrail?: AuditRowOutcome;
   id: string;
   /** Legacy numeric project id, or null when the ident named a program. */
   projectId: number | null;
@@ -963,6 +971,7 @@ async function compileFromSpine(
   // package ready that transmit would refuse (2026-09-23, W5/D7).
   let leftOut: string[] = [];
   let lifecycle: CompiledLifecycle | null = null;
+  let auditTrail: AuditRowOutcome | undefined;
 
   try {
     const assembled = await assembleSequence({
@@ -979,6 +988,7 @@ async function compileFromSpine(
       sponsorId: `UNASSIGNED-ORG-${orgId}`,
       sponsorName: `UNASSIGNED (organization ${orgId})`,
     });
+    auditTrail = assembled.auditTrail;
     try {
       const buffer = await fs.readFile(assembled.bundle.path);
       const JSZip = (await import('jszip')).default;
@@ -1033,6 +1043,11 @@ async function compileFromSpine(
     }
   } catch (err) {
     assembleFailure = err instanceof Error ? err.message : String(err);
+    // A refusal the assembler audited (EctdAssemblyBlockedError) carries what
+    // happened to that row. Read structurally: the class arrives through a
+    // dynamic import, and a refusal is reported the same either way.
+    const refusalAudit = (err as { auditTrail?: AuditRowOutcome } | null)?.auditTrail;
+    if (refusalAudit) auditTrail = refusalAudit;
   }
 
   // A leaf with no document at all was reported materialized: the resolver
@@ -1168,6 +1183,7 @@ async function compileFromSpine(
     sequenceNumber: seq.sequenceNumber,
     region: seq.region,
     recorded,
+    ...(auditTrail ? { auditTrail } : {}),
     ...(compiledPackage ? { package: compiledPackage } : {}),
     ...(lifecycle ? { lifecycle } : {}),
     errors,

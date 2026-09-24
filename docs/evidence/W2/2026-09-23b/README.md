@@ -109,28 +109,98 @@ Each item names the files it touches and says whether it is verified or inferred
        `deb.debian.org` (403), so the `apt-get` in both stages cannot run here.
      - The workflow has never run against AWS. It needs the account, and the
        deploy role from item 2.
-2. **Deploy OIDC role and the CloudFront distribution id** are not in Terraform
-   (inferred). `AWS_DEPLOY_ROLE_ARN` is a repository secret that nothing creates.
-3. **Trivy config gate** in `deploy-aws.yml` blocks on HIGH/CRITICAL IaC findings
-   that `.trivyignore` does not cover (inferred: nobody has run it on this tree).
-   Run it, then fix each finding or record it with a reason.
-4. **compliance-evidence module apply errors** (inferred). The CMK has no policy
-   for CloudTrail or Logs, there is no bucket policy, the SSE names an alias
-   nothing creates, and the names are hard-coded `ros-staging-*`. The ECS boot is
-   not blocked, but the apply log would not be clean.
-5. **First-apply order**: an empty account needs the ECS service-linked role;
-   create the services at `desired_count 0` until an image exists. `engine_version
-   "15.4"` must be confirmed creatable, and `startPeriod` measured on a cold
-   Fargate boot (inferred).
+2. **The deploy roles are in Terraform.** Nothing had created the role
+   `AWS_DEPLOY_ROLE_ARN` named. Now `terraform/modules/github-deploy-roles`
+   (via `terraform/stack/github_deploy.tf`) creates the account's GitHub OIDC
+   provider and two roles:
+   - **Deploy role.** Trusts only `repo:…:environment:production`: migrate,
+     deploy-api, deploy-frontend, provision. It can register and describe task
+     definitions; run the migrate and provision families, in this cluster only;
+     describe and stop tasks there; describe and update the API service; pass
+     the two task roles to ECS only; read the API log group; write the frontend
+     bucket; and invalidate the distribution. Sessions last two hours, since the
+     provision job can outlast one.
+   - **Build role.** Trusts the `v*` tags and the branch: build-push and
+     smoke-test. It can push the API image and read the distribution, and
+     nothing that changes what production runs.
+
+   One role trusted for both kinds of subject would let any branch workflow
+   deploy past the environment gate, so `build-push` and `smoke-test` now assume
+   `AWS_BUILD_ROLE_ARN`. The root outputs `github_deploy_role_arn`,
+   `github_build_role_arn` and `cloudfront_distribution_id`; `terraform.tfvars.example`
+   says which secret each fills.
+
+   Proof:
+   - The module's own suite: 6 runs, 4 mutations each caught
+     (`github-deploy-roles.txt`).
+   - The proof maps every `aws` call each job makes, including the runner's, to
+     its IAM action and checks it against the rendered policy of the role that
+     job can assume. That's 38 pairs. It was red until those two jobs were
+     switched (their calls would have been refused at AssumeRole), and a
+     dropped permission or an unmapped call turns it red
+     (`workflow-iam.txt`).
+   - Not proven: none of it has been applied.
+
+3. **Trivy config gate**: `deploy-aws.yml`'s blocking IaC scan fails on HIGH/CRITICAL
+   findings. Claimed as its own lane, TRIVY-01 (`…01GSjEDJ`,
+   `docs/evidence/W2/2026-09-24-trivy/`).
+
+4. **The compliance-evidence module can apply.** It could not before, and
+   `validate` never shows it:
+   - the CMK had no policy, so the log group and the trail failed to create;
+   - no bucket policy admitted CloudTrail;
+   - default encryption named an alias nothing created;
+   - every name was hard-coded `ros-staging-*`, even in production;
+   - the trail logged S3 data events on its own delivery bucket, so every log
+     file it wrote was itself a logged write.
+
+   Now the key policy admits CloudTrail (for this trail's ARN) and CloudWatch
+   Logs (for this log group's ARN), with rotation and a real alias. The bucket
+   policy admits this trail and denies non-TLS requests. Encryption uses the
+   module's own key. Advanced event selectors log evidence-object access except
+   the trail's own `AWSLogs/` prefix. Log-file validation is on, and names
+   derive from the environment prefix. `tests/evidence.tftest.hcl`: 4 runs;
+   each old defect, re-introduced, is caught (`compliance-evidence.txt`).
+   Nothing applied.
+
+5. **First apply, in order** (the chicken-and-egg: the services reference an
+   image the pipeline can only push once ECR exists, and the pipeline needs
+   roles and secrets only the apply creates):
+   1. `terraform/bootstrap`: the state bucket and lock table.
+   2. ACM certificates for the domain (DNS validation), covering `domain_aliases`.
+   3. `terraform/environments/production`: `terraform apply -var api_desired_count=0 -var worker_desired_count=0`.
+      The task definitions register with an image not yet pushed, which ECS
+      allows; nothing is launched.
+      - The ECS service-linked role: CreateCluster makes it on a new account,
+        and provider 5.70.0 retries CreateService on "Unable to assume the
+        service linked role" (the string is in its binary). Inferred, not
+        observed.
+   4. GitHub: create the `production` environment, then set `AWS_DEPLOY_ROLE_ARN`,
+      `AWS_BUILD_ROLE_ARN` and `CLOUDFRONT_DISTRIBUTION_ID` from the outputs
+      (`terraform.tfvars.example` lists them).
+   5. Run **Provision database (first run)**. The API service exists at count 0,
+      so the task gets its network.
+   6. Run `deploy-aws.yml` (tag `v*` or dispatch). It builds, migrates, rolls
+      the API revision and syncs the frontend.
+   7. `terraform apply` with the real counts (and the B6+B7 worker decision).
+   8. File the apply log and `/readyz` JSON here: D1's evidence.
+
 6. **Lock file platforms**: the committed `.terraform.lock.hcl` has hashes for
    linux_amd64 and darwin only (from the local mirror). This session's egress
    refuses `registry.terraform.io`. With registry access, run
    `terraform providers lock -platform=linux_amd64 -platform=linux_arm64 -platform=darwin_amd64 -platform=darwin_arm64 -platform=windows_amd64`.
 7. **Known exposures, recorded rather than designed:**
    - The API task carries the owner credential. `ensureCoreTables` runs DDL on
-     it at every boot, and `server/routes/tenants-simple.ts` serves routes through
-     a `postgres.js` client on it, outside RLS. That is a second DB client (zero
-     duplication) and a tenant-isolation question for D3's owner.
+     it at every boot. `server/routes/tenants-simple.ts` serves `/api/tenants`
+     through a second client (`postgres.js`) on it, outside RLS.
+     - Checked 2026-09-24: this is **not a cross-tenant read**. Every route
+       there is either platform-admin gated or membership-scoped in the query,
+       and `server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts`
+       pins that.
+     - What remains is architectural: a second DB client (zero duplication),
+       with scoping in application code rather than RLS. Moving it onto the
+       runtime pool is a tenant-isolation design change, since listing a user's
+       organisations spans tenants. That belongs to D3's owner, not this lane.
    - `NODE_EXTRA_CA_CERTS` adds all 108 RDS roots to every outbound TLS call.
      Narrowing it to the region's bundle, or passing `sslrootcert` in the URL,
      needs every DB client verified first (`postgres.js` included). Not done.

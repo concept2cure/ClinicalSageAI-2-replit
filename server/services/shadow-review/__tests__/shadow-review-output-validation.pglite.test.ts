@@ -17,6 +17,7 @@ vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async () => (
 vi.mock('../../ai-gateway', () => ({ getGateway: () => ({ route: async () => ({ model: 'm', content: holder.reply }) }) }));
 
 import { runShadowReview } from '../shadow-review-service';
+import auditService from '../../auditService';
 
 let h: IndPgliteDb;
 const ORG = 7;
@@ -86,5 +87,35 @@ describe('runShadowReview — only a countable assessment completes a run', () =
     holder.reply = '{"findings":[],"summary":"No issues found."}';
     await runShadowReview({ sequenceId: 4, organizationId: ORG, userId: USER });
     expect(await gateInputs(4)).toEqual({ completedRuns: 1, openCriticals: 0 });
+  });
+});
+
+/* WO-16C. The run's §11.10(e) row (AI_GENERATE on shadow_review_run) was
+   written by an `await auditService.logAction(…)` whose outcome was discarded,
+   so a completed review with no audit row returned exactly what one with a row
+   did. The route answers the result verbatim, so `auditTrail` on the result is
+   what reaches Submission Center — where the client transport shows "Saved,
+   but the audit trail did not record it". The run still completes: the review
+   happened and its findings are stored; only its record is missing. */
+describe('runShadowReview carries its audit-row outcome', () => {
+  it('a lost row: the run completes and the result says the row is missing', async () => {
+    vi.mocked(auditService.logAction).mockResolvedValueOnce({
+      persisted: false, chained: false, tamperProof: false, error: 'audit store unreachable',
+    } as any);
+    holder.reply = '{"findings":[],"summary":"No issues found."}';
+    const before = (await gateInputs(4)).completedRuns;
+
+    const result = await runShadowReview({ sequenceId: 4, organizationId: ORG, userId: USER });
+
+    expect(result.auditTrail).toEqual({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message: expect.any(String) });
+    expect(JSON.stringify(result)).not.toContain('unreachable');
+    expect((await gateInputs(4)).completedRuns).toBe(before + 1);
+  });
+
+  it('a written row says so', async () => {
+    vi.mocked(auditService.logAction).mockResolvedValueOnce({ persisted: true, chained: true, tamperProof: true } as any);
+    holder.reply = '{"findings":[],"summary":"No issues found."}';
+    const result = await runShadowReview({ sequenceId: 4, organizationId: ORG, userId: USER });
+    expect(result.auditTrail).toEqual({ persisted: true, chained: true });
   });
 });

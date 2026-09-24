@@ -4,7 +4,7 @@ import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
-import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { apiRequest, probeAuditRowOutcome, serverMessage } from '@/lib/queryClient';
 import { getAuthHeaders } from '@/utils/authToken';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
@@ -370,6 +370,8 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
       fd.append('file', pendingFile, pendingFile.name);
       fd.append('name', extract.name);
       const res = await fetch('/api/c2c/templates/from-upload', { method: 'POST', headers: getAuthHeaders(), credentials: 'include', body: fd });
+      // A raw fetch, so the transport's audit-row check runs here explicitly.
+      probeAuditRowOutcome('POST', '/api/c2c/templates/from-upload', res);
       const json = await res.json().catch(() => null);
       if (!res.ok || !json?.template?.id) {
         note(res.status === 401 ? 'Sign in to save the template.' : 'Couldn’t save — ' + (serverMessage(json) ?? 'the server did not say why') + '. Nothing was persisted.', 'error');

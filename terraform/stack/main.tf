@@ -160,6 +160,13 @@ locals {
     # deployment on any other domain boots, reports ready, and nobody can sign
     # in. domain_aliases are validated to be lowercase hostnames (variables.tf).
     { name = "ALLOWED_ORIGINS", value = local.app_origin },
+    # Vault documents go to this stack's bucket (vault_storage.tf). Without a
+    # named store production refuses to boot (storage-posture.ts); the preflight
+    # requires both names and accepts only `s3` here. AWS_REGION: the provider
+    # otherwise assumes us-east-1, and staging need not run there.
+    { name = "STORAGE_PROVIDER", value = "s3" },
+    { name = "AWS_S3_BUCKET", value = local.vault_bucket },
+    { name = "AWS_REGION", value = var.region },
   ]
 
   # The deployment's public origin: the first CloudFront alias. One input, so
@@ -282,8 +289,7 @@ module "ecs" {
 module "evidence" {
   source           = "../modules/compliance-evidence"
   bucket_name      = local.evidence_bucket
-  kms_key_id       = "alias/${local.short}-evidence"
-  kms_policy       = ""
+  name_prefix      = local.short
   object_lock_mode = var.evidence_object_lock_mode
   retention_days   = var.evidence_retention_days
   tags             = var.tags

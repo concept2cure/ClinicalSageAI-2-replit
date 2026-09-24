@@ -1,0 +1,61 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T18:33:06.976Z","pid":9672,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T18:33:06.977Z","pid":9672,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T18:33:06.977Z","pid":9672,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/chat-upload.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-24T18:33:07.044Z', poolSize: 1 }
+
+stdout | tests/db/chat-upload.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/chat-upload.dbtest.ts
+Loaded 0 academic documents
+
+stderr | tests/db/chat-upload.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/chat-upload.dbtest.ts > POST /api/chat/upload — a client document reaches its tenant > accepts the upload and records it for the organization
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "stability-note.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+{"level":40,"time":"2026-09-24T18:33:14.454Z","pid":9672,"hostname":"vm","context":{"op":"pool.query","caller":"server/routes/chat/upload.ts:193:16","queryPreview":"INSERT INTO file_uploads (id, user_id, organization_id, original_name, mime_type, file_size, storage_path, checksum_sha256, status, created_at) VALUES ($1, $...","enforcement":"on"},"msg":"[tenant-rls-observability] Database operation blocked because tenant scope is missing"}
+stderr | tests/db/chat-upload.dbtest.ts > POST /api/chat/upload — a client document reaches its tenant > accepts the upload and records it for the organization
+{
+  "level": "error",
+  "message": "[chat-upload] Upload error",
+  "context": {
+    "err": "[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on"
+  }
+}
+
+ × tests/db/chat-upload.dbtest.ts > POST /api/chat/upload — a client document reaches its tenant > accepts the upload and records it for the organization 28ms
+   → {"error":"Failed to upload file","code":"UPLOAD_ERROR"}: expected 500 to be less than 300
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/chat-upload.dbtest.ts > POST /api/chat/upload — a client document reaches its tenant > accepts the upload and records it for the organization
+AssertionError: {"error":"Failed to upload file","code":"UPLOAD_ERROR"}: expected 500 to be less than 300
+ ❯ tests/db/chat-upload.dbtest.ts:69:50
+     67|       .attach('file', Buffer.from('Stability summary: impurity B 0.31%…
+     68|
+     69|     expect(res.status, JSON.stringify(res.body)).toBeLessThan(300);
+       |                                                  ^
+     70|     const { rows } = await owner.query(
+     71|       `SELECT original_name, organization_id FROM file_uploads WHERE o…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  18:33:05
+   Duration  9.11s (transform 6.52s, setup 62ms, import 99ms, tests 8.72s, environment 0ms)
+

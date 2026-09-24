@@ -30,6 +30,7 @@ import {
 } from 'shared/schema/ana-intelligence';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import type { ActionContext } from './ana-scoped-rule-loader';
+import { pickWritable } from '../utils/authedOrgId';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -376,6 +377,18 @@ export async function buildMergedContext(
  * Upsert a user intelligence profile. Called when users edit
  * their preferences via /my-context or the UserContextEditor UI.
  */
+/** What a user's AnA profile edit may write: the profile, not whose it is. */
+const USER_PROFILE_FIELDS = [
+  'displayName',
+  'role',
+  'department',
+  'expertiseAreas',
+  'regulatorySpecializations',
+  'communicationStyle',
+  'personalInstructions',
+  'workflowPreferences',
+] as const satisfies readonly (keyof typeof userIntelligenceProfiles.$inferInsert & string)[];
+
 export async function upsertUserProfile(
   userId: number,
   organizationId: number,
@@ -401,16 +414,21 @@ export async function upsertUserProfile(
     )
     .limit(1);
 
+  // The route hands this the raw request body. Spread as-is, `userId` or
+  // `organizationId` in it re-assigned the profile — planting
+  // `personalInstructions`, which the context builder presents as overriding
+  // company defaults, into a colleague's AnA (ledger L195).
+  const profile = pickWritable<typeof userIntelligenceProfiles.$inferInsert>(data, USER_PROFILE_FIELDS);
   if (existing.length > 0) {
     await db
       .update(userIntelligenceProfiles)
-      .set({ ...data, updatedAt: new Date() })
+      .set({ ...profile, updatedAt: new Date() })
       .where(eq(userIntelligenceProfiles.id, existing[0].id));
   } else {
     await db.insert(userIntelligenceProfiles).values({
+      ...profile,
       userId,
       organizationId,
-      ...data,
     });
   }
 }

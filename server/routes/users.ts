@@ -16,10 +16,37 @@ import {
 } from '../../shared/constants/domain/report-personas';
 
 import { verifyLiveToken } from '../services/token-revocation';
+import { pickWritable } from '../utils/authedOrgId';
 import { isDevAuthAllowed } from '../auth/dev-auth-policy.js';
 import { sessionMfaFields } from '../services/mfa-enrolment';
 
 const router = Router();
+
+/** What PATCH /me/notifications may write: the preferences, not the row's id or
+ *  owner. See the handler (ledger L195). */
+const NOTIFICATION_PREFERENCE_FIELDS = [
+  'emailMentions',
+  'emailShares',
+  'emailApprovals',
+  'emailCompliance',
+  'emailSystem',
+  'emailDigest',
+  'inAppMentions',
+  'inAppShares',
+  'inAppApprovals',
+  'inAppCompliance',
+  'inAppSystem',
+  'toastEnabled',
+  'toastDuration',
+  'toastPosition',
+  'quietHoursEnabled',
+  'quietHoursStart',
+  'quietHoursEnd',
+  'timezone',
+  'autoFollowOnInteraction',
+  'soundEnabled',
+  'metadata',
+] as const satisfies readonly (keyof typeof notificationPreferences.$inferInsert & string)[];
 
 /**
  * A bearer token that does not verify, has expired, or belongs to a session
@@ -637,8 +664,13 @@ router.patch('/me/notifications', async (req: Request, res: Response) => {
     const decoded = (await verifyLiveToken(token)) as { userId: string };
     const userId = parseInt(decoded.userId);
 
-    const updates = req.body;
-    updates.updatedAt = new Date();
+    // Preferences only. The body was written as-is, so `userId` in it moved this
+    // row onto another user, or created one for them (ledger L195): the table
+    // is keyed on user_id alone, with no organization column and no RLS policy.
+    const updates = {
+      ...pickWritable<typeof notificationPreferences.$inferInsert>(req.body, NOTIFICATION_PREFERENCE_FIELDS),
+      updatedAt: new Date(),
+    };
 
     // Upsert notification preferences
     const existing = await db
@@ -653,7 +685,7 @@ router.patch('/me/notifications', async (req: Request, res: Response) => {
         .set(updates)
         .where(eq(notificationPreferences.userId, userId));
     } else {
-      await db.insert(notificationPreferences).values({ userId, ...updates });
+      await db.insert(notificationPreferences).values({ ...updates, userId });
     }
 
     res.json({ success: true, message: 'Notification preferences updated' });

@@ -905,7 +905,7 @@ router.put('/credits/auto-reload', authenticateToken, requireRole('admin', 'owne
     // Partial update: omitted fields keep their current values, so a plain
     // { enabled: false, reason } toggle works without re-supplying amounts.
     const current = await getAutoReload(orgId);
-    const saved = await setAutoReload(
+    const { settings: saved, auditTrail } = await setAutoReload(
       orgId,
       {
         enabled: enabled == null ? current.enabled : Boolean(enabled),
@@ -915,7 +915,9 @@ router.put('/credits/auto-reload', authenticateToken, requireRole('admin', 'owne
       { userId },
       reason,
     );
-    res.json({ autoReload: saved });
+    // `auditTrail` says whether the change's §11.10(e) row was written; the
+    // client transport shows "Saved, but the audit trail did not record it".
+    res.json({ autoReload: saved, auditTrail });
   } catch (error) {
     const validation = (error as any)?.validation;
     if (Array.isArray(validation)) return res.status(400).json({ error: (error as Error).message, validation });
