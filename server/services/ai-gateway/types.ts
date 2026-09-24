@@ -77,6 +77,29 @@ export const EFFORT_TO_STRATEGY = {
   thorough: 'quality_optimized',
 } as const satisfies Record<EffortLevel, RoutingStrategy>;
 
+/**
+ * One Anthropic-executed tool call, as far as we can observe it.
+ *
+ * `result` is the raw result body. It is kept verbatim rather than parsed into
+ * a shape of our own because the two tools return different things — web search
+ * a list of results, web fetch a document — and an ERROR arrives as an object
+ * where a success arrives as a list. Normalising that here would mean guessing
+ * at shapes the API is free to extend; the caller that renders it can branch,
+ * and `isError` tells it which case it has without having to guess.
+ */
+export interface GatewayServerToolUse {
+  /** The block's own id, e.g. `srvtoolu_…`. Never paired with a tool_result. */
+  id?: string;
+  /** `web_search`, `web_fetch`, … */
+  name: string;
+  /** What the model asked for, when the API reports it. */
+  input?: Record<string, unknown>;
+  /** The result block's `content`, verbatim. Absent when only the use was seen. */
+  result?: unknown;
+  /** True when the result body is an error object rather than a result list. */
+  isError?: boolean;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Request & Response Types
 // ─────────────────────────────────────────────────────────────────────────────
@@ -248,6 +271,20 @@ export interface AnaGatewayResponse extends GatewayResponse {
   thinking?: string;
   /** Tool use requests from Claude */
   toolUses?: AnaToolUse[];
+  /**
+   * Work Anthropic's infrastructure did on our behalf — a web search, a web
+   * fetch — which we neither dispatch nor see the result of except through
+   * these blocks.
+   *
+   * The gateway used to drop them. Its block loop handled `text`, `thinking`
+   * and `tool_use`, and everything else fell through silently, so a turn that
+   * searched the web looked exactly like a turn that did not. The CITATIONS
+   * survived, because those ride on the text blocks — but the SEARCH did not,
+   * and this product's whole claim about AnA is that she shows her work. A step
+   * that happened and is invisible is the worst kind of missing record: the
+   * trace looks complete on its face.
+   */
+  serverToolUses?: GatewayServerToolUse[];
   /** Whether prompt cache was hit */
   cacheHit?: boolean;
   /** Cache creation/read token counts */
