@@ -1,0 +1,8 @@
+ ✓ server/services/storage/__tests__/s3-provider-lookup.test.ts > S3StorageProvider finds what it stored, past the first page > reads a tenant's document when other tenants' keys fill the first 1000 16ms
+ ✓ server/services/storage/__tests__/s3-provider-lookup.test.ts > S3StorageProvider finds what it stored, past the first page > reads a tenant's 1,200th document 19ms
+ ✓ server/services/storage/__tests__/s3-provider-lookup.test.ts > S3StorageProvider finds what it stored, past the first page > lists every document in a project, not the first 500 25ms
+ ✓ server/services/storage/__tests__/s3-provider-lookup.test.ts > S3StorageProvider finds what it stored, past the first page > deletes a document past the first page, and it is then gone 11ms
+ ✓ server/services/storage/__tests__/s3-provider-lookup.test.ts > S3StorageProvider finds what it stored, past the first page > never looks outside the requesting tenant's prefix, and never returns another tenant's document 1ms
+ ✓ server/services/storage/__tests__/s3-provider-lookup.test.ts > S3StorageProvider reports a failure as a failure > rejects, rather than reporting the document missing, when S3 refuses 2ms
+ ✓ server/services/storage/__tests__/s3-provider-lookup.test.ts > S3StorageProvider reports a failure as a failure > still reports a genuinely absent version as missing 1ms
+      Tests  7 passed (7)

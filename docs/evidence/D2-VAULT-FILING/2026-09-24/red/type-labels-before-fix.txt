@@ -1,0 +1,8 @@
+# RED — vaultSurface.test.tsx against Vault.tsx as at HEAD 2b869304
+
+ × client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > names a hit's document type in words, not the stored wire token 5047ms
+   → Unable to find an element with the text: Module 3 · quality. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the upload type picker names types in words > offers the shared labels, not the wire tokens with underscores swapped for spaces 22ms
+   → expected [ 'CSR', 'PROTOCOL', 'CER', …(13) ] to include 'Clinical study report'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 19 passed (21)

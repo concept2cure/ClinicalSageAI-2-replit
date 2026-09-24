@@ -30,7 +30,8 @@ export function uploadDoc(over: Record<string, unknown> = {}) {
     title: 'stability-summary-24m',
     type: 'Test reports',
     status: 'suggested',
-    pct: 0,
+    // As the server projects an upload: no authoring completion assessed.
+    pct: null,
     owner: 'A. Author',
     ver: 'v1.0',
     updated: '2m ago',

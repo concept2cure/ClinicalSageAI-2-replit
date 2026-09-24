@@ -1,0 +1,183 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T17:52:04.962Z","pid":19652,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T17:52:04.965Z","pid":19652,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T17:52:04.965Z","pid":19652,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/governed-edit-boundary.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-24T17:52:05.325Z', poolSize: 1 }
+
+stdout | tests/db/governed-edit-boundary.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/governed-edit-boundary.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a plan edit cannot move the plan to another org, and the content edit still applies
+[database] Database connection successful { timestamp: '2026-09-24T17:52:05.872Z', poolSize: 2 }
+
+{"level":50,"time":"2026-09-24T17:52:05.887Z","pid":19652,"hostname":"vm","context":{"err":"Failed query: update \"ai_ml_pccp_plans\" set \"organization_id\" = $1, \"title\" = $2, \"updated_by\" = $3, \"updated_at\" = $4 where \"ai_ml_pccp_plans\".\"id\" = $5 returning \"id\", \"organization_id\", \"program_id\", \"code\", \"version\", \"previous_plan_id\", \"title\", \"device_subject_name\", \"intended_use\", \"description_summary\", \"data_management_practices\", \"retraining_practices\", \"performance_evaluation_protocol\", \"update_procedures\", \"transparency_commitments\", \"benefits_narrative\", \"risks_narrative\", \"mitigations_narrative\", \"comparison_to_current_device\", \"monitoring_plan\", \"drift_detection_plan\", \"bias_subgroup_analysis_plan\", \"cybersecurity_impact_narrative\", \"labeling_impact_narrative\", \"rollback_strategy_narrative\", \"status\", \"approved_by\", \"approved_at\", \"signature_id\", \"locked\", \"guidance_version\", \"metadata\", \"created_by\", \"updated_by\", \"created_at\", \"updated_at\"\nparams: 90302,wo03_19652_muftx3c6-plan-rehome,69,2026-09-24T17:52:05.883Z,bc9ef3d4-6b08-47a5-a354-5cc062ef53fd","correlationId":null,"code":null},"msg":"[pccp] updating plans failed"}
+ × tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a plan edit cannot approve or lock the plan, and the content edit still applies 106ms
+   → an edit must not approve the plan: that is the approve endpoint and its gate: expected { status: 'approved', …(3) } to deeply equal { Object (status, locked, ...) }
+ × tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a plan edit cannot move the plan to another org, and the content edit still applies 39ms
+   → the content edit must go through, not be refused as a whole: expected 500 to be 200 // Object.is equality
+{"level":30,"time":"2026-09-24T17:52:05.940Z","pid":19652,"hostname":"vm","context":{"userId":"69","tenantId":90301,"resourceId":"cb1a3b11-9ff6-4d82-933d-f45202161e18"},"msg":"[audit-service] [AUDIT] post_market.document.update post_market_document"}
+{"level":50,"time":"2026-09-24T17:52:05.970Z","pid":19652,"hostname":"vm","context":{"err":"Failed query: update \"post_market_documents\" set \"organization_id\" = $1, \"summary\" = $2, \"updated_by\" = $3, \"updated_at\" = $4 where \"post_market_documents\".\"id\" = $5 returning \"id\", \"organization_id\", \"program_id\", \"document_type\", \"code\", \"version\", \"previous_document_id\", \"title\", \"device_subject_name\", \"reporting_period_start\", \"reporting_period_end\", \"content\", \"summary\", \"risks_identified\", \"benefit_risk_conclusion\", \"status\", \"locked\", \"approved_by\", \"approved_at\", \"signature_id\", \"related_cer_report_id\", \"related_predicate_k_number\", \"metadata\", \"created_by\", \"updated_by\", \"created_at\", \"updated_at\"\nparams: 90302,wo03_19652_muftx3c6-summary-rehome,69,2026-09-24T17:52:05.968Z,bd0e8ab5-f7a1-4410-bce3-cc2a8be39569","correlationId":null,"code":null},"msg":"[gspr-postmarket] loading coverage failed"}
+{"level":30,"time":"2026-09-24T17:52:05.984Z","pid":19652,"hostname":"vm","context":{"userId":"69","tenantId":90301,"resourceId":"8009ae09-2786-473f-a84f-3f4ee87fd7de"},"msg":"[audit-service] [AUDIT] post_market.document.update post_market_document"}
+ × tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a plan edit cannot hang the plan from another org's program 19ms
+   → tenant A's plan must not hang from tenant B's program: expected '697e80ab-fc84-4db2-b163-8df1213e337d' to be 'f571bf20-ea82-46cd-956c-2ea00c8882fc' // Object.is equality
+ × tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a modification edit cannot move it into another org's plan 15ms
+   → tenant A's modification must stay in tenant A's plan: expected '5e954e19-a12b-41da-ba3d-865a1d4540dc' to be '1803f381-597e-4d20-ac0a-cb968c41bb74' // Object.is equality
+ × tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a post-market document edit cannot approve or lock it, and the content edit still applies 33ms
+   → an edit must not approve the document: that is the approve endpoint and its gate: expected { status: 'approved', …(2) } to deeply equal { Object (status, locked, ...) }
+ × tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a post-market document edit cannot move it to another org, and the content edit still applies 12ms
+   → the content edit must go through, not be refused as a whole: expected 500 to be 200 // Object.is equality
+ × tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a post-market document edit cannot hang it from another org's program 28ms
+   → tenant A's document must not hang from tenant B's program: expected '697e80ab-fc84-4db2-b163-8df1213e337d' to be 'f571bf20-ea82-46cd-956c-2ea00c8882fc' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a plan edit cannot approve or lock the plan, and the content edit still applies
+AssertionError: an edit must not approve the plan: that is the approve endpoint and its gate: expected { status: 'approved', …(3) } to deeply equal { Object (status, locked, ...) }
+
+- Expected
++ Received
+
+  {
+-   "approved_by": null,
+-   "locked": false,
+-   "signature_id": null,
+-   "status": "draft",
++   "approved_by": "forged-approver",
++   "locked": true,
++   "signature_id": "00000000-0000-4000-8000-00000000f00d",
++   "status": "approved",
+  }
+
+ ❯ tests/db/governed-edit-boundary.dbtest.ts:158:7
+    156|       { status: after.status, locked: after.locked, approved_by: after…
+    157|       'an edit must not approve the plan: that is the approve endpoint…
+    158|     ).toEqual({
+       |       ^
+    159|       status: before.status,
+    160|       locked: before.locked,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a plan edit cannot move the plan to another org, and the content edit still applies
+AssertionError: the content edit must go through, not be refused as a whole: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ tests/db/governed-edit-boundary.dbtest.ts:175:87
+    173|     const after = await plan(planToRehome);
+    174|     expect(after.organization_id, "tenant A's plan must remain tenant …
+    175|     expect(res.status, 'the content edit must go through, not be refus…
+       |                                                                                       ^
+    176|     expect(after.title).toBe(`${TAG}-plan-rehome`);
+    177|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a plan edit cannot hang the plan from another org's program
+AssertionError: tenant A's plan must not hang from tenant B's program: expected '697e80ab-fc84-4db2-b163-8df1213e337d' to be 'f571bf20-ea82-46cd-956c-2ea00c8882fc' // Object.is equality
+
+Expected: "f571bf20-ea82-46cd-956c-2ea00c8882fc"
+Received: "697e80ab-fc84-4db2-b163-8df1213e337d"
+
+ ❯ tests/db/governed-edit-boundary.dbtest.ts:185:87
+    183|       .send({ programId: progB, title: `${TAG}-plan-reparent` });
+    184|     const after = await plan(planToReparent);
+    185|     expect(after.program_id, "tenant A's plan must not hang from tenan…
+       |                                                                                       ^
+    186|     expect(res.status).toBe(200);
+    187|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a modification edit cannot move it into another org's plan
+AssertionError: tenant A's modification must stay in tenant A's plan: expected '5e954e19-a12b-41da-ba3d-865a1d4540dc' to be '1803f381-597e-4d20-ac0a-cb968c41bb74' // Object.is equality
+
+Expected: "1803f381-597e-4d20-ac0a-cb968c41bb74"
+Received: "5e954e19-a12b-41da-ba3d-865a1d4540dc"
+
+ ❯ tests/db/governed-edit-boundary.dbtest.ts:199:83
+    197|       ])
+    198|     ).rows[0];
+    199|     expect(after.plan_id, "tenant A's modification must stay in tenant…
+       |                                                                                   ^
+    200|     expect(res.status).toBe(200);
+    201|     expect(after.title).toBe(`${TAG}-mod-edited`);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a post-market document edit cannot approve or lock it, and the content edit still applies
+AssertionError: an edit must not approve the document: that is the approve endpoint and its gate: expected { status: 'approved', …(2) } to deeply equal { Object (status, locked, ...) }
+
+- Expected
++ Received
+
+  {
+-   "approved_by": null,
+-   "locked": false,
+-   "status": "draft",
++   "approved_by": "forged-approver",
++   "locked": true,
++   "status": "approved",
+  }
+
+ ❯ tests/db/governed-edit-boundary.dbtest.ts:219:7
+    217|       { status: after.status, locked: after.locked, approved_by: after…
+    218|       'an edit must not approve the document: that is the approve endp…
+    219|     ).toEqual({ status: before.status, locked: before.locked, approved…
+       |       ^
+    220|     expect(res.status).toBe(200);
+    221|     expect(after.summary).toBe(`${TAG}-summary`);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a post-market document edit cannot move it to another org, and the content edit still applies
+AssertionError: the content edit must go through, not be refused as a whole: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ tests/db/governed-edit-boundary.dbtest.ts:231:87
+    229|     const after = await doc(docToRehome);
+    230|     expect(after.organization_id, "tenant A's document must remain ten…
+    231|     expect(res.status, 'the content edit must go through, not be refus…
+       |                                                                                       ^
+    232|     expect(after.summary).toBe(`${TAG}-summary-rehome`);
+    233|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a post-market document edit cannot hang it from another org's program
+AssertionError: tenant A's document must not hang from tenant B's program: expected '697e80ab-fc84-4db2-b163-8df1213e337d' to be 'f571bf20-ea82-46cd-956c-2ea00c8882fc' // Object.is equality
+
+Expected: "f571bf20-ea82-46cd-956c-2ea00c8882fc"
+Received: "697e80ab-fc84-4db2-b163-8df1213e337d"
+
+ ❯ tests/db/governed-edit-boundary.dbtest.ts:241:91
+    239|       .send({ programId: progB, summary: `${TAG}-summary-reparent` });
+    240|     const after = await doc(docToReparent);
+    241|     expect(after.program_id, "tenant A's document must not hang from t…
+       |                                                                                           ^
+    242|     expect(res.status).toBe(200);
+    243|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+   Start at  17:52:02
+   Duration  3.55s (transform 1.42s, setup 96ms, import 2.40s, tests 711ms, environment 0ms)
+
