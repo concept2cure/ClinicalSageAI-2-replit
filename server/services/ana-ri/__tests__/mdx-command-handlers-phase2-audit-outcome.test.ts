@@ -34,6 +34,11 @@ const { svc, audit } = vi.hoisted(() => ({
   audit: { logAction: vi.fn() },
 }));
 
+const ownership = vi.hoisted(() => ({ check: vi.fn(async () => true) }));
+// The tool proves program ownership through the canonical guard (ledger L195);
+// these tests exercise what happens after it answers, so it answers yes unless a
+// case says otherwise.
+vi.mock('../../../routes/innovation-routes', () => ({ programBelongsToOrg: ownership.check }));
 vi.mock('../../gspr-postmarket/gspr.service', () => ({
   upsertMapping: (...a: any[]) => svc.upsertMapping(...a),
 }));
