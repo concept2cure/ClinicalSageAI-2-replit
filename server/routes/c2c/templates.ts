@@ -132,7 +132,7 @@ router.post('/from-upload', upload.single('file'), async (req: Request, res: Res
     const name =
       (typeof req.body?.name === 'string' && req.body.name.trim()) ||
       req.file.originalname.replace(/\.(docx|pdf)$/i, '');
-    const record = await createTemplate({
+    const { record, auditTrail } = await createTemplate({
       orgId,
       userId,
       name,
@@ -144,7 +144,8 @@ router.post('/from-upload', upload.single('file'), async (req: Request, res: Res
       extractionConfidence: extracted.confidence,
       extractionWarnings: extracted.warnings,
     });
-    return res.status(201).json({ template: record, extraction: extracted });
+    // `auditTrail`: whether the template's §11.10(e) row was written (WO-16C).
+    return res.status(201).json({ template: record, extraction: extracted, auditTrail });
   } catch (err: any) {
     console.error('[c2c/templates] from-upload', err?.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
@@ -162,7 +163,7 @@ router.post('/', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'NAME_REQUIRED' });
   }
   try {
-    const record = await createTemplate({
+    const { record, auditTrail } = await createTemplate({
       orgId,
       userId,
       name: name.trim(),
@@ -170,7 +171,7 @@ router.post('/', async (req: Request, res: Response) => {
       projectId: typeof projectId === 'string' ? projectId : null,
       spec: normalizeTemplateSpec(spec),
     });
-    return res.status(201).json({ template: record });
+    return res.status(201).json({ template: record, auditTrail });
   } catch (err: any) {
     console.error('[c2c/templates] create', err?.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
@@ -200,14 +201,14 @@ router.put('/:id', async (req: Request, res: Response) => {
   if (!orgId || !userId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
   const { name, description, spec, verified } = req.body ?? {};
   try {
-    const record = await updateTemplate(orgId, userId, String(req.params.id), {
+    const updated = await updateTemplate(orgId, userId, String(req.params.id), {
       name: typeof name === 'string' ? name : undefined,
       description: typeof description === 'string' ? description : undefined,
       spec: spec !== undefined ? normalizeTemplateSpec(spec) : undefined,
       verified: typeof verified === 'boolean' ? verified : undefined,
     });
-    if (!record) return res.status(404).json({ error: 'NOT_FOUND' });
-    return res.json({ template: record });
+    if (!updated) return res.status(404).json({ error: 'NOT_FOUND' });
+    return res.json({ template: updated.record, auditTrail: updated.auditTrail });
   } catch (err: any) {
     console.error('[c2c/templates] update', err?.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
@@ -221,9 +222,9 @@ router.delete('/:id', async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
   if (!orgId || !userId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
   try {
-    const ok = await deactivateTemplate(orgId, userId, String(req.params.id));
-    if (!ok) return res.status(404).json({ error: 'NOT_FOUND' });
-    return res.json({ success: true });
+    const deactivated = await deactivateTemplate(orgId, userId, String(req.params.id));
+    if (!deactivated) return res.status(404).json({ error: 'NOT_FOUND' });
+    return res.json({ success: true, auditTrail: deactivated.auditTrail });
   } catch (err: any) {
     console.error('[c2c/templates] delete', err?.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });

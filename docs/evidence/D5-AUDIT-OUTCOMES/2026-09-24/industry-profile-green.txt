@@ -1,0 +1,5 @@
+# GREEN — industry-profile: same tests, fix applied
+ ✓ server/routes/__tests__/mdx-industry-profile-audit-outcome.test.ts > PATCH /api/mdx/industry-profile carries its audit-row outcome > a lost row: 200 with the saved profile, and meta.auditTrail says the row is missing 33ms
+ ✓ server/routes/__tests__/mdx-industry-profile-audit-outcome.test.ts > PATCH /api/mdx/industry-profile carries its audit-row outcome > a written row says so 6ms
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
