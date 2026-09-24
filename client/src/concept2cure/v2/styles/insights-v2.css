@@ -22,7 +22,7 @@
 .rc-op-headline{ font-size:14.5px; font-weight:600; color:var(--text-100); line-height:1.4; margin-bottom:6px; }
 .rc-op-body{ font-size:12.5px; color:var(--text-300); line-height:1.55; margin-bottom:11px; }
 .rc-preset-btn{ display:inline-flex; align-items:center; gap:7px; width:100%; justify-content:center; background:var(--accent-strong); color:var(--accent-on-strong); border:none; border-radius:9px; padding:9px 12px; font-size:12.5px; font-weight:600; cursor:pointer; transition:background var(--dur,.16s) ease; }
-.rc-preset-btn:hover{ background:var(--accent-200); }
+.rc-preset-btn:hover{box-shadow:var(--shadow-sm);transform:translateY(-1px);}
 .rc-preset-btn svg{ width:14px; height:14px; }
 .rc-op-why{ font-size:11.5px; color:var(--text-400); line-height:1.5; margin-top:8px; }
 .rc-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }

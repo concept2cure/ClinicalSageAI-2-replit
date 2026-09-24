@@ -2278,7 +2278,7 @@
 }
 .mdx-shell .btn.small { height: 28px; padding: 0 11px; font-size: 12px; gap: 6px; }
 .mdx-shell .btn.primary { background: var(--accent-strong); color: var(--accent-on-strong); }
-.mdx-shell .btn.primary:hover { background: var(--accent-200); }
+.mdx-shell .btn.primary:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
 .mdx-shell .btn.ghost { border: 1px solid var(--border); color: var(--text-200); }
 .mdx-shell .btn.ghost:hover { background: var(--bg-100); }
 .mdx-shell .btn .ico { display: inline-flex; align-items: center; }
@@ -2656,11 +2656,11 @@
 }
 .mdx-shell .data-state-btn:hover { background: var(--bg-100); color: var(--text-100); }
 .mdx-shell .data-state-btn.primary {
-  background: var(--accent-100);
-  border-color: var(--accent-100);
-  color: var(--text-000);
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  color: var(--accent-on-strong);
 }
-.mdx-shell .data-state-btn.primary:hover { background: var(--accent-200); border-color: var(--accent-200); }
+.mdx-shell .data-state-btn.primary:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
 .mdx-shell .data-state-spinner {
   width: 18px; height: 18px;
   border-radius: 50%;
@@ -2686,13 +2686,12 @@
 .mdx-shell .gov-action-btn.small  { height: 28px; padding: 0 12px; font-size: 12px; }
 .mdx-shell .gov-action-btn.medium { height: 32px; }
 .mdx-shell .gov-action-btn.primary {
-  background: var(--accent-100);
-  border-color: var(--accent-100);
-  color: var(--text-000);
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  color: var(--accent-on-strong);
 }
 .mdx-shell .gov-action-btn.primary:hover:not(:disabled) {
-  background: var(--accent-200);
-  border-color: var(--accent-200);
+  box-shadow: var(--shadow-sm); transform: translateY(-1px);
 }
 .mdx-shell .gov-action-btn.ghost {
   background: transparent;
@@ -2967,11 +2966,11 @@
 }
 .mdx-shell .ana-draft-btn.ghost:hover { color: var(--text-200); border-color: var(--text-500); }
 .mdx-shell .ana-draft-btn.primary {
-  background: var(--accent-100);
-  color: var(--text-000);
-  border-color: var(--accent-100);
+  background: var(--accent-strong);
+  color: var(--accent-on-strong);
+  border-color: var(--accent-strong);
 }
-.mdx-shell .ana-draft-btn.primary:hover { background: var(--accent-200); border-color: var(--accent-200); }
+.mdx-shell .ana-draft-btn.primary:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
 .mdx-shell .ana-draft-btn[disabled] { opacity: 0.6; cursor: progress; }
 .mdx-shell .ana-draft-btn .ana-draft-arrow svg { width: 12px; height: 12px; vertical-align: middle; }
 .mdx-shell .ana-draft-error {

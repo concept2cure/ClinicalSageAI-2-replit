@@ -30,7 +30,7 @@
   .ec-topbtn:hover{ background:var(--bg-100); color:var(--text-100); }
   .ec-topbtn svg{ width:15px; height:15px; }
   .ec-topbtn.primary{ background:var(--accent-strong); border-color:var(--accent-100); color:var(--accent-on-strong); }
-  .ec-topbtn.primary:hover{ background:var(--accent-200); color:#fff; }
+  .ec-topbtn.primary:hover{box-shadow:var(--shadow-sm);transform:translateY(-1px);}
 
   /* eCTD tree */
   .ec-tree{ background:var(--bg-050); padding:14px 10px; overflow-y:auto; border-right:1px solid var(--border); min-width:0; transition:opacity 200ms var(--ease); }
@@ -111,7 +111,7 @@
   .ec-att-x:hover{ color:var(--text-100); }
   .ec-send{ width:28px; height:28px; border-radius:7px; background:var(--accent-strong); color:var(--accent-on-strong); display:inline-flex; align-items:center; justify-content:center; border:0; cursor:pointer; transition:background 160ms var(--ease), opacity 160ms var(--ease); }
   .ec-send svg{ width:15px; height:15px; }
-  .ec-send:hover{ background:var(--accent-200); }
+  .ec-send:hover{box-shadow:var(--shadow-sm);transform:translateY(-1px);}
   .ec-send:disabled{ opacity:.35; cursor:not-allowed; }
 
   /* Artifact (right) */

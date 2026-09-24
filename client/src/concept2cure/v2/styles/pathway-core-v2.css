@@ -303,7 +303,7 @@
     padding: 7px 14px; background: var(--accent-strong); color: var(--accent-on-strong);
     border-radius: var(--radius-md); font-size: 12px; font-weight: 500;
   }
-  .ap-sign-btn:hover { background: var(--accent-200); }
+  .ap-sign-btn:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
   .ap-sign-btn svg { width: 13px; height: 13px; }
   .ap-decline-btn, .ap-review-btn {
     display: inline-flex; align-items: center; gap: 6px;

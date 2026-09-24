@@ -1074,8 +1074,8 @@
     position: absolute;
     top: -11px;
     left: 22px;
-    background: var(--accent-100);
-    color: #fff;
+    background: var(--accent-strong);
+    color: var(--accent-on-strong);
     font-size: 10px;
     font-weight: 600;
     padding: 4px 11px;

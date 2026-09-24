@@ -132,7 +132,7 @@
 .c2c-v2 .cc-btn:hover{ background:var(--bg-100); }
 .c2c-v2 .cc-btn.sm{ padding:6px 11px; font-size:12px; }
 .c2c-v2 .cc-btn.primary{ background:var(--accent-strong); border-color:var(--accent-strong); color:var(--accent-on-strong); }
-.c2c-v2 .cc-btn.primary:hover{ background:var(--accent-200); }
+.c2c-v2 .cc-btn.primary:hover{box-shadow:var(--shadow-sm);transform:translateY(-1px);}
 .c2c-v2 .cc-btn svg{ width:14px; height:14px; }
 .c2c-v2 .cc-comm[data-fresh]{ animation:ccFresh 1.4s ease-out; }
 @keyframes ccFresh{ 0%{ background:var(--accent-000); } 100%{ background:var(--bg-000); } }
