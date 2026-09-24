@@ -264,7 +264,7 @@
     "db:push": "drizzle-kit push",
     "db:seed": "node scripts/seed-ga-demo.mjs",
     "db:backfill-document-aliases": "node scripts/backfill-document-aliases.mjs",
-    "db:backfill-vault-storage": "node scripts/backfill-vault-storage.mjs",
+    "db:backfill-vault-storage": "tsx scripts/backfill-vault-storage.mjs",
     "db:seed:admin": "node scripts/seed-admin.mjs",
     "db:seed:mdx-beta": "node scripts/seed-mdx-beta.mjs",
     "db:seed:mdx-content": "node scripts/seed-mdx-content.mjs",
