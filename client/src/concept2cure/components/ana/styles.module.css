@@ -889,7 +889,7 @@
 }
 .signoffInput:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-main-200, #78716c); }
 .signoffHint { font-size: 11px; color: var(--text-400, var(--ink-subtle)); }
-.signoffError { font-size: 12px; color: var(--danger, #b91c1c); margin: 2px 0 0; }
+.signoffError { font-size: 12px; color: var(--error); margin: 2px 0 0; }
 .signoffActions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
 .signoffConfirm {
   font: inherit; font-size: 12px; font-weight: 600;

@@ -35,16 +35,16 @@
 
   /* Status/severity tone pairs for the ported mdx surfaces — see the
      "Ported surfaces" deviation notes further down. */
-  --mdx-tone-ok-bg:   #ecf1e4;  --mdx-tone-ok-fg:   #4d6235;  --mdx-tone-ok-line:   #cfd9bd;
-  --mdx-tone-warn-bg: #f6e9cf;  --mdx-tone-warn-fg: #7e5510;  --mdx-tone-warn-line: #e2c98c;
-  --mdx-tone-err-bg:  #f3d6d2;  --mdx-tone-err-fg:  #7c1f1f;  --mdx-tone-err-line:  #dca5a0;
-  --mdx-tone-info-bg: #e2e8f5;  --mdx-tone-info-fg: #355270;
-  --mdx-tone-alt-bg:  #ece9f7;  --mdx-tone-alt-fg:  #544698;
+  --mdx-tone-ok-bg:   var(--success-muted);  --mdx-tone-ok-fg:   var(--success);  --mdx-tone-ok-line:   color-mix(in srgb, var(--success) 30%, var(--success-muted));
+  --mdx-tone-warn-bg: var(--warning-muted);  --mdx-tone-warn-fg: var(--warning);  --mdx-tone-warn-line: color-mix(in srgb, var(--warning) 30%, var(--warning-muted));
+  --mdx-tone-err-bg:  var(--error-muted);    --mdx-tone-err-fg:  var(--error);    --mdx-tone-err-line:  color-mix(in srgb, var(--error) 30%, var(--error-muted));
+  --mdx-tone-info-bg: var(--info-muted);     --mdx-tone-info-fg: var(--info);
+  --mdx-tone-alt-bg:  var(--accent-pro-000);  --mdx-tone-alt-fg:  var(--accent-pro-200);
   /* Muted variants — the ISO 14971 heat map's zero-count cells, which carry a
      tone (the cell's risk band) with no count to print. */
-  --mdx-tone-ok-bg-muted:   #f5f6ef;  --mdx-tone-ok-line-muted:   #e6e9d8;
-  --mdx-tone-warn-bg-muted: #f8efde;  --mdx-tone-warn-line-muted: #e9d6a8;
-  --mdx-tone-err-bg-muted:  #f6e6e3;  --mdx-tone-err-line-muted:  #ecbeb6;
+  --mdx-tone-ok-bg-muted:   color-mix(in srgb, var(--success-muted) 45%, var(--bg-000));  --mdx-tone-ok-line-muted:   color-mix(in srgb, var(--success) 15%, var(--bg-000));
+  --mdx-tone-warn-bg-muted: color-mix(in srgb, var(--warning-muted) 45%, var(--bg-000));  --mdx-tone-warn-line-muted: color-mix(in srgb, var(--warning) 15%, var(--bg-000));
+  --mdx-tone-err-bg-muted:  color-mix(in srgb, var(--error-muted) 45%, var(--bg-000));    --mdx-tone-err-line-muted:  color-mix(in srgb, var(--error) 15%, var(--bg-000));
 }
 
 /* ─── Reset ─── */
@@ -1709,9 +1709,9 @@
 .mdx-shell .docs-blocker-note {
   display: flex; gap: 6px; align-items: center;
   margin-top: 8px; padding: 6px 10px;
-  background: #fbeae6;
+  background: var(--error-muted);
   border-radius: var(--radius-md);
-  font-size: 11px; color: var(--error-text);
+  font-size: 11px; color: var(--error);
 }
 .mdx-shell .docs-blocker-note .ico svg { width: 12px; height: 12px; color: var(--error); }
 .mdx-shell .docs-flags { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
@@ -2976,7 +2976,7 @@
 .mdx-shell .ana-draft-error {
   flex-basis: 100%;
   font-size: 12px;
-  color: var(--error-text, #b91c1c);
+  color: var(--error);
   margin-top: 4px;
 }
 .mdx-shell .ana-draft-banner,

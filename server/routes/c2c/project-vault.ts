@@ -52,6 +52,8 @@ import { productTypesToSegments } from '../../services/report-os/segment.js';
 import {
   filingTypesForView,
   foldersForView,
+  VAULT_FOLDER_PRESETS,
+  VAULT_VIEWS,
   VAULT_DOC_KINDS,
   type VaultViewId,
   vaultIngestTypeLabel,
@@ -485,6 +487,16 @@ export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
   return leaf;
 }
 
+/** A folder id's label and the view it belongs to, for a folder the current
+ *  view does not have. Names the raw id only when no view knows it. */
+function whereFiled(folderId: string): string {
+  for (const v of VAULT_VIEWS) {
+    const f = (VAULT_FOLDER_PRESETS[v.value] ?? []).find(x => x.id === folderId);
+    if (f) return `“${f.label}” (${v.label} view)`;
+  }
+  return `a folder this vault no longer defines (${folderId})`;
+}
+
 /**
  * The filing cabinet: the program's vault-view folder taxonomy with every
  * uploaded document placed where its (suggested or confirmed) filing says,
@@ -494,9 +506,20 @@ export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
  */
 export function filingCabinet(view: VaultViewId, uploads: UploadRow[]): VaultFolder {
   const unfiled = uploads.filter(u => !u.folder_id || (u.placement_status || 'unfiled') === 'unfiled');
+  const inView = new Set(foldersForView(view).map(f => f.id));
   const byFolder = new Map<string, UploadRow[]>();
+  /* Filed to a folder this view does not have. The view is resolved per read
+     and not stored on the row, so a document filed under a device folder on a
+     program that now reads as pharma (or one filed while the view lookup had
+     fallen back) belongs to no folder here. It used to be dropped from the tree
+     while still counted; it is shown, with where it was filed. */
+  const otherView: UploadRow[] = [];
   for (const u of uploads) {
     if (!u.folder_id || (u.placement_status || 'unfiled') === 'unfiled') continue;
+    if (!inView.has(u.folder_id)) {
+      otherView.push(u);
+      continue;
+    }
     const list = byFolder.get(u.folder_id) ?? [];
     list.push(u);
     byFolder.set(u.folder_id, list);
@@ -514,6 +537,17 @@ export function filingCabinet(view: VaultViewId, uploads: UploadRow[]): VaultFol
       code: '',
       label: folder.label,
       children: (byFolder.get(folder.id) ?? []).map(u => uploadLeaf(view, u)),
+    });
+  }
+  if (otherView.length > 0) {
+    children.push({
+      id: 'cab-other-view',
+      code: '',
+      label: 'Filed under another view · needs review',
+      children: otherView.map(u => ({
+        ...uploadLeaf(view, u),
+        flag: `Filed to ${whereFiled(u.folder_id!)}, which is not a folder in this program's current view. Move it to a folder here, or check the program's product type.`,
+      })),
     });
   }
   return {

@@ -31,7 +31,7 @@
 .qms-topbar {
   display: flex; align-items: center; gap: 12px;
   padding: 0 20px; height: 48px; flex: 0 0 48px;
-  background: var(--background); border-bottom: 1px solid #f2f0e8;
+  background: var(--background); border-bottom: 1px solid var(--border-subtle);
   font-size: 12px;
 }
 .qms-crumbs { display: flex; align-items: center; gap: 6px; color: var(--text-300); font-weight: 500; }
@@ -63,19 +63,19 @@
   font-size: 12.5px; font-weight: 600; white-space: nowrap;
   transition: background 200ms ease-out, color 200ms ease-out, border-color 200ms ease-out;
 }
-.qms-btn.ghost { color: var(--text-200); border: 1px solid #e8e6dc; background: var(--background); }
+.qms-btn.ghost { color: var(--text-200); border: 1px solid var(--bg-200); background: var(--background); }
 .qms-btn.ghost:hover { background: var(--bg-100); color: var(--text-100); }
 .qms-btn.primary { background: var(--accent-strong); color: var(--accent-on-strong); }
 
 /* ─── KPIs ─────────────────────────────────────────────────────── */
 .qms-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
-.qms-kpi { background: var(--background); border: 1px solid #e8e6dc; border-radius: 10px; padding: 13px 15px; }
+.qms-kpi { background: var(--background); border: 1px solid var(--bg-200); border-radius: 10px; padding: 13px 15px; }
 .qms-kpi .lbl { font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-300); font-weight: 600; margin-bottom: 6px; }
 .qms-kpi .val { font-size: 22px; font-weight: 600; color: var(--text-100); font-variant-numeric: tabular-nums; }
 .qms-kpi .val .unit { font-size: 13px; color: var(--text-300); margin-left: 3px; font-weight: 500; }
 .qms-kpi .sub { font-size: 11.5px; color: var(--text-300); margin-top: 4px; }
 .qms-kpi[data-tone="err"] .val { color: var(--error); }
-.qms-kpi[data-tone="warn"] .val { color: #c2410c; }
+.qms-kpi[data-tone="warn"] .val { color: var(--warning); }
 
 /* ─── Sections ─────────────────────────────────────────────────── */
 .qms-sec { margin-bottom: 26px; }
@@ -91,7 +91,7 @@
 /* ─── Template gallery ─────────────────────────────────────────── */
 .qms-tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
 .qms-tpl-card {
-  text-align: left; background: var(--background); border: 1px solid #e8e6dc; border-radius: 10px;
+  text-align: left; background: var(--background); border: 1px solid var(--bg-200); border-radius: 10px;
   padding: 14px; display: flex; flex-direction: column; gap: 6px;
   transition: border-color 200ms ease-out, box-shadow 200ms ease-out;
 }
@@ -109,10 +109,10 @@
    still clips to the radius. `overflow-y:hidden` is explicit because setting
    only the x axis computes y to auto. Rows carry their own min-width from
    registerGrid.ts, so all of them scroll as one and the columns stay aligned. */
-.qms-table { border: 1px solid #e8e6dc; border-radius: 10px; overflow-x: auto; overflow-y: hidden; background: var(--background); }
+.qms-table { border: 1px solid var(--bg-200); border-radius: 10px; overflow-x: auto; overflow-y: hidden; background: var(--background); }
 .qms-thead, .qms-row { display: grid; align-items: center; gap: 10px; padding: 9px 14px; }
-.qms-thead { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-300); font-weight: 600; background: var(--bg-100); border-bottom: 1px solid #e8e6dc; }
-.qms-row { border-bottom: 1px solid #f2f0e8; font-size: 12.5px; }
+.qms-thead { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-300); font-weight: 600; background: var(--bg-100); border-bottom: 1px solid var(--bg-200); }
+.qms-row { border-bottom: 1px solid var(--border-subtle); font-size: 12.5px; }
 .qms-row:last-child { border-bottom: 0; }
 .qms-row[data-status="superseded"], .qms-row[data-status="retired"] { opacity: 0.6; }
 .qms-cell { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -120,14 +120,14 @@
 .qms-num:hover { color: var(--accent-main-100); }
 .qms-title { color: var(--text-100); }
 .qms-shell .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-.qms-tag { display: inline-block; font-size: 10.5px; padding: 2px 7px; border-radius: 5px; background: var(--bg-100); color: var(--text-300); border: 1px solid #e8e6dc; }
+.qms-tag { display: inline-block; font-size: 10.5px; padding: 2px 7px; border-radius: 5px; background: var(--bg-100); color: var(--text-300); border: 1px solid var(--bg-200); }
 .qms-overdue { color: var(--error); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
 
 /* status pill */
 .qms-pill { display: inline-block; font-size: 10.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
-.qms-pill[data-tone="effective"] { background: #e7efe2; color: #4a6b3a; }
-.qms-pill[data-tone="review"]    { background: #f6ead3; color: #8a5a1a; }
-.qms-pill[data-tone="draft"]     { background: var(--bg-100); color: var(--text-300); border: 1px solid #e8e6dc; }
+.qms-pill[data-tone="effective"] { background: var(--success-muted); color: var(--success); }
+.qms-pill[data-tone="review"]    { background: var(--warning-muted); color: var(--warning); }
+.qms-pill[data-tone="draft"]     { background: var(--bg-100); color: var(--text-300); border: 1px solid var(--bg-200); }
 .qms-pill[data-tone="muted"]     { background: var(--bg-100); color: var(--text-300); }
 
 /* row actions — AnA-first */
@@ -135,7 +135,7 @@
 .qms-chip {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 6px;
-  color: var(--text-300); border: 1px solid #e8e6dc; background: var(--background);
+  color: var(--text-300); border: 1px solid var(--bg-200); background: var(--background);
   transition: background 200ms ease-out, color 200ms ease-out, border-color 200ms ease-out;
 }
 .qms-chip:hover { background: var(--bg-100); color: var(--text-100); }
@@ -149,15 +149,15 @@
   .qms-kpis { grid-template-columns: repeat(2, 1fr); }
 }
 
-.qms-review { border: 1px solid #e8e6dc; border-radius: 10px; overflow: hidden; background: var(--background); }
+.qms-review { border: 1px solid var(--bg-200); border-radius: 10px; overflow: hidden; background: var(--background); }
 .qms-review-row {
   display: grid; grid-template-columns: 100px minmax(0, 1fr) 96px; gap: 10px; align-items: center;
-  width: 100%; text-align: left; padding: 9px 13px; border-bottom: 1px solid #f2f0e8; font-size: 12.5px;
+  width: 100%; text-align: left; padding: 9px 13px; border-bottom: 1px solid var(--border-subtle); font-size: 12.5px;
   transition: background 200ms ease-out;
 }
 .qms-review-row:last-child { border-bottom: 0; }
 .qms-review-row:hover { background: var(--bg-100); }
-.qms-review-row[data-overdue] { background: #fbf2ef; }
+.qms-review-row[data-overdue] { background: var(--error-muted); }
 .qms-review-num { color: var(--text-200); font-weight: 600; }
 .qms-review-title { color: var(--text-100); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .qms-review-when { text-align: right; color: var(--text-300); font-size: 11.5px; }
@@ -168,9 +168,9 @@
 .qms-train-row { display: grid; grid-template-columns: minmax(0, 1fr) 90px 52px 84px; gap: 10px; align-items: center; font-size: 12px; }
 .qms-train-doc { color: var(--text-200); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .qms-train-bar { height: 6px; border-radius: 999px; background: var(--bg-200); overflow: hidden; }
-.qms-train-fill { display: block; height: 100%; border-radius: 999px; background: #6f8c5a; transition: background 200ms ease-out; }
-.qms-train-fill[data-tone="warn"] { background: #d09a3c; }
-.qms-train-fill[data-tone="err"]  { background: #c84a4a; }
+.qms-train-fill { display: block; height: 100%; border-radius: 999px; background: var(--success); transition: background 200ms ease-out; }
+.qms-train-fill[data-tone="warn"] { background: var(--warning); }
+.qms-train-fill[data-tone="err"]  { background: var(--error); }
 .qms-train-pct { color: var(--text-300); text-align: right; }
 .qms-train-when { color: var(--text-300); font-size: 11px; text-align: right; }
 
@@ -178,7 +178,7 @@
 .qms-tabbar {
   display: flex; gap: 2px; align-items: stretch;
   padding: 0 20px; height: 40px; flex: 0 0 40px;
-  background: var(--background); border-bottom: 1px solid #f2f0e8;
+  background: var(--background); border-bottom: 1px solid var(--border-subtle);
 }
 .qms-tab {
   display: inline-flex; align-items: center; gap: 6px; padding: 0 12px;
@@ -191,21 +191,21 @@
 .qms-tab-ico { display: inline-flex; color: currentColor; }
 
 /* status pill — extra tone for rejected changes */
-.qms-pill[data-tone="err"] { background: #f6dfda; color: #a23b2f; }
+.qms-pill[data-tone="err"] { background: var(--error-muted); color: var(--error); }
 
 /* ─── Change control: classification chip ──────────────────────── */
 .qcc-class { display: inline-block; font-size: 10.5px; font-weight: 600; padding: 2px 8px; border-radius: 5px; }
-.qcc-class[data-tone="ok"]   { background: #e7efe2; color: #4a6b3a; }
-.qcc-class[data-tone="warn"] { background: #f6ead3; color: #8a5a1a; }
-.qcc-class[data-tone="err"]  { background: #f6dfda; color: #a23b2f; }
+.qcc-class[data-tone="ok"]   { background: var(--success-muted); color: var(--success); }
+.qcc-class[data-tone="warn"] { background: var(--warning-muted); color: var(--warning); }
+.qcc-class[data-tone="err"]  { background: var(--error-muted); color: var(--error); }
 
 /* ─── Change control: lifecycle flowchart ──────────────────────── */
-.qcc-flow { border: 1px solid #e8e6dc; border-radius: 10px; background: var(--background); padding: 16px; }
+.qcc-flow { border: 1px solid var(--bg-200); border-radius: 10px; background: var(--background); padding: 16px; }
 .qcc-flow-track { display: flex; align-items: stretch; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
 .qcc-node {
   flex: 1 1 0; min-width: 122px; display: flex; flex-direction: column; gap: 4px;
   align-items: flex-start; text-align: left; padding: 10px 12px;
-  border: 1px solid #e8e6dc; border-radius: 9px; background: var(--bg-050);
+  border: 1px solid var(--bg-200); border-radius: 9px; background: var(--bg-050);
   transition: border-color 200ms ease-out, background 200ms ease-out, box-shadow 200ms ease-out;
 }
 .qcc-node:hover { border-color: var(--text-300); }
@@ -224,17 +224,17 @@
 .qcc-node-blurb { font-size: 10.5px; color: var(--text-400); line-height: 1.4; }
 .qcc-arrow { display: flex; align-items: center; color: var(--text-500); flex: 0 0 auto; }
 
-.qcc-flow-foot { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #f2f0e8; }
+.qcc-flow-foot { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-subtle); }
 .qcc-offramps { display: flex; gap: 8px; flex: 1; flex-wrap: wrap; }
 .qcc-offramp {
   display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500;
-  color: var(--text-300); padding: 3px 9px; border: 1px solid #e8e6dc; border-radius: 999px;
+  color: var(--text-300); padding: 3px 9px; border: 1px solid var(--bg-200); border-radius: 999px;
   background: var(--background); transition: background 200ms ease-out, color 200ms ease-out, border-color 200ms ease-out;
 }
 .qcc-offramp:hover { background: var(--bg-100); color: var(--text-100); }
 .qcc-offramp[data-on] { border-color: var(--text-300); color: var(--text-100); background: var(--bg-100); }
 .qcc-offramp-dot { width: 8px; height: 8px; border-radius: 999px; }
-.qcc-offramp-dot[data-stage="rejected"]  { background: #c84a4a; }
+.qcc-offramp-dot[data-stage="rejected"]  { background: var(--error); }
 .qcc-offramp-dot[data-stage="cancelled"] { background: #b6b1a2; }
 
 /* ─── Change control: register links ───────────────────────────── */
@@ -244,21 +244,21 @@
 }
 .qcc-linkcount:hover { color: var(--accent-main-100); }
 
-.qcc-detail { padding: 12px 14px 14px; background: var(--bg-050); border-bottom: 1px solid #f2f0e8; }
+.qcc-detail { padding: 12px 14px 14px; background: var(--bg-050); border-bottom: 1px solid var(--border-subtle); }
 .qcc-detail-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .qcc-detail-title { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-400); font-weight: 600; }
 .qcc-detail-empty { font-size: 12px; color: var(--text-400); line-height: 1.5; padding: 4px 0; }
 .qcc-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
 .qcc-link {
-  display: flex; align-items: center; gap: 9px; padding: 8px 10px; border: 1px solid #e8e6dc;
+  display: flex; align-items: center; gap: 9px; padding: 8px 10px; border: 1px solid var(--bg-200);
   border-radius: 8px; background: var(--background); text-align: left;
   transition: border-color 200ms ease-out, box-shadow 200ms ease-out;
 }
 .qcc-link:hover { border-color: var(--accent-main-100); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }
 .qcc-link-ico { display: inline-flex; color: var(--text-300); flex: 0 0 auto; }
-.qcc-link-ico[data-type="deviation"]  { color: #c2410c; }
-.qcc-link-ico[data-type="capa"]       { color: #8a5a1a; }
-.qcc-link-ico[data-type="validation"] { color: #4a6b3a; }
+.qcc-link-ico[data-type="deviation"]  { color: var(--warning); }
+.qcc-link-ico[data-type="capa"]       { color: var(--warning); }
+.qcc-link-ico[data-type="validation"] { color: var(--success); }
 .qcc-link-body { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .qcc-link-ref { font-size: 12px; font-weight: 600; color: var(--text-100); }
 .qcc-link-label { font-size: 10.5px; color: var(--text-400); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -269,7 +269,7 @@
 }
 
 /* ─── Change control: training + forms ─────────────────────────── */
-.qcc-train { border: 1px solid #e8e6dc; border-radius: 10px; background: var(--background); padding: 14px 16px; }
+.qcc-train { border: 1px solid var(--bg-200); border-radius: 10px; background: var(--background); padding: 14px 16px; }
 .qcc-steps { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-direction: column; gap: 9px; }
 .qcc-steps li { display: flex; align-items: flex-start; gap: 10px; font-size: 12.5px; color: var(--text-200); line-height: 1.45; }
 .qcc-step-n {

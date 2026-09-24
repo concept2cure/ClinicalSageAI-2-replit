@@ -49,7 +49,7 @@
 .opr-act svg { width: 12px; height: 12px; }
 .opr-act:disabled { opacity: .5; cursor: not-allowed; }
 .opr-act.approve[aria-pressed="true"] { border-color: var(--success); color: var(--success); background: color-mix(in srgb, var(--success) 8%, transparent); }
-.opr-act.reject[aria-pressed="true"] { border-color: var(--error-text); color: var(--error-text); }
+.opr-act.reject[aria-pressed="true"] { border-color: var(--error); color: var(--error); }
 
 .opr-commit { position: sticky; bottom: 0; background: var(--bg-000); border-top: 1px solid var(--border); padding: 14px 0 4px; margin-top: 8px; }
 .opr-reason { width: 100%; box-sizing: border-box; border: 1px solid var(--border-control); background: var(--bg-050); color: var(--text-100); border-radius: var(--radius-sm); padding: 8px 11px; font-size: 12px; font-family: inherit; margin-bottom: 10px; }
