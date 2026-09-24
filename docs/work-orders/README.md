@@ -37,6 +37,49 @@ to one line; edit only your own row to limit merge conflicts.
 If you are one of the sessions above, correct your own row. If a lane you want
 is claimed, take the next unclaimed finding in §3 rather than duplicating it.
 
+### Found by the vault re-baseline (`…01KnUGoX`) — confirmed, handed on, not edited
+
+A re-verification of `VAULT_DATA_ROOM_ASSESSMENT_2026-09-05.md` against HEAD
+after 394 commits (14 section verifiers, each overturned or upheld by an
+adversarial skeptic; 2026-09-24). Every item below was upheld by its skeptic.
+Items in this lane's own code are fixed in this lane, not listed here.
+
+**→ `…01Wcyqbq` (launch-catalog follow-through, D2/D5/D6)**
+- `server/routes/c2c/artifacts.ts` status route writes Part 11 'approval'/'publish' signatures to `concept2cure_signatures` from the session alone (no re-verification); the printed signer name falls back to 'unknown'; the signature is not atomic with the status change and is skipped silently when no version row exists; the removal note and its pinning test say this router writes no signature substrate (false). The seal-verified route persists a client-supplied `signerRole`.
+- AnA `approve_qms_document` makes a QMS controlled document effective with no password/MFA, no signing-authority and no self-approval check; the QMS router accepts `status: 'effective'` directly on create and patch; three paths bypass the signed approval; two parallel QMS document-control backends, the guarded one unreached.
+- `AUTH_BOUNDARY_MODE=warn` is honoured in production: one env var turns default-deny off with an info log.
+- Submission Center shows a passing Validation gate when the readiness read fails.
+
+**→ `…01DiJJAk` (AnA client files, D3)**
+- The AnA vault write tools (`file_chat_upload_to_vault`, `place_project_document`) carry no org-role gate: a viewer writes the vault through AnA.
+- The vault passage tool refuses on two AnA entry points that never pass `organizationUuid`.
+- AnA's Vault screen context reports uploaded files as "0% complete" (the surface itself was fixed to show no percentage, `28324fdf`).
+
+**→ D3, unclaimed**
+- The cortex vault Q&A route takes its tenant key from the client's `x-org-uuid` header, and both its SQL predicate and RLS trust it.
+- The vault context-expansion (small-to-big) query has no org predicate and relies on RLS alone; it runs by default for regulatory_qa and foresight.
+- Authoring file-to-vault (`e0f99d3c`) writes `vault.documents` without `requireEditorAccess`: a viewer can write.
+
+**→ `…01LjrcEe` / `…01TtwRHm` (D7)**
+- Vault leaves are exempt from the approval ('finalized') transmit gate: an unapproved upload can be placed and transmitted.
+- AnA `place_into_sequence` cannot file a vault document, and its description says vault is unmaterializable.
+- Two vault byte readers: the eCTD resolver reads through the provider only; `readVerifiedVaultBytes` falls back to the legacy path.
+
+**→ W2 (D1)**
+- The in-repo production deployment writes vault bytes to per-task ephemeral disk: two Fargate tasks, no `STORAGE_PROVIDER`, no vault bucket, and the deploy preflight does not require one. An unrecognised `STORAGE_PROVIDER` value falls back to local silently.
+- `S3StorageProvider.get` cannot find objects past the first 1000 keys.
+- The byte reader ignores the recorded provider; there is no local-to-S3 migration path, and `scripts/backfill-vault-storage.mjs` (runnable since `eaedc4d1`) is not in the production image.
+
+**→ tenant offboarding, unclaimed (D6)** — see `docs/evidence/D6-EXPORT-COVERS-PURGE/2026-09-24/` §"Not done": the purge's transaction runs on a Pool, a truncated export authorizes a full purge, no legal hold is consulted, the return carries no document bytes. Legal holds cannot be placed or lifted through the product at all, and retention destruction is audited to a local file, not the Part 11 chain.
+
+**→ Projects, unclaimed (D2)**
+- ProjectHome's "Dossier readiness" ring always shows 0%, contradicting the Projects list; the numeric readiness engine queries a column that does not exist.
+- Two task stores: tasks from AnA, agency communications and the schedule never reach the task board. The Blocked tile and the Blocked/Complete filters are always empty, and AnA is told "0 blocked".
+- The portfolio is cut off at 50 programs without saying so; the TaskBoard critical-path view claims a calculation it does not perform.
+
+**→ Data room — founder decisions first (see the assessment §5 Data room)**
+- Under production RLS the client portal cannot serve any principal outside the owning tenant, so a grant INSERT alone would not make the external path work; no code path places a program into a client workspace; the org default workspace is not excluded from portal scope; portal deliverables read `public.documents`, not the vault.
+
 ### Found by the IND eCTD demo lane (`…01TtwRHm`) — not fixed, not this lane's to decide
 
 1. **Two go/no-go gates disagree about a clinical hold.** `ind-lifecycle/ind-dispatch-gate.ts`
