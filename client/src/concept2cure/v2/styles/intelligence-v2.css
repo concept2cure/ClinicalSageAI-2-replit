@@ -31,7 +31,7 @@
 .c2c-v2 .det-verdict-v[data-tone="crit"]{color:var(--error);}
 .c2c-v2 .det-verdict-l{font-size:11px;color:var(--text-400);font-weight:500;}
 .c2c-v2 .det-b{padding:8px 14px 12px;display:flex;flex-direction:column;gap:8px;}
-.c2c-v2 .det-sec-l{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin-bottom:4px;}
+.c2c-v2 .det-sec-l{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin-bottom:4px;}
 .c2c-v2 .det-find{display:flex;gap:7px;align-items:flex-start;padding:5px 8px;border-radius:6px;background:var(--bg-050);font-size:11.5px;line-height:1.45;color:var(--text-200);}
 .c2c-v2 .det-find+.det-find{margin-top:3px;}
 .c2c-v2 .det-find svg{width:11px;height:11px;flex-shrink:0;margin-top:2px;}
@@ -43,7 +43,7 @@
 .c2c-v2 .det-rat li{margin:2px 0;}
 .c2c-v2 .det-recs{display:flex;flex-direction:column;gap:6px;}
 .c2c-v2 .det-rec{display:flex;gap:7px;align-items:flex-start;font-size:11.5px;line-height:1.5;color:var(--text-200);}
-.c2c-v2 .det-rec .n{font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--accent-200);flex-shrink:0;margin-top:1px;}
+.c2c-v2 .det-rec .n{font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--accent-200);flex-shrink:0;margin-top:1px;}
 .c2c-v2 .det-warns{font-size:10.5px;color:var(--warning);background:var(--warning-muted);border-radius:6px;padding:6px 9px;line-height:1.45;}
 .c2c-v2 .det-f{display:flex;align-items:center;gap:6px;padding:8px 12px;border-top:1px solid var(--bg-100);background:var(--bg-050);flex-wrap:wrap;}
 
@@ -52,7 +52,7 @@
 .c2c-v2 .cit svg{width:9px;height:9px;color:var(--text-400);}
 .c2c-v2 .cit:hover{border-color:var(--accent-100);color:var(--accent-200);}
 .c2c-v2 .cit-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;}
-.c2c-v2 .cit-lead{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin-right:2px;}
+.c2c-v2 .cit-lead{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin-right:2px;}
 
 /* ── ValidationSummaryPanel ── */
 .c2c-v2 .vsp{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;font-size:12px;}
@@ -64,7 +64,7 @@
 .c2c-v2 .vsp-verdict[data-ok="true"]{background:var(--success-muted);color:var(--success);}
 .c2c-v2 .vsp-verdict[data-ok="false"]{background:var(--error-muted);color:var(--error);}
 .c2c-v2 .vsp-grp{padding:6px 0;}
-.c2c-v2 .vsp-grp-l{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);padding:6px 14px 3px;}
+.c2c-v2 .vsp-grp-l{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);padding:6px 14px 3px;}
 .c2c-v2 .vsp-row{display:flex;gap:8px;align-items:flex-start;padding:6px 14px;border-top:1px solid var(--bg-100);line-height:1.45;}
 .c2c-v2 .vsp-row svg{width:11px;height:11px;flex-shrink:0;margin-top:2px;}
 .c2c-v2 .vsp-row[data-sev="error"] svg, .c2c-v2 .vsp-row[data-sev="reject"] svg{color:var(--error);}
@@ -78,11 +78,11 @@
 /* ── Capability index surface ── */
 .c2c-v2 .cap{max-width:1060px;margin:0 auto;padding:28px 32px 64px;}
 .c2c-v2 .cap-hero{margin-bottom:20px;}
-.c2c-v2 .cap-eyebrow{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-200);margin-bottom:6px;}
+.c2c-v2 .cap-eyebrow{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-200);margin-bottom:6px;}
 .c2c-v2 .cap-title{font-size:20px;font-weight:600;color:var(--text-100);margin:0 0 6px;}
 .c2c-v2 .cap-sub{font-size:12.5px;color:var(--text-400);line-height:1.55;max-width:720px;margin:0;}
 .c2c-v2 .cap-legend{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 24px;padding:12px 14px;background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);align-items:center;}
-.c2c-v2 .cap-legend-l{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin-right:4px;}
+.c2c-v2 .cap-legend-l{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin-right:4px;}
 .c2c-v2 .cap-wave{margin-bottom:22px;}
 .c2c-v2 .cap-wave-h{font-size:13px;font-weight:600;color:var(--text-100);margin:0 0 2px;}
 .c2c-v2 .cap-wave-sub{font-size:11px;color:var(--text-400);margin:0 0 10px;}
