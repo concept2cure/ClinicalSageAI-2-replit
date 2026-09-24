@@ -969,7 +969,6 @@
 .mdx-shell .ed-val-badge[data-tone="ok"]   { color: var(--success);  background: var(--success-muted); border-color: transparent; }
 .mdx-shell .ed-val-badge[data-tone="warn"] { color: var(--warning);  background: var(--warning-muted); border-color: transparent; }
 .mdx-shell .ed-val-badge[data-tone="err"]  { color: var(--error);    background: var(--error-muted);   border-color: transparent; }
-.mdx-shell .ed-val-badge:hover { filter: brightness(0.97); }
 
 .mdx-shell .ed-val-pop {
   position: absolute; top: calc(100% + 6px); right: 14px;
