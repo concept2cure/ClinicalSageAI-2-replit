@@ -295,3 +295,32 @@ describe('ProjectHome — where a source is used', () => {
     expect(screen.queryByText(/drafted from a source that has since changed/)).toBeNull();
   });
 });
+
+/**
+ * The count is of current sources, and a full window says so.
+ * Found by the 2026-09-24 Vault-against-Veeva mapping: a re-uploaded file was
+ * counted twice (its retired revision and its successor), and the list stopped
+ * at 200 with nothing said.
+ */
+describe('ProjectHome — data room counts', () => {
+  it('counts a re-uploaded file once', async () => {
+    mockApi(() => ok({ projectId: PID, unscoped: [], window: { shown: 2, truncated: false }, sources: [
+      source({ id: 1, title: 'protocol-v1.pdf', isCurrent: false }),
+      source({ id: 2, title: 'protocol-v2.pdf', isCurrent: true }),
+    ] }));
+    render(<ProjectHome {...props()} />);
+    await screen.findByText('protocol-v2.pdf');
+    expect(document.body.textContent).toMatch(/(^|\D)1 source · 1 readable/);
+    expect(document.body.textContent).not.toMatch(/(^|\D)2 sources/);
+  });
+
+  it('a full window reads as a floor', async () => {
+    mockApi(() => ok({ projectId: PID, unscoped: [], window: { shown: 2, truncated: true }, sources: [
+      source({ id: 1, title: 'a.pdf' }), source({ id: 2, title: 'b.pdf' }),
+    ] }));
+    render(<ProjectHome {...props()} />);
+    await screen.findByText('a.pdf');
+    expect(document.body.textContent).toMatch(/2\+ sources/);
+    expect(document.body.textContent).toMatch(/newest 2 shown/);
+  });
+});
