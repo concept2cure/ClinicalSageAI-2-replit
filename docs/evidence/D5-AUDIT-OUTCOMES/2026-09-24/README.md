@@ -155,6 +155,27 @@ Launch-path sites remaining: **12 of 25**, 4 of them launch-app.
   routes, which have no launch client, and drop it at the tool. They go with
   the `AnaToolExecutor` change.
 
+## Third tranche (134 → 133)
+
+- `routes/c2c/artifacts.ts:2946`: the artifact status change AnA's
+  conversation thread makes (shell). `logAuditEntry` resolves
+  `{ written, attributed }`. The new `auditTrailFromEntry`
+  (`routes/c2c/shared.ts`) turns that into the canonical wire shape. A written
+  row is `chained: false` because it is: that writer's store is
+  `regulatory_audit_logs`, not the chained `audit_logs`. Red 2/2 failing →
+  green 2/2 (`artifact-status-*`). ConversationThread calls through `apiCall`,
+  so the notice covers it.
+- **Handed to the D5 tasks lane, not converted:** `ana-ri/command-executor.ts`
+  ×2. AnA's create_task and update_task mirror a row into `unified_tasks`, then
+  write the `task.create` / `task.transition` ledger row best-effort, outside
+  any transaction. That lane made every other task write ledger its row on the
+  write's own transaction (`auditTaskActionInTx`; a failed row rolls the write
+  back). Carrying an outcome here would be the weaker of two patterns for one
+  capability. The fix is theirs.
+
+Launch-path sites remaining: **11 of 25** (4 launch-app: AnA QMS change
+control ×3 and, for forwarding, the eCTD callers named above).
+
 ## Review
 
 A self-review of the day's diff (the workflow tool was unavailable for an

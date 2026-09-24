@@ -1484,7 +1484,7 @@ registerToolHandler('remember_document_in_project', async (input, ctx) => {
       '../client-intelligence-memory.js'
     );
 
-    const profile = await getProjectIntelligence(ctx.projectId);
+    const profile = await getProjectIntelligence(ctx.projectId, ctx.organizationId);
     if (!profile?.id) {
       return JSON.stringify({
         ok: false,

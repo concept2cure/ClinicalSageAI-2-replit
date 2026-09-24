@@ -23,7 +23,7 @@ to one line; edit only your own row to limit merge conflicts.
 | WO-15 finding 5 — `c2c_template_specs.doc_types` | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed |
 | WO-15 finding 8 — the two blind gates | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed `b9152a016` |
 | WO-15 finding 4 — `/api/design-risk` | `…session_01J935DZwfFEardJCv85SJds` | **released** — done `153481465` |
-| WO-16C — discarded §11.10(e) audit-write outcomes: the `ci:discarded-audit-write` population (148 sites / 70 files on 2026-09-24), launch-path sites first. Files another lane touched in the last 24h are skipped, not raced | `…session_01E8btkB8mcLirW4rNvsMNxK` | **claimed** 2026-09-24 — measuring which of the 148 are on launch-catalog write paths (the 2026-09-22 review's open first item), then converting those |
+| WO-16C — discarded §11.10(e) audit-write outcomes: the `ci:discarded-audit-write` population (148 sites / 70 files on 2026-09-24), launch-path sites first. Files another lane touched in the last 24h are skipped, not raced | `…session_01E8btkB8mcLirW4rNvsMNxK` | **claimed** 2026-09-24. Measured: 25 of 148 are on launch paths; 14 converted, the client now shows a lost row; 148 → 133. Left and handed on: see *Found by the WO-16C audit-outcome lane* below |
 | WO-15 finding 2 — `project_charters` 27 vs 48 columns | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed |
 | `KNOWN_UNLISTED` triage — 10 entries, 16 tables | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed, all ten now on the applier |
 | **W1 / D2** — the relations server SQL names that no provisioned database has, measured against *launch reach* (a launch-app or shell action, an AnA tool, or a boot/cron/worker path). Distinct from `…01PwLFr8`'s first-render surface sweep and `…01KiDof7`'s all-SQL guards. Evidence: `docs/evidence/W1/2026-09-24-launch-reach/` | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** 2026-09-24 — every baselined relation classified by launch reach; the two production-reached ones fixed (enterprise onboarding intake `254f502da`, Firecrawl webhook); `ci:runtime-ddl` added (`cbe9844c1`); baseline 42 → 40. Earlier, pre-Rule-2: DEAD surfaces deleted (§7), triage corrected (§8), CMC playbook provisioned (§9) |
@@ -88,10 +88,32 @@ Items in this lane's own code are fixed in this lane, not listed here.
 **→ Projects, unclaimed (D2)**
 - ProjectHome's "Dossier readiness" ring always shows 0%, contradicting the Projects list; the numeric readiness engine queries a column that does not exist. **Claimed 2026-09-24 by `…session_01KnUGoX3g4R4FWKWGc2sTbN` (row D2)**: the ring first (`server/routes/c2c/projects.ts` detail read, `ProjectHome.tsx`), then the engine's `project_id` query. Evidence `docs/evidence/D2-PROJECT-READINESS/2026-09-24/`. **Ring: done** (`61a7221d`). **Engine: deliberately NOT fixed; this needs a decision.** The missing column is what keeps an invented figure dark. With no twin assessment, `computeReadinessScore` scores consistency as the constant `70` and quality and compliance by heuristics (`estimateQuality`: 65 ± profile counts; `estimateCompliance`: 80 − risks). A program with no documents would read about 46. Today every call throws 42703 and all nine callers get null or an error (project-home, AnA context enrichment and orchestrator, next-best-action, RIM, intelligence routes ×2, AI editing ×2). Fix the query alone and they all publish that number. Before the query is fixed, the engine must either (a) report each dimension as null when not assessed, with no overall score unless every dimension has a real input, or (b) be retired in favour of the canonical readiness (`readinessByProject` / `readinessEvaluator`, which already says `assessed: false`). That is the re-baseline's "readiness built three times, all disagree", and it belongs to whoever owns project intelligence, or to the founder. Also in that function: `program_milestones.id` is a uuid mapped through `Number()`, so every overdue-milestone gap would carry NaN. The correct join, when it is time, is `projects.regulatory_program_id` (the anchor, `services/c2c/program-project-anchor.ts`). `recommendation-engine.ts:231-237` has the same query; its generator fails, is logged and skipped, and `program_milestones` has no writer, so it produces nothing either way.
 - Two task stores: tasks from AnA, agency communications and the schedule never reach the task board. The Blocked tile and the Blocked/Complete filters are always empty, and AnA is told "0 blocked".
-- The portfolio is cut off at 50 programs without saying so; the TaskBoard critical-path view claims a calculation it does not perform.
+- ~~The portfolio is cut off at 50 programs without saying so~~ **Done 2026-09-24 by `…01KnUGoX`**: the count reads "50+", a note says what the figures cover, and AnA is told (`docs/evidence/D2-PROJECTS-PORTFOLIO/2026-09-24/`). Loading the rest is not done. Still open, unclaimed: the TaskBoard critical-path view claims a calculation it does not perform.
 
 **→ Data room — founder decisions first (see the assessment §5 Data room)**
 - Under production RLS the client portal cannot serve any principal outside the owning tenant, so a grant INSERT alone would not make the external path work; no code path places a program into a client workspace; the org default workspace is not excluded from portal scope; portal deliverables read `public.documents`, not the vault.
+
+### Found by the WO-16C audit-outcome lane (`…01E8btkB`) — not fixed, handed on
+
+Full record: `docs/evidence/D5-AUDIT-OUTCOMES/2026-09-24/README.md`.
+
+1. **D5 tasks lane:** AnA's `create_task` / `update_task`
+   (`server/services/ana-ri/command-executor.ts` ~1021, ~1302) mirror a row
+   into `unified_tasks`, then write the `task.create` / `task.transition`
+   ledger row best-effort, outside any transaction. Every other task write now
+   commits its row on the write's transaction (`auditTaskActionInTx`).
+2. **Whoever next edits `AnaToolExecutor.ts`:** QMS change control (×3,
+   launch-app) discards its audit outcome. `apply_fact_change`,
+   `establish_governed_fact` and `check_consistency` copy chosen result fields,
+   so an outcome their services carry would be dropped at the tool.
+   `run_shadow_review` spreads its result and already carries `auditTrail`.
+3. **eCTD callers:** `assembleSequence` now returns `auditTrail`.
+   `routes/submissions.ts`, `submission-service.ts` and `routes/ectd-export.ts`
+   receive it and do not answer it. The export sends a binary, so it needs the
+   `X-Audit-Row-Persisted` / `X-Audit-Row-Code` headers.
+4. **QMS owner:** `server/routes/qms.ts` is a second QMS document-control API
+   (create, transition) that no client calls. The launch QMS surfaces use
+   `/api/mdx/qms/*` and `/api/quality`.
 
 ### Found by the IND eCTD demo lane (`…01TtwRHm`) — not fixed, not this lane's to decide
 
