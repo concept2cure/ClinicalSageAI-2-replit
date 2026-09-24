@@ -92,11 +92,38 @@ is enabled, so the gate fails CI rather than accepting a scope that scopes
 nothing. The three deny-all `csr_` / `ctd_` chains are left deny-all on
 purpose: nobody reads them, and the test pins that choice.
 
+**Children outside `public` (ledger L203), same day.** The chained list takes
+schema-qualified names and gains sixteen: the fourteen with a tenant-scoped
+parent (the `audit`, `core`, `ectd`, `global_dossier`, `manufacturing`,
+`precedent`, `ai` and `regulatory_harmonization` schemas), plus
+`audit.purge_approvals` and `audit.tombstones`. Those two appeared once their
+parent `audit.purge_requests` was covered, and are listed after it.
+
+A second survey found no reader of the fourteen that runs without a tenant
+context. Thirteen are unused at runtime or reached only by dead code. The
+fourteenth, `regulatory_harmonization.export_job_audit_log`, is written on the
+request path, and it was the leak: `POST /api/grdhe/exports/:jobId/cancel`
+filed an audit row against any job id. Execute's failure path does the same.
+Row security filtered the job's UPDATE, but the audit insert ran regardless,
+through a foreign key that ignores row security. Cancel then answered
+`success: true` with no job.
+
+That is fixed twice. The policy refuses the insert, and the service no longer
+attempts it: both writers now return the UPDATE's id and raise
+`ExportJobNotFoundError` when nothing was updated. Cancel answers 404. Unit
+test: red 2/4 on the old service, green 4/4
+(`red/unit-grdhe-audit-before.txt`, `green/unit-grdhe-audit-4-of-4.txt`).
+
+Children of `identity.users` are per-user rather than per-tenant, and are not
+counted: `cognitive_audit.*` and `federated_ml.privacy_budget_ledger`.
+
 ## The gate that keeps it closed
 
 `scripts/db/rls-coverage-check.sql`, which CI runs after `install-fresh` and
-`deploy-migrate`, gains a child rule. It flags any public table with no tenant
-column and row security off that has a foreign key into an RLS-protected parent.
+`deploy-migrate`, gains a child rule. It flags any table, in any schema, with no
+tenant column and row security off that has a foreign key into an
+RLS-protected parent other than `identity.users`. Before the non-public entries
+it listed the fourteen (`red/gate-nonpublic-before.txt`).
 After the grandchildren, there is no carve-out left. A child that cannot be
 covered would go there, with its reason.
 
@@ -128,21 +155,26 @@ event sourced from the caller's own complaint answers 201 and links it.
 **The grandchildren:** red, `c2c_document_section_versions` is read across
 tenants from the child alone (`red/contract-grandchildren-before.txt`); green,
 11 of 11 (`green/contract-11-of-11.txt`). The structural list now holds 71 new
-tables.
+tables. The non-public children: red, `audit.purge_requests` unpolicied
+(`red/contract-nonpublic-before.txt`); green, 12 of 12
+(`green/contract-12-of-12.txt`).
 
 **Every real-database suite, after the amendment:** 53 of 54 files, 655 of 660
 tests (`green/all-db-suites-53-of-54.txt`), and after the grandchildren
-656 of 661 (`green/all-db-suites-after-grandchildren.txt`). That includes all
-seven D3 fixture suites. The one failing file, `atom-search`, fails on `search_atoms_hybrid`'s
+656 of 661 (`green/all-db-suites-after-grandchildren.txt`), and after the
+non-public children 657 of 662 (`green/all-db-suites-after-nonpublic.txt`).
+That includes all seven D3 fixture suites. The one failing file, `atom-search`, fails on `search_atoms_hybrid`'s
 signature on a from-blank install. That predates this change and is recorded in
 the D3 launch note.
 
 ## Recorded, not fixed here
 
-- **Outside `public`,** 19 child tables (30 edges) have the same shape, in
-  schemas such as `global_dossier`, `manufacturing`, `audit` and
-  `cognitive_audit`. Several belong to subsystems CLAUDE.md RULE 2 gives no
-  sessions. They need the same survey before any policy.
+- **GRDHE writes `system` as its actor.** `getCurrentUserId()` in
+  `grdheService.ts` returns `CURRENT_USER_ID` or `'system'`. Its own comment
+  says production "would" read the request context. So every export audit row,
+  `completed_by` and completion signature names no real user. That is a Part 11
+  attribution defect, row D5. The whole service also leaves tenant filtering to
+  row security.
 
 ## Reproduce
 
