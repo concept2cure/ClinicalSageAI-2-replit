@@ -131,7 +131,7 @@
 
   --border-subtle:           var(--sidebar-border);
   --border-strong:           var(--bg-300);
-  --border-focus:            var(--accent-main-100);
+  --border-focus:            var(--accent-main-200);   /* a focus ring must clear 3:1 — -100 is 2.96:1 on bg-000 */
 
   /* The boundary of an INTERACTIVE control, and the only border token that
      clears WCAG 2.2 SC 1.4.11's 3:1.
@@ -388,7 +388,7 @@
   --ink-disabled:            var(--text-500);
   --ink-inverse:             var(--text-000);
 
-  --border-focus:            var(--accent-main-100);
+  --border-focus:            var(--accent-main-200);   /* a focus ring must clear 3:1 — -100 is 2.96:1 on bg-000 */
   --accent-hover:            var(--accent-main-200);
 
   --info:                    var(--ai);

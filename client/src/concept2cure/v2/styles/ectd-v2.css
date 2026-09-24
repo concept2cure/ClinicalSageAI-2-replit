@@ -87,7 +87,7 @@
   /* Composer */
   .ec-intel-foot{ padding:14px 20px 18px; border-top:1px solid var(--border); background:var(--bg-000); }
   .ec-composer{ max-width:620px; margin:0 auto; background:var(--bg-000); border:1px solid var(--border-strong); border-radius:14px; transition:border-color 200ms var(--ease), box-shadow 200ms var(--ease); }
-  .ec-composer:focus-within{ border-color:var(--accent-100); box-shadow:0 0 0 3px var(--accent-muted); }
+  .ec-composer:focus-within{ border-color:var(--accent-200); box-shadow:0 0 0 3px var(--accent-muted); }
   .ec-composer textarea{ width:100%; resize:none; border:0; outline:none; background:transparent; padding:12px 14px 6px; font-size:13px; line-height:1.55; color:var(--text-100); min-height:20px; max-height:180px; font-family:inherit; }
   .ec-composer textarea::placeholder{ color:var(--text-500); }
   .ec-composer-row{ display:flex; align-items:center; justify-content:space-between; padding:4px 8px 6px; }
@@ -96,7 +96,7 @@
      the affordances a control owes: pointer, hover, and a visible focus ring. */
   .ec-chip{ display:inline-flex; align-items:center; gap:4px; padding:4px 8px; border-radius:6px; font-size:11.5px; color:var(--text-400); background:none; border:1px solid transparent; font-family:inherit; cursor:pointer; }
   .ec-chip:hover{ background:var(--bg-100); color:var(--text-200); }
-  .ec-chip:focus-visible{ outline:2px solid var(--accent-100); outline-offset:1px; }
+  .ec-chip:focus-visible{ outline:2px solid var(--accent-200); outline-offset:1px; }
   .ec-chip svg{ width:13px; height:13px; }
 
   /* Attached sources, with how the server read each one. Status is in the text

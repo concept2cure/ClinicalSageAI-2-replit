@@ -1031,7 +1031,7 @@
   }
   .esign-field input:focus,
   .esign-field select:focus {
-    border-color: var(--accent-100);
+    border-color: var(--accent-200);
   }
   .esign-manifest {
     font-size: 11px;
@@ -1161,7 +1161,7 @@
   .ed-guard:focus-visible {
     box-shadow:
       var(--v2-shadow-lg),
-      0 0 0 2px var(--accent-100);
+      0 0 0 2px var(--accent-200);
   }
   .ed-guard-t {
     font-size: 15px;

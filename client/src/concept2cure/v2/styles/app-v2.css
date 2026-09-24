@@ -81,7 +81,7 @@
 }
 .c2c-v2 *, .c2c-v2 *::before, .c2c-v2 *::after { box-sizing: border-box; }
 .c2c-v2 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: left; }
-.c2c-v2 button:focus-visible { outline: 2px solid var(--accent-100); outline-offset: 2px; border-radius: var(--radius-md); }
+.c2c-v2 button:focus-visible { outline: 2px solid var(--accent-200); outline-offset: 2px; border-radius: var(--radius-md); }
 .c2c-v2 input, .c2c-v2 textarea, .c2c-v2 select { font: inherit; color: inherit; background: transparent; border: 0; outline: 0; }
 /* The reset above strips the user-agent focus ring from every field in v2, and
    nothing put one back — `.c2c-input`, the class every surface uses, has no rule
@@ -91,7 +91,7 @@
    WCAG 2.2 SC 2.4.7. */
 .c2c-v2 input:focus-visible,
 .c2c-v2 textarea:focus-visible,
-.c2c-v2 select:focus-visible { outline: 2px solid var(--accent-100); outline-offset: 2px; border-radius: var(--radius-md); }
+.c2c-v2 select:focus-visible { outline: 2px solid var(--accent-200); outline-offset: 2px; border-radius: var(--radius-md); }
 
 /* `.c2c-input` — the field chrome the class never had.
    ────────────────────────────────────────────────────────────────────────────
@@ -524,7 +524,7 @@
 .c2c-v2 .rci-card[data-open]{border-color:var(--accent-muted);}
 .c2c-v2 .rci-top{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;background:none;border:0;text-align:left;cursor:pointer;color:inherit;font:inherit;}
 .c2c-v2 .rci-top:hover{background:var(--bg-050);}
-.c2c-v2 .rci-top:focus-visible{outline:2px solid var(--accent-100);outline-offset:-2px;}
+.c2c-v2 .rci-top:focus-visible{outline:2px solid var(--accent-200);outline-offset:-2px;}
 .c2c-v2 .rci-kind{flex-shrink:0;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:4px;background:var(--bg-100);color:var(--text-300);}
 .c2c-v2 .rci-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
 .c2c-v2 .rci-title{font-size:13px;font-weight:600;color:var(--text-100);line-height:1.4;}
@@ -784,7 +784,7 @@
 .c2c-v2 .tb-col-h .kn{margin-left:auto;font-size:10.5px;color:var(--text-400);background:var(--bg-200);border-radius:10px;padding:1px 7px;}
 .c2c-v2 .kdot{width:8px;height:8px;border-radius:50%;background:var(--text-400);}
 .c2c-v2 .kdot[data-tone="idle"]{background:var(--text-400);}.c2c-v2 .kdot[data-tone="ai"]{background:var(--accent-100);}.c2c-v2 .kdot[data-tone="warn"]{background:var(--warning);}.c2c-v2 .kdot[data-tone="ok"]{background:var(--success);}.c2c-v2 .kdot[data-tone="err"]{background:var(--error);}
-.c2c-v2 .tb-card:focus-visible{outline:2px solid var(--accent-100);outline-offset:2px;}
+.c2c-v2 .tb-card:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;}
 /* The card's move buttons are opacity:0 until hover. Without this companion
    rule a keyboard user tabs onto a control that paints nothing — the focus ring
    is suppressed along with the button, so there is no way to tell where you are
@@ -971,7 +971,7 @@
 .c2c-v2 .tb-field label i{color:var(--error);font-style:normal;margin-left:2px;}
 .c2c-v2 .tb-field input[type=text], .c2c-v2 .tb-field input[type=number], .c2c-v2 .tb-field select, .c2c-v2 .tb-field textarea{font:inherit;font-size:12.5px;padding:8px 10px;border:1px solid var(--border-control);border-radius:var(--radius-md);background:var(--bg-000);color:var(--text-100);width:100%;}
 .c2c-v2 .tb-field input::placeholder{color:var(--text-500);}
-.c2c-v2 .tb-field input:focus, .c2c-v2 .tb-field select:focus, .c2c-v2 .tb-field textarea:focus{outline:none;border-color:var(--accent-100);box-shadow:0 0 0 3px var(--accent-000);}
+.c2c-v2 .tb-field input:focus, .c2c-v2 .tb-field select:focus, .c2c-v2 .tb-field textarea:focus{outline:none;border-color:var(--accent-200);box-shadow:0 0 0 3px var(--accent-000);}
 .c2c-v2 .tb-field input[type=range]{padding:0;height:18px;accent-color:var(--accent-100);}
 .c2c-v2 .tb-toggles{display:flex;gap:8px;flex-wrap:wrap;}
 .c2c-v2 .tb-tog{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:7px 11px;border:1px solid var(--border);border-radius:8px;background:var(--bg-000);color:var(--text-400);cursor:pointer;}
@@ -1005,7 +1005,7 @@
 .c2c-v2 .pj-tool-t{display:block;font-size:13px;font-weight:600;color:var(--text-100);}
 .c2c-v2 .pj-tool-d{display:block;font-size:11.5px;color:var(--text-400);margin-top:1px;}
 .c2c-v2 .pj-tool-go{font-size:14px;color:var(--text-400);opacity:0;transition:opacity .12s;}
-.c2c-v2 .pj-tool:hover .pj-tool-go{opacity:1;}
+.c2c-v2 .pj-tool:hover .pj-tool-go,.c2c-v2 .pj-tool:focus-visible .pj-tool-go{opacity:1;}
 
 /* ===== Project Home — Claude-Projects model, grounded in ctdOnboardingProjects/Documents/Gaps ===== */
 .c2c-v2 .pj{max-width:1180px;}
@@ -1060,7 +1060,7 @@
 .c2c-v2 .pj-convo .pj-composer{border:none;border-top:1px solid var(--border);border-radius:0;box-shadow:none;}
 .c2c-v2 .pj-convo .pj-composer:focus-within{box-shadow:none;}
 .c2c-v2 .pj-composer{border:1.5px solid var(--accent-muted);border-radius:14px;background:var(--bg-000);padding:13px 14px;box-shadow:0 1px 2px rgb(20 20 19 / .04);}
-.c2c-v2 .pj-composer:focus-within{border-color:var(--accent-100);box-shadow:0 0 0 3px var(--accent-000);}
+.c2c-v2 .pj-composer:focus-within{border-color:var(--accent-200);box-shadow:0 0 0 3px var(--accent-000);}
 .c2c-v2 .pj-composer textarea{width:100%;border:none;background:none;outline:none;resize:none;font-family:var(--font-sans);font-size:14px;line-height:1.5;color:var(--text-100);}
 .c2c-v2 .pj-composer textarea::placeholder{color:var(--text-400);}
 .c2c-v2 .pj-composer-row{display:flex;align-items:center;gap:8px;margin-top:8px;}
@@ -1150,7 +1150,7 @@
 .c2c-v2 .pj-card-body{font-size:12px;line-height:1.6;color:var(--text-300);margin:0;}
 .c2c-v2 .pj-card-foot{font-size:10.5px;color:var(--text-500);margin-top:8px;}
 .c2c-v2 .pj-edit-ta{width:100%;min-height:150px;border:1px solid var(--border-strong);border-radius:var(--radius-md);background:var(--bg-050);padding:9px 10px;font-family:var(--font-sans);font-size:12px;line-height:1.55;color:var(--text-100);resize:vertical;outline:none;}
-.c2c-v2 .pj-edit-ta:focus{border-color:var(--accent-100);box-shadow:0 0 0 3px var(--accent-000);}
+.c2c-v2 .pj-edit-ta:focus{border-color:var(--accent-200);box-shadow:0 0 0 3px var(--accent-000);}
 .c2c-v2 .pj-edit-row{display:flex;justify-content:flex-end;margin-top:8px;}
 .c2c-v2 .pj-edit-save{padding:6px 12px;border-radius:var(--radius-md);font-size:11.5px;font-weight:600;color:var(--accent-on-strong);background:var(--accent-strong);}
 .c2c-v2 .pj-edit-save:hover{background:var(--accent-200);}
@@ -1520,7 +1520,7 @@
 .c2c-v2 .fc-search{position:relative;display:flex;align-items:center;margin-top:22px;}
 .c2c-v2 .fc-search-ic{position:absolute;left:15px;color:var(--text-400);display:inline-flex;}.c2c-v2 .fc-search-ic svg{width:17px;height:17px;}
 .c2c-v2 .fc-search input{width:100%;border:1px solid var(--border-control);border-radius:12px;background:var(--bg-000);padding:14px 40px;font-size:14px;color:var(--text-100);outline:none;transition:border-color var(--dur),box-shadow var(--dur);}
-.c2c-v2 .fc-search input:focus{border-color:var(--accent-100);box-shadow:0 0 0 3px var(--accent-000);}
+.c2c-v2 .fc-search input:focus{border-color:var(--accent-200);box-shadow:0 0 0 3px var(--accent-000);}
 .c2c-v2 .fc-search-x{position:absolute;right:10px;width:26px;height:26px;border-radius:7px;color:var(--text-400);display:flex;align-items:center;justify-content:center;}
 .c2c-v2 .fc-search-x:hover{background:var(--bg-100);color:var(--text-200);}.c2c-v2 .fc-search-x svg{width:15px;height:15px;}
 
@@ -1564,7 +1564,7 @@
 .c2c-v2 .fc-meta-ctd{font-size:10.5px;color:var(--text-300);}
 .c2c-v2 .fc-item-go{flex-shrink:0;display:inline-flex;color:var(--text-500);opacity:0;transition:opacity var(--dur),transform var(--dur);}
 .c2c-v2 .fc-item-go svg{width:16px;height:16px;}
-.c2c-v2 .fc-item:hover .fc-item-go{opacity:1;transform:translateX(2px);color:var(--accent-200);}
+.c2c-v2 .fc-item:hover .fc-item-go,.c2c-v2 .fc-item:focus-visible .fc-item-go{opacity:1;transform:translateX(2px);color:var(--accent-200);}
 
 /* search results */
 .c2c-v2 .fc-results{max-width:760px;margin:26px auto 0;padding:0 32px 90px;}
@@ -1672,7 +1672,7 @@
 .c2c-v2 .ana-empty{font-size:12px;color:var(--text-400);line-height:1.5;}
 .c2c-v2 .ana-foot{flex-shrink:0;border-top:1px solid var(--border);padding:10px 12px;}
 .c2c-v2 .ana-composer{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-xl);padding:8px 10px;transition:border-color var(--dur);}
-.c2c-v2 .ana-composer:focus-within{border-color:var(--accent-100);}
+.c2c-v2 .ana-composer:focus-within{border-color:var(--accent-200);}
 .c2c-v2 .ana-composer textarea{width:100%;resize:none;font-size:12.5px;line-height:1.5;max-height:120px;}
 .c2c-v2 .ana-crow{display:flex;align-items:center;justify-content:space-between;margin-top:6px;}
 .c2c-v2 .ana-crow .hint{font-size:10px;color:var(--text-400);}
@@ -1809,7 +1809,7 @@
 .c2c-v2 .ana-drive-count{font-size:11px;color:var(--text-400);border:1px solid var(--border);border-radius:999px;padding:1px 7px;white-space:nowrap;flex:none;}
 .c2c-v2 .ana-drive-steer{display:flex;min-width:0;flex:1 1 120px;}
 .c2c-v2 .ana-drive-steer-input{width:100%;min-width:80px;font:inherit;font-size:12px;color:var(--text-100);background:var(--bg-100);border:1px solid var(--border);border-radius:999px;padding:4px 10px;outline:none;transition:border-color 200ms ease-out;}
-.c2c-v2 .ana-drive-steer-input:focus{border-color:var(--accent-100);box-shadow:0 0 0 3px var(--accent-000);}
+.c2c-v2 .ana-drive-steer-input:focus{border-color:var(--accent-200);box-shadow:0 0 0 3px var(--accent-000);}
 .c2c-v2 .ana-drive-steer-err{font-size:11px;color:var(--warning);}
 .c2c-v2 .ana-drive-steer-input[aria-invalid]{border-color:var(--warning);}
 .c2c-v2 .ana-drive-steer-input::placeholder{color:var(--text-400);}
@@ -2078,7 +2078,7 @@
 .c2c-v2 .cl-field .cl-opt{text-transform:none;letter-spacing:0;font-weight:400;color:var(--text-400);}
 .c2c-v2 .cl-field input, .c2c-v2 .cl-field select, .c2c-v2 .cl-field textarea{width:100%;height:34px;padding:0 10px;border:1px solid var(--border-control);border-radius:var(--radius-md);background:var(--bg-000);color:var(--text-100);font-size:12.5px;font-family:inherit;}
 .c2c-v2 .cl-field textarea{height:auto;padding:8px 10px;resize:vertical;line-height:1.5;}
-.c2c-v2 .cl-field input:focus, .c2c-v2 .cl-field select:focus, .c2c-v2 .cl-field textarea:focus{outline:none;border-color:var(--accent-100);box-shadow:0 0 0 3px var(--accent-000);}
+.c2c-v2 .cl-field input:focus, .c2c-v2 .cl-field select:focus, .c2c-v2 .cl-field textarea:focus{outline:none;border-color:var(--accent-200);box-shadow:0 0 0 3px var(--accent-000);}
 .c2c-v2 .cl-frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .c2c-v2 .cl-frow:has(.cl-field:nth-child(3)){grid-template-columns:1fr 1fr 1fr;}
 
@@ -2303,7 +2303,7 @@
 .c2c-v2 .gri-field .req{color:var(--accent-100);margin-left:3px;}
 .c2c-v2 .gri-field .desc{font-size:11px;color:var(--text-400);margin-bottom:6px;}
 .c2c-v2 .gri-input{width:100%;height:34px;padding:0 11px;border:1px solid var(--border-control);border-radius:var(--radius-md);background:var(--bg-000);font-size:13px;}
-.c2c-v2 .gri-input:focus{border-color:var(--accent-100);box-shadow:0 0 0 3px var(--accent-000);}
+.c2c-v2 .gri-input:focus{border-color:var(--accent-200);box-shadow:0 0 0 3px var(--accent-000);}
 .c2c-v2 select.gri-input{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238a8880' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px;}
 .c2c-v2 .gri-toggle{display:flex;align-items:center;gap:10px;}
 .c2c-v2 .gri-toggle-l{font-size:12px;color:var(--text-200);}
@@ -3214,11 +3214,11 @@
 .c2c-v2 .lp-spl-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:0 0 14px;}
 .c2c-v2 .lp-spl-f{display:flex;flex-direction:column;gap:5px;font-size:11.5px;color:var(--text-400);}
 .c2c-v2 .lp-spl-f input{border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;background:var(--bg-000);color:var(--text-100);}
-.c2c-v2 .lp-spl-f input:focus-visible{outline:2px solid var(--accent-100);outline-offset:1px;}
+.c2c-v2 .lp-spl-f input:focus-visible{outline:2px solid var(--accent-200);outline-offset:1px;}
 /* Labeling — agency negotiation: audited reason + expanded redline. */
 .c2c-v2 .lp-neg-reason{display:flex;flex-direction:column;gap:5px;font-size:11.5px;color:var(--text-400);margin:12px 0 10px;}
 .c2c-v2 .lp-neg-reason input{border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;background:var(--bg-000);color:var(--text-100);}
-.c2c-v2 .lp-neg-reason input:focus-visible{outline:2px solid var(--accent-100);outline-offset:1px;}
+.c2c-v2 .lp-neg-reason input:focus-visible{outline:2px solid var(--accent-200);outline-offset:1px;}
 .c2c-v2 .lp-neg-redline{border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-top:12px;background:var(--bg-000);}
 .c2c-v2 .lp-neg-redline-h{font-size:11px;font-weight:600;color:var(--text-300);text-transform:uppercase;letter-spacing:.04em;}
 @media(max-width:1080px){.c2c-v2 .lp-split{grid-template-columns:1fr;}.c2c-v2 .lp-stages{margin-left:0;width:100%;}}
@@ -3669,7 +3669,7 @@
 .c2c-v2 .esign-b{padding:18px;display:flex;flex-direction:column;gap:14px;}
 .c2c-v2 .esign-field label{display:block;font-size:11px;font-weight:600;color:var(--text-300);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;}
 .c2c-v2 .esign-field input, .c2c-v2 .esign-field select{width:100%;height:36px;padding:0 11px;border:1px solid var(--border-control);border-radius:var(--radius-md);background:var(--bg-050);font-size:13px;}
-.c2c-v2 .esign-field input:focus, .c2c-v2 .esign-field select:focus{border-color:var(--accent-100);box-shadow:0 0 0 3px var(--accent-000);}
+.c2c-v2 .esign-field input:focus, .c2c-v2 .esign-field select:focus{border-color:var(--accent-200);box-shadow:0 0 0 3px var(--accent-000);}
 .c2c-v2 .esign-manifest{font-size:11px;color:var(--text-400);line-height:1.5;background:var(--bg-100);border-radius:var(--radius-md);padding:10px 12px;}
 .c2c-v2 .esign-f{display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--border);}
 
@@ -3737,7 +3737,7 @@
 .c2c-v2 .landing-att[data-status="error"]{border-color:color-mix(in srgb, var(--error) 40%, transparent);color:var(--error);}
 .c2c-v2 .landing-att[data-status="error"] em{color:var(--error);}
 .c2c-v2 .landing-att-x{border:0;background:none;color:inherit;cursor:pointer;font-size:13px;line-height:1;padding:0 0 0 2px;}
-.c2c-v2 .landing-att-x:focus-visible{outline:2px solid var(--accent-100);outline-offset:1px;}
+.c2c-v2 .landing-att-x:focus-visible{outline:2px solid var(--accent-200);outline-offset:1px;}
 
 /* Document journey — the preview's toolbar states what the screen can do
    instead of offering nine controls that can never act. */
@@ -3754,7 +3754,7 @@
 .c2c-v2 .orch-newrun-t{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 12px;text-align:left;padding:11px 13px;border:1px solid var(--border);border-radius:var(--radius-md,8px);background:var(--bg-100);cursor:pointer;}
 .c2c-v2 .orch-newrun-t:hover:not(:disabled){border-color:var(--accent-100);background:var(--accent-000);}
 .c2c-v2 .orch-newrun-t:disabled{opacity:.6;cursor:default;}
-.c2c-v2 .orch-newrun-t:focus-visible{outline:2px solid var(--accent-100);outline-offset:1px;}
+.c2c-v2 .orch-newrun-t:focus-visible{outline:2px solid var(--accent-200);outline-offset:1px;}
 .c2c-v2 .orch-newrun-tn{font-size:13px;font-weight:600;color:var(--text-100);}
 .c2c-v2 .orch-newrun-td{grid-column:1;font-size:11.5px;line-height:1.5;color:var(--text-400);}
 .c2c-v2 .orch-newrun-go{grid-row:1/span 2;font-size:11.5px;color:var(--text-400);white-space:nowrap;}
