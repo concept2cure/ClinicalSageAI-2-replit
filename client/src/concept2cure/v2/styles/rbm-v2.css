@@ -96,7 +96,7 @@
   .rbm-btn svg{width:13px;height:13px;}
   .rbm-btn:hover{border-color:var(--text-400);}
   .rbm-btn.pri{background:var(--accent-strong);border-color:var(--accent-strong);color:var(--accent-on-strong);}
-  .rbm-btn.pri:hover{background:var(--accent-200);}
+  .rbm-btn.pri:hover{box-shadow:var(--shadow-sm);transform:translateY(-1px);}
   .rbm-btn:disabled{opacity:.5;pointer-events:none;}
 
   /* starters */

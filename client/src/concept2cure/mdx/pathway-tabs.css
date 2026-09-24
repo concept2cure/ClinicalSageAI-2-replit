@@ -316,7 +316,7 @@
   padding: 7px 14px; background: var(--accent-strong); color: var(--accent-on-strong);
   border-radius: var(--radius-md); font-size: 12px; font-weight: 500;
 }
-.mdx-shell .ap-sign-btn:hover { background: var(--accent-200); }
+.mdx-shell .ap-sign-btn:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
 .mdx-shell .ap-sign-btn svg { width: 13px; height: 13px; }
 .mdx-shell .ap-decline-btn,
 .mdx-shell .ap-review-btn {
@@ -454,7 +454,7 @@
   padding: 8px 14px; background: var(--accent-strong); color: var(--accent-on-strong);
   border-radius: var(--radius-md); font-size: 12px; font-weight: 500;
 }
-.mdx-shell .dd-foot-edit:hover { background: var(--accent-200); }
+.mdx-shell .dd-foot-edit:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
 .mdx-shell .dd-foot-edit svg { width: 13px; height: 13px; }
 
 /* ─── DossierDrawer · path bar + tabs ──────────────────────── */
@@ -499,8 +499,8 @@
   text-align: center;
 }
 .mdx-shell .dd-tab[data-on="true"] .dd-tab-count {
-  background: var(--accent-100);
-  color: var(--text-000);
+  background: var(--accent-strong);
+  color: var(--accent-on-strong);
 }
 
 /* ─── DossierDrawer · Document tab ─────────────────────────── */
@@ -613,8 +613,8 @@
   font-family: var(--font-mono);
   font-size: 9px;
   padding: 2px 6px;
-  background: var(--accent-100);
-  color: var(--text-000);
+  background: var(--accent-strong);
+  color: var(--accent-on-strong);
   border-radius: 8px;
   text-transform: uppercase; letter-spacing: 0.05em;
   flex-shrink: 0;

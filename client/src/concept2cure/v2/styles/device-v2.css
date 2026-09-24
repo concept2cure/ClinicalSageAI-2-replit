@@ -259,7 +259,7 @@
   .dv-ca-action:hover{border-color:var(--accent-100);background:var(--accent-000);color:var(--accent-200);}
   .dv-ca-action svg{color:var(--accent-200);}
   .dv-ca-ask{display:flex;align-items:center;justify-content:center;gap:7px;padding:10px;border-radius:var(--radius-md);background:var(--accent-strong);color:var(--accent-on-strong);font-size:12.5px;font-weight:500;transition:background var(--dur);}
-  .dv-ca-ask:hover{background:var(--accent-200);}
+  .dv-ca-ask:hover{box-shadow:var(--shadow-sm);transform:translateY(-1px);}
 
   @media (max-width:1280px){ .dv-grid{grid-template-columns:220px 1fr 340px;} .dv-page{padding:38px 40px 50px;} }
   @media (prefers-reduced-motion:reduce){.dv-path,.dv-acc-h,.dv-ca-action{transition-duration:1ms;}}
