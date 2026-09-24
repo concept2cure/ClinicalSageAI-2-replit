@@ -227,7 +227,37 @@ describe('pointer shape', () => {
     const vault = { documentTable: 'vault_documents', documentId: null, documentUuid: uuid, documentContentSha256: hash };
     const out = await resolveLeafDocuments([vault, { documentTable: null, documentId: null }, vault], ORG);
     expect(out.map((r) => r.status)).toEqual(['resolved', 'no_pointer', 'resolved']);
-    expect(out[0]).toBe(out[2]);
+    // Equal, not the same object: the store read is shared, each leaf's verdict
+    // is its own (see the next two cases for why that distinction matters).
+    expect(out[2]).toEqual(out[0]);
+  });
+
+  /* New-code audit 2026-09-24, finding 3. The batch cache was keyed by
+     table:uuid:id and held the whole resolution, INCLUDING the first leaf's pin
+     verdict. Two leaves on one document with different pins got the first
+     one's answer, in whatever order the leaves were read (the assessor reads
+     them with no ORDER BY). A stale pin then passed dispatch and transmit
+     Gate 2 as "resolved". Each leaf must be compared against its own pin. */
+  it('does not lend one leaf’s pin verdict to another leaf on the same document — unpinned first', async () => {
+    const id = await seedCoauthor({ content: 'Current body.' });
+    const unpinned = { documentTable: 'coauthor_documents', documentId: id, documentUuid: null, documentContentSha256: null };
+    const stale = { ...unpinned, documentContentSha256: sha('The body as filed.') };
+    const [a, b] = await resolveLeafDocuments([unpinned, stale], ORG);
+    expect(a.pin).toBe('unpinned');
+    expect(b.status).toBe('content_changed');
+    expect(b.pin).toBe('mismatch');
+    expect(b.pinnedSha256).toBe(sha('The body as filed.'));
+  });
+
+  it('does not lend one leaf’s pin verdict to another leaf on the same document — fresh first', async () => {
+    const id = await seedCoauthor({ content: 'Current body.' });
+    const fresh = { documentTable: 'coauthor_documents', documentId: id, documentUuid: null, documentContentSha256: sha('Current body.') };
+    const stale = { ...fresh, documentContentSha256: sha('The body as filed.') };
+    const [a, b] = await resolveLeafDocuments([fresh, stale], ORG);
+    expect(a.status).toBe('resolved');
+    expect(a.pin).toBe('match');
+    expect(b.status).toBe('content_changed');
+    expect(b.pin).toBe('mismatch');
   });
 });
 

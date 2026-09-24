@@ -135,7 +135,7 @@ Widening the gate is a follow-up.
 | # | Finding | Launch reach | Where it goes |
 |---|---|---|---|
 | 2 | The review quorum counts approvals of an earlier version (`artifact-approval-act.ts:77-93`); v2 becomes filable on reviewer R's v1 decision | Authoring → Submission Center, API-only reviewer routes | next in this lane |
-| 3 | Batch leaf resolution shares one leaf's pin verdict across every leaf on the same document (`ectd/leaf-document-resolver.ts:263`), so dispatch and transmit Gate 2 can clear stale content | Submission Readiness / Center | next in this lane, after checking package-spine's 24h window |
+| 3 | Batch leaf resolution shares one leaf's pin verdict across every leaf on the same document (`ectd/leaf-document-resolver.ts:263`), so dispatch and transmit Gate 2 can clear stale content | Submission Readiness / Center | **fixed** in this lane (below) |
 | 5 | The model-governance gate misses prose tools its field regex does not name (`governed-write-tools.ts:32`) | AnA drafting (D4 model governance) | AnA lane `…01DiJJAk` |
 | 6 | The MCP connector accepts suspended or deprovisioned accounts (`server/mcp/auth/platform-token.ts:104`, `provider.ts:116`) | D8, live only with `MCP_ENABLED=true` | D8 owner, before staging |
 | 9 | File-to-vault leaves a vault row behind when placement throws, then says nothing was written (`authoring-file-to-vault.ts:306`) | Authoring → Vault | AnA lane (canvas → vault path) |
@@ -146,3 +146,21 @@ Widening the gate is a follow-up.
 The QMS retire route (`mdx-qms.ts:656`) and `retire_qms_document` also take the
 reason as optional, and the tool records a stock sentence. That belongs with P5
 and V1 (server-side reason-for-change) in this lane.
+
+### #3 — batch leaf resolution lent one leaf's pin verdict to the others (fixed)
+
+`resolveLeafDocuments` cached the whole resolution, pin verdict included, under a
+key naming only the document. Two leaves on one document took the first leaf's
+verdict. The assessor reads leaves with no ORDER BY, so a stale pin read as
+`resolved` whenever an unpinned or fresh leaf on the same document came first.
+Dispatch readiness, freeze and transmit Gate 2 then cleared content its placement
+never pinned. The cache now shares only the store read, and each leaf's own pin is
+compared against it. The file was last touched on 09-22, so it is in no lane's
+window.
+
+- `leaf-pin-red.txt`: the two new orderings, [unpinned, stale] and [fresh, stale],
+  fail on real PGlite with the source unchanged. The stale leaf reads `resolved`.
+- `leaf-pin-green.txt`: 26/26 across the resolver and both dispatch-readiness
+  suites.
+- One existing assertion changed from `toBe` to `toEqual`. Identical pointers no
+  longer share a single resolution object, and that shared object was the defect.
