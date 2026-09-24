@@ -19,6 +19,9 @@ import type { Server as SocketIOServer, Socket } from 'socket.io';
 
 import { createScopedLogger } from '../../utils/logger.js';
 import { verifyLiveToken } from '../token-revocation';
+import { requireAccessTokenReason } from '../../middleware/tokenType';
+import { checkOrgMembership } from '../../middleware/orgMembership';
+import { shouldProcessTenantInBackground } from '../tenant/tenant-lifecycle.js';
 import type { GatewayRequest } from '../ai-gateway/types.js';
 import { getAllEnabledTools } from './AnaToolDefinitions.js';
 import { selectToolsForTurn, type ToolSelectionContext } from './tool-selection.js';
@@ -167,18 +170,64 @@ interface AuthedSocket extends Socket {
 export function registerAnaRealtime(io: SocketIOServer, runTurn: RunTurn = runAgenticTurn): void {
   const ns = io.of('/ana');
 
+  // The same gate as the main namespace (socketServer.ts) and the collaboration
+  // socket (hocuspocus-server.ts). This namespace is a third transport: no
+  // Express middleware runs for it, so every check the HTTP boundary makes has
+  // to be made here, or a handshake is the weakest door into the tool loop.
+  // Security audit 2026-09-24, IAM-01: before this, only `verifyLiveToken` and
+  // the presence of two claims were checked, so the 5-minute `mfa_challenge`
+  // token a correct password yields BEFORE the second factor opened the AnA
+  // agent loop with the account's tenant scope.
   ns.use((socket: AuthedSocket, next) => {
     void (async () => {
       try {
-        const token = socket.handshake.auth?.token || socket.handshake.query?.token;
-        if (!token) return next(new Error('Missing bearer token'));
-        // A signed-out session opens no AnA socket (AUTH-03).
-        const decoded = (await verifyLiveToken(token as string)) as { organizationId?: unknown; userId?: unknown };
+        // `handshake.auth` only. A query-string token lands in proxy and access
+        // logs; the main namespace's query fallback is a separate item (P1-9).
+        const token = socket.handshake.auth?.token;
+        if (!token || typeof token !== 'string') return next(new Error('Missing bearer token'));
+        // A signed-out or deprovisioned session opens no AnA socket (AUTH-03, F-29).
+        const decoded = (await verifyLiveToken(token)) as {
+          organizationId?: unknown;
+          userId?: unknown;
+          type?: unknown;
+          token_use?: unknown;
+        };
         if (!decoded?.organizationId || !decoded?.userId) return next(new Error('Invalid token claims'));
-        socket.orgId = String(decoded.organizationId);
-        socket.authUserId = String(decoded.userId);
+        // Refresh / MFA-challenge / MFA-partial tokens are signed with the SAME
+        // secret as access tokens; `verifyLiveToken` checks signature, revocation
+        // and account standing, never the class, so the class is refused here.
+        // The strict form: a token that declares no class is refused too (no
+        // client of this namespace predates the `type` claim).
+        const nonAccess = requireAccessTokenReason(decoded as Parameters<typeof requireAccessTokenReason>[0]);
+        if (nonAccess) {
+          log.warn(`[ana-realtime] Rejected non-access token (${nonAccess}) for ${socket.id}`);
+          return next(new Error('Invalid token claims'));
+        }
+        const organizationId = Number(decoded.organizationId);
+        const userId = Number(decoded.userId);
+        if (!Number.isSafeInteger(organizationId) || organizationId <= 0 || !Number.isSafeInteger(userId) || userId <= 0) {
+          return next(new Error('Invalid token claims'));
+        }
+        // Live membership. A socket outlives the request that opened it; a
+        // member removed from the organisation must not keep a tool channel.
+        // Indeterminate (the membership could not be read) refuses, as the
+        // collaboration socket does.
+        const member = await checkOrgMembership(userId, organizationId);
+        if (member !== 'member') {
+          log.warn(`[ana-realtime] Refused socket ${socket.id} — organization membership ${member}`);
+          return next(new Error('Organization membership not confirmed'));
+        }
+        // Tenant lifecycle: a suspended or read-only organisation gets no live
+        // tool channel (every handler on this namespace can write).
+        if (!(await shouldProcessTenantInBackground(organizationId))) {
+          log.warn(`[ana-realtime] Refused socket ${socket.id} for org ${organizationId} — tenant not active`);
+          return next(new Error('Organization is not active'));
+        }
+        socket.orgId = String(organizationId);
+        socket.authUserId = String(userId);
         next();
-      } catch {
+      } catch (err: any) {
+        log.warn(`[ana-realtime] Auth failed for ${socket.id}: ${err?.message}`);
         next(new Error('Invalid token'));
       }
     })();
