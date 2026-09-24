@@ -72,7 +72,12 @@ interface VaultDisplayShape {
   program: string;
   spine: string;
   standard: string;
+  /** Documents, counted by the server: authored documents (one each, however
+   *  many sections), CMC artifacts, and the programme's uploads — not the
+   *  leaves of the tree, and not the capped uploads page. */
   documentCount: number;
+  /** What documentCount is made of; a branch that could not be read is null. */
+  documentCounts?: { authored: number; cmcArtifacts: number | null; uploads: number | null };
   tree: VaultFolder[];
   pendingStore?: boolean;
   /** Uploads awaiting a person's filing decision (visible queue, not a black hole).
@@ -809,13 +814,16 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
     const shown = results.length;
     return {
       summary:
-        `Document vault: ${allDocs.length} document(s) in the tree` +
+        `Document vault: ${vault?.documentCount ?? 0} document(s)` +
         (vault?.unfiledCount ? `, ${vault.unfiledCount} upload(s) unfiled` : '') +
         (folder ? `, folder "${folder.label}" open` : '') +
         (searching ? `, filtered to ${shown} by the search "${q.trim()}"` : '') +
         (sel ? `, "${sel.title}" selected` : ''),
       facts: {
-        totalDocuments: allDocs.length,
+        // The server's count of documents. allDocs is the tree's leaves: each
+        // section of an authored document, and only the uploads on the page.
+        totalDocuments: vault?.documentCount ?? 0,
+        documentCounts: vault?.documentCounts ?? null,
         unfiledUploads: vault?.unfiledCount ?? 0,
         dataRoom: vault?.dataRoom
           ? {
@@ -851,7 +859,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         'Confirm or move an upload’s suggested filing (governed, audited)',
       ],
     };
-  }, [vaultState.loading, vaultState.error, allDocs, results.length, folder, searching, q, sel, vault]);
+  }, [vaultState.loading, vaultState.error, results.length, folder, searching, q, sel, vault]);
   usePublishSurfaceContext('vault', anaContext);
 
   const st = (s: string) => vaultStatus(s);
@@ -920,7 +928,11 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           <div className="vd-sub">
             <span className="vd-sub-x">
               {vault && vault.spine ? <>{vault.spine} {I.dot} </> : null}
-              {allDocs.length} document{allDocs.length === 1 ? '' : 's'}
+              {vault ? (
+                <>
+                  {vault.documentCount} document{vault.documentCount === 1 ? '' : 's'}
+                </>
+              ) : null}
               {vault && (vault.unfiledCount ?? 0) > 0 ? (
                 <> {I.dot} {vault.unfiledCount} unfiled — needs review</>
               ) : null}
