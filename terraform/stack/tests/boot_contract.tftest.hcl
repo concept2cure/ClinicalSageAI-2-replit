@@ -98,6 +98,7 @@ variables {
   cloudfront_certificate_arn      = "arn:aws:acm:us-east-1:111122223333:certificate/cf"
   domain_aliases                  = ["app.example.com"]
   cloudfront_origin_secret        = "c2cTestOriginSecret_0123456789abcdef"
+  create_github_oidc_provider     = true
   openai_api_key                  = "test-openai-key"
   jwt_secret                      = "jwt-0123456789abcdef0123456789abcdef"
   refresh_token_secret            = "refresh-0123456789abcdef0123456789abcdef"
@@ -268,6 +269,74 @@ run "renders_the_boot_contract" {
 # Production's names are hard-coded in deploy-aws.yml's env block. If Terraform
 # names anything differently, a deploy registers into infrastructure that does
 # not exist. Each expected value is read out of the workflow.
+# Vault documents (vault_storage.tf). The preflight's names are checked above;
+# this is the store they point at: the stack's own bucket, private, versioned,
+# encrypted, TLS-only, and readable and writable by the application task role
+# alone, with the delete the provider needs.
+run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use" {
+  command = apply
+
+  assert {
+    condition = alltrue([
+      for c in [module.ecs.api_container, module.ecs.worker_container] :
+      contains([for e in c.environment : "${e.name}=${e.value}"], "STORAGE_PROVIDER=s3") &&
+      contains([for e in c.environment : "${e.name}=${e.value}"], "AWS_S3_BUCKET=${aws_s3_bucket.vault.bucket}")
+    ])
+    error_message = "Both containers must name S3 and this stack's vault bucket."
+  }
+  assert {
+    condition     = aws_s3_bucket.vault.bucket == "c2c-prod-vault"
+    error_message = "Production's vault bucket is c2c-prod-vault."
+  }
+  assert {
+    condition     = one(aws_s3_bucket_versioning.vault.versioning_configuration).status == "Enabled"
+    error_message = "The vault bucket must be versioned: an overwrite or delete keeps the prior version."
+  }
+  assert {
+    condition = alltrue([
+      aws_s3_bucket_public_access_block.vault.block_public_acls,
+      aws_s3_bucket_public_access_block.vault.block_public_policy,
+      aws_s3_bucket_public_access_block.vault.ignore_public_acls,
+      aws_s3_bucket_public_access_block.vault.restrict_public_buckets,
+    ])
+    error_message = "Every public-access block must be on for the vault bucket."
+  }
+  assert {
+    condition     = one(one(aws_s3_bucket_server_side_encryption_configuration.vault.rule).apply_server_side_encryption_by_default).sse_algorithm == "AES256"
+    error_message = "The vault bucket must encrypt at rest."
+  }
+  assert {
+    condition = anytrue([
+      for st in [for s in jsondecode(aws_s3_bucket_policy.vault.policy).Statement : s if s.Effect == "Allow"] :
+      st.Principal.AWS == module.ecs.task_role_arn && st.Resource == "${aws_s3_bucket.vault.arn}/*" &&
+      length(setsubtract(toset(["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]), toset(st.Action))) == 0
+    ])
+    error_message = "The task role must get, put and delete vault objects (s3-provider.ts deletes on discard)."
+  }
+  assert {
+    condition = anytrue([
+      for st in [for s in jsondecode(aws_s3_bucket_policy.vault.policy).Statement : s if s.Effect == "Allow"] :
+      st.Principal.AWS == module.ecs.task_role_arn && st.Resource == aws_s3_bucket.vault.arn &&
+      contains(st.Action, "s3:ListBucket")
+    ])
+    error_message = "The task role must list the vault bucket (a version stored before the index object is found by listing)."
+  }
+  assert {
+    condition = alltrue([
+      for st in [for s in jsondecode(aws_s3_bucket_policy.vault.policy).Statement : s if s.Effect == "Allow"] :
+      st.Principal.AWS == module.ecs.task_role_arn && length(keys(st.Principal)) == 1
+    ])
+    error_message = "No principal but the application task role may be allowed into the vault bucket."
+  }
+  assert {
+    condition = anytrue([
+      for st in [for s in jsondecode(aws_s3_bucket_policy.vault.policy).Statement : s if s.Effect == "Deny"] :
+      try(st.Condition.Bool["aws:SecureTransport"], "") == "false"
+    ])
+    error_message = "The vault bucket must refuse requests that are not over TLS."
+  }
+}
+
 run "production_names_are_the_ones_the_deploy_workflow_targets" {
   command = plan
   assert {
@@ -323,6 +392,28 @@ run "staging_is_distinct_from_production" {
 }
 
 # Refusals. Each run must fail on exactly the named check.
+
+# provision-database.yml names its targets itself; they must be production's,
+# or the first provision registers a family the deploy role cannot run
+# (github_deploy.tf) against a cluster that does not exist.
+run "provision_workflow_names_are_the_ones_terraform_creates" {
+  command = plan
+  assert {
+    condition = alltrue([
+      for k, v in merge(output.deploy_targets, { ECS_PROVISION_TASK_FAMILY = "c2c-production-provision" }) :
+      v == one(regex("\n  ${k}: ([^\\s]+)", file("../../.github/workflows/provision-database.yml")))
+      if k != "FRONTEND_BUCKET" && k != "ECS_MIGRATE_TASK_FAMILY"
+    ])
+    error_message = "A name in provision-database.yml differs from what Terraform creates."
+  }
+  assert {
+    condition = anytrue([
+      for st in jsondecode(output.github_deploy_policies.deploy).Statement :
+      contains(st.Action, "ecs:RunTask") && try(contains(st.Resource, "arn:aws:ecs:us-east-1:123456789012:task-definition/c2c-production-provision:*"), false)
+    ])
+    error_message = "The deploy role cannot run the provision family."
+  }
+}
 
 # ── Each of these must FAIL. A check only ever seen to pass has not been tested.
 

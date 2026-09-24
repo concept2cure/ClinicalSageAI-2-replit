@@ -74,6 +74,9 @@ module "stack" {
   domain_aliases             = var.domain_aliases
   cloudfront_origin_secret   = var.cloudfront_origin_secret
 
+  # The account's GitHub OIDC provider is created here.
+  create_github_oidc_provider = true
+
   jwt_secret                      = var.jwt_secret
   refresh_token_secret            = var.refresh_token_secret
   mfa_encryption_key              = var.mfa_encryption_key
@@ -125,4 +128,17 @@ output "release_signing_key_arn" {
 # Review before apply: what the API task definition will carry.
 output "api_task_boot_contract" {
   value = module.stack.api_task_boot_contract
+}
+
+# The pipeline's repository secrets (terraform.tfvars.example says which is which).
+output "github_deploy_role_arn" {
+  value = module.stack.github_deploy_role_arn
+}
+
+output "github_build_role_arn" {
+  value = module.stack.github_build_role_arn
+}
+
+output "cloudfront_distribution_id" {
+  value = module.stack.cloudfront_distribution_id
 }

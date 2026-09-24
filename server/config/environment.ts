@@ -15,6 +15,7 @@ import {
 } from '../services/audit/auditSealPosture';
 import { assertAiGovernancePostureForProduction } from '../startup/ai-governance-posture';
 import { assertSensitivePlacementConfiguration } from '../services/ai-gateway/sensitive-placement-policy';
+import { assertDurableStorageForProduction } from '../services/storage/storage-posture';
 
 type Environment = 'development' | 'staging' | 'production' | 'test';
 
@@ -390,5 +391,12 @@ export const config = {
       !(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY),
   },
 };
+
+// Vault byte storage: production must name a durable store. Unset meant local
+// disk, which on Fargate and in a compose container is lost with the container
+// while the vault's rows remain. Fires on import, like the asserts above, but
+// after `config` is built so the secret checks it runs keep reporting first.
+// No-op outside production. See server/services/storage/storage-posture.ts.
+assertDurableStorageForProduction();
 
 export default config;

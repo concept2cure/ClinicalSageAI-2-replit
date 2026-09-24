@@ -1668,6 +1668,13 @@ jobs:
           # records the same acceptance (docs/SOP_KEY_MANAGEMENT.md).
           CONCEPT2CURE_SIGNER_MODE: hmac
           CONCEPT2CURE_SIGNER_ACCEPT_HMAC: 'true'
+          # Production refuses to boot without a named vault store
+          # (server/services/storage/storage-posture.ts). This job stores no
+          # documents and its runner is discarded with it, so it takes the
+          # local-disk posture with the acceptance stated. It proves boot, not
+          # durability; a deployment names S3 (terraform/stack) or a real volume.
+          STORAGE_PROVIDER: local
+          STORAGE_ACCEPT_LOCAL_DISK: 'true'
           # This job has no AI provider, and since /readyz gained its `ana`
           # dependency (startup/ana-readiness-state.ts) that is no longer a
           # silent condition: a process where AnA cannot answer refuses to
