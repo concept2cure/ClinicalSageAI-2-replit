@@ -22,105 +22,20 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { Vault } from '../surfaces/Vault';
-import { useActiveSurfaceContext } from '../surfaceContext';
+import {
+  PID,
+  DOC_ID,
+  ok,
+  unauthorized,
+  uploadDoc,
+  cabinetTree,
+  vaultPayload,
+  props,
+  mockVaultApi,
+} from './_vault-surface-fixtures';
 
-const PID = '11111111-1111-4111-8111-111111111111';
-const DOC_ID = '22222222-2222-4222-8222-222222222222';
-
-function ok(data: unknown) {
-  return { ok: true, status: 200, json: async () => data } as Response;
-}
-
-/* An expired-token 401 as authenticateToken returns it. apiRequest does NOT
-   throw on 401, so this response reaches the caller — the case that used to fall
-   through Vault's filing handler into a fabricated success. */
-function unauthorized() {
-  return {
-    ok: false,
-    status: 401,
-    json: async () => ({ error: { code: 'AUTH_002', message: 'Invalid or expired token' } }),
-  } as Response;
-}
-
-function uploadDoc(over: Record<string, unknown> = {}) {
-  return {
-    id: `up-${DOC_ID}`,
-    num: '3.2.P.8',
-    title: 'stability-summary-24m',
-    type: 'Test reports',
-    status: 'suggested',
-    // As the server projects an upload: no authoring completion assessed.
-    pct: null,
-    owner: 'A. Author',
-    ver: 'v1.0',
-    updated: '2m ago',
-    preview: 'stability-summary-24m.pdf · 1.0 MB · SHA-256 aaaaaaaaaaaa…',
-    src: 'upload',
-    docId: DOC_ID,
-    sizeLabel: '1.0 MB',
-    hash: 'a'.repeat(64),
-    filing: {
-      folderId: 'module-3',
-      folderLabel: 'Module 3 · Quality',
-      evidenceKind: 'report',
-      ctdSection: '3.2.P.8',
-      placementStatus: 'suggested',
-      confidence: 'high',
-      rationale: 'CTD pattern "Stability" → Module 3 (3.2.P.8).',
-    },
-    ...over,
-  };
-}
-
-function cabinetTree(docs: unknown[] = [uploadDoc()], unfiledDocs: unknown[] = []) {
-  return [
-    {
-      id: 'cabinet',
-      code: '',
-      label: 'Source files · filing cabinet',
-      children: [
-        { id: 'cab-unfiled', code: '', label: 'Unfiled · needs review', children: unfiledDocs },
-        { id: 'cab-module-3', code: '', label: 'Module 3 · Quality', children: docs },
-        { id: 'cab-corresp', code: '', label: 'Agency correspondence', children: [] },
-      ],
-    },
-  ];
-}
-
-function vaultPayload(over: Record<string, unknown> = {}) {
-  return {
-    success: true,
-    data: {
-      program: 'BX-301',
-      spine: 'IND · 21 CFR 312',
-      standard: 'pharma',
-      documentCount: 1,
-      tree: cabinetTree(),
-      unfiledCount: 0,
-      ...over,
-    },
-  };
-}
-
-const props = () => ({
-  surface: { id: 'vault', label: 'Vault' } as any,
-  onAsk: vi.fn(),
-  onNav: vi.fn(),
-  segment: 'biopharma',
-});
-
-function mockApi(vaultResponse: () => Response, onFile?: (body: unknown) => Response) {
-  apiRequest.mockReset();
-  apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
-    if (url === `/api/c2c/project-vault/${PID}` && method === 'GET') return vaultResponse();
-    if (url === `/api/c2c/project-vault/${PID}/file` && method === 'POST') {
-      return onFile
-        ? onFile(body)
-        : ok({ success: true, filing: { folderId: 'module-3', folderLabel: 'Module 3 · Quality', placementStatus: 'confirmed' } });
-    }
-    return ok({});
-  });
-}
+const mockApi = (vaultResponse: () => Response, onFile?: (body: unknown) => Response) =>
+  mockVaultApi(apiRequest, vaultResponse, onFile);
 
 afterEach(() => {
   cleanup();
@@ -606,31 +521,3 @@ describe('Vault — placing a document into a submission', () => {
     expect(String(sent.documentUuid)).not.toMatch(/^up-/);
   });
 });
-
-describe('Vault — what AnA is told about the selected document', () => {
-  /* The surface shows no percentage for an upload (there is no authoring
-     completion to show), but the context it publishes for AnA carried the
-     tree's placeholder 0 as `percentComplete`, so AnA described every uploaded
-     file as "0% complete". The server now sends null for an upload; the
-     surface also maps an upload to null, because a 0 from a server that has
-     not caught up is still not a completion figure. */
-  function ContextProbe({ onContext }: { onContext: (c: unknown) => void }) {
-    onContext(useActiveSurfaceContext('vault'));
-    return null;
-  }
-
-  it('an upload has no completion figure — null, not 0% complete', async () => {
-    mockApi(() => ok(vaultPayload()));
-    let latest: any = null;
-    render(
-      <>
-        <Vault {...props()} />
-        <ContextProbe onContext={(c) => { latest = c; }} />
-      </>,
-    );
-    await screen.findByTestId('vault-filing-block');
-    await waitFor(() => expect(latest?.facts?.selected?.title).toBe('stability-summary-24m'));
-    expect(latest.facts.selected.percentComplete).toBeNull();
-  });
-});
-
