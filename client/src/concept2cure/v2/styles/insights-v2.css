@@ -19,7 +19,7 @@
 
 .rc-opener{ background:var(--bg-000); border:1px solid var(--border); border-radius:var(--radius-md,12px); padding:14px; }
 .rc-op-head{ display:flex; align-items:center; gap:7px; font-size:10.5px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--ai,#6a9bcc); margin-bottom:8px; }
-.rc-op-headline{ font-size:14.5px; font-weight:650; color:var(--text-100); line-height:1.4; margin-bottom:6px; }
+.rc-op-headline{ font-size:14.5px; font-weight:600; color:var(--text-100); line-height:1.4; margin-bottom:6px; }
 .rc-op-body{ font-size:12.5px; color:var(--text-300); line-height:1.55; margin-bottom:11px; }
 .rc-preset-btn{ display:inline-flex; align-items:center; gap:7px; width:100%; justify-content:center; background:var(--accent-100); color:#fff; border:none; border-radius:9px; padding:9px 12px; font-size:12.5px; font-weight:600; cursor:pointer; transition:background var(--dur,.16s) ease; }
 .rc-preset-btn:hover{ background:var(--accent-200); }
@@ -65,7 +65,7 @@
 .rc-canvas{ min-height:0; overflow-y:auto; padding:26px 30px 40px; }
 .rc-empty{ max-width:640px; margin:6vh auto 0; text-align:center; }
 .rc-empty-mark{ font-size:34px; color:var(--ai,#6a9bcc); margin-bottom:14px; }
-.rc-empty-h{ font-size:20px; font-weight:650; color:var(--text-100); margin:0 0 8px; }
+.rc-empty-h{ font-size:20px; font-weight:600; color:var(--text-100); margin:0 0 8px; }
 .rc-empty-s{ font-size:13.5px; color:var(--text-300); line-height:1.6; margin:0 auto 22px; max-width:520px; }
 .rc-empty-presets{ display:grid; gap:12px; text-align:left; }
 .rc-empty-preset{ background:var(--bg-000); border:1px solid var(--border); border-radius:12px; padding:15px 16px; cursor:pointer; transition:border-color var(--dur,.16s) ease, box-shadow var(--dur,.16s) ease, transform var(--dur,.16s) ease; }
@@ -80,9 +80,9 @@
 .ro-rep-head{ margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid var(--border); }
 .ro-rep-eyebrow{ display:flex; align-items:center; gap:8px; font-size:10.5px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--text-400); margin-bottom:7px; }
 .ro-region{ background:var(--bg-100); color:var(--text-300); padding:1px 6px; border-radius:5px; font-size:9.5px; letter-spacing:.03em; }
-.ro-rep-title{ font-size:22px; font-weight:650; color:var(--text-100); margin:0 0 9px; line-height:1.25; }
+.ro-rep-title{ font-size:22px; font-weight:600; color:var(--text-100); margin:0 0 9px; line-height:1.25; }
 .ro-rep-meta{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-size:12px; color:var(--text-400); }
-.ro-status{ font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; padding:2px 9px; border-radius:999px; }
+.ro-status{ font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; padding:2px 9px; border-radius:999px; }
 .ro-status.st-ok{ background:color-mix(in srgb,var(--success) 15%,transparent); color:color-mix(in srgb,var(--success) 72%,#000); }
 .ro-status.st-warn{ background:color-mix(in srgb,var(--warning) 16%,transparent); color:color-mix(in srgb,var(--warning) 74%,#000); }
 .ro-status.st-idle{ background:var(--bg-100); color:var(--text-400); }
@@ -99,7 +99,7 @@
 .ro-narr-tag{ font-size:10px; letter-spacing:.05em; text-transform:uppercase; color:var(--text-400); font-weight:600; margin:6px 0 0; }
 .ro-metric{ width:auto !important; min-width:150px; background:var(--bg-000); border:1px solid var(--border); border-radius:10px; padding:11px 13px; margin:0 12px 12px 0; }
 .ro-m-lbl{ font-size:11px; color:var(--text-400); margin-bottom:5px; }
-.ro-m-val{ font-size:23px; font-weight:650; color:var(--text-100); line-height:1; }
+.ro-m-val{ font-size:23px; font-weight:600; color:var(--text-100); line-height:1; }
 .ro-m-unit{ font-size:13px; color:var(--text-400); margin-left:2px; }
 .ro-m-st{ font-size:10.5px; font-weight:600; margin-top:6px; }
 .ro-m-st.st-ready{ color:color-mix(in srgb,var(--success) 72%,#000); }
@@ -127,7 +127,7 @@
 .ro-list{ list-style:none; margin:0 0 12px; padding:0; width:100%; max-width:680px; }
 .ro-li{ display:flex; align-items:baseline; gap:9px; padding:7px 0; border-top:1px dashed var(--border); font-size:12.5px; }
 .ro-li:first-child{ border-top:none; }
-.ro-sev{ font-size:9.5px; letter-spacing:.05em; text-transform:uppercase; font-weight:700; flex:0 0 62px; }
+.ro-sev{ font-size:9.5px; letter-spacing:.05em; text-transform:uppercase; font-weight:600; flex:0 0 62px; }
 .ro-sev.sev-critical{ color:#8a3a3a; } .ro-sev.sev-high{ color:var(--error); } .ro-sev.sev-medium{ color:var(--warning); } .ro-sev.sev-low{ color:var(--text-400); }
 .ro-li-b{ color:var(--text-100); flex:1; min-width:0; }
 .ro-li-msg{ display:block; font-size:11px; color:var(--text-400); margin-top:2px; }
@@ -152,7 +152,7 @@
 .ro-pack-fam{ display:flex; align-items:center; gap:6px; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--text-400); }
 .ro-pack-title{ font-size:13.5px; font-weight:600; color:var(--text-100); line-height:1.35; }
 .ro-pack-kpi{ display:flex; align-items:baseline; gap:6px; margin-top:auto; }
-.ro-pack-kpi .v{ font-size:20px; font-weight:650; color:var(--text-100); }
+.ro-pack-kpi .v{ font-size:20px; font-weight:600; color:var(--text-100); }
 .ro-pack-kpi .l{ font-size:11px; color:var(--text-400); }
 .ro-pack-open{ display:flex; align-items:center; gap:4px; font-size:11.5px; font-weight:600; color:var(--accent-200); }
 .ro-pack-open svg{ width:13px; height:13px; }
@@ -163,7 +163,7 @@
 .ro-port-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:12px; }
 .ro-port-card{ display:flex; align-items:center; gap:12px; background:var(--bg-000); border:1px solid var(--border); border-radius:12px; padding:13px; }
 .ro-port-b{ min-width:0; }
-.ro-port-code{ font-size:14px; font-weight:650; color:var(--text-100); }
+.ro-port-code{ font-size:14px; font-weight:600; color:var(--text-100); }
 .ro-port-ind{ font-size:11.5px; color:var(--text-300); line-height:1.4; margin:2px 0; }
 .ro-port-filing{ font-size:11px; color:var(--text-400); }
 @media (max-width:1000px){ .rc{ grid-template-columns:340px 1fr; } }

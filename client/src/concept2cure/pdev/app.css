@@ -707,7 +707,10 @@
 
 /* ── Compile section (Assembly) ─────────────────────────────────── */
 .pdev-compile-section {
-  background: linear-gradient(135deg, var(--accent-000) 0%, var(--canvas-elevated) 100%);
+  /* Was a 135° accent-000→canvas-elevated gradient. The design system allows
+     one gradient in the product — the brand mark — and keeps grounds flat;
+     the accent tint ground carries the "this section is live" emphasis alone. */
+  background: var(--accent-000);
   border-color: var(--accent-100);
 }
 .pdev-compile-card {
