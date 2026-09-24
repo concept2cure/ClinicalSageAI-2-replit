@@ -42,7 +42,9 @@ const hoisted = vi.hoisted(() => {
     validateEctdPackage: vi.fn(),
     registerExportGovernanceQuick: vi.fn(),
     auditLogAction: vi.fn(),
+    resolveSignedPackageForExport: vi.fn(),
     reset() {
+      this.resolveSignedPackageForExport.mockReset();
       this.assembleSubmissionEctd.mockReset();
       this.validateEctdPackage.mockReset();
       this.registerExportGovernanceQuick.mockReset();
@@ -113,6 +115,24 @@ vi.mock('../../server/services/compute/exportGovernance', () => ({
   registerExportGovernanceQuick: (...args: unknown[]) =>
     hoisted.registerExportGovernanceQuick(...args),
 }));
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MOCK the signed-package resolver (GET /by-run/:runId/signed). Its refusal
+// logic has its own suite (signed-package-export.test.ts); here only the
+// route's response shape is under test, so the resolver is stubbed and the
+// rest of the module (refusalHttpStatus) stays real.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+vi.mock('../../server/services/ectd/signed-package-export', async () => {
+  const actual = await vi.importActual<
+    typeof import('../../server/services/ectd/signed-package-export')
+  >('../../server/services/ectd/signed-package-export');
+  return {
+    ...actual,
+    resolveSignedPackageForExport: (...args: unknown[]) =>
+      hoisted.resolveSignedPackageForExport(...args),
+  };
+});
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MOCK auditService — default export with logAction
@@ -391,5 +411,54 @@ describe('POST /api/ectd/validate/preflight', () => {
     expect(res.body.error).toMatch(/Invalid preflight body/i);
     // zod's flattened error should mention the offending key.
     expect(JSON.stringify(res.body.details ?? {})).toMatch(/region/);
+  });
+});
+
+describe('GET /api/ectd/export/by-run/:runId/signed', () => {
+  const descriptor = {
+    runId: 'run-0001',
+    submissionId: 'sub-001',
+    organizationId: 100,
+    applicationNumber: 'IND123456',
+    sequenceNumber: '0001',
+    region: 'US',
+    submissionType: 'IND',
+    leaves: [],
+    backboneXml: '',
+    totalSizeBytes: 0,
+    payloadDigest: 'a'.repeat(64),
+    signatureId: 7,
+    signerId: 12,
+    signerName: 'A. Reviewer',
+    signerTitle: null,
+    signatureMeaning: 'approval',
+    signedAt: '2026-09-20T14:03:05.000Z',
+    sealVerdict: 'ok',
+    signatureVerdict: 'unsigned',
+    gatewayReady: true,
+    hardenedScore: 100,
+  };
+
+  it('returns the §11.50 manifestation of the release signature (review P11-4)', async () => {
+    hoisted.resolveSignedPackageForExport.mockResolvedValue({ ok: true, descriptor });
+
+    const res = await request(makeApp()).get('/api/ectd/export/by-run/run-0001/signed');
+
+    expect(res.status).toBe(200);
+    expect(res.body.signature).toEqual({
+      payloadDigest: 'a'.repeat(64),
+      signatureId: 7,
+      sealVerdict: 'ok',
+      signerId: 12,
+      signerName: 'A. Reviewer',
+      // Not recorded on the row: stays null on the wire, never a stand-in.
+      signerTitle: null,
+      signatureMeaning: 'approval',
+      signedAt: '2026-09-20T14:03:05.000Z',
+    });
+    expect(hoisted.resolveSignedPackageForExport).toHaveBeenCalledWith({
+      runId: 'run-0001',
+      organizationId: 100,
+    });
   });
 });
