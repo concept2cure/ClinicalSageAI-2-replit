@@ -22,7 +22,7 @@ import {
   GOVERNED_DECISION_REPOSITORY_VERSION as GOVERNED_DECISION_SERVICE_VERSION,
 } from '../../services/governed-decision-repository';
 import {
-  evaluateGovernedDocument,
+  computeGovernedEvaluation,
   GOVERNED_DOCUMENT_EVALUATOR_VERSION,
 } from '../control-plane/governed-document-evaluator';
 import { READINESS_GATES_VERSION } from '../control-plane/readiness-gates';
@@ -306,7 +306,19 @@ router.post('/governed/evaluate', requireControlPlaneAccess, (req, res) => {
   if (!parsed.success) {
     return res.status(400).json({ error: { code: 'INVALID_EVALUATION_INPUT', details: parsed.error.flatten() } });
   }
-  const result = evaluateGovernedDocument(parsed.data as Parameters<typeof evaluateGovernedDocument>[0]);
+  // A SIMULATION computes and returns; it records nothing. This used to call
+  // evaluateGovernedDocument(), the orchestrator that ALSO persists a
+  // governed decision under context.organizationId — and that id, the project
+  // and the actor all come from this request's BODY. The write only ever
+  // failed because the recorder violated decision_records' CHECK
+  // constraints; once recording works, this route would let any caller the
+  // control-plane guard admits (any role containing "admin", or anyone at all
+  // in non-production by default) file a decision into another tenant's
+  // decision_records under an actor of their choosing. The evaluator's own
+  // contract already says what to use here: "Use computeGovernedEvaluation()
+  // directly for testing or dry-runs." It is pure — no reads, no writes — so a
+  // body-supplied context can shape the answer but cannot touch any tenant.
+  const result = computeGovernedEvaluation(parsed.data as Parameters<typeof computeGovernedEvaluation>[0]);
   return res.json({ result });
 });
 
