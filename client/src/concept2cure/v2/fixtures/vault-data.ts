@@ -27,7 +27,8 @@ export interface VaultDoc {
   title: string;
   type: string;
   status: string;
-  pct: number;
+  /** Authoring completion, 0–100. Null for an upload, which has none. */
+  pct: number | null;
   owner: string;
   ver: string;
   updated: string;

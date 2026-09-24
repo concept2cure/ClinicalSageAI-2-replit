@@ -448,7 +448,7 @@ function searchHitToDoc(h: VaultSearchHit): VaultDoc {
     title: h.title,
     type: h.documentType || '',
     status: h.placementStatus || 'unfiled',
-    pct: 0,
+    pct: null,
     owner: '',
     ver: '',
     updated: '',
@@ -834,7 +834,10 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           ? {
               id: sel.id, number: sel.num, title: sel.title, type: sel.type,
               status: sel.status, version: sel.ver, owner: sel.owner,
-              updated: sel.updated, percentComplete: sel.pct,
+              updated: sel.updated,
+              // An upload has no authoring completion. The server sends null;
+              // a 0 from one that has not caught up is still not a figure.
+              percentComplete: sel.src === 'upload' ? null : sel.pct,
               blocker: sel.blocker ?? false, flag: sel.flag ?? null,
               filing: sel.filing ?? null,
             }
