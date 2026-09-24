@@ -1,0 +1,12 @@
+# Broad vitest run, 2026-09-24T16:37Z, working tree of this change
+# scope: client/src/concept2cure/v2 client/src/concept2cure/components/ana tests/ui server/services/ana/__tests__ server/services/__tests__/memory-context-assembler-mode.test.ts server/routes/ana-ri
+ Test Files  1 failed | 470 passed | 1 skipped (472)
+      Tests  1 failed | 5892 passed | 3 skipped (5896)
+
+# The one failure:
+ FAIL  server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan is always offered and has a calm label > names drafting and project search by what they act on
+# The two new tool labels and their test were written while this run was in
+# progress; the run executed the new test against the earlier agentic-loop.ts.
+# Re-run alone on the final tree:
+ Test Files  1 passed (1)
+      Tests  21 passed (21)

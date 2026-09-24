@@ -1,5 +1,5 @@
 /**
- * Whether the "AnA at work" dock is shown — one memory, shared by every host.
+ * Whether AnA's progress dock is shown — one memory, shared by every host.
  *
  * The rail, the conversation surface and the owned authoring panes each mount
  * the same dock; a person who hides it in one place has said what they want
@@ -24,7 +24,7 @@ function readStored(): boolean {
   }
 }
 
-export function useWorkDockVisible(): [boolean, (v: boolean) => void] {
+function useWorkDockVisible(): [boolean, (v: boolean) => void] {
   const [shown, setShown] = React.useState<boolean>(readStored);
   const set = React.useCallback((v: boolean) => {
     setShown(v);
@@ -35,4 +35,34 @@ export function useWorkDockVisible(): [boolean, (v: boolean) => void] {
     }
   }, []);
   return [shown, set];
+}
+
+/**
+ * The progress dock as every host drives it: the shared show/hide memory, the
+ * chip that toggles it, and a close that hands focus back to that chip. The
+ * panel's own close control lives INSIDE the panel, so closing it unmounts the
+ * control that had focus; without the hand-back the browser drops focus to
+ * <body>. Not on mount — a remembered "hidden" must not steal focus.
+ */
+export function useProgressDock(): {
+  open: boolean;
+  toggle: () => void;
+  close: () => void;
+  chipRef: React.RefObject<HTMLButtonElement | null>;
+} {
+  const [open, setOpen] = useWorkDockVisible();
+  const chipRef = React.useRef<HTMLButtonElement>(null);
+  const refocus = React.useRef(false);
+  const close = React.useCallback(() => {
+    refocus.current = true;
+    setOpen(false);
+  }, [setOpen]);
+  const toggle = React.useCallback(() => setOpen(!open), [open, setOpen]);
+  React.useEffect(() => {
+    if (!open && refocus.current) {
+      refocus.current = false;
+      chipRef.current?.focus();
+    }
+  }, [open]);
+  return { open, toggle, close, chipRef };
 }

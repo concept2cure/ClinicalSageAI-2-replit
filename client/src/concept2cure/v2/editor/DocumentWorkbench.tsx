@@ -47,10 +47,13 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { I } from '../icons';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
-import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
-import { AnaWorkPanel } from '../AnaWorkPanel';
+import { useAnaChat } from '../../components/ana/useAnaChat';
+import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
+import { AnaActivity, activityPropsFor } from '../AnaActivity';
+import { AnaGrounding } from '../AnaGrounding';
+import { AnaOutputCards } from '../AnaOutputs';
 import { useAgentActivity } from '../useAgentActivity';
-import { useWorkDockVisible } from '../workDock';
+import { useProgressDock } from '../workDock';
 import { shellProgramName } from '../shellProject';
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
@@ -576,195 +579,6 @@ function AuthoringSignoffs({ signoffs }: { signoffs: PendingSignoff[] }) {
   );
 }
 
-function AnaActivity({
-  message,
-  onSuggestedAction,
-}: {
-  message: AnaChatMessage;
-  onSuggestedAction: (action: string) => void;
-}) {
-  const toolCalls = message.toolCalls ?? [];
-  const evidence = message.evidence;
-  const groundingSources = message.groundingSources ?? [];
-  const warnings = message.warnings ?? [];
-  const suggestedActions = message.suggestedActions ?? [];
-  const hasMeta =
-    message.detectedLens ||
-    message.effortUsed ||
-    message.fallback ||
-    (!message.streaming && message.latencyMs != null) ||
-    message.stopped;
-
-  if (
-    !hasMeta &&
-    toolCalls.length === 0 &&
-    !evidence &&
-    groundingSources.length === 0 &&
-    warnings.length === 0 &&
-    suggestedActions.length === 0
-  ) {
-    return null;
-  }
-
-  return (
-    <div className="ana-activity" aria-label="AnA activity and evidence">
-      {hasMeta && (
-        <div className="ana-meta" aria-label="AnA response details">
-          {message.detectedLens && (
-            <span className="ana-meta-chip">Lens: {message.detectedLens}</span>
-          )}
-          {message.effortUsed && (
-            <span className="ana-meta-chip">Effort: {message.effortUsed}</span>
-          )}
-          {message.fallback && (
-            <span className="ana-meta-chip ana-meta-chip-warn">Fallback provider</span>
-          )}
-          {!message.streaming && message.latencyMs != null && (
-            <span className="ana-meta-chip">
-              Response: {(message.latencyMs / 1000).toFixed(1)}s
-            </span>
-          )}
-          {message.stopped && (
-            <span className="ana-meta-chip ana-meta-chip-warn">Stopped before completion</span>
-          )}
-        </div>
-      )}
-
-      {toolCalls.length > 0 && (
-        <details className="ana-activity-group" open={message.streaming || undefined}>
-          <summary className="ana-activity-summary">
-            <span>{I.workflow} Work log</span>
-            <span className="ana-activity-count">
-              {toolCalls.length} step{toolCalls.length === 1 ? '' : 's'}
-            </span>
-          </summary>
-          <div className="ana-tool-list" role="list">
-            {toolCalls.map((tool, toolIndex) => {
-              const stateLabel =
-                tool.status === 'running'
-                  ? 'Running'
-                  : tool.status === 'error'
-                  ? 'Failed'
-                  : 'Complete';
-              return (
-                <div
-                  key={`${tool.name}-${toolIndex}`}
-                  className="ana-tool"
-                  data-status={tool.status}
-                  role="listitem"
-                >
-                  <span className="ana-tool-state" aria-hidden="true">
-                    {tool.status === 'error'
-                      ? I.alertTriangle
-                      : tool.status === 'running'
-                      ? I.clock
-                      : I.check}
-                  </span>
-                  <span className="ana-tool-label">{tool.label}</span>
-                  <span className="ana-tool-status">{stateLabel}</span>
-                  {tool.round != null && <span className="ana-tool-round">Round {tool.round}</span>}
-                  {tool.result && (
-                    <details className="ana-tool-result">
-                      <summary>View result</summary>
-                      <pre>{tool.result}</pre>
-                    </details>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </details>
-      )}
-
-      {evidence && (
-        <div
-          className="ana-evidence"
-          data-validated={evidence.validated}
-          role="status"
-          aria-live="polite"
-        >
-          <div className="ana-evidence-head">
-            <span>{evidence.validated ? I.shieldCheck : I.alertTriangle}</span>
-            <strong>{evidence.validated ? 'Evidence grounded' : 'Evidence needs review'}</strong>
-          </div>
-          <div className="ana-evidence-summary">
-            {evidence.sourceCount} source{evidence.sourceCount === 1 ? '' : 's'} ·{' '}
-            {evidence.groundedClaims} grounded claim{evidence.groundedClaims === 1 ? '' : 's'} ·{' '}
-            {evidence.weakClaims} weak
-          </div>
-          {evidence.riskSummary && <div className="ana-evidence-risk">{evidence.riskSummary}</div>}
-          {evidence.flaggedClaims && evidence.flaggedClaims.length > 0 && (
-            <details className="ana-flagged-claims">
-              <summary>
-                {evidence.flaggedClaims.length} flagged claim
-                {evidence.flaggedClaims.length === 1 ? '' : 's'}
-              </summary>
-              <ul>
-                {evidence.flaggedClaims.map((claim, claimIndex) => (
-                  <li key={`${claim.kind}-${claimIndex}`}>
-                    <strong>{claim.kind}</strong>: {claim.text}
-                  </li>
-                ))}
-              </ul>
-            </details>
-          )}
-        </div>
-      )}
-
-      {groundingSources.length > 0 && (
-        <details className="ana-activity-group">
-          <summary className="ana-activity-summary">
-            <span>{I.link} Context used</span>
-            <span className="ana-activity-count">{groundingSources.length}</span>
-          </summary>
-          <ul className="ana-context-list">
-            {groundingSources.map(source => (
-              <li key={source}>{source}</li>
-            ))}
-          </ul>
-        </details>
-      )}
-
-      {warnings.map((warning, warningIndex) => (
-        <div
-          key={`${warning}-${warningIndex}`}
-          className="ana-warning"
-          role="status"
-          aria-live="polite"
-        >
-          {I.alertTriangle}
-          <span>{warning}</span>
-        </div>
-      ))}
-
-      {suggestedActions.length > 0 && (
-        <div className="ana-next-actions">
-          <div className="ana-next-label">Next actions</div>
-          <div className="ana-next-list">
-            {suggestedActions.map(action => (
-              <button
-                key={action}
-                type="button"
-                className="ana-next-action"
-                disabled={message.streaming}
-                title={
-                  message.streaming
-                    ? 'Available after AnA finishes this response'
-                    : `Ask AnA: ${action}`
-                }
-                onClick={() => onSuggestedAction(action)}
-              >
-                {I.arrowRight}
-                <span>{action}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function DocumentWorkbench({
   onNav,
   liveDrive,
@@ -1199,10 +1013,11 @@ export function DocumentWorkbench({
     onDriveEvent: liveDrive?.onDriveEvent,
     onArtifactSaved: liveDrive?.onWorkSaved,
   });
-  /* The live work dock for this pane (AnaWorkPanel): one shared show/hide
-     memory with the rail, and the background queue read only while shown. */
-  const [workDockOpen, setWorkDockOpen] = useWorkDockVisible();
-  const anaWorkQueue = useAgentActivity(workDockOpen, ana.isStreaming);
+  /* AnA's progress panel for this pane: one shared show/hide memory with
+     every other host (workDock.ts), toggled by the chip in the pane header,
+     and the background queue read only while shown. */
+  const dock = useProgressDock();
+  const anaWorkQueue = useAgentActivity(dock.open, ana.isStreaming);
   const anaComposerRef = useRef<HTMLTextAreaElement>(null);
   const anaReturnFocusRef = useRef<HTMLElement | null>(null);
   const anaWasOpenRef = useRef(false);
@@ -4127,16 +3942,13 @@ export function DocumentWorkbench({
                 : ''}
             </span>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <button
-                type="button"
-                className="ana-work-toggle"
-                aria-pressed={workDockOpen}
-                aria-label={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
-                title={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
-                onClick={() => setWorkDockOpen(!workDockOpen)}
-              >
-                {I.activity} AnA at work
-              </button>
+              <AnaProgressChip
+                ref={dock.chipRef}
+                messages={ana.messages}
+                streaming={ana.isStreaming}
+                open={dock.open}
+                onToggle={dock.toggle}
+              />
               <button
                 type="button"
                 className="ed-comments-close"
@@ -4152,7 +3964,7 @@ export function DocumentWorkbench({
               the log below, deliberately: that region is aria-live, and a
               clock ticking inside a live region would be read out every
               second. */}
-          {workDockOpen && (
+          {dock.open && (
             <div className="ana-work-host">
               <AnaWorkPanel
                 messages={ana.messages}
@@ -4224,7 +4036,46 @@ export function DocumentWorkbench({
                         {m.streaming ? m.statusPhase || 'Thinking…' : ''}
                       </div>
                     )}
-                    <AnaActivity message={m} onSuggestedAction={askAna} />
+                    {/* The shared record of her work, her output and the
+                        grounding verdict — the same three every host renders.
+                        This pane had its own copy of the first, which showed
+                        the raw tool payload and a raw lens code, and listed
+                        prompt-module ids as "Context used". */}
+                    <AnaGrounding evidence={m.evidence} />
+                    {Array.isArray(m.warnings) && m.warnings.length > 0 && (
+                      <div className="ana-msg-warnings" role="note">
+                        {m.warnings.map((w, wi) => (
+                          <div key={wi} className="ana-msg-warning">
+                            <span className="ana-msg-warning-ic" aria-hidden="true">{I.alertTriangle}</span>
+                            <span>{w}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <AnaActivity {...activityPropsFor(m)} />
+                    <AnaOutputCards message={m} />
+                    {(m.suggestedActions ?? []).length > 0 && (
+                      <div className="ana-next-actions">
+                        <div className="ana-next-label">Next actions</div>
+                        <div className="ana-next-list">
+                          {(m.suggestedActions ?? []).map((action) => (
+                            <button
+                              key={action}
+                              type="button"
+                              className="ana-next-action"
+                              disabled={m.streaming}
+                              title={
+                                m.streaming ? 'Available after AnA finishes this response' : `Ask AnA: ${action}`
+                              }
+                              onClick={() => askAna(action)}
+                            >
+                              {I.arrowRight}
+                              <span>{action}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     {/* AI output enters the record ONLY as an attributed
                         in-text suggestion — struck-in green, pending until a
                         human accepts or rejects each edit in the canvas.

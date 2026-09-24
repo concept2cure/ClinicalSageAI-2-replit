@@ -240,7 +240,9 @@ describe('DocumentAuthoring — the editor answers its own asks', () => {
     // above it, which names the same step, so a pane-wide query finds two.
     const log = within(pane).getByRole('log', { name: 'AnA conversation' });
     expect(await within(log).findByText('Checking dossier consistency')).toBeTruthy();
-    expect(await within(pane).findByText('Evidence grounded')).toBeTruthy();
+    // The shared grounding verdict (AnaGrounding) — the pane's own copy of an
+    // evidence block is gone, so it reads the same here as in the rail.
+    expect(await within(pane).findByText(/3 of 3 claims grounded · 2 sources/)).toBeTruthy();
     const followUp = await within(pane).findByRole('button', { name: /Review the citation chain/ });
     expect((followUp as HTMLButtonElement).disabled).toBe(false);
     fireEvent.click(followUp);

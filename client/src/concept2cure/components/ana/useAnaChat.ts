@@ -54,9 +54,19 @@ export type {
   DriveTurnControls,
   AnaSendOptions,
   AnaProgressPhase,
+  AnaPlanStep,
+  AnaPlanChange,
+  AnaContextUsed,
 } from './useAnaChat.types';
 
-import { advanceProgress, closeProgress, settleRunningCalls, CLIENT_PHASE_LABELS } from './anaProgress';
+import {
+  advanceProgress,
+  applyPlanEvent,
+  closeProgress,
+  readContextUsed,
+  settleRunningCalls,
+  CLIENT_PHASE_LABELS,
+} from './anaProgress';
 import { getAnaLockedScreens } from './anaLockedScreens';
 
 import type {
@@ -1287,6 +1297,18 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                   )
                 );
               }
+            } else if (event.type === 'plan' || event.type === 'context_used') {
+              // Her declared plan, and what the turn read before answering. Both
+              // parsed and applied by pure helpers in anaProgress.ts.
+              const at = Date.now();
+              const used = event.type === 'context_used' ? readContextUsed(event) : null;
+              setMessages(prev =>
+                prev.map(m => {
+                  if (m.id !== assistantId) return m;
+                  if (event.type === 'plan') return applyPlanEvent(m, event, at);
+                  return used ? { ...m, contextUsed: used } : m;
+                })
+              );
             } else if (event.type === 'war_game_report') {
               const report = event.report;
               if (report) {
