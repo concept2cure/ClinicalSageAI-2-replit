@@ -16,7 +16,7 @@
 .adm-access .adm-muted { color: var(--text-400); }
 .adm-access .adm-ok { color: var(--success); display: inline-flex; }
 .adm-access .adm-warn { color: var(--warning); display: inline-flex; }
-.adm-access .adm-overdue { color: var(--error-text, var(--error)); font-weight: 600; }
+.adm-access .adm-overdue { color: var(--error); font-weight: 600; }
 
 /* Page header */
 .adm-access .page-header {
@@ -100,7 +100,7 @@
 .adm-access .adm-role-admin { background: color-mix(in oklab, var(--ai, #6b5bd6) 16%, transparent); color: var(--ai, #6b5bd6); }
 .adm-access .adm-role-editor { background: color-mix(in oklab, var(--success) 14%, transparent); color: var(--success); }
 .adm-access .adm-role-reviewer { background: color-mix(in oklab, var(--warning) 14%, transparent); color: var(--warning); }
-.adm-access .adm-role-external { background: color-mix(in oklab, var(--error) 12%, transparent); color: var(--error-text, var(--error)); }
+.adm-access .adm-role-external { background: color-mix(in oklab, var(--error) 12%, transparent); color: var(--error); }
 
 /* Members layout + drawer */
 .adm-access .adm-members-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 0; align-items: start; }

@@ -11,8 +11,8 @@
  * Token surface: canonical tokens come from
  * design-system/colors_and_type.css (imported at client/src/index.css).
  * The kit references three aliases (--accent-100, --accent-200,
- * --accent-000) and three shim tokens (--border-100, --border-200,
- * --error-text) that the kit's standalone styles.css declared at
+ * --accent-000) and two shim tokens (--border-100, --border-200)
+ * that the kit's standalone styles.css declared at
  * `:root`. To avoid polluting the global token surface, those aliases
  * are scoped to `.pdev-shell` here. When the design system absorbs
  * them into colors_and_type.css the scope can drop. Logged in
@@ -52,9 +52,6 @@
   --accent-000: var(--accent-main-000);
   --border-100: var(--bg-200);
   --border-200: var(--bg-300);
-  --error-text: #8a2929;
-  --warning: #d97706;
-  --success: #5a7341;
 
   display: grid;
   grid-template-columns: var(--pdev-rail-w) 1fr var(--pdev-ana-w);
@@ -382,10 +379,10 @@
 .pdev-state-pill.state-idle { background: var(--bg-200); color: var(--text-400); }
 .pdev-state-pill.state-flight { background: var(--bg-100); color: var(--text-200); }
 .pdev-state-pill.state-ai { background: var(--accent-000); color: var(--accent-200); font-weight: 600; }
-.pdev-state-pill.state-warn { background: #f6e9cf; color: #7e5510; }
+.pdev-state-pill.state-warn { background: var(--warning-muted); color: var(--warning); }
 .pdev-state-pill.state-warn-strong { background: var(--warning); color: var(--bg-000); }
-.pdev-state-pill.state-done { background: #ecf1e4; color: #4d6235; }
-.pdev-state-pill.state-blocked { background: #f3d6d2; color: #7c1f1f; }
+.pdev-state-pill.state-done { background: var(--success-muted); color: var(--success); }
+.pdev-state-pill.state-blocked { background: var(--error-muted); color: var(--error); }
 .pdev-state-pill.state-neutral { background: var(--bg-200); color: var(--text-500); opacity: 0.8; }
 
 /* ── Stage strip ────────────────────────────────────────────────── */
@@ -398,9 +395,9 @@
   padding: 10px 8px; border-radius: 8px;
   background: var(--bg-050); position: relative;
 }
-.pdev-stage-node[data-state="done"] { background: #ecf1e4; }
+.pdev-stage-node[data-state="done"] { background: var(--success-muted); }
 .pdev-stage-node[data-state="active"] { background: var(--accent-000); border: 1px solid var(--accent-100); }
-.pdev-stage-node[data-state="blocked"] { background: #f3d6d2; }
+.pdev-stage-node[data-state="blocked"] { background: var(--error-muted); }
 .pdev-stage-dot {
   width: 28px; height: 28px; border-radius: 999px;
   background: var(--canvas-elevated);
@@ -608,7 +605,7 @@
 }
 .pdev-ana-context-blocker {
   display: flex; gap: 6px; padding: 6px 0; margin-top: 4px;
-  font-size: 11px; color: var(--error-text);
+  font-size: 11px; color: var(--error);
 }
 .pdev-ana-section-label {
   font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
@@ -727,8 +724,8 @@
 }
 .pdev-compile-sub { font-size: 13px; color: var(--text-300); line-height: 1.5; }
 .pdev-compile-warning {
-  font-size: 12px; color: var(--error-text); margin-top: 8px;
-  padding: 6px 10px; background: var(--error-muted, #f5dfdd); border-radius: 4px;
+  font-size: 12px; color: var(--error); margin-top: 8px;
+  padding: 6px 10px; background: var(--error-muted); border-radius: 4px;
 }
 .pdev-compile-actions {
   display: flex; flex-direction: column; gap: 6px;
@@ -811,9 +808,9 @@
   font-weight: 600;
 }
 .pdev-fda-kind-q_sub_commitment,
-.pdev-fda-kind-commitment { background: #f6e9cf; color: #7e5510; }
+.pdev-fda-kind-commitment { background: var(--warning-muted); color: var(--warning); }
 .pdev-fda-kind-q_sub_meeting,
-.pdev-fda-kind-meeting { background: #e2e8f5; color: #355270; }
+.pdev-fda-kind-meeting { background: var(--info-muted); color: var(--info); }
 .pdev-fda-kind-q_submission,
 .pdev-fda-kind-submission { background: var(--accent-000); color: var(--accent-200); }
 .pdev-fda-kind-q_sub_question,
@@ -821,7 +818,7 @@
 .pdev-fda-kind-q_sub_timeline,
 .pdev-fda-kind-timeline { background: var(--bg-100); color: var(--text-300); }
 .pdev-fda-kind-fda_communication,
-.pdev-fda-kind-communication { background: #ece9f7; color: #544698; }
+.pdev-fda-kind-communication { background: var(--accent-pro-000); color: var(--accent-pro-200); }
 .pdev-fda-row-body .pdev-fda-title {
   font-weight: 600; color: var(--text-100); margin-bottom: 4px;
 }
@@ -832,9 +829,9 @@
   display: inline-block; padding: 2px 8px; border-radius: 999px;
   font-size: 11px; font-weight: 500;
 }
-.pdev-fda-status-pending-rollup { background: #f6e9cf; color: #7e5510; }
+.pdev-fda-status-pending-rollup { background: var(--warning-muted); color: var(--warning); }
 .pdev-fda-status-responded,
-.pdev-fda-status-closed { background: #ecf1e4; color: #4d6235; }
+.pdev-fda-status-closed { background: var(--success-muted); color: var(--success); }
 .pdev-blocker-chip {
   display: inline-block; margin-left: 6px;
   padding: 1px 6px; background: var(--error); color: white;
@@ -851,7 +848,7 @@
 .pdev-fda-rollup-row[data-blocker="true"] {
   border-left: 3px solid var(--error);
   padding-left: 11px;
-  background: #fbeae6;
+  background: var(--error-muted);
 }
 .pdev-fda-rollup-text { font-size: 12px; color: var(--text-100); }
 .pdev-fda-rollup-proposed {
@@ -901,10 +898,10 @@
   font-weight: 600;
 }
 .pdev-authority-advisory-only { background: var(--bg-100); color: var(--text-300); }
-.pdev-authority-requires-review { background: #f6e9cf; color: #7e5510; }
+.pdev-authority-requires-review { background: var(--warning-muted); color: var(--warning); }
 .pdev-authority-requires-approval { background: var(--accent-000); color: var(--accent-200); }
-.pdev-authority-blocks-promotion { background: #f3d6d2; color: #7c1f1f; }
-.pdev-authority-requires-escalation { background: #ece9f7; color: #544698; }
+.pdev-authority-blocks-promotion { background: var(--error-muted); color: var(--error); }
+.pdev-authority-requires-escalation { background: var(--accent-pro-000); color: var(--accent-pro-200); }
 
 .pdev-contradiction-detail-head {
   display: flex; align-items: center; gap: 8px;
@@ -1017,8 +1014,8 @@
 .pdev-confirm-error {
   margin: 0 22px 12px;
   padding: 8px 12px;
-  background: var(--error-muted, #f5dfdd);
-  color: var(--error-text);
+  background: var(--error-muted);
+  color: var(--error);
   border-radius: 6px;
   font-size: 12px;
 }
@@ -1108,10 +1105,10 @@
   font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em;
   font-weight: 600;
 }
-.pdev-link-supports { background: #ecf1e4; color: #4d6235; }
-.pdev-link-contradicts { background: #f3d6d2; color: #7c1f1f; }
+.pdev-link-supports { background: var(--success-muted); color: var(--success); }
+.pdev-link-contradicts { background: var(--error-muted); color: var(--error); }
 .pdev-link-references { background: var(--bg-100); color: var(--text-300); }
-.pdev-link-supersedes { background: #f6e9cf; color: #7e5510; }
+.pdev-link-supersedes { background: var(--warning-muted); color: var(--warning); }
 .pdev-evidence-list {
   display: flex; flex-direction: column; gap: 4px;
   max-height: 280px; overflow-y: auto;
@@ -1143,10 +1140,10 @@
   margin-left: auto; padding: 2px 8px; border-radius: 999px;
   font-size: 11px; font-weight: 500;
 }
-.pdev-workflow-status-awaiting-approval { background: #f6e9cf; color: #7e5510; }
-.pdev-workflow-status-completed { background: #ecf1e4; color: #4d6235; }
+.pdev-workflow-status-awaiting-approval { background: var(--warning-muted); color: var(--warning); }
+.pdev-workflow-status-completed { background: var(--success-muted); color: var(--success); }
 .pdev-workflow-status-failed,
-.pdev-workflow-status-cancelled { background: #f3d6d2; color: #7c1f1f; }
+.pdev-workflow-status-cancelled { background: var(--error-muted); color: var(--error); }
 .pdev-workflow-step {
   display: flex; gap: 12px; padding: 12px;
   background: var(--canvas-elevated);
@@ -1158,7 +1155,7 @@
 }
 .pdev-workflow-step[data-status="awaiting_review"] {
   border-left: 3px solid var(--warning); padding-left: 9px;
-  background: #fdfbf3;
+  background: var(--warning-muted);
 }
 .pdev-workflow-step-num {
   width: 28px; height: 28px; border-radius: 999px;
@@ -1190,8 +1187,8 @@
   padding: 2px 8px; border-radius: 999px;
   font-size: 11px; font-weight: 500; flex-shrink: 0;
 }
-.pdev-workflow-step-approved { background: #ecf1e4; color: #4d6235; }
-.pdev-workflow-step-awaiting-review { background: #f6e9cf; color: #7e5510; }
+.pdev-workflow-step-approved { background: var(--success-muted); color: var(--success); }
+.pdev-workflow-step-awaiting-review { background: var(--warning-muted); color: var(--warning); }
 .pdev-workflow-step-proposed { background: var(--bg-100); color: var(--text-400); }
 
 /* Provenance */
