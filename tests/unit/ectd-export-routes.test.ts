@@ -462,3 +462,80 @@ describe('GET /api/ectd/export/by-run/:runId/signed', () => {
     });
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// POST /api/ectd/export/:submissionId — the ONE eCTD export
+//
+// The download itself had no route-level test: this file covered /validate,
+// /preflight and /by-run only. That mattered twice over. The route's two
+// refusals — a structurally invalid package (ECTD_PACKAGE_INVALID) and an
+// incomplete one under requireComplete (ECTD_INCOMPLETE) — were unpinned, so a
+// refactor could return to shipping `200 + zip` with only an X-ECTD-Valid
+// header as the signal. And POST /api/audit-services/export/ectd, a second
+// endpoint over the same assembler that did exactly that, is deleted on the
+// strength of this route being the reachable replacement; these cases are what
+// prove it is.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+describe('POST /api/ectd/export/:submissionId — the canonical export', () => {
+  const REVIEWED = {
+    governance: {
+      aiGenerated: true,
+      humanReviewApproved: true,
+      reviewerName: 'Dana Reviewer',
+      reviewerRole: 'Regulatory Affairs',
+      reviewTimestamp: '2026-09-24T10:00:00.000Z',
+    },
+  };
+
+  it('returns the package bytes as a zip when it validates', async () => {
+    const res = await request(makeApp())
+      .post('/api/ectd/export/42')
+      .send({ applicationNumber: '123456', ...REVIEWED })
+      .buffer(true)
+      .parse((r, cb) => {
+        const chunks: Buffer[] = [];
+        r.on('data', (c: Buffer) => chunks.push(c));
+        r.on('end', () => cb(null, Buffer.concat(chunks)));
+      });
+    expect(res.status, (res.body as Buffer).toString('utf8').slice(0, 300)).toBe(200);
+    expect(res.headers['content-type']).toMatch(/application\/zip/);
+    expect((res.body as Buffer).toString('utf8')).toBe('FAKE-ZIP-BYTES');
+    expect(hoisted.assembleSubmissionEctd).toHaveBeenCalledTimes(1);
+  });
+
+  it('refuses a package that fails structural validation, and returns no zip', async () => {
+    /* The failure this route used to have, and the one the deleted
+       audit-services endpoint still had: an invalid package delivered as a
+       normal download, the verdict only in a response header a script saving
+       the file never reads. */
+    hoisted.validateEctdPackage.mockResolvedValueOnce({
+      valid: false,
+      errors: [{ code: 'DTD_NO_BACKBONE', message: 'index.xml has no backbone' }],
+      warnings: [],
+    });
+    const res = await request(makeApp())
+      .post('/api/ectd/export/42')
+      .send({ applicationNumber: '123456', ...REVIEWED });
+    expect(res.status).toBe(422);
+    expect(res.headers['content-type']).toMatch(/application\/json/);
+    expect(res.body.code).toBe('ECTD_PACKAGE_INVALID');
+    expect(res.body.errorCount).toBe(1);
+  });
+
+  it('refuses an incomplete package when requireComplete is set', async () => {
+    const { EctdCompletenessError } = await import('../../server/services/ectd/completeness');
+    hoisted.assembleSubmissionEctd.mockRejectedValueOnce(
+      new EctdCompletenessError({
+        totalLeaves: 9, completeLeaves: 7, placeholderLeaves: 1, unfinalizedLeaves: 1,
+        completenessPct: 78, complete: false, incompleteSections: ['3.2.S.4.1'],
+      } as never),
+    );
+    const res = await request(makeApp())
+      .post('/api/ectd/export/42')
+      .send({ applicationNumber: '123456', requireComplete: true, ...REVIEWED });
+    expect(res.status).toBe(422);
+    expect(res.body.code).toBe('ECTD_INCOMPLETE');
+    expect(res.body.completeness.completenessPct).toBe(78);
+  });
+});
