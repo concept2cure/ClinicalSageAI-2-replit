@@ -514,6 +514,8 @@ router.post('/:id/purge', requirePlatformAdmin, async (req, res) => {
       organizationId: record.organizationId,
       status: record.status,
       purgedAt: record.purgedAt,
+      // What happened to the vault's stored bytes, stated rather than implied.
+      storageErasure: record.storageErasure,
     });
   } catch (error) {
     if (error instanceof OffboardingStateError) {

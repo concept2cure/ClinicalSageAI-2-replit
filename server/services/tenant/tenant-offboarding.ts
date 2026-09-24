@@ -38,12 +38,13 @@
  * @module server/services/tenant/tenant-offboarding
  */
 
-import type { Pool } from 'pg';
+import type { Pool, PoolClient } from 'pg';
 import { createScopedLogger } from '../../utils/logger';
 import { invalidateTenantPosture } from './tenant-lifecycle';
 import { invalidateOrgMembershipCache } from '../../middleware/orgMembership';
 import { findExportReceipt } from '../tenant-export/tenant-full-export.service';
 import { VAULT_DOCUMENT_TENANCY } from './vault-tenancy';
+import { getStorageProviderFor } from '../storage';
 
 const logger = createScopedLogger('tenant-offboarding');
 
@@ -375,7 +376,7 @@ export const PURGE_PARENT_SCOPED: Readonly<Record<string, string>> = Object.free
 
 /** Empty one tenant-owned table. Absent tables are skipped; other errors abort. */
 async function purgeChildTable(
-  pool: Pool,
+  client: PoolClient,
   table: string,
   organizationId: number
 ): Promise<void> {
@@ -405,19 +406,105 @@ async function purgeChildTable(
   const predicate = Object.prototype.hasOwnProperty.call(PURGE_PARENT_SCOPED, table)
     ? PURGE_PARENT_SCOPED[table]
     : 'organization_id = $1';
+  // Each table behind a savepoint. Inside a real transaction any error aborts
+  // it, so "skip a table this schema lacks" is only possible by rolling back to
+  // just before that one statement; without the savepoint the skip left the
+  // transaction dead and every later statement failed.
+  await client.query('SAVEPOINT purge_table');
   try {
-    await pool.query(`DELETE FROM ${table} WHERE ${predicate}`, [organizationId]);
+    await client.query(`DELETE FROM ${table} WHERE ${predicate}`, [organizationId]);
+    await client.query('RELEASE SAVEPOINT purge_table');
   } catch (error) {
     // A table absent from this deployment's schema is expected — the schema
     // varies by edition. A different error is not, and must abort the purge
     // rather than leave the tenant half-destroyed.
     const code = (error as { code?: string }).code;
     if (code === '42P01' || code === '42703') {
+      await client.query('ROLLBACK TO SAVEPOINT purge_table');
       logger.debug('Purge skipped a table not present in this schema', { table });
       return;
     }
     throw error;
   }
+}
+
+/**
+ * Refuse while any legal hold on the tenant is active. A record under hold may
+ * not be destroyed by anyone, whatever the retention clock says
+ * (migrations/20260906b_vault_legal_holds.sql). The purge consulted none.
+ *
+ * Read inside the purge's transaction, so a hold placed after the preflight
+ * checks is still seen. A deployment without the vault schema has no hold
+ * table, and so no holds; any other failure to read aborts the purge.
+ */
+async function assertNoActiveLegalHold(client: PoolClient, organizationId: number): Promise<void> {
+  const present = await client.query(`SELECT to_regclass('vault.legal_holds') IS NOT NULL AS present`);
+  if (!present.rows[0]?.present) return;
+  const { rows } = await client.query(
+    `SELECT count(*)::int AS active
+       FROM vault.legal_holds
+      WHERE organization_id = $1 AND lifted_at IS NULL`,
+    [organizationId]
+  );
+  const active = rows[0]?.active ?? 0;
+  if (active > 0) {
+    throw new OffboardingStateError(
+      'LEGAL_HOLD_ACTIVE',
+      `${active} legal hold(s) on this organization are active. Records under hold cannot be ` +
+        'destroyed; lift each hold, with a reason, before purging.'
+    );
+  }
+}
+
+/** What the purge did to the vault's stored bytes, which live outside the database. */
+export interface StorageErasure {
+  /** Provider-backed vault objects the tenant held when the purge committed. */
+  objects: number;
+  deleted: number;
+  /** Version ids whose bytes were not deleted: missing, or the store refused.
+   *  Residue to act on, reported rather than implied away. */
+  notDeleted: string[];
+}
+
+interface StoredObject {
+  versionId: string;
+  provider: string | null;
+}
+
+/** The tenant's provider-backed vault objects, read inside the transaction while the rows exist. */
+async function readStoredVaultObjects(client: PoolClient, organizationId: number): Promise<StoredObject[]> {
+  const present = await client.query(`SELECT to_regclass('vault.documents') IS NOT NULL AS present`);
+  if (!present.rows[0]?.present) return [];
+  const { rows } = await client.query(
+    // tenant-isolation-safe: VAULT_DOCUMENT_TENANCY carries `organization_id = $1`.
+    `SELECT storage_version_id, storage_provider
+       FROM vault.documents
+      WHERE ${VAULT_DOCUMENT_TENANCY} AND storage_version_id IS NOT NULL`,
+    [organizationId]
+  );
+  return rows.map((r: { storage_version_id: string; storage_provider: string | null }) => ({
+    versionId: r.storage_version_id,
+    provider: r.storage_provider,
+  }));
+}
+
+/**
+ * Delete the bytes of a committed purge, each from the store it was saved in.
+ * After COMMIT, never before: deleting first and then rolling back would leave
+ * a tenant that was not purged with records whose bytes are gone.
+ */
+async function eraseStoredObjects(objects: StoredObject[], organizationId: number): Promise<StorageErasure> {
+  const notDeleted: string[] = [];
+  let deleted = 0;
+  for (const o of objects) {
+    try {
+      if (await getStorageProviderFor(o.provider).delete(o.versionId, organizationId)) deleted++;
+      else notDeleted.push(o.versionId);
+    } catch {
+      notDeleted.push(o.versionId);
+    }
+  }
+  return { objects: objects.length, deleted, notDeleted };
 }
 
 export async function purgeTenant(
@@ -429,20 +516,35 @@ export async function purgeTenant(
     /** Tables purged, in FK-safe order. Injected so callers/tests can narrow it. */
     childTables?: readonly string[];
   }
-): Promise<OffboardingRecord> {
+): Promise<OffboardingRecord & { storageErasure: StorageErasure }> {
   const { organizationId, purgedByUserId, preconditions } = params;
 
   await assertPurgePermitted(pool, organizationId, preconditions);
 
   const childTables = params.childTables ?? PURGE_CHILD_TABLES;
 
-  await pool.query('BEGIN');
+  /* One checked-out client for the whole transaction. BEGIN, COMMIT and
+     ROLLBACK went through `pool.query`, which may run each statement on a
+     different connection: the deletes were not in the transaction the BEGIN
+     opened, and a failure part-way left the tenant half-destroyed with a
+     ROLLBACK that undid nothing (docs/evidence/D6/2026-09-24-purge/). */
+  let storedObjects: StoredObject[] = [];
+  const client = await pool.connect();
   try {
-    for (const table of childTables) {
-      await purgeChildTable(pool, table, organizationId);
-    }
+    await client.query('BEGIN');
+    try {
+      await assertNoActiveLegalHold(client, organizationId);
+      // Read the bytes' addresses while the rows that hold them still exist,
+      // and only when those rows are being purged: bytes whose records survive
+      // must survive too.
+      if (childTables.includes('vault.documents')) {
+        storedObjects = await readStoredVaultObjects(client, organizationId);
+      }
+      for (const table of childTables) {
+        await purgeChildTable(client, table, organizationId);
+      }
 
-    await pool.query(
+      await client.query(
       `UPDATE organizations
           SET status                 = 'purged',
               purged_at              = NOW(),
@@ -456,16 +558,27 @@ export async function purgeTenant(
               updated_at             = NOW()
         WHERE id = $1`,
       [organizationId, purgedByUserId, preconditions.finalExportDigest]
-    );
+      );
 
-    await pool.query('COMMIT');
-  } catch (error) {
-    await pool.query('ROLLBACK').catch(() => {});
-    throw error;
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    }
+  } finally {
+    client.release();
   }
 
   invalidateTenantPosture(organizationId);
   invalidateOrgMembershipCache(undefined, organizationId);
+
+  const storageErasure = await eraseStoredObjects(storedObjects, organizationId);
+  if (storageErasure.notDeleted.length > 0) {
+    logger.error('Tenant purged; some stored vault objects were not deleted', {
+      organizationId,
+      notDeleted: storageErasure.notDeleted,
+    });
+  }
 
   logger.warn('Tenant purged', {
     organizationId,
@@ -477,7 +590,7 @@ export async function purgeTenant(
   const after = await readOrganization(pool, organizationId);
   // The row is guaranteed to exist — the purge updates it rather than deleting
   // it, precisely so the deletion remains auditable.
-  return after as OffboardingRecord;
+  return { ...(after as OffboardingRecord), storageErasure };
 }
 
 /**
@@ -516,11 +629,12 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      Chunks are ordered first because their scoping predicate reads
      vault.documents, so they must be deleted while their parents still exist.
 
-     HONEST SCOPE: this deletes the document RECORDS and their chunks. It does
-     NOT delete the stored object bytes, which live outside the database
-     (uploads/vault/<program>/<sha256><ext> under the local provider). Purging
-     those is a storage-lifecycle concern this function does not perform, and
-     saying so here is better than implying an erasure that did not happen. */
+     The stored object BYTES live outside the database. purgeTenant reads their
+     addresses before these rows go and, after COMMIT, deletes each from the
+     store it was saved in (storage_provider), returning what was and was not
+     deleted (StorageErasure). Rows written before the storage provider (a
+     legacy `uploads/` path in s3_key, no storage_version_id) are not reached;
+     rendered_leaf_files holds version ids with no recorded provider. */
   'vault.document_chunks',
   'vault.documents',
   'regulatory_programs',
