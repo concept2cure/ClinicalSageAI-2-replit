@@ -2,10 +2,8 @@
 
 **Date:** 2026-09-24 · **Row:** D2 (Launch catalog) · **Workstream:** W1 ·
 **Session:** `…01E2moDuSNSNTBqAHV5GtWoz`
-**Status of this folder:** interim. The reference database, two baseline
-ratchets and the enterprise-intake fix below are complete. The classification of the remaining 40 is running; this
-README is extended with its verdicts, and with red → green proof for any
-in-scope defect, when they land.
+**Status of this folder:** complete for this pass. The reference database, two baseline
+ratchets, two fixes, one new gate and the classification of every baselined relation are below.
 
 ## The question
 
@@ -281,3 +279,49 @@ With `ci:runtime-ddl` in place, no new runtime creator can land, so what that
 path now vouches for is only the 14 baselined files. Whether to stop counting
 them — which would surface the latent EULA and `ai_feedback` tables as unbacked —
 is that lane's call. It was not changed from here.
+
+## The classification of every baselined relation
+
+**Method, and what did not run.** A 48-agent workflow was set up per subsystem cluster: an investigator, two skeptics with opposite lenses (one hunting missed exposure, one hunting gates that disable a path), and a judge. **It hit the session's usage limit.** All 12 investigators finished, and 6 of the 24 skeptics, none of whose challenges refuted a verdict. **No judge ran.** So the table below is the investigators' verdicts, checked by hand wherever a verdict claimed production reach, which is the judges' job. It is not a three-way adjudicated result, and should not be read as one.
+
+| Verdict | Relations | Checked by hand |
+|---|---|---|
+| **LAUNCH_ACTION** | `license_requests` | yes — **fixed** above |
+| **AUTONOMOUS** | `external_tool_audit_log` (public webhook) | yes — **fixed** below |
+| GATED_OFF | `firecrawl_usage_daily`, `assembly_docs`, `assembly_audit_logs`, `extraction_jobs` | test-assembly gate re-read at HEAD (`register-core-routes.ts:48`) |
+| OUT_OF_SCOPE (reached only from surfaces outside the catalog, or by direct API with no caller) | `vault.drafting_sessions`, `vault.extracted_entities`, `vault.hybrid_search`, `vault.table_priority_search`, `reg_submissions`, `reg_m3_sections`, `reg_changes`, `reg_rpi_snapshots`, `external_evidence_documents`, `external_tool_settings`, `reg_ectd_packages` | `reg_ectd_packages`: yes — the only caller's format type is `'pdf' \| 'docx' \| 'zip'` |
+| UNREACHABLE | the 7 cognitive-ecosystem relations, `step_runs`, `workflow_definitions`, `workflow_step_definitions`, `document_approvals` (ratcheted out above), `license_agreements`, `license_acceptances`, `literature_sources`, `medline`, `academic_embeddings`, `academic_resources`, `pg_stat_statements`, `regulatory_status`, `trials`, `ai_feedback`, `compliance.check_access`, `correspondences`, `enterprise_integration_credentials`, `site_intel.site_scorecard` | licensing, `ai_feedback`: yes (no client caller, no AnA tool) |
+
+**Result for D2:** of the relations no provisioned database has, **the only one a
+launch-catalog customer could reach was `license_requests`**, and it is fixed. The
+only one production reaches without a user was the Firecrawl webhook, and it is
+fixed. Everything else is behind a production-off surface, gated, or reached by
+nothing. Under Rule 2 those get no session. They are listed here so a surface
+admitted to the catalog later arrives knowing its absences.
+
+### Fixed: the public Firecrawl webhook wrote before it verified
+
+`POST /api/firecrawl-webhooks` is on the session-auth open list and mounted
+unconditionally. It INSERTed into `external_tool_audit_log` **before** checking
+the signature, with no catch, in the super-admin scope, for every request from
+anyone. That table is on no applier.
+
+In the launch posture `FIRECRAWL_WEBHOOK_SECRET` is unset, since Firecrawl is
+outside the catalog, so every request is unverified. Production therefore
+answered each one **500** instead of its contract's 401. Had the table existed,
+any internet client could have written rows past RLS.
+
+Not a crash: Express 5 turns a rejected handler into a 500, and global
+rejection handlers exist. That was checked, not assumed.
+
+The fix verifies first. A refused request is logged, not stored.
+`server/routes/__tests__/firecrawl-webhooks-verify-first.test.ts` uses a pool
+that fails exactly as production's does:
+
+- **red on the old code, 3/3** — 500 not 401, and the pool was reached;
+- **green after**, with the existing verification and auth-gate tests, 31/31
+  (`firecrawl-webhook-verify-first.txt`).
+
+`external_tool_audit_log` stays baselined. A *valid* webhook would still find no
+table, but none can arrive until someone provisions Firecrawl, which is
+out-of-catalog work.

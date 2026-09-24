@@ -74,7 +74,11 @@ interface ProgramRow {
   intended_use: string | null;
   primary_agency: string | null;
   target_submission_date: string | null;
-  progress_percent: number | null;
+  /** The share of this program's governed sections that are approved or
+   *  locked — the figure its card in the Projects list reports. Null when the
+   *  server could not measure it. (This read `progress_percent` until
+   *  2026-09-24: a column written once as 0 and never updated.) */
+  readiness?: number | null;
   /** The device taxonomy intake stores for a device / IVD program
    *  (regulatory_programs columns + the metadata-held fields the read lifts).
    *  Every one is null for a drug program, and absent on a server that predates
@@ -1209,7 +1213,7 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
   const status = sel?.status || prog?.status || null;
   const priority = prog?.priority ?? null;
   const phase = prog?.phase ?? null;
-  const completion = prog?.progress_percent ?? null;
+  const completion = typeof prog?.readiness === 'number' ? prog.readiness : null;
   /* The device taxonomy, read from the row only. A device / IVD program shows
      its class, path, product code, regulation, panel, predicate and flags —
      each field stated as absent when the row lacks it; a drug program shows

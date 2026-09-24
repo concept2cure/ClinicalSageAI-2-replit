@@ -267,14 +267,16 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
  * this codebase, not a hypothetical. Keeping it separate means a database
  * without the phase-9 schema still gets its project list.
  *
- * On that failure the caller keeps the stored value. That is not a good answer
- * — it is the same 0 — but it is the pre-existing one, and it is logged rather
- * than passed off as a measurement.
+ * On that failure it answers null, not an empty map: "could not measure" and
+ * "measured, nothing approved" are different answers. The list keeps the stored
+ * value on null — not a good answer, it is the same 0, but it is the
+ * pre-existing one and it is logged. The detail read reports null, which
+ * ProjectHome renders as no figure.
  */
 async function readinessByProject(
   projectIds: string[],
   orgId: number,
-): Promise<Map<string, number>> {
+): Promise<Map<string, number> | null> {
   const out = new Map<string, number>();
   if (projectIds.length === 0) return out;
   try {
@@ -297,6 +299,7 @@ async function readinessByProject(
       err: err instanceof Error ? err.message : String(err),
       code: (err as { code?: string })?.code,
     });
+    return null;
   }
   return out;
 }
@@ -438,7 +441,7 @@ const PROGRAM_DETAIL_SQL = `
     p.description, p.product_name, p.indication, p.intended_use,
     p.primary_agency, p.target_agencies,
     p.target_submission_date, p.actual_submission_date, p.approval_date,
-    p.progress_percent, p.lead_user_id, p.team_members,
+    p.lead_user_id, p.team_members,
     p.created_at, p.updated_at,
     p.application_number,
     p.product_type, p.device_class, p.regulatory_path, p.product_code,
@@ -482,10 +485,25 @@ export function serializeProgramDetail(row: Record<string, unknown>): Record<str
   };
 }
 
-/** The detail row for one program in one organization, or null. */
+/**
+ * The detail row for one program in one organization, or null.
+ *
+ * `readiness` is the figure the list reports for the same program
+ * (readinessByProject), so a program reads the same on its card and on its own
+ * page. It used to return the raw `progress_percent` — written once as 0 and
+ * never updated — which ProjectHome drew as "Dossier readiness 0%" and told AnA,
+ * while the card beside it showed the real share. `progress_percent` is left
+ * out of the projection: a column nothing maintains is not offered to a reader.
+ * Null when the aggregate could not be read: not assessed, never 0.
+ */
 async function readProgramDetail(id: string, orgId: number): Promise<Record<string, unknown> | null> {
   const { rows } = await pool.query(PROGRAM_DETAIL_SQL, [id, orgId]);
-  return rows.length ? serializeProgramDetail(rows[0] as Record<string, unknown>) : null;
+  if (!rows.length) return null;
+  const measured = await readinessByProject([id], orgId);
+  return {
+    ...serializeProgramDetail(rows[0] as Record<string, unknown>),
+    readiness: measured ? (measured.get(id) ?? 0) : null,
+  };
 }
 
 // ── GET /api/c2c/projects ─────────────────────────────────────────────────────
@@ -552,7 +570,7 @@ router.get('/', async (req: Request, res: Response) => {
       orgId,
     );
     for (const p of page as Array<{ id: string; readiness: number }>) {
-      const r = real.get(p.id);
+      const r = real?.get(p.id);
       if (r != null) p.readiness = r;
     }
 
