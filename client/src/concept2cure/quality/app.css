@@ -264,7 +264,7 @@
 .qcc-link-label { font-size: 10.5px; color: var(--text-400); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .qcc-link-rel { font-size: 10px; color: var(--text-400); white-space: nowrap; }
 .qcc-link-type {
-  font-size: 9.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-400);
+  font-size: 10px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-400);
   font-weight: 600; background: var(--bg-100); padding: 2px 6px; border-radius: 4px; white-space: nowrap;
 }
 

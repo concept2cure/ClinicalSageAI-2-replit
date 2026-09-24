@@ -105,7 +105,7 @@
     gap: 6px;
   }
   .ed-basis-chip {
-    font-size: 9.5px;
+    font-size: 10px;
     font-weight: 600;
     padding: 2px 7px;
     border-radius: 999px;
@@ -130,7 +130,7 @@
     color: var(--error);
   }
   .ed-basis-l {
-    font-size: 9.5px;
+    font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--text-400);
@@ -539,7 +539,7 @@
     padding: 2px 0;
   }
   .ed-prov-r .k {
-    font-size: 9.5px;
+    font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     opacity: 0.55;
@@ -1074,8 +1074,8 @@
     position: absolute;
     top: -11px;
     left: 22px;
-    background: var(--accent-100);
-    color: #fff;
+    background: var(--accent-strong);
+    color: var(--accent-on-strong);
     font-size: 10px;
     font-weight: 600;
     padding: 4px 11px;

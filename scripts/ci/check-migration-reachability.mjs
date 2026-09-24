@@ -216,7 +216,9 @@ const REF_RE = new RegExp(
  */
 export function cteNames(sql) {
   const out = new Set();
-  for (const m of sql.matchAll(/(?:\bWITH|,)\s+(?:RECURSIVE\s+)?([a-zA-Z_][\w]*)\s+AS\s*\(/gi)) {
+  // `AS [NOT] MATERIALIZED (` is a CTE too (PostgreSQL 12+). Without it,
+  // `WITH scoped AS MATERIALIZED (…) … FROM scoped` read as a table `scoped`.
+  for (const m of sql.matchAll(/(?:\bWITH|,)\s+(?:RECURSIVE\s+)?([a-zA-Z_][\w]*)\s+AS\s*(?:(?:NOT\s+)?MATERIALIZED\s*)?\(/gi)) {
     out.add(m[1].toLowerCase());
   }
   return out;

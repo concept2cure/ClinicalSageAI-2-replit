@@ -79,7 +79,7 @@
   .pdev-btn:hover{ background:var(--bg-100); }
   .pdev-btn.sm{ padding:6px 11px; font-size:12px; }
   .pdev-btn.primary{ background:var(--accent-strong); border-color:var(--accent-strong); color:var(--accent-on-strong); }
-  .pdev-btn.primary:hover{ background:var(--accent-200); }
+  .pdev-btn.primary:hover{box-shadow:var(--shadow-sm);transform:translateY(-1px);}
   .pdev-btn.primary:disabled{ opacity:.5; cursor:default; }
   .pdev-btn.ghost{ background:transparent; }
   .pdev-btn.warn{ border-color:#e6b98f; color:var(--warning); }
