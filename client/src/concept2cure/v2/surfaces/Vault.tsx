@@ -449,7 +449,11 @@ interface VaultSearchShape {
 /** A search hit rendered in the same row component the tree uses. */
 function searchHitToDoc(h: VaultSearchHit): VaultDoc {
   return {
-    id: h.id,
+    /* Keyed the way the tree keys the same document (`up-<uuid>`, server
+       uploadLeaf), so a hit and its tree leaf are one selection. Keyed by the
+       bare uuid, no hit ever matched, and every click fell back to the first
+       hit. */
+    id: `up-${h.id}`,
     num: h.ctdSection || '',
     title: h.title,
     // The same reader-facing name the tree shows (the server maps tree rows
@@ -792,8 +796,19 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
     { documentUuid: string; documentTitle: string; mimeType?: string | null } | null
   >(null);
 
-  const sel =
-    allDocs.find((d) => d.id === selId) || results[0] || allDocs[0] || null;
+  /* The tree's record of a document wins over a search hit for the same one:
+     it carries the filing block (Confirm, Move, Place into submission) that a
+     hit does not, and keeps the hit's matching excerpt. A document only the
+     search found is shown as its hit. */
+  const pick = (id: string | undefined): VaultDoc | undefined => {
+    if (id === undefined) return undefined;
+    const leaf = allDocs.find((d) => d.id === id);
+    const hit = searching ? results.find((d) => d.id === id) : undefined;
+    if (!leaf) return hit;
+    // While searching, the excerpt that matched is what the reader needs to see.
+    return hit?.preview ? { ...leaf, preview: hit.preview } : leaf;
+  };
+  const sel = pick(selId ?? undefined) || pick(results[0]?.id) || allDocs[0] || null;
 
   /* What AnA can see of this screen.
      Until now she knew the user was on "vault" and nothing else — not which
