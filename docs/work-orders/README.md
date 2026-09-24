@@ -248,6 +248,25 @@ index and the filter is a tenant, the same miss is possible — HNSW included,
 once a tenant is a small fraction of the table. Not changed here: not this
 lane's corpora.
 
+**For tenant offboarding / retention, D6 (2026-09-24, from the AnA client-files lane): no stored Vault object is ever deleted.**
+Only one place in `server/` calls the storage provider's `delete()`: the
+refused-upload cleanup added today (`server/services/vault/vault-ingest-discard.ts`).
+Nothing else, including the tenant purge, document deletion (a soft delete),
+retention and version replacement, removes a document's bytes.
+`tenant-offboarding.ts` says so in its purge list ("does NOT delete the stored
+object bytes … a storage-lifecycle concern this function does not perform"),
+and its path description (`uploads/vault/<program>/<sha256>`) predates the
+provider: bytes are at `<org>/<program>/versions/<versionId>/` (local) or the
+same keys in the bucket (S3). So an offboarded tenant's documents stay on disk
+or in the bucket after the purge reports success. Two smaller leaks feed the
+same pile: re-uploading identical bytes to the same code and version repoints
+`storage_version_id` to the new copy and leaves the old one unreferenced, and
+bytes stored before this lane's fix for refused uploads. The provider has what
+a purge needs, `list(orgId, projectId)` and an org-checked `delete`. What it
+needs first is a decision this lane should not take alone: legal holds (which
+the D6 note above says cannot be placed at all) must be able to stop it. Not
+changed here.
+
 **For the D3 isolation and eCTD package-spine lanes (2026-09-24): trunk is over the warning ratchet.**
 Running `check-eslint-warning-ratchet.mjs` on trunk gives 6434 warnings against a
 baseline of 6431. `--since 019afa70d` (the last baseline commit) names the files
