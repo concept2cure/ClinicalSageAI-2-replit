@@ -14,6 +14,7 @@ import {
   useChatUpload,
   attachmentReadLabel,
   validateUploadFile,
+  composeTurn,
   CHAT_UPLOAD_MAX_BYTES,
 } from '../../client/src/concept2cure/hooks/useChatUpload';
 
@@ -47,6 +48,29 @@ describe('attachmentReadLabel', () => {
   it('returns null when nothing was read', () => {
     expect(attachmentReadLabel('utf8', 0)).toBeNull();
     expect(attachmentReadLabel(null, undefined)).toBeNull();
+  });
+});
+
+describe('composeTurn', () => {
+  const ready = { id: 'a1', name: 'Protocol v3.pdf', status: 'ready' as const, fileId: 'file_1', extractionWords: 40 };
+  const failed = { id: 'a2', name: 'broken.pdf', status: 'error' as const, error: 'unreadable' };
+  const pending = { id: 'a3', name: 'late.pdf', status: 'uploading' as const };
+
+  it('names and sends only the files the server confirmed', () => {
+    const { body, files } = composeTurn('Summarise this', [ready, failed, pending]);
+    expect(body).toBe('Summarise this\n\nAttached: Protocol v3.pdf');
+    expect(files).toEqual([
+      { id: 'a1', name: 'Protocol v3.pdf', fileId: 'file_1', extractionMethod: undefined, extractionWords: 40 },
+    ]);
+  });
+
+  it('lets the attachment line be the message when there is no text', () => {
+    expect(composeTurn('  ', [ready]).body).toBe('Attached: Protocol v3.pdf');
+  });
+
+  it('sends nothing extra when no file is ready', () => {
+    expect(composeTurn('Read this', [failed])).toEqual({ body: 'Read this', files: [] });
+    expect(composeTurn('', [failed]).body).toBe('');
   });
 });
 

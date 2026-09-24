@@ -131,7 +131,7 @@
 
   --border-subtle:           var(--sidebar-border);
   --border-strong:           var(--bg-300);
-  --border-focus:            var(--accent-main-100);
+  --border-focus:            var(--accent-main-200);   /* a focus ring must clear 3:1 — -100 is 2.96:1 on bg-000 */
 
   /* The boundary of an INTERACTIVE control, and the only border token that
      clears WCAG 2.2 SC 1.4.11's 3:1.
@@ -184,6 +184,13 @@
   --warning-muted:           #f8e9d0;
   --error:                   #b63939;   /* 5.49 / 4.98 / 4.54 */
   --error-muted:             #f5dfdd;
+  /* A label on a semantic FILL — the success / warning / error counterpart of
+     --accent-on-strong, for the same reason: the fills lift lighter in dark
+     (#8fae6e, #d99a58, #ef7d7d) and white on them falls to 2.4–2.7:1. Stated,
+     not derived; each pair is enforced in check-token-contrast. */
+  --on-success:              #ffffff;   /* 5.59:1 on --success */
+  --on-warning:              #ffffff;   /* 5.43:1 on --warning */
+  --on-error:                #ffffff;   /* 5.78:1 on --error */
   --info:                    var(--ai);
   --info-muted:              var(--ai-muted);
 
@@ -388,7 +395,7 @@
   --ink-disabled:            var(--text-500);
   --ink-inverse:             var(--text-000);
 
-  --border-focus:            var(--accent-main-100);
+  --border-focus:            var(--accent-main-200);   /* a focus ring must clear 3:1 — -100 is 2.96:1 on bg-000 */
   --accent-hover:            var(--accent-main-200);
 
   --info:                    var(--ai);
@@ -422,6 +429,9 @@
   --warning-muted:           #4a3a1e;   /* badge 4.55:1 */
   --error:                   #ef7d7d;   /* 5.70 / 4.97 */
   --error-muted:             #4a2424;   /* badge 5.03:1 */
+  --on-success:              #141413;   /* 7.42:1 on --success */
+  --on-warning:              #141413;   /* 7.65:1 on --warning */
+  --on-error:                #141413;   /* 6.93:1 on --error */
 
   /* The AnA blue was the seventh tone that pass missed, for the same reason:
      never declared for dark, so the light values cascaded onto the dark page.

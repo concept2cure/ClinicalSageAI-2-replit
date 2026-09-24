@@ -3948,6 +3948,7 @@ export function DocumentWorkbench({
                 streaming={ana.isStreaming}
                 open={dock.open}
                 onToggle={dock.toggle}
+                controls={dock.panelId}
               />
               <button
                 type="button"
@@ -3960,13 +3961,12 @@ export function DocumentWorkbench({
               </button>
             </span>
           </div>
-          {/* The live work dock — the same one the shell rail mounts. ABOVE
-              the log below, deliberately: that region is aria-live, and a
-              clock ticking inside a live region would be read out every
-              second. */}
+          {/* AnA's progress — the same panel the shell rail mounts — above the
+              conversation, so the work is seen before the words. */}
           {dock.open && (
             <div className="ana-work-host">
               <AnaWorkPanel
+                id={dock.panelId}
                 messages={ana.messages}
                 streaming={ana.isStreaming}
                 runStatus={ana.runStatus}
@@ -3984,13 +3984,17 @@ export function DocumentWorkbench({
               />
             </div>
           )}
+          {/* A labelled region, NOT a live one. As a polite `log` marked busy
+              while streaming, it made the whole transcript a live region and
+              held every announcement inside it until the turn ended — the
+              per-turn record's own polite region (AnaActivity) included, so
+              "Searching the literature…" was never heard while it happened.
+              Status is announced by that narrow region alone, the same
+              arrangement as the rail (Shell.tsx). */}
           <div
             ref={anaScrollRef}
-            role="log"
+            role="region"
             aria-label="AnA conversation"
-            aria-live="polite"
-            aria-relevant="additions text"
-            aria-busy={ana.isStreaming}
             style={{
               flex: 1,
               minHeight: 0,
@@ -4025,22 +4029,16 @@ export function DocumentWorkbench({
                     <div className="cmt-meta">
                       <b>AnA</b>
                     </div>
-                    {/* Until the first token lands the server's status phase
-                        stands in — never an invented sentence. The phase is a
-                        server-authored label, not a document, so it is not put
-                        through the markdown path. */}
-                    {m.text ? (
-                      <AnaMarkdown text={m.text} />
-                    ) : (
-                      <div className="cmt-body">
-                        {m.streaming ? m.statusPhase || 'Thinking…' : ''}
-                      </div>
-                    )}
-                    {/* The shared record of her work, her output and the
-                        grounding verdict — the same three every host renders.
-                        This pane had its own copy of the first, which showed
-                        the raw tool payload and a raw lens code, and listed
-                        prompt-module ids as "Context used". */}
+                    {/* Her work first — while she works, its live phase is the
+                        waiting state, so this pane no longer prints the same
+                        phase a second time under it — then the answer. */}
+                    <AnaActivity {...activityPropsFor(m)} />
+                    {m.text && <AnaMarkdown text={m.text} />}
+                    {/* The grounding verdict and her output — with the record
+                        above, the same three every host renders. This pane had
+                        its own copy of the record, which showed the raw tool
+                        payload and a raw lens code, and listed prompt-module
+                        ids as "Context used". */}
                     <AnaGrounding evidence={m.evidence} />
                     {Array.isArray(m.warnings) && m.warnings.length > 0 && (
                       <div className="ana-msg-warnings" role="note">
@@ -4052,7 +4050,6 @@ export function DocumentWorkbench({
                         ))}
                       </div>
                     )}
-                    <AnaActivity {...activityPropsFor(m)} />
                     <AnaOutputCards message={m} />
                     {(m.suggestedActions ?? []).length > 0 && (
                       <div className="ana-next-actions">

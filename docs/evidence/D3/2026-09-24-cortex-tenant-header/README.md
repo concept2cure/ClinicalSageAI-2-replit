@@ -37,12 +37,23 @@ some time — `server/__tests__/security/tenant-isolation-org-uuid.contract.test
 
 ## What contained it, and what did not
 
-In the posture D3 requires, the database contained it. `lumen_data_atoms` is
-FORCEd, with `tenant_isolation_policy` keyed on the **session's** GUC.
-`search_atoms_hybrid` is not SECURITY DEFINER, and `/api/cortex` is not in
-`SYSTEM_SCOPE_PREFIXES`. So a header naming B gave the old handler "B's key
-under A's policy" and it found nothing. RLS was the only thing between a
-caller and another tenant's atoms, as mutation M1 shows.
+**Corrected the same day — the first version of this section was wrong for
+half the route.** For the atom corpus, the database contained it:
+`lumen_data_atoms` is FORCEd with `tenant_isolation_policy` keyed on the
+**session's** GUC, `search_atoms_hybrid` is not SECURITY DEFINER, and
+`/api/cortex` is not in `SYSTEM_SCOPE_PREFIXES`. A header naming B gave search
+and graph modes "B's key under A's policy", which found nothing, and RLS was
+the only thing in the way (mutation M1).
+
+**For the vault corpus it was not contained.** Generate and advisory modes pass
+the handler's `organizationUuid` into `ragRouter`. The RAG pipeline then
+**writes that uuid into `app.current_org_id`**, the GUC vault RLS reads, and
+uses it as the vault arm's SQL predicate too. So the old handler's header
+decided which tenant's vault those two modes read, **with RLS enforcing**. The
+re-baseline's original wording, "both its SQL predicate and RLS trust it", was
+right. The pipeline mechanism is shown directly, as app_service with RLS on,
+and fixed for every caller, in `../2026-09-24-rag-pipeline-tenant/`. The fix
+here (the session's key only) had already closed this route's side of it.
 
 ## The contract
 

@@ -1,0 +1,8 @@
+# P4 client half — GREEN; 2026-09-24T19:16:49Z
+ ✓ client/src/concept2cure/v2/__tests__/authoringSignatures.test.tsx > §11.50(a) — the three required items are displayed > shows the printed name, the meaning and the exact time 118ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSignatures.test.tsx > §11.50(a) — the three required items are displayed > shows the reason the signer typed, which the toast never did 14ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringSignatures.test.tsx > §11.50(a) — the three required items are displayed > shows WHICH frozen version the signature covers (§11.70) 13ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 3. signature state distinguishes unsigned from tampered > names who signed, when, and with what meaning (§11.50) 72ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx > 3. signature state distinguishes unsigned from tampered > says a printed name the record does not hold is not recorded 54ms
+ Test Files  3 passed (3)
+      Tests  44 passed (44)

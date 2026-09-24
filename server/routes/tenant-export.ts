@@ -173,6 +173,7 @@ router.get('/full', async (req: Request, res: Response) => {
       tableCount: payload.coverage.tablesExported,
       rowCount: payload.coverage.totalRows,
       createdBy: Number((req as any).user?.userId ?? (req as any).user?.id) || null,
+      coverage: payload.coverage,
     });
 
     /* WO-16C #133. Was `void auditService.logAction({…})`.

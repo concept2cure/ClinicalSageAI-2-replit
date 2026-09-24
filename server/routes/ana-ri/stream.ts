@@ -101,9 +101,11 @@ import {
   buildTraceEntry,
   collectTracesFromHistory,
   formatTraceForContext,
+  refusalOf,
   type ToolTraceEntry,
 } from '../../services/ana/tool-trace.js';
 import { runStreamPostProcessing } from './post-processing.js';
+import { DOCUMENT_ACTIONS } from '../../services/ana-ri/document-actions.js';
 import { reflectAfterTurn } from '../../services/ana-ri/relational-profile-service.js';
 import { selectToolsForTurn } from '../../services/ana/tool-selection.js';
 import { planEventFromToolResult, type TurnPlanStep } from '../../services/ana/turn-plan.js';
@@ -1053,7 +1055,10 @@ export function mountStreamRoute(router: Router): void {
             appliedRole: orchestration.appliedRole,
             activeWorkstream: orchestration.activeWorkstream,
             workstreamHandoff: orchestration.workstreamHandoff,
-            suggestedActions: orchestration.suggestedActions,
+            // Their labels, not their ids. Every renderer shows these as
+            // buttons that ask AnA for the thing named, so "rewritten_section"
+            // was both what the person read and what the button sent.
+            suggestedActions: orchestration.suggestedActions.map(t => DOCUMENT_ACTIONS[t]?.label ?? t),
           },
         })}\n\n`
       );
@@ -1478,7 +1483,11 @@ export function mountStreamRoute(router: Router): void {
               continue;
             }
 
-            if (!runId || !runHandle) {
+            // `runOrgId === null` never adds a case — no org means no run row
+            // (the column is NOT NULL), so `runId` is already empty. It is here
+            // so the org the decision is recorded against is typed non-null
+            // below, rather than re-checked in a branch that cannot fire.
+            if (!runId || !runHandle || runOrgId === null) {
               // No durable run means no way to ask and no way to wait. Refusing
               // is the only honest outcome: the alternative is running a
               // governed action with nobody having authorised it.
@@ -1497,7 +1506,7 @@ export function mountStreamRoute(router: Router): void {
               continue;
             }
 
-            out.set(toolUse.id, await awaitDecision(toolUse, verdict, round));
+            out.set(toolUse.id, await awaitDecision(toolUse, verdict, round, runOrgId));
           }
           return out;
         };
@@ -1506,7 +1515,9 @@ export function mountStreamRoute(router: Router): void {
         const awaitDecision = async (
           toolUse: ToolCall,
           verdict: Extract<ReturnType<typeof classifyToolCall>, { kind: 'NEEDS_APPROVAL' }>,
-          round: number
+          round: number,
+          /** The run's own tenant. Every write to the run row is bound to it. */
+          orgId: number
         ): Promise<{ ok: boolean; result: unknown; why?: string }> => {
           const refused = (why: string, message: string) => ({
             ok: false,
@@ -1572,7 +1583,7 @@ export function mountStreamRoute(router: Router): void {
               return refused('the run was stopped', 'The run was stopped before anyone decided, so this action did not run.');
             }
             if (res.writableEnded) {
-              await stopRunInternally(getPool(), runId, 'client_disconnected', runOrgId ?? undefined);
+              await stopRunInternally(getPool(), runId, 'client_disconnected', orgId);
               return refused('the client disconnected', 'The connection dropped before anyone decided, so this action did not run.');
             }
             const decision = await readApprovalDecision(getPool(), runId, toolUse.id).catch(() => null);
@@ -1592,7 +1603,7 @@ export function mountStreamRoute(router: Router): void {
               // Timeout DENIES. The same ceiling as an abandoned pause, so
               // there is one number for "the human is not coming back" rather
               // than two that can drift apart.
-              await recordApprovalDecision(getPool(), runId, {
+              await recordApprovalDecision(getPool(), runId, orgId, {
                 toolUseId: toolUse.id,
                 decided: 'denied',
                 decidedAt: new Date().toISOString(),
@@ -1755,6 +1766,14 @@ export function mountStreamRoute(router: Router): void {
                   note: `No local handler for ${toolUse.name}; may be a server-resolved tool.`,
                 });
                 toolStatus = 'not_found';
+              }
+              // A handler that refuses returns `{ error }` rather than throwing.
+              // The step still did not happen: say so in the stream, the trace
+              // and the telemetry, never as a success.
+              const refusal = toolStatus === 'success' ? refusalOf(resultStr) : null;
+              if (refusal) {
+                toolStatus = 'error';
+                toolErrorMessage = refusal;
               }
               void logToolRun({
                 threadId: thread_id,

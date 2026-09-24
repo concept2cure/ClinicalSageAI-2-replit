@@ -339,6 +339,13 @@ export interface ExportReceiptOutcome {
   recorded: boolean;
   /** True only when THIS call wrote the row (false on an ON CONFLICT no-op). */
   inserted: boolean;
+  /**
+   * Set when no receipt was written because the export was incomplete: a table
+   * failed to read, or one was truncated. The receipt is what authorizes a
+   * purge, and an incomplete return of a tenant's data must never authorize its
+   * destruction. Names the tables, so the operator knows what to fix.
+   */
+  incomplete?: { tablesFailed: string[]; truncatedTables: string[] };
 }
 
 export async function recordExportReceipt(
@@ -349,8 +356,25 @@ export async function recordExportReceipt(
     tableCount: number;
     rowCount: number;
     createdBy: number | null;
+    /** The export's own coverage report (`payload.coverage`). */
+    coverage: {
+      tablesFailed: ReadonlyArray<{ table: string } | string>;
+      truncatedTables: ReadonlyArray<string>;
+    };
   }
 ): Promise<ExportReceiptOutcome> {
+  const tablesFailed = params.coverage.tablesFailed.map((t) => (typeof t === 'string' ? t : t.table));
+  const truncatedTables = [...params.coverage.truncatedTables];
+  if (tablesFailed.length > 0 || truncatedTables.length > 0) {
+    // No receipt: this digest must not open a purge (tenant-purge.dbtest.ts).
+    logger.warn('Tenant export incomplete — no receipt recorded; this digest cannot authorize a purge', {
+      organizationId: params.organizationId,
+      digest: params.digest,
+      tablesFailed,
+      truncatedTables,
+    });
+    return { recorded: false, inserted: false, incomplete: { tablesFailed, truncatedTables } };
+  }
   try {
     const res = await client.query(
       `INSERT INTO tenant_export_receipts

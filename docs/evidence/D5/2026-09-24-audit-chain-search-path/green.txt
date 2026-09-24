@@ -1,0 +1,6 @@
+# the same, WITH the fix
+ ✓ server/services/audit/__tests__/chain-concurrency.dbtest.ts > audit_logs chain under real PostgreSQL concurrency (F-1) > 1. eight concurrent writers of one tenant never fork the chain 82ms
+ ✓ server/services/audit/__tests__/chain-concurrency.dbtest.ts > audit_logs chain under real PostgreSQL concurrency (F-1) > 2. chain order is commit order, not occurred_at order 109ms
+ ✓ server/services/audit/__tests__/chain-concurrency.dbtest.ts > audit_logs chain under real PostgreSQL concurrency (F-1) > 3. tenant-scoped (RLS) and unscoped connections write one verifiable chain per tenant 141ms
+ ✓ server/services/audit/__tests__/chain-concurrency.dbtest.ts > audit_logs chain under real PostgreSQL concurrency (F-1) > 4. a connection whose search_path puts another schema first still takes the head in chain order 36ms
+      Tests  4 passed (4)

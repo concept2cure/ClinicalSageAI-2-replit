@@ -197,4 +197,42 @@ describe('audit_logs chain under real PostgreSQL concurrency (F-1)', () => {
       client.release();
     }
   });
+
+  it('4. a connection whose search_path puts another schema first still takes the head in chain order', async () => {
+    // current_schema() is the first schema on the search_path that exists; the
+    // unqualified `audit_logs` every statement names resolves further down. The
+    // writer asked current_schema() whether chain_seq existed, got "no", and took
+    // the head by occurred_at. Seen in a full real-database run: tenant 0's row 45
+    // (tests/db/master-licensing-console.dbtest.ts, which sets such a search_path
+    // on its runtime role) chained to row 43, skipping 44, whose occurred_at was
+    // the earlier of two racing password resets.
+    // The search_path is set for the connection from its start, as a role-level
+    // setting does, so the writer's first look at this connection sees it.
+    await pool.query('CREATE SCHEMA IF NOT EXISTS chain_elsewhere');
+    const now = Date.now();
+    await writeInTx(7, 'later-timestamp-first', new Date(now).toISOString());
+    await writeInTx(7, 'earlier-timestamp-second', new Date(now - 5_000).toISOString());
+    const skewedUrl = new URL((pool as unknown as { options: { connectionString: string } }).options.connectionString);
+    skewedUrl.searchParams.set('options', '-c search_path=chain_elsewhere,public');
+    const skewed = new Pool({ connectionString: skewedUrl.toString(), max: 1 });
+    try {
+      const writer = await skewed.connect();
+      try {
+        await writer.query('BEGIN');
+        await writeRow(writer, 7, 'written-under-another-search-path');
+        await writer.query('COMMIT');
+      } finally {
+        writer.release();
+      }
+    } finally {
+      await skewed.end();
+    }
+    const client = await pool.connect();
+    try {
+      const verdict = await verifyAuditChain(client);
+      expect(verdict, JSON.stringify(verdict.brokenAt)).toMatchObject({ ok: true, rowsChecked: 3 });
+    } finally {
+      client.release();
+    }
+  });
 });

@@ -308,6 +308,43 @@ if ! npm run --silent check:catalog-copy 2>&1; then
 fi
 echo "   ✅ Catalog copy passed."
 
+# ── Fixture and mock data reaching a tenant (unconditional) ──
+#
+# docs/LAUNCH_DEFINITION_OF_DONE.md row D2 requires `ci:fixture-fallback` and
+# `ci:no-mock-in-prod-routes` "set to block". Both ran only in ci.yml's `lint`
+# job, which under RULE 0 (every change pushed straight to concept2cure-v2, no
+# PRs) blocks nothing: a reintroduced fixture lands on the only branch and CI
+# turns red afterwards. This hook is the one place that runs BEFORE the code
+# lands, so this is where "block" is true.
+#
+# The two defects they catch are the ones a regulated tenant cannot detect:
+# `live ?? FIXTURE` substitutes example rows on exactly the occasions the read
+# failed (an empty tenant, an expired token, a 500), and a MOCK_* constant in a
+# route handler ships invented records as the tenant's own. Both were shown
+# failing on a launch file before this was added (periodic review 2026-09-24:
+# `live ?? FIXTURE_DOCS` in Vault.tsx and `MOCK_PROGRAMS` in
+# taskManagement.routes.ts, each rc=1, each restored byte-identical). ~0.5 s each.
+echo "   Checking for fixture fallback in client surfaces..."
+if ! npm run --silent ci:fixture-fallback 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Ungated fixture fallback FAILED."
+  echo "   A surface falls back to example rows when its read fails. Use"
+  echo "   useSampleRows(live, fixture) behind the explicit sample-mode boundary."
+  echo ""
+  exit 1
+fi
+echo "   ✅ No ungated fixture fallback."
+
+echo "   Checking for mock data in production routes..."
+if ! npm run --silent ci:no-mock-in-prod-routes 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Mock data in a production route FAILED."
+  echo "   A route handler ships invented records. Fail closed instead."
+  echo ""
+  exit 1
+fi
+echo "   ✅ No mock data in production routes."
+
 # ── Fabricated signer identity (unconditional) ──
 #
 # 21 CFR 11.50(a)(1) asks for the PRINTED NAME OF THE SIGNER, and §11.10(e) for

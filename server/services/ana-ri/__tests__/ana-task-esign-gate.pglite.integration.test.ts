@@ -158,7 +158,12 @@ beforeAll(async () => {
   await pg.exec(DDL);
   await pg.exec(`INSERT INTO organizations (id, name, settings) VALUES (${ORG}, 'Concept2Cure', '{}'::jsonb)`);
   await pg.exec(`INSERT INTO projects (id, organization_id, name) VALUES (${PROJECT}, ${ORG}, 'BX-099')`);
-});
+  // Load the executor here, not inside the first test. Its module graph
+  // (command-executor.ts is ~5,300 lines) takes seconds to transform on a cold
+  // run, and in the first `it` that counted against the 10s test timeout: 6.2s
+  // alone, and over 10s — a failure — beside a full lint and typecheck.
+  await import('../command-executor');
+}, 60_000);
 afterAll(async () => { await pg?.close(); });
 
 beforeEach(async () => {

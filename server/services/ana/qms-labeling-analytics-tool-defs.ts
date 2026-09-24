@@ -17,7 +17,7 @@ import type { AnaTool } from '../ai-gateway/types';
 export const CREATE_QMS_DOCUMENT: AnaTool = {
   name: 'create_qms_document',
   description:
-    "Create a controlled QMS document (SOP, WI, form, spec, policy, manual, protocol). Starts in draft; flip to effective via approve_qms_document. Use when the user agrees to write a new procedure or AnA derives one from regulatory analysis.",
+    "Create a controlled QMS document (SOP, WI, form, spec, policy, manual, protocol). Starts in draft. It becomes effective only when a person other than the author approves it with an electronic signature in the Quality register; AnA cannot do that. Use when the user agrees to write a new procedure or AnA derives one from regulatory analysis.",
   input_schema: {
     type: 'object',
     properties: {
@@ -34,7 +34,7 @@ export const CREATE_QMS_DOCUMENT: AnaTool = {
 export const APPROVE_QMS_DOCUMENT: AnaTool = {
   name: 'approve_qms_document',
   description:
-    "Approve a draft / in-review QMS document and flip status to 'effective'. Stamps approver_id + approved_at; sets effective_date to today (or to the provided override).",
+    "AnA cannot sign. Approving a QMS controlled document makes it effective and is an electronic signature (21 CFR 11.50): it needs the approver's password and second factor, which a chat turn cannot collect. This tool writes nothing; it tells the user to approve on the document in the Quality register. Use it only to explain that.",
   input_schema: {
     type: 'object',
     properties: {
