@@ -53,7 +53,7 @@ Items in this lane's own code are fixed in this lane, not listed here.
 
 **→ `…01DiJJAk` (AnA client files, D3)**
 - ~~The AnA vault write tools (`file_chat_upload_to_vault`, `place_project_document`) carry no org-role gate: a viewer writes the vault through AnA.~~ **Done 2026-09-24:** the role check now sits in `ingestVaultDocument` / `placeVaultDocument` (`server/services/vault/vault-write-authority.ts`), on the tenant scope's `organization_users` role. Evidence: `docs/evidence/D3/2026-09-24-vault-write-role/`.
-- The vault passage tool refuses on two AnA entry points that never pass `organizationUuid`.
+- ~~The vault passage tool refuses on two AnA entry points that never pass `organizationUuid`.~~ **Done 2026-09-24:** `executeAgenticLoop` fills it from the same-tenant request scope, which covers deep investigations. The realtime `/ana` namespace opens no tenant scope at all and has no client; that is reported, not fixed. Evidence: `docs/evidence/D4/2026-09-24-passage-search-entry-points/`.
 - AnA's Vault screen context reports uploaded files as "0% complete" (the surface itself was fixed to show no percentage, `28324fdf`).
 
 **→ D3, unclaimed**
