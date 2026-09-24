@@ -13,7 +13,7 @@
  * ── What these tests hold ────────────────────────────────────────────────────
  * The change stands when the row is lost, and each writer now resolves the
  * outcome beside its result; the route forwards it as `auditTrail`, which the
- * client transport turns into "Saved, but the audit trail did not record it".
+ * client transport turns into "The request completed, but the audit trail did not record it".
  */
 
 import express, { type NextFunction, type Request, type Response } from 'express';

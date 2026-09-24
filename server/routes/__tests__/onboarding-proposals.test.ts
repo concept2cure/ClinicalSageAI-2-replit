@@ -330,7 +330,7 @@ describe('POST /api/onboarding/commit — governed, server-authoritative', () =>
      away, so an applied profile change with no §11.10(e) row answered exactly
      like one with a row. The change stands either way; `auditTrail` says which,
      and OnboardingIngest's transport (apiRequest) turns a lost row into the
-     "Saved, but the audit trail did not record it" notice. */
+     "The request completed, but the audit trail did not record it" notice. */
   it('an applied change whose audit row was lost still answers 200, and says the row is missing', async () => {
     const runId = await ingestAsAdmin();
     auditMock.mockResolvedValueOnce({ persisted: false, chained: false, tamperProof: false, error: 'deadlock detected' });
