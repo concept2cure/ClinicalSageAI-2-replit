@@ -1,0 +1,9 @@
+# GREEN — the server contract the client must satisfy, both boundary modes
+
+ ✓ server/routes/__tests__/esignature-requires-bearer.test.ts > authBoundary mode=enforce > refuses verify-password without a bearer token, and never checks the password 26ms
+ ✓ server/routes/__tests__/esignature-requires-bearer.test.ts > authBoundary mode=enforce > refuses verify-mfa without a bearer token 4ms
+ ✓ server/routes/__tests__/esignature-requires-bearer.test.ts > authBoundary mode=enforce > reaches the signer check WITH the bearer token the fixed hook now sends 6ms
+ ✓ server/routes/__tests__/esignature-requires-bearer.test.ts > authBoundary mode=warn > refuses verify-password without a bearer token, and never checks the password 4ms
+ ✓ server/routes/__tests__/esignature-requires-bearer.test.ts > authBoundary mode=warn > refuses verify-mfa without a bearer token 4ms
+ ✓ server/routes/__tests__/esignature-requires-bearer.test.ts > authBoundary mode=warn > reaches the signer check WITH the bearer token the fixed hook now sends 4ms
+      Tests  6 passed (6)

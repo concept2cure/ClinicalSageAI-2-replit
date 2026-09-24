@@ -494,22 +494,30 @@ flight upstream fixes two MDX hooks on the same diagnosis — see
 `client/src/concept2cure/mdx/hooks/__tests__/mdx-hooks-send-auth.test.ts`, whose opening line is
 "`credentials: 'include'` is not authentication in this app."
 
-A repo-wide sweep of `fetch('/api/…')` across `client/src` found **one more real instance**, now
-fixed: `useSubmissions.ts` read a package's readiness gate and milestones with
-`credentials: 'include'` and no headers, against `/api/submission-ops`, which is not on
-PUBLIC_API_ALLOWLIST. The failure mode was the honest-state one rather than a blank screen — a
-401 is not `res.ok`, so both branches left `gate` and `log` null and the surface rendered a
-package with no readiness gate and no milestones, indistinguishable from one that has neither.
+**Corrected 2026-09-24 — the sweep below was incomplete, and its "no gate" conclusion was
+wrong.** It read, in part: *"A repo-wide sweep of `fetch('/api/…')` across `client/src` found
+one more real instance"* (`useSubmissions.ts`, fixed), *"The other 13 hits … are false
+positives"* (that part was right), and *"No CI gate is proposed for this class"*.
 
-**The other 13 hits the sweep reported are false positives, checked individually**, and the
-number is recorded here so nobody re-runs the same crude scan and re-reports them: `ZenLogin`,
-`ZenSignup`, `Concept2CureLogin` and `Onboarding`'s license-request call are `/api/auth/*`,
-public by design and on the allowlist; `portal/logger.ts` posts to `/api/v1`, likewise
-allowlisted; `useEstarFiling` (×5) and `useCerLiterature` (×2) call a local `jsonHeaders()`
-that spreads `buildAuthHeaders()`; and `Onboarding`'s other two build a `headers` object with
-`...getAuthHeaders()` further up the function. No CI gate is proposed for this class for that
-reason: a scanner that cannot resolve a local header helper would need thirteen baselined
-non-defects to go green, and a baseline that large teaches people to add to it.
+The sweep searched for the **string** `/api/`. Three more call sites of this defect reach
+`fetch()` in a form that string search cannot see, and all three fail in **every** environment
+because their routes carry auth inline, not only in production:
+
+- **`useEsignature` — the shared e-signature modal.** It builds its URL as
+  `` `${BASE}${path}` ``. `<EsignModal>` gates every governed confirm on its verify-password
+  call, and `/api/esignature` refused that call in both authBoundary modes, so **no signer
+  could be verified anywhere** — Submission Center, the task board, authoring signatures and
+  filing, the document workbench. The validation OQ did not see it: it signs through
+  `/api/c2c/actions/sign` with its own bearer token. A D5 blocker; D4 coverage gap.
+- **`usePdevData` `postJson`** — all nine PDEV writes. The URL arrives as a parameter.
+- **`EvidencePicker`** — PDEV evidence search, shown to the user as "HTTP 401".
+
+All three fixed 2026-09-24, with evidence at `docs/evidence/D5-ESIGN-TOKEN/2026-09-24/`. The
+conclusion against a gate was reasoned from the crude scan's false positives; the fix for
+false positives was a better scan, not no scan. **`ci:unauthenticated-fetch`** (pre-push)
+checks every raw `fetch()` whatever its URL, resolves local header helpers and init objects
+passed by name, reads what is public from the server's own `PUBLIC_API_ALLOWLIST`, and needs
+**zero** baseline entries; its self-test builds each shape above and shows it refused.
 
 The remaining duplication is still worth closing, and it is not forty lines: the hook's outcome
 reports file NAMES (`succeeded: string[]`), while eTMF needs the id of the row the vault wrote

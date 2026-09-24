@@ -1,0 +1,13 @@
+# RED — ci:unauthenticated-fetch with the same pre-fix files in place
+
+❌ ci:unauthenticated-fetch — 3 raw fetch() call(s) send no bearer token:
+   client/src/concept2cure/hooks/useEsignature.ts:28  ${BASE}${path}
+   client/src/concept2cure/pdev/hooks/usePdevData.ts:807  url
+   client/src/concept2cure/pdev/surfaces/EvidencePicker.tsx:83  url
+
+   `credentials: 'include'` is not authentication here: the /api gate reads the
+   Authorization header only. Add headers: { ...getAuthHeaders() } (or the
+   lane's buildAuthHeaders()), or go through apiRequest. If the endpoint is
+   public, it belongs on PUBLIC_API_ALLOWLIST in server/middleware/authBoundary.ts,
+   not in this gate's baseline.
+exit=1

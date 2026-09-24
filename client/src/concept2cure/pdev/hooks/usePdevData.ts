@@ -11,7 +11,7 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
-import { useFetchJson } from '../../mdx/hooks/useFetchJson';
+import { useFetchJson, buildAuthHeaders } from '../../mdx/hooks/useFetchJson';
 import type { PdevActivityState, PdevWorkstream } from '../data/enums';
 import type {
   PdevActivityView,
@@ -807,7 +807,12 @@ async function postJson<TBody, TResult>(
   const res = await fetch(url, {
     method,
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
+    /* `credentials: 'include'` is not authentication in this app: the /api gate
+       reads `req.headers.authorization` and has no cookie fallback, and
+       /api/pdev is mounted with authenticateToken inline — so without the bearer token this
+       answered 401 in every environment, not only production. The same headers
+       the read path sends (useFetchJson.buildAuthHeaders), not a second copy. */
+    headers: { 'Content-Type': 'application/json', ...buildAuthHeaders() },
     body: JSON.stringify(body),
   });
   if (!res.ok) {
