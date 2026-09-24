@@ -117,6 +117,25 @@ variable "openai_api_key" {
   sensitive = true
 }
 
+# Login OTP delivery (SMTP); validated in terraform/stack. Port is fixed at 465.
+variable "smtp_host" {
+  type = string
+}
+
+variable "smtp_user" {
+  type      = string
+  sensitive = true
+}
+
+variable "smtp_pass" {
+  type      = string
+  sensitive = true
+}
+
+variable "smtp_from" {
+  type = string
+}
+
 # D1 brief B4: the founder's compliance decision. No default, no example.
 variable "ai_provider_placement_approvals" {
   type = string

@@ -106,6 +106,10 @@ variables {
   audit_hmac_key                  = "audkey-0123456789abcdef0123456789abcdef"
   audit_hmac_secret               = "audsec-0123456789abcdef0123456789abcdef"
   connector_encryption_key        = "conn-0123456789abcdef0123456789abcdef"
+  smtp_host                       = "email-smtp.us-east-1.amazonaws.com"
+  smtp_user                       = "test-smtp-user"
+  smtp_pass                       = "test-smtp-pass-0123456789"
+  smtp_from                       = "noreply@example.com"
   ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\"],\"approvedIntendedUses\":[\"drafting\"]}}"
 }
 
@@ -234,6 +238,7 @@ run "renders_the_boot_contract" {
             random_password.db_master.result, random_password.db_app_service.result,
             var.jwt_secret, var.refresh_token_secret, var.mfa_encryption_key, var.audit_hmac_key,
             var.audit_hmac_secret, var.connector_encryption_key, var.openai_api_key,
+            var.smtp_user, var.smtp_pass,
           ] : !strcontains(e.value, secret)
         ]
       ]
@@ -543,4 +548,35 @@ run "refuses_a_domain_alias_with_a_trailing_dot" {
     domain_aliases = ["app.example.com."]
   }
   expect_failures = [var.domain_aliases]
+}
+
+# Login OTP is the mandatory second factor: without SMTP the app boots, reads
+# ready, and admits no one. Both containers carry it; the credentials only as
+# secrets; the port only as 465, the one the mailer uses with TLS required.
+run "every_container_can_send_login_codes" {
+  command = apply
+
+  assert {
+    condition = alltrue([
+      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      contains([for e in defs.environment : "${e.name}=${e.value}"], "SMTP_PORT=465") &&
+      contains([for e in defs.environment : e.name], "SMTP_HOST") &&
+      contains([for e in defs.environment : e.name], "SMTP_FROM") &&
+      contains([for e in defs.secrets : e.name], "SMTP_USER") &&
+      contains([for e in defs.secrets : e.name], "SMTP_PASS") &&
+      !contains([for e in defs.environment : e.name], "SMTP_USER") &&
+      !contains([for e in defs.environment : e.name], "SMTP_PASS")
+    ])
+    error_message = "Each container needs SMTP_HOST, SMTP_PORT=465 and SMTP_FROM in its environment and SMTP_USER/SMTP_PASS as secrets."
+  }
+}
+
+run "refuses_an_smtp_port_without_required_tls" {
+  command = plan
+
+  variables {
+    smtp_port = 587
+  }
+
+  expect_failures = [var.smtp_port]
 }
