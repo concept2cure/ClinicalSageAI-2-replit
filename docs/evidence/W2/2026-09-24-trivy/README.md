@@ -14,8 +14,18 @@ nothing showed it: the only other copy of the scan, in `ci.yml`, was advisory
 (`continue-on-error`), so CI stayed green while the scan printed exit code 1.
 
 Every finding is now either fixed or excepted at its own resource with a
-written reason. The scan exits 0. The `ci.yml` copy is blocking, so a
-regression fails on the commit that introduces it.
+written reason. On the tree this change was built against, the scan exits 0.
+
+**It went red again on merge.** `terraform/stack/vault_storage.tf` landed
+upstream the same afternoon (`7925a33d3`, the vault-storage lane) with an
+`AES256` bucket for client documents: AWS-0132, twice. That bucket holds
+regulated documents, so the fix is a customer-managed key, as the state
+bucket now has, not an exception. It is that lane's file, so it is handed to
+them on the board and not edited here.
+
+The `ci.yml` copy stays advisory until that lands. Making it blocking now
+would turn trunk red for every lane. Its comment says which line to delete.
+This drift is the reason CI's copy should block.
 
 ## The 16 findings and what happened to each
 
