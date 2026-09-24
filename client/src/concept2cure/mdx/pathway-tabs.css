@@ -34,9 +34,10 @@
    with no rhythm between them. Matching the bar's inset puts the panel's
    content box where the bar's is; the remaining 16px to the label is
    `.pwt-btn`'s own padding, which is its hit area and should stay.
-   mdx only: `PathwayTabBar` renders inside `.mdx-shell` and nowhere else, so a
-   copy in `v2/styles/pathway-core-v2.css` would be a new cross-shell collision
-   for a class the v2 shell never mounts. */
+   mdx only: `PathwayTabBar` renders inside `.mdx-shell` and nowhere else. The
+   v2 shell once carried a fork of this whole sheet (pathway-core-v2.css and
+   pathway-panels-v2.css, 243 of 254 rules identical) for classes it never
+   mounts; that fork is gone and this file is the one place these rules live. */
 .mdx-shell .pwt-pane { padding: 16px 24px 0; }
 .mdx-shell .pwt-btn.active {
   color: var(--text-100); font-weight: 500;
@@ -646,6 +647,11 @@
 .mdx-shell .dd-act-file { color: var(--text-300); }
 .mdx-shell .dd-act-sub { font-size: 10.5px; color: var(--text-400); margin-top: 2px; }
 /* audit and correspondence detail panes, the correspondence bar's left group (ledger L139) */
-.audit-det { display: flex; flex-direction: column; gap: 8px; }
-.corr-bar-l { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.corr-det { display: flex; flex-direction: column; gap: 8px; }
+.mdx-shell .audit-det { display: flex; flex-direction: column; gap: 8px; }
+.mdx-shell .corr-bar-l { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.mdx-shell .corr-det { display: flex; flex-direction: column; gap: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mdx-shell .dd-scrim,
+  .mdx-shell .dd-drawer { animation: none; }
+}

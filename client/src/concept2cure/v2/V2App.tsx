@@ -119,8 +119,6 @@ import './styles/authoring-v2.css';
 import './styles/research-v2.css';
 import './styles/misc-surfaces-v2.css';
 import './styles/device-v2.css';
-import './styles/pathway-core-v2.css';
-import './styles/pathway-panels-v2.css';
 /* LAST, deliberately. `surface-text-ramp.css` re-bases `--text-400` /
    `--text-300` on every element that establishes a tinted surface, so it has to
    load after the sheets that declare those surfaces — a custom property set
