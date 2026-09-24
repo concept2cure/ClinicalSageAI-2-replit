@@ -46,6 +46,7 @@ import { createScopedLogger } from '../../utils/logger.js';
 import { assertUploadSafe, UploadSafetyError, type UploadOrigin } from '../../middleware/uploadSafety.js';
 import { writeChainedAuditRow } from '../auditService.js';
 import { getStorageProvider } from '../storage/index.js';
+import { discardUnrecordedBytes, type StoredUpload } from './vault-ingest-discard.js';
 import {
   classifyForFiling,
   resolveVaultView,
@@ -127,11 +128,62 @@ export type VaultIngestResult =
     }
   | { ok: false; status: number; code: string; message: string };
 
+/** The last sentence of a refusal that is only true once the stored copy is gone. */
+const NOTHING_SAVED = 'Nothing was saved.';
+
 /**
  * Admit a document into the governed vault. Must be called inside the acting
  * organization's tenant scope (see the module header).
+ *
+ * ── Why the admission is wrapped ─────────────────────────────────────────────
+ * The bytes are stored BEFORE the record is written — the record carries the
+ * storage version id, so it cannot be written first. Every refusal after that
+ * point (a folder outside the taxonomy, different bytes at an occupied code and
+ * version, the same bytes under a second code, a failed audit write) told the
+ * user "Nothing was changed" or "Nothing was saved" and left the file in the
+ * tenant's storage under no record. No surface lists such a copy and no
+ * deletion reaches it, so it outlives the customer deleting everything they can
+ * see. Here, one exit covers every refusal and every throw: a stored copy that
+ * no committed record holds is removed. The version id is a fresh randomUUID
+ * per put, so removing it cannot touch the bytes of a record that already
+ * exists — including the one a DUPLICATE_CONTENT refusal points at.
  */
 export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultIngestResult> {
+  const stored: StoredUpload = { versionId: null, orgId: null, committed: false };
+  let result: VaultIngestResult;
+  try {
+    result = await admitVaultDocument(args, stored);
+  } catch (err) {
+    await discardUnrecordedBytes(stored);
+    throw err;
+  }
+  if (result.ok) return result;
+  const fate = await discardUnrecordedBytes(stored);
+  if (fate === 'retained') {
+    return {
+      ...result,
+      message:
+        `${result.message.replace(NOTHING_SAVED, 'No record was created.')} ` +
+        'The uploaded file itself could not be removed from storage and is still held there, ' +
+        'referenced by no record.',
+    };
+  }
+  if (fate === 'referenced') {
+    return {
+      ...result,
+      message:
+        `${result.message.replace(NOTHING_SAVED, 'Whether it was recorded could not be confirmed.')} ` +
+        'A vault record refers to the uploaded file, so it was kept — check the Vault before ' +
+        'uploading it again.',
+    };
+  }
+  return result;
+}
+
+async function admitVaultDocument(
+  args: VaultIngestArgs,
+  stored: StoredUpload,
+): Promise<VaultIngestResult> {
   // Tenant ownership guard. `vault.documents` now carries organization_id
   // (migrations/20260905_vault_documents_organization_id.sql), and the INSERT
   // below writes it — the retrieval path filters on it, so a row left NULL is
@@ -229,7 +281,7 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
   let storageProvider: string;
   let storageFileId: string;
   try {
-    const stored = await getStorageProvider().put({
+    const written = await getStorageProvider().put({
       orgId,
       projectId: args.programId,
       filename: fileName,
@@ -237,9 +289,11 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
       mime: mimeType,
       metadata: { contentHash, documentCode: args.documentCode },
     });
-    storageVersionId = stored.vaultVersionId;
-    storageProvider = stored.provider;
-    storageFileId = stored.vaultFileId;
+    storageVersionId = written.vaultVersionId;
+    storageProvider = written.provider;
+    storageFileId = written.vaultFileId;
+    stored.versionId = storageVersionId;
+    stored.orgId = orgId;
   } catch (err) {
     logger.error('Vault file persistence failed — refusing to record the document', {
       reason: err instanceof Error ? err.message : 'unknown',
@@ -604,6 +658,7 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
     });
 
     await client.query('COMMIT');
+    stored.committed = true;
 
     /* Passage index, post-commit: chunk + embed the extracted text into
        vault.document_chunks — the store the RAG vault corpus reads — and
@@ -690,7 +745,7 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
 
     logger.error('Vault ingest failed — nothing recorded', { err: err?.message });
     return { ok: false, status: 500, code: 'INGEST_FAILED',
-      message: 'The document could not be recorded in the vault. Nothing was saved.' };
+      message: `The document could not be recorded in the vault. ${NOTHING_SAVED}` };
   } finally {
     client.release();
   }

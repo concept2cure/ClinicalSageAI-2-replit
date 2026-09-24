@@ -134,7 +134,7 @@ async function extractXlsxText(
 ): Promise<ExtractedDocumentText> {
   try {
     const { workbookToText } = await import('../documentIntelligence/spreadsheetService');
-    return { text: await workbookToText(buffer, filename, undefined, mime), method: 'xlsx' };
+    return { text: await workbookToText(buffer, filename, mime), method: 'xlsx' };
   } catch (error) {
     logger.warn('xlsx extraction failed', { error: error instanceof Error ? error.message : String(error) });
     return { text: '', method: 'none' };

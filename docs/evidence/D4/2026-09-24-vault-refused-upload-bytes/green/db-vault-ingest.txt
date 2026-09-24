@@ -1,0 +1,306 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T16:54:00.168Z","pid":15302,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T16:54:00.169Z","pid":15302,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T16:54:00.169Z","pid":15302,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-ingest.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-24T16:54:00.260Z', poolSize: 1 }
+
+stdout | tests/db/vault-ingest.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/vault-ingest.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-09-24T16:54:00.454Z","pid":15302,"hostname":"vm","context":{"filename":"dhf-extract.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stderr | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > accepts the upload and records the SHA-256 of the bytes that were sent
+Warning: Indexing all PDF objects
+
+(node:15302) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":40,"time":"2026-09-24T16:54:00.673Z","pid":15302,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-09-24T16:54:00.701Z","pid":15302,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > accepts the upload and records the SHA-256 of the bytes that were sent
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "8761fd5a-f600-48fb-8dfc-9ff0bedb1219",
+    "code": "DBTEST-W06-DOC",
+    "type": "OTHER",
+    "size": 69,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > accepts the upload and records the SHA-256 of the bytes that were sent 340ms
+stderr | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — another tenant cannot write into your program > refuses the upload and leaves nothing behind
+{
+  "level": "warn",
+  "message": "[vault-ingest] Vault ingest denied: program not owned by caller organization",
+  "context": {
+    "programId": "3be9e99a-ad8c-4d81-a735-cc0aea41f1f6",
+    "orgId": 7
+  }
+}
+
+{"level":40,"time":"2026-09-24T16:54:00.798Z","pid":15302,"hostname":"vm","context":{"filename":"dhf-extract.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-09-24T16:54:00.800Z","pid":15302,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-09-24T16:54:00.801Z","pid":15302,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > different bytes at an occupied code and version: 409, and no new object in storage
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest refused — its stored bytes were removed",
+  "context": {
+    "versionId": "58416201-b3ab-4deb-8770-f1e2ea0fea1c",
+    "orgId": 7
+  }
+}
+
+{"level":40,"time":"2026-09-24T16:54:00.814Z","pid":15302,"hostname":"vm","context":{"filename":"dhf-extract-copy.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-09-24T16:54:00.815Z","pid":15302,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-09-24T16:54:00.816Z","pid":15302,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the same bytes under a second code: 409, no new object, and the original still reads back
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest refused: content already recorded in this program",
+  "context": {
+    "constraint": "idx_vault_documents_program_hash_unique"
+  }
+}
+
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the same bytes under a second code: 409, no new object, and the original still reads back
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest refused — its stored bytes were removed",
+  "context": {
+    "versionId": "062d7bb6-51e0-449e-8ee6-e9efef90b49e",
+    "orgId": 7
+  }
+}
+
+{"level":40,"time":"2026-09-24T16:54:00.828Z","pid":15302,"hostname":"vm","context":{"filename":"misfiled.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-09-24T16:54:00.830Z","pid":15302,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-09-24T16:54:00.830Z","pid":15302,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > a folder outside the program taxonomy: 400, and no new object in storage
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest refused — its stored bytes were removed",
+  "context": {
+    "versionId": "bf68e52d-61d4-49c3-aa80-738f416a6690",
+    "orgId": 7
+  }
+}
+
+{"level":40,"time":"2026-09-24T16:54:00.841Z","pid":15302,"hostname":"vm","context":{"filename":"second.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-09-24T16:54:00.842Z","pid":15302,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-09-24T16:54:00.842Z","pid":15302,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > an admitted upload still stores exactly one object — the one its record names
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "70967751-d59a-40ec-9610-ef2e5861dcb1",
+    "code": "DBTEST-W06-DOC-NEW",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > persisted a row carrying the canonical columns the route writes 3ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > the bytes are retrievable at the address the row records 3ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the Part 11 record of who put it there > wrote a hash-chained audit row naming the actor and the content hash 2ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the Part 11 record of who put it there > a document and its audit row cannot exist without each other 5ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — another tenant cannot write into your program > refuses the upload and leaves nothing behind 8ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > different bytes at an occupied code and version: 409, and no new object in storage 16ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the same bytes under a second code: 409, no new object, and the original still reads back 14ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > a folder outside the program taxonomy: 400, and no new object in storage 10ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the reference check the discard relies on sees an admitted record, as the runtime role 3ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > an admitted upload still stores exactly one object — the one its record names 18ms
+{"level":30,"time":"2026-09-24T16:54:01.807Z","pid":15327,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T16:54:01.808Z","pid":15327,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T16:54:01.808Z","pid":15327,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/document-catalog.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-24T16:54:01.853Z', poolSize: 1 }
+
+stdout | tests/db/document-catalog.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/document-catalog.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-09-24T16:54:01.912Z","pid":15327,"hostname":"vm","context":{"filename":"stability-st-23-104.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+(node:15327) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a readable upload lands with catalog_status=extracted and real counts
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 198,
+    "wordCount": 26,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a readable upload lands with catalog_status=extracted and real counts
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "bc04308b-caba-4c90-8d25-9f7604676df4",
+    "code": "DBTEST-CAT-DOC-TXT",
+    "type": "OTHER",
+    "size": 198,
+    "hasText": true
+  }
+}
+
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a readable upload lands with catalog_status=extracted and real counts 112ms
+{"level":40,"time":"2026-09-24T16:54:02.126Z","pid":15327,"hostname":"vm","context":{"filename":"three-pages.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":30,"time":"2026-09-24T16:54:02.757Z","pid":15327,"hostname":"vm","context":{"pages":3,"dpi":200,"region":"full"},"msg":"[pdf-rasterizer] Rasterized PDF"}
+(node:15327) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":30,"time":"2026-09-24T16:54:03.390Z","pid":15327,"hostname":"vm","context":{"languages":"eng","chars":0,"confidence":0,"durationMs":397},"msg":"[tesseract-ocr] OCR completed"}
+{"level":30,"time":"2026-09-24T16:54:03.627Z","pid":15327,"hostname":"vm","context":{"languages":"eng","chars":0,"confidence":0,"durationMs":237},"msg":"[tesseract-ocr] OCR completed"}
+{"level":30,"time":"2026-09-24T16:54:03.859Z","pid":15327,"hostname":"vm","context":{"languages":"eng","chars":0,"confidence":0,"durationMs":232},"msg":"[tesseract-ocr] OCR completed"}
+stdout | tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a real PDF records its actual page count, not null
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 44,
+    "wordCount": 15,
+    "pagesMapped": 3
+  }
+}
+
+{"level":30,"time":"2026-09-24T16:54:03.860Z","pid":15327,"hostname":"vm","context":{"pages":3,"confidence":0,"durationMs":1550},"msg":"[ocr-service] PDF text OCR completed"}
+stdout | tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a real PDF records its actual page count, not null
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "ac4fc7e7-b512-402a-a04d-fe0d638eac84",
+    "code": "DBTEST-CAT-DOC-PAGES",
+    "type": "REPORT",
+    "size": 598,
+    "hasText": true
+  }
+}
+
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a real PDF records its actual page count, not null 1877ms
+{"level":40,"time":"2026-09-24T16:54:03.883Z","pid":15327,"hostname":"vm","context":{"filename":"opaque-scan.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-09-24T16:54:03.887Z","pid":15327,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-09-24T16:54:03.888Z","pid":15327,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > an upload extraction cannot read is recorded as a FAILURE with a reason
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "082b383a-bf74-4772-8406-a0f3f75338e0",
+    "code": "DBTEST-CAT-DOC-PDF",
+    "type": "OTHER",
+    "size": 69,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > an upload extraction cannot read is recorded as a FAILURE with a reason 26ms
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > read_project_document refuses to pretend the opaque document has content 3195ms
+stdout | tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > after reading ALL of it, the catalog write succeeds and is durable
+✅ Enhanced Embedding Service initialized
+
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > list_project_documents shows both files with honest catalog states 32ms
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > reports the scope total while the page stays at the limit 6ms
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > counts what needs attention across the scope, not across the page 7ms
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > claims completeness only when the page really is the whole scope 5ms
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > the session-start digest carries the scope it sampled from 10ms
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > catalog_project_document REFUSES a partial read and names what is unread 18ms
+stderr | tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > after reading ALL of it, the catalog write succeeds and is durable
+{
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — recorded as failed, catalog still written",
+  "context": {
+    "documentId": "bc04308b-caba-4c90-8d25-9f7604676df4",
+    "err": "403 Host not in allowlist: api.openai.com. Add this host to your network egress settings to allow access."
+  }
+}
+
+{"level":40,"time":"2026-09-24T16:54:07.268Z","pid":15327,"hostname":"vm","context":{"filename":"coa-23-104.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 245,
+    "wordCount": 35,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "fb433966-de15-46ab-9e14-d7d83a486779",
+    "code": "DBTEST-CAT-DOC-COA",
+    "type": "OTHER",
+    "size": 254,
+    "hasText": true
+  }
+}
+
+stderr | tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe > ACCEPTS the document’s own values, in its typography or plain ASCII
+{
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — recorded as failed, catalog still written",
+  "context": {
+    "documentId": "fb433966-de15-46ab-9e14-d7d83a486779",
+    "err": "403 Host not in allowlist: api.openai.com. Add this host to your network egress settings to allow access."
+  }
+}
+
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > after reading ALL of it, the catalog write succeeds and is durable 64ms
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > hands the comprehension record BACK on the next read, instead of starting from zero 9ms
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > another tenant cannot list or read the document 9ms
+ ✓ tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe > REFUSES invented values, a verdict and a nested leaf — names each, stores nothing 8ms
+ ✓ tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe > ACCEPTS the document’s own values, in its typography or plain ASCII 23ms
+{"level":40,"time":"2026-09-24T16:54:07.339Z","pid":15327,"hostname":"vm","context":{"op":"pool.query","caller":"server/services/enhancedEmbeddingService.ts:233:38","queryPreview":"SELECT id, content, title, atom_type, embedding IS NOT NULL as has_embedding FROM lumen_data_atoms WHERE id = $1","enforcement":"on"},"msg":"[tenant-rls-observability] Database operation blocked because tenant scope is missing"}
+{"level":40,"time":"2026-09-24T16:54:07.340Z","pid":15327,"hostname":"vm","context":{"sourceId":"dbtest-catalog:upload-atom","atomId":16,"err":"[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on"},"msg":"[upload-retrieval-atom] Upload atom written but not embedded — it is not retrievable yet"}
+ ✓ tests/db/document-catalog.dbtest.ts > a chat upload knows it is indexed by its opening only > writes the file length and the embedded length onto the row 20ms
+ ✓ tests/db/document-catalog.dbtest.ts > a chat upload knows it is indexed by its opening only > a second write for the same source is a no-op, not a duplicate 2ms
+{"level":30,"time":"2026-09-24T16:54:08.194Z","pid":15352,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T16:54:08.195Z","pid":15352,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T16:54:08.195Z","pid":15352,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label
+[database] Database connection successful { timestamp: '2026-09-24T16:54:08.242Z', poolSize: 1 }
+
+stdout | tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label
+[database] Database connection successful
+
+stderr | tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label 715ms
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > left an audit row naming the location it came from and the one it went to 14ms
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > honours an explicit unfile — the Unfiled queue is a real answer 19ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses a folder from another modality's taxonomy 7ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses to confirm a suggestion that does not exist 6ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses a call that names no destination at all 5ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > confirms an existing suggestion in place, keeping the CTD section 8ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > will not let another organization move the document 4ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > records AnA's folder as a suggestion a person must confirm, not as a person's filing 660ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > refuses to confirm a suggestion — a person confirms filing in the Vault 10ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > the service itself refuses an agent's confirm, so no other agent caller can record one either 7ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > unfiles with the same attribution — the Unfiled queue is where a person decides 13ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > leaves a person's filing through the Vault a confirmed decision with no agent marker 13ms
+
+ Test Files  3 passed (3)
+      Tests  41 passed (41)
+   Start at  16:53:58
+   Duration  10.63s (transform 3.64s, setup 116ms, import 245ms, tests 9.76s, environment 0ms)
+
