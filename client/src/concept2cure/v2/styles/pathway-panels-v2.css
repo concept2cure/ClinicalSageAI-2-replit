@@ -118,7 +118,7 @@
     padding: 1px 5px;
     background: var(--bg-100);
     color: var(--text-300);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     min-width: 16px;
     text-align: center;
   }
@@ -226,7 +226,7 @@
     padding: 2px 6px;
     background: var(--accent-strong);
     color: var(--accent-on-strong);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     text-transform: uppercase; letter-spacing: 0.05em;
     flex-shrink: 0;
   }

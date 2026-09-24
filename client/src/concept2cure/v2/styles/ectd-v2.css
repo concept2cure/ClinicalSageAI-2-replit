@@ -41,7 +41,7 @@
   .ec-tree-search svg{ width:13px; height:13px; }
   .ec-tree-search input{ flex:1; border:0; background:transparent; outline:none; color:var(--text-100); font-size:12px; }
   .ec-tree-mod{ margin-bottom:2px; }
-  .ec-tree-row{ display:flex; align-items:center; gap:6px; width:100%; padding:5px 8px; border-radius:6px; font-size:12px; color:var(--text-100); text-align:left; background:transparent; border:0; cursor:pointer; transition:background var(--dur) var(--ease); line-height:1.3; }
+  .ec-tree-row{ display:flex; align-items:center; gap:6px; width:100%; padding:5px 8px; border-radius:var(--radius-md); font-size:12px; color:var(--text-100); text-align:left; background:transparent; border:0; cursor:pointer; transition:background var(--dur) var(--ease); line-height:1.3; }
   .ec-tree-row:hover{ background:var(--bg-000); }
   .ec-tree-row[data-active="true"]{ background:var(--accent-000); color:var(--text-100); font-weight:600; }
   .ec-tree-row[data-active="true"] .ec-tnum{ color:var(--accent-200); }
@@ -73,13 +73,13 @@
   .ec-avatar{ width:26px; height:26px; border-radius:7px; background:var(--accent-strong); color:var(--accent-on-strong); font-weight:600; font-size:10px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; letter-spacing:-.02em; }
   .ec-msg-ai .ec-body{ flex:1; min-width:0; font-size:13px; line-height:1.6; color:var(--text-100); }
   .ec-msg-ai .ec-body p{ margin:0 0 10px; font-size:13px; line-height:1.6; }
-  .ec-tool{ display:flex; align-items:center; gap:8px; margin:0 0 10px; padding:6px 10px; font-size:11.5px; font-family:var(--font-mono); background:var(--bg-100); border:1px solid var(--border); border-radius:6px; color:var(--text-300); }
+  .ec-tool{ display:flex; align-items:center; gap:8px; margin:0 0 10px; padding:6px 10px; font-size:11.5px; font-family:var(--font-mono); background:var(--bg-100); border:1px solid var(--border); border-radius:var(--radius-md); color:var(--text-300); }
   .ec-tool b{ color:var(--text-100); font-weight:600; }
   .ec-tick{ color:var(--success); display:inline-flex; }
   .ec-tick svg{ width:12px; height:12px; }
-  .ec-artchip{ display:inline-flex; align-items:center; gap:8px; padding:8px 10px 8px 8px; margin:4px 0 0; background:var(--bg-100); border:1px solid var(--border); border-radius:8px; font-size:12px; cursor:pointer; transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease); color:var(--text-100); max-width:100%; text-align:left; }
+  .ec-artchip{ display:inline-flex; align-items:center; gap:8px; padding:8px 10px 8px 8px; margin:4px 0 0; background:var(--bg-100); border:1px solid var(--border); border-radius:var(--radius-lg); font-size:12px; cursor:pointer; transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease); color:var(--text-100); max-width:100%; text-align:left; }
   .ec-artchip:hover{ background:var(--bg-000); border-color:var(--border-strong); }
-  .ec-artchip-ico{ width:28px; height:28px; border-radius:6px; background:var(--bg-000); border:1px solid var(--border); display:inline-flex; align-items:center; justify-content:center; color:var(--accent-100); flex-shrink:0; }
+  .ec-artchip-ico{ width:28px; height:28px; border-radius:var(--radius-md); background:var(--bg-000); border:1px solid var(--border); display:inline-flex; align-items:center; justify-content:center; color:var(--accent-100); flex-shrink:0; }
   .ec-artchip-ico svg{ width:15px; height:15px; }
   .ec-artchip-t{ font-weight:600; line-height:1.3; display:block; }
   .ec-artchip-m{ font-size:11px; color:var(--text-300); line-height:1.3; }
@@ -94,7 +94,7 @@
   /* Now a real <button> — it used to be a <span>, i.e. a paperclip and the word
      "Sources" that could not be clicked. Reset the UA button chrome and give it
      the affordances a control owes: pointer, hover, and a visible focus ring. */
-  .ec-chip{ display:inline-flex; align-items:center; gap:4px; padding:4px 8px; border-radius:6px; font-size:11.5px; color:var(--text-400); background:none; border:1px solid transparent; font-family:inherit; cursor:pointer; }
+  .ec-chip{ display:inline-flex; align-items:center; gap:4px; padding:4px 8px; border-radius:var(--radius-md); font-size:11.5px; color:var(--text-400); background:none; border:1px solid transparent; font-family:inherit; cursor:pointer; }
   .ec-chip:hover{ background:var(--bg-100); color:var(--text-200); }
   .ec-chip:focus-visible{ outline:2px solid var(--accent-200); outline-offset:1px; }
   .ec-chip svg{ width:13px; height:13px; }
@@ -102,7 +102,7 @@
   /* Attached sources, with how the server read each one. Status is in the text
      as well as the colour. */
   .ec-atts{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
-  .ec-att-chip{ display:inline-flex; align-items:center; gap:5px; padding:3px 6px 3px 8px; border:1px solid var(--border); border-radius:8px; background:var(--bg-050); font-size:11.5px; color:var(--text-200); }
+  .ec-att-chip{ display:inline-flex; align-items:center; gap:5px; padding:3px 6px 3px 8px; border:1px solid var(--border); border-radius:var(--radius-lg); background:var(--bg-050); font-size:11.5px; color:var(--text-200); }
   .ec-att-chip svg{ width:12px; height:12px; flex-shrink:0; }
   .ec-att-chip em{ font-style:normal; color:var(--text-400); }
   .ec-att-chip[data-status="error"]{ border-color:var(--error); }
@@ -146,7 +146,7 @@
   .ec-doc-body table{ width:100%; font-family:var(--font-sans); font-size:12px; border-collapse:collapse; margin:14px 0 18px; }
   .ec-doc-body th,.ec-doc-body td{ padding:8px 10px; text-align:left; border-bottom:1px solid var(--border); vertical-align:top; }
   .ec-doc-body th{ font-size:10px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--text-400); border-bottom:1px solid var(--border-strong); background:var(--bg-050); }
-  .ec-doc-body code{ font-family:var(--font-mono); font-size:12px; background:var(--bg-100); padding:1px 5px; border-radius:4px; }
+  .ec-doc-body code{ font-family:var(--font-mono); font-size:12px; background:var(--bg-100); padding:1px 5px; border-radius:var(--radius-sm); }
   .ec-doc-body blockquote{ margin:0 0 14px; padding-left:14px; border-left:3px solid var(--border-strong); color:var(--text-300); }
   .ec-p{ margin:0 0 14px; position:relative; padding-left:12px; }
   .ec-gutter{ position:absolute; left:0; top:4px; bottom:4px; width:2px; border-radius:1px; background:transparent; transition:background var(--dur) var(--ease); }
@@ -154,8 +154,8 @@
   .ec-p[data-conf="med"] .ec-gutter{ background:var(--accent-muted); }
   .ec-p[data-conf="lo"] .ec-gutter{ background:var(--warning); }
   .ec-p:hover .ec-gutter{ width:3px; }
-  .ec-cite{ display:inline-flex; align-items:center; padding:0 5px; height:15px; margin-left:3px; font-family:var(--font-mono); font-size:10px; font-weight:500; color:var(--accent-200); background:var(--accent-000); border-radius:4px; vertical-align:baseline; text-decoration:none; }
-  .ec-prov{ position:absolute; left:calc(100% + 14px); top:0; width:212px; padding:10px 12px; background:var(--text-100); color:rgba(255,255,255,.92); border-radius:8px; font-family:var(--font-sans); font-size:10.5px; line-height:1.45; opacity:0; transform:translateY(4px); transition:opacity var(--dur) var(--ease), transform var(--dur) var(--ease); pointer-events:none; box-shadow:var(--shadow-lg); z-index:5; display:block; }
+  .ec-cite{ display:inline-flex; align-items:center; padding:0 5px; height:15px; margin-left:3px; font-family:var(--font-mono); font-size:10px; font-weight:500; color:var(--accent-200); background:var(--accent-000); border-radius:var(--radius-sm); vertical-align:baseline; text-decoration:none; }
+  .ec-prov{ position:absolute; left:calc(100% + 14px); top:0; width:212px; padding:10px 12px; background:var(--text-100); color:rgba(255,255,255,.92); border-radius:var(--radius-lg); font-family:var(--font-sans); font-size:10.5px; line-height:1.45; opacity:0; transform:translateY(4px); transition:opacity var(--dur) var(--ease), transform var(--dur) var(--ease); pointer-events:none; box-shadow:var(--shadow-lg); z-index:5; display:block; }
   .ec-p:hover .ec-prov{ opacity:1; transform:translateY(0); }
   .ec-prov-row{ display:flex; justify-content:space-between; gap:10px; margin-bottom:4px; }
   .ec-prov-lbl{ color:rgba(255,255,255,.5); font-size:10px; letter-spacing:.06em; text-transform:uppercase; }
@@ -166,7 +166,7 @@
   .ec-doc-table th,.ec-doc-table td{ padding:8px 10px; text-align:left; border-bottom:1px solid var(--border); vertical-align:top; }
   .ec-doc-table th{ font-size:10px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--text-400); border-bottom:1px solid var(--border-strong); background:var(--bg-050); }
   .ec-doc-table td.num{ font-family:var(--font-mono); font-size:11px; }
-  .ec-pill{ display:inline-block; padding:1px 6px; border-radius:4px; font-size:10px; font-family:var(--font-sans); font-weight:500; }
+  .ec-pill{ display:inline-block; padding:1px 6px; border-radius:var(--radius-sm); font-size:10px; font-family:var(--font-sans); font-weight:500; }
   .ec-pill.ok{ background:var(--success-muted); color:var(--success); }
   .ec-pill.warn{ background:var(--warning-muted); color:var(--warning); }
 
@@ -209,7 +209,7 @@
   .ec-cscore-l{ font-size:14px; font-weight:600; color:var(--text-100); }
   .ec-cscore-s{ font-size:11.5px; color:var(--text-400); margin-top:3px; }
   .ec-checks{ display:flex; flex-direction:column; gap:2px; }
-  .ec-check{ display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; font-size:12.5px; }
+  .ec-check{ display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:var(--radius-lg); font-size:12.5px; }
   .ec-check:hover{ background:var(--bg-050); }
   .ec-check-dot{ width:20px; height:20px; border-radius:50%; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; }
   .ec-check-dot svg{ width:12px; height:12px; }

@@ -19,7 +19,7 @@
   .ac-prov svg{ width:12px; height:12px; }
 
   /* Portfolio roll-up */
-  .ac-port-gap{ margin:2px 0 6px; padding:8px 12px; font-size:12px; line-height:1.5; color:var(--text-300); background:var(--bg-050); border:1px solid var(--border); border-radius:8px; display:flex; gap:8px; align-items:flex-start; }
+  .ac-port-gap{ margin:2px 0 6px; padding:8px 12px; font-size:12px; line-height:1.5; color:var(--text-300); background:var(--bg-050); border:1px solid var(--border); border-radius:var(--radius-lg); display:flex; gap:8px; align-items:flex-start; }
   .ac-port{ display:grid; grid-template-columns:repeat(3,1fr); gap:11px; margin-bottom:14px; }
   .ac-pcard{ text-align:left; background:var(--bg-000); border:1px solid var(--border); border-radius:13px; padding:13px 15px; cursor:pointer; transition:border-color var(--dur), transform var(--dur), box-shadow var(--dur); }
   .ac-pcard:hover{ transform:translateY(-1px); border-color:var(--accent-muted); }
@@ -32,8 +32,8 @@
   .ac-pname{ font-size:11.5px; color:var(--text-400); margin:5px 0 9px; }
   .ac-pmeta{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
   .ac-pready{ display:flex; align-items:center; gap:7px; flex:1; }
-  .ac-pready-bar{ flex:1; height:6px; border-radius:4px; background:var(--bg-200); overflow:hidden; }
-  .ac-pready-bar>div{ height:100%; border-radius:4px; background:var(--accent-200); }
+  .ac-pready-bar{ flex:1; height:6px; border-radius:var(--radius-sm); background:var(--bg-200); overflow:hidden; }
+  .ac-pready-bar>div{ height:100%; border-radius:var(--radius-sm); background:var(--accent-200); }
   .ac-pready-bar>div[data-s=at_risk]{ background:var(--error); }
   .ac-pready>span{ font-size:12px; font-weight:600; color:var(--text-200); }
   .ac-ptraj{ display:inline-flex; align-items:center; gap:3px; font-size:11px; font-weight:600; }
@@ -84,8 +84,8 @@
   .ac-change-m{ font-size:11px; color:var(--text-400); font-family:var(--font-mono,monospace); margin-top:2px; }
 
   .ac-two{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:18px; }
-  .ac-ready-row{ font-size:12.5px; color:var(--text-200); background:color-mix(in srgb,var(--success) 6%,var(--bg-000)); border:1px solid color-mix(in srgb,var(--success) 20%,var(--border)); border-radius:8px; padding:8px 10px; margin-bottom:6px; line-height:1.4; }
-  .ac-attn-row{ background:var(--bg-000); border:1px solid var(--border); border-left:2px solid var(--accent-200); border-radius:8px; padding:8px 10px; margin-bottom:6px; }
+  .ac-ready-row{ font-size:12.5px; color:var(--text-200); background:color-mix(in srgb,var(--success) 6%,var(--bg-000)); border:1px solid color-mix(in srgb,var(--success) 20%,var(--border)); border-radius:var(--radius-lg); padding:8px 10px; margin-bottom:6px; line-height:1.4; }
+  .ac-attn-row{ background:var(--bg-000); border:1px solid var(--border); border-left:2px solid var(--accent-200); border-radius:var(--radius-lg); padding:8px 10px; margin-bottom:6px; }
   .ac-attn-t{ font-size:12.5px; font-weight:600; color:var(--text-100); }
   .ac-attn-r{ font-size:11.5px; color:var(--text-300); margin-top:2px; line-height:1.4; }
 
@@ -114,7 +114,7 @@
   .ac-rec-evi{ font-size:11px; color:var(--text-400); line-height:1.4; }
   .ac-rec-act{ display:flex; align-items:center; gap:10px; justify-content:space-between; border-top:1px solid var(--bg-100); padding-top:9px; }
   .ac-rec-sa{ font-size:12px; color:var(--text-300); font-style:italic; flex:1; }
-  .ac-rec-run{ display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600; padding:6px 12px; border-radius:8px; border:none; background:var(--accent-strong); color:var(--accent-on-strong); cursor:pointer; flex-shrink:0; }
+  .ac-rec-run{ display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600; padding:6px 12px; border-radius:var(--radius-lg); border:none; background:var(--accent-strong); color:var(--accent-on-strong); cursor:pointer; flex-shrink:0; }
   .ac-rec-run svg{ width:13px; height:13px; }
 
   /* Workflow templates + execution */
@@ -133,11 +133,11 @@
   .ac-exec-pct{ font-size:12px; font-weight:600; color:var(--accent-200); }
   .ac-exec-x{ font-size:11.5px; color:var(--text-400); background:none; border:none; cursor:pointer; }
   .ac-exec-x:hover{ color:var(--text-100); }
-  .ac-exec-bar{ height:5px; border-radius:4px; background:var(--bg-200); overflow:hidden; margin-bottom:14px; }
+  .ac-exec-bar{ height:5px; border-radius:var(--radius-sm); background:var(--bg-200); overflow:hidden; margin-bottom:14px; }
   /* The bar's width is set inline from live execution data. A layout property
      must never animate, and a value that moves while it is read is worse than
      useless, so only the fill colour (the [data-done] flip) transitions. */
-  .ac-exec-bar>div{ height:100%; background:var(--accent-200); border-radius:4px; transition:background var(--dur) var(--ease); }
+  .ac-exec-bar>div{ height:100%; background:var(--accent-200); border-radius:var(--radius-sm); transition:background var(--dur) var(--ease); }
   .ac-exec-bar>div[data-done]{ background:var(--success); }
   .ac-exec-steps{ display:flex; flex-direction:column; gap:3px; }
   .ac-exec-step{ display:flex; gap:10px; padding:7px 0; opacity:.5; transition:opacity var(--dur); }
@@ -155,7 +155,7 @@
     .ac-exec-step[data-st=running] .ac-exec-ic{ animation:none; }
   }
   .ac-exec-sn{ font-size:12.5px; font-weight:600; color:var(--text-100); display:flex; align-items:center; gap:7px; }
-  .ac-exec-appr{ font-size:10px; font-weight:600; text-transform:uppercase; color:var(--accent-200); background:var(--accent-000); padding:1px 6px; border-radius:4px; }
+  .ac-exec-appr{ font-size:10px; font-weight:600; text-transform:uppercase; color:var(--accent-200); background:var(--accent-000); padding:1px 6px; border-radius:var(--radius-sm); }
   .ac-exec-sd{ font-size:11.5px; color:var(--text-400); margin-top:1px; }
   .ac-exec-done{ display:flex; align-items:flex-start; gap:7px; font-size:12.5px; color:var(--text-200); line-height:1.5; margin-top:12px; padding-top:12px; border-top:1px solid var(--bg-100); }
   .ac-exec-done svg{ width:15px; height:15px; color:var(--success); flex-shrink:0; margin-top:1px; }
@@ -262,12 +262,12 @@
   .amem-atom[data-imp="critical"]{ border-left:3px solid var(--error); }
   .amem-atom[data-imp="high"]{ border-left:3px solid var(--warning); }
   .amem-atom-top{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-  .amem-tag{ font-size:10.5px; font-weight:600; letter-spacing:.03em; padding:3px 8px; border-radius:6px;
+  .amem-tag{ font-size:10.5px; font-weight:600; letter-spacing:.03em; padding:3px 8px; border-radius:var(--radius-md);
     background:var(--bg-100); color:var(--text-200); text-transform:uppercase; }
   .amem-tag.warn{ background:color-mix(in srgb, var(--warning) 15%, transparent); color:var(--warning); }
   .amem-tag.ok{ background:color-mix(in srgb, var(--success) 15%, transparent); color:var(--success); }
   .amem-tag.ai{ background:color-mix(in srgb, var(--accent-100) 15%, transparent); color:var(--accent-100); }
-  .amem-imp{ font-size:10.5px; font-weight:600; padding:3px 8px; border-radius:6px; text-transform:uppercase; letter-spacing:.03em; }
+  .amem-imp{ font-size:10.5px; font-weight:600; padding:3px 8px; border-radius:var(--radius-md); text-transform:uppercase; letter-spacing:.03em; }
   .amem-imp.err{ background:color-mix(in srgb, var(--error) 14%, transparent); color:var(--error); }
   .amem-imp.warn{ background:color-mix(in srgb, var(--warning) 14%, transparent); color:var(--warning); }
   .amem-imp.ai{ background:color-mix(in srgb, var(--accent-100) 14%, transparent); color:var(--accent-100); }
@@ -275,7 +275,7 @@
   .amem-conf{ font-size:11.5px; color:var(--text-300); font-weight:500; }
   .amem-verified{ margin-left:auto; display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600; color:var(--success); }
   .amem-verified svg{ width:13px; height:13px; }
-  .amem-verify{ margin-left:auto; display:inline-flex; align-items:center; gap:5px; padding:5px 11px; border-radius:8px;
+  .amem-verify{ margin-left:auto; display:inline-flex; align-items:center; gap:5px; padding:5px 11px; border-radius:var(--radius-lg);
     background:var(--bg-050); border:1px solid var(--border); font-size:11.5px; font-weight:600; color:var(--text-100); cursor:pointer; }
   .amem-verify svg{ width:12px; height:12px; }
   .amem-verify:hover{ background:color-mix(in srgb, var(--success) 12%, var(--bg-050)); border-color:color-mix(in srgb, var(--success) 40%, var(--border)); }

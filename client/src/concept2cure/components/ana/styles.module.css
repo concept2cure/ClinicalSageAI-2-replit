@@ -31,7 +31,7 @@
 }
 .sbLogoText span { color: var(--accent-main-100); }
 .sbCollapse {
-  width: 28px; height: 28px; border-radius: 6px;
+  width: 28px; height: 28px; border-radius: var(--radius-md);
   color: var(--ink-muted, var(--text-300));
   display: inline-flex; align-items: center; justify-content: center;
   background: transparent; border: 0; cursor: pointer;
@@ -40,7 +40,7 @@
 
 .sbNew {
   display: flex; align-items: center; gap: 10px;
-  width: 100%; padding: 8px 10px; border-radius: 8px;
+  width: 100%; padding: 8px 10px; border-radius: var(--radius-lg);
   font-size: 13px; font-weight: 500;
   color: var(--ink, var(--text-100));
   transition: background 200ms var(--ease);
@@ -55,7 +55,7 @@
 
 .sbItem {
   display: flex; align-items: center; gap: 10px;
-  padding: 7px 10px; border-radius: 8px;
+  padding: 7px 10px; border-radius: var(--radius-lg);
   font-size: 13px; color: var(--ink-body, var(--text-200));
   transition: background 200ms var(--ease);
   width: 100%; text-align: left; min-width: 0;
@@ -97,7 +97,7 @@
 .sbSpacer { flex: 1; }
 .sbAccount {
   display: flex; align-items: center; gap: 10px;
-  padding: 8px 10px; border-radius: 8px; width: 100%;
+  padding: 8px 10px; border-radius: var(--radius-lg); width: 100%;
   transition: background 200ms var(--ease);
   background: transparent; border: 0; cursor: pointer; text-align: left;
 }
@@ -138,7 +138,7 @@
 }
 .topbarModel {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 5px 10px; border-radius: 8px;
+  padding: 5px 10px; border-radius: var(--radius-lg);
   font-size: 13px; font-weight: 500; color: var(--ink, var(--text-100));
   transition: background 200ms var(--ease);
   background: transparent; border: 0; cursor: pointer;
@@ -147,7 +147,7 @@
 .aiDot { width: 6px; height: 6px; border-radius: 9999px; background: var(--ai); }
 .topbarActions { display: flex; gap: 2px; align-items: center; }
 .iconBtn {
-  width: 34px; height: 34px; border-radius: 8px;
+  width: 34px; height: 34px; border-radius: var(--radius-lg);
   color: var(--ink-muted, var(--text-300));
   display: inline-flex; align-items: center; justify-content: center;
   transition: background 200ms var(--ease), color 200ms var(--ease);
@@ -245,7 +245,7 @@
 .agentItemBtn {
   flex: 1; min-width: 0;
   display: flex; align-items: center; gap: 8px;
-  margin: 0 -6px; padding: 3px 6px; border: none; border-radius: 6px;
+  margin: 0 -6px; padding: 3px 6px; border: none; border-radius: var(--radius-md);
   background: none; color: inherit; font: inherit; text-align: left;
   cursor: pointer;
   transition: background-color 200ms var(--ease);
@@ -300,7 +300,7 @@
 }
 .composerChip:hover { background: var(--bg-200); }
 .composerIcon {
-  width: 32px; height: 32px; border-radius: 8px;
+  width: 32px; height: 32px; border-radius: var(--radius-lg);
   color: var(--ink-muted, var(--text-300));
   display: inline-flex; align-items: center; justify-content: center;
   background: transparent; border: 0; cursor: pointer;
@@ -348,7 +348,7 @@
 }
 .toolPickerRow {
   display: flex; align-items: center; gap: 8px;
-  font-size: 12px; padding: 3px 4px; border-radius: 6px; cursor: pointer;
+  font-size: 12px; padding: 3px 4px; border-radius: var(--radius-md); cursor: pointer;
 }
 .toolPickerRow:hover { background: var(--bg-200); }
 .toolPickerRow[data-disabled] { opacity: 0.5; cursor: default; }
@@ -424,7 +424,7 @@
 .composerAttachment {
   display: inline-flex; align-items: center; gap: 6px;
   max-width: 260px;
-  padding: 4px 8px; border-radius: 8px;
+  padding: 4px 8px; border-radius: var(--radius-lg);
   font-size: 12px; line-height: 1.2;
   color: var(--ink-body, var(--text-200));
   background: var(--bg-200);
@@ -519,7 +519,7 @@
 .msgAttachments { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
 .msgAttachment {
   display: inline-flex; align-items: center; gap: 6px;
-  max-width: 240px; padding: 4px 8px; border-radius: 8px;
+  max-width: 240px; padding: 4px 8px; border-radius: var(--radius-lg);
   font-size: 12px; line-height: 1.2; color: var(--ink-body, var(--text-200));
   background: var(--bg-200); border: 1px solid var(--border);
 }
@@ -528,7 +528,7 @@
 /* User-message edit affordance — visible on row hover only, uses the same
    subtle icon-button pattern as the assistant ai-actions row. */
 .userEditBtn {
-  width: 24px; height: 24px; border-radius: 6px;
+  width: 24px; height: 24px; border-radius: var(--radius-md);
   color: var(--ink-subtle, var(--text-400));
   display: inline-flex; align-items: center; justify-content: center;
   background: transparent; border: 0; cursor: pointer;
@@ -602,14 +602,14 @@
   font-family: var(--font-mono); font-size: 11px;
   color: var(--ink-subtle, var(--text-400));
   background: var(--bg-200, rgba(0, 0, 0, 0.04));
-  padding: 2px 6px; border-radius: 4px;
+  padding: 2px 6px; border-radius: var(--radius-sm);
   letter-spacing: 0.02em;
 }
 .codeCopy {
   font-family: var(--font-sans, inherit); font-size: 11px;
   color: var(--ink-muted, var(--text-300));
   background: var(--bg-200, rgba(0, 0, 0, 0.04));
-  border: 0; padding: 3px 10px; border-radius: 4px;
+  border: 0; padding: 3px 10px; border-radius: var(--radius-sm);
   cursor: pointer;
   letter-spacing: 0.02em;
 }
@@ -621,7 +621,7 @@
 }
 .aiProse code {
   font-family: var(--font-mono); font-size: 13px;
-  background: var(--muted); padding: 1px 6px; border-radius: 4px;
+  background: var(--muted); padding: 1px 6px; border-radius: var(--radius-sm);
   color: var(--ink, var(--text-100));
 }
 .aiProse table {
@@ -682,7 +682,7 @@
 }
 .msgAi:hover .aiActions { opacity: 1; }
 .aiActions button {
-  width: 28px; height: 28px; border-radius: 6px;
+  width: 28px; height: 28px; border-radius: var(--radius-md);
   color: var(--ink-subtle, var(--text-400));
   display: inline-flex; align-items: center; justify-content: center;
   background: transparent; border: 0; cursor: pointer;
@@ -703,7 +703,7 @@
 /* Citation chip (inline) */
 .cite {
   display: inline-flex; align-items: center; gap: 4px;
-  padding: 0 6px; border-radius: 4px;
+  padding: 0 6px; border-radius: var(--radius-sm);
   background: var(--muted); font-family: var(--font-sans);
   font-size: 11px; color: var(--ink-muted, var(--text-300));
   vertical-align: 1px; margin: 0 1px;
@@ -715,7 +715,7 @@
    button reset and a pointer so it reads as expandable. */
 .citeButton {
   display: inline-flex; align-items: center; gap: 4px;
-  padding: 0 6px; border-radius: 4px; border: 0;
+  padding: 0 6px; border-radius: var(--radius-sm); border: 0;
   background: var(--muted); font-family: var(--font-sans);
   font-size: 11px; color: var(--ink-muted, var(--text-300));
   vertical-align: 1px; margin: 0 1px;
@@ -884,7 +884,7 @@
 .signoffLabel { font-size: 12px; font-weight: 600; color: var(--text-200, var(--ink)); margin-top: 4px; }
 .signoffInput {
   font: inherit; font-size: 13px;
-  border: 1px solid var(--border-control); border-radius: 8px;
+  border: 1px solid var(--border-control); border-radius: var(--radius-lg);
   padding: 6px 8px; background: var(--bg-000, var(--background)); color: var(--text-100, var(--ink));
 }
 .signoffInput:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-main-200, #78716c); }
@@ -980,7 +980,7 @@
   color: var(--ink-body, var(--ink));
   background: var(--bg-200);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   padding: 3px 6px;
   cursor: pointer;
 }
@@ -1003,7 +1003,7 @@
   color: var(--ink-subtle, var(--text-400));
   background: transparent;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   padding: 3px 5px;
   cursor: pointer;
   transition: background 200ms var(--ease), color 200ms var(--ease);
@@ -1080,7 +1080,7 @@
   color: var(--ink-subtle, var(--text-400));
   background: transparent;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   padding: 4px;
   cursor: pointer;
   transition: background 200ms var(--ease), color 200ms var(--ease);
@@ -1100,7 +1100,7 @@
   flex-wrap: wrap;
   gap: 8px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   padding: 10px 12px;
   background: var(--bg-000);
 }
@@ -1148,7 +1148,7 @@
 .verifyPanel {
   border: 1px solid var(--border);
   border-left-width: 3px;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   padding: 8px 12px;
   background: var(--bg-000);
 }
@@ -1273,7 +1273,7 @@
 .gatePanel {
   border: 1px solid var(--border);
   border-left-width: 3px;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   padding: 10px 12px;
   background: var(--bg-000);
 }
@@ -1286,7 +1286,7 @@
 .concordPanel {
   border: 1px solid var(--border);
   border-left-width: 3px;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   padding: 10px 12px;
   background: var(--bg-000);
 }
@@ -1300,7 +1300,7 @@
   border: 1px solid var(--border);
   border-left-width: 3px;
   border-left-color: var(--warning, #b4831f);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   padding: 10px 12px;
   background: var(--bg-000);
 }
@@ -1414,7 +1414,7 @@
   border: 1px solid var(--border);
   border-left-width: 3px;
   border-left-color: var(--ink-subtle, var(--text-400));
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   padding: 10px 12px;
   background: var(--bg-100, var(--bg-000));
 }
@@ -1490,7 +1490,7 @@
   color: var(--ink-muted, var(--text-300));
   padding: 4px 8px;
   border: 1px dashed var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
 }
 .concordClaims {
   margin: 10px 0 0;
@@ -1532,7 +1532,7 @@
 .consistencyPanel {
   border: 1px solid var(--border);
   border-left-width: 3px;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   padding: 8px 12px;
   font-size: 12px;
   font-weight: 600;
@@ -1583,7 +1583,7 @@
   border: 1px solid var(--border);
   border-left-width: 3px;
   border-left-color: var(--accent-main-100, #6366f1);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   padding: 8px 12px;
   background: var(--bg-000);
 }
@@ -1725,7 +1725,7 @@
   font-weight: 600;
   letter-spacing: 0.04em;
   padding: 1px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: var(--bg-100, var(--bg-000));
   border: 1px solid var(--border);
   color: var(--ink-muted, var(--text-300));
@@ -1755,7 +1755,7 @@
   font-weight: 600;
   letter-spacing: 0.04em;
   padding: 1px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   color: var(--ink-muted, var(--text-300));
 }
@@ -1792,7 +1792,7 @@
   gap: 3px;
   padding: 6px 8px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: var(--bg-100, var(--bg-000));
 }
 .concordSideLabel {
@@ -2304,7 +2304,7 @@
 .sealBadge {
   margin-top: 8px;
   border: 1px solid var(--success, #2f7d57);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   background: var(--success-subtle, rgba(47, 125, 87, 0.06));
   padding: 8px 12px;
 }
@@ -2456,7 +2456,7 @@
 }
 .briefChallenge {
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   padding: 6px 8px;
   background: var(--bg-100, var(--bg-000));
 }
@@ -2471,7 +2471,7 @@
   text-transform: uppercase;
   letter-spacing: 0.03em;
   padding: 1px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--ink-muted, var(--text-300));
   border: 1px solid var(--border);
 }

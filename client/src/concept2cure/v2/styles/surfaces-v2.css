@@ -20,14 +20,14 @@
 .c2c-v2 .landing-crow{display:flex;align-items:center;justify-content:space-between;padding:6px 10px 10px;}
 .c2c-v2 .landing-crow-l{display:flex;align-items:center;gap:4px;position:relative;}
 .c2c-v2 .landing-crow-r{display:flex;align-items:center;gap:6px;position:relative;}
-.c2c-v2 .landing-tool{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--text-300);font-size:18px;transition:background var(--dur);}
+.c2c-v2 .landing-tool{width:32px;height:32px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;color:var(--text-300);font-size:18px;transition:background var(--dur);}
 .c2c-v2 .landing-tool:hover{background:var(--bg-100);color:var(--text-200);}
-.c2c-v2 .landing-engine{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;font-size:12.5px;font-weight:500;color:var(--text-300);transition:background var(--dur);}
+.c2c-v2 .landing-engine{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:var(--radius-lg);font-size:12.5px;font-weight:500;color:var(--text-300);transition:background var(--dur);}
 .c2c-v2 .landing-eng-ana{font-weight:600;color:var(--accent-100);letter-spacing:.01em;}
 .c2c-v2 .landing-engine:hover{background:var(--bg-100);}
 .c2c-v2 .landing-eng-mode{color:var(--text-400);font-weight:400;}
 .c2c-v2 .landing-eng-chev{font-size:12px;color:var(--text-400);}
-.c2c-v2 .landing-send{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--accent-strong);color:var(--accent-on-strong);font-size:16px;transition:opacity var(--dur);}
+.c2c-v2 .landing-send{width:32px;height:32px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;background:var(--accent-strong);color:var(--accent-on-strong);font-size:16px;transition:opacity var(--dur);}
 .c2c-v2 .landing-send:disabled{opacity:.5;cursor:default;}
 .c2c-v2 .landing-plus-menu{position:absolute;bottom:40px;left:0;background:var(--bg-000);border:1px solid var(--bg-200);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.1);padding:4px;min-width:200px;z-index:10;}
 .c2c-v2 .landing-plus-menu button{display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;border-radius:7px;font-size:12.5px;color:var(--text-200);text-align:left;transition:background var(--dur);}
@@ -63,7 +63,7 @@
 .c2c-v2 .landing-action .ico{font-size:14px;color:var(--text-400);}
 
 /* ════ "Browse all capabilities" — the home's link to the long tail ════ */
-.c2c-v2 .landing-browse{margin-top:14px;padding:4px 8px;border:0;background:none;font-size:12.5px;font-weight:500;color:var(--text-400);border-radius:6px;transition:color var(--dur),background var(--dur);}
+.c2c-v2 .landing-browse{margin-top:14px;padding:4px 8px;border:0;background:none;font-size:12.5px;font-weight:500;color:var(--text-400);border-radius:var(--radius-md);transition:color var(--dur),background var(--dur);}
 .c2c-v2 .landing-browse:hover{color:var(--text-200);background:var(--bg-100);}
 
 /* ════ CapabilityBrowser — the module launcher, in an overlay ════
@@ -75,7 +75,7 @@
 .c2c-v2 .capbrowser-h{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px 18px 12px;border-bottom:1px solid var(--bg-100);}
 .c2c-v2 .capbrowser-h .cb-title{margin:0;font-size:14px;font-weight:600;color:var(--text-100);letter-spacing:-.01em;}
 .c2c-v2 .capbrowser-h .cb-sub{display:block;margin-top:3px;font-size:11.5px;color:var(--text-400);}
-.c2c-v2 .capbrowser-x{flex-shrink:0;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:0;border-radius:6px;background:none;color:var(--text-400);transition:background var(--dur),color var(--dur);}
+.c2c-v2 .capbrowser-x{flex-shrink:0;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:0;border-radius:var(--radius-md);background:none;color:var(--text-400);transition:background var(--dur),color var(--dur);}
 .c2c-v2 .capbrowser-x:hover{background:var(--bg-100);color:var(--text-200);}
 .c2c-v2 .capbrowser-x svg{width:15px;height:15px;}
 .c2c-v2 .capbrowser-search{display:flex;align-items:center;gap:8px;margin:12px 18px 0;padding:7px 11px;border:1px solid var(--bg-200);border-radius:9px;background:var(--bg-050,transparent);}
@@ -104,7 +104,7 @@
 .c2c-v2 .cb-grp-grid{display:flex;flex-direction:column;gap:1px;padding:5px;}
 .c2c-v2 .cb-card{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:7px;border:1px solid transparent;background:transparent;text-align:left;transition:background var(--dur),border-color var(--dur);}
 .c2c-v2 .cb-card:hover{background:var(--bg-050);border-color:var(--bg-200);}
-.c2c-v2 .cb-card-ic{flex-shrink:0;width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;background:var(--bg-100);color:var(--text-300);}
+.c2c-v2 .cb-card-ic{flex-shrink:0;width:24px;height:24px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;background:var(--bg-100);color:var(--text-300);}
 .c2c-v2 .cb-card-ic svg{width:14px;height:14px;}
 .c2c-v2 .cb-card:hover .cb-card-ic{background:var(--accent-000);color:var(--accent-100);}
 .c2c-v2 .cb-card-l{font-size:12px;font-weight:500;color:var(--text-200);line-height:1.3;}
@@ -256,7 +256,7 @@
 .c2c-v2 .ct-strong{font-weight:500;}
 .c2c-v2 .vn{display:flex;align-items:center;gap:8px;min-width:0;}
 .c2c-v2 .vn .ct-strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.c2c-v2 .vtype{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;padding:2px 5px;border-radius:4px;background:var(--bg-200);color:var(--text-300);flex-shrink:0;}
+.c2c-v2 .vtype{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;padding:2px 5px;border-radius:var(--radius-sm);background:var(--bg-200);color:var(--text-300);flex-shrink:0;}
 .c2c-v2 .esig{color:var(--success);font-size:14px;}
 .c2c-v2 .vault-drawer{border:1px solid var(--border);border-radius:var(--radius-xl);padding:16px;background:var(--bg-050);}
 .c2c-v2 .dr-eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-400);font-weight:600;}

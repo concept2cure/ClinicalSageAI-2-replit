@@ -59,7 +59,7 @@
 .qms-actions { display: flex; gap: 8px; flex: 0 0 auto; }
 .qms-btn {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 7px 12px; border-radius: 8px;
+  padding: 7px 12px; border-radius: var(--radius-lg);
   font-size: 12.5px; font-weight: 600; white-space: nowrap;
   transition: background 200ms var(--ease), color 200ms var(--ease), border-color 200ms var(--ease);
 }
@@ -134,7 +134,7 @@
 .qms-rowacts { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
 .qms-chip {
   display: inline-flex; align-items: center; gap: 4px;
-  font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 6px;
+  font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: var(--radius-md);
   color: var(--text-300); border: 1px solid var(--bg-200); background: var(--background);
   transition: background 200ms var(--ease), color 200ms var(--ease), border-color 200ms var(--ease);
 }
@@ -251,7 +251,7 @@
 .qcc-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
 .qcc-link {
   display: flex; align-items: center; gap: 9px; padding: 8px 10px; border: 1px solid var(--bg-200);
-  border-radius: 8px; background: var(--background); text-align: left;
+  border-radius: var(--radius-lg); background: var(--background); text-align: left;
   transition: border-color 200ms var(--ease), box-shadow 200ms var(--ease);
 }
 .qcc-link:hover { border-color: var(--accent-main-100); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }
@@ -265,7 +265,7 @@
 .qcc-link-rel { font-size: 10px; color: var(--text-400); white-space: nowrap; }
 .qcc-link-type {
   font-size: 10px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-400);
-  font-weight: 600; background: var(--bg-100); padding: 2px 6px; border-radius: 4px; white-space: nowrap;
+  font-weight: 600; background: var(--bg-100); padding: 2px 6px; border-radius: var(--radius-sm); white-space: nowrap;
 }
 
 /* ─── Change control: training + forms ─────────────────────────── */
