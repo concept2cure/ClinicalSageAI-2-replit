@@ -269,6 +269,42 @@ describe('Vault — the data room lane', () => {
   });
 });
 
+/* A suggestion has two possible authors: the ingest classifier, which always
+   records its confidence, and AnA, whose place_project_document writes a
+   suggestion for a person to confirm (D5, 2026-09-24) and records none. The
+   filing block labelled EVERY suggestion "Classifier: …", so AnA's proposal
+   would have been shown beside the Confirm button as the classifier's —
+   misattributed in the one place a person decides whether to accept it. */
+describe('Vault — a suggestion is attributed to whoever made it', () => {
+  it("labels the classifier's proposal as the classifier's, with its confidence", async () => {
+    mockApi(() => ok(vaultPayload()));
+    render(<Vault {...props()} />);
+    const block = await screen.findByTestId('vault-filing-block');
+    expect(block.textContent).toMatch(/Classifier \(high confidence\): CTD pattern "Stability"/);
+  });
+
+  it("does not label AnA's suggestion as the classifier's", async () => {
+    const anaDoc = uploadDoc({
+      filing: {
+        folderId: 'module-3',
+        folderLabel: 'Module 3 · Quality',
+        evidenceKind: 'report',
+        ctdSection: '3.2.P.8',
+        placementStatus: 'suggested',
+        confidence: null,
+        rationale: "AnA's suggestion: the report states a 24-month stability study.",
+      },
+    });
+    mockApi(() => ok(vaultPayload({ tree: cabinetTree([anaDoc]) })));
+    render(<Vault {...props()} />);
+    const block = await screen.findByTestId('vault-filing-block');
+    expect(block.textContent).toMatch(/AnA's suggestion: the report states/);
+    expect(block.textContent).not.toMatch(/Classifier/);
+    // Still a suggestion a person can confirm.
+    expect(screen.getByTestId('vault-confirm-filing')).toBeTruthy();
+  });
+});
+
 describe('Vault — filing decisions are governed commits, not local patches', () => {
   it('confirming a suggested filing POSTs to /file and re-reads the tree', async () => {
     let reads = 0;

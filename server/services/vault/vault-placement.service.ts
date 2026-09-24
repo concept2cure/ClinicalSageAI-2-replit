@@ -32,6 +32,19 @@
  * Failures are RETURNED, not thrown, so both callers decide their own
  * presentation. Only an unexpected error escapes.
  *
+ * ── An agent's placement is a suggestion, never a person's decision ─────────
+ * (D5, placement-attribution, 2026-09-24.) AnA's place_project_document called
+ * this with nothing but the human's user id, so her folder was written as
+ * 'confirmed', placed_by that person, under a chained audit row whose user and
+ * actor were that person — and nothing anywhere recorded that an agent made
+ * the call. The Vault counts 'confirmed' as "an upload a person filed", and
+ * URS-VAULT-007 says a person confirms the filing, so the Part 11 record said
+ * a person had decided something no person decided. A caller acting for an
+ * agent now says so (`agent`): the write becomes the 'suggested' state the
+ * ingest classifier already uses for a machine proposal, names no person as
+ * the placer, refuses to confirm, and carries the agent's provenance in the
+ * audit row beside the move. A person's call — the route — is unchanged.
+ *
  * @module server/services/vault/vault-placement.service
  */
 
@@ -63,6 +76,15 @@ export interface PlaceVaultDocumentArgs {
   /** Request provenance for the audit row; a tool call has neither. */
   ipAddress?: string;
   userAgent?: string;
+  /**
+   * Set when an AI agent, not a person, is placing the document: the agent's
+   * provenance in the repo's agent-audit shape (actorKind, reason, tool,
+   * serving model, thread, turn — see document-placement-tools.ts), written
+   * into the audit row's details. Its presence is also what makes the write a
+   * suggestion rather than a filing: `userId` stays the person on whose behalf
+   * the agent acted, and that person — not the agent — confirms in the Vault.
+   */
+  agent?: Record<string, unknown>;
 }
 
 /** The placement as it stands after the write — the shape the Vault renders. */
@@ -145,6 +167,20 @@ function placementRationale(
   targetFolder: string | null,
   priorRationale: string | null,
 ): string {
+  // An agent's rationale names the agent, in the text itself. The Vault shows a
+  // suggestion's rationale beside the Confirm button, and its only other
+  // author is the ingest classifier — so an unsigned rationale would read as
+  // the classifier's, and a signed-by-default "by user" would be the very
+  // misattribution the `agent` field exists to prevent.
+  if (args.agent) {
+    const who = args.agent.actorKind === 'agent:ana' ? 'AnA' : 'An agent';
+    if (args.note) {
+      return targetFolder ? `${who}'s suggestion: ${args.note}` : `Unfiled by ${who}: ${args.note}`;
+    }
+    return targetFolder
+      ? `Suggested by ${who} — awaiting a person's confirmation.`
+      : `Unfiled by ${who} — awaiting a filing decision.`;
+  }
   if (args.note) return args.note;
   if (!targetFolder) return 'Unfiled by user — awaiting a filing decision.';
   return args.confirm
@@ -168,6 +204,15 @@ export async function placeVaultDocument(
   }
   if (!UUID_RE.test(documentId)) {
     return invalid('INVALID_DOCUMENT_ID', 'documentId (uuid) is required.');
+  }
+  // Confirming is the one act that makes a placement a person's decision, so
+  // it is refused to an agent outright rather than recorded under the person.
+  if (args.agent && args.confirm) {
+    return invalid(
+      'CONFIRMATION_REQUIRES_A_PERSON',
+      'A person confirms a filing, in the Vault. An agent may suggest a folder or unfile a document; it cannot confirm one.',
+      403,
+    );
   }
 
   // Program ownership — the same guard as the read path. A program in another
@@ -251,7 +296,10 @@ async function writePlacement(
   targetFolder: string | null,
 ): Promise<PlaceVaultDocumentResult> {
     const { programId, documentId, organizationId, userId } = args;
-    const newStatus = targetFolder ? 'confirmed' : 'unfiled';
+    const byAgent = args.agent != null;
+    // An agent's folder is a proposal a person confirms ('suggested', the
+    // classifier's state); only a person's call records 'confirmed'.
+    const newStatus = !targetFolder ? 'unfiled' : byAgent ? 'suggested' : 'confirmed';
     const rationale = placementRationale(args, targetFolder, before.placement_rationale);
 
     const upd = await client.query(
@@ -263,7 +311,7 @@ async function writePlacement(
          placement_confidence = NULL,
          placement_rationale = $5,
          placed_by = $6,
-         placed_at = NOW(),
+         placed_at = CASE WHEN $10::boolean THEN NULL ELSE NOW() END,
          updated_at = NOW()
        WHERE id = $7 AND program_id = $8
          AND EXISTS (
@@ -282,10 +330,14 @@ async function writePlacement(
         args.ctdSection ?? (args.confirm ? before.ctd_section : null),
         newStatus,
         rationale,
-        userId,
+        // placed_by/placed_at record the PERSON who placed it (shared/schema/
+        // vault.ts). Like the classifier's proposal, an agent's names nobody;
+        // the audit row carries who it acted for and who actually decided.
+        byAgent ? null : userId,
         documentId,
         programId,
         organizationId,
+        byAgent,
       ],
     );
     const after = upd.rows[0] as {
@@ -305,6 +357,8 @@ async function writePlacement(
       ipAddress: args.ipAddress,
       userAgent: args.userAgent,
       details: {
+        // First, so the write's own facts below can never be overwritten by it.
+        ...(args.agent ?? {}),
         programId,
         documentTitle: before.document_title,
         view,
