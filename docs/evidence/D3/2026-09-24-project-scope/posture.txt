@@ -1,0 +1,34 @@
+# Posture of the database these runs used — read from the catalog, 2026-09-24
+# The from-blank PostgreSQL 16 install of ../2026-09-24-update-boundary/ (install-fresh + deploy-migrate).
+
+app_service                   superuser=false bypassrls=false
+
+# The tables the cases write or read, and whether RLS could have refused it.
+# The mutation runs set rls=false on the first six, then restored ENABLE + FORCE:
+projects                      rls=true force=true policies=1 org_column=organization_id
+project_intelligence_profiles rls=true force=true policies=1 org_column=organization_id
+client_memory_entries         rls=true force=true policies=1 org_column=organization_id
+resolution_plans              rls=true force=true policies=1 org_column=organization_id
+csr_reports                   rls=true force=true policies=1 org_column=organization_id
+csr_details                   rls=true force=true policies=1 org_column=none
+client_intelligence_profiles  rls=true force=true policies=1 org_column=organization_id
+resolution_bundles            rls=true force=true policies=1 org_column=organization_id
+resolution_bundle_items       rls=false force=false policies=0 org_column=none
+organizations                 rls=false force=false policies=0 org_column=none
+
+# Every policy on these tables also passes when app.rls_enforce is not 'on' (the
+# posture outside production) — checked for all eight with a policy. csr_reports:
+  tenant_isolation_policy: ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on':: …
+
+# The foreign keys the pin cases write through (Postgres checks them without RLS):
+  project_intelligence_profiles: FOREIGN KEY (project_id) REFERENCES projects(id)
+  projects: FOREIGN KEY (client_workspace_id) REFERENCES client_workspaces(id)
+  projects: FOREIGN KEY (parent_project_id) REFERENCES projects(id)
+
+# The plan link has no foreign key in either direction, so nothing but the handler checks it:
+  resolution_bundles.plan_id (uuid), foreign keys: 0
+  resolution_plans.bundle_id (uuid), foreign keys: 0
+
+# The corpus keys a study across all orgs, which is why a second org's ingest of it is refused:
+  CREATE UNIQUE INDEX csr_reports_report_id_unique ON public.csr_reports USING btree (report_id)
+  CREATE UNIQUE INDEX uq_csr_reports_nct_id ON public.csr_reports USING btree (nct_id) WHERE (nct_id IS NOT NULL)

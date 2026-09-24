@@ -331,6 +331,13 @@ export async function teardownTwoTenantFixture(): Promise<void> {
            vigilance_events have no organization column: they hang from a
            program by a text program_id, so they are matched through the fixture
            orgs' programs, which the loop below then deletes. */
+        // project-scope-boundary.dbtest.ts: csr_details has no organization
+        // column; it hangs from its report.
+        await cleanup.query(
+          `DELETE FROM csr_details WHERE report_id IN
+             (SELECT id FROM csr_reports WHERE organization_id=ANY($1::int[]))`,
+          [FIXTURE_ORGS]
+        );
         for (const table of ['vigilance_events', 'mdr_events', 'complaints']) {
           await cleanup.query(
             `DELETE FROM ${table} WHERE program_id IN
@@ -358,6 +365,14 @@ export async function teardownTwoTenantFixture(): Promise<void> {
           'cro_clients',
           'user_intelligence_profiles',
           'gspr_program_mappings',
+          // project-scope-boundary.dbtest.ts. Entries before the profiles they
+          // hang from; bundle items cascade from their bundles. Plans and
+          // bundles name projects by id with no foreign key.
+          'client_memory_entries',
+          'client_intelligence_profiles',
+          'resolution_bundles',
+          'resolution_plans',
+          'csr_reports',
           // governed-edit-boundary.dbtest.ts. PCCP plans, their modifications
           // and post-market documents all cascade from the program.
           'regulatory_programs',
