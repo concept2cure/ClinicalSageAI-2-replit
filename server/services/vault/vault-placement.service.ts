@@ -51,6 +51,7 @@
 import { pool } from '../../db.js';
 import { writeChainedAuditRow } from '../auditService.js';
 import { resolveVaultView, isFolderInView, folderLabel } from './vault-filing.service.js';
+import { vaultWriteRefusal } from './vault-write-authority.js';
 import type { VaultViewId } from '../../../shared/constants/domain/vault-taxonomy.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -198,6 +199,8 @@ function placementRationale(
 export async function placeVaultDocument(
   args: PlaceVaultDocumentArgs,
 ): Promise<PlaceVaultDocumentResult> {
+  const roleRefusal = vaultWriteRefusal();
+  if (roleRefusal) return roleRefusal;
   const { programId, documentId, organizationId } = args;
   if (!UUID_RE.test(programId)) {
     return invalid('NOT_FOUND', 'No such project.', 404);
