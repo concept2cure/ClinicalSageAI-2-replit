@@ -85,6 +85,7 @@ output "resource_names" {
     evidence_role   = module.evidence.names.role
     frontend_bucket = local.frontend_bucket
     vault_bucket    = local.vault_bucket
+    vault_kms       = local.vault_key_alias
     signing_alias   = local.release_signing_key_alias
   }
 }

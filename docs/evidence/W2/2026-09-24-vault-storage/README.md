@@ -30,7 +30,7 @@ at HEAD before it was fixed, and each fix was shown failing first.
 | 2 | `resolveStorageProviderName` refuses an unimplemented value by name. | `server/services/storage/provider-name.ts` |
 | 3, 4 | `put` writes a per-version index object last, so a read is one GET. Older objects are found by listing the org's own prefix, following continuation tokens. `null` means only "not found"; every other failure propagates. Version ids that are not uuid-shaped are refused. | `s3-provider.ts` |
 | 5 | Boot posture: production must set `STORAGE_PROVIDER`. `s3` needs a bucket. `local` needs `STORAGE_ACCEPT_LOCAL_DISK=true`, the operator's statement that `storage/` is durable. It fires on import from `server/config/environment.ts`. | `server/services/storage/storage-posture.ts` |
-| 6 | `terraform/stack/vault_storage.tf` creates a bucket per environment (`c2c-prod-vault`, `c2c-stg-vault`). It is private, versioned and SSE-encrypted, refuses non-TLS requests, and its policy allows only the task role to list the bucket and get, put and delete objects. Both containers get `STORAGE_PROVIDER=s3`, `AWS_S3_BUCKET` and `AWS_REGION`. The preflight requires both names, and on Fargate accepts only the value `s3`. | `terraform/stack/{vault_storage,main,outputs}.tf`, `.github/workflows/deploy-aws.yml` |
+| 6 | `terraform/stack/vault_storage.tf` creates a bucket per environment (`c2c-prod-vault`, `c2c-stg-vault`). It is private and versioned. It is encrypted under its own KMS key: rotating, bucket keys on, and a key policy under which the account administers the key but cannot decrypt, while the task role can use it only through S3. It refuses non-TLS requests. Its bucket policy allows only the task role to list the bucket and get, put and delete objects. The provider no longer sends an `AES256` header on each put, because that header overrode the bucket's key. Both containers get `STORAGE_PROVIDER=s3`, `AWS_S3_BUCKET` and `AWS_REGION`. The preflight requires both names, and on Fargate accepts only the value `s3`. | `terraform/stack/{vault_storage,main,outputs}.tf`, `.github/workflows/deploy-aws.yml` |
 | 7 | A `vaultdata` volume at `/app/storage` in both compose stacks, with local accepted because the volume is real. The image creates `/app/storage/vault` before its `chown`. The CI boot smoke states local "proves boot, not durability". | `docker-compose{,.beta}.yml`, `Dockerfile.optimized`, `.github/workflows/ci.yml` |
 
 ## Shown failing first
@@ -42,7 +42,7 @@ at HEAD before it was fixed, and each fix was shown failing first.
 | `storage-posture.test.ts`, which imports the real `environment.ts` in a production process | "expected 'LOADED' to match /REFUSED: .*STORAGE_PROVIDER/" before wiring (`red/R3`) | 7/7 (`green/R3`) |
 | `terraform test` on `terraform/stack`, whose preflight names come from `deploy-aws.yml` | 15/17: API, worker and staging lack a required name (`red/R4-terraform.txt`) | 19/19 at HEAD, which includes the vault run and the deploy-role run another lane added the same hour (`green/R4-terraform.txt`) |
 
-Six mutants of the new Terraform run (`mutants/`). Each one fails exactly one run:
+Nine mutants of the new Terraform run (`mutants/`). Each one fails exactly one run:
 
 | Mutant | Fails |
 |---|---|
@@ -52,6 +52,15 @@ Six mutants of the new Terraform run (`mutants/`). Each one fails exactly one ru
 | V4: `STORAGE_PROVIDER=local` in the task | the vault run |
 | V5: the TLS deny inverted | the vault run |
 | V6: staging names production's bucket | `staging_is_distinct_from_production` |
+| V7: the bucket back on SSE-S3 | the vault run |
+| V8: the account root given `kms:Decrypt` | the vault run |
+| V9: the key usable through any service | the vault run |
+
+The key was chosen over SSE-S3 for what the vault holds, and for the
+deploy's blocking Trivy scan. As far as this session knows (Trivy could not
+be fetched here), the scan rates an S3 bucket without a customer-managed key
+as HIGH. An SSE-S3 vault bucket would have been one more finding for
+TRIVY-01 to clear.
 
 The pipeline's own preflight shell, extracted byte for byte from `deploy-aws.yml`
 and run with `aws` stubbed (`scripts/ops/terraform-preflight-proof.mjs`),
