@@ -413,11 +413,24 @@ export async function getGovernedDecisionSummary(options: {
   return summary;
 }
 
+/**
+ * The organization is REQUIRED. This used to take (projectId, artifactId) and
+ * query with no org, which search() turns into `organization_id = NULL` — so
+ * every trace came back empty however many decisions the artifact had, at all
+ * three callers, including the client-facing governance route (ledger L182).
+ * Making the org a parameter rather than optional is the point: an org-less
+ * call cannot be written, so it cannot silently answer "no decisions" again.
+ */
 export async function getArtifactDecisionTrace(
   projectId: string,
-  artifactId: string
+  artifactId: string,
+  organizationId: number
 ): Promise<GovernedDecisionRecord[]> {
-  const records = await getRecentGovernedDecisions({ projectId, limit: 200 });
+  const records = await getRecentGovernedDecisions({
+    organizationId: String(organizationId),
+    projectId,
+    limit: 200,
+  });
   return records.filter(d => d.artifactId === artifactId);
 }
 
