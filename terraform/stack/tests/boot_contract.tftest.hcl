@@ -302,8 +302,27 @@ run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use" {
     error_message = "Every public-access block must be on for the vault bucket."
   }
   assert {
-    condition     = one(one(aws_s3_bucket_server_side_encryption_configuration.vault.rule).apply_server_side_encryption_by_default).sse_algorithm == "AES256"
-    error_message = "The vault bucket must encrypt at rest."
+    condition = (
+      one(one(aws_s3_bucket_server_side_encryption_configuration.vault.rule).apply_server_side_encryption_by_default).sse_algorithm == "aws:kms" &&
+      one(one(aws_s3_bucket_server_side_encryption_configuration.vault.rule).apply_server_side_encryption_by_default).kms_master_key_id == aws_kms_key.vault.arn &&
+      aws_kms_key.vault.enable_key_rotation
+    )
+    error_message = "The vault bucket must encrypt under its own rotating KMS key."
+  }
+  assert {
+    condition = anytrue([
+      for st in [for s in jsondecode(aws_kms_key.vault.policy).Statement : s if s.Principal.AWS == module.ecs.task_role_arn] :
+      length(setsubtract(toset(["kms:Decrypt", "kms:GenerateDataKey"]), toset(st.Action))) == 0 &&
+      st.Condition.StringEquals["kms:ViaService"] == "s3.${var.region}.amazonaws.com"
+    ])
+    error_message = "The task role must decrypt and generate data keys with the vault key, through S3 only."
+  }
+  assert {
+    condition = alltrue([
+      for st in jsondecode(aws_kms_key.vault.policy).Statement :
+      st.Principal.AWS == module.ecs.task_role_arn || length(setintersection(toset(st.Action), toset(["kms:Decrypt", "kms:Encrypt", "kms:GenerateDataKey", "kms:ReEncrypt*", "kms:*"]))) == 0
+    ])
+    error_message = "No principal but the task role may decrypt with the vault key."
   }
   assert {
     condition = anytrue([

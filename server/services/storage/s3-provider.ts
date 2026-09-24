@@ -6,7 +6,7 @@
  * Requires: AWS_S3_BUCKET, AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
  *
  * Features:
- * - Server-side encryption (AES-256)
+ * - Encryption at rest by the bucket's default (KMS in terraform/stack)
  * - Pre-signed URLs with configurable TTL
  * - Structured key paths: {orgId}/{projectId}/versions/{versionId}/{filename}
  *
@@ -97,13 +97,15 @@ export class S3StorageProvider implements IStorageProvider {
     const vaultVersionId = generateVersionId();
     const vaultFileId = buildVaultFileId(orgId, projectId, filename);
 
-    // Upload file with server-side encryption
+    // Encryption at rest is the bucket's default, not a per-request header. The
+    // stack's vault bucket encrypts under its own KMS key
+    // (terraform/stack/vault_storage.tf), and an explicit `AES256` here
+    // overrode that on every object.
     await this.client.send(new PutObjectCommand({
       Bucket: this.bucket,
       Key: this.keyPath(orgId, projectId, vaultVersionId, filename),
       Body: bytes,
       ContentType: mime,
-      ServerSideEncryption: 'AES256',
       Metadata: {
         ...metadata,
         'x-vault-file-id': vaultFileId,
@@ -131,7 +133,6 @@ export class S3StorageProvider implements IStorageProvider {
       Key: this.metaKeyPath(orgId, projectId, vaultVersionId),
       Body: Buffer.from(metaJson, 'utf8'),
       ContentType: 'application/json',
-      ServerSideEncryption: 'AES256',
     }));
 
     // Written last: a version is findable by id only once its bytes and
@@ -141,7 +142,6 @@ export class S3StorageProvider implements IStorageProvider {
       Key: this.indexKeyPath(orgId, vaultVersionId),
       Body: Buffer.from(metaJson, 'utf8'),
       ContentType: 'application/json',
-      ServerSideEncryption: 'AES256',
     }));
 
     return { vaultFileId, vaultVersionId, sizeBytes, sha256, provider: 's3' };
