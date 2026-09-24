@@ -126,6 +126,15 @@ export function auditRowOutcomeFrom(
   // `reason` is deliberately NOT returned: it is the store's own text and the
   // envelope is forwarded to a tenant client. Find it by the log line above,
   // keyed on the action and resource id repeated here.
+  return unpersistedAuditRow();
+}
+
+/**
+ * The wire shape of a lost row, for a writer that has already logged its own
+ * failure and only needs to say so in the canonical form the client reads
+ * (`logAuditEntry` in routes/c2c/shared.ts). Logs nothing.
+ */
+export function unpersistedAuditRow(): AuditRowOutcome {
   return { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message: AUDIT_NOT_PERSISTED_MESSAGE };
 }
 
