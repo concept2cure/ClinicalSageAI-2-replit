@@ -1,0 +1,61 @@
+{
+  "$comment": "Runtime server files that issue DDL, pinned to their exact statement count, each with the reason it is tolerated today. Read by scripts/ci/check-runtime-ddl.mjs. Production's runtime role (app_service) cannot CREATE in public and owns no table, and PostgreSQL checks that BEFORE IF NOT EXISTS, so a runtime DDL statement is refused in production even when the object exists, and succeeds on every developer machine. This file may only SHRINK: move the object into a migration in C2C_MIGRATION_FILES (CLAUDE.md RULE 1), or delete the dead code, then lower or remove the entry. A new entry without a reason fails. Dispositions measured 2026-09-24 against a database provisioned by scripts/db/provision.mjs, as app_service: docs/evidence/W1/2026-09-24-launch-reach/.",
+  "files": {
+    "server/db/bootstrap/auth-schema.ts": {
+      "count": 8,
+      "reason": "Boot, on the OWNER connection, not the runtime role: ensureAuthTables (server/db/bootstrap/index.ts) opens a separate pool on DATABASE_URL — the owner URL — whenever APP_DATABASE_URL splits the runtime role. Safe as long as that holds; a caller passing the runtime pool would break production boot."
+    },
+    "server/db/ensureCoreTables.ts": {
+      "count": 9,
+      "reason": "Boot, on the OWNER connection: server/startup/services.ts calls ensureCoreTables(process.env.DATABASE_URL), the owner URL in the split-role production posture. Not the runtime role. Safe while the call site passes the owner URL."
+    },
+    "server/db/pglite-harness.ts": {
+      "count": 27,
+      "reason": "Test infrastructure: the in-process PGlite harness. Imported by no production module (only by tests), so it never reaches a production connection."
+    },
+    "server/db/setupLiterature.ts": {
+      "count": 2,
+      "reason": "Dead: its only importer, server/db/initDatabase.ts, is imported by nothing. Delete with initDatabase when that is taken (CLAUDE.md working agreement: history search, named replacement)."
+    },
+    "server/db/tenantRls.ts": {
+      "count": 7,
+      "reason": "Dead: imported by nothing. Its policy DDL is superseded by migrations/0021_enable_rls_everywhere.sql and db/migrations/20260801_tenant_isolation_sweep.sql, which run as the owner on the applier."
+    },
+    "server/routes/c2c/context-intelligence.ts": {
+      "count": 1,
+      "reason": "Latent defect, no caller: POST /api/concept2cure/feedback runs CREATE TABLE ai_feedback at request time (refused to app_service), swallows the failure and answers { recorded: true } with nothing stored. No client code and no AnA tool calls the route, and nothing reads ai_feedback. Fix before anything calls it: a migration, and a failure that is reported."
+    },
+    "server/routes/cognitive-ecosystem.ts": {
+      "count": 4,
+      "reason": "Unmounted: retired (#844, Phase 0.2), see the note at server/bootstrap/register-document-routes.ts. Its deletion is blocked on a Part 11 decision recorded in docs/work-orders/README.md §8."
+    },
+    "server/routes/test-assembly.ts": {
+      "count": 2,
+      "reason": "Mounted only when testRoutesEnabled (server/bootstrap/register-core-routes.ts); test scaffolding, never on a production connection. Recorded decision: server/db/ensureCoreTables.ts reachability-audit notes, 2026-08-11."
+    },
+    "server/services/ai/openai-orchestrator.ts": {
+      "count": 6,
+      "reason": "Dead DDL: every statement is inside initializeFactsGraph(), which nothing calls. The module's other exports are live and issue no DDL."
+    },
+    "server/services/chat-thread-helpers.ts": {
+      "count": 2,
+      "reason": "Reached (AnA chat), harmless in production: ensureChatTables catches the refusal, sets tablesEnsured so it never retries, and the tables exist from migrations/20260728_chat_thread_store.sql. Cost: one refused statement and one warning per process. Remove the DDL; keep a to_regclass check if one is wanted."
+    },
+    "server/services/innovation/submission-readiness-twin-service.ts": {
+      "count": 5,
+      "reason": "Reached through the AnA tool get_submission_readiness_twin (server/services/ana/AnaToolExecutor.ts), harmless in production: ensureTables catches the refusal, and the four innovation.readiness_* tables and their 14 criteria rows exist from db/migrations/072_gcc_innovation_platform_core.sql. Cost: a refused statement and a warning per construction."
+    },
+    "server/services/integrations/credentialVault.ts": {
+      "count": 2,
+      "reason": "Dead: imported by nothing."
+    },
+    "server/services/licensing/eula-service.ts": {
+      "count": 5,
+      "reason": "Latent defect, no caller: ensureSchema runs CREATE TABLE for license_agreements / license_acceptances, refused to app_service; the read paths catch it and return [], so hasAcceptedAll() answers TRUE for everyone. Unreached: requireLicenseAcceptance is mounted on no route, and no client code or AnA tool calls /api/licensing. Fix before in-app acceptance is ever built: a migration, and read paths that fail closed."
+    },
+    "server/utils/database-optimizer.ts": {
+      "count": 4,
+      "reason": "Dead: imported by nothing."
+    }
+  }
+}

@@ -32,7 +32,7 @@
 
 import * as React from 'react';
 import { I } from '../icons';
-import { DocumentsPanel } from '../components/DocumentsPanel';
+import { DocumentsPanel, averageAssessedCompletion } from '../components/DocumentsPanel';
 import { DataGate } from '../components/DataGate';
 import {
   UDI_DEVICES,
@@ -119,9 +119,7 @@ export function UdiSurface({ onAskAna, onOpenEditor }: UdiSurfaceProps) {
   const submissionDocs = documents.filter((d) => d.editor === 'data-submission');
   const blockedDocs = documents.filter((d) => d.blocker);
   const pendingSig = documents.filter((d) => d.esigState === 'pending').length;
-  const avgCompletion = documents.length
-    ? Math.round(documents.reduce((s, d) => s + d.completion, 0) / documents.length)
-    : 0;
+  const avgCompletion = averageAssessedCompletion(documents);
 
   const blockers = React.useMemo<UdiBlocker[]>(() => {
     const list: UdiBlocker[] = [];
@@ -204,8 +202,12 @@ export function UdiSurface({ onAskAna, onOpenEditor }: UdiSurfaceProps) {
         <div className="metric-card">
           <div className="metric-label">Avg completion</div>
           <div className="metric-val">
-            {avgCompletion}
-            <span className="unit">%</span>
+            {avgCompletion === null ? '—' : (
+              <>
+                {avgCompletion}
+                <span className="unit">%</span>
+              </>
+            )}
           </div>
           <div className="metric-meta">Across all label and submission artifacts</div>
         </div>

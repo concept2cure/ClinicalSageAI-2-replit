@@ -1,0 +1,30 @@
+# terraform test — the same tests against the modules AFTER this change
+# Terraform 1.9.8, hashicorp/aws 5.70.0 mocked (mock_provider), no AWS credentials
+
+## modules/alb
+tests/cloudfront_only.tftest.hcl... in progress
+  run "nothing_but_https_from_cloudfront_reaches_it"... pass
+  run "the_prefix_list_is_cloudfronts_and_the_secret_opens_the_listener"... pass
+  run "a_short_secret_is_refused"... pass
+  run "a_wildcard_secret_is_refused"... pass
+tests/cloudfront_only.tftest.hcl... tearing down
+tests/cloudfront_only.tftest.hcl... pass
+
+Success! 4 passed, 0 failed.
+exit=0
+
+## modules/cloudfront
+tests/alb_origin.tftest.hcl... in progress
+  run "api_errors_reach_the_browser_as_errors"... pass
+  run "every_server_path_routes_to_the_alb"... pass
+  run "the_alb_sees_the_viewers_headers"... pass
+  run "the_alb_origin_carries_the_secret"... pass
+  run "client_routes_are_rewritten_on_the_bucket_behaviour_only"... pass
+  run "api_routing_needs_a_custom_domain"... pass
+  run "api_routing_needs_the_secret"... pass
+  run "without_an_api_origin_nothing_routes_to_it"... pass
+tests/alb_origin.tftest.hcl... tearing down
+tests/alb_origin.tftest.hcl... pass
+
+Success! 8 passed, 0 failed.
+exit=0

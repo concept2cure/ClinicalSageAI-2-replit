@@ -457,6 +457,10 @@
 .mdx-shell .status-pill.active    { background: var(--ai-muted); color: var(--ai); }
 .mdx-shell .status-pill.na        { background: var(--bg-100); color: var(--text-500); }
 .mdx-shell .status-pill.final     { background: var(--success-muted); color: var(--success); }
+/* Neutral on purpose. An uploaded file is neither an achievement (success) nor
+   a warning — it is a record with no authoring lifecycle, and the pill should
+   read as a statement of kind, not of progress. */
+.mdx-shell .status-pill.uploaded  { background: var(--bg-200); color: var(--text-300); }
 /* Neutral, not accent — locked pills repeat per row, and accent orange is
    reserved for one focal point per screen. */
 .mdx-shell .status-pill.locked    { background: var(--bg-200); color: var(--text-200); border-color: var(--border-strong); }

@@ -171,6 +171,25 @@ if ! npm run --silent ci:column-reachability 2>&1; then
 fi
 echo "   ✅ Column reachability passed."
 
+# Schema is created by an applier, never by a request. Production's runtime role
+# cannot CREATE in public and owns no table, and PostgreSQL checks that BEFORE
+# IF NOT EXISTS — so a runtime CREATE TABLE is refused in production even when
+# the table exists, and succeeds on every developer machine. That is how the
+# enterprise onboarding intake lost every request in production. Reads files
+# only, no database (~1.5s).
+echo "   Validating server code runs no DDL on the runtime connection..."
+if ! npm run --silent ci:runtime-ddl 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Runtime DDL check FAILED."
+  echo "   Server code issues DDL that production's runtime role cannot run."
+  echo "   Create the object in a migration listed in C2C_MIGRATION_FILES"
+  echo "   (CLAUDE.md RULE 1); where a table might be missing, verify it with"
+  echo "   to_regclass and fail loudly. Never create schema at request time."
+  echo ""
+  exit 1
+fi
+echo "   ✅ No runtime DDL."
+
 # The third migration invariant, and the only one nothing was enforcing: every
 # .sql file in db/migrations must appear in migrations_manifest.json, which is
 # what orders them for the appliers that read it. `db:sync-manifest:check`
@@ -399,5 +418,31 @@ if ! npm run --silent ci:pushed-lint-errors 2>&1; then
   exit 1
 fi
 echo "   ✅ No ESLint errors in the pushed files."
+
+# ── TypeScript, before the push rather than after ────────────────────────────
+#
+# CI fails on ANY type error (.typecheck-baseline.json is ratcheted to 0). But
+# Rule 0 means no PRs — every push lands on concept2cure-v2 directly — so CI
+# only ever reports a type error AFTER it is on trunk. Nothing here typechecked.
+# Twice on 19 Sep 2026 a red typecheck reached trunk that way, both tests not
+# updated when a signature tightened, and each time the next person to push had
+# to fix somebody else's error before their own would go green.
+#
+# This runs the SAME gate CI runs (typecheck-no-regression, with its guards for a
+# compiler that died of OOM and a tsconfig that checked zero files), in its
+# --incremental mode, and only when the push changes something that can change a
+# type — .ts/.tsx (deletions included), typed JSON, tsconfig, package manifests.
+# A docs- or SQL-only push skips it and says so. ~45 s warm, ~95 s after editing
+# a widely imported file, ~5 min once after an install while the cache builds.
+echo "   Typechecking (only if this push can change a type)..."
+if ! npm run --silent ci:pushed-typecheck 2>&1; then
+  echo ""
+  echo "🚫 ERROR: The typecheck gate failed."
+  echo "   This is the check CI would fail on — after the push had already landed."
+  echo "   Fix the errors above and re-push."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Typecheck passed (or nothing type-relevant was pushed)."
 
 echo "✅ Pre-push checks complete — all gates passed."

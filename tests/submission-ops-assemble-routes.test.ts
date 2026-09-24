@@ -268,9 +268,12 @@ beforeEach(() => {
       ctdSection: l.ctdSection,
       fileName: l.fileName,
       href: `m${String(l.ctdSection).charAt(0)}/${String(l.ctdSection).replace(/\./g, '-')}/${l.fileName}`,
-      md5: createHash('md5').update(l.bytes).digest('hex'),
+      // A withdrawal ships no bytes; the real packager republishes the md5 it
+      // was handed for one, because the file it names lives in a prior sequence.
+      md5: l.bytes ? createHash('md5').update(l.bytes).digest('hex') : (l.md5 ?? ''),
       ...(l.operation ? { operation: l.operation } : {}),
       ...(l.title ? { title: l.title } : {}),
+      ...(l.leafKey ? { leafKey: l.leafKey } : {}),
     })),
     ...PACKAGER_EVIDENCE,
   }));
@@ -888,6 +891,84 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(manifest).toHaveLength(1);
     expect(manifest[0]).toMatchObject({ ctdSection: '1.2', fileName: 'cover-letter-cover.pdf', operation: 'new' });
     expect(manifest[0].md5).toMatch(/^[0-9a-f]{32}$/);
+  });
+
+  it('a RENAMED section does not file the same document twice — the leaf name is not its identity', async () => {
+    /* The leaf file name is composed from the section key, which PATCH edits in
+       place. After a rename the same artifact at the same CTD section came back
+       as `new` with a different file name, so the agency held two current
+       copies of one document and nothing warned. */
+    dbState.pkg = lockedPkg();
+    dbState.sections = [{ id: 13, sectionKey: 'clinical-overview', sectionLabel: 'Clinical Overview', sortOrder: 0 }];
+    dbState.mappedByCall = [[art('co', '2.5')]];
+    expect((await post()).status).toBe(200);
+    const filed = filedFrom('0000');
+    expect(filed.leaves[0]).toMatchObject({ ctdSection: '2.5', leafKey: 'artifact:artifact_co@2.5' });
+    const originalName = filed.leaves[0].fileName as string;
+
+    // The section is renamed and the artifact edited; 0001 files the change.
+    packageLeafBytesFn.mockClear();
+    (dbState as any)._pkgResolved = false;
+    dbState.pkg = lockedPkg({ regulatory: REGULATORY, filedSequences: [filed] });
+    dbState.sections = [{ id: 13, sectionKey: 'clinical-overview-summary', sectionLabel: 'Clinical Overview', sortOrder: 0 }];
+    dbState.mappedByCall = [[{ ...art('co', '2.5'), content: 'Real content co, revised' }]];
+    const res = await post({ sequence: '0001', submissionType: 'Efficacy Supplement' });
+    expect(res.status).toBe(200);
+    const sent = packageLeafBytesFn.mock.calls[0][0].leaves;
+    expect(sent).toHaveLength(1);
+    expect(sent[0].fileName).not.toBe(originalName);   // the name did move
+    expect(sent[0].operation).toBe('replace');         // the document did not
+    expect(sent[0].modifiedFile).toContain(originalName);
+    expect(res.body.data.bundle.lifecycle.summary).toMatchObject({ replace: 1, new: 0 });
+  });
+
+  it('WITHDRAWS a named document: a delete reaches the packager with no bytes, and is not counted as a file', async () => {
+    /* `delete` was unreachable: no input ever set it, so summary.delete was a
+       counter that could only read 0 and a document filed in error stayed
+       current at the agency through this path forever. */
+    dbState.pkg = lockedPkg();
+    dbState.sections = [
+      { id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 },
+      { id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 1 },
+    ];
+    dbState.mappedByCall = [[art('cover', null)], [art('co', null, 2)]];
+    expect((await post()).status).toBe(200);
+    const filed = filedFrom('0000');
+    const doomed = filed.leaves.find((l) => l.ctdSection === '2.5')! as { ctdSection: string; fileName: string };
+
+    packageLeafBytesFn.mockClear();
+    (dbState as any)._pkgResolved = false;
+    dbState.pkg = lockedPkg({ regulatory: REGULATORY, filedSequences: [filed] });
+    // The withdrawn document is no longer mapped; the cover letter is edited.
+    dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
+    dbState.mappedByCall = [[{ ...art('cover', null), content: 'revised' }]];
+    const res = await post({
+      sequence: '0001', submissionType: 'Efficacy Supplement',
+      withdraw: [{ ctdSection: doomed.ctdSection, fileName: doomed.fileName }],
+    });
+    expect(res.status).toBe(200);
+    const sent = packageLeafBytesFn.mock.calls[0][0].leaves;
+    const gone = sent.find((l: any) => l.fileName === doomed.fileName);
+    expect(gone).toBeDefined();
+    expect(gone.operation).toBe('delete');
+    expect(gone.bytes).toBeUndefined();          // a withdrawal ships no file
+    expect(gone.modifiedFile).toContain('0000'); // it points at the one on file
+    expect(res.body.data.bundle.lifecycle.summary).toMatchObject({ delete: 1, replace: 1 });
+    // It is not a file, so it is neither validated as one nor counted as one.
+    expect(dbState.updateSet.metadata.bundle.leafCount).toBe(1);
+  });
+
+  it('REFUSES a withdrawal of something this package never filed', async () => {
+    dbState.pkg = lockedPkg({ foo: 'bar', regulatory: REGULATORY, filedSequences: [FILED_0000] });
+    dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
+    dbState.mappedByCall = [[art('cover', null)]];
+    const res = await post({
+      sequence: '0001', submissionType: 'Efficacy Supplement',
+      withdraw: [{ ctdSection: '5.3.5.1', fileName: 'never-filed.pdf' }],
+    });
+    expect(res.status).toBe(409);
+    expect(res.body).toMatchObject({ code: 'WITHDRAWAL_NOT_ON_FILE', gate: 'sequence_lifecycle' });
+    expect(packageLeafBytesFn).not.toHaveBeenCalled();
   });
 
   it('assembling does NOT file the sequence: only a successful transmit puts a leaf on file', async () => {

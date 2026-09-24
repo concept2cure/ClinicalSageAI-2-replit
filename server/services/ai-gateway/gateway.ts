@@ -40,6 +40,7 @@ import type {
   AnaGatewayResponse,
   AnaToolUse,
   GatewayCitation,
+  GatewayServerToolUse,
   StreamCallback,
   ContentBlock,
 } from './types';
@@ -144,6 +145,7 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-opus-4',
     provider: 'anthropic',
     model: 'claude-opus-5',
+    maxApiEffort: 'max',
     thinkingMode: 'adaptive',
     supportsSamplingParams: false,
     supportsInlineSystem: true,
@@ -184,6 +186,7 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-opus-4-legacy',
     provider: 'anthropic',
     model: 'claude-opus-4-8',
+    maxApiEffort: 'max',
     thinkingMode: 'adaptive',
     supportsSamplingParams: false,
     supportsInlineSystem: true,
@@ -210,6 +213,7 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-sonnet-4',
     provider: 'anthropic',
     model: 'claude-sonnet-5',
+    maxApiEffort: 'max',
     supportsStructuredOutputs: true,
     // Sonnet 5 shares the flagship's reasoning-only surface: adaptive
     // thinking, and temperature/top_p/top_k rejected. Note this differs from
@@ -245,6 +249,7 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-sonnet-4-legacy',
     provider: 'anthropic',
     model: 'claude-sonnet-4-6',
+    maxApiEffort: 'max',
     thinkingMode: 'budget',
     supportsSamplingParams: true,
     contextWindow: 1000000,
@@ -271,6 +276,10 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     // stale-prior artifact. Haiku keeps the 200K window — unlike the Opus and
     // Sonnet entries above, that figure is correct here.
     model: 'claude-haiku-4-5',
+    // null, not omitted: Haiku 4.5 rejects effort with a 400, and every
+    // Fast turn routes here. Declared explicitly so the reason is on the
+    // entry rather than implied by an absence.
+    maxApiEffort: null,
     supportsStructuredOutputs: true,
     thinkingMode: 'budget',
     supportsSamplingParams: true,
@@ -587,6 +596,127 @@ function resolveStructuredOutputFormat(
  * shape this function does not recognise still yields its `cited_text` rather
  * than being dropped, because the span is the part that matters most.
  */
+/**
+ * Fold one content block into the running record of Anthropic-executed tools.
+ *
+ * The gateway's block loops handled `text`, `thinking` and `tool_use`, and let
+ * everything else fall through. So a turn that ran a web search looked exactly
+ * like a turn that did not: the citations came back, because those ride on the
+ * text blocks, but the SEARCH ITSELF was gone — no record that it happened, no
+ * query, and nothing for the work trace to show. For a product whose claim is
+ * that AnA shows her work, a step that happened and is invisible is worse than
+ * one that failed loudly: the trace reads as complete.
+ *
+ * Returns true when the block was a server-tool block, so a caller can tell
+ * "handled here" from "not mine".
+ *
+ * `server_tool_use` and its result arrive as SEPARATE blocks. They are matched
+ * by id where the API gives one; a result whose use we never saw still gets an
+ * entry, because an unmatched result is evidence of work we are otherwise not
+ * recording at all.
+ */
+/**
+ * Did this result block carry an error rather than results?
+ *
+ * A server tool does not raise: a failed web search is an HTTP 200 whose result
+ * body is an error OBJECT where a success would be a LIST. The shape is the
+ * only signal there is, so it is read here rather than inferred at each caller.
+ */
+function isServerToolError(block: any): boolean {
+  if (block?.is_error) return true;
+  const content = block?.content;
+  if (content == null || Array.isArray(content) || typeof content !== 'object') return false;
+  return typeof (content as any).error_code === 'string';
+}
+
+/** Record a `server_tool_use` block: the model asked Anthropic to do something. */
+function recordServerToolUse(block: any, into: GatewayServerToolUse[]): void {
+  into.push({
+    ...(typeof block.id === 'string' ? { id: block.id } : {}),
+    name: typeof block.name === 'string' ? block.name : 'server_tool',
+    ...(block.input && typeof block.input === 'object' ? { input: block.input } : {}),
+  });
+}
+
+/**
+ * Record a `*_tool_result` block against the use it belongs to.
+ *
+ * The use and its result arrive as SEPARATE blocks, matched by id where the API
+ * gives one. A result whose use we never saw still gets an entry: an unmatched
+ * result is evidence of work we would otherwise not be recording at all, and
+ * dropping it would recreate the defect in miniature.
+ */
+function recordServerToolResult(block: any, type: string, into: GatewayServerToolUse[]): void {
+  const isError = isServerToolError(block);
+  const useId = typeof block.tool_use_id === 'string' ? block.tool_use_id : undefined;
+  const existing = useId ? into.find(entry => entry.id === useId) : undefined;
+  if (existing) {
+    existing.result = block.content;
+    if (isError) existing.isError = true;
+    return;
+  }
+  into.push({
+    ...(useId ? { id: useId } : {}),
+    // Recover the tool from the block type: `web_search_tool_result` -> web_search.
+    name: type.replace(/_tool_result$/, '') || 'server_tool',
+    result: block.content,
+    ...(isError ? { isError: true } : {}),
+  });
+}
+
+/**
+ * Fold one content block into the running record of Anthropic-executed tools.
+ *
+ * The gateway's block loops handled `text`, `thinking` and `tool_use`, and let
+ * everything else fall through. So a turn that ran a web search looked exactly
+ * like a turn that did not: the citations came back, because those ride on the
+ * text blocks, but the SEARCH ITSELF was gone — no record that it happened, no
+ * query, and nothing for the work trace to show. For a product whose claim is
+ * that AnA shows her work, a step that happened and is invisible is worse than
+ * one that failed loudly, because the trace reads as complete.
+ *
+ * Returns true when the block was a server-tool block, so a caller can tell
+ * "handled here" from "not mine".
+ */
+function collectServerToolBlock(block: any, into: GatewayServerToolUse[]): boolean {
+  const type: string = block?.type ?? '';
+  if (type === 'server_tool_use') {
+    recordServerToolUse(block, into);
+    return true;
+  }
+  if (!type.endsWith('_tool_result')) return false;
+  recordServerToolResult(block, type, into);
+  return true;
+}
+
+/**
+ * Route one opening content block to whatever is recording it.
+ *
+ * A `tool_use` opens a buffer for its streamed arguments. Anything else may be
+ * Anthropic-executed work — a web search, a web fetch — which the handler used
+ * to let fall through, so the search vanished from the record while its
+ * citations (which ride on the text blocks) still arrived. Same collector as
+ * the non-streaming path, so the two cannot describe the same event
+ * differently.
+ */
+function openContentBlock(
+  event: any,
+  toolUses: AnaToolUse[],
+  toolInputBuffers: ToolInputBuffers,
+  serverToolUses: GatewayServerToolUse[]
+): void {
+  if (event.content_block?.type === 'tool_use') {
+    toolUses.push({
+      id: event.content_block.id,
+      name: event.content_block.name,
+      input: {},
+    });
+    toolInputBuffers.set(event.index, { toolIndex: toolUses.length - 1, json: '' });
+    return;
+  }
+  collectServerToolBlock(event.content_block, serverToolUses);
+}
+
 function normalizeCitation(raw: any): GatewayCitation | null {
   const citedText = typeof raw?.cited_text === 'string' ? raw.cited_text : '';
   if (!citedText) return null;
@@ -1850,7 +1980,7 @@ export class AIGateway {
       params.output_config = { ...(params.output_config ?? {}), format: structured.format };
     }
     // Only a level this model accepts (Haiku 4.5 rejects effort outright).
-    const modelEffort = apiEffortForModel(modelConfig.model, request.apiEffort);
+    const modelEffort = apiEffortForModel(modelConfig, request.apiEffort);
     if (modelEffort) {
       params.output_config = { ...(params.output_config ?? {}), effort: modelEffort };
     }
@@ -1897,6 +2027,7 @@ export class AIGateway {
     // each carrying the citations for the span it contains — the same facts the
     // streaming path receives as citations_delta.
     const nonStreamCitations: GatewayCitation[] = [];
+    const nonStreamServerTools: GatewayServerToolUse[] = [];
 
     for (const block of response.content || []) {
       if (block.type === 'text') {
@@ -1905,6 +2036,8 @@ export class AIGateway {
           const citation = normalizeCitation(raw);
           if (citation) nonStreamCitations.push(citation);
         }
+      } else if (collectServerToolBlock(block, nonStreamServerTools)) {
+        // Recorded by the collector; nothing further to accumulate here.
       } else if (block.type === 'thinking') {
         thinking += (block as any).thinking || '';
       } else if (block.type === 'tool_use') {
@@ -1954,6 +2087,7 @@ export class AIGateway {
       // constrained answer and a fortunate one look identical.
       structuredOutputEnforced: structured.enforced,
       citations: nonStreamCitations.length > 0 ? nonStreamCitations : undefined,
+      serverToolUses: nonStreamServerTools.length > 0 ? nonStreamServerTools : undefined,
     };
   }
 
@@ -2068,7 +2202,7 @@ export class AIGateway {
       params.output_config = { ...(params.output_config ?? {}), format: structured.format };
     }
     // Only a level this model accepts (Haiku 4.5 rejects effort outright).
-    const modelEffort = apiEffortForModel(modelConfig.model, request.apiEffort);
+    const modelEffort = apiEffortForModel(modelConfig, request.apiEffort);
     if (modelEffort) {
       params.output_config = { ...(params.output_config ?? {}), effort: modelEffort };
     }
@@ -2103,6 +2237,7 @@ export class AIGateway {
     let outputTokens = 0;
     let cacheCreationInputTokens = 0;
     let cacheReadInputTokens = 0;
+    const serverToolUses: GatewayServerToolUse[] = [];
     let stopReason = 'unknown';
     let resolvedModel: string | undefined;
 
@@ -2165,14 +2300,7 @@ export class AIGateway {
             appendToolInputFragment(toolInputBuffers, event.index, event.delta.partial_json);
           }
         } else if (event.type === 'content_block_start') {
-          if (event.content_block?.type === 'tool_use') {
-            toolUses.push({
-              id: event.content_block.id,
-              name: event.content_block.name,
-              input: {},
-            });
-            toolInputBuffers.set(event.index, { toolIndex: toolUses.length - 1, json: '' });
-          }
+          openContentBlock(event, toolUses, toolInputBuffers, serverToolUses);
         } else if (event.type === 'content_block_stop') {
           // The block is closed, so its fragments are now a complete JSON
           // document — parse it onto the tool use it belongs to.
@@ -2252,6 +2380,7 @@ export class AIGateway {
       cached: false,
       deterministic: false,
       finishReason: stopReason,
+      serverToolUses: serverToolUses.length > 0 ? serverToolUses : undefined,
       cacheHit: streamCacheStats ? cacheReadInputTokens > 0 : undefined,
       cacheStats: streamCacheStats,
       structuredOutputEnforced: structured.enforced,

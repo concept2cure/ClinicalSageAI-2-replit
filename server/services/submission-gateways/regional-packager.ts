@@ -1071,6 +1071,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
       ...(p.leaf.operation ? { operation: p.leaf.operation } : {}),
       ...(p.leaf.modifiedFile ? { modifiedFile: p.leaf.modifiedFile } : {}),
       ...(p.leaf.title ? { title: p.leaf.title } : {}),
+      ...(p.leaf.leafKey ? { leafKey: p.leaf.leafKey } : {}),
     })),
     // A withdrawal ships no file, but it is a filing act: the prior-state fold
     // drops a leaf whose last operation is a delete, and it can only do that if
@@ -1085,6 +1086,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
       operation: 'delete' as const,
       ...(leaf.modifiedFile ? { modifiedFile: leaf.modifiedFile } : {}),
       ...(leaf.title ? { title: leaf.title } : {}),
+      ...(leaf.leafKey ? { leafKey: leaf.leafKey } : {}),
     })),
   ];
 
