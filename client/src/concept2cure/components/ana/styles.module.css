@@ -252,7 +252,7 @@
 }
 .agentItemBtn:hover { background: var(--bg-200, rgba(0, 0, 0, 0.04)); }
 .agentItemBtn:focus-visible {
-  outline: 2px solid var(--accent-main-100, #6366f1);
+  outline: 2px solid var(--accent-main-200, #6366f1);
   outline-offset: 1px;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -271,7 +271,7 @@
               border-color 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
 }
 .composer:focus-within {
-  border-color: var(--border-strong);
+  border-color: var(--accent-main-200);
   box-shadow: 0 0 0 3px var(--accent-subtle);
 }
 .composer[data-dragging] {
@@ -377,7 +377,7 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 .effortOption:focus-visible {
-  outline: 2px solid var(--accent-main-100); outline-offset: 1px;
+  outline: 2px solid var(--accent-main-200); outline-offset: 1px;
 }
 
 /* ───────── Model dropdown (advanced) ───────── */
@@ -397,7 +397,7 @@
 }
 .modelSelect:hover { background-color: var(--bg-200); }
 .modelSelect:focus-visible {
-  outline: 2px solid var(--accent-main-100); outline-offset: 1px;
+  outline: 2px solid var(--accent-main-200); outline-offset: 1px;
 }
 .modelSelect:disabled { opacity: 0.55; cursor: default; }
 
@@ -888,7 +888,7 @@
   border: 1px solid var(--border-control); border-radius: 8px;
   padding: 6px 8px; background: var(--bg-000, var(--background)); color: var(--text-100, var(--ink));
 }
-.signoffInput:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-main-100, #78716c); }
+.signoffInput:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-main-200, #78716c); }
 .signoffHint { font-size: 11px; color: var(--text-400, var(--ink-subtle)); }
 .signoffError { font-size: 12px; color: var(--danger, #b91c1c); margin: 2px 0 0; }
 .signoffActions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
@@ -899,7 +899,7 @@
   border-radius: 9999px; padding: 5px 14px; cursor: pointer;
 }
 .signoffConfirm:disabled { opacity: 0.5; cursor: not-allowed; }
-.signoffConfirm:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-main-100, #78716c); }
+.signoffConfirm:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-main-200, #78716c); }
 .signoffResolved {
   display: inline-flex; align-items: center; gap: 6px;
   font-size: 12px; color: var(--text-200, var(--ink));
@@ -952,7 +952,7 @@
   background: var(--accent-main-100, #6366f1);
 }
 .studioResize:focus-visible {
-  background: var(--accent-main-100, #6366f1);
+  background: var(--accent-main-200, #6366f1);
   box-shadow: 0 0 0 2px var(--accent-subtle, rgba(99, 102, 241, 0.35));
 }
 
@@ -1015,7 +1015,7 @@
 .studioVersionSelect:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px var(--accent-subtle, rgba(99, 102, 241, 0.35));
-  border-color: var(--accent-main-100, #6366f1);
+  border-color: var(--accent-main-200, #6366f1);
 }
 
 .studioHeader {
@@ -1072,7 +1072,7 @@
 .studioDownload:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px var(--accent-subtle, rgba(99, 102, 241, 0.35));
-  border-color: var(--accent-main-100, #6366f1);
+  border-color: var(--accent-main-200, #6366f1);
 }
 .studioClose {
   display: inline-flex;
@@ -1088,8 +1088,8 @@
 }
 .studioClose:hover { background: var(--bg-200); color: var(--ink); }
 .studioClose:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--accent-subtle, rgba(99, 102, 241, 0.35));
+  outline: 2px solid var(--accent-main-200);
+  outline-offset: 1px;
   color: var(--ink);
 }
 
@@ -1214,12 +1214,12 @@
 .verifyResolve:focus-visible,
 .consistencyResolve:focus-visible,
 .concordResolve:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--accent-subtle, rgba(99, 102, 241, 0.35));
+  outline: 2px solid var(--accent-main-200);
+  outline-offset: 1px;
 }
 .verifyResolve:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--bg-000, #fff), 0 0 0 4px var(--accent-main-100, #6366f1);
+  box-shadow: 0 0 0 2px var(--bg-000, #fff), 0 0 0 4px var(--accent-main-200, #6366f1);
 }
 .verifyResolve:disabled { opacity: 0.5; cursor: not-allowed; }
 @media (prefers-reduced-motion: reduce) {
@@ -2081,7 +2081,7 @@
 .premortemExport:disabled { opacity: 0.5; cursor: not-allowed; }
 .premortemExport:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--bg-000, #fff), 0 0 0 4px var(--accent-main-100, #6366f1);
+  box-shadow: 0 0 0 2px var(--bg-000, #fff), 0 0 0 4px var(--accent-main-200, #6366f1);
 }
 .premortemExportReason {
   margin: 0;
@@ -2265,7 +2265,7 @@
 }
 .narrativeInput:focus,
 .narrativeTextarea:focus {
-  outline: 2px solid var(--accent-main-100, #6366f1);
+  outline: 2px solid var(--accent-main-200, #6366f1);
   outline-offset: 1px;
 }
 .narrativeFileRow {
@@ -2339,7 +2339,7 @@
   cursor: pointer;
 }
 .provTrailToggle:focus-visible {
-  outline: 2px solid var(--accent-main-100, #6366f1);
+  outline: 2px solid var(--accent-main-200, #6366f1);
   outline-offset: 2px;
 }
 .provTrail {
@@ -2558,7 +2558,7 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 .signoffMeaning:focus-visible {
-  outline: 2px solid var(--accent-main-100, #6366f1);
+  outline: 2px solid var(--accent-main-200, #6366f1);
   outline-offset: 1px;
 }
 .signoffAttest {
@@ -2569,12 +2569,12 @@
 }
 /* The Cancel pill in the sign-off dialog needs a visible focus ring. */
 .suggestPill:focus-visible {
-  outline: 2px solid var(--accent-main-100, #6366f1);
+  outline: 2px solid var(--accent-main-200, #6366f1);
   outline-offset: 1px;
 }
 /* Deep-link to a blocking item needs a visible focus ring. */
 .gateDeepLink:focus-visible {
-  outline: 2px solid var(--accent-main-100, #6366f1);
+  outline: 2px solid var(--accent-main-200, #6366f1);
   outline-offset: 2px;
   border-radius: 2px;
 }
@@ -2615,7 +2615,7 @@
 .dossierAssemble:focus-visible,
 .narrativeSampleToggle:focus-visible,
 .narrativeSampleToggle input:focus-visible {
-  outline: 2px solid var(--accent-main-100, #6366f1);
+  outline: 2px solid var(--accent-main-200, #6366f1);
   outline-offset: 2px;
 }
 

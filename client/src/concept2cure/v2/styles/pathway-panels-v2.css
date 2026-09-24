@@ -154,7 +154,7 @@
     transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
   }
   .dd-doc-edit:focus {
-    border-color: var(--accent-100);
+    border-color: var(--accent-200);
     box-shadow: 0 0 0 3px var(--accent-muted);
   }
 

@@ -139,7 +139,7 @@
   font-size: 12px; outline: 0;
 }
 .pdev-rail-program-select:focus-visible {
-  border-color: var(--accent-100);
+  border-color: var(--accent-200);
   box-shadow: 0 0 0 3px var(--accent-000);
 }
 .pdev-rail-section {
@@ -1011,7 +1011,7 @@
 }
 .pdev-confirm-field textarea:focus,
 .pdev-confirm-input:focus {
-  border-color: var(--accent-100);
+  border-color: var(--accent-200);
   box-shadow: 0 0 0 3px var(--accent-000);
 }
 .pdev-confirm-error {
@@ -1037,7 +1037,7 @@
 }
 .pdev-sheet-section textarea:focus,
 .pdev-sheet-section input:focus {
-  border-color: var(--accent-100);
+  border-color: var(--accent-200);
   box-shadow: 0 0 0 3px var(--accent-000);
 }
 .pdev-sheet-hint {
@@ -1122,7 +1122,7 @@
   border: 1px solid var(--border-100); border-radius: 6px;
 }
 /* Borderless inner input clears its outline — ring the container instead. */
-.pdev-search-input:focus-within { border-color: var(--accent-100); box-shadow: 0 0 0 3px var(--accent-000); }
+.pdev-search-input:focus-within { border-color: var(--accent-200); box-shadow: 0 0 0 3px var(--accent-000); }
 .pdev-search-input .ico { color: var(--text-400); }
 .pdev-search-input input {
   flex: 1; font-size: 13px; background: transparent; outline: 0; border: 0;
