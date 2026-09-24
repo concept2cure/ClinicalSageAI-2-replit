@@ -24,7 +24,12 @@ import {
   type VaultViewId,
 } from '../../../../../shared/constants/domain/vault-taxonomy';
 
-export type VaultFileStatus = 'draft' | 'review' | 'final' | 'locked';
+/** 'uploaded' is not a rung on the authoring ladder — it is the absence of
+ *  one. An ingested file is complete AS a file and has no drafting lifecycle,
+ *  so 'draft' understates a finished record and 'final' claims an approval
+ *  nobody gave. The v2 surface reached the same conclusion independently; see
+ *  the note on `uploaded` in v2/fixtures/vault-data.ts. */
+export type VaultFileStatus = 'draft' | 'review' | 'final' | 'locked' | 'uploaded';
 
 /** Who a stored artifact may be released to under the program's policy. */
 export type VaultDistribution =
