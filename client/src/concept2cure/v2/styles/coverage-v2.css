@@ -867,7 +867,7 @@
 .c2c-v2 .etmf-sec-x{ font-weight:400; color:var(--text-400); }
 .c2c-v2 .etmf-doc{ margin:0; }
 .c2c-v2 .etmf-doc-body{ padding:0; }
-.c2c-v2 .etmf-cover{ padding:26px 30px 20px; border-bottom:1px solid var(--border); background:linear-gradient(180deg,var(--bg-050),transparent); }
+.c2c-v2 .etmf-cover{ padding:26px 30px 20px; border-bottom:1px solid var(--border); background:var(--bg-050); }
 .c2c-v2 .etmf-cover-badge{ display:inline-block; font-size:10.5px; font-weight:600; letter-spacing:.06em; padding:4px 10px; border-radius:999px; background:color-mix(in srgb,var(--warning) 15%,transparent); color:var(--warning); margin-bottom:12px; }
 .c2c-v2 .etmf-cover-badge[data-ready]{ background:color-mix(in srgb,var(--success) 15%,transparent); color:var(--success); }
 .c2c-v2 .etmf-cover h2{ font-size:19px; font-weight:600; color:var(--text-100); margin:0 0 12px; line-height:1.25; max-width:34ch; }

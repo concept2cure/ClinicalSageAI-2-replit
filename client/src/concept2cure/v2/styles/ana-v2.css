@@ -203,7 +203,7 @@
 
   /* Answer-first lead */
   .amem-lead{ display:flex; gap:16px; padding:22px 24px; border-radius:16px;
-    background:linear-gradient(180deg, color-mix(in srgb, var(--accent-100) 7%, var(--bg-000)), var(--bg-000));
+    background:var(--accent-000);
     border:1px solid color-mix(in srgb, var(--accent-100) 20%, var(--border)); margin-bottom:22px; }
   .amem-lead-badge{ flex:none; width:40px; height:40px; border-radius:11px; display:grid; place-items:center;
     background:var(--accent-100); color:#fff; }

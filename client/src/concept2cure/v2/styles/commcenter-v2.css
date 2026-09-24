@@ -11,7 +11,7 @@
 .c2c-v2 .cc-tab.on{ color:var(--accent-200); border-bottom-color:var(--accent-100); font-weight:600; }
 
 /* ── CRL response countdown ── */
-.c2c-v2 .cc-crl{ display:flex; align-items:center; gap:22px; background:linear-gradient(180deg, color-mix(in srgb, var(--error) 5%, var(--bg-000)), var(--bg-000)); border:1px solid color-mix(in srgb, var(--error) 22%, var(--border)); border-radius:16px; padding:18px 22px; margin:4px 0 20px; }
+.c2c-v2 .cc-crl{ display:flex; align-items:center; gap:22px; background:color-mix(in srgb, var(--error) 5%, var(--bg-000)); border:1px solid color-mix(in srgb, var(--error) 22%, var(--border)); border-radius:16px; padding:18px 22px; margin:4px 0 20px; }
 .c2c-v2 .cc-crl-clock{ display:flex; align-items:center; gap:14px; padding-right:22px; border-right:1px solid var(--border); }
 .c2c-v2 .cc-crl-days{ font-size:46px; font-weight:600; line-height:.9; color:var(--success); font-variant-numeric:tabular-nums; display:flex; flex-direction:column; align-items:center; }
 .c2c-v2 .cc-crl-clock[data-warn] .cc-crl-days{ color:var(--error); }
