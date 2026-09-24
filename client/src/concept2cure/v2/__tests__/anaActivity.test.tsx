@@ -134,6 +134,42 @@ describe('AnaActivity — the work is visible while it happens', () => {
     expect(screen.getByText(/Went back · round 2/)).toBeTruthy();
   });
 
+  it('names no rounds when she declared a plan — the plan is the structure', () => {
+    render(
+      <AnaActivity
+        streaming
+        planChanges={[{ kind: 'added', title: 'Read the protocol', at: 1, initial: true }]}
+        toolCalls={[
+          call({ name: 'update_plan', label: 'Updating the plan · 1 step', round: 1 }),
+          call({ round: 2, label: 'Precedent search' }),
+          call({ round: 4, label: 'Citation coverage' }),
+        ]}
+      />,
+    );
+    expect(screen.queryByText(/Went back/)).toBeNull();
+    expect(screen.queryByText('First pass')).toBeNull();
+  });
+
+  it('says a draft once when the step that wrote it already names it', () => {
+    const { rerender } = render(
+      <AnaActivity
+        draftTitle="Primary endpoint summary"
+        toolCalls={[call({ name: 'draft_authoring_document', label: 'Drafting "Primary endpoint summary"' })]}
+      />,
+    );
+    fireEvent.click(document.querySelector('.ana-activity-toggle') as HTMLElement);
+    const rows = () => [...document.querySelectorAll('.ana-activity-list > li')].map((li) => li.textContent ?? '');
+    expect(rows().filter((t) => t.includes('Drafted Primary endpoint summary'))).toEqual([]);
+    // A step that FAILED does not stand in for it, and neither does no step.
+    rerender(
+      <AnaActivity
+        draftTitle="Primary endpoint summary"
+        toolCalls={[call({ name: 'draft_authoring_document', label: 'Drafting "Primary endpoint summary"', status: 'error' })]}
+      />,
+    );
+    expect(rows().filter((t) => t.includes('Drafted Primary endpoint summary'))).toHaveLength(1);
+  });
+
   it('states how the question was read', () => {
     render(<AnaActivity streaming lens="risk" toolCalls={[call()]} />);
 
@@ -391,6 +427,26 @@ describe('AnaActivity — each row opens in place, like the work it records', ()
 });
 
 describe('AnaActivity — her plan, live and reopened', () => {
+  it('does not say the plan twice: the folded line counts the work, the first row is the plan', () => {
+    render(
+      <AnaActivity
+        planChanges={[
+          { kind: 'added', title: 'Read the protocol', at: 1, initial: true },
+          { kind: 'added', title: 'Draft the synopsis', at: 1, initial: true },
+        ]}
+        toolCalls={[call({ label: 'Reading the protocol', startedAt: 2, endedAt: 3 })]}
+        startedAt={0}
+        completedAt={72_000}
+      />,
+    );
+    const toggle = document.querySelector('.ana-activity-toggle') as HTMLElement;
+    expect(toggle.textContent).toContain('1 tool run · in 1m 12s');
+    expect(toggle.textContent).not.toContain('Planned');
+    if (toggle.getAttribute('aria-expanded') !== 'true') fireEvent.click(toggle);
+    const first = document.querySelector('.ana-activity-list > li');
+    expect(first?.textContent).toContain('Planned 2 steps');
+  });
+
   it('says "Plan", not "Planned", for a reopened thread that kept only the final list', () => {
     render(
       <AnaActivity

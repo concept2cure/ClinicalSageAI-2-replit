@@ -21,8 +21,10 @@ import brandMark from '@/assets/concept2cure-icon.svg';
 import {
   useChatUpload,
   attachmentReadLabel,
+  composeTurn,
   CHAT_UPLOAD_ACCEPT,
   SR_ONLY_STYLE,
+  type SentAttachment,
 } from '../hooks/useChatUpload';
 import { I } from './icons';
 import { AppMentionMenu, useAppMentions } from './appMentions';
@@ -605,7 +607,8 @@ export function AnaRail({
   mode: string;
   setMode: (m: string) => void;
   messages: AnaMessage[];
-  onSend: (text: string) => void;
+  /** The turn's text, and the files it carries by upload id (composer sends only). */
+  onSend: (text: string, files?: SentAttachment[]) => void;
   onAct: (id: string) => void;
   /** First-run AnA welcome (P1, assist-only). Null once the client has started
    *  a conversation or dismissed it — the rail only renders it when present. */
@@ -747,17 +750,13 @@ export function AnaRail({
     // error, and the message says nothing about it.
     if (!t && readyAttachments.length === 0) return;
 
-    const names = readyAttachments.map((a) => a.name);
-    const attachmentLine = names.length
-      ? `Attached: ${names.join(', ')}`
-      : '';
-
     // With text, the attachment reference is appended so AnA has both. Without
     // text, the reference IS the message — and it names the files it actually
-    // received rather than counting chips the user happened to see.
-    const bodyText = t ? (attachmentLine ? `${t}\n\n${attachmentLine}` : t) : attachmentLine;
+    // received rather than counting chips the user happened to see. The files
+    // themselves go by id, so the stream opens them and says it did.
+    const { body: bodyText, files } = composeTurn(t, attachments);
 
-    onSend(agent ? `[Agent] ${bodyText}` : bodyText);
+    onSend(agent ? `[Agent] ${bodyText}` : bodyText, files);
     setDraft('');
     clearAttachments();
   };
@@ -792,6 +791,7 @@ export function AnaRail({
               streaming={streaming}
               open={dock.open}
               onToggle={dock.toggle}
+              controls={dock.panelId}
             />
           )}
           <button
@@ -817,11 +817,12 @@ export function AnaRail({
           announced by the narrow, always-mounted regions that own it:
           AnaActivity for what AnA is doing, and the upload region below. */}
       <div className="ana-body">
-        {/* The live dock: progress, queue, tools, outputs and context for the
-            turn in flight. Above the transcript so the person sees the work
-            before the words; AnaActivity below keeps the per-turn record. */}
+        {/* AnA's progress: her plan or the phases, and what the session used.
+            Above the transcript so the person sees the work before the words;
+            AnaActivity below keeps the per-turn record. */}
         {work && workVisible && (
           <AnaWorkPanel
+            id={dock.panelId}
             messages={work.messages}
             streaming={streaming}
             runStatus={runStatus}
@@ -985,13 +986,16 @@ export function AnaRail({
                   renderSafeMarkdown (marked → DOMPurify) — so a header is a
                   heading and not a literal "##". The person's own text stays
                   plain: it is never parsed as markup. */}
+              {/* Her work first, then the answer it produced, then the output —
+                  the order every host renders a turn in, and the reference's. */}
+              {m.role === 'ana' && m.activity && <AnaActivity {...m.activity} />}
               {m.role === 'ana' ? (
-                <div className="bd ana-md" dangerouslySetInnerHTML={{ __html: renderSafeMarkdown(m.body ?? '') }} />
+                <div className="ana-msg-bd ana-md" dangerouslySetInnerHTML={{ __html: renderSafeMarkdown(m.body ?? '') }} />
               ) : (
-                <div className="bd">{m.body}</div>
+                <div className="ana-msg-bd">{m.body}</div>
               )}
-              {/* Caveats sit directly under the answer they qualify, above the
-                  work record and never inside it. `useAnaChat` records a
+              {/* Caveats sit directly under the answer they qualify, and never
+                  inside the work record. `useAnaChat` records a
                   server degraded-mode signal, and a timeout, on the message —
                   and on timeout it KEEPS whatever text had already streamed.
                   Nothing rendered these, so a turn cut off mid-answer showed
@@ -1006,10 +1010,9 @@ export function AnaRail({
                   <CrlPremortemPanel artifact={m.crlPremortem} />
                 </div>
               )}
-              {/* How well-grounded the answer is. Above the caveats and the
-                  work record on purpose: those say what went wrong and how she
-                  got here, this says how far the answer can be trusted, which
-                  is read first. */}
+              {/* How well-grounded the answer is. Above the caveats on purpose:
+                  they say what went wrong, this says how far the answer can be
+                  trusted, which is read first. */}
               {m.role === 'ana' && <AnaGrounding evidence={m.evidence} />}
               {/* Steers AnA accepted for this turn. Shown because a steer you
                   cannot see afterwards is one you cannot tell was taken — and
@@ -1034,8 +1037,7 @@ export function AnaRail({
                   ))}
                 </div>
               )}
-              {m.role === 'ana' && m.activity && <AnaActivity {...m.activity} />}
-              {/* Her output beneath the work that made it. It opens the full
+              {/* Her output beneath the answer. It opens the full
                   conversation on this same thread, where the draft is the
                   document canvas (docs/design/ANA_DOCUMENT_CANVAS.md). */}
               {m.role === 'ana' && m.output && (

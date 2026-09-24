@@ -242,6 +242,11 @@ function ToolRow({ c, now }: { c: AnaToolCall; now: number }) {
   );
 }
 
+/** True when a step that succeeded already carries the draft's title in its label. */
+function namedBySuccessfulStep(calls: AnaToolCall[], title: string): boolean {
+  return calls.some((c) => c.status === 'success' && (c.label ?? '').includes(title));
+}
+
 /**
  * The folded line. Failures and deliverables are OUTCOMES and appear here
  * rather than only inside the disclosure — an outcome you have to open a
@@ -264,16 +269,20 @@ function foldedLine(o: {
   const planned = persisted ? o.finalPlan.length : o.changes.filter((c) => c.initial && c.kind === 'added').length;
   const steps = (n: number) => `${n} ${n === 1 ? 'step' : 'steps'}`;
   const parts = [
-    planned > 0 ? `${persisted ? 'Plan ·' : 'Planned'} ${steps(planned)}` : '',
-    // With a plan on the line its steps are "steps" and the tool calls are
-    // tools, so "Planned 3 steps · 4 steps completed" never reads as a contradiction.
+    // With a plan, her plan's items are the steps and the tool calls are
+    // tools, so "3 steps" on the rail and "4 steps completed" here never read
+    // as a contradiction.
     o.ran > 0 ? (planned > 0 ? `${o.ran} ${o.ran === 1 ? 'tool' : 'tools'} run` : `${steps(o.ran)} completed`) : '',
     o.failed > 0 ? `${o.failed} failed` : '',
     o.draftTitle ? `Drafted ${o.draftTitle}` : '',
     o.thinking ? 'reasoning' : '',
     o.fallback ? 'answered by a fallback provider' : '',
-    o.duration ? `in ${o.duration}` : '',
   ].filter(Boolean);
+  // The plan is the record's first row, in the same words; leading with it
+  // here too made the opened record say it twice, three words apart. It leads
+  // only when it is all there is to say.
+  if (parts.length === 0 && planned > 0) parts.push(`${persisted ? 'Plan ·' : 'Planned'} ${steps(planned)}`);
+  if (o.duration) parts.push(`in ${o.duration}`);
   return parts.length > 0 ? parts.join(' · ') : 'How this was read';
 }
 
@@ -337,7 +346,13 @@ export function AnaActivity({
   const work = calls.filter((c) => c.name !== PLAN_TOOL || c.status === 'error');
   const ran = work.filter((c) => c.status !== 'running').length;
   const failed = work.filter((c) => c.status === 'error').length;
-  const multiRound = new Set(work.map((c) => (typeof c.round === 'number' && c.round > 0 ? c.round : 1))).size > 1;
+  // Round headers say "she went back for more". With a declared plan the plan
+  // is the structure, and every plan update takes a round of its own, so the
+  // first step after "Planned 3 steps" would read "Went back · round 2" when
+  // nothing had sent her back. Rounds are named only when there is no plan.
+  const planned = finalPlan.length > 0 || changes.length > 0;
+  const multiRound =
+    !planned && new Set(work.map((c) => (typeof c.round === 'number' && c.round > 0 ? c.round : 1))).size > 1;
 
   // While working the record is open — that is the whole point. Once the answer
   // has landed it folds, because by then the answer is what matters and the
@@ -476,8 +491,12 @@ export function AnaActivity({
           })}
 
           {/* One sentence, not verb + object: the title is the deliverable's
-              name, and the card beneath the turn already sets it large. */}
-          {draftTitle && <Row status="success" glyph={I.fileText} verb={`Drafted ${draftTitle}`} />}
+              name, and the card beneath the turn already sets it large. Left
+              out when the step that wrote it already names it ("Drafting X",
+              checked): the same title twice, one row apart, says nothing new. */}
+          {draftTitle && !namedBySuccessfulStep(work, draftTitle) && (
+            <Row status="success" glyph={I.fileText} verb={`Drafted ${draftTitle}`} />
+          )}
 
           {fallback && !streaming && (
             <Row status="error" verb="Answered by" object="a fallback provider" />

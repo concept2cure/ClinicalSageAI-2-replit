@@ -1362,6 +1362,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 streaming: false,
                 statusPhase: undefined,
                 completedAt: Date.now(),
+                interrupted: true,
                 progress: closeProgress(m.progress, 'stopped', Date.now()),
                 toolCalls: settleRunningCalls(m.toolCalls, 'Not finished — AnA stopped responding.', Date.now()),
                 warnings: [...(m.warnings || []), 'Response timed out'],
@@ -1401,6 +1402,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 streaming: false,
                 statusPhase: undefined,
                 completedAt: Date.now(),
+                interrupted: true,
                 progress: closeProgress(m.progress, 'stopped', Date.now()),
                 toolCalls: settleRunningCalls(m.toolCalls, 'Not finished — the connection was lost.', Date.now()),
               };

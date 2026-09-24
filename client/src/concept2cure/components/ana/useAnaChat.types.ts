@@ -270,6 +270,13 @@ export interface AnaChatMessage {
   /** True if the user explicitly stopped the stream. */
   stopped?: boolean;
   /**
+   * True when the turn ended before the server finished it — the stream went
+   * silent or the connection failed. Distinct from `stopped` (the person's own
+   * stop), and recorded even when no phase had arrived yet, so a turn that
+   * never got going cannot read as finished.
+   */
+  interrupted?: boolean;
+  /**
    * Intent lens AnA detected for this turn (audit / risk / strategy /
    * improve / compare / auto). Rendered as a small meta chip.
    */

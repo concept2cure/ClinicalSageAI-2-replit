@@ -236,9 +236,9 @@ describe('DocumentAuthoring — the editor answers its own asks', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
 
     const pane = await screen.findByLabelText(/AnA — document authoring/);
-    // Scoped to the conversation log: the pane also mounts the live work dock
+    // Scoped to the conversation: the pane also mounts the live work dock
     // above it, which names the same step, so a pane-wide query finds two.
-    const log = within(pane).getByRole('log', { name: 'AnA conversation' });
+    const log = within(pane).getByRole('region', { name: 'AnA conversation' });
     expect(await within(log).findByText('Checking dossier consistency')).toBeTruthy();
     // The shared grounding verdict (AnaGrounding) — the pane's own copy of an
     // evidence block is gone, so it reads the same here as in the rail.
@@ -254,7 +254,11 @@ describe('DocumentAuthoring — the editor answers its own asks', () => {
     await screen.findAllByText('General Information');
     const pane = await screen.findByLabelText(/AnA — document authoring/);
     expect(pane.textContent).toMatch(/Ask AnA about this section/);
-    expect(within(pane).getByRole('log', { name: 'AnA conversation' })).toBeTruthy();
+    const convo = within(pane).getByRole('region', { name: 'AnA conversation' });
+    // Not a live region, and never marked busy: either one swallows the
+    // per-turn record's own announcement of what AnA is doing.
+    expect(convo.getAttribute('aria-live')).toBeNull();
+    expect(convo.hasAttribute('aria-busy')).toBe(false);
     const composer = within(pane).getByRole('textbox', { name: 'Ask AnA about 3.2.S.1' });
 
     // Shipping the pane open must NOT take the caret out of the document on

@@ -1556,7 +1556,7 @@
        the conversation was flexed to zero: the thread rendered, the canvas
        rendered, and neither was visible. Stacked, the conversation keeps the
        screen and the dock takes a capped share beneath it — nothing is
-       removed, so "Hide side panel" still means what it says.
+       removed, so the header's progress chip still means what it says.
 
        These three selectors belong beside `.ct-side` in app-v2.css. They are
        here because that file is another workstream's this week; the canvas

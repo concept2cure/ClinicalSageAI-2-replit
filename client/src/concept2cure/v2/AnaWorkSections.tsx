@@ -4,12 +4,11 @@
  * so every function here stays readable on one screen and the panel itself is
  * only composition.
  *
- * Three sections, in the order a person asks about work in progress:
+ * Two sections, in the order a person asks about work in progress:
  *
  *   Steps                 where she is — her declared plan when she made one,
  *                         otherwise the phases the turn reported — on one
  *                         vertical rail, the current step emphasised
- *   Outputs               what the conversation has produced
  *   Used in this session  uploads, memory, tools and project context — one
  *                         line each, only when there is something true to say
  *
@@ -26,7 +25,7 @@ import type { AnaChatMessage, AnaToolCall } from '../components/ana/useAnaChat';
 import type { AnaPlanStep, AnaProgressPhase } from '../components/ana/useAnaChat.types';
 import { currentStep, formatElapsed, formatStepDuration } from '../components/ana/anaProgress';
 import type { AgentActivityView } from './useAgentActivity';
-import { clip, formatClock, SENDING_PLACEHOLDER, type OutputRow, type UsedRow } from './anaWorkModel';
+import { clip, formatClock, SENDING_PLACEHOLDER, type UsedRow } from './anaWorkModel';
 
 /** The one status glyph: check / warning triangle / dot. Shared with AnaActivity. */
 export function statusGlyph(status: AnaToolCall['status']): React.ReactElement {
@@ -198,7 +197,7 @@ export function SteersWaiting({ steers }: { steers: string[] }) {
   );
 }
 
-/* ── Outputs and what was used ────────────────────────────────────────────── */
+/* ── What was used ────────────────────────────────────────────────────────── */
 
 /** One line: icon, label, and a muted detail that truncates rather than wraps. */
 function LineRow({
@@ -206,16 +205,14 @@ function LineRow({
   label,
   detail,
   note,
-  tone,
 }: {
   icon: React.ReactElement;
   label: string;
   detail?: string;
   note?: string;
-  tone?: 'warn';
 }) {
   return (
-    <li className={`ana-work-line${tone ? ` is-${tone}` : ''}`}>
+    <li className="ana-work-line">
       <span className="ana-work-line-ic" aria-hidden="true">{icon}</span>
       <span className="ana-work-line-l">{label}</span>
       {detail ? (
@@ -225,22 +222,6 @@ function LineRow({
       ) : null}
       {note ? <span className="ana-work-line-n">{note}</span> : null}
     </li>
-  );
-}
-
-export function OutputsBody({ outputs }: { outputs: OutputRow[] }) {
-  return (
-    <ul className="ana-work-lines">
-      {outputs.map((o) => (
-        <LineRow
-          key={o.key}
-          icon={I[o.icon]}
-          label={o.label}
-          detail={o.note}
-          tone={o.icon === 'alertTriangle' ? 'warn' : undefined}
-        />
-      ))}
-    </ul>
   );
 }
 

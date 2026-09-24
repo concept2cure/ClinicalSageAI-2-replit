@@ -2,9 +2,9 @@
  * The work panel's model — pure projections of the chat turns.
  *
  * Everything AnaWorkPanel says is computed here from the messages `useAnaChat`
- * keeps, so each claim the panel makes ("Finished in 1m 12s", "Drafted X ·
- * saved", "3 of 5 steps") is a function of recorded facts and testable without
- * a DOM. Nothing here invents a value for a field the turn did not report: a
+ * keeps, so each claim the panel makes ("Finished in 1m 12s", "Step 2 of 5",
+ * "Saved · version 2") is a function of recorded facts and testable without a
+ * DOM. Nothing here invents a value for a field the turn did not report: a
  * missing context row is omitted, a draft with no save report says so.
  *
  * @module client/src/concept2cure/v2/anaWorkModel
@@ -32,14 +32,6 @@ export interface AnaWorkContext {
   pinnedTools?: string[];
 }
 
-export interface OutputRow {
-  key: string;
-  /** Icon key into the shell's `I` map. */
-  icon: 'fileText' | 'alertTriangle' | 'zap' | 'lock' | 'barChart' | 'shieldAlert';
-  label: string;
-  note?: string;
-}
-
 /** The header's one-line state: in flight, paused, stopped or finished, with its clock. */
 export function stateLineFor(
   turn: AnaChatMessage | null,
@@ -54,11 +46,11 @@ export function stateLineFor(
     return `Still working · ${elapsed}`;
   }
   if (turn.stopped) return `Stopped after ${elapsed}`;
-  // A timeout or a lost connection closes the record with its last phase
-  // marked stopped and never sets `stopped` (that flag is the person's own
-  // stop). Both are turns that did not finish, and neither may read
-  // "Finished".
-  if (progressCutShort(turn)) return `Did not finish · ${elapsed}`;
+  // A timeout or a lost connection never sets `stopped` (that flag is the
+  // person's own stop). Both are turns that did not finish, and neither may
+  // read "Finished" — including one that failed before its first phase
+  // arrived, which leaves no phase to mark stopped.
+  if (turn.interrupted || progressCutShort(turn)) return `Did not finish · ${elapsed}`;
   if (typeof turn.completedAt === 'number') return `Finished in ${elapsed}`;
   return '';
 }
@@ -130,52 +122,6 @@ export function draftNote(m: Pick<AnaChatMessage, 'generatedDraft' | 'streaming'
   return m.streaming ? 'Save not yet reported' : 'Not reported as saved';
 }
 
-function actionRows(m: AnaChatMessage, i: number): OutputRow[] {
-  return (m.executedActions ?? [])
-    .filter(
-      (a) => a.actionType !== 'navigate' && a.actionType !== 'surface_action' && a.actionType !== 'start_demo',
-    )
-    .map((a) => ({
-      key: `a-${i}-${a.label}`,
-      icon: a.error ? 'alertTriangle' : 'zap',
-      label: a.label,
-      note: a.error ? 'Did not complete' : a.executed ? 'Done' : undefined,
-    }));
-}
-
-/**
- * Everything the conversation has produced, across every assistant turn.
- * `drafts: false` leaves the draft rows to a host that lists them as
- * artifact cards of its own.
- */
-export function collectOutputs(messages: AnaChatMessage[], opts: { drafts?: boolean } = {}): OutputRow[] {
-  const withDrafts = opts.drafts !== false;
-  const rows: OutputRow[] = [];
-  messages.forEach((m, i) => {
-    if (m.role !== 'assistant') return;
-    if (withDrafts && m.generatedDraft?.title) {
-      rows.push({ key: `d-${i}`, icon: 'fileText', label: `Drafted ${m.generatedDraft.title}`, note: draftNote(m) });
-    }
-    rows.push(...actionRows(m, i));
-    const signoffs = m.pendingSignoffs?.length ?? 0;
-    if (signoffs > 0) {
-      rows.push({
-        key: `s-${i}`,
-        icon: 'lock',
-        label: `${signoffs} governed ${signoffs === 1 ? 'action' : 'actions'} waiting for sign-off`,
-      });
-    }
-    // Produced, and said as produced: no v2 host renders these two yet, so a
-    // row claiming "rendered in the canvas" described a render that never
-    // happened.
-    if (m.reportCanvas?.kind === 'report') {
-      rows.push({ key: `r-${i}`, icon: 'barChart', label: 'Report produced' });
-    }
-    if (m.warGameReport) rows.push({ key: `w-${i}`, icon: 'shieldAlert', label: 'Audit simulation report produced' });
-  });
-  return rows;
-}
-
 /**
  * Distinct tools used anywhere in the conversation, by label, first-seen
  * order. The plan tool is not listed: it is how she keeps the plan, which the
@@ -223,7 +169,7 @@ export interface UsedRow {
   label: string;
   /** One line, truncated by the row: the first few items. */
   detail: string;
-  /** A qualifier the row must not drop (a file read by name only, a failed read). */
+  /** A qualifier the row must not drop (a file attached by name only, a failed read). */
   note?: string;
 }
 
@@ -233,19 +179,29 @@ function firstAndMore(items: string[], shown = 1): string {
   return more > 0 ? `${head} +${more}` : head;
 }
 
-/** Every upload the conversation attached or a turn reported reading, by file. */
+/**
+ * Every upload the conversation attached or a turn reported, once each. A file
+ * pinned for five turns is one file: its read state is the best any turn gave
+ * it (read in full once is not "by name only" because a later turn only named
+ * it), and it is counted once.
+ */
 function tallyUploads(messages: AnaChatMessage[]): { names: Map<string, string>; nameOnly: number; unresolved: number } {
   const names = new Map<string, string>();
-  let nameOnly = 0;
+  const read = new Map<string, 'content' | 'name_only'>();
   let unresolved = 0;
   for (const m of messages) {
     for (const a of m.attachments ?? []) names.set(a.fileId || a.name, a.name);
-    unresolved += m.contextUsed?.unresolvedUploads ?? 0;
+    // The server reports a count, not which request failed, and a pinned
+    // source that cannot be opened fails on every turn it rides. The most any
+    // one turn reported is the count that cannot double a single failure.
+    unresolved = Math.max(unresolved, m.contextUsed?.unresolvedUploads ?? 0);
     for (const u of m.contextUsed?.uploads ?? []) {
-      if (!names.has(u.fileId || u.fileName)) names.set(u.fileId || u.fileName, u.fileName);
-      nameOnly += u.read === 'name_only' ? 1 : 0;
+      const key = u.fileId || u.fileName;
+      if (!names.has(key)) names.set(key, u.fileName);
+      if (read.get(key) !== 'content') read.set(key, u.read);
     }
   }
+  const nameOnly = [...read.values()].filter((r) => r === 'name_only').length;
   return { names, nameOnly, unresolved };
 }
 
@@ -253,7 +209,10 @@ function uploadsRow(messages: AnaChatMessage[]): UsedRow | null {
   const { names, nameOnly, unresolved } = tallyUploads(messages);
   if (names.size === 0 && unresolved === 0) return null;
   const notes = [
-    nameOnly > 0 ? `${nameOnly} read by name only` : '',
+    // The turn was given the file's name and id, not its text. The text may
+    // still reach her through memory or a tool — rows of their own — so this
+    // says what was attached, not what she could see.
+    nameOnly > 0 ? `${nameOnly} attached by name only` : '',
     unresolved > 0 ? `${unresolved} could not be opened` : '',
   ].filter(Boolean);
   return {
@@ -320,7 +279,10 @@ function toolsRow(messages: AnaChatMessage[], context: AnaWorkContext | undefine
 /** The project and engine she was given, and the effort the latest turn used. */
 function contextRow(messages: AnaChatMessage[], context: AnaWorkContext | undefined): UsedRow | null {
   const turn = [...messages].reverse().find((m) => m.role === 'assistant');
-  const effort = turn?.effortUsed ? `${turn.effortUsed} effort` : null;
+  // "Balanced · balanced effort" says one word twice: the effort is named only
+  // when it differs from the engine mode the person chose.
+  const sameAsEngine = turn?.effortUsed && context?.engine?.toLowerCase() === turn.effortUsed.toLowerCase();
+  const effort = turn?.effortUsed && !sameAsEngine ? `${turn.effortUsed} effort` : null;
   const parts = [context?.project, context?.module, context?.engine, effort].filter(
     (v): v is string => typeof v === 'string' && v.length > 0,
   );
