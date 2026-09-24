@@ -147,19 +147,8 @@ WHERE c.relnamespace = 'public'::regnamespace
     WHERE a.attrelid = c.oid AND a.attname IN ('organization_id', 'org_id', 'tenant_id') AND NOT a.attisdropped
   )
   AND NOT c.relrowsecurity
-  AND c.relname <> ALL (ARRAY[
-    -- Grandchildren: each parent is itself a child with no tenant column, so the
-    -- single-level spec in 20260813_child_table_parent_scoped_rls.sql cannot
-    -- express them (the chained case that file already records for three
-    -- csr_/ctd_ tables). Their live readers reach them through the parent,
-    -- whose own policy filters the join. A chained predicate is the next step.
-    'ai_claims',                      -- -> ai_generation_runs -> ai_threads
-    'ai_claim_citations',             -- -> ai_retrieval_chunks -> ai_retrieval_runs
-    'c2c_document_section_evidence',  -- -> c2c_document_sections -> c2c_documents
-    'c2c_document_section_versions',  -- -> c2c_document_sections -> c2c_documents
-                                      --    (written only by the section trigger;
-                                      --    read with an org join)
-    'section_propagations'            -- -> section_patches -> sections (no
-                                      --    runtime reader)
-  ])
+  -- No carve-out. The five grandchildren that once stood here are scoped
+  -- through their parent's own policy by the chained list in that migration
+  -- (ledger L202). A child that cannot be covered goes here, with its reason.
+  AND c.relname <> ALL (ARRAY[]::text[])
 ORDER BY 1;

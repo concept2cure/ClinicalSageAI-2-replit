@@ -90,6 +90,11 @@
 --     this single-level spec cannot express, are named in that gate's
 --     carve-out with their reasons.
 --
+-- ── AMENDED IN PLACE 2026-09-24, again (ledger L202) ────────────────────────
+-- A second, CHAINED list follows the first loop: grandchildren whose parent is
+-- itself a child. Each delegates to the parent's own tenant_isolation_policy,
+-- which the single-level predicate cannot. See the note above that block.
+--
 -- Idempotent: guarded on pg_policies and pg_class, safe to re-run every deploy.
 
 BEGIN;
@@ -375,6 +380,99 @@ BEGIN
   END LOOP;
 
   RAISE NOTICE '[child-rls] % policied, % skipped', applied, skipped;
+END
+$$;
+
+-- ── Chained children (AMENDED IN PLACE 2026-09-24, ledger L202) ──────────────
+-- A grandchild's parent is itself a child with no tenant column, so the
+-- single-level predicate above has no tenant column to compare. Here the child
+-- delegates to its PARENT'S OWN tenant_isolation_policy instead: a policy's
+-- subquery runs under the invoker's row security, so "the parent row is
+-- visible" means "the parent row is this tenant's". That was shown on a real
+-- database as the runtime role before being written here. Counted from the
+-- child alone, a tenant saw one of two tenants' section versions. The
+-- SECURITY INVOKER section trigger's own snapshot insert still passed
+-- WITH CHECK.
+--
+-- A parent that carries no tenant_isolation_policy of its own is skipped BEFORE
+-- row security is enabled on the child. The child then stays visibly
+-- unprotected, and scripts/db/rls-coverage-check.sql's child rule fails CI on
+-- it, rather than being "scoped" to a parent that scopes nothing.
+--
+-- The three deny-all csr_/ctd_ chains recorded in the header could now be
+-- expressed the same way. They are left deny-all deliberately: no server code
+-- reads them, and the test pins that choice.
+DO $$
+DECLARE
+  -- child, fk column, parent, parent key column. Key types agree for every
+  -- pair (checked against the catalog), so no cast is needed.
+  chained TEXT[][] := ARRAY[
+    ['ai_claims',                     'generation_run_id',  'ai_generation_runs',     'id'],
+    ['ai_claim_citations',            'retrieval_chunk_id', 'ai_retrieval_chunks',    'id'],
+    ['c2c_document_section_evidence', 'section_id',         'c2c_document_sections',  'id'],
+    ['c2c_document_section_versions', 'section_id',         'c2c_document_sections',  'id'],
+    ['section_propagations',          'patch_id',           'section_patches',        'id']
+  ];
+  i INT;
+  child TEXT; fk_col TEXT; parent TEXT; parent_col TEXT;
+  predicate TEXT;
+  applied INT := 0;
+  skipped INT := 0;
+BEGIN
+  FOR i IN 1 .. array_length(chained, 1) LOOP
+    child      := chained[i][1];
+    fk_col     := chained[i][2];
+    parent     := chained[i][3];
+    parent_col := chained[i][4];
+
+    IF to_regclass('public.' || child) IS NULL OR to_regclass('public.' || parent) IS NULL THEN
+      RAISE NOTICE '[child-rls] % or % absent — skipping', child, parent;
+      skipped := skipped + 1;
+      CONTINUE;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_policies
+                    WHERE schemaname='public' AND tablename=parent
+                      AND policyname='tenant_isolation_policy') THEN
+      RAISE WARNING '[child-rls] % → %: the parent is not scoped, so delegating to it would scope nothing — skipping', child, parent;
+      skipped := skipped + 1;
+      CONTINUE;
+    END IF;
+
+    EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', child);
+    EXECUTE format('ALTER TABLE public.%I FORCE ROW LEVEL SECURITY', child);
+
+    IF EXISTS (SELECT 1 FROM pg_policies
+                WHERE schemaname='public' AND tablename=child
+                  AND policyname='tenant_isolation_policy') THEN
+      RAISE NOTICE '[child-rls] % already policied — leaving it alone', child;
+      skipped := skipped + 1;
+      CONTINUE;
+    END IF;
+
+    predicate := format('EXISTS (SELECT 1 FROM public.%I p WHERE p.%I = public.%I.%I)',
+                        parent, parent_col, child, fk_col);
+
+    EXECUTE format($pol$
+      CREATE POLICY tenant_isolation_policy ON public.%I
+        FOR ALL
+        USING (
+          NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
+          OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
+          OR %s
+        )
+        WITH CHECK (
+          NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
+          OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
+          OR %s
+        )
+    $pol$, child, predicate, predicate);
+
+    applied := applied + 1;
+    RAISE NOTICE '[child-rls] % scoped through % (chained)', child, parent;
+  END LOOP;
+
+  RAISE NOTICE '[child-rls] chained: % policied, % skipped', applied, skipped;
 END
 $$;
 
