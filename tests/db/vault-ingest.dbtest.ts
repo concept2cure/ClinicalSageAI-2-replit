@@ -454,3 +454,56 @@ describe('POST /api/vault/ingest — a refused upload leaves no bytes behind', (
     expect(added).toEqual([String(rows[0].storage_version_id)]);
   });
 });
+
+describe('POST /api/vault/ingest — only a role that may write adds to the Vault (D3)', () => {
+  /* The route carries requireEditorAccess, so it cannot show the service's own
+     check. AnA's file_chat_upload_to_vault, authoring's file-to-vault and eSTAR
+     retention call the service directly — so the service is asked directly,
+     in the scope each of them runs in. */
+  async function ingestAs(role: string | null, code: string, tag: string) {
+    const { ingestVaultDocument } = await import('../../server/services/vault/vault-ingest.service');
+    const { runWithTenantScope } = await import('../../server/db/tenantStore');
+    return runWithTenantScope(
+      { tenantId: String(orgId), orgUuid, role, source: 'request', caller: 'tests/db/vault-ingest.dbtest.ts' },
+      () =>
+        ingestVaultDocument({
+          organizationId: orgId,
+          userId,
+          programId,
+          documentCode: code,
+          documentTitle: `Uploaded as ${role ?? 'no role'}`,
+          documentType: 'OTHER',
+          fileName: `${tag}.pdf`,
+          mimeType: 'application/pdf',
+          fileBuffer: Buffer.concat([PDF_BYTES, Buffer.from(`% ${tag}\n`, 'utf8')]),
+        }),
+    );
+  }
+  async function storedVersionIds(): Promise<Set<string>> {
+    const { getStorageProvider } = await import('../../server/services/storage/index');
+    return new Set((await getStorageProvider().list(orgId, programId)).map((o) => o.vaultVersionId));
+  }
+
+  it('refuses a viewer before anything is stored or recorded', async () => {
+    const before = await storedVersionIds();
+    const out = await ingestAs('viewer', `${PROBE_CODE}-VIEWER`, 'viewer');
+    expect(out).toMatchObject({ ok: false, status: 403, code: 'VAULT_WRITE_ROLE_REQUIRED' });
+    const { rows } = await owner.query(
+      'SELECT count(*)::int AS n FROM vault.documents WHERE document_code = $1',
+      [`${PROBE_CODE}-VIEWER`],
+    );
+    expect(rows[0].n).toBe(0);
+    expect([...(await storedVersionIds())].filter((id) => !before.has(id))).toEqual([]);
+  });
+
+  it('refuses a scope that carries no role at all', async () => {
+    const out = await ingestAs(null, `${PROBE_CODE}-NOROLE`, 'no-role');
+    expect(out).toMatchObject({ ok: false, status: 403, code: 'VAULT_WRITE_ROLE_REQUIRED' });
+  });
+
+  it('admits a member — the role SSO provisioning assigns', async () => {
+    const out = await ingestAs('member', `${PROBE_CODE}-MEMBER`, 'member');
+    expect(out.ok).toBe(true);
+  });
+});
+

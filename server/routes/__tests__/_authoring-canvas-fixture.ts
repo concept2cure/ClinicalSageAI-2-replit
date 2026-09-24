@@ -12,6 +12,7 @@ import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
 import { AUDIT_LOGS_PGLITE_DDL } from '../../db/pglite-harness';
+import { runWithTenantScope } from '../../db/tenantStore';
 
 export const JWT_SECRET = 'authoring-canvas-secret-0921';
 process.env.JWT_SECRET = JWT_SECRET;
@@ -122,9 +123,20 @@ export async function mint(u: { id: string; organizationId?: number; email: stri
     .sign(new TextEncoder().encode(JWT_SECRET));
 }
 
-export function makeApp(router: express.Router): express.Express {
+export function makeApp(router: express.Router, opts: { role?: string } = {}): express.Express {
   const app = express();
   app.use(express.json({ limit: '5mb' }));
+  /* The request's tenant scope, as production opens it: the global /api gate
+     (server/bootstrap/register-platform-routes.ts) runs authMiddleware ahead of
+     this router, which scopes the request with the caller's organization_users
+     role. The Vault write services read that role. 'member' is the role PREREQ
+     gives AUTHOR. */
+  app.use((_req, _res, next) =>
+    runWithTenantScope(
+      { tenantId: String(ORG), role: opts.role ?? 'member', source: 'request', caller: 'authoring-canvas-fixture' },
+      next,
+    ),
+  );
   // No auth shim: the router's OWN jose middleware verifies the token.
   app.use('/api/authoring', router);
   return app;
