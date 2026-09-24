@@ -93,6 +93,18 @@ export interface CreateDecisionInput {
   recommendationRationale?: string;
   confidenceLevel?: string;
   evidenceBasis?: EvidenceBasis;
+  /**
+   * The lifecycle state the record is born in. Omit for a human-authored
+   * recommendation, which correctly starts at the column default 'proposed'
+   * and waits for someone to act on it.
+   *
+   * A caller recording a decision that has ALREADY concluded — an automated
+   * gate evaluation, say — must set this. Leaving such a row at 'proposed'
+   * files a machine observation into the queue of things a human still owes an
+   * answer on, and `requiresAllDecisionsResolved` then blocks the boundary
+   * transition forever, because nobody is coming to approve it.
+   */
+  actionState?: ActionState;
   relatedAssumptionIds?: string[];
   decidedBy: string;
   notes?: string;
@@ -167,8 +179,8 @@ export class DecisionRecordService {
         organization_id, project_id, decision_code, title, domain_track,
         recommendation_type, recommendation_summary, recommendation_rationale,
         confidence_level, evidence_basis, related_assumption_ids,
-        decided_by, notes, decision_context
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+        decided_by, notes, decision_context, action_state
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
       RETURNING *
     `,
       [
@@ -186,6 +198,9 @@ export class DecisionRecordService {
         input.decidedBy,
         input.notes ?? null,
         JSON.stringify(input.decisionContext ?? {}),
+        // Matches the column default when the caller says nothing, so a
+        // human-authored recommendation still starts life awaiting review.
+        input.actionState ?? 'proposed',
       ]
     );
 
@@ -198,6 +213,14 @@ export class DecisionRecordService {
     domainTrack?: string;
     actionState?: ActionState;
     recommendationType?: RecommendationType;
+    /**
+     * Match `decision_context->>'kind'`. Callers that write a row-class
+     * discriminator need somewhere to put it: domain_track and
+     * recommendation_type are CHECK-constrained to clinical vocabularies, so a
+     * caller-specific literal in either one is rejected by the database rather
+     * than stored. decision_context is JSONB and unconstrained.
+     */
+    decisionContextKind?: string;
     limit?: number;
   }): Promise<DecisionRecord[]> {
     const conditions: string[] = ['organization_id = $1'];
@@ -219,6 +242,10 @@ export class DecisionRecordService {
     if (input.recommendationType) {
       conditions.push(`recommendation_type = $${idx++}`);
       params.push(input.recommendationType);
+    }
+    if (input.decisionContextKind) {
+      conditions.push(`decision_context->>'kind' = $${idx++}`);
+      params.push(input.decisionContextKind);
     }
 
     const limit = input.limit ?? 50;
