@@ -1971,6 +1971,20 @@ const assembleBody = z.object({
    * annual report, and the packager refuses to guess (see planSequence).
    */
   submissionType: z.string().trim().min(1).max(120).optional(),
+  /**
+   * Documents to WITHDRAW from the application in this sequence, each named as
+   * the filed history records it. Withdrawal is EXPLICIT and can only be: a
+   * leaf missing from an assembly is unchanged and still on file, because
+   * inferring withdrawal from absence would delete a dossier at the agency the
+   * first time somebody assembled a two-document amendment.
+   */
+  withdraw: z
+    .array(z.object({
+      ctdSection: z.string().trim().min(1).max(32),
+      fileName: z.string().trim().min(1).max(120),
+    }))
+    .max(500)
+    .optional(),
   // Governed transition: the operator's reason is recorded on the audit row.
   // It used to be optional with a placeholder ('eCTD bundle assembled')
   // written in its place — a fabricated justification on a hash-chained
@@ -2212,10 +2226,16 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
       // describe the pre-drop set, so the descriptor and the transmit gate both
       // described a package the bytes were not.
       modulePath: string;
+      // The DOCUMENT's identity across sequences, independent of its file name.
+      leafKey: string;
       operation?: LeafBytes['operation']; modifiedFile?: string;
     }> = [];
     // Placement findings (unplaced / disagreement), merged into the validation
     // result below so the governed transmit gate sees them.
+    // Withdrawals: backbone-only leaves with no bytes, kept apart from
+    // `ctdLeaves` because everything that set is used for — validation, the
+    // leaf count, the empty-section list — is about files this bundle contains.
+    const withdrawals: LeafBytes[] = [];
     const placementFindings: Array<{ severity: 'error' | 'warning'; ruleId: string; message: string }> = [];
     // ── Only approved documents are filed (2026-09-23, W5/D7, round-2 review) ──
     // The mapped-artifact read below had no status predicate, publish needs
@@ -2453,7 +2473,20 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
           markdown,
           contentModifiedAt: sectionContentAt(artifact ? [artifact] : []),
         });
-        ctdLeaves.push({ ctdSection: placement.code, fileName, bytes, title, modulePath });
+        /* Identity, not presentation. `fileName` is composed from the section
+           key, which PATCH edits in place, so renaming a section changed every
+           file name in it and the next sequence filed the same documents again
+           as `new` — leaving two current copies of each at the agency, with no
+           finding. The artifact's own id does not move; the CTD section is part
+           of the key because one document legitimately files at two sections,
+           and because moving a document to a different section is a withdrawal
+           and a new filing, never a replace across sections. An empty section
+           ships a placeholder that belongs to the SECTION ROW, whose id is
+           stable across renames of its key. */
+        const leafKey = artifact
+          ? `artifact:${artifact.artifactId}@${placement.code}`
+          : `section:${section.id}@${placement.code}`;
+        ctdLeaves.push({ ctdSection: placement.code, fileName, bytes, title, modulePath, leafKey });
         leafs.push({ path: modulePath, mediaType: 'application/pdf', content: bytes });
         const approval = artifact ? approvalOf.get(artifact)! : null;
         if (approval && !approval.filable) {
@@ -2489,9 +2522,11 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
             ? { terms, accepts: (v: string) => resolveSubmissionTypeCode(v) !== null }
             : null,
           filed: readFiledSequences(existingMetadata),
+          withdraw: parsed.data.withdraw,
           desired: ctdLeaves.map((l) => ({
             ctdSection: l.ctdSection,
             fileName: l.fileName,
+            leafKey: l.leafKey,
             md5: createHash('md5').update(l.bytes).digest('hex'),
             title: l.title,
           })),
@@ -2533,6 +2568,26 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
         emptyLeafPaths.length = 0;
         emptyLeafPaths.push(...keptEmpty);
         emptyLeafCount = keptEmpty.length;
+      }
+      // A withdrawal ships no bytes: it is a backbone entry pointing at the
+      // sequence that holds the document. It reaches the packager, and NOTHING
+      // else — not `leafs`, so it is neither validated as a file nor counted as
+      // one, because there is no file.
+      const shippingKeys = new Set(kept.map((l) => `${l.ctdSection}/${l.fileName}`));
+      for (const l of lifecycle.leaves) {
+        if (l.operation !== 'delete') continue;
+        if (shippingKeys.has(`${l.ctdSection}/${l.fileName}`)) continue;
+        withdrawals.push({
+          ctdSection: l.ctdSection,
+          fileName: l.fileName,
+          // The title and checksum the document was FILED under: a withdrawal
+          // ships no bytes, so neither can be recomputed, and the backbone has
+          // to name and check the file in the sequence that holds it.
+          title: l.title ?? l.fileName,
+          operation: 'delete',
+          ...(l.md5 ? { md5: l.md5 } : {}),
+          ...(l.modifiedFile ? { modifiedFile: l.modifiedFile } : {}),
+        });
       }
       ctdLeaves.length = 0;
       ctdLeaves.push(...kept);
@@ -2645,7 +2700,7 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
           productName: pkg.title,
           outputDir: work,
           environment: 'staging',
-          leaves: ctdLeaves,
+          leaves: [...ctdLeaves, ...withdrawals],
         });
         zip = await fs.promises.readFile(canonical.path);
         canonicalLeafManifest = canonical.leafManifest ?? null;

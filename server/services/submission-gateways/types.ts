@@ -117,6 +117,10 @@ export interface SubmissionBundle {
     /** For replace/append/delete: the filed leaf acted on, from this sequence's root. */
     modifiedFile?: string;
     title?: string;
+    /** Stable identity of the document, so the next sequence recognises it
+     *  through a file-name change. Absent on manifests filed before it existed;
+     *  the diff falls back to the path for those. */
+    leafKey?: string;
   }>;
   /** Optional human-readable display name. */
   displayName?: string;
