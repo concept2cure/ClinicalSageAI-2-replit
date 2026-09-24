@@ -194,15 +194,18 @@ export const SEARCH_DOCUMENT_PASSAGES: AnaTool = {
 export const PLACE_PROJECT_DOCUMENT: AnaTool = {
   name: 'place_project_document',
   description:
-    'File a project-vault document into its dossier folder \u2014 the act that turns "we have this" into "it is ' +
-    'where it belongs". At upload a classifier PROPOSES a placement from the file name and a sample of the text; ' +
+    'Suggest the dossier folder a project-vault document belongs in \u2014 a proposal a person confirms in the ' +
+    'Vault, not a filing. At upload a classifier PROPOSES a placement from the file name and a sample of the text; ' +
     'a document it could not place sits in the Unfiled queue and one it guessed wrong sits under "suggested", and ' +
-    'nothing revisits either. Use this once you have READ the document and recorded what it is: the placement then ' +
-    'rests on comprehension instead of a filename. It is a governed, 21 CFR Part 11 audited move (the prior and new ' +
-    'locations are both recorded), so say what you moved and where. Refused for a document you have not cataloged ' +
-    '\u2014 read it with read_project_document and record it with catalog_project_document first. If you genuinely ' +
-    'cannot tell where it belongs, pass unfile:true: the visible Unfiled queue is the honest answer, and a guessed ' +
-    'folder is worse than an admitted gap.',
+    'nothing revisits either. Use this once you have READ the document and recorded what it is: your suggestion ' +
+    'then rests on comprehension instead of a filename, and replaces the classifier\u0027s. It is recorded as YOUR ' +
+    'suggestion, never as the person\u0027s decision: the 21 CFR Part 11 audit trail records the prior and new ' +
+    'locations, you as the agent who proposed it, and the person you acted for, and the Vault asks a person to ' +
+    'confirm it. So tell the user where you suggested it and that it awaits their confirmation \u2014 never that ' +
+    'it is filed. You cannot confirm a suggestion, yours or the classifier\u0027s: confirm_suggested is refused. ' +
+    'Refused for a document you have not cataloged \u2014 read it with read_project_document and record it with ' +
+    'catalog_project_document first. If you genuinely cannot tell where it belongs, pass unfile:true: the visible ' +
+    'Unfiled queue is where a person decides, and a guessed folder is worse than an admitted gap.',
   input_schema: {
     type: 'object',
     properties: {
@@ -213,13 +216,14 @@ export const PLACE_PROJECT_DOCUMENT: AnaTool = {
       folder_id: {
         type: 'string',
         description:
-          'The taxonomy folder to file it into (e.g. "module-4"). It must exist in this program\u0027s vault view; ' +
-          'a folder from another modality\u0027s tree is refused rather than stored.',
+          'The taxonomy folder to suggest (e.g. "module-4"); a person confirms it in the Vault. It must exist in ' +
+          'this program\u0027s vault view; a folder from another modality\u0027s tree is refused rather than stored.',
       },
       confirm_suggested: {
         type: 'boolean',
         description:
-          'Confirm the classifier\u0027s existing suggestion in place, without naming a folder. Refused when there is no suggestion to confirm.',
+          'Always refused: confirming a filing is a person\u0027s decision, made in the Vault, not yours. To agree ' +
+          'with the existing suggestion, tell the user it awaits their confirmation there.',
       },
       unfile: {
         type: 'boolean',

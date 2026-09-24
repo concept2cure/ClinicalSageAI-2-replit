@@ -18,7 +18,7 @@
  * the step makes. If the pipeline's rules change, this checks the new rules.
  *
  * ── What it runs ─────────────────────────────────────────────────────────────
- *   1. `terraform test` on terraform/environments/production with the AWS
+ *   1. `terraform test` on terraform/stack (production's settings) with the AWS
  *      provider mocked (tests/boot_contract.tftest.hcl). No account needed.
  *   2. Reads the rendered API task definition out of the test's final state,
  *      and fails unless its family is the one the pipeline inspects.
@@ -52,7 +52,9 @@ import { fileURLToPath } from 'node:url';
 import { load as loadYaml } from 'js-yaml';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const TF_DIR = path.join(repoRoot, 'terraform', 'environments', 'production');
+// The one composition production and staging instantiate; its suite tests it
+// with production's settings.
+const TF_DIR = path.join(repoRoot, 'terraform', 'stack');
 const TEST_FILE = 'tests/boot_contract.tftest.hcl';
 const WORKFLOW = path.join(repoRoot, '.github', 'workflows', 'deploy-aws.yml');
 const PREFLIGHT_STEP = 'Preflight — task definition must carry the production boot contract';

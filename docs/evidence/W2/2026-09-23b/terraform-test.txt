@@ -1,6 +1,9 @@
-$ terraform test   # AWS provider mocked; no account, no credentials
+$ cd terraform/stack && terraform test   # production settings; AWS provider mocked; no account
 tests/boot_contract.tftest.hcl... in progress
   run "renders_the_boot_contract"... pass
+  run "production_names_are_the_ones_the_deploy_workflow_targets"... pass
+  run "staging_carries_every_name_the_deploy_preflight_requires"... pass
+  run "staging_is_distinct_from_production"... pass
   run "refuses_a_refresh_secret_equal_to_the_jwt_secret"... pass
   run "refuses_a_short_audit_chain_secret"... pass
   run "refuses_placement_approvals_that_are_not_a_json_object"... pass
@@ -17,5 +20,5 @@ tests/boot_contract.tftest.hcl... in progress
 tests/boot_contract.tftest.hcl... tearing down
 tests/boot_contract.tftest.hcl... pass
 
-Success! 14 passed, 0 failed.
+Success! 17 passed, 0 failed.
 exit=0

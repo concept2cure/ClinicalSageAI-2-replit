@@ -39,8 +39,8 @@ reads it. `package.json` regained `db:provision`, which `25a793e0f` had dropped
 four minutes after it was added. `.github/workflows/terraform-tests.yml`
 runs the Terraform tests and the proof on every push that touches these paths.
 
-How to re-run: `cd terraform/environments/production && terraform init -backend=false && terraform test`, then
-`node scripts/ops/terraform-preflight-proof.mjs --no-init`, and
+How to re-run: `cd terraform/stack && terraform init -backend=false && terraform test`, then
+`node scripts/ops/terraform-preflight-proof.mjs`, and
 `node scripts/build-server.mjs && npm run ci:server-bundle-prod-imports`.
 
 ## Reconciliation with a parallel implementation (2026-09-24)
@@ -59,6 +59,23 @@ had to go. The merge (`docs/evidence/W2/2026-09-24-b1-b5/` is the other record):
 | RDS CA | Theirs: vendored under `assets/rds-ca/` | No network at build time, and it follows the repo's vendoring policy. Their `.pem` had never been committed (`.gitignore`), and this change commits it. Their contract test gained "tracked by git" and `PGSSLROOTCERT` cases, and the proof's CA step was deleted |
 | CI workflow | Theirs: `terraform-tests.yml` (production, alb, cloudfront, staging) | It gained the preflight proof as a job, plus concurrency. `terraform-boot-contract.yml` was deleted |
 | Everything else in this table above | This change | Theirs had no counterpart |
+
+A second round, the same day: the same session moved production's composition
+into `terraform/stack/`, with production and staging as thin roots (B8,
+`e4d5d856d`), before this change landed. The stack is kept. This change's
+deltas were ported into it:
+- the full boot contract on the worker (theirs gave it 3 secrets, so it would
+  have exited at boot);
+- `ALLOWED_ORIGINS`, the approvals shape validation, the lowercase-alias rule
+  and `depends_on = [module.alb]`.
+
+The merged suite (`terraform/stack/tests`, 17 runs) is this change's, plus
+their deploy-target and staging runs. Their fixture approvals value used keys
+the app rejects (`zeroRetention`, `dataClasses`, `uses`), so it would have
+crash-looped every task; the new validation refuses it. Their fixture also gave
+every secret one mock ARN again. The ECS module exposes their decoded
+`api_container` (read by `deploy_targets`) plus `worker_container`, instead of
+two encodings of the same thing. The proof now points at `terraform/stack`.
 
 ## Still between this and D1, in order
 

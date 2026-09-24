@@ -1,20 +1,18 @@
+# production — a thin root over terraform/stack, the one deployment composition.
+# This file owns the backend, the provider and what differs about production;
+# everything else is the stack's. See terraform/stack/versions.tf for why.
+
 terraform {
   required_version = ">= 1.5"
 
   required_providers {
-    # Pinned to the minor this configuration is tested against
-    # (tests/boot_contract.tftest.hcl, docs/evidence/W2/). `>= 5.0` let a fresh
-    # init resolve any later provider — a new major included — that nothing had
-    # ever validated this stack with. .terraform.lock.hcl records the exact build.
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.70"
+      version = ">= 5.0"
     }
-    # Database credentials Terraform owns (B1): generated here, composed into
-    # connection strings below, and handed to ECS as Secrets Manager secrets.
     random = {
       source  = "hashicorp/random"
-      version = "~> 3.6"
+      version = ">= 3.5"
     }
   }
 
@@ -39,333 +37,90 @@ provider "aws" {
   }
 }
 
-# ── Networking ───────────────────────────────────────────────────────────────
+module "stack" {
+  source      = "../../stack"
+  environment = "production"
+  region      = var.region
+  tags        = var.tags
 
-module "vpc" {
-  source           = "../../modules/vpc-secure"
-  vpc_cidr         = var.vpc_cidr
-  public_subnets   = var.public_subnets
-  private_subnets  = var.private_subnets
-  azs              = var.azs
-  region           = var.region
-  eks_workloads_sg = module.ecs.ecs_tasks_security_group_id
-  tags             = var.tags
-}
+  vpc_cidr        = var.vpc_cidr
+  public_subnets  = var.public_subnets
+  private_subnets = var.private_subnets
+  azs             = var.azs
 
-# ── Container Registry ──────────────────────────────────────────────────────
+  # Production: Multi-AZ, 35-day backups, protected from deletion, Part 11
+  # evidence under COMPLIANCE object lock for seven years.
+  rds_engine_version        = "15.4"
+  rds_allocated_storage     = 50
+  rds_max_allocated_storage = 500
+  rds_multi_az              = true
+  rds_backup_retention_days = 35
+  rds_deletion_protection   = true
+  alb_deletion_protection   = true
+  evidence_object_lock_mode = "COMPLIANCE"
+  evidence_retention_days   = 2555 # 7 years
 
-module "ecr" {
-  source           = "../../modules/ecr"
-  prefix           = "c2c-prod"
-  repository_names = ["api", "worker"]
-  tags             = var.tags
-}
-
-# ── Database credentials (B1) ───────────────────────────────────────────────
-#
-# DATABASE_URL used to be `module.rds.master_user_secret_arn`: the secret RDS
-# creates under manage_master_user_password, whose value is JSON
-# ({"username":…,"password":…}). ECS injects a secret's value verbatim, so the
-# container received that JSON as DATABASE_URL and the app — which reads a
-# connection string — could not connect. Terraform now owns both credentials
-# and composes the URLs the app actually reads.
-#
-# Request-serving queries run as `app_service` (LOGIN NOSUPERUSER NOBYPASSRLS),
-# through APP_DATABASE_URL; under RLS_ENFORCE=on the boot refuses a superuser or
-# BYPASSRLS runtime role. The role is minted by the first provision of the empty
-# database (`npm run db:provision`) and re-aligned by every deploy's migration
-# step: the migrate task is cloned from the API task definition, which carries
-# APP_SERVICE_DB_PASSWORD for that reason (provision-app-role.mjs sends only its
-# SCRAM verifier to the server). The API itself never mints; the password adds
-# nothing to what APP_DATABASE_URL already holds.
-#
-# The owner URL (DATABASE_URL) is NOT migration-only. The API reads it at every
-# boot — ensureCoreTables / ensureAuthTables open owner pools and run DDL — and
-# server/routes/tenants-simple.ts serves live routes through a client on it,
-# outside RLS. So the API task carries the master credential. That is a known
-# exposure, recorded in docs/evidence/W2/2026-09-23b/README.md, not a design.
-#
-# Alphanumeric only: the password sits inside a URL, and RDS rejects '/', '"',
-# '@' and ' '. 48 alphanumerics is ~285 bits.
-#
-# Both values land in Terraform state, which is the encrypted S3 backend above.
-
-resource "random_password" "db_master" {
-  length  = 48
-  special = false
-}
-
-resource "random_password" "db_app_service" {
-  length  = 48
-  special = false
-}
-
-locals {
-  db_name            = "concept2cure_ri"
-  db_master_username = "c2c_admin"
-  db_app_role        = "app_service"
-  db_endpoint        = "${module.rds.address}:${module.rds.port}"
-
-  # sslmode=verify-full: the application verifies the server certificate in
-  # production (server/db/ssl.ts), which requires the Amazon RDS CA bundle the
-  # image ships (Dockerfile.optimized, NODE_EXTRA_CA_CERTS).
-  database_url     = "postgresql://${local.db_master_username}:${random_password.db_master.result}@${local.db_endpoint}/${local.db_name}?sslmode=verify-full"
-  app_database_url = "postgresql://${local.db_app_role}:${random_password.db_app_service.result}@${local.db_endpoint}/${local.db_name}?sslmode=verify-full"
-}
-
-# ── Secrets Manager ─────────────────────────────────────────────────────────
-
-module "secrets" {
-  source = "../../modules/secrets"
-  prefix = "c2c/production"
-  secrets = {
-    jwt_secret = {
-      description = "JWT signing secret"
-      value       = var.jwt_secret
-    }
-    openai_api_key = {
-      description = "OpenAI API key"
-      value       = var.openai_api_key
-    }
-    database_url = {
-      description = "Owner connection string (migrations). postgresql:// URL, not the RDS JSON credential."
-      value       = local.database_url
-    }
-    app_database_url = {
-      description = "Runtime connection string as app_service (non-superuser, NOBYPASSRLS)."
-      value       = local.app_database_url
-    }
-    # On the API task definition (api_secrets below) so the migrate task, which
-    # is cloned from it, re-aligns app_service on every deploy: LOGIN, the safe
-    # attributes, this password. Idempotent, and the server receives only the
-    # SCRAM verifier. Same value APP_DATABASE_URL already embeds.
-    app_service_db_password = {
-      description = "app_service password, for the migrate step to mint or re-align the role (APP_SERVICE_DB_PASSWORD). Same value APP_DATABASE_URL embeds."
-      value       = random_password.db_app_service.result
-    }
-    refresh_token_secret = {
-      description = "Refresh-token signing secret"
-      value       = var.refresh_token_secret
-    }
-    mfa_encryption_key = {
-      description = "Encrypts TOTP secrets at rest"
-      value       = var.mfa_encryption_key
-    }
-    audit_hmac_key = {
-      description = "Audit ledger HMAC seal key"
-      value       = var.audit_hmac_key
-    }
-    audit_hmac_secret = {
-      description = "Tamper-proof audit chain signing secret"
-      value       = var.audit_hmac_secret
-    }
-    connector_encryption_key = {
-      description = "Connector credential encryption key"
-      value       = var.connector_encryption_key
-    }
-  }
-  tags = var.tags
-}
-
-# Cross-variable rules, so preconditions rather than variable validations
-# (which cannot reference another variable before Terraform 1.9).
-resource "terraform_data" "boot_contract" {
-  lifecycle {
-    precondition {
-      condition     = var.refresh_token_secret != var.jwt_secret
-      error_message = "refresh_token_secret must differ from jwt_secret (server/config/environment.ts refuses to boot when they match)."
-    }
-    # The app does not check this one. AUDIT_HMAC_KEY seals audit records and
-    # AUDIT_HMAC_SECRET chains them; one value in both collapses the two-key
-    # design into one secret whose disclosure forges both.
-    precondition {
-      condition     = var.audit_hmac_secret != var.audit_hmac_key
-      error_message = "audit_hmac_secret must differ from audit_hmac_key: one seals audit records, the other chains them."
-    }
-  }
-}
-
-# The one list of what every container of this image needs to boot. The API and
-# the worker share it, and the deploy pipeline derives the migration task from
-# the API task definition, so all three carry the same contract. Checked against
-# deploy-aws.yml's preflight by terraform/environments/production/tests/ and
-# scripts/ops/terraform-preflight-proof.mjs.
-locals {
-  boot_secrets = [
-    { name = "DATABASE_URL", value_from = module.secrets.secret_arns["database_url"] },
-    { name = "APP_DATABASE_URL", value_from = module.secrets.secret_arns["app_database_url"] },
-    { name = "JWT_SECRET", value_from = module.secrets.secret_arns["jwt_secret"] },
-    { name = "REFRESH_TOKEN_SECRET", value_from = module.secrets.secret_arns["refresh_token_secret"] },
-    { name = "MFA_ENCRYPTION_KEY", value_from = module.secrets.secret_arns["mfa_encryption_key"] },
-    { name = "AUDIT_HMAC_KEY", value_from = module.secrets.secret_arns["audit_hmac_key"] },
-    { name = "AUDIT_HMAC_SECRET", value_from = module.secrets.secret_arns["audit_hmac_secret"] },
-    { name = "CONNECTOR_ENCRYPTION_KEY", value_from = module.secrets.secret_arns["connector_encryption_key"] },
-    { name = "OPENAI_API_KEY", value_from = module.secrets.secret_arns["openai_api_key"] },
-  ]
-
-  # The deployment's public origin: the first CloudFront alias. One input, so
-  # APP_URL and ALLOWED_ORIGINS cannot disagree with the domain browsers use.
-  app_origin = "https://${var.domain_aliases[0]}"
-
-  boot_environment = [
-    # Production accepts only the literal `on` (server/db/rlsEnforcement.ts).
-    { name = "RLS_ENFORCE", value = "on" },
-    # Not a decision: production refuses to boot on any other value
-    # (assertSensitivePlacementConfiguration). The decision is the approvals.
-    { name = "AI_SENSITIVE_DATA_POLICY_MODE", value = "enforce" },
-    { name = "AI_PROVIDER_PLACEMENT_APPROVALS", value = var.ai_provider_placement_approvals },
-    { name = "APP_URL", value = local.app_origin },
-    # In production csrfProtection refuses every state-changing browser request
-    # (sign-in included) whose Origin is not in ALLOWED_ORIGINS or a short
-    # hardcoded list (server/middleware/enterprise-security.ts). Without this, a
-    # deployment on any other domain boots, reports ready, and nobody can sign
-    # in. Both come from the first CloudFront alias: the one origin browsers
-    # use, validated to be a lowercase hostname (variables.tf).
-    { name = "ALLOWED_ORIGINS", value = local.app_origin },
-  ]
-}
-
-# ── Database ─────────────────────────────────────────────────────────────────
-
-module "rds" {
-  source                = "../../modules/rds"
-  identifier            = "c2c-production"
-  engine_version        = "15.4"
-  instance_class        = var.rds_instance_class
-  allocated_storage     = 50
-  max_allocated_storage = 500
-  database_name         = local.db_name
-  master_username       = local.db_master_username
-  master_password       = random_password.db_master.result
-  subnet_ids            = module.vpc.private_subnet_ids
-  security_group_ids    = [module.vpc.rds_sg_id]
-  multi_az              = true
-  backup_retention_days = 35
-  tags                  = var.tags
-}
-
-# ── Load Balancer ────────────────────────────────────────────────────────────
-
-module "alb" {
-  source            = "../../modules/alb"
-  name              = "c2c-prod"
-  vpc_id            = module.vpc.vpc_id
-  vpc_cidr          = module.vpc.vpc_cidr
-  public_subnet_ids = module.vpc.public_subnet_ids
-  certificate_arn   = var.acm_certificate_arn
-  api_port          = 5000
-  origin_secret     = var.cloudfront_origin_secret
-  tags              = var.tags
-}
-
-# ── Compute (ECS Fargate) ───────────────────────────────────────────────────
-
-module "ecs" {
-  source = "../../modules/ecs-fargate"
-  # The api service registers with the ALB's target group, and ECS refuses
-  # CreateService until that group is attached to a load balancer through a
-  # listener. The module sees only the target group's ARN, so without this the
-  # first apply can create the service while the ALB is still provisioning
-  # ("target group does not have an associated load balancer"). The mocked
-  # apply cannot observe it; this orders it.
-  depends_on = [module.alb]
-
-  cluster_name          = "c2c-production"
-  region                = var.region
-  vpc_id                = module.vpc.vpc_id
-  private_subnet_ids    = module.vpc.private_subnet_ids
-  alb_security_group_id = module.alb.alb_security_group_id
-  api_target_group_arn  = module.alb.api_target_group_arn
-  # CloudFront, then the ALB. The ALB admits CloudFront alone (modules/alb), so
-  # the second-to-last X-Forwarded-For entry is CloudFront's record of the user.
-  trust_proxy_hops = 2
-
-  # Immutable, parameterized image references (see var.image_tag). Never
-  # deploy a mutable `:latest` tag — that breaks rollback and reproducibility.
-  # TODO(GA-blocker): pin to image digest (e.g. "...@sha256:<digest>") rather
-  # than a tag once the deploy pipeline resolves the pushed image digest.
-  api_image    = "${module.ecr.repository_urls["api"]}:${var.image_tag}"
-  worker_image = "${module.ecr.repository_urls["worker"]}:${var.image_tag}"
-
+  rds_instance_class   = var.rds_instance_class
   api_cpu              = var.api_cpu
   api_memory           = var.api_memory
   api_desired_count    = var.api_desired_count
   worker_desired_count = var.worker_desired_count
 
-  secret_arns = module.secrets.secret_arns_list
-  s3_bucket_arns = [
-    module.evidence.evidence_bucket_arn,
-    module.cdn.frontend_bucket_arn,
-    "${module.cdn.frontend_bucket_arn}/*",
-  ]
+  image_tag                  = var.image_tag
+  acm_certificate_arn        = var.acm_certificate_arn
+  cloudfront_certificate_arn = var.cloudfront_certificate_arn
+  domain_aliases             = var.domain_aliases
+  cloudfront_origin_secret   = var.cloudfront_origin_secret
 
-  # The migrate task is cloned from this definition and re-aligns app_service
-  # from APP_SERVICE_DB_PASSWORD; the worker has no such clone.
-  api_secrets = concat(local.boot_secrets, [
-    { name = "APP_SERVICE_DB_PASSWORD", value_from = module.secrets.secret_arns["app_service_db_password"] },
-  ])
-  worker_secrets = local.boot_secrets
-
-  # The boot contract, plus the release signer (release_signing.tf).
-  api_environment    = concat(local.boot_environment, local.signer_environment)
-  worker_environment = concat(local.boot_environment, local.signer_environment)
-
-  tags = var.tags
+  jwt_secret                      = var.jwt_secret
+  refresh_token_secret            = var.refresh_token_secret
+  mfa_encryption_key              = var.mfa_encryption_key
+  audit_hmac_key                  = var.audit_hmac_key
+  audit_hmac_secret               = var.audit_hmac_secret
+  connector_encryption_key        = var.connector_encryption_key
+  openai_api_key                  = var.openai_api_key
+  ai_provider_placement_approvals = var.ai_provider_placement_approvals
 }
-
-# ── Compliance Evidence (S3 + CloudTrail) ────────────────────────────────────
-
-module "evidence" {
-  source           = "../../modules/compliance-evidence"
-  bucket_name      = "c2c-prod-part11-evidence"
-  kms_key_id       = "alias/c2c-prod-evidence"
-  kms_policy       = ""
-  object_lock_mode = "COMPLIANCE"
-  retention_days   = 2555 # 7 years
-  tags             = var.tags
-}
-
-# ── CDN (CloudFront + S3) ───────────────────────────────────────────────────
-
-module "cdn" {
-  source          = "../../modules/cloudfront"
-  bucket_name     = "c2c-prod-frontend"
-  domain_aliases  = var.domain_aliases
-  certificate_arn = var.cloudfront_certificate_arn
-  api_domain_name = module.alb.alb_dns_name
-  tags            = var.tags
-
-  api_origin_secret_header_name = module.alb.origin_secret_header_name
-  api_origin_secret             = var.cloudfront_origin_secret
-}
-
-# ── Outputs ──────────────────────────────────────────────────────────────────
 
 output "vpc_id" {
-  value = module.vpc.vpc_id
+  value = module.stack.vpc_id
 }
 
 output "alb_dns_name" {
-  value = module.alb.alb_dns_name
+  value = module.stack.alb_dns_name
 }
 
 output "cloudfront_domain" {
-  value = module.cdn.distribution_domain_name
+  value = module.stack.cloudfront_domain
 }
 
 output "ecr_api_url" {
-  value = module.ecr.repository_urls["api"]
+  value = module.stack.ecr_api_url
 }
 
 output "ecr_worker_url" {
-  value = module.ecr.repository_urls["worker"]
+  value = module.stack.ecr_worker_url
 }
 
 output "rds_endpoint" {
-  value     = module.rds.endpoint
+  value     = module.stack.rds_endpoint
   sensitive = true
 }
 
 output "ecs_cluster" {
-  value = module.ecs.cluster_name
+  value = module.stack.ecs_cluster
+}
+
+output "evidence_bucket" {
+  value = module.stack.evidence_bucket
+}
+
+# Filed as evidence for SOP_KEY_MANAGEMENT.md §10 step 1.
+output "release_signing_key_arn" {
+  value = module.stack.release_signing_key_arn
+}
+
+# Review before apply: what the API task definition will carry.
+output "api_task_boot_contract" {
+  value = module.stack.api_task_boot_contract
 }

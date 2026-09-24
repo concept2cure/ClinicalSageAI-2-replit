@@ -1,6 +1,6 @@
-$ node scripts/ops/terraform-preflight-proof.mjs --no-init
+$ node scripts/ops/terraform-preflight-proof.mjs
 [terraform-preflight-proof] ok — preflight step found in job "migrate" (5177 bytes of shell)
-[terraform-preflight-proof] ok — terraform test: 14 passed, 0 failed, 0 errored
+[terraform-preflight-proof] ok — terraform test: 17 passed, 0 failed, 0 errored
 [terraform-preflight-proof] ok — rendered API task definition written to /tmp/tf-td-XXXXXX/api-td.json
 [terraform-preflight-proof] ok — rendered family matches the pipeline's ECS_API_TASK_FAMILY (c2c-production-api)
 Production boot contract satisfied by arn:aws:ecs:us-east-1:123456789012:task-definition/c2c-production-api:1.

@@ -20,10 +20,22 @@
  * under AnA\u0027s name would dress a guess up as judgement. Unfiling is exempt,
  * because it retracts a claim rather than making one.
  *
+ * And what she writes is a SUGGESTION, in her own name (D5,
+ * placement-attribution, 2026-09-24). This tool used to hand the service only
+ * the person's user id, so her folder was recorded as 'confirmed' — what the
+ * Vault counts as "an upload a person filed" — placed_by that person, under a
+ * Part 11 audit row naming only them, while URS-VAULT-007 says a person
+ * confirms the filing. She now passes her provenance, which makes the write
+ * 'suggested' (the state the Vault already asks a person to confirm) and puts
+ * the tool, the serving model, the thread and the turn on the audit row. She
+ * cannot confirm a suggestion at all; that is the person's act, in the Vault.
+ *
  * @module server/services/ana/document-placement-tools
  */
 
 import type { ToolContext } from './AnaToolExecutor.js';
+import type { CommandContext } from '../ana-ri/command-executor.js';
+import { agentAuditDetails, type PolicyCheck } from '../ana-ri/mdx-tool-policy.js';
 import {
   CHAT_UPLOAD_ID,
   requireCatalog,
@@ -35,18 +47,18 @@ import {
 /**
  * A placement request, already resolved to the arguments the service takes.
  *
- * The three destinations (a named folder, "confirm what was suggested", and
- * unfile) differ only in these five fields, so they are normalized here rather
- * than branched over again at the call site — where five parallel ternaries
- * would be five chances for one of them to disagree with the others.
+ * The two destinations (a named folder, and unfile) differ only in these
+ * fields, so they are normalized here rather than branched over again at the
+ * call site — where parallel ternaries would be chances for one of them to
+ * disagree with the others. "Confirm what was suggested" is not a destination
+ * AnA has: it is refused before a plan is made (confirmationRefusal).
  */
 interface PlacementPlan {
   documentId: string;
   /** True only for an explicit unfile, which skips the comprehension gate. */
   unfile: boolean;
-  confirm: boolean;
-  /** A folder, `null` to unfile, or `undefined` to confirm in place. */
-  folderId: string | null | undefined;
+  /** A folder to suggest, or `null` to unfile. */
+  folderId: string | null;
   ctdSection: string | null;
   evidenceKind: string | null;
   rationale: string;
@@ -69,7 +81,6 @@ function parsePlacementInput(input: Record<string, unknown>): PlacementPlan | { 
     return {
       documentId,
       unfile: true,
-      confirm: false,
       folderId: null,
       ctdSection: null,
       evidenceKind: null,
@@ -77,19 +88,17 @@ function parsePlacementInput(input: Record<string, unknown>): PlacementPlan | { 
     };
   }
 
-  const folderId = str(input.folder_id) ?? undefined;
-  const confirm = input.confirm_suggested === true;
-  if (!folderId && !confirm) {
+  const folderId = str(input.folder_id);
+  if (!folderId) {
     return {
       error:
-        'place_project_document needs a destination: folder_id to file it, confirm_suggested:true to accept the ' +
-        'existing suggestion, or unfile:true to put it in the Unfiled queue.',
+        'place_project_document needs a destination: folder_id to suggest a folder (a person confirms it in the ' +
+        'Vault), or unfile:true to put it in the Unfiled queue.',
     };
   }
   return {
     documentId,
     unfile: false,
-    confirm,
     folderId,
     ctdSection: str(input.ctd_section),
     evidenceKind: str(input.evidence_kind),
@@ -124,6 +133,67 @@ function comprehensionRefusal(
   });
 }
 
+/**
+ * confirm_suggested is refused outright. Confirming is the act that turns a
+ * proposal into a person's filing decision (URS-VAULT-007), so an AnA call
+ * that did it recorded a person's decision nobody made — the D5 defect in its
+ * plainest form. The service refuses an agent's confirm too; this answers
+ * first, before anything is read, with what she CAN do instead.
+ */
+function confirmationRefusal(documentId: unknown): string {
+  return JSON.stringify({
+    ok: false,
+    refused: true,
+    documentId: typeof documentId === 'string' ? documentId : null,
+    reason:
+      'You cannot confirm a filing. A person confirms where a document is filed, in the Vault; until they do, ' +
+      'a placement is a suggestion. If you have read the document and a folder is right, pass folder_id with your ' +
+      'rationale — it is recorded as your suggestion for them to confirm. If it belongs nowhere you can justify, ' +
+      'pass unfile:true. Tell the user the existing suggestion is waiting for their confirmation in the Vault.',
+  });
+}
+
+/**
+ * Who made this placement, for its audit row — the D5 fix.
+ *
+ * In the repo's one agent-audit shape: agentAuditDetails (ana-ri/
+ * mdx-tool-policy), the details every agent.ana.* row carries and
+ * explain_audit_row reads to say "AnA (agent)" rather than "human user". The
+ * helper takes a command context and a governed-tool gate; it reads only the
+ * thread and chat-message ids from the one and the reason and artifact flag
+ * from the other, so a tool call supplies what it has — its thread, and its
+ * rationale as the reason — and the rest of this tool's provenance is added
+ * beside it.
+ */
+function placementProvenance(
+  ctx: ToolContext | undefined,
+  orgId: number,
+  rationale: string,
+): Record<string, unknown> {
+  const commandCtx = {
+    organizationId: orgId,
+    userId: ctx?.userId,
+    threadId: ctx?.threadId ?? undefined,
+  } as CommandContext;
+  const gate = { ok: true, reason: rationale } as PolicyCheck;
+  return {
+    ...agentAuditDetails(commandCtx, gate),
+    // That soft signal is computed by the governed-tool gate, which this tool
+    // does not run. The helper would record `false`, which explain_audit_row
+    // renders as "the reason did NOT cite a concrete artifact" — a finding no
+    // one made. Null is "not assessed".
+    reasonReferencedArtifact: null,
+    tool: 'place_project_document',
+    // As the gateway reported it. A model this call was not told about is
+    // recorded as unknown, never guessed.
+    servingModel: {
+      provider: ctx?.servingModel?.provider ?? null,
+      model: ctx?.servingModel?.model ?? ctx?.model ?? null,
+    },
+    turnId: ctx?.turnId ?? null,
+  };
+}
+
 async function handlePlaceProjectDocument(
   input: Record<string, unknown>,
   ctx?: ToolContext,
@@ -131,6 +201,8 @@ async function handlePlaceProjectDocument(
   const gate = await requireCatalog(ctx, 'place_project_document');
   if ('refusal' in gate) return JSON.stringify({ error: gate.refusal });
   const { svc, orgId } = gate;
+
+  if (input.confirm_suggested === true) return confirmationRefusal(input.document_id);
 
   const parsed = parsePlacementInput(input);
   if ('error' in parsed) return JSON.stringify(parsed);
@@ -151,12 +223,13 @@ async function handlePlaceProjectDocument(
     programId: doc.programId,
     documentId: doc.id,
     organizationId: orgId,
+    // The person on whose behalf she acts; `agent` says who decided.
     userId: ctx?.userId ?? null,
-    confirm: parsed.confirm,
     folderId: parsed.folderId,
     ctdSection: parsed.ctdSection,
     evidenceKind: parsed.evidenceKind,
     note: parsed.rationale,
+    agent: placementProvenance(ctx, orgId, parsed.rationale),
   });
 
   if (!outcome.ok) {
@@ -171,10 +244,13 @@ async function handlePlaceProjectDocument(
     filing,
     message:
       filing.placementStatus === 'unfiled'
-        ? `${doc.fileName} is now in the Unfiled queue with your reason recorded. Tell the user it is unplaced and why.`
-        : `${doc.fileName} is filed under ${filing.folderLabel}${
+        ? `${doc.fileName} is now in the Unfiled queue with your reason recorded, for a person to decide. ` +
+          'Tell the user it is unplaced and why.'
+        : `${doc.fileName} is now suggested for ${filing.folderLabel}${
             filing.ctdSection ? ` (${filing.ctdSection})` : ''
-          }. The move is in the Part 11 audit trail. Tell the user where it now lives.`,
+          } — your suggestion, not a filing: a person confirms it in the Vault. The suggestion is in the ` +
+          'Part 11 audit trail under your name. Tell the user where you suggested it and that it awaits their ' +
+          'confirmation in the Vault.',
   });
 }
 

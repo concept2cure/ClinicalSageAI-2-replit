@@ -14,8 +14,11 @@
 # mock cannot tell you — whether AWS accepts an engine version, whether a quota
 # allows a rule — is not claimed here; see docs/evidence/W2/.
 #
-#   cd terraform/environments/production
+#   cd terraform/stack
 #   terraform init -backend=false && terraform test
+#
+# The stack is the one composition production and staging both instantiate
+# (e4d5d856d); this suite tests it with production's settings.
 #
 # The required-names list below mirrors deploy-aws.yml's preflight. It is kept
 # honest by scripts/ops/terraform-preflight-proof.mjs, which parses both and
@@ -55,9 +58,11 @@ mock_provider "aws" {
   }
   mock_resource "aws_db_instance" {
     defaults = {
-      arn     = "arn:aws:rds:us-east-1:123456789012:db:mock"
-      address = "c2c-production.mock.us-east-1.rds.amazonaws.com"
-      port    = 5432
+      arn      = "arn:aws:rds:us-east-1:123456789012:db:mock"
+      address  = "c2c-production.mock.us-east-1.rds.amazonaws.com"
+      port     = 5432
+      username = "c2c_admin"
+      db_name  = "concept2cure_ri"
     }
   }
   # No arn default for secrets: the mock then generates a DISTINCT value per
@@ -65,20 +70,41 @@ mock_provider "aws" {
   # assertion below pass even with DATABASE_URL pointed at jwt_secret.
 }
 
-# Throwaway values of the right SHAPE. Nothing here is a real credential.
+# Throwaway values of the right SHAPE, for production's settings. Nothing here
+# is a real credential.
 variables {
-  image_tag                       = "sha-00000000"
-  acm_certificate_arn             = "arn:aws:acm:us-east-1:123456789012:certificate/mock-alb"
-  cloudfront_certificate_arn      = "arn:aws:acm:us-east-1:123456789012:certificate/mock-cf"
-  jwt_secret                      = "test-jwt-secret-0000000000000000000000000000"
-  openai_api_key                  = "sk-test-not-a-key"
-  refresh_token_secret            = "test-refresh-secret-00000000000000000000000000"
-  mfa_encryption_key              = "test-mfa-key-000000000000000000000000000000000"
-  audit_hmac_key                  = "test-audit-hmac-key-0000000000000000000000000"
-  audit_hmac_secret               = "test-audit-hmac-secret-0000000000000000000000"
-  connector_encryption_key        = "test-connector-key-00000000000000000000000000"
+  environment                     = "production"
+  region                          = "us-east-1"
+  vpc_cidr                        = "10.10.0.0/16"
+  public_subnets                  = ["10.10.101.0/24", "10.10.102.0/24"]
+  private_subnets                 = ["10.10.1.0/24", "10.10.2.0/24"]
+  azs                             = ["us-east-1a", "us-east-1b"]
+  rds_instance_class              = "db.t3.medium"
+  rds_engine_version              = "15.4"
+  rds_allocated_storage           = 50
+  rds_max_allocated_storage       = 500
+  rds_multi_az                    = true
+  rds_backup_retention_days       = 35
+  rds_deletion_protection         = true
+  alb_deletion_protection         = true
+  evidence_object_lock_mode       = "COMPLIANCE"
+  evidence_retention_days         = 2555
+  api_cpu                         = 1024
+  api_memory                      = 2048
+  api_desired_count               = 2
+  worker_desired_count            = 1
+  image_tag                       = "v1.0.0"
+  acm_certificate_arn             = "arn:aws:acm:us-east-1:111122223333:certificate/alb"
+  cloudfront_certificate_arn      = "arn:aws:acm:us-east-1:111122223333:certificate/cf"
   domain_aliases                  = ["app.example.com"]
-  cloudfront_origin_secret        = "test-origin-secret-0000000000000000000000"
+  cloudfront_origin_secret        = "c2cTestOriginSecret_0123456789abcdef"
+  openai_api_key                  = "test-openai-key"
+  jwt_secret                      = "jwt-0123456789abcdef0123456789abcdef"
+  refresh_token_secret            = "refresh-0123456789abcdef0123456789abcdef"
+  mfa_encryption_key              = "mfa-0123456789abcdef0123456789abcdef"
+  audit_hmac_key                  = "audkey-0123456789abcdef0123456789abcdef"
+  audit_hmac_secret               = "audsec-0123456789abcdef0123456789abcdef"
+  connector_encryption_key        = "conn-0123456789abcdef0123456789abcdef"
   ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\"],\"approvedIntendedUses\":[\"drafting\"]}}"
 }
 
@@ -92,10 +118,10 @@ run "renders_the_boot_contract" {
   # value checks. Adopted from the parallel implementation in 752a09ab1.
   assert {
     condition = length(setsubtract(
-      toset(concat(["APP_URL", "NODE_ENV"], regexall("[A-Z][A-Z0-9_]+", one(regex("for VAR in ([A-Z0-9_\\\\\\s]+); do", file("../../../.github/workflows/deploy-aws.yml")))))),
+      toset(concat(["APP_URL", "NODE_ENV"], regexall("[A-Z][A-Z0-9_]+", one(regex("for VAR in ([A-Z0-9_\\\\\\s]+); do", file("../../.github/workflows/deploy-aws.yml")))))),
       toset(concat(
-        [for e in jsondecode(module.ecs.api_container_definitions)[0].environment : e.name],
-        [for s in jsondecode(module.ecs.api_container_definitions)[0].secrets : s.name],
+        [for e in module.ecs.api_container.environment : e.name],
+        [for s in module.ecs.api_container.secrets : s.name],
       ))
     )) == 0
     error_message = "The API container is missing a variable the deploy preflight requires (and the app refuses to boot without)."
@@ -104,10 +130,10 @@ run "renders_the_boot_contract" {
   # The worker runs the same image, so it carries the same contract.
   assert {
     condition = length(setsubtract(
-      toset(concat(["APP_URL", "NODE_ENV"], regexall("[A-Z][A-Z0-9_]+", one(regex("for VAR in ([A-Z0-9_\\\\\\s]+); do", file("../../../.github/workflows/deploy-aws.yml")))))),
+      toset(concat(["APP_URL", "NODE_ENV"], regexall("[A-Z][A-Z0-9_]+", one(regex("for VAR in ([A-Z0-9_\\\\\\s]+); do", file("../../.github/workflows/deploy-aws.yml")))))),
       toset(concat(
-        [for e in jsondecode(module.ecs.worker_container_definitions)[0].environment : e.name],
-        [for s in jsondecode(module.ecs.worker_container_definitions)[0].secrets : s.name],
+        [for e in module.ecs.worker_container.environment : e.name],
+        [for s in module.ecs.worker_container.secrets : s.name],
       ))
     )) == 0
     error_message = "The worker container is missing part of the boot contract."
@@ -118,13 +144,13 @@ run "renders_the_boot_contract" {
   assert {
     condition = alltrue([
       for pair in [["NODE_ENV", "production"], ["RLS_ENFORCE", "on"], ["AI_SENSITIVE_DATA_POLICY_MODE", "enforce"]] :
-      one([for e in jsondecode(module.ecs.api_container_definitions)[0].environment : e.value if e.name == pair[0]]) == pair[1]
+      one([for e in module.ecs.api_container.environment : e.value if e.name == pair[0]]) == pair[1]
     ])
     error_message = "NODE_ENV, RLS_ENFORCE and AI_SENSITIVE_DATA_POLICY_MODE must be plain environment values of exactly production / on / enforce."
   }
 
   assert {
-    condition     = one([for e in jsondecode(module.ecs.api_container_definitions)[0].environment : e.value if e.name == "APP_URL"]) == "https://${var.domain_aliases[0]}"
+    condition     = one([for e in module.ecs.api_container.environment : e.value if e.name == "APP_URL"]) == "https://${var.domain_aliases[0]}"
     error_message = "APP_URL must be the https origin of the first CloudFront alias, in the API environment."
   }
 
@@ -132,8 +158,8 @@ run "renders_the_boot_contract" {
   # deployment's own origin must be in it, in both containers.
   assert {
     condition = alltrue([
-      for defs in [module.ecs.api_container_definitions, module.ecs.worker_container_definitions] :
-      one([for e in jsondecode(defs)[0].environment : e.value if e.name == "ALLOWED_ORIGINS"]) == "https://${var.domain_aliases[0]}"
+      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      one([for e in defs.environment : e.value if e.name == "ALLOWED_ORIGINS"]) == "https://${var.domain_aliases[0]}"
     ])
     error_message = "ALLOWED_ORIGINS must carry the deployment's own origin (the first CloudFront alias) in the API and worker environments."
   }
@@ -143,8 +169,8 @@ run "renders_the_boot_contract" {
   assert {
     condition = length(setsubtract(
       toset(concat(
-        [for s in jsondecode(module.ecs.api_container_definitions)[0].secrets : s.valueFrom],
-        [for s in jsondecode(module.ecs.worker_container_definitions)[0].secrets : s.valueFrom],
+        [for s in module.ecs.api_container.secrets : s.valueFrom],
+        [for s in module.ecs.worker_container.secrets : s.valueFrom],
       )),
       toset(flatten([jsondecode(module.ecs.execution_secrets_policy).Statement[0].Resource]))
     )) == 0
@@ -156,7 +182,7 @@ run "renders_the_boot_contract" {
   assert {
     condition = alltrue([
       for pair in [["DATABASE_URL", "database_url"], ["APP_DATABASE_URL", "app_database_url"]] :
-      one([for s in jsondecode(module.ecs.api_container_definitions)[0].secrets : s.valueFrom if s.name == pair[0]]) == module.secrets.secret_arns[pair[1]]
+      one([for s in module.ecs.api_container.secrets : s.valueFrom if s.name == pair[0]]) == module.secrets.secret_arns[pair[1]]
     ])
     error_message = "DATABASE_URL / APP_DATABASE_URL must be the composed connection-string secrets."
   }
@@ -170,10 +196,10 @@ run "renders_the_boot_contract" {
   assert {
     condition = nonsensitive(alltrue([
       for pair in [["c2c_admin", local.database_url], ["app_service", local.app_database_url]] :
-      can(regex("^postgresql://${pair[0]}:[A-Za-z0-9]{48}@", pair[1]))
+      can(regex("^postgresql://${pair[0]}:[A-Za-z0-9]{40}@", pair[1]))
       && endswith(pair[1], "@${module.rds.address}:${module.rds.port}/concept2cure_ri?sslmode=verify-full")
     ]))
-    error_message = "DATABASE_URL / APP_DATABASE_URL must be postgresql://<role>:<48 alphanumerics>@<rds address>:<port>/concept2cure_ri?sslmode=verify-full."
+    error_message = "DATABASE_URL / APP_DATABASE_URL must be postgresql://<role>:<40 alphanumerics>@<rds address>:<port>/concept2cure_ri?sslmode=verify-full."
   }
 
   assert {
@@ -187,11 +213,11 @@ run "renders_the_boot_contract" {
   # container may carry it as a plain variable.
   assert {
     condition = alltrue([
-      one([for s in jsondecode(module.ecs.api_container_definitions)[0].secrets : s.valueFrom if s.name == "APP_SERVICE_DB_PASSWORD"]) == module.secrets.secret_arns["app_service_db_password"],
-      !contains([for s in jsondecode(module.ecs.worker_container_definitions)[0].secrets : s.name], "APP_SERVICE_DB_PASSWORD"),
+      one([for s in module.ecs.api_container.secrets : s.valueFrom if s.name == "APP_SERVICE_DB_PASSWORD"]) == module.secrets.secret_arns["app_service_db_password"],
+      !contains([for s in module.ecs.worker_container.secrets : s.name], "APP_SERVICE_DB_PASSWORD"),
       alltrue([
-        for defs in [module.ecs.api_container_definitions, module.ecs.worker_container_definitions] :
-        !contains([for e in jsondecode(defs)[0].environment : e.name], "APP_SERVICE_DB_PASSWORD")
+        for defs in [module.ecs.api_container, module.ecs.worker_container] :
+        !contains([for e in defs.environment : e.name], "APP_SERVICE_DB_PASSWORD")
       ]),
     ])
     error_message = "APP_SERVICE_DB_PASSWORD must be an API secret (for the migrate clone), not on the worker, and never a plain variable."
@@ -201,8 +227,8 @@ run "renders_the_boot_contract" {
   # ecs:DescribeTaskDefinition reads it. Substrings too: a URL embeds a password.
   assert {
     condition = nonsensitive(alltrue(flatten([
-      for defs in [module.ecs.api_container_definitions, module.ecs.worker_container_definitions] : [
-        for e in jsondecode(defs)[0].environment : [
+      for defs in [module.ecs.api_container, module.ecs.worker_container] : [
+        for e in defs.environment : [
           for secret in [
             random_password.db_master.result, random_password.db_app_service.result,
             var.jwt_secret, var.refresh_token_secret, var.mfa_encryption_key, var.audit_hmac_key,
@@ -221,7 +247,7 @@ run "renders_the_boot_contract" {
 
   # The image has no wget; a check that cannot run marks every task unhealthy.
   assert {
-    condition     = !strcontains(join(" ", jsondecode(module.ecs.api_container_definitions)[0].healthCheck.command), "wget")
+    condition     = !strcontains(join(" ", module.ecs.api_container.healthCheck.command), "wget")
     error_message = "The container health check calls wget, which the image does not contain."
   }
 
@@ -230,19 +256,80 @@ run "renders_the_boot_contract" {
   # here makes ECS replace every task until the deploy rolls back.
   assert {
     condition = alltrue([
-      strcontains(join(" ", jsondecode(module.ecs.api_container_definitions)[0].healthCheck.command), "/healthz'"),
-      !strcontains(join(" ", jsondecode(module.ecs.api_container_definitions)[0].healthCheck.command), "readyz"),
+      strcontains(join(" ", module.ecs.api_container.healthCheck.command), "/healthz'"),
+      !strcontains(join(" ", module.ecs.api_container.healthCheck.command), "readyz"),
     ])
     error_message = "The container health check must probe /healthz (liveness), not /readyz."
   }
 }
+
+# From the parallel implementation (e4d5d856d): the names the deploy workflow
+# targets, and staging as the same composition.
+# Production's names are hard-coded in deploy-aws.yml's env block. If Terraform
+# names anything differently, a deploy registers into infrastructure that does
+# not exist. Each expected value is read out of the workflow.
+run "production_names_are_the_ones_the_deploy_workflow_targets" {
+  command = plan
+  assert {
+    condition = alltrue([
+      for k, v in output.deploy_targets :
+      v == one(regex("\n  ${k}: ([^\\s]+)", file("../../.github/workflows/deploy-aws.yml")))
+    ])
+    error_message = "A production name differs from deploy-aws.yml: ${join("; ", [for k, v in output.deploy_targets : "${k} terraform=${v} workflow=${one(regex("\n  ${k}: ([^\\s]+)", file("../../.github/workflows/deploy-aws.yml")))}" if v != one(regex("\n  ${k}: ([^\\s]+)", file("../../.github/workflows/deploy-aws.yml")))])}"
+  }
+}
+
+# The same contract for staging. Staging exists to prove what production will
+# run (D1 brief B8), so a staging task definition the preflight would refuse
+# proves nothing.
+
+run "staging_carries_every_name_the_deploy_preflight_requires" {
+  command = apply
+  variables {
+    environment = "staging"
+  }
+  assert {
+    condition = alltrue([
+      for n in regexall("[A-Z][A-Z0-9_]+", one(regex("for VAR in ([A-Z0-9_\\\\\\s]+); do", file("../../.github/workflows/deploy-aws.yml")))) :
+      contains(output.api_task_boot_contract.names, n)
+    ])
+    error_message = "The staging API task definition lacks a name the deploy preflight requires."
+  }
+  assert {
+    condition     = output.api_task_boot_contract.environment["RLS_ENFORCE"] == "on" && output.api_task_boot_contract.environment["NODE_ENV"] == "production"
+    error_message = "Staging runs the production posture: NODE_ENV=production and RLS_ENFORCE=on."
+  }
+  assert {
+    condition     = module.rds.master_user_secret_arn == null && output.api_task_boot_contract.secret_source["DATABASE_URL"] == module.secrets.secret_arns["database_url"]
+    error_message = "Staging's DATABASE_URL must be the composed URL secret, as production's is."
+  }
+}
+
+run "staging_is_distinct_from_production" {
+  command = plan
+  variables {
+    environment = "staging"
+  }
+  # Nothing in staging may collide with, or be mistaken for, production: every
+  # name carries "stg" or "staging", and none is a production name.
+  assert {
+    condition     = alltrue([for k, v in output.resource_names : strcontains(v, "stg") || strcontains(v, "staging")])
+    error_message = "Every staging resource name must be its own: ${jsonencode(output.resource_names)}"
+  }
+  assert {
+    condition     = output.resource_names.signing_alias == "alias/fda-signing-key-2026-staging"
+    error_message = "Staging must sign with its own KMS key, never under the production alias."
+  }
+}
+
+# Refusals. Each run must fail on exactly the named check.
 
 # ── Each of these must FAIL. A check only ever seen to pass has not been tested.
 
 run "refuses_a_refresh_secret_equal_to_the_jwt_secret" {
   command = plan
   variables {
-    refresh_token_secret = "test-jwt-secret-0000000000000000000000000000"
+    refresh_token_secret = "jwt-0123456789abcdef0123456789abcdef"
   }
   expect_failures = [terraform_data.boot_contract]
 }
@@ -266,7 +353,7 @@ run "refuses_placement_approvals_that_are_not_a_json_object" {
 run "refuses_equal_audit_seal_and_chain_keys" {
   command = plan
   variables {
-    audit_hmac_secret = "test-audit-hmac-key-0000000000000000000000000"
+    audit_hmac_secret = "audkey-0123456789abcdef0123456789abcdef"
   }
   expect_failures = [terraform_data.boot_contract]
 }

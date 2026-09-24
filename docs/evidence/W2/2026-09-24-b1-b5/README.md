@@ -48,7 +48,7 @@ the list in `.github/workflows/deploy-aws.yml`:
 
 ## The test, committed this time
 
-`terraform/environments/production/tests/boot_contract.tftest.hcl` has seven
+`terraform/environments/production/tests/boot_contract.tftest.hcl` (moved to `terraform/stack/tests/` the same day by B8, `../2026-09-24-b8/`, where it also covers staging) has seven
 runs, all passing (`after-boot-contract-test.txt`).
 
 The required names are **read out of `deploy-aws.yml`** with a regex, so the

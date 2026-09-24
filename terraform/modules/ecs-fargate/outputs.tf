@@ -30,14 +30,20 @@ output "task_role_arn" {
 # scripts/ops/terraform-preflight-proof.mjs to check the rendered task
 # definitions against the production boot contract before any deploy. They
 # carry names, secret ARNs and plain configuration — never a secret's value.
-output "api_container_definitions" {
-  description = "Rendered API container definitions (JSON)"
-  value       = aws_ecs_task_definition.api.container_definitions
+output "api_container" {
+  description = <<-EOT
+    The API container definition as rendered into the task definition. The deploy
+    preflight (.github/workflows/deploy-aws.yml) reads the same fields off the
+    registered task definition; the stack's deploy_targets output reads its name.
+    Exposed so the boot contract can be checked at plan time (terraform/stack/tests).
+    Carries names, plain environment values and secret ARNs, never secret values.
+  EOT
+  value       = jsondecode(aws_ecs_task_definition.api.container_definitions)[0]
 }
 
-output "worker_container_definitions" {
-  description = "Rendered worker container definitions (JSON)"
-  value       = aws_ecs_task_definition.worker.container_definitions
+output "worker_container" {
+  description = "The worker container definition as rendered, for the same checks."
+  value       = jsondecode(aws_ecs_task_definition.worker.container_definitions)[0]
 }
 
 output "execution_secrets_policy" {

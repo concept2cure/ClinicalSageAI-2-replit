@@ -1343,8 +1343,12 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       )}
                       {sel.filing.rationale && (
                         <div className="vd-d-filing-why">
-                          {sel.filing.placementStatus === 'suggested'
-                            ? `Classifier${sel.filing.confidence ? ` (${sel.filing.confidence} confidence)` : ''}: `
+                          {/* "Classifier" only for the classifier's own proposal, which
+                              always carries its confidence. A suggestion AnA made has
+                              none, and its rationale already names her — labelling it
+                              "Classifier" would misattribute it all over again. */}
+                          {sel.filing.placementStatus === 'suggested' && sel.filing.confidence
+                            ? `Classifier (${sel.filing.confidence} confidence): `
                             : ''}
                           {sel.filing.rationale}
                         </div>
