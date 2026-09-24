@@ -152,3 +152,15 @@ export async function recordAuditRow(entry: AuditEntry): Promise<AuditRowOutcome
     thrown,
   });
 }
+
+/**
+ * One outcome for an act that wrote several audit rows: persisted only when
+ * every row was, chained only when every row was. A lost row anywhere in the
+ * act is reported, never hidden behind a later row that happened to land.
+ */
+export function combineAuditRowOutcomes(first: AuditRowOutcome, ...rest: AuditRowOutcome[]): AuditRowOutcome {
+  const all = [first, ...rest];
+  const lost = all.find((o) => !o.persisted);
+  if (lost) return lost;
+  return { persisted: true, chained: all.every((o) => o.persisted && o.chained) };
+}
