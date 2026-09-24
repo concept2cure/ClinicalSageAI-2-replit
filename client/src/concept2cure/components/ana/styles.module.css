@@ -43,7 +43,7 @@
   width: 100%; padding: 8px 10px; border-radius: 8px;
   font-size: 13px; font-weight: 500;
   color: var(--ink, var(--text-100));
-  transition: background 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: background 200ms var(--ease);
   background: transparent; border: 0; cursor: pointer; text-align: left;
 }
 .sbNew:hover { background: var(--bg-200); }
@@ -57,7 +57,7 @@
   display: flex; align-items: center; gap: 10px;
   padding: 7px 10px; border-radius: 8px;
   font-size: 13px; color: var(--ink-body, var(--text-200));
-  transition: background 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: background 200ms var(--ease);
   width: 100%; text-align: left; min-width: 0;
   background: transparent; border: 0; cursor: pointer;
 }
@@ -98,7 +98,7 @@
 .sbAccount {
   display: flex; align-items: center; gap: 10px;
   padding: 8px 10px; border-radius: 8px; width: 100%;
-  transition: background 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: background 200ms var(--ease);
   background: transparent; border: 0; cursor: pointer; text-align: left;
 }
 .sbAccount:hover { background: var(--bg-200); }
@@ -140,7 +140,7 @@
   display: inline-flex; align-items: center; gap: 6px;
   padding: 5px 10px; border-radius: 8px;
   font-size: 13px; font-weight: 500; color: var(--ink, var(--text-100));
-  transition: background 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: background 200ms var(--ease);
   background: transparent; border: 0; cursor: pointer;
 }
 .topbarModel:hover { background: var(--bg-200); }
@@ -150,7 +150,7 @@
   width: 34px; height: 34px; border-radius: 8px;
   color: var(--ink-muted, var(--text-300));
   display: inline-flex; align-items: center; justify-content: center;
-  transition: background 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1)), color 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: background 200ms var(--ease), color 200ms var(--ease);
   background: transparent; border: 0; cursor: pointer;
 }
 .iconBtn:hover { background: var(--bg-200); color: var(--ink, var(--text-100)); }
@@ -248,7 +248,7 @@
   margin: 0 -6px; padding: 3px 6px; border: none; border-radius: 6px;
   background: none; color: inherit; font: inherit; text-align: left;
   cursor: pointer;
-  transition: background-color 200ms ease-out;
+  transition: background-color 200ms var(--ease);
 }
 .agentItemBtn:hover { background: var(--bg-200, rgba(0, 0, 0, 0.04)); }
 .agentItemBtn:focus-visible {
@@ -267,8 +267,8 @@
   border-radius: 16px;
   padding: 12px 14px 8px;
   box-shadow: var(--shadow-xs);
-  transition: box-shadow 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1)),
-              border-color 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: box-shadow 200ms var(--ease),
+              border-color 200ms var(--ease);
 }
 .composer:focus-within {
   border-color: var(--accent-main-200);
@@ -295,7 +295,7 @@
   padding: 4px 10px; border-radius: 9999px;
   font-size: 12px; font-weight: 500; color: var(--ink-body, var(--text-200));
   background: transparent; border: 1px solid var(--border);
-  transition: background 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: background 200ms var(--ease);
   cursor: pointer;
 }
 .composerChip:hover { background: var(--bg-200); }
@@ -368,8 +368,8 @@
   font-size: 12px; font-weight: 500; line-height: 1;
   color: var(--ink-muted, var(--text-300));
   font-family: var(--font-sans, inherit);
-  transition: background 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1)),
-    color 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: background 200ms var(--ease),
+    color 200ms var(--ease);
 }
 .effortOption:hover { color: var(--ink, var(--text-100)); }
 .effortOption[data-active='true'] {
@@ -388,7 +388,7 @@
   color: var(--ink-body, var(--text-200));
   background: transparent; border: 1px solid var(--border);
   font-family: var(--font-sans, inherit);
-  transition: background 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: background 200ms var(--ease);
   background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
     linear-gradient(135deg, currentColor 50%, transparent 50%);
   background-position: calc(100% - 13px) calc(50% + 1px), calc(100% - 9px) calc(50% + 1px);
@@ -405,7 +405,7 @@
   width: 32px; height: 32px; border-radius: 9999px;
   background: var(--accent-strong); color: var(--accent-on-strong);
   display: inline-flex; align-items: center; justify-content: center;
-  transition: background 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: background 200ms var(--ease);
   border: 0; cursor: pointer;
 }
 .composerSend:disabled { background: var(--bg-300); cursor: default; }
@@ -452,7 +452,7 @@
   display: inline-flex; align-items: center; justify-content: center;
   border: 0; background: transparent; cursor: pointer;
   padding: 0; color: inherit; opacity: 0.6;
-  transition: opacity 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: opacity 200ms var(--ease);
 }
 .composerAttachmentRemove:hover { opacity: 1; }
 
@@ -465,7 +465,7 @@
   padding: 7px 14px; border-radius: 9999px;
   background: transparent; border: 1px solid var(--border);
   font-size: 13px; color: var(--ink-body, var(--text-200));
-  transition: background 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: background 200ms var(--ease);
   cursor: pointer;
 }
 .suggestPill:hover { background: var(--bg-200); }
@@ -498,7 +498,7 @@
   font-size: 12px; font-weight: 500;
   font-family: var(--font-sans, inherit);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
-  transition: transform 120ms ease;
+  transition: transform 200ms var(--ease);
   z-index: 5;
 }
 .jumpLatest:hover { transform: translateX(-50%) translateY(-1px); }
@@ -533,7 +533,7 @@
   display: inline-flex; align-items: center; justify-content: center;
   background: transparent; border: 0; cursor: pointer;
   opacity: 0;
-  transition: opacity 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: opacity 200ms var(--ease);
   margin-top: 8px;
 }
 .msgUser:hover .userEditBtn { opacity: 1; }
@@ -595,7 +595,7 @@
 .codeBar {
   position: absolute; top: 8px; right: 8px;
   display: inline-flex; align-items: center; gap: 6px;
-  opacity: 0; transition: opacity 150ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+  opacity: 0; transition: opacity 200ms var(--ease);
 }
 .aiProse pre:hover .codeBar { opacity: 1; }
 .codeLang {
@@ -678,7 +678,7 @@
 
 .aiActions {
   display: flex; gap: 2px; margin-top: 8px;
-  opacity: 0; transition: opacity 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+  opacity: 0; transition: opacity 200ms var(--ease);
 }
 .msgAi:hover .aiActions { opacity: 1; }
 .aiActions button {
@@ -798,7 +798,7 @@
   font-size: 12px; color: var(--ink-body, var(--text-200));
   text-transform: capitalize;
 }
-.evidenceChevron { transition: transform 200ms ease-out; }
+.evidenceChevron { transition: transform 200ms var(--ease); }
 .evidenceChevronOpen { transform: rotate(180deg); }
 @media (prefers-reduced-motion: reduce) {
   .evidenceChevron { transition: none; }
@@ -835,7 +835,7 @@
   background: var(--canvas-elevated, #fff);
   border: 1px solid var(--border-subtle, var(--border));
   border-radius: 12px; padding: 16px; cursor: pointer;
-  transition: border-color 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1)), box-shadow 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1)), transform 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: border-color 200ms var(--ease), box-shadow 200ms var(--ease), transform 200ms var(--ease);
   display: flex; flex-direction: column; gap: 8px; text-align: left;
   min-height: 140px;
 }
@@ -943,7 +943,7 @@
   width: 6px;
   background: var(--border);
   cursor: col-resize;
-  transition: background 200ms ease-out;
+  transition: background 200ms var(--ease);
   outline: none;
 }
 .studioResize:hover,
@@ -1006,7 +1006,7 @@
   border-radius: 6px;
   padding: 3px 5px;
   cursor: pointer;
-  transition: background 200ms ease-out, color 200ms ease-out;
+  transition: background 200ms var(--ease), color 200ms var(--ease);
 }
 .studioPagerBtn:hover:not(:disabled) { background: var(--bg-200); color: var(--ink); }
 .studioPagerBtn:disabled { opacity: 0.5; cursor: default; }
@@ -1064,7 +1064,7 @@
   border-radius: 7px;
   padding: 5px 10px;
   cursor: pointer;
-  transition: background 200ms ease-out, border-color 200ms ease-out;
+  transition: background 200ms var(--ease), border-color 200ms var(--ease);
 }
 .studioDownload:hover { background: var(--bg-300); border-color: var(--border-strong); }
 .studioDownload:disabled { opacity: 0.5; cursor: default; }
@@ -1083,7 +1083,7 @@
   border-radius: 6px;
   padding: 4px;
   cursor: pointer;
-  transition: background 200ms ease-out, color 200ms ease-out;
+  transition: background 200ms var(--ease), color 200ms var(--ease);
 }
 .studioClose:hover { background: var(--bg-200); color: var(--ink); }
 .studioClose:focus-visible {
@@ -1122,7 +1122,7 @@
   border-radius: 7px;
   padding: 7px 12px;
   cursor: pointer;
-  transition: background 200ms ease-out;
+  transition: background 200ms var(--ease);
 }
 .studioAssembleBtn:hover:not(:disabled) { background: var(--bg-200, #e7e7e5); }
 .studioAssembleBtn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -1207,7 +1207,7 @@
   border-radius: 7px;
   padding: 5px 10px;
   cursor: pointer;
-  transition: background 200ms ease-out;
+  transition: background 200ms var(--ease);
 }
 .verifyResolve:hover { background: var(--accent-main-200, rgba(99, 102, 241, 0.16)); }
 .verifyResolve:focus-visible,
@@ -1775,7 +1775,7 @@
   border-radius: 7px;
   padding: 6px 12px;
   cursor: pointer;
-  transition: background 200ms ease-out;
+  transition: background 200ms var(--ease);
 }
 .concordPair {
   margin-top: 6px;
@@ -1856,7 +1856,7 @@
   background: var(--accent-subtle, rgba(99, 102, 241, 0.08));
   border: 1px solid var(--accent-main-100, #6366f1);
   cursor: pointer;
-  transition: background 200ms ease-out;
+  transition: background 200ms var(--ease);
 }
 .consistencyItem[data-severity='critical'] .ico { color: var(--danger, #b4541f); }
 .consistencyItem[data-severity='high'] .ico { color: var(--warning, #b4831f); }
@@ -1914,7 +1914,7 @@
   border-radius: 7px;
   padding: 6px 12px;
   cursor: pointer;
-  transition: background 200ms ease-out;
+  transition: background 200ms var(--ease);
 }
 .perAuthorBtn:hover:not(:disabled) { background: var(--accent-main-200, rgba(99, 102, 241, 0.16)); }
 .perAuthorBtn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -2059,7 +2059,7 @@
   border-radius: 7px;
   padding: 7px 12px;
   cursor: pointer;
-  transition: background 200ms ease-out, opacity 200ms ease-out;
+  transition: background 200ms var(--ease), opacity 200ms var(--ease);
 }
 .gateSeal:hover:not(:disabled) { background: var(--success-strong, #276649); }
 .gateSeal:disabled {
@@ -2146,7 +2146,7 @@
   color: var(--ink-muted, var(--text-300));
   border: none;
   cursor: pointer;
-  transition: background 200ms ease-out, color 200ms ease-out;
+  transition: background 200ms var(--ease), color 200ms var(--ease);
 }
 .labelingToggleBtn[data-active='true'] {
   background: var(--accent-main-100, #6366f1);
@@ -2225,7 +2225,7 @@
   background: var(--bg-100);
   color: var(--ink-muted, var(--text-300));
   cursor: pointer;
-  transition: background 200ms ease-out, color 200ms ease-out;
+  transition: background 200ms var(--ease), color 200ms var(--ease);
 }
 .narrativeMode[data-active='true'] {
   background: var(--accent-subtle, rgba(99, 102, 241, 0.08));
@@ -2285,7 +2285,7 @@
   border-radius: 7px;
   padding: 5px 10px;
   cursor: pointer;
-  transition: background 200ms ease-out;
+  transition: background 200ms var(--ease);
 }
 .sealAction:hover { background: var(--success-subtle, rgba(47, 125, 87, 0.1)); }
 .sealAction:disabled { opacity: 0.5; cursor: default; }
@@ -2393,7 +2393,7 @@
   border-radius: 7px;
   padding: 6px 12px;
   cursor: pointer;
-  transition: background 200ms ease-out, opacity 200ms ease-out;
+  transition: background 200ms var(--ease), opacity 200ms var(--ease);
 }
 .narrativeErrors li {
   display: flex;
@@ -2425,7 +2425,7 @@
   background: var(--accent-main-100, #6366f1);
   border: 1px solid var(--accent-main-100, #6366f1);
   cursor: pointer;
-  transition: background 200ms ease-out, opacity 200ms ease-out;
+  transition: background 200ms var(--ease), opacity 200ms var(--ease);
 }
 .labelingExport:hover:not(:disabled) { background: var(--accent-main-200, #4f46e5); }
 .labelingExport:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -2548,7 +2548,7 @@
   font-weight: 500;
   line-height: 1;
   color: var(--ink-muted, var(--text-300));
-  transition: background 200ms ease-out, color 200ms ease-out;
+  transition: background 200ms var(--ease), color 200ms var(--ease);
 }
 .signoffMeaning:hover { color: var(--ink, var(--text-100)); }
 .signoffMeaning[data-active='true'] {
@@ -2581,7 +2581,7 @@
 /* Provenance-trail chevron: calm 200ms rotation, static under reduced motion. */
 .provTrailChevron {
   display: inline-flex;
-  transition: transform 200ms ease-out;
+  transition: transform 200ms var(--ease);
 }
 .provTrailChevron[data-open='true'] { transform: rotate(180deg); }
 @media (prefers-reduced-motion: reduce) {

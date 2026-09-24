@@ -133,8 +133,8 @@
   font-family: inherit;
   font-size: 14px;
   outline: 0;
-  transition: border-color var(--dur-normal, 200ms) var(--ease, cubic-bezier(0.4, 0, 0.2, 1)),
-              box-shadow var(--dur-normal, 200ms) var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: border-color var(--dur-normal) var(--ease),
+              box-shadow var(--dur-normal) var(--ease);
 }
 .input::placeholder { color: var(--text-400); }
 .input:hover { border-color: var(--border-control); }

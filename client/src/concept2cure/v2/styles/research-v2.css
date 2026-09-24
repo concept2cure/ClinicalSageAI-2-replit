@@ -91,7 +91,7 @@
 
   /* toast */
   .pg-toast-host{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:1100;display:flex;flex-direction:column;gap:8px;align-items:center;}
-  .pg-toast{display:flex;align-items:center;gap:9px;background:var(--text-100);color:var(--bg-000);font-size:12.5px;padding:10px 15px;border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);opacity:0;transform:translateY(8px);transition:opacity .24s var(--ease), transform .24s var(--ease);}
+  .pg-toast{display:flex;align-items:center;gap:9px;background:var(--text-100);color:var(--bg-000);font-size:12.5px;padding:10px 15px;border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);opacity:0;transform:translateY(8px);transition:opacity var(--dur) var(--ease), transform var(--dur) var(--ease);}
   .pg-toast.in{opacity:1;transform:translateY(0);}
   .pg-toast-ic{color:var(--success);font-weight:600;}
   .pg-toast .pg-mono{opacity:.7;}

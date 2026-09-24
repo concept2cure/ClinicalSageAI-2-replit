@@ -42,7 +42,7 @@
   display: inline-flex; align-items: center; gap: 5px;
   padding: 5px 10px; border-radius: 7px;
   font-size: 12px; color: var(--text-300); font-weight: 500;
-  transition: background 200ms ease-out, color 200ms ease-out;
+  transition: background 200ms var(--ease), color 200ms var(--ease);
 }
 .qms-tb-btn:hover { background: var(--bg-100); color: var(--text-100); }
 
@@ -61,7 +61,7 @@
   display: inline-flex; align-items: center; gap: 6px;
   padding: 7px 12px; border-radius: 8px;
   font-size: 12.5px; font-weight: 600; white-space: nowrap;
-  transition: background 200ms ease-out, color 200ms ease-out, border-color 200ms ease-out;
+  transition: background 200ms var(--ease), color 200ms var(--ease), border-color 200ms var(--ease);
 }
 .qms-btn.ghost { color: var(--text-200); border: 1px solid var(--bg-200); background: var(--background); }
 .qms-btn.ghost:hover { background: var(--bg-100); color: var(--text-100); }
@@ -83,7 +83,7 @@
 .qms-sec-head h2 { font-family: var(--font-serif); font-size: 16px; font-weight: 600; color: var(--text-100); margin: 0; white-space: nowrap; }
 .qms-sec-head .meta { font-size: 11.5px; color: var(--text-300); }
 .qms-sec-head .spacer { flex: 1; }
-.qms-link { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-300); font-weight: 500; transition: color 200ms ease-out; }
+.qms-link { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-300); font-weight: 500; transition: color 200ms var(--ease); }
 .qms-link:hover { color: var(--accent-main-100); }
 .qms-seg { display: inline-flex; gap: 6px; }
 .qms-chip[data-on="true"] { border-color: var(--text-300); color: var(--text-100); background: var(--bg-100); }
@@ -93,7 +93,7 @@
 .qms-tpl-card {
   text-align: left; background: var(--background); border: 1px solid var(--bg-200); border-radius: 10px;
   padding: 14px; display: flex; flex-direction: column; gap: 6px;
-  transition: border-color 200ms ease-out, box-shadow 200ms ease-out;
+  transition: border-color 200ms var(--ease), box-shadow 200ms var(--ease);
 }
 .qms-tpl-card:hover { border-color: var(--accent-main-100); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }
 .qms-tpl-top { display: flex; align-items: center; justify-content: space-between; }
@@ -136,7 +136,7 @@
   display: inline-flex; align-items: center; gap: 4px;
   font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 6px;
   color: var(--text-300); border: 1px solid var(--bg-200); background: var(--background);
-  transition: background 200ms ease-out, color 200ms ease-out, border-color 200ms ease-out;
+  transition: background 200ms var(--ease), color 200ms var(--ease), border-color 200ms var(--ease);
 }
 .qms-chip:hover { background: var(--bg-100); color: var(--text-100); }
 .qms-chip.ghost { border-color: transparent; padding: 3px 6px; }
@@ -153,7 +153,7 @@
 .qms-review-row {
   display: grid; grid-template-columns: 100px minmax(0, 1fr) 96px; gap: 10px; align-items: center;
   width: 100%; text-align: left; padding: 9px 13px; border-bottom: 1px solid var(--border-subtle); font-size: 12.5px;
-  transition: background 200ms ease-out;
+  transition: background 200ms var(--ease);
 }
 .qms-review-row:last-child { border-bottom: 0; }
 .qms-review-row:hover { background: var(--bg-100); }
@@ -168,7 +168,7 @@
 .qms-train-row { display: grid; grid-template-columns: minmax(0, 1fr) 90px 52px 84px; gap: 10px; align-items: center; font-size: 12px; }
 .qms-train-doc { color: var(--text-200); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .qms-train-bar { height: 6px; border-radius: 999px; background: var(--bg-200); overflow: hidden; }
-.qms-train-fill { display: block; height: 100%; border-radius: 999px; background: var(--success); transition: background 200ms ease-out; }
+.qms-train-fill { display: block; height: 100%; border-radius: 999px; background: var(--success); transition: background 200ms var(--ease); }
 .qms-train-fill[data-tone="warn"] { background: var(--warning); }
 .qms-train-fill[data-tone="err"]  { background: var(--error); }
 .qms-train-pct { color: var(--text-300); text-align: right; }
@@ -184,7 +184,7 @@
   display: inline-flex; align-items: center; gap: 6px; padding: 0 12px;
   font-size: 12.5px; font-weight: 500; color: var(--text-300);
   border-bottom: 2px solid transparent;
-  transition: color 200ms ease-out, border-color 200ms ease-out;
+  transition: color 200ms var(--ease), border-color 200ms var(--ease);
 }
 .qms-tab:hover { color: var(--text-100); }
 .qms-tab[data-on] { color: var(--text-100); font-weight: 600; border-bottom-color: var(--accent-main-100); }
@@ -206,7 +206,7 @@
   flex: 1 1 0; min-width: 122px; display: flex; flex-direction: column; gap: 4px;
   align-items: flex-start; text-align: left; padding: 10px 12px;
   border: 1px solid var(--bg-200); border-radius: 9px; background: var(--bg-050);
-  transition: border-color 200ms ease-out, background 200ms ease-out, box-shadow 200ms ease-out;
+  transition: border-color 200ms var(--ease), background 200ms var(--ease), box-shadow 200ms var(--ease);
 }
 .qcc-node:hover { border-color: var(--text-300); }
 .qcc-node[data-on] { border-color: var(--accent-main-100); background: var(--background); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }
@@ -229,7 +229,7 @@
 .qcc-offramp {
   display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500;
   color: var(--text-300); padding: 3px 9px; border: 1px solid var(--bg-200); border-radius: 999px;
-  background: var(--background); transition: background 200ms ease-out, color 200ms ease-out, border-color 200ms ease-out;
+  background: var(--background); transition: background 200ms var(--ease), color 200ms var(--ease), border-color 200ms var(--ease);
 }
 .qcc-offramp:hover { background: var(--bg-100); color: var(--text-100); }
 .qcc-offramp[data-on] { border-color: var(--text-300); color: var(--text-100); background: var(--bg-100); }
@@ -252,7 +252,7 @@
 .qcc-link {
   display: flex; align-items: center; gap: 9px; padding: 8px 10px; border: 1px solid var(--bg-200);
   border-radius: 8px; background: var(--background); text-align: left;
-  transition: border-color 200ms ease-out, box-shadow 200ms ease-out;
+  transition: border-color 200ms var(--ease), box-shadow 200ms var(--ease);
 }
 .qcc-link:hover { border-color: var(--accent-main-100); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }
 .qcc-link-ico { display: inline-flex; color: var(--text-300); flex: 0 0 auto; }

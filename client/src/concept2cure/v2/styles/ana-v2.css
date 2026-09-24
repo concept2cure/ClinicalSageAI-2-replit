@@ -21,7 +21,7 @@
   /* Portfolio roll-up */
   .ac-port-gap{ margin:2px 0 6px; padding:8px 12px; font-size:12px; line-height:1.5; color:var(--text-300); background:var(--bg-050); border:1px solid var(--border); border-radius:8px; display:flex; gap:8px; align-items:flex-start; }
   .ac-port{ display:grid; grid-template-columns:repeat(3,1fr); gap:11px; margin-bottom:14px; }
-  .ac-pcard{ text-align:left; background:var(--bg-000); border:1px solid var(--border); border-radius:13px; padding:13px 15px; cursor:pointer; transition:border-color .2s, transform .2s, box-shadow .2s; }
+  .ac-pcard{ text-align:left; background:var(--bg-000); border:1px solid var(--border); border-radius:13px; padding:13px 15px; cursor:pointer; transition:border-color var(--dur), transform var(--dur), box-shadow var(--dur); }
   .ac-pcard:hover{ transform:translateY(-1px); border-color:var(--accent-muted); }
   .ac-pcard[data-on]{ border-color:var(--accent-200); box-shadow:0 0 0 1px var(--accent-200) inset; }
   .ac-pcard-top{ display:flex; align-items:center; justify-content:space-between; }
@@ -44,7 +44,7 @@
   /* Role lens */
   .ac-roles{ display:flex; align-items:center; gap:7px; margin-bottom:16px; flex-wrap:wrap; }
   .ac-roles-l{ font-size:11px; font-weight:600; color:var(--text-400); text-transform:uppercase; letter-spacing:.04em; margin-right:2px; }
-  .ac-role{ font-size:12px; font-weight:550; color:var(--text-300); background:var(--bg-000); border:1px solid var(--border); border-radius:20px; padding:5px 13px; cursor:pointer; transition:background .15s, border-color .15s, color .15s, font-weight .15s; }
+  .ac-role{ font-size:12px; font-weight:550; color:var(--text-300); background:var(--bg-000); border:1px solid var(--border); border-radius:20px; padding:5px 13px; cursor:pointer; transition:background var(--dur), border-color var(--dur), color var(--dur), font-weight var(--dur); }
   .ac-role:hover{ border-color:var(--accent-muted); }
   .ac-role[data-on]{ background:var(--text-100); border-color:var(--text-100); color:var(--bg-000); font-weight:600; }
 
@@ -119,7 +119,7 @@
 
   /* Workflow templates + execution */
   .ac-tpls{ display:flex; flex-direction:column; gap:9px; }
-  .ac-tpl{ text-align:left; background:var(--bg-000); border:1px solid var(--border); border-radius:12px; padding:12px 14px; cursor:pointer; transition:border-color .2s, transform .2s; position:relative; }
+  .ac-tpl{ text-align:left; background:var(--bg-000); border:1px solid var(--border); border-radius:12px; padding:12px 14px; cursor:pointer; transition:border-color var(--dur), transform var(--dur); position:relative; }
   .ac-tpl:hover{ border-color:var(--accent-muted); transform:translateY(-1px); }
   .ac-tpl-top{ display:flex; align-items:center; justify-content:space-between; }
   .ac-tpl-n{ font-size:13px; font-weight:600; color:var(--text-100); }
@@ -140,7 +140,7 @@
   .ac-exec-bar>div{ height:100%; background:var(--accent-200); border-radius:4px; transition:background var(--dur) var(--ease); }
   .ac-exec-bar>div[data-done]{ background:var(--success); }
   .ac-exec-steps{ display:flex; flex-direction:column; gap:3px; }
-  .ac-exec-step{ display:flex; gap:10px; padding:7px 0; opacity:.5; transition:opacity .3s; }
+  .ac-exec-step{ display:flex; gap:10px; padding:7px 0; opacity:.5; transition:opacity var(--dur); }
   .ac-exec-step[data-st=running]{ opacity:1; } .ac-exec-step[data-st=completed]{ opacity:1; }
   .ac-exec-ic{ width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:var(--bg-200); color:var(--text-400); }
   .ac-exec-step[data-st=running] .ac-exec-ic{ background:var(--accent-100); color:#fff; animation:acspin 1s linear infinite; }

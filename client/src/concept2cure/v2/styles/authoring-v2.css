@@ -336,7 +336,7 @@
     flex: 1;
     min-width: 0;
   }
-  .ed-full-edit { opacity: 0; transition: opacity 120ms ease-out; }
+  .ed-full-edit { opacity: 0; transition: opacity var(--dur) var(--ease); }
   .ed-full-sec:hover .ed-full-edit,
   .ed-full-edit:focus-visible { opacity: 1; }
   @media (prefers-reduced-motion: reduce) {
@@ -523,7 +523,7 @@
     font-family: var(--font-sans);
     opacity: 0;
     transform: translateY(4px);
-    transition: opacity 180ms var(--ease), transform 180ms var(--ease);
+    transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
     pointer-events: none;
     box-shadow: var(--shadow-lg);
     z-index: 5;
@@ -1804,7 +1804,7 @@
   }
   .pf-folder-chev {
     display: inline-flex;
-    transition: transform 150ms ease-out;
+    transition: transform var(--dur) var(--ease);
   }
   .pf-folder-chev[data-open] {
     transform: rotate(90deg);
