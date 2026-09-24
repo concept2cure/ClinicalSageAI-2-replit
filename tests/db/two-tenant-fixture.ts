@@ -43,6 +43,9 @@ export let tokenA: string;
 export let tokenB: string;
 export let userA: number;
 export let userB: number;
+/** Permanent: a signature can never be deleted, so neither can its signer. */
+export let signerA: number;
+export let signerB: number;
 export let workspaceA: number;
 export let workspaceB: number;
 export const ids = { A: {} as Record<Domain, string>, B: {} as Record<Domain, string> };
@@ -169,6 +172,24 @@ export async function provisionTwoTenantFixture(): Promise<void> {
   );
   [savedQueryA, savedQueryB] = savedQueries.rows.map(r => r.id);
 
+  /* Permanent signers, for the signatures domain (see tenant-proof-routes.ts).
+     ON CONFLICT (email) makes this a lookup after the first run on a database;
+     DO UPDATE (not NOTHING) so RETURNING yields the id either way. NULL
+     default_organization_id keeps them out of the teardown's users-by-org
+     delete, which a signature's FK to its signer would otherwise turn into a
+     23503 that strands every fixture after it (observed on 2026-09-19, which is
+     how signatures came to be excluded until 2026-09-24). */
+  const signers = await owner.query(
+    `INSERT INTO users (email,name,password_hash)
+     VALUES ('wo03-fixture-signer-a@example.invalid','WO03 signer A','not-a-real-password'),
+            ('wo03-fixture-signer-b@example.invalid','WO03 signer B','not-a-real-password')
+     ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name
+     RETURNING id, email`
+  );
+  const signerByEmail = new Map(signers.rows.map(r => [r.email as string, Number(r.id)]));
+  signerA = signerByEmail.get('wo03-fixture-signer-a@example.invalid')!;
+  signerB = signerByEmail.get('wo03-fixture-signer-b@example.invalid')!;
+
   for (const [side, org, user, workspace] of [
     ['A', ORG_A, userA, workspaceA],
     ['B', ORG_B, userB, workspaceB],
@@ -217,6 +238,45 @@ export async function provisionTwoTenantFixture(): Promise<void> {
       [org, `${TAG}-hazard-${side}`, `fixture-body-${side}`]
     );
     ids[side].risk_items = String(ri.rows[0].id);
+
+    /* ── The two domains added 2026-09-24 ────────────────────────────────── */
+    // One fixture signature per org, reused for the life of the database:
+    // looked up first, inserted only when absent, never deleted (§11.70).
+    const sigHash = `wo03-fixture-signature-${side}`;
+    const signer = side === 'A' ? signerA : signerB;
+    const found = await owner.query(
+      `SELECT id FROM electronic_signatures
+        WHERE organization_id=$1 AND signature_hash=$2 ORDER BY id LIMIT 1`,
+      [org, sigHash]
+    );
+    const sig =
+      found.rows[0] ??
+      (
+        await owner.query(
+          `INSERT INTO electronic_signatures
+             (organization_id,signature_type,signature_purpose,signer_id,signer_name,signer_email,
+              authentication_method,authentication_timestamp,signature_hash,signed_target)
+           VALUES ($1,'approval',$2,$3,$4,$5,'password',NOW(),$6,$7) RETURNING id`,
+          [
+            org,
+            `fixture-body-${side}`,
+            signer,
+            `WO03 signer ${side}`,
+            `wo03-fixture-signer-${side.toLowerCase()}@example.invalid`,
+            sigHash,
+            `wo03-fixture-target-${side}`,
+          ]
+        )
+      ).rows[0];
+    ids[side].signatures = String(sig.id);
+
+    const run = await owner.query(
+      `INSERT INTO submission_orchestrator_runs
+         (run_id,organization_id,submission_id,application_number,region,submission_type,started_at,status)
+       VALUES (gen_random_uuid(),$1,$2,$3,'US','IND',NOW(),'complete') RETURNING run_id`,
+      [org, `${TAG}-submission-${side}`, `fixture-body-${side}`]
+    );
+    ids[side].orchestrator_runs = String(run.rows[0].run_id);
   }
 
   tokenA = accessToken(userA, ORG_A);
@@ -304,6 +364,10 @@ export async function teardownTwoTenantFixture(): Promise<void> {
         await cleanup.query('DELETE FROM decision_records WHERE organization_id=ANY($1::int[])', [
           FIXTURE_ORGS,
         ]);
+        await cleanup.query(
+          'DELETE FROM submission_orchestrator_runs WHERE organization_id=ANY($1::int[])',
+          [FIXTURE_ORGS]
+        );
         await cleanup.query('DELETE FROM risk_items WHERE organization_id=ANY($1::int[])', [
           FIXTURE_ORGS,
         ]);
@@ -324,7 +388,13 @@ export async function teardownTwoTenantFixture(): Promise<void> {
         await cleanup.query('DELETE FROM users WHERE default_organization_id=ANY($1::int[])', [
           FIXTURE_ORGS,
         ]);
-        await cleanup.query('DELETE FROM organizations WHERE id=ANY($1::int[])', [FIXTURE_ORGS]);
+        /* The two organization rows are NOT deleted, as of 2026-09-24. Each
+           carries a fixture signature, which §11.70 makes permanent and which
+           references its organization, so this delete could only ever fail with
+           23503. provisionTwoTenantFixture upserts both ids on every run, so
+           leaving them costs nothing; every row that hangs off them is removed
+           above. This retires the property "no fixture org remains after a
+           run", which could not coexist with signatures in the contract. */
       } finally {
         cleanup.release();
       }
