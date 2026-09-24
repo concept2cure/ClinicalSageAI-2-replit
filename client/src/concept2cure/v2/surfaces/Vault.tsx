@@ -453,7 +453,9 @@ function searchHitToDoc(h: VaultSearchHit): VaultDoc {
     // "MODULE_3" in a search.
     type: h.documentType ? vaultIngestTypeLabel(h.documentType) : '',
     status: h.placementStatus || 'unfiled',
-    pct: 0,
+    // Not assessed — a hit carries no authoring completion, and 0 would tell
+    // AnA (percentComplete below) that the document was never started.
+    pct: null,
     owner: '',
     ver: '',
     updated: '',

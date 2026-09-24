@@ -27,7 +27,9 @@ export interface VaultDoc {
   title: string;
   type: string;
   status: string;
-  pct: number;
+  /** Authoring completion, or null when none was assessed — an upload or a
+   *  search hit has no authoring lifecycle to be part-way through. */
+  pct: number | null;
   owner: string;
   ver: string;
   updated: string;

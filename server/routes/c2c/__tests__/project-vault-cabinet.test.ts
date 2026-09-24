@@ -93,7 +93,7 @@ describe('filingCabinet — uploads appear in the tree they were uploaded into',
     expect(doc.status).toBe('confirmed');
     expect(doc.num).toBe('—');                      // no CTD section → em dash, not invented
     expect(doc.preview).toContain('SHA-256');
-    expect(doc.pct).toBe(0);                        // uploads carry no authoring completion
+    expect(doc.pct).toBeNull();                     // uploads carry no authoring completion — null, not a 0 AnA reads as "0% complete"
   });
 
   it('a row with a folder but unfiled status stays in the queue (placement wins over stale folder)', () => {
@@ -117,5 +117,15 @@ describe('uploadLeaf carries the file type the filing action decides on', () => 
     expect(
       uploadLeaf('pharma', row({ mime_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })).mimeType,
     ).toBe('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+  });
+});
+
+describe('an upload has no authoring completion, and says so', () => {
+  // `pct: 0` was set "rather than a fabricated figure" — but 0 is a figure too.
+  // The Vault publishes it to AnA as percentComplete, so AnA read an uploaded
+  // PDF as "0% complete": a document nobody has started, said of a finished
+  // file with no authoring lifecycle. Null means "not assessed".
+  it('projects pct as null, not 0', () => {
+    expect(uploadLeaf('pharma', row({})).pct).toBeNull();
   });
 });

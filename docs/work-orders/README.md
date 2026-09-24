@@ -53,7 +53,6 @@ Items in this lane's own code are fixed in this lane, not listed here.
 **→ `…01DiJJAk` (AnA client files, D3)**
 - The AnA vault write tools (`file_chat_upload_to_vault`, `place_project_document`) carry no org-role gate: a viewer writes the vault through AnA.
 - The vault passage tool refuses on two AnA entry points that never pass `organizationUuid`.
-- AnA's Vault screen context reports uploaded files as "0% complete" (the surface itself was fixed to show no percentage, `28324fdf`).
 
 **→ D3, unclaimed**
 - The cortex vault Q&A route takes its tenant key from the client's `x-org-uuid` header, and both its SQL predicate and RLS trust it.

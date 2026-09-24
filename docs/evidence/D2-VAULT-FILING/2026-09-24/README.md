@@ -65,3 +65,21 @@ picker's option VALUES are still the tokens the ingest schema accepts.
 |---|---|
 | `red/type-labels-before-fix.txt` | `Vault.tsx` as at HEAD: 2 of 21 fail. |
 | `green/type-labels-after-fix.txt` | 21 of 21. |
+
+---
+
+## 4. An upload was reported to AnA as "0% complete"
+
+`uploadLeaf` set `pct: 0` for uploads — "rather than a fabricated figure", its
+comment said — and search hits did the same. But 0 is a figure: the Vault
+publishes the selection's `pct` to AnA as `percentComplete`, so AnA was told an
+uploaded PDF was a document nobody had started. The re-verification found it; I
+first handed it to the AnA lane, and it is not theirs — the number is made in
+this lane's projection and surface. `pct` is now `number | null`, and null
+("not assessed") is what an upload and a search hit carry.
+
+Tests: `project-vault-cabinet.test.ts` ("projects pct as null, not 0"; the older
+assertion that pinned `0` as "no authoring completion" now pins `null`, the same
+intent) and `vaultSurface.test.tsx` ("a search hit is not '0% complete'", read
+through the published surface context). Both were red on the code as at HEAD
+("expected +0 to be null") and are green after.

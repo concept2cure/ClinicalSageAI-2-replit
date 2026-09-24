@@ -22,6 +22,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { Vault } from '../surfaces/Vault';
+import { useActiveSurfaceContext, type SurfaceContext } from '../surfaceContext';
 
 const PID = '11111111-1111-4111-8111-111111111111';
 const DOC_ID = '22222222-2222-4222-8222-222222222222';
@@ -48,7 +49,8 @@ function uploadDoc(over: Record<string, unknown> = {}) {
     title: 'stability-summary-24m',
     type: 'Test reports',
     status: 'suggested',
-    pct: 0,
+    // As the server projects an upload: no authoring completion assessed.
+    pct: null,
     owner: 'A. Author',
     ver: 'v1.0',
     updated: '2m ago',
@@ -639,5 +641,35 @@ describe('Vault — the upload type picker names types in words', () => {
     expect(labels).not.toContain('CSR');
     // The VALUE is still the token the ingest schema accepts.
     expect(Array.from(picker.options).map((o) => o.value)).toContain('MODULE_3');
+  });
+});
+
+describe('Vault — what AnA is told about a selected file', () => {
+  function Probe({ onCtx }: { onCtx: (c: SurfaceContext | null) => void }) {
+    onCtx(useActiveSurfaceContext('vault'));
+    return null;
+  }
+
+  it('a search hit is not "0% complete": no authoring completion was assessed', async () => {
+    apiRequest.mockReset();
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (url.startsWith(`/api/c2c/project-vault/${PID}/search`)) {
+        return ok({ success: true, data: { query: 'shelf', total: 1, limit: 100, offset: 0, results: [{
+          id: DOC_ID, title: 'Stability Report', fileName: 's.pdf', documentType: 'REPORT', size: '1.0 MB',
+          folderId: 'module-3', ctdSection: '3.2.P.8', placementStatus: 'confirmed', snippet: null,
+        }] } });
+      }
+      if (url === `/api/c2c/project-vault/${PID}` && method === 'GET') return ok(vaultPayload());
+      return ok({});
+    });
+    let ctx: SurfaceContext | null = null;
+    render(<><Vault {...props()} /><Probe onCtx={(c) => { ctx = c; }} /></>);
+    fireEvent.change(await screen.findByLabelText('Search this vault'), { target: { value: 'shelf' } });
+    await screen.findAllByText('Stability Report');
+    await waitFor(() => {
+      const selected = (ctx?.facts as { selected?: { title?: string; percentComplete?: unknown } } | undefined)?.selected;
+      expect(selected?.title).toBe('Stability Report');
+      expect(selected?.percentComplete).toBeNull();
+    });
   });
 });
