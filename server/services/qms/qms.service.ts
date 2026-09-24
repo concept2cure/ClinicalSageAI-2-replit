@@ -58,25 +58,32 @@ export async function getDocument(orgId: number, id: number) {
 
 export class InvalidTransitionError extends Error {}
 
-export async function transitionDocument(orgId: number, id: number, to: string, approverId?: number | null) {
+export async function transitionDocument(orgId: number, id: number, to: string) {
   const doc = await getDocument(orgId, id);
   if (!doc) return null;
+  /* Becoming effective is an electronic signature (21 CFR 11.50). This used to
+     stamp the caller as approver with no re-authentication, no signing-authority
+     check, no author ≠ approver check and no signature row. The only path that
+     makes a controlled document effective is the signed approval,
+     POST /api/mdx/qms/documents/:id/approve (VSR-001 F-3). Refused here, in the
+     service, so no caller of this function can reach 'effective' unsigned.
+     New-code audit 2026-09-24, finding 1. */
+  if (to === 'effective') {
+    throw new InvalidTransitionError(
+      'Making a controlled document effective is an electronic signature. Approve it with POST /api/mdx/qms/documents/:id/approve, which re-verifies the signer; nothing was changed.',
+    );
+  }
   const allowed = DOC_TRANSITIONS[doc.status] ?? [];
   if (!allowed.includes(to)) {
     throw new InvalidTransitionError(`Cannot move document from ${doc.status} to ${to}`);
   }
-  // Becoming effective stamps the approval + effective date.
-  const setApproval = to === 'effective';
   const { rows } = await pool.query(
     `UPDATE qms_documents
         SET status = $1,
-            approver_id = COALESCE($2, approver_id),
-            approved_at = CASE WHEN $3 THEN now() ELSE approved_at END,
-            effective_date = CASE WHEN $3 THEN CURRENT_DATE ELSE effective_date END,
             updated_at = now()
-      WHERE id = $4 AND organization_id = $5
+      WHERE id = $2 AND organization_id = $3
       RETURNING *`,
-    [to, approverId ?? null, setApproval, id, orgId]
+    [to, id, orgId]
   );
   return rows[0];
 }

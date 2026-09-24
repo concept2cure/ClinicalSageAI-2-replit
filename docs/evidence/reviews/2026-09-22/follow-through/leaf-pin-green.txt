@@ -1,0 +1,5 @@
+# GREEN, change applied; 2026-09-24T19:04:15Z
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > pointer shape > does not lend one leaf’s pin verdict to another leaf on the same document — unpinned first 3ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > pointer shape > does not lend one leaf’s pin verdict to another leaf on the same document — fresh first 3ms
+ Test Files  3 passed (3)
+      Tests  26 passed (26)
