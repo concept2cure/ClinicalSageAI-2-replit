@@ -1,0 +1,47 @@
+# RED — access-requests-trials: tests run against the unfixed implementation (server/routes/module-access-requests.ts server/routes/admin/licensing-trials.ts stashed at 1c6f56e31)
+ ✓ server/routes/admin/__tests__/licensing-trials.test.ts > parseTrialEnd > accepts a future instant 3ms
+ ✓ server/routes/admin/__tests__/licensing-trials.test.ts > parseTrialEnd > refuses a past date, and says what to do instead 1ms
+ ✓ server/routes/admin/__tests__/licensing-trials.test.ts > parseTrialEnd > refuses an unreadable or missing date rather than guessing 0ms
+ ✓ server/routes/admin/__tests__/licensing-trials.test.ts > coveredByTier — what the customer keeps when it lapses > the ladder is inclusive upward 0ms
+ ✓ server/routes/admin/__tests__/licensing-trials.test.ts > coveredByTier — what the customer keeps when it lapses > a module with no tier list is unrestricted 0ms
+ ✓ server/routes/admin/__tests__/licensing-trials.test.ts > POST /licensing/trials > will not write without a reason 1ms
+ ✓ server/routes/admin/__tests__/licensing-trials.test.ts > POST /licensing/trials > will not write a past end date 0ms
+ ✓ server/routes/admin/__tests__/licensing-trials.test.ts > POST /licensing/trials > grants with the end date and audits the change 2ms
+ ✓ server/routes/admin/__tests__/licensing-trials.test.ts > POST /licensing/trials/end — lapse, never revoke > THE DISTINCTION: keeps the grant enabled and moves the expiry to now 1ms
+ ✓ server/routes/admin/__tests__/licensing-trials.test.ts > POST /licensing/trials/end — lapse, never revoke > says the plan is unaffected, so nobody reads it as a revocation 1ms
+ ✓ server/routes/admin/__tests__/licensing-trials.test.ts > POST /licensing/trials/convert > clears the end date and records it as a conversion 1ms
+ ✓ server/routes/admin/__tests__/licensing-trials.test.ts > GET /licensing/trials > lists lapsed grants alongside live ones 1ms
+ ✓ server/routes/admin/__tests__/licensing-trials.test.ts > GET /licensing/trials > surfaces a failed read as an error, never as an empty list 2ms
+ × server/routes/admin/__tests__/licensing-trials.test.ts > trial writes carry the audit-row outcome > a set trial whose row was lost still grants, and says the row is missing 6ms
+ × server/routes/admin/__tests__/licensing-trials.test.ts > trial writes carry the audit-row outcome > a conversion whose row was written says so 1ms
+ × server/routes/admin/__tests__/licensing-trials.test.ts > trial writes carry the audit-row outcome > an ended trial whose row was lost says so 3ms
+ ✓ server/routes/__tests__/module-access-requests.test.ts > POST / — a member records a request > accepts an ordinary member, with a note, for their own workspace 36ms
+ ✓ server/routes/__tests__/module-access-requests.test.ts > POST / — a member records a request > ignores an organizationId supplied by the caller 10ms
+ ✓ server/routes/__tests__/module-access-requests.test.ts > POST / — a member records a request > updates the open request instead of stacking a second one 6ms
+ ✓ server/routes/__tests__/module-access-requests.test.ts > POST / — a member records a request > keeps two people asking for the same module as two separate requests 7ms
+ ✓ server/routes/__tests__/module-access-requests.test.ts > POST / — a member records a request > refuses an unknown module 3ms
+ ✓ server/routes/__tests__/module-access-requests.test.ts > POST / — a member records a request > refuses a caller with no workspace 3ms
+ ✓ server/routes/__tests__/module-access-requests.test.ts > POST / — a member records a request > refuses an over-long note rather than storing a truncated one 5ms
+ ✓ server/routes/__tests__/module-access-requests.test.ts > GET /mine — what the lock panel reads > returns the caller own requests, and nobody else 9ms
+ ✓ server/routes/__tests__/module-access-requests.test.ts > GET / — the administrator queue > shows an org admin their own workspace only 10ms
+ ✓ server/routes/__tests__/module-access-requests.test.ts > GET / — the administrator queue > refuses an ordinary member the queue 9ms
+ ✓ server/routes/__tests__/module-access-requests.test.ts > GET / — the administrator queue > shows the platform owner every workspace, on the platform mount 10ms
+ ✓ server/routes/__tests__/module-access-requests.test.ts > GET / — the administrator queue > refuses the all-workspaces scope on the per-user mount, even for the owner 12ms
+ ✓ server/routes/__tests__/module-access-requests.test.ts > GET / — the administrator queue > refuses an org admin the platform mount 6ms
+ ✓ server/routes/__tests__/module-access-requests.test.ts > POST /:id/decision — approving and declining > approving writes the grant through module_subscriptions and records the reason 7ms
+ ✓ server/routes/__tests__/module-access-requests.test.ts > POST /:id/decision — approving and declining > declining records the reason and grants nothing 4ms
+ ✓ server/routes/__tests__/module-access-requests.test.ts > POST /:id/decision — approving and declining > takes the row lock for the status check the decision depends on 11ms
+ ✓ server/routes/__tests__/module-access-requests.test.ts > POST /:id/decision — approving and declining > refuses an administrator of another workspace, and grants nothing 7ms
+ ✓ server/routes/__tests__/module-access-requests.test.ts > POST /:id/decision — approving and declining > refuses an ordinary member of the same workspace, and grants nothing 4ms
+ ✓ server/routes/__tests__/module-access-requests.test.ts > POST /:id/decision — approving and declining > lets the platform owner answer another workspace request, on the platform mount 4ms
+ ✓ server/routes/__tests__/module-access-requests.test.ts > POST /:id/decision — approving and declining > requires a reason of at least three characters, and grants nothing without one 9ms
+ ✓ server/routes/__tests__/module-access-requests.test.ts > POST /:id/decision — approving and declining > requires a decision the table can hold 5ms
+ ✓ server/routes/__tests__/module-access-requests.test.ts > POST /:id/decision — approving and declining > refuses a second answer on an already-answered request 11ms
+ ✓ server/routes/__tests__/module-access-requests.test.ts > POST /:id/decision — approving and declining > lets the same person ask again once the first ask was answered 7ms
+ ✓ server/routes/__tests__/module-access-requests.test.ts > POST /:id/decision — approving and declining > returns 404 for a request that does not exist 3ms
+ ✓ server/routes/__tests__/module-access-requests.test.ts > POST /:id/decision — approving and declining > reports a failed queue read as a failure, never as an empty list 5ms
+ × server/routes/__tests__/module-access-requests.test.ts > access-request writes carry the audit-row outcome > recording an ask: a lost row still records it, and says the row is missing 4ms
+ × server/routes/__tests__/module-access-requests.test.ts > access-request writes carry the audit-row outcome > answering: an approval whose row was lost still grants, and says the row is missing 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  5 failed | 38 passed (43)

@@ -31,6 +31,7 @@
 
 import { pool } from '../db.js';
 import { logAuditEvent } from './audit/auditLogger.js';
+import { auditRowOutcomeFrom, type AuditRowOutcome } from './audit/audit-write-outcome.js';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('credit-ledger');
@@ -284,13 +285,17 @@ export async function getAutoReload(organizationId: number): Promise<AutoReloadS
 /**
  * Set auto-reload. GOVERNED: validates, requires a reason-for-change, and
  * writes a 21 CFR Part 11 audit event with before/after values.
+ *
+ * Resolves the saved settings AND what happened to that audit event. The
+ * settings stand when the event is lost (an audit outage must not undo an
+ * admin's change); the caller is told which, and the route forwards it.
  */
 export async function setAutoReload(
   organizationId: number,
   settings: { enabled: boolean; thresholdCents: number; topupCents: number },
   actor: { userId: number },
   reason: string,
-): Promise<AutoReloadSettings> {
+): Promise<{ settings: AutoReloadSettings; auditTrail: AuditRowOutcome }> {
   const errors = validateAutoReload(settings);
   if (errors.length) throw validationError(errors);
   if (!reason || !reason.trim()) {
@@ -314,8 +319,20 @@ export async function setAutoReload(
   );
   const saved = await getAutoReload(organizationId);
 
+  /* WO-16C. This was `try { await logAuditEvent(…) } catch { logger.error }`
+     with the resolved outcome thrown away. logAuditEvent RESOLVES
+     `persisted: false` when the row is lost — it does not reject — so the catch
+     could only ever see a bug, and a rule change with no §11.10(e) row returned
+     exactly what one with a row did. The outcome is now carried. The catch
+     stays for the bug case, and reports it as a lost row, not as success. */
+  const auditContext = {
+    action: 'compliance.credit_autoreload.update',
+    resourceType: 'credit_autoreload_settings',
+    resourceId: String(organizationId),
+  };
+  let auditTrail: AuditRowOutcome;
   try {
-    await logAuditEvent({
+    const written = await logAuditEvent({
       category: 'compliance',
       severity: 'info',
       action: 'credit_autoreload.update',
@@ -328,14 +345,15 @@ export async function setAutoReload(
       metadata: { reason: reason.trim() },
       success: true,
     });
+    auditTrail = auditRowOutcomeFrom(written, auditContext);
   } catch (e) {
-    // Audit-trail outage must not break the governed action it records.
-    logger.error('credit_autoreload audit write failed', {
-      err: e instanceof Error ? e.message : String(e),
+    auditTrail = auditRowOutcomeFrom(undefined, {
+      ...auditContext,
+      thrown: e instanceof Error ? e.message : String(e),
     });
   }
 
-  return saved;
+  return { settings: saved, auditTrail };
 }
 
 /**

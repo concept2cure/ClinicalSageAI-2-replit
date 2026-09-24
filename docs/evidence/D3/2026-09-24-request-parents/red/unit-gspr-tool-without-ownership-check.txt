@@ -1,0 +1,66 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > gspr.mapping.upsert > refuses without confirm 3ms
+ × server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > gspr.mapping.upsert > refuses a program that is not the caller's, and writes nothing 8ms
+   → expected undefined to be 'NOT_FOUND' // Object.is equality
+ × server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > gspr.mapping.upsert > says so when ownership could not be checked, and writes nothing 2ms
+   → expected undefined to be 'OWNERSHIP_UNVERIFIABLE' // Object.is equality
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > gspr.mapping.upsert > rejects non-uuid programId 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > gspr.mapping.upsert > audits agent.ana.gspr.mapping.upsert on success 2ms
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > post_market.document.create > rejects missing required fields 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > post_market.document.create > audits on success 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > post_market.document.approve > audits .approve on success 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > post_market.document.approve > audits .approve.blocked when service refuses 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > evidence_sufficiency.assess > rejects unknown pathway 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > evidence_sufficiency.assess > audits on success and tags trigger=ana 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > reviewer_simulation.run > rejects when program object missing 0ms
+ ✓ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > reviewer_simulation.run > audits on success with personaCount detail 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > gspr.mapping.upsert > refuses a program that is not the caller's, and writes nothing
+AssertionError: expected undefined to be 'NOT_FOUND' // Object.is equality
+
+- Expected:
+"NOT_FOUND"
+
++ Received:
+undefined
+
+ ❯ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts:83:21
+     81|       applicability: 'applicable',
+     82|     });
+     83|     expect(r.error).toBe('NOT_FOUND');
+       |                     ^
+     84|     expect(svc.upsertMapping).not.toHaveBeenCalled();
+     85|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts > gspr.mapping.upsert > says so when ownership could not be checked, and writes nothing
+AssertionError: expected undefined to be 'OWNERSHIP_UNVERIFIABLE' // Object.is equality
+
+- Expected:
+"OWNERSHIP_UNVERIFIABLE"
+
++ Received:
+undefined
+
+ ❯ server/services/ana-ri/__tests__/mdx-command-handlers-phase2.test.ts:97:21
+     95|       applicability: 'applicable',
+     96|     });
+     97|     expect(r.error).toBe('OWNERSHIP_UNVERIFIABLE');
+       |                     ^
+     98|     expect(r.message).toMatch(/Do not tell the user the program does n…
+     99|     expect(svc.upsertMapping).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 11 passed (13)
+   Start at  18:13:10
+   Duration  702ms (transform 255ms, setup 93ms, import 263ms, tests 25ms, environment 0ms)
+

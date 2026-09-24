@@ -1,0 +1,171 @@
+# D5 — a saved change whose audit row was not written is reported, not hidden
+
+**Row:** D5, Part 11 evidence (21 CFR Part 11 §11.10(e)). **Lane:** WO-16C,
+`…session_01E8btkB8mcLirW4rNvsMNxK` (claimed in `docs/work-orders/README.md` §0).
+**Date:** 2026-09-24.
+
+## What was wrong
+
+`auditService.logAction` never rejects when the audit row fails to persist. It
+resolves an outcome (`persisted`, `chained`). Since WO-16C, routes that carry
+that outcome send it in the response as `auditTrail`, shaped
+`{ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message }`, or as the
+headers `X-Audit-Row-Persisted` / `X-Audit-Row-Code`.
+
+Two gaps remained, one per layer:
+
+1. **The client never read it.** On 2026-09-24 a `git grep` of `client/src` for
+   `AUDIT_ROW_NOT_PERSISTED`, `auditTrail.persisted` and `X-Audit-Row` found
+   nothing. The server reported the lost row and the browser discarded it, so a
+   user whose change committed without its audit row still saw only "Saved".
+   Every earlier server conversion stopped one layer short of the person.
+2. **148 sites in 70 files still discarded the outcome on the server**
+   (`npm run ci:discarded-audit-write`, baseline on this date).
+
+## What changed
+
+### The client reads the outcome (all converted routes, not only this tranche)
+
+- `client/src/lib/queryClient.ts`: `findUnpersistedAuditRow` is the one reader
+  of both wire forms. It matches on the code, not on `persisted` alone, and it
+  is bounded and cycle-safe. `probeAuditRowOutcome` runs it on every successful
+  non-GET response from `apiRequest` and `apiUpload`. It reads from a `clone()`,
+  is not awaited, parses JSON bodies only, and is wrapped so it can never be
+  what breaks a write. `apiCall` and `liveMutateOrNull` go through
+  `apiRequest`, so they are covered too. It raises
+  `c2c:audit-row-not-persisted`.
+- `client/src/concept2cure/v2/GlobalMutationErrors.tsx` (mounted once in
+  `main.tsx`) renders that event as **"Saved, but the audit trail did not
+  record it"**, with the request's `X-Request-Id`. The notice says the change
+  WAS saved, because it was: telling the user it failed would be its own false
+  record. Retries are de-duplicated and the notice can be dismissed.
+- Four launch-path writes call `fetch` directly and now call
+  `probeAuditRowOutcome` explicitly: Onboarding's org-name and industry-profile
+  writes, Setup's industry profile (`useIndustryProfile`), and the Template
+  Library upload-and-save.
+
+### Server sites converted in this tranche (148 → 140)
+
+| Site | Launch path | Carrier |
+|---|---|---|
+| `routes/organizations-routes.ts` profile + settings | Setup, Onboarding (shell) | `auditTrail` |
+| `services/credit-ledger.ts` `setAutoReload` | Billing (shell) | `auditTrail` via `billing-dashboard.ts` |
+| `routes/mdx-industry-context.ts` org + project profile | Setup, Onboarding (shell) | `meta.auditTrail` |
+| `routes/onboarding-proposals.ts` commit | Onboarding ingest (shell) | `auditTrail` |
+| `services/templates/templateStore.ts` create / update / deactivate | **Authoring** — Template Library | `auditTrail` from `routes/c2c/templates.ts`; the AI-action handler adds a warning |
+| `services/shadow-review/shadow-review-service.ts` | **Submission Center** — Shadow Review | `auditTrail` on the result, which the route and the AnA tool both answer verbatim |
+
+`services/audit/audit-write-outcome.ts` gains `auditRowOutcomeFrom`. It
+factors `recordAuditRow`'s mapping out, so a writer that wraps `logAction`
+(`logAuditEvent`) reports through the same code instead of a second copy.
+
+### Proof: each fix shown failing first
+
+Each `*-red.txt` is the fix's own tests run with its implementation files
+stashed at the same commit; each `*-green.txt` is the same tests with the fix.
+
+| Fix | Red | Green |
+|---|---|---|
+| client reader + notice | 9 failed / 1 passed of 10 | 10 / 10 |
+| organizations | 4 failed / 12 passed of 16 | 16 / 16 |
+| credit auto-reload | 3 failed of 3 | 3 / 3 |
+| industry profile | 2 failed of 2 | 2 / 2 |
+| onboarding commit | 2 failed / 17 passed of 19 | 19 / 19 |
+| templates | 7 failed of 7 | 7 / 7 |
+| shadow review | 2 failed / 4 passed of 6 | 6 / 6 |
+
+Regression: every client suite that imports the transport or the notice
+(191 files, 1,847 tests) passes with the probe in place. The one "passed"
+case in the client red run is the negative case ("a persisted row, and a GET,
+raise nothing"), which is vacuously true before the reader exists.
+
+Typecheck: `tsc --noEmit` reports 38 errors, all in `server/mcp/*` and
+`server/services/signature/kms-signer.ts` and its test double. They exist
+because `@modelcontextprotocol/sdk` and `@aws-sdk/client-kms` are declared in
+`package.json` and not installed in this container. None is in a file this
+change touches.
+
+## Launch-path measurement
+
+The 2026-09-22 review (`docs/evidence/reviews/2026-09-22/README.md`) left one
+first item open: how many discarded sites are on launch-catalog write paths.
+Each of the 148 sites was classified by one agent: the route or trigger that
+reaches it, its mount chain, its client callers, and the surface that renders
+them. A second agent then independently re-derived each classification and
+tried to refute it, working hardest on any "not on a launch path" verdict.
+All 148 were verified. The verifier agreed with 147. It moved one site down,
+`defense-packet-staleness.service.ts:257`, from shell to out-of-scope. Per-site
+routes, mount chains, client callers and both agents' evidence are in
+`launch-path-classification.json`.
+
+| Class | Sites | Converted here | Left |
+|---|---:|---:|---:|
+| **Launch app**: a launch-app surface's client reaches it | 8 | 2 (Template Library, Shadow Review) | 6: eCTD compile ×3, AnA QMS change control ×3, all in files another lane is working |
+| **Launch shell**: Setup, Onboarding, Billing, access requests, master licensing, AnA | 17 | 5 | 12 |
+| Cross-cutting: middleware for every tenant | 2 | 0 | 2 (a CSRF refusal record, an API-key expiry) |
+| Unreachable: mounted, but the line cannot run, or nothing reaches it | 3 | 0 | 3 |
+| Out of scope: reachable only as API, or only from non-launch surfaces | 118 | 1 (project industry profile, same file) | 117 |
+
+**The answer to the review's question: 25 of the 148 (17%) are on
+launch-catalog write paths; 7 of those are converted here.** The rest are
+mostly API surface no launch client calls. The largest block is the legacy
+`/api/concept2cure/*` namespace (`concept2cure.ts`, `c2c/artifacts.ts`,
+`c2c/exports.ts`, knowledge sources, conversations), which launch surfaces
+replaced with `/api/c2c/*`. They still matter. The module entitlement gate
+defaults to `off` (`server/middleware/moduleEntitlementGate.ts`), so any
+signed-in organisation can call them. They are not what a launch customer's
+UI exercises.
+
+Findings the measurement surfaced beyond its question (recorded, not acted on):
+
+- `server/routes/qms.ts` is a second QMS document-control API, with create and
+  transition, that no client calls. The launch QMS surfaces use
+  `/api/mdx/qms/*` and `/api/quality`. This violates the zero-duplication rule.
+  Deleting it is a decision for its owner.
+- `AdminConsole` in `client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx`
+  (the platform role-grant UI) is rendered by nothing. `admin-console` maps to
+  `AdminAccess`. `/api/admin/access/grants` is therefore API-only.
+- `enterprise-security.ts:584`: `validateTenantContext` runs before anything
+  sets `req.user`, so its impersonation branch cannot execute. The
+  `req.organizationId` it claims to set (per `server/utils/authedOrgId.ts:29`)
+  is never set either.
+
+## Second tranche, same day (148 → 134)
+
+| Site | Launch path | Carrier | Red → green |
+|---|---|---|---|
+| `services/ectd/package-from-core.ts`, `assemble-from-core.ts` ×2 | **Submission Center**: eCTD Compile | `auditTrail` on the assembly result, persisted only when both rows were (`combineAuditRowOutcomes`). A refusal throws `EctdAssemblyBlockedError` carrying the refusal row's outcome. `routes/ectd-compile.ts` forwards both. | 7 failed / 23 passed of 30 → 30/30 (`ectd-assembly-*`) |
+| `routes/module-access-requests.ts` ×2 | access requests (shell): ask, approve or decline | `auditTrail` | 5 failed / 38 passed of 43 → 43/43 (`access-requests-trials-*`) |
+| `routes/admin/licensing-trials.ts` | master licensing (shell): trial set, convert, end | `auditTrail` | (same run) |
+
+Launch-path sites remaining: **12 of 25**, 4 of them launch-app.
+
+- AnA QMS change control (`AnaToolExecutor.ts` ×3) is launch-app. That file
+  is edited by other lanes within hours of any given moment.
+- eCTD assembly now carries its outcome. Three callers receive it and do not
+  yet answer it: `routes/submissions.ts`, `submission-service.ts` (another
+  lane, changed within the hour) and `routes/ectd-export.ts`. The export
+  answers a binary, so it needs the `X-Audit-Row-*` headers.
+- The living-record facts (`fact-change-orchestrator.ts` ×2,
+  `document-binder.ts:298`) are reached from AnA tools that copy chosen
+  fields. Converting the services alone would carry the outcome to their HTTP
+  routes, which have no launch client, and drop it at the tool. They go with
+  the `AnaToolExecutor` change.
+
+## Not done here, and why
+
+- **eCTD compile** (`services/ectd/assemble-from-core.ts` ×2,
+  `package-from-core.ts`) and **AnA QMS change control**
+  (`services/ana/AnaToolExecutor.ts` ×3) are launch-app paths. Other lanes
+  touched those files 8–13 hours ago, so they are left for when those lanes
+  are done, not raced.
+- **The consistency check** (`truth-engine-service.ts`) is reached from AnA.
+  It returns a bare array, and both of its callers (`AnaToolExecutor.ts`,
+  `routes/submissions.ts`) are hot.
+- **The prompt-injection observation** (`ana-input-guard.ts`) records a
+  security event, not a user's change. Its carrier should be an operational
+  alert, not a user notice. That is a decision, not a conversion.
+- **Onboarding commit, a second defect in the same handler:** if
+  `markRunCommitted` throws after the organisation update has committed, the
+  user is told "Could not apply those changes" when they were applied. That is
+  reported here, not fixed in this tranche.

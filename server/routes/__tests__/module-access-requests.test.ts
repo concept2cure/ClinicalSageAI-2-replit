@@ -629,3 +629,35 @@ describe('POST /:id/decision — approving and declining', () => {
     expect(res.body.requests).toBeUndefined();
   });
 });
+
+/* WO-16C. Both writes ran `await auditService.logAction(…)` at statement
+   position and discarded the outcome, so an ask, or an approval that changed
+   what a workspace is entitled to, answered the same whether or not its
+   §11.10(e) row existed. The write stands either way, and `auditTrail` says
+   which happened. */
+describe('access-request writes carry the audit-row outcome', () => {
+  const KEPT = { persisted: true, chained: true, tamperProof: true };
+  const LOST = { persisted: false, chained: false, tamperProof: false, error: 'audit store unreachable' };
+
+  it('recording an ask: a lost row still records it, and says the row is missing', async () => {
+    audit.logAction.mockResolvedValueOnce(LOST as any);
+    const res = await request(appWith(MEMBER)).post('/api/module-access-requests').send({ moduleId: 'pv-cockpit' });
+    expect(res.status).toBe(201);
+    expect(res.body.auditTrail).toEqual({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message: expect.any(String) });
+    expect(JSON.stringify(res.body)).not.toContain('unreachable');
+  });
+
+  it('answering: an approval whose row was lost still grants, and says the row is missing', async () => {
+    audit.logAction.mockResolvedValueOnce(KEPT as any);
+    const opened = await request(appWith(MEMBER)).post('/api/module-access-requests').send({ moduleId: 'pv-cockpit' });
+    expect(opened.body.auditTrail).toEqual({ persisted: true, chained: true });
+
+    audit.logAction.mockResolvedValueOnce(LOST as any);
+    const res = await request(appWith(ORG_ADMIN))
+      .post(`/api/module-access-requests/${opened.body.request.id}/decision`)
+      .send({ decision: 'approved', reason: 'Named on the filing plan.' });
+    expect(res.status).toBe(200);
+    expect(res.body.granted).toBe(true);
+    expect(res.body.auditTrail).toMatchObject({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' });
+  });
+});

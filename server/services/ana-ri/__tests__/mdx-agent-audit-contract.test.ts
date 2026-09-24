@@ -64,6 +64,11 @@ const { TenantAccessError } = vi.hoisted(() => ({
   },
 }));
 
+const ownership = vi.hoisted(() => ({ check: vi.fn(async () => true) }));
+// The tool proves program ownership through the canonical guard (ledger L195);
+// these tests exercise what happens after it answers, so it answers yes unless a
+// case says otherwise.
+vi.mock('../../../routes/innovation-routes', () => ({ programBelongsToOrg: ownership.check }));
 vi.mock('../../q-sub/q-sub.service', () => ({
   createQSubmission: (...a: any[]) => (svc.createQSubmission as any)(...a),
   setCommitmentRolledIn: (...a: any[]) => (svc.setCommitmentRolledIn as any)(...a),

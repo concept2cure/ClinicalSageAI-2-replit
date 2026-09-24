@@ -1,0 +1,155 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T18:10:25.050Z","pid":23417,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T18:10:25.052Z","pid":23417,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T18:10:25.052Z","pid":23417,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/request-parent-boundary.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/request-parent-boundary.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/request-parent-boundary.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > an MDR event cannot be sourced from another tenant's complaint
+[database] Database connection successful { timestamp: '2026-09-24T18:10:28.523Z', poolSize: 1 }
+
+{"level":30,"time":"2026-09-24T18:10:28.561Z","pid":23417,"hostname":"vm","context":{"userId":"114","tenantId":90301,"resourceId":"1e10c040-fdf7-4ee0-8514-a3477091dbc4"},"msg":"[audit-service] [AUDIT] mdr_opened mdr_event"}
+ × tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > an MDR event cannot be sourced from another tenant's complaint 155ms
+   → tenant B's complaint must not be linked to tenant A's MDR event: expected '1e10c040-fdf7-4ee0-8514-a3477091dbc4' to be null
+ × tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > notification preferences are written for the caller, whatever userId the body names 16ms
+   → no preference row may be written for tenant B's user: expected 1 to be +0 // Object.is equality
+ × tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > an AnA profile edit writes the caller's profile, never a colleague's 21ms
+   → no profile may be planted onto a colleague's AnA: expected 1 to be +0 // Object.is equality
+{"level":30,"time":"2026-09-24T18:10:28.733Z","pid":23417,"hostname":"vm","context":{"userId":114,"tenantId":90301,"resourceId":"6975352f-e432-47c9-a9e8-424d9f585c49"},"msg":"[audit-service] [AUDIT] agent.ana.gspr.mapping.upsert gspr_program_mapping"}
+ × tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > a task cannot be filed under another tenant's task 39ms
+   → no task may hang from tenant B's task: expected 1 to be +0 // Object.is equality
+ × tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > a CRO study cannot be filed against another tenant's client 40ms
+   → no study of tenant A may name tenant B's client: expected 1 to be +0 // Object.is equality
+ × tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > the GSPR mapping tool cannot write against another tenant's program 23ms
+   → no mapping may be written against tenant B's program: expected 1 to be +0 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > an MDR event cannot be sourced from another tenant's complaint
+AssertionError: tenant B's complaint must not be linked to tenant A's MDR event: expected '1e10c040-fdf7-4ee0-8514-a3477091dbc4' to be null
+
+- Expected:
+null
+
++ Received:
+"1e10c040-fdf7-4ee0-8514-a3477091dbc4"
+
+ ❯ tests/db/request-parent-boundary.dbtest.ts:146:87
+    144|       await owner.query('SELECT linked_mdr_event_id FROM complaints WH…
+    145|     ).rows[0].linked_mdr_event_id;
+    146|     expect(linked, "tenant B's complaint must not be linked to tenant …
+       |                                                                                       ^
+    147|     expect(
+    148|       await count('mdr_events WHERE source_complaint_id=$1', [complain…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > notification preferences are written for the caller, whatever userId the body names
+AssertionError: no preference row may be written for tenant B's user: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/db/request-parent-boundary.dbtest.ts:162:7
+    160|       await count('notification_preferences WHERE user_id=$1', [userB]…
+    161|       "no preference row may be written for tenant B's user"
+    162|     ).toBe(0);
+       |       ^
+    163|     expect(res.status).toBe(200);
+    164|     const own = await owner.query('SELECT email_digest FROM notificati…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > an AnA profile edit writes the caller's profile, never a colleague's
+AssertionError: no profile may be planted onto a colleague's AnA: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/db/request-parent-boundary.dbtest.ts:180:7
+    178|       await count('user_intelligence_profiles WHERE user_id=$1', [coll…
+    179|       "no profile may be planted onto a colleague's AnA"
+    180|     ).toBe(0);
+       |       ^
+    181|     expect(res.status).toBe(200);
+    182|     const own = await owner.query(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > a task cannot be filed under another tenant's task
+AssertionError: no task may hang from tenant B's task: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/db/request-parent-boundary.dbtest.ts:197:7
+    195|       await count('project_tasks WHERE parent_task_id=$1', [taskB]),
+    196|       "no task may hang from tenant B's task"
+    197|     ).toBe(0);
+       |       ^
+    198|     expect(res.status, "another tenant's task must read as not found")…
+    199|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > a CRO study cannot be filed against another tenant's client
+AssertionError: no study of tenant A may name tenant B's client: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/db/request-parent-boundary.dbtest.ts:216:7
+    214|       await count('cro_studies WHERE client_id=$1 AND organization_id=…
+    215|       "no study of tenant A may name tenant B's client"
+    216|     ).toBe(0);
+       |       ^
+    217|     expect(res.status, "another tenant's client must read as not found…
+    218|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > the GSPR mapping tool cannot write against another tenant's program
+AssertionError: no mapping may be written against tenant B's program: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/db/request-parent-boundary.dbtest.ts:235:7
+    233|       await count('gspr_program_mappings WHERE program_id=$1', [progB]…
+    234|       "no mapping may be written against tenant B's program"
+    235|     ).toBe(0);
+       |       ^
+    236|     expect(result.success).toBe(false);
+    237|     expect(result.error).toBe('NOT_FOUND');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  18:10:22
+   Duration  7.11s (transform 2.98s, setup 84ms, import 5.69s, tests 1.02s, environment 0ms)
+

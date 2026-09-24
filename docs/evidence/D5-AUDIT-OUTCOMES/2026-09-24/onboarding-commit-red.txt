@@ -1,0 +1,23 @@
+# RED — onboarding-commit: tests run against the unfixed implementation (server/routes/onboarding-proposals.ts stashed at 872c47182)
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/ingest > 401s without authentication 28ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/ingest > 400s without an organization context 13ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/ingest > 400s when no document is attached 4ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/ingest > 415s an unreadable file type instead of pretending to read it 4ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/ingest > returns verified proposals with their provenance 7ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/ingest > passes through an honest empty result rather than inventing content 4ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/ingest > degrades honestly when extraction throws 5ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > 403s a non-admin member (fail-closed authorization) 16ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > 400s without a reason — it is never synthesized 7ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > 410s an expired or unknown review session rather than trusting the body 2ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > applies an approved field and audits it as AnA-on-behalf-of with server provenance 6ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > cannot be tricked into writing a value the server never proposed 7ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > is registered as a Part 11 governed command at the reason-only tier 0ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > enforces the governed minimum reason length, not a token one 5ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > records the governed command name in the audit entry 5ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > rejects a human edit that the canonical governed PATCH would reject 6ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > reports a field with no governed write path instead of writing it elsewhere 5ms
+ × server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > an applied change whose audit row was lost still answers 200, and says the row is missing 11ms
+ × server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > an applied change whose audit row was written says so 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 17 passed (19)
