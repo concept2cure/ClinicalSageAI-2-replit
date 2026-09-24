@@ -22,6 +22,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { Vault } from '../surfaces/Vault';
+import { useActiveSurfaceContext } from '../surfaceContext';
 
 const PID = '11111111-1111-4111-8111-111111111111';
 const DOC_ID = '22222222-2222-4222-8222-222222222222';
@@ -604,3 +605,31 @@ describe('Vault — placing a document into a submission', () => {
     expect(String(sent.documentUuid)).not.toMatch(/^up-/);
   });
 });
+
+describe('Vault — what AnA is told about the selected document', () => {
+  /* The surface shows no percentage for an upload (there is no authoring
+     completion to show), but the context it publishes for AnA carried the
+     tree's placeholder 0 as `percentComplete`, so AnA described every uploaded
+     file as "0% complete". The server now sends null for an upload; the
+     surface also maps an upload to null, because a 0 from a server that has
+     not caught up is still not a completion figure. */
+  function ContextProbe({ onContext }: { onContext: (c: unknown) => void }) {
+    onContext(useActiveSurfaceContext('vault'));
+    return null;
+  }
+
+  it('an upload has no completion figure — null, not 0% complete', async () => {
+    mockApi(() => ok(vaultPayload()));
+    let latest: any = null;
+    render(
+      <>
+        <Vault {...props()} />
+        <ContextProbe onContext={(c) => { latest = c; }} />
+      </>,
+    );
+    await screen.findByTestId('vault-filing-block');
+    await waitFor(() => expect(latest?.facts?.selected?.title).toBe('stability-summary-24m'));
+    expect(latest.facts.selected.percentComplete).toBeNull();
+  });
+});
+
