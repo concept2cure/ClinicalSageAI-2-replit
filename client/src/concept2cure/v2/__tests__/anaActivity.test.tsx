@@ -388,6 +388,23 @@ describe('AnaActivity — each row opens in place, like the work it records', ()
     expect(rows.findIndex((t) => t?.includes('Reading the protocol'))).toBeLessThan(rows.findIndex((t) => t?.includes('Added step')));
   });
 
+});
+
+describe('AnaActivity — her plan, live and reopened', () => {
+  it('says "Plan", not "Planned", for a reopened thread that kept only the final list', () => {
+    render(
+      <AnaActivity
+        plan={[
+          { title: 'Read the protocol', status: 'completed' },
+          { title: 'Draft the synopsis', status: 'completed' },
+        ]}
+      />,
+    );
+    const toggle = screen.getByRole('button');
+    expect(toggle.textContent).toContain('Plan · 2 steps');
+    expect(toggle.textContent).not.toContain('Planned');
+  });
+
   it('keeps a FAILED plan call as a failed row — a failure is never folded away', () => {
     const { container } = render(
       <AnaActivity toolCalls={[call({ name: 'update_plan', label: 'Updating the plan', status: 'error' })]} />,

@@ -16,6 +16,7 @@
  */
 
 import type { HumanControlEvent } from './run-status.js';
+import type { TurnPlanStep } from './turn-plan.js';
 
 export interface ToolTraceEntry {
   tool: string;
@@ -174,6 +175,12 @@ export interface AssistantMessageMetadata {
    * the auditable decision lineage and shows in the document dossier.
    */
   humanControls?: HumanControlEvent[];
+  /**
+   * The plan AnA last declared this turn (`update_plan`, turn-plan.ts), as the
+   * server validated it. Persisted so a reopened thread still shows the plan
+   * and its count; only the final list is kept, not when each step changed.
+   */
+  plan?: TurnPlanStep[];
 }
 
 /** Cap on persisted reasoning so a pathological turn can't bloat a message row. */
@@ -191,6 +198,7 @@ export function buildAssistantMetadata(
   grounding: GroundingSummary | null,
   reasoning?: string | null,
   humanControls?: HumanControlEvent[] | null,
+  plan?: TurnPlanStep[] | null,
 ): AssistantMessageMetadata | undefined {
   const meta: AssistantMessageMetadata = {};
   if (toolTrace.length > 0) meta.toolTrace = toolTrace;
@@ -209,5 +217,6 @@ export function buildAssistantMetadata(
         : trimmedReasoning;
   }
   if (humanControls && humanControls.length > 0) meta.humanControls = humanControls;
+  if (plan && plan.length > 0) meta.plan = plan;
   return Object.keys(meta).length > 0 ? meta : undefined;
 }
