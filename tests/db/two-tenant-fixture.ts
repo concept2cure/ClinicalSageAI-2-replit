@@ -339,6 +339,9 @@ export async function teardownTwoTenantFixture(): Promise<void> {
           'qmp_traceability_matrix',
           'ctq_factors',
           'quality_management_plans',
+          // governed-edit-boundary.dbtest.ts. PCCP plans, their modifications
+          // and post-market documents all cascade from the program.
+          'regulatory_programs',
         ]) {
           await cleanup.query(`DELETE FROM ${table} WHERE organization_id=ANY($1::int[])`, [
             FIXTURE_ORGS,
