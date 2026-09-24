@@ -1467,6 +1467,9 @@ router.get('/:id/vault-structure', async (req: Request, res: Response) => {
 // project does not own must never appear as though it does.
 // ════════════════════════════════════════════════════════════════════════════
 
+/** How many of a project's sources /:id/sources returns, newest first. */
+const SOURCES_WINDOW = 200;
+
 router.get('/:id/sources', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return send403(res);
@@ -1484,7 +1487,13 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
     );
 
     const programId = String(req.params.id);
-    const sources = await listClientDocuments(orgId, { programId });
+    /* One past the window, so a full one can say so: the reader's default cap
+       was 200 and nothing said when it was reached. Superseded sources stay in
+       the list — the authoring canvas and sources rail read this route too —
+       and each carries isCurrent, so a reader that counts can count once. */
+    const read = await listClientDocuments(orgId, { programId, limit: SOURCES_WINDOW + 1 });
+    const truncated = read.length > SOURCES_WINDOW;
+    const sources = truncated ? read.slice(0, SOURCES_WINDOW) : read;
     const unscoped =
       req.query.includeUnscoped === 'true'
         ? await listClientDocuments(orgId, { includeUnscoped: true, limit: 50 })
@@ -1510,6 +1519,7 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
       id: s.id,
       title: s.title,
       checksum: s.checksum,
+      isCurrent: s.isCurrent !== false,
       ingestionStatus: s.ingestionStatus,
       extractionStatus: s.extractionStatus,
       createdAt: s.createdAt,
@@ -1531,6 +1541,7 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
       projectId: programId,
       sources: sources.map(shape),
       unscoped: unscoped.map(shape),
+      window: { shown: sources.length, truncated },
     });
   } catch (err: unknown) {
     return serverError(res, logger, 'loading the sources', err, { programId: String(req.params.id) });

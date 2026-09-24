@@ -52,6 +52,8 @@ import { productTypesToSegments } from '../../services/report-os/segment.js';
 import {
   filingTypesForView,
   foldersForView,
+  VAULT_FOLDER_PRESETS,
+  VAULT_VIEWS,
   VAULT_DOC_KINDS,
   type VaultViewId,
   vaultIngestTypeLabel,
@@ -129,9 +131,12 @@ interface DataRoomRow {
   addedAt: string;
   /** captured → classified → filed; DERIVED, never stored guesswork:
    *  'filed' = its checksum matches a vault document in this program,
-   *  'classified' = the capture path stamped a dossier classification,
-   *  'captured' = neither. */
-  stage: 'captured' | 'classified' | 'filed';
+   *  'classified' = the classifier proposed a folder for it,
+   *  'needs_review' = the classifier ran and refused to propose one,
+   *  'captured' = the classifier has not run on it.
+   *  ("Classified" used to mean "the classifier ran", so a refusal read as a
+   *  classification.) */
+  stage: 'captured' | 'needs_review' | 'classified' | 'filed';
   readState: string;
   suggestedFolder: string | null;
   suggestedFolderLabel: string;
@@ -142,10 +147,20 @@ interface DataRoomRow {
 
 interface DataRoomBlock {
   captured: number;
+  /** Sources the classifier placed, filed ones included (the pipeline is cumulative). */
   classified: number;
   filed: number;
+  /** Sources the classifier refused to place: a person has to decide. */
+  needsReview: number;
   sources: DataRoomRow[];
+  /** The lane reads the newest DATA_ROOM_WINDOW current sources. When there
+   *  are more, every count above covers the window only and is a floor. */
+  window: { shown: number; truncated: boolean };
 }
+
+/** How many current sources the lane reads. One more is asked for, so a full
+ *  window can say it is full without a second query. */
+const DATA_ROOM_WINDOW = 200;
 
 interface VaultDisplayShape {
   program: string;
@@ -472,6 +487,16 @@ export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
   return leaf;
 }
 
+/** A folder id's label and the view it belongs to, for a folder the current
+ *  view does not have. Names the raw id only when no view knows it. */
+function whereFiled(folderId: string): string {
+  for (const v of VAULT_VIEWS) {
+    const f = (VAULT_FOLDER_PRESETS[v.value] ?? []).find(x => x.id === folderId);
+    if (f) return `“${f.label}” (${v.label} view)`;
+  }
+  return `a folder this vault no longer defines (${folderId})`;
+}
+
 /**
  * The filing cabinet: the program's vault-view folder taxonomy with every
  * uploaded document placed where its (suggested or confirmed) filing says,
@@ -481,9 +506,20 @@ export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
  */
 export function filingCabinet(view: VaultViewId, uploads: UploadRow[]): VaultFolder {
   const unfiled = uploads.filter(u => !u.folder_id || (u.placement_status || 'unfiled') === 'unfiled');
+  const inView = new Set(foldersForView(view).map(f => f.id));
   const byFolder = new Map<string, UploadRow[]>();
+  /* Filed to a folder this view does not have. The view is resolved per read
+     and not stored on the row, so a document filed under a device folder on a
+     program that now reads as pharma (or one filed while the view lookup had
+     fallen back) belongs to no folder here. It used to be dropped from the tree
+     while still counted; it is shown, with where it was filed. */
+  const otherView: UploadRow[] = [];
   for (const u of uploads) {
     if (!u.folder_id || (u.placement_status || 'unfiled') === 'unfiled') continue;
+    if (!inView.has(u.folder_id)) {
+      otherView.push(u);
+      continue;
+    }
     const list = byFolder.get(u.folder_id) ?? [];
     list.push(u);
     byFolder.set(u.folder_id, list);
@@ -501,6 +537,17 @@ export function filingCabinet(view: VaultViewId, uploads: UploadRow[]): VaultFol
       code: '',
       label: folder.label,
       children: (byFolder.get(folder.id) ?? []).map(u => uploadLeaf(view, u)),
+    });
+  }
+  if (otherView.length > 0) {
+    children.push({
+      id: 'cab-other-view',
+      code: '',
+      label: 'Filed under another view · needs review',
+      children: otherView.map(u => ({
+        ...uploadLeaf(view, u),
+        flag: `Filed to ${whereFiled(u.folder_id!)}, which is not a folder in this program's current view. Move it to a folder here, or check the program's product type.`,
+      })),
     });
   }
   return {
@@ -1110,7 +1157,17 @@ export default function createProjectVaultRoutes(): Router {
         });
       } else {
         try {
-          const sources = await listClientDocuments(orgId, { programId: id });
+          /* Current sources only: a re-upload retires its predecessor
+             (is_current = false), and counting both made one file two. One
+             past the window, so a program with more says so; the reader's
+             default cap was 200 and nothing said when it was reached. */
+          const read = await listClientDocuments(orgId, {
+            programId: id,
+            currentOnly: true,
+            limit: DATA_ROOM_WINDOW + 1,
+          });
+          const truncated = read.length > DATA_ROOM_WINDOW;
+          const sources = truncated ? read.slice(0, DATA_ROOM_WINDOW) : read;
           // `filed` asks whether THIS source's bytes already exist in the
           // program's vault. Ask the database that, about exactly these
           // checksums, instead of deriving it from the page of documents
@@ -1140,7 +1197,9 @@ export default function createProjectVaultRoutes(): Router {
                   confidence?: string | null; needsReview?: boolean }
               | null;
             const filed = Boolean(s.checksum && vaultHashes.has(s.checksum));
-            const stage: DataRoomRow['stage'] = filed ? 'filed' : dossier ? 'classified' : 'captured';
+            const proposed = Boolean(dossier?.suggestedFolder);
+            const stage: DataRoomRow['stage'] =
+              filed ? 'filed' : proposed ? 'classified' : dossier ? 'needs_review' : 'captured';
             const mime = typeof meta.mimeType === 'string' ? meta.mimeType : '';
             const kind =
               /pdf/i.test(mime) ? 'PDF'
@@ -1171,9 +1230,11 @@ export default function createProjectVaultRoutes(): Router {
           });
           dataRoom = {
             captured: rows.length,
-            classified: rows.filter(r => r.stage !== 'captured').length,
+            classified: rows.filter(r => r.stage === 'classified' || r.stage === 'filed').length,
             filed: rows.filter(r => r.stage === 'filed').length,
+            needsReview: rows.filter(r => r.stage === 'needs_review').length,
             sources: rows,
+            window: { shown: rows.length, truncated },
           };
         } catch (err) {
           if (!isMissingStore(err)) throw err;
