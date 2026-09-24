@@ -22,9 +22,10 @@ import {
   GOVERNED_DECISION_REPOSITORY_VERSION as GOVERNED_DECISION_SERVICE_VERSION,
 } from '../../services/governed-decision-repository';
 import {
-  evaluateGovernedDocument,
+  computeGovernedEvaluation,
   GOVERNED_DOCUMENT_EVALUATOR_VERSION,
 } from '../control-plane/governed-document-evaluator';
+import { getSecureOrgId } from '../../utils/tenantContext';
 import { READINESS_GATES_VERSION } from '../control-plane/readiness-gates';
 import { PLACEMENT_AUTHORITY_VERSION } from '../control-plane/placement-authority';
 import { EXPORT_PUBLISH_GATES_VERSION } from '../control-plane/export-publish-gates';
@@ -197,32 +198,63 @@ router.get('/governed/fabric-version', requireControlPlaneAccess, (_req, res) =>
 });
 
 /**
+ * Governed decisions are tenant data, so every read below resolves the CALLER's
+ * org from the authenticated request and refuses without one. The org is never
+ * taken from the query, the body or the path.
+ *
+ * Three of these four used to pass no org at all. The repository's search()
+ * binds `organization_id = $1` unconditionally, so an absent org became
+ * `= NULL` and they answered "0 decisions" however many existed — an error
+ * rendered as an empty result (ledger L182). The fourth read
+ * `req.user.organizationId` inline and fell back to org 0. getSecureOrgId reads
+ * that same JWT field FIRST, so this changes no one's precedence; it only
+ * scopes the three that had none, and turns "no org" into a refusal.
+ */
+function requireCallerOrg(req: any, res: any, next: any) {
+  const raw = getSecureOrgId(req);
+  const organizationId = raw == null ? NaN : Number(raw);
+  if (!Number.isInteger(organizationId) || organizationId <= 0) {
+    return res.status(403).json({
+      error: { code: 'ORG_CONTEXT_REQUIRED', message: 'Organization context required.' },
+    });
+  }
+  res.locals.organizationId = organizationId;
+  return next();
+}
+
+/**
  * GET /governed/decisions — Recent governed document decisions
  */
-router.get('/governed/decisions', requireControlPlaneAccess, async (req, res) => {
+router.get('/governed/decisions', requireControlPlaneAccess, requireCallerOrg, async (req, res) => {
   const parsed = governedDecisionQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     return res.status(400).json({ error: { code: 'INVALID_QUERY', details: parsed.error.flatten() } });
   }
-  const entries = await getRecentGovernedDecisions(parsed.data);
+  const entries = await getRecentGovernedDecisions({
+    organizationId: String(res.locals.organizationId),
+    projectId: parsed.data.projectId,
+    limit: parsed.data.limit,
+  });
   return res.json({ entries, count: entries.length });
 });
 
 /**
  * GET /governed/decisions/summary — Aggregated decision summary
  */
-router.get('/governed/decisions/summary', requireControlPlaneAccess, async (req, res) => {
+router.get('/governed/decisions/summary', requireControlPlaneAccess, requireCallerOrg, async (req, res) => {
   const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : undefined;
-  const summary = await getGovernedDecisionSummary({ projectId });
+  const summary = await getGovernedDecisionSummary({
+    organizationId: String(res.locals.organizationId),
+    projectId,
+  });
   res.json({ summary });
 });
 
 /**
  * GET /governed/decisions/:decisionId — Single decision detail
  */
-router.get('/governed/decisions/:decisionId', requireControlPlaneAccess, async (req, res) => {
-  const organizationId = Number(req.user?.organizationId ?? 0);
-  const decision = await getGovernedDecision(req.params.decisionId, organizationId);
+router.get('/governed/decisions/:decisionId', requireControlPlaneAccess, requireCallerOrg, async (req, res) => {
+  const decision = await getGovernedDecision(req.params.decisionId, res.locals.organizationId);
   if (!decision) {
     return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Decision not found' } });
   }
@@ -232,8 +264,12 @@ router.get('/governed/decisions/:decisionId', requireControlPlaneAccess, async (
 /**
  * GET /governed/trace/:projectId/:artifactId — Decision trace for an artifact
  */
-router.get('/governed/trace/:projectId/:artifactId', requireControlPlaneAccess, async (req, res) => {
-  const trace = await getArtifactDecisionTrace(req.params.projectId, req.params.artifactId);
+router.get('/governed/trace/:projectId/:artifactId', requireControlPlaneAccess, requireCallerOrg, async (req, res) => {
+  const trace = await getArtifactDecisionTrace(
+    req.params.projectId,
+    req.params.artifactId,
+    res.locals.organizationId,
+  );
   res.json({ trace, count: trace.length });
 });
 
@@ -306,7 +342,19 @@ router.post('/governed/evaluate', requireControlPlaneAccess, (req, res) => {
   if (!parsed.success) {
     return res.status(400).json({ error: { code: 'INVALID_EVALUATION_INPUT', details: parsed.error.flatten() } });
   }
-  const result = evaluateGovernedDocument(parsed.data as Parameters<typeof evaluateGovernedDocument>[0]);
+  // A SIMULATION computes and returns; it records nothing. This used to call
+  // evaluateGovernedDocument(), the orchestrator that ALSO persists a
+  // governed decision under context.organizationId — and that id, the project
+  // and the actor all come from this request's BODY. The write only ever
+  // failed because the recorder violated decision_records' CHECK
+  // constraints; once recording works, this route would let any caller the
+  // control-plane guard admits (any role containing "admin", or anyone at all
+  // in non-production by default) file a decision into another tenant's
+  // decision_records under an actor of their choosing. The evaluator's own
+  // contract already says what to use here: "Use computeGovernedEvaluation()
+  // directly for testing or dry-runs." It is pure — no reads, no writes — so a
+  // body-supplied context can shape the answer but cannot touch any tenant.
+  const result = computeGovernedEvaluation(parsed.data as Parameters<typeof computeGovernedEvaluation>[0]);
   return res.json({ result });
 });
 

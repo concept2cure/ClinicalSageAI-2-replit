@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-24T00:26:21.546Z",
+  "generatedAt": "2026-09-24T00:42:33.287Z",
   "git": {
-    "sha": "0835b988b6f1930a9cce7ff0c386cf0ff692f88c",
+    "sha": "f55dfcec902c98b048ac31aedc02063d18631645",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2027,7 +2027,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 150564
+        "bytes": 150871
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2193,7 +2193,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 3581
+        "lines": 3589
       },
       {
         "file": "server/services/intelligent-report-engine.ts",

@@ -43,6 +43,33 @@
 -- test cannot load it); application code records embedding_status honestly
 -- instead of assuming the column.
 
+-- ── Amended in place 2026-09-24: row-level security (row D3) ──────────────────
+-- As first written, both tables below had NO row-level security and NO policy.
+-- Neither carries a tenant column — ownership is document_id → vault.documents,
+-- which IS policied — so isolation rested entirely on every application query
+-- remembering to join through vault.documents. Reproduced on real PostgreSQL as
+-- the production runtime role with sponsor A's tenant settings: A read sponsor
+-- B's comprehension record (summary and key_data), overwrote it, forged a
+-- 'cataloged' row for B's uncatalogued document, planted a full-coverage read
+-- receipt on B's document — the proof completeCatalog trusts before accepting a
+-- comprehension record — and deleted B's receipt.
+--
+-- The fix is the policy set vault.document_chunks has carried since
+-- 20260905b: ENABLE plus one policy per command, each an EXISTS through
+-- vault.documents with core.can_access_program / core.can_write_program. The
+-- EXISTS is itself subject to vault.documents' own policy for the querying
+-- role, so another tenant's document is simply not there to match. A parent-
+-- scoped policy, not an organization_id column: duplicating the tenant onto a
+-- child creates a second copy of the truth that can drift (the same reasoning
+-- as db/migrations/20260813_child_table_parent_scoped_rls.sql).
+--
+-- Amended here rather than in a new file (CLAUDE.md Rule 1): every file in the
+-- set re-runs on every deploy, the policies are DROP POLICY IF EXISTS / CREATE,
+-- and putting them beside the CREATE TABLE keeps the table's protection in the
+-- file a reader opens to learn what the table is. Proof, red then green:
+-- tests/db/vault-catalog-tenant-isolation.dbtest.ts;
+-- evidence docs/evidence/D3/2026-09-24-vault-catalog/.
+
 DO $document_catalog$
 BEGIN
   IF to_regclass('vault.documents') IS NULL THEN
@@ -91,6 +118,49 @@ BEGIN
 
   IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'vector') THEN
     EXECUTE 'ALTER TABLE vault.document_catalog ADD COLUMN IF NOT EXISTS embedding vector(1536)';
+  END IF;
+
+  -- RLS (amended 2026-09-24, see header): the vault.document_chunks policy set,
+  -- scoped through the parent document. ENABLE is unconditional; the policies
+  -- need the program-access functions, which a database without the identity
+  -- layer (the PGlite schema contract) legitimately lacks.
+  EXECUTE 'ALTER TABLE vault.document_catalog ENABLE ROW LEVEL SECURITY';
+  EXECUTE 'ALTER TABLE vault.document_read_receipts ENABLE ROW LEVEL SECURITY';
+  IF EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+              WHERE n.nspname = 'core' AND p.proname = 'can_access_program') THEN
+    EXECUTE 'DROP POLICY IF EXISTS rls_vault_catalog_select ON vault.document_catalog';
+    EXECUTE $p$CREATE POLICY rls_vault_catalog_select ON vault.document_catalog FOR SELECT
+             USING (EXISTS (SELECT 1 FROM vault.documents d WHERE d.id = document_id
+                    AND core.can_access_program(d.program_id)))$p$;
+    EXECUTE 'DROP POLICY IF EXISTS rls_vault_catalog_insert ON vault.document_catalog';
+    EXECUTE $p$CREATE POLICY rls_vault_catalog_insert ON vault.document_catalog FOR INSERT
+             WITH CHECK (EXISTS (SELECT 1 FROM vault.documents d WHERE d.id = document_id
+                         AND core.can_write_program(d.program_id)))$p$;
+    EXECUTE 'DROP POLICY IF EXISTS rls_vault_catalog_update ON vault.document_catalog';
+    EXECUTE $p$CREATE POLICY rls_vault_catalog_update ON vault.document_catalog FOR UPDATE
+             USING (EXISTS (SELECT 1 FROM vault.documents d WHERE d.id = document_id
+                    AND core.can_write_program(d.program_id)))$p$;
+    EXECUTE 'DROP POLICY IF EXISTS rls_vault_catalog_delete ON vault.document_catalog';
+    EXECUTE $p$CREATE POLICY rls_vault_catalog_delete ON vault.document_catalog FOR DELETE
+             USING (EXISTS (SELECT 1 FROM vault.documents d WHERE d.id = document_id
+                    AND core.can_write_program(d.program_id)))$p$;
+
+    EXECUTE 'DROP POLICY IF EXISTS rls_vault_receipts_select ON vault.document_read_receipts';
+    EXECUTE $p$CREATE POLICY rls_vault_receipts_select ON vault.document_read_receipts FOR SELECT
+             USING (EXISTS (SELECT 1 FROM vault.documents d WHERE d.id = document_id
+                    AND core.can_access_program(d.program_id)))$p$;
+    EXECUTE 'DROP POLICY IF EXISTS rls_vault_receipts_insert ON vault.document_read_receipts';
+    EXECUTE $p$CREATE POLICY rls_vault_receipts_insert ON vault.document_read_receipts FOR INSERT
+             WITH CHECK (EXISTS (SELECT 1 FROM vault.documents d WHERE d.id = document_id
+                         AND core.can_write_program(d.program_id)))$p$;
+    EXECUTE 'DROP POLICY IF EXISTS rls_vault_receipts_update ON vault.document_read_receipts';
+    EXECUTE $p$CREATE POLICY rls_vault_receipts_update ON vault.document_read_receipts FOR UPDATE
+             USING (EXISTS (SELECT 1 FROM vault.documents d WHERE d.id = document_id
+                    AND core.can_write_program(d.program_id)))$p$;
+    EXECUTE 'DROP POLICY IF EXISTS rls_vault_receipts_delete ON vault.document_read_receipts';
+    EXECUTE $p$CREATE POLICY rls_vault_receipts_delete ON vault.document_read_receipts FOR DELETE
+             USING (EXISTS (SELECT 1 FROM vault.documents d WHERE d.id = document_id
+                    AND core.can_write_program(d.program_id)))$p$;
   END IF;
 END
 $document_catalog$;
