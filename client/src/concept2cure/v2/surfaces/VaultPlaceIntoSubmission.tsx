@@ -84,7 +84,7 @@ function placeBlockedReason(hasSequence: boolean, sectionUsable: boolean, vocabu
 /* Offering to file a non-PDF promised an assembly that cannot happen: the
    success message said "the vault copy is what will be assembled", and the
    packager would then refuse the leaf. */
-function NotPdfNotice({ mimeType }: { mimeType: string | undefined }) {
+function NotPdfNotice({ mimeType }: { mimeType: string | null | undefined }) {
   return (
     <div className="de-err" role="status">
       Only a PDF can be filed into a submission. This file is {mimeType || 'of an unrecorded type'}, and the

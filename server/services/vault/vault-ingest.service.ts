@@ -46,7 +46,13 @@ import { createScopedLogger } from '../../utils/logger.js';
 import { assertUploadSafe, UploadSafetyError, type UploadOrigin } from '../../middleware/uploadSafety.js';
 import { writeChainedAuditRow } from '../auditService.js';
 import { getStorageProvider } from '../storage/index.js';
-import { discardUnrecordedBytes, type StoredUpload } from './vault-ingest-discard.js';
+import {
+  discardUnrecordedBytes,
+  NOTHING_SAVED,
+  refusalAfterDiscard,
+  type StoredUpload,
+} from './vault-ingest-discard.js';
+import { vaultWriteRefusal } from './vault-write-authority.js';
 import {
   classifyForFiling,
   resolveVaultView,
@@ -128,9 +134,6 @@ export type VaultIngestResult =
     }
   | { ok: false; status: number; code: string; message: string };
 
-/** The last sentence of a refusal that is only true once the stored copy is gone. */
-const NOTHING_SAVED = 'Nothing was saved.';
-
 /**
  * Admit a document into the governed vault. Must be called inside the acting
  * organization's tenant scope (see the module header).
@@ -158,32 +161,18 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
     throw err;
   }
   if (result.ok) return result;
-  const fate = await discardUnrecordedBytes(stored);
-  if (fate === 'retained') {
-    return {
-      ...result,
-      message:
-        `${result.message.replace(NOTHING_SAVED, 'No record was created.')} ` +
-        'The uploaded file itself could not be removed from storage and is still held there, ' +
-        'referenced by no record.',
-    };
-  }
-  if (fate === 'referenced') {
-    return {
-      ...result,
-      message:
-        `${result.message.replace(NOTHING_SAVED, 'Whether it was recorded could not be confirmed.')} ` +
-        'A vault record refers to the uploaded file, so it was kept — check the Vault before ' +
-        'uploading it again.',
-    };
-  }
-  return result;
+  return { ...result, message: refusalAfterDiscard(result.message, await discardUnrecordedBytes(stored)) };
 }
 
 async function admitVaultDocument(
   args: VaultIngestArgs,
   stored: StoredUpload,
 ): Promise<VaultIngestResult> {
+  // Role first, as requireEditorAccess orders it: a caller who may not write
+  // is told so before anything is stored, checked or disclosed.
+  const roleRefusal = vaultWriteRefusal();
+  if (roleRefusal) return roleRefusal;
+
   // Tenant ownership guard. `vault.documents` now carries organization_id
   // (migrations/20260905_vault_documents_organization_id.sql), and the INSERT
   // below writes it — the retrieval path filters on it, so a row left NULL is

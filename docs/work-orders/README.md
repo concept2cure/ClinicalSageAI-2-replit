@@ -52,13 +52,14 @@ Items in this lane's own code are fixed in this lane, not listed here.
 - Submission Center shows a passing Validation gate when the readiness read fails.
 
 **→ `…01DiJJAk` (AnA client files, D3)**
-- The AnA vault write tools (`file_chat_upload_to_vault`, `place_project_document`) carry no org-role gate: a viewer writes the vault through AnA.
-- The vault passage tool refuses on two AnA entry points that never pass `organizationUuid`.
+- ~~The AnA vault write tools (`file_chat_upload_to_vault`, `place_project_document`) carry no org-role gate: a viewer writes the vault through AnA.~~ **Done 2026-09-24:** the role check now sits in `ingestVaultDocument` / `placeVaultDocument` (`server/services/vault/vault-write-authority.ts`), on the tenant scope's `organization_users` role. Evidence: `docs/evidence/D3/2026-09-24-vault-write-role/`.
+- ~~The vault passage tool refuses on two AnA entry points that never pass `organizationUuid`.~~ **Done 2026-09-24:** `executeAgenticLoop` fills it from the same-tenant request scope, which covers deep investigations. The realtime `/ana` namespace opens no tenant scope at all and has no client; that is reported, not fixed. Evidence: `docs/evidence/D4/2026-09-24-passage-search-entry-points/`.
+- ~~AnA's Vault screen context reports uploaded files as "0% complete" (the surface itself was fixed to show no percentage, `28324fdf`).~~ **Done 2026-09-24 by `…01KnUGoX`** (`3b525ea9`): the vault projects an upload's completion as `null` (not assessed), and a search hit carries the same; `client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx` pins what AnA is told. Evidence: `docs/evidence/D2-VAULT-FILING/2026-09-24/`.
 
 **→ D3, unclaimed**
 - The cortex vault Q&A route takes its tenant key from the client's `x-org-uuid` header, and both its SQL predicate and RLS trust it.
 - The vault context-expansion (small-to-big) query has no org predicate and relies on RLS alone; it runs by default for regulatory_qa and foresight.
-- Authoring file-to-vault (`e0f99d3c`) writes `vault.documents` without `requireEditorAccess`: a viewer can write.
+- ~~Authoring file-to-vault (`e0f99d3c`) writes `vault.documents` without `requireEditorAccess`: a viewer can write.~~ **Closed 2026-09-24 by the client-files lane** at the shared service (same evidence as above): the viewer is refused 403 at ingest, after a render that writes nothing. The route itself still has no gate of its own; adding `requireEditorAccess` there would refuse earlier, and that is the authoring lane's call.
 
 **→ `…01LjrcEe` / `…01TtwRHm` (D7)**
 - Vault leaves are exempt from the approval ('finalized') transmit gate: an unapproved upload can be placed and transmitted.
