@@ -1,0 +1,25 @@
+F-36 — RED: the test run against the code with this fix reverted
+The plain-text fallback PDF carried nothing saying it was not the formatted document
+
+Fix commit: b34301f6b. Tree: 893a4750f with ONLY the lines below reverted to the pre-fix logic,
+then restored byte-for-byte after the run:
+  - server/export/renderers.ts: replace "    doc.fontSize(9);\n    doc.text(FALLBACK_PDF_NOTICE, { align: 'left'"...
+
+vitest exit code: 1 (non-zero = the test caught the defect)
+
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > keeps table cells, list numbering, figures and entities readable 181ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > renders a placeholder rather than an empty page for empty input 8ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > is deterministic for identical input 17ms
+ × server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > says on the page that it is a plain-text rendering 15ms
+   → expected '9.2 Efficacy Results Arm | n | ORR Ac…' to contain 'Plain-text rendering. The document st…'
+ × server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > puts the notice before the content, not after it 7ms
+   → expected -1 to be greater than -1
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > does not alter the content it is warning about 7ms
+ ✓ server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > is the renderer actually in use unless a Puppeteer driver is installed 14ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > says on the page that it is a plain-text rendering
+AssertionError: expected '9.2 Efficacy Results Arm | n | ORR Ac…' to contain 'Plain-text rendering. The document st…'
+ FAIL  server/export/__tests__/renderers-fallback.test.ts > renderHtmlToPdf fallback — document structure survives > puts the notice before the content, not after it
+AssertionError: expected -1 to be greater than -1
