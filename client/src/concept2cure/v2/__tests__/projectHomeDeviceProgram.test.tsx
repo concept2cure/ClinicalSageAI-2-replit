@@ -11,7 +11,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -104,7 +104,12 @@ describe('project home — device program', () => {
     mockProgram(deviceProgram());
     render(<ProjectHome {...props()} />);
     await screen.findByRole('region', { name: /program identity/i });
-    expect(readShellProject()?.productType).toBe('ivd');
+    /* The product type is published from a useEffect (ProjectHome's
+       `updateShellProject({ productType })`), which runs after the commit that
+       draws the region. Asserting synchronously once the region appears raced
+       that effect: it held on an idle machine and failed under load. The
+       property is that the shell learns the product type, so wait for it. */
+    await waitFor(() => expect(readShellProject()?.productType).toBe('ivd'));
   });
 });
 

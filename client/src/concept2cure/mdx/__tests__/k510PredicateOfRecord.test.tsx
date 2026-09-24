@@ -65,6 +65,8 @@ interface StubOptions {
   onFile?: unknown;
   /** 503 the shadow predicate service, so the openFDA fallback takes over. */
   shadowDown?: boolean;
+  /** What the predicate service returns when it is up. Defaults to [CANDIDATE]. */
+  candidates?: unknown[];
 }
 
 /** Records every PUT body so a test can assert what was actually claimed. */
@@ -119,7 +121,7 @@ function stubApi(options: StubOptions = {}) {
         });
       }
       if (url.includes('/api/predicate-intelligence/candidates')) {
-        return options.shadowDown ? json({}, 503) : json({ candidates: [CANDIDATE] });
+        return options.shadowDown ? json({}, 503) : json({ candidates: options.candidates ?? [CANDIDATE] });
       }
       if (url.includes('/api/predicate-intelligence/se-matrix')) return json({}, 503);
       return json({ data: [] });
@@ -259,18 +261,28 @@ describe('claiming a predicate of record', () => {
 });
 
 describe('example rows are never claimable', () => {
-  it('refuses to claim a fixture K-number, and says why', async () => {
-    setSampleMode(true);
-    const puts = stubApi({ shadowDown: true });
-    wrap(<K510Surface program={PROGRAM} onAskAna={() => {}} />);
+  /* This used to find the refusal tooltip on every example row — "Example rows
+     cannot be claimed as the predicate of record" — and prove the button was
+     disabled. The property it protected is that an example K-number can never
+     reach FDA as this sponsor's own assertion.
 
-    /* Every fixture row carries the same refusal — none of them is claimable. */
-    const refused = await screen.findAllByTitle(
-      'Example rows cannot be claimed as the predicate of record',
-    );
-    expect(refused.length).toBeGreaterThan(0);
-    for (const button of refused) expect((button as HTMLButtonElement).disabled).toBe(true);
-    fireEvent.click(refused[0]);
-    await waitFor(() => expect(puts.length).toBe(0));
+     That property now holds more strongly: the example rows are gone. They
+     paired real clearances with an invented match score against the sponsor's
+     device, and nothing on screen said they were examples; the only marking
+     was that tooltip. So the check becomes that sample mode, which used to
+     summon them, produces no candidate row at all — and therefore no control
+     that could claim one. */
+  it('offers no example K-number to claim, even with sample mode on', async () => {
+    setSampleMode(true);
+    const puts = stubApi({ shadowDown: false, candidates: [] });
+    const { container } = wrap(<K510Surface program={PROGRAM} onAskAna={() => {}} />);
+
+    await waitFor(() => expect(container.textContent ?? '').toMatch(/predicate/i));
+    const text = container.textContent ?? '';
+    for (const exampleK of ['K221847', 'K213163', 'K201715', 'K193536', 'K182764', 'K162625']) {
+      expect(text).not.toContain(exampleK);
+    }
+    expect(screen.queryAllByTitle(/as the predicate of record/)).toHaveLength(0);
+    expect(puts.length).toBe(0);
   });
 });

@@ -22,7 +22,7 @@
  */
 
 import * as React from 'react';
-import { K510_ESTAR } from '../data/k510';
+import { K510_ESTAR_SECTIONS } from '../data/k510';
 import type {
   AuditEvent,
   DossierAttachment,
@@ -190,7 +190,11 @@ const K510_SEED_ATTACHMENTS: Record<number, DossierAttachment[]> = {
     { name: 'cover-letter-v3.docx',           size: 24576,    kind: 'doc', who: 'Jordan Chen',     when: '2026-04-22T16:42:00Z', source: 'Sources/' },
   ],
   7: [
-    { name: 'IFU-final-locked.pdf',           size: 92160,    kind: 'pdf', who: 'Dr. Lee Hartman', when: '2026-04-28T15:44:00Z', source: 'Sources/labeling/' },
+    /* Was 'IFU-final-locked.pdf'. "Final" and "locked" name a labeling
+       document that has been signed and version-frozen for a submission
+       cycle — a Part 11 claim in a filename, in an example workspace where
+       nothing has been signed. An example attachment is a draft. */
+    { name: 'IFU-draft-v2.pdf',               size: 92160,    kind: 'pdf', who: 'Dr. Lee Hartman', when: '2026-04-28T15:44:00Z', source: 'Sources/labeling/' },
   ],
   11: [
     { name: 'BX204-PIVOT-CSR-final.pdf',      size: 14680064, kind: 'pdf', who: 'Marcus Wei',      when: '2026-04-12T11:08:00Z', source: 'Sources/clinical/' },
@@ -487,17 +491,24 @@ function getBackendDocId(pathway: PathwayId): string | undefined {
 
 function seed(): void {
   // 510(k)
-  K510_ESTAR.forEach((s) => {
+  /* Seeded from the eSTAR template's real section list. The per-section
+     `status` and `blocker` that used to come with it were an invented
+     assessment of a submission, and `signers: ['Dr. Lee Hartman']` on §7 was
+     an invented electronic signature — the one thing sample mode's banner
+     cannot make safe, and the same fabrication the pathway audit and
+     approvals panes were stripped of. Every seeded section is a draft that
+     nobody has signed, which is what an example workspace honestly is. */
+  K510_ESTAR_SECTIONS.forEach((s) => {
     const body = K510_SEED_BODIES[s.id] || `# ${s.label}\n\nSection draft pending. Use the editor to start, or open in the full editor for the complete authoring surface.`;
     const meta: DossierSectionMeta = {
       sectionId:  s.id,
       label:      s.label,
-      status:     s.status || 'draft',
-      version:    s.id === 11 ? 14 : s.id === 7 ? 9 : s.id === 1 ? 6 : 1,
+      status:     'draft',
+      version:    1,
       lastEdited: '2026-04-29T10:55:00Z',
       lastEditor: 'Jordan Chen',
-      signers:    s.id === 7 ? ['Dr. Lee Hartman'] : [],
-      blocker:    s.blocker || null,
+      signers:    [],
+      blocker:    null,
     };
     writeSectionBody('k510', s.id, s.label, body, { silent: true, who: meta.lastEditor, when: meta.lastEdited });
     const folder = sectionFolder('k510', s.id, s.label);
