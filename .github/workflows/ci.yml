@@ -301,6 +301,16 @@ jobs:
           npm run ci:canvas-path:selftest
           npm run ci:canvas-path
 
+      # ci:untracked-imports runs on pre-push against the pushed diff. Its first
+      # version read `from '…'` inside comments and template-literal fixtures as
+      # imports, and would have refused any push touching the canvas-path
+      # selftest above. The selftest pins both halves in CI, where no hook can
+      # be skipped: it FAILS on an import of a gitignored module and on a missing
+      # dynamic import, and PASSES on text that only looks like an import.
+      - name: Guardrails — untracked-imports gate is trustworthy (selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:untracked-imports:selftest
+
       # D4's URS documents cite the code each requirement is implemented by.
       # `validation:traceability` joins those rows to the executed OQ results;
       # it cannot notice that a cited file was deleted, because a deleted file

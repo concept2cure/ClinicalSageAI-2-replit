@@ -31,6 +31,13 @@ export interface FiledLeaf {
   md5: string;
   operation?: string;
   title?: string;
+  /**
+   * Stable identity of the DOCUMENT this leaf carries. Optional because a
+   * history filed before it existed has none — the fold and the diff both fall
+   * back to ctdSection/fileName for those, which is why it is not required
+   * here and why removing the fallback would re-file every such application.
+   */
+  leafKey?: string;
 }
 
 /** One sequence this package actually transmitted. Append-only. */
@@ -61,7 +68,8 @@ export function isFiledLeaf(v: unknown): v is FiledLeaf {
     typeof l.ctdSection === 'string' && l.ctdSection.length > 0 &&
     typeof l.fileName === 'string' && l.fileName.length > 0 &&
     typeof l.href === 'string' &&
-    typeof l.md5 === 'string'
+    typeof l.md5 === 'string' &&
+    (l.leafKey === undefined || typeof l.leafKey === 'string')
   );
 }
 
@@ -108,9 +116,13 @@ export function foldFiledState(filed: readonly FiledSequence[]): PriorLeaf[] {
   const byKey = new Map<string, PriorLeaf>();
   for (const seq of [...filed].sort((a, b) => a.sequence.localeCompare(b.sequence))) {
     for (const leaf of seq.leaves) {
-      const key = `${leaf.ctdSection}/${leaf.fileName}`;
+      // Folded on the document's own identity where it has one, so a later
+      // sequence that re-filed a document under a changed file name supersedes
+      // the earlier copy instead of sitting beside it in the prior state.
+      const key = leaf.leafKey ?? `${leaf.ctdSection}/${leaf.fileName}`;
       if (leaf.operation === 'delete') { byKey.delete(key); continue; }
       byKey.set(key, {
+        leafKey: leaf.leafKey,
         ctdSection: leaf.ctdSection,
         fileName: leaf.fileName,
         md5: leaf.md5,
@@ -134,7 +146,9 @@ export class SequenceLifecycleRefusal extends Error {
       | 'SEQUENCE_OUT_OF_ORDER'
       | 'SUBMISSION_TYPE_REQUIRED'
       | 'SUBMISSION_TYPE_UNKNOWN'
-      | 'NOTHING_TO_FILE',
+      | 'NOTHING_TO_FILE'
+      | 'WITHDRAWAL_NOT_ON_FILE'
+      | 'WITHDRAWAL_CONTRADICTS_CONTENT',
     message: string,
     /** For SUBMISSION_TYPE_UNKNOWN: the terms the region will accept, so the
      *  caller can offer them rather than making the operator guess again. */
@@ -145,8 +159,14 @@ export class SequenceLifecycleRefusal extends Error {
 }
 
 export interface SequencePlan {
-  /** The operation and modified-file pointer for each leaf that ships. */
-  leaves: Array<{ ctdSection: string; fileName: string; operation: string; modifiedFile?: string }>;
+  /** The operation and modified-file pointer for each leaf that ships. A
+   *  withdrawal additionally carries the title and checksum the document was
+   *  FILED under: it ships no bytes, so those cannot be recomputed, and the
+   *  backbone entry must still name and check the file it withdraws. */
+  leaves: Array<{
+    ctdSection: string; fileName: string; operation: string; modifiedFile?: string;
+    title?: string; md5?: string;
+  }>;
   /** Leaves unchanged since the last filing: they do not ship at all. */
   omitted: Array<{ ctdSection: string; fileName: string }>;
   summary: { new: number; replace: number; append: number; delete: number; unchanged: number };
@@ -171,7 +191,7 @@ export function planSequence(params: {
   sequence: string;
   submissionType?: string | null;
   filed: readonly FiledSequence[];
-  desired: Array<{ ctdSection: string; fileName: string; md5: string; title: string }>;
+  desired: Array<{ ctdSection: string; fileName: string; md5: string; title: string; leafKey?: string }>;
   /**
    * The region's submission-type vocabulary, when it has one. Supply it and an
    * unfilable term is refused HERE, with the list of what would work, instead
@@ -185,6 +205,16 @@ export function planSequence(params: {
    * Supplement') rather than a second, stricter copy of it here.
    */
   submissionTypeVocabulary?: { readonly terms: readonly string[]; accepts(value: string): boolean } | null;
+  /**
+   * Documents to WITHDRAW from the application, each named as it sits on file.
+   *
+   * Withdrawal is explicit and can only be explicit. A leaf missing from an
+   * assembly is unchanged and still on file, never withdrawn — inferring it
+   * from absence would delete a dossier at the agency the first time somebody
+   * assembled a two-document amendment. So this is the only way `delete`
+   * happens, and without it `summary.delete` could only ever be 0.
+   */
+  withdraw?: ReadonlyArray<{ ctdSection: string; fileName: string }>;
 }): SequencePlan {
   const { sequence, filed, desired } = params;
 
@@ -262,7 +292,6 @@ export function planSequence(params: {
   }
 
   const prior = foldFiledState(filed);
-  const priorByKey = new Map(prior.map((p) => [`${p.ctdSection}/${p.fileName}`, p]));
 
   // The canonical operator does the diff. `sourcePath` is a placeholder here:
   // this plan decides operations only, and the assemble route pairs them back
@@ -273,12 +302,46 @@ export function planSequence(params: {
     title: d.title,
     sourcePath: '',
     md5: d.md5,
+    ...(d.leafKey ? { leafKey: d.leafKey } : {}),
   }));
+  // Withdrawals are appended as desired leaves the operator marks `withdraw`;
+  // it emits the delete pointing at the sequence that holds the document.
+  const priorByPath = new Map(prior.map((p) => [`${p.ctdSection}/${p.fileName}`, p]));
+  for (const w of params.withdraw ?? []) {
+    const key = `${w.ctdSection}/${w.fileName}`;
+    const onFile = priorByPath.get(key);
+    if (!onFile) {
+      throw new SequenceLifecycleRefusal(
+        'WITHDRAWAL_NOT_ON_FILE',
+        `Cannot withdraw ${key}: this package has filed nothing by that name, so there is nothing at the agency to withdraw. ` +
+          'Name it exactly as the filed sequence recorded it.',
+      );
+    }
+    if (desired.some((d) => `${d.ctdSection}/${d.fileName}` === key)) {
+      throw new SequenceLifecycleRefusal(
+        'WITHDRAWAL_CONTRADICTS_CONTENT',
+        `Cannot both file and withdraw ${key} in sequence ${sequence}. Unmap the artifact from this package, or drop the withdrawal.`,
+      );
+    }
+    desiredLeaves.push({
+      ctdSection: onFile.ctdSection,
+      fileName: onFile.fileName,
+      title: onFile.title ?? onFile.fileName,
+      sourcePath: '',
+      md5: onFile.md5,
+      withdraw: true,
+      ...(onFile.leafKey ? { leafKey: onFile.leafKey } : {}),
+    });
+  }
+
   const { leaves, summary } = computeLifecycleOperations(prior, desiredLeaves, {});
 
+  // A desired leaf that did not ship is unchanged — that is the only outcome
+  // the operator does not emit. Keyed on the path because that is what the
+  // emitted leaves carry, and what the caller pairs the plan back onto.
   const shipped = new Set(leaves.map((l) => `${l.ctdSection}/${l.fileName}`));
   const omitted = desired
-    .filter((d) => !shipped.has(`${d.ctdSection}/${d.fileName}`) && priorByKey.has(`${d.ctdSection}/${d.fileName}`))
+    .filter((d) => !shipped.has(`${d.ctdSection}/${d.fileName}`))
     .map((d) => ({ ctdSection: d.ctdSection, fileName: d.fileName }));
 
   // Everything the operator asked to file is already on file, unchanged. There
@@ -301,6 +364,7 @@ export function planSequence(params: {
       fileName: l.fileName,
       operation: String(l.operation),
       ...(l.modifiedFile ? { modifiedFile: l.modifiedFile } : {}),
+      ...(l.operation === 'delete' ? { title: l.title, md5: l.md5 } : {}),
     })),
     omitted,
     summary,

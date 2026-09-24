@@ -1,0 +1,117 @@
+# MUTANT — platform policy widened to USING (true): the two privacy tests must fail.
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T00:44:20.273Z","pid":7885,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T00:44:20.275Z","pid":7885,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T00:44:20.275Z","pid":7885,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/enterprise-onboarding-intake.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/enterprise-onboarding-intake.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-24T00:44:20.597Z', poolSize: 1 }
+
+stdout | tests/db/enterprise-onboarding-intake.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/enterprise-onboarding-intake.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/enterprise-onboarding-intake.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/enterprise-onboarding-intake.dbtest.ts > POST /api/auth/license-request — the enterprise onboarding intake
+{
+  "timestamp": "2026-09-24T00:44:21.379Z",
+  "level": "info",
+  "message": "[auth] License request received",
+  "context": {
+    "email": "dbtlr-ok-7885_muet7crv@example.invalid",
+    "organization": "dbtlr Biologics 7885_muet7crv"
+  }
+}
+
+stderr | tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could not be stored is never reported as recorded
+{
+  "timestamp": "2026-09-24T00:44:21.410Z",
+  "level": "error",
+  "message": "[auth] recording your enterprise onboarding request failed",
+  "context": {
+    "email": "dbtlr-fail-7885_muet7crv@example.invalid",
+    "organization": "dbtlr Biologics 7885_muet7crv",
+    "err": "dbtlr simulated store outage",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > posture — the connection is production's > server/db talks to Postgres as the non-superuser runtime role, RLS enforcing 5ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > posture — the connection is production's > the runtime role cannot CREATE in public — so no handler can provision a table at runtime 1ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > the schema — created by an applier, not by a request > license_requests exists on the provisioned database 1ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > the schema — created by an applier, not by a request > it is under RLS with exactly the intake and platform policies 3ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > POST /api/auth/license-request — the enterprise onboarding intake > answers 200 and says the request was submitted 1ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > POST /api/auth/license-request — the enterprise onboarding intake > records exactly one row carrying what the prospect typed 2ms
+ × tests/db/enterprise-onboarding-intake.dbtest.ts > who can read a prospect's request > the pre-auth scope that wrote it cannot read it back 8ms
+   → expected [ Array(1) ] to deeply equal []
+ × tests/db/enterprise-onboarding-intake.dbtest.ts > who can read a prospect's request > a signed-in tenant member cannot read it — another company's contact details 3ms
+   → expected [ Array(1) ] to deeply equal []
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > who can read a prospect's request > the platform scope can — that is who works the request 2ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could not be stored is never reported as recorded > answers 500, not success 0ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could not be stored is never reported as recorded > stores nothing 1ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could not be stored is never reported as recorded > does not put the database error text in the response 0ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could not be stored is never reported as recorded > logs the prospect's contact so the lead can be recovered, with the real cause 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/enterprise-onboarding-intake.dbtest.ts > who can read a prospect's request > the pre-auth scope that wrote it cannot read it back
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "email": "dbtlr-ok-7885_muet7crv@example.invalid",
++   },
++ ]
+
+ ❯ tests/db/enterprise-onboarding-intake.dbtest.ts:264:18
+    262|   it('the pre-auth scope that wrote it cannot read it back', async () …
+    263|     const { rows } = await runWithPreAuthScope('dbtlr:read-preauth', r…
+    264|     expect(rows).toEqual([]);
+       |                  ^
+    265|   });
+    266|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/enterprise-onboarding-intake.dbtest.ts > who can read a prospect's request > a signed-in tenant member cannot read it — another company's contact details
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "email": "dbtlr-ok-7885_muet7crv@example.invalid",
++   },
++ ]
+
+ ❯ tests/db/enterprise-onboarding-intake.dbtest.ts:272:18
+    270|       read,
+    271|     );
+    272|     expect(rows).toEqual([]);
+       |                  ^
+    273|   });
+    274|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 11 passed (13)
+   Start at  00:44:18
+   Duration  3.44s (transform 1.50s, setup 73ms, import 174ms, tests 2.92s, environment 0ms)
+

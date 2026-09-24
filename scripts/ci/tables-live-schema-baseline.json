@@ -3,7 +3,7 @@
   "generatedAt": "2026-09-18T20:45:44.972Z",
   "liveRelationCount": 1282,
   "referencedCount": 752,
-  "count": 42,
+  "count": 40,
   "tables": {
     "academic_embeddings": [
       "server/academic-knowledge-tracker.ts"
@@ -32,9 +32,6 @@
     ],
     "correspondences": [
       "server/services/ana-ri/mdx-proactive-signals.ts"
-    ],
-    "document_approvals": [
-      "server/services/unifiedTaskService.ts"
     ],
     "ectd_v4.submissions": [
       "server/services/cognitive-ecosystem/cognitive-audit.service.ts"
@@ -80,9 +77,6 @@
     ],
     "license_agreements": [
       "server/services/licensing/eula-service.ts"
-    ],
-    "license_requests": [
-      "server/routes/auth.ts"
     ],
     "literature_sources": [
       "server/db/setupLiterature.ts"
