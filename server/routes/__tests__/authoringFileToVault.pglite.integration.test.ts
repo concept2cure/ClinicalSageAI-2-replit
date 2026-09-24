@@ -58,6 +58,7 @@ const lastStoredBytes = (): Buffer => (h.put.mock.calls.at(-1)?.[0] as { bytes: 
 const T = 180_000;
 let jdb: JourneyDb;
 let app: express.Express;
+let viewerApp: express.Express;
 let author: (r: request.Test) => request.Test;
 
 beforeAll(async () => {
@@ -96,6 +97,7 @@ beforeAll(async () => {
   author = asToken(await mint(AUTHOR));
   const { default: router } = await import('../authoring.router');
   app = makeApp(router);
+  viewerApp = makeApp(router, { role: 'viewer' });
 }, T);
 
 afterAll(async () => {
@@ -192,6 +194,16 @@ describe('POST /docs/:docId/file-to-vault', () => {
     const res = await author(request(app).post(`/api/authoring/docs/${docId}/file-to-vault`)).send({ format: 'docx' });
     expect(res.status).toBe(409);
     expect(res.body.error.code).toBe('DOCUMENT_MID_FREEZE');
+  });
+
+  it('refuses 403 to a viewer, and files nothing — the Vault service checks the role this route does not', async () => {
+    const docId = await draftDocument('Drafted by a member, filed by a viewer');
+    const before = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM vault.documents');
+    const res = await author(request(viewerApp).post(`/api/authoring/docs/${docId}/file-to-vault`)).send({ format: 'pdf' });
+    expect(res.status, JSON.stringify(res.body)).toBe(403);
+    expect(res.body.error.code).toBe('VAULT_WRITE_ROLE_REQUIRED');
+    const after = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM vault.documents');
+    expect(after.rows[0]).toEqual(before.rows[0]);
   });
 
   it('refuses 400 on a format it does not file', async () => {

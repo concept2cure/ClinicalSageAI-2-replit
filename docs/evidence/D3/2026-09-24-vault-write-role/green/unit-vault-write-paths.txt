@@ -1,0 +1,2592 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/vault/__tests__/storage-migration.pglite.integration.test.ts > a path-addressed document whose bytes match the record > is migrated, and the row now carries the provider handle 2860ms
+ ✓ tests/schema-contract/c2c-section-timestamps.contract.test.ts > the defect was real (pre-fix state) > /workstreams (projects.ts:334) fails with a missing-column error 2996ms
+ ✓ server/services/vault/__tests__/storage-migration.pglite.integration.test.ts > a path-addressed document whose bytes match the record > hands the provider the organization from the PROGRAM, not from the row 1865ms
+stdout | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > save { text } → the outline reports has_content
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > save { text } → the outline reports has_content
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > save { text } → the outline reports has_content
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > save { text } → the outline reports has_content
+{
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > save { text } → the outline reports has_content
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > save { text } → the outline reports has_content 5828ms
+ ✓ tests/schema-contract/c2c-section-timestamps.contract.test.ts > the defect was real (pre-fix state) > /drafts (projects.ts:371,377) fails with a missing-column error 1754ms
+ ✓ tests/schema-contract/c2c-section-timestamps.contract.test.ts > the defect was real (pre-fix state) > project vault (project-vault.ts:365) fails with a missing-column error 1712ms
+ ✓ server/services/vault/__tests__/storage-migration.pglite.integration.test.ts > a path-addressed document whose bytes match the record > leaves the original file in place 1766ms
+stdout | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > an untouched section still reports no content
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > an untouched section still reports no content
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > an untouched section still reports no content
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > an untouched section still reports no content
+{
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/vault/__tests__/storage-migration.pglite.integration.test.ts > the dry run > reports what it would move and writes nothing 1870ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > an untouched section still reports no content 2440ms
+ ✓ tests/schema-contract/c2c-section-timestamps.contract.test.ts > the defect was real (pre-fix state) > PATCH section save (documents.ts:441) fails with a missing-column error 2016ms
+ ✓ server/services/vault/__tests__/storage-migration.pglite.integration.test.ts > rows that are left alone > refuses bytes that do not hash to what the record claims 1904ms
+ ✓ tests/schema-contract/c2c-section-timestamps.contract.test.ts > the defect was real (pre-fix state) > fails at plan time — an empty table is not the reason 1924ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > every body shape the reader accepts counts as content > editor default  { text } 2017ms
+ ✓ server/services/vault/__tests__/storage-migration.pglite.integration.test.ts > rows that are left alone > reports a row whose file is gone rather than counting it done 1965ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > every body shape the reader accepts counts as content > backfill shape  { paragraphs } 1891ms
+ ✓ tests/schema-contract/c2c-section-timestamps.contract.test.ts > the guarded ALTER fixes an existing database > /workstreams (projects.ts:334) now runs 2052ms
+ ✓ server/services/vault/__tests__/storage-migration.pglite.integration.test.ts > rows that are left alone > refuses a storage key that resolves outside the uploads root 1806ms
+ ✓ tests/schema-contract/c2c-section-timestamps.contract.test.ts > the guarded ALTER fixes an existing database > /drafts (projects.ts:371,377) now runs 1882ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > every body shape the reader accepts counts as content > { markdown } 2118ms
+ ✓ server/services/vault/__tests__/storage-migration.pglite.integration.test.ts > rows that are left alone > reports a row with no storage key at all 1955ms
+ ✓ tests/schema-contract/c2c-section-timestamps.contract.test.ts > the guarded ALTER fixes an existing database > project vault (project-vault.ts:365) now runs 1842ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > every body shape the reader accepts counts as content > { xml } 2169ms
+ ✓ server/services/vault/__tests__/storage-migration.pglite.integration.test.ts > scope and repeatability > does not touch another tenant, whose program carries a different org 2023ms
+ ✓ tests/schema-contract/c2c-section-timestamps.contract.test.ts > the guarded ALTER fixes an existing database > PATCH section save (documents.ts:441) now runs 1835ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > every body shape the reader accepts counts as content > bare JSON string 1890ms
+ ✓ server/services/vault/__tests__/storage-migration.pglite.integration.test.ts > scope and repeatability > is a no-op on a second run — already-migrated rows are not candidates 1868ms
+ ✓ tests/schema-contract/c2c-section-timestamps.contract.test.ts > the guarded ALTER fixes an existing database > adds both columns, NOT NULL with a default so existing rows are valid 2023ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > scaffold placeholder {} → no content 1897ms
+ ✓ server/services/vault/__tests__/storage-migration.pglite.integration.test.ts > a row with no recorded hash > is migrated but counted separately, because nothing checked it 1808ms
+ ✓ tests/schema-contract/c2c-section-timestamps.contract.test.ts > the guarded ALTER fixes an existing database > is re-runnable 1828ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > empty text → no content 2169ms
+ ✓ tests/schema-contract/c2c-section-timestamps.contract.test.ts > the guarded ALTER fixes an existing database > no-ops where the table does not exist 2050ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > whitespace-only text → no content 2185ms
+ ✓ tests/schema-contract/c2c-section-timestamps.contract.test.ts > the guarded ALTER fixes an existing database > adds no BEFORE UPDATE trigger that would race the Part 11 version trigger 2144ms
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/golden-journeys/device-510k-estar.journey.test.ts
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/golden-journeys/device-510k-estar.journey.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > empty paragraphs list → no content 1898ms
+ ✓ tests/schema-contract/c2c-section-timestamps.contract.test.ts > the fresh-install path converges with the incremental one > 20260528 declares both columns, so a new database needs no catch-up 2073ms
+stderr | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "3"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "4"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "5"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "6"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "7"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "8"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "9"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "10"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "11"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "12"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "3"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "4"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "5"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "6"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "7"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "8"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "9"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "10"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "11"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "12"
+  }
+}
+
+stderr | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+[Renderers] No Puppeteer driver installed — every HTML export is rendered by the PDFKit fallback, which produces a plain-text document with no style-pack CSS applied. Install `puppeteer`, or `puppeteer-core` alongside an existing Chromium, to restore styled rendering.
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] DEVICE_PROFILE_UPDATED regulatory_program",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "53ecd75b-0b5e-4f11-8b1d-a28969a08d04"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ESTAR_REGISTRATION_CREATED estar_registration",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1b51f11d-b8cb-4939-af8f-c4c9f647492c"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[estar-registration-service] Created eSTAR registration",
+  "context": {
+    "organizationId": 1
+  }
+}
+
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > unrelated keys only → no content 2132ms
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ESTAR_REGISTRATION_UPDATED estar_registration",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1b51f11d-b8cb-4939-af8f-c4c9f647492c"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "level": "info",
+  "message": "[estar-registration-service] Updated eSTAR registration",
+  "context": {
+    "organizationId": 1
+  }
+}
+
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > empty JSON string → no content 1913ms
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts
+[journey] manifest: /home/user/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/device-510k-estar.manifest.json
+[journey] report:   /home/user/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/device-510k-estar.report.md
+
+ ✓ tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey 2686ms
+stderr | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > renders, ingests, files and records ONE governed action — the vault row carries the export bytes’ SHA-256
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 017813fd-d1c7-4892-a3e8-a5a7408af8ee by author@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > renders, ingests, files and records ONE governed action — the vault row carries the export bytes’ SHA-256
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 017813fd-d1c7-4892-a3e8-a5a7408af8ee by author@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > renders, ingests, files and records ONE governed action — the vault row carries the export bytes’ SHA-256
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 017813fd-d1c7-4892-a3e8-a5a7408af8ee by author@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > renders, ingests, files and records ONE governed action — the vault row carries the export bytes’ SHA-256
+{
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Module_2_5_Clinical_Overview___to_file.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > renders, ingests, files and records ONE governed action — the vault row carries the export bytes’ SHA-256
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > renders, ingests, files and records ONE governed action — the vault row carries the export bytes’ SHA-256
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "3283f2eb-9434-43bf-9efb-f9c3754d4959",
+    "code": "authoring-017813fd-d1c7-4892-a3e8-a5a7408af8ee",
+    "type": "MODULE_2",
+    "size": 4027,
+    "hasText": true
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > renders, ingests, files and records ONE governed action — the vault row carries the export bytes’ SHA-256
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 017813fd-d1c7-4892-a3e8-a5a7408af8ee by author@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 409 DOCUMENT_MID_FREEZE when the document carries a lock but no sealed status
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 839c0c52-6d66-40d7-b304-ab0077b20e1c by author@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 409 DOCUMENT_MID_FREEZE when the document carries a lock but no sealed status
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 839c0c52-6d66-40d7-b304-ab0077b20e1c by author@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 409 DOCUMENT_MID_FREEZE when the document carries a lock but no sealed status
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 839c0c52-6d66-40d7-b304-ab0077b20e1c by author@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > renders, ingests, files and records ONE governed action — the vault row carries the export bytes’ SHA-256 521ms
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 409 DOCUMENT_HAS_NO_PROGRAM for an org-wide document — nothing filed 26ms
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 403 to a viewer, and files nothing — the Vault service checks the role this route does not
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b86cefd2-9fce-40b8-8a23-fb3f0e353107 by author@canvas.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > a NULL content column does not error 1866ms
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 403 to a viewer, and files nothing — the Vault service checks the role this route does not
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b86cefd2-9fce-40b8-8a23-fb3f0e353107 by author@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 403 to a viewer, and files nothing — the Vault service checks the role this route does not
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b86cefd2-9fce-40b8-8a23-fb3f0e353107 by author@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 409 DOCUMENT_MID_FREEZE when the document carries a lock but no sealed status 122ms
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 400 on a format it does not file
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7ee9b286-0f92-47d4-ae98-53a455bd0a3a by author@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 400 on a format it does not file
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7ee9b286-0f92-47d4-ae98-53a455bd0a3a by author@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 400 on a format it does not file
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7ee9b286-0f92-47d4-ae98-53a455bd0a3a by author@canvas.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > the predicate cannot drift from the writer again > the key useSectionSave.ts actually sends is one the predicate accepts 2113ms
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > files a DOCX too — real docx bytes, the same folder
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f69d8de0-b9c0-4c19-a981-2518747d7b5a by author@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > files a DOCX too — real docx bytes, the same folder
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f69d8de0-b9c0-4c19-a981-2518747d7b5a by author@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > files a DOCX too — real docx bytes, the same folder
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f69d8de0-b9c0-4c19-a981-2518747d7b5a by author@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 403 to a viewer, and files nothing — the Vault service checks the role this route does not 110ms
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 400 on a format it does not file 92ms
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > files a DOCX too — real docx bytes, the same folder
+{
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Module_2_5___docx.docx",
+    "declaredMime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > files a DOCX too — real docx bytes, the same folder
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > files a DOCX too — real docx bytes, the same folder
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "3b212a55-d627-49fe-a9cf-0e605b0cda26",
+    "code": "authoring-f69d8de0-b9c0-4c19-a981-2518747d7b5a",
+    "type": "MODULE_2",
+    "size": 8317,
+    "hasText": true
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > files a DOCX too — real docx bytes, the same folder
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc f69d8de0-b9c0-4c19-a981-2518747d7b5a by author@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > never leaves a partial write: a failure after ingest reverts the vault row and answers 500
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc abc00067-1f84-49db-b504-8e3452f9905f by author@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > never leaves a partial write: a failure after ingest reverts the vault row and answers 500
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc abc00067-1f84-49db-b504-8e3452f9905f by author@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > never leaves a partial write: a failure after ingest reverts the vault row and answers 500
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc abc00067-1f84-49db-b504-8e3452f9905f by author@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > never leaves a partial write: a failure after ingest reverts the vault row and answers 500
+{
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Compensation_case.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > never leaves a partial write: a failure after ingest reverts the vault row and answers 500
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > never leaves a partial write: a failure after ingest reverts the vault row and answers 500
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "e5938d98-a3ba-4259-ade3-f005aa52fd8b",
+    "code": "authoring-abc00067-1f84-49db-b504-8e3452f9905f",
+    "type": "MODULE_2",
+    "size": 4004,
+    "hasText": true
+  }
+}
+
+stderr | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > never leaves a partial write: a failure after ingest reverts the vault row and answers 500
+{
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed; reverting the ingested vault row",
+  "context": {
+    "docId": "abc00067-1f84-49db-b504-8e3452f9905f",
+    "why": "relation \"authoring_export_history\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > files a DOCX too — real docx bytes, the same folder 242ms
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > never leaves a partial write: a failure after ingest reverts the vault row and answers 500 144ms
+stderr | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc ff326009-cafa-4d72-ad66-079883b3f9c2 by author@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc ff326009-cafa-4d72-ad66-079883b3f9c2 by author@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc ff326009-cafa-4d72-ad66-079883b3f9c2 by author@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > sanitizes the content: a <script> tag and an onerror handler never reach the store
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 1521e43e-e4a6-4969-b3c4-b972e6df7fc8 by author@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } } 189ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > sanitizes the content: a <script> tag and an onerror handler never reach the store 56ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 on an empty section list — nothing written 4ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 without a programId 3ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 on a provenance source it does not know 2ms
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5658f88a-6ab5-483f-a826-96d43d5ebd75 by author@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5658f88a-6ab5-483f-a826-96d43d5ebd75 by author@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5658f88a-6ab5-483f-a826-96d43d5ebd75 by author@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 403 without a tenant 3ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > the root cause, demonstrated: the alias map admits ONE canonical document per filing 4ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId= 103ms
+stdout | tests/routes/estar-official-pdf.test.ts
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > the predicate cannot drift from the writer again > no route computes has_content from the paragraphs key alone 3787ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/scaffold-field-map > enumerates AcroForm fields into a skeleton map from inline template bytes 45ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/scaffold-field-map > fails closed (422) when no template is available to scaffold against 49ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official > honest fail-closed (no template / empty map) > returns 422 with blockers and officialEstarPdf:false; never persists 9ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official > end-to-end official PDF when template + verified map present > produces a real PDF and asserts officialEstarPdf:true truthfully 20ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > not ready (no template / empty map) > reports ready:false with blockers and persists nothing 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > ready (template + verified map present) > reports ready:true with no blockers 4ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'pma', variant: 'device', descriptorId: 'pma-device' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'pma', variant: 'ivd', descriptorId: 'pma-ivd' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'q_sub', variant: 'device', descriptorId: 'q_sub-prestar' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'ide', variant: 'ivd', descriptorId: 'ide-prestar' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: '513g', variant: 'device', descriptorId: '513g-prestar' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with useProgramData:true > governed wins, request fills the gap, blanks + ignored keys are reported, provenance is persisted 11ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with useProgramData:true > without useProgramData the loader is never consulted and the response carries no fieldReport 18ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with useProgramData:true > with nothing governed and nothing requested no official eSTAR is produced at all 3ms
+stderr | tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('numeric' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or written
+{
+  "level": "error",
+  "message": "[510k-estar-routes] estar official-fields preview failure",
+  "context": {
+    "err": "boom: canceling statement due to statement timeout"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('program uuid' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or written
+{
+  "level": "error",
+  "message": "[510k-estar-routes] estar official-fields preview failure",
+  "context": {
+    "err": "boom: canceling statement due to statement timeout"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('numeric' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written
+{
+  "level": "error",
+  "message": "[510k-estar-routes] official eSTAR export failure",
+  "context": {
+    "err": "boom: canceling statement due to statement timeout"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('program uuid' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written
+{
+  "level": "error",
+  "message": "[510k-estar-routes] official eSTAR export failure",
+  "context": {
+    "err": "boom: canceling statement due to statement timeout"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > withholds the file when the vault could not retain it
+{
+  "level": "error",
+  "message": "[510k-estar-routes] official eSTAR export failure",
+  "context": {
+    "err": "The official eSTAR could not be retained (STORAGE_WRITE_FAILED): The document could not be stored."
+  }
+}
+
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 200: one row per mapped field with value + source; unsourced keys are null/null but name their declared home; no request data 2ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 200: the Phase 3 homes are sourced when the program and registration rows hold them 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 404 when the ident resolves to nothing in this organization — and reads no governed data 5ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 422 ESTAR_FIELD_MAP_NOT_POPULATED when the descriptor has no verified map 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 400 on a bad query (missing ident / unknown variant) 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('numeric' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or written 2ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('program uuid' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or written 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('numeric' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written 7ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('program uuid' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields': schema absence (42P01) is still "no row" — 404, exactly as for an unknown ident 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official': schema absence (42P01) is still "no row" — 404, exactly as for an unknown ident 0ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > retains the delivered bytes and reports where they went 6ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > withholds the file when the vault could not retain it 5ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > says plainly when a legacy project has no vault, and still delivers 19ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > names the erased keys in the 200 body AND in the registered metadata 187ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > reports an EMPTY erased list rather than omitting it (assessed ≠ unassessed) 167ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > REFUSES 422 when every written value is one the form erases (P3) 181ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > REFUSES 422 on the reviewer's non-string declaring entity (P1, over HTTP) 24ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (governed path) > says the same thing beside the fieldReport, and in the metadata 9ms
+ ✓ server/services/vault/__tests__/vault-document-index.pglite.integration.test.ts > vault document index — tenant isolation > returns only documents whose programme belongs to the organization 10ms
+ ✓ server/services/vault/__tests__/vault-document-index.pglite.integration.test.ts > vault document index — tenant isolation > TRUSTS THE PROGRAMME, NOT THE COLUMN: a row whose organization_id claims this tenant but whose programme belongs to another is invisible 5ms
+ ✓ server/services/vault/__tests__/vault-document-index.pglite.integration.test.ts > vault document index — tenant isolation > an unattributable row (organization_id NULL) is still reachable through its programme 4ms
+ ✓ server/services/vault/__tests__/vault-document-index.pglite.integration.test.ts > vault document index — tenant isolation > getVaultDocument returns null for another tenant's document, identically to a missing one 4ms
+ ✓ server/services/vault/__tests__/vault-document-index.pglite.integration.test.ts > vault document index — tenant isolation > excludes soft-deleted documents and documents on a soft-deleted programme 5ms
+ ✓ server/services/vault/__tests__/vault-document-index.pglite.integration.test.ts > vault document index — tenant isolation > excludes an orphan whose programme row does not exist at all 3ms
+ ✓ server/services/vault/__tests__/vault-document-index.pglite.integration.test.ts > vault document index — disclosure boundary > never discloses bytes, extracted text, or storage addressing 5ms
+ ✓ server/services/vault/__tests__/vault-document-index.pglite.integration.test.ts > vault document index — disclosure boundary > projects the metadata a client actually needs, with file_size as a number 3ms
+ ✓ server/services/vault/__tests__/vault-document-index.pglite.integration.test.ts > vault document index — filters and paging > filters by classification, processing status, type, programme and CTD section 15ms
+ ✓ server/services/vault/__tests__/vault-document-index.pglite.integration.test.ts > vault document index — filters and paging > counts the total over the SAME predicate as the page, filters included 8ms
+ ✓ server/services/vault/__tests__/vault-document-index.pglite.integration.test.ts > vault document index — filters and paging > pages without repeating or skipping a row when updated_at ties 15ms
+ ✓ server/services/vault/__tests__/vault-document-index.pglite.integration.test.ts > vault document index — honest failure > throws VaultStoreUnavailableError when the vault schema is absent, rather than reporting an empty cabinet 2057ms
+ ✓ server/services/vault/__tests__/vault-document-index.pglite.integration.test.ts > vault document index — honest failure > does not swallow an unrelated database error as "store unavailable" 4ms
+ ✓ server/services/vault/__tests__/vault-document-index.pglite.integration.test.ts > vault document index — exported domains > exposes the schema enum values rather than a restated copy 2ms
+ ✓ server/services/vault/__tests__/vault-document-index.pglite.integration.test.ts > vault document index — exported domains > isUuid accepts a real uuid and rejects injection-shaped input 2ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > files the document and says where it went 466ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > the fragment is not an injection surface > refuses anything that is not a plain or qualified identifier 2055ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > the governed record names what was filed, not only the form 448ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > reads the tenant and the program from the REQUEST, never from the body 371ms
+stderr | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts
+{
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > hands the resolver a client it can actually query with 414ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > refuses the export, with the reason, when a section is not fileable 296ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > refuses a slot the template does not declare 303ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > rejects a malformed attachment request at the schema, before any work 2ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > does not inflate the administrative field report by one 570ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > never builds a resolver when no attachment was asked for 175ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > inserts the first upload 8ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > is idempotent for identical bytes — a retry still succeeds 2ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > returns NO row for different bytes, which the route turns into a 409 1ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > leaves the original hash and storage key untouched 2ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > accepts the new bytes under a new version 1ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > the second unique constraint > raises 23505 for the same bytes under a different code 3ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > the second unique constraint > is handled by the route rather than falling through to INGEST_FAILED 0ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > the defect the predicate prevents is still demonstrable > WITHOUT the predicate, the same upload overwrites the recorded hash 4ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — collapsed > renders the record: title, type, project name and phase, provenance, first section, count, actions 79ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — collapsed > "Show all" reveals every section, with an honest "Not drafted yet" for an empty one 236ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — collapsed > a failed read is an error with a retry, never an empty document 82ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — collapsed > says "Not filed under a program" when the draft carried no program 29ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — collapsed > "Edit in Authoring" carries the document identity and the return route on the editor channel 34ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > lists the vault read model the Vault surface renders, under the program name 510ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — converts into the full editor in place > Open full editor mounts DocumentWorkbench for the same docId without navigating; Back collapses and keeps state; Escape collapses 565ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > searches through the vault search route and shows the total 554ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — converts into the full editor in place > Escape inside the editor document or a text control belongs to it, not to the canvas 137ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — converts into the full editor in place > an ask from inside the workbench lands in the host composer, not a second AnA pane 337ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > DocumentCanvas — accessibility smoke > is a labelled region whose controls have names, and the dialogs it opens are modal and labelled 35ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > Cite in this section inserts a citation node through the editor and records the source link 395ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > a file that is not a data-room source cannot be cited; a reference inserts as text and says it is not a citation 358ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > a failed vault read is an error with a retry, never an empty vault 300ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > with no program open the rail says the document is not filed under a program 161ms
+ ✓ server/services/vault/__tests__/backfill-vault-storage-cli.test.ts > scripts/backfill-vault-storage.mjs — the entry point > npm runs it with tsx, not plain node 2ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > the first painted frame asserts nothing it has not checked 18ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > renders while every request is still pending — checking is a visible status, not only a title 296ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > renders when the user is NOT signed in (401 everywhere) — disabled with a reason, no empty table 103ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > renders when the network throws outright — a failed read, in plain words, with retry 67ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > with no program says so and fetches no field list 45ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the produce-gate > not ready ⇒ Generate disabled with the blockers in the title, no input claims data 52ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the produce-gate > a failed field read disables Generate with the reason — the user has not seen what will be written 29ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the produce-gate > busy ⇒ Exporting… is a visible status line and the reason on the control 87ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the produce-gate > generateDisabledReason (pure): lock, then program, then readiness, then busy, then not ready, then field list 2ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > ready ⇒ governed rows are read-only with source words; unsourced rows have labelled inputs 56ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > switching programs never shows the previous program’s values while the next field list loads 17ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > a failed field read (5xx) renders ErrorState with a sentence and retry, never an empty table or the raw body 63ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > a 404 says the program was not found — and offers no retry, which could not succeed 10ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > a 422 says the field map is not populated — and offers no retry 13ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > posts useProgramData:true and only the typed non-empty keys, then reports filled/blank 107ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > switching programs forgets the previous program’s outcome — no stale Downloaded line under the new header 82ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > after a run, says how to see the values in Acrobat — the form hides those sections until then 52ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > says which written values the form clears when the filer follows the instruction 45ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > warns that the Declaration of Conformity company name is rebuilt from the applicant 53ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > names the typed keys the server dropped 71ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > a 403 NOT_ENTITLED renders Locked with the tier in the title — never a dead button 45ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > a 422 refusal shows the blockers on the status line 35ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the entitlement lock is known before the first click > an enforced denial locks Generate on mount, names the tier, and never posts 40ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the entitlement lock is known before the first click > a denial in warn mode does not lock — the POST would go through 42ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the entitlement lock is known before the first click > a failed entitlement read locks nothing 46ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > officialEstarVariantFor (pure): the product type decides, never the surface 1ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > the header names the family, and the reads carry the variant 12ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > a device program reads as the nIVD eSTAR 13ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — a blank governed key names its durable home > value null + declaredSource set ⇒ the caption, "Not set — <home>", AND the export-only input 32ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — a blank governed key names its durable home > value null + declaredSource null ⇒ export-only, no "Not set" line 24ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — a blank governed key names its durable home > a registration-held key names the eSTAR registration as its home 19ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — a blank governed key names its durable home > a governed value never shows "Not set" even though its declaredSource is set 18ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > officialEstarTypeFor (pure): the regulatory path decides, never the surface 1ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > the header names the pathway and the family 16ms
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > with the open program (uuid projectRef): the document, its sections and its provenance exist
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 36719b4d-7615-45c5-8c36-966b18767237 by author@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > with the open program (uuid projectRef): the document, its sections and its provenance exist
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 36719b4d-7615-45c5-8c36-966b18767237 by author@canvas.example",
+  "context": {}
+}
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > the type travels in the readiness and official-fields reads 18ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > the type travels in the POST body 38ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > switching the pathway forgets what was typed under the previous one 33ms
+ ✓ server/services/vault/__tests__/backfill-vault-storage-cli.test.ts > scripts/backfill-vault-storage.mjs — the entry point > refuses a missing --org with a usage message and exit 2, before touching any module 363ms
+ ✓ server/services/vault/__tests__/backfill-vault-storage-cli.test.ts > scripts/backfill-vault-storage.mjs — the entry point > resolves every import, then fails CLOSED when no database is configured 1813ms
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > with the open program (uuid projectRef): the document, its sections and its provenance exist
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 36719b4d-7615-45c5-8c36-966b18767237 by author@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > is in the tool catalog the model sees 2ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > refuses verbatim without an open project, and writes nothing 4ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > refuses a project another organization owns as "no project" — never a cross-tenant write 2ms
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > resolves a legacy integer project through its regulatory_program_id anchor
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b0b21a2d-81ae-4545-8758-9b0e6b61f2d9 by author@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > resolves a legacy integer project through its regulatory_program_id anchor
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b0b21a2d-81ae-4545-8758-9b0e6b61f2d9 by author@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > resolves a legacy integer project through its regulatory_program_id anchor
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b0b21a2d-81ae-4545-8758-9b0e6b61f2d9 by author@canvas.example",
+  "context": {}
+}
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the preview re-reads after a sibling panel saves > a saved device profile makes the preview re-read the governed values 75ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the preview re-reads after a sibling panel saves > a rejected device-profile save does NOT re-read — nothing changed to re-read 90ms
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a second document in the same program is created too (many documents per program)
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 01fe4836-5060-4989-979d-58ea1f0f50cb by author@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a second document in the same program is created too (many documents per program)
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 01fe4836-5060-4989-979d-58ea1f0f50cb by author@canvas.example",
+  "context": {}
+}
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the preview re-reads after a sibling panel saves > a saved correspondent block makes the preview re-read 64ms
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a second document in the same program is created too (many documents per program)
+{
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 01fe4836-5060-4989-979d-58ea1f0f50cb by author@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > with the open program (uuid projectRef): the document, its sections and its provenance exist 131ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > resolves a legacy integer project through its regulatory_program_id anchor 74ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a second document in the same program is created too (many documents per program) 75ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > refuses malformed input as an error the model can read, not a crash 1ms
+stderr | server/routes/__tests__/510k-estar-entitlement.test.ts > ENTITLEMENTS_ENFORCE=off (today's default) > reaches the handler (zod 400 on an invalid body), no entitlement queries
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/510k-estar-entitlement.test.ts > ENTITLEMENTS_ENFORCE=off (today's default) > reaches the handler (zod 400 on an invalid body), no entitlement queries
+{
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/510k-estar-entitlement.test.ts > ENTITLEMENTS_ENFORCE=off (today's default) > reaches the handler (zod 400 on an invalid body), no entitlement queries
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/510k-estar-entitlement.test.ts > ENTITLEMENTS_ENFORCE=off (today's default) > reaches the handler (zod 400 on an invalid body), no entitlement queries
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > renders the filing cabinet with the upload inside its suggested folder 124ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > shows the unfiled queue and the header review count 64ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > a failed vault read is an error, never "no documents" 28ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > reports the derived pipeline stages and lists sources on demand 79ms
+stderr | server/routes/__tests__/510k-estar-entitlement.test.ts > ENTITLEMENTS_ENFORCE=warn > allows an unentitled org through with the warning header
+{
+  "level": "warn",
+  "message": "[require-entitlement] Entitlement 'device_assembly_readiness' not satisfied but allowed (mode=warn). This request would be refused with 403 NOT_ENTITLED in 'on' mode.",
+  "context": {
+    "feature": "device_assembly_readiness",
+    "requiredTier": "standard",
+    "organizationId": 7,
+    "tier": "free",
+    "reason": null
+  }
+}
+
+ ✓ server/routes/__tests__/510k-estar-entitlement.test.ts > ENTITLEMENTS_ENFORCE=off (today's default) > reaches the handler (zod 400 on an invalid body), no entitlement queries 1254ms
+ ✓ server/routes/__tests__/510k-estar-entitlement.test.ts > ENTITLEMENTS_ENFORCE=on > 403s an unentitled org with the NOT_ENTITLED contract, before the handler 6ms
+ ✓ server/routes/__tests__/510k-estar-entitlement.test.ts > ENTITLEMENTS_ENFORCE=on > an entitled org passes the gate and reaches the handler 4ms
+ ✓ server/routes/__tests__/510k-estar-entitlement.test.ts > ENTITLEMENTS_ENFORCE=warn > allows an unentitled org through with the warning header 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an unavailable data room renders as a failure, never an empty room 49ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an empty data room says it is empty 32ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an unavailable branch is said, never silently omitted from the tree 25ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a suggestion is attributed to whoever made it > labels the classifier's proposal as the classifier's, with its confidence 47ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a suggestion is attributed to whoever made it > does not label AnA's suggestion as the classifier's 37ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — filing decisions are governed commits, not local patches > confirming a suggested filing POSTs to /file and re-reads the tree 59ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — filing decisions are governed commits, not local patches > a rejected filing (expired session) is reported as refused, never as recorded 70ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > renders a search input the human can actually use 43ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > calls the route with the chosen format and renders the server’s folder, hash and id 434ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > searches on the server and shows the hits, not a substring filter 74ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > renders the server’s refusal as a refusal, with nothing claimed 245ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > reports a FAILED search as a failure, never as zero matches 205ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > says how many of the total are shown when the page is not all of them 65ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > states the window and the real total when the server truncated the page 41ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > says nothing when the whole cabinet fits — no note on the common case 44ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > leaves the unfiled queue alone — it is programme-wide, not a page count 27ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > a 2xx without a vault record is not a success 208ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > with no program the dialog says so and offers no submit 199ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — placing a document into a submission > offers the action on an uploaded document and files it by BARE uuid 273ms
+ ✓ server/middleware/__tests__/tenant-scope-org-guc.test.ts > app.current_org_id on a per-user request > carries the organisation uuid when the request has one 2ms
+ ✓ server/middleware/__tests__/tenant-scope-org-guc.test.ts > app.current_org_id on a per-user request > falls back to the uuid on tenantContext when req.user has none 0ms
+ ✓ server/middleware/__tests__/tenant-scope-org-guc.test.ts > app.current_org_id on a per-user request > writes the EMPTY STRING when neither carries one — the FORCE precondition 0ms
+ ✓ server/middleware/__tests__/tenant-scope-org-guc.test.ts > app.current_org_id on a per-user request > sets all three session vars on one acquisition, not lazily per read 1ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — the class namespace is its own > shares no class name with the Design Controls surface, whose stylesheet also owns a “.dc” family 80ms
+ ✓ server/middleware/__tests__/tenant-scope-org-guc.test.ts > org membership → tenant scope → app.current_org_id > carries the uuid the membership lookup resolved 532ms
+ ✓ server/middleware/__tests__/tenant-scope-org-guc.test.ts > org membership → tenant scope → app.current_org_id > carries the empty string when the lookup resolves no uuid 1ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > names what the expand control does and what it controls, and moves focus into the region it opens 290ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > Escape collapses from anywhere in the expanded region — including with focus left on the body — and returns focus to the header control 194ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > offers exactly one way back while expanded 451ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > does not trap: every control in the collapsed card is reachable, and the card does not hold focus 25ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — the dialogs it opens are real dialogs > File to vault: labelled, modal, focus trapped while open, focus restored on close 42ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — the dialogs it opens are real dialogs > Assign review: labelled, modal, focus trapped while open, focus restored on close 71ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > the canvas stylesheet — motion > every transition and animation is at most 200ms and eases out — no spring, no bounce, no overshoot 3ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > the canvas stylesheet — motion > every animation and transition it declares is removed under prefers-reduced-motion 1ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > the canvas — microcopy > never exclaims and never cheers 2ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > the canvas — microcopy > never hedges in a user-facing string 2ms
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > hides the side column while a canvas is expanded, and Open full editor mounts the one workbench in place
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > mounts DocumentCanvas beneath a turn whose draft carries authoringDocId, read from the store 148ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > keeps a document-backed draft OUT of the side-panel artifact list, and a legacy draft IN it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > a turn without a document gets no canvas 52ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > finds the document in a rehydrated turn’s tool trace, and never in prose 1ms
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > renders a heading, bold and a list as elements, not symbols; user text stays as typed
+An update to DocumentCanvas inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > renders a heading, bold and a list as elements, not symbols; user text stays as typed
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentCanvas inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentCanvas inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentCanvas inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > a <script> in model text never reaches the DOM
+An update to DocumentCanvas inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > a <script> in model text never reaches the DOM
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentCanvas inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentCanvas inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentCanvas inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > hides the side column while a canvas is expanded, and Open full editor mounts the one workbench in place 128ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > renders a heading, bold and a list as elements, not symbols; user text stays as typed 39ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > a <script> in model text never reaches the DOM 29ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Vault — AnA operates the real surface > registers on mount, and vault.search drives the SAME search state the surface renders 114ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Vault — AnA operates the real surface > vault.open-folder refuses an unknown folder honestly 39ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Vault — AnA operates the real surface > the navigate→mount stash performs when the Vault mounts (AnA acts before the screen exists) 75ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Vault — AnA operates the real surface > a data-dependent action stashed pre-mount is HELD through the load and applies when the read lands 58ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Projects — AnA opens a real program > projects.open-program resolves the portfolio, publishes the shell project, and enters project home 30ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Projects — AnA opens a real program > an unknown or ambiguous program is an honest refusal, never a guess 19ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Projects — AnA opens a real program > a chip-shaped payload validates through the registry before it can drive anything 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > publishes the selected section on the editor deep-link channel before navigating 120ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > carries the section but NOT an invented family for a dossier the channel cannot name 61ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > leaves no stale target behind for the next, unrelated visit to the editor 51ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > shows the filed document by title once the read settles, with the spine still the open folder 85ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > the row opens the cabinet folder the document sits in and selects it 57ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > a vault with no uploads says so in the lane rather than rendering nothing 51ms
+stdout | tests/routes/estar-build-pma-package.test.ts
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/estar-build-pma-package.test.ts
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/vault-file-authorization.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/vault-file-authorization.test.ts
+{
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/build — a governed PMA program > renders one PDF per authored 814.20 section plus the combined PDF/DOCX, labelled as a PMA draft — never the six 510(k) slots 32ms
+stdout | server/routes/__tests__/vault-file-authorization.test.ts
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/vault-file-authorization.test.ts
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/build — a governed PMA program > a governed 510(k) program renders EVERY authored section, not six fixed slots 70ms
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/build — a governed PMA program > a governed denovo document is cut per section and labelled as itself, never as a 510(k) 5ms
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/build — a governed PMA program > a governed cer document is cut per section and labelled as itself, never as a 510(k) 6ms
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/build — a governed PMA program > the LEGACY store keeps the six 510(k) slots those slots were built for 5ms
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/assemble — pathway pma > does not call the official eSTAR producible on a template whose bytes are not the pinned ones 16ms
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/assemble — pathway pma > computes the PMA assembly verdict against the PMA modules 19ms
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/assemble — pathway pma > a 510(k) carries its device properties in the request; without them the conditional sections stay undetermined 35ms
+ ✓ tests/routes/estar-build-pma-package.test.ts > POST /api/510k/estar/assemble — pathway pma > accepts the PMA supplement type and scopes the required modules to it 25ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > a viewer cannot commit a filing decision > refuses with 403 and never reaches the governed write 29ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > a viewer cannot commit a filing decision > refuses whatever case the role arrives in 5ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > a viewer cannot commit a filing decision > refuses a caller with no role at all 4ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > the writing roles still get through > admits member 5ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > the writing roles still get through > admits manager 5ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > the writing roles still get through > admits admin 4ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > the writing roles still get through > admits owner 4ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > the writing roles still get through > admits super_admin 6ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > organization context is still required > refuses a writing role with no organization 6ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > POST /api/vault/ingest — who may put bytes in the vault > gates the role BEFORE the upload is parsed 41ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > POST /api/vault/ingest — who may put bytes in the vault > lets a writing role past the gate 4ms
+stdout | tests/routes/estar-export-governance.test.ts
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/estar-export-governance.test.ts
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/vault-tree-bounded.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/vault-tree-bounded.test.ts
+{
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > answers 500 PROJECT_RESOLUTION_FAILED — never 404 — when the anchor READ fails
+{
+  "level": "error",
+  "message": "[510k-estar-routes] project resolution failure",
+  "context": {
+    "err": "boom: canceling statement due to statement timeout"
+  }
+}
+
+stderr | tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > fails closed when governed persistence fails
+{
+  "level": "error",
+  "message": "[510k-estar-routes] governed export failure",
+  "context": {
+    "err": "persistence failed"
+  }
+}
+
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > creates governed bundle consequence with durable references 27ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > 404s when the project does not resolve in the caller org 1ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > answers 500 PROJECT_RESOLUTION_FAILED — never 404 — when the anchor READ fails 3ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > still 404s on schema absence (42P01): a database without the table has no row to find 2ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > delivers an audited (registry-unplaced) export for a program-spine UUID project 26ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > places the export in the registry when the program HAS a C1 project anchor 8ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > keeps the unplaced path when the program resolves but has NO anchor 6ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > assembles content server-side from authored sections with useProjectContent 10ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > a program anchor reads ITS governed document, not the org-wide legacy store (ESTAR-01/02) 5ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > a program anchor with nothing authored in its governed document 422s and names the store 1ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > 422s honestly when useProjectContent finds no authored sections 1ms
+ ✓ tests/routes/estar-export-governance.test.ts > 510(k) eSTAR governed export > fails closed when governed persistence fails 6ms
+stdout | server/routes/__tests__/vault-tree-bounded.test.ts
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/vault-tree-bounded.test.ts
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/vault-download.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/vault-download.test.ts
+{
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/vault-tree-bounded.test.ts > the filing cabinet page is bounded and says so > caps the rows it fetches and reports the window rather than implying it is the whole vault
+{
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "unknown",
+    "queryPreview": "select \"id\" from \"projects\" where (\"projects\".\"regulatory_program_id\" = $1 and \"projects\".\"organization_id\" = $2) limit $3",
+    "enforcement": "off"
+  }
+}
+
+stderr | tests/routes/estar-export-governance.test.ts > an unplaced export whose audit row does not persist > is refused with a 500 and no downloadable bytes
+{
+  "level": "error",
+  "message": "[510k-estar-routes] governed export failure",
+  "context": {
+    "err": "UNAUDITED_EXPORT_REFUSED: the export was not delivered because its audit row did not persist (no database pool: the chained audit_logs row was not attempted)"
+  }
+}
+
+ ✓ tests/routes/estar-export-governance.test.ts > POST /api/510k/estar/assemble — the device-assembly contract over HTTP > reports artifactKind none with blockers when nothing is authored 24ms
+ ✓ tests/routes/estar-export-governance.test.ts > POST /api/510k/estar/assemble — the device-assembly contract over HTTP > reports a draft-only artifact for authored content with no vendored template 22ms
+ ✓ tests/routes/estar-export-governance.test.ts > an unplaced export whose audit row does not persist > is refused with a 500 and no downloadable bytes 45ms
+ ✓ server/routes/__tests__/vault-tree-bounded.test.ts > the filing cabinet page is bounded and says so > caps the rows it fetches and reports the window rather than implying it is the whole vault 47ms
+ ✓ server/routes/__tests__/vault-tree-bounded.test.ts > the filing cabinet page is bounded and says so > asks the database for cap + 1 rows, which is how the overflow is detected 9ms
+ ✓ server/routes/__tests__/vault-tree-bounded.test.ts > the filing cabinet page is bounded and says so > does not report truncation when the vault fits inside the cap 8ms
+ ✓ server/routes/__tests__/vault-tree-bounded.test.ts > the unfiled queue counts the program, not the page > reports the program-wide unfiled count even though every fetched row is filed 14ms
+ ✓ server/routes/__tests__/vault-tree-bounded.test.ts > the unfiled queue counts the program, not the page > takes that count with the same predicate as the page, so the two cannot describe different sets 9ms
+ ✓ server/routes/__tests__/vault-tree-bounded.test.ts > a source's filed stage is answered by the database, not by the page > reports filed for a document the page never carried 8ms
+stdout | server/routes/__tests__/vault-download.test.ts
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/vault-download.test.ts
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/vault-tree-bounded.test.ts > a source's filed stage is answered by the database, not by the page > still reports not-filed when the database says the checksum is absent 9ms
+ ✓ server/routes/__tests__/vault-tree-bounded.test.ts > a source's filed stage is answered by the database, not by the page > probes only the checksums it actually holds, scoped to program and tenant 4ms
+ ✓ server/routes/__tests__/vault-tree-bounded.test.ts > a source's filed stage is answered by the database, not by the page > issues no probe at all when there are no sources to ask about 6ms
+ ✓ server/routes/__tests__/vault-tree-bounded.test.ts > the authored-document sections are read in one query > issues exactly one sections query for two documents 5ms
+ ✓ server/routes/__tests__/vault-tree-bounded.test.ts > the authored-document sections are read in one query > asks for both document ids at once, and keeps the tenant re-assertion 3ms
+ ✓ server/routes/__tests__/vault-tree-bounded.test.ts > the authored-document sections are read in one query > gives each document its OWN sections, never another document’s 3ms
+stderr | server/routes/__tests__/vault-download.test.ts > integrity > serves the bytes when they match the recorded hash
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | server/routes/__tests__/vault-download.test.ts > integrity > REFUSES bytes that do not match the recorded hash
+{
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download refused: content hash mismatch",
+  "context": {
+    "documentId": "22222222-2222-4222-8222-222222222222",
+    "recorded": "ffffffffffff",
+    "actual": "ff2022db4319"
+  }
+}
+
+stderr | server/routes/__tests__/vault-download.test.ts > integrity > says the stored file is missing when the bytes are gone from disk
+{
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download: stored file missing on disk",
+  "context": {
+    "documentId": "22222222-2222-4222-8222-222222222222",
+    "key": "uploads/vault/11111111-1111-4111-8111-111111111111/ff2022db4319b278aead60812ad32722c336bcd1ccd37b7126a76404f126a074.pdf"
+  }
+}
+
+stderr | server/routes/__tests__/vault-download.test.ts > path safety > refuses a storage key that escapes the uploads root
+{
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download refused: storage key escapes the uploads root",
+  "context": {
+    "documentId": "22222222-2222-4222-8222-222222222222"
+  }
+}
+
+stderr | server/routes/__tests__/vault-download.test.ts > path safety > refuses an absolute key outside the uploads root
+{
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download refused: storage key escapes the uploads root",
+  "context": {
+    "documentId": "22222222-2222-4222-8222-222222222222"
+  }
+}
+
+stderr | server/routes/__tests__/vault-download.test.ts > audit > REFUSES the download when the audit write fails, and sends nothing
+{
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download refused: audit write failed",
+  "context": {
+    "documentId": "22222222-2222-4222-8222-222222222222",
+    "err": "audit store unavailable"
+  }
+}
+
+ ✓ server/routes/__tests__/vault-download.test.ts > scope > 403 without org context 21ms
+ ✓ server/routes/__tests__/vault-download.test.ts > scope > 404 when the programme is not this org’s — the document is never looked up 10ms
+ ✓ server/routes/__tests__/vault-download.test.ts > scope > 404 when the document does not belong to the programme 4ms
+ ✓ server/routes/__tests__/vault-download.test.ts > scope > 404 on a non-uuid id rather than a 500 from the uuid cast 7ms
+ ✓ server/routes/__tests__/vault-download.test.ts > integrity > serves the bytes when they match the recorded hash 7ms
+ ✓ server/routes/__tests__/vault-download.test.ts > integrity > REFUSES bytes that do not match the recorded hash 4ms
+ ✓ server/routes/__tests__/vault-download.test.ts > integrity > says the record has no stored file rather than 404ing the record itself 4ms
+ ✓ server/routes/__tests__/vault-download.test.ts > integrity > says the stored file is missing when the bytes are gone from disk 6ms
+ ✓ server/routes/__tests__/vault-download.test.ts > path safety > refuses a storage key that escapes the uploads root 4ms
+ ✓ server/routes/__tests__/vault-download.test.ts > path safety > refuses an absolute key outside the uploads root 3ms
+ ✓ server/routes/__tests__/vault-download.test.ts > audit > records the download before any byte is sent 3ms
+ ✓ server/routes/__tests__/vault-download.test.ts > audit > records the served content hash, so the trail names which edition left 3ms
+ ✓ server/routes/__tests__/vault-download.test.ts > audit > REFUSES the download when the audit write fails, and sends nothing 3ms
+ ✓ server/routes/__tests__/vault-download.test.ts > audit > does not audit a refused read 2ms
+ ✓ server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > serves a provider-backed row from the provider, never from disk 3ms
+ ✓ server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > passes the caller organization to the provider — the only tenant gate on bytes 4ms
+stderr | server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > refuses when the provider has no such version for this organization
+{
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download: stored version not readable for this organization",
+  "context": {
+    "documentId": "22222222-2222-4222-8222-222222222222"
+  }
+}
+
+stderr | server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > does not fall back to disk when the provider read fails
+{
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download: storage provider read failed",
+  "context": {
+    "documentId": "22222222-2222-4222-8222-222222222222",
+    "reason": "bucket unreachable"
+  }
+}
+
+stderr | server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > hash-verifies provider bytes against the record, same as disk bytes
+{
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download refused: content hash mismatch",
+  "context": {
+    "documentId": "22222222-2222-4222-8222-222222222222",
+    "recorded": "ff2022db4319",
+    "actual": "912cf2f281e7"
+  }
+}
+
+ ✓ server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > prefers the version id when the row carries both addresses 17ms
+ ✓ server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > still serves a legacy row from disk, untouched by the move 3ms
+ ✓ server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > refuses when the provider has no such version for this organization 3ms
+ ✓ server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > does not fall back to disk when the provider read fails 4ms
+ ✓ server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > hash-verifies provider bytes against the record, same as disk bytes 3ms
+ ✓ server/routes/__tests__/vault-download.test.ts > download — where the bytes come from > refuses a row carrying neither address 3ms
+stderr | server/routes/__tests__/vault-search.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/vault-search.test.ts
+{
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/vault-search.test.ts
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/vault-search.test.ts
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-branches.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-vault-branches.test.ts
+{
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-branches.test.ts > GET /api/c2c/project-vault/:id — derived branches > a real failure in a branch is still a failure — not silently degraded
+{
+  "level": "error",
+  "message": "[c2c-project-vault-routes] project vault read error",
+  "context": {
+    "err": "connection reset"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/project-vault-branches.test.ts > GET /api/c2c/project-vault/:id — derived branches > lists CMC-compiled Module 3 artifacts organized by CTD section 22ms
+ ✓ server/routes/c2c/__tests__/project-vault-branches.test.ts > GET /api/c2c/project-vault/:id — derived branches > lists what the Upload button ingested — the row really does appear in the tree, WHERE its filing says 5ms
+ ✓ server/routes/c2c/__tests__/project-vault-branches.test.ts > GET /api/c2c/project-vault/:id — derived branches > reports an unprovisioned store as unavailable — never as an empty branch 4ms
+ ✓ server/routes/c2c/__tests__/project-vault-branches.test.ts > GET /api/c2c/project-vault/:id — derived branches > reports an UNANCHORED program as unavailable, not as a missing Module 3 branch 5ms
+ ✓ server/routes/c2c/__tests__/project-vault-branches.test.ts > GET /api/c2c/project-vault/:id — derived branches > an ANCHORED program with nothing filed yet is an honest empty, not an unavailable 3ms
+ ✓ server/routes/c2c/__tests__/project-vault-branches.test.ts > GET /api/c2c/project-vault/:id — derived branches > a real failure in a branch is still a failure — not silently degraded 4ms
+stderr | server/routes/__tests__/vault-search.test.ts > failure is not an empty result > 500s with a message saying nothing was searched
+{
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault search failed",
+  "context": {
+    "err": "index unavailable"
+  }
+}
+
+ ✓ server/routes/__tests__/vault-search.test.ts > tenant scope > 403s without organization context 20ms
+ ✓ server/routes/__tests__/vault-search.test.ts > tenant scope > 404s when the programme is not this org's, and never searches it 5ms
+ ✓ server/routes/__tests__/vault-search.test.ts > tenant scope > 404s on a non-uuid programme id rather than 500ing on the cast 5ms
+ ✓ server/routes/__tests__/vault-search.test.ts > empty query > returns no results rather than the whole vault 4ms
+ ✓ server/routes/__tests__/vault-search.test.ts > empty query > does not query at all for an absent or whitespace query 6ms
+ ✓ server/routes/__tests__/vault-search.test.ts > results > returns the page and the REAL total, not the page length 4ms
+ ✓ server/routes/__tests__/vault-search.test.ts > results > carries a body snippet when the match was in the content 3ms
+ ✓ server/routes/__tests__/vault-search.test.ts > results > omits an empty snippet rather than rendering a blank line 8ms
+ ✓ server/routes/__tests__/vault-search.test.ts > results > clamps limit and offset to a sane page 4ms
+ ✓ server/routes/__tests__/vault-search.test.ts > results > reports an honest zero when nothing matches 3ms
+ ✓ server/routes/__tests__/vault-search.test.ts > failure is not an empty result > 500s with a message saying nothing was searched 3ms
+stderr | server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts
+{
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > runs both reads — the count and the rows 18ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > every vault read names the caller organization in its own SQL 4ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > binds the caller organization, not a value from the request 3ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > counts over exactly the set it returns rows from 3ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > does not reach the store at all for an empty query 3ms
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > hands it the caller organization and the programme as the project
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "CSR-201",
+    "type": "report",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > records the version id, the provider and the handle on the row
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "CSR-201",
+    "type": "report",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > a storage failure refuses the upload > returns STORAGE_WRITE_FAILED and writes NO row
+{
+  "level": "error",
+  "message": "[vault-ingest] Vault file persistence failed — refusing to record the document",
+  "context": {
+    "reason": "bucket unreachable",
+    "contentHash": "f3c9d586682936c8987ce11239d2d886f1b9710840ddcf4d36211f4e6a3d3398"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > the tenant guard still runs before any of this > refuses a programme the caller does not own, without touching storage
+{
+  "level": "warn",
+  "message": "[vault-ingest] Vault ingest denied: program not owned by caller organization",
+  "context": {
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > different bytes at an occupied (program, code, version): 409, and the copy is removed
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest refused — its stored bytes were removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > the same bytes under a second code: 409, and the copy is removed
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest refused: content already recorded in this program",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > the same bytes under a second code: 409, and the copy is removed
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest refused — its stored bytes were removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a folder outside the program taxonomy: 400, and the copy is removed
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest refused — its stored bytes were removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a failed audit write rolls the record back, and the copy with it
+{
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest failed — nothing recorded",
+  "context": {
+    "err": "chain tip locked"
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a failed audit write rolls the record back, and the copy with it
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest refused — its stored bytes were removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an error thrown before the transaction still removes the copy, and still propagates
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest refused — its stored bytes were removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an admitted upload keeps its bytes
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "CSR-201",
+    "type": "report",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a failed delete: the message no longer claims nothing was saved
+{
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest failed — nothing recorded",
+  "context": {
+    "err": "chain tip locked"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a failed delete: the message no longer claims nothing was saved
+{
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest could not remove refused bytes from storage",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a delete that throws is reported the same way, not raised over the refusal
+{
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest could not remove refused bytes from storage",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7,
+    "err": "bucket unreachable"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a record that refers to the stored version keeps it — bytes a record points at are never deleted
+{
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest failed — nothing recorded",
+  "context": {
+    "err": "connection reset"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a record that refers to the stored version keeps it — bytes a record points at are never deleted
+{
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest reported a failure, but a record holds its stored bytes — kept",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > hands it the caller organization and the programme as the project 11ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > records the version id, the provider and the handle on the row 3ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a storage failure refuses the upload > returns STORAGE_WRITE_FAILED and writes NO row 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a role that may not write the Vault is refused before anything is stored > a viewer: 403, nothing stored, nothing written 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a role that may not write the Vault is refused before anything is stored > no role at all: refused the same way 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the tenant guard still runs before any of this > refuses a programme the caller does not own, without touching storage 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the tenant guard still runs before any of this > refuses with no organization context at all 0ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > different bytes at an occupied (program, code, version): 409, and the copy is removed 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > the same bytes under a second code: 409, and the copy is removed 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a folder outside the program taxonomy: 400, and the copy is removed 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a failed audit write rolls the record back, and the copy with it 3ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an error thrown before the transaction still removes the copy, and still propagates 3ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an admitted upload keeps its bytes 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a failed delete: the message no longer claims nothing was saved 3ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a delete that throws is reported the same way, not raised over the refusal 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a record that refers to the stored version keeps it — bytes a record points at are never deleted 1ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > refuses a .exe with 400 FILE_TYPE_NOT_ALLOWED and stores nothing (F-4) 32ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > refuses an upload under the wrong field name with 400, not 500 (multer LIMIT_UNEXPECTED_FILE) 9ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > still admits an allowed type to the governed ingest (the happy path is untouched) 9ms
+stderr | tests/governed-export-behavioral.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/governed-export-behavioral.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/governed-export-behavioral.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > creates artifact + version + provenance + audit + snapshot in a single transaction
+[GenerationGuard] export_success | source=cerv2_cer project=42 artifact=artifact_export_1790270712506_d39aadf6 trace=gen_1790270712507_rzfz9m
+
+stdout | tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > returns artifactId, version, status, placementState, governance refs
+[GenerationGuard] export_success | source=cerv2_cer project=42 artifact=artifact_export_1790270712509_c0131ef2 trace=gen_1790270712509_ae2nmj
+
+stdout | tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > sets placementState to "placed" when ctdSection is provided
+[GenerationGuard] export_success | source=cerv2_cer project=42 artifact=artifact_export_1790270712511_14b185b3 trace=gen_1790270712511_z56w02
+
+stdout | tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > sets placementState to "unplaced" when no ctdSection
+[GenerationGuard] export_success | source=cerv2_cer project=42 artifact=artifact_export_1790270712512_806cc7ef trace=gen_1790270712512_87289h
+
+stdout | tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > persists governance source metadata in artifact record
+[GenerationGuard] export_success | source=cerv2_cer project=42 artifact=artifact_export_1790270712513_f0e2a545 trace=gen_1790270712513_szke3o
+
+stdout | tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > creates provenance event with export hash and format details
+[GenerationGuard] export_success | source=cerv2_cer project=42 artifact=artifact_export_1790270712514_22867132 trace=gen_1790270712514_wt28rz
+
+stdout | tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > creates audit log with EXPORT action and is_gxp_relevant=true
+[GenerationGuard] export_success | source=cerv2_cer project=42 artifact=artifact_export_1790270712515_f1329b82 trace=gen_1790270712515_t7e53y
+
+stdout | tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > creates submission snapshot with filename/size/export-format action
+[GenerationGuard] export_success | source=cerv2_cer project=42 artifact=artifact_export_1790270712516_c404cc6f trace=gen_1790270712516_5mfy9o
+
+stdout | tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > throws on DB failure and issues ROLLBACK
+[GenerationGuard] export_failure | source=document_builder project=42 artifact=none trace=gen_1790270712517_cd5obf
+
+stderr | tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > throws on DB failure and issues ROLLBACK
+{
+  "level": "error",
+  "message": "[exportGovernance] Failed to register governed export",
+  "context": {
+    "err": "DB connection lost"
+  }
+}
+
+stdout | tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > handles 510k eSTAR export type correctly
+[GenerationGuard] export_success | source=document_builder project=42 artifact=artifact_export_1790270712519_b575a620 trace=gen_1790270712519_7oxcn1
+
+stdout | tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > handles CERV2 ZIP export type correctly
+[GenerationGuard] export_success | source=cerv2_510k project=42 artifact=artifact_export_1790270712520_2207425d trace=gen_1790270712520_z7a9tw
+
+ ✓ tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > creates artifact + version + provenance + audit + snapshot in a single transaction 4ms
+ ✓ tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > returns artifactId, version, status, placementState, governance refs 2ms
+ ✓ tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > sets placementState to "placed" when ctdSection is provided 1ms
+ ✓ tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > sets placementState to "unplaced" when no ctdSection 1ms
+ ✓ tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > persists governance source metadata in artifact record 1ms
+ ✓ tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > creates provenance event with export hash and format details 1ms
+ ✓ tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > creates audit log with EXPORT action and is_gxp_relevant=true 1ms
+ ✓ tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > creates submission snapshot with filename/size/export-format action 1ms
+ ✓ tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > throws on DB failure and issues ROLLBACK 3ms
+ ✓ tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > handles 510k eSTAR export type correctly 1ms
+ ✓ tests/governed-export-behavioral.test.ts > registerGovernedExport — behavioral > handles CERV2 ZIP export type correctly 1ms
+ ✓ tests/governed-export-behavioral.test.ts > CER v2 export routes — governed wiring > imports createGovernedExportConsequence from governed service 1ms
+ ✓ tests/governed-export-behavioral.test.ts > CER v2 export routes — governed wiring > PDF route calls createGovernedExportConsequence before response 0ms
+ ✓ tests/governed-export-behavioral.test.ts > CER v2 export routes — governed wiring > DOCX route calls createGovernedExportConsequence before response 0ms
+ ✓ tests/governed-export-behavioral.test.ts > CER v2 export routes — governed wiring > sets X-Concept2Cure-Governance-Persistence header to "governed" 0ms
+ ✓ tests/governed-export-behavioral.test.ts > CER v2 export routes — governed wiring > does not have old "none" governance persistence default 0ms
+ ✓ tests/governed-export-behavioral.test.ts > CER v2 export routes — governed wiring > consequence includes sourceType export_pdf and export_docx 0ms
+ ✓ tests/governed-export-behavioral.test.ts > CER v2 export routes — governed wiring > consequence includes backendRoute for traceability 0ms
+ ✓ tests/governed-export-behavioral.test.ts > 510(k) eSTAR build route — governed wiring > imports createGovernedExportConsequence 0ms
+ ✓ tests/governed-export-behavioral.test.ts > 510(k) eSTAR build route — governed wiring > calls createGovernedExportConsequence in build handler 0ms
+ ✓ tests/governed-export-behavioral.test.ts > 510(k) eSTAR build route — governed wiring > accepts projectId in request schema 0ms
+ ✓ tests/governed-export-behavioral.test.ts > 510(k) eSTAR build route — governed wiring > consequence sourceType is export_estar_zip 0ms
+stderr | server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunking ledger tenancy > a refused foreign document leaves the other tenant's ledger row alone
+{
+  "level": "warn",
+  "message": "[document-chunking] Vault chunking failed — recorded on the catalog ledger",
+  "context": {
+    "documentId": "5b1f0d1e-0000-4000-8000-00000000abcd",
+    "error": "Document is not in the caller's organization; refusing to index it."
+  }
+}
+
+ ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunk writer tenancy > refuses a document that is not in the caller's organization, writing nothing 32ms
+ ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunk writer tenancy > every statement that touches vault.document_chunks is bound to the organization 2ms
+ ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunking ledger tenancy > a refused foreign document leaves the other tenant's ledger row alone 2ms
+ ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts > vault chunking ledger tenancy > the ledger write for an owned document is bound to the organization too 1ms
+stderr | server/routes/c2c/__tests__/project-vault-completion.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-vault-completion.test.ts
+{
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the dry run > writes nothing and spends no embeddings
+{
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 2,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the dry run > still reports what cannot be indexed, so the report is actionable
+{
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — applying > indexes documents that have text and counts the chunks written
+{
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 2,
+    "indexed": 2,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — applying > a document with no text is skipped with its reason, never counted as indexed
+{
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 2,
+    "indexed": 1,
+    "skipped": 1,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — applying > a failure is named and ledgered, not folded into the total
+{
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 1,
+    "dryRun": false
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the candidate set > is bound to the organization and skips already-indexed documents
+{
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 0,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the candidate set > takes previously failed documents only when a retry is asked for
+{
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 0,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the candidate set > clamps the limit so one run cannot sweep an unbounded corpus
+{
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 0,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+stdout | server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the candidate set > clamps the limit so one run cannot sweep an unbounded corpus
+{
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 42,
+    "examined": 0,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+ ✓ server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the dry run > writes nothing and spends no embeddings 7ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the dry run > still reports what cannot be indexed, so the report is actionable 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — applying > indexes documents that have text and counts the chunks written 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — applying > a document with no text is skipped with its reason, never counted as indexed 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — applying > a failure is named and ledgered, not folded into the total 2ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the candidate set > is bound to the organization and skips already-indexed documents 1ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the candidate set > takes previously failed documents only when a retry is asked for 0ms
+ ✓ server/services/vault/__tests__/document-chunking-backfill.service.test.ts > backfillVaultChunks — the candidate set > clamps the limit so one run cannot sweep an unbounded corpus 1ms
+stdout | server/routes/c2c/__tests__/project-vault-completion.test.ts
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-completion.test.ts
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — section completion > a drafted section is not 100% — it is 0% until the filing approves it
+{
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "unknown",
+    "queryPreview": "select \"id\" from \"projects\" where (\"projects\".\"regulatory_program_id\" = $1 and \"projects\".\"organization_id\" = $2) limit $3",
+    "enforcement": "off"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — section completion > a drafted section is not 100% — it is 0% until the filing approves it 29ms
+ ✓ server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — section completion > an approved section is 100% 6ms
+ ✓ server/routes/c2c/__tests__/project-vault-completion.test.ts > GET /api/c2c/project-vault/:id — section completion > an untouched mandatory section is 0% and still flags itself as a blocker 5ms
+stdout | server/services/vault/__tests__/vault-filing.service.test.ts
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-filing.service.test.ts
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/vault-filing.service.test.ts
+[database] Database connection successful
+
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > FILING_RULES totality > every rule target folder exists in the view preset it names 2ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > FILING_RULES totality > classifier output folder is always renderable for the input view 10ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > fail-closed on unclassifiable input > a meaningless filename lands in the Unfiled queue, not a guessed folder 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > fail-closed on unclassifiable input > an empty name with no text is unfiled everywhere 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > fail-closed on unclassifiable input > the TMF default zone is NOT treated as a finding — service-view no-match stays unfiled 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > view fidelity — the same file files by client type > labeling: pharma → Module 1, device → udi 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > view fidelity — the same file files by client type > CTD content: stability → Module 3, toxicology → Module 4, CSR → Module 5 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > view fidelity — the same file files by client type > device engineering: risk file → eng with a rationale 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > view fidelity — the same file files by client type > an SOP in a pharma dossier vault is honestly not placeable 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > view fidelity — the same file files by client type > service view files by TMF zone on a keyword match 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > view fidelity — the same file files by client type > correspondence and templates file in every view 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > document-body fallback > uses bounded text only when the name says nothing 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > document-body fallback > a name match wins over body text 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > folderLabel > labels a real folder and never invents one 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > files a cataloged document and reports where it now lives 3ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > refuses to file a document whose comprehension was never recorded 1ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > refuses a document that has never been cataloged at all 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > says a failed extraction leaves nothing to base a placement on 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > allows unfiling an uncataloged document — it retracts a claim, not makes one 3ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > hands the service her provenance, so the write cannot pass for a person's decision 1ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > records a model it was not told about as unknown, never a guessed one 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > refuses confirm_suggested — confirming a filing is a person's act, in the Vault 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > is described to the model as a suggestion a person confirms, not a filing 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > tells the model the placement awaits a person, not that the document is filed 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > answers a chat-upload id with the wrong-store refusal, not absence 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > requires a rationale — the audit trail records why, not just what 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > requires a destination rather than guessing one 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > reports a document this organization does not hold as unknown, with the discovery tool 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > passes the service refusal through instead of claiming a move 0ms
+stdout | server/routes/c2c/__tests__/vault-download-integrity.test.ts
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/vault-download-integrity.test.ts
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/vault-download-integrity.test.ts
+[database] Database connection successful
+
+stderr | server/routes/c2c/__tests__/vault-download-integrity.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/vault-download-integrity.test.ts
+{
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/vault-download-integrity.test.ts > readVerifiedVaultBytes > REFUSES bytes that no longer match the recorded hash
+{
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download refused: content hash mismatch",
+  "context": {
+    "documentId": "doc-1",
+    "recorded": "a27efdfe974d",
+    "actual": "35e5b81a076f"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/vault-download-integrity.test.ts > readVerifiedVaultBytes > reports a missing file distinctly from a corrupt one
+{
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download: stored file missing on disk",
+  "context": {
+    "documentId": "doc-1",
+    "key": "uploads/nope/gone.bin"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/vault-download-integrity.test.ts > readVerifiedVaultBytes > refuses a record that carries no storage address at all
+{
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download refused: record carries no storage address",
+  "context": {
+    "documentId": "doc-1"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/vault-download-integrity.test.ts > readVerifiedVaultBytes > refuses a storage key that escapes the uploads root
+{
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download refused: storage key escapes the uploads root",
+  "context": {
+    "documentId": "doc-1"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/vault-download-integrity.test.ts > readVerifiedVaultBytes > returns the bytes when they match the recorded hash 2ms
+ ✓ server/routes/c2c/__tests__/vault-download-integrity.test.ts > readVerifiedVaultBytes > returns the bytes when no hash was ever recorded, rather than refusing 1ms
+ ✓ server/routes/c2c/__tests__/vault-download-integrity.test.ts > readVerifiedVaultBytes > REFUSES bytes that no longer match the recorded hash 2ms
+ ✓ server/routes/c2c/__tests__/vault-download-integrity.test.ts > readVerifiedVaultBytes > reports a missing file distinctly from a corrupt one 1ms
+ ✓ server/routes/c2c/__tests__/vault-download-integrity.test.ts > readVerifiedVaultBytes > refuses a record that carries no storage address at all 1ms
+ ✓ server/routes/c2c/__tests__/vault-download-integrity.test.ts > readVerifiedVaultBytes > refuses a storage key that escapes the uploads root 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — the reproduced CoA > ACCEPTS the faithful values, written the way the document writes them 4ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — the reproduced CoA > ACCEPTS the same values typed in plain ASCII, any case, either mu 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — the reproduced CoA > REFUSES every invented value and NAMES each leaf with the value it carried 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — the reproduced CoA > names only the failing leaves when faithful and invented values are mixed 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — verdicts are not transcriptions > REFUSES a boolean leaf even though "released" is a word in the text 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — verdicts are not transcriptions > REFUSES a null leaf and an empty string — neither transcribes anything 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — verdicts are not transcriptions > REFUSES a figure the document does not state, even a derived one 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — nesting > checks a leaf inside an array inside an object, and names its full path 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — nesting > quotes a key that is not a plain identifier, so the path is unambiguous 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — nesting > does not verify keys — labels are the model’s naming, not a claim about the text 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — nesting > has nothing to verify when there is no key_data 2ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a number’s decimal form must match exactly: no prefix, suffix or neighbour 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > thousands grouping may be added or removed for a number — but a group is not the number 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > an identifier fragment is not the identifier 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a hyphen separates tokens: 24 is stated by "24-month" 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a sign is part of the figure: −5 °C states -5, not 5 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a superscript exponent is not folded into the digits (NFKC alone makes 10³ read "103") 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a unit glued to a figure makes one token: 10 is not "10mg", "10mg" is 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a value the extraction wrapped across a line, or padded with spaces, still occurs 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > fails closed against a document with no text 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > assertCatalogWriteAllowed — the gate composes both checks > REFUSES invented key_data even after a complete read, carrying the named leaves 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > assertCatalogWriteAllowed — the gate composes both checks > judges coverage first: a partial read is refused on coverage, not on values 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > assertCatalogWriteAllowed — the gate composes both checks > allows a complete read whose key_data the text states 0ms
+stdout | tests/routes/estar-registration-correspondent.test.ts
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/estar-registration-correspondent.test.ts
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/routes/estar-registration-correspondent.test.ts > PUT /api/510k/estar/registration — correspondent and declaration facts > the five facts reach the audited upsert exactly as sent, and come back on `registration` 4ms
+ ✓ tests/routes/estar-registration-correspondent.test.ts > PUT /api/510k/estar/registration — correspondent and declaration facts > null CLEARS a fact (it is forwarded as null, not dropped) 1ms
+ ✓ tests/routes/estar-registration-correspondent.test.ts > PUT /api/510k/estar/registration — correspondent and declaration facts > the declaration name and address travel together, so the DoC names one legal entity 1ms
+ ✓ tests/routes/estar-registration-correspondent.test.ts > PUT /api/510k/estar/registration — correspondent and declaration facts > correspondentCompanyName over its column width is refused 400 and nothing is written 1ms
+ ✓ tests/routes/estar-registration-correspondent.test.ts > PUT /api/510k/estar/registration — correspondent and declaration facts > correspondentContactEmail over its column width is refused 400 and nothing is written 1ms
+ ✓ tests/routes/estar-registration-correspondent.test.ts > PUT /api/510k/estar/registration — correspondent and declaration facts > correspondentTelephone over its column width is refused 400 and nothing is written 1ms
+ ✓ tests/routes/estar-registration-correspondent.test.ts > PUT /api/510k/estar/registration — correspondent and declaration facts > declarationCompanyName over its column width is refused 400 and nothing is written 0ms
+ ✓ tests/routes/estar-registration-correspondent.test.ts > PUT /api/510k/estar/registration — correspondent and declaration facts > declarationCompanyAddress over its column width is refused 400 and nothing is written 0ms
+ ✓ tests/routes/estar-registration-correspondent.test.ts > PUT /api/510k/estar/registration — correspondent and declaration facts > the widths are the column widths, not smaller: the maximum length is accepted 1ms
+ ✓ tests/routes/estar-registration-correspondent.test.ts > GET /api/510k/estar/registration — the stored facts come back > returns the five facts on `registration` when the org has a row 1ms
+ ✓ tests/routes/estar-registration-correspondent.test.ts > GET /api/510k/estar/registration — the stored facts come back > an org that never registered gets registered:false and a null registration — nothing invented 0ms
+stdout | tests/routes/estar-submission-filing.test.ts
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/estar-submission-filing.test.ts
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/document-catalog.service.test.ts
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/document-catalog.service.test.ts
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/document-catalog.service.test.ts
+[database] Database connection successful
+
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > mergeSpans > unions touching and overlapping spans into one 2ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > mergeSpans > clamps to [0, charCount] and drops spans that vanish 1ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > mergeSpans > keeps genuinely disjoint spans apart 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > computeCoverage > reports exact gaps between reads, in order 1ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > computeCoverage > is complete only at exact full coverage — 99.9% is not "reviewed" 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > computeCoverage > double-reading does not inflate coverage 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > computeCoverage > a document with no text can never be "completely read" 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > assertCatalogWriteAllowed — the sampling gate > REFUSES a first-page-only read and names the exact unread ranges 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > assertCatalogWriteAllowed — the sampling gate > REFUSES a middle gap even when both ends were read 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > assertCatalogWriteAllowed — the sampling gate > REFUSES a document whose extraction produced nothing 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > assertCatalogWriteAllowed — the sampling gate > allows the write only once every character has been served 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > buildExtractionOutcome — honesty about extraction > an empty result is a FAILURE with a reason, never "extracted, 0 chars" 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > buildExtractionOutcome — honesty about extraction > a file type nothing could extract says exactly that 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > buildExtractionOutcome — honesty about extraction > a thrown extraction error is carried, not swallowed 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > buildExtractionOutcome — honesty about extraction > real text is recorded with its method, confidence and counts 1ms
+stdout | tests/routes/estar-entitlement-precheck.test.ts
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/estar-entitlement-precheck.test.ts
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > files with the artifact, the declared meaning and what was actually verified 8ms
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > records a second factor only when one was actually presented 1ms
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > refuses a filing with no artifact, and nothing is advanced 1ms
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > refuses a filing with no reason, and nothing is advanced 1ms
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > refuses a filing with a too-short reason, and nothing is advanced 1ms
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > refuses a filing whose re-authentication failed, before anything is advanced 1ms
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > has nowhere to put a client-supplied filing date 1ms
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > leaves every other transition unsigned and un-gated 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > admits the delivered bytes through the canonical vault ingest 4ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > versions by content, so the same bytes are idempotent and new bytes are a new version 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > says plainly when a program has no vault to retain into 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when storage refused the bytes — an unretained submission artifact is not delivered 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when the program is not ours — an unretained submission artifact is not delivered 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when different bytes already hold this version — an unretained submission artifact is not delivered 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when the ingest itself fails, rather than reporting a retention 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when the stored hash is not the delivered hash 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > listRetainedEstarArtifacts > reads this org only, only retained eSTARs, and only live rows 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > listRetainedEstarArtifacts > maps the row to what a signer needs to tell two eSTARs apart 1ms
+stderr | tests/routes/estar-entitlement-precheck.test.ts > GET /api/510k/estar/entitlement — failure envelopes > 500 ESTAR_ENTITLEMENT_FAILED when the evaluator throws; the body carries no error text
+{
+  "level": "error",
+  "message": "[510k-estar-routes] estar entitlement pre-check failure",
+  "context": {
+    "err": "boom: canceling statement due to statement timeout"
+  }
+}
+
+ ✓ tests/routes/estar-entitlement-precheck.test.ts > GET /api/510k/estar/entitlement — mode off evaluates nothing > ENTITLEMENTS_ENFORCE 'unset': 200 mode off, allowed null, and the evaluator is NEVER called 3ms
+ ✓ tests/routes/estar-entitlement-precheck.test.ts > GET /api/510k/estar/entitlement — mode off evaluates nothing > ENTITLEMENTS_ENFORCE '\'off\'': 200 mode off, allowed null, and the evaluator is NEVER called 1ms
+ ✓ tests/routes/estar-entitlement-precheck.test.ts > GET /api/510k/estar/entitlement — the verdict the gate would reach > mode 'on' + below tier: enforced true, allowed false, requiredTier from the evaluation — the POST would refuse 1ms
+ ✓ tests/routes/estar-entitlement-precheck.test.ts > GET /api/510k/estar/entitlement — the verdict the gate would reach > mode 'warn' + below tier: allowed false but enforced false — the surface must NOT lock 1ms
+ ✓ tests/routes/estar-entitlement-precheck.test.ts > GET /api/510k/estar/entitlement — the verdict the gate would reach > mode 'on' + entitled (via a pilot toggle): allowed true, reason null 0ms
+ ✓ tests/routes/estar-entitlement-precheck.test.ts > GET /api/510k/estar/entitlement — reason is copy or null, never query text > a failed tier lookup is reported as unknown (tier null, reason null) — the driver text never reaches the body 0ms
+ ✓ tests/routes/estar-entitlement-precheck.test.ts > GET /api/510k/estar/entitlement — reason is copy or null, never query text > an unknown tier with a copy reason ('organization not found') forwards that reason 0ms
+ ✓ tests/routes/estar-entitlement-precheck.test.ts > GET /api/510k/estar/entitlement — failure envelopes > 500 ESTAR_ENTITLEMENT_FAILED when the evaluator throws; the body carries no error text 1ms
+ ✓ tests/routes/estar-entitlement-precheck.test.ts > GET /api/510k/estar/entitlement — failure envelopes > 400 when no organization context resolves; nothing evaluated 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document — a chat upload id > is told it is the wrong store, and never that the file is missing 3ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document — a chat upload id > a genuinely unknown vault id still says plainly that the vault does not hold it 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > catalog_project_document — a chat upload id > is refused with the same honest reason, without a pointless lookup 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > files the upload through the SAME governed ingest the Vault surface uses 2ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > refuses a vault UUID — a document already in the vault needs no filing 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > asks which program rather than guessing one 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > relays a governed refusal with its reason, claiming nothing 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > the read refusal now names a tool that exists 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document hands back what was already learned > returns the comprehension record for a cataloged document 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document hands back what was already learned > omits it entirely for a document nobody has studied 1ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > cerv2-export-routes.ts must import or call a governed export function 1ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > 510k-estar-routes.ts must import or call a governed export function 1ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > ectd-export.ts must import or call a governed export function 0ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > rtm-export.ts must import or call a governed export function 0ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > docx-factory.ts must import or call a governed export function 0ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > ivdr-routes.ts must import or call a governed export function 0ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > all export route files exist in the inventory 1ms
+ ✓ tests/ci/export-governance-guard.test.ts > Export Governance Coverage Guard > exempted files have documented reasons 2ms
+stdout | server/services/vault/__tests__/document-chunking.service.test.ts
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/document-chunking.service.test.ts
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/document-chunking.service.test.ts
+[database] Database connection successful
+
+ ✓ server/services/vault/__tests__/document-chunking.service.test.ts > chunkExtractedText > returns nothing for empty text and one chunk for short text 3ms
+ ✓ server/services/vault/__tests__/document-chunking.service.test.ts > chunkExtractedText > every chunk is exactly its span of the source text 0ms
+ ✓ server/services/vault/__tests__/document-chunking.service.test.ts > chunkExtractedText > spans jointly cover the whole text — no tail is silently dropped 1ms
+ ✓ server/services/vault/__tests__/document-chunking.service.test.ts > chunkExtractedText > consecutive chunks overlap so boundary-straddling facts survive 0ms
+ ✓ server/services/vault/__tests__/document-chunking.service.test.ts > chunkExtractedText > prefers paragraph boundaries when one is available 0ms
+ ✓ server/services/vault/__tests__/document-chunking.service.test.ts > chunkExtractedText > still advances on pathological text with no boundaries at all 0ms
+ ✓ server/services/vault/__tests__/document-chunking.service.test.ts > chunkExtractedText > is deterministic 0ms
+stdout | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+[database] Database connection successful
+
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+{
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a suggested upload renders inside its taxonomy folder 4ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > an unfiled upload renders in the Unfiled queue — visible, never dropped 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > every preset folder of the view renders even when empty 3ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a confirmed upload counts as placed, and its leaf carries real provenance only 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a row with a folder but unfiled status stays in the queue (placement wins over stale folder) 1ms
+
+ Test Files  50 passed (50)
+      Tests  540 passed (540)
+   Start at  17:24:12
+   Duration  64.17s (transform 12.85s, setup 1.66s, import 36.92s, tests 139.49s, environment 5.13s)
+

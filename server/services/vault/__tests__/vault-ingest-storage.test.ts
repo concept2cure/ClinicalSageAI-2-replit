@@ -36,6 +36,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const { query, connect } = vi.hoisted(() => ({ query: vi.fn(), connect: vi.fn() }));
 vi.mock('../../../db.js', () => ({ pool: { query, connect } }));
 
+/* The role the tenant scope carries — what the Vault write check reads. A
+   member by default; the role cases below set it. */
+const { scope } = vi.hoisted(() => ({ scope: { role: 'member' as string | null } }));
+vi.mock('../../../db/tenantStore.js', () => ({ getTenantScope: () => scope }));
+
 const { put, del } = vi.hoisted(() => ({ put: vi.fn(), del: vi.fn() }));
 vi.mock('../../storage/index.js', () => ({
   getStorageProvider: () => ({ name: 'local', put, get: vi.fn(), delete: del }),
@@ -118,6 +123,7 @@ let recordRefersToStoredBytes = false;
 beforeEach(() => {
   vi.clearAllMocks();
   recordRefersToStoredBytes = false;
+  scope.role = 'member';
   isFolderInView.mockReturnValue(true);
   del.mockResolvedValue(true);
   // Program ownership check passes; the reference check answers per test.
@@ -183,6 +189,28 @@ describe('a storage failure refuses the upload', () => {
     const res = await ingestVaultDocument(args());
     expect(res).toMatchObject({ ok: false, status: 500, code: 'STORAGE_WRITE_FAILED' });
     expect(calls.some(c => /INSERT INTO vault\.documents/.test(c.sql))).toBe(false);
+  });
+});
+
+describe('a role that may not write the Vault is refused before anything is stored', () => {
+  /* AnA's file_chat_upload_to_vault, authoring's file-to-vault and eSTAR
+     retention reach this function with no route middleware in front of it.
+     The real-database proof is tests/db/vault-ingest.dbtest.ts. */
+  it('a viewer: 403, nothing stored, nothing written', async () => {
+    const { client, calls } = txClient();
+    connect.mockResolvedValue(client);
+    scope.role = 'viewer';
+    const res = await ingestVaultDocument(args());
+    expect(res).toMatchObject({ ok: false, status: 403, code: 'VAULT_WRITE_ROLE_REQUIRED' });
+    expect(put).not.toHaveBeenCalled();
+    expect(calls).toEqual([]);
+  });
+
+  it('no role at all: refused the same way', async () => {
+    scope.role = null;
+    const res = await ingestVaultDocument(args());
+    expect(res).toMatchObject({ ok: false, status: 403, code: 'VAULT_WRITE_ROLE_REQUIRED' });
+    expect(put).not.toHaveBeenCalled();
   });
 });
 
