@@ -79,7 +79,10 @@ output "resource_names" {
     alb_name        = local.short
     ecs_cluster     = local.long
     evidence_bucket = local.evidence_bucket
-    evidence_kms    = "alias/${local.short}-evidence"
+    evidence_kms    = module.evidence.names.key_alias
+    evidence_trail  = module.evidence.names.trail
+    evidence_logs   = module.evidence.names.log_group
+    evidence_role   = module.evidence.names.role
     frontend_bucket = local.frontend_bucket
     vault_bucket    = local.vault_bucket
     vault_kms       = local.vault_key_alias
