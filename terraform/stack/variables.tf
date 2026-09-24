@@ -250,3 +250,22 @@ variable "tags" {
   type    = map(string)
   default = {}
 }
+
+# ── GitHub deploy roles (github_deploy.tf) ───────────────────────────────────
+
+variable "github_repository" {
+  type        = string
+  description = "owner/repo whose Actions deploy this environment."
+  default     = "concept2cure/ClinicalSageAI-2-replit"
+}
+
+variable "github_build_subjects" {
+  type        = list(string)
+  description = "OIDC subjects (after repo:<repo>:) for the build role: jobs outside the GitHub environment. deploy-aws.yml runs on v* tags and on workflow_dispatch from the branch."
+  default     = ["ref:refs/tags/v*", "ref:refs/heads/concept2cure-v2"]
+}
+
+variable "create_github_oidc_provider" {
+  type        = bool
+  description = "Create the account's GitHub OIDC provider. One per account: set false for an environment that shares an account with one that already created it (the account-topology decision in docs/evidence/W2/2026-09-23b/README.md)."
+}
