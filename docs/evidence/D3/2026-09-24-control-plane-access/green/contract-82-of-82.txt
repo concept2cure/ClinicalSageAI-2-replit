@@ -1,0 +1,198 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T19:10:52.283Z","pid":7399,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T19:10:52.285Z","pid":7399,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T19:10:52.285Z","pid":7399,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a tenant administrator cannot read the kernel's cross-tenant log
+[database] Database connection successful
+
+stdout | tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a tenant administrator cannot read the kernel's cross-tenant log
+[database] Database connection successful { timestamp: '2026-09-24T19:10:52.849Z', poolSize: 1 }
+
+{"level":40,"time":"2026-09-24T19:10:52.867Z","pid":7399,"hostname":"vm","context":{"role":"admin","path":"/api/control-plane/kernel/recent?limit=500"},"msg":"[platform-admin-guard] Master Administration access denied"}
+{"level":40,"time":"2026-09-24T19:10:52.880Z","pid":7399,"hostname":"vm","context":{"role":"research_admin","path":"/api/control-plane/kernel/recent?limit=500"},"msg":"[platform-admin-guard] Master Administration access denied"}
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a tenant administrator cannot read the kernel's cross-tenant log 93ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a role that merely contains "admin" is not a platform role 8ms
+{"level":40,"time":"2026-09-24T19:10:52.889Z","pid":7399,"hostname":"vm","context":{"role":"admin","path":"/api/control-plane/kernel/recent/clear"},"msg":"[platform-admin-guard] Master Administration access denied"}
+{"level":40,"time":"2026-09-24T19:10:52.896Z","pid":7399,"hostname":"vm","context":{"role":"member","path":"/api/control-plane/kernel/recent?limit=500"},"msg":"[platform-admin-guard] Master Administration access denied"}
+{"level":40,"time":"2026-09-24T19:10:52.944Z","pid":7399,"hostname":"vm","context":{"role":"member","path":"/api/control-plane/kernel/recent?limit=500"},"msg":"[platform-admin-guard] Master Administration access denied"}
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a tenant administrator cannot clear the platform's kernel log 9ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > outside production, a member is not let in by default 6ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a member cannot read the organization's governed decisions 6ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > the organization's administrator can 26ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a platform operator reads the kernel log 5ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > monitoring that presents the ops token reads the kernel log 5ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a wrong ops token is refused 7ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > the non-production bypass still opens the control plane when it is asked for 5ms
+{"level":30,"time":"2026-09-24T19:10:54.233Z","pid":7417,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T19:10:54.235Z","pid":7417,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T19:10:54.235Z","pid":7417,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/two-tenant-application-rls.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/two-tenant-application-rls.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-24T19:10:54.466Z', poolSize: 1 }
+
+stdout | tests/db/two-tenant-application-rls.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > catalog and live session prove RLS is active for the runtime role 11ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal project-context endpoint cannot resolve Tenant B profile as Tenant A 131ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal regulatory-content CRUD endpoints hide and protect Tenant B rows 95ms
+stdout | tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: WITH CHECK rejects planting a row into tenant B without leaking details
+[database] Database connection successful { timestamp: '2026-09-24T19:10:54.947Z', poolSize: 2 }
+
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: list/filter, direct read and existence probe hide tenant B from A 41ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: update and delete of tenant B are indistinguishable not-found 29ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: WITH CHECK rejects planting a row into tenant B without leaking details 26ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: list/filter, direct read and existence probe hide tenant B from A 34ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: update and delete of tenant B are indistinguishable not-found 17ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: WITH CHECK rejects planting a row into tenant B without leaking details 7ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: list/filter, direct read and existence probe hide tenant B from A 24ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: update and delete of tenant B are indistinguishable not-found 16ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: WITH CHECK rejects planting a row into tenant B without leaking details 7ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: list/filter, direct read and existence probe hide tenant B from A 23ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: update and delete of tenant B are indistinguishable not-found 17ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: WITH CHECK rejects planting a row into tenant B without leaking details 7ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: list/filter, direct read and existence probe hide tenant B from A 24ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: update and delete of tenant B are indistinguishable not-found 19ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: WITH CHECK rejects planting a row into tenant B without leaking details 11ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: list/filter, direct read and existence probe hide tenant B from A 27ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: update and delete of tenant B are indistinguishable not-found 22ms
+{"level":30,"time":"2026-09-24T19:10:55.287Z","pid":7417,"hostname":"vm","context":{"code":"governed-fabric:269dcbf9-8da6-44c4-906d-1af9ab8d4892","project":903010},"msg":"[decision-record] Creating decision record"}
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: WITH CHECK rejects planting a row into tenant B without leaking details 7ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: list/filter, direct read and existence probe hide tenant B from A 23ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: update and delete of tenant B are indistinguishable not-found 17ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: WITH CHECK rejects planting a row into tenant B without leaking details 5ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > pooled session context is reset and the wrong-context negative control is observable 11ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the recording evaluator persists the caller's own decision through the app role 1507ms
+{"level":30,"time":"2026-09-24T19:10:56.791Z","pid":7417,"hostname":"vm","context":{"code":"governed-fabric:4518c204-4248-4c89-ad6e-ce1e9673260c","project":903010},"msg":"[decision-record] Creating decision record"}
+{"level":40,"time":"2026-09-24T19:10:56.793Z","pid":7417,"hostname":"vm","context":{"operation":"recordGovernedDecision","error":"new row violates row-level security policy for table \"decision_records\""},"msg":"[governance-observability] Governance persistence failure"}
+{"level":40,"time":"2026-09-24T19:10:56.793Z","pid":7417,"hostname":"vm","context":{"decisionId":"4518c204-4248-4c89-ad6e-ce1e9673260c","error":"new row violates row-level security policy for table \"decision_records\""},"msg":"[governed-decision-repository] Governed decision durable write failed"}
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > WITH CHECK refuses a decision the recorder files for another tenant 1505ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the simulate route records nothing, for any tenant 1512ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the reads show tenant A its decision and tenant B nothing of it 33ms
+{"level":30,"time":"2026-09-24T19:11:01.149Z","pid":7434,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T19:11:01.151Z","pid":7434,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T19:11:01.151Z","pid":7434,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/request-parent-boundary.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/request-parent-boundary.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/request-parent-boundary.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > an MDR event cannot be sourced from another tenant's complaint
+[database] Database connection successful { timestamp: '2026-09-24T19:11:03.408Z', poolSize: 1 }
+
+ ✓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > an MDR event cannot be sourced from another tenant's complaint 61ms
+ ✓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > notification preferences are written for the caller, whatever userId the body names 17ms
+ ✓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > an AnA profile edit writes the caller's profile, never a colleague's 15ms
+ ✓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > a task cannot be filed under another tenant's task 27ms
+ ✓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > a CRO study cannot be filed against another tenant's client 26ms
+ ✓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > the GSPR mapping tool cannot write against another tenant's program 342ms
+{"level":30,"time":"2026-09-24T19:11:05.283Z","pid":7451,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T19:11:05.285Z","pid":7451,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T19:11:05.285Z","pid":7451,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/report-os-tenant-from-session.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-24T19:11:05.443Z', poolSize: 1 }
+
+stdout | tests/db/report-os-tenant-from-session.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/report-os-tenant-from-session.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > GET /runs never lists another tenant's run, whatever org the query names 73ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > GET /runs lists the session tenant's own runs 13ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > POST /runs records for the session tenant and user, whatever the body names 57ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > POST /runs over another tenant's project is not found and computes nothing 12ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a program group is made in the session tenant by the session user, whatever the body names 17ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a program group over another tenant's project is refused 12ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > another tenant's program group cannot be changed 12ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > another tenant's program group cannot be snapshotted 10ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a bundle cannot take another tenant's run 18ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a bundle of the session tenant's own run is stored and records the session user 46ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a delivery cannot take another tenant's run 12ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a delivery of the session tenant's own run records the session user 15ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > correspondence cannot be captured into another tenant's project 10ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > correspondence is captured into the session tenant's own project and submission 23ms
+{"level":30,"time":"2026-09-24T19:11:07.457Z","pid":7466,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T19:11:07.458Z","pid":7466,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T19:11:07.459Z","pid":7466,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/project-scope-boundary.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-24T19:11:07.679Z', poolSize: 1 }
+
+stdout | tests/db/project-scope-boundary.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/project-scope-boundary.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a project intelligence profile cannot be filed against another tenant's project
+[database] Database connection successful { timestamp: '2026-09-24T19:11:08.353Z', poolSize: 2 }
+
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a project intelligence profile cannot be filed against another tenant's project 82ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > another tenant's project intelligence profile cannot be read 9ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > the caller's own project profile is still written and read 27ms
+{"level":30,"time":"2026-09-24T19:11:08.457Z","pid":7466,"hostname":"vm","context":{"tenantId":90301,"resourceId":"90301"},"msg":"[audit-service] [AUDIT] ana:update_project organizations"}
+{"level":30,"time":"2026-09-24T19:11:08.495Z","pid":7466,"hostname":"vm","context":{"tenantId":90301,"resourceId":"90301"},"msg":"[audit-service] [AUDIT] ana:update_project organizations"}
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > another tenant's client memory entry cannot be archived 9ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > another tenant's client memory entry cannot be marked verified 8ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > the caller's own memory entry is still archived 12ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > AnA's project update cannot hang a project from another tenant's project or workspace 33ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > AnA's project update cannot move a project to another tenant 43ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a resolution bundle cannot be linked to another tenant's plan 12ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a resolution bundle is still linked to the caller's own plan 16ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a corpus ingest cannot take over another org's report of the same study 8ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a corpus re-ingest still updates the org's own report in place 14ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > /api/users/me refuses a password-only token awaiting its second factor 8ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > /api/users/me still answers an access token 11ms
+{"level":30,"time":"2026-09-24T19:11:09.832Z","pid":7483,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T19:11:09.833Z","pid":7483,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T19:11:09.833Z","pid":7483,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/governed-edit-boundary.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-24T19:11:10.008Z', poolSize: 1 }
+
+stdout | tests/db/governed-edit-boundary.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/governed-edit-boundary.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a plan edit cannot approve or lock the plan, and the content edit still applies
+[database] Database connection successful { timestamp: '2026-09-24T19:11:10.302Z', poolSize: 2 }
+
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a plan edit cannot approve or lock the plan, and the content edit still applies 102ms
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a plan edit cannot move the plan to another org, and the content edit still applies 17ms
+{"level":30,"time":"2026-09-24T19:11:10.397Z","pid":7483,"hostname":"vm","context":{"userId":"247","tenantId":90301,"resourceId":"84cd2bb3-c1f4-4ff8-8dd1-ad596e91be4a"},"msg":"[audit-service] [AUDIT] post_market.document.update post_market_document"}
+{"level":30,"time":"2026-09-24T19:11:10.427Z","pid":7483,"hostname":"vm","context":{"userId":"247","tenantId":90301,"resourceId":"092a9d5d-8e38-4c0b-bc03-b54c38da6331"},"msg":"[audit-service] [AUDIT] post_market.document.update post_market_document"}
+{"level":30,"time":"2026-09-24T19:11:10.452Z","pid":7483,"hostname":"vm","context":{"userId":"247","tenantId":90301,"resourceId":"356eaa97-b165-4d09-a7a3-b3e69309ad58"},"msg":"[audit-service] [AUDIT] post_market.document.update post_market_document"}
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a plan edit cannot hang the plan from another org's program 14ms
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a modification edit cannot move it into another org's plan 13ms
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a post-market document edit cannot approve or lock it, and the content edit still applies 31ms
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a post-market document edit cannot move it to another org, and the content edit still applies 26ms
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a post-market document edit cannot hang it from another org's program 17ms
+{"level":30,"time":"2026-09-24T19:11:11.776Z","pid":7499,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T19:11:11.779Z","pid":7499,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T19:11:11.779Z","pid":7499,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/traceability-update-boundary.dbtest.ts > A traceability update cannot move an item across the tenant boundary (D3) > an update naming another org leaves the item in its own tenant, and still applies
+[database] Database connection successful
+
+stdout | tests/db/traceability-update-boundary.dbtest.ts > A traceability update cannot move an item across the tenant boundary (D3) > an update naming another org leaves the item in its own tenant, and still applies
+[database] Database connection successful { timestamp: '2026-09-24T19:11:12.022Z', poolSize: 1 }
+
+stdout | tests/db/traceability-update-boundary.dbtest.ts > A traceability update cannot move an item across the tenant boundary (D3) > an update naming another org leaves the item in its own tenant, and still applies
+[database] Database connection successful { timestamp: '2026-09-24T19:11:12.022Z', poolSize: 2 }
+
+ ✓ tests/db/traceability-update-boundary.dbtest.ts > A traceability update cannot move an item across the tenant boundary (D3) > an update naming another org leaves the item in its own tenant, and still applies 111ms
+ ✓ tests/db/traceability-update-boundary.dbtest.ts > A traceability update cannot move an item across the tenant boundary (D3) > an update cannot re-point the item at another tenant's QMP 37ms
+
+ Test Files  7 passed (7)
+      Tests  82 passed (82)
+   Start at  19:10:50
+   Duration  22.24s (transform 3.68s, setup 273ms, import 11.65s, tests 9.01s, environment 1ms)
+

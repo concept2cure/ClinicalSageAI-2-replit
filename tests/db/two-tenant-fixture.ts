@@ -72,10 +72,14 @@ export let savedQueryB: number;
  *
  * activeJwtSecret() resolves the secret the same way, at the same moment, as
  * the verifier that will check the token, so the two cannot drift.
+ *
+ * `role` is the claim the request's role is read from once membership is
+ * confirmed (establishRequestTenantScope sets req.userRole from it), so a case
+ * that needs an org administrator or a platform operator mints one here.
  */
-export function accessToken(userId: number, organizationId: number): string {
+export function accessToken(userId: number, organizationId: number, role = 'member'): string {
   return jwt.sign(
-    { type: 'access', userId, organizationId: String(organizationId), role: 'member' },
+    { type: 'access', userId, organizationId: String(organizationId), role },
     activeJwtSecret(),
     { expiresIn: '5m' }
   );
