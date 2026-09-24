@@ -405,6 +405,9 @@ async function handleCatalogProjectDocument(
       refused: true,
       reason: result.refusal,
       uncoveredRanges: result.coverage?.uncovered.slice(0, 10),
+      // A key_data refusal names every value the text does not state, by path,
+      // so the correction is to those values and nothing else.
+      ...(result.unverifiedKeyData ? { unverifiedKeyData: result.unverifiedKeyData } : {}),
     });
   }
   return JSON.stringify({

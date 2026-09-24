@@ -167,6 +167,24 @@ defect, one of them mine:**
 Both are scoped to the diff against the upstream ref, so they hold a lane to its
 own code. Both fail closed on an ESLint crash or an unreadable index.
 
+**For the model-governance lane (2026-09-24) — the free-text classifier cannot see most field names:**
+`server/services/ana/governed-write-tools.ts` finds tools that store model-written
+text with `FREE_TEXT_FIELD`, a fixed list of whole property names (`content`,
+`body`, … `summary_text`). `catalog_project_document` writes `summary`,
+`purpose`, `document_kind` and `key_data`; `place_project_document` writes
+`rationale` into a Part 11 row. Neither name is on the list, so both come back
+with no free-text fields, sit in neither `GOVERNED_CONTENT_WRITE_TOOLS` nor
+`FREE_TEXT_NON_GOVERNED_TOOLS`, and the approved-model gate never applies. The
+test that should catch it — "every tool with a free-text input is classified"
+(`governed-write-gate.test.ts`) — draws its population from the same regex, so
+it can only fail for a name already on the list. Widening the regex by
+`summary|purpose|rationale|document_kind` alone surfaces 12 unclassified tools
+(reproduced in a scratch probe, 2026-09-24). The fix is the classifier's, not a
+per-tool patch; this lane has not changed that file. Separately, `key_data`
+figures are now verified against the document text
+(`docs/evidence/MODEL-GOVERNANCE/2026-09-24-catalog-key-data/`), which covers
+the figures but not which model wrote the prose.
+
 **For the RAG / memory owners (2026-09-24) — filtered vector search can miss:**
 the vault reader's dense arm (`AdvancedRAGPipeline.searchVaultSimilar`) put its
 tenant predicate in the `WHERE` of `ORDER BY embedding <=> $q LIMIT k`. With an
