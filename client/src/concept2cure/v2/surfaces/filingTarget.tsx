@@ -19,6 +19,22 @@ import React from 'react';
 import { liveGetOrNull } from '../dataConnect';
 import { SC_SEQ_STATUS } from '../fixtures/submission';
 import { normalizeCtdCode, ctdFolderSlug } from '@shared/regulatory/section-code';
+import {
+  validateSectionCode,
+  vocabularyForApplicationType,
+  type PlacementVocabulary,
+} from '@shared/regulatory/placement-vocabulary';
+
+export { vocabularyForApplicationType };
+export type { PlacementVocabulary };
+
+/** How each non-CTD vocabulary is named to the person. */
+const VOCABULARY_LABEL: Record<Exclude<PlacementVocabulary, 'ctd'>, string> = {
+  estar: 'eSTAR',
+  ctis: 'CTIS',
+  irb: 'IRB',
+  registry: 'trial-registry',
+};
 
 /** GET /api/submissions → listSubmissions() rows (only what the picker reads). */
 export interface SubmissionRow {
@@ -245,7 +261,32 @@ export interface SectionCodeJudgement {
   note: { tone: 'ok' | 'err'; text: string } | null;
 }
 
-export function judgeSectionCode(section: string): SectionCodeJudgement {
+export function judgeSectionCode(section: string, vocabulary: PlacementVocabulary = 'ctd'): SectionCodeJudgement {
+  /* A submission's section codes come from its OWN vocabulary — the server has
+     judged placements that way since d0da50de (shared/regulatory/
+     placement-vocabulary.ts): an IRB package files on artifact slots, a 510(k)
+     on eSTAR sections. Applying the CTD rule to every submission refused every
+     valid IRB and eSTAR placement, and ACCEPTED a CTD code for an IRB package
+     that the server then refused. Non-CTD vocabularies are judged by the same
+     shared function the write boundary calls, and its message is shown as
+     written. The CTD branch below is unchanged, so a caller that passes no
+     vocabulary behaves exactly as before. */
+  if (vocabulary !== 'ctd') {
+    const trimmed = section.trim();
+    const verdict = validateSectionCode(section, vocabulary);
+    const label = VOCABULARY_LABEL[vocabulary];
+    return {
+      canonical: verdict.ok ? (verdict.canonical ?? trimmed) : null,
+      folder: null,
+      placeable: verdict.ok,
+      note:
+        trimmed === ''
+          ? null
+          : verdict.ok
+            ? { tone: 'ok', text: `Files at ${verdict.canonical ?? trimmed} in this ${label} submission.` }
+            : { tone: 'err', text: `This is an ${label} submission. ${verdict.message ?? ''}`.trim() },
+    };
+  }
   const canonical = normalizeCtdCode(section);
   const folder = ctdFolderSlug(section);
   const placeable = canonical !== null && canonical.includes('.');

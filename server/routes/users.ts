@@ -15,11 +15,56 @@ import {
   isReportPersona,
 } from '../../shared/constants/domain/report-personas';
 
-import { verifyLiveToken } from '../services/token-revocation';
+import { verifyLiveToken, SessionEndedError } from '../services/token-revocation';
+import { requireAccessTokenReason } from '../middleware/tokenType';
+import { pickWritable } from '../utils/authedOrgId';
 import { isDevAuthAllowed } from '../auth/dev-auth-policy.js';
 import { sessionMfaFields } from '../services/mfa-enrolment';
 
 const router = Router();
+
+/** What PATCH /me/notifications may write: the preferences, not the row's id or
+ *  owner. See the handler (ledger L195). */
+const NOTIFICATION_PREFERENCE_FIELDS = [
+  'emailMentions',
+  'emailShares',
+  'emailApprovals',
+  'emailCompliance',
+  'emailSystem',
+  'emailDigest',
+  'inAppMentions',
+  'inAppShares',
+  'inAppApprovals',
+  'inAppCompliance',
+  'inAppSystem',
+  'toastEnabled',
+  'toastDuration',
+  'toastPosition',
+  'quietHoursEnabled',
+  'quietHoursStart',
+  'quietHoursEnd',
+  'timezone',
+  'autoFollowOnInteraction',
+  'soundEnabled',
+  'metadata',
+] as const satisfies readonly (keyof typeof notificationPreferences.$inferInsert & string)[];
+
+/**
+ * A live ACCESS token's claims. verifyLiveToken alone accepts any live token
+ * signed with this key, a pre-MFA one included, and this router is mounted
+ * pre-auth-scoped, so the /api boundary in front of it may be in warn mode (it
+ * is outside production). Every handler here reads or writes the signed-in
+ * user's own account, which a password-only session must not reach (ledger
+ * L195). A refused token is a SessionEndedError, which isSessionError below
+ * already answers with 401.
+ */
+async function verifyAccessToken<T = unknown>(token: string): Promise<T> {
+  const decoded = await verifyLiveToken<T>(token);
+  if (requireAccessTokenReason(decoded as Parameters<typeof requireAccessTokenReason>[0])) {
+    throw new SessionEndedError();
+  }
+  return decoded;
+}
 
 /**
  * A bearer token that does not verify, has expired, or belongs to a session
@@ -76,7 +121,7 @@ router.get('/', async (req: Request, res: Response) => {
   }
 
   try {
-    const decoded = (await verifyLiveToken(token)) as { userId: string; email: string };
+    const decoded = (await verifyAccessToken(token)) as { userId: string; email: string };
     const user = await db
       .select()
       .from(users)
@@ -121,7 +166,7 @@ router.get('/me', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = (await verifyLiveToken(token)) as {
+    const decoded = (await verifyAccessToken(token)) as {
       userId: string;
       email: string;
       organizationId: string;
@@ -214,7 +259,7 @@ router.patch('/me', async (req: Request, res: Response) => {
       return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
     }
 
-    const decoded = (await verifyLiveToken(token)) as { userId: string };
+    const decoded = (await verifyAccessToken(token)) as { userId: string };
     const userId = parseInt(decoded.userId);
 
     const { name, title, department, bio, avatar, preferences } = req.body;
@@ -355,7 +400,7 @@ router.get('/me/preferences', async (req: Request, res: Response) => {
       return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
     }
 
-    const decoded = (await verifyLiveToken(token)) as { userId: string };
+    const decoded = (await verifyAccessToken(token)) as { userId: string };
     const userId = parseInt(decoded.userId);
     if (!Number.isFinite(userId)) {
       return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
@@ -398,7 +443,7 @@ router.put('/me/preferences', async (req: Request, res: Response) => {
       return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
     }
 
-    const decoded = (await verifyLiveToken(token)) as { userId: string };
+    const decoded = (await verifyAccessToken(token)) as { userId: string };
     const userId = parseInt(decoded.userId);
     if (!Number.isFinite(userId)) {
       return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
@@ -470,7 +515,7 @@ router.get('/me/persona', async (req: Request, res: Response) => {
     if (!token) {
       return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
     }
-    const decoded = (await verifyLiveToken(token)) as { userId: string; organizationId?: string };
+    const decoded = (await verifyAccessToken(token)) as { userId: string; organizationId?: string };
     const userId = parseInt(decoded.userId);
     const organizationId = parseInt(String(decoded.organizationId ?? ''));
     if (!Number.isFinite(userId) || !Number.isFinite(organizationId)) {
@@ -514,7 +559,7 @@ router.put('/me/persona', async (req: Request, res: Response) => {
     if (!token) {
       return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
     }
-    const decoded = (await verifyLiveToken(token)) as { userId: string; organizationId?: string };
+    const decoded = (await verifyAccessToken(token)) as { userId: string; organizationId?: string };
     const userId = parseInt(decoded.userId);
     const organizationId = parseInt(String(decoded.organizationId ?? ''));
     if (!Number.isFinite(userId) || !Number.isFinite(organizationId)) {
@@ -576,7 +621,7 @@ router.get('/me/notifications', async (req: Request, res: Response) => {
       return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
     }
 
-    const decoded = (await verifyLiveToken(token)) as { userId: string };
+    const decoded = (await verifyAccessToken(token)) as { userId: string };
     const userId = parseInt(decoded.userId);
 
     const prefs = await db
@@ -634,11 +679,16 @@ router.patch('/me/notifications', async (req: Request, res: Response) => {
       return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
     }
 
-    const decoded = (await verifyLiveToken(token)) as { userId: string };
+    const decoded = (await verifyAccessToken(token)) as { userId: string };
     const userId = parseInt(decoded.userId);
 
-    const updates = req.body;
-    updates.updatedAt = new Date();
+    // Preferences only. The body was written as-is, so `userId` in it moved this
+    // row onto another user, or created one for them (ledger L195): the table
+    // is keyed on user_id alone, with no organization column and no RLS policy.
+    const updates = {
+      ...pickWritable<typeof notificationPreferences.$inferInsert>(req.body, NOTIFICATION_PREFERENCE_FIELDS),
+      updatedAt: new Date(),
+    };
 
     // Upsert notification preferences
     const existing = await db
@@ -653,7 +703,7 @@ router.patch('/me/notifications', async (req: Request, res: Response) => {
         .set(updates)
         .where(eq(notificationPreferences.userId, userId));
     } else {
-      await db.insert(notificationPreferences).values({ userId, ...updates });
+      await db.insert(notificationPreferences).values({ ...updates, userId });
     }
 
     res.json({ success: true, message: 'Notification preferences updated' });
@@ -690,7 +740,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = (await verifyLiveToken(token)) as {
+    const decoded = (await verifyAccessToken(token)) as {
       userId: string;
       organizationId?: string;
     };

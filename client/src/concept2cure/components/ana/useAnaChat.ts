@@ -64,6 +64,7 @@ import {
   applyPlanEvent,
   closeProgress,
   readContextUsed,
+  readPlanSteps,
   settleRunningCalls,
   CLIENT_PHASE_LABELS,
 } from './anaProgress';
@@ -479,6 +480,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
             reasoning?: string;
             toolTrace?: Array<{ tool?: string; label?: string; status?: string; resultSummary?: string }>;
             humanControls?: Array<{ action?: string; message?: string }>;
+            plan?: unknown;
           } | null;
         }>;
       };
@@ -511,10 +513,15 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                   .filter(c => c?.action === 'interject' && typeof c.message === 'string' && c.message)
                   .map(c => c.message as string)
               : [];
+          // Her last declared plan, as the server validated it. Only the final
+          // list is persisted, not when each step changed, so no plan changes
+          // are invented for it.
+          const plan = m.role === 'assistant' ? readPlanSteps(m.metadata?.plan) : null;
           return {
             id: `t-${threadId}-${idx}`,
             role: m.role as 'user' | 'assistant',
             text: m.content as string,
+            ...(plan ? { plan } : {}),
             ...(reasoning ? { thinking: reasoning } : {}),
             ...(toolCalls.length > 0 ? { toolCalls } : {}),
             ...(interjections.length > 0 ? { interjections } : {}),

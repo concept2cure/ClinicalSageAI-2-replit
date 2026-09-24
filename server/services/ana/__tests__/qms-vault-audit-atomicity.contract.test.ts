@@ -231,33 +231,32 @@ describe('create_qms_document — controlled document creation is audited atomic
   });
 });
 
-describe('approve_qms_document — making a document effective is audited atomically', () => {
-  it('writes the approval AND its audit row (previously wrote NO audit at all)', async () => {
+describe('approve_qms_document — AnA cannot make a document effective', () => {
+  /* It used to: this block asserted that the tool wrote the approval and its
+     audit row. The audit row was right and the act was not. Making an SOP
+     effective is an electronic signature (§11.50), and the signed route
+     (POST /api/mdx/qms/documents/:id/approve, VSR-001 F-3) re-verifies the
+     signer's password and second factor, checks signing authority and refuses
+     the author. This tool did none of that and stamped the chat user as
+     approver. New-code audit 2026-09-24, finding 1. */
+  it('writes nothing and hands the approval to the person', async () => {
     const id = await effectiveDoc('SOP-200');
-    await pglite.query(`UPDATE qms_documents SET status = 'draft' WHERE id = $1`, [id]);
+    await pglite.query(
+      `UPDATE qms_documents SET status = 'draft', approver_id = NULL, approved_at = NULL WHERE id = $1`,
+      [id],
+    );
 
     const res = await call('approve_qms_document', { document_id: id, reason: 'QA approval complete.' });
-    expect(res.ok).toBe(true);
-    expect(res.status).toBe('effective');
-
-    const audits = await auditRows();
-    expect(audits).toHaveLength(1);
-    expect(audits[0].target).toBe(`qms-document:${id}`);
-    expect((await ledgerRows())[0].payload.kind).toBe('approve');
-  });
-
-  it('FAILS CLOSED — a broken audit write rolls the approval back', async () => {
-    const id = await effectiveDoc('SOP-201');
-    await pglite.query(`UPDATE qms_documents SET status = 'draft' WHERE id = $1`, [id]);
-    await breakAuditWrites();
-
-    const res = await call('approve_qms_document', { document_id: id });
-    expect(res.error).toMatch(/approve_qms_document failed/i);
+    expect(res.ok).toBe(false);
+    expect(res.signatureRequired).toBe(true);
+    expect(res.message).toMatch(/electronic signature/i);
 
     const doc = await docRow(id);
-    expect(doc.status, 'approval must not persist without its audit row').toBe('draft');
+    expect(doc.status, 'a chat turn must not make a controlled document effective').toBe('draft');
     expect(doc.approved_at).toBeNull();
+    expect(doc.approver_id).toBeNull();
     expect(await auditRows()).toHaveLength(0);
+    expect(await ledgerRows()).toHaveLength(0);
   });
 });
 

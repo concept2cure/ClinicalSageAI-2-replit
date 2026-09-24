@@ -84,6 +84,16 @@ export async function gracefulShutdown(
     console.warn('⚠️ Chain integrity monitor stop failed:', error.message);
   }
 
+  // AnA's run-control LISTEN connection is checked out for the life of the
+  // process, and pool.end() waits for every checked-out client — so without
+  // this the drain hung at the line below and never reached process.exit.
+  try {
+    const { stopRunControlListener } = await import('../services/ana/run-control.js');
+    stopRunControlListener();
+  } catch (error: any) {
+    console.warn('⚠️ AnA run-control listener stop failed:', error.message);
+  }
+
   try {
     if (ctx.pool) await ctx.pool.end();
     console.log('✅ Database connections closed');

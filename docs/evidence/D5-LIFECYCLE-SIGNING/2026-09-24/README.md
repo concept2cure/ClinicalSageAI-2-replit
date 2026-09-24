@@ -53,6 +53,28 @@ The test file's own history is part of the finding: it previously signed with no
 password and its request user had no `id`, so it asserted both defects as the
 working behaviour.
 
+## 3a. Follow-up the same day — the writer's refusals were 500s
+
+The 2026-09-24 re-verification of this work found that the placement path's own
+comment ("a refusal is a 409 … not a 500") held only for the binding's
+`LeafBindingRefusal`. The canonical leaf writer, `upsertLeaf`, refuses a frozen
+or dispatched sequence with `SubmissionError('INVALID_STATE', 'Sequence is frozen;
+its leaves are immutable.')`, and a missing one with `NOT_FOUND` — and the route
+let both fall through to `wrap`, i.e. **500**: "the server broke", for a request
+that named a sequence no one may write to.
+
+Now the route answers a `SubmissionError` with the status the canonical route
+(`routes/submissions.ts`) gives it, in the orchestrator's refusal shape. The
+status table moved next to the error class as `SUBMISSION_ERROR_STATUS`, typed
+over `SubmissionErrorCode` so a new code cannot ship unmapped, and
+`routes/submissions.ts` spreads it instead of restating it — one table, two
+readers.
+
+| | |
+|---|---|
+| `red/writer-refusal-status.txt` | Route without the mapping: **2 of 13 fail** — frozen sequence 500 (expected 409), missing sequence 500 (expected 404). |
+| `green/writer-refusal-status.txt` | 13 of 13. |
+
 ## 4. Not done here — owed
 
 - The recorded `ApprovalSignature` does not carry how identity was established

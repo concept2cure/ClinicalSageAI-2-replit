@@ -42,6 +42,8 @@ function refused(code: string, message: string) {
 
 const SUBMISSIONS = [
   { id: 4, title: 'BX-301 NDA', applicationType: 'nda', primaryRegion: 'us', status: 'open' },
+  { id: 5, title: 'BX-301 IRB package', applicationType: 'irb', primaryRegion: 'us', status: 'open' },
+  { id: 6, title: 'OR-801 510(k)', applicationType: '510k', primaryRegion: 'us', status: 'open' },
 ];
 const SEQUENCES = [
   { id: 9, sequenceNumber: '0000', type: 'original', status: 'draft', region: 'us' },
@@ -58,7 +60,7 @@ function mockApi(onPut: (body: unknown) => Response = () =>
   apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
     if (method !== 'GET') writes.push({ method, url, body });
     if (method === 'GET' && url === '/api/submissions') return ok(SUBMISSIONS);
-    if (method === 'GET' && url === '/api/submissions/4/sequences') return ok(SEQUENCES);
+    if (method === 'GET' && /^\/api\/submissions\/\d+\/sequences$/.test(url)) return ok(SEQUENCES);
     if (method === 'PUT' && /\/sequences\/\d+\/leaves$/.test(url)) return onPut(body);
     return ok({});
   });
@@ -72,9 +74,9 @@ const props = () => ({
 });
 
 /** Choose the submission, then type a section code. */
-async function fillTarget(section = '3.2.P.8.3') {
+async function fillTarget(section = '3.2.P.8.3', submissionId = '4') {
   const sub = await screen.findByLabelText('Target submission');
-  fireEvent.change(sub, { target: { value: '4' } });
+  fireEvent.change(sub, { target: { value: submissionId } });
   await screen.findByLabelText('Sequence');
   fireEvent.change(screen.getByLabelText(/^Section code/), { target: { value: section } });
 }
@@ -156,5 +158,71 @@ describe('the target picker is the shared one', () => {
     const frozen = screen.getByRole('option', { name: /0001/ }) as HTMLOptionElement;
     expect(frozen.disabled, 'a frozen sequence cannot take a leaf').toBe(true);
     expect(screen.getByText(/leaves are immutable/i)).toBeTruthy();
+  });
+});
+
+/**
+ * The section code is judged in the chosen submission's OWN vocabulary.
+ *
+ * This dialog applied the CTD rule to every submission, while the server has
+ * judged placements by submission type since d0da50de
+ * (shared/regulatory/placement-vocabulary.ts): an IRB package files on artifact
+ * slots, a 510(k) on eSTAR sections. So the dialog refused every valid IRB and
+ * eSTAR placement — and it did so as a malformed-code error, which read as the
+ * user's mistake rather than the dialog's.
+ */
+describe('the section code is judged in the submission type\'s vocabulary', () => {
+  it('files a vault document into an IRB package at an IRB slot', async () => {
+    mockApi((body) => ok({ id: 78, sectionCode: (body as { sectionCode: string }).sectionCode, title: 'ICF', lifecycleOp: 'new' }));
+    render(<VaultPlaceIntoSubmission {...props()} />);
+    await fillTarget('irb.consent', '5');
+    const btn = screen.getByRole('button', { name: /place into submission/i }) as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
+    fireEvent.click(btn);
+    await waitFor(() => expect(writes.some((w) => w.method === 'PUT')).toBe(true));
+    expect((writes.find((w) => w.method === 'PUT')!.body as Record<string, unknown>).sectionCode).toBe('irb.consent');
+  });
+
+  it('refuses a CTD code in an IRB package, naming the IRB vocabulary', async () => {
+    render(<VaultPlaceIntoSubmission {...props()} />);
+    await fillTarget('3.2.P.8.3', '5');
+    expect((screen.getByRole('button', { name: /place into submission/i }) as HTMLButtonElement).disabled).toBe(true);
+    expect(await screen.findByText(/This is an IRB submission. Section code "3.2.P.8.3" is not an IRB package slot/)).toBeTruthy();
+    expect(writes).toEqual([]);
+  });
+
+  it('files into a 510(k) at an eSTAR section', async () => {
+    mockApi((body) => ok({ id: 79, sectionCode: (body as { sectionCode: string }).sectionCode, title: 'DD', lifecycleOp: 'new' }));
+    render(<VaultPlaceIntoSubmission {...props()} />);
+    await fillTarget('estar.device-description', '6');
+    const btn = screen.getByRole('button', { name: /place into submission/i }) as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
+  });
+
+  it('stays strict for an eCTD submission: an IRB slot is not a CTD section', async () => {
+    render(<VaultPlaceIntoSubmission {...props()} />);
+    await fillTarget('irb.consent', '4');
+    expect((screen.getByRole('button', { name: /place into submission/i }) as HTMLButtonElement).disabled).toBe(true);
+  });
+});
+
+/**
+ * Only a PDF can be filed. The packager's vault branch refuses a leaf whose
+ * bytes do not begin with %PDF- (leaf-source-resolver.ts), so offering to file
+ * anything else — and then reporting "the vault copy is what will be assembled"
+ * — promised an assembly that could never happen.
+ */
+describe('a non-PDF is refused before anything is written', () => {
+  it('says why, and offers no placement', async () => {
+    render(<VaultPlaceIntoSubmission {...props()} mimeType="application/vnd.openxmlformats-officedocument.wordprocessingml.document" />);
+    expect(await screen.findByText(/Only a PDF can be filed/)).toBeTruthy();
+    expect(screen.queryByLabelText('Target submission')).toBeNull();
+    expect(writes).toEqual([]);
+  });
+
+  it('a PDF is filed as before', async () => {
+    render(<VaultPlaceIntoSubmission {...props()} mimeType="application/pdf" />);
+    await fillTarget();
+    expect((screen.getByRole('button', { name: /place into submission/i }) as HTMLButtonElement).disabled).toBe(false);
   });
 });

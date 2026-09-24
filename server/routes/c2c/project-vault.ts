@@ -80,7 +80,9 @@ interface VaultDoc {
   title: string;
   type: string;
   status: string;
-  pct: number;
+  /** Authoring completion, 0–100. Null for an upload: it has none, and a 0
+   *  there was read to AnA as "0% complete". */
+  pct: number | null;
   owner: string;
   ver: string;
   updated: string;
@@ -93,6 +95,10 @@ interface VaultDoc {
   docId?: string;
   sizeLabel?: string;
   hash?: string;
+  /** vault.documents.mime_type, verified against the magic bytes at ingest.
+   *  The surface offers "Place into submission" only for a PDF: the packager
+   *  refuses any other leaf. */
+  mimeType?: string | null;
   filing?: UploadFiling;
 }
 
@@ -145,7 +151,22 @@ interface VaultDisplayShape {
   program: string;
   spine: string;
   standard: string;
+  /** Documents, not tree leaves: the sum of `documentCounts` over the branches
+   *  that could be read. */
   documentCount: number;
+  /**
+   * What `documentCount` is made of. A branch that could not be read is null —
+   * unknown, not zero (`unavailable` says why). Absent on the pending-store
+   * answer, which has no branches at all.
+   */
+  documentCounts?: {
+    /** Authored documents — one each, however many rule-pack sections. */
+    authored: number;
+    /** Governed Module 3 (CMC) artifacts filed for the programme. */
+    cmcArtifacts: number | null;
+    /** Uploads in the whole programme, not the page the tree carries. */
+    uploads: number | null;
+  };
   tree: VaultFolder[];
   /** Honest signal: the c2c document store is not provisioned in this env. */
   pendingStore?: boolean;
@@ -421,8 +442,10 @@ export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
     title,
     type: uploadTypeLabel(row),
     status: placementStatus,
-    // Uploads have no authoring completion; 0 rather than a fabricated figure.
-    pct: 0,
+    // Uploads have no authoring completion, so no figure at all. It was 0,
+    // "rather than a fabricated figure" — but 0 is a figure, and AnA's screen
+    // context reported every uploaded file as 0% complete.
+    pct: null,
     owner: row.owner_name ?? '—',
     ver: row.version ? `v${row.version}` : '—',
     updated: relativeTime(row.updated_at),
@@ -432,6 +455,7 @@ export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
     docId: row.id,
     sizeLabel: size,
     hash: row.content_hash ?? undefined,
+    mimeType: row.mime_type ?? null,
     filing: {
       folderId: row.folder_id,
       folderLabel: folderLabel(view, row.folder_id),
@@ -602,16 +626,6 @@ function documentFolder(doc: DocRow, live: Map<string, LiveSection>): VaultFolde
     label: doc.title || doc.doc_type || 'Document',
     children,
   };
-}
-
-/** Count leaf VaultDocs in a tree. */
-function countDocs(nodes: Array<VaultFolder | VaultDoc>): number {
-  let n = 0;
-  for (const node of nodes) {
-    if ('children' in node) n += countDocs(node.children);
-    else n += 1;
-  }
-  return n;
 }
 
 /** Missing table (42P01) / missing column (42703) — a store this environment
@@ -949,10 +963,14 @@ export default function createProjectVaultRoutes(): Router {
       //    empty branch (which would read as "no documents"); any other
       //    failure is a real error and 500s.
       const unavailable: Array<{ branch: string; reason: string }> = [];
+      let cmcArtifacts: number | null = null;
       try {
         const m3 = await module3Branch(id, orgId);
         if (m3.kind === 'branch') {
           tree.push(m3.folder);
+          cmcArtifacts = m3.folder.children.length;
+        } else if (m3.kind === 'empty') {
+          cmcArtifacts = 0;
         } else if (m3.kind === 'unaddressable') {
           // Not an empty branch: the registry cannot be asked about this
           // program at all, and the resolver's own sentence says why and what
@@ -1143,11 +1161,22 @@ export default function createProjectVaultRoutes(): Router {
         }
       }
 
+      /* Documents, not leaves. `countDocs(tree)` counted every leaf: each
+         rule-pack section of an authored document (one IND with a 40-section
+         pack read "40 documents") and the capped uploads page rather than the
+         programme's uploads — beside a note saying the page was partial. */
+      const documentCounts = {
+        authored: docsRes.rows.length,
+        cmcArtifacts,
+        uploads: uploadsWindow ? uploadsWindow.total : null,
+      };
       const data: VaultDisplayShape = {
         program: project.name || 'Vault',
         spine: vaultViewLabel(view),
         standard: view,
-        documentCount: countDocs(tree),
+        documentCount:
+          documentCounts.authored + (documentCounts.cmcArtifacts ?? 0) + (documentCounts.uploads ?? 0),
+        documentCounts,
         tree,
         unfiledCount,
         ...(uploadsWindow ? { uploadsWindow } : {}),

@@ -12,7 +12,7 @@
 
 import { randomUUID } from 'crypto';
 import { pool } from '../../db.js';
-import auditService from '../auditService.js';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome.js';
 import { normalizeTemplateSpec, type TemplateSpec } from './templateSpec';
 
 export interface TemplateRecord {
@@ -63,36 +63,45 @@ async function auditTemplate(params: {
   action: string;
   templateId: string;
   reason: string;
-}): Promise<void> {
-  try {
-    // Routed through auditService rather than a raw INSERT: the raw form set
-    // no sha256_chain / payload_hash / hmac_seal, so the row landed IN
-    // audit_logs but OUTSIDE the hash chain — invisible to the chain verifier
-    // and therefore not tamper-evident. auditService computes the chain link
-    // and seal inside its own transaction (§11.10(e), §11.70).
-    // NOTE on `reason`: auditService writes the mutation-primitive `target`
-    // column (derived as resourceType:resourceId) but not `target_type` /
-    // `target_id` / `reason`. The reason is therefore carried in details →
-    // new_values rather than the dedicated column, so no governance data is
-    // lost by the switch. Promoting it to the column belongs with the
-    // governed-action path (recordGovernedAction) if template edits ever
-    // become governed mutations.
-    await auditService.logAction({
-      organizationId: params.orgId,
-      userId: params.userId,
-      action: params.action,
-      resourceType: 'c2c_template_specs',
-      resourceId: params.templateId,
-      details: {
-        targetType: 'template',
-        targetId: params.templateId,
-        reason: params.reason,
-      },
-    });
-  } catch (err: any) {
-    // Audit is best-effort here; never block the CRUD on a logging failure.
-    console.warn('[templateStore] audit write failed:', err?.message);
-  }
+}): Promise<AuditRowOutcome> {
+  // Routed through auditService rather than a raw INSERT: the raw form set
+  // no sha256_chain / payload_hash / hmac_seal, so the row landed IN
+  // audit_logs but OUTSIDE the hash chain — invisible to the chain verifier
+  // and therefore not tamper-evident. auditService computes the chain link
+  // and seal inside its own transaction (§11.10(e), §11.70).
+  // NOTE on `reason`: auditService writes the mutation-primitive `target`
+  // column (derived as resourceType:resourceId) but not `target_type` /
+  // `target_id` / `reason`. The reason is therefore carried in details →
+  // new_values rather than the dedicated column, so no governance data is
+  // lost by the switch. Promoting it to the column belongs with the
+  // governed-action path (recordGovernedAction) if template edits ever
+  // become governed mutations.
+  //
+  // WO-16C. This was `try { await auditService.logAction(…) } catch { warn }`
+  // with the outcome discarded. logAction RESOLVES `persisted: false` when the
+  // row is lost — it does not reject — so the catch could only ever see a bug,
+  // and every template change answered the same whether or not its row
+  // existed. `recordAuditRow` never throws either; it REPORTS, and each writer
+  // below hands the outcome to its caller. The change itself stands when the
+  // row is lost: an audit outage must not undo the edit.
+  return recordAuditRow({
+    organizationId: params.orgId,
+    userId: params.userId,
+    action: params.action,
+    resourceType: 'c2c_template_specs',
+    resourceId: params.templateId,
+    details: {
+      targetType: 'template',
+      targetId: params.templateId,
+      reason: params.reason,
+    },
+  });
+}
+
+/** A template write's result and what happened to its §11.10(e) audit row. */
+export interface TemplateWrite {
+  record: TemplateRecord;
+  auditTrail: AuditRowOutcome;
 }
 
 export interface CreateTemplateInput {
@@ -109,7 +118,7 @@ export interface CreateTemplateInput {
   verified?: boolean;
 }
 
-export async function createTemplate(input: CreateTemplateInput): Promise<TemplateRecord> {
+export async function createTemplate(input: CreateTemplateInput): Promise<TemplateWrite> {
   const id = `tpl_${randomUUID().replace(/-/g, '')}`;
   const spec = normalizeTemplateSpec(input.spec);
   const res = await pool.query(
@@ -133,14 +142,14 @@ export async function createTemplate(input: CreateTemplateInput): Promise<Templa
       input.userId,
     ],
   );
-  await auditTemplate({
+  const auditTrail = await auditTemplate({
     orgId: input.orgId,
     userId: input.userId,
     action: 'c2c.template.create',
     templateId: id,
     reason: `Created template "${input.name}"`,
   });
-  return rowToRecord(res.rows[0]);
+  return { record: rowToRecord(res.rows[0]), auditTrail };
 }
 
 export async function listTemplates(
@@ -181,7 +190,7 @@ export async function updateTemplate(
   userId: number,
   id: string,
   patch: UpdateTemplateInput,
-): Promise<TemplateRecord | null> {
+): Promise<TemplateWrite | null> {
   const existing = await getTemplate(orgId, id);
   if (!existing) return null;
 
@@ -198,34 +207,34 @@ export async function updateTemplate(
     [id, orgId, name, description, JSON.stringify(spec), verified],
   );
   if (res.rows.length === 0) return null;
-  await auditTemplate({
+  const auditTrail = await auditTemplate({
     orgId,
     userId,
     action: 'c2c.template.update',
     templateId: id,
     reason: `Updated template "${name}"`,
   });
-  return rowToRecord(res.rows[0]);
+  return { record: rowToRecord(res.rows[0]), auditTrail };
 }
 
 export async function deactivateTemplate(
   orgId: number,
   userId: number,
   id: string,
-): Promise<boolean> {
+): Promise<{ auditTrail: AuditRowOutcome } | null> {
   const res = await pool.query(
     `UPDATE c2c_template_specs SET is_active = false, updated_at = now()
       WHERE id = $1 AND org_id = $2 AND is_active = true
       RETURNING id`,
     [id, orgId],
   );
-  if (res.rows.length === 0) return false;
-  await auditTemplate({
+  if (res.rows.length === 0) return null;
+  const auditTrail = await auditTemplate({
     orgId,
     userId,
     action: 'c2c.template.deactivate',
     templateId: id,
     reason: 'Deactivated template',
   });
-  return true;
+  return { auditTrail };
 }

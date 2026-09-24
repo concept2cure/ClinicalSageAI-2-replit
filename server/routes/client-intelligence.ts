@@ -34,10 +34,36 @@ import {
   supersedeClientMemoryEntry,
   supersedeProjectMemoryEntry,
   getSharedMemoryPool,
+  isOwnProject,
 } from '../services/client-intelligence-memory';
 import { buildMemoryContextForChat } from '../services/memory-context-assembler.js';
 
 const router = Router();
+
+/**
+ * Every /project/:projectId route acts on one project, so prove it is the
+ * caller's before any of them runs, as server/api/cmc/projectRoutes.ts does.
+ * These read and wrote by project id alone: GET /profile returned any project's
+ * intelligence profile, and POST /profile — under RLS — filed a profile in the
+ * caller's org pointing at another tenant's project (a foreign key, which RLS
+ * does not check); without RLS it overwrote theirs (ledger L195).
+ */
+router.param('projectId', async (req, res, next, raw) => {
+  let organizationId: number;
+  try {
+    ({ organizationId } = getRequestContext(req));
+  } catch {
+    return sendError(res, 403, 'Organization context required');
+  }
+  try {
+    if (!(await isOwnProject(organizationId, parseInt(String(raw), 10)))) {
+      return sendError(res, 404, 'Project not found');
+    }
+    return next();
+  } catch (err) {
+    return next(err);
+  }
+});
 
 // ── Response envelope helpers (governed pattern per CLAUDE.md §Code Standards) ──
 function sendSuccess(res: Response, data: Record<string, unknown> = {}, status = 200) {
@@ -353,10 +379,12 @@ router.get('/memory/context-assemble', async (req: Request, res: Response) => {
  */
 router.post('/memory/:id/verify', async (req: Request, res: Response) => {
   try {
-    const { userId } = getRequestContext(req);
+    const { organizationId, userId } = getRequestContext(req);
     const entryId = parseInt(String(req.params.id), 10);
 
-    await verifyMemoryEntry(entryId, userId);
+    if (!(await verifyMemoryEntry(entryId, organizationId, userId))) {
+      return sendError(res, 404, 'Memory entry not found');
+    }
     return sendSuccess(res);
   } catch (err: any) {
     console.error('[ClientIntelligence] POST /memory/:id/verify error:', err);
@@ -390,8 +418,11 @@ router.post('/memory/:id/supersede', async (req: Request, res: Response) => {
  */
 router.delete('/memory/:id', async (req: Request, res: Response) => {
   try {
+    const { organizationId } = getRequestContext(req);
     const entryId = parseInt(String(req.params.id), 10);
-    await archiveMemoryEntry(entryId);
+    if (!(await archiveMemoryEntry(entryId, organizationId))) {
+      return sendError(res, 404, 'Memory entry not found');
+    }
     return sendSuccess(res);
   } catch (err: any) {
     console.error('[ClientIntelligence] DELETE /memory/:id error:', err);
@@ -430,7 +461,8 @@ router.get('/context', async (req: Request, res: Response) => {
 router.get('/project/:projectId/profile', async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(String(req.params.projectId), 10);
-    const profile = await getProjectIntelligence(projectId);
+    const { organizationId } = getRequestContext(req);
+    const profile = await getProjectIntelligence(projectId, organizationId);
     return sendSuccess(res, { profile });
   } catch (err: any) {
     console.error('[ProjectIntelligence] GET profile error:', err);
@@ -472,7 +504,7 @@ router.post(
       }
 
       // Get or create project profile
-      let profile = await getProjectIntelligence(projectId);
+      let profile = await getProjectIntelligence(projectId, organizationId);
       if (!profile) {
         profile = await upsertProjectIntelligence(projectId, organizationId, {}, userId);
       }
@@ -499,8 +531,9 @@ router.post(
  */
 router.get('/project/:projectId/documents', async (req: Request, res: Response) => {
   try {
+    const { organizationId } = getRequestContext(req);
     const projectId = parseInt(String(req.params.projectId), 10);
-    const profile = await getProjectIntelligence(projectId);
+    const profile = await getProjectIntelligence(projectId, organizationId);
     if (!profile) return sendSuccess(res, { documents: [] });
 
     const documents = await getProjectIngestedDocuments(profile.id);
@@ -517,8 +550,9 @@ router.get('/project/:projectId/documents', async (req: Request, res: Response) 
  */
 router.get('/project/:projectId/memory', async (req: Request, res: Response) => {
   try {
+    const { organizationId } = getRequestContext(req);
     const projectId = parseInt(String(req.params.projectId), 10);
-    const profile = await getProjectIntelligence(projectId);
+    const profile = await getProjectIntelligence(projectId, organizationId);
     if (!profile) return sendSuccess(res, { entries: [], totalCount: 0 });
 
     const category = req.query.category as string | undefined;
@@ -545,7 +579,7 @@ router.get('/project/:projectId/memory/semantic-search', async (req: Request, re
       return sendError(res, 400, 'query is required');
     }
 
-    const profile = await getProjectIntelligence(projectId);
+    const profile = await getProjectIntelligence(projectId, organizationId);
     if (!profile) return sendSuccess(res, { entries: [], totalCount: 0, query });
 
     const category = req.query.category as string | undefined;
@@ -621,8 +655,9 @@ router.get('/memory/shared-pool', async (req: Request, res: Response) => {
  */
 router.get('/project/:projectId/context', async (req: Request, res: Response) => {
   try {
+    const { organizationId } = getRequestContext(req);
     const projectId = parseInt(String(req.params.projectId), 10);
-    const context = await buildProjectIntelligenceContext(projectId);
+    const context = await buildProjectIntelligenceContext(projectId, organizationId);
     return sendSuccess(res, { context });
   } catch (err: any) {
     console.error('[ProjectIntelligence] GET context error:', err);

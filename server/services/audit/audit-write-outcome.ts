@@ -12,8 +12,8 @@
  * with two possible outcomes and one observable result: the caller, its caller,
  * the HTTP envelope and the surface are byte-identical whether the §11.10(e)
  * record exists or does not. `recordAuditRow` is the one shape this repository
- * uses instead, and `ci:void-audit-write` is the gate that keeps the population
- * of unconverted sites shrinking.
+ * uses instead, and `ci:discarded-audit-write` is the gate that keeps the
+ * population of unconverted sites shrinking.
  *
  * HISTORY. This began as a private helper inside pdev-workflow-bridge
  * (WO-16C #133), moved to server/services/pdev/pdev-audit-record.ts when
@@ -84,29 +84,32 @@ const AUDIT_NOT_PERSISTED_MESSAGE =
 /** The object call form of `auditService.logAction` (its entry type is not exported). */
 type AuditEntry = Extract<Parameters<typeof auditService.logAction>[0], object>;
 
+/** What `auditService.logAction` (and `logAuditEvent`, which forwards to it) resolves. */
+type AuditWriteResultLike = Awaited<ReturnType<typeof auditService.logAction>>;
+
 /**
- * Write one audit row and REPORT what happened to it. Never throws: an
- * audit-trail outage must not break the transition it records, which is the
- * same policy `logAction` holds — the difference is that the caller is now
- * told, and tells its own caller.
+ * Turn an already-resolved audit write into the outcome a caller carries, and
+ * log a lost or tamper-proof-only row the same way `recordAuditRow` does.
+ *
+ * For writers that cannot go through `recordAuditRow` because they add their
+ * own envelope before forwarding to `logAction` — `logAuditEvent`
+ * (services/audit/auditLogger.ts) records `<category>.<action>` with category
+ * and severity details, and switching such a site to `recordAuditRow` would
+ * change the action string its existing rows are queried by. Pass what it
+ * resolved; `thrown` is for a caller that caught a rejection itself.
  */
-export async function recordAuditRow(entry: AuditEntry): Promise<AuditRowOutcome> {
-  let result: Awaited<ReturnType<typeof auditService.logAction>> | undefined;
-  let thrown: string | undefined;
-  try {
-    result = await auditService.logAction(entry);
-  } catch (err) {
-    // Documented never to happen; if it ever does, it is still not a reason to
-    // report an audit row that does not exist.
-    thrown = err instanceof Error ? err.message : String(err);
-  }
+export function auditRowOutcomeFrom(
+  result: AuditWriteResultLike | undefined,
+  context: { action: string; resourceType?: string; resourceId?: unknown; thrown?: string },
+): AuditRowOutcome {
+  const { action, resourceType, resourceId, thrown } = context;
   if (result?.persisted) {
     // `persisted` is `chained || tamperProof`. Carry which, because only the
     // chained audit_logs row is the one a customer reads back or exports.
     if (!result.chained) {
       logger.warn(
         'Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist',
-        { action: entry.action, resourceType: entry.resourceType, resourceId: entry.resourceId },
+        { action, resourceType, resourceId },
       );
     }
     return { persisted: true, chained: result.chained };
@@ -118,16 +121,55 @@ export async function recordAuditRow(entry: AuditEntry): Promise<AuditRowOutcome
     'auditService.logAction reported no durable store; the audit row cannot be shown to exist';
   logger.error(
     'Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist',
-    {
-      action: entry.action,
-      resourceType: entry.resourceType,
-      resourceId: entry.resourceId,
-      reason,
-    },
+    { action, resourceType, resourceId, reason },
   );
   // `reason` is deliberately NOT returned: it is the store's own text and the
   // envelope is forwarded to a tenant client. Find it by the log line above,
   // keyed on the action and resource id repeated here.
+  return unpersistedAuditRow();
+}
+
+/**
+ * The wire shape of a lost row, for a writer that has already logged its own
+ * failure and only needs to say so in the canonical form the client reads
+ * (`logAuditEntry` in routes/c2c/shared.ts). Logs nothing.
+ */
+export function unpersistedAuditRow(): AuditRowOutcome {
   return { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message: AUDIT_NOT_PERSISTED_MESSAGE };
 }
 
+/**
+ * Write one audit row and REPORT what happened to it. Never throws: an
+ * audit-trail outage must not break the transition it records, which is the
+ * same policy `logAction` holds — the difference is that the caller is now
+ * told, and tells its own caller.
+ */
+export async function recordAuditRow(entry: AuditEntry): Promise<AuditRowOutcome> {
+  let result: AuditWriteResultLike | undefined;
+  let thrown: string | undefined;
+  try {
+    result = await auditService.logAction(entry);
+  } catch (err) {
+    // Documented never to happen; if it ever does, it is still not a reason to
+    // report an audit row that does not exist.
+    thrown = err instanceof Error ? err.message : String(err);
+  }
+  return auditRowOutcomeFrom(result, {
+    action: entry.action,
+    resourceType: entry.resourceType,
+    resourceId: entry.resourceId,
+    thrown,
+  });
+}
+
+/**
+ * One outcome for an act that wrote several audit rows: persisted only when
+ * every row was, chained only when every row was. A lost row anywhere in the
+ * act is reported, never hidden behind a later row that happened to land.
+ */
+export function combineAuditRowOutcomes(first: AuditRowOutcome, ...rest: AuditRowOutcome[]): AuditRowOutcome {
+  const all = [first, ...rest];
+  const lost = all.find((o) => !o.persisted);
+  if (lost) return lost;
+  return { persisted: true, chained: all.every((o) => o.persisted && o.chained) };
+}

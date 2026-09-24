@@ -15,6 +15,11 @@ locals {
   origin_secret_header_name = "X-Origin-Verify"
 }
 
+# Internet-facing on purpose: it is CloudFront's origin, and CloudFront reaches
+# custom origins over the internet. What reaches it is limited below (B9): the
+# security group admits CloudFront's origin-facing addresses alone, and the
+# listener forwards only requests carrying the origin secret.
+#trivy:ignore:AWS-0053
 resource "aws_lb" "this" {
   name               = var.name
   internal           = false
@@ -24,6 +29,9 @@ resource "aws_lb" "this" {
   subnets         = var.public_subnet_ids
 
   enable_deletion_protection = var.deletion_protection
+
+  # A header whose name is not a valid HTTP token never reaches the API.
+  drop_invalid_header_fields = true
 
   access_logs {
     bucket  = var.access_logs_bucket

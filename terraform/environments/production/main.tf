@@ -21,7 +21,9 @@ terraform {
     key            = "production/terraform.tfstate"
     region         = "us-east-1"
     dynamodb_table = "c2c-terraform-lock"
-    encrypt        = true
+    # No `encrypt = true`: without a kms_key_id it requests SSE-S3 on every write,
+    # overriding the bucket's customer-managed key, and the bucket refuses it
+    # (terraform/bootstrap, TRIVY-01).
   }
 }
 
@@ -72,6 +74,9 @@ module "stack" {
   domain_aliases             = var.domain_aliases
   cloudfront_origin_secret   = var.cloudfront_origin_secret
 
+  # The account's GitHub OIDC provider is created here.
+  create_github_oidc_provider = true
+
   jwt_secret                      = var.jwt_secret
   refresh_token_secret            = var.refresh_token_secret
   mfa_encryption_key              = var.mfa_encryption_key
@@ -79,6 +84,13 @@ module "stack" {
   audit_hmac_secret               = var.audit_hmac_secret
   connector_encryption_key        = var.connector_encryption_key
   openai_api_key                  = var.openai_api_key
+
+  # Login OTP delivery; without it no one can sign in.
+  smtp_host = var.smtp_host
+  smtp_user = var.smtp_user
+  smtp_pass = var.smtp_pass
+  smtp_from = var.smtp_from
+
   ai_provider_placement_approvals = var.ai_provider_placement_approvals
 }
 
@@ -123,4 +135,17 @@ output "release_signing_key_arn" {
 # Review before apply: what the API task definition will carry.
 output "api_task_boot_contract" {
   value = module.stack.api_task_boot_contract
+}
+
+# The pipeline's repository secrets (terraform.tfvars.example says which is which).
+output "github_deploy_role_arn" {
+  value = module.stack.github_deploy_role_arn
+}
+
+output "github_build_role_arn" {
+  value = module.stack.github_build_role_arn
+}
+
+output "cloudfront_distribution_id" {
+  value = module.stack.cloudfront_distribution_id
 }

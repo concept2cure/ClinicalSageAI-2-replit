@@ -41,6 +41,7 @@ import {
   getOrganizationId,
   getUserId,
   logAuditEntry,
+  auditTrailFromEntry,
   logConcept2cureError,
   paramStr,
   sanitizeContent,
@@ -2943,7 +2944,8 @@ router.put(
         },
       });
 
-      await logAuditEntry(
+      // WO-16C: the outcome was discarded; it is now answered as `auditTrail`.
+      const statusAudit = await logAuditEntry(
         req,
         requiresAttestation ? 'APPROVE' : 'UPDATE',
         'artifact_status',
@@ -2987,6 +2989,7 @@ router.put(
         publishedVersionId: updated.publishedVersionId,
         publishedAt: updated.publishedAt,
         enforcedRole: userRole,
+        auditTrail: auditTrailFromEntry(statusAudit),
         signature: signatureRecord,
         snapshot: snapshotRecord,
       });

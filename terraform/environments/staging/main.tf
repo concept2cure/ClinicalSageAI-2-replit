@@ -21,7 +21,9 @@ terraform {
     key            = "staging/terraform.tfstate"
     region         = "us-east-1"
     dynamodb_table = "c2c-terraform-lock"
-    encrypt        = true
+    # No `encrypt = true`: without a kms_key_id it requests SSE-S3 on every write,
+    # overriding the bucket's customer-managed key, and the bucket refuses it
+    # (terraform/bootstrap, TRIVY-01).
   }
 }
 
@@ -74,6 +76,10 @@ module "stack" {
   domain_aliases             = var.domain_aliases
   cloudfront_origin_secret   = var.cloudfront_origin_secret
 
+  # true while staging has its own AWS account (the recommended account topology);
+  # set false if it shares production's account, which already created the provider.
+  create_github_oidc_provider = true
+
   jwt_secret                      = var.jwt_secret
   refresh_token_secret            = var.refresh_token_secret
   mfa_encryption_key              = var.mfa_encryption_key
@@ -81,6 +87,13 @@ module "stack" {
   audit_hmac_secret               = var.audit_hmac_secret
   connector_encryption_key        = var.connector_encryption_key
   openai_api_key                  = var.openai_api_key
+
+  # Login OTP delivery; without it no one can sign in.
+  smtp_host = var.smtp_host
+  smtp_user = var.smtp_user
+  smtp_pass = var.smtp_pass
+  smtp_from = var.smtp_from
+
   ai_provider_placement_approvals = var.ai_provider_placement_approvals
 }
 

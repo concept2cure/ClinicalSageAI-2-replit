@@ -1,0 +1,23 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/startup/__tests__/document-catalog-bootstrap.test.ts
+[database] Database connection successful
+
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > describeCatalogToggles > names both feature keys, so the line is searchable against the toggle table 1ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > describeCatalogToggles > when off, says what is inactive AND both ways to turn it on 1ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > describeCatalogToggles > does not claim every tenant is off — a per-org enablement is invisible here 0ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > describeCatalogToggles > distinguishes an env override from a toggle so the source of ON is not guessed at 0ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > describeCatalogToggles > says passage search has no index when the catalog is on but chunking is not 0ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > describeCatalogToggles > confirms the whole surface when both are on 0ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > a store it could not read is not a feature somebody turned off > says UNKNOWN, and says the flag was not turned off 0ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > a store it could not read is not a feature somebody turned off > an ordinary off still reads as off, with the two ways to turn it on 0ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > a store it could not read is not a feature somebody turned off > one unreadable flag is enough to stop claiming the other is simply off 0ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > bootstrapDocumentCatalogToggles — a row it could not create is said, not swallowed > warns with the key and the reason when a toggle row cannot be created 1ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  18:25:31
+   Duration  1.55s (transform 698ms, setup 71ms, import 1.23s, tests 8ms, environment 0ms)
+

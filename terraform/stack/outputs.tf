@@ -57,11 +57,12 @@ output "release_signing_key_arn" {
 # not exist (tests/names.tftest.hcl reads the workflow and checks).
 output "deploy_targets" {
   value = {
-    ECR_API_REPO           = "${local.short}-api"
-    ECS_CLUSTER            = module.ecs.cluster_name
-    ECS_API_SERVICE        = module.ecs.api_service_name
-    ECS_API_TASK_FAMILY    = "${local.long}-api"
-    ECS_API_CONTAINER_NAME = module.ecs.api_container.name
+    ECR_API_REPO            = "${local.short}-api"
+    ECS_CLUSTER             = module.ecs.cluster_name
+    ECS_API_SERVICE         = module.ecs.api_service_name
+    ECS_API_TASK_FAMILY     = "${local.long}-api"
+    ECS_API_CONTAINER_NAME  = module.ecs.api_container.name
+    ECS_MIGRATE_TASK_FAMILY = local.migrate_family
     # The configured name, which is what S3 creates; the module's output is
     # the bucket's computed id, unknown until apply.
     FRONTEND_BUCKET = local.frontend_bucket
@@ -78,8 +79,37 @@ output "resource_names" {
     alb_name        = local.short
     ecs_cluster     = local.long
     evidence_bucket = local.evidence_bucket
-    evidence_kms    = "alias/${local.short}-evidence"
+    evidence_kms    = module.evidence.names.key_alias
+    evidence_trail  = module.evidence.names.trail
+    evidence_logs   = module.evidence.names.log_group
+    evidence_role   = module.evidence.names.role
     frontend_bucket = local.frontend_bucket
+    vault_bucket    = local.vault_bucket
+    vault_kms       = local.vault_key_alias
     signing_alias   = local.release_signing_key_alias
+  }
+}
+
+# Repository secrets for the pipeline (github_deploy.tf).
+output "github_deploy_role_arn" {
+  description = "AWS_DEPLOY_ROLE_ARN: jobs in the GitHub environment (migrate, deploy-api, deploy-frontend, provision)."
+  value       = module.github_deploy.deploy_role_arn
+}
+
+output "github_build_role_arn" {
+  description = "AWS_BUILD_ROLE_ARN: build-push and smoke-test, which run outside the environment."
+  value       = module.github_deploy.build_role_arn
+}
+
+output "cloudfront_distribution_id" {
+  description = "CLOUDFRONT_DISTRIBUTION_ID: deploy-frontend invalidates it, smoke-test reads its domain."
+  value       = module.cdn.distribution_id
+}
+
+output "github_deploy_policies" {
+  description = "Both roles' permissions (JSON), read by scripts/ops/terraform-preflight-proof.mjs to check them against every AWS call the workflows make."
+  value = {
+    deploy = module.github_deploy.deploy_policy
+    build  = module.github_deploy.build_policy
   }
 }
