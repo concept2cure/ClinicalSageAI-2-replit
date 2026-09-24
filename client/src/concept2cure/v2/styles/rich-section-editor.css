@@ -24,7 +24,7 @@
 .rse-review-h { display:flex; gap:10px; padding:6px 12px; font-size:11px; font-weight:600; color:var(--text-300); }
 .rse-review-row { display:flex; align-items:center; gap:8px; padding:4px 12px; font-size:12px; }
 .rse-review-jump { display:flex; align-items:baseline; gap:8px; flex:1; min-width:0; background:none; border:none; cursor:pointer; text-align:left; padding:0; }
-.rse-review-kind { font-size:10px; font-weight:700; text-transform:uppercase; }
+.rse-review-kind { font-size:10px; font-weight:600; text-transform:uppercase; }
 .rse-review-kind[data-kind="insertion"] { color:var(--success); }
 .rse-review-kind[data-kind="deletion"] { color:var(--error); }
 .rse-review-by { font-weight:600; color:var(--text-200); white-space:nowrap; }
