@@ -62,6 +62,7 @@ vi.mock('../../services/endpoint-recommender-service.js', () => ({ getEndpointRe
 vi.mock('../../services/precedent-engine.js', () => ({ precedentEngine: {} }));
 
 import express from 'express';
+import { API_KEY_SCOPES } from '../../../shared/schema/api-keys';
 import request from 'supertest';
 
 const DOC_ID = '2f1c9d8e-0b3a-4c5d-8e7f-a1b2c3d4e5f6';
@@ -191,18 +192,47 @@ describe('fetch by id', () => {
 });
 
 describe('the API describes itself truthfully', () => {
-  it('every GRANTABLE scope is advertised and required by a real endpoint', async () => {
+  type Listed = { path: string; method: string; scope: string };
+  const listed = async (): Promise<Listed[]> =>
+    (await request(await mountApp()).get('/api/v1/docs')).body.endpoints;
+  const concrete = (path: string) => path.replace(':id', DOC_ID);
+  /** A scope refusal names the scope; a quota or tenant 403 does not. */
+  const refusedFor = (body: { required?: string; missing?: string[] }, scope: string) =>
+    body.required === scope || (body.missing ?? []).includes(scope);
+
+  /*
+   * These used to read the endpoint list from /docs and compare it with /docs'
+   * own scope list — so a route that stopped requiring its scope, or a listed
+   * path no route serves, still passed. They now CALL every listed endpoint.
+   */
+  it('every grantable scope is advertised and required by a listed endpoint', async () => {
     const res = await request(await mountApp()).get('/api/v1/docs');
     expect(res.status).toBe(200);
-
-    const advertised: string[] = res.body.authentication.scopes;
-    const routeScopes = new Set(res.body.endpoints.map((e: { scope: string }) => e.scope));
-
-    // The invariant that was broken: every advertised scope must be reachable.
-    for (const scope of advertised) {
-      expect(routeScopes.has(scope), `scope ${scope} is advertised but no endpoint requires it`).toBe(true);
+    expect([...res.body.authentication.scopes].sort()).toEqual([...API_KEY_SCOPES].sort());
+    const routeScopes = new Set((res.body.endpoints as Listed[]).map((e) => e.scope));
+    for (const scope of API_KEY_SCOPES) {
+      expect(routeScopes.has(scope), `scope ${scope} is grantable but no endpoint lists it`).toBe(true);
     }
-    expect(advertised).toContain('documents:read');
+  });
+
+  it('every listed endpoint REFUSES a key holding every scope but its own', async () => {
+    for (const e of await listed()) {
+      keyWithScopes(...API_KEY_SCOPES.filter((s) => s !== e.scope));
+      const res = await call(concrete(e.path));
+      expect(res.status, `${e.method} ${e.path} served a key without ${e.scope}`).toBe(403);
+      expect(refusedFor(res.body, e.scope), `${e.path}: 403 did not name ${e.scope}`).toBe(true);
+    }
+  });
+
+  it('every listed endpoint is served — the scope admits it to a real route', async () => {
+    for (const e of await listed()) {
+      keyWithScopes(e.scope);
+      const res = await call(concrete(e.path));
+      expect(res.status, `${e.path} refused its own scope`).not.toBe(403);
+      // An unmatched path is Express's HTML 404; a route's own 404 is JSON with a code.
+      const unmatched = res.status === 404 && !res.body?.error;
+      expect(unmatched, `${e.method} ${e.path} is listed but no route serves it`).toBe(false);
+    }
   });
 
   it('/health reports the endpoint count /docs actually lists', async () => {
