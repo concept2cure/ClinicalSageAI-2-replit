@@ -39,6 +39,7 @@ import { buildContextUsedEvent, memoryStatusOf } from '../turn-context-used';
 import { ALWAYS_ON_TOOLS, selectToolsForTurn } from '../tool-selection';
 import { describeToolPlan } from '../agentic-loop';
 import { buildMemoryContextForChat } from '../../memory-context-assembler';
+import { buildAssistantMetadata } from '../tool-trace';
 
 const steps = (...s: Array<[string, string]>) => s.map(([title, status]) => ({ title, status }));
 
@@ -171,5 +172,17 @@ describe('context_used states only what reached the model', () => {
     expect(titles).not.toContain('Late item');
     expect(result.diagnostics.trimmed).toBe(true);
     expect(memoryStatusOf(result)).toBe('read');
+  });
+});
+
+describe('the declared plan is persisted with the turn', () => {
+  it('stores the last validated plan on the assistant metadata', () => {
+    const plan = normalizePlan({ steps: steps(['Read', 'completed'], ['Draft', 'in_progress']) });
+    expect(buildAssistantMetadata([], null, null, null, plan)?.plan).toEqual(plan);
+  });
+
+  it('stores nothing for a turn that declared no plan', () => {
+    expect(buildAssistantMetadata([], null, null, null, undefined)).toBeUndefined();
+    expect(buildAssistantMetadata([], null, null, null, [])).toBeUndefined();
   });
 });

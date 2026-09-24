@@ -106,7 +106,7 @@ import {
 import { runStreamPostProcessing } from './post-processing.js';
 import { reflectAfterTurn } from '../../services/ana-ri/relational-profile-service.js';
 import { selectToolsForTurn } from '../../services/ana/tool-selection.js';
-import { planEventFromToolResult } from '../../services/ana/turn-plan.js';
+import { planEventFromToolResult, type TurnPlanStep } from '../../services/ana/turn-plan.js';
 import { buildContextUsedEvent, type ContextUpload } from '../../services/ana/turn-context-used.js';
 import { guardUserInput, PromptInjectionError } from '../../services/ana/ana-input-guard.js';
 import { isPdfIntakeEnabled, readLocalUploadBuffer } from '../../services/anthropic-files.js';
@@ -1197,6 +1197,8 @@ export function mountStreamRoute(router: Router): void {
       // Structured record of the tools run this turn (persisted on the assistant
       // message's metadata for cross-turn memory; see tool-trace.ts).
       const toolTrace: ToolTraceEntry[] = [];
+      // The plan AnA last declared this turn, persisted with the message.
+      let lastPlan: TurnPlanStep[] | undefined;
       // Failure-adaptation guidance from the most recent tool round; appended to
       // the next model turn (then cleared) so a failed round becomes a course
       // correction instead of an identical retry the thrash guard has to kill.
@@ -1843,7 +1845,10 @@ export function mountStreamRoute(router: Router): void {
             // The plan AnA declared, from the handler's NORMALISED result — the
             // client's "Step 2 of 5" counts only steps the server validated.
             const planEvent = planEventFromToolResult(toolUse.name, toolStatus, resultStr, round);
-            if (planEvent) res.write(`data: ${JSON.stringify(planEvent)}\n\n`);
+            if (planEvent) {
+              lastPlan = planEvent.steps;
+              res.write(`data: ${JSON.stringify(planEvent)}\n\n`);
+            }
             if (toolStatus === 'success') {
               try {
                 const parsed = JSON.parse(resultStr);
@@ -2433,6 +2438,7 @@ export function mountStreamRoute(router: Router): void {
         toolTrace,
         reasoning: fullThinking,
         humanControls: await readControlEvents(),
+        plan: lastPlan,
         toolEvidenceCorpus,
         collectedProvenance,
         collectedNavigation,
