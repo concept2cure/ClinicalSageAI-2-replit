@@ -29,6 +29,7 @@
  */
 import React from 'react';
 import { I } from '../icons';
+import { AnaActivity } from '../AnaActivity';
 import { apiRequest, serverMessage, redactInternals } from '@/lib/queryClient';
 import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveGetOrNull, EmptyState } from '../dataConnect';
 import { assessmentStateFor } from '../assessmentState';
@@ -573,12 +574,14 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
     phase: 'idle' | 'running' | 'done' | 'error';
     data?: ExplainResponse;
     error?: string;
+    /** When the running request began, for the live record's clock. */
+    since?: number;
   }>({ phase: 'idle' });
   React.useEffect(() => setExplain({ phase: 'idle' }), [seq.id]);
 
   const runExplain = async () => {
     if (findings.length === 0 || explain.phase === 'running') return;
-    setExplain({ phase: 'running' });
+    setExplain({ phase: 'running', since: Date.now() });
     const r = await mutateVerbatim<ExplainResponse>(
       'POST',
       `/api/submissions/${sub.id}/validation/explain`,
@@ -669,6 +672,17 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
                   {explain.phase === 'running' ? 'Explaining…' : 'Explain the findings (AI)'}
                 </button>
               </div>
+            )}
+            {/* The wait, in the same live record AnA shows everywhere else: what is
+            running, a pulse, and a clock — never a percentage, which the
+            request cannot know. Its polite live region is what a screen-reader
+            user hears; the button label alone said nothing to them. */}
+            {explain.phase === 'running' && (
+              <AnaActivity
+                streaming
+                phase={`Explaining ${findings.length} ${findings.length === 1 ? 'finding' : 'findings'} for ${seq.region}…`}
+                startedAt={explain.since}
+              />
             )}
             {explain.phase === 'error' && (
               <div className="sc-verdict tone-err sc-mt" role="status">
@@ -791,10 +805,13 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
   });
   const [notice, setNotice] = React.useState<Notice | null>(null);
   const [running, setRunning] = React.useState(false);
+  /** When the running review began, for the live record's clock. */
+  const [runningSince, setRunningSince] = React.useState<number | null>(null);
 
   const runReview = async () => {
     if (running) return;
     setRunning(true);
+    setRunningSince(Date.now());
     setNotice(null);
     const r = await mutateVerbatim<{ runId: number; findingCount: number; summary: string }>(
       'POST',
@@ -852,6 +869,17 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
             {I.sparkles} {running ? 'Reviewing…' : 'Run shadow review'}
           </button>
         </div>
+        {/* The wait, in the same live record AnA shows everywhere else: what is
+            running, a pulse, and a clock — never a percentage, which the
+            request cannot know. Its polite live region is what a screen-reader
+            user hears; the button label alone said nothing to them. */}
+        {running && (
+          <AnaActivity
+            streaming
+            phase={`Reading sequence ${seq.sequenceNumber} as a ${lensL(lens)} reviewer…`}
+            startedAt={runningSince ?? undefined}
+          />
+        )}
         <VerdictNote notice={notice} />
         {runs.loading ? (
           <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>

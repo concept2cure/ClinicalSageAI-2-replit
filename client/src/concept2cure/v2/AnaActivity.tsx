@@ -39,7 +39,7 @@ import React from 'react';
 import { SR_ONLY_STYLE } from '../hooks/useChatUpload';
 import { I } from './icons';
 import type { AnaChatMessage, AnaToolCall } from '../components/ana/useAnaChat';
-import type { AnaPlanChange } from '../components/ana/useAnaChat.types';
+import type { AnaPlanChange, AnaPlanStep } from '../components/ana/useAnaChat.types';
 import { formatElapsed, LENS_PHRASE, PLAN_TOOL } from '../components/ana/anaProgress';
 import { statusGlyph } from './AnaWorkSections';
 import { stepDuration } from './anaWorkModel';
@@ -58,6 +58,12 @@ export interface AnaActivityProps {
   toolCalls?: AnaToolCall[];
   /** Every change to the plan she declared, in arrival order. */
   planChanges?: AnaPlanChange[];
+  /**
+   * Her plan as last declared. Read only when there is no change history —
+   * a thread reopened later, which persists the final plan and not when each
+   * step changed — so the row says "Plan", not "Planned".
+   */
+  plan?: AnaPlanStep[];
   /** Extended reasoning, when the model produced any. */
   thinking?: string;
   /** Title of the deliverable produced this turn, if one was. */
@@ -83,6 +89,7 @@ export function activityPropsFor(m: AnaChatMessage): AnaActivityProps {
     documentType: m.detectedDocumentType,
     toolCalls: m.toolCalls,
     planChanges: m.planChanges,
+    plan: m.plan,
     thinking: m.thinking,
     draftTitle: m.generatedDraft?.title,
     fallback: m.fallback,
@@ -96,6 +103,7 @@ export function hasReportableWork(a: AnaActivityProps): boolean {
   return Boolean(
     (a.toolCalls && a.toolCalls.length > 0) ||
       (a.planChanges && a.planChanges.length > 0) ||
+      (a.plan && a.plan.length > 0) ||
       (a.lens && LENS_PHRASE[a.lens]) ||
       a.documentType ||
       a.thinking ||
@@ -234,9 +242,44 @@ function ToolRow({ c, now }: { c: AnaToolCall; now: number }) {
   );
 }
 
+/**
+ * The folded line. Failures and deliverables are OUTCOMES and appear here
+ * rather than only inside the disclosure — an outcome you have to open a
+ * twisty to discover is one the product is hiding. So is a fallback answer.
+ */
+function foldedLine(o: {
+  changes: AnaPlanChange[];
+  finalPlan: AnaPlanStep[];
+  ran: number;
+  failed: number;
+  draftTitle?: string;
+  thinking?: string;
+  fallback?: boolean;
+  /** Set only for a turn with a recorded END; never read off the clock. */
+  duration: string;
+}): string {
+  // "Planned" only when the declaration was seen; a reopened thread knows the
+  // final list and not how it was built, so it says "Plan".
+  const persisted = o.changes.length === 0 && o.finalPlan.length > 0;
+  const planned = persisted ? o.finalPlan.length : o.changes.filter((c) => c.initial && c.kind === 'added').length;
+  const steps = (n: number) => `${n} ${n === 1 ? 'step' : 'steps'}`;
+  const parts = [
+    planned > 0 ? `${persisted ? 'Plan ·' : 'Planned'} ${steps(planned)}` : '',
+    // With a plan on the line its steps are "steps" and the tool calls are
+    // tools, so "Planned 3 steps · 4 steps completed" never reads as a contradiction.
+    o.ran > 0 ? (planned > 0 ? `${o.ran} ${o.ran === 1 ? 'tool' : 'tools'} run` : `${steps(o.ran)} completed`) : '',
+    o.failed > 0 ? `${o.failed} failed` : '',
+    o.draftTitle ? `Drafted ${o.draftTitle}` : '',
+    o.thinking ? 'reasoning' : '',
+    o.fallback ? 'answered by a fallback provider' : '',
+    o.duration ? `in ${o.duration}` : '',
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(' · ') : 'How this was read';
+}
+
 type Item =
   | { kind: 'tool'; t: number; seq: number; call: AnaToolCall }
-  | { kind: 'plan'; t: number; seq: number; steps: string[] }
+  | { kind: 'plan'; t: number; seq: number; steps: string[]; persisted?: boolean }
   | { kind: 'added'; t: number; seq: number; title: string };
 
 /**
@@ -247,7 +290,7 @@ type Item =
  * call is shown as the plan it recorded; a FAILED plan call stays a failed
  * row, because a failure is never folded away.
  */
-function orderedItems(calls: AnaToolCall[], changes: AnaPlanChange[]): Item[] {
+function orderedItems(calls: AnaToolCall[], changes: AnaPlanChange[], plan: AnaPlanStep[]): Item[] {
   const items: Item[] = [];
   let seq = 0;
   let lastT = Number.NEGATIVE_INFINITY;
@@ -259,6 +302,9 @@ function orderedItems(calls: AnaToolCall[], changes: AnaPlanChange[]): Item[] {
   const initial = changes.filter((c) => c.initial && c.kind === 'added');
   if (initial.length > 0) {
     items.push({ kind: 'plan', t: initial[0].at, seq: seq++, steps: initial.map((c) => c.title) });
+  } else if (changes.length === 0 && plan.length > 0) {
+    // A reopened thread: the final plan, first, with no claim about when.
+    items.push({ kind: 'plan', t: Number.NEGATIVE_INFINITY, seq: -1, steps: plan.map((s) => s.title), persisted: true });
   }
   for (const c of changes) {
     if (c.initial || c.kind !== 'added') continue;
@@ -274,6 +320,7 @@ export function AnaActivity({
   documentType,
   toolCalls,
   planChanges,
+  plan,
   thinking,
   draftTitle,
   fallback,
@@ -282,6 +329,7 @@ export function AnaActivity({
 }: AnaActivityProps) {
   const calls = toolCalls ?? [];
   const changes = planChanges ?? [];
+  const finalPlan = plan ?? [];
   // The clock ticks only while the turn is live AND has a start; a settled turn
   // reads its recorded end, and a turn with no start claims no duration.
   const now = useNow(Boolean(streaming) && typeof startedAt === 'number');
@@ -300,32 +348,21 @@ export function AnaActivity({
 
   const lensPhrase = lens && LENS_PHRASE[lens] ? LENS_PHRASE[lens] : null;
   const hasDecision = Boolean(lensPhrase) || Boolean(documentType);
-  const hasBody = hasReportableWork({ toolCalls: calls, planChanges: changes, lens, documentType, thinking, draftTitle });
+  const hasBody = hasReportableWork({ toolCalls: calls, planChanges: changes, plan: finalPlan, lens, documentType, thinking, draftTitle });
   if (!streaming && !hasBody) return null;
   if (streaming && !hasBody && !phase) return null;
 
   const expanded = Boolean(streaming) || open;
-  const planned = changes.filter((c) => c.initial && c.kind === 'added').length;
-
-  // The folded line. Failures and deliverables are OUTCOMES and appear here
-  // rather than only inside the disclosure — an outcome you have to open a
-  // twisty to discover is one the product is hiding. So is a fallback answer.
-  const summary = (() => {
-    const parts: string[] = [];
-    if (planned > 0) parts.push(`Planned ${planned} ${planned === 1 ? 'step' : 'steps'}`);
-    // With a plan on the line, its steps are "steps"; the tool calls are tools,
-    // so "Planned 3 steps · 4 steps completed" never reads as a contradiction.
-    if (ran > 0) {
-      parts.push(planned > 0 ? `${ran} ${ran === 1 ? 'tool' : 'tools'} run` : `${ran} ${ran === 1 ? 'step' : 'steps'} completed`);
-    }
-    if (failed > 0) parts.push(`${failed} failed`);
-    if (draftTitle) parts.push(`Drafted ${draftTitle}`);
-    if (thinking) parts.push('reasoning');
-    if (fallback) parts.push('answered by a fallback provider');
-    // Only a turn with a recorded END gets a duration on its folded line.
-    if (elapsed && typeof completedAt === 'number') parts.push(`in ${elapsed}`);
-    return parts.length > 0 ? parts.join(' · ') : 'How this was read';
-  })();
+  const summary = foldedLine({
+    changes,
+    finalPlan,
+    ran,
+    failed,
+    draftTitle,
+    thinking,
+    fallback,
+    duration: elapsed && typeof completedAt === 'number' ? elapsed : '',
+  });
 
   /* The spoken version of this record: the phase plus the OUTCOMES, in one
      always-mounted polite region (a region that appears in the same paint as
@@ -397,14 +434,14 @@ export function AnaActivity({
               />
             ))}
 
-          {orderedItems(calls, changes).map((it) => {
+          {orderedItems(calls, changes, finalPlan).map((it) => {
             if (it.kind === 'plan') {
               return (
                 <Row
                   key={`p-${it.seq}`}
                   status="success"
                   glyph={I.list}
-                  verb="Planned"
+                  verb={it.persisted ? 'Plan ·' : 'Planned'}
                   object={`${it.steps.length} ${it.steps.length === 1 ? 'step' : 'steps'}`}
                   detail={
                     <ol className="ana-activity-plan">

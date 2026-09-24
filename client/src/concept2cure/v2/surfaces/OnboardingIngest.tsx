@@ -23,6 +23,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import type { OnboardingIngestResult, OnboardingProposalField } from '@shared/types/onboarding-ingest';
 import { OnboardingProposalReview } from './OnboardingProposalReview';
+import { AnaActivity } from '../AnaActivity';
 import '../styles/onboarding-review.css';
 
 interface CommitOutcome {
@@ -35,6 +36,8 @@ type Phase = 'idle' | 'reading' | 'review' | 'committing' | 'done';
 
 export function OnboardingIngest({ onNav }: SurfaceViewProps) {
   const [phase, setPhase] = useState<Phase>('idle');
+  /** When the current read began, for the live record's clock. */
+  const [readingSince, setReadingSince] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<(OnboardingIngestResult & { runId?: string }) | null>(null);
   const [outcome, setOutcome] = useState<CommitOutcome | null>(null);
@@ -44,6 +47,7 @@ export function OnboardingIngest({ onNav }: SurfaceViewProps) {
     setError(null);
     setOutcome(null);
     setPhase('reading');
+    setReadingSince(Date.now());
     try {
       const form = new FormData();
       form.append('file', file);
@@ -211,7 +215,11 @@ export function OnboardingIngest({ onNav }: SurfaceViewProps) {
 
       {phase === 'reading' && (
         <div className="opr-group">
-          <div role="status" className="opr-group-h">Reading your document…</div>
+          {/* The wait, in the same live record AnA shows everywhere else: what is
+          running, a pulse, and a clock — never a percentage, which the
+          request cannot know. Its polite live region is what a screen-reader
+          user hears; the button label alone said nothing to them. */}
+          <AnaActivity streaming phase="Reading your document…" startedAt={readingSince ?? undefined} />
           <div className="opr-empty">
             AnA is looking for values it can trace back to a specific place in the document.
           </div>

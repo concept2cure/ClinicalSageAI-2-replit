@@ -43,6 +43,7 @@ import {
 } from '../../services/ana-ri/navigation-actions.js';
 import type { NavigationDirective } from '../../../shared/navigation/index.js';
 import type { SurfaceActionDirective } from '../../../shared/navigation/surface-actions.js';
+import type { TurnPlanStep } from '../../services/ana/turn-plan.js';
 
 export interface StreamPostProcessingContext {
   res: Response;
@@ -68,6 +69,8 @@ export interface StreamPostProcessingContext {
   reasoning?: string;
   /** Human control actions (pause/resume/interject/cancel) taken this turn. */
   humanControls?: HumanControlEvent[];
+  /** The plan AnA last declared this turn, validated; persisted with the message. */
+  plan?: TurnPlanStep[];
   /** Raw tool output this turn — evidence corpus for the grounding round. */
   toolEvidenceCorpus: string[];
   /** Provenance envelopes from evidence tools this turn — persisted to the lineage trail. */
@@ -270,6 +273,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     toolTrace,
     reasoning,
     humanControls,
+    plan,
     toolEvidenceCorpus,
     collectedProvenance,
     collectedNavigation,
@@ -385,7 +389,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
       orgId && threadId && fullContent
         ? saveMessage(
             threadId, 'assistant', finalAssistantContent, undefined, undefined,
-            buildAssistantMetadata(toolTrace, streamGrounding, reasoning, humanControls) as Record<string, unknown> | undefined,
+            buildAssistantMetadata(toolTrace, streamGrounding, reasoning, humanControls, plan) as Record<string, unknown> | undefined,
           )
             .then(() => undefined)
             .catch((e: any) => {

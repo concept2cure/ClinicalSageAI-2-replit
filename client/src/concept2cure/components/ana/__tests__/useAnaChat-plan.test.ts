@@ -121,6 +121,34 @@ describe('the declared plan over a real stream', () => {
   });
 });
 
+describe('a reopened thread', () => {
+  it('restores her last plan from the persisted metadata, and invents no plan changes', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        messages: [
+          { role: 'user', content: 'Draft the synopsis' },
+          {
+            role: 'assistant',
+            content: 'Drafted.',
+            metadata: { plan: plan(['Read the protocol', 'completed'], ['Draft the synopsis', 'in_progress']) },
+          },
+          { role: 'assistant', content: 'Malformed plan ignored.', metadata: { plan: [{ title: 'x', status: 'done' }] } },
+        ],
+      }),
+    });
+    const { result } = renderHook(() => useAnaChat({}));
+    await act(async () => {
+      await result.current.loadThread('th_1');
+    });
+    const [, first, second] = result.current.messages;
+    expect(first.plan).toEqual(plan(['Read the protocol', 'completed'], ['Draft the synopsis', 'in_progress']));
+    expect(first.planChanges).toBeUndefined();
+    expect(second.plan).toBeUndefined();
+  });
+});
+
 describe('plan helpers', () => {
   it('planPosition counts only what she declared', () => {
     expect(planPosition(plan(['A', 'completed'], ['B', 'in_progress'], ['C', 'pending']))).toEqual({
