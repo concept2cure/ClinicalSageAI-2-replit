@@ -144,7 +144,7 @@
   .ac-exec-step[data-st=running]{ opacity:1; } .ac-exec-step[data-st=completed]{ opacity:1; }
   .ac-exec-ic{ width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:var(--bg-200); color:var(--text-400); }
   .ac-exec-step[data-st=running] .ac-exec-ic{ background:var(--accent-100); color:#fff; animation:acspin 1s linear infinite; }
-  .ac-exec-step[data-st=completed] .ac-exec-ic{ background:var(--success); color:#fff; }
+  .ac-exec-step[data-st=completed] .ac-exec-ic{ background:var(--success); color:var(--on-success); }
   .ac-exec-ic svg{ width:12px; height:12px; }
   @keyframes acspin{ to{ transform:rotate(360deg); } }
   /* Reduced motion: the running-step spinner is decoration on top of a state the

@@ -405,9 +405,9 @@
   display: flex; align-items: center; justify-content: center;
   font-size: 12px; font-weight: 600; color: var(--text-300);
 }
-.pdev-stage-node[data-state="done"] .pdev-stage-dot { background: var(--success); color: white; border-color: var(--success); }
+.pdev-stage-node[data-state="done"] .pdev-stage-dot { background: var(--success); color: var(--on-success); border-color: var(--success); }
 .pdev-stage-node[data-state="active"] .pdev-stage-dot { background: var(--accent-strong); color: var(--accent-on-strong); border-color: var(--accent-strong); }
-.pdev-stage-node[data-state="blocked"] .pdev-stage-dot { background: var(--error); color: white; border-color: var(--error); }
+.pdev-stage-node[data-state="blocked"] .pdev-stage-dot { background: var(--error); color: var(--on-error); border-color: var(--error); }
 .pdev-stage-label { font-size: 12px; font-weight: 500; color: var(--text-100); text-align: center; }
 .pdev-stage-meta { font-size: 10px; color: var(--text-400); }
 
@@ -552,7 +552,7 @@
 .pdev-required-doc-code { font-size: 11px; color: var(--text-300); }
 .pdev-required-doc-ectd { font-size: 11px; color: var(--text-400); }
 .pdev-required-doc-mandatory {
-  padding: 1px 6px; background: var(--error); color: white;
+  padding: 1px 6px; background: var(--error); color: var(--on-error);
   border-radius: var(--radius-sm); font-size: 10px;
   text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;
 }
@@ -698,7 +698,7 @@
 .pdev-btn.small { padding: 4px 8px; font-size: 11px; }
 .pdev-btn.large { padding: 10px 16px; font-size: 14px; }
 .pdev-btn.warn {
-  background: var(--warning); color: white;
+  background: var(--warning); color: var(--on-warning);
   border: 1px solid var(--warning);
 }
 
@@ -834,7 +834,7 @@
 .pdev-fda-status-closed { background: var(--success-muted); color: var(--success); }
 .pdev-blocker-chip {
   display: inline-block; margin-left: 6px;
-  padding: 1px 6px; background: var(--error); color: white;
+  padding: 1px 6px; background: var(--error); color: var(--on-error);
   border-radius: var(--radius-sm); font-size: 10px;
   text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;
 }
@@ -1076,7 +1076,7 @@
 .pdev-doc-ectd { font-size: 10px; color: var(--text-400); }
 .pdev-doc-title { font-size: 13px; color: var(--text-100); }
 .pdev-mandatory-chip {
-  padding: 1px 6px; background: var(--error); color: white;
+  padding: 1px 6px; background: var(--error); color: var(--on-error);
   border-radius: var(--radius-sm); font-size: 10px;
   text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;
 }
@@ -1165,10 +1165,10 @@
   flex-shrink: 0;
 }
 .pdev-workflow-step[data-status="approved"] .pdev-workflow-step-num {
-  background: var(--success); color: white;
+  background: var(--success); color: var(--on-success);
 }
 .pdev-workflow-step[data-status="awaiting_review"] .pdev-workflow-step-num {
-  background: var(--warning); color: white;
+  background: var(--warning); color: var(--on-warning);
 }
 .pdev-workflow-step-body { flex: 1; min-width: 0; }
 .pdev-workflow-step-name {
@@ -1261,9 +1261,9 @@
   padding: 4px 10px; border-radius: 999px;
   font-size: 12px; font-weight: 600;
 }
-.pdev-grade-a { background: var(--success); color: white; }
+.pdev-grade-a { background: var(--success); color: var(--on-success); }
 .pdev-grade-b { background: var(--accent-strong); color: var(--accent-on-strong); }
-.pdev-grade-c { background: var(--warning); color: white; }
+.pdev-grade-c { background: var(--warning); color: var(--on-warning); }
 /* Governed-draft result panel — metadata only (no fabricated prose preview). */
 .pdev-aidraft-result { display: flex; flex-direction: column; gap: 12px; }
 .pdev-aidraft-result-head {
