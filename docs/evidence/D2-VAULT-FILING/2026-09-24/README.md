@@ -49,3 +49,19 @@ re-verification of the vault assessment and upheld by its skeptic.
   directly, so a key such as `constructor` reaches `Object.prototype` — the
   class this repo has fixed elsewhere with an own-key lookup. That file is not
   this lane's; noted on the work-order board.
+
+---
+
+## 3. The same document had two names
+
+The tree named a document's type through the shared label map I added on
+2026-09-19 (`vaultIngestTypeLabel`, "Module 3 · quality"); two places did not.
+**Search hits** were mapped separately and rendered the raw stored token
+(`MODULE_3`), and the **upload type picker** showed the token with underscores
+swapped for spaces (`MODULE 3`, `CSR`). Both now use the one helper; the
+picker's option VALUES are still the tokens the ingest schema accepts.
+
+| | |
+|---|---|
+| `red/type-labels-before-fix.txt` | `Vault.tsx` as at HEAD: 2 of 21 fail. |
+| `green/type-labels-after-fix.txt` | 21 of 21. |
