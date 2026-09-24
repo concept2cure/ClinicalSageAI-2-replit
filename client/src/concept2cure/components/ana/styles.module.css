@@ -306,7 +306,7 @@
   background: transparent; border: 0; cursor: pointer;
 }
 .composerIcon:hover { background: var(--bg-200); color: var(--ink, var(--text-100)); }
-.composerIcon:disabled { opacity: 0.45; cursor: default; }
+.composerIcon:disabled { opacity: 0.5; cursor: default; }
 
 /* Tool picker — button + popover anchored to the composer's Tools control. */
 .toolPicker { position: relative; display: inline-flex; }
@@ -351,7 +351,7 @@
   font-size: 12px; padding: 3px 4px; border-radius: 6px; cursor: pointer;
 }
 .toolPickerRow:hover { background: var(--bg-200); }
-.toolPickerRow[data-disabled] { opacity: 0.45; cursor: default; }
+.toolPickerRow[data-disabled] { opacity: 0.5; cursor: default; }
 .toolPickerRow[data-disabled]:hover { background: transparent; }
 .toolPickerRow input { accent-color: var(--accent-main-100); }
 .toolPickerName { min-width: 0; text-transform: capitalize; }
@@ -399,7 +399,7 @@
 .modelSelect:focus-visible {
   outline: 2px solid var(--accent-main-200); outline-offset: 1px;
 }
-.modelSelect:disabled { opacity: 0.55; cursor: default; }
+.modelSelect:disabled { opacity: 0.5; cursor: default; }
 
 .composerSend {
   width: 32px; height: 32px; border-radius: 9999px;
@@ -1009,7 +1009,7 @@
   transition: background 200ms ease-out, color 200ms ease-out;
 }
 .studioPagerBtn:hover:not(:disabled) { background: var(--bg-200); color: var(--ink); }
-.studioPagerBtn:disabled { opacity: 0.4; cursor: default; }
+.studioPagerBtn:disabled { opacity: 0.5; cursor: default; }
 .studioPagerBtn:focus-visible,
 .studioVersionSelect:focus-visible {
   outline: none;
@@ -1067,7 +1067,7 @@
   transition: background 200ms ease-out, border-color 200ms ease-out;
 }
 .studioDownload:hover { background: var(--bg-300); border-color: var(--border-strong); }
-.studioDownload:disabled { opacity: 0.6; cursor: default; }
+.studioDownload:disabled { opacity: 0.5; cursor: default; }
 .studioDownload:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px var(--accent-subtle, rgba(99, 102, 241, 0.35));
@@ -1125,7 +1125,7 @@
   transition: background 200ms ease-out;
 }
 .studioAssembleBtn:hover:not(:disabled) { background: var(--bg-200, #e7e7e5); }
-.studioAssembleBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+.studioAssembleBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 @media (prefers-reduced-motion: reduce) {
   .studioAssembleBtn { transition: none; }
 }
@@ -1917,7 +1917,7 @@
   transition: background 200ms ease-out;
 }
 .perAuthorBtn:hover:not(:disabled) { background: var(--accent-main-200, rgba(99, 102, 241, 0.16)); }
-.perAuthorBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+.perAuthorBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 .perAuthorBtn:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px var(--accent-subtle, rgba(99, 102, 241, 0.45));
@@ -2096,7 +2096,7 @@
   .concordResolve { transition: none; }
 }
 .dossierAssemble:hover { background: var(--accent-main-200, rgba(99, 102, 241, 0.16)); }
-.dossierAssemble:disabled { opacity: 0.6; cursor: default; }
+.dossierAssemble:disabled { opacity: 0.5; cursor: default; }
 @media (prefers-reduced-motion: reduce) {
   .dossierAssemble { transition: none; }
 }
@@ -2288,7 +2288,7 @@
   transition: background 200ms ease-out;
 }
 .sealAction:hover { background: var(--success-subtle, rgba(47, 125, 87, 0.1)); }
-.sealAction:disabled { opacity: 0.6; cursor: default; }
+.sealAction:disabled { opacity: 0.5; cursor: default; }
 .sealAction:focus-visible {
   outline: 2px solid var(--success, #2f7d57);
   outline-offset: 2px;
@@ -2439,7 +2439,7 @@
   .labelingExport { transition: none; }
 }
 .narrativeSubmit:disabled {
-  opacity: 0.45;
+  opacity: 0.5;
   cursor: default;
 }
 
