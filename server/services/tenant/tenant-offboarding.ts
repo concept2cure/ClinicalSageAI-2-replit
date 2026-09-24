@@ -43,6 +43,7 @@ import { createScopedLogger } from '../../utils/logger';
 import { invalidateTenantPosture } from './tenant-lifecycle';
 import { invalidateOrgMembershipCache } from '../../middleware/orgMembership';
 import { findExportReceipt } from '../tenant-export/tenant-full-export.service';
+import { VAULT_DOCUMENT_TENANCY } from './vault-tenancy';
 
 const logger = createScopedLogger('tenant-offboarding');
 
@@ -345,33 +346,8 @@ async function assertPurgePermitted(
   return existing;
 }
 
-/**
- * Which vault documents belong to a tenant.
- *
- * NOT `organization_id = $1` alone, which is what both vault entries used and
- * which under-deletes on a GDPR erasure.
- * `vault.documents.organization_id` is NULLABLE by design — the schema records
- * that "NULL = unattributable — the program is missing or SOFT-DELETED"
- * (shared/schema/vault.ts). So a document whose programme has been soft-deleted
- * carries a NULL there, matches no `organization_id = $1`, and SURVIVED the
- * purge with its bytes, which is the precise failure an erasure request exists
- * to prevent. Naming the vault tables correctly fixed the table-level miss; it
- * left this row-level one behind, in the rows most likely to be old.
- *
- * The programme is the authoritative owner — the column is backfilled FROM it
- * (migrations/20260905_vault_documents_organization_id.sql) — so ownership is
- * asked of the programme, and the column is kept as a union rather than
- * replaced: a row the programme cannot attribute but the column can is still
- * this tenant's, and dropping that clause would trade one under-deletion for
- * another.
- *
- * Deliberately NO `deleted_at IS NULL` on regulatory_programs. A purge must
- * reach documents on a soft-deleted programme — that is exactly the population
- * the column cannot attribute, and filtering them out here would reinstate the
- * bug this predicate exists to fix.
- */
-const VAULT_DOCUMENT_TENANCY =
-  '(organization_id = $1 OR program_id IN (SELECT id FROM regulatory_programs WHERE organization_id = $1))';
+/* Which vault documents belong to a tenant: see ./vault-tenancy, shared with
+   the tenant export so the two cannot disagree about what an erasure destroys. */
 
 /**
  * Tenant-owned tables that are NOT purged by the uniform `organization_id = $1`,
@@ -390,7 +366,7 @@ export const PURGE_PARENT_SCOPED: Readonly<Record<string, string>> = Object.free
   'vault.documents': VAULT_DOCUMENT_TENANCY,
   'vault.document_chunks':
     // tenant-isolation-safe: the inner SELECT is filtered by
-    // VAULT_DOCUMENT_TENANCY above — `organization_id = $1 OR program_id IN
+    // VAULT_DOCUMENT_TENANCY (./vault-tenancy) — `organization_id = $1 OR program_id IN
     // (… WHERE organization_id = $1)`. The org predicate IS in the statement;
     // it arrives through the interpolated constant, which a same-statement
     // text match cannot follow.

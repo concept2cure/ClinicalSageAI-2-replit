@@ -219,6 +219,13 @@ describe('ICH rules: unavailable input is reported, never asserted as absence', 
     expect(f[0].status).toBe('pass');
   });
 
+});
+
+/* Split from the block above so neither callback exceeds the 100-line
+   max-lines-per-function limit the ESLint ratchet holds (the three Q2 cases
+   were appended to it and took it to 109). Same assertions, grouped by the
+   rule they exercise. */
+describe('ICH Q2: a method\'s recorded validation status', () => {
   /**
    * ICH Q2 and a method with NO recorded validation status.
    *

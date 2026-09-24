@@ -27,6 +27,15 @@ export declare const DEFAULT_TABLE_PRIVILEGES: readonly string[];
 export declare const APPEND_ONLY_TABLES: readonly { schema: string; name: string }[];
 
 /** Resolve and validate the runtime role name (APP_SERVICE_DB_ROLE, default app_service). */
+/**
+ * The SCRAM-SHA-256 verifier PostgreSQL stores for `password`, computed
+ * client-side so the plaintext never reaches the server. Printable ASCII only.
+ */
+export declare function scramSha256Verifier(
+  password: string,
+  options?: { salt?: Buffer; iterations?: number },
+): string;
+
 export declare function resolveAppServiceRole(env?: Record<string, string | undefined>): string;
 
 /** The login role named in a connection string, or null. */

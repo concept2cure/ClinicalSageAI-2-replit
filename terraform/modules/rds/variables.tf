@@ -24,38 +24,29 @@ variable "max_allocated_storage" {
 }
 
 variable "database_name" {
-  type    = string
+  type = string
+  # Was "concept2cure-ri". RDS for PostgreSQL's DBName allows letters, digits
+  # and underscores and must start with a letter, so the hyphen fails
+  # CreateDBInstance — at apply, after everything before it has been built.
+  # `terraform validate` cannot see that; this validation makes plan see it.
   default = "concept2cure_ri"
 
-  # RDS for PostgreSQL DBName: letters, digits and underscores, starting with a
-  # letter, at most 63 characters. The default was "concept2cure-ri", and the
-  # hyphen fails CreateDBInstance at apply time, which `terraform validate`
-  # never sees (D1 brief B2, docs/evidence/W2/2026-09-23/README.md). Checked
-  # here so it fails at plan.
   validation {
     condition     = can(regex("^[A-Za-z][A-Za-z0-9_]{0,62}$", var.database_name))
-    error_message = "database_name must start with a letter and contain only letters, digits and underscores (at most 63 characters): RDS rejects anything else at create time."
+    error_message = "database_name must start with a letter and contain only letters, digits and underscores (RDS DBName rule, max 63)."
   }
-}
-
-variable "master_password" {
-  type        = string
-  default     = null
-  sensitive   = true
-  description = <<-EOT
-    Master password Terraform owns. When set, RDS does NOT manage the password in
-    Secrets Manager, so the caller can compose a real connection URL from it.
-
-    Left null, RDS manages it (manage_master_user_password), and the secret it
-    writes is JSON ({"username","password"}), not a URL. Production passed that
-    secret's ARN as DATABASE_URL, so ECS injected the JSON string verbatim and
-    the app could not connect (D1 brief B1).
-  EOT
 }
 
 variable "master_username" {
   type    = string
   default = "c2c_admin"
+}
+
+variable "master_password" {
+  type        = string
+  description = "Master password. When set, Terraform owns the credential and RDS manages no secret; when null, RDS manages it (manage_master_user_password)."
+  default     = null
+  sensitive   = true
 }
 
 variable "subnet_ids" {
@@ -92,4 +83,10 @@ variable "backup_retention_days" {
 variable "tags" {
   type    = map(string)
   default = {}
+}
+
+variable "ca_cert_identifier" {
+  type        = string
+  description = "RDS server certificate CA. Must chain to a certificate in the bundle the image trusts (Dockerfile.optimized)."
+  default     = "rds-ca-rsa2048-g1"
 }

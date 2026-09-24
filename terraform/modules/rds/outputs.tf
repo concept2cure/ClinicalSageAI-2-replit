@@ -14,8 +14,9 @@ output "port" {
 }
 
 output "master_user_secret_arn" {
-  description = "ARN of the RDS-managed master secret (JSON, not a URL). Null when var.master_password is set."
-  value       = try(aws_db_instance.this.master_user_secret[0].secret_arn, null)
+  description = "ARN of the Secrets Manager secret containing the master password"
+  # Empty when the caller supplied master_password: RDS then manages no secret.
+  value = try(aws_db_instance.this.master_user_secret[0].secret_arn, null)
 }
 
 output "db_name" {
@@ -24,6 +25,6 @@ output "db_name" {
 }
 
 output "master_username" {
-  description = "Owner-role username, for composing the migrations connection URL"
+  description = "Master username (the owner role migrations connect as)"
   value       = aws_db_instance.this.username
 }

@@ -27,10 +27,15 @@ on:
       - 'terraform/**'
       - '.github/workflows/deploy-aws.yml'
       - '.github/workflows/terraform-tests.yml'
+      - 'scripts/ops/terraform-preflight-proof.mjs'
   workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: terraform-tests-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   terraform-test:
@@ -68,6 +73,37 @@ jobs:
       - name: test
         working-directory: ${{ matrix.dir }}
         run: terraform test
+
+  # The production boot contract, end to end: deploy-aws.yml's own preflight
+  # shell run against the task definition the mocked apply renders; the
+  # checked revision's ARN pinned through migrate and deploy-api; the rendered
+  # health check executed against a stub. The terraform test above says the
+  # task definition has the right names; this says the pipeline accepts it and
+  # the probe works. (Merged here from terraform-boot-contract.yml, 2026-09-24:
+  # two sessions built the same lane, and one workflow is canonical.)
+  preflight-proof:
+    name: deploy preflight against the rendered task definition
+    runs-on: ubuntu-latest
+    env:
+      TF_IN_AUTOMATION: true
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        with:
+          terraform_version: 1.9.8
+          # The wrapper re-emits stdout; the proof parses `terraform test -json`.
+          terraform_wrapper: false
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Install dependencies
+        # The proof reads deploy-aws.yml with js-yaml, the repository's own copy.
+        run: npm ci --legacy-peer-deps --ignore-scripts
+      - name: Proof
+        run: node scripts/ops/terraform-preflight-proof.mjs
 
   environments-validate:
     name: terraform validate (${{ matrix.env }})

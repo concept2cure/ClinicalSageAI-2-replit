@@ -155,14 +155,29 @@ resource "aws_ecs_task_definition" "api" {
       }
     }
 
+    # LIVENESS, and runnable in this image (B5, 2026-09-23).
+    #
+    # It was `wget …/api/health`. The image (Dockerfile.optimized) installs curl,
+    # not wget, so the check could never pass: every task unhealthy, every
+    # deploy rolled back by the circuit breaker.
+    #
+    # It is NOT /readyz, which the 2026-09-23 brief proposed. /readyz answers 503
+    # whenever the database, the schema OR AnA is down, and AnA's verdict is
+    # recorded once at boot (server/startup/ana-readiness-state.ts). A failing
+    # container check makes ECS REPLACE the task, so /readyz here would restart
+    # every task whose AnA verdict was latched down, and during a Multi-AZ
+    # failover would replace every task at once — turning a 60-second database
+    # event into an outage. Restarting cannot fix a dependency; it can only take
+    # the process down with it. So this asks the one question a restart
+    # answers: is the process alive.
+    #
+    # Readiness belongs in the deploy's post-roll check, which reports without
+    # killing. As of 2026-09-24 NOTHING in the deploy path asks /readyz — the
+    # smoke-test job probes the static /api/health (B9's lane is changing that).
+    # Until it does, a deploy can report success while /readyz is 503.
+    # node is the image's own interpreter; exec form needs no shell.
     healthCheck = {
-      # The image's own probe (Dockerfile.optimized HEALTHCHECK), against
-      # /readyz. The image is node:22-slim with curl and no wget, so the old
-      # `wget -qO- …/api/health` always failed: every task was reported
-      # unhealthy and the deployment circuit breaker rolled every deploy back
-      # (D1 brief B5). /readyz is also what D1's acceptance line reads, so ECS
-      # and the acceptance check agree on what "healthy" means.
-      command     = ["CMD", "node", "-e", "require('http').get('http://localhost:${var.api_container_port}/readyz',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      command     = ["CMD", "node", "-e", "require('http').get('http://localhost:${var.api_container_port}/healthz',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
       interval    = 30
       timeout     = 10
       retries     = 3
@@ -240,7 +255,23 @@ resource "aws_ecs_service" "api" {
   deployment_minimum_healthy_percent = 100
   deployment_maximum_percent         = 200
 
+  # The load balancer's checks (and ECS's reaction to them — it replaces a task
+  # the target group marks unhealthy) start once the task is registered. Give a
+  # cold start room before that counts, the way the container check's
+  # startPeriod does.
+  health_check_grace_period_seconds = 120
+
   tags = var.tags
+
+  # Terraform owns the task definition's CONTENT; the deploy pipeline owns which
+  # revision runs. deploy-aws.yml registers a new revision copied from the latest
+  # one with only the image changed to the pinned digest, then moves the service
+  # onto it. Without this, the next `terraform apply` moved the service back to
+  # Terraform's own revision — the image by tag, not by digest — undoing the
+  # deploy it did not know had happened.
+  lifecycle {
+    ignore_changes = [task_definition]
+  }
 }
 
 # ── Worker service ──────────────────────────────────────────────────────────
@@ -264,4 +295,9 @@ resource "aws_ecs_service" "worker" {
   }
 
   tags = var.tags
+
+  # No ignore_changes here, unlike the api service: no pipeline deploys the
+  # worker (deploy-aws.yml has no worker job; B7), so Terraform is the only
+  # thing that moves it to a new revision. Ignoring task_definition would pin
+  # it to its first revision for good.
 }
