@@ -1,0 +1,33 @@
+# fixed advancedRAGPipeline.ts; RLS_ENFORCE=on, app_service
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T19:06:02.685Z","pid":1602,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T19:06:02.689Z","pid":1602,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T19:06:02.690Z","pid":1602,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/rag-pipeline-tenant-scope.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-24T19:06:03.079Z', poolSize: 1 }
+
+stdout | tests/db/rag-pipeline-tenant-scope.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > positive control: tenant A, handed its own uuid, retrieves its own passage
+✅ Enhanced Embedding Service initialized
+⚠️ OpenAI API key not configured
+⚠️ Anthropic API key not configured
+✅ Advanced RAG Pipeline initialized
+
+stderr | tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > a missing uuid keeps its existing refusal (unchanged by this fix)
+[RAG] vault retrieval skipped: no usable organizationUuid on the request. Refusing rather than searching across tenants.
+
+ ✓ tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > positive control: tenant A, handed its own uuid, retrieves its own passage 26ms
+ ✓ tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > tenant A's session, handed tenant B's uuid, never receives B's passage 1ms
+ ✓ tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > a uuid that disagrees with the session scope is refused, not quietly answered 2ms
+ ✓ tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > …including when the session scope carries no uuid — exactly when a header fallback fires 13ms
+ ✓ tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > a missing uuid keeps its existing refusal (unchanged by this fix) 1ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  19:06:00
+   Duration  2.60s (transform 1.13s, setup 67ms, import 1.93s, tests 333ms, environment 0ms)
+
