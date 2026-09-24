@@ -23,7 +23,28 @@ RUN npm run build
 # bundle's imports and the same lockfile the production stage installs from.
 RUN node scripts/ci/check-server-bundle-prod-imports.mjs
 
-# Production stage
+# Provision stage — the first provision of an EMPTY database, run once as a
+# one-off ECS task (.github/workflows/provision-database.yml). Not the image
+# that serves traffic: `npm run db:provision` needs what production prunes —
+# drizzle-kit (install-fresh's table step) and psql (its governed-content
+# step) — and it must run inside the VPC, the only network RDS admits. Built
+# FROM builder, so the source, node_modules and lockfile are the exact ones the
+# production image was built from.
+FROM builder AS provision
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends postgresql-client && \
+    rm -rf /var/lib/apt/lists/*
+# The production stage's CA settings, re-declared: an ENV does not cross
+# stages. verify-full against RDS needs the RDS roots, for Node (install-fresh,
+# deploy-migrate) and for libpq (psql).
+ENV NODE_EXTRA_CA_CERTS=/app/assets/rds-ca/global-bundle.pem \
+    PGSSLROOTCERT=/app/assets/rds-ca/global-bundle.pem
+USER node
+CMD ["npm", "run", "db:provision"]
+
+# Production stage — the default target is named explicitly by the pipeline
+# (`docker build --target production`), so adding a stage never changes what
+# ships.
 FROM node:22-slim AS production
 
 WORKDIR /app

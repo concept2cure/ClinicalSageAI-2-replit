@@ -1,0 +1,20 @@
+# scripts/ops/ecs-one-off-task.sh against a fake aws (scripts/ci/__tests__/ecs-one-off-task.test.mjs)
+
+## As written
+  # pass 7
+  # fail 0
+
+## Mutation 1: the step exits 0 whatever the task did
+  not ok 2 - a task that exits non-zero fails the step with that code
+  # pass 6
+  # fail 1
+
+## Mutation 2: a container with no exit code (never ran) is treated as success
+  not ok 5 - a container that never ran (no exit code) is a failure, not success
+  # pass 6
+  # fail 1
+
+## Mutation 3: the deadline is ignored — the task is abandoned, not stopped
+  not ok 4 - past the deadline the task is STOPPED and the step fails 124
+  # pass 6
+  # fail 1

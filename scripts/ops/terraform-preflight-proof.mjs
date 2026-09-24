@@ -57,6 +57,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
 const TF_DIR = path.join(repoRoot, 'terraform', 'stack');
 const TEST_FILE = 'tests/boot_contract.tftest.hcl';
 const WORKFLOW = path.join(repoRoot, '.github', 'workflows', 'deploy-aws.yml');
+const PROVISION_WORKFLOW = path.join(repoRoot, '.github', 'workflows', 'provision-database.yml');
 const PREFLIGHT_STEP = 'Preflight — task definition must carry the production boot contract';
 const TAG = '[terraform-preflight-proof]';
 
@@ -104,6 +105,37 @@ function runPreflight(pre, tdFile) {
 }
 
 /**
+ * The first-provision workflow's own check, run against the rendered task
+ * definition: it must accept what Terraform renders, pin that revision, and
+ * hand db:provision the owner URL as DATABASE_OWNER_URL from the SAME secret
+ * the API reads as DATABASE_URL. Its shell, verbatim, with `aws` stubbed.
+ */
+function checkProvisionSource(tdFile, td) {
+  const wf = loadYaml(fs.readFileSync(PROVISION_WORKFLOW, 'utf8'));
+  const job = Object.values(wf.jobs ?? {}).find((j) => (j.steps ?? []).some((st) => st.id === 'source'));
+  const step = job?.steps.find((st) => st.id === 'source');
+  if (!step) return fail('provision-database.yml has no step with id "source"');
+  const res = runPreflight({ run: step.run, env: { ...(wf.env ?? {}), ...(job.env ?? {}), ...(step.env ?? {}) } }, tdFile);
+  if (res.status !== 0) {
+    process.stderr.write(res.stdout + res.stderr);
+    return fail(`provision-database.yml's source check refused the rendered task definition (exit ${res.status})`);
+  }
+  const out = Object.fromEntries(
+    res.githubOutput.trim().split('\n').map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]),
+  );
+  const dbUrl = td.containerDefinitions[0].secrets.find((x) => x.name === 'DATABASE_URL')?.valueFrom;
+  let extra = [];
+  try { extra = JSON.parse(out.extra_secrets ?? '[]'); } catch { /* reported below */ }
+  if (out.arn !== td.taskDefinitionArn) {
+    return fail(`provision source pinned ${out.arn}, not the revision it checked (${td.taskDefinitionArn})`);
+  }
+  if (!(extra.length === 1 && extra[0].name === 'DATABASE_OWNER_URL' && extra[0].valueFrom === dbUrl)) {
+    return fail(`provision source must add DATABASE_OWNER_URL from DATABASE_URL's secret; got ${out.extra_secrets}`);
+  }
+  ok('provision-database.yml accepts the rendered task definition and passes the owner URL from the same secret');
+}
+
+/**
  * The revision the preflight checks is the revision that rolls. The step
  * publishes the ARN it checked; migrate derives from that ARN, exports it, and
  * deploy-api derives from it and refuses if the family moved. Structural, read
@@ -119,9 +151,13 @@ function checkRevisionPinning(pre) {
   if (migrate.outputs?.api_td_arn !== '${{ steps.preflight.outputs.api_td_arn }}') {
     problems.push(`job "${pre.jobName}" does not export the checked ARN as outputs.api_td_arn`);
   }
-  const reg = migrate.steps.find((st) => (st.name ?? '').startsWith('Register migration task definition'));
-  if (reg?.env?.CHECKED_API_TD_ARN !== '${{ steps.preflight.outputs.api_td_arn }}' || !/--task-definition "\$CHECKED_API_TD_ARN"/.test(reg?.run ?? '')) {
-    problems.push('the migration task definition is not derived from the checked ARN');
+  const mig = migrate.steps.find((st) => st.id === 'migrate-task');
+  if (
+    mig?.env?.CHECKED_API_TD_ARN !== '${{ steps.preflight.outputs.api_td_arn }}' ||
+    !/SOURCE_TD_ARN="\$CHECKED_API_TD_ARN"/.test(mig?.run ?? '') ||
+    !/scripts\/ops\/ecs-one-off-task\.sh/.test(mig?.run ?? '')
+  ) {
+    problems.push('the migration is not derived from the checked ARN (step id migrate-task, via scripts/ops/ecs-one-off-task.sh)');
   }
   const deploy = Object.entries(wf.jobs).find(([, j]) => (j.steps ?? []).some((st) => st.id === 'register-api-td'));
   if (!deploy) {
@@ -257,15 +293,17 @@ async function main() {
   if (tdJsonArg) return;
 
   checkRevisionPinning(pre);
+  checkProvisionSource(tdFile, td);
 
   // Where the preflight sits: it has to run before the production migration.
-  const migrateJob = Object.entries(pre.wf.jobs).find(([, j]) => (j.steps ?? []).some((s) => (s.name ?? '').startsWith('Register migration task definition')));
+  const migrateJob = Object.entries(pre.wf.jobs).find(([, j]) => (j.steps ?? []).some((s) => s.id === 'migrate-task'));
+  if (!migrateJob) fail('no step with id migrate-task in deploy-aws.yml; cannot confirm the preflight gates the migration');
   if (migrateJob) {
     const [mName, mJob] = migrateJob;
     const needs = [].concat(mJob.needs ?? []);
     const runsBefore = pre.jobName === mName
       ? (mJob.steps.findIndex((s) => (s.name ?? '').startsWith(PREFLIGHT_STEP)) <
-         mJob.steps.findIndex((s) => (s.name ?? '').startsWith('Register migration task definition')))
+         mJob.steps.findIndex((s) => s.id === 'migrate-task'))
       : needs.includes(pre.jobName);
     if (!runsBefore) fail(`the preflight (job "${pre.jobName}") does not run before the migration (job "${mName}")`);
     else ok(`the preflight runs before the migration (job "${mName}")`);

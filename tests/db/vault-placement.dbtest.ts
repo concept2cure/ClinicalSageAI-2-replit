@@ -62,13 +62,17 @@ let userId: number;
 let programId: string;
 let documentId: string;
 
-async function inTenantScope<T>(org: { id: number; uuid: string }, fn: () => Promise<T>): Promise<T> {
+async function inTenantScope<T>(
+  org: { id: number; uuid: string },
+  fn: () => Promise<T>,
+  role: string | null = 'admin',
+): Promise<T> {
   const { runWithTenantScope } = await import('../../server/db/tenantStore');
   return runWithTenantScope(
     {
       tenantId: String(org.id),
       orgUuid: org.uuid,
-      role: 'admin',
+      role,
       source: 'request',
       caller: 'tests/db/vault-placement.dbtest.ts',
     },
@@ -79,18 +83,22 @@ async function inTenantScope<T>(org: { id: number; uuid: string }, fn: () => Pro
 async function place(
   args: Record<string, unknown>,
   as: { id: number; uuid: string } = { id: orgId, uuid: orgUuid },
+  role: string | null = 'admin',
 ) {
   const { placeVaultDocument } = await import(
     '../../server/services/vault/vault-placement.service'
   );
-  return inTenantScope(as, () =>
-    placeVaultDocument({
-      programId,
-      documentId,
-      organizationId: as.id,
-      userId,
-      ...args,
-    } as Parameters<typeof placeVaultDocument>[0]),
+  return inTenantScope(
+    as,
+    () =>
+      placeVaultDocument({
+        programId,
+        documentId,
+        organizationId: as.id,
+        userId,
+        ...args,
+      } as Parameters<typeof placeVaultDocument>[0]),
+    role,
   );
 }
 
@@ -229,12 +237,14 @@ const ANA_CTX = {
 };
 
 /** place_project_document, resolved through the real executor registry. */
-async function anaPlaces(input: Record<string, unknown>) {
+async function anaPlaces(input: Record<string, unknown>, role: string | null = 'admin') {
   const { getToolHandler } = await import('../../server/services/ana/AnaToolExecutor');
   const handler = getToolHandler('place_project_document');
   if (!handler) throw new Error('place_project_document is not registered');
-  const raw = await inTenantScope({ id: orgId, uuid: orgUuid }, () =>
-    handler({ document_id: documentId, ...input }, { organizationId: orgId, userId, ...ANA_CTX }),
+  const raw = await inTenantScope(
+    { id: orgId, uuid: orgUuid },
+    () => handler({ document_id: documentId, ...input }, { organizationId: orgId, userId, ...ANA_CTX }),
+    role,
   );
   return JSON.parse(raw);
 }
@@ -483,3 +493,43 @@ describe('a placement AnA makes is a suggestion, attributed to her (D5)', () => 
     expect(audit!.details.servingModel).toBeUndefined();
   });
 });
+
+describe('only a role that may write files into the Vault (D3)', () => {
+  /* The web routes carry requireEditorAccess. The service they share with
+     AnA's tools, authoring's file-to-vault and eSTAR retention carried none, and
+     ToolContext carries no role at all — so a viewer who asked AnA to file a
+     document had it filed. The check now sits in the service, on the role the
+     tenant scope carries: on every request path that is the organization_users
+     role the middleware reads, AnA's included. */
+  it('refuses a viewer, and writes nothing', async () => {
+    const before = await row();
+    const out = await place({ folderId: 'eng', note: 'filed by a viewer' }, undefined, 'viewer');
+    expect(out).toMatchObject({ ok: false, status: 403, code: 'VAULT_WRITE_ROLE_REQUIRED' });
+    expect(await row()).toEqual(before);
+    expect(await lastFilingAudit()).toBeNull();
+  });
+
+  it('refuses a scope that carries no role at all', async () => {
+    const out = await place({ folderId: 'eng', note: 'no role' }, undefined, null);
+    expect(out).toMatchObject({ ok: false, status: 403, code: 'VAULT_WRITE_ROLE_REQUIRED' });
+    expect((await row()).placement_status).toBe('unfiled');
+  });
+
+  it('refuses AnA acting for a viewer — the path that had no check', async () => {
+    await markCataloged();
+    const before = await row();
+    const out = await anaPlaces({ folder_id: 'eng', rationale: 'Design history extract.' }, 'viewer');
+    // The tool's refusal shape: the service's code under `error`, its message for AnA to relay.
+    expect(out).toMatchObject({ ok: false, error: 'VAULT_WRITE_ROLE_REQUIRED' });
+    expect(out.message).toMatch(/viewer/);
+    expect(await row()).toEqual(before);
+    expect(await lastFilingAudit()).toBeNull();
+  });
+
+  it('lets a member file — the role SSO provisioning assigns', async () => {
+    const out = await place({ folderId: 'eng', note: 'filed by a member' }, undefined, 'member');
+    expect(out.ok).toBe(true);
+    expect((await row()).folder_id).toBe('eng');
+  });
+});
+

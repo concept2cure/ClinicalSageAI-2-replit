@@ -172,3 +172,60 @@ describe('executeAgenticLoop adapter', () => {
     expect(gatewayState.calls.length).toBe(1);
   });
 });
+
+/* ── The tenant uuid the tools scope by ───────────────────────────────────────
+   search_document_passages refuses without ctx.organizationUuid (it is the
+   tenant boundary the vault corpus enforces), and so do project_knowledge_search
+   and the artifact scope. The chat route passes it; background deep
+   investigations and the realtime namespace build their toolContext from the
+   integer org id alone, so every one of those tools answered "unavailable"
+   there. A deep investigation runs inside the chat request's tenant scope —
+   started fire-and-forget from it — and that scope already holds the uuid. */
+describe('the tool context carries the tenant uuid its request scope holds', () => {
+  const ORG_UUID = '11111111-2222-4333-8444-555555555555';
+
+  async function contextSeenByATool(
+    scope: { tenantId: string; orgUuid?: string | null } | null,
+    toolContext: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
+    let seen: Record<string, unknown> = {};
+    registerToolHandler('__test_ctx_capture', async (_input, ctx) => {
+      seen = { ...(ctx ?? {}) };
+      return 'ok';
+    });
+    gatewayState.responses = [
+      { content: '', toolUses: [{ id: 'c1', name: '__test_ctx_capture', input: {} }], usage: {}, provider: 'p', model: 'm', requestId: 'r1' },
+      { content: 'done', toolUses: [], usage: {}, provider: 'p', model: 'm', requestId: 'r2' },
+    ];
+    const run = () => executeAgenticLoop(baseRequest() as any, { maxRounds: 2, toolContext: toolContext as any });
+    if (scope) {
+      const { runWithTenantScope } = await import('../../../db/tenantStore');
+      await runWithTenantScope({ ...scope, role: 'member', source: 'request', caller: 'executor-agentic-loop.test' }, run);
+    } else {
+      await run();
+    }
+    return seen;
+  }
+
+  it('fills it from the request scope when the scope is the same tenant', async () => {
+    const seen = await contextSeenByATool({ tenantId: '7', orgUuid: ORG_UUID }, { organizationId: 7, userId: 3 });
+    expect(seen.organizationUuid).toBe(ORG_UUID);
+  });
+
+  it("never borrows another tenant's uuid", async () => {
+    const seen = await contextSeenByATool({ tenantId: '8', orgUuid: ORG_UUID }, { organizationId: 7, userId: 3 });
+    expect(seen.organizationUuid ?? null).toBeNull();
+  });
+
+  it('keeps a uuid the caller passed', async () => {
+    const own = '99999999-2222-4333-8444-555555555555';
+    const seen = await contextSeenByATool({ tenantId: '7', orgUuid: ORG_UUID }, { organizationId: 7, organizationUuid: own });
+    expect(seen.organizationUuid).toBe(own);
+  });
+
+  it('invents nothing outside a scope', async () => {
+    const seen = await contextSeenByATool(null, { organizationId: 7 });
+    expect(seen.organizationUuid ?? null).toBeNull();
+  });
+});
+
