@@ -185,11 +185,11 @@
   /* Validation + compliance panels (secondary dashboards) */
   .ec-art-panel{ font-family:var(--font-sans); }
   .ec-panel-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:18px; }
-  .ec-panel-t{ font-size:16px; font-weight:650; color:var(--text-100); }
+  .ec-panel-t{ font-size:16px; font-weight:600; color:var(--text-100); }
   .ec-panel-s{ font-size:11.5px; color:var(--text-400); font-family:var(--font-mono); margin-top:3px; }
   .ec-empty{ color:var(--text-300); font-size:13px; padding:40px 0; text-align:center; }
   .ec-vstat{ display:flex; align-items:center; gap:12px; margin-bottom:16px; }
-  .ec-vbadge{ font-size:12px; font-weight:700; padding:4px 12px; border-radius:20px; }
+  .ec-vbadge{ font-size:12px; font-weight:600; padding:4px 12px; border-radius:20px; }
   .ec-vbadge.ok{ background:var(--success-muted); color:var(--success); }
   .ec-vbadge.err{ background:var(--error-muted); color:var(--error); }
   .ec-vstat .mono{ font-size:11.5px; color:var(--text-400); }
@@ -204,9 +204,9 @@
   .ec-ftype{ font-size:10.5px; color:var(--text-400); margin-bottom:3px; }
   .ec-fmsg{ font-size:12.5px; color:var(--text-200); line-height:1.5; }
   .ec-cscore{ display:flex; align-items:center; gap:18px; padding:16px 20px; background:var(--bg-050); border:1px solid var(--border); border-radius:12px; margin-bottom:18px; }
-  .ec-cscore-num{ font-size:44px; font-weight:700; line-height:1; color:var(--accent-200); font-variant-numeric:tabular-nums; }
+  .ec-cscore-num{ font-size:44px; font-weight:600; line-height:1; color:var(--accent-200); font-variant-numeric:tabular-nums; }
   .ec-cscore-num .u{ font-size:20px; color:var(--text-400); margin-left:2px; }
-  .ec-cscore-l{ font-size:14px; font-weight:650; color:var(--text-100); }
+  .ec-cscore-l{ font-size:14px; font-weight:600; color:var(--text-100); }
   .ec-cscore-s{ font-size:11.5px; color:var(--text-400); margin-top:3px; }
   .ec-checks{ display:flex; flex-direction:column; gap:2px; }
   .ec-check{ display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; font-size:12.5px; }
