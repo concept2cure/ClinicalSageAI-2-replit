@@ -130,6 +130,28 @@ Findings the measurement surfaced beyond its question (recorded, not acted on):
   `req.organizationId` it claims to set (per `server/utils/authedOrgId.ts:29`)
   is never set either.
 
+## Second tranche, same day (148 → 134)
+
+| Site | Launch path | Carrier | Red → green |
+|---|---|---|---|
+| `services/ectd/package-from-core.ts`, `assemble-from-core.ts` ×2 | **Submission Center**: eCTD Compile | `auditTrail` on the assembly result, persisted only when both rows were (`combineAuditRowOutcomes`). A refusal throws `EctdAssemblyBlockedError` carrying the refusal row's outcome. `routes/ectd-compile.ts` forwards both. | 7 failed / 23 passed of 30 → 30/30 (`ectd-assembly-*`) |
+| `routes/module-access-requests.ts` ×2 | access requests (shell): ask, approve or decline | `auditTrail` | 5 failed / 38 passed of 43 → 43/43 (`access-requests-trials-*`) |
+| `routes/admin/licensing-trials.ts` | master licensing (shell): trial set, convert, end | `auditTrail` | (same run) |
+
+Launch-path sites remaining: **12 of 25**, 4 of them launch-app.
+
+- AnA QMS change control (`AnaToolExecutor.ts` ×3) is launch-app. That file
+  is edited by other lanes within hours of any given moment.
+- eCTD assembly now carries its outcome. Three callers receive it and do not
+  yet answer it: `routes/submissions.ts`, `submission-service.ts` (another
+  lane, changed within the hour) and `routes/ectd-export.ts`. The export
+  answers a binary, so it needs the `X-Audit-Row-*` headers.
+- The living-record facts (`fact-change-orchestrator.ts` ×2,
+  `document-binder.ts:298`) are reached from AnA tools that copy chosen
+  fields. Converting the services alone would carry the outcome to their HTTP
+  routes, which have no launch client, and drop it at the tool. They go with
+  the `AnaToolExecutor` change.
+
 ## Not done here, and why
 
 - **eCTD compile** (`services/ectd/assemble-from-core.ts` ×2,
