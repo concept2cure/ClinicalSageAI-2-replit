@@ -18,10 +18,10 @@
 
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 
-import { AnaActivity } from '../AnaActivity';
-import type { AnaToolCall } from '../../components/ana/useAnaChat';
+import { AnaActivity, activityPropsFor, splitLabel } from '../AnaActivity';
+import type { AnaChatMessage, AnaToolCall } from '../../components/ana/useAnaChat';
 
 afterEach(cleanup);
 
@@ -332,5 +332,110 @@ describe('AnaActivity — the clock', () => {
     const { container } = render(<AnaActivity startedAt={1_700_000_000_000} toolCalls={[call()]} />);
     const toggle = container.querySelector('.ana-activity-toggle') as HTMLElement;
     expect(toggle.textContent).not.toMatch(/ in \d/);
+  });
+});
+
+describe('AnaActivity — each row opens in place, like the work it records', () => {
+  it('puts a step\'s duration and the inputs she passed behind that step\'s own chevron', () => {
+    const { container } = render(
+      <AnaActivity
+        streaming
+        toolCalls={[call({ label: 'Searching the literature for "estimand"', latencyMs: 2_340, round: 1, input: { alpha: 0.05 } })]}
+      />,
+    );
+    const row = screen.getByRole('button', { name: /Searching the literature for/ });
+    // Verb muted, object not: the eye lands on what she worked on.
+    expect(container.querySelector('.ana-activity-obj')?.textContent).toBe('estimand');
+    expect(row.getAttribute('aria-expanded')).toBe('false');
+    // Mounted while collapsed so aria-controls resolves; hidden until opened.
+    const detail = document.getElementById(row.getAttribute('aria-controls') as string) as HTMLElement;
+    expect(detail.hasAttribute('hidden')).toBe(true);
+    fireEvent.click(row);
+    expect(detail.hasAttribute('hidden')).toBe(false);
+    expect(within(detail).getByText(/Took 2\.3s · round 1/)).toBeTruthy();
+    const inputs = within(detail).getByRole('region', { name: 'Inputs AnA passed to this step' });
+    expect(inputs.textContent).toContain('"alpha": 0.05');
+    expect(inputs.getAttribute('tabindex')).toBe('0');
+  });
+
+  it('records her plan once as "Planned N steps", with the steps behind the chevron', () => {
+    render(
+      <AnaActivity
+        streaming
+        planChanges={[
+          { kind: 'added', title: 'Read the protocol', at: 1, initial: true },
+          { kind: 'started', title: 'Read the protocol', at: 1, initial: true },
+          { kind: 'added', title: 'Draft the synopsis', at: 1, initial: true },
+          { kind: 'added', title: 'Check citations', at: 5 },
+        ]}
+        toolCalls={[
+          call({ name: 'update_plan', label: 'Updating the plan · 2 steps', startedAt: 1 }),
+          call({ label: 'Reading the protocol', startedAt: 2 }),
+        ]}
+      />,
+    );
+    const planned = screen.getByRole('button', { name: /Planned 2 steps/ });
+    fireEvent.click(planned);
+    const steps = document.getElementById(planned.getAttribute('aria-controls') as string) as HTMLElement;
+    expect(within(steps).getByText('Read the protocol')).toBeTruthy();
+    expect(within(steps).getByText('Draft the synopsis')).toBeTruthy();
+    // A step added later is its own row, in the order it happened.
+    expect(screen.getByText('Added step')).toBeTruthy();
+    // Her bookkeeping call is the plan it recorded, not a second tool row.
+    expect(screen.queryByText('Updating the plan · 2 steps')).toBeNull();
+    const rows = [...document.querySelectorAll('.ana-activity-list > li')].map((li) => li.textContent);
+    expect(rows.findIndex((t) => t?.includes('Planned'))).toBeLessThan(rows.findIndex((t) => t?.includes('Reading the protocol')));
+    expect(rows.findIndex((t) => t?.includes('Reading the protocol'))).toBeLessThan(rows.findIndex((t) => t?.includes('Added step')));
+  });
+
+  it('keeps a FAILED plan call as a failed row — a failure is never folded away', () => {
+    const { container } = render(
+      <AnaActivity toolCalls={[call({ name: 'update_plan', label: 'Updating the plan', status: 'error' })]} />,
+    );
+    expect(screen.getByRole('button').textContent).toContain('1 failed');
+    // And as a row of its own once the record is open, not only as a count.
+    fireEvent.click(screen.getByRole('button'));
+    const failed = container.querySelector('.ana-activity-step.is-error');
+    expect(failed?.textContent).toContain('Updating the plan');
+  });
+
+  it('claims no duration for a settled step whose end was never recorded', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1_700_000_100_000);
+    render(<AnaActivity streaming toolCalls={[call({ status: 'success', startedAt: 1_700_000_000_000, input: { a: 1 } })]} />);
+    const row = screen.getByRole('button', { name: /Sample size/ });
+    // A clock read off "now" for a finished step would say 1m 40s and keep growing.
+    expect(row.textContent).not.toMatch(/\d+(\.\d)?s|\dm/);
+    vi.useRealTimers();
+  });
+
+  it('says on the folded line when a fallback provider answered', () => {
+    render(<AnaActivity toolCalls={[call()]} fallback />);
+    expect(screen.getByRole('button').textContent).toContain('answered by a fallback provider');
+  });
+
+  it('is fed by one mapping from the turn, which carries the plan and the fallback', () => {
+    const m: AnaChatMessage = {
+      id: 'a',
+      role: 'assistant',
+      text: '',
+      fallback: true,
+      planChanges: [{ kind: 'added', title: 'X', at: 1, initial: true }],
+      generatedDraft: { title: 'IB', content: '' },
+      sentAt: 1,
+      completedAt: 2,
+    };
+    expect(activityPropsFor(m)).toMatchObject({ fallback: true, draftTitle: 'IB', startedAt: 1, completedAt: 2 });
+    expect(activityPropsFor(m).planChanges).toHaveLength(1);
+  });
+
+  it('splits a label at the argument the server quoted, and leaves the rest whole', () => {
+    expect(splitLabel('Searching the literature for "estimand"')).toEqual({ verb: 'Searching the literature for', object: 'estimand' });
+    expect(splitLabel('Convening the drafting council for "2.5" — draft, verify')).toEqual({
+      verb: 'Convening the drafting council for',
+      object: '2.5',
+      rest: '— draft, verify',
+    });
+    expect(splitLabel('Sample size — biostatistics engine')).toEqual({ verb: 'Sample size — biostatistics engine' });
   });
 });

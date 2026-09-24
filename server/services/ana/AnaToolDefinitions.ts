@@ -20,6 +20,8 @@ import {
   START_DEEP_INVESTIGATION,
   CHECK_DEEP_INVESTIGATION,
 } from './agentic-workflow-tools.js';
+// AnA's declared plan for a turn — the only source of a "Step 2 of 5" count.
+import { UPDATE_PLAN } from './turn-plan.js';
 // Biotech program orchestrator — the biologics/advanced-therapy development
 // spine (discovery → IND → Phase 1/2/3 → BLA → post-approval). Handler is
 // registered from biotech-program.ts via the inject-and-sibling pattern.
@@ -2214,6 +2216,7 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   DRAFT_CLINICAL_OVERVIEW_M2_5,
   BATCH_DRAFT_SECTIONS,
   CONVENE_DRAFTING_COUNCIL,
+  UPDATE_PLAN,
   GET_CLIENT_JOURNEY,
   GET_BIOTECH_PROGRAM_STATUS,
   COMMIT_DOCUMENT_REVISION,
