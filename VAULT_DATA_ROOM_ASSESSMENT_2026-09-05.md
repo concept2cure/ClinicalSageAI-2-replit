@@ -21,6 +21,11 @@ database.
 
 ## 0. Re-baseline, 2026-09-24 — what held and what did not
 
+> **The build plan that follows from this re-baseline** is
+> `docs/design/VAULT_VEEVA_PARITY_PLAN_2026-09-24.md`: a parity table against Veeva Vault and a
+> due-diligence data room, twenty ordered slices, and the twelve decisions only the founder can make.
+> It supersedes §11–§12 of this document as the sequence of work.
+
 Nineteen days and several hundred commits after this was written, every checkable claim in
 §1–§12 was re-verified against trunk: one verifier per section, an adversarial skeptic over
 every claim the verifiers overturned, and a sweep of the 394 commits since, looking for work
@@ -57,8 +62,9 @@ mattered, each corrected where it sits:
    said to make the defect class "unable to recur silently" compared `/docs` with itself
    (now calls every endpoint, `5157a08c`).
 3. **"The purge … CLOSED TWICE"** (§5 API). The records closed; the stored bytes did not, and
-   the purge's own code said so. Open under tenant offboarding (D6), behind a legal-hold check
-   the purge does not make.
+   the purge's own code said so. *(Closed later the same day by the D6 lane in `2ddb77b0`: the
+   purge is now one transaction, refuses while a legal hold is active, and erases the stored
+   bytes through the store each was saved in.)*
 4. **"A row stays readable after a backend change" / "the fix is now a one-variable change"**
    (§5 Storage). The reader never consults the recorded provider; S3 could not be selected in
    any production build until `647b71e3`; `S3StorageProvider.get` fails past 1000 keys; the
@@ -827,6 +833,9 @@ loads. Closing a hole is not parity.
   erasure still leaves every document file in storage. Open under tenant offboarding (D6,
   unclaimed). Erasing regulated documents first needs the legal-hold check the purge does not
   make, and no hold can be placed through the product.)*
+  *(Closed later on 2026-09-24 by the D6 lane, `2ddb77b0`: one transaction, legal holds
+  consulted, stored bytes erased. A hold still cannot be placed through the product; see
+  `docs/design/VAULT_VEEVA_PARITY_PLAN_2026-09-24.md`, VR-17.)*
 - **`VaultSyncService` (the Veeva-migration story) has no importer outside its own file.**
   **STILL OPEN** — re-verified 2026-09-19. The only references anywhere are its own definition
   (`server/integrations/veeva-vault/vault-sync-service.ts`) and its own test. No route, service
