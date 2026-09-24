@@ -41,6 +41,9 @@ export interface VaultDoc {
   docId?: string;
   sizeLabel?: string;
   hash?: string;
+  /** vault.documents.mime_type (uploads only). Filing into a submission is
+   *  offered only for a PDF. */
+  mimeType?: string | null;
   filing?: VaultDocFiling;
 }
 

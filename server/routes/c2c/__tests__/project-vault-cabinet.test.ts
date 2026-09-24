@@ -108,3 +108,26 @@ describe('filingCabinet — uploads appear in the tree they were uploaded into',
     expect((m3 as { children: unknown[] }).children).toHaveLength(0);
   });
 });
+
+describe('uploadLeaf carries the file type the filing action decides on', () => {
+  // The surface offers "Place into submission" by this field, and the dialog
+  // refuses anything but a PDF before a request is made: the packager's vault
+  // branch refuses a leaf whose bytes are not a PDF. Dropped here, the client
+  // guard would be blind and a Word file could be offered for assembly again.
+  it('projects mime_type as mimeType', () => {
+    expect(uploadLeaf('pharma', row({})).mimeType).toBe('application/pdf');
+    expect(
+      uploadLeaf('pharma', row({ mime_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })).mimeType,
+    ).toBe('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+  });
+});
+
+describe('an upload has no authoring completion, and says so', () => {
+  // `pct: 0` was set "rather than a fabricated figure" — but 0 is a figure too.
+  // The Vault publishes it to AnA as percentComplete, so AnA read an uploaded
+  // PDF as "0% complete": a document nobody has started, said of a finished
+  // file with no authoring lifecycle. Null means "not assessed".
+  it('projects pct as null, not 0', () => {
+    expect(uploadLeaf('pharma', row({})).pct).toBeNull();
+  });
+});

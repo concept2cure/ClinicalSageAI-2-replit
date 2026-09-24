@@ -75,6 +75,20 @@ export class SubmissionError extends Error {
   }
 }
 
+/**
+ * The HTTP status each refusal carries, wherever a route surfaces one. Typed
+ * over the code union so a new code cannot ship unmapped — an unmapped refusal
+ * is a 500, which tells the caller the server broke when it did not.
+ */
+export const SUBMISSION_ERROR_STATUS: Readonly<Record<SubmissionErrorCode, number>> = {
+  NOT_FOUND: 404,
+  INVALID_STATE: 409,
+  VALIDATION: 400,
+  GOVERNED_REQUIRED: 403,
+  DISPATCH_BLOCKED: 422,
+  FORBIDDEN: 403,
+};
+
 // ── Pure lifecycle rules ────────────────────────────────────────────────────
 
 export const SEQUENCE_STATUSES = ['draft', 'assembling', 'validated', 'frozen', 'dispatched'] as const;

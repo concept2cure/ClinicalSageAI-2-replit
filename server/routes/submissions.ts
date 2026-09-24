@@ -33,6 +33,7 @@ import {
   listLeaves,
   upsertLeaf,
   removeLeaf,
+  SUBMISSION_ERROR_STATUS,
 } from '../services/submission-service/submission-service';
 import {
   isPlaceableDocumentTable,
@@ -81,13 +82,8 @@ function ctxOf(req: Request): Ctx | null {
 }
 
 const CODE_STATUS: Record<string, number> = {
-  NOT_FOUND: 404,
-  INVALID_STATE: 409,
-  GOVERNED_REQUIRED: 403,
-  DISPATCH_BLOCKED: 422,
+  ...SUBMISSION_ERROR_STATUS,
   NO_AUTHORED_CONTENT: 422,
-  FORBIDDEN: 403,
-  VALIDATION: 400,
   RATE_LIMITED: 429,
   OVERLOADED: 503,
   TOKEN_LIMIT_EXCEEDED: 413,
