@@ -28,6 +28,7 @@ import { createDocumentLifecycleRouter } from '../../server/routes/document-life
 import { buildLifecycleBindings } from '../../server/services/regulatory/lifecycleBindings';
 import type { DocumentAuditEvent } from '../../shared/regulatory/document-lifecycle';
 import type { SignerCredentials, SignerReverification } from '../../server/services/part11/reverify-signer';
+import { SubmissionError } from '../../server/services/submission-service/submission-service';
 
 const ORG = 1;
 const USER = 42;
@@ -306,5 +307,64 @@ describe('signing re-verifies, and writes are role-gated (2026-09-24)', () => {
     expect(res.status).toBe(409);
     expect(res.body.blockedBy).toContain('ILLEGAL_TRANSITION');
     expect(reverifyCalls).toBe(0);
+  });
+});
+
+/**
+ * The leaf writer's own refusals are refusals, not server errors.
+ *
+ * upsertLeaf refuses a frozen or dispatched sequence (and a missing one) with a
+ * typed SubmissionError. The route caught only the binding's LeafBindingRefusal,
+ * so the writer's refusal fell through to a 500 — while the route's own comment
+ * said a refusal is "a 409 … never a 500". Found by the 2026-09-24
+ * re-verification.
+ */
+describe('the writer\'s refusals keep their status', () => {
+  function appWithWriter(refusal: SubmissionError): express.Express {
+    const a = express();
+    a.use(express.json());
+    a.use((req, _res, next) => {
+      (req as express.Request & { tenantContext?: unknown }).tenantContext = { organizationId: ORG };
+      (req as express.Request & { user?: unknown }).user = ADMIN;
+      next();
+    });
+    a.use('/api/regulatory/documents', createDocumentLifecycleRouter({
+      db: harness.db as never,
+      reverify,
+      bindingsFactory: (deps) => buildLifecycleBindings({
+        ...deps,
+        audit: async () => {},
+        registerGovernedDocument: async () => {},
+        upsertLeaf: async () => { throw refusal; },
+      }),
+    }));
+    return a;
+  }
+
+  async function approvedDoc(): Promise<string> {
+    const id = (await request(app).post('/api/regulatory/documents')
+      .send({ title: 'Writer refusal', documentType: 'US_IND', hasContent: true })).body.canonicalId;
+    await request(app).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'in_review' });
+    await request(app).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD });
+    expect((await request(app).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved', password: PASSWORD })).status).toBe(200);
+    return id;
+  }
+
+  it('a frozen sequence is a 409 in the orchestrator\'s shape, not a 500', async () => {
+    const id = await approvedDoc();
+    const res = await request(appWithWriter(new SubmissionError('INVALID_STATE', 'Sequence is frozen; its leaves are immutable.')))
+      .post(`/api/regulatory/documents/${id}/advance`)
+      .send({ to: 'placed', placement: { ...PLACEMENT, sequenceId: 9 } });
+    expect(res.status).toBe(409);
+    expect(res.body.ok).toBe(false);
+    expect(String(res.body.blockedBy?.join(' '))).toMatch(/INVALID_STATE: Sequence is frozen; its leaves are immutable/);
+  });
+
+  it('a sequence that does not exist is a 404', async () => {
+    const id = await approvedDoc();
+    const res = await request(appWithWriter(new SubmissionError('NOT_FOUND', 'Sequence not found for this organization.')))
+      .post(`/api/regulatory/documents/${id}/advance`)
+      .send({ to: 'placed', placement: { ...PLACEMENT, sequenceId: 9 } });
+    expect(res.status).toBe(404);
   });
 });

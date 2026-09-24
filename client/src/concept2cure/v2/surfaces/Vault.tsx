@@ -8,6 +8,7 @@ import { useLiveData, EmptyState } from '../dataConnect';
 import { useVaultUpload } from '../useVaultUpload';
 import {
   VAULT_INGEST_DOCUMENT_TYPES,
+  vaultIngestTypeLabel,
   type VaultIngestDocumentType,
 } from '@shared/constants/domain/vault-taxonomy';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -446,7 +447,11 @@ function searchHitToDoc(h: VaultSearchHit): VaultDoc {
     id: h.id,
     num: h.ctdSection || '',
     title: h.title,
-    type: h.documentType || '',
+    // The same reader-facing name the tree shows (the server maps tree rows
+    // through vaultIngestTypeLabel). A hit mapped here separately rendered the
+    // raw token, so one document read "Module 3 · quality" in the tree and
+    // "MODULE_3" in a search.
+    type: h.documentType ? vaultIngestTypeLabel(h.documentType) : '',
     status: h.placementStatus || 'unfiled',
     pct: null,
     owner: '',
@@ -779,7 +784,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   /* The vault document currently being filed into a submission, if any. The
      tree id is `up-<uuid>`; the uuid is what a leaf names. */
   const [filingIntoSubmission, setFilingIntoSubmission] = React.useState<
-    { documentUuid: string; documentTitle: string } | null
+    { documentUuid: string; documentTitle: string; mimeType?: string | null } | null
   >(null);
 
   const sel =
@@ -956,7 +961,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         >
           {VAULT_INGEST_DOCUMENT_TYPES.map((t) => (
             <option key={t} value={t}>
-              {t.replace(/_/g, ' ')}
+              {vaultIngestTypeLabel(t)}
             </option>
           ))}
         </select>
@@ -1023,6 +1028,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         <VaultPlaceIntoSubmission
           documentUuid={filingIntoSubmission.documentUuid}
           documentTitle={filingIntoSubmission.documentTitle}
+          mimeType={filingIntoSubmission.mimeType}
           onClose={() => setFilingIntoSubmission(null)}
         />
       )}
@@ -1312,6 +1318,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                                 // prefix is refused server-side as a malformed uuid.
                                 documentUuid: sel.docId!,
                                 documentTitle: sel.title || sel.num || 'Vault document',
+                                mimeType: sel.mimeType,
                               })
                             }
                             data-testid="vault-place-into-submission"

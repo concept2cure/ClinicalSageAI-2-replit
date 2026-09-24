@@ -52,7 +52,11 @@ import {
   makeUpsertLeafBinding,
   LeafBindingRefusal,
 } from '../services/regulatory/lifecycle-leaf-binding';
-import { upsertLeaf } from '../services/submission-service/submission-service';
+import {
+  upsertLeaf,
+  SubmissionError,
+  SUBMISSION_ERROR_STATUS,
+} from '../services/submission-service/submission-service';
 
 export interface DocumentLifecycleRouterOptions {
   /** Drizzle handle. Defaults to the runtime db. */
@@ -286,6 +290,17 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
          that cannot be filed and here is which part. */
       if (err instanceof LeafBindingRefusal) {
         return res.status(409).json({
+          ok: false,
+          from: projected.state.stage,
+          to,
+          blockedBy: [`${err.code}: ${err.message}`],
+        });
+      }
+      /* The leaf writer refuses too — a frozen or dispatched sequence, one that
+         is not this organisation's — and its refusal keeps the status the
+         canonical route gives it (routes/submissions.ts), in the same shape. */
+      if (err instanceof SubmissionError) {
+        return res.status(SUBMISSION_ERROR_STATUS[err.code]).json({
           ok: false,
           from: projected.state.stage,
           to,
