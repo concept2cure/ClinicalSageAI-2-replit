@@ -45,7 +45,13 @@ vi.mock('../../server/db', () => ({
 import { assumptionRegistryService } from '../../server/services/assumption-registry-service';
 import { decisionRecordService } from '../../server/services/decision-record-service';
 import { contradictionEngineService } from '../../server/services/contradiction-engine-service';
+import express from 'express';
+import request from 'supertest';
 import { GovernanceBoundaryService } from '../../server/services/governance-boundary-service';
+import {
+  getRecentGovernedDecisions,
+  GOVERNED_FABRIC_KIND,
+} from '../../server/services/governed-decision-repository';
 import { createResolutionPlan } from '../../server/services/resolution/resolution-planner';
 import { createBundleFromPlan, transitionBundleState } from '../../server/services/resolution/bundle-builder';
 import { executeBundle } from '../../server/services/resolution/bundle-executor';
@@ -349,6 +355,211 @@ describe('Journey C — HAQ correction loop (service level, canonical DDL)', () 
         [ORG],
       );
       return { allowed: result.allowed, audit: audit.rows[0] as Record<string, unknown> };
+    });
+
+    // ── 11b. The governed-document fabric's decisions persist and read back ─
+    // The fabric records one decision per evaluation. Until 2026-09 NONE of them
+    // persisted: the writer used domain_track='governance' and
+    // recommendation_type='governed_fabric_decision', both outside the deployed
+    // CHECK vocabularies, and the insert failure was swallowed while the caller
+    // still received a decision reference. The repository's own integration
+    // suite only ever asserted EMPTY results, and no golden journey reached the
+    // fabric at all (it runs only for DOCUMENT transitions, and none of these
+    // passes an artifactId), so nothing noticed.
+    //
+    // This drives the REAL evaluator — which records through the real
+    // repository, against the real CHECK constraints this harness applies from
+    // db/migrations/20260323_assumption_decision_contradiction.sql — for a
+    // document that is ready and one that is empty, then reads back through the
+    // public API. Nothing here is a synthetic evaluation object.
+    await R.step('governed-fabric-decisions-persist', async () => {
+      const { evaluateGovernedDocument } = await import(
+        '../../server/src/control-plane/governed-document-evaluator'
+      );
+      const base = {
+        organizationId: String(ORG),
+        projectId: String(PROJECT),
+        actorId: String(AUTHOR),
+        intendedAction: 'promote' as const,
+        actorRole: 'author',
+      };
+      const ready = evaluateGovernedDocument({
+        context: { ...base, artifactId: 'journey-ready-doc', ctdSection: '2.7.3' },
+        documentState: {
+          hasContent: true, hasEvidence: true, evidenceCount: 3,
+          hasBeenReviewed: true, hasApproval: true,
+          hasPlacement: true, placementValid: true, hasProvenance: false,
+          unresolvedContradictionCount: 0, criticalContradictionCount: 0,
+        },
+      });
+      const empty = evaluateGovernedDocument({
+        context: { ...base, artifactId: 'journey-empty-doc' },
+        documentState: {
+          hasContent: false, hasEvidence: false, evidenceCount: 0,
+          hasBeenReviewed: false, hasApproval: false,
+          hasPlacement: false, placementValid: false, hasProvenance: false,
+          unresolvedContradictionCount: 0, criticalContradictionCount: 0,
+        },
+      });
+      const outcomes = [ready.evaluation.decision.outcome, empty.evaluation.decision.outcome];
+
+      // The write is fire-and-forget; poll rather than race it.
+      let recorded: Awaited<ReturnType<typeof getRecentGovernedDecisions>> = [];
+      for (let i = 0; i < 30 && recorded.length < 2; i++) {
+        recorded = await getRecentGovernedDecisions({
+          organizationId: String(ORG),
+          projectId: String(PROJECT),
+        });
+        if (recorded.length < 2) await new Promise((r) => setTimeout(r, 100));
+      }
+      expect(
+        recorded.length,
+        `the fabric evaluated 2 documents (${outcomes.join(', ')}) but ${recorded.length} decision(s) read back`,
+      ).toBe(2);
+
+      const rows = await jdb.pool.query(
+        `SELECT action_state, domain_track, recommendation_type,
+                decision_context->>'outcome' AS outcome
+           FROM decision_records
+          WHERE organization_id = $1 AND project_id = $2
+            AND decision_context->>'kind' = $3`,
+        [ORG, PROJECT, GOVERNED_FABRIC_KIND],
+      );
+      const fabric = rows.rows as Array<Record<string, string>>;
+      expect(fabric.length).toBe(2);
+
+      // A machine record of a concluded evaluation must never be filed as
+      // 'proposed' — the queue of decisions a human still owes an answer on.
+      const expected: Record<string, string> = {
+        allow: 'executed',
+        block: 'rejected',
+        review: 'under_review',
+        degraded: 'under_review',
+      };
+      for (const r of fabric) {
+        expect(r.action_state, `outcome ${r.outcome}`).toBe(expected[r.outcome]);
+        expect(r.domain_track).toBe('regulatory');
+        expect(r.recommendation_type).toBe('regulatory_strategy');
+      }
+
+      // And those rows must not wedge the project's boundary rules. The
+      // "Approved to Locked" rule counts UNRESOLVED decisions per project.
+      //
+      // Both evaluations above conclude 'block' -> 'rejected', which that rule
+      // never counts — so on its own this assertion would pass whether or not
+      // the rule excludes machine rows, and prove nothing about it. (They block
+      // because the export gate raises a CRITICAL "AI provenance of this content
+      // is not recorded" reason, and a critical reason from any gate decides
+      // every intent — a deliberate fail-closed policy, not something to tune
+      // this test around.) So one of the REAL fabric rows is reopened for
+      // re-review — rejected -> under_review is a valid lifecycle step — which
+      // leaves an unresolved machine row in the project. A machine's evaluation
+      // of one document is not a decision a human owes, so the lock that cleared
+      // in step 11 must still clear. A human decision in the same state still
+      // blocks: step 4 of this journey proves that.
+      const reopenTarget = await jdb.pool.query(
+        `SELECT id FROM decision_records
+          WHERE organization_id = $1 AND project_id = $2
+            AND decision_context->>'kind' = $3
+          ORDER BY created_at LIMIT 1`,
+        [ORG, PROJECT, GOVERNED_FABRIC_KIND],
+      );
+      const reopened = await decisionRecordService.transition(
+        (reopenTarget.rows[0] as { id: string }).id,
+        {
+          organizationId: ORG,
+          actionState: 'under_review',
+          performedBy: String(REVIEWER),
+          reason: 'journey: reopen a machine gate evaluation for re-review',
+        },
+      );
+      expect(reopened?.actionState).toBe('under_review');
+
+      const relock = await GovernanceBoundaryService.getInstance().evaluateTransition({
+        organizationId: ORG,
+        projectId: PROJECT,
+        fromBoundary: 'approved',
+        toBoundary: 'locked',
+        actorId: AUTHOR,
+        actorRole: 'author',
+      });
+      expect(
+        relock.allowed,
+        `fabric rows wedged the project lock: ${relock.blockedReasons.join(' | ')}`,
+      ).toBe(true);
+
+      return {
+        outcomes,
+        persisted: fabric.length,
+        states: fabric.map((r) => `${r.outcome}->${r.action_state}`),
+        reopenedToUnderReview: reopened?.actionState,
+        relockAllowed: relock.allowed,
+      };
+    });
+
+    // ── 11c. KNOWN-BAD: the simulate endpoint must not file a decision ──────
+    // POST /api/control-plane/governed/evaluate takes context.organizationId,
+    // projectId and actorId from the request BODY. It used to run the
+    // recording evaluator, which files a decision under that org — harmless
+    // only while every recording failed its CHECK (see 11b). Now that
+    // recording works, it would let a caller write into ANOTHER tenant's
+    // decision_records as any actor. The route must compute and return,
+    // nothing more. Driven over HTTP through the real router against the real
+    // store, naming a foreign org, and waiting out the fire-and-forget window
+    // the old code wrote in.
+    // An R.step with an explicit assertion, NOT R.expectBlocked: the harness
+    // files any non-assertion throw from an expectBlocked step as
+    // "blocked-as-expected", so a failed import or a broken request here would
+    // pass vacuously. Every failure in this step has to fail the journey.
+    await R.step('simulate-cannot-file-a-foreign-decision', async () => {
+      const { default: controlPlaneRouter } = await import(
+        '../../server/src/routes/control-plane.router'
+      );
+      const app = express();
+      app.use(express.json());
+      app.use((req, _res, next) => {
+        (req as unknown as { user: unknown }).user = { id: AUTHOR, role: 'admin', organizationId: ORG };
+        next();
+      });
+      app.use('/api/control-plane', controlPlaneRouter);
+
+      const countFor = async (org: number) =>
+        Number(
+          (
+            await jdb.pool.query(
+              `SELECT count(*)::int AS n FROM decision_records WHERE organization_id = $1`,
+              [org],
+            )
+          ).rows[0]?.n ?? 0,
+        );
+      const before = await countFor(OTHER_ORG);
+
+      const res = await request(app)
+        .post('/api/control-plane/governed/evaluate')
+        .send({
+          context: {
+            organizationId: String(OTHER_ORG),
+            projectId: '777',
+            actorId: 'someone-else',
+            intendedAction: 'promote',
+            artifactId: 'foreign-doc',
+          },
+          documentState: { hasContent: true },
+        });
+      expect(res.status).toBe(200);
+      expect(res.body?.result?.evaluation?.decision?.outcome).toBeTruthy();
+
+      // The old path recorded fire-and-forget; give it the window it used.
+      await new Promise((r) => setTimeout(r, 1500));
+      const after = await countFor(OTHER_ORG);
+      expect(
+        after - before,
+        `POST /governed/evaluate filed ${after - before} decision(s) into org ${OTHER_ORG} from a body-supplied context`,
+      ).toBe(0);
+      return {
+        foreignRowsWritten: after - before,
+        simulatedOutcome: res.body?.result?.evaluation?.decision?.outcome,
+      };
     });
 
     // ── 12. KNOWN-BAD: tenant isolation ─────────────────────────────────────
