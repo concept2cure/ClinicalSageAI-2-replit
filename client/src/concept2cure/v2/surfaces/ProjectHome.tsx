@@ -234,6 +234,8 @@ interface SourceRow {
   artifactId: string | null;
   origin: string | null;
   extractionMethod: string | null;
+  /** False once a re-upload superseded it. Absent on a server that predates it. */
+  isCurrent?: boolean;
   /** Recorded citations of this source. Absent on a server that predates it. */
   usage?: { sections: number; documents: number; changedSections: number } | null;
 }
@@ -332,10 +334,10 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   const [dragging, setDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const state = useLiveData<{ sources: SourceRow[] }>(
+  const state = useLiveData<{ sources: SourceRow[]; window?: { shown: number; truncated: boolean } }>(
     pid ? `/api/c2c/projects/${pid}/sources` : null,
     [pid, reloadKey],
-    hasKeys<{ sources: SourceRow[] }>('sources'),
+    hasKeys<{ sources: SourceRow[]; window?: { shown: number; truncated: boolean } }>('sources'),
   );
 
   // Sections in this project drafted from a source that has since changed. Read
@@ -362,8 +364,12 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   const rows = sources.filter(s =>
     q.trim() ? (s.title || '').toLowerCase().includes(q.trim().toLowerCase()) : true,
   );
-  const total = sources.length;
-  const readable = sources.filter(s => s.extractionStatus === 'extracted').length;
+  /* One file re-uploaded is one source: its retired revision is listed but not
+     counted. A full window's count is a floor. */
+  const current = sources.filter(s => s.isCurrent !== false);
+  const total = current.length;
+  const readable = current.filter(s => s.extractionStatus === 'extracted').length;
+  const truncated = state.data?.window?.truncated === true;
 
   return (
     <section className="pj-sec">
@@ -375,7 +381,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
           {state.error
             ? "couldn't load this project's sources — the list below is incomplete"
             : total > 0
-              ? `${total} source${total === 1 ? '' : 's'} · ${readable} readable — what this project's documents are written from`
+              ? `${total}${truncated ? '+' : ''} source${total === 1 && !truncated ? '' : 's'} · ${readable} readable${truncated ? ` (newest ${sources.length} shown)` : ''} — what this project's documents are written from`
               : "the sources this project's documents are written from"}
         </span>
       </div>

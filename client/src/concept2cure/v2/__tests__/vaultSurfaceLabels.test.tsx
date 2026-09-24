@@ -126,7 +126,9 @@ describe('Vault — what AnA is told about a selected file', () => {
   }
 
   it('a search hit is not "0% complete": no authoring completion was assessed', async () => {
-    mockSearch(() => searchHit({ title: 'Stability Report', documentType: 'REPORT', ctdSection: '3.2.P.8' }));
+    // A document the search found that is not in the tree, so the hit itself is
+    // what is selected (a hit for a tree document opens the tree's record).
+    mockSearch(() => searchHit({ id: '44444444-4444-4444-8444-444444444444', title: 'Stability Report', documentType: 'REPORT', ctdSection: '3.2.P.8' }));
     let ctx: SurfaceContext | null = null;
     render(<><Vault {...props()} /><Probe onCtx={(c) => { ctx = c; }} /></>);
     fireEvent.change(await screen.findByLabelText('Search this vault'), { target: { value: 'shelf' } });
