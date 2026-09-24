@@ -250,6 +250,36 @@ const CASES: Case[] = [
     },
     countOwn: `SELECT count(*)::int AS n FROM public.resolution_bundle_items WHERE bundle_id = $1::uuid`,
   },
+  {
+    // Added 2026-09-24 (ledger L202): a GRANDCHILD. A section version's parent,
+    // the section, is itself a child of the document that carries the tenant.
+    // So the policy delegates to the section's own policy (the migration's
+    // chained list). The rows are the full prior text of a governed section,
+    // its Part 11 history.
+    child: 'c2c_document_section_versions',
+    parent: 'c2c_document_sections',
+    fk: 'section_id',
+    parentTenant: 'org_id (on c2c_documents, through the section)',
+    seed: async (q, org, tag) => {
+      await q(
+        `INSERT INTO public.c2c_documents (id, org_id, doc_type, agency, rule_pack_version, title)
+         VALUES ($1, $2, 'k510', 'fda', 'fda-510k-2024', $3)`,
+        [tag, org, `document ${tag}`],
+      );
+      const section = await q(
+        `INSERT INTO public.c2c_document_sections (document_id, section_key, label, path_order)
+         VALUES ($1, 's1', 'Section', 1) RETURNING id::text AS id`,
+        [tag],
+      );
+      await q(
+        `INSERT INTO public.c2c_document_section_versions (section_id, version, content, author_id, reason)
+         VALUES ($1::bigint, 99, $2::jsonb, 1, 'dbtest')`,
+        [section.rows[0].id, JSON.stringify({ text: `prior text for org ${org}` })],
+      );
+      return section.rows[0].id;
+    },
+    countOwn: `SELECT count(*)::int AS n FROM public.c2c_document_section_versions WHERE section_id = $1::bigint`,
+  },
 ];
 
 /** Named by the migration; asserted as a set so a dropped entry is caught. */
@@ -293,6 +323,10 @@ const ALL_CHILD_TABLES = [
   'simple_document_versions', 'species_comparisons', 'timeline_phases',
   'validation_findings', 'validation_harmonization_opportunities', 'validation_issues',
   'workflow_approvals', 'workflow_history', 'workflow_steps',
+  // Added 2026-09-24 (ledger L202): grandchildren, scoped through the parent's
+  // own policy by the migration's chained list.
+  'ai_claims', 'ai_claim_citations', 'c2c_document_section_evidence',
+  'c2c_document_section_versions', 'section_propagations',
 ];
 
 /**
@@ -381,7 +415,16 @@ async function ensureTables(pool: { query: (sql: string) => Promise<unknown> }):
       chunk_index INTEGER NOT NULL,
       content     TEXT NOT NULL
     );
+  `);
+}
 
+/**
+ * The parents and children the ledger L201 / L202 cases use, created the same
+ * way and for the same reason as ensureTables above: a bare CI database has
+ * none of them. Kept apart so each function stays readable.
+ */
+async function ensureAddedTables(pool: { query: (sql: string) => Promise<unknown> }): Promise<void> {
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS public.regulatory_programs (
       id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       organization_id INTEGER NOT NULL,
@@ -391,6 +434,29 @@ async function ensureTables(pool: { query: (sql: string) => Promise<unknown> }):
       product_type    TEXT NOT NULL,
       primary_agency  TEXT NOT NULL,
       product_name    TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS public.c2c_documents (
+      id                TEXT PRIMARY KEY,
+      org_id            INTEGER NOT NULL,
+      doc_type          TEXT NOT NULL,
+      agency            TEXT NOT NULL,
+      rule_pack_version TEXT NOT NULL,
+      title             TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS public.c2c_document_sections (
+      id          BIGSERIAL PRIMARY KEY,
+      document_id TEXT NOT NULL REFERENCES public.c2c_documents(id),
+      section_key TEXT NOT NULL,
+      label       TEXT NOT NULL,
+      path_order  INTEGER NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS public.c2c_document_section_versions (
+      id          BIGSERIAL PRIMARY KEY,
+      section_id  BIGINT NOT NULL REFERENCES public.c2c_document_sections(id),
+      version     INTEGER NOT NULL,
+      content     JSONB NOT NULL,
+      author_id   INTEGER NOT NULL,
+      reason      TEXT NOT NULL
     );
     CREATE TABLE IF NOT EXISTS public.pdev_program_activities (
       id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -426,6 +492,7 @@ async function ensureTables(pool: { query: (sql: string) => Promise<unknown> }):
   `);
 }
 
+
 const ORG_A = 91001;
 const ORG_B = 91002;
 /** Unique per run, so a previous run's rows can never satisfy this one. */
@@ -441,6 +508,7 @@ describe('child tables are scoped to their parent row’s tenant', () => {
     // the isolation cases would fail for a reason that has nothing to do with
     // the policy.
     await ensureTables(scratch.ownerPool);
+    await ensureAddedTables(scratch.ownerPool);
     // Applied here rather than assumed, so the suite is self-provisioning
     // regardless of which migrations the surrounding CI job happened to run.
     await scratch.ownerPool.query(fs.readFileSync(MIGRATION, 'utf8'));

@@ -74,6 +74,9 @@ transaction, legal hold, truncated-export refusal and object bytes (`2ddb77b0`; 
 | P1-25 | Audit-trail review: a reviewer sign-off record (who, when, scope, outcome) and a surface for the tenant's QA to record periodic review; the procedure in POLICY-IS-001 | eng | 2 d | a review row written through the ceremony | D5 | Annex 11 §9; FDA DI 2018 Q7 | DP-21 |
 | P1-26 | Time source declared (Amazon Time Sync) and one clock rule for audit timestamps, recorded in the VMP | eng (docs) + founder | 0.5 d | procedure filed | D4 | 11.10(e) | DP-25 |
 | P1-27 | `ci:dead-audit-catch` false positive fixed so the blocking gate is green; the browser Sentry `beforeSend` scrubber; the `Math.random` org API key replaced or removed; `tamper_proof_log` gains a tenant column | eng | 1 d | gate green; unit tests for the scrubber | D6 | GDPR 25/32 | DP-24, DP-26, DP-27, DP-28 |
+| P1-28 | QMS change-control approval through the ceremony: the AnA `qms_change_transition` with `to='approved'` joins the refusal set (as `approve_qms_document` did) or routes through `execute_platform_command` as a `requiresSignature` command; the HTTP route requires `reverifySigner` for `approved` and writes the signature and the chained audit row inside `transitionChange`'s transaction | eng (D5) | 1 d | contract: approval from chat → refusal; HTTP approval without credentials → 428; signature row present | D5 | 11.10(d), 11.50, 11.200(a)(1); Annex 11 §14; ICH Q10 3.2.3 | DP-31 |
+| P1-29 | Retirement of an effective controlled document is a signed transition on the HTTP door and a refusal on the AnA door (or a change-control outcome), with a required reason | eng (D5) | 0.5 d | dbtest: retire without the ceremony → refused | D5 | 11.10(d)(e), 11.50; Annex 11 §9, §14 | DP-32 |
+| P1-30 | Remove `DELETE /api/authoring/docs/:docId` (UAT clean-up becomes a platform-owner script), or bind it to `requirePlatformAdmin`, add the tenant predicate, soft-delete, and write `writeChainedAuditRow` on the same client; `ci:regulated-delete-audit` extended to require an attributable actor on the audit call it accepts | eng (D5) | 0.5 d | the route is gone or a foreign id and a missing actor both fail the gate (red first) | D5 | 11.10(d)(e)(g); Annex 11 §17 | DP-33 |
 
 ## 3. P2 — market entry: European Union, Japan, and HIPAA-bearing US tenants
 
@@ -107,7 +110,7 @@ transaction, legal hold, truncated-export refusal and object bytes (`2ddb77b0`; 
 | Stage | Engineering days (sum of `eng` estimates) | Founder / counsel / vendor items | Exit criterion |
 |---|---|---|---|
 | P0 | ~26 | GitHub settings; credential rotation; provider-key decision | every P0 acceptance test green and filed; the Critical and the exploitable Highs closed |
-| P1 | ~45 | Redis, alert receiver, WAF decision; pen test; tabletop; signatures on the policy set | D6's named evidence: pen-test report with findings closed; questionnaire and trust page corrected; per-tenant retention and residency statement published |
+| P1 | ~47 | Redis, alert receiver, WAF decision; pen test; tabletop; signatures on the policy set | D6's named evidence: pen-test report with findings closed; questionnaire and trust page corrected; per-tenant retention and residency statement published |
 | P2 | ~46 | EU and Japanese counsel; BAAs; region decision | an EU or Japanese buyer's QA and privacy review can be answered from files, not intentions |
 | P3 | ongoing | compliance platform | SOC 2 window open; weekly lens and nightly suite running |
 

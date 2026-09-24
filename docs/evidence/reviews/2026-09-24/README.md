@@ -16,6 +16,5 @@ holds the first run of the missing lens; the other three lenses were run on 2026
 |---|---|
 | `security.md` | security and tenant isolation: re-verification of the audit's ten decisive findings at head, object-level authorization on a sample of launch-catalog mutation routes, the AnA write tools the six apps delegate to, second doors added in the last 48 hours, and the gate table with baseline sizes |
 
-Findings that are new relative to the audit are written up in `security.md` with the audit's id scheme continued;
-their remediation goes into the next revision of `docs/security/REMEDIATION_AND_ENHANCEMENT_PLAN_2026-09-24.md` by
-whichever lane takes them.
+The lens raised three ids (DP-31, DP-32, DP-33). They are carried in the audit's register (§4.4) and in the plan
+(P1-28…P1-30) so there is one register; `security.md` is the evidence behind them.
