@@ -31,6 +31,7 @@ import {
   tokenA,
   tokenB,
   userA,
+  signerA,
   workspaceB,
   ids,
   programA,
@@ -55,7 +56,12 @@ beforeAll(async () => {
   // regulatory-query service entry points, not test-owned replicas.
   app.use('/actual/mdx', authenticateToken, industryContextRouter);
   app.use('/actual/saved-precedent-queries', authenticateToken, savedPrecedentQueriesRouter);
-  mountTenantProofRoutes(app, { tag: TAG, foreignWorkspace: workspaceB, actingUser: userA });
+  mountTenantProofRoutes(app, {
+    tag: TAG,
+    foreignWorkspace: workspaceB,
+    actingUser: userA,
+    permanentSigner: signerA,
+  });
 }, 60_000);
 
 afterAll(teardownTwoTenantFixture);
