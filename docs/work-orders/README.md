@@ -243,6 +243,18 @@ index and the filter is a tenant, the same miss is possible — HNSW included,
 once a tenant is a small fraction of the table. Not changed here: not this
 lane's corpora.
 
+**For the D3 isolation and eCTD package-spine lanes (2026-09-24): trunk is over the warning ratchet.**
+Running `check-eslint-warning-ratchet.mjs` on trunk gives 6434 warnings against a
+baseline of 6431. `--since 019afa70d` (the last baseline commit) names the files
+that grew:
+`tests/db/two-tenant-application-rls.dbtest.ts` +2 (a describe arrow at 118
+lines, and the file at 580 lines; last touched `a2eb23243`),
+`server/services/ectd/package-leaf-bytes.ts` +1 (`packageLeafBytes` has
+complexity 22), and `server/services/ectd/package-sequence-lifecycle.ts` +1
+(`planSequence` is 127 lines; both from `af6440e98`). The gate runs in CI only,
+so no pre-push hook sees it. This lane has not touched these files, because both
+lanes are active and the fixes are refactors of their code.
+
 **ESLint ERROR cleared from another lane (2026-09-19):**
 `server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts:169` (commit
 `1e8ddb6d2`) carried four literal spaces inside a regex, which `no-regex-spaces`
