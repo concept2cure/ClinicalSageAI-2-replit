@@ -1,3 +1,7 @@
+# production — a thin root over terraform/stack, the one deployment composition.
+# This file owns the backend, the provider and what differs about production;
+# everything else is the stack's. See terraform/stack/versions.tf for why.
+
 terraform {
   required_version = ">= 1.5"
 
@@ -5,6 +9,10 @@ terraform {
     aws = {
       source  = "hashicorp/aws"
       version = ">= 5.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = ">= 3.5"
     }
   }
 
@@ -29,181 +37,90 @@ provider "aws" {
   }
 }
 
-# ── Networking ───────────────────────────────────────────────────────────────
+module "stack" {
+  source      = "../../stack"
+  environment = "production"
+  region      = var.region
+  tags        = var.tags
 
-module "vpc" {
-  source          = "../../modules/vpc-secure"
   vpc_cidr        = var.vpc_cidr
   public_subnets  = var.public_subnets
   private_subnets = var.private_subnets
   azs             = var.azs
-  region          = var.region
-  eks_workloads_sg = module.ecs.ecs_tasks_security_group_id
-  tags            = var.tags
-}
 
-# ── Container Registry ──────────────────────────────────────────────────────
+  # Production: Multi-AZ, 35-day backups, protected from deletion, Part 11
+  # evidence under COMPLIANCE object lock for seven years.
+  rds_engine_version        = "15.4"
+  rds_allocated_storage     = 50
+  rds_max_allocated_storage = 500
+  rds_multi_az              = true
+  rds_backup_retention_days = 35
+  rds_deletion_protection   = true
+  alb_deletion_protection   = true
+  evidence_object_lock_mode = "COMPLIANCE"
+  evidence_retention_days   = 2555 # 7 years
 
-module "ecr" {
-  source           = "../../modules/ecr"
-  prefix           = "c2c-prod"
-  repository_names = ["api", "worker"]
-  tags             = var.tags
-}
-
-# ── Secrets Manager ─────────────────────────────────────────────────────────
-
-module "secrets" {
-  source = "../../modules/secrets"
-  prefix = "c2c/production"
-  secrets = {
-    jwt_secret = {
-      description = "JWT signing secret"
-      value       = var.jwt_secret
-    }
-    openai_api_key = {
-      description = "OpenAI API key"
-      value       = var.openai_api_key
-    }
-  }
-  tags = var.tags
-}
-
-# ── Database ─────────────────────────────────────────────────────────────────
-
-module "rds" {
-  source             = "../../modules/rds"
-  identifier         = "c2c-production"
-  engine_version     = "15.4"
-  instance_class     = var.rds_instance_class
-  allocated_storage  = 50
-  max_allocated_storage = 500
-  database_name      = "concept2cure-ri"
-  subnet_ids         = module.vpc.private_subnet_ids
-  security_group_ids = [module.vpc.rds_sg_id]
-  multi_az           = true
-  backup_retention_days = 35
-  tags               = var.tags
-}
-
-# ── Load Balancer ────────────────────────────────────────────────────────────
-
-module "alb" {
-  source             = "../../modules/alb"
-  name               = "c2c-prod"
-  vpc_id             = module.vpc.vpc_id
-  vpc_cidr           = module.vpc.vpc_cidr
-  public_subnet_ids  = module.vpc.public_subnet_ids
-  certificate_arn    = var.acm_certificate_arn
-  api_port           = 5000
-  origin_secret      = var.cloudfront_origin_secret
-  tags               = var.tags
-}
-
-# ── Compute (ECS Fargate) ───────────────────────────────────────────────────
-
-module "ecs" {
-  source                = "../../modules/ecs-fargate"
-  cluster_name          = "c2c-production"
-  region                = var.region
-  vpc_id                = module.vpc.vpc_id
-  private_subnet_ids    = module.vpc.private_subnet_ids
-  alb_security_group_id = module.alb.alb_security_group_id
-  api_target_group_arn  = module.alb.api_target_group_arn
-  # CloudFront, then the ALB. The ALB admits CloudFront alone (modules/alb), so
-  # the second-to-last X-Forwarded-For entry is CloudFront's record of the user.
-  trust_proxy_hops = 2
-
-  # Immutable, parameterized image references (see var.image_tag). Never
-  # deploy a mutable `:latest` tag — that breaks rollback and reproducibility.
-  # TODO(GA-blocker): pin to image digest (e.g. "...@sha256:<digest>") rather
-  # than a tag once the deploy pipeline resolves the pushed image digest.
-  api_image    = "${module.ecr.repository_urls["api"]}:${var.image_tag}"
-  worker_image = "${module.ecr.repository_urls["worker"]}:${var.image_tag}"
-
-  api_cpu    = var.api_cpu
-  api_memory = var.api_memory
+  rds_instance_class   = var.rds_instance_class
+  api_cpu              = var.api_cpu
+  api_memory           = var.api_memory
   api_desired_count    = var.api_desired_count
   worker_desired_count = var.worker_desired_count
 
-  secret_arns = module.secrets.secret_arns_list
-  s3_bucket_arns = [
-    module.evidence.evidence_bucket_arn,
-    module.cdn.frontend_bucket_arn,
-    "${module.cdn.frontend_bucket_arn}/*",
-  ]
+  image_tag                  = var.image_tag
+  acm_certificate_arn        = var.acm_certificate_arn
+  cloudfront_certificate_arn = var.cloudfront_certificate_arn
+  domain_aliases             = var.domain_aliases
+  cloudfront_origin_secret   = var.cloudfront_origin_secret
 
-  api_secrets = [
-    { name = "DATABASE_URL",    value_from = module.rds.master_user_secret_arn },
-    { name = "JWT_SECRET",      value_from = module.secrets.secret_arns["jwt_secret"] },
-    { name = "OPENAI_API_KEY",  value_from = module.secrets.secret_arns["openai_api_key"] },
-  ]
-
-  worker_secrets = [
-    { name = "DATABASE_URL",    value_from = module.rds.master_user_secret_arn },
-    { name = "OPENAI_API_KEY",  value_from = module.secrets.secret_arns["openai_api_key"] },
-  ]
-
-  # The release signer — see release_signing.tf.
-  api_environment    = local.signer_environment
-  worker_environment = local.signer_environment
-
-  tags = var.tags
+  jwt_secret                      = var.jwt_secret
+  refresh_token_secret            = var.refresh_token_secret
+  mfa_encryption_key              = var.mfa_encryption_key
+  audit_hmac_key                  = var.audit_hmac_key
+  audit_hmac_secret               = var.audit_hmac_secret
+  connector_encryption_key        = var.connector_encryption_key
+  openai_api_key                  = var.openai_api_key
+  ai_provider_placement_approvals = var.ai_provider_placement_approvals
 }
-
-# ── Compliance Evidence (S3 + CloudTrail) ────────────────────────────────────
-
-module "evidence" {
-  source      = "../../modules/compliance-evidence"
-  bucket_name = "c2c-prod-part11-evidence"
-  kms_key_id  = "alias/c2c-prod-evidence"
-  kms_policy  = ""
-  object_lock_mode = "COMPLIANCE"
-  retention_days   = 2555 # 7 years
-  tags             = var.tags
-}
-
-# ── CDN (CloudFront + S3) ───────────────────────────────────────────────────
-
-module "cdn" {
-  source          = "../../modules/cloudfront"
-  bucket_name     = "c2c-prod-frontend"
-  domain_aliases  = var.domain_aliases
-  certificate_arn = var.cloudfront_certificate_arn
-  api_domain_name = module.alb.alb_dns_name
-  tags            = var.tags
-
-  api_origin_secret_header_name = module.alb.origin_secret_header_name
-  api_origin_secret             = var.cloudfront_origin_secret
-}
-
-# ── Outputs ──────────────────────────────────────────────────────────────────
 
 output "vpc_id" {
-  value = module.vpc.vpc_id
+  value = module.stack.vpc_id
 }
 
 output "alb_dns_name" {
-  value = module.alb.alb_dns_name
+  value = module.stack.alb_dns_name
 }
 
 output "cloudfront_domain" {
-  value = module.cdn.distribution_domain_name
+  value = module.stack.cloudfront_domain
 }
 
 output "ecr_api_url" {
-  value = module.ecr.repository_urls["api"]
+  value = module.stack.ecr_api_url
 }
 
 output "ecr_worker_url" {
-  value = module.ecr.repository_urls["worker"]
+  value = module.stack.ecr_worker_url
 }
 
 output "rds_endpoint" {
-  value     = module.rds.endpoint
+  value     = module.stack.rds_endpoint
   sensitive = true
 }
 
 output "ecs_cluster" {
-  value = module.ecs.cluster_name
+  value = module.stack.ecs_cluster
+}
+
+output "evidence_bucket" {
+  value = module.stack.evidence_bucket
+}
+
+# Filed as evidence for SOP_KEY_MANAGEMENT.md §10 step 1.
+output "release_signing_key_arn" {
+  value = module.stack.release_signing_key_arn
+}
+
+# Review before apply: what the API task definition will carry.
+output "api_task_boot_contract" {
+  value = module.stack.api_task_boot_contract
 }

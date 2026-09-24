@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-24T01:13:17.127Z",
+  "generatedAt": "2026-09-24T16:32:29.253Z",
   "git": {
-    "sha": "1de2678e5314b699d197865de62c323a04d41dbf",
+    "sha": "cf54bdf022232e8f386578e157e4386c0f606816",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1971,7 +1971,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1056132
+        "bytes": 1057038
       },
       {
         "file": "shared/schema.ts",
@@ -2149,7 +2149,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 20439
+        "lines": 20443
       },
       {
         "file": "shared/schema.ts",
@@ -2524,16 +2524,16 @@
         "lines": 1623
       },
       {
+        "file": "server/services/advancedRAGPipeline.ts",
+        "lines": 1613
+      },
+      {
         "file": "server/services/pediatric/pediatric-knowledge.ts",
         "lines": 1606
       },
       {
         "file": "server/services/toxicology/toxicology-knowledge.ts",
         "lines": 1602
-      },
-      {
-        "file": "server/services/advancedRAGPipeline.ts",
-        "lines": 1587
       },
       {
         "file": "server/services/module3-extensions.ts",
@@ -2548,15 +2548,15 @@
         "lines": 1543
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "lines": 1535
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
         "lines": 1532
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 1531
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
         "lines": 1531
       },
       {

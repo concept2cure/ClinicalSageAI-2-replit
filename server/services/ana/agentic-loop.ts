@@ -576,8 +576,8 @@ const TOOL_LABELS: Record<string, (input: Record<string, unknown>) => string> = 
   catalog_project_document: () => 'Recording what this document is',
   search_project_documents: i => `Searching the project files for ${quoteArg(i.query)}`,
   // Document vault / governed reads — legible "she's reading the right thing".
-  list_vault_documents: () => 'Listing the document vault',
-  read_vault_document: () => 'Reading the vault document',
+  list_vault_documents: () => 'Listing Artifacts Center documents',
+  read_vault_document: () => 'Reading an Artifacts Center document',
   get_document_versions: () => 'Reviewing the document version history',
   list_governed_documents: () => 'Listing the governed documents',
   read_governed_document: () => 'Reading the governed document',

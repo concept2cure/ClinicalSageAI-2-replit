@@ -156,7 +156,13 @@ resource "aws_ecs_task_definition" "api" {
     }
 
     healthCheck = {
-      command     = ["CMD-SHELL", "wget -qO- http://localhost:${var.api_container_port}/api/health || exit 1"]
+      # The image's own probe (Dockerfile.optimized HEALTHCHECK), against
+      # /readyz. The image is node:22-slim with curl and no wget, so the old
+      # `wget -qO- …/api/health` always failed: every task was reported
+      # unhealthy and the deployment circuit breaker rolled every deploy back
+      # (D1 brief B5). /readyz is also what D1's acceptance line reads, so ECS
+      # and the acceptance check agree on what "healthy" means.
+      command     = ["CMD", "node", "-e", "require('http').get('http://localhost:${var.api_container_port}/readyz',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
       interval    = 30
       timeout     = 10
       retries     = 3

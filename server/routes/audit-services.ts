@@ -138,77 +138,19 @@ router.post('/export/pdf', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * POST /api/audit-services/export/ectd
- * Assemble an eCTD package from the canonical submission spine (submissions →
- * ectd_sequences → submission_leaves) via the ONE canonical generator,
- * `ectd/assemble-from-core`. `projectId` is the canonical submissions.id; a
- * submission with no sequence or placed leaves is an honest 404/refusal, never
- * a placeholder package.
+/*
+ * POST /api/audit-services/export/ectd was deleted on 2026-09-24. The one eCTD
+ * export is POST /api/ectd/export/:submissionId (server/routes/ectd-export.ts),
+ * over the same assembler; tests/unit/ectd-export-routes.test.ts, "the
+ * canonical export", pins that it is reachable and that it refuses what this
+ * endpoint shipped.
+ *
+ * This endpoint ran the structural validator and then sent the zip with 200
+ * regardless, putting the verdict only in an X-ECTD-Valid header, which a
+ * caller saving the download never reads. It also bypassed the export review
+ * gate and the governed export record, and returned raw error text in its 500s.
+ * It had no caller in the client, the scripts or the tests.
  */
-router.post('/export/ectd', async (req: Request, res: Response) => {
-  try {
-    const { assembleSubmissionEctd } = await getSvc<any>(() => import('../services/ectd/assemble-from-core.js'));
-    const { validateEctdPackage } = await getSvc<any>(() =>
-      import('../services/submission-gateways/ectd-structural-validator.js'));
-    const { projectId, applicationNumber, sequenceNumber, region, validateAfter } = req.body;
-    const user = (req as any).user;
-
-    if (!projectId || !applicationNumber) {
-      return res.status(400).json({ error: 'projectId and applicationNumber are required' });
-    }
-
-    const result = await assembleSubmissionEctd({
-      submissionId: Number(projectId),
-      organizationId: Number(user?.organizationId),
-      userId: Number(user?.id || user?.userId || 0),
-      applicationNumber,
-      sequenceNumber: sequenceNumber || undefined,
-      // Cross-check only: the sequence's recorded region is authoritative and a
-      // contradicting request is refused, never silently honored.
-      region: region || undefined,
-    });
-
-    const validation = validateAfter === false ? null : await validateEctdPackage(result.buffer);
-
-    res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
-    res.setHeader('X-Export-Format', 'ectd');
-    res.setHeader('X-ECTD-Total-Modules', String(result.stats.totalModules));
-    res.setHeader('X-ECTD-Total-Files', String(result.stats.totalFiles));
-    res.setHeader('X-ECTD-Generated-At', result.stats.generatedAt);
-    // Surface submission-completeness here too (parity with /api/ectd/export) so
-    // any caller of this export path can see how much of the dossier could not
-    // be materialized, not just the module/file counts.
-    if (result.stats.completeness) {
-      res.setHeader('X-ECTD-Completeness-Pct', String(result.stats.completeness.completenessPct));
-      res.setHeader('X-ECTD-Incomplete-Leaves', String(result.stats.completeness.placeholderLeaves));
-      res.setHeader('X-ECTD-Submission-Complete', String(result.stats.completeness.complete));
-    }
-    res.setHeader('X-ECTD-Index-XML-Path', 'index.xml');
-    // The canonical packager nests the regional backbone under m1/<code>/.
-    const coreRegion = String(result.region || '').toLowerCase();
-    const regionCode = ['eu', 'ema'].includes(coreRegion) ? 'eu'
-      : ['jp', 'pmda'].includes(coreRegion) ? 'jp'
-      : 'us';
-    res.setHeader('X-ECTD-Regional-XML-Path', `m1/${regionCode}/${regionCode}-regional.xml`);
-    res.setHeader('X-ECTD-Sequence', result.sequenceNumber);
-    if (validation) {
-      res.setHeader('X-ECTD-Valid', String(validation.valid));
-      res.setHeader('X-ECTD-Validation-Errors', String(validation.errors.length));
-    }
-    return res.send(result.buffer);
-  } catch (error: any) {
-    const msg = error instanceof Error ? error.message : String(error);
-    logger.error('eCTD export failed', { err: msg });
-    // A submission/sequence that does not exist in the caller's org is a 404,
-    // not a server failure.
-    if (/not found/i.test(msg)) {
-      return res.status(404).json({ error: msg });
-    }
-    res.status(500).json({ error: msg || 'eCTD export failed' });
-  }
-});
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SENTENCE-LEVEL TRACEABILITY

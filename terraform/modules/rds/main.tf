@@ -18,7 +18,10 @@ resource "aws_db_instance" "this" {
 
   db_name  = var.database_name
   username = var.master_username
-  manage_master_user_password = true  # AWS manages the password in Secrets Manager
+  # Terraform-owned when the caller supplies one (see var.master_password);
+  # AWS-managed otherwise. The two are mutually exclusive in the provider.
+  password                    = var.master_password
+  manage_master_user_password = var.master_password == null ? true : null
 
   db_subnet_group_name   = aws_db_subnet_group.this.name
   vpc_security_group_ids = var.security_group_ids
