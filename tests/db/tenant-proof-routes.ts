@@ -10,7 +10,7 @@
  */
 import express from 'express';
 import { authenticateToken } from '../../server/middleware/auth';
-import { requestPgClient } from '../../server/db/requestDb';
+import { requestPgClient, type RequestSqlClient } from '../../server/db/requestDb';
 
 /**
  * The domains this probe proves isolation FOR. Everything outside this list is
@@ -133,6 +133,78 @@ export interface ProofFixture {
   permanentSigner: number;
 }
 
+/** Plants one row for `foreignOrg` through the caller's RLS-scoped client. */
+type Forge = (client: RequestSqlClient, foreignOrg: number, fixture: ProofFixture) => Promise<unknown>;
+
+/**
+ * The POST (WITH CHECK) probe's insert, per domain.
+ *
+ * A Record over Domain, so the compiler requires one entry per domain. This was
+ * an if/else chain ending in a bare `else` that forged a RISK ITEM: a domain
+ * added to the list without its own branch planted into risk_items, was refused
+ * by risk_items' policy, answered 404 and passed, having tested nothing about
+ * its own table. Shown happening on 2026-09-24 with signatures' RLS off
+ * (docs/evidence/D3/2026-09-24-signatures-and-runs/red/mutation-C-*). A runtime
+ * UNHANDLED_DOMAIN refusal replaced it first; moving the chain here, to keep
+ * mountTenantProofRoutes under the function-length limit, made the omission a
+ * type error instead, which is earlier and cannot be skipped.
+ */
+const forgeFor: Record<Domain, Forge> = {
+  projects: (c, org, f) =>
+    c.query(
+      `INSERT INTO projects (organization_id,client_workspace_id,name,type,created_by_id)
+       VALUES ($1,$2,$3,'regulatory',$4)`,
+      [org, f.foreignWorkspace, `${f.tag}-forged-project`, f.actingUser]
+    ),
+  documents: (c, org, f) =>
+    c.query(
+      `INSERT INTO documents
+       (organization_id,client_workspace_id,document_code,title,document_type,owner_id,created_by_id)
+       VALUES ($1,$2,$3,$4,'REGULATORY',$5,$5)`,
+      [org, f.foreignWorkspace, `${f.tag}-FORGED`, `${f.tag}-forged-document`, f.actingUser]
+    ),
+  audit_logs: (c, org, f) =>
+    c.query(
+      `INSERT INTO audit_logs (tenant_id,user_id,action,table_name,record_id)
+       VALUES ($1,$2,'FORGED','wo03',$3)`,
+      [org, f.actingUser, `${f.tag}-forged-audit`]
+    ),
+  design_controls: (c, org, f) =>
+    c.query(
+      `INSERT INTO c2c_design_controls (id,organization_id,cat,req)
+       VALUES ($1,$2,'performance','forged')`,
+      [`${f.tag}-forged-dc`, org]
+    ),
+  risk_items: (c, org, f) =>
+    c.query(
+      `INSERT INTO risk_items (organization_id,hazard,harm,severity,probability)
+       VALUES ($1,$2,'forged',3,2)`,
+      [org, `${f.tag}-forged-hazard`]
+    ),
+  // Signed by A's PERMANENT signer — see ProofFixture.permanentSigner.
+  signatures: (c, org, f) =>
+    c.query(
+      `INSERT INTO electronic_signatures
+         (organization_id,signature_type,signature_purpose,signer_id,signer_name,signer_email,
+          authentication_method,authentication_timestamp,signature_hash,signed_target)
+       VALUES ($1,'approval','forged',$2,'forged',$3,'password',NOW(),$4,$5)`,
+      [
+        org,
+        f.permanentSigner,
+        'wo03-fixture-signer-a@example.invalid',
+        `${f.tag}-forged-signature`,
+        `${f.tag}-forged-target`,
+      ]
+    ),
+  orchestrator_runs: (c, org, f) =>
+    c.query(
+      `INSERT INTO submission_orchestrator_runs
+         (run_id,organization_id,submission_id,application_number,region,submission_type,started_at,status)
+       VALUES (gen_random_uuid(),$1,$2,'forged','US','IND',NOW(),'running')`,
+      [org, `${f.tag}-forged-submission`]
+    ),
+};
+
 /** Mounts /proof/:domain on `app`, behind the production authenticateToken. */
 export function mountTenantProofRoutes(app: express.Express, fixture: ProofFixture): void {
   app.use('/proof', authenticateToken);
@@ -174,67 +246,7 @@ export function mountTenantProofRoutes(app: express.Express, fixture: ProofFixtu
     if (!domain) return res.status(404).json({ error: { code: 'NOT_FOUND' } });
     const foreignOrg = Number(req.body?.organizationId);
     try {
-      if (domain === 'projects') {
-        await requestPgClient(req).query(
-          `INSERT INTO projects (organization_id,client_workspace_id,name,type,created_by_id)
-           VALUES ($1,$2,$3,'regulatory',$4)`,
-          [foreignOrg, fixture.foreignWorkspace, `${fixture.tag}-forged-project`, fixture.actingUser]
-        );
-      } else if (domain === 'documents') {
-        await requestPgClient(req).query(
-          `INSERT INTO documents
-           (organization_id,client_workspace_id,document_code,title,document_type,owner_id,created_by_id)
-           VALUES ($1,$2,$3,$4,'REGULATORY',$5,$5)`,
-          [foreignOrg, fixture.foreignWorkspace, `${fixture.tag}-FORGED`, `${fixture.tag}-forged-document`, fixture.actingUser]
-        );
-      } else if (domain === 'audit_logs') {
-        await requestPgClient(req).query(
-          `INSERT INTO audit_logs (tenant_id,user_id,action,table_name,record_id)
-           VALUES ($1,$2,'FORGED','wo03',$3)`,
-          [foreignOrg, fixture.actingUser, `${fixture.tag}-forged-audit`]
-        );
-      } else if (domain === 'design_controls') {
-        await requestPgClient(req).query(
-          `INSERT INTO c2c_design_controls (id,organization_id,cat,req)
-           VALUES ($1,$2,'performance','forged')`,
-          [`${fixture.tag}-forged-dc`, foreignOrg]
-        );
-      } else if (domain === 'risk_items') {
-        await requestPgClient(req).query(
-          `INSERT INTO risk_items (organization_id,hazard,harm,severity,probability)
-           VALUES ($1,$2,'forged',3,2)`,
-          [foreignOrg, `${fixture.tag}-forged-hazard`]
-        );
-      } else if (domain === 'signatures') {
-        await requestPgClient(req).query(
-          `INSERT INTO electronic_signatures
-             (organization_id,signature_type,signature_purpose,signer_id,signer_name,signer_email,
-              authentication_method,authentication_timestamp,signature_hash,signed_target)
-           VALUES ($1,'approval','forged',$2,'forged',$3,'password',NOW(),$4,$5)`,
-          [
-            foreignOrg,
-            fixture.permanentSigner,
-            'wo03-fixture-signer-a@example.invalid',
-            `${fixture.tag}-forged-signature`,
-            `${fixture.tag}-forged-target`,
-          ]
-        );
-      } else if (domain === 'orchestrator_runs') {
-        await requestPgClient(req).query(
-          `INSERT INTO submission_orchestrator_runs
-             (run_id,organization_id,submission_id,application_number,region,submission_type,started_at,status)
-           VALUES (gen_random_uuid(),$1,$2,'forged','US','IND',NOW(),'running')`,
-          [foreignOrg, `${fixture.tag}-forged-submission`]
-        );
-      } else {
-        /* This was a bare `else` that forged a RISK ITEM. A domain added to the
-           list without its own branch would have planted into risk_items, been
-           refused by risk_items' policy, answered 404 — and passed, for the
-           wrong table. Shown happening on 2026-09-24 with signatures' RLS off
-           (docs/evidence/D3/2026-09-24-signatures-and-runs/red/mutation-C-*).
-           An unhandled domain now fails its test. */
-        return res.status(500).json({ error: { code: 'UNHANDLED_DOMAIN' } });
-      }
+      await forgeFor[domain](requestPgClient(req), foreignOrg, fixture);
       return res.sendStatus(201);
     } catch (error) {
       // Do not serialize the PostgreSQL error: it may contain schema or row

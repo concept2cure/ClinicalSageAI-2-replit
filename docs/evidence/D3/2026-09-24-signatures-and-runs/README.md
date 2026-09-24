@@ -121,6 +121,20 @@ was proven again on the same database:
 | `green/contract-43-of-43-resolved-onto-proof-routes-module.txt` | **43 of 43** on the resolved code, all six new domain cases present. |
 | `red/mutation-B2-resolved-structure-rls-off-on-runs.txt` | RLS off on `submission_orchestrator_runs`, resolved code: **4 fail, 39 pass** — the moved handlers still catch the breach. |
 | `red/mutation-D-forge-branch-removed-fails-not-passes.txt` | The `orchestrator_runs` forge branch deleted: its WITH CHECK case now **fails** (`got 500`, `UNHANDLED_DOMAIN`). Under the old handler the same deletion would have forged a risk item and passed. |
+| `green/contract-43-of-43-forge-as-exhaustive-record.txt` | **43 of 43** after the final form below. |
+| `red/mutation-E-forge-entry-removed-is-a-type-error.txt` | The final form: deleting the `orchestrator_runs` entry is `TS2741: Property 'orchestrator_runs' is missing … required in type 'Record<Domain, Forge>'`. The intact file has 0 errors. |
+
+**The final form of the fix.** The ESLint warning ratchet (CI only) showed the
+two new branches took `mountTenantProofRoutes` to 121 lines (limit 100): +1
+warning, attributed to this change by `--since origin/concept2cure-v2`. Moving
+the forge SQL out of the function into `forgeFor: Record<Domain, Forge>` fixed
+that (delta 0) and made the defect impossible rather than caught: a domain with
+no forge entry no longer reaches a runtime 500, it does not compile. So the
+runtime `UNHANDLED_DOMAIN` path of mutation D is superseded by mutation E.
+
+The full ratchet also reads 6433 against a baseline of 6431 without this change
+(6434 with the +1 above, removed before landing). That +2 is on trunk already
+and is not from this work; it is recorded, not chased, because it is outside D3.
 
 ## Permanent rows this work left in the scratch database, stated plainly
 
