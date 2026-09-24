@@ -130,6 +130,15 @@ exercises its create-when-absent path. The suite was back to 13 / 13.
   change of error format, and the test keeps a guard for it. It is not claimed
   as a reproduced defect.
 - Baseline ratchet 41 → 40 (`ratchet-license-requests.txt`).
+- Proven on all three paths a database reaches production by: an existing
+  database re-migrated by `deploy-migrate` (above); a database provisioned from
+  **empty** by `npm run db:provision` — exit 0, 1282/1282 relations carrying the
+  runtime role's grants (`intake-provision-from-empty.txt`); and C-33, which
+  applies the whole set in order to a bare database — schema-contract shards 1–3
+  green, 86 files, 1101 tests (`intake-schema-contract-shards.txt`). The last two
+  were run **after** the push, not before, which reverses this lane's own rule
+  (C-33 green before pushing). Both came back green; the order is recorded
+  because the rule exists for the case where they would not have.
 
 Gates, on the tree with the change: `ci:migration-set-order`,
 `ci:migration-drop-safety`, `ci:migration-reachability`, `ci:duplicate-table-ddl`,
