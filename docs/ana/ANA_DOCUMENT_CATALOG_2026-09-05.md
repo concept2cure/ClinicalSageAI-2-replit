@@ -181,6 +181,21 @@ a mapping stuck on page 1 cannot pass. Reverting the write to NULL turns it red.
 `server/services/ocr/__tests__/page-offsets.test.ts` covers the refusals: an
 unfindable page, out-of-order pages, empty input.
 
+### The catalog had no row-level security (row D3)
+
+**Migration:** `migrations/20260905_document_catalog.sql` (amended in place
+2026-09-24) · **Proof:** `tests/db/vault-catalog-tenant-isolation.dbtest.ts` ·
+**Evidence:** `docs/evidence/D3/2026-09-24-vault-catalog/`
+
+`vault.document_catalog` and `vault.document_read_receipts` shipped with no RLS
+and no policy, while `vault.document_chunks` — written by this lane a file
+later — carried four. As the production runtime role with sponsor A's tenant
+settings, A could read B's comprehension record, overwrite it, forge one for
+B's uncatalogued document, and plant the full-coverage read receipt the
+coverage gate trusts. Both tables now carry the chunk table's policy set,
+scoped through `vault.documents`. Not FORCEd, matching their neighbours and the
+posture `docs/evidence/D3/2026-09-23/` settled.
+
 ### A file sent in chat was indexed by its first 16,000 characters
 
 **Writer:** `server/services/chat-uploads/upload-retrieval-atom.ts` ·
