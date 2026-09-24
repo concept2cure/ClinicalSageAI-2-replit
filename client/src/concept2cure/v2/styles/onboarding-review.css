@@ -47,7 +47,7 @@
 .opr-reason-hint { font-size: 12px; color: var(--warning); margin-top: 6px; }
 .opr-act { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--border); background: var(--bg-000); color: var(--text-300); border-radius: var(--radius-sm); padding: 4px 9px; font-size: 11px; cursor: pointer; }
 .opr-act svg { width: 12px; height: 12px; }
-.opr-act:disabled { opacity: .4; cursor: not-allowed; }
+.opr-act:disabled { opacity: .5; cursor: not-allowed; }
 .opr-act.approve[aria-pressed="true"] { border-color: var(--success); color: var(--success); background: color-mix(in srgb, var(--success) 8%, transparent); }
 .opr-act.reject[aria-pressed="true"] { border-color: var(--error-text); color: var(--error-text); }
 
@@ -56,4 +56,4 @@
 .opr-commit-actions { display: flex; justify-content: flex-end; gap: 10px; }
 .opr-cancel { border: 1px solid var(--border); background: var(--bg-000); color: var(--text-300); border-radius: var(--radius-md); padding: 8px 14px; font-size: 12.5px; cursor: pointer; }
 .opr-commit-btn { border: none; background: var(--accent-200); color: #fff; border-radius: var(--radius-md); padding: 8px 16px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
-.opr-commit-btn:disabled { opacity: .45; cursor: not-allowed; }
+.opr-commit-btn:disabled { opacity: .5; cursor: not-allowed; }

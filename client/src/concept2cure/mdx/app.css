@@ -2282,7 +2282,7 @@
 .mdx-shell .btn.ghost { border: 1px solid var(--border); color: var(--text-200); }
 .mdx-shell .btn.ghost:hover { background: var(--bg-100); }
 .mdx-shell .btn .ico { display: inline-flex; align-items: center; }
-.mdx-shell .btn[disabled] { opacity: 0.55; cursor: not-allowed; }
+.mdx-shell .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
 
 /* small utilities used in workbench */
 .mdx-shell .btn.small svg { width: 13px; height: 13px; }
@@ -2971,7 +2971,7 @@
   border-color: var(--accent-strong);
 }
 .mdx-shell .ana-draft-btn.primary:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
-.mdx-shell .ana-draft-btn[disabled] { opacity: 0.6; cursor: progress; }
+.mdx-shell .ana-draft-btn[disabled] { opacity: 0.5; cursor: progress; }
 .mdx-shell .ana-draft-btn .ana-draft-arrow svg { width: 12px; height: 12px; vertical-align: middle; }
 .mdx-shell .ana-draft-error {
   flex-basis: 100%;

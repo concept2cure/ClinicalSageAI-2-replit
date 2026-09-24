@@ -367,7 +367,7 @@
   transition: background var(--dur, .15s), color var(--dur, .15s), border-color var(--dur, .15s);
 }
 .c2c-v2 .c2c-error-retry:hover:not(:disabled) { background: var(--accent-strong); color: var(--accent-on-strong); border-color: var(--accent-strong); }
-.c2c-v2 .c2c-error-retry:disabled { opacity: .6; cursor: default; }
+.c2c-v2 .c2c-error-retry:disabled { opacity: .5; cursor: default; }
 .c2c-v2 .c2c-error-dismiss {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 32px; min-height: 32px; border-radius: var(--radius-md, 6px);
@@ -710,7 +710,7 @@
    button that also lit up on hover. The only signal that it could not act was
    that clicking did nothing. The reason now shows on hover (title) AND the
    control reads as unavailable before it is pressed. */
-.c2c-v2 .orch-ctrl:disabled{opacity:.45;cursor:not-allowed;}
+.c2c-v2 .orch-ctrl:disabled{opacity:.5;cursor:not-allowed;}
 .c2c-v2 .orch-ctrl.pri:disabled{background:var(--bg-100);border-color:var(--border);color:var(--text-400);}
 .c2c-v2 .orch-ctrl .ico{font-size:13px;}
 .c2c-v2 .orch-sec-l{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);font-weight:600;margin:16px 0 8px;}
@@ -745,7 +745,7 @@
 .c2c-v2 .orch-gate-reason{flex:1 1 220px;min-width:180px;font-size:11.5px;padding:5px 8px;border-radius:var(--radius-md);border:1px solid var(--border-control);background:var(--bg-000);color:var(--text-100);}
 .c2c-v2 .orch-note.err{color:var(--danger, #b42318);}
 .c2c-v2 .orch-note.err .ico{color:var(--danger, #b42318);}
-.c2c-v2 .orch-mini:disabled{opacity:.55;cursor:not-allowed;}
+.c2c-v2 .orch-mini:disabled{opacity:.5;cursor:not-allowed;}
 .c2c-v2 .orch-mini{font-size:10.5px;font-weight:600;padding:4px 9px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--bg-000);color:var(--text-300);}
 .c2c-v2 .orch-mini.ok{color:var(--success);border-color:var(--success-muted);}
 .c2c-v2 .orch-mini.no{color:var(--error);border-color:var(--error-muted);}
@@ -896,7 +896,7 @@
 .c2c-v2 .tb-move{position:absolute;top:8px;right:8px;display:flex;gap:2px;opacity:0;transition:opacity var(--dur);}
 .c2c-v2 .tb-card:hover .tb-move{opacity:1;}
 .c2c-v2 .tb-move button{width:20px;height:20px;border-radius:4px;background:var(--bg-100);color:var(--text-300);font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;}
-.c2c-v2 .tb-move button:hover:not(:disabled){background:var(--accent-strong);color:var(--accent-on-strong);}.c2c-v2 .tb-move button:disabled{opacity:.3;}
+.c2c-v2 .tb-move button:hover:not(:disabled){background:var(--accent-strong);color:var(--accent-on-strong);}.c2c-v2 .tb-move button:disabled{opacity:.5;}
 .c2c-v2 .tb-empty{font-size:11px;color:var(--text-500);text-align:center;padding:14px 0;}
 /* critical path */
 .c2c-v2 .tb-path{max-width:760px;}
@@ -1069,7 +1069,7 @@
 .c2c-v2 .pj-comp-model{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text-400);}
 .c2c-v2 .pj-comp-model .ico{font-size:13px;}
 .c2c-v2 .pj-comp-send{width:32px;height:32px;border-radius:8px;background:var(--accent-strong);color:var(--accent-on-strong);display:flex;align-items:center;justify-content:center;font-size:17px;}
-.c2c-v2 .pj-comp-send:disabled{opacity:.4;}
+.c2c-v2 .pj-comp-send:disabled{opacity:.5;}
 .c2c-v2 .pj-comp-send:not(:disabled):hover{box-shadow:var(--shadow-sm);transform:translateY(-1px);}
 .c2c-v2 .pj-sec{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);padding:15px 16px;}
 .c2c-v2 .pj-sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:11px;}
@@ -1778,7 +1778,7 @@
 .c2c-v2 .ana-runctl-actions{display:flex;align-items:center;gap:6px;margin-left:auto;}
 .c2c-v2 .ana-runctl-btn,.c2c-v2 .ana-runctl-go{font:inherit;font-size:11.5px;color:var(--text-300);background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 10px;cursor:pointer;white-space:nowrap;transition:color 200ms ease-out,border-color 200ms ease-out;}
 .c2c-v2 .ana-runctl-btn:hover,.c2c-v2 .ana-runctl-go:hover:not(:disabled){color:var(--text-100);border-color:var(--text-300);}
-.c2c-v2 .ana-runctl-go:disabled{opacity:.55;cursor:default;}
+.c2c-v2 .ana-runctl-go:disabled{opacity:.5;cursor:default;}
 /* A refused steer. Warning tone, and the icon-free text carries the meaning on
    its own — colour is never the only signal. */
 .c2c-v2 .ana-runctl-err{flex-basis:100%;font-size:11px;color:var(--warning);}
@@ -2973,7 +2973,7 @@
 /* A disabled artifact action looked exactly like an enabled one — the artifact
    card's controls can be legitimately unavailable (a draft with no governed
    row, no open program), and until now the only signal was the tooltip. */
-.c2c-v2 .ct-art-actions button:disabled{opacity:.55;cursor:not-allowed;}
+.c2c-v2 .ct-art-actions button:disabled{opacity:.5;cursor:not-allowed;}
 .c2c-v2 .ct-art-actions button:disabled:hover{background:var(--bg-000);}
 .c2c-v2 .ct-art-adv{margin-left:auto;background:var(--accent-strong)!important;color:var(--accent-on-strong)!important;border-color:var(--accent-strong)!important;}
 .c2c-v2 .ct-art-adv:disabled{background:var(--bg-000)!important;color:var(--text-300)!important;border-color:var(--border)!important;}
@@ -3736,7 +3736,7 @@
 
 /* Biostatistics — a persisted document with no recorded statistical type has no
    generator to open. Named in the row rather than left as a silent no-op. */
-.c2c-v2 .sp-row:disabled{cursor:default;opacity:.72;}
+.c2c-v2 .sp-row:disabled{cursor:default;opacity:.5;}
 .c2c-v2 .sp-row-note{font-size:10.5px;color:var(--text-400);white-space:nowrap;}
 
 /* Market access — the strategy tab states plainly that no sequencing has been
@@ -3770,7 +3770,7 @@
 .c2c-v2 .orch-newrun-list{display:flex;flex-direction:column;gap:8px;overflow-y:auto;}
 .c2c-v2 .orch-newrun-t{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 12px;text-align:left;padding:11px 13px;border:1px solid var(--border);border-radius:var(--radius-md,8px);background:var(--bg-100);cursor:pointer;}
 .c2c-v2 .orch-newrun-t:hover:not(:disabled){border-color:var(--accent-100);background:var(--accent-000);}
-.c2c-v2 .orch-newrun-t:disabled{opacity:.6;cursor:default;}
+.c2c-v2 .orch-newrun-t:disabled{opacity:.5;cursor:default;}
 .c2c-v2 .orch-newrun-t:focus-visible{outline:2px solid var(--accent-200);outline-offset:1px;}
 .c2c-v2 .orch-newrun-tn{font-size:13px;font-weight:600;color:var(--text-100);}
 .c2c-v2 .orch-newrun-td{grid-column:1;font-size:11.5px;line-height:1.5;color:var(--text-400);}

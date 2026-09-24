@@ -406,7 +406,7 @@
   .rbm-field-row{display:flex;gap:10px;}
   .rbm-field-hint{font-style:normal;font-size:10.5px;line-height:1.45;color:var(--text-400);text-transform:none;letter-spacing:0;}
   .rbm-field select{border:1px solid var(--border-control);border-radius:var(--radius-md);padding:8px 10px;font-size:12.5px;background:var(--bg-000);color:var(--text-100);}
-  .rbm-field input:disabled,.rbm-field textarea:disabled,.rbm-field select:disabled{opacity:.6;cursor:not-allowed;}
+  .rbm-field input:disabled,.rbm-field textarea:disabled,.rbm-field select:disabled{opacity:.5;cursor:not-allowed;}
   .rbm-modal-note{font-size:10.5px;line-height:1.5;color:var(--text-400);margin:2px 0 14px;}
   .rbm-modal-acts{display:flex;justify-content:flex-end;gap:8px;}
 
