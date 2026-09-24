@@ -112,3 +112,28 @@ export function withoutOrgId<T extends Record<string, unknown>>(data: T): Omit<T
   const { organizationId: _discard, ...rest } = data as { organizationId?: unknown } & T;
   return rest as Omit<T, 'organizationId'>;
 }
+
+/**
+ * Keep only the named keys of a request body — the allow-list form of the two
+ * helpers above, and the one to reach for on an edit. Stripping the tenant key
+ * leaves every OTHER identity column writable: the parent a row hangs from, its
+ * version lineage, and its governance fields (status, locked, approvedBy,
+ * signatureId), which is how a PATCH could mark a record approved without the
+ * approval gate (ledger L192). Name what an edit may write instead, so a column
+ * added later is not writable until someone decides it should be. `keys` is
+ * typed against the row type, so a misspelt column fails to compile.
+ */
+export function pickWritable<T extends object>(
+  body: unknown,
+  keys: readonly (keyof T & string)[]
+): Partial<T> {
+  const out: Record<string, unknown> = {};
+  if (body && typeof body === 'object') {
+    for (const key of keys) {
+      if (Object.prototype.hasOwnProperty.call(body, key)) {
+        out[key] = (body as Record<string, unknown>)[key];
+      }
+    }
+  }
+  return out as Partial<T>;
+}
