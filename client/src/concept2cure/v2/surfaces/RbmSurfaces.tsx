@@ -9,9 +9,11 @@ import { I } from '../icons';
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import type { AnaChatAction, AnaChatMessage, RunControlStatus } from '../../components/ana/useAnaChat';
-import { AnaWorkPanel } from '../AnaWorkPanel';
+import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
+import { AnaActivity, type AnaActivityProps } from '../AnaActivity';
+import { AnaOutputCards, type AnaOutput } from '../AnaOutputs';
 import { useAgentActivity } from '../useAgentActivity';
-import { useWorkDockVisible } from '../workDock';
+import { useProgressDock } from '../workDock';
 import { shellProgramName } from '../shellProject';
 import { RBM_VOCAB, rbmBand, kriStatusOf, type RbmNavItem } from '../fixtures/rbm-data';
 import { useDialog } from '../useDialog';
@@ -281,6 +283,10 @@ export interface RbmAnaMessage {
   text?: string;
   executedActions?: AnaChatAction[];
   pendingSignoffs?: PendingSignoff[];
+  /** The shared record of her work this turn (AnaActivity.activityPropsFor). */
+  activity?: AnaActivityProps;
+  /** The draft this turn produced, for its output card. */
+  output?: AnaOutput;
 }
 
 /** The REAL Part 11 sign-off prompts AnA returned for governed RBM commands,
@@ -310,6 +316,10 @@ function RbmAnaMsg({
     <div className="rbm-ana-ai">
       <div className="rbm-ana-who"><span className="mk">{'✻'}</span>AnA</div>
       {m.text && <div className="rbm-ana-text">{m.text}</div>}
+      {/* The same record and output card every host renders. This pane used to
+          drop the tools, rounds and drafts and show "Thinking…". */}
+      {m.activity && <AnaActivity {...m.activity} />}
+      {m.output && <AnaOutputCards message={m.output} />}
       {Array.isArray(m.executedActions) && m.executedActions.length > 0 && (
         <div className="rbm-ana-chips">
           {m.executedActions.map((a, i) =>
@@ -358,10 +368,10 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work, onNav, onSt
 }) {
   const [draft, setDraft] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
-  /* The same dock the shell rail and the authoring panes mount, under the
-     one shared show/hide choice; the "At work" pill is its one control. */
-  const [workDockOpen, setWorkDockOpen] = useWorkDockVisible();
-  const showWork = Boolean(work) && workDockOpen;
+  /* The same progress panel every host mounts, under the one shared show/hide
+     choice (workDock.ts); the chip in the header toggles it. */
+  const dock = useProgressDock();
+  const showWork = Boolean(work) && dock.open;
   const anaWorkQueue = useAgentActivity(showWork, work?.streaming);
   useEffect(() => { if (endRef.current) endRef.current.scrollTop = endRef.current.scrollHeight; }, [msgs]);
   const ask = (text: string) => { if (!text) return; onAsk(text); setDraft(''); };
@@ -371,16 +381,13 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work, onNav, onSt
         <div className="rbm-ana-id"><span className="mk">{'✻'}</span><div><div className="nm">AnA — RBM co-monitor</div><div className="md">bound to {study} — {nav.label}</div></div></div>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
           {work && (
-            <button
-              type="button"
-              className="ana-work-toggle"
-              aria-pressed={workDockOpen}
-              aria-label={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
-              title={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
-              onClick={() => setWorkDockOpen(!workDockOpen)}
-            >
-              {I.activity} AnA at work
-            </button>
+            <AnaProgressChip
+              ref={dock.chipRef}
+              messages={work.messages}
+              streaming={work.streaming}
+              open={dock.open}
+              onToggle={dock.toggle}
+            />
           )}
           <button className="tb-btn" onClick={onClose} title="Collapse" aria-label="Collapse">{I.panelRight}</button>
         </span>
