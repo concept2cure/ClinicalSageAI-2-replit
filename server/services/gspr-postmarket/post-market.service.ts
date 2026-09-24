@@ -26,6 +26,7 @@ import {
 } from '../../../shared/schema/gspr-postmarket';
 import { publishRegulatoryChange, type PublishOutcome } from '../living-file/publish';
 import { DRAFT_SENTINEL } from './scaffold-sentinel';
+import { pickWritable } from '../../utils/authedOrgId';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Validator
@@ -310,10 +311,36 @@ export async function createDocument(
   return row;
 }
 
+/**
+ * The document columns an edit may write. Not the tenant key, the program it
+ * belongs to or its version lineage, and not status / locked / approvedBy /
+ * approvedAt / signatureId, which only approveDocument writes, behind its gate.
+ * Both callers — PATCH /api/post-market/documents/:id and the AnA tool
+ * post_market.document.update, which a member can run — spread their input into
+ * .set(), so either could move a document into another org, re-parent it, or
+ * mark it approved and locked without approving it (ledger L192).
+ */
+const DOCUMENT_EDITABLE = [
+  'documentType',
+  'code',
+  'title',
+  'deviceSubjectName',
+  'reportingPeriodStart',
+  'reportingPeriodEnd',
+  'content',
+  'summary',
+  'risksIdentified',
+  'benefitRiskConclusion',
+  'relatedCerReportId',
+  'relatedPredicateKNumber',
+  'metadata',
+] as const satisfies readonly (keyof InsertPostMarketDocument & string)[];
+
 export async function updateDocument(
   organizationId: number,
   documentId: string,
-  patch: Partial<InsertPostMarketDocument>
+  patch: unknown,
+  updatedBy: string
 ): Promise<PostMarketDocument | null> {
   const existing = await getDocument(organizationId, documentId);
   if (!existing) return null;
@@ -322,8 +349,14 @@ export async function updateDocument(
   }
   const [row] = await db
     .update(postMarketDocuments)
-    .set({ ...patch, updatedAt: new Date() })
-    .where(eq(postMarketDocuments.id, documentId))
+    .set({
+      ...pickWritable<InsertPostMarketDocument>(patch, DOCUMENT_EDITABLE),
+      updatedBy,
+      updatedAt: new Date(),
+    })
+    .where(
+      and(eq(postMarketDocuments.id, documentId), eq(postMarketDocuments.organizationId, organizationId))
+    )
     .returning();
   return row ?? null;
 }
