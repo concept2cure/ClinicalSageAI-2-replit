@@ -1,0 +1,42 @@
+# The deploy gate's scan on trunk d6ecc2ebc, after the vault-storage lane's 2fe4ec4b2 (vault bucket on its own KMS key)
+# Trivy v0.70.0, same checks bundle as the other files here
+
+
+Report Summary
+
+┌────────────────────────────────────────────────────┬────────────┬───────────────────┐
+│                       Target                       │    Type    │ Misconfigurations │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ .claude/skills/gstack/.github/docker/Dockerfile.ci │ dockerfile │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ Dockerfile.optimized                               │ dockerfile │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ infra/k8s/bff-with-predicate-shadow.yaml           │ kubernetes │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/bootstrap                                │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/bootstrap/main.tf                        │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/environments/production                  │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/environments/staging                     │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/modules/alb/main.tf                      │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/modules/cloudfront/main.tf               │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/modules/compliance-evidence/main.tf      │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/modules/ecr/main.tf                      │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/modules/ecs-fargate/main.tf              │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/modules/rds/main.tf                      │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/stack/vault_storage.tf                   │ terraform  │         0         │
+└────────────────────────────────────────────────────┴────────────┴───────────────────┘
+Legend:
+- '-': Not scanned
+- '0': Clean (no security findings detected)
+
+exit=0
