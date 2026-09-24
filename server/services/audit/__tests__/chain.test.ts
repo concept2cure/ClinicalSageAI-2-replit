@@ -54,7 +54,7 @@ function fakeClient(rows: object[], opts: FakeOptions = {}): Fake {
     calls,
     query: async (sql: string, params?: unknown[]) => {
       calls.push({ sql, params });
-      if (sql.includes('information_schema.columns')) return { rows: [{ present: opts.ordered ?? true }] };
+      if (sql.includes("attname = 'chain_seq'")) return { rows: [{ present: opts.ordered ?? true }] };
       if (sql.includes("current_setting('app.current_tenant_id'")) return { rows: [{ tenant: opts.connectionTenant ?? null }] };
       if (sql.includes("current_setting('app.rls_enforce'")) {
         return { rows: [{ rls_enforce: opts.rlsEnforce ?? null, role: opts.role ?? null }] };
