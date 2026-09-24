@@ -33,6 +33,7 @@ import {
   NOT_A_RELATION,
   sqlishSegments,
   REF_RE,
+  cteNames,
 } from '../../scripts/ci/check-migration-reachability.mjs';
 
 /** Every relation name REF_RE finds in one SQL segment, qualified as the guard does. */
@@ -167,5 +168,20 @@ describe('C-35: the reference scan ignores non-relations', () => {
       expect(NOT_A_RELATION.has(w), `${w} should be excluded`).toBe(true);
     }
     expect(NOT_A_RELATION.has('authoring_documents')).toBe(false);
+  });
+});
+
+describe('a CTE is a name the query binds, however it is written', () => {
+  // `WITH scoped AS MATERIALIZED (…) … FROM scoped s` (advancedRAGPipeline.ts,
+  // ffc1643a2) was read as a query of a table named `scoped`, and the live-schema
+  // guard failed every Blank DB run on a relation that cannot exist.
+  it('binds MATERIALIZED and NOT MATERIALIZED CTEs', () => {
+    const sql = `WITH scoped AS MATERIALIZED (SELECT 1), kept AS NOT MATERIALIZED (SELECT 2), plain AS (SELECT 3)
+                 SELECT * FROM scoped s JOIN kept k ON true JOIN plain p ON true`;
+    expect([...cteNames(sql)].sort()).toEqual(['kept', 'plain', 'scoped']);
+  });
+
+  it('does not bind a table merely named after a CTE keyword', () => {
+    expect([...cteNames('SELECT * FROM materialized_views')]).toEqual([]);
   });
 });
