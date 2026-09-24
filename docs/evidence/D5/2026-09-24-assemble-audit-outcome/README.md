@@ -23,6 +23,16 @@ mounts the real router with the assembly service mocked. It was red 3/3
 green 3/3 (`green/after.txt`). The related suites pass, 42/42: coauthor status
 and the assembler's own audit-outcome test.
 
-**Correction to the handed-on note:** `submission-service.ts` and
-`routes/ectd-export.ts` do not call `assembleSequence` at HEAD. This route is
-its only caller.
+**Other callers, still open.** A first version of this note said this route is
+the only caller. That was wrong: the grep behind it searched the wrong path.
+`assembleSequence` is also called by:
+
+- `server/services/submission-service/submission-service.ts:844`, the pre-check
+  assembly before a freeze or dispatch;
+- the same file at `:1312`, the transmit assembly;
+- `server/routes/ectd-compile.ts:976`.
+
+None of these passes the outcome on. The two in submission-service sit inside
+the governed freeze/dispatch/transmit chain, whose responses would have to carry
+it, and that chain is the package-spine lane's. They are left open and handed
+on. `routes/ectd-export.ts` does not call it.
