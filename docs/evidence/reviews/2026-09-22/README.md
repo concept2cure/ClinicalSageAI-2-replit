@@ -66,16 +66,19 @@ real files:
 
 **CT** = re-verified by the control tower. **Aud** = auditor-verified, not re-traced.
 
+Status re-checked at HEAD on 2026-09-24 (`follow-through/README.md`). Rows still
+marked open were confirmed open then; D1–D4 and H1 were not re-checked.
+
 | # | Sev | App | Finding | Where | Owner / status |
 |---|---|---|---|---|---|
-| P1 | **critical** | Authoring | Protocol finalize and review disposition write `command='sign'` ledger rows with no re-auth, no SoD check and no `electronic_signatures` row | `server/routes/protocol-development.ts:81-108,483`; `protocol-reviews.ts:148` | open; CT |
-| P2 | **critical** | QMS | QMP create / activate / delete write no audit record; Activate is one click with no reason | `server/routes/quality-management-api.ts:581,634,726`; `QmpWorkspace.tsx:112,203` | open; CT |
-| T1 | **critical** | Projects/Tasks | Every task ledger write is best-effort and its outcome discarded, including the PIN-signed completion: `auditTaskAction` catches a write failure and returns `{recorded:false}`; all 9 call sites `await` it bare and none passes `executor` | `server/services/tasking/task-audit.ts:180-196`; `taskManagement.routes.ts:215,395,506,678,865,906,1020,1260,1392` | open; CT |
-| P3 | **critical** | Sub. Readiness | Resolving a gate contradiction writes no audit record; UI shows a literal `'AnA + you'` as resolver | `contradiction-engine-service.ts:697-716`; `Inconsistency.tsx:269,784` | open; CT |
-| P4 | high | Sub. Center | eCTD release-signature panel shows no signer, time or meaning: `findActiveReleaseSignature` selects only `id` | `submission-package-orchestrator.ts:970`; `EctdCompile.tsx:961-1008` | open; CT |
-| T2 | high | Projects/Tasks | No authority check on any task write: create, transition, archive, dependency, auto-assign and from-template are open to a `viewer`; no role gating in the UI (§11.10(g)) | `server/routes/taskManagement.routes.ts` (0 role-gate references); mounted at `register-core-routes.ts:125` and `register-advanced-platform-routes.ts:219` | open; CT |
-| T3 | medium | Projects/Tasks | `archive()` and `sign()` fall through silently on a 401 because `apiRequest` does not throw on it; `move()` in the same file already handles this | `TaskBoard.tsx:1083-1102,1267-1288` | open; Aud |
-| T4 | medium | Projects/Tasks | Archive reason is required in the UI (≥3) but optional on the server | `taskManagement.routes.ts:1358-1360`; `TaskBoard.tsx:1078` | open; Aud |
+| P1 | **critical** | Authoring | Protocol finalize and review disposition write `command='sign'` ledger rows with no re-auth, no SoD check and no `electronic_signatures` row | `server/routes/protocol-development.ts:81-108,483`; `protocol-reviews.ts:148` | **fixed** `d622ca53a`; CT |
+| P2 | **critical** | QMS | QMP create / activate / delete write no audit record; Activate is one click with no reason | `server/routes/quality-management-api.ts:581,634,726`; `QmpWorkspace.tsx:112,203` | **fixed** `f4c9c50ca`; CT |
+| T1 | **critical** | Projects/Tasks | Every task ledger write is best-effort and its outcome discarded, including the PIN-signed completion: `auditTaskAction` catches a write failure and returns `{recorded:false}`; all 9 call sites `await` it bare and none passes `executor` | `server/services/tasking/task-audit.ts:180-196`; `taskManagement.routes.ts:215,395,506,678,865,906,1020,1260,1392` | **fixed** `a7955fc10`, `95aa4216c` (WO-16C); CT |
+| P3 | **critical** | Sub. Readiness | Resolving a gate contradiction writes no audit record; UI shows a literal `'AnA + you'` as resolver | `contradiction-engine-service.ts:697-716`; `Inconsistency.tsx:269,784` | **fixed** `9f3f40d72` (`docs/evidence/D5-GOVERNED-PATH/2026-09-22/`); CT |
+| P4 | high | Sub. Center | eCTD release-signature panel shows no signer, time or meaning: `findActiveReleaseSignature` selects only `id` | `submission-package-orchestrator.ts:970`; `EctdCompile.tsx:961-1008` | **server fixed** 2026-09-24: lookup, export descriptor and `GET …/by-run/:runId/signed` carry name, title, meaning, time (`follow-through/`). **Client open**: `EctdCompile.tsx` renders none of it yet; D7 lane's file; CT |
+| T2 | high | Projects/Tasks | No authority check on any task write: create, transition, archive, dependency, auto-assign and from-template are open to a `viewer`; no role gating in the UI (§11.10(g)) | `server/routes/taskManagement.routes.ts` (0 role-gate references); mounted at `register-core-routes.ts:125` and `register-advanced-platform-routes.ts:219` | **fixed** `a7955fc10`; CT |
+| T3 | medium | Projects/Tasks | `archive()` and `sign()` fall through silently on a 401 because `apiRequest` does not throw on it; `move()` in the same file already handles this | `TaskBoard.tsx:1083-1102,1267-1288` | **fixed** `6f79a000f` (sign), `a7955fc10` (archive); Aud |
+| T4 | medium | Projects/Tasks | Archive reason is required in the UI (≥3) but optional on the server | `taskManagement.routes.ts:1358-1360`; `TaskBoard.tsx:1078` | **fixed** `a7955fc10`; Aud |
 | P5 | medium | Authoring | Reason-for-change is enforced on the client only (section save, freeze, review verdict) | `authoring.router.ts:1919-1950,3700,2740` | open; Aud |
 | D1 | medium | Authoring | Phantom `--danger` renders the light-mode red in dark mode | `Review.tsx:849` | open; CT |
 | D2 | medium | Projects/Tasks | Same phantom `--danger` | `TaskBoard.tsx:1691` | open; CT |

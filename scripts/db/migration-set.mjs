@@ -2574,6 +2574,16 @@ export const C2C_MIGRATION_FILES = [
   // (identity.organizations from 051, organizations.uuid from 20260129) are far
   // earlier in the set.
   C48_STAGE1_IDENTITY_ORG_BRIDGE,
+  // ── license_requests: the enterprise onboarding intake (D2, 2026-09-24) ──
+  // POST /api/auth/license-request — Onboarding's "Request Enterprise
+  // onboarding", a launch shell surface — INSERTed here while nothing created
+  // the table; its runtime CREATE TABLE fallback is refused to the production
+  // runtime role ("permission denied for schema public"), so every request was
+  // lost in production and only on production. This file is now the only
+  // creator. It has NO tenant column by design — the row is written before any
+  // organisation exists — so the sweeps below never touch it; it carries its
+  // own insert-only-for-the-public, read-only-for-the-platform policy.
+  'migrations/20260924_license_requests.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

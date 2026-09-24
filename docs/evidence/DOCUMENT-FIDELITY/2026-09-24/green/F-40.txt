@@ -1,0 +1,19 @@
+F-40 — GREEN: the same tests against 893a4750f as committed
+Signature manifest printed a content hash nobody compared; a sealed record nobody signed exported
+
+vitest exit code: 0
+
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > prints the printed name, the meaning and the executed time 195ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > says so plainly when a document carries no signatures 20ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > does not print an email where the printed name goes 15ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > includes a signature element with the required lines 5ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > escapes the document title, which it never did 5ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > is parseable by a real XML parser 23ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — PDF carries the manifestation > renders the signature block into the PDF html 260ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > the dead renderer is gone > buildDocx no longer exists to be mistaken for the live path 2ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > states, per signature, that it covers the exported content 13ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > refuses the export when NO signature covers the content being filed 6ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > still exports, and marks the stale one, when a LATER signature covers it 14ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > an unsigned document is unaffected — nothing to verify, nothing to refuse 10ms
+ Test Files  1 passed (1)
+      Tests  12 passed (12)

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-24T00:42:33.287Z",
+  "generatedAt": "2026-09-24T01:13:17.127Z",
   "git": {
-    "sha": "f55dfcec902c98b048ac31aedc02063d18631645",
+    "sha": "1de2678e5314b699d197865de62c323a04d41dbf",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1987,7 +1987,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 279311
+        "bytes": 281377
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2035,7 +2035,7 @@
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
-        "bytes": 146764
+        "bytes": 148230
       },
       {
         "file": "server/storage.ts",
@@ -2161,7 +2161,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6405
+        "lines": 6442
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2205,7 +2205,7 @@
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 3398
+        "lines": 3433
       },
       {
         "file": "server/routes/submission-ops.ts",
@@ -2280,12 +2280,12 @@
         "lines": 2386
       },
       {
-        "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
-        "lines": 2379
+        "file": "server/routes/auth.ts",
+        "lines": 2381
       },
       {
-        "file": "server/routes/auth.ts",
-        "lines": 2376
+        "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
+        "lines": 2379
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",

@@ -1202,7 +1202,7 @@ where it lives in routing. Evidence is under
 
 | Id | What | Shown failing first | State |
 |---|---|---|---|
-| **F-24** (§11.10(e), §11.300) | **Behind the load balancer every user shared one sign-in allowance, and the audit trail recorded the proxy.** Express trusted no proxy, so `req.ip` was the load balancer's: the per-address sign-in and code limits (10 in 15 minutes) were one allowance for a whole deployment, and every audit row recorded the load balancer. | Unit 1 fail / 13 pass; live, the eleventh different client refused 429 | **Fixed** `eefac757b`: one trusted hop in production (`server/config/trust-proxy.ts`, `TRUST_PROXY_HOPS`, validated). 14/14; live, twelve clients each their own allowance, a rotating client stopped at the eleventh, each audit row the client's own address. Two hops through CloudFront wait on D1's ingress change. |
+| **F-24** (§11.10(e), §11.300) | **Behind the load balancer every user shared one sign-in allowance, and the audit trail recorded the proxy.** Express trusted no proxy, so `req.ip` was the load balancer's: the per-address sign-in and code limits (10 in 15 minutes) were one allowance for a whole deployment, and every audit row recorded the load balancer. | Unit 1 fail / 13 pass; live, the eleventh different client refused 429 | **Fixed** `eefac757b`: one trusted hop in production (`server/config/trust-proxy.ts`, `TRUST_PROXY_HOPS`, validated). 14/14; live, twelve clients each their own allowance, a rotating client stopped at the eleventh, each audit row the client's own address. Two hops through CloudFront wait on D1's ingress change. 2026-09-24: Terraform makes that change and sets two hops together (W2 B9, `docs/evidence/W2/2026-09-24-b9/`; the rendered task definition carries `TRUST_PROXY_HOPS=2` under a mocked provider); live once D1 is applied. |
 | **F-25** (honest state) | **A contradiction scan reported a project it could not read as clean.** `scanProject` never checked that the organisation holds the project, and a program's uuid became "no filter", so the scan read every assumption and decision in the organisation and reported them as this project's. OQ-SRDY-06 passed on it. | Unit 2 fail / 1 pass; OQ-005 v0.5 on the pre-fix server: OQ-SRDY-06 and OQ-SRDY-08 fail (`OQ-005-v0.5/before-F-25-and-rescope/`) | **Fixed** `1b6dc0fab`: a non-integer id is refused 400 and an unheld project 404, before anything is read. 3/3; OQ-005 v0.5 passes (`after-…`). With the §14.3 item 1 decision (§16.5). |
 | **F-26** (§11.300, §11.200(a)(1)) | **A signed-in session could replace an enrolled authenticator.** `POST /api/auth/mfa/setup` wrote a new secret over the stored one and handed it back, with two-step verification left on. Session plus password then signed as the owner, and the owner's own codes were refused. Nothing was recorded. | `second-factor-binding.dbtest.ts`: 7 fail / 2 pass | **Fixed** `0c912e67e`: a secret is written only while MFA is off, in one conditional statement; setup answers 409 otherwise; each change is recorded. 9/9. |
 | **F-27** (§11.300(d)) | **A wrong password or code at signing never counted, and a locked account could sign.** The ceremony and the signing dialog's own checks neither consulted nor fed the sign-in's lockout: an unmetered oracle for the password, then the code, to whoever held a session. | `signing-lockout.dbtest.ts`: signing 4 fail / 4 pass; the dialog's checks 3 fail | **Fixed** `c3e891bba`: the lockout is checked before anything is compared (423 `ACCOUNT_LOCKED`), and a wrong factor counts against the sign-in's own allowance. 11/11. |
@@ -1364,3 +1364,58 @@ mount in source; runtime effect not measured.
 Prepared by the W3 Claude session (drafting and execution only; cannot sign).
 No result was edited after execution. The runners wrote every record, and the
 matrix builder regenerated TM-001.
+
+## 17. Addendum 2026-09-24 — document fidelity: seven defects in what reaches a filed document (document-fidelity session)
+
+The earlier sections test that governed actions are authorised, attributed and
+recorded. This section concerns the documents those actions produce. Each
+defect below changed what a filed document says, or what it claims about
+itself, without raising an error. Evidence is in
+`docs/evidence/DOCUMENT-FIDELITY/2026-09-24/`. Each `red/` file is the finding's
+tests run with only that fix reverted in the current tree, with the reverted
+lines listed. `gen_evidence.py` in the same directory reproduces all of them.
+
+### 17.1 Findings
+
+| Id | What | Shown failing first | State |
+|---|---|---|---|
+| **F-34** (21 CFR 54, 801) | **FDA forms asserted facts nobody entered.** Form 3881 filed a device with no recorded use as "Prescription Use (21 CFR 801 Subpart D)". Form 3654 checked "No financial interests to disclose" when the answer was absent, which put a Part 54 certification under the certifier's name. | 2 of 6 fail. Both boxes render `checked`. | **Fixed** `380bd650a`. Both are opt-in, and an unanswered Part 54 block says so. 6/6. The Part 54 half was found in parallel by another session. |
+| **F-35** (content fidelity) | **A specification limit was deleted from the built .docx.** Entities were decoded before tags were stripped, so "Total impurities were &lt; 0.05% and assay was &gt; 98.0%" was built as "Total impurities were  98.0%". The same chain decoded `&amp;` first, which collapsed a literal `&amp;lt;` into `<`. | 3 of 6 fail, with the deleted text as the output. | **Fixed** `cd716f6d6`. A single-pass decoder runs after every strip and is shared with the eCTD leaf fallback. 6/6. |
+| **F-36** (§11.10(b), honest state) | **A plain-text stand-in passed as the formatted PDF.** With no Puppeteer driver installed, the PDFKit fallback renders every HTML export. The 510(k), PMA, CER and authoring exports discard the `usedFallback` flag, and nothing in the file said it lacked its typesetting. | 2 of 7 fail. The extracted PDF has no notice. | **Fixed** `b34301f6b`. Page one states the rendering is plain text and must not be filed as the formatted document. A driver is resolved without being required, and `puppeteer-core` against an existing Chromium rendered with `usedFallback=false`. 7/7. |
+| **F-37** (content fidelity) | **The PDF branch dropped what the DOCX branch kept.** Editor marks were never read on the HTML path. The same section read "10⁶ CFU/mL" in the .docx and "106 CFU/mL" in the PDF. Figures vanished and table cells ran together. An unresolved tracked change lost both marks, so the PDF stated one value as settled. | 4 of 6 fail. | **Fixed** `d52b24909`. 6/6. |
+| **F-38** (D7, filing identity) | **The FDA backbone declared a filing identity nobody supplied.** A missing application type defaulted to `fdaat1` (NDA), so every package built without an `fda` block, and every 510(k), De Novo or PMA, declared itself an NDA. The orchestrator's IND sequences were coded `fdast9` ("IND Safety Reports") by a lookup in the wrong vocabulary. | 4 of 5 fail. A 510(k) builds, and an original IND carries `fdast9`. | **Fixed** `6d1b9a5df`. Both attributes fail closed, and callers pass the identity they hold. 5/5. **Behaviour change:** device pathways are refused on this backbone, which has no code for them. §17.3 records this for the owner. |
+| **F-39** (§11.10(a)) | **A draft cut off at the token limit was filed as finished.** The drafting service dropped the gateway's `finishReason`, so a narrative truncated at 8,192 tokens was accepted into `coauthor_documents`, the source of eCTD leaves. | 2 of 11 fail. The truncated draft is accepted with 200. | **Fixed** `e854953f8`. 422 `DRAFT_TRUNCATED`, and nothing is written. 11/11. |
+| **F-40** (§11.70, §11.50(b)) | **The signature manifest printed a hash nobody compared.** The export computed the content hash with the same function the signing routes store, and never compared the two. A filed document could carry an approval signature over prose that hashed to something else. | 3 of 12 fail. There is no verdict, and a sealed record no signature covers exports with 200. | **Fixed** `7087ae5c4`. Every signature line carries a verdict. A sealed document whose signatures all fail to cover its content is refused with 409 `SIGNATURE_CONTENT_MISMATCH` before the audit event. An earlier AUTHOR signature still exports, marked as not covering. 12/12. |
+
+### 17.2 What this changes in the records above
+
+- **OQ-003 (Authoring):** the export's §11.50(b) manifestation now includes a
+  §11.70 verdict for each signature. The next OQ execution should add a step
+  that edits a signed, then re-approved, document and checks that the earlier
+  signature reads "DOES NOT COVER" while the approval reads "covers".
+- **OQ-004 (Submission Center):** an FDA package built without an application
+  type is now refused rather than coded as an NDA. Any OQ step that built one
+  implicitly needs an `fda.applicationType`.
+- **RA-001:** F-35, F-37 and F-39 are content-fidelity hazards with no
+  detection before filing. Their controls are the tests named above, which run
+  in CI.
+
+### 17.3 Decisions for the owner (not taken by this session)
+
+1. **Device pathways on the eCTD backbone (F-38).** Refusal is correct:
+   labelling a device dossier as an NDA is not. Whether a 510(k) should reach
+   the eCTD packager at all, rather than being routed to eSTAR, is a product
+   routing decision.
+2. **Styled PDF output (F-36).** Adding `puppeteer`, or `puppeteer-core` with a
+   Chromium, to the production image is a D1 image decision. Until then every
+   HTML export is the plain-text rendering, and it now says so.
+
+### 17.4 Limits recorded
+
+- F-39 is enforced where the client reports the finish reason. A caller that
+  omits it is not caught until drafts are recorded server-side.
+- All runs are local, on PGlite or mocked HTTP where the test says so. The
+  staging execution with the production image is owed under D1.
+
+Prepared by the document-fidelity Claude session (drafting and execution only;
+cannot sign). No result was edited after execution.

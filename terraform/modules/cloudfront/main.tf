@@ -1,4 +1,27 @@
-// CloudFront + S3 for static frontend hosting
+// CloudFront + S3 for static frontend hosting, and the only way in to the API
+//
+// The ALB admits CloudFront alone (modules/alb, W2 B9), so every path the API
+// server answers must have a behaviour here; a path left off this list cannot
+// be reached at all.
+
+locals {
+  alb_path_patterns = var.api_domain_name == "" ? [] : [
+    "/api/*",
+    "/readyz", # D1's acceptance line reads it here
+    "/healthz",
+    "/collab", # live co-editing WebSocket (server/services/hocuspocus-server.ts)
+    "/collab/*",
+    "/scim/*", # SCIM 2.0 provisioning (/scim/v2)
+    "/mcp",    # the connector for Claude and its OAuth endpoints (server/mcp/index.ts)
+    "/mcp/*",
+    "/.well-known/*",
+    "/authorize",
+    "/token",
+    "/register",
+    "/revoke",
+    "/oauth/*",
+  ]
+}
 
 resource "aws_s3_bucket" "frontend" {
   bucket = var.bucket_name
@@ -54,6 +77,31 @@ resource "aws_s3_bucket_policy" "frontend" {
   })
 }
 
+# ── Client-side routes ──────────────────────────────────────────────────────
+#
+# A path whose last segment has no dot is a client-side route, so the bucket's
+# index.html answers it. This runs on the S3 behaviour only. It replaces
+# distribution-wide custom_error_response blocks (403/404 → 200 /index.html),
+# which applied to every origin, so an API 403 or 404 reached the browser as
+# 200 with the app's HTML.
+
+resource "aws_cloudfront_function" "spa_routes" {
+  name    = "${replace(var.bucket_name, ".", "-")}-spa-routes"
+  runtime = "cloudfront-js-2.0"
+  comment = "Serve index.html for client-side routes"
+  publish = true
+  code    = <<-EOT
+    function handler(event) {
+      var request = event.request;
+      var last = request.uri.substring(request.uri.lastIndexOf('/') + 1);
+      if (last.indexOf('.') === -1) {
+        request.uri = '/index.html';
+      }
+      return request;
+    }
+  EOT
+}
+
 # ── CloudFront distribution ─────────────────────────────────────────────────
 
 resource "aws_cloudfront_distribution" "this" {
@@ -82,6 +130,11 @@ resource "aws_cloudfront_distribution" "this" {
         origin_protocol_policy = "https-only"
         origin_ssl_protocols   = ["TLSv1.2"]
       }
+      # The ALB forwards only requests that carry this (modules/alb).
+      custom_header {
+        name  = var.api_origin_secret_header_name
+        value = var.api_origin_secret
+      }
     }
   }
 
@@ -102,13 +155,25 @@ resource "aws_cloudfront_distribution" "this" {
     min_ttl     = 0
     default_ttl = 3600
     max_ttl     = 86400
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.spa_routes.arn
+    }
   }
 
-  # Route /api/* to ALB
+  # Route the API server's paths to the ALB.
+  #
+  # Every viewer header is forwarded, which also means nothing is cached.
+  #   - Host: CloudFront checks the ALB's certificate against the Host it
+  #     forwards. Without it, it checks the ALB's *.elb.amazonaws.com name,
+  #     which no ACM certificate can cover, and every request fails 502.
+  #   - User-Agent: CloudFront replaces it with its own unless it is
+  #     forwarded, so the audit trail recorded CloudFront, not the browser.
   dynamic "ordered_cache_behavior" {
-    for_each = var.api_domain_name != "" ? [1] : []
+    for_each = local.alb_path_patterns
     content {
-      path_pattern           = "/api/*"
+      path_pattern           = ordered_cache_behavior.value
       allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
       cached_methods         = ["GET", "HEAD"]
       target_origin_id       = "alb-api"
@@ -117,7 +182,7 @@ resource "aws_cloudfront_distribution" "this" {
 
       forwarded_values {
         query_string = true
-        headers      = ["Authorization", "Origin", "Accept"]
+        headers      = ["*"]
         cookies {
           forward = "all"
         }
@@ -127,19 +192,6 @@ resource "aws_cloudfront_distribution" "this" {
       default_ttl = 0
       max_ttl     = 0
     }
-  }
-
-  # SPA fallback — serve index.html for client-side routes
-  custom_error_response {
-    error_code         = 403
-    response_code      = 200
-    response_page_path = "/index.html"
-  }
-
-  custom_error_response {
-    error_code         = 404
-    response_code      = 200
-    response_page_path = "/index.html"
   }
 
   restrictions {
@@ -153,6 +205,20 @@ resource "aws_cloudfront_distribution" "this" {
     ssl_support_method       = var.certificate_arn != "" ? "sni-only" : null
     minimum_protocol_version = var.certificate_arn != "" ? "TLSv1.2_2021" : null
     cloudfront_default_certificate = var.certificate_arn == ""
+  }
+
+  lifecycle {
+    # The forwarded Host is what the ALB's certificate must match. A
+    # *.cloudfront.net name cannot be on an ACM certificate, so API routing
+    # needs a custom domain, on both this certificate and the ALB's.
+    precondition {
+      condition     = var.api_domain_name == "" || (length(var.domain_aliases) > 0 && var.certificate_arn != "")
+      error_message = "Routing the API through CloudFront needs domain_aliases and certificate_arn; the ALB's certificate must cover the same names."
+    }
+    precondition {
+      condition     = var.api_domain_name == "" || (var.api_origin_secret_header_name != "" && length(var.api_origin_secret) >= 32)
+      error_message = "Routing the API through CloudFront needs the ALB's origin secret header name and a secret of at least 32 characters (modules/alb)."
+    }
   }
 
   tags = var.tags

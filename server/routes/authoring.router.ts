@@ -74,6 +74,9 @@ import {
   renderAuthoringExport,
   logExport,
   computeDocHash as computeDocHashOn,
+  sectionsDigest,
+  readSignaturesForExport,
+  anySignatureCovers,
   EXPORT_FORMATS,
 } from '../services/authoring/authoring-export';
 import {
@@ -5008,10 +5011,43 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
     );
 
     const exportId = crypto.randomUUID();
-    const fileHash = await computeDocHash(docId, tenantId);
+    /* The digest of the rows about to be rendered — one read, so the hash on
+       the export record, the manifest's verdicts and the refusal below all
+       describe the same content. Same function the signing routes store as
+       content_hash (sectionsDigest via computeDocHash). */
+    const fileHash = sectionsDigest(sectionsResult.rows);
 
     // The export record is written by logExport() AFTER the file is generated,
     // so file_name and file_size are the real ones (ledger C-14).
+
+    /* §11.70 — a sealed record's signatures have to cover it.
+
+       Narrow on purpose. A signature that does not match is usually NOT a
+       fault: an AUTHOR signature does not lock the document, so the ordinary
+       flow (author signs, editing continues, approver signs the final text)
+       leaves the author's signature legitimately covering earlier content, and
+       the manifest says so per signature. What cannot be right is a document
+       this route has already required to be sealed (above) carrying signatures
+       of which NOT ONE covers the content being filed: the content moved after
+       it was sealed, and the manifest would attest to a record nobody signed.
+
+       Checked BEFORE the EXPORT audit event, so a refusal leaves no record of
+       an export that never happened. */
+    const exportSignatures = await readSignaturesForExport(pool, String(docId), tenantId);
+    if (exportSignatures.length > 0 && !anySignatureCovers(exportSignatures, fileHash)) {
+      return res.status(409).json({
+        error: 'Signatures do not cover this document',
+        code: 'SIGNATURE_CONTENT_MISMATCH',
+        message:
+          'Every signature on this document was applied to different content than the ' +
+          'sections it now contains, so none of them covers what would be exported. ' +
+          'Exporting would produce a filing whose signature manifestation attests to a ' +
+          'record it does not contain (21 CFR 11.70). Re-sign the document as it now ' +
+          'stands, or restore the content that was signed.',
+        exportedContentHash: fileHash,
+        signatureCount: exportSignatures.length,
+      });
+    }
 
     // Create audit event
     await createAuditEvent(
@@ -5032,6 +5068,7 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
       doc,
       sections: sectionsResult.rows,
       format,
+      signatures: exportSignatures,
     });
 
     /* §11.10(b): the record carries a hash of the SOURCE section rows

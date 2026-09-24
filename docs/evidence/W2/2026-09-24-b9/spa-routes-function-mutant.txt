@@ -1,0 +1,14 @@
+# The same check against a mutant that rewrites every path (dot test removed): assets break
+ok   /                                          -> /index.html
+ok   /login                                     -> /index.html
+ok   /concept2cure                              -> /index.html
+ok   /concept2cure/vault                        -> /index.html
+ok   /concept2cure/submission-center/           -> /index.html
+ok   /index.html                                -> /index.html
+FAIL /assets/index-3f9a2c1b.js                  -> /index.html
+FAIL /assets/index-8d1e7f00.css                 -> /index.html
+FAIL /locales/en/common.json                    -> /index.html
+FAIL /manifest.webmanifest                      -> /index.html
+FAIL /robots.txt                                -> /index.html
+FAIL /sitemap.xml                               -> /index.html
+6 FAILED

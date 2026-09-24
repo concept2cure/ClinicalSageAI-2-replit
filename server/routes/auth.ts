@@ -14,6 +14,7 @@ import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
 import { db } from '../db';
 import { createScopedLogger } from '../utils/logger.js';
+import { serverError } from '../lib/api-response';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { verifyLiveToken } from '../services/token-revocation';
 import { requireAccessTokenReason } from '../middleware/tokenType';
@@ -2332,30 +2333,34 @@ router.post('/license-request', licenseRequestLimiter, async (req: Request, res:
 
     const { name, email, organization, message } = parsed.data;
 
-    // Persist to database (best-effort — table may not exist yet)
+    // Persist. The table is created by migrations/20260924_license_requests.sql,
+    // on the applier — never here.
+    //
+    // Until 2026-09-24 this block caught 42P01 and ran CREATE TABLE IF NOT
+    // EXISTS at request time. That succeeds only for a role that can CREATE in
+    // public: a superuser dev server, never production's runtime role, which is
+    // refused ("permission denied for schema public"). So in production every
+    // enterprise onboarding request answered 500 and was lost, and nothing on a
+    // developer machine could show it. It also carried an `else` that answered
+    // `success: true` without storing anything (unreachable through Drizzle,
+    // whose error text always names the table — but an error rendered as
+    // success all the same). Both are gone: stored, or an honest 500.
+    //
+    // On failure the prospect's contact is logged — the same two fields the
+    // success line below already logs — so a request that could not be stored
+    // is still recoverable by the team rather than lost. The response carries
+    // no database text; Onboarding.tsx tells the prospect it was NOT recorded.
     try {
       await db.execute(sql`INSERT INTO license_requests (name, email, organization, message, status, created_at)
               VALUES (${name}, ${email}, ${organization}, ${message}, 'pending', NOW())`);
-    } catch (dbErr: any) {
-      // If table doesn't exist, create it and retry once
-      if (dbErr?.message?.includes('license_requests') || dbErr?.code === '42P01') {
-        await db.execute(sql`CREATE TABLE IF NOT EXISTS license_requests (
-            id SERIAL PRIMARY KEY,
-            name VARCHAR(200) NOT NULL,
-            email VARCHAR(254) NOT NULL,
-            organization VARCHAR(300) NOT NULL,
-            message TEXT DEFAULT '',
-            status VARCHAR(20) DEFAULT 'pending',
-            created_at TIMESTAMPTZ DEFAULT NOW(),
-            reviewed_at TIMESTAMPTZ,
-            reviewed_by INTEGER
-          )`);
-        await db.execute(sql`INSERT INTO license_requests (name, email, organization, message, status, created_at)
-                VALUES (${name}, ${email}, ${organization}, ${message}, 'pending', NOW())`);
-      } else {
-        logger.error('License request DB error', { err: dbErr?.message ?? String(dbErr) });
-        // Still return success to the user — we log the request
-      }
+    } catch (dbErr) {
+      // Drizzle wraps the driver error as "Failed query: <sql>" and keeps
+      // PostgreSQL's reason and SQLSTATE on `.cause`; log those, not the SQL.
+      const cause = (dbErr as { cause?: unknown })?.cause ?? dbErr;
+      return serverError(res, logger, 'recording your enterprise onboarding request', cause, {
+        email,
+        organization,
+      });
     }
 
     logger.info('License request received', { email, organization });

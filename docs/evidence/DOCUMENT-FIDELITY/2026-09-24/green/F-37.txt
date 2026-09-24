@@ -1,0 +1,14 @@
+F-37 — GREEN: the same tests against 893a4750f as committed
+Editor-JSON to HTML (every PDF) dropped marks, images, table structure and tracked changes
+
+vitest exit code: 0
+
+ ✓ server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > a superscript stays a magnitude in the PDF, as it already does in the DOCX 190ms
+ ✓ server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > a subscript reads as the conventional formula 14ms
+ ✓ server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > an unresolved tracked change stays unresolved 9ms
+ ✓ server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > table cells keep a delimiter instead of running together 9ms
+ ✓ server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > a figure leaves a trace instead of disappearing 10ms
+ ✓ server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > the DOCX branch still produces a document for the same input 35ms
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+stderr | server/export/__tests__/editor-json-to-html.test.ts > editor JSON → HTML keeps what the DOCX branch keeps > a superscript stays a magnitude in the PDF, as it already does in the DOCX
