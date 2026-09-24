@@ -1,0 +1,6 @@
+# RED — artifact-status: tests run against the unfixed implementation (server/routes/c2c/artifacts.ts server/routes/c2c/shared.ts server/services/audit/audit-write-outcome.ts stashed at e0080e0d9)
+ × tests/artifact-status-audit-outcome.test.ts > PUT …/status carries its audit-row outcome > a status change whose row was lost still changes the status, and says the row is missing 40ms
+ × tests/artifact-status-audit-outcome.test.ts > PUT …/status carries its audit-row outcome > a written row says so, and says it is not the chained audit_logs row 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
