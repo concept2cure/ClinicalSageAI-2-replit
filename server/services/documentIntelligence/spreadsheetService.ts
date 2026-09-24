@@ -27,8 +27,14 @@ export interface SheetInfo {
   name: string;
   /** 1-based position in the workbook. */
   index: number;
+  /** How many rows hold a value — a COUNT, not where the sheet ends. */
   rowCount: number;
+  /** How many columns hold a value — a COUNT, not where the sheet ends. */
   columnCount: number;
+  /** The row number of the last value; page to here, not to rowCount. */
+  lastRow: number;
+  /** The column number of the last value. */
+  lastColumn: number;
   hidden: boolean;
   formulaCells: number;
 }
@@ -54,10 +60,17 @@ export interface WorksheetFormula {
 
 export interface WorksheetReadResult {
   sheet: string;
+  /** How many rows hold a value. */
   totalRows: number;
+  /** How many columns hold a value. */
   totalColumns: number;
+  /** The row number of the last value — the end of the sheet. */
+  lastRow: number;
+  /** The column number of the last value; every row's `values` is this long. */
+  lastColumn: number;
   startRow: number;
   endRow: number;
+  /** True while rows after endRow still hold values. */
   truncated: boolean;
   rows: WorksheetRow[];
   formulas: WorksheetFormula[];
@@ -140,6 +153,27 @@ function countFormulaCells(ws: Worksheet): number {
   return count;
 }
 
+/**
+ * Where a sheet's values end: the last row and the last column holding one.
+ *
+ * Not exceljs's actualRowCount / actualColumnCount. Those COUNT the rows and
+ * columns that hold values, and every loop in this file used to run 1..count
+ * as though the count were a position. On a sheet with one blank spacer row
+ * the last row was never read; with one blank column, the last column. Nothing
+ * reported either loss, because by the count the read had finished.
+ */
+function valueExtent(ws: Worksheet): { lastRow: number; lastColumn: number } {
+  let lastRow = 0;
+  let lastColumn = 0;
+  ws.eachRow((row, rowNumber) => {
+    lastRow = Math.max(lastRow, rowNumber);
+    row.eachCell((_cell, colNumber) => {
+      lastColumn = Math.max(lastColumn, colNumber);
+    });
+  });
+  return { lastRow, lastColumn };
+}
+
 export async function inspectWorkbook(
   buffer: Buffer,
   filename = '',
@@ -153,6 +187,7 @@ export async function inspectWorkbook(
       index: id,
       rowCount: ws.actualRowCount,
       columnCount: ws.actualColumnCount,
+      ...valueExtent(ws),
       hidden: ws.state !== 'visible',
       formulaCells: countFormulaCells(ws),
     });
@@ -198,17 +233,18 @@ export async function readWorksheet(
 
   const totalRows = ws.actualRowCount;
   const totalColumns = ws.actualColumnCount;
+  const { lastRow, lastColumn } = valueExtent(ws);
   const maxRows = Math.min(Math.max(1, options.maxRows ?? 100), 1000);
   const startRow = Math.max(1, options.startRow ?? 1);
   const requestedEnd = options.endRow ?? startRow + maxRows - 1;
-  const endRow = Math.min(requestedEnd, startRow + maxRows - 1, Math.max(totalRows, startRow));
+  const endRow = Math.min(requestedEnd, startRow + maxRows - 1, Math.max(lastRow, startRow));
 
   const rows: WorksheetRow[] = [];
   const formulas: WorksheetFormula[] = [];
-  for (let r = startRow; r <= endRow && r <= totalRows; r++) {
+  for (let r = startRow; r <= endRow && r <= lastRow; r++) {
     const row = ws.getRow(r);
     const values: (string | number | boolean | null)[] = [];
-    for (let c = 1; c <= totalColumns; c++) {
+    for (let c = 1; c <= lastColumn; c++) {
       const cell = row.getCell(c);
       values.push(cellValueToDisplay(cell.value));
       if (options.includeFormulas !== false && cell.formula) {
@@ -229,52 +265,48 @@ export async function readWorksheet(
     sheet: ws.name,
     totalRows,
     totalColumns,
+    lastRow,
+    lastColumn,
     startRow,
-    endRow: Math.min(endRow, totalRows),
-    truncated: endRow < totalRows,
+    endRow: Math.min(endRow, lastRow),
+    truncated: endRow < lastRow,
     rows,
     formulas,
   };
 }
 
-export interface WorkbookToTextOptions {
-  /** Per-sheet row cap in the text rendering (default 300). */
-  maxRowsPerSheet?: number;
-}
-
 /**
  * Render a whole workbook as readable text (one TSV block per sheet) — the
- * representation used by the upload extraction pipeline and memory embedding.
+ * representation the upload extraction pipeline stores.
+ *
+ * EVERY row, with no cap. This text is the Vault's extracted_text: the passage
+ * index is built from it, and the catalog records a document as 'cataloged' —
+ * read in full — only once AnA has been served every character of it. It used
+ * to stop at 300 rows per sheet, so a 1,000-lot listing was cataloged, indexed
+ * and searched as its first 299 lots, and "read in full" was true of the
+ * rendering and false of the file. PDF, Word and CSV text is extracted whole;
+ * a workbook now is too. Every consumer pages or searches the text rather
+ * than placing it in a prompt whole.
  */
-export async function workbookToText(
-  buffer: Buffer,
-  filename = '',
-  options: WorkbookToTextOptions = {},
-  mime?: string,
-): Promise<string> {
+export async function workbookToText(buffer: Buffer, filename = '', mime?: string): Promise<string> {
   const { workbook } = await loadWorkbook(buffer, filename, mime);
-  const maxRows = Math.min(Math.max(1, options.maxRowsPerSheet ?? 300), 2000);
   const parts: string[] = [];
 
   workbook.eachSheet((ws) => {
-    const rows = ws.actualRowCount;
-    const cols = ws.actualColumnCount;
-    const lines: string[] = [`## Sheet: ${ws.name} (${rows} rows × ${cols} columns)`];
-    const limit = Math.min(rows, maxRows);
-    for (let r = 1; r <= limit; r++) {
-      const row = ws.getRow(r);
+    const { lastColumn } = valueExtent(ws);
+    const lines: string[] = [
+      `## Sheet: ${ws.name} (${ws.actualRowCount} rows × ${ws.actualColumnCount} columns)`,
+    ];
+    ws.eachRow((row) => {
       const cells: string[] = [];
-      for (let c = 1; c <= cols; c++) {
+      for (let c = 1; c <= lastColumn; c++) {
         const v = cellValueToDisplay(row.getCell(c).value);
         cells.push(v === null ? '' : String(v));
       }
       // Drop trailing empties so wide-but-sparse sheets stay compact.
       while (cells.length && cells[cells.length - 1] === '') cells.pop();
       if (cells.length) lines.push(cells.join('\t'));
-    }
-    if (rows > limit) {
-      lines.push(`… ${rows - limit} more rows not shown (use read_spreadsheet with start_row to page).`);
-    }
+    });
     parts.push(lines.join('\n'));
   });
 

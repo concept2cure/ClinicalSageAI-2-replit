@@ -1,0 +1,799 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > workbookToText renders every sheet as labelled TSV blocks
+{
+  "level": "info",
+  "message": "[spreadsheet-service] workbook rendered to text",
+  "context": {
+    "sheets": 2,
+    "chars": 162
+  }
+}
+
+stdout | server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > applyWorkbookEdits sets values and formulas without touching the source buffer
+{
+  "level": "info",
+  "message": "[spreadsheet-service] workbook edits applied",
+  "context": {
+    "edits": 3,
+    "createdSheets": 0
+  }
+}
+
+stdout | server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > applyWorkbookEdits can create missing sheets when asked
+{
+  "level": "info",
+  "message": "[spreadsheet-service] workbook edits applied",
+  "context": {
+    "edits": 1,
+    "createdSheets": 1
+  }
+}
+
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > inspectWorkbook inventories sheets with dimensions and formula counts 21ms
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > readWorksheet returns rows with values and preserved formulas 7ms
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > readWorksheet pages with startRow/maxRows and flags truncation 5ms
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > readWorksheet resolves a sheet by 1-based index string 5ms
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > readWorksheet names available sheets when the sheet is unknown 7ms
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > workbookToText renders every sheet as labelled TSV blocks 5ms
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > applyWorkbookEdits sets values and formulas without touching the source buffer 14ms
+stdout | server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > a spreadsheet is read to its last value > workbookToText renders every row of a long sheet
+{
+  "level": "info",
+  "message": "[spreadsheet-service] workbook rendered to text",
+  "context": {
+    "sheets": 1,
+    "chars": 3354
+  }
+}
+
+stdout | server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > a spreadsheet is read to its last value > workbookToText keeps the row after a blank row and the column after a blank column
+{
+  "level": "info",
+  "message": "[spreadsheet-service] workbook rendered to text",
+  "context": {
+    "sheets": 1,
+    "chars": 53
+  }
+}
+
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > applyWorkbookEdits can create missing sheets when asked 15ms
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > applyWorkbookEdits rejects sheets that do not exist by default 8ms
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > applyWorkbookEdits rejects malformed cell addresses 5ms
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > reads CSV input through the same surface 8ms
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > cellValueToDisplay handles rich text, formulas, hyperlinks and errors 0ms
+ × server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > a spreadsheet is read to its last value > workbookToText renders every row of a long sheet 37ms
+   → expected '## Sheet: Lots (1001 rows × 2 columns…' to contain 'L0300'
+(node:18196) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > a spreadsheet is read to its last value > the extraction pipeline stores the whole workbook
+{
+  "level": "info",
+  "message": "[spreadsheet-service] workbook rendered to text",
+  "context": {
+    "sheets": 1,
+    "chars": 3354
+  }
+}
+
+ × server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > a spreadsheet is read to its last value > workbookToText keeps the row after a blank row and the column after a blank column 5ms
+   → expected '## Sheet: Stability (3 rows × 2 colum…' to contain 'Impurity B %'
+ × server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > a spreadsheet is read to its last value > the extraction pipeline stores the whole workbook 96ms
+   → expected '## Sheet: Lots (1001 rows × 2 columns…' to contain 'L1000'
+ × server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > a spreadsheet is read to its last value > readWorksheet reaches the last row of a sheet with a blank row in it 5ms
+   → expected [ 1, 2 ] to deeply equal [ 1, 2, 4 ]
+ × server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > a spreadsheet is read to its last value > readWorksheet reports a page that stops before the last row as truncated 4ms
+   → expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > a spreadsheet is read to its last value > workbookToText renders every row of a long sheet
+AssertionError: expected '## Sheet: Lots (1001 rows × 2 columns…' to contain 'L0300'
+
+- Expected
++ Received
+
+- L0300
++ ## Sheet: Lots (1001 rows × 2 columns)
++ Lot	Assay %
++ L0001	99.1
++ L0002	99.2
++ L0003	99.3
++ L0004	99.4
++ L0005	99.5
++ L0006	99.6
++ L0007	99.7
++ L0008	99.8
++ L0009	99.9
++ L0010	99
++ L0011	99.1
++ L0012	99.2
++ L0013	99.3
++ L0014	99.4
++ L0015	99.5
++ L0016	99.6
++ L0017	99.7
++ L0018	99.8
++ L0019	99.9
++ L0020	99
++ L0021	99.1
++ L0022	99.2
++ L0023	99.3
++ L0024	99.4
++ L0025	99.5
++ L0026	99.6
++ L0027	99.7
++ L0028	99.8
++ L0029	99.9
++ L0030	99
++ L0031	99.1
++ L0032	99.2
++ L0033	99.3
++ L0034	99.4
++ L0035	99.5
++ L0036	99.6
++ L0037	99.7
++ L0038	99.8
++ L0039	99.9
++ L0040	99
++ L0041	99.1
++ L0042	99.2
++ L0043	99.3
++ L0044	99.4
++ L0045	99.5
++ L0046	99.6
++ L0047	99.7
++ L0048	99.8
++ L0049	99.9
++ L0050	99
++ L0051	99.1
++ L0052	99.2
++ L0053	99.3
++ L0054	99.4
++ L0055	99.5
++ L0056	99.6
++ L0057	99.7
++ L0058	99.8
++ L0059	99.9
++ L0060	99
++ L0061	99.1
++ L0062	99.2
++ L0063	99.3
++ L0064	99.4
++ L0065	99.5
++ L0066	99.6
++ L0067	99.7
++ L0068	99.8
++ L0069	99.9
++ L0070	99
++ L0071	99.1
++ L0072	99.2
++ L0073	99.3
++ L0074	99.4
++ L0075	99.5
++ L0076	99.6
++ L0077	99.7
++ L0078	99.8
++ L0079	99.9
++ L0080	99
++ L0081	99.1
++ L0082	99.2
++ L0083	99.3
++ L0084	99.4
++ L0085	99.5
++ L0086	99.6
++ L0087	99.7
++ L0088	99.8
++ L0089	99.9
++ L0090	99
++ L0091	99.1
++ L0092	99.2
++ L0093	99.3
++ L0094	99.4
++ L0095	99.5
++ L0096	99.6
++ L0097	99.7
++ L0098	99.8
++ L0099	99.9
++ L0100	99
++ L0101	99.1
++ L0102	99.2
++ L0103	99.3
++ L0104	99.4
++ L0105	99.5
++ L0106	99.6
++ L0107	99.7
++ L0108	99.8
++ L0109	99.9
++ L0110	99
++ L0111	99.1
++ L0112	99.2
++ L0113	99.3
++ L0114	99.4
++ L0115	99.5
++ L0116	99.6
++ L0117	99.7
++ L0118	99.8
++ L0119	99.9
++ L0120	99
++ L0121	99.1
++ L0122	99.2
++ L0123	99.3
++ L0124	99.4
++ L0125	99.5
++ L0126	99.6
++ L0127	99.7
++ L0128	99.8
++ L0129	99.9
++ L0130	99
++ L0131	99.1
++ L0132	99.2
++ L0133	99.3
++ L0134	99.4
++ L0135	99.5
++ L0136	99.6
++ L0137	99.7
++ L0138	99.8
++ L0139	99.9
++ L0140	99
++ L0141	99.1
++ L0142	99.2
++ L0143	99.3
++ L0144	99.4
++ L0145	99.5
++ L0146	99.6
++ L0147	99.7
++ L0148	99.8
++ L0149	99.9
++ L0150	99
++ L0151	99.1
++ L0152	99.2
++ L0153	99.3
++ L0154	99.4
++ L0155	99.5
++ L0156	99.6
++ L0157	99.7
++ L0158	99.8
++ L0159	99.9
++ L0160	99
++ L0161	99.1
++ L0162	99.2
++ L0163	99.3
++ L0164	99.4
++ L0165	99.5
++ L0166	99.6
++ L0167	99.7
++ L0168	99.8
++ L0169	99.9
++ L0170	99
++ L0171	99.1
++ L0172	99.2
++ L0173	99.3
++ L0174	99.4
++ L0175	99.5
++ L0176	99.6
++ L0177	99.7
++ L0178	99.8
++ L0179	99.9
++ L0180	99
++ L0181	99.1
++ L0182	99.2
++ L0183	99.3
++ L0184	99.4
++ L0185	99.5
++ L0186	99.6
++ L0187	99.7
++ L0188	99.8
++ L0189	99.9
++ L0190	99
++ L0191	99.1
++ L0192	99.2
++ L0193	99.3
++ L0194	99.4
++ L0195	99.5
++ L0196	99.6
++ L0197	99.7
++ L0198	99.8
++ L0199	99.9
++ L0200	99
++ L0201	99.1
++ L0202	99.2
++ L0203	99.3
++ L0204	99.4
++ L0205	99.5
++ L0206	99.6
++ L0207	99.7
++ L0208	99.8
++ L0209	99.9
++ L0210	99
++ L0211	99.1
++ L0212	99.2
++ L0213	99.3
++ L0214	99.4
++ L0215	99.5
++ L0216	99.6
++ L0217	99.7
++ L0218	99.8
++ L0219	99.9
++ L0220	99
++ L0221	99.1
++ L0222	99.2
++ L0223	99.3
++ L0224	99.4
++ L0225	99.5
++ L0226	99.6
++ L0227	99.7
++ L0228	99.8
++ L0229	99.9
++ L0230	99
++ L0231	99.1
++ L0232	99.2
++ L0233	99.3
++ L0234	99.4
++ L0235	99.5
++ L0236	99.6
++ L0237	99.7
++ L0238	99.8
++ L0239	99.9
++ L0240	99
++ L0241	99.1
++ L0242	99.2
++ L0243	99.3
++ L0244	99.4
++ L0245	99.5
++ L0246	99.6
++ L0247	99.7
++ L0248	99.8
++ L0249	99.9
++ L0250	99
++ L0251	99.1
++ L0252	99.2
++ L0253	99.3
++ L0254	99.4
++ L0255	99.5
++ L0256	99.6
++ L0257	99.7
++ L0258	99.8
++ L0259	99.9
++ L0260	99
++ L0261	99.1
++ L0262	99.2
++ L0263	99.3
++ L0264	99.4
++ L0265	99.5
++ L0266	99.6
++ L0267	99.7
++ L0268	99.8
++ L0269	99.9
++ L0270	99
++ L0271	99.1
++ L0272	99.2
++ L0273	99.3
++ L0274	99.4
++ L0275	99.5
++ L0276	99.6
++ L0277	99.7
++ L0278	99.8
++ L0279	99.9
++ L0280	99
++ L0281	99.1
++ L0282	99.2
++ L0283	99.3
++ L0284	99.4
++ L0285	99.5
++ L0286	99.6
++ L0287	99.7
++ L0288	99.8
++ L0289	99.9
++ L0290	99
++ L0291	99.1
++ L0292	99.2
++ L0293	99.3
++ L0294	99.4
++ L0295	99.5
++ L0296	99.6
++ L0297	99.7
++ L0298	99.8
++ L0299	99.9
++ … 701 more rows not shown (use read_spreadsheet with start_row to page).
+
+ ❯ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts:212:18
+    210|   it('workbookToText renders every row of a long sheet', async () => {
+    211|     const text = await workbookToText(long, 'lots.xlsx');
+    212|     expect(text).toContain('L0300');
+       |                  ^
+    213|     expect(text).toContain('L1000');
+    214|     expect(text).not.toMatch(/more rows not shown/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > a spreadsheet is read to its last value > workbookToText keeps the row after a blank row and the column after a blank column
+AssertionError: expected '## Sheet: Stability (3 rows × 2 colum…' to contain 'Impurity B %'
+
+- Expected
++ Received
+
+- Impurity B %
++ ## Sheet: Stability (3 rows × 2 columns)
++ Timepoint
++ T0
+
+ ❯ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts:219:18
+    217|   it('workbookToText keeps the row after a blank row and the column af…
+    218|     const text = await workbookToText(gapped, 'stability.xlsx');
+    219|     expect(text).toContain('Impurity B %');
+       |                  ^
+    220|     expect(text).toContain('T12');
+    221|     expect(text).toContain('0.31');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > a spreadsheet is read to its last value > the extraction pipeline stores the whole workbook
+AssertionError: expected '## Sheet: Lots (1001 rows × 2 columns…' to contain 'L1000'
+
+- Expected
++ Received
+
+- L1000
++ ## Sheet: Lots (1001 rows × 2 columns)
++ Lot	Assay %
++ L0001	99.1
++ L0002	99.2
++ L0003	99.3
++ L0004	99.4
++ L0005	99.5
++ L0006	99.6
++ L0007	99.7
++ L0008	99.8
++ L0009	99.9
++ L0010	99
++ L0011	99.1
++ L0012	99.2
++ L0013	99.3
++ L0014	99.4
++ L0015	99.5
++ L0016	99.6
++ L0017	99.7
++ L0018	99.8
++ L0019	99.9
++ L0020	99
++ L0021	99.1
++ L0022	99.2
++ L0023	99.3
++ L0024	99.4
++ L0025	99.5
++ L0026	99.6
++ L0027	99.7
++ L0028	99.8
++ L0029	99.9
++ L0030	99
++ L0031	99.1
++ L0032	99.2
++ L0033	99.3
++ L0034	99.4
++ L0035	99.5
++ L0036	99.6
++ L0037	99.7
++ L0038	99.8
++ L0039	99.9
++ L0040	99
++ L0041	99.1
++ L0042	99.2
++ L0043	99.3
++ L0044	99.4
++ L0045	99.5
++ L0046	99.6
++ L0047	99.7
++ L0048	99.8
++ L0049	99.9
++ L0050	99
++ L0051	99.1
++ L0052	99.2
++ L0053	99.3
++ L0054	99.4
++ L0055	99.5
++ L0056	99.6
++ L0057	99.7
++ L0058	99.8
++ L0059	99.9
++ L0060	99
++ L0061	99.1
++ L0062	99.2
++ L0063	99.3
++ L0064	99.4
++ L0065	99.5
++ L0066	99.6
++ L0067	99.7
++ L0068	99.8
++ L0069	99.9
++ L0070	99
++ L0071	99.1
++ L0072	99.2
++ L0073	99.3
++ L0074	99.4
++ L0075	99.5
++ L0076	99.6
++ L0077	99.7
++ L0078	99.8
++ L0079	99.9
++ L0080	99
++ L0081	99.1
++ L0082	99.2
++ L0083	99.3
++ L0084	99.4
++ L0085	99.5
++ L0086	99.6
++ L0087	99.7
++ L0088	99.8
++ L0089	99.9
++ L0090	99
++ L0091	99.1
++ L0092	99.2
++ L0093	99.3
++ L0094	99.4
++ L0095	99.5
++ L0096	99.6
++ L0097	99.7
++ L0098	99.8
++ L0099	99.9
++ L0100	99
++ L0101	99.1
++ L0102	99.2
++ L0103	99.3
++ L0104	99.4
++ L0105	99.5
++ L0106	99.6
++ L0107	99.7
++ L0108	99.8
++ L0109	99.9
++ L0110	99
++ L0111	99.1
++ L0112	99.2
++ L0113	99.3
++ L0114	99.4
++ L0115	99.5
++ L0116	99.6
++ L0117	99.7
++ L0118	99.8
++ L0119	99.9
++ L0120	99
++ L0121	99.1
++ L0122	99.2
++ L0123	99.3
++ L0124	99.4
++ L0125	99.5
++ L0126	99.6
++ L0127	99.7
++ L0128	99.8
++ L0129	99.9
++ L0130	99
++ L0131	99.1
++ L0132	99.2
++ L0133	99.3
++ L0134	99.4
++ L0135	99.5
++ L0136	99.6
++ L0137	99.7
++ L0138	99.8
++ L0139	99.9
++ L0140	99
++ L0141	99.1
++ L0142	99.2
++ L0143	99.3
++ L0144	99.4
++ L0145	99.5
++ L0146	99.6
++ L0147	99.7
++ L0148	99.8
++ L0149	99.9
++ L0150	99
++ L0151	99.1
++ L0152	99.2
++ L0153	99.3
++ L0154	99.4
++ L0155	99.5
++ L0156	99.6
++ L0157	99.7
++ L0158	99.8
++ L0159	99.9
++ L0160	99
++ L0161	99.1
++ L0162	99.2
++ L0163	99.3
++ L0164	99.4
++ L0165	99.5
++ L0166	99.6
++ L0167	99.7
++ L0168	99.8
++ L0169	99.9
++ L0170	99
++ L0171	99.1
++ L0172	99.2
++ L0173	99.3
++ L0174	99.4
++ L0175	99.5
++ L0176	99.6
++ L0177	99.7
++ L0178	99.8
++ L0179	99.9
++ L0180	99
++ L0181	99.1
++ L0182	99.2
++ L0183	99.3
++ L0184	99.4
++ L0185	99.5
++ L0186	99.6
++ L0187	99.7
++ L0188	99.8
++ L0189	99.9
++ L0190	99
++ L0191	99.1
++ L0192	99.2
++ L0193	99.3
++ L0194	99.4
++ L0195	99.5
++ L0196	99.6
++ L0197	99.7
++ L0198	99.8
++ L0199	99.9
++ L0200	99
++ L0201	99.1
++ L0202	99.2
++ L0203	99.3
++ L0204	99.4
++ L0205	99.5
++ L0206	99.6
++ L0207	99.7
++ L0208	99.8
++ L0209	99.9
++ L0210	99
++ L0211	99.1
++ L0212	99.2
++ L0213	99.3
++ L0214	99.4
++ L0215	99.5
++ L0216	99.6
++ L0217	99.7
++ L0218	99.8
++ L0219	99.9
++ L0220	99
++ L0221	99.1
++ L0222	99.2
++ L0223	99.3
++ L0224	99.4
++ L0225	99.5
++ L0226	99.6
++ L0227	99.7
++ L0228	99.8
++ L0229	99.9
++ L0230	99
++ L0231	99.1
++ L0232	99.2
++ L0233	99.3
++ L0234	99.4
++ L0235	99.5
++ L0236	99.6
++ L0237	99.7
++ L0238	99.8
++ L0239	99.9
++ L0240	99
++ L0241	99.1
++ L0242	99.2
++ L0243	99.3
++ L0244	99.4
++ L0245	99.5
++ L0246	99.6
++ L0247	99.7
++ L0248	99.8
++ L0249	99.9
++ L0250	99
++ L0251	99.1
++ L0252	99.2
++ L0253	99.3
++ L0254	99.4
++ L0255	99.5
++ L0256	99.6
++ L0257	99.7
++ L0258	99.8
++ L0259	99.9
++ L0260	99
++ L0261	99.1
++ L0262	99.2
++ L0263	99.3
++ L0264	99.4
++ L0265	99.5
++ L0266	99.6
++ L0267	99.7
++ L0268	99.8
++ L0269	99.9
++ L0270	99
++ L0271	99.1
++ L0272	99.2
++ L0273	99.3
++ L0274	99.4
++ L0275	99.5
++ L0276	99.6
++ L0277	99.7
++ L0278	99.8
++ L0279	99.9
++ L0280	99
++ L0281	99.1
++ L0282	99.2
++ L0283	99.3
++ L0284	99.4
++ L0285	99.5
++ L0286	99.6
++ L0287	99.7
++ L0288	99.8
++ L0289	99.9
++ L0290	99
++ L0291	99.1
++ L0292	99.2
++ L0293	99.3
++ L0294	99.4
++ L0295	99.5
++ L0296	99.6
++ L0297	99.7
++ L0298	99.8
++ L0299	99.9
++ … 701 more rows not shown (use read_spreadsheet with start_row to page).
+
+ ❯ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts:232:28
+    230|     );
+    231|     expect(extracted.method).toBe('xlsx');
+    232|     expect(extracted.text).toContain('L1000');
+       |                            ^
+    233|   });
+    234|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > a spreadsheet is read to its last value > readWorksheet reaches the last row of a sheet with a blank row in it
+AssertionError: expected [ 1, 2 ] to deeply equal [ 1, 2, 4 ]
+
+- Expected
++ Received
+
+  [
+    1,
+    2,
+-   4,
+  ]
+
+ ❯ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts:237:42
+    235|   it('readWorksheet reaches the last row of a sheet with a blank row i…
+    236|     const r = await readWorksheet(gapped, 'stability.xlsx', { maxRows:…
+    237|     expect(r.rows.map((row) => row.row)).toEqual([1, 2, 4]);
+       |                                          ^
+    238|     expect(r.rows[2].values).toEqual(['T12', null, 0.31]);
+    239|     expect(r.truncated).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > a spreadsheet is read to its last value > readWorksheet reports a page that stops before the last row as truncated
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts:245:25
+    243|     const r = await readWorksheet(gapped, 'stability.xlsx', { startRow…
+    244|     expect(r.endRow).toBe(3);
+    245|     expect(r.truncated).toBe(true);
+       |                         ^
+    246|     expect(r.lastRow).toBe(4);
+    247|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 12 passed (17)
+   Start at  17:06:59
+   Duration  810ms (transform 134ms, setup 62ms, import 195ms, tests 317ms, environment 0ms)
+
