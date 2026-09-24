@@ -1,0 +1,4 @@
+ × client/src/concept2cure/v2/__tests__/taskBoardCriticalPathHonesty.test.tsx > TaskBoard — critical path view > describes a hand-marked list in dependency order, not a computed path
+   → expected 'Critical path — 2 tasks — computed fr…' not to match /computed/i
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed (1)
