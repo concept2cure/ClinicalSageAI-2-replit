@@ -337,12 +337,11 @@
 .mdx-shell .du-cta {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 10px 18px;
-  background: var(--accent-100);
-  color: var(--text-000);
+  background: var(--accent-strong);
+  color: var(--accent-on-strong);
   border-radius: var(--radius-md);
   font-size: 13px; font-weight: 500;
 }
-.mdx-shell .du-cta:hover:not([disabled]) { filter: brightness(1.05); }
 .mdx-shell .du-cta[disabled] { opacity: 0.65; cursor: progress; }
 .mdx-shell .du-cta svg { width: 14px; height: 14px; }
 
@@ -626,10 +625,9 @@
 .mdx-shell .drafter-foot-act.ghost.danger { color: var(--error); }
 .mdx-shell .drafter-foot-act.ghost.danger:hover { background: var(--error-muted); }
 .mdx-shell .drafter-foot-act.primary {
-  background: var(--accent-100); color: var(--text-000); border-color: var(--accent-100);
+  background: var(--accent-strong); color: var(--accent-on-strong); border-color: var(--accent-strong);
   font-weight: 500;
 }
-.mdx-shell .drafter-foot-act.primary:hover { filter: brightness(1.05); }
 .mdx-shell .drafter-foot-act.primary.is-disabled,
 .mdx-shell .drafter-foot-act.primary[disabled] {
   background: var(--bg-200); color: var(--text-400); border-color: var(--border);
