@@ -27,7 +27,14 @@ vi.mock('../../../db', () => ({
   getPool: () => ({ query: (...args: unknown[]) => queryImpl(...args) }),
 }));
 
-vi.mock('../governed-ana-execution.js', () => ({
+/* The governed-state evaluation is not what these cases are about, so it is
+   stubbed clean. This mock used to name '../governed-ana-execution.js', which
+   from this folder is server/services/cmc/governed-ana-execution.js, a module
+   that does not exist. So the stub never applied. The real evaluation ran,
+   its governed-decision read failed on this file's db mock, and the
+   repository answered that failure with "nothing unresolved". The ALLOWS
+   case passed on that alone (ledger L186, which made the read fail closed). */
+vi.mock('../../governed-ana-execution.js', () => ({
   buildCanonicalGovernedState: vi.fn(async () => ({
     derivedFlags: { isBlocked: false, hasUnresolvedGovernedDecisions: false },
   })),
