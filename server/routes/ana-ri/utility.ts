@@ -136,8 +136,17 @@ async function releaseWaitingRun(
   reasonForChange: string,
   outcome: { result?: unknown; error?: string },
 ): Promise<void> {
+  // Bound with the SAME resolver the lookup used (resolveAuthorisedAction), so
+  // the decision is written against exactly the tenant whose run was proven to
+  // be waiting. Only reached when that lookup found the run, which already
+  // required a non-null org — the guard is for the type, not a live branch.
+  const organizationId = resolveOrgId(req);
+  if (organizationId === null) {
+    log.error('Refusing to record an approval decision with no organization', { runId, toolUseId });
+    return;
+  }
   try {
-    await recordApprovalDecision(requestPgClient(req), runId, {
+    await recordApprovalDecision(requestPgClient(req), runId, organizationId, {
       toolUseId,
       decided: outcome.error ? 'denied' : 'approved',
       decidedAt: new Date().toISOString(),
