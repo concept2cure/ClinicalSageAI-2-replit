@@ -1,0 +1,108 @@
+# Pushed state aa20931a, c2c_d3 (0521402e + the amended 20260730 migration re-applied, as deploy-migrate re-runs every file), app_service, RLS_ENFORCE=on
+ ✓ tests/db/vault-passage-search.dbtest.ts > the chunk corpus is written by ingest > chunked and embedded both uploads, and the catalog ledger says so 4ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > returns the passage that answers the question, from the right document 3712ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > answers a tox question from the tox document 17ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > never returns another organization's document, even for identical text 13ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > states the coverage it searched, read from the chunking ledger 17ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > REFUSES without an organization identity rather than reporting no matches 1ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > a retrieved passage can be cited > carries a real page number, derived from the PDF and not from arithmetic 445ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > catalog and live session prove RLS is active for the runtime role 13ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal project-context endpoint cannot resolve Tenant B profile as Tenant A 125ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal regulatory-content CRUD endpoints hide and protect Tenant B rows 85ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: list/filter, direct read and existence probe hide tenant B from A 37ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: update and delete of tenant B are indistinguishable not-found 18ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: WITH CHECK rejects planting a row into tenant B without leaking details 7ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: list/filter, direct read and existence probe hide tenant B from A 25ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: update and delete of tenant B are indistinguishable not-found 17ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: WITH CHECK rejects planting a row into tenant B without leaking details 7ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: list/filter, direct read and existence probe hide tenant B from A 25ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: update and delete of tenant B are indistinguishable not-found 17ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: WITH CHECK rejects planting a row into tenant B without leaking details 8ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: list/filter, direct read and existence probe hide tenant B from A 23ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: update and delete of tenant B are indistinguishable not-found 15ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: WITH CHECK rejects planting a row into tenant B without leaking details 8ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: list/filter, direct read and existence probe hide tenant B from A 22ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: update and delete of tenant B are indistinguishable not-found 19ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: WITH CHECK rejects planting a row into tenant B without leaking details 6ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: list/filter, direct read and existence probe hide tenant B from A 23ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: update and delete of tenant B are indistinguishable not-found 16ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: WITH CHECK rejects planting a row into tenant B without leaking details 6ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: list/filter, direct read and existence probe hide tenant B from A 26ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: update and delete of tenant B are indistinguishable not-found 18ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: WITH CHECK rejects planting a row into tenant B without leaking details 6ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > pooled session context is reset and the wrong-context negative control is observable 14ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the recording evaluator persists the caller's own decision through the app role 1507ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > WITH CHECK refuses a decision the recorder files for another tenant 1505ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the simulate route records nothing, for any tenant 1520ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the reads show tenant A its decision and tenant B nothing of it 51ms
+ ✓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > an MDR event cannot be sourced from another tenant's complaint 53ms
+ ✓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > notification preferences are written for the caller, whatever userId the body names 18ms
+ ✓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > an AnA profile edit writes the caller's profile, never a colleague's 17ms
+ ✓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > a task cannot be filed under another tenant's task 25ms
+ ✓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > a CRO study cannot be filed against another tenant's client 22ms
+ ✓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > the GSPR mapping tool cannot write against another tenant's program 313ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > GET /runs never lists another tenant's run, whatever org the query names 68ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > GET /runs lists the session tenant's own runs 18ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > POST /runs records for the session tenant and user, whatever the body names 59ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > POST /runs over another tenant's project is not found and computes nothing 13ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a program group is made in the session tenant by the session user, whatever the body names 19ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a program group over another tenant's project is refused 12ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > another tenant's program group cannot be changed 13ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > another tenant's program group cannot be snapshotted 12ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a bundle cannot take another tenant's run 22ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a bundle of the session tenant's own run is stored and records the session user 60ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a delivery cannot take another tenant's run 13ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a delivery of the session tenant's own run records the session user 19ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > correspondence cannot be captured into another tenant's project 11ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > correspondence is captured into the session tenant's own project and submission 28ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a project intelligence profile cannot be filed against another tenant's project 84ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > another tenant's project intelligence profile cannot be read 9ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > the caller's own project profile is still written and read 27ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > another tenant's client memory entry cannot be archived 11ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > another tenant's client memory entry cannot be marked verified 11ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > the caller's own memory entry is still archived 15ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > AnA's project update cannot hang a project from another tenant's project or workspace 45ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > AnA's project update cannot move a project to another tenant 50ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a resolution bundle cannot be linked to another tenant's plan 15ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a resolution bundle is still linked to the caller's own plan 23ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a corpus ingest cannot take over another org's report of the same study 10ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a corpus re-ingest still updates the org's own report in place 16ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > /api/users/me refuses a password-only token awaiting its second factor 8ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > /api/users/me still answers an access token 10ms
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a plan edit cannot approve or lock the plan, and the content edit still applies 85ms
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a plan edit cannot move the plan to another org, and the content edit still applies 16ms
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a plan edit cannot hang the plan from another org's program 18ms
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a modification edit cannot move it into another org's plan 16ms
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a post-market document edit cannot approve or lock it, and the content edit still applies 35ms
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a post-market document edit cannot move it to another org, and the content edit still applies 36ms
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a post-market document edit cannot hang it from another org's program 22ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > positive control: tenant A querying as itself finds its own atom and not B's 56ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > tenant A naming tenant B in the header is served nothing of B's 14ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > …and is served its OWN atom: the header is ignored, not merely contained by RLS 10ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > with no header, the query is scoped to the session rather than to nothing 15ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > search mode asks for the session's tenant, whatever the header says 11ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > a session with no usable organization is refused, never served 9ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a tenant administrator cannot read the kernel's cross-tenant log 67ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a role that merely contains "admin" is not a platform role 8ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a tenant administrator cannot clear the platform's kernel log 6ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > outside production, a member is not let in by default 6ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a member cannot read the organization's governed decisions 6ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > the organization's administrator can 11ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a platform operator reads the kernel log 5ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > monitoring that presents the ops token reads the kernel log 5ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a wrong ops token is refused 7ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > the non-production bypass still opens the control plane when it is asked for 12ms
+ ✓ tests/db/traceability-update-boundary.dbtest.ts > A traceability update cannot move an item across the tenant boundary (D3) > an update naming another org leaves the item in its own tenant, and still applies 111ms
+ ✓ tests/db/traceability-update-boundary.dbtest.ts > A traceability update cannot move an item across the tenant boundary (D3) > an update cannot re-point the item at another tenant's QMP 23ms
+ ✓ tests/db/atom-search.dbtest.ts > search_atoms_hybrid on a from-blank database > returns rows 11ms
+ ✓ tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > returns no more rows than the limit, all the tenant’s own 9ms
+ ✓ tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > weights semantic and keyword scores as the caller asked 8ms
+ ✓ tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > returns a project's own atoms even when other projects' atoms score higher 7ms
+ ✓ tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > never returns another tenant’s atom, even on a connection RLS does not filter 6ms
+ ✓ tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > positive control: tenant A, handed its own uuid, retrieves its own passage 25ms
+ ✓ tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > tenant A's session, handed tenant B's uuid, never receives B's passage 1ms
+ ✓ tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > a uuid that disagrees with the session scope is refused, not quietly answered 2ms
+ ✓ tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > …including when the session scope carries no uuid — exactly when a header fallback fires 14ms
+ ✓ tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > a missing uuid keeps its existing refusal (unchanged by this fix) 1ms
+ Test Files  11 passed (11)
+      Tests  105 passed (105)

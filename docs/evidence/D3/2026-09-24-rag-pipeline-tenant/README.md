@@ -95,6 +95,13 @@ with the GUC now always the session's, the RLS it relies on is keyed correctly.
 database (18 of 18 with this suite). So do the 16 unit files that touch the
 pipeline (138 of 138).
 
+**On the pushed state** (`aa20931a`), every suite on the shared two-tenant
+fixture plus `vault-passage-search.dbtest.ts`: 11 files, **105 of 105**
+(`green/pushed-state-11-suites-105-of-105.txt`). `atom-search.dbtest.ts` first
+failed 5 of 5 because this database predated that lane's in-place amendment of
+`20260730_fix_atom_embedding_dimension.sql`. Re-applying the file, as every
+deploy does (Rule 1), made it pass. That was a stale database, not this change.
+
 ## Still asserted, not proven
 
 - **Outside a tenant scope, or in system scope (`tenantId '0'`), the guard
