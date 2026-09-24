@@ -74,6 +74,10 @@ module "stack" {
   domain_aliases             = var.domain_aliases
   cloudfront_origin_secret   = var.cloudfront_origin_secret
 
+  # true while staging has its own AWS account (the recommended account topology);
+  # set false if it shares production's account, which already created the provider.
+  create_github_oidc_provider = true
+
   jwt_secret                      = var.jwt_secret
   refresh_token_secret            = var.refresh_token_secret
   mfa_encryption_key              = var.mfa_encryption_key

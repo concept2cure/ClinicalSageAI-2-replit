@@ -29,6 +29,7 @@ on:
       - '.github/workflows/terraform-tests.yml'
       - 'scripts/ops/terraform-preflight-proof.mjs'
       - '.github/workflows/provision-database.yml'
+      - 'scripts/ops/ecs-one-off-task.sh'
   workflow_dispatch:
 
 permissions:
@@ -49,6 +50,7 @@ jobs:
           - terraform/stack
           - terraform/modules/alb
           - terraform/modules/cloudfront
+          - terraform/modules/github-deploy-roles
     env:
       TF_IN_AUTOMATION: true
     steps:
