@@ -94,6 +94,9 @@
 -- A second, CHAINED list follows the first loop: grandchildren whose parent is
 -- itself a child. Each delegates to the parent's own tenant_isolation_policy,
 -- which the single-level predicate cannot. See the note above that block.
+-- ── AMENDED IN PLACE 2026-09-24, a third time (ledger L203) ─────────────────
+-- The chained list takes schema-qualified names and gains fourteen children
+-- outside public. See the note above that block.
 --
 -- Idempotent: guarded on pg_policies and pg_class, safe to re-run every deploy.
 
@@ -402,6 +405,19 @@ $$;
 -- The three deny-all csr_/ctd_ chains recorded in the header could now be
 -- expressed the same way. They are left deny-all deliberately: no server code
 -- reads them, and the test pins that choice.
+--
+-- NON-PUBLIC CHILDREN (AMENDED IN PLACE 2026-09-24, ledger L203). The same
+-- delegation works for a child outside public whose parent carries its own
+-- tenant_isolation_policy. So this list takes schema-qualified names; a bare
+-- name means public. Order matters where a child's parent is itself on this
+-- list: the parent's line comes first. A survey of every reader of the fourteen found none that
+-- runs without a tenant context. Thirteen are unused at runtime, or reached
+-- only by dead code. One, regulatory_harmonization.export_job_audit_log, is
+-- written on the request path, and it was filing audit rows against other
+-- tenants' export jobs (see grdheService). Where a child names two parents,
+-- the owning key is chosen as above. Three owners are nullable
+-- (ai.risk_assessments, audit.idempotency_keys, audit.purge_requests), so an
+-- unparented row is visible to nobody.
 DO $$
 DECLARE
   -- child, fk column, parent, parent key column. Key types agree for every
@@ -411,50 +427,75 @@ DECLARE
     ['ai_claim_citations',            'retrieval_chunk_id', 'ai_retrieval_chunks',    'id'],
     ['c2c_document_section_evidence', 'section_id',         'c2c_document_sections',  'id'],
     ['c2c_document_section_versions', 'section_id',         'c2c_document_sections',  'id'],
-    ['section_propagations',          'patch_id',           'section_patches',        'id']
+    ['section_propagations',          'patch_id',           'section_patches',        'id'],
+    -- 2026-09-24 (ledger L203): children outside public.
+    ['ai.risk_assessments',                          'dossier_id',   'global_dossier.dossier_instances',        'id'],
+    ['audit.config_bundles',                         'program_id',   'core.programs',                           'id'],
+    ['audit.dataset_snapshots',                      'program_id',   'core.programs',                           'id'],
+    ['audit.idempotency_keys',                       'program_id',   'core.programs',                           'id'],
+    ['audit.purge_requests',                         'program_id',   'core.programs',                           'id'],
+    -- Children of audit.purge_requests, which the line above scopes, so they
+    -- follow it; listed after it so its policy exists when they are reached.
+    -- No server code reads or writes either.
+    ['audit.purge_approvals',                        'purge_request_id', 'audit.purge_requests',                'id'],
+    ['audit.tombstones',                             'purge_request_id', 'audit.purge_requests',                'id'],
+    ['core.entities',                                'program_id',   'core.programs',                           'id'],
+    ['ectd.project_folders',                         'project_id',   'core.programs',                           'id'],
+    ['global_dossier.content_versions',              'dossier_id',   'global_dossier.dossier_instances',        'id'],
+    ['global_dossier.dossier_branches',              'dossier_id',   'global_dossier.dossier_instances',        'id'],
+    ['global_dossier.dossier_sync_events',           'dossier_id',   'global_dossier.dossier_instances',        'id'],
+    ['global_dossier.regulatory_comments',           'dossier_id',   'global_dossier.dossier_instances',        'id'],
+    ['manufacturing.rtrt_predictions',               'twin_id',      'manufacturing.digital_twins',             'id'],
+    ['precedent.csr_precedent_links',                'precedent_id', 'precedent.regulatory_precedents',         'id'],
+    ['regulatory_harmonization.export_job_audit_log','job_id',       'regulatory_harmonization.export_jobs',    'id']
   ];
   i INT;
   child TEXT; fk_col TEXT; parent TEXT; parent_col TEXT;
+  child_schema TEXT; parent_schema TEXT;
   predicate TEXT;
   applied INT := 0;
   skipped INT := 0;
 BEGIN
   FOR i IN 1 .. array_length(chained, 1) LOOP
-    child      := chained[i][1];
-    fk_col     := chained[i][2];
-    parent     := chained[i][3];
-    parent_col := chained[i][4];
+    -- A bare name is public; 'schema.table' names another schema.
+    child_schema  := CASE WHEN position('.' IN chained[i][1]) > 0 THEN split_part(chained[i][1], '.', 1) ELSE 'public' END;
+    child         := CASE WHEN position('.' IN chained[i][1]) > 0 THEN split_part(chained[i][1], '.', 2) ELSE chained[i][1] END;
+    fk_col        := chained[i][2];
+    parent_schema := CASE WHEN position('.' IN chained[i][3]) > 0 THEN split_part(chained[i][3], '.', 1) ELSE 'public' END;
+    parent        := CASE WHEN position('.' IN chained[i][3]) > 0 THEN split_part(chained[i][3], '.', 2) ELSE chained[i][3] END;
+    parent_col    := chained[i][4];
 
-    IF to_regclass('public.' || child) IS NULL OR to_regclass('public.' || parent) IS NULL THEN
-      RAISE NOTICE '[child-rls] % or % absent — skipping', child, parent;
+    IF to_regclass(format('%I.%I', child_schema, child)) IS NULL
+       OR to_regclass(format('%I.%I', parent_schema, parent)) IS NULL THEN
+      RAISE NOTICE '[child-rls] %.% or %.% absent — skipping', child_schema, child, parent_schema, parent;
       skipped := skipped + 1;
       CONTINUE;
     END IF;
 
     IF NOT EXISTS (SELECT 1 FROM pg_policies
-                    WHERE schemaname='public' AND tablename=parent
+                    WHERE schemaname=parent_schema AND tablename=parent
                       AND policyname='tenant_isolation_policy') THEN
-      RAISE WARNING '[child-rls] % → %: the parent is not scoped, so delegating to it would scope nothing — skipping', child, parent;
+      RAISE WARNING '[child-rls] %.% → %.%: the parent is not scoped, so delegating to it would scope nothing — skipping', child_schema, child, parent_schema, parent;
       skipped := skipped + 1;
       CONTINUE;
     END IF;
 
-    EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', child);
-    EXECUTE format('ALTER TABLE public.%I FORCE ROW LEVEL SECURITY', child);
+    EXECUTE format('ALTER TABLE %I.%I ENABLE ROW LEVEL SECURITY', child_schema, child);
+    EXECUTE format('ALTER TABLE %I.%I FORCE ROW LEVEL SECURITY', child_schema, child);
 
     IF EXISTS (SELECT 1 FROM pg_policies
-                WHERE schemaname='public' AND tablename=child
+                WHERE schemaname=child_schema AND tablename=child
                   AND policyname='tenant_isolation_policy') THEN
-      RAISE NOTICE '[child-rls] % already policied — leaving it alone', child;
+      RAISE NOTICE '[child-rls] %.% already policied — leaving it alone', child_schema, child;
       skipped := skipped + 1;
       CONTINUE;
     END IF;
 
-    predicate := format('EXISTS (SELECT 1 FROM public.%I p WHERE p.%I = public.%I.%I)',
-                        parent, parent_col, child, fk_col);
+    predicate := format('EXISTS (SELECT 1 FROM %I.%I p WHERE p.%I = %I.%I.%I)',
+                        parent_schema, parent, parent_col, child_schema, child, fk_col);
 
     EXECUTE format($pol$
-      CREATE POLICY tenant_isolation_policy ON public.%I
+      CREATE POLICY tenant_isolation_policy ON %I.%I
         FOR ALL
         USING (
           NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
@@ -466,10 +507,10 @@ BEGIN
           OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
           OR %s
         )
-    $pol$, child, predicate, predicate);
+    $pol$, child_schema, child, predicate, predicate);
 
     applied := applied + 1;
-    RAISE NOTICE '[child-rls] % scoped through % (chained)', child, parent;
+    RAISE NOTICE '[child-rls] %.% scoped through %.% (chained)', child_schema, child, parent_schema, parent;
   END LOOP;
 
   RAISE NOTICE '[child-rls] chained: % policied, % skipped', applied, skipped;
