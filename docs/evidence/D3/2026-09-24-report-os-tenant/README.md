@@ -137,3 +137,9 @@ owning tenants, not a migration.
 TEST_DATABASE_URL=<owner url> APP_DATABASE_URL=<app_service url> \
   npx vitest run --config vitest.db.config.ts tests/db/two-tenant-application-rls.dbtest.ts
 ```
+
+Later the same day, the fourteen Report OS cases moved, unchanged, into
+`tests/db/report-os-tenant-from-session.dbtest.ts` on the shared
+`tests/db/two-tenant-fixture.ts`, because the combined file had crossed the
+ESLint 500-line limit. The 37 cases are now split 23 + 14, so to re-run
+everything recorded here, pass both files to the command above.

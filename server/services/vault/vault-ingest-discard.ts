@@ -15,6 +15,35 @@ import { getStorageProvider } from '../storage/index.js';
 
 const logger = createScopedLogger('vault-ingest');
 
+/** The last sentence of a refusal that is only true once the stored copy is gone. */
+export const NOTHING_SAVED = 'Nothing was saved.';
+
+/**
+ * A refusal's message, made true of what happened to the stored copy. When the
+ * copy is gone (or was never stored) the refusal stands as written; otherwise
+ * "Nothing was saved." is no longer true, and the message says what is.
+ */
+export function refusalAfterDiscard(
+  message: string,
+  fate: 'none' | 'discarded' | 'referenced' | 'retained',
+): string {
+  if (fate === 'retained') {
+    return (
+      `${message.replace(NOTHING_SAVED, 'No record was created.')} ` +
+      'The uploaded file itself could not be removed from storage and is still held there, ' +
+      'referenced by no record.'
+    );
+  }
+  if (fate === 'referenced') {
+    return (
+      `${message.replace(NOTHING_SAVED, 'Whether it was recorded could not be confirmed.')} ` +
+      'A vault record refers to the uploaded file, so it was kept — check the Vault before ' +
+      'uploading it again.'
+    );
+  }
+  return message;
+}
+
 /** What the admission put in storage, and whether a committed record now holds it. */
 export interface StoredUpload {
   versionId: string | null;

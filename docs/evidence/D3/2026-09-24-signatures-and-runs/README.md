@@ -39,6 +39,8 @@ with 23503 and stranded every fixture after them.
 
 The obstacle still holds. It is designed around, not worked around:
 
+(In `tests/db/two-tenant-fixture.ts` since `26e30b87`; see below.)
+
 - each fixture org has a **permanent signer** (fixed email, NULL
   `default_organization_id`, so the users-by-org delete never reaches it);
 - each org has **one fixture signature**, looked up before it is inserted;
@@ -135,6 +137,28 @@ runtime `UNHANDLED_DOMAIN` path of mutation D is superseded by mutation E.
 The full ratchet also reads 6433 against a baseline of 6431 without this change
 (6434 with the +1 above, removed before landing). That +2 is on trunk already
 and is not from this work; it is recorded, not chased, because it is outside D3.
+
+## A third concurrent change: the fixture moved too
+
+Before this could land, `26e30b87` split the contract again: the fixture
+(constants, tokens, provisioning, teardown) went to `tests/db/two-tenant-fixture.ts`,
+shared by `two-tenant-application-rls.dbtest.ts` and a new
+`report-os-tenant-from-session.dbtest.ts`. Resolved onto that structure: the
+permanent signers, the signature and run seeds and the teardown changes are in
+the shared fixture; the domain list and forge record stay in
+`tests/db/tenant-proof-routes.ts`.
+
+That commit states "Afterwards no fixture org remains." With signatures in the
+contract that property cannot hold — a §11.70 signature is permanent and
+references its org — so it is retired explicitly, in a comment where the
+organizations delete used to be, rather than broken silently. No other suite
+can collide with the two kept rows: every other `tests/db` suite reserves its
+own id band (90001–92149, none overlapping 90301–90302), and the one that
+deletes by slug matches `dbtsi-%`.
+
+| File | What it shows |
+|---|---|
+| `green/contract-43-of-43-on-shared-fixture-two-files.txt` | Both files on the shared fixture: **43 of 43** (29 + 14), all six new cases present; afterwards 0 per-run users, 0 runs, 0 memberships left in the fixture orgs. ESLint ratchet `--since`: no file changed its warning count. |
 
 ## Permanent rows this work left in the scratch database, stated plainly
 
