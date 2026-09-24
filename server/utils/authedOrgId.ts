@@ -35,6 +35,7 @@
  */
 
 import type { Request, Response } from 'express';
+import type { z } from 'zod';
 
 export function authedOrgId(req: Request): number | null {
   const raw =
@@ -89,4 +90,25 @@ export function requireAuthedOrgId(req: Request, res: Response): RequireOk | Req
     return { ok: false };
   }
   return { ok: true, orgId };
+}
+
+/**
+ * The tenant key is taken from the authenticated context, never the body.
+ *
+ * A drizzle-zod `createInsertSchema(table)` accepts every column, the tenant
+ * key included, and `.partial()` keeps it; parse a request with one and spread
+ * the result into `.values()` or `.set()`, and the caller chooses the row's
+ * organization — on UPDATE that moves the caller's own row into another tenant.
+ * Strip it from the schema (withoutTenantKey) or from the parsed data
+ * (withoutOrgId). Moved here from server/services/cmc/register-writes.ts, which
+ * re-exports both, so every router reaches the same pair.
+ */
+export function withoutTenantKey<S extends z.AnyZodObject>(schema: S): S {
+  return schema.omit({ organizationId: true } as never) as unknown as S;
+}
+
+/** Strip the tenant key from a validated body. */
+export function withoutOrgId<T extends Record<string, unknown>>(data: T): Omit<T, 'organizationId'> {
+  const { organizationId: _discard, ...rest } = data as { organizationId?: unknown } & T;
+  return rest as Omit<T, 'organizationId'>;
 }
