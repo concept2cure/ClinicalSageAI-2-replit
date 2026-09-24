@@ -18,7 +18,8 @@
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
-import { AUDIT_LOGS_PGLITE_DDL, GOVERNED_ACTION_LEDGER_PGLITE_DDL } from '../../../db/pglite-harness';
+import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
+import { GOVERNED_ACTION_LEDGER_PGLITE_DDL } from './governed-action-ledger.fixture';
 
 let pg: PGlite;
 

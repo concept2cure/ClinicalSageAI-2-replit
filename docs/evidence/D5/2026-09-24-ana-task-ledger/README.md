@@ -54,8 +54,10 @@ recorded. AnA's result also said "Created task" or "updated" either way.
 silently. Its three "completion / transition allowed" cases passed only
 because the board moved without a ledger row, which is the defect this change
 removes. The harness now has a connectable pool, plus the ledger tables from a
-new shared `GOVERNED_ACTION_LEDGER_PGLITE_DDL` in `server/db/pglite-harness.ts`,
-which the new test uses too. Both files together: 17/17.
+new shared `GOVERNED_ACTION_LEDGER_PGLITE_DDL`
+(`server/services/ana-ri/__tests__/governed-action-ledger.fixture.ts`), which
+the new test uses too. It sits under `__tests__/` because `ci:runtime-ddl`
+counts `server/db/pglite-harness.ts` as server code. Both files together: 17/17.
 
 Also:
 
