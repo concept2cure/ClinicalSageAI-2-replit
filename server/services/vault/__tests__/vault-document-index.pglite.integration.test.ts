@@ -104,7 +104,6 @@ async function seed(over: Record<string, unknown> = {}): Promise<string> {
     mime_type: 'application/pdf',
     content_hash: `hash-${seq}`,
     classification: 'INTERNAL',
-    processing_status: 'INDEXED',
     extracted_text: 'CONFIDENTIAL CLINICAL NARRATIVE — must never leave via the index',
     placement_status: 'unfiled',
     deleted_at: null,
@@ -224,9 +223,13 @@ describe('vault document index — disclosure boundary', () => {
       documentType: 'csr',
       mimeType: 'application/pdf',
       classification: 'INTERNAL',
-      processingStatus: 'INDEXED',
       pageCount: 12,
     });
+    /* Not reported: nothing in the repository advances processing_status off
+       its PENDING default, so every document would read PENDING — a pipeline
+       stage no pipeline sets. (This fixture used to seed INDEXED directly and
+       assert it back, which is how the field looked live.) */
+    expect(doc).not.toHaveProperty('processingStatus');
     // bigint arrives from node-postgres as a string; an unconverted value would
     // serialize as "987654321" and quietly change the field's type for clients.
     expect(doc!.fileSize).toBe(987654321);
@@ -236,12 +239,11 @@ describe('vault document index — disclosure boundary', () => {
 });
 
 describe('vault document index — filters and paging', () => {
-  it('filters by classification, processing status, type, programme and CTD section', async () => {
-    const target = await seed({ classification: 'CONFIDENTIAL', processing_status: 'FAILED', document_type: 'protocol', ctd_section: '5.3.5.1' });
+  it('filters by classification, type, programme and CTD section', async () => {
+    const target = await seed({ classification: 'CONFIDENTIAL', document_type: 'protocol', ctd_section: '5.3.5.1' });
     await seed({});
 
     expect((await list({ classification: 'CONFIDENTIAL' })).documents.map((d) => d.id)).toEqual([target]);
-    expect((await list({ processingStatus: 'FAILED' })).documents.map((d) => d.id)).toEqual([target]);
     expect((await list({ documentType: 'protocol' })).documents.map((d) => d.id)).toEqual([target]);
     expect((await list({ ctdSection: '5.3.5.1' })).documents.map((d) => d.id)).toEqual([target]);
     expect((await list({ programId: OTHER_PROGRAM })).documents).toEqual([]);
@@ -306,7 +308,6 @@ describe('vault document index — honest failure', () => {
 describe('vault document index — exported domains', () => {
   it('exposes the schema enum values rather than a restated copy', () => {
     expect(VAULT_CLASSIFICATIONS).toEqual(['CONFIDENTIAL', 'INTERNAL', 'CONTROLLED', 'PUBLIC']);
-    expect(VAULT_PROCESSING_STATUSES).toEqual(['PENDING', 'EXTRACTING', 'VECTORIZING', 'INDEXED', 'FAILED', 'ARCHIVED']);
   });
 
   it('isUuid accepts a real uuid and rejects injection-shaped input', () => {

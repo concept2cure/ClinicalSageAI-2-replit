@@ -40,11 +40,35 @@ No route code changed; this is a test that now fails on the case it exists for.
 | 1. `/csr/search` loses `requireScope('csr:read')` | `red/mutant-1-old-test.txt` — **17 of 17 pass** | `red/mutant-1-new-test.txt` — fails: *GET /api/v1/csr/search served a key without csr:read: expected 500 to be 403* |
 | 2. `/trial-design/suggest` served at `/trial-design/suggestions` (listed path unserved) | `red/mutant-2-old-test.txt` — **17 of 17 pass** | `red/mutant-2-new-test.txt` — fails on both: 404 not 403, and *listed but no route serves it* |
 
-`green/public-api-documents.txt`: the real router, 19 of 19.
+`green/public-api-documents.txt`: the real router, 20 of 20 (19 at §3, plus §5's two cases, less the one `processingStatus=NOPE` input case it replaces).
 
 ## 4. Not done here
 
 - `/health` reports `endpoints: 7` as a literal; the test pins it to the length
   of `/docs`' list, which is the claim a caller reads. It is not derived.
-- `processingStatus` on `/api/v1/documents` — see the vault re-baseline in
-  `VAULT_DATA_ROOM_ASSESSMENT_2026-09-05.md`.
+
+## 5. Same class, same day — a filter that could not select anything
+
+`/api/v1/documents` reported `processingStatus` on every document and offered it
+as a filter over six values. The column it read, `vault.documents.processing_status`,
+is never advanced off its `PENDING` default: ingest extracts and indexes inside the
+upload request, records the outcome in the catalog tier, and writes `PENDING`
+here on every write. So every document read `PENDING` — waiting for work that had
+already run or already failed — and `?processingStatus=INDEXED` returned no rows.
+`routes/mdx-vault.ts` had reached the same conclusion on 2026-09-19 and stopped
+reporting it; this read model, written two days earlier, never caught up.
+
+The test that "proved" the field was the fixture: it seeded `INDEXED` and
+`FAILED` directly and asserted them back.
+
+Now the field is not in the read model, and the parameter is **refused by name**
+(`400 UNSUPPORTED_PARAMETER`). Ignoring it would be worse than the old
+behaviour: a client asking for `INDEXED` would get the whole cabinet. No
+consumer existed to break — the key-only path is not reachable until F-32 — and
+nothing else imports the read model.
+
+| | |
+|---|---|
+| `red/processing-status.txt` | Old code, new tests: 3 fail — `?processingStatus=INDEXED` answered 200; `/docs` advertises the filter; the summary carries the field. |
+| `green/processing-status.txt` | 35 of 35 (route + PGlite read model). |
+

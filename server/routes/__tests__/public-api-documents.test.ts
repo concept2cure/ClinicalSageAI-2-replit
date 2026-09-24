@@ -53,7 +53,6 @@ vi.mock('../../services/vault/vault-document-index.service.js', () => ({
   isUuid: (v: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v),
   VaultStoreUnavailableError: StoreUnavailable,
   VAULT_CLASSIFICATIONS: ['CONFIDENTIAL', 'INTERNAL', 'CONTROLLED', 'PUBLIC'],
-  VAULT_PROCESSING_STATUSES: ['PENDING', 'EXTRACTING', 'VECTORIZING', 'INDEXED', 'FAILED', 'ARCHIVED'],
 }));
 // The remaining data services, stubbed only so the router's module graph loads.
 vi.mock('../../services/csr-search-service.js', () => ({ csrSearchService: { searchCSRs: vi.fn() } }));
@@ -143,7 +142,6 @@ describe('input refusal', () => {
   it.each([
     ['/api/v1/documents?programId=not-a-uuid', 'programId'],
     ['/api/v1/documents?classification=SUPER_SECRET', 'classification'],
-    ['/api/v1/documents?processingStatus=NOPE', 'processingStatus'],
     ['/api/v1/documents/not-a-uuid', 'id'],
   ])('refuses %s with 400 before touching the store', async (path, parameter) => {
     const res = await call(path);
@@ -151,6 +149,25 @@ describe('input refusal', () => {
     expect(res.body).toMatchObject({ error: 'INVALID_PARAMETER', parameter });
     expect(listMock).not.toHaveBeenCalled();
     expect(getMock).not.toHaveBeenCalled();
+  });
+
+  /* processingStatus was a filter over a column nothing advances off PENDING:
+     five of its six values returned no rows and PENDING returned all of them.
+     Ignoring it now would be worse — a client asking for INDEXED would get the
+     whole cabinet back — so it is refused by name. */
+  it('refuses processingStatus by name instead of ignoring it', async () => {
+    for (const value of ['INDEXED', 'PENDING']) {
+      const res = await call(`/api/v1/documents?processingStatus=${value}`);
+      expect(res.status, value).toBe(400);
+      expect(res.body).toMatchObject({ error: 'UNSUPPORTED_PARAMETER', parameter: 'processingStatus' });
+    }
+    expect(listMock).not.toHaveBeenCalled();
+  });
+
+  it('/docs does not advertise a processingStatus filter', async () => {
+    const res = await request(await mountApp()).get('/api/v1/docs');
+    const list = res.body.endpoints.find((e: { path: string }) => e.path === '/api/v1/documents');
+    expect(Object.keys(list.parameters)).not.toContain('processingStatus');
   });
 
   it('accepts a valid classification case-insensitively', async () => {

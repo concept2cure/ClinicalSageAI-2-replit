@@ -6,8 +6,9 @@
  ✓ server/routes/__tests__/public-api-documents.test.ts > an unavailable store is a 503, never an empty page > an unrelated failure is a 500, not a 503 and not an empty page
  ✓ server/routes/__tests__/public-api-documents.test.ts > input refusal > refuses /api/v1/documents?programId=not-a-uuid with 400 before touching the store
  ✓ server/routes/__tests__/public-api-documents.test.ts > input refusal > refuses /api/v1/documents?classification=SUPER_SECRET with 400 before touching the store
- ✓ server/routes/__tests__/public-api-documents.test.ts > input refusal > refuses /api/v1/documents?processingStatus=NOPE with 400 before touching the store
  ✓ server/routes/__tests__/public-api-documents.test.ts > input refusal > refuses /api/v1/documents/not-a-uuid with 400 before touching the store
+ ✓ server/routes/__tests__/public-api-documents.test.ts > input refusal > refuses processingStatus by name instead of ignoring it
+ ✓ server/routes/__tests__/public-api-documents.test.ts > input refusal > /docs does not advertise a processingStatus filter
  ✓ server/routes/__tests__/public-api-documents.test.ts > input refusal > accepts a valid classification case-insensitively
  ✓ server/routes/__tests__/public-api-documents.test.ts > paging window > caps the page size at 200 and floors a negative offset at 0
  ✓ server/routes/__tests__/public-api-documents.test.ts > paging window > reports the window so a short page is distinguishable from the end of the cabinet
@@ -17,4 +18,4 @@
  ✓ server/routes/__tests__/public-api-documents.test.ts > the API describes itself truthfully > every listed endpoint REFUSES a key holding every scope but its own
  ✓ server/routes/__tests__/public-api-documents.test.ts > the API describes itself truthfully > every listed endpoint is served — the scope admits it to a real route
  ✓ server/routes/__tests__/public-api-documents.test.ts > the API describes itself truthfully > /health reports the endpoint count /docs actually lists
-      Tests  19 passed (19)
+      Tests  20 passed (20)
