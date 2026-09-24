@@ -122,4 +122,33 @@ WHERE c.table_schema NOT IN ('pg_catalog', 'information_schema')
         AND btrim(coalesce(p.qual, 'true')) IN ('true', '(true)')
     )
   )
+
+-- CHILD TABLES INHERIT THEIR PARENT'S ISOLATION (ledger L201). Everything above
+-- asks about tables that carry a tenant column. A public table that carries none
+-- but has a foreign key into an RLS-protected parent holds that parent's
+-- tenant's data. Until L201, 67 of them had row security OFF, so under
+-- RLS_ENFORCE=on the database refused nothing on them. That is what this flags.
+-- A child with row security on is isolated by some mechanism: its own
+-- tenant_isolation_policy over a join to the parent, or no policy at all, which
+-- denies by default. db/migrations/20260813_child_table_parent_scoped_rls.sql is
+-- the canonical way a child gets the first; its spec list is where a child is
+-- added. The carve-out below lists the children not yet covered, each with its
+-- reason. It may only shrink.
+UNION ALL
+SELECT DISTINCT 'public.' || c.relname || ' (child of ' || p.relname || ', row security off)'
+FROM pg_class c
+JOIN pg_constraint k ON k.conrelid = c.oid AND k.contype = 'f'
+JOIN pg_class p ON p.oid = k.confrelid
+WHERE c.relnamespace = 'public'::regnamespace
+  AND c.relkind = 'r'
+  AND p.relrowsecurity
+  AND NOT EXISTS (
+    SELECT 1 FROM pg_attribute a
+    WHERE a.attrelid = c.oid AND a.attname IN ('organization_id', 'org_id', 'tenant_id') AND NOT a.attisdropped
+  )
+  AND NOT c.relrowsecurity
+  -- No carve-out. The five grandchildren that once stood here are scoped
+  -- through their parent's own policy by the chained list in that migration
+  -- (ledger L202). A child that cannot be covered goes here, with its reason.
+  AND c.relname <> ALL (ARRAY[]::text[])
 ORDER BY 1;

@@ -151,6 +151,33 @@ describe("A request cannot name another tenant's parent, or write another user's
     expect(res.status, "another tenant's complaint must read as not found").toBe(404);
   });
 
+  it("an MDR event is still sourced from the caller's own complaint, under the complaint and MDR policies", async () => {
+    // Positive control for the case above, and for ledger L201, which put
+    // complaints and mdr_events under row security: the tenant's own flow must
+    // still link.
+    const own = (
+      await owner.query(
+        `INSERT INTO complaints (program_id, complaint_code, source, channel, received_at, event_narrative)
+         VALUES ($1,'CMP-A','customer','email',now(),$2) RETURNING id::text AS id`,
+        [progA, `${TAG} fixture complaint A`]
+      )
+    ).rows[0].id;
+    const res = await request(app)
+      .post('/api/capa-mdr/mdr-events')
+      .set(auth(tokenA))
+      .send({
+        programId: progA,
+        sourceComplaintId: own,
+        jurisdiction: 'other',
+        decisionDate: new Date().toISOString(),
+        eventNarrative: `${TAG} own MDR`,
+      });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    const linked = (await owner.query('SELECT linked_mdr_event_id FROM complaints WHERE id=$1', [own])).rows[0]
+      .linked_mdr_event_id;
+    expect(linked, "the caller's complaint must be linked to its MDR event").toBeTruthy();
+  });
+
   it('notification preferences are written for the caller, whatever userId the body names', async () => {
     const res = await request(app)
       .patch('/api/users/me/notifications')
