@@ -1,0 +1,12 @@
+# terraform test, environments/production, after the fix (Terraform 1.9.8, aws 5.70.0 + random 3.6.3, mocked providers)
+tests/boot_contract.tftest.hcl... in progress
+  run "every_name_the_deploy_preflight_requires_is_in_the_task_definition"... pass
+  run "the_database_urls_are_urls_not_the_rds_json_secret"... pass
+  run "the_database_name_is_one_rds_accepts"... pass
+  run "the_health_check_is_the_images_own_probe_on_readyz"... pass
+  run "refuses_a_refresh_secret_equal_to_the_jwt_secret"... pass
+  run "refuses_a_short_key"... pass
+  run "refuses_placement_approvals_that_are_not_a_json_object"... pass
+tests/boot_contract.tftest.hcl... tearing down
+tests/boot_contract.tftest.hcl... pass
+Success! 7 passed, 0 failed.

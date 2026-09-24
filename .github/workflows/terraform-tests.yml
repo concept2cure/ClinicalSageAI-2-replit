@@ -1,0 +1,86 @@
+name: Terraform tests (offline)
+
+# Every push that touches the infrastructure, or the deploy preflight whose
+# contract the infrastructure has to meet, runs the Terraform test suites.
+#
+# Until this workflow, no Terraform check ran in CI at all:
+# terraform-compliance.yml triggers only on pull_request, which this repository
+# does not use (docs/evidence/W2/2026-09-24-b9/README.md). As a result, the
+# production task definition carried 3 of the 12 names deploy-aws.yml's
+# preflight requires, and nothing noticed before a deploy would have been
+# refused (D1 brief B3).
+#
+# These tests run against mocked providers. They need no AWS account and no
+# credentials, and they create nothing.
+#   environments/production  the boot contract. It reads the required names out
+#                            of deploy-aws.yml, so this workflow also runs when
+#                            that file changes.
+#   modules/alb              the ALB admits CloudFront alone (B9)
+#   modules/cloudfront       API routing through CloudFront (B9)
+
+on:
+  push:
+    branches: ['concept2cure-v2']
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/deploy-aws.yml'
+      - '.github/workflows/terraform-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  terraform-test:
+    name: terraform test (${{ matrix.dir }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dir:
+          - terraform/environments/production
+          - terraform/modules/alb
+          - terraform/modules/cloudfront
+    env:
+      TF_IN_AUTOMATION: true
+    steps:
+      # Pinned to full commit SHAs, as every `uses:` in this repository is: a
+      # tag is a mutable pointer. Same SHAs as terraform-compliance.yml.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        with:
+          # The version the evidence under docs/evidence/W2/ was produced with.
+          terraform_version: 1.9.8
+          terraform_wrapper: false
+
+      - name: init (no backend)
+        working-directory: ${{ matrix.dir }}
+        run: terraform init -backend=false -input=false
+
+      - name: validate
+        working-directory: ${{ matrix.dir }}
+        run: terraform validate
+
+      - name: test
+        working-directory: ${{ matrix.dir }}
+        run: terraform test
+
+  staging-validate:
+    name: terraform validate (staging)
+    runs-on: ubuntu-latest
+    env:
+      TF_IN_AUTOMATION: true
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        with:
+          terraform_version: 1.9.8
+          terraform_wrapper: false
+      - name: init and validate
+        working-directory: terraform/environments/staging
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate
