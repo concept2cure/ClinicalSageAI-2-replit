@@ -464,7 +464,7 @@ async function resolveVaultAttachment(
      document's identity is the failure that check exists for. */
   const docRes = await pool.query(
     `SELECT id, file_name, document_title, mime_type, s3_key,
-            storage_version_id, content_hash
+            storage_version_id, storage_provider, content_hash
        FROM vault.documents
       WHERE id = $1 AND program_id = $2 AND deleted_at IS NULL
         AND EXISTS (
@@ -484,6 +484,7 @@ async function resolveVaultAttachment(
         mime_type: string | null;
         s3_key: string | null;
         storage_version_id: string | null;
+        storage_provider: string | null;
         content_hash: string | null;
       }
     | undefined;
@@ -509,6 +510,7 @@ async function resolveVaultAttachment(
       storageVersionId: doc.storage_version_id,
       storageKey: doc.s3_key,
       organizationId: input.organizationId,
+      storageProvider: doc.storage_provider,
     },
     doc.content_hash,
     doc.id,
