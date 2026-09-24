@@ -25,6 +25,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import request from 'supertest';
+import { timingSafeEqual } from 'node:crypto';
 
 const hoisted = vi.hoisted(() => ({
   verifySignerPassword: vi.fn(),
@@ -56,7 +57,13 @@ const SIGNER_ID = 5;
 function authenticate(req: Request, res: Response, next: NextFunction) {
   const token = extractBearerToken(req.headers.authorization);
   if (!token) return res.status(401).json({ error: { code: 'AUTH_001', message: 'No authentication token provided' } });
-  if (token !== VALID) return res.status(401).json({ error: { code: 'AUTH_002', message: 'Invalid token' } });
+  const a = Buffer.from(token);
+  const b = Buffer.from(VALID);
+  // Constant-time, as the real verifier's comparison is; a test stand-in is
+  // still code the lint ratchet reads.
+  if (a.length !== b.length || !timingSafeEqual(a, b)) {
+    return res.status(401).json({ error: { code: 'AUTH_002', message: 'Invalid token' } });
+  }
   (req as Request & { user?: unknown; userId?: number }).user = { id: SIGNER_ID };
   (req as Request & { userId?: number }).userId = SIGNER_ID;
   next();
