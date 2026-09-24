@@ -1,0 +1,139 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T19:10:16.815Z","pid":7277,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T19:10:16.817Z","pid":7277,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T19:10:16.817Z","pid":7277,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a tenant administrator cannot read the kernel's cross-tenant log
+[database] Database connection successful
+
+stdout | tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a tenant administrator cannot read the kernel's cross-tenant log
+[database] Database connection successful { timestamp: '2026-09-24T19:10:17.427Z', poolSize: 1 }
+
+ × tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a tenant administrator cannot read the kernel's cross-tenant log 89ms
+   → tenant B's traffic must not reach tenant A's administrator: expected '{"entries":[{"timestamp":"2026-09-24T…' not to contain '/api/wo03_7277_mufwpnd9/tenant-b-traf…'
+ × tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a role that merely contains "admin" is not a platform role 11ms
+   → tenant B's traffic must not reach a research_admin: expected '{"entries":[{"timestamp":"2026-09-24T…' not to contain '/api/wo03_7277_mufwpnd9/tenant-b-traf…'
+ × tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a tenant administrator cannot clear the platform's kernel log 14ms
+   → the platform's log must keep tenant B's entry: expected false to be true // Object.is equality
+ × tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > outside production, a member is not let in by default 7ms
+   → the non-production bypass must be off unless asked for: expected '{"entries":[{"timestamp":"2026-09-24T…' not to contain '/api/wo03_7277_mufwpnd9/tenant-b-traf…'
+ × tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a member cannot read the organization's governed decisions 26ms
+   → expected 200 to be 403 // Object.is equality
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > the organization's administrator can 9ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a platform operator reads the kernel log 6ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > monitoring that presents the ops token reads the kernel log 5ms
+ × tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a wrong ops token is refused 8ms
+   → expected '{"entries":[{"timestamp":"2026-09-24T…' not to contain '/api/wo03_7277_mufwpnd9/tenant-b-traf…'
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > the non-production bypass still opens the control plane when it is asked for 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a tenant administrator cannot read the kernel's cross-tenant log
+AssertionError: tenant B's traffic must not reach tenant A's administrator: expected '{"entries":[{"timestamp":"2026-09-24T…' not to contain '/api/wo03_7277_mufwpnd9/tenant-b-traf…'
+
+Expected: "/api/wo03_7277_mufwpnd9/tenant-b-traffic"
+Received: "{"entries":[{"timestamp":"2026-09-24T19:10:17.369Z","method":"POST","path":"/api/wo03_7277_mufwpnd9/tenant-b-traffic","statusCode":200,"requestId":"wo03_7277_mufwpnd9-tenant-b","tenantId":"90302","actorId":"223","kernel":{"requestId":"wo03_7277_mufwpnd9-tenant-b","finalDecision":"allow","score":0,"trace":[],"flags":[],"controls":{"requiresHumanReview":false,"requiresAuditEscalation":false}}}]}"
+
+ ❯ tests/db/control-plane-access.dbtest.ts:99:104
+     97|   it("a tenant administrator cannot read the kernel's cross-tenant log…
+     98|     const res = await request(cp).get('/api/control-plane/kernel/recen…
+     99|     expect(JSON.stringify(res.body), "tenant B's traffic must not reac…
+       |                                                                                                        ^
+    100|       planted
+    101|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a role that merely contains "admin" is not a platform role
+AssertionError: tenant B's traffic must not reach a research_admin: expected '{"entries":[{"timestamp":"2026-09-24T…' not to contain '/api/wo03_7277_mufwpnd9/tenant-b-traf…'
+
+Expected: "/api/wo03_7277_mufwpnd9/tenant-b-traffic"
+Received: "{"entries":[{"timestamp":"2026-09-24T19:10:17.369Z","method":"POST","path":"/api/wo03_7277_mufwpnd9/tenant-b-traffic","statusCode":200,"requestId":"wo03_7277_mufwpnd9-tenant-b","tenantId":"90302","actorId":"223","kernel":{"requestId":"wo03_7277_mufwpnd9-tenant-b","finalDecision":"allow","score":0,"trace":[],"flags":[],"controls":{"requiresHumanReview":false,"requiresAuditEscalation":false}}}]}"
+
+ ❯ tests/db/control-plane-access.dbtest.ts:107:96
+    105|   it('a role that merely contains "admin" is not a platform role', asy…
+    106|     const res = await request(cp).get('/api/control-plane/kernel/recen…
+    107|     expect(JSON.stringify(res.body), "tenant B's traffic must not reac…
+       |                                                                                                ^
+    108|     expect(res.status).toBe(403);
+    109|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a tenant administrator cannot clear the platform's kernel log
+AssertionError: the platform's log must keep tenant B's entry: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/db/control-plane-access.dbtest.ts:113:70
+    111|   it("a tenant administrator cannot clear the platform's kernel log", …
+    112|     const res = await request(cp).post('/api/control-plane/kernel/rece…
+    113|     expect(inLog(), "the platform's log must keep tenant B's entry").t…
+       |                                                                      ^
+    114|     expect(res.status).toBe(403);
+    115|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > outside production, a member is not let in by default
+AssertionError: the non-production bypass must be off unless asked for: expected '{"entries":[{"timestamp":"2026-09-24T…' not to contain '/api/wo03_7277_mufwpnd9/tenant-b-traf…'
+
+Expected: "/api/wo03_7277_mufwpnd9/tenant-b-traffic"
+Received: "{"entries":[{"timestamp":"2026-09-24T19:10:17.482Z","method":"POST","path":"/api/wo03_7277_mufwpnd9/tenant-b-traffic","statusCode":200,"requestId":"wo03_7277_mufwpnd9-tenant-b","tenantId":"90302","actorId":"223","kernel":{"requestId":"wo03_7277_mufwpnd9-tenant-b","finalDecision":"allow","score":0,"trace":[],"flags":[],"controls":{"requiresHumanReview":false,"requiresAuditEscalation":false}}}]}"
+
+ ❯ tests/db/control-plane-access.dbtest.ts:119:100
+    117|   it('outside production, a member is not let in by default', async ()…
+    118|     const res = await request(cp).get('/api/control-plane/kernel/recen…
+    119|     expect(JSON.stringify(res.body), 'the non-production bypass must b…
+       |                                                                                                    ^
+    120|       planted
+    121|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a member cannot read the organization's governed decisions
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ tests/db/control-plane-access.dbtest.ts:127:24
+    125|   it("a member cannot read the organization's governed decisions", asy…
+    126|     const res = await request(cp).get('/api/control-plane/governed/dec…
+    127|     expect(res.status).toBe(403);
+       |                        ^
+    128|   });
+    129|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a wrong ops token is refused
+AssertionError: expected '{"entries":[{"timestamp":"2026-09-24T…' not to contain '/api/wo03_7277_mufwpnd9/tenant-b-traf…'
+
+Expected: "/api/wo03_7277_mufwpnd9/tenant-b-traffic"
+Received: "{"entries":[{"timestamp":"2026-09-24T19:10:17.482Z","method":"POST","path":"/api/wo03_7277_mufwpnd9/tenant-b-traffic","statusCode":200,"requestId":"wo03_7277_mufwpnd9-tenant-b","tenantId":"90302","actorId":"223","kernel":{"requestId":"wo03_7277_mufwpnd9-tenant-b","finalDecision":"allow","score":0,"trace":[],"flags":[],"controls":{"requiresHumanReview":false,"requiresAuditEscalation":false}}}]}"
+
+ ❯ tests/db/control-plane-access.dbtest.ts:156:42
+    154|       .set(as('member'))
+    155|       .set('x-ana-ops-token', `${OPS_TOKEN}-wrong`);
+    156|     expect(JSON.stringify(res.body)).not.toContain(planted);
+       |                                          ^
+    157|     expect(res.status).toBe(403);
+    158|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 4 passed (10)
+   Start at  19:10:14
+   Duration  3.11s (transform 1.31s, setup 83ms, import 2.22s, tests 513ms, environment 0ms)
+

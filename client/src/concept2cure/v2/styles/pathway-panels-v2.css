@@ -75,7 +75,7 @@
 
   .dd-foot-edit {
     display: inline-flex; align-items: center; gap: 6px;
-    padding: 8px 14px; background: var(--accent-100); color: var(--text-000);
+    padding: 8px 14px; background: var(--accent-strong); color: var(--accent-on-strong);
     border-radius: var(--radius-md); font-size: 12px; font-weight: 500;
   }
   .dd-foot-edit:hover { background: var(--accent-200); }

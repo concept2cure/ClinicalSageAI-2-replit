@@ -18,7 +18,7 @@ OPEN verdict was given to a second agent told to refute it. None was refuted.
 | T3 archive / sign swallow a 401 | fixed | `6f79a000f` (sign), `a7955fc10` (archive) |
 | T4 archive reason optional on the server | fixed | `a7955fc10` |
 | SEC-1 reads outside the request-scoped client | fixed | `fe78e4c3c` |
-| **P4** release signature shows no signer, time or meaning | **server fixed here; client open** | below |
+| **P4** release signature shows no signer, time or meaning | **fixed here** (server and client) | below |
 | P5 reason-for-change enforced on the client only | open | `authoring.router.ts` — skip window, see below |
 | P6 Revert enabled on a sealed document | open | `DocumentWorkbench.tsx` — skip window |
 | P7 activity feed shows `User <id>` | open | `c2c/projects.ts` — skip window |
@@ -58,17 +58,18 @@ finding-14 throw are unchanged. A test pins each of them.
 - `ci:eslint-warning-ratchet --since HEAD`: no file changed its count.
 - `ci:fabricated-identity`: OK.
 
-**Not done: the client half.** `client/src/concept2cure/v2/surfaces/EctdCompile.tsx`
-still renders only the id, the digest and the seal verdict. That file belongs to the
-claimed D7/W5 lane (`…01TtwRHm`), which changed it within the last 24 hours. The
-server now returns everything the panel needs. The client change should:
-- render the printed name and title, the time, and the meaning;
-- render a null name as "Printed name not recorded";
-- add the same fields to the `signedPackage` AnA facts;
-- extend `ectdCompileOrchestratorHonesty.test.tsx:210`, with a failing run first.
+**Client half, done 2026-09-24.** `EctdCompile.tsx` had not been touched for more
+than 24 hours, so it was free. The panel now shows:
+- **Signed by:** the printed name and title, or "Printed name not recorded".
+- **Signed at:** through `GovernedTimestamp`, in UTC.
+- **Meaning:** through `signatureMeaningLabel`, lifted out of
+  `AuthoringSignatures.tsx` into `client/src/concept2cure/_shared/signatureMeaning.ts`
+  so both panels use one label.
 
-A meaning label already exists inside `AuthoringSignatures.tsx`. Lift it into a
-shared module rather than copying it.
+The same fields go to AnA in `signedPackage`.
+- `p11-4-client-red.txt`: the two new cases fail against the unchanged panel.
+- `p11-4-client-green.txt`: 44/44, including the authoring-signature suite that
+  now imports the shared label.
 
 ## New-code audit, 2026-09-24
 

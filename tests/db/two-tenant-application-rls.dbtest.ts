@@ -31,6 +31,7 @@ import {
   tokenA,
   tokenB,
   userA,
+  userB,
   signerA,
   workspaceB,
   ids,
@@ -39,6 +40,7 @@ import {
   savedQueryA,
   savedQueryB,
   auth,
+  accessToken,
   provisionTwoTenantFixture,
   teardownTwoTenantFixture,
 } from './two-tenant-fixture';
@@ -274,12 +276,19 @@ const settle = () => new Promise(r => setTimeout(r, 1500));
  */
 describe('WO-03 governed decisions under RLS (D3, 2026-09-24)', () => {
   let cp: express.Express;
+  // The control plane's tenant-scoped routes are for each org's administrators
+  // (ledger L183). These cases passed as members only because the guard let
+  // everyone in outside production by default, which it no longer does.
+  let adminA: string;
+  let adminB: string;
 
   beforeAll(() => {
     // Mounted exactly as server/bootstrap/register-core-routes.ts mounts it.
     cp = express();
     cp.use(express.json());
     cp.use('/api/control-plane', authenticateToken, controlPlaneRouter);
+    adminA = accessToken(userA, ORG_A, 'admin');
+    adminB = accessToken(userB, ORG_B, 'admin');
   });
 
   it('the recording evaluator persists the caller\'s own decision through the app role', async () => {
@@ -318,7 +327,7 @@ describe('WO-03 governed decisions under RLS (D3, 2026-09-24)', () => {
     const beforeB = (await fabricRows(ORG_B)).length;
     const res = await request(cp)
       .post('/api/control-plane/governed/evaluate')
-      .set(auth(tokenA))
+      .set(auth(adminA))
       .send(evaluation(ORG_B, `${TAG}-simulated-doc`));
     expect(res.status).toBe(200);
     expect(res.body?.result?.evaluation?.decision?.outcome).toBeTruthy();
@@ -334,7 +343,7 @@ describe('WO-03 governed decisions under RLS (D3, 2026-09-24)', () => {
 
     const listA = await request(cp)
       .get(`/api/control-plane/governed/decisions?projectId=${GD_PROJECT}`)
-      .set(auth(tokenA));
+      .set(auth(adminA));
     expect(listA.status).toBe(200);
     expect(listA.body.count).toBe(own.length);
     const listedId: string = listA.body.entries[0].decisionId;
@@ -344,31 +353,31 @@ describe('WO-03 governed decisions under RLS (D3, 2026-09-24)', () => {
     // nothing — it would also be what a broken lookup returns to everyone.
     const detailA = await request(cp)
       .get(`/api/control-plane/governed/decisions/${listedId}`)
-      .set(auth(tokenA));
+      .set(auth(adminA));
     expect(detailA.status, 'tenant A must be able to fetch its own decision by the id it was given').toBe(
       200
     );
 
     const listB = await request(cp)
       .get(`/api/control-plane/governed/decisions?projectId=${GD_PROJECT}`)
-      .set(auth(tokenB));
+      .set(auth(adminB));
     expect(listB.status).toBe(200);
     expect(listB.body.count).toBe(0);
 
     const detailB = await request(cp)
       .get(`/api/control-plane/governed/decisions/${listedId}`)
-      .set(auth(tokenB));
+      .set(auth(adminB));
     expect(detailB.status).toBe(404);
 
     const traceB = await request(cp)
       .get(`/api/control-plane/governed/trace/${GD_PROJECT}/${mine.artifact}`)
-      .set(auth(tokenB));
+      .set(auth(adminB));
     expect(traceB.status).toBe(200);
     expect(traceB.body.count).toBe(0);
 
     const traceA = await request(cp)
       .get(`/api/control-plane/governed/trace/${GD_PROJECT}/${mine.artifact}`)
-      .set(auth(tokenA));
+      .set(auth(adminA));
     expect(traceA.body.count).toBe(1);
   });
 });
