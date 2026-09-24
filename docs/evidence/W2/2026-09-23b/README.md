@@ -109,8 +109,38 @@ Each item names the files it touches and says whether it is verified or inferred
        `deb.debian.org` (403), so the `apt-get` in both stages cannot run here.
      - The workflow has never run against AWS. It needs the account, and the
        deploy role from item 2.
-2. **Deploy OIDC role and the CloudFront distribution id** are not in Terraform
-   (inferred). `AWS_DEPLOY_ROLE_ARN` is a repository secret that nothing creates.
+2. **The deploy roles are in Terraform.** Nothing had created the role
+   `AWS_DEPLOY_ROLE_ARN` named. Now `terraform/modules/github-deploy-roles`
+   (via `terraform/stack/github_deploy.tf`) creates the account's GitHub OIDC
+   provider and two roles:
+   - **Deploy role.** Trusts only `repo:…:environment:production`: migrate,
+     deploy-api, deploy-frontend, provision. It can register and describe task
+     definitions; run the migrate and provision families, in this cluster only;
+     describe and stop tasks there; describe and update the API service; pass
+     the two task roles to ECS only; read the API log group; write the frontend
+     bucket; and invalidate the distribution. Sessions last two hours, since the
+     provision job can outlast one.
+   - **Build role.** Trusts the `v*` tags and the branch: build-push and
+     smoke-test. It can push the API image and read the distribution, and
+     nothing that changes what production runs.
+
+   One role trusted for both kinds of subject would let any branch workflow
+   deploy past the environment gate, so `build-push` and `smoke-test` now assume
+   `AWS_BUILD_ROLE_ARN`. The root outputs `github_deploy_role_arn`,
+   `github_build_role_arn` and `cloudfront_distribution_id`; `terraform.tfvars.example`
+   says which secret each fills.
+
+   Proof:
+   - The module's own suite: 6 runs, 4 mutations each caught
+     (`github-deploy-roles.txt`).
+   - The proof maps every `aws` call each job makes, including the runner's, to
+     its IAM action and checks it against the rendered policy of the role that
+     job can assume. That's 38 pairs. It was red until those two jobs were
+     switched (their calls would have been refused at AssumeRole), and a
+     dropped permission or an unmapped call turns it red
+     (`workflow-iam.txt`).
+   - Not proven: none of it has been applied.
+
 3. **Trivy config gate** in `deploy-aws.yml` blocks on HIGH/CRITICAL IaC findings
    that `.trivyignore` does not cover (inferred: nobody has run it on this tree).
    Run it, then fix each finding or record it with a reason.
