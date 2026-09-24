@@ -972,38 +972,64 @@ export class AdvancedRAGPipeline {
     });
 
     return withTenantContext(this.pool, organizationUuid, async client => {
+      /* ── Scope to the tenant FIRST, then rank exactly ──────────────────────
+         This arm used to be one query: `ORDER BY c.embedding <=> $1 LIMIT $3`
+         with the tenant and distance predicates in the same WHERE. Once the
+         planner chose the approximate index on vault.document_chunks
+         (ivfflat, probes = 1 by default), the scan took its candidates from
+         ONE list and the WHERE then filtered them — so when that list held
+         another tenant's chunks, or none above the threshold, the arm
+         returned nothing while this tenant's matching passages sat in lists
+         it never probed. search_document_passages then said "No passage
+         matched" beside a coverage line saying every document was indexed: a
+         miss presented as an exhaustive search. It depends on table
+         statistics, which is why it passed on near-empty test databases and
+         is exactly the shape production reaches with every tenant's chunks in
+         one table (tests/db/vault-passage-search.dbtest.ts forces that plan).
+
+         The MATERIALIZED CTE fixes the order of operations: the tenant's
+         chunks are selected through the btree indexes, and only then ordered
+         by distance — exactly, over rows that are all this tenant's. The
+         approximate index cannot short-circuit a sort over a materialized
+         CTE. For a regulatory answer, recall is not a tunable; the cost is a
+         distance computation per chunk the tenant holds. */
       // tenant-isolation-safe: the WHERE carries an explicit organization
       // predicate ($4 -> organizations.uuid -> organizations.id ->
       // vault.documents.organization_id). RLS is defence in depth here, not the
       // boundary — see the refusal above for why it could not be relied on.
       const { rows: denseRows } = await client.query<VaultChunkRow>(
         `
+        WITH scoped AS MATERIALIZED (
+          SELECT
+            c.id, c.document_id, c.chunk_text, c.page_number, c.section_title,
+            c.chunk_index, c.embedding,
+            COALESCE(d.document_title, d.file_name, '') AS title
+          FROM vault.document_chunks c
+          JOIN vault.documents d ON d.id = c.document_id
+          WHERE c.embedding IS NOT NULL${denseFilter}
+            -- Explicit tenant predicate. A document with a NULL organization_id is
+            -- unattributable (migrations/20260905_vault_documents_organization_id.sql)
+            -- and this predicate excludes it, which is the intended refusal: an
+            -- orphan document belongs to no tenant and is returned to none.
+            AND d.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid = $4::uuid)
+        )
         SELECT
-          c.id AS chunk_id,
-          c.document_id AS document_id,
-          COALESCE(d.document_title, d.file_name, '') AS title,
-          c.chunk_text AS content,
-          c.page_number AS page_number,
-          c.section_title AS section_title,
-          c.chunk_index AS chunk_index,
-          ${embeddingCol}
-          1 - (c.embedding <=> $1::vector) AS similarity
-        FROM vault.document_chunks c
-        JOIN vault.documents d ON d.id = c.document_id
-        WHERE c.embedding IS NOT NULL${denseFilter}
-          -- (1 - sim) filter as a distance bound: 1 - dist > t  <=>  dist < 1 - t.
-          -- Uses the same bare <=> operator as ORDER BY so the planner reuses
-          -- the distance and the predicate matches the indexed cosine operator.
-          -- $2 is cast explicitly: in "1 - $2" Postgres infers the parameter
-          -- from the integer literal, and a float threshold like 0.65 then
-          -- fails with 22P02 before the query ever runs.
-          AND (c.embedding <=> $1::vector) < 1 - $2::float8
-          -- Explicit tenant predicate. A document with a NULL organization_id is
-          -- unattributable (migrations/20260905_vault_documents_organization_id.sql)
-          -- and this predicate excludes it, which is the intended refusal: an
-          -- orphan document belongs to no tenant and is returned to none.
-          AND d.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid = $4::uuid)
-        ORDER BY c.embedding <=> $1::vector
+          s.id AS chunk_id,
+          s.document_id AS document_id,
+          s.title AS title,
+          s.chunk_text AS content,
+          s.page_number AS page_number,
+          s.section_title AS section_title,
+          s.chunk_index AS chunk_index,
+          ${embeddingCol.replace('c.embedding', 's.embedding')}
+          1 - (s.embedding <=> $1::vector) AS similarity
+        FROM scoped s
+        -- (1 - sim) filter as a distance bound: 1 - dist > t  <=>  dist < 1 - t.
+        -- $2 is cast explicitly: in "1 - $2" Postgres infers the parameter
+        -- from the integer literal, and a float threshold like 0.65 then
+        -- fails with 22P02 before the query ever runs.
+        WHERE (s.embedding <=> $1::vector) < 1 - $2::float8
+        ORDER BY s.embedding <=> $1::vector
         LIMIT $3
       `,
         denseParams
