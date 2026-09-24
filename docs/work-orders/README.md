@@ -255,6 +255,15 @@ complexity 22), and `server/services/ectd/package-sequence-lifecycle.ts` +1
 so no pre-push hook sees it. This lane has not touched these files, because both
 lanes are active and the fixes are refactors of their code.
 
+*Resolved for the dbtest the same day.* The two-tenant fixture moved to
+`tests/db/two-tenant-fixture.ts` and the `/proof` scaffolding to
+`tests/db/tenant-proof-routes.ts`. The Report OS contract (L184), which by then
+had added a 291-line describe, moved to
+`tests/db/report-os-tenant-from-session.dbtest.ts`. The cases are unchanged:
+23 + 14 = 37/37 on a from-blank database as `app_service` with RLS enforcing.
+The ratchet is at 6431 = baseline. **A new D3 tenant contract goes in its own
+`*.dbtest.ts` on that fixture, not as another describe in the WO-03 file.**
+
 **ESLint ERROR cleared from another lane (2026-09-19):**
 `server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts:169` (commit
 `1e8ddb6d2`) carried four literal spaces inside a regex, which `no-regex-spaces`
