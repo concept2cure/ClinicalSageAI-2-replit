@@ -78,7 +78,7 @@ Items in this lane's own code are fixed in this lane, not listed here.
 **→ tenant offboarding, unclaimed (D6)** — see `docs/evidence/D6-EXPORT-COVERS-PURGE/2026-09-24/` §"Not done": the purge erases vault records and chunks but not the stored object bytes (its own "HONEST SCOPE" comment says so; the assessment had marked this CLOSED), the purge's transaction runs on a Pool, a truncated export authorizes a full purge, no legal hold is consulted, the return carries no document bytes. Legal holds cannot be placed or lifted through the product at all, and retention destruction is audited to a local file, not the Part 11 chain.
 
 **→ Projects, unclaimed (D2)**
-- ProjectHome's "Dossier readiness" ring always shows 0%, contradicting the Projects list; the numeric readiness engine queries a column that does not exist.
+- ProjectHome's "Dossier readiness" ring always shows 0%, contradicting the Projects list; the numeric readiness engine queries a column that does not exist. **Claimed 2026-09-24 by `…session_01KnUGoX3g4R4FWKWGc2sTbN` (row D2)**: the ring first (`server/routes/c2c/projects.ts` detail read, `ProjectHome.tsx`), then the engine's `project_id` query. Evidence `docs/evidence/D2-PROJECT-READINESS/2026-09-24/`.
 - Two task stores: tasks from AnA, agency communications and the schedule never reach the task board. The Blocked tile and the Blocked/Complete filters are always empty, and AnA is told "0 blocked".
 - The portfolio is cut off at 50 programs without saying so; the TaskBoard critical-path view claims a calculation it does not perform.
 
