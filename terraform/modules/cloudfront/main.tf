@@ -36,6 +36,10 @@ resource "aws_s3_bucket_public_access_block" "frontend" {
   restrict_public_buckets = true
 }
 
+# The bucket holds the built frontend, which CloudFront serves to every viewer.
+# A customer-managed key would protect nothing, and CloudFront would then need
+# kms:Decrypt on it to read the assets.
+#trivy:ignore:AWS-0132
 resource "aws_s3_bucket_server_side_encryption_configuration" "frontend" {
   bucket = aws_s3_bucket.frontend.id
   rule {
@@ -104,6 +108,12 @@ resource "aws_cloudfront_function" "spa_routes" {
 
 # ── CloudFront distribution ─────────────────────────────────────────────────
 
+# No WAF yet: a founder decision, not defaulted (docs/evidence/W2/2026-09-24-trivy/).
+# It carries a monthly cost, and AWS's common managed rule set blocks request
+# bodies over 8 KB until it is tuned, which would refuse document uploads and
+# AnA turns. Until then the ALB admits CloudFront alone, and sign-in and API
+# rate limits are applied in the app.
+#trivy:ignore:AWS-0011
 resource "aws_cloudfront_distribution" "this" {
   enabled             = true
   is_ipv6_enabled     = true

@@ -1,0 +1,23 @@
+# Each fix and each exception removed on its own (the rest of the change kept); the affected directory re-scanned
+# with the repository's .trivyignore. S1 adds an unexcepted open-egress group beside the excepted one: exceptions are per resource.
+
+E1 exception removed: public ALB
+    scan of terraform/: exit=1  findings: AWS-0053
+E2 exception removed: frontend bucket key
+    scan of terraform/: exit=1  findings: AWS-0132
+E3 exception removed: WAF
+    scan of terraform/: exit=1  findings: AWS-0011
+E4 exception removed: task egress
+    scan of terraform/: exit=1  findings: AWS-0104
+F1 fix reverted: ALB passes invalid headers
+    scan of terraform/: exit=1  findings: AWS-0052
+F2 fix reverted: state bucket on the AWS-managed key
+    scan of terraform/: exit=1  findings: AWS-0132
+F3 fix reverted: app container without securityContext
+    scan of infra/k8s/: exit=1  findings: KSV-0014
+F4 fix reverted: sidecar without securityContext
+    scan of infra/k8s/: exit=1  findings: KSV-0014
+F5 fix reverted: pod without securityContext
+    scan of infra/k8s/: exit=1  findings: KSV-0118
+S1 scope: a second open-egress group beside the excepted one
+    scan of terraform/: exit=1  findings: AWS-0104

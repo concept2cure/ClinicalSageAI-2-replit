@@ -191,9 +191,16 @@ Each item names the files it touches and says whether it is verified or inferred
    `terraform providers lock -platform=linux_amd64 -platform=linux_arm64 -platform=darwin_amd64 -platform=darwin_arm64 -platform=windows_amd64`.
 7. **Known exposures, recorded rather than designed:**
    - The API task carries the owner credential. `ensureCoreTables` runs DDL on
-     it at every boot, and `server/routes/tenants-simple.ts` serves routes through
-     a `postgres.js` client on it, outside RLS. That is a second DB client (zero
-     duplication) and a tenant-isolation question for D3's owner.
+     it at every boot. `server/routes/tenants-simple.ts` serves `/api/tenants`
+     through a second client (`postgres.js`) on it, outside RLS.
+     - Checked 2026-09-24: this is **not a cross-tenant read**. Every route
+       there is either platform-admin gated or membership-scoped in the query,
+       and `server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts`
+       pins that.
+     - What remains is architectural: a second DB client (zero duplication),
+       with scoping in application code rather than RLS. Moving it onto the
+       runtime pool is a tenant-isolation design change, since listing a user's
+       organisations spans tenants. That belongs to D3's owner, not this lane.
    - `NODE_EXTRA_CA_CERTS` adds all 108 RDS roots to every outbound TLS call.
      Narrowing it to the region's bundle, or passing `sslrootcert` in the URL,
      needs every DB client verified first (`postgres.js` included). Not done.
