@@ -68,18 +68,20 @@ picker's option VALUES are still the tokens the ingest schema accepts.
 
 ---
 
-## 4. An upload was reported to AnA as "0% complete"
+## 4. An upload was reported to AnA as "0% complete" — fixed by the other lane
 
 `uploadLeaf` set `pct: 0` for uploads — "rather than a fabricated figure", its
 comment said — and search hits did the same. But 0 is a figure: the Vault
 publishes the selection's `pct` to AnA as `percentComplete`, so AnA was told an
-uploaded PDF was a document nobody had started. The re-verification found it; I
-first handed it to the AnA lane, and it is not theirs — the number is made in
-this lane's projection and surface. `pct` is now `number | null`, and null
-("not assessed") is what an upload and a search hit carry.
+uploaded PDF was a document nobody had started.
 
-Tests: `project-vault-cabinet.test.ts` ("projects pct as null, not 0"; the older
-assertion that pinned `0` as "no authoring completion" now pins `null`, the same
-intent) and `vaultSurface.test.tsx` ("a search hit is not '0% complete'", read
-through the published surface context). Both were red on the code as at HEAD
-("expected +0 to be null") and are green after.
+**Correction, same day.** I handed this to the AnA lane (`…01DiJJAk`) on the
+work-order board, then decided it was mine and fixed it locally (`3b525ea9`)
+without re-reading the board. The AnA lane had already claimed it and landed
+the same fix first — `d9be3513`, evidence under
+`docs/evidence/D4/2026-09-24-vault-upload-completion/`. Two sessions, one
+defect, two implementations: exactly what the board exists to prevent, and the
+check I skipped was the one it asks for. At merge, every overlapping hunk took
+theirs. What remains from this lane is one test for a path theirs does not
+exercise: selecting a **search hit** publishes `percentComplete: null`
+(`vaultSurfaceLabels.test.tsx`), red on the code before either fix.

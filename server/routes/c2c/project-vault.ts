@@ -80,8 +80,8 @@ interface VaultDoc {
   title: string;
   type: string;
   status: string;
-  /** Authoring completion, or null when none was assessed (an upload has no
-   *  authoring lifecycle). The Vault publishes it to AnA as percentComplete. */
+  /** Authoring completion, 0–100. Null for an upload: it has none, and a 0
+   *  there was read to AnA as "0% complete". */
   pct: number | null;
   owner: string;
   ver: string;
@@ -427,10 +427,9 @@ export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
     title,
     type: uploadTypeLabel(row),
     status: placementStatus,
-    /* Uploads have no authoring completion. This was 0, "rather than a
-       fabricated figure" — but 0 is a figure: the Vault publishes it to AnA as
-       percentComplete, so AnA read an uploaded PDF as "0% complete", a document
-       nobody had started. Null is "not assessed", which is true. */
+    // Uploads have no authoring completion, so no figure at all. It was 0,
+    // "rather than a fabricated figure" — but 0 is a figure, and AnA's screen
+    // context reported every uploaded file as 0% complete.
     pct: null,
     owner: row.owner_name ?? '—',
     ver: row.version ? `v${row.version}` : '—',

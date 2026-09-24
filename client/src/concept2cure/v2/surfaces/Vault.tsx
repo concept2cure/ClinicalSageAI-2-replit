@@ -453,8 +453,6 @@ function searchHitToDoc(h: VaultSearchHit): VaultDoc {
     // "MODULE_3" in a search.
     type: h.documentType ? vaultIngestTypeLabel(h.documentType) : '',
     status: h.placementStatus || 'unfiled',
-    // Not assessed — a hit carries no authoring completion, and 0 would tell
-    // AnA (percentComplete below) that the document was never started.
     pct: null,
     owner: '',
     ver: '',
@@ -841,7 +839,10 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           ? {
               id: sel.id, number: sel.num, title: sel.title, type: sel.type,
               status: sel.status, version: sel.ver, owner: sel.owner,
-              updated: sel.updated, percentComplete: sel.pct,
+              updated: sel.updated,
+              // An upload has no authoring completion. The server sends null;
+              // a 0 from one that has not caught up is still not a figure.
+              percentComplete: sel.src === 'upload' ? null : sel.pct,
               blocker: sel.blocker ?? false, flag: sel.flag ?? null,
               filing: sel.filing ?? null,
             }
