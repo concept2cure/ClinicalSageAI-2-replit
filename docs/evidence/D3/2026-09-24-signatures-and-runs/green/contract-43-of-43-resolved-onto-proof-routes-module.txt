@@ -1,0 +1,74 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T17:21:47.288Z","pid":4671,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T17:21:47.290Z","pid":4671,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T17:21:47.290Z","pid":4671,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/two-tenant-application-rls.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/two-tenant-application-rls.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/two-tenant-application-rls.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > catalog and live session prove RLS is active for the runtime role 18ms
+stdout | tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal project-context endpoint cannot resolve Tenant B profile as Tenant A
+[database] Database connection successful { timestamp: '2026-09-24T17:21:48.921Z', poolSize: 1 }
+
+stdout | tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal regulatory-content CRUD endpoints hide and protect Tenant B rows
+[database] Database connection successful { timestamp: '2026-09-24T17:21:48.969Z', poolSize: 2 }
+
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal project-context endpoint cannot resolve Tenant B profile as Tenant A 147ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal regulatory-content CRUD endpoints hide and protect Tenant B rows 133ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: list/filter, direct read and existence probe hide tenant B from A 43ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: update and delete of tenant B are indistinguishable not-found 21ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: WITH CHECK rejects planting a row into tenant B without leaking details 16ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: list/filter, direct read and existence probe hide tenant B from A 30ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: update and delete of tenant B are indistinguishable not-found 21ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: WITH CHECK rejects planting a row into tenant B without leaking details 8ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: list/filter, direct read and existence probe hide tenant B from A 28ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: update and delete of tenant B are indistinguishable not-found 18ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: WITH CHECK rejects planting a row into tenant B without leaking details 7ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: list/filter, direct read and existence probe hide tenant B from A 29ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: update and delete of tenant B are indistinguishable not-found 17ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: WITH CHECK rejects planting a row into tenant B without leaking details 6ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: list/filter, direct read and existence probe hide tenant B from A 25ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: update and delete of tenant B are indistinguishable not-found 21ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: WITH CHECK rejects planting a row into tenant B without leaking details 6ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: list/filter, direct read and existence probe hide tenant B from A 43ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: update and delete of tenant B are indistinguishable not-found 18ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: WITH CHECK rejects planting a row into tenant B without leaking details 6ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: list/filter, direct read and existence probe hide tenant B from A 28ms
+{"level":30,"time":"2026-09-24T17:21:49.530Z","pid":4671,"hostname":"vm","context":{"code":"governed-fabric:eff3d873-4d7c-461a-85ec-ee81c8a35102","project":903010},"msg":"[decision-record] Creating decision record"}
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: update and delete of tenant B are indistinguishable not-found 21ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: WITH CHECK rejects planting a row into tenant B without leaking details 6ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > pooled session context is reset and the wrong-context negative control is observable 13ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the recording evaluator persists the caller's own decision through the app role 1509ms
+{"level":30,"time":"2026-09-24T17:21:51.020Z","pid":4671,"hostname":"vm","context":{"code":"governed-fabric:95150f48-8820-47ae-b8d0-e85da9f5f283","project":903010},"msg":"[decision-record] Creating decision record"}
+{"level":40,"time":"2026-09-24T17:21:51.023Z","pid":4671,"hostname":"vm","context":{"operation":"recordGovernedDecision","error":"new row violates row-level security policy for table \"decision_records\""},"msg":"[governance-observability] Governance persistence failure"}
+{"level":40,"time":"2026-09-24T17:21:51.023Z","pid":4671,"hostname":"vm","context":{"decisionId":"95150f48-8820-47ae-b8d0-e85da9f5f283","error":"new row violates row-level security policy for table \"decision_records\""},"msg":"[governed-decision-repository] Governed decision durable write failed"}
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > WITH CHECK refuses a decision the recorder files for another tenant 1504ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the simulate route records nothing, for any tenant 1512ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the reads show tenant A its decision and tenant B nothing of it 40ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > GET /runs never lists another tenant's run, whatever org the query names 16ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > GET /runs lists the session tenant's own runs 13ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > POST /runs records for the session tenant and user, whatever the body names 72ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > POST /runs over another tenant's project is not found and computes nothing 20ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a program group is made in the session tenant by the session user, whatever the body names 19ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a program group over another tenant's project is refused 13ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > another tenant's program group cannot be changed 10ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > another tenant's program group cannot be snapshotted 9ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a bundle cannot take another tenant's run 17ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a bundle of the session tenant's own run is stored and records the session user 39ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a delivery cannot take another tenant's run 13ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a delivery of the session tenant's own run records the session user 17ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > correspondence cannot be captured into another tenant's project 11ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > correspondence is captured into the session tenant's own project and submission 24ms
+
+ Test Files  1 passed (1)
+      Tests  43 passed (43)
+   Start at  17:21:43
+   Duration  10.82s (transform 2.40s, setup 114ms, import 4.30s, tests 5.97s, environment 0ms)
+

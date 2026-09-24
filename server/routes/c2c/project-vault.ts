@@ -95,6 +95,10 @@ interface VaultDoc {
   docId?: string;
   sizeLabel?: string;
   hash?: string;
+  /** vault.documents.mime_type, verified against the magic bytes at ingest.
+   *  The surface offers "Place into submission" only for a PDF: the packager
+   *  refuses any other leaf. */
+  mimeType?: string | null;
   filing?: UploadFiling;
 }
 
@@ -436,6 +440,7 @@ export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
     docId: row.id,
     sizeLabel: size,
     hash: row.content_hash ?? undefined,
+    mimeType: row.mime_type ?? null,
     filing: {
       folderId: row.folder_id,
       folderLabel: folderLabel(view, row.folder_id),
