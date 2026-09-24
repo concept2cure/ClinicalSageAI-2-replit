@@ -65,6 +65,9 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+          # Build plus up to a 60-minute provision outlasts the default hour;
+          # the deploy role allows two (max_session_duration).
+          role-duration-seconds: 7200
 
       - name: Login to Amazon ECR
         id: login-ecr

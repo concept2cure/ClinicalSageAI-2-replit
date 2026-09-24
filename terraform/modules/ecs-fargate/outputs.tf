@@ -50,3 +50,17 @@ output "execution_secrets_policy" {
   description = "The execution role's Secrets Manager grant (JSON policy document)"
   value       = aws_iam_role_policy.ecs_execution_secrets.policy
 }
+
+# For the GitHub deploy role (modules/github-deploy-roles): the resources it
+# may act on, by ARN.
+output "cluster_arn" {
+  value = aws_ecs_cluster.this.arn
+}
+
+output "api_service_arn" {
+  value = aws_ecs_service.api.id # the service's id IS its ARN
+}
+
+output "api_log_group_arn" {
+  value = aws_cloudwatch_log_group.api.arn
+}
