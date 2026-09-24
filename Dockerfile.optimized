@@ -128,6 +128,13 @@ COPY --from=builder /app/scripts/db ./scripts/db
 # and template integrity still verifies at runtime.
 COPY --from=builder /app/assets ./assets
 
+# The Amazon RDS certificate bundle, from the assets copied above
+# (assets/rds-ca/README.md). Production verifies the database certificate, and
+# Node's built-in roots contain no RDS CA, so without this every connection to
+# RDS, from the API or from the migrate task that runs this image, fails
+# verification. NODE_EXTRA_CA_CERTS adds to the default roots and replaces none.
+ENV NODE_EXTRA_CA_CERTS=/app/assets/rds-ca/global-bundle.pem
+
 # Create non-root user for security
 RUN groupadd -r appuser && useradd -r -g appuser -d /app appuser && chown -R appuser:appuser /app
 

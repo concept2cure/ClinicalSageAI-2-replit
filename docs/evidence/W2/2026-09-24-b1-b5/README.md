@@ -82,7 +82,7 @@ staging `validate`, `modules/alb` 4/4, `modules/cloudfront` 8/8.
   account.
 - **The first provision** is still a one-time `node scripts/db/install-fresh.mjs`
   against the new instance, out of band (`deploy-aws.yml` exit 3 says so).
-- **Open, found while doing this: RDS TLS trust.** In production the app
+- **Found while doing this, fixed the same day (`../2026-09-24-rds-ca/`): RDS TLS trust.** In production the app
   verifies the database certificate against Node's trust store
   (`server/db/ssl.ts`, `rejectUnauthorized: true`). The RDS CA is not a public
   root. Measured: AWS's published bundle
