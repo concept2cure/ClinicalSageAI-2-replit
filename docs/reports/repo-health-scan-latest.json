@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-24T17:09:36.161Z",
+  "generatedAt": "2026-09-24T17:35:50.851Z",
   "git": {
-    "sha": "b4a22a781a62d4d0586765ba2c562d66152c5fcd",
+    "sha": "9cd48abe7687c13b760a1a24683c4d9f8ffe2279",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1971,7 +1971,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1057038
+        "bytes": 1058271
       },
       {
         "file": "shared/schema.ts",
@@ -2149,7 +2149,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 20443
+        "lines": 20465
       },
       {
         "file": "shared/schema.ts",

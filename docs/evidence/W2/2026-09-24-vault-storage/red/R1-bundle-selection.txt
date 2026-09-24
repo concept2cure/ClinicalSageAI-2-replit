@@ -1,0 +1,8 @@
+ × server/services/storage/__tests__/storage-provider-production-bundle.test.ts > the production bundle selects the storage provider it is configured with > serves S3 when STORAGE_PROVIDER=s3 and a bucket is named 65ms
+   → selecting S3 in the production bundle must not throw: expected 'S3StorageProvider: @aws-sdk/client-s3…' to be undefined
+ ✓ server/services/storage/__tests__/storage-provider-production-bundle.test.ts > the production bundle selects the storage provider it is configured with > refuses an S3 selection that names no bucket 52ms
+ × server/services/storage/__tests__/storage-provider-production-bundle.test.ts > the production bundle selects the storage provider it is configured with > refuses a value it does not recognise instead of writing to local disk 52ms
+   → an unrecognised provider must never fall back to local disk: expected 'local' to be undefined
+ ✓ server/services/storage/__tests__/storage-provider-production-bundle.test.ts > the production bundle selects the storage provider it is configured with > still serves local disk by default outside production configuration 49ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 2 passed (4)

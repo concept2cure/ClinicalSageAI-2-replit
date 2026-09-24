@@ -17,6 +17,7 @@
 import { isGovernedContentWriteTool } from './governed-write-tools.js';
 import { isServedModelApprovedForHighRisk } from '../ai-governance/approved-models.js';
 import { getGateway } from '../ai-gateway/gateway';
+import { getTenantScope } from '../../db/tenantStore.js';
 // Region + gateway taxonomy — shared with the tool schemas in
 // AnaToolDefinitions so an accepted value and an advertised one are the same
 // list. This module has no runtime deps, so importing it here does not pull in
@@ -15179,6 +15180,26 @@ export interface AgenticOptions {
 }
 
 /**
+ * The tool context, with the tenant uuid filled from the active request scope
+ * when the caller did not pass it and the scope is the same tenant.
+ *
+ * The uuid is the tenant boundary search_document_passages,
+ * project_knowledge_search and the artifact scope enforce, and each refuses
+ * without it. The chat route passes it; a background deep investigation (and
+ * the realtime namespace) built its context from the integer org id alone, so
+ * those tools answered "unavailable" there. A deep investigation is started
+ * fire-and-forget from inside the chat request, whose scope holds the uuid the
+ * auth boundary resolved. Only that scope is trusted, and only for its own
+ * tenant — never another tenant's uuid, and nothing invented outside a scope.
+ */
+function withScopeOrganizationUuid(ctx: ToolContext | undefined): ToolContext | undefined {
+  if (!ctx || ctx.organizationUuid || ctx.organizationId == null) return ctx;
+  const scope = getTenantScope();
+  if (!scope?.orgUuid || scope.tenantId !== String(ctx.organizationId)) return ctx;
+  return { ...ctx, organizationUuid: scope.orgUuid };
+}
+
+/**
  * Execute a multi-turn agentic loop with AnA.
  *
  * AnA can call tools, get results, reason further, call more tools, and
@@ -15205,6 +15226,7 @@ export async function executeAgenticLoop(
   const maxRounds = options?.maxRounds || resolveMaxRounds('balanced');
   const progressExtension = options?.progressExtension ?? resolveRoundExtension('balanced');
   const signal = options?.signal;
+  const toolContext = withScopeOrganizationUuid(options?.toolContext);
   // Failure-adaptation guidance from the latest round (cleared after use).
   let pendingAdaptationNote = '';
 
@@ -15269,7 +15291,7 @@ export async function executeAgenticLoop(
         return runOneTool(
           handler,
           call,
-          { ...(options?.toolContext ?? {}), servingModel: servedModelOf(finalResponse) },
+          { ...(toolContext ?? {}), servingModel: servedModelOf(finalResponse) },
           signal,
         );
       },
