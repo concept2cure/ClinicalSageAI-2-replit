@@ -247,7 +247,7 @@
   .pd-timeline{display:flex;flex-direction:column;}
   .pd-tl-row{display:grid;grid-template-columns:auto 1fr;gap:14px;}
   .pd-tl-rail{display:flex;flex-direction:column;align-items:center;}
-  .pd-tl-node{width:18px;height:18px;border-radius:50%;border:2px solid var(--bg-400);background:var(--bg-000);display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;flex-shrink:0;}
+  .pd-tl-node{width:18px;height:18px;border-radius:50%;border:2px solid var(--bg-400);background:var(--bg-000);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--on-success);flex-shrink:0;}
   .pd-tl-node[data-status="done"]{background:var(--success);border-color:var(--success);}
   .pd-tl-node[data-status="active"]{border-color:var(--accent-100);background:var(--accent-000);box-shadow:0 0 0 4px var(--accent-000);}
   .pd-tl-line{flex:1;width:2px;background:var(--border);min-height:24px;}
@@ -322,7 +322,7 @@
   .pd-consent-row{display:grid;grid-template-columns:auto 1fr;gap:11px;align-items:center;padding:9px 12px;border-radius:var(--radius-md);font-size:12.5px;color:var(--text-200);}
   .pd-consent-row:hover{background:var(--bg-050);}
   .pd-consent-row.missing{color:var(--text-400);}
-  .pd-consent-ck{width:18px;height:18px;border-radius:var(--radius-sm);border:1.5px solid var(--bg-400);display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;}
+  .pd-consent-ck{width:18px;height:18px;border-radius:var(--radius-sm);border:1.5px solid var(--bg-400);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--on-success);}
   .pd-consent-ck[data-on="true"]{background:var(--success);border-color:var(--success);}
 
   /* ════ Research administration ════ */
