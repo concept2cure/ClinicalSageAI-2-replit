@@ -82,6 +82,42 @@ shipped stylesheets (`design-system/colors_and_type.css`, `index.css`, `app-v2.c
   0%/100% bar, Deep Research's fixed percentages, the Authoring section "AI draft" button,
   Evidence ask, Submission explain / shadow review, onboarding ingest, AnA Command, and two
   workflow-engine runners). Moving each onto the canonical record needs an adapter per endpoint.
-- **The plan is not persisted.** A reopened thread shows its phases and tools but no plan, and
-  therefore no count — honest, but the record is thinner after a reload.
 - Live staging screenshots are owed with D1.
+
+## Second pass (same day): the plan survives a reload; five in-catalog waits
+
+**The declared plan is persisted with the turn.** `update_plan`'s last validated plan rides the
+assistant message metadata (`tool-trace.ts` `plan`, via the post-processing context) and
+`loadThread` restores it, so a reopened conversation keeps its rail and its "N of M done". Only
+the final list is stored, not when each step changed, so no plan changes are invented on reload
+and the transcript says **"Plan · N steps"**, never "Planned".
+
+**Five in-catalog AI waits now show AnA's live record** (the shared `AnaActivity`: what is
+running, a pulse, a running clock, one polite live region) instead of a button label that said
+nothing to a screen reader. No percentage anywhere; none of these requests can know one.
+
+| Surface (launch app) | File | Live line |
+|---|---|---|
+| Section "AI draft" — every document type (Authoring) | `surfaces/AuthoringAiDraft.tsx` | "Retrieving Data Room evidence and drafting §…" |
+| Validation "Explain the findings" (Submission Center) | `surfaces/SubmissionSeqWorkspaces.tsx` | "Explaining N findings for <region>…" |
+| Shadow review (Submission Center) | `surfaces/SubmissionSeqWorkspaces.tsx` | "Reading sequence NNNN as a <lens> reviewer…" |
+| Onboarding document read (always on) | `surfaces/OnboardingIngest.tsx` | "Reading your document…" |
+| AnA Command run (always on) | `surfaces/AnaCommand.tsx` | "Running <command> — every step runs server-side…" |
+
+AnA Command's post-run step list is left as it is: its engine reports statuses (`skipped`,
+`queued`) that the shared rows cannot state without calling them done.
+
+Not moved, and why: Batch Draft, Deep Research, Evidence ask and Orchestration are outside the
+launch catalog (flag-off in production; `shared/constants/launch-scope.ts`) — Rule 2 leaves them.
+
+### Verified (second pass)
+
+| Mutation | Caught by |
+|---|---|
+| The AI-draft wait's live record removed | `authoringAiDraft.test.tsx` |
+| The plan not written to the assistant metadata | `turn-plan-and-context.test.ts` |
+| The plan not restored by `loadThread` | `useAnaChat-plan.test.ts` |
+| A reopened plan labelled "Planned" | `anaActivity.test.tsx` |
+
+Affected suites after the last edit: 30 files, 325 passed. `tsc` 0 errors. ESLint warnings on
+the touched files equal to their base.
