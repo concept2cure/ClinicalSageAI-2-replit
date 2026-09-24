@@ -289,8 +289,7 @@ module "ecs" {
 module "evidence" {
   source           = "../modules/compliance-evidence"
   bucket_name      = local.evidence_bucket
-  kms_key_id       = "alias/${local.short}-evidence"
-  kms_policy       = ""
+  name_prefix      = local.short
   object_lock_mode = var.evidence_object_lock_mode
   retention_days   = var.evidence_retention_days
   tags             = var.tags
