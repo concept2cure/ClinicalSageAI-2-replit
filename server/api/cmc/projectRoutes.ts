@@ -396,13 +396,14 @@ router.post('/projects/:projectId/documents', async (req, res) => {
     }
 
     const { projectId } = req.params;
-    const orgIdFromAuth = Number(getOrgId(req));
-    const organizationId =
-      Number(req.body?.organizationId) ||
-      (Number.isFinite(orgIdFromAuth) ? orgIdFromAuth : 0);
-
+    // The session's org only. This read `req.body.organizationId` FIRST and
+    // fell back to the session, so any caller could file a document into
+    // another tenant's regulatory_documents (router.param only proves the
+    // PROJECT is the caller's). The explicit key after the body spread below
+    // overrides whatever the body carries.
+    const organizationId = getOrgId(req);
     if (!organizationId || organizationId <= 0) {
-      return res.status(400).json({ error: 'Valid organizationId is required' });
+      return res.status(401).json({ error: 'Organization context required' });
     }
 
     const validatedDocumentData = insertRegulatoryDocumentSchema

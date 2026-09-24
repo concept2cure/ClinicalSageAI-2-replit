@@ -39,6 +39,7 @@ import {
   BINDING_BASIS,
 } from '../services/part11/signature-persistence.js';
 import { clientIpOf } from '../utils/client-ip.js';
+import { resolveUserRole } from '../types/auth-request';
 
 const router = Router();
 
@@ -48,13 +49,6 @@ function resolveUserId(req: Request): number | null {
   if (raw === undefined || raw === null) return null;
   const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
   return Number.isFinite(n) ? n : null;
-}
-
-/** The signer's organization role from the authenticated request (lowercased). */
-function resolveUserRole(req: Request): string {
-  const r = req as any;
-  const raw = r.userRole ?? r.user?.role ?? r.tenantContext?.role ?? '';
-  return String(raw).trim().toLowerCase();
 }
 
 /**

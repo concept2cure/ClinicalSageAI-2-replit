@@ -52,9 +52,12 @@ import { liveGetOrNull, liveMutateOrNull, EmptyState } from '../dataConnect';
 import { redactInternals } from '@/lib/queryClient';
 import { RichSectionEditor, type RichSectionEditorHandle } from '../editor/RichSectionEditor';
 import { useAnaChat } from '../../components/ana/useAnaChat';
-import { AnaWorkPanel } from '../AnaWorkPanel';
+import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
+import { AnaActivity, activityPropsFor } from '../AnaActivity';
+import { AnaMarkdown } from '../AnaMarkdown';
+import { AnaOutputCards } from '../AnaOutputs';
 import { useAgentActivity } from '../useAgentActivity';
-import { useWorkDockVisible } from '../workDock';
+import { useProgressDock } from '../workDock';
 import { shellProgramName } from '../shellProject';
 import { useChatUpload, attachmentReadLabel } from '../../hooks/useChatUpload';
 import { SignoffList } from '../SignoffList';
@@ -317,10 +320,11 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
     onDriveEvent: liveDrive?.onDriveEvent,
     onArtifactSaved: liveDrive?.onWorkSaved,
   });
-  /* The live work dock for this pane (AnaWorkPanel): one shared show/hide
-     memory with the rail, and the background queue read only while shown. */
-  const [workDockOpen, setWorkDockOpen] = useWorkDockVisible();
-  const anaWorkQueue = useAgentActivity(workDockOpen, anaChat.isStreaming);
+  /* AnA's progress panel for this pane: one shared show/hide memory with
+     every other host (workDock.ts), toggled by the chip in the pane header,
+     and the background queue read only while shown. */
+  const dock = useProgressDock();
+  const anaWorkQueue = useAgentActivity(dock.open, anaChat.isStreaming);
   const turns = anaChat.messages;
 
   /* Validation + compliance are per-document — clear stale results when the
@@ -749,21 +753,18 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
           {/* "live" was asserted from token presence alone, including when every
     read on the surface had failed. */}
           <span className="hint">co-authoring &sect;{activeRef || '—'} — bound to the dossier</span>
-          <button
-            type="button"
-            className="ana-work-toggle"
-            aria-pressed={workDockOpen}
-            aria-label={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
-            title={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
-            onClick={() => setWorkDockOpen(!workDockOpen)}
-          >
-            {I.activity} AnA at work
-          </button>
+          <AnaProgressChip
+            ref={dock.chipRef}
+            messages={anaChat.messages}
+            streaming={anaChat.isStreaming}
+            open={dock.open}
+            onToggle={dock.toggle}
+          />
         </div>
         <div className="ec-intel-scroll" ref={scrollRef}>
           {/* The live work dock — the same one the shell rail mounts — above
               the thread, so the person sees the work before the words. */}
-          {workDockOpen && (
+          {dock.open && (
             <div className="ana-work-host" style={{ padding: '0 0 14px' }}>
               <AnaWorkPanel
                 messages={anaChat.messages}
@@ -793,9 +794,14 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
               <div key={i} className="ec-msg-ai">
                 <span className="ec-avatar">AnA</span>
                 <div className="ec-body">
-                  {/* While the reply streams the server's status phase stands in
-                      until the first token lands — never a fabricated sentence. */}
-                  <p>{m.text || (m.streaming ? m.statusPhase || 'Thinking…' : '')}</p>
+                  {/* The answer through the one markdown path, and the shared
+                      record of her work beneath it — the same two every host
+                      renders. This pane showed plain text and, while she
+                      worked, the single word "Thinking…". The waiting state is
+                      the record's live phase now, never an invented sentence. */}
+                  {m.text && <AnaMarkdown text={m.text} className="ana-md" />}
+                  <AnaActivity {...activityPropsFor(m)} />
+                  <AnaOutputCards message={m} />
                   {Array.isArray(m.executedActions) && m.executedActions.length > 0 && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                       <AnaActionChips

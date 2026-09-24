@@ -118,6 +118,43 @@ export interface AnaProgressPhase {
   endedAt?: number;
 }
 /**
+ * One step of the plan AnA declared for a turn through `update_plan`
+ * (server/services/ana/turn-plan.ts). The ONLY source of a "Step 2 of 5"
+ * count: a turn that declared no plan has none, and a step is `completed`
+ * only because she marked it so — nothing on the client infers it.
+ */
+export interface AnaPlanStep {
+  title: string;
+  status: 'pending' | 'in_progress' | 'completed';
+}
+/**
+ * One change to the declared plan, in the order it arrived. The panel reads
+ * the plan itself; the transcript reads these to say "Planned 5 steps" or
+ * "Added step …" at the point in the work where it happened.
+ */
+export interface AnaPlanChange {
+  kind: 'added' | 'started' | 'completed' | 'removed';
+  title: string;
+  at: number;
+  /** The agentic-loop round of the update_plan call that made the change. */
+  round?: number;
+  /** True for the steps of the first plan the turn declared. */
+  initial?: boolean;
+}
+/**
+ * What the turn actually read before answering — the server's
+ * `context_used` event (server/services/ana/turn-context-used.ts). Only
+ * uploads that resolved are listed, each saying whether its content or only
+ * its name reached the model; a memory read that failed is `unavailable`,
+ * never an empty list that reads as "nothing matched".
+ */
+export interface AnaContextUsed {
+  uploads: Array<{ fileId: string; fileName: string; mimeType: string; read: 'content' | 'name_only' }>;
+  unresolvedUploads: number;
+  memory: Array<{ layer: string; title: string; documentName?: string }>;
+  memoryStatus: 'read' | 'none' | 'unavailable';
+}
+/**
  * Result of `verify_docx_against_source` — the audited "verify it against your
  * text" step. Surfaced as the Document Studio verification trust-panel: a
  * pass/fail with the exact caption/boilerplate strings that were missing and
@@ -305,6 +342,12 @@ export interface AnaChatMessage {
    * in the work panel. See {@link AnaProgressPhase} for the honesty contract.
    */
   progress?: AnaProgressPhase[];
+  /** The plan AnA declared this turn, as last updated. Absent when she declared none. */
+  plan?: AnaPlanStep[];
+  /** Every change to `plan`, in arrival order. */
+  planChanges?: AnaPlanChange[];
+  /** What the turn read before answering (uploads, memory). Absent until the event arrives. */
+  contextUsed?: AnaContextUsed;
   /**
    * Draft produced by a document-generating tool this turn. The rail reads
    * `title` only; nothing routes `content` anywhere, so this is NOT

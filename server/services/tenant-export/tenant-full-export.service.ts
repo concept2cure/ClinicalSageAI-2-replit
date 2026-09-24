@@ -42,6 +42,7 @@
  */
 
 import crypto from 'node:crypto';
+import { VAULT_DOCUMENT_TENANCY } from '../tenant/vault-tenancy';
 import type { Pool, PoolClient } from 'pg';
 import { createScopedLogger } from '../../utils/logger';
 
@@ -93,6 +94,22 @@ export const EXPORT_EXCLUDED_TABLES: readonly string[] = Object.freeze([
 
 /** Row cap per table, so one pathological table cannot exhaust memory. */
 const MAX_ROWS_PER_TABLE = 50_000;
+
+/**
+ * Tables whose tenant rows are NOT "the tenant column equals the org id", with
+ * the predicate that selects them instead — the SAME predicate the purge
+ * deletes by, so an export never contains less than the erasure it authorizes
+ * destroys. `$1` is the organization id as an integer.
+ *
+ * vault.document_chunks is deliberately absent: it has no tenant column, so it
+ * is not discovered, and it is derived — the passages are cut from the
+ * documents' extracted_text, which IS exported with each document. The purge
+ * removes chunks with their parent; the data return carries the text they were
+ * cut from.
+ */
+const EXPORT_SCOPED_PREDICATES: Readonly<Record<string, string>> = Object.freeze({
+  'vault.documents': VAULT_DOCUMENT_TENANCY,
+});
 
 export interface ExportedTable {
   table: string;
@@ -239,10 +256,19 @@ export async function exportTenantFull(
         tablesFailed.push({ table: label, error: 'unsafe identifier' });
         continue;
       }
-      const { rows } = await client.query(
-        `SELECT * FROM "${schema}"."${table}" WHERE "${tenantColumn}"::text = $1 LIMIT ${MAX_ROWS_PER_TABLE + 1}`,
-        [String(organizationId)]
-      );
+      // Own-key lookup: a bare index reaches Object.prototype.
+      const scoped = Object.prototype.hasOwnProperty.call(EXPORT_SCOPED_PREDICATES, label)
+        ? EXPORT_SCOPED_PREDICATES[label]
+        : null;
+      const { rows } = scoped
+        ? await client.query(
+            `SELECT * FROM "${schema}"."${table}" WHERE ${scoped} LIMIT ${MAX_ROWS_PER_TABLE + 1}`,
+            [organizationId]
+          )
+        : await client.query(
+            `SELECT * FROM "${schema}"."${table}" WHERE "${tenantColumn}"::text = $1 LIMIT ${MAX_ROWS_PER_TABLE + 1}`,
+            [String(organizationId)]
+          );
       const truncated = rows.length > MAX_ROWS_PER_TABLE;
       const kept = truncated ? rows.slice(0, MAX_ROWS_PER_TABLE) : rows;
       if (truncated) truncatedTables.push(label);

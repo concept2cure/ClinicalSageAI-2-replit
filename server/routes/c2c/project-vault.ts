@@ -80,7 +80,9 @@ interface VaultDoc {
   title: string;
   type: string;
   status: string;
-  pct: number;
+  /** Authoring completion, 0–100. Null for an upload: it has none, and a 0
+   *  there was read to AnA as "0% complete". */
+  pct: number | null;
   owner: string;
   ver: string;
   updated: string;
@@ -421,8 +423,10 @@ export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
     title,
     type: uploadTypeLabel(row),
     status: placementStatus,
-    // Uploads have no authoring completion; 0 rather than a fabricated figure.
-    pct: 0,
+    // Uploads have no authoring completion, so no figure at all. It was 0,
+    // "rather than a fabricated figure" — but 0 is a figure, and AnA's screen
+    // context reported every uploaded file as 0% complete.
+    pct: null,
     owner: row.owner_name ?? '—',
     ver: row.version ? `v${row.version}` : '—',
     updated: relativeTime(row.updated_at),

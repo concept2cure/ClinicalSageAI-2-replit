@@ -23,15 +23,98 @@ import {
 
 /** A pg-shaped fake that records every statement and answers the quote/probe
  *  queries the provisioner issues. `existingSchemas` is the set the pg_namespace
- *  discovery query reports; `roleExists` toggles CREATE vs ALTER. */
+ *  discovery query reports; `roleExists` toggles CREATE vs ALTER.
+ *
+ *  The role's attributes are STATE, because the provisioner reads them back
+ *  after minting and refuses an unsafe result: CREATE/ALTER apply the attribute
+ *  keywords they name, exactly as the server would, so a mint that omits one
+ *  leaves whatever the role carried before (`existingAttrs`). The connecting
+ *  role is a superuser unless `connectingIsSuperuser` is false — the RDS master,
+ *  which may not NAME SUPERUSER / BYPASSRLS / REPLICATION in ALTER ROLE. */
+type RoleAttrs = {
+  rolcanlogin: boolean;
+  rolsuper: boolean;
+  rolbypassrls: boolean;
+  rolreplication: boolean;
+  rolcreatedb: boolean;
+  rolcreaterole: boolean;
+};
+const KEYWORD_ATTR: Record<string, keyof RoleAttrs> = {
+  LOGIN: 'rolcanlogin',
+  SUPERUSER: 'rolsuper',
+  BYPASSRLS: 'rolbypassrls',
+  REPLICATION: 'rolreplication',
+  CREATEDB: 'rolcreatedb',
+  CREATEROLE: 'rolcreaterole',
+};
+const SUPERUSER_ONLY = ['SUPERUSER', 'BYPASSRLS', 'REPLICATION'];
 function makeFakeDb({
   existingSchemas = ['public', 'audit', 'vault', 'precedent', 'intelligence', 'extensions'],
   roleExists = false,
-}: { existingSchemas?: string[]; roleExists?: boolean } = {}) {
+  existingAttrs = {},
+  connectingIsSuperuser = true,
+}: {
+  existingSchemas?: string[];
+  roleExists?: boolean;
+  existingAttrs?: Partial<RoleAttrs>;
+  connectingIsSuperuser?: boolean;
+} = {}) {
   const statements: string[] = [];
+  const params: unknown[][] = [];
+  // 080_gcc creates the role NOLOGIN; that is the shape an existing role has.
+  let attrs: RoleAttrs | null = roleExists
+    ? {
+        rolcanlogin: false,
+        rolsuper: false,
+        rolbypassrls: false,
+        rolreplication: false,
+        rolcreatedb: false,
+        rolcreaterole: false,
+        ...existingAttrs,
+      }
+    : null;
+  const applyAttributeKeywords = (sql: string, base: RoleAttrs): RoleAttrs => {
+    const next = { ...base };
+    const clause = sql.replace(/PASSWORD\s+'(?:[^']|'')*'/, '');
+    for (const [kw, key] of Object.entries(KEYWORD_ATTR)) {
+      if (new RegExp(`\\bNO${kw}\\b`).test(clause)) next[key] = false;
+      else if (new RegExp(`\\b${kw}\\b`).test(clause)) next[key] = true;
+    }
+    return next;
+  };
+  /** CREATE/ALTER ROLE as the server applies it, including the refusal a
+   *  non-superuser gets for naming a superuser-only attribute. */
+  const applyRoleDdl = (sql: string) => {
+    if (sql.startsWith('ALTER') && !connectingIsSuperuser) {
+      const clause = sql.replace(/PASSWORD\s+'(?:[^']|'')*'/, '');
+      const named = SUPERUSER_ONLY.find((kw) => new RegExp(`\\b(NO)?${kw}\\b`).test(clause));
+      if (named) {
+        throw new Error(
+          `permission denied to alter role: Only roles with the SUPERUSER attribute may change the ${named} attribute.`,
+        );
+      }
+    }
+    const empty: RoleAttrs = {
+      rolcanlogin: false,
+      rolsuper: false,
+      rolbypassrls: false,
+      rolreplication: false,
+      rolcreatedb: false,
+      rolcreaterole: false,
+    };
+    attrs = applyAttributeKeywords(sql, sql.startsWith('CREATE') ? empty : (attrs ?? empty));
+  };
   const db = {
     async query(sql: string, args?: unknown[]) {
       statements.push(sql);
+      params.push(args ?? []);
+      if (/^(CREATE|ALTER) ROLE /.test(sql)) {
+        applyRoleDdl(sql);
+        return { rows: [], rowCount: 0 };
+      }
+      if (sql.includes('FROM pg_roles WHERE rolname = current_user')) {
+        return { rows: [{ rolsuper: connectingIsSuperuser }], rowCount: 1 };
+      }
       if (sql.includes('quote_ident($1) AS role_ident')) {
         return {
           rows: [
@@ -54,7 +137,7 @@ function makeFakeDb({
         return { rows: [{ db_ident: '"testdb"' }], rowCount: 1 };
       }
       if (sql.includes('FROM pg_roles WHERE rolname')) {
-        return roleExists ? { rows: [{}], rowCount: 1 } : { rows: [], rowCount: 0 };
+        return attrs ? { rows: [{ rolname: args![0], ...attrs }], rowCount: 1 } : { rows: [], rowCount: 0 };
       }
       // Schema discovery: return the configured schema set as pg_namespace rows.
       if (sql.includes('FROM pg_namespace')) {
@@ -66,7 +149,7 @@ function makeFakeDb({
       return { rows: [], rowCount: 0 };
     },
   };
-  return { db, statements };
+  return { db, statements, params };
 }
 
 const priorPassword = process.env.APP_SERVICE_DB_PASSWORD;
@@ -129,10 +212,8 @@ describe('provisionAppServiceRole', () => {
 
   it('CREATEs the role NOSUPERUSER + NOBYPASSRLS and grants least privilege', async () => {
     const { db, statements } = makeFakeDb({ roleExists: false });
-    // A password carrying a single quote + a SQL breakout attempt: proves the
-    // value is escaped by Postgres (quote_literal), not raw-concatenated.
     const result = await provisionAppServiceRole(db as never, {
-      env: { APP_SERVICE_DB_PASSWORD: "secret'; DROP ROLE postgres; --" },
+      env: { APP_SERVICE_DB_PASSWORD: 'a-sufficiently-long-secret' },
     });
     expect(result.skipped).toBe(false);
 
@@ -143,10 +224,6 @@ describe('provisionAppServiceRole', () => {
     expect(create).toContain('NOCREATEDB');
     expect(create).toContain('NOCREATEROLE');
     expect(create).toContain('LOGIN');
-    // The password reaches DDL only as a Postgres-quoted literal: the embedded
-    // quote is DOUBLED (escaped), so the breakout sequence never appears raw.
-    expect(create).toContain("secret''; DROP ROLE postgres; --"); // escaped form
-    expect(create).not.toContain("secret'; DROP"); // un-escaped breakout absent
 
     // Wrapped in a transaction.
     expect(statements).toContain('BEGIN');
@@ -185,6 +262,20 @@ describe('provisionAppServiceRole', () => {
     expect(statements.some((s) => s.includes('ALTER DEFAULT PRIVILEGES IN SCHEMA "public"'))).toBe(
       true,
     );
+  });
+
+  it('never sends the plaintext password: DDL carries its SCRAM verifier', async () => {
+    // A password carrying a single quote and a SQL breakout attempt. It never
+    // reaches the server at all — statement or bind parameter — so neither the
+    // breakout nor the secret can land in SQL or in log_statement=ddl output.
+    const { db, statements, params } = makeFakeDb({ roleExists: false });
+    await provisionAppServiceRole(db as never, {
+      env: { APP_SERVICE_DB_PASSWORD: "secret'; DROP ROLE postgres; --" },
+    });
+    const create = statements.find((st) => st.includes('CREATE ROLE'));
+    expect(create).toMatch(/PASSWORD 'SCRAM-SHA-256\$4096:[A-Za-z0-9+/=]+\$[A-Za-z0-9+/=]+:[A-Za-z0-9+/=]+'/);
+    expect(statements.some((st) => st.includes('secret'))).toBe(false);
+    expect(params.some((ps) => ps.some((v) => String(v).includes('secret')))).toBe(false);
   });
 
   it('ALTERs (not re-CREATEs) an existing role, rotating the password in place', async () => {
@@ -234,6 +325,35 @@ import {
   auditRuntimeRoleGrants,
   APPEND_ONLY_TABLES,
 } from '../../../scripts/db/provision-app-role.mjs';
+
+describe('provisionAppServiceRole as a non-superuser (the RDS master)', () => {
+  it('ALTERs as a non-superuser (the RDS master) without naming superuser-only attributes', async () => {
+    const { db, statements } = makeFakeDb({ roleExists: true, connectingIsSuperuser: false });
+    const result = await provisionAppServiceRole(db as never, {
+      env: { APP_SERVICE_DB_PASSWORD: 'a-sufficiently-long-secret' },
+    });
+    expect(result.skipped).toBe(false);
+    const alter = statements.find((s) => s.startsWith('ALTER ROLE'));
+    expect(alter).toMatch(/\bLOGIN\b/);
+    expect(alter).not.toMatch(/SUPERUSER|BYPASSRLS|REPLICATION/);
+  });
+
+  it('REFUSES an existing role a non-superuser cannot make safe, rather than reporting it minted', async () => {
+    const { db, statements } = makeFakeDb({
+      roleExists: true,
+      connectingIsSuperuser: false,
+      existingAttrs: { rolbypassrls: true },
+    });
+    await expect(
+      provisionAppServiceRole(db as never, {
+        env: { APP_SERVICE_DB_PASSWORD: 'a-sufficiently-long-secret' },
+      }),
+    ).rejects.toThrow(/is BYPASSRLS/);
+    // Refused before any grant was issued on its behalf.
+    expect(statements.some((s) => /^GRANT /.test(s))).toBe(false);
+  });
+
+});
 
 describe('roleFromUrl', () => {
   it('reads the login role out of a connection string, with or without the psql wrapper', () => {

@@ -1,0 +1,70 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana/__tests__/catalog-gated-tools.test.ts > CATALOG_GATED_TOOLS > names exactly the tools whose handlers call requireCatalog 16ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > removes a denied tool from the surface the model is offered 2ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > returns everything when the tenant denies nothing 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > does NOT apply the allowlist — that would strip every search tool 2ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > skips the policy lookup entirely when there is no organization 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > ignores a non-numeric organization id rather than passing it to the query 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > is default-allow when the policy cannot be read 0ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > does not offer the catalog tools to an organization whose catalog is off 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > offers them when the catalog is on 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > fails closed when the toggle cannot be read — a tool that would refuse is not offered 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > does not offer them to an org-less turn, which they refuse outright 1ms
+stdout | server/services/ana-ri/__tests__/persona-client-files.test.ts
+{
+  "timestamp": "2026-09-24T00:55:51.368Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-24T00:55:51.369Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/persona-client-files.test.ts
+{
+  "timestamp": "2026-09-24T00:55:51.369Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/vault-named-tools-honesty.test.ts > Artifacts Center tools named "vault" > an empty listing says what it searched, not that the Vault is empty 3ms
+ ✓ server/services/ana/__tests__/vault-named-tools-honesty.test.ts > Artifacts Center tools named "vault" > an unknown id is not reported as absent from the Vault 1ms
+ ✓ server/services/ana/__tests__/vault-named-tools-honesty.test.ts > Artifacts Center tools named "vault" > their descriptions tell the model which store they read 1ms
+stdout | server/services/ana-ri/__tests__/persona-client-files.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > names the tools rather than gesturing at a capability 1ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > list_project_documents is a real, executable tool 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > read_uploaded_document is a real, executable tool 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > search_project_documents is a real, executable tool 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > search_document_passages is a real, executable tool 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > file_chat_upload_to_vault is a real, executable tool 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > read_project_document is a real, executable tool 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > catalog_project_document is a real, executable tool 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > place_project_document is a real, executable tool 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > tells her a listing is a page, and that absence is a claim about the whole vault 1ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > says what to do when the catalog tools are not offered — without naming internal settings 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > tells her to LOOK before reporting a file absent 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > says a file is not part of the context snapshot, so the "not in my context" reply does not apply to it 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > requires the whole document, not a sample, and says a scan is a document 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > requires the comprehension to be recorded, and only what the text states 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > points at the passage index for a question the text settles, without licensing a sample 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > requires the file to be PUT somewhere, and unfiling to be the honest fallback 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > requires an unreadable file to be reported as such 0ms
+ ✓ server/services/ana-ri/__tests__/persona-client-files.test.ts > persona — the client files discipline > carries no backtick — the persona body is a template literal 0ms
+
+ Test Files  4 passed (4)
+      Tests  33 passed (33)
+   Start at  00:55:47
+   Duration  4.08s (transform 4.80s, setup 577ms, import 7.30s, tests 57ms, environment 0ms)
+

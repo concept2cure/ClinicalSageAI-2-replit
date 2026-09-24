@@ -22,6 +22,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { Vault } from '../surfaces/Vault';
+import { useActiveSurfaceContext } from '../surfaceContext';
 
 const PID = '11111111-1111-4111-8111-111111111111';
 const DOC_ID = '22222222-2222-4222-8222-222222222222';
@@ -266,6 +267,42 @@ describe('Vault — the data room lane', () => {
     expect(
       await screen.findByText(/Uploaded files: The vault document store/),
     ).toBeTruthy();
+  });
+});
+
+/* A suggestion has two possible authors: the ingest classifier, which always
+   records its confidence, and AnA, whose place_project_document writes a
+   suggestion for a person to confirm (D5, 2026-09-24) and records none. The
+   filing block labelled EVERY suggestion "Classifier: …", so AnA's proposal
+   would have been shown beside the Confirm button as the classifier's —
+   misattributed in the one place a person decides whether to accept it. */
+describe('Vault — a suggestion is attributed to whoever made it', () => {
+  it("labels the classifier's proposal as the classifier's, with its confidence", async () => {
+    mockApi(() => ok(vaultPayload()));
+    render(<Vault {...props()} />);
+    const block = await screen.findByTestId('vault-filing-block');
+    expect(block.textContent).toMatch(/Classifier \(high confidence\): CTD pattern "Stability"/);
+  });
+
+  it("does not label AnA's suggestion as the classifier's", async () => {
+    const anaDoc = uploadDoc({
+      filing: {
+        folderId: 'module-3',
+        folderLabel: 'Module 3 · Quality',
+        evidenceKind: 'report',
+        ctdSection: '3.2.P.8',
+        placementStatus: 'suggested',
+        confidence: null,
+        rationale: "AnA's suggestion: the report states a 24-month stability study.",
+      },
+    });
+    mockApi(() => ok(vaultPayload({ tree: cabinetTree([anaDoc]) })));
+    render(<Vault {...props()} />);
+    const block = await screen.findByTestId('vault-filing-block');
+    expect(block.textContent).toMatch(/AnA's suggestion: the report states/);
+    expect(block.textContent).not.toMatch(/Classifier/);
+    // Still a suggestion a person can confirm.
+    expect(screen.getByTestId('vault-confirm-filing')).toBeTruthy();
   });
 });
 
@@ -568,3 +605,31 @@ describe('Vault — placing a document into a submission', () => {
     expect(String(sent.documentUuid)).not.toMatch(/^up-/);
   });
 });
+
+describe('Vault — what AnA is told about the selected document', () => {
+  /* The surface shows no percentage for an upload (there is no authoring
+     completion to show), but the context it publishes for AnA carried the
+     tree's placeholder 0 as `percentComplete`, so AnA described every uploaded
+     file as "0% complete". The server now sends null for an upload; the
+     surface also maps an upload to null, because a 0 from a server that has
+     not caught up is still not a completion figure. */
+  function ContextProbe({ onContext }: { onContext: (c: unknown) => void }) {
+    onContext(useActiveSurfaceContext('vault'));
+    return null;
+  }
+
+  it('an upload has no completion figure — null, not 0% complete', async () => {
+    mockApi(() => ok(vaultPayload()));
+    let latest: any = null;
+    render(
+      <>
+        <Vault {...props()} />
+        <ContextProbe onContext={(c) => { latest = c; }} />
+      </>,
+    );
+    await screen.findByTestId('vault-filing-block');
+    await waitFor(() => expect(latest?.facts?.selected?.title).toBe('stability-summary-24m'));
+    expect(latest.facts.selected.percentComplete).toBeNull();
+  });
+});
+

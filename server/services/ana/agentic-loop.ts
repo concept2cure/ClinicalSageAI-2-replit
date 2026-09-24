@@ -558,6 +558,14 @@ const TOOL_LABELS: Record<string, (input: Record<string, unknown>) => string> = 
     `Starting a background deep investigation${i.question ? ` — ${quoteArg(i.question)}` : ''}`,
   check_deep_investigation: () => 'Checking on the background investigation',
   get_client_journey: () => 'Getting your bearings — from license to submission',
+  // Drafting and project search, named by what they act on — the transcript
+  // shows the quoted argument as the row's object.
+  draft_authoring_document: i => (i.title ? `Drafting ${quoteArg(i.title)}` : 'Drafting the document'),
+  project_knowledge_search: i => `Searching the project's documents${i.query ? ` for ${quoteArg(i.query)}` : ''}`,
+  update_plan: i => {
+    const n = Array.isArray(i.steps) ? i.steps.length : 0;
+    return n > 0 ? `Updating the plan · ${n} step${n === 1 ? '' : 's'}` : 'Updating the plan';
+  },
   // Project-folder catalog — legible "she knows the files and is studying them".
   list_project_documents: () => 'Checking the project folder',
   file_chat_upload_to_vault: () => 'Filing the document into the project vault',
@@ -568,8 +576,8 @@ const TOOL_LABELS: Record<string, (input: Record<string, unknown>) => string> = 
   catalog_project_document: () => 'Recording what this document is',
   search_project_documents: i => `Searching the project files for ${quoteArg(i.query)}`,
   // Document vault / governed reads — legible "she's reading the right thing".
-  list_vault_documents: () => 'Listing the document vault',
-  read_vault_document: () => 'Reading the vault document',
+  list_vault_documents: () => 'Listing Artifacts Center documents',
+  read_vault_document: () => 'Reading an Artifacts Center document',
   get_document_versions: () => 'Reviewing the document version history',
   list_governed_documents: () => 'Listing the governed documents',
   read_governed_document: () => 'Reading the governed document',

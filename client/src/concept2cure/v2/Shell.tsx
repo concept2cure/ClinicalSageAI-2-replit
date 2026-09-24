@@ -29,9 +29,10 @@ import { AppMentionMenu, useAppMentions } from './appMentions';
 import { TaskTray } from './TaskTray';
 import type { OnboardingWelcome } from './onboardingWelcome';
 import { AnaActivity, type AnaActivityProps } from './AnaActivity';
-import { AnaWorkPanel } from './AnaWorkPanel';
+import { AnaProgressChip, AnaWorkPanel } from './AnaWorkPanel';
+import { AnaOutputCards, type AnaOutput } from './AnaOutputs';
 import { useAgentActivity } from './useAgentActivity';
-import { useWorkDockVisible } from './workDock';
+import { useProgressDock } from './workDock';
 import { segmentForShellProject, shellProgramName, useShellProject } from './shellProject';
 import { availableDemoScripts } from '../components/ana/anaLockedScreens';
 import { AnaActionChips } from './AnaActionChips';
@@ -118,6 +119,8 @@ export interface AnaMessage {
    * sites — a board-ready artifact the product could not show anyone.
    */
   crlPremortem?: CrlPremortemArtifact;
+  /** The draft this turn produced, for its output card (AnaOutputs). */
+  output?: AnaOutput;
 }
 
 /**
@@ -553,6 +556,24 @@ export interface AnaRailLiveDrive {
   onStartDemo?: (demoId: string, title: string) => void;
 }
 
+/**
+ * Open the full-page conversation on the rail's own thread. The rail and that
+ * page run on the shell's one chat instance, so `{ id: 'current' }` — the
+ * hand-off ConversationThread itself writes when it navigates away — shows
+ * the same turns there, each draft as its document canvas.
+ */
+function openThisConversation(onNav: (id: string) => void): void {
+  try {
+    (window as unknown as { C2C_CONVO?: { id: string; seed?: string | null } }).C2C_CONVO = {
+      id: 'current',
+      seed: null,
+    };
+  } catch {
+    /* non-fatal: the page opens on the conversation it already holds */
+  }
+  onNav('conversation-thread');
+}
+
 export function AnaRail({
   open,
   setOpen,
@@ -651,10 +672,12 @@ export function AnaRail({
   const [agent, setAgent] = React.useState(false);
   const [plusOpen, setPlusOpen] = React.useState(false);
   const [modeOpen, setModeOpen] = React.useState(false);
-  /* The work dock: shown by default, hidden by one shared per-browser choice
-     (workDock.ts) that every host of the dock honours. */
-  const [workOpen, setWorkDock] = useWorkDockVisible();
-  const workVisible = Boolean(work) && workOpen;
+  /* The progress panel: shown by default, hidden by one shared per-browser
+     choice (workDock.ts) that every host honours. The chip in the header is
+     its one control — the panel sits directly beneath it, and a second close
+     a few pixels away would be two affordances for one action. */
+  const dock = useProgressDock();
+  const workVisible = Boolean(work) && dock.open;
   /* Background investigations: read only while the dock shows them, and
      re-read the moment a turn ends (a turn can start or finish one). */
   const agentActivity = useAgentActivity(workVisible, streaming);
@@ -763,16 +786,13 @@ export function AnaRail({
         </div>
         <div className="ana-actions">
           {work && (
-            <button
-              type="button"
-              className={`tb-btn${workOpen ? ' on' : ''}`}
-              onClick={() => setWorkDock(!workOpen)}
-              aria-pressed={workOpen}
-              title={workOpen ? 'Hide AnA at work' : 'Show AnA at work'}
-              aria-label={workOpen ? 'Hide AnA at work' : 'Show AnA at work'}
-            >
-              {I.activity}
-            </button>
+            <AnaProgressChip
+              ref={dock.chipRef}
+              messages={work.messages}
+              streaming={streaming}
+              open={dock.open}
+              onToggle={dock.toggle}
+            />
           )}
           <button
             type="button"
@@ -948,7 +968,11 @@ export function AnaRail({
           </div>
         )}
         {messages.map((m, i) => (
-            <div key={i} className={`ana-msg ${m.role}`}>
+            /* `is-ana` / `is-user`, not the bare role: a message classed `ana`
+               matched the rail CONTAINER's own `.c2c-v2 .ana` rule (100vh,
+               overflow hidden, a left border, flex-shrink), so every AnA
+               message was clipped to whatever height the column left it. */
+            <div key={i} className={`ana-msg is-${m.role}`}>
               {m.role === 'ana' && (
                 <div className="who">
                   AnA · {m.model || model}
@@ -1011,6 +1035,16 @@ export function AnaRail({
                 </div>
               )}
               {m.role === 'ana' && m.activity && <AnaActivity {...m.activity} />}
+              {/* Her output beneath the work that made it. It opens the full
+                  conversation on this same thread, where the draft is the
+                  document canvas (docs/design/ANA_DOCUMENT_CANVAS.md). */}
+              {m.role === 'ana' && m.output && (
+                <AnaOutputCards
+                  message={m.output}
+                  onOpen={onNav ? () => openThisConversation(onNav) : undefined}
+                  openLabel="Open in conversation"
+                />
+              )}
               {m.role === 'ana' && Array.isArray(m.actions) && m.actions.length > 0 && (
                 <div className="ana-msg-actions">
                   {m.actions.map((id) => {

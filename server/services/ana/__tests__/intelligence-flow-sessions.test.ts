@@ -17,6 +17,7 @@
  *     marks the session committed; a refused entry stops the commit, leaves
  *     the session 'complete', and dry_run shows the plan without writing.
  */
+import { runWithTenantScope } from '../../../db/tenantStore';
 import { describe, it, expect, beforeEach, type Mock } from 'vitest';
 
 import { mockPool } from '../../../../tests/setup';
@@ -47,6 +48,9 @@ vi.mock('../../cmc/register-writes', () => registerCreates);
    BEFORE the executor loads — the wrapper delegates to it, so scripting the
    original drives every query the handlers issue. */
 const rawQuery = mockPool.query as unknown as Mock;
+/* Same for connect: instrumentation replaces pool.connect, and the scoped path
+   runs every query through the ORIGINAL one captured here. */
+const rawConnect = mockPool.connect as unknown as Mock;
 const { getToolHandler } = await import('../AnaToolExecutor');
 const { startFlow } = await import('../intelligence-questions/engine.js');
 
@@ -84,15 +88,45 @@ function scriptPool(answer: (text: string, params: unknown[]) => unknown[] | nul
   return statements;
 }
 
+/**
+ * Run a tool the way production does: inside the caller's tenant scope.
+ *
+ * The request middleware (establishRequestTenantScope) and AnA run-control both
+ * wrap tool execution in runWithTenantScope for the caller's organisation, and
+ * with RLS_ENFORCE=on — the test default since tests/setup.db.ts, and the
+ * production requirement — a bare pool.query outside a scope fails closed. These
+ * tests called the handler directly, so every tool that persists anything
+ * failed with "[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant
+ * scope" before reaching the behaviour under test. A context with no
+ * organisation runs unscoped, which is what the refusal cases assert against.
+ */
 const call = async (name: string, input: Record<string, unknown>, ctx?: Record<string, unknown>) => {
   const handler = getToolHandler(name);
   expect(handler, `${name} registered`).toBeTypeOf('function');
-  return JSON.parse(await handler!(input, ctx as never));
+  const org = ctx?.organizationId;
+  const run = () => handler!(input, ctx as never);
+  const raw = org == null
+    ? await run()
+    : await runWithTenantScope({ tenantId: String(org), source: 'test', caller: `tool:${name}` }, run);
+  return JSON.parse(raw);
 };
 
+/* Under a tenant scope the instrumented pool runs each query on a connection
+   (pool.connect → set_config → the statement), and the shared mock's client
+   answers undefined. Route that client to the same scripted query, minus the
+   scope's own session-variable setup, so `statements` still holds only the
+   tool's SQL. */
+const SCOPE_SETUP = /^\s*(SELECT set_config\(|BEGIN\b|COMMIT\b|ROLLBACK\b|RESET\b)/i;
 beforeEach(() => {
   rawQuery.mockReset();
   rawQuery.mockResolvedValue({ rows: [], rowCount: 0 });
+  rawConnect.mockResolvedValue({
+    query: (text: unknown, params?: unknown[]) =>
+      SCOPE_SETUP.test(String((text as { text?: string })?.text ?? text))
+        ? Promise.resolve({ rows: [], rowCount: 0 })
+        : rawQuery(text, params),
+    release: () => undefined,
+  });
 });
 
 describe('start_intelligence_flow', () => {

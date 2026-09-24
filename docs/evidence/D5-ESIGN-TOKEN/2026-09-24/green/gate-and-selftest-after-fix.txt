@@ -1,0 +1,21 @@
+# GREEN — ci:unauthenticated-fetch
+
+✅ ci:unauthenticated-fetch — 64 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+exit=0
+
+# GREEN — ci:unauthenticated-fetch:selftest
+
+[ci:unauthenticated-fetch:selftest] the gate refuses:
+  ok    a literal /api URL with credentials only (useVaultUpload, useSubmissions)
+  ok    a URL passed as a PARAMETER (usePdevData.postJson — invisible to a URL sweep)
+  ok    a ${BASE}${path} template (useEsignature — invisible to a URL sweep)
+  ok    "auth" that is only a COMMENT
+  ok    a baseline entry with no written reason
+  ok    a baseline entry that no longer occurs
+[ci:unauthenticated-fetch:selftest] the gate admits:
+  ok    a public endpoint, judged by the SERVER allowlist (/api/auth/*)
+  ok    the token sent through a local helper (useEstarFiling jsonHeaders shape)
+  ok    the token sent through an init object passed by name (apiRequest shape)
+
+✅ ci:unauthenticated-fetch:selftest — every case behaves
+exit=0

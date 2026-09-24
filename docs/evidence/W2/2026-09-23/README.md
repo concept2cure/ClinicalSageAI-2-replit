@@ -180,3 +180,11 @@ means it is an inference to confirm at plan or apply time.
 
 The founder runs `terraform apply` from the steps above. This session did not,
 and had no credentials to.
+
+## Follow-up (2026-09-24)
+
+B1–B3 and B5 are fixed in `docs/evidence/W2/2026-09-23b/`. Two corrections to
+this brief: B5's fix is `/healthz`, not `/readyz` (readiness in a container
+check replaces tasks it cannot heal); and B7's premise is wrong — `/readyz`'s
+`worker` is the API's in-process queue, so Redis (B6) decides it. The updated
+ordered list and founder decisions are in that folder's README.

@@ -38,6 +38,7 @@
 
 import { getAllEnabledTools } from './AnaToolDefinitions.js';
 import { loadAnaToolPolicy, filterToolsByPolicy } from '../ana-ri/mdx-tool-policy.js';
+import { CATALOG_GATED_TOOLS } from './document-tools-shared.js';
 
 type PolicyPool = { query: (sql: string, params: unknown[]) => Promise<{ rows: any[] }> };
 
@@ -53,7 +54,41 @@ export async function governedToolsetFor(
   organizationId: number | null | undefined,
 ): Promise<ReturnType<typeof getAllEnabledTools>> {
   const all = getAllEnabledTools();
-  if (organizationId == null || !Number.isFinite(Number(organizationId))) return all;
+  if (organizationId == null || !Number.isFinite(Number(organizationId))) {
+    // The catalog tools refuse an org-less call outright, so they are not offered.
+    return withoutCatalogTools(all);
+  }
   const policy = await loadAnaToolPolicy(pool, Number(organizationId));
-  return filterToolsByPolicy(all, policy);
+  const permitted = filterToolsByPolicy(all, policy);
+  return (await catalogEnabledFor(Number(organizationId))) ? permitted : withoutCatalogTools(permitted);
+}
+
+/**
+ * Whether the organization's document catalog is on — and false when that
+ * cannot be read.
+ *
+ * ── Why the toolset asks ────────────────────────────────────────────────────
+ * 'ana.document_catalog' is off for every new organisation, which is the launch
+ * default and not this module's decision. With it off, the seven catalog tools
+ * were still offered on every turn and every call refused — and the persona's
+ * client-files rule sends AnA to list_project_documents the moment a user
+ * mentions their material. So a regulatory user asking about a file they had
+ * uploaded to the Vault got a refusal naming an internal feature key. A tool
+ * that can only refuse is not a tool to offer; this is also the one place all
+ * three chat doors already compose through, so the gate holds on each of them.
+ *
+ * Fail closed: an unreadable toggle means the tools would refuse too, so they
+ * are withheld rather than offered.
+ */
+async function catalogEnabledFor(organizationId: number): Promise<boolean> {
+  try {
+    const { isDocumentCatalogEnabled } = await import('../vault/document-catalog.service.js');
+    return await isDocumentCatalogEnabled(organizationId);
+  } catch {
+    return false;
+  }
+}
+
+function withoutCatalogTools<T extends { name: string }>(tools: T[]): T[] {
+  return tools.filter(t => !CATALOG_GATED_TOOLS.includes(t.name));
 }

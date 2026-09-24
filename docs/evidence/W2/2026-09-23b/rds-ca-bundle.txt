@@ -1,0 +1,21 @@
+# Amazon RDS global CA bundle, as Dockerfile.optimized fetches and pins it (2026-09-23)
+$ curl -fsSL -o global-bundle.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
+$ sha256sum global-bundle.pem
+e5bb2084ccf45087bda1c9bffdea0eb15ee67f0b91646106e466714f9de3c7e3  global-bundle.pem
+$ wc -c < global-bundle.pem
+165408
+$ grep -c "BEGIN CERTIFICATE" global-bundle.pem
+108
+
+# Node's bundled roots contain no Amazon RDS CA (why the bundle is needed):
+$ node -e "console.log(tls.rootCertificates.length, tls.rootCertificates.filter(c=>/Amazon RDS/.test(new crypto.X509Certificate(c).subject)).length)"
+144 0
+
+# The bundle loads as NODE_EXTRA_CA_CERTS. Node reads the file lazily, so the probe
+# builds a TLS context to force it. Control first: a path that does not exist warns.
+$ NODE_EXTRA_CA_CERTS=/nonexistent.pem node -e "require(\"tls\").createSecureContext(); console.log(\"ctx\")"
+Warning: Ignoring extra certs from `/nonexistent.pem`, load failed: error:80000002:system library::No such file or directory
+ctx
+$ NODE_EXTRA_CA_CERTS=global-bundle.pem node -e "require(\"tls\").createSecureContext(); console.log(\"ctx\")"
+ctx
+(node v22.22.2; no warning = all 108 certificates loaded. All 108 are self-signed regional roots.)

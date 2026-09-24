@@ -448,7 +448,7 @@ function searchHitToDoc(h: VaultSearchHit): VaultDoc {
     title: h.title,
     type: h.documentType || '',
     status: h.placementStatus || 'unfiled',
-    pct: 0,
+    pct: null,
     owner: '',
     ver: '',
     updated: '',
@@ -834,7 +834,10 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           ? {
               id: sel.id, number: sel.num, title: sel.title, type: sel.type,
               status: sel.status, version: sel.ver, owner: sel.owner,
-              updated: sel.updated, percentComplete: sel.pct,
+              updated: sel.updated,
+              // An upload has no authoring completion. The server sends null;
+              // a 0 from one that has not caught up is still not a figure.
+              percentComplete: sel.src === 'upload' ? null : sel.pct,
               blocker: sel.blocker ?? false, flag: sel.flag ?? null,
               filing: sel.filing ?? null,
             }
@@ -1343,8 +1346,12 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       )}
                       {sel.filing.rationale && (
                         <div className="vd-d-filing-why">
-                          {sel.filing.placementStatus === 'suggested'
-                            ? `Classifier${sel.filing.confidence ? ` (${sel.filing.confidence} confidence)` : ''}: `
+                          {/* "Classifier" only for the classifier's own proposal, which
+                              always carries its confidence. A suggestion AnA made has
+                              none, and its rationale already names her — labelling it
+                              "Classifier" would misattribute it all over again. */}
+                          {sel.filing.placementStatus === 'suggested' && sel.filing.confidence
+                            ? `Classifier (${sel.filing.confidence} confidence): `
                             : ''}
                           {sel.filing.rationale}
                         </div>

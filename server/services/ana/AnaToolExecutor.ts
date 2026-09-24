@@ -17,6 +17,7 @@
 import { isGovernedContentWriteTool } from './governed-write-tools.js';
 import { isServedModelApprovedForHighRisk } from '../ai-governance/approved-models.js';
 import { getGateway } from '../ai-gateway/gateway';
+import { getTenantScope } from '../../db/tenantStore.js';
 // Region + gateway taxonomy — shared with the tool schemas in
 // AnaToolDefinitions so an accepted value and an advertised one are the same
 // list. This module has no runtime deps, so importing it here does not pull in
@@ -15179,6 +15180,26 @@ export interface AgenticOptions {
 }
 
 /**
+ * The tool context, with the tenant uuid filled from the active request scope
+ * when the caller did not pass it and the scope is the same tenant.
+ *
+ * The uuid is the tenant boundary search_document_passages,
+ * project_knowledge_search and the artifact scope enforce, and each refuses
+ * without it. The chat route passes it; a background deep investigation (and
+ * the realtime namespace) built its context from the integer org id alone, so
+ * those tools answered "unavailable" there. A deep investigation is started
+ * fire-and-forget from inside the chat request, whose scope holds the uuid the
+ * auth boundary resolved. Only that scope is trusted, and only for its own
+ * tenant — never another tenant's uuid, and nothing invented outside a scope.
+ */
+function withScopeOrganizationUuid(ctx: ToolContext | undefined): ToolContext | undefined {
+  if (!ctx || ctx.organizationUuid || ctx.organizationId == null) return ctx;
+  const scope = getTenantScope();
+  if (!scope?.orgUuid || scope.tenantId !== String(ctx.organizationId)) return ctx;
+  return { ...ctx, organizationUuid: scope.orgUuid };
+}
+
+/**
  * Execute a multi-turn agentic loop with AnA.
  *
  * AnA can call tools, get results, reason further, call more tools, and
@@ -15205,6 +15226,7 @@ export async function executeAgenticLoop(
   const maxRounds = options?.maxRounds || resolveMaxRounds('balanced');
   const progressExtension = options?.progressExtension ?? resolveRoundExtension('balanced');
   const signal = options?.signal;
+  const toolContext = withScopeOrganizationUuid(options?.toolContext);
   // Failure-adaptation guidance from the latest round (cleared after use).
   let pendingAdaptationNote = '';
 
@@ -15269,7 +15291,7 @@ export async function executeAgenticLoop(
         return runOneTool(
           handler,
           call,
-          { ...(options?.toolContext ?? {}), servingModel: servedModelOf(finalResponse) },
+          { ...(toolContext ?? {}), servingModel: servedModelOf(finalResponse) },
           signal,
         );
       },
@@ -19337,8 +19359,12 @@ registerToolHandler('list_vault_documents', async (input, ctx) => {
       count: rows.length,
       documents: rows,
       message: rows.length
-        ? `${rows.length} vault documents. Use read_vault_document with an id to open one.`
-        : 'No vault documents match the filters.',
+        ? `${rows.length} Artifacts Center document(s). Use read_vault_document with an id to open one.`
+        : /* An empty Artifacts Center answer said "No vault documents match", about a
+             store that is not the Vault — so a file the user had uploaded to the Vault
+             was reported absent. Say what was searched instead. */
+          'No Artifacts Center documents match the filters. This does not search files uploaded to the Vault — ' +
+          'do not tell the user a Vault file is missing on the strength of this result.',
     });
   } catch (err) {
     return JSON.stringify({ error: `list_vault_documents failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -19389,7 +19415,7 @@ registerToolHandler('read_vault_document', async (input, ctx) => {
         LIMIT 1`,
       [ctx.organizationId, artifactId],
     );
-    if (!rows.length) return JSON.stringify({ error: `No vault document '${artifactId}' in this organization.` });
+    if (!rows.length) return JSON.stringify({ error: `No Artifacts Center document '${artifactId}' in this organization. Files uploaded to the Vault are a different store with UUID ids — this does not mean a Vault file is missing.` });
     const { content, ...meta } = rows[0];
     const excerpt = viewExcerpt(typeof content === 'string' ? content : JSON.stringify(content ?? ''), input);
 
@@ -19429,7 +19455,7 @@ registerToolHandler('get_document_versions', async (input, ctx) => {
         WHERE organization_id = $1 AND (id::text = $2 OR artifact_id = $2) LIMIT 1`,
       [ctx.organizationId, artifactId],
     );
-    if (!idRes.rows.length) return JSON.stringify({ error: `No vault document '${artifactId}' in this organization.` });
+    if (!idRes.rows.length) return JSON.stringify({ error: `No Artifacts Center document '${artifactId}' in this organization. Files uploaded to the Vault are a different store with UUID ids — this does not mean a Vault file is missing.` });
     const versions = await getPool().query(
       `SELECT id, version AS version_number, change_description AS change_summary,
               content_hash, created_at, created_by_id
@@ -19732,7 +19758,7 @@ registerToolHandler('update_vault_document', async (input, ctx) => {
       );
       if (!existing.rows.length) {
         await client.query('ROLLBACK');
-        return JSON.stringify({ error: `No vault document '${artifactId}' in this organization.` });
+        return JSON.stringify({ error: `No Artifacts Center document '${artifactId}' in this organization. Files uploaded to the Vault are a different store with UUID ids — this does not mean a Vault file is missing.` });
       }
       const doc = existing.rows[0];
       if (doc.status === 'locked') {
@@ -19815,7 +19841,7 @@ registerToolHandler('compare_vault_versions', async (input, ctx) => {
         WHERE organization_id = $1 AND (id::text = $2 OR artifact_id = $2) LIMIT 1`,
       [ctx.organizationId, artifactId],
     );
-    if (!idRes.rows.length) return JSON.stringify({ error: `No vault document '${artifactId}' in this organization.` });
+    if (!idRes.rows.length) return JSON.stringify({ error: `No Artifacts Center document '${artifactId}' in this organization. Files uploaded to the Vault are a different store with UUID ids — this does not mean a Vault file is missing.` });
     const { rows } = await getPool().query(
       `SELECT version, content, content_hash, change_description, created_at, created_by_id
          FROM concept2cure_artifact_versions

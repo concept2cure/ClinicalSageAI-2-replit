@@ -1,0 +1,25 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > files a cataloged document and reports where it now lives 4ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > refuses to file a document whose comprehension was never recorded 1ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > refuses a document that has never been cataloged at all 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > says a failed extraction leaves nothing to base a placement on 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > allows unfiling an uncataloged document — it retracts a claim, not makes one 2ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > hands the service her provenance, so the write cannot pass for a person's decision 1ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > records a model it was not told about as unknown, never a guessed one 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > refuses confirm_suggested — confirming a filing is a person's act, in the Vault 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > is described to the model as a suggestion a person confirms, not a filing 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > tells the model the placement awaits a person, not that the document is filed 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > answers a chat-upload id with the wrong-store refusal, not absence 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > requires a rationale — the audit trail records why, not just what 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > requires a destination rather than guessing one 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > reports a document this organization does not hold as unknown, with the discovery tool 0ms
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > passes the service refusal through instead of claiming a move 0ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  16:11:15
+   Duration  545ms (transform 215ms, setup 80ms, import 218ms, tests 14ms, environment 0ms)
+

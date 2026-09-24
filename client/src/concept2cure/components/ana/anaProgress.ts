@@ -24,7 +24,14 @@
  * @module client/src/concept2cure/components/ana/anaProgress
  */
 
-import type { AnaProgressPhase, AnaToolCall } from './useAnaChat.types';
+import type {
+  AnaChatMessage,
+  AnaContextUsed,
+  AnaPlanChange,
+  AnaPlanStep,
+  AnaProgressPhase,
+  AnaToolCall,
+} from './useAnaChat.types';
 
 /**
  * Phases the client itself observes (no server `status` event carries them).
@@ -196,4 +203,114 @@ export function currentStep(calls: AnaToolCall[] | undefined): AnaToolCall | nul
     if (list[i].status === 'running') return list[i];
   }
   return null;
+}
+
+/* ── The declared plan ────────────────────────────────────────────────────── */
+
+const PLAN_STATUSES: ReadonlySet<string> = new Set(['pending', 'in_progress', 'completed']);
+
+/** The `update_plan` tool, whose rows the transcript shows as plan changes instead. */
+export const PLAN_TOOL = 'update_plan';
+
+/**
+ * Parse a `plan` event's steps. The server already validated them; this only
+ * refuses a malformed payload rather than rendering half of one.
+ */
+export function readPlanSteps(raw: unknown): AnaPlanStep[] | null {
+  if (!Array.isArray(raw) || raw.length === 0) return null;
+  const steps: AnaPlanStep[] = [];
+  for (const r of raw) {
+    const title = typeof r?.title === 'string' ? r.title.trim() : '';
+    const status = typeof r?.status === 'string' ? r.status : '';
+    if (!title || !PLAN_STATUSES.has(status)) return null;
+    steps.push({ title, status: status as AnaPlanStep['status'] });
+  }
+  return steps;
+}
+
+/**
+ * The changes from one plan to the next, keyed by title (the tool asks for the
+ * same titles on every call). A first plan is all `added`, marked `initial`,
+ * so the transcript can say "Planned 5 steps" once rather than five times.
+ */
+export function diffPlan(
+  prev: AnaPlanStep[] | undefined,
+  next: AnaPlanStep[],
+  at: number,
+  round?: number,
+): AnaPlanChange[] {
+  const before = new Map((prev ?? []).map((s) => [s.title.toLowerCase(), s]));
+  const initial = !prev || prev.length === 0;
+  const tag = { at, ...(round ? { round } : {}), ...(initial ? { initial: true } : {}) };
+  const changes: AnaPlanChange[] = [];
+  for (const s of next) {
+    const was = before.get(s.title.toLowerCase());
+    if (!was) changes.push({ kind: 'added', title: s.title, ...tag });
+    if (s.status !== was?.status) {
+      if (s.status === 'in_progress') changes.push({ kind: 'started', title: s.title, ...tag });
+      if (s.status === 'completed') changes.push({ kind: 'completed', title: s.title, ...tag });
+    }
+    before.delete(s.title.toLowerCase());
+  }
+  for (const gone of before.values()) changes.push({ kind: 'removed', title: gone.title, at, ...(round ? { round } : {}) });
+  return changes;
+}
+
+/** Apply a `plan` event to the turn it belongs to. A malformed payload changes nothing. */
+export function applyPlanEvent(
+  m: AnaChatMessage,
+  event: { steps?: unknown; round?: unknown },
+  now: number,
+): AnaChatMessage {
+  const steps = readPlanSteps(event.steps);
+  if (!steps) return m;
+  const round = typeof event.round === 'number' && event.round > 0 ? event.round : undefined;
+  return { ...m, plan: steps, planChanges: [...(m.planChanges ?? []), ...diffPlan(m.plan, steps, now, round)] };
+}
+
+/** Parse a `context_used` event. Null when the payload is not one. */
+export function readContextUsed(event: Record<string, unknown>): AnaContextUsed | null {
+  const status = event.memoryStatus;
+  if (!Array.isArray(event.uploads) || !Array.isArray(event.memory)) return null;
+  if (status !== 'read' && status !== 'none' && status !== 'unavailable') return null;
+  const str = (v: unknown) => (typeof v === 'string' ? v : '');
+  return {
+    uploads: event.uploads
+      .filter((u) => u && typeof u.fileName === 'string')
+      .map((u) => ({
+        fileId: str(u.fileId),
+        fileName: u.fileName as string,
+        mimeType: str(u.mimeType),
+        read: u.read === 'content' ? ('content' as const) : ('name_only' as const),
+      })),
+    unresolvedUploads: typeof event.unresolvedUploads === 'number' ? Math.max(0, event.unresolvedUploads) : 0,
+    memory: event.memory
+      .filter((a) => a && typeof a.title === 'string' && a.title)
+      .map((a) => ({
+        layer: str(a.layer),
+        title: a.title as string,
+        ...(typeof a.documentName === 'string' && a.documentName ? { documentName: a.documentName } : {}),
+      })),
+    memoryStatus: status,
+  };
+}
+
+export interface PlanPosition {
+  /** 1-based step the work is on: the first in progress, else the first not yet done. */
+  current: number;
+  total: number;
+  completed: number;
+}
+
+/**
+ * Where the declared plan stands. Null without a plan — the caller then shows
+ * no count at all, because there is nothing honest to count against.
+ */
+export function planPosition(plan: AnaPlanStep[] | undefined): PlanPosition | null {
+  if (!plan || plan.length === 0) return null;
+  const completed = plan.filter((s) => s.status === 'completed').length;
+  const active = plan.findIndex((s) => s.status === 'in_progress');
+  const next = plan.findIndex((s) => s.status !== 'completed');
+  const current = active >= 0 ? active + 1 : next >= 0 ? next + 1 : plan.length;
+  return { current, total: plan.length, completed };
 }

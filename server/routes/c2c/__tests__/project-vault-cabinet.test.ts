@@ -93,7 +93,9 @@ describe('filingCabinet — uploads appear in the tree they were uploaded into',
     expect(doc.status).toBe('confirmed');
     expect(doc.num).toBe('—');                      // no CTD section → em dash, not invented
     expect(doc.preview).toContain('SHA-256');
-    expect(doc.pct).toBe(0);                        // uploads carry no authoring completion
+    // Uploads carry no authoring completion, so no figure: 0 read to AnA as
+    // "0% complete" for every file in the cabinet.
+    expect(doc.pct).toBeNull();
   });
 
   it('a row with a folder but unfiled status stays in the queue (placement wins over stale folder)', () => {

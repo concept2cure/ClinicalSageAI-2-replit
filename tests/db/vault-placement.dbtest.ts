@@ -25,15 +25,30 @@
  *   6. an explicit unfile is honoured — the visible Unfiled queue is a
  *      legitimate answer;
  *   7. a caller from another organization cannot move the document, and
- *      nothing is written.
+ *      nothing is written;
+ *   8. a placement AnA makes, through the real place_project_document handler,
+ *      is recorded as a SUGGESTION with her provenance on the audit row, and
+ *      she cannot confirm one — while a person's filing through the same
+ *      service is still a confirmed decision with no agent marker.
  *
  * Only a real database can witness 3 and 7: both are predicates, and a mocked
  * pool has no catalog to refuse against and no rows to filter.
+ *
+ * 8 is D5 (placement-attribution). AnA's placement wrote placement_status
+ * 'confirmed', placed_by the human, and a chained 'vault.document.file' row
+ * whose user and actor were that human — with nothing anywhere saying AnA, the
+ * tool or the serving model made the call. The Vault counts 'confirmed' as "an
+ * upload a person filed", and URS-VAULT-007 says a person confirms the filing,
+ * so the Part 11 record said a person decided something no person decided.
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
+
+// place_project_document refuses unless the catalog is on for the tenant; the
+// env override the flag helper honours stands in for a toggle row.
+process.env.ANA_DOCUMENT_CATALOG_FORCE_ON = 'true';
 
 const PROBE_PREFIX = 'dbtest-place ';
 const PROBE_CODE = 'DBTEST-PLACE-DOC';
@@ -47,13 +62,17 @@ let userId: number;
 let programId: string;
 let documentId: string;
 
-async function inTenantScope<T>(org: { id: number; uuid: string }, fn: () => Promise<T>): Promise<T> {
+async function inTenantScope<T>(
+  org: { id: number; uuid: string },
+  fn: () => Promise<T>,
+  role: string | null = 'admin',
+): Promise<T> {
   const { runWithTenantScope } = await import('../../server/db/tenantStore');
   return runWithTenantScope(
     {
       tenantId: String(org.id),
       orgUuid: org.uuid,
-      role: 'admin',
+      role,
       source: 'request',
       caller: 'tests/db/vault-placement.dbtest.ts',
     },
@@ -64,18 +83,22 @@ async function inTenantScope<T>(org: { id: number; uuid: string }, fn: () => Pro
 async function place(
   args: Record<string, unknown>,
   as: { id: number; uuid: string } = { id: orgId, uuid: orgUuid },
+  role: string | null = 'admin',
 ) {
   const { placeVaultDocument } = await import(
     '../../server/services/vault/vault-placement.service'
   );
-  return inTenantScope(as, () =>
-    placeVaultDocument({
-      programId,
-      documentId,
-      organizationId: as.id,
-      userId,
-      ...args,
-    } as Parameters<typeof placeVaultDocument>[0]),
+  return inTenantScope(
+    as,
+    () =>
+      placeVaultDocument({
+        programId,
+        documentId,
+        organizationId: as.id,
+        userId,
+        ...args,
+      } as Parameters<typeof placeVaultDocument>[0]),
+    role,
   );
 }
 
@@ -83,21 +106,25 @@ const row = async () =>
   (
     await owner.query(
       `SELECT folder_id, ctd_section, evidence_kind, placement_status,
-              placement_rationale, placed_by
+              placement_rationale, placed_by, placed_at
          FROM vault.documents WHERE id = $1`,
       [documentId],
     )
   ).rows[0];
 
-async function cleanupProbeRows(): Promise<void> {
+/* The probe documents and the filing audit rows written about them. Run before
+   every case, not only at the end: the per-case reset used to delete the
+   documents alone, which orphaned every earlier case's audit rows beyond the
+   reach of the final cleanup (it found them through the documents). Keyed on
+   this suite's own two tenants instead, which also sweeps a crashed run's. */
+async function deleteProbeDocuments(): Promise<void> {
   const client = await owner.connect();
   try {
     await client.query('BEGIN');
     await client.query(`SET LOCAL app.audit_archive_bypass = 'on'`);
     await client.query(
-      `DELETE FROM audit_logs WHERE action = 'vault.document.file'
-         AND record_id IN (SELECT id::text FROM vault.documents WHERE document_code LIKE $1)`,
-      [`${PROBE_CODE}%`],
+      `DELETE FROM audit_logs WHERE action = 'vault.document.file' AND tenant_id = ANY($1::int[])`,
+      [[orgId, otherOrgId]],
     );
     await client.query('COMMIT');
   } catch {
@@ -106,6 +133,10 @@ async function cleanupProbeRows(): Promise<void> {
     client.release();
   }
   await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${PROBE_CODE}%`]);
+}
+
+async function cleanupProbeRows(): Promise<void> {
+  await deleteProbeDocuments();
   await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE_PREFIX}%`]);
 }
 
@@ -149,7 +180,7 @@ beforeAll(async () => {
 /* A fresh document per case: these are writes, and a case that inherited the
    previous one's placement would pass for the wrong reason. */
 beforeEach(async () => {
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${PROBE_CODE}%`]);
+  await deleteProbeDocuments();
   const doc = await owner.query(
     `INSERT INTO vault.documents
        (program_id, organization_id, document_code, document_title, document_type,
@@ -168,6 +199,69 @@ afterAll(async () => {
   await cleanupProbeRows().catch(() => {});
   await owner.end().catch(() => {});
 });
+
+/** The latest filing audit row for the probe document, details parsed. */
+async function lastFilingAudit() {
+  const { rows } = await owner.query(
+    `SELECT user_id, new_values
+       FROM audit_logs
+      WHERE action = 'vault.document.file' AND record_id = $1
+      ORDER BY created_at DESC LIMIT 1`,
+    [documentId],
+  );
+  if (!rows[0]) return null;
+  const nv = rows[0].new_values;
+  return {
+    userId: rows[0].user_id == null ? null : Number(rows[0].user_id),
+    details: (typeof nv === 'string' ? JSON.parse(nv) : nv) as Record<string, any>,
+  };
+}
+
+const filingAuditCount = async () =>
+  Number(
+    (
+      await owner.query(
+        `SELECT count(*)::int AS n FROM audit_logs
+          WHERE action = 'vault.document.file' AND record_id = $1`,
+        [documentId],
+      )
+    ).rows[0].n,
+  );
+
+/* The provenance the chat stream hands a tool, tagged so a row it leaves is
+   recognisably this suite's. */
+const ANA_CTX = {
+  servingModel: { provider: 'anthropic', model: 'dbtest-place-model' },
+  threadId: 'dbtest-place-thread',
+  turnId: 'dbtest-place-turn',
+};
+
+/** place_project_document, resolved through the real executor registry. */
+async function anaPlaces(input: Record<string, unknown>, role: string | null = 'admin') {
+  const { getToolHandler } = await import('../../server/services/ana/AnaToolExecutor');
+  const handler = getToolHandler('place_project_document');
+  if (!handler) throw new Error('place_project_document is not registered');
+  const raw = await inTenantScope(
+    { id: orgId, uuid: orgUuid },
+    () => handler({ document_id: documentId, ...input }, { organizationId: orgId, userId, ...ANA_CTX }),
+    role,
+  );
+  return JSON.parse(raw);
+}
+
+/* AnA files only a document she has read and recorded, so the AnA cases give
+   the probe the comprehension record catalog_project_document would leave. */
+async function markCataloged(): Promise<void> {
+  await owner.query(
+    `INSERT INTO vault.document_catalog
+       (document_id, content_hash, catalog_status, char_count, document_kind,
+        purpose, summary, cataloged_by, cataloged_at)
+     VALUES ($1, repeat('d', 64), 'cataloged', 120, 'design_history_file',
+             'Design history extract for AF-1000.', 'dbtest-place summary', $2, NOW())
+     ON CONFLICT (document_id) DO UPDATE SET catalog_status = 'cataloged'`,
+    [documentId, userId],
+  );
+}
 
 describe('filing a document where its own taxonomy allows', () => {
   it('files it, records who placed it, and reports the folder label', async () => {
@@ -281,3 +375,161 @@ describe('what it refuses, writing nothing', () => {
     expect((await row()).placement_status).toBe('unfiled');
   });
 });
+
+describe('a placement AnA makes is a suggestion, attributed to her (D5)', () => {
+  const RATIONALE = 'The document is a design history file extract for the AF-1000.';
+
+  it("records AnA's folder as a suggestion a person must confirm, not as a person's filing", async () => {
+    await markCataloged();
+    const out = await anaPlaces({ folder_id: 'eng', rationale: RATIONALE });
+    expect(out.ok).toBe(true);
+
+    const r = await row();
+    const audit = await lastFilingAudit();
+    // One assertion over the whole record, so a failure prints every field of
+    // the row and the audit entry at once rather than the first wrong one.
+    expect({
+      reported: out.filing.placementStatus,
+      row: r,
+      auditUserId: audit?.userId,
+      audit: audit?.details,
+    }).toMatchObject({
+      reported: 'suggested',
+      // The state the ingest classifier writes for a machine proposal, which
+      // the Vault already asks a person to confirm — and, like the
+      // classifier's, it names no person as the one who placed it.
+      row: {
+        folder_id: 'eng',
+        placement_status: 'suggested',
+        placed_by: null,
+        placed_at: null,
+        // Signed in the text: the Vault shows it beside the Confirm button,
+        // where an unsigned rationale would read as the classifier's.
+        placement_rationale: `AnA's suggestion: ${RATIONALE}`,
+      },
+      // The person stays on the audit row: AnA acted on their behalf, in
+      // their session...
+      auditUserId: userId,
+      // ...and the row says who actually decided.
+      audit: {
+        actorKind: 'agent:ana',
+        tool: 'place_project_document',
+        agentReason: RATIONALE,
+        servingModel: { provider: 'anthropic', model: 'dbtest-place-model' },
+        threadId: 'dbtest-place-thread',
+        turnId: 'dbtest-place-turn',
+        to: { folderId: 'eng', placementStatus: 'suggested' },
+        rationale: `AnA's suggestion: ${RATIONALE}`,
+      },
+    });
+  });
+
+  it('refuses to confirm a suggestion — a person confirms filing in the Vault', async () => {
+    await markCataloged();
+    await owner.query(
+      `UPDATE vault.documents
+          SET folder_id = 'cer', placement_status = 'suggested',
+              placement_rationale = 'Classifier read a clinical evaluation.'
+        WHERE id = $1`,
+      [documentId],
+    );
+    const before = await filingAuditCount();
+    const out = await anaPlaces({ confirm_suggested: true, rationale: 'The classifier was right.' });
+    expect(out.ok).toBe(false);
+    expect(out.refused).toBe(true);
+    expect(out.reason).toContain('Vault');
+
+    const r = await row();
+    expect(r.placement_status).toBe('suggested');
+    expect(r.placed_by).toBeNull();
+    expect(await filingAuditCount()).toBe(before);
+  });
+
+  it("the service itself refuses an agent's confirm, so no other agent caller can record one either", async () => {
+    await owner.query(
+      `UPDATE vault.documents
+          SET folder_id = 'cer', placement_status = 'suggested',
+              placement_rationale = 'Classifier read a clinical evaluation.'
+        WHERE id = $1`,
+      [documentId],
+    );
+    const before = await filingAuditCount();
+    const out = await place({ confirm: true, agent: { actorKind: 'agent:ana', tool: 'dbtest-place-probe' } });
+    expect(out.ok).toBe(false);
+    if (out.ok) return;
+    expect(out.code).toBe('CONFIRMATION_REQUIRES_A_PERSON');
+    expect((await row()).placement_status).toBe('suggested');
+    expect(await filingAuditCount()).toBe(before);
+  });
+
+  it('unfiles with the same attribution — the Unfiled queue is where a person decides', async () => {
+    const out = await anaPlaces({ unfile: true, rationale: 'I cannot tell which design control this evidences.' });
+    expect(out.ok).toBe(true);
+    const r = await row();
+    expect(r.placement_status).toBe('unfiled');
+    expect(r.placed_by).toBeNull();
+    expect(r.placed_at).toBeNull();
+    const audit = await lastFilingAudit();
+    expect(audit!.details).toMatchObject({
+      actorKind: 'agent:ana',
+      tool: 'place_project_document',
+      turnId: 'dbtest-place-turn',
+      to: { folderId: null, placementStatus: 'unfiled' },
+    });
+  });
+
+  it("leaves a person's filing through the Vault a confirmed decision with no agent marker", async () => {
+    const out = await place({ folderId: 'eng', note: 'Filed by the reviewer.' });
+    expect(out.ok).toBe(true);
+    const r = await row();
+    expect(r.placement_status).toBe('confirmed');
+    expect(Number(r.placed_by)).toBe(userId);
+    expect(r.placed_at).not.toBeNull();
+    const audit = await lastFilingAudit();
+    expect(audit!.userId).toBe(userId);
+    expect(audit!.details.to.placementStatus).toBe('confirmed');
+    expect(audit!.details.actorKind).toBeUndefined();
+    expect(audit!.details.tool).toBeUndefined();
+    expect(audit!.details.servingModel).toBeUndefined();
+  });
+});
+
+describe('only a role that may write files into the Vault (D3)', () => {
+  /* The web routes carry requireEditorAccess. The service they share with
+     AnA's tools, authoring's file-to-vault and eSTAR retention carried none, and
+     ToolContext carries no role at all — so a viewer who asked AnA to file a
+     document had it filed. The check now sits in the service, on the role the
+     tenant scope carries: on every request path that is the organization_users
+     role the middleware reads, AnA's included. */
+  it('refuses a viewer, and writes nothing', async () => {
+    const before = await row();
+    const out = await place({ folderId: 'eng', note: 'filed by a viewer' }, undefined, 'viewer');
+    expect(out).toMatchObject({ ok: false, status: 403, code: 'VAULT_WRITE_ROLE_REQUIRED' });
+    expect(await row()).toEqual(before);
+    expect(await lastFilingAudit()).toBeNull();
+  });
+
+  it('refuses a scope that carries no role at all', async () => {
+    const out = await place({ folderId: 'eng', note: 'no role' }, undefined, null);
+    expect(out).toMatchObject({ ok: false, status: 403, code: 'VAULT_WRITE_ROLE_REQUIRED' });
+    expect((await row()).placement_status).toBe('unfiled');
+  });
+
+  it('refuses AnA acting for a viewer — the path that had no check', async () => {
+    await markCataloged();
+    const before = await row();
+    const out = await anaPlaces({ folder_id: 'eng', rationale: 'Design history extract.' }, 'viewer');
+    // The tool's refusal shape: the service's code under `error`, its message for AnA to relay.
+    expect(out).toMatchObject({ ok: false, error: 'VAULT_WRITE_ROLE_REQUIRED' });
+    expect(out.message).toMatch(/viewer/);
+    expect(await row()).toEqual(before);
+    expect(await lastFilingAudit()).toBeNull();
+  });
+
+  it('lets a member file — the role SSO provisioning assigns', async () => {
+    const out = await place({ folderId: 'eng', note: 'filed by a member' }, undefined, 'member');
+    expect(out.ok).toBe(true);
+    expect((await row()).folder_id).toBe('eng');
+  });
+});
+

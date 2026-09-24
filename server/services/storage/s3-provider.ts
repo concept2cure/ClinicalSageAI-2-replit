@@ -1,7 +1,4 @@
 
-import { createScopedLogger } from '../../utils/logger.js';
-
-const logger = createScopedLogger('s3-provider');
 /**
  * AWS S3 Storage Provider
  *
@@ -27,28 +24,18 @@ import {
   sanitizeProjectId,
   buildVaultFileId,
 } from './storage-provider';
-
-// S3 client types — uses @aws-sdk/client-s3 if available
-let S3Client: any;
-let PutObjectCommand: any;
-let GetObjectCommand: any;
-let DeleteObjectCommand: any;
-let ListObjectsV2Command: any;
-let getSignedUrlFn: any;
-
-try {
-  const s3Module = require('@aws-sdk/client-s3');
-  S3Client = s3Module.S3Client;
-  PutObjectCommand = s3Module.PutObjectCommand;
-  GetObjectCommand = s3Module.GetObjectCommand;
-  DeleteObjectCommand = s3Module.DeleteObjectCommand;
-  ListObjectsV2Command = s3Module.ListObjectsV2Command;
-
-  const presigner = require('@aws-sdk/s3-request-presigner');
-  getSignedUrlFn = presigner.getSignedUrl;
-} catch {
-  logger.warn('AWS SDK not installed — S3 provider unavailable');
-}
+// Static imports. These were `require()` calls inside a try/catch, which cannot
+// work in this ESM package: the production bundle turns them into a shim that
+// throws, the catch reported the SDK as "not installed", and S3 could never be
+// selected in a deployed build (storage-provider-production-bundle.test.ts).
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+  ListObjectsV2Command,
+} from '@aws-sdk/client-s3';
+import { getSignedUrl as getSignedUrlFn } from '@aws-sdk/s3-request-presigner';
 
 /**
  * Does this stored object belong to the organization making the request?
@@ -80,9 +67,6 @@ export class S3StorageProvider implements IStorageProvider {
     if (!bucket) {
       throw new Error('S3StorageProvider: AWS_S3_BUCKET environment variable required');
     }
-    if (!S3Client) {
-      throw new Error('S3StorageProvider: @aws-sdk/client-s3 package not installed');
-    }
 
     this.bucket = bucket;
     this.client = new S3Client({ region });
@@ -94,6 +78,15 @@ export class S3StorageProvider implements IStorageProvider {
 
   private metaKeyPath(orgId: number, projectId: string, versionId: string): string {
     return `${orgId}/${sanitizeProjectId(projectId)}/versions/${versionId}/_meta.json`;
+  }
+
+  /**
+   * Where a version's metadata can be read knowing only the org and the version
+   * id, which is all `get`, `delete` and `getSignedUrl` are given. Without it
+   * the only way to find an object was to list keys until one matched.
+   */
+  private indexKeyPath(orgId: number, versionId: string): string {
+    return `${orgId}/_index/versions/${versionId}.json`;
   }
 
   async put(opts: StoragePutOptions): Promise<StoragePutResult> {
@@ -141,14 +134,23 @@ export class S3StorageProvider implements IStorageProvider {
       ServerSideEncryption: 'AES256',
     }));
 
+    // Written last: a version is findable by id only once its bytes and
+    // sidecar are both in place.
+    await this.client.send(new PutObjectCommand({
+      Bucket: this.bucket,
+      Key: this.indexKeyPath(orgId, vaultVersionId),
+      Body: Buffer.from(metaJson, 'utf8'),
+      ContentType: 'application/json',
+      ServerSideEncryption: 'AES256',
+    }));
+
     return { vaultFileId, vaultVersionId, sizeBytes, sha256, provider: 's3' };
   }
 
   async get(vaultVersionId: string, orgId: number): Promise<StorageGetResult | null> {
     try {
-      // First find the metadata to get the actual file path
-      // In production, this would use a DB index; here we rely on known structure
-      const meta = await this.getMeta(vaultVersionId);
+      // Metadata first: it names the object's key and the org that wrote it.
+      const meta = await this.getMeta(vaultVersionId, orgId);
       if (!meta) return null;
 
       // The object's OWN metadata names its org. Trusting that alone is what made
@@ -185,7 +187,7 @@ export class S3StorageProvider implements IStorageProvider {
 
   async delete(vaultVersionId: string, orgId: number): Promise<boolean> {
     try {
-      const meta = await this.getMeta(vaultVersionId);
+      const meta = await this.getMeta(vaultVersionId, orgId);
       if (!meta) return false;
 
       // A cross-tenant DELETE is strictly worse than a cross-tenant read: the
@@ -204,6 +206,10 @@ export class S3StorageProvider implements IStorageProvider {
         Bucket: this.bucket,
         Key: this.metaKeyPath(orgId, projectId, vaultVersionId),
       }));
+      await this.client.send(new DeleteObjectCommand({
+        Bucket: this.bucket,
+        Key: this.indexKeyPath(orgId, vaultVersionId),
+      }));
 
       return true;
     } catch {
@@ -221,13 +227,7 @@ export class S3StorageProvider implements IStorageProvider {
   }>> {
     const prefix = `${orgId}/${sanitizeProjectId(projectId)}/versions/`;
 
-    const response = await this.client.send(new ListObjectsV2Command({
-      Bucket: this.bucket,
-      Prefix: prefix,
-    }));
-
-    const metaFiles = (response.Contents || [])
-      .filter((obj: any) => obj.Key?.endsWith('/_meta.json'));
+    const metaFiles = (await this.listKeys(prefix)).filter((key) => key.endsWith('/_meta.json'));
 
     const results: Array<{
       vaultFileId: string;
@@ -238,11 +238,11 @@ export class S3StorageProvider implements IStorageProvider {
       storedAt: string;
     }> = [];
 
-    for (const metaObj of metaFiles) {
+    for (const metaKey of metaFiles) {
       try {
         const getResp = await this.client.send(new GetObjectCommand({
           Bucket: this.bucket,
-          Key: metaObj.Key,
+          Key: metaKey,
         }));
         const chunks: Buffer[] = [];
         for await (const chunk of getResp.Body) {
@@ -270,11 +270,7 @@ export class S3StorageProvider implements IStorageProvider {
     orgId: number,
     ttlSeconds = 900
   ): Promise<StorageSignedUrlResult> {
-    if (!getSignedUrlFn) {
-      throw new Error('S3: @aws-sdk/s3-request-presigner not installed');
-    }
-
-    const meta = await this.getMeta(vaultVersionId);
+    const meta = await this.getMeta(vaultVersionId, orgId);
     if (!meta) throw new Error(`S3: version ${vaultVersionId} not found`);
 
     // A pre-signed URL is a bearer token for the object that outlives this
@@ -308,33 +304,53 @@ export class S3StorageProvider implements IStorageProvider {
     }
   }
 
-  private async getMeta(vaultVersionId: string): Promise<any | null> {
-    // In production, use DB index. For now, scan is acceptable for this provider.
-    // The caller should maintain a DB mapping of vaultVersionId → orgId/projectId
-    try {
-      const response = await this.client.send(new ListObjectsV2Command({
+  /** Every key under `prefix`, following S3's continuation tokens to the end. */
+  private async listKeys(prefix: string): Promise<string[]> {
+    const keys: string[] = [];
+    let token: string | undefined;
+    do {
+      const page = await this.client.send(new ListObjectsV2Command({
         Bucket: this.bucket,
-        Prefix: '',
-        MaxKeys: 1000,
+        Prefix: prefix,
+        ContinuationToken: token,
       }));
+      for (const obj of page.Contents || []) if (obj.Key) keys.push(obj.Key);
+      token = page.IsTruncated ? page.NextContinuationToken : undefined;
+    } while (token);
+    return keys;
+  }
 
-      const metaKey = (response.Contents || [])
-        .find((obj: any) => obj.Key?.includes(`/versions/${vaultVersionId}/_meta.json`));
+  private async readJson(key: string): Promise<any> {
+    const resp = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
+    const chunks: Buffer[] = [];
+    for await (const chunk of resp.Body) chunks.push(Buffer.from(chunk));
+    return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+  }
 
-      if (!metaKey) return null;
-
-      const getResp = await this.client.send(new GetObjectCommand({
-        Bucket: this.bucket,
-        Key: metaKey.Key,
-      }));
-
-      const chunks: Buffer[] = [];
-      for await (const chunk of getResp.Body) {
-        chunks.push(Buffer.from(chunk));
-      }
-      return JSON.parse(Buffer.concat(chunks).toString('utf8'));
-    } catch {
+  /**
+   * A version's metadata, looked up only under the requesting org's prefix.
+   *
+   * This listed the whole bucket once, 1000 keys and no continuation, and
+   * returned null on ANY error. Past roughly 500 documents bucket-wide, reads
+   * reported stored documents as missing, and a refused credential read as
+   * "no such document". Now: the index key written by `put` is one GET; a
+   * version stored before the index existed is found by a paginated listing of
+   * the org's own keys; null means only "not found"; every other failure
+   * propagates.
+   */
+  private async getMeta(vaultVersionId: string, orgId: number): Promise<any | null> {
+    // A version id is a uuid (generateVersionId). Anything else cannot name
+    // one of ours, and must not be allowed to shape a key or a prefix.
+    if (!/^[A-Za-z0-9-]{1,64}$/.test(vaultVersionId) || !Number.isSafeInteger(orgId) || orgId <= 0) {
       return null;
     }
+    try {
+      return await this.readJson(this.indexKeyPath(orgId, vaultVersionId));
+    } catch (err: any) {
+      if (err?.name !== 'NoSuchKey') throw err;
+    }
+    const suffix = `/versions/${vaultVersionId}/_meta.json`;
+    const metaKey = (await this.listKeys(`${orgId}/`)).find((key) => key.endsWith(suffix));
+    return metaKey ? this.readJson(metaKey) : null;
   }
 }
