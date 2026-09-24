@@ -218,7 +218,7 @@
   vertical-align: baseline;
 }
 .mdx-shell .dl-inline-def:hover { background: var(--accent-000); color: var(--accent-200); border-color: var(--accent-100); }
-.mdx-shell .dl-inline-def.is-active { background: var(--accent-100); color: var(--text-000); border-color: var(--accent-100); }
+.mdx-shell .dl-inline-def.is-active { background: var(--accent-strong); color: var(--accent-on-strong); border-color: var(--accent-strong); }
 
 /* Deficiency rail inside the letter */
 .mdx-shell .dl-deficiencies-rail {
@@ -498,7 +498,7 @@
 .mdx-shell .dr-ev-new {
   display: inline-block; padding: 1px 6px; border-radius: 99px;
   font-size: 9px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
-  background: var(--accent-100); color: var(--text-000);
+  background: var(--accent-strong); color: var(--accent-on-strong);
 }
 .mdx-shell .dr-ev-sub { font-size: 11px; color: var(--text-400); margin-top: 2px; }
 .mdx-shell .dr-ev-rm {

@@ -45,7 +45,7 @@
 .txw-filter-l{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-400);margin-right:4px;}
 .txw-chip{font-size:10px;padding:2px 8px;border-radius:10px;border:1px solid var(--border);background:var(--bg-000);color:var(--text-300);font-weight:500;display:inline-flex;align-items:center;gap:4px;line-height:1.4;}
 .txw-chip:hover{border-color:var(--text-400);color:var(--text-100);}
-.txw-chip[data-on]{background:var(--accent-100);border-color:var(--accent-100);color:#fff;}
+.txw-chip[data-on]{background:var(--accent-strong);border-color:var(--accent-strong);color:var(--accent-on-strong);}
 .txw-chip-ct{font-family:var(--font-mono);font-size:9px;opacity:.8;}
 
 /* ── Segment card (stacked source-over-target) ── */
@@ -114,9 +114,9 @@
 .txw-act{font-size:10.5px;font-weight:500;padding:4px 9px;border-radius:5px;border:1px solid var(--border);background:var(--bg-000);color:var(--text-200);display:inline-flex;align-items:center;gap:4px;line-height:1.2;}
 .txw-act:hover{border-color:var(--accent-100);color:var(--accent-200);}
 .txw-act svg{width:11px;height:11px;}
-.txw-act.pri{background:var(--accent-100);border-color:var(--accent-100);color:#fff;}
+.txw-act.pri{background:var(--accent-strong);border-color:var(--accent-strong);color:var(--accent-on-strong);}
 .txw-act.pri:hover{background:var(--accent-200);border-color:var(--accent-200);color:#fff;}
-.txw-act.gov{background:var(--accent-100);border-color:var(--accent-100);color:#fff;}
+.txw-act.gov{background:var(--accent-strong);border-color:var(--accent-strong);color:var(--accent-on-strong);}
 .txw-act.gov:hover{background:var(--accent-200);border-color:var(--accent-200);}
 .txw-act:disabled,.txw-act[data-disabled]{opacity:.55;cursor:not-allowed;background:var(--bg-100);}
 .txw-act:disabled:hover{border-color:var(--border);color:var(--text-300);}
@@ -151,7 +151,7 @@
 .txw-gloss-search input{flex:1;font-size:11px;padding:5px 8px;border-radius:var(--radius-md);background:var(--bg-000);border:1px solid var(--border-control);}
 .txw-gloss-search input:focus{border-color:var(--accent-100);box-shadow:0 0 0 3px var(--accent-000);}
 .txw-gloss-add{font-size:10px;font-weight:600;color:var(--accent-200);padding:4px 9px;border:1px solid var(--accent-100);border-radius:var(--radius-md);background:var(--accent-000);display:inline-flex;gap:4px;align-items:center;}
-.txw-gloss-add:hover{background:var(--accent-100);color:#fff;}
+.txw-gloss-add:hover{background:var(--accent-strong);color:var(--accent-on-strong);}
 
 /* ── Governed approve modal ── */
 .txw-gov-bd{position:fixed;inset:0;background:rgba(20,20,19,.55);backdrop-filter:blur(3px);z-index:9500;display:flex;align-items:center;justify-content:center;padding:24px;}
@@ -171,9 +171,9 @@
 .txw-gov-f{display:flex;gap:8px;padding:12px 20px;border-top:1px solid var(--border);background:var(--bg-050);}
 .txw-gov-f button{flex:1;font-size:12px;font-weight:600;padding:9px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--bg-000);color:var(--text-200);display:inline-flex;align-items:center;justify-content:center;gap:6px;}
 .txw-gov-f button:hover{border-color:var(--text-400);color:var(--text-100);}
-.txw-gov-f .pri{background:var(--accent-100);border-color:var(--accent-100);color:#fff;}
+.txw-gov-f .pri{background:var(--accent-strong);border-color:var(--accent-strong);color:var(--accent-on-strong);}
 .txw-gov-f .pri:hover{background:var(--accent-200);border-color:var(--accent-200);color:#fff;}
-.txw-gov-f .pri:disabled{opacity:.5;cursor:not-allowed;background:var(--accent-100);color:#fff;}
+.txw-gov-f .pri:disabled{opacity:.5;cursor:not-allowed;background:var(--accent-strong);color:var(--accent-on-strong);}
 .txw-gov-f .pri svg{width:13px;height:13px;}
 
 /* ── Wide review modal (full-bleed bilingual editor) ── */
@@ -231,7 +231,7 @@
 /* Lang/category chips for settings */
 .txw-pchip{font-size:11px;font-weight:500;padding:4px 10px;border-radius:99px;border:1px solid var(--border);background:var(--bg-000);color:var(--text-300);display:inline-flex;align-items:center;gap:4px;}
 .txw-pchip:hover{border-color:var(--text-400);color:var(--text-100);}
-.txw-pchip[data-on]{background:var(--accent-100);border-color:var(--accent-100);color:#fff;}
+.txw-pchip[data-on]{background:var(--accent-strong);border-color:var(--accent-strong);color:var(--accent-on-strong);}
 .txw-pchip .txw-pchip-flag{font-family:var(--font-mono);font-size:9px;letter-spacing:.04em;opacity:.85;}
 
 /* Help + status notes */
