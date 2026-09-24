@@ -12,7 +12,11 @@
 # pattern no longer matches, regex() errors and this test fails; it does not
 # pass on a stale copy.
 #
-# Offline: a mocked AWS provider. Run from this directory:
+# The stack is the one composition both environments use (terraform/stack), so
+# these runs cover production and staging alike: every contract run below is
+# repeated with environment = "staging".
+#
+# Offline: mocked providers. Run from terraform/stack:
 #   terraform init -backend=false && terraform test
 
 mock_provider "aws" {
@@ -53,6 +57,26 @@ mock_provider "aws" {
 mock_provider "random" {}
 
 variables {
+  environment                     = "production"
+  region                          = "us-east-1"
+  vpc_cidr                        = "10.10.0.0/16"
+  public_subnets                  = ["10.10.101.0/24", "10.10.102.0/24"]
+  private_subnets                 = ["10.10.1.0/24", "10.10.2.0/24"]
+  azs                             = ["us-east-1a", "us-east-1b"]
+  rds_instance_class              = "db.t3.medium"
+  rds_engine_version              = "15.4"
+  rds_allocated_storage           = 50
+  rds_max_allocated_storage       = 500
+  rds_multi_az                    = true
+  rds_backup_retention_days       = 35
+  rds_deletion_protection         = true
+  alb_deletion_protection         = true
+  evidence_object_lock_mode       = "COMPLIANCE"
+  evidence_retention_days         = 2555
+  api_cpu                         = 1024
+  api_memory                      = 2048
+  api_desired_count               = 2
+  worker_desired_count            = 1
   image_tag                       = "v1.0.0"
   acm_certificate_arn             = "arn:aws:acm:us-east-1:111122223333:certificate/alb"
   cloudfront_certificate_arn      = "arn:aws:acm:us-east-1:111122223333:certificate/cf"
@@ -73,10 +97,10 @@ run "every_name_the_deploy_preflight_requires_is_in_the_task_definition" {
 
   assert {
     condition = alltrue([
-      for n in regexall("[A-Z][A-Z0-9_]+", one(regex("for VAR in ([A-Z0-9_\\\\\\s]+); do", file("../../../.github/workflows/deploy-aws.yml")))) :
+      for n in regexall("[A-Z][A-Z0-9_]+", one(regex("for VAR in ([A-Z0-9_\\\\\\s]+); do", file("../../.github/workflows/deploy-aws.yml")))) :
       contains(output.api_task_boot_contract.names, n)
     ])
-    error_message = "The API task definition lacks a name deploy-aws.yml's preflight requires. Missing: ${join(", ", [for n in regexall("[A-Z][A-Z0-9_]+", one(regex("for VAR in ([A-Z0-9_\\\\\\s]+); do", file("../../../.github/workflows/deploy-aws.yml")))) : n if !contains(output.api_task_boot_contract.names, n)])}"
+    error_message = "The API task definition lacks a name deploy-aws.yml's preflight requires. Missing: ${join(", ", [for n in regexall("[A-Z][A-Z0-9_]+", one(regex("for VAR in ([A-Z0-9_\\\\\\s]+); do", file("../../.github/workflows/deploy-aws.yml")))) : n if !contains(output.api_task_boot_contract.names, n)])}"
   }
 
   # The preflight reads these by value, not only by name.
@@ -150,6 +174,64 @@ run "the_health_check_is_the_images_own_probe_on_readyz" {
   assert {
     condition     = length([for c in output.api_task_boot_contract.health_check : c if strcontains(c, "/readyz")]) == 1
     error_message = "The health check must probe /readyz, the endpoint D1's acceptance line reads."
+  }
+}
+
+# Production's names are hard-coded in deploy-aws.yml's env block. If Terraform
+# names anything differently, a deploy registers into infrastructure that does
+# not exist. Each expected value is read out of the workflow.
+
+run "production_names_are_the_ones_the_deploy_workflow_targets" {
+  command = plan
+  assert {
+    condition = alltrue([
+      for k, v in output.deploy_targets :
+      v == one(regex("\n  ${k}: ([^\\s]+)", file("../../.github/workflows/deploy-aws.yml")))
+    ])
+    error_message = "A production name differs from deploy-aws.yml: ${join("; ", [for k, v in output.deploy_targets : "${k} terraform=${v} workflow=${one(regex("\n  ${k}: ([^\\s]+)", file("../../.github/workflows/deploy-aws.yml")))}" if v != one(regex("\n  ${k}: ([^\\s]+)", file("../../.github/workflows/deploy-aws.yml")))])}"
+  }
+}
+
+# The same contract for staging. Staging exists to prove what production will
+# run (D1 brief B8), so a staging task definition the preflight would refuse
+# proves nothing.
+
+run "staging_carries_every_name_the_deploy_preflight_requires" {
+  command = apply
+  variables {
+    environment = "staging"
+  }
+  assert {
+    condition = alltrue([
+      for n in regexall("[A-Z][A-Z0-9_]+", one(regex("for VAR in ([A-Z0-9_\\\\\\s]+); do", file("../../.github/workflows/deploy-aws.yml")))) :
+      contains(output.api_task_boot_contract.names, n)
+    ])
+    error_message = "The staging API task definition lacks a name the deploy preflight requires."
+  }
+  assert {
+    condition     = output.api_task_boot_contract.environment["RLS_ENFORCE"] == "on" && output.api_task_boot_contract.environment["NODE_ENV"] == "production"
+    error_message = "Staging runs the production posture: NODE_ENV=production and RLS_ENFORCE=on."
+  }
+  assert {
+    condition     = module.rds.master_user_secret_arn == null && output.api_task_boot_contract.secret_source["DATABASE_URL"] == module.secrets.secret_arns["database_url"]
+    error_message = "Staging's DATABASE_URL must be the composed URL secret, as production's is."
+  }
+}
+
+run "staging_is_distinct_from_production" {
+  command = plan
+  variables {
+    environment = "staging"
+  }
+  # Nothing in staging may collide with, or be mistaken for, production: every
+  # name carries "stg" or "staging", and none is a production name.
+  assert {
+    condition     = alltrue([for k, v in output.resource_names : strcontains(v, "stg") || strcontains(v, "staging")])
+    error_message = "Every staging resource name must be its own: ${jsonencode(output.resource_names)}"
+  }
+  assert {
+    condition     = output.resource_names.signing_alias == "alias/fda-signing-key-2026-staging"
+    error_message = "Staging must sign with its own KMS key, never under the production alias."
   }
 }
 
