@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-24T16:09:01.833Z",
+  "generatedAt": "2026-09-24T16:25:38.699Z",
   "git": {
-    "sha": "fb5e1fc97f634a0db130e06c1fce35e5c999dee7",
+    "sha": "7710130d214be53673d929ae57ff5dd4bb344501",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2548,15 +2548,15 @@
         "lines": 1543
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "lines": 1535
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
         "lines": 1532
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 1531
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
         "lines": 1531
       },
       {
