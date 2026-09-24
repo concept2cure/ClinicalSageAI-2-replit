@@ -1,0 +1,17 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > both tables have RLS enabled and a policy for every command 4ms
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > document_catalog: each tenant reads its own row and not the other's 22ms
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > document_read_receipts: each tenant reads its own row and not the other's 8ms
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > A cannot overwrite B's comprehension record 4ms
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > A cannot forge a catalog row for B's document 4ms
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > A cannot plant a read receipt on B's document — the proof the coverage gate trusts 2ms
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > A cannot delete B's read receipt 3ms
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > a tenant still writes its OWN catalog row and receipt — the policy is not a blanket deny 8ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  00:42:10
+   Duration  799ms (transform 82ms, setup 65ms, import 56ms, tests 438ms, environment 0ms)
+
