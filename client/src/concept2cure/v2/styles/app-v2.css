@@ -1984,7 +1984,8 @@
 /* The chip in a host's header: "Step 2 of 5". A pressed toggle. */
 .c2c-v2 .ana-step-chip{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-000);font:inherit;font-size:12px;font-weight:500;color:var(--text-200);white-space:nowrap;font-variant-numeric:tabular-nums;cursor:pointer;transition:background 200ms ease-out,border-color 200ms ease-out,color 200ms ease-out;}
 .c2c-v2 .ana-step-chip:hover{background:var(--bg-050);color:var(--text-100);}
-.c2c-v2 .ana-step-chip[aria-pressed="true"]{background:var(--bg-100);border-color:var(--border-strong);color:var(--text-100);}
+/* Open: keyed on the attribute the chip sets — it is a disclosure (aria-expanded). */
+.c2c-v2 .ana-step-chip[aria-expanded="true"]{background:var(--bg-100);border-color:var(--border-strong);color:var(--text-100);}
 .c2c-v2 .ana-step-chip:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;}
 .c2c-v2 .ana-step-chip-ic{display:inline-flex;color:var(--text-300);}
 .c2c-v2 .ana-step-chip-ic svg{font-size:13px;}

@@ -8,6 +8,8 @@
  * one key every host shares.
  */
 import React from 'react';
+import fs from 'node:fs';
+import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 
@@ -167,5 +169,13 @@ describe('AnaRail — the progress panel', () => {
     expect(items[1].getAttribute('aria-current')).toBe('step');
     expect(items[0].textContent).toContain('done');
     expect(items[2].textContent).toContain('not started');
+  });
+});
+
+describe('the chip\'s open look follows the attribute it sets', () => {
+  it('styles the open chip by aria-expanded — the attribute the component sets — never aria-pressed', () => {
+    const css = fs.readFileSync(path.resolve(__dirname, '../styles/app-v2.css'), 'utf8');
+    expect(css).toMatch(/\.ana-step-chip\[aria-expanded="true"\]\{/);
+    expect(css).not.toMatch(/\.ana-step-chip\[aria-pressed/);
   });
 });
