@@ -96,7 +96,9 @@ describe('GET /api/c2c/projects/:id', () => {
     for (const bad of ['p.sponsor_name', 'p.lead_indication', 'p.filing_date', 'p.pdufa_date', 'p.completion_percentage']) {
       expect(sql).not.toContain(bad);
     }
-    expect(sql).toContain('progress_percent');
+    // progress_percent is written once as 0 and never updated; the detail
+    // reports the governed readiness instead (projects-readiness.test.ts).
+    expect(sql).not.toContain('progress_percent');
     // WO-9 Click 1: the landing shows sponsor and the agency application number,
     // both read from the database — sponsor from the organisation row, the number
     // from regulatory_programs.application_number (20260907 migration).

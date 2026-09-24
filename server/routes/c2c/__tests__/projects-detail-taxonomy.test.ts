@@ -66,7 +66,7 @@ const deviceRow = () => ({
   id: PID, code: 'DMN5', name: '[Demo · MDX] NeuroPanel-Dx 510(k)', program_type: '510k', status: 'active', phase: 'planning',
   priority: 'high', description: null, product_name: 'NeuroPanel-Dx', indication: 'Differential diagnosis of viral CNS infection',
   intended_use: 'Qualitative multiplexed IVD test …', primary_agency: 'FDA', target_agencies: ['FDA'],
-  target_submission_date: null, actual_submission_date: null, approval_date: null, progress_percent: 0,
+  target_submission_date: null, actual_submission_date: null, approval_date: null,
   lead_user_id: 1, team_members: [], created_at: '2026-09-21T17:00:00.000Z', updated_at: '2026-09-21T17:00:00.000Z',
   application_number: null, sponsor_name: 'Concept2Cure Diagnostics',
   product_type: 'ivd', device_class: 'II', regulatory_path: '510k', product_code: 'QNX',
@@ -117,7 +117,7 @@ describe('GET /api/c2c/projects/:id — device taxonomy', () => {
     const res = await request(app(2)).get(`/api/c2c/projects/${PID}`);
     expect(res.status).toBe(200);
     for (const k of ['id', 'code', 'name', 'program_type', 'status', 'phase', 'priority', 'description', 'product_name', 'indication',
-      'intended_use', 'primary_agency', 'target_agencies', 'target_submission_date', 'progress_percent', 'lead_user_id',
+      'intended_use', 'primary_agency', 'target_agencies', 'target_submission_date', 'readiness', 'lead_user_id',
       'team_members', 'created_at', 'updated_at', 'application_number', 'sponsor_name']) {
       expect(res.body, `key ${k}`).toHaveProperty(k);
     }
@@ -158,7 +158,8 @@ describe('POST /api/c2c/projects — the create answers with the same serializer
       .mockResolvedValueOnce({ rows: [] })                    // audit_logs INSERT
       .mockResolvedValueOnce({ rows: [] })                    // COMMIT
       .mockResolvedValueOnce({ rows: [card] })                // card re-select
-      .mockResolvedValueOnce({ rows: [deviceRow()] });        // detail re-select (same projection as GET /:id)
+      .mockResolvedValueOnce({ rows: [deviceRow()] })         // detail re-select (same projection as GET /:id)
+      .mockResolvedValueOnce({ rows: [] });                   // governed readiness: a new program has approved nothing
     const res = await request(app(2, 1)).post('/api/c2c/projects').send({
       name: '[Demo · MDX] NeuroPanel-Dx 510(k)', productName: 'NeuroPanel-Dx', programType: '510k', productType: 'ivd',
       primaryAgency: 'FDA', indication: 'Differential diagnosis of viral CNS infection',
@@ -166,11 +167,11 @@ describe('POST /api/c2c/projects — the create answers with the same serializer
     });
     expect(res.status).toBe(201);
     expect(res.body.data).toMatchObject({ id: PID, ws: 'MDX' });
-    expect(res.body.program).toEqual(serializeProgramDetail(deviceRow()));
+    expect(res.body.program).toEqual({ ...serializeProgramDetail(deviceRow()), readiness: 0 });
     expect(res.body.program).toMatchObject({ device_class: 'II', product_code: 'QNX', predicate_devices: [{ kNumber: 'K223456' }], review_panel: 'Microbiology', product_type: 'ivd' });
 
     // The detail re-select is the SAME SQL the read issues (one projection, one serializer).
-    const detailSql = String(query.mock.calls[query.mock.calls.length - 1][0]);
+    const detailSql = String(query.mock.calls[query.mock.calls.length - 2][0]);
     expect(detailSql).toContain('p.device_class');
     expect(detailSql).toContain('o.name AS sponsor_name');
   });
