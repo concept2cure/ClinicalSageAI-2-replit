@@ -156,11 +156,26 @@ the FILED history and its fold — and delegates the diff itself to the canonica
   content's own dates, not the wall clock, so identical content renders to identical
   bytes. Without that every leaf differs from itself and every follow-up re-files the
   whole application as `replace`.
+- **Identity is the document, not the file name.** A leaf's file name is composed from its
+  section key, and a section can be renamed in place — so the diff keys on a stable
+  `leafKey` (`artifact:<artifactId>@<ctdSection>`, or `section:<id>@<ctdSection>` for an
+  empty-section placeholder), published in the leaf manifest. A history filed before leaf
+  keys existed carries none, so the path remains the fallback; without it every document on
+  such an application would come back as `new`. The CTD section is part of the key: moving
+  a document to a different section is a withdrawal and a new filing, never a replace
+  across sections.
 - **Absence is not withdrawal.** A leaf on file but missing from this assembly stays on
-  file, unchanged and unmentioned.
+  file, unchanged and unmentioned. Withdrawal is explicit: `withdraw: [{ctdSection,
+  fileName}]` on the assemble body names documents as the filed history recorded them, and
+  each becomes an `operation="delete"` backbone entry pointing at the sequence that holds
+  the document. It ships no bytes, takes no line in the md5 manifest, and is not counted as
+  a leaf of this bundle — but it IS in the bundle's leaf manifest, because that entry is
+  what removes the document from the next sequence's fold.
 
-Six refusals answer 409 with a `code` and `gate: sequence_lifecycle`, in preference to a
-guess: `NO_PRIOR_SEQUENCE` (a follow-up on a package that has transmitted nothing),
+Eight refusals answer 409 with a `code` and `gate: sequence_lifecycle`, in preference to a
+guess: `WITHDRAWAL_NOT_ON_FILE`, `WITHDRAWAL_CONTRADICTS_CONTENT` (a document cannot be
+filed and withdrawn in one sequence), `NO_PRIOR_SEQUENCE` (a follow-up on a package that
+has transmitted nothing),
 `SEQUENCE_ALREADY_FILED`, `SEQUENCE_OUT_OF_ORDER` (the only ordering this knows is the
 sequence number, so a gap or a backfill would be diffed against filings made after it),
 `NOTHING_TO_FILE` (every leaf already on file, byte for byte — the zip would carry no leaf
