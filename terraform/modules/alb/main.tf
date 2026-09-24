@@ -1,11 +1,27 @@
 // Application Load Balancer for C2C services
+//
+// Reachable through CloudFront alone (W2 B9, docs/evidence/W2/2026-09-24-b9/).
+// Two locks, because CloudFront's address list admits every distribution in
+// AWS, not only ours:
+//   1. the security group admits CloudFront's origin-facing addresses, on 443;
+//   2. the HTTPS listener forwards a request only when it carries the origin
+//      secret header our distribution adds (modules/cloudfront), and answers
+//      anything else 403.
+// With both in place the second-to-last X-Forwarded-For entry is the one
+// CloudFront wrote, so the API can trust two hops (TRUST_PROXY_HOPS,
+// server/config/trust-proxy.ts) and record the user rather than the edge.
+
+locals {
+  origin_secret_header_name = "X-Origin-Verify"
+}
 
 resource "aws_lb" "this" {
   name               = var.name
   internal           = false
   load_balancer_type = "application"
-  security_groups    = var.security_group_ids
-  subnets            = var.public_subnet_ids
+  # The module's own group always applies: the CloudFront-only rule lives there.
+  security_groups = distinct(concat([aws_security_group.alb.id], var.security_group_ids))
+  subnets         = var.public_subnet_ids
 
   enable_deletion_protection = var.deletion_protection
 
@@ -18,7 +34,11 @@ resource "aws_lb" "this" {
   tags = var.tags
 }
 
-# ── HTTPS listener (primary) ────────────────────────────────────────────────
+# ── HTTPS listener (the only one) ───────────────────────────────────────────
+#
+# There is no port-80 listener. Nothing but CloudFront can connect, and
+# CloudFront reaches this origin over HTTPS only; viewers are redirected from
+# HTTP to HTTPS at CloudFront (modules/cloudfront, default_cache_behavior).
 
 resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.this.arn
@@ -27,26 +47,32 @@ resource "aws_lb_listener" "https" {
   ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
   certificate_arn   = var.certificate_arn
 
+  # Refuse by default. A request from another CloudFront distribution passes
+  # the security group, but it does not carry our origin secret.
   default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.api.arn
+    type = "fixed-response"
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "Forbidden"
+      status_code  = "403"
+    }
   }
 }
 
-# ── HTTP → HTTPS redirect ───────────────────────────────────────────────────
+resource "aws_lb_listener_rule" "from_cloudfront" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 1
 
-resource "aws_lb_listener" "http_redirect" {
-  load_balancer_arn = aws_lb.this.arn
-  port              = 80
-  protocol          = "HTTP"
-
-  default_action {
-    type = "redirect"
-    redirect {
-      port        = "443"
-      protocol    = "HTTPS"
-      status_code = "HTTP_301"
+  condition {
+    http_header {
+      http_header_name = local.origin_secret_header_name
+      values           = [var.origin_secret]
     }
+  }
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.api.arn
   }
 }
 
@@ -77,25 +103,24 @@ resource "aws_lb_target_group" "api" {
 
 # ── Security group for ALB ───────────────────────────────────────────────────
 
+# AWS-managed list of the addresses CloudFront uses to reach origins. One
+# reference counts as its full weight (about 55 entries) against the rules
+# quota of the security group, which is why there is one rule, not one per port.
+data "aws_ec2_managed_prefix_list" "cloudfront_origin_facing" {
+  name = "com.amazonaws.global.cloudfront.origin-facing"
+}
+
 resource "aws_security_group" "alb" {
   name_prefix = "${var.name}-alb-"
-  description = "ALB security group — allows inbound HTTP/HTTPS"
+  description = "ALB security group - HTTPS from CloudFront origin-facing addresses only"
   vpc_id      = var.vpc_id
 
   ingress {
-    description = "HTTPS from internet"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    description = "HTTP (redirect to HTTPS)"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    description     = "HTTPS from CloudFront origin-facing addresses only"
+    from_port       = 443
+    to_port         = 443
+    protocol        = "tcp"
+    prefix_list_ids = [data.aws_ec2_managed_prefix_list.cloudfront_origin_facing.id]
   }
 
   egress {

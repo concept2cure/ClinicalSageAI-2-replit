@@ -1,0 +1,27 @@
+F-35 — RED: the test run against the code with this fix reverted
+Entity decoded before tag strip: "&lt; 0.05% and assay was &gt;" deleted from the built .docx
+
+Fix commit: cd716f6d6. Tree: 893a4750f with ONLY the lines below reverted to the pre-fix logic,
+then restored byte-for-byte after the run:
+  - server/services/docx/masterDocumentBuilder.ts: replace '  let text = inlineMarksToText(html);'...
+
+vitest exit code: 1 (non-zero = the test caught the defect)
+
+ × server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > DOCX: keeps the limit, the criterion, and the text between them 8ms
+   → expected 'Total impurities were  98.0%' to contain '< 0.05%'
+ ✓ server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > eCTD leaf: same document, same text 5ms
+ × server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > DOCX: a decoded entity is never re-read as a tag 2ms
+   → expected 'Field  is required' to be 'Field <not-a-tag> is required' // Object.is equality
+ ✓ server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > DOCX: a real tag is still stripped, and its content kept 0ms
+ ✓ server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > DOCX: an entity inside a heading survives too 0ms
+ × server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > DOCX: &amp; decodes exactly once 1ms
+   → expected 'Type < to compare' to be 'Type &lt; to compare' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  3 failed | 3 passed (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > DOCX: keeps the limit, the criterion, and the text between them
+AssertionError: expected 'Total impurities were  98.0%' to contain '< 0.05%'
+ FAIL  server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > DOCX: a decoded entity is never re-read as a tag
+AssertionError: expected 'Field  is required' to be 'Field <not-a-tag> is required' // Object.is equality
+ FAIL  server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > DOCX: &amp; decodes exactly once
+AssertionError: expected 'Type < to compare' to be 'Type &lt; to compare' // Object.is equality

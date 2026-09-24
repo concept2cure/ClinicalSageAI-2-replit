@@ -1,0 +1,13 @@
+F-35 — GREEN: the same tests against 893a4750f as committed
+Entity decoded before tag strip: "&lt; 0.05% and assay was &gt;" deleted from the built .docx
+
+vitest exit code: 0
+
+ ✓ server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > DOCX: keeps the limit, the criterion, and the text between them 2ms
+ ✓ server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > eCTD leaf: same document, same text 5ms
+ ✓ server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > DOCX: a decoded entity is never re-read as a tag 1ms
+ ✓ server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > DOCX: a real tag is still stripped, and its content kept 0ms
+ ✓ server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > DOCX: an entity inside a heading survives too 0ms
+ ✓ server/export/__tests__/entity-comparators-survive-export.test.ts > entity-encoded comparators survive export > DOCX: &amp; decodes exactly once 0ms
+ Test Files  1 passed (1)
+      Tests  6 passed (6)

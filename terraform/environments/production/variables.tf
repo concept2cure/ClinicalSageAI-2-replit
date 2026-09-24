@@ -83,6 +83,13 @@ variable "domain_aliases" {
   type        = list(string)
   description = "Custom domain names for CloudFront"
   default     = []
+
+  # Checked here because it is known at plan. The same rule in modules/cloudfront
+  # waits for the ALB's DNS name, which exists only once apply has created the ALB.
+  validation {
+    condition     = length(var.domain_aliases) > 0
+    error_message = "Production routes the API through CloudFront, which needs a custom domain that the ALB's certificate (acm_certificate_arn) also covers."
+  }
 }
 
 # ── Secrets (pass via -var or TF_VAR_ env) ───────────────────────────────────
@@ -233,4 +240,12 @@ variable "tags" {
     Project     = "concept2cure"
     Environment = "production"
   }
+}
+
+# ── CloudFront → ALB origin secret (pass via -var or TF_VAR_ env) ────────────
+
+variable "cloudfront_origin_secret" {
+  type        = string
+  sensitive   = true
+  description = "Header value CloudFront adds and the ALB requires (modules/alb origin_secret): 32-128 letters, digits, '-' or '_'."
 }

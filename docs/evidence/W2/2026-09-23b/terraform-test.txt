@@ -14,8 +14,9 @@ tests/boot_contract.tftest.hcl... in progress
   run "refuses_a_non_string_intended_use"... pass
   run "refuses_a_missing_region"... pass
   run "accepts_the_fail_closed_interim_approvals"... pass
+  run "refuses_an_app_url_outside_the_cloudfront_domains"... pass
 tests/boot_contract.tftest.hcl... tearing down
 tests/boot_contract.tftest.hcl... pass
 
-Success! 14 passed, 0 failed.
+Success! 15 passed, 0 failed.
 exit=0

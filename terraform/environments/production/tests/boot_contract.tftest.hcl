@@ -41,6 +41,12 @@ mock_provider "aws" {
   mock_resource "aws_lb" {
     defaults = { arn = "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/mock/0" }
   }
+  mock_resource "aws_lb_listener" {
+    defaults = { arn = "arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/mock/0/0" }
+  }
+  mock_resource "aws_cloudfront_function" {
+    defaults = { arn = "arn:aws:cloudfront::123456789012:function/mock" }
+  }
   mock_resource "aws_lb_target_group" {
     defaults = { arn = "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/mock/0" }
   }
@@ -72,6 +78,8 @@ variables {
   audit_hmac_secret               = "test-audit-hmac-secret-0000000000000000000000"
   connector_encryption_key        = "test-connector-key-00000000000000000000000000"
   app_url                         = "https://app.example.com"
+  domain_aliases                  = ["app.example.com"]
+  cloudfront_origin_secret        = "test-origin-secret-0000000000000000000000"
   ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\"],\"approvedIntendedUses\":[\"drafting\"]}}"
 }
 
@@ -332,4 +340,12 @@ run "accepts_the_fail_closed_interim_approvals" {
   variables {
     ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":false,\"approvedDataClasses\":[],\"approvedIntendedUses\":[]}}"
   }
+}
+
+run "refuses_an_app_url_outside_the_cloudfront_domains" {
+  command = plan
+  variables {
+    app_url = "https://elsewhere.example.com"
+  }
+  expect_failures = [terraform_data.boot_contract]
 }
