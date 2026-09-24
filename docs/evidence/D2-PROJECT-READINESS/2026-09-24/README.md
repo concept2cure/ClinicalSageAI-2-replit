@@ -53,7 +53,11 @@ ProjectHome test file (plus `anaDrivesScreens`, 54 tests) pass.
   but a card cannot say "not measured": the list's contract is `readiness: number`, and the
   portfolio mean averages it. Changing that contract is a separate change to `Projects.tsx`.
 - **The numeric readiness engine** (`readiness-scoring-engine.ts`) queries a `project_id` column
-  that neither `regulatory_programs` nor `program_milestones` has. That is the second half of
-  this handoff, next in this lane.
+  that neither `regulatory_programs` nor `program_milestones` has, so it always throws. It is
+  **deliberately not fixed here**. With no twin assessment the engine scores consistency as the
+  constant 70 and quality and compliance by heuristics, so a program with no documents would read
+  about 46. The missing column is the only thing keeping that figure away from its nine callers.
+  Repairing the query alone would publish it. The work-order board carries the decision: make the
+  engine report "not assessed", or retire it for the canonical readiness.
 - POST's card re-select still reads `COALESCE(p.progress_percent, 0)`. For a program created a
   moment ago, 0 is true.
