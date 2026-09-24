@@ -10,7 +10,7 @@
    ════════════════════════════════════════════════════════════════════ */
 
 /* ── PedigreeBadge — the keystone trust pill ── */
-.c2c-v2 .ped{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:600;padding:2px 8px;border-radius:10px;line-height:1.3;white-space:nowrap;cursor:help;border:1px solid transparent;}
+.c2c-v2 .ped{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;line-height:1.3;white-space:nowrap;cursor:help;border:1px solid transparent;}
 .c2c-v2 .ped svg{width:10px;height:10px;}
 .c2c-v2 .ped-trust{font-weight:500;opacity:.8;}
 .c2c-v2 .ped[data-l="deterministic_registry"], .c2c-v2 .ped[data-l="deterministic_query"]{background:var(--success-muted);color:var(--success);border-color:color-mix(in oklab,var(--success) 30%,transparent);}
@@ -31,7 +31,7 @@
 .c2c-v2 .det-verdict-v[data-tone="crit"]{color:var(--error);}
 .c2c-v2 .det-verdict-l{font-size:11px;color:var(--text-400);font-weight:500;}
 .c2c-v2 .det-b{padding:8px 14px 12px;display:flex;flex-direction:column;gap:8px;}
-.c2c-v2 .det-sec-l{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin-bottom:4px;}
+.c2c-v2 .det-sec-l{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin-bottom:4px;}
 .c2c-v2 .det-find{display:flex;gap:7px;align-items:flex-start;padding:5px 8px;border-radius:6px;background:var(--bg-050);font-size:11.5px;line-height:1.45;color:var(--text-200);}
 .c2c-v2 .det-find+.det-find{margin-top:3px;}
 .c2c-v2 .det-find svg{width:11px;height:11px;flex-shrink:0;margin-top:2px;}
@@ -52,26 +52,26 @@
 .c2c-v2 .cit svg{width:9px;height:9px;color:var(--text-400);}
 .c2c-v2 .cit:hover{border-color:var(--accent-100);color:var(--accent-200);}
 .c2c-v2 .cit-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;}
-.c2c-v2 .cit-lead{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin-right:2px;}
+.c2c-v2 .cit-lead{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin-right:2px;}
 
 /* ── ValidationSummaryPanel ── */
 .c2c-v2 .vsp{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;font-size:12px;}
 .c2c-v2 .vsp-h{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg-050);}
 .c2c-v2 .vsp-t{font-size:12.5px;font-weight:600;color:var(--text-100);flex:1;}
-.c2c-v2 .vsp-std{font-size:9.5px;font-weight:600;font-family:var(--font-mono);background:var(--bg-100);color:var(--text-300);padding:2px 7px;border-radius:4px;}
+.c2c-v2 .vsp-std{font-size:10px;font-weight:600;font-family:var(--font-mono);background:var(--bg-100);color:var(--text-300);padding:2px 7px;border-radius:4px;}
 .c2c-v2 .vsp-verdict{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:10px;}
 .c2c-v2 .vsp-verdict svg{width:11px;height:11px;}
 .c2c-v2 .vsp-verdict[data-ok="true"]{background:var(--success-muted);color:var(--success);}
 .c2c-v2 .vsp-verdict[data-ok="false"]{background:var(--error-muted);color:var(--error);}
 .c2c-v2 .vsp-grp{padding:6px 0;}
-.c2c-v2 .vsp-grp-l{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);padding:6px 14px 3px;}
+.c2c-v2 .vsp-grp-l{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);padding:6px 14px 3px;}
 .c2c-v2 .vsp-row{display:flex;gap:8px;align-items:flex-start;padding:6px 14px;border-top:1px solid var(--bg-100);line-height:1.45;}
 .c2c-v2 .vsp-row svg{width:11px;height:11px;flex-shrink:0;margin-top:2px;}
 .c2c-v2 .vsp-row[data-sev="error"] svg, .c2c-v2 .vsp-row[data-sev="reject"] svg{color:var(--error);}
 .c2c-v2 .vsp-row[data-sev="warning"] svg{color:var(--warning);}
 .c2c-v2 .vsp-row[data-sev="notice"] svg, .c2c-v2 .vsp-row[data-sev="info"] svg{color:var(--ai);}
-.c2c-v2 .vsp-rule{font-family:var(--font-mono);font-size:9.5px;font-weight:600;color:var(--text-300);background:var(--bg-100);padding:1px 5px;border-radius:3px;flex-shrink:0;margin-top:1px;}
-.c2c-v2 .vsp-dom{font-size:9.5px;color:var(--text-400);flex-shrink:0;margin-top:2px;}
+.c2c-v2 .vsp-rule{font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--text-300);background:var(--bg-100);padding:1px 5px;border-radius:3px;flex-shrink:0;margin-top:1px;}
+.c2c-v2 .vsp-dom{font-size:10px;color:var(--text-400);flex-shrink:0;margin-top:2px;}
 .c2c-v2 .vsp-msg{font-size:11.5px;color:var(--text-200);flex:1;min-width:0;}
 .c2c-v2 .vsp-empty{padding:20px 14px;text-align:center;font-size:11.5px;color:var(--text-400);}
 
@@ -94,9 +94,9 @@
 .c2c-v2 .cap-filter{max-width:520px;}
 .c2c-v2 .cap-gap{height:16px;}
 .c2c-v2 .cap-card-t{font-size:12px;font-weight:600;color:var(--text-100);flex:1;}
-.c2c-v2 .cap-card-n{font-family:var(--font-mono);font-size:9.5px;color:var(--text-300);background:var(--bg-100);padding:1px 6px;border-radius:8px;font-weight:600;}
+.c2c-v2 .cap-card-n{font-family:var(--font-mono);font-size:10px;color:var(--text-300);background:var(--bg-100);padding:1px 6px;border-radius:8px;font-weight:600;}
 .c2c-v2 .cap-tools{display:flex;flex-wrap:wrap;gap:4px;}
-.c2c-v2 .cap-tool{font-family:var(--font-mono);font-size:9.5px;color:var(--text-300);background:var(--bg-050);border:1px solid var(--bg-200);padding:2px 6px;border-radius:4px;line-height:1.4;cursor:pointer;transition:background 200ms cubic-bezier(.4,0,.2,1), border-color 200ms cubic-bezier(.4,0,.2,1), color 200ms cubic-bezier(.4,0,.2,1);}
+.c2c-v2 .cap-tool{font-family:var(--font-mono);font-size:10px;color:var(--text-300);background:var(--bg-050);border:1px solid var(--bg-200);padding:2px 6px;border-radius:4px;line-height:1.4;cursor:pointer;transition:background 200ms cubic-bezier(.4,0,.2,1), border-color 200ms cubic-bezier(.4,0,.2,1), color 200ms cubic-bezier(.4,0,.2,1);}
 .c2c-v2 .cap-tool:hover{border-color:var(--accent-100);color:var(--accent-200);background:var(--accent-000);}
 .c2c-v2 .cap-legend .ped{cursor:default;}
 .c2c-v2 .ana-sugg[data-on]{border-color:var(--accent-100);color:var(--accent-200);background:var(--accent-000);}

@@ -105,7 +105,7 @@
     gap: 6px;
   }
   .ed-basis-chip {
-    font-size: 9.5px;
+    font-size: 10px;
     font-weight: 600;
     padding: 2px 7px;
     border-radius: 999px;
@@ -130,7 +130,7 @@
     color: var(--error);
   }
   .ed-basis-l {
-    font-size: 9.5px;
+    font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--text-400);
@@ -539,7 +539,7 @@
     padding: 2px 0;
   }
   .ed-prov-r .k {
-    font-size: 9.5px;
+    font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     opacity: 0.55;
@@ -1074,8 +1074,8 @@
     position: absolute;
     top: -11px;
     left: 22px;
-    background: var(--accent-100);
-    color: #fff;
+    background: var(--accent-strong);
+    color: var(--accent-on-strong);
     font-size: 10px;
     font-weight: 600;
     padding: 4px 11px;
@@ -1556,7 +1556,7 @@
        the conversation was flexed to zero: the thread rendered, the canvas
        rendered, and neither was visible. Stacked, the conversation keeps the
        screen and the dock takes a capped share beneath it — nothing is
-       removed, so "Hide side panel" still means what it says.
+       removed, so the header's progress chip still means what it says.
 
        These three selectors belong beside `.ct-side` in app-v2.css. They are
        here because that file is another workstream's this week; the canvas

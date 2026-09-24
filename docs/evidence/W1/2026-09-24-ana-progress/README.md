@@ -61,23 +61,25 @@ Each check below was mutated in the code and the named test was seen to fail, th
 
 ## Screenshots
 
-Real components rendered from a fixture turn in jsdom, measured and painted in Chromium with the
-shipped stylesheets (`design-system/colors_and_type.css`, `index.css`, `app-v2.css`,
-`authoring-v2.css`, `surface-text-ramp.css`). Fonts are the system fallbacks.
+From the **running application** (third pass, below): `npx tsx server/index.ts` on a freshly
+provisioned database, driven by Playwright in Chromium. The only stand-in is the model — a local
+endpoint that plays a fixed turn (`live/harness/fake-anthropic.mjs`). Fonts are the sandbox's
+system fallbacks (Google Fonts is not reachable from it). The first two passes' screenshots were
+jsdom renders of a fixture turn; they showed the since-removed Outputs section and are replaced.
 
-- `conversation-1440-light.png`, `conversation-1440-dark.png` — full-page conversation: chip in
-  the header, the settled turn's record opened with one step's inputs shown, the output card, a
-  live turn with a failed step in the server's own words, and the Progress panel with its plan,
-  Outputs and Used in this session.
-- `rail-380-light.png`, `rail-380-dark.png` — the persistent rail every module's asks go to.
-- `conversation-390-light.png` — phone width.
+- `live/conv-1440-light-live.png` — mid-turn: chip "Step 2 of 3", the step in progress on the rail, "Still working".
+- `live/conv-1440-light-settled.png`, `live/conv-1440-dark-settled.png` — settled: "3 of 3 done", "Finished in 15s", the drafted document as its canvas.
+- `live/conv-1440-light-record-open.png` — the record opened: "Planned 3 steps", then each step, one step's inputs shown.
+- `live/conv-1440-light-rail-turn.png` — the same turn in the rail from another module: record, answer, output card with its save state.
+- `live/editor-1440-light-editor.png` — the document editor's AnA pane: same chip, panel and record.
+- `live/conv-390-light-settled.png` — phone width.
 
 ## Not done here (named, not hidden)
 
-- **Uploads are not yet passed by id.** Every composer flattens attachments into the text
-  "Attached: …" and calls `send(text)` without them, so `file_ids` never reach the server and the
-  Uploads row appears only for turns whose uploads were resolved server-side. Passing them also
-  turns on the server's PDF-reading path — a governance decision, left to the founder.
+- ~~Uploads are not yet passed by id.~~ Connected in the third pass (below). Correction to the
+  earlier wording: passing ids does **not** by itself turn on PDF reading. The bytes of a PDF or
+  text file reach the model only when `ANA_ENABLE_PDF_INTAKE=true` (off by default); otherwise
+  the turn is given the file's name and id, and the panel says "attached by name only".
 - **Eleven AI paths outside the chat stream** keep their own spinners and bars (Batch Draft's
   0%/100% bar, Deep Research's fixed percentages, the Authoring section "AI draft" button,
   Evidence ask, Submission explain / shadow review, onboarding ingest, AnA Command, and two
@@ -121,3 +123,64 @@ launch catalog (flag-off in production; `shared/constants/launch-scope.ts`) — 
 
 Affected suites after the last edit: 30 files, 325 passed. `tsc` 0 errors. ESLint warnings on
 the touched files equal to their base.
+
+## Third pass (same day): test · enhance · perfect · connect
+
+### Tested — four auditors, then the running application
+
+**Auditors** (a11y, honest state, microcopy, design) over every changed file. Each finding is fixed
+and pinned by a test that was seen to fail with the fix reverted:
+
+| Finding | Fix | Pinned by |
+|---|---|---|
+| Editor transcript was a polite `role="log"` marked `aria-busy` while streaming, holding the record's own announcements until the turn ended (SC 4.1.3) | A labelled region, not a live one — the rail's arrangement | `authoringAnaPane.test.tsx` |
+| Chip used `aria-pressed` for a show/hide control, with no `aria-controls` (SC 4.1.2) | `aria-expanded` + `aria-controls` naming the panel while it exists; the id comes from `useProgressDock` so every host gets it | `anaRailWorkDock.test.tsx` |
+| Row chevrons and the fold toggle were ~18px tall (SC 2.5.8) | 24px targets, rows the same height as before | browser check "row targets are at least 24px" |
+| A turn that failed before its first phase read "Finished in 3s" | `interrupted` set on timeout and lost connection | `anaWorkPanel.test.tsx`, `useAnaChat-plan.test.ts` |
+| A pinned file counted once per turn ("5 read by name only" for one file) | Counted once per file, at the best read it got | `anaWorkPanel.test.tsx` |
+| "Reading sequence 3 as a FDA filing review reviewer…" | "…through the FDA filing review lens…" | — (string) |
+| The panel's Outputs list repeated what the conversation already shows | Removed; every host shows drafts, actions and sign-offs inline | `anaWorkPanel.test.tsx` |
+| The folded line and the record's first row both said "Planned 3 steps" | The plan leads the folded line only when it is all there is | `anaActivity.test.tsx` |
+
+**Running application** (`live/browser-checks.txt`, 89 checks across the conversation page at
+1440 light and dark and 390, the rail, and the document editor — all pass). Running it found what
+no unit test had:
+
+| Found live | Fix | Evidence |
+|---|---|---|
+| **A tool that refused was reported as a success.** Handlers refuse by returning `{ error }`; only a throw marked a step failed, so a draft that was never made got a check mark | `refusalOf` in `tool-trace.ts`; the stream marks such a step failed in the event, the trace and telemetry | `live/server-stream.txt` (before/after); `turn-plan-and-context.test.ts` |
+| The editor's next actions were raw ids (`rewritten_section`), and the button sent the id as the person's message | The stream sends each action's label from `DOCUMENT_ACTIONS` | `live/server-stream.txt` (before/after); `document-action-labels.test.ts`; browser check |
+| Batch Draft's page root `.c2c-v2 .bd` (26px 30px 60px padding) matched every rail message body, indenting the answer and opening a gap under it | The rail's body is `ana-msg-bd` | `live/conv-1440-light-rail-turn.png` |
+| An empty "Artifacts 0" block beside a drafted document, promising drafts "appear here" | The block is mounted only when it has an artifact | browser check |
+| Rail, editor, eCTD and RBM rendered answer → record; the conversation page record → answer | All five: record, answer, output — the reference's order | `anaRailWorkDock.test.tsx`, browser check |
+| Round headers ("Went back · round 2") straight after "Planned 3 steps" — plan updates take rounds of their own | No round headers when she declared a plan | `anaActivity.test.tsx`, browser check |
+| Title cut to "…primary endpoint A" (the attachment line); phone header collapsed the title to one letter | First line only; the header tightens under 560px | browser checks |
+| "Drafting X ✓" followed by "Drafted X" | The outcome row is left out when a successful step already names it | `anaActivity.test.tsx` |
+| Done markers too faint to read; "Balanced · balanced effort" | A filled disc; effort named only when it differs | screenshots; `anaWorkPanel.test.tsx` |
+
+### Connected — uploads by id, from every composer
+
+`composeTurn` (`hooks/useChatUpload.ts`) is the one place a composer turns text + attachments into
+a turn: the "Attached: …" line the thread shows, and the ready files by id. The rail, the
+conversation page, the eCTD co-author and Home (which seeds the conversation page through
+`window.C2C_CONVO.seedFiles`) all use it, and `useAnaChat.send` puts the ids in `file_ids`.
+Proven end to end: a file uploaded through Home's own input was resolved by the server by id and
+reported in `context_used`, and the panel's Uploads row names it (`live/browser-checks.txt`,
+"stream request carries file_ids", "uploads row names the real file …"). Tests:
+`anaRailAttach.test.tsx`, `shellAskGuard.test.tsx` (seed → stream `file_ids`),
+`use-chat-upload.test.tsx` (`composeTurn`), each seen failing with its wiring removed.
+
+Memory reads "Could not be read" in these captures because the sandbox cannot reach the embedding
+provider — the panel saying so is the honest state, not a defect.
+
+### Verified (third pass)
+
+| Check | Result |
+|---|---|
+| `client/src/concept2cure/v2`, `components/ana`, `tests/ui`, `use-chat-upload`, `server/services/ana/__tests__`, `server/routes/ana-ri`, `document-action-labels` | 475 files: 5,945 passed, 3 skipped, 0 failed |
+| Mutations (each fix reverted, its test seen failing, restored) | 17, all caught |
+| Browser run on the live server (`live/browser-checks.txt`) | 89 of 89 |
+| `tsc --noEmit -p tsconfig.check.json` | 0 errors |
+| ESLint on every file touched this pass (HEAD vs working tree) | 93 → 92 |
+| The gates of the second pass, plus `ci:migration-drop-safety` | pass |
+| `ci:duplicate-exported-types` | the same two pre-existing names only (`DocumentProvenance`, `EligibilityAssessment`) |

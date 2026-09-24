@@ -1,0 +1,1426 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST / — when the activation link cannot be issued, the 201 says so instead of claiming a 500
+{
+  "timestamp": "2026-09-24T19:43:35.072Z",
+  "level": "error",
+  "message": "[tenant-users] Invitation could not be issued for the new member",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST / — in production with no public origin, nothing is created and the admin is told why (503)
+{
+  "timestamp": "2026-09-24T19:43:35.083Z",
+  "level": "error",
+  "message": "[tenant-users] Member creation refused: no public origin configured",
+  "context": {
+    "code": "PUBLIC_ORIGIN_NOT_CONFIGURED",
+    "name": "PublicOriginNotConfiguredError"
+  }
+}
+
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts (20 tests) 530ms
+     ✓ GET /:tenantId — non-member of the target org is denied (403)  349ms
+(node:7233) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 SIGTERM listeners added to [process]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:7233) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 SIGINT listeners added to [process]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+ ✓ server/__tests__/security/tenant-isolation-workflow-templates.contract.test.ts (20 tests) 724ms
+     ✓ does not return another organization's template  626ms
+ ✓ server/__tests__/security/document-attachments-audit-honesty.contract.test.ts (29 tests) 724ms
+     ✓ actually stores the attachment it audits  691ms
+stderr | server/__tests__/security/scim-provisioning.contract.test.ts > SCIM provisioning — auth > rejects requests with no bearer token (401)
+{
+  "timestamp": "2026-09-24T19:43:35.766Z",
+  "level": "error",
+  "message": "[scim] Failed to load SCIM tenants from DB",
+  "context": {}
+}
+
+stderr | server/__tests__/security/scim-provisioning.contract.test.ts > SCIM respects tenant entitlement — asymmetrically > REFUSES to create a user for a non-entitled organization
+{
+  "timestamp": "2026-09-24T19:43:35.983Z",
+  "level": "warn",
+  "message": "[scim] SCIM provisioning refused — organization is not entitled",
+  "context": {
+    "orgId": 7
+  }
+}
+
+stderr | server/__tests__/security/scim-provisioning.contract.test.ts > SCIM respects tenant entitlement — asymmetrically > REFUSES an ACTIVATING patch for a non-entitled organization
+{
+  "timestamp": "2026-09-24T19:43:36.003Z",
+  "level": "warn",
+  "message": "[scim] SCIM provisioning refused — organization is not entitled",
+  "context": {
+    "orgId": 7
+  }
+}
+
+ ✓ server/__tests__/security/scim-provisioning.contract.test.ts (22 tests) 301ms
+stderr | server/__tests__/security/document-attachments-routes.contract.test.ts > GET /documents/:id/attachments/:attachmentId — two boundaries, honest headers > reports a record whose bytes the provider will not return as not found
+{
+  "timestamp": "2026-09-24T19:43:37.412Z",
+  "level": "warn",
+  "message": "[module-integration] Attachment record has no retrievable bytes",
+  "context": {
+    "documentId": 100,
+    "attachmentId": 900
+  }
+}
+
+stderr | server/__tests__/security/document-attachments-routes.contract.test.ts > GET /documents/:id/attachments/:attachmentId — two boundaries, honest headers > refuses to serve bytes that no longer match the recorded digest
+{
+  "timestamp": "2026-09-24T19:43:37.418Z",
+  "level": "error",
+  "message": "[module-integration] Attachment bytes do not match the recorded digest",
+  "context": {
+    "documentId": 100,
+    "attachmentId": 900
+  }
+}
+
+ ✓ server/__tests__/security/document-attachments-routes.contract.test.ts (12 tests) 1826ms
+     ✓ proves ownership, then safety, then stores bytes, then records — in that order  1679ms
+ ✓ server/__tests__/security/tenant-isolation-nano-banana-cache.contract.test.ts (9 tests) 200ms
+stderr | server/__tests__/security/ana-mdx-pen-scaffold.test.ts
+{
+  "timestamp": "2026-09-24T19:43:38.536Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/__tests__/security/ana-mdx-pen-scaffold.test.ts > SECURITY: gate rejects oversized + degenerate reasons > flags but does NOT refuse a generic "user asked" reason
+{
+  "timestamp": "2026-09-24T19:43:38.882Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] agent.ana.q_sub.create q_submission",
+  "context": {
+    "userId": 7,
+    "tenantId": 11,
+    "resourceId": "q-1"
+  }
+}
+
+stderr | server/__tests__/security/ana-mdx-pen-scaffold.test.ts > SECURITY: gate rejects oversized + degenerate reasons > flags but does NOT refuse a generic "user asked" reason
+{
+  "timestamp": "2026-09-24T19:43:38.883Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stderr | server/__tests__/security/ana-mdx-pen-scaffold.test.ts > SECURITY: gate rejects oversized + degenerate reasons > flags but does NOT refuse a generic "user asked" reason
+{
+  "timestamp": "2026-09-24T19:43:38.883Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "agent.ana.q_sub.create",
+    "resourceType": "q_submission",
+    "resourceId": "q-1",
+    "reason": "no database pool: the chained audit_logs row was not attempted"
+  }
+}
+
+ ✓ server/__tests__/security/ana-mdx-pen-scaffold.test.ts (16 tests) 18ms
+stderr | server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit writes > F3: POST /audit/events attributes to the JWT principal, never the body
+[SECURITY] audit-trail: body user id (4242) differs from authenticated principal (1). Body value ignored. path=/audit/events
+
+stderr | server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit writes > F4: POST /audit/signatures writes a non-authoritative marker attributed to the principal
+[SECURITY] audit-trail: body user id (4242) differs from authenticated principal (1). Body value ignored. path=/audit/signatures
+
+ ✓ server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts (12 tests) 214ms
+ ✓ server/__tests__/security/audit-trail-contract.test.ts (9 tests) 4758ms
+     ✓ q_sub.create on POST /api/q-sub  2562ms
+     ✓ POST /api/esignature/sign fails closed and logs no esignature.sign when the signature cannot be persisted  837ms
+     ✓ gspr.mapping.upsert on POST /programs/:p/mappings  554ms
+stdout | server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/csr/search without an x-api-key (401)
+{
+  "timestamp": "2026-09-24T19:43:40.377Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-24T19:43:40.378Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/csr/search without an x-api-key (401)
+{
+  "timestamp": "2026-09-24T19:43:40.378Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/csr/search without an x-api-key (401)
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/csr/search without an x-api-key (401)
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/csr/search without an x-api-key (401)
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/csr/search without an x-api-key (401)
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/csr/search without an x-api-key (401)
+{
+  "timestamp": "2026-09-24T19:43:40.761Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 respects the tenant lifecycle posture > lets an active tenant through
+{
+  "timestamp": "2026-09-24T19:43:40.938Z",
+  "level": "error",
+  "message": "[public-api] [public-api] weekly limit check failed (fail-open)",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'rows')"
+  }
+}
+
+stderr | server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 respects the tenant lifecycle posture > lets a past-due organization keep READING
+{
+  "timestamp": "2026-09-24T19:43:40.946Z",
+  "level": "error",
+  "message": "[public-api] [public-api] weekly limit check failed (fail-open)",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'rows')"
+  }
+}
+
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts (21 tests) 2143ms
+     ✓ rejects unauthenticated /api/v1/csr/search without an x-api-key (401)  1997ms
+stdout | server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant list — membership scoping > a non-admin only gets their own orgs (query joins organization_users)
+{
+  "timestamp": "2026-09-24T19:43:42.067Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-24T19:43:42.068Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant list — membership scoping > a non-admin only gets their own orgs (query joins organization_users)
+{
+  "timestamp": "2026-09-24T19:43:42.068Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant list — membership scoping > a non-admin only gets their own orgs (query joins organization_users)
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant list — membership scoping > a non-admin only gets their own orgs (query joins organization_users)
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant list — membership scoping > a non-admin only gets their own orgs (query joins organization_users)
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/__tests__/security/tenant-isolation-global-compliance.contract.test.ts (6 tests) 1696ms
+     ✓ serves a route org that matches the JWT org  1462ms
+stdout | server/__tests__/security/auth-db-contract-smoke.test.ts
+{
+  "timestamp": "2026-09-24T19:43:42.569Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-24T19:43:42.571Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/security/auth-db-contract-smoke.test.ts
+{
+  "timestamp": "2026-09-24T19:43:42.571Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/security/auth-db-contract-smoke.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/security/auth-db-contract-smoke.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/security/auth-db-contract-smoke.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/__tests__/security/auth-db-contract-smoke.test.ts > stage3 auth/db contract smoke > rejects invalid JWT in canonical and compatibility middleware paths
+{
+  "timestamp": "2026-09-24T19:43:42.725Z",
+  "level": "error",
+  "message": "[auth] Authentication error",
+  "context": {
+    "name": "JsonWebTokenError",
+    "message": "invalid token"
+  }
+}
+
+ ✓ server/__tests__/security/auth-db-contract-smoke.test.ts (6 tests) 1414ms
+stderr | server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant mutations — admin only > a non-admin cannot create a tenant
+{
+  "timestamp": "2026-09-24T19:43:42.837Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "path": "/api/tenants"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant mutations — admin only > a non-admin cannot delete a tenant or rotate an API key
+{
+  "timestamp": "2026-09-24T19:43:42.847Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "path": "/api/tenants/5"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant mutations — admin only > a non-admin cannot delete a tenant or rotate an API key
+{
+  "timestamp": "2026-09-24T19:43:42.853Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "path": "/api/tenants/5/api-key"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant creation — the launch catalog comes with it (D2) > a refused creation provisions nothing
+{
+  "timestamp": "2026-09-24T19:43:42.868Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "path": "/api/tenants"
+  }
+}
+
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts (11 tests) 2481ms
+     ✓ a non-admin only gets their own orgs (query joins organization_users)  2362ms
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > returns the job to the organization that queued it
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > returns the job to the organization that queued it
+{
+  "timestamp": "2026-09-24T19:43:44.137Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > returns the job to the organization that queued it
+{
+  "timestamp": "2026-09-24T19:43:44.145Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_created file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > returns the job to the organization that queued it
+{
+  "timestamp": "2026-09-24T19:43:44.146Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > returns the job to the organization that queued it
+{
+  "timestamp": "2026-09-24T19:43:44.149Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > returns the job to the organization that queued it
+{
+  "timestamp": "2026-09-24T19:43:44.150Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_failed file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > returns the job to the organization that queued it
+{
+  "timestamp": "2026-09-24T19:43:44.155Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > returns the job to the organization that queued it
+{
+  "timestamp": "2026-09-24T19:43:44.155Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > returns the job to the organization that queued it
+[AutoExtraction] Job 8e37b779-9b68-4fe5-9ecb-709d5203367b failed: ExtractionSourceUnavailableError: Extraction source unavailable: no stored text for artifact_id=file-7-100 (protocol.pdf). The job is failed rather than completed with a placeholder.
+    at extractText (/home/user/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:431:9)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at processJob (/home/user/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:310:25)
+    at processQueue (/home/user/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:282:7)
+
+stdout | server/__tests__/security/tenant-isolation-q-sub.contract.test.ts > Tenant isolation — Q-Sub list > org-A list never includes org-B Q-Subs
+{
+  "timestamp": "2026-09-24T19:43:44.350Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-24T19:43:44.351Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-q-sub.contract.test.ts > Tenant isolation — Q-Sub list > org-A list never includes org-B Q-Subs
+{
+  "timestamp": "2026-09-24T19:43:44.352Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > publishes the verified UUID, not the header
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > publishes the verified UUID, not the header
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > publishes the verified UUID, not the header
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/__tests__/security/tenant-isolation-q-sub.contract.test.ts > Tenant isolation — Q-Sub list > org-A list never includes org-B Q-Subs
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/security/tenant-isolation-q-sub.contract.test.ts > Tenant isolation — Q-Sub list > org-A list never includes org-B Q-Subs
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/security/tenant-isolation-q-sub.contract.test.ts > Tenant isolation — Q-Sub list > org-A list never includes org-B Q-Subs
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/__tests__/security/tenant-isolation-q-sub.contract.test.ts > Tenant isolation — Q-Sub list > org-A list never includes org-B Q-Subs
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/security/tenant-isolation-q-sub.contract.test.ts > Tenant isolation — Q-Sub list > org-A list never includes org-B Q-Subs
+{
+  "timestamp": "2026-09-24T19:43:44.495Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > does not return another organization's job
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > does not return another organization's job
+{
+  "timestamp": "2026-09-24T19:43:44.518Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > does not return another organization's job
+{
+  "timestamp": "2026-09-24T19:43:44.520Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_created file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > does not return another organization's job
+{
+  "timestamp": "2026-09-24T19:43:44.520Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > does not return another organization's job
+{
+  "timestamp": "2026-09-24T19:43:44.520Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > does not return another organization's job
+{
+  "timestamp": "2026-09-24T19:43:44.521Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_failed file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > does not return another organization's job
+{
+  "timestamp": "2026-09-24T19:43:44.526Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > does not return another organization's job
+{
+  "timestamp": "2026-09-24T19:43:44.526Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > does not return another organization's job
+[AutoExtraction] Job f18a2ef6-b765-4a71-a635-9383a9424615 failed: ExtractionSourceUnavailableError: Extraction source unavailable: no stored text for artifact_id=file-7-100 (protocol.pdf). The job is failed rather than completed with a placeholder.
+    at extractText (/home/user/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:431:9)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at processJob (/home/user/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:310:25)
+    at processQueue (/home/user/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:282:7)
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > reports a foreign job exactly as it reports a missing one
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > reports a foreign job exactly as it reports a missing one
+{
+  "timestamp": "2026-09-24T19:43:44.816Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > reports a foreign job exactly as it reports a missing one
+{
+  "timestamp": "2026-09-24T19:43:44.838Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_created file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > reports a foreign job exactly as it reports a missing one
+{
+  "timestamp": "2026-09-24T19:43:44.838Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > reports a foreign job exactly as it reports a missing one
+{
+  "timestamp": "2026-09-24T19:43:44.839Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > reports a foreign job exactly as it reports a missing one
+{
+  "timestamp": "2026-09-24T19:43:44.839Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_failed file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > reports a foreign job exactly as it reports a missing one
+{
+  "timestamp": "2026-09-24T19:43:44.846Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > reports a foreign job exactly as it reports a missing one
+{
+  "timestamp": "2026-09-24T19:43:44.846Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > reports a foreign job exactly as it reports a missing one
+[AutoExtraction] Job 34b3396e-db79-4982-99a1-681188b12329 failed: ExtractionSourceUnavailableError: Extraction source unavailable: no stored text for artifact_id=file-7-100 (protocol.pdf). The job is failed rather than completed with a placeholder.
+    at extractText (/home/user/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:431:9)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at processJob (/home/user/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:310:25)
+    at processQueue (/home/user/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:282:7)
+
+stderr | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > publishes no UUID at all when only the header offers one
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > publishes no UUID at all when only the header offers one
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > publishes no UUID at all when only the header offers one
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/__tests__/security/tenant-isolation-q-sub.contract.test.ts (5 tests) 1820ms
+     ✓ org-A list never includes org-B Q-Subs  1779ms
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > fails closed on an unusable organization
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > fails closed on an unusable organization
+{
+  "timestamp": "2026-09-24T19:43:44.988Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > fails closed on an unusable organization
+{
+  "timestamp": "2026-09-24T19:43:44.989Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_created file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > fails closed on an unusable organization
+{
+  "timestamp": "2026-09-24T19:43:44.989Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > fails closed on an unusable organization
+{
+  "timestamp": "2026-09-24T19:43:44.990Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > fails closed on an unusable organization
+{
+  "timestamp": "2026-09-24T19:43:44.990Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_failed file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > fails closed on an unusable organization
+{
+  "timestamp": "2026-09-24T19:43:44.990Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > fails closed on an unusable organization
+{
+  "timestamp": "2026-09-24T19:43:44.990Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > fails closed on an unusable organization
+[AutoExtraction] Job 6d09b5f0-e322-4a28-9fec-15815fba2b56 failed: ExtractionSourceUnavailableError: Extraction source unavailable: no stored text for artifact_id=file-7-100 (protocol.pdf). The job is failed rather than completed with a placeholder.
+    at extractText (/home/user/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:431:9)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at processJob (/home/user/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:310:25)
+    at processQueue (/home/user/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:282:7)
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+{
+  "timestamp": "2026-09-24T19:43:45.177Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+{
+  "timestamp": "2026-09-24T19:43:45.178Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_created file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+{
+  "timestamp": "2026-09-24T19:43:45.178Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+{
+  "timestamp": "2026-09-24T19:43:45.178Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+{
+  "timestamp": "2026-09-24T19:43:45.179Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_failed file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+{
+  "timestamp": "2026-09-24T19:43:45.179Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_created file",
+  "context": {
+    "userId": 1,
+    "tenantId": 991,
+    "resourceId": "file-991-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+{
+  "timestamp": "2026-09-24T19:43:45.179Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+{
+  "timestamp": "2026-09-24T19:43:45.179Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+[AutoExtraction] Job 9b0972b0-b76e-41da-a61d-afb3771825a5 failed: ExtractionSourceUnavailableError: Extraction source unavailable: no stored text for artifact_id=file-7-100 (a-protocol.pdf). The job is failed rather than completed with a placeholder.
+    at extractText (/home/user/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:431:9)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at processJob (/home/user/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:310:25)
+    at processQueue (/home/user/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:282:7)
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+{
+  "timestamp": "2026-09-24T19:43:45.180Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_failed file",
+  "context": {
+    "userId": 1,
+    "tenantId": 991,
+    "resourceId": "file-991-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+{
+  "timestamp": "2026-09-24T19:43:45.180Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+{
+  "timestamp": "2026-09-24T19:43:45.180Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+[AutoExtraction] Job 484505fc-a776-4ace-bb8b-3cbe77a4a723 failed: ExtractionSourceUnavailableError: Extraction source unavailable: no stored text for artifact_id=file-991-100 (b-protocol.pdf). The job is failed rather than completed with a placeholder.
+    at extractText (/home/user/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:431:9)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at processJob (/home/user/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:310:25)
+    at processQueue (/home/user/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:282:7)
+
+stderr | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > still keeps the integer org id from the JWT
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > still keeps the integer org id from the JWT
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts > tenantContextMiddleware — a forged header must not become the tenant key > still keeps the integer org id from the JWT
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts (9 tests) 2174ms
+     ✓ publishes the verified UUID, not the header  1370ms
+     ✓ publishes no UUID at all when only the header offers one  421ms
+     ✓ still keeps the integer org id from the JWT  326ms
+ ✓ server/__tests__/security/auditlogger-persistence.contract.test.ts (5 tests) 14ms
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+{
+  "timestamp": "2026-09-24T19:43:45.398Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-24T19:43:45.399Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+{
+  "timestamp": "2026-09-24T19:43:45.399Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+{
+  "timestamp": "2026-09-24T19:43:45.502Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Database operation blocked because tenant scope is missing",
+  "context": {
+    "op": "pool.connect",
+    "caller": "server/services/auditService.ts:417:35",
+    "enforcement": "on"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+{
+  "timestamp": "2026-09-24T19:43:45.503Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+{
+  "timestamp": "2026-09-24T19:43:45.503Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns nothing for a project that belongs to another organization
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns nothing for a project that belongs to another organization
+{
+  "timestamp": "2026-09-24T19:43:45.687Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns nothing for a project that belongs to another organization
+{
+  "timestamp": "2026-09-24T19:43:45.692Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_created file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns nothing for a project that belongs to another organization
+{
+  "timestamp": "2026-09-24T19:43:45.692Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns nothing for a project that belongs to another organization
+{
+  "timestamp": "2026-09-24T19:43:45.692Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns nothing for a project that belongs to another organization
+{
+  "timestamp": "2026-09-24T19:43:45.692Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_failed file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns nothing for a project that belongs to another organization
+{
+  "timestamp": "2026-09-24T19:43:45.694Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns nothing for a project that belongs to another organization
+{
+  "timestamp": "2026-09-24T19:43:45.694Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns nothing for a project that belongs to another organization
+[AutoExtraction] Job 636023b0-f088-4238-b957-b1fabf874a2c failed: ExtractionSourceUnavailableError: Extraction source unavailable: no stored text for artifact_id=file-7-100 (protocol.pdf). The job is failed rather than completed with a placeholder.
+    at extractText (/home/user/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:431:9)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at processJob (/home/user/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:310:25)
+    at processQueue (/home/user/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:282:7)
+
+ ✓ server/__tests__/security/tenant-isolation-response-cache.contract.test.ts (5 tests) 98ms
+stdout | server/services/__tests__/saml-provider.test.ts > saml-provider — fail-closed signature enforcement > rejects a forged, UNSIGNED assertion (the prior auth-bypass payload)
+{
+  "timestamp": "2026-09-24T19:43:45.820Z",
+  "level": "info",
+  "message": "[saml-provider] Initialized SAML provider for org=\"forge-test-1\"",
+  "context": {}
+}
+
+stdout | server/services/__tests__/saml-provider.test.ts > saml-provider — fail-closed signature enforcement > rejects empty / garbage SAMLResponse input
+{
+  "timestamp": "2026-09-24T19:43:45.831Z",
+  "level": "info",
+  "message": "[saml-provider] Initialized SAML provider for org=\"forge-test-2\"",
+  "context": {}
+}
+
+stdout | server/services/__tests__/saml-provider.test.ts > saml-provider — fail-closed signature enforcement > never returns an authenticated user for an unverified assertion
+{
+  "timestamp": "2026-09-24T19:43:45.834Z",
+  "level": "info",
+  "message": "[saml-provider] Initialized SAML provider for org=\"forge-test-3\"",
+  "context": {}
+}
+
+stdout | server/services/__tests__/saml-provider.test.ts > saml-provider — fail-closed signature enforcement > can produce SP metadata for federation setup
+{
+  "timestamp": "2026-09-24T19:43:45.836Z",
+  "level": "info",
+  "message": "[saml-provider] Initialized SAML provider for org=\"meta-test\"",
+  "context": {}
+}
+
+stdout | server/services/__tests__/saml-provider.test.ts > saml-provider — Single Logout (SLO) > reports no logout support without idpSloUrl
+{
+  "timestamp": "2026-09-24T19:43:45.840Z",
+  "level": "info",
+  "message": "[saml-provider] Initialized SAML provider for org=\"slo-off\"",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns an empty list, not the whole queue, for an unusable organization
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns an empty list, not the whole queue, for an unusable organization
+{
+  "timestamp": "2026-09-24T19:43:45.841Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/__tests__/saml-provider.test.ts > saml-provider — Single Logout (SLO) > builds an SP-initiated LogoutRequest URL when idpSloUrl is configured
+{
+  "timestamp": "2026-09-24T19:43:45.841Z",
+  "level": "info",
+  "message": "[saml-provider] Initialized SAML provider for org=\"slo-on\"",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns an empty list, not the whole queue, for an unusable organization
+{
+  "timestamp": "2026-09-24T19:43:45.843Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_created file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns an empty list, not the whole queue, for an unusable organization
+{
+  "timestamp": "2026-09-24T19:43:45.844Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns an empty list, not the whole queue, for an unusable organization
+{
+  "timestamp": "2026-09-24T19:43:45.844Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns an empty list, not the whole queue, for an unusable organization
+{
+  "timestamp": "2026-09-24T19:43:45.845Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_failed file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns an empty list, not the whole queue, for an unusable organization
+{
+  "timestamp": "2026-09-24T19:43:45.845Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns an empty list, not the whole queue, for an unusable organization
+{
+  "timestamp": "2026-09-24T19:43:45.846Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns an empty list, not the whole queue, for an unusable organization
+[AutoExtraction] Job fdc38523-3b98-4c9e-867c-ea526e483254 failed: ExtractionSourceUnavailableError: Extraction source unavailable: no stored text for artifact_id=file-7-100 (protocol.pdf). The job is failed rather than completed with a placeholder.
+    at extractText (/home/user/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:431:9)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at processJob (/home/user/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:310:25)
+    at processQueue (/home/user/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:282:7)
+
+ ✓ server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts (7 tests) 2664ms
+     ✓ returns the job to the organization that queued it  991ms
+     ✓ does not return another organization's job  337ms
+     ✓ reports a foreign job exactly as it reports a missing one  320ms
+     ✓ lists only the caller organization's jobs for a project  513ms
+ ✓ server/services/__tests__/saml-provider.test.ts (6 tests) 31ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts (18 tests) 10ms
+ ✓ server/__tests__/security/audit-siem-export.test.ts (7 tests) 183ms
+ ✓ server/__tests__/security/tenant-isolation-evidence-sufficiency.contract.test.ts (5 tests) 461ms
+     ✓ POST /programs/:org-A/assess succeeds  426ms
+stderr | server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > deletes and audits in one transaction
+{
+  "timestamp": "2026-09-24T19:43:47.862Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > fails closed — an audit failure rolls the delete back (500)
+{
+  "timestamp": "2026-09-24T19:43:48.053Z",
+  "level": "error",
+  "message": "[ectd-documents] Delete error",
+  "context": {
+    "err": "audit_events insert failed"
+  }
+}
+
+stderr | server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > fails closed — an audit failure rolls the delete back (500)
+{
+  "timestamp": "2026-09-24T19:43:48.181Z",
+  "level": "error",
+  "message": "[coauthor] Delete document error",
+  "context": {
+    "err": "audit_events insert failed"
+  }
+}
+
+ ✓ server/__tests__/security/tenant-isolation-post-market.contract.test.ts (5 tests) 1482ms
+     ✓ POST /programs/:org-A/mappings succeeds  784ms
+ ✓ server/__tests__/security/coauthor-document-delete-audit.contract.test.ts (8 tests) 2099ms
+     ✓ deletes and audits in one transaction  1952ms
+ ✓ server/__tests__/security/tenant-isolation-intelligent-reports.contract.test.ts (7 tests) 163ms
+stderr | server/__tests__/security/c2c-documents-delete-audit-order.contract.test.ts > Part 11 — c2c evidence delete audit ordering > audits and deletes atomically in one transaction (audit before delete, then commit)
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/security/c2c-documents-delete-audit-order.contract.test.ts > Part 11 — c2c evidence delete audit ordering > audits and deletes atomically in one transaction (audit before delete, then commit)
+{
+  "timestamp": "2026-09-24T19:43:49.831Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/__tests__/security/c2c-documents-delete-audit-order.contract.test.ts > Part 11 — c2c evidence delete audit ordering > fails closed — an audit-write failure rolls back the transaction; nothing is deleted
+[c2c/documents] DELETE /:id/sections/:key/evidence/:evId Error: governed write failed
+    at /home/user/ClinicalSageAI-2-replit/server/__tests__/security/c2c-documents-delete-audit-order.contract.test.ts:71:39
+    at Mock (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/c2c/documents.ts:792:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+ ✓ server/__tests__/security/c2c-documents-delete-audit-order.contract.test.ts (3 tests) 1428ms
+     ✓ audits and deletes atomically in one transaction (audit before delete, then commit)  1389ms
+stderr | server/__tests__/security/scim-ip-allowlist-enforcement.test.ts > SCIM IP allowlist enforcement > valid token from outside the allowlist is rejected (403)
+{
+  "timestamp": "2026-09-24T19:43:50.705Z",
+  "level": "warn",
+  "message": "[scim] SCIM request from non-allowlisted IP",
+  "context": {
+    "orgId": 7,
+    "sourceIp": "8.8.8.8"
+  }
+}
+
+stderr | server/__tests__/security/scim-ip-allowlist-enforcement.test.ts > SCIM IP allowlist enforcement > a leaked token cannot claim an allowlisted address: the load balancer's entry decides (403)
+{
+  "timestamp": "2026-09-24T19:43:50.718Z",
+  "level": "warn",
+  "message": "[scim] SCIM request from non-allowlisted IP",
+  "context": {
+    "orgId": 7,
+    "sourceIp": "8.8.8.8"
+  }
+}
+
+ ✓ server/__tests__/security/scim-ip-allowlist-enforcement.test.ts (5 tests) 54ms
+ ✓ server/__tests__/security/check-security-patterns.test.ts (4 tests) 3459ms
+     ✓ flags organizationId destructured from req.body across multiple lines  840ms
+     ✓ flags tenantId destructured from req.query across multiple lines  744ms
+     ✓ passes a handler that sources the org from the JWT helper  1041ms
+     ✓ honors a security-allow marker on the line preceding a multi-line destructure  829ms
+stdout | server/__tests__/security/tenant-isolation-client-branding.contract.test.ts > Tenant isolation — branding writes > POST /upload-logo writes the JWT org, not a spoofed body org
+{
+  "timestamp": "2026-09-24T19:43:51.049Z",
+  "level": "info",
+  "message": "[client-branding] Logo uploaded for org 7",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-client-branding.contract.test.ts > Tenant isolation — branding writes > POST /upload-letterhead writes the JWT org, not a spoofed body org
+{
+  "timestamp": "2026-09-24T19:43:51.059Z",
+  "level": "info",
+  "message": "[client-branding] Letterhead uploaded for org 7",
+  "context": {}
+}
+
+ ✓ server/__tests__/security/tenant-isolation-client-branding.contract.test.ts (5 tests) 72ms
+stderr | server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > forbids non-admins (403)
+{
+  "timestamp": "2026-09-24T19:43:51.359Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "path": "/api/admin/scim-ip-allowlist"
+  }
+}
+
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts (7 tests) 116ms
+stderr | server/__tests__/security/ind-application-delete-audit.contract.test.ts > Part 11 — IND application delete audit > fails closed — an audit-events failure rolls the delete back (500)
+{
+  "timestamp": "2026-09-24T19:43:51.504Z",
+  "level": "error",
+  "message": "[ind-routes] Failed to delete IND application",
+  "context": {}
+}
+
+ ✓ server/__tests__/security/ind-application-delete-audit.contract.test.ts (3 tests) 69ms
+ ✓ server/__tests__/security/cidr.test.ts (15 tests) 9ms
+stderr | server/__tests__/security/scim-tenants-admin.test.ts > admin SCIM-tenants API > forbids non-admins (403)
+{
+  "timestamp": "2026-09-24T19:43:51.818Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "path": "/api/admin/scim-tenants"
+  }
+}
+
+ ✓ server/__tests__/security/scim-tenants-admin.test.ts (6 tests) 96ms
+ ✓ server/__tests__/security/check-security-patterns-socket-broadcast.test.ts (4 tests) 3585ms
+     ✓ flags a namespace-global broadcast off a socket  1082ms
+     ✓ flags a publish straight off the Socket.IO server handle  984ms
+     ✓ does NOT flag ordinary EventEmitter publishes or already-scoped sends  798ms
+     ✓ honors an audited security-allow escape hatch  716ms
+stderr | server/__tests__/security/c2c-documents-transition-audit-order.contract.test.ts > Part 11 — c2c section transition audit ordering > audits in-transaction, after the update and before COMMIT
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/security/c2c-documents-transition-audit-order.contract.test.ts > Part 11 — c2c section transition audit ordering > audits in-transaction, after the update and before COMMIT
+{
+  "timestamp": "2026-09-24T19:43:52.916Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/__tests__/security/c2c-documents-evidence-link-audit-order.contract.test.ts > Part 11 — c2c evidence link audit ordering > inserts and audits in one transaction, before COMMIT
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/security/c2c-documents-evidence-link-audit-order.contract.test.ts > Part 11 — c2c evidence link audit ordering > inserts and audits in one transaction, before COMMIT
+{
+  "timestamp": "2026-09-24T19:43:52.994Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/__tests__/security/tenant-isolation-folders.contract.test.ts (3 tests) 102ms
+stderr | server/__tests__/security/c2c-documents-transition-audit-order.contract.test.ts > Part 11 — c2c section transition audit ordering > fails closed — an audit failure rolls back the transition (no COMMIT)
+[c2c/documents] PATCH /:id/sections/:key Error: governed write failed
+    at /home/user/ClinicalSageAI-2-replit/server/__tests__/security/c2c-documents-transition-audit-order.contract.test.ts:66:39
+    at Mock (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/c2c/documents.ts:607:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+ ✓ server/__tests__/security/c2c-documents-transition-audit-order.contract.test.ts (2 tests) 1024ms
+     ✓ audits in-transaction, after the update and before COMMIT  1004ms
+stderr | server/__tests__/security/c2c-documents-evidence-link-audit-order.contract.test.ts > Part 11 — c2c evidence link audit ordering > fails closed — an audit failure rolls back the insert (no COMMIT)
+[c2c/documents] POST /:id/sections/:key/evidence Error: governed write failed
+    at /home/user/ClinicalSageAI-2-replit/server/__tests__/security/c2c-documents-evidence-link-audit-order.contract.test.ts:63:39
+    at Mock (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/c2c/documents.ts:738:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+ ✓ server/__tests__/security/c2c-documents-evidence-link-audit-order.contract.test.ts (2 tests) 941ms
+     ✓ inserts and audits in one transaction, before COMMIT  923ms
+ ✓ server/services/ai-gateway/__tests__/promptInjection.test.ts (20 tests) 13ms
+ ✓ server/__tests__/security/tenant-isolation-cortex-advisory.contract.test.ts (2 tests) 67ms
+stdout | server/__tests__/security/auth-invalid-expired-jwt.test.ts
+{
+  "timestamp": "2026-09-24T19:43:54.233Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-24T19:43:54.234Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/security/auth-invalid-expired-jwt.test.ts
+{
+  "timestamp": "2026-09-24T19:43:54.234Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/security/auth-invalid-expired-jwt.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/security/auth-invalid-expired-jwt.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/security/auth-invalid-expired-jwt.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/__tests__/security/tenant-isolation-vault-list.contract.test.ts (3 tests) 855ms
+     ✓ scopes every documents query to the authed org  838ms
+stderr | server/__tests__/security/auth-invalid-expired-jwt.test.ts > stage3 invalid/expired jwt contract > authMiddleware rejects invalid JWT (server/auth.ts)
+{
+  "timestamp": "2026-09-24T19:43:54.312Z",
+  "level": "error",
+  "message": "[auth] Authentication error",
+  "context": {
+    "name": "JsonWebTokenError",
+    "message": "invalid token"
+  }
+}
+
+ ✓ server/__tests__/security/auth-invalid-expired-jwt.test.ts (3 tests) 916ms
+ ✓ server/__tests__/security/telemetry-redaction.test.ts (4 tests) 7ms
+stdout | server/__tests__/security/auth-hardening.test.ts
+{
+  "timestamp": "2026-09-24T19:43:54.897Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-24T19:43:54.899Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/security/auth-hardening.test.ts
+{
+  "timestamp": "2026-09-24T19:43:54.900Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/__tests__/security/well-known-security-txt.test.ts (2 tests) 26ms
+stderr | server/__tests__/security/auth-hardening.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/security/auth-hardening.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/security/auth-hardening.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/__tests__/security/auth-hardening.test.ts (3 tests) 7ms
+stdout | server/__tests__/security/tenant-isolation-intelligence.contract.test.ts > Tenant isolation — Intelligence fail-open guard > 403s instead of falling back to org 0 when no org context is present
+{
+  "timestamp": "2026-09-24T19:43:55.414Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-24T19:43:55.416Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-intelligence.contract.test.ts > Tenant isolation — Intelligence fail-open guard > 403s instead of falling back to org 0 when no org context is present
+{
+  "timestamp": "2026-09-24T19:43:55.416Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-intelligence.contract.test.ts > Tenant isolation — Intelligence fail-open guard > 403s instead of falling back to org 0 when no org context is present
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/security/tenant-isolation-intelligence.contract.test.ts > Tenant isolation — Intelligence fail-open guard > 403s instead of falling back to org 0 when no org context is present
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/security/tenant-isolation-intelligence.contract.test.ts > Tenant isolation — Intelligence fail-open guard > 403s instead of falling back to org 0 when no org context is present
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/__tests__/security/tenant-isolation-intelligence.contract.test.ts (1 test) 1176ms
+     ✓ 403s instead of falling back to org 0 when no org context is present  1173ms
+
+ Test Files  45 passed (45)
+      Tests  377 passed (377)
+   Start at  19:43:33
+   Duration  21.97s (transform 9.26s, setup 1.05s, import 11.43s, tests 42.25s, environment 9ms)
+
+exit=0

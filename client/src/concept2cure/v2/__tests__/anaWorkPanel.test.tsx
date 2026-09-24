@@ -109,19 +109,28 @@ describe('AnaWorkPanel — the work is visible while it happens', () => {
     expect(screen.queryByText(/Finished in/)).toBeNull();
   });
 
-  it('adds Outputs only once there is an output, never an empty section', () => {
-    const { rerender } = render(<AnaWorkPanel messages={liveTurn()} streaming />);
+  it('says a turn that failed before its first phase did not finish', () => {
+    // The connection failed before any status event: no phase exists to mark
+    // stopped, so only the turn's own flag can say it did not finish.
+    const failed = liveTurn({ streaming: false, completedAt: T0 + 3_000, progress: [], interrupted: true });
+    render(<AnaWorkPanel messages={failed} streaming={false} />);
+    expect(screen.getByText('Did not finish · 3s')).toBeTruthy();
+    expect(screen.queryByText(/Finished in/)).toBeNull();
+  });
+
+  it('lists no outputs — the conversation shows each one where it happened', () => {
+    const msgs = liveTurn({
+      streaming: false,
+      completedAt: T0 + 5_000,
+      generatedDraft: { title: 'Clinical Overview 2.5', content: '#', artifactId: 'art_1', version: 2 },
+      executedActions: [{ label: 'Validated the draft', actionType: 'run_validation', executed: true }],
+      pendingSignoffs: [{ command: 'seal_document', params: {}, reason: 'Part 11' } as never],
+    });
+    render(<AnaWorkPanel messages={msgs} streaming={false} />);
     expect(screen.queryByRole('heading', { name: 'Outputs' })).toBeNull();
-    rerender(
-      <AnaWorkPanel
-        messages={liveTurn({ generatedDraft: { title: 'Clinical Overview 2.5', content: '#' } })}
-        streaming
-      />,
-    );
-    expect(screen.getByRole('heading', { name: 'Outputs' })).toBeTruthy();
-    expect(screen.getByText('Drafted Clinical Overview 2.5')).toBeTruthy();
-    // Still in flight: the save is not reported yet, and is not claimed.
-    expect(screen.getByText('Save not yet reported')).toBeTruthy();
+    expect(screen.queryByText(/Clinical Overview 2\.5/)).toBeNull();
+    expect(screen.queryByText('Validated the draft')).toBeNull();
+    expect(screen.queryByText(/waiting for sign-off/)).toBeNull();
   });
 
   it('says a stopped turn was stopped, never finished', () => {
@@ -264,34 +273,6 @@ describe('AnaWorkPanel — nothing is shown that did not happen', () => {
   });
 });
 
-describe('AnaWorkPanel — outputs and context', () => {
-  it('lists drafts with their save state and governed actions waiting for sign-off', () => {
-    const msgs = liveTurn({
-      streaming: false,
-      completedAt: T0 + 5_000,
-      generatedDraft: { title: 'Clinical Overview 2.5', content: '#', artifactId: 'art_1', version: 2 },
-      pendingSignoffs: [{ command: 'seal_document', params: {}, reason: 'Part 11' } as never],
-    });
-    render(<AnaWorkPanel messages={msgs} streaming={false} />);
-    expect(screen.getByText('Drafted Clinical Overview 2.5')).toBeTruthy();
-    expect(screen.getByText('Saved · version 2')).toBeTruthy();
-    expect(screen.getByText('1 governed action waiting for sign-off')).toBeTruthy();
-  });
-
-  it('leaves draft rows to a host that lists them as artifact cards', () => {
-    const msgs = liveTurn({
-      streaming: false,
-      completedAt: T0 + 5_000,
-      generatedDraft: { title: 'Clinical Overview 2.5', content: '#', artifactId: 'art_1', version: 2 },
-      executedActions: [{ label: 'Validated the draft', actionType: 'run_validation', executed: true }],
-    });
-    render(<AnaWorkPanel messages={msgs} streaming={false} omitDrafts />);
-    expect(screen.queryByText('Drafted Clinical Overview 2.5')).toBeNull();
-    expect(screen.getByText('Validated the draft')).toBeTruthy();
-  });
-
-});
-
 describe('AnaWorkPanel — used in this session', () => {
   it('says what the session used — only what reached the model, and a failed read as failed', () => {
     const msgs = liveTurn({
@@ -318,11 +299,20 @@ describe('AnaWorkPanel — used in this session', () => {
       />,
     );
     expect(screen.getByText('Protocol v3.pdf +1')).toBeTruthy();
-    expect(screen.getByText('1 read by name only · 1 could not be opened')).toBeTruthy();
+    expect(screen.getByText('1 attached by name only · 1 could not be opened')).toBeTruthy();
     expect(screen.getByText('Read · Estimand decision, Stability arm')).toBeTruthy();
     expect(screen.getByText('ONC-221 · Phase II · CMC · Balanced · thorough effort')).toBeTruthy();
     // The lens belongs to the turn's record in the transcript, not here.
     expect(screen.queryByText(/a risk question/)).toBeNull();
+  });
+
+  it('names the effort only when it differs from the engine she was given', () => {
+    const { rerender } = render(
+      <AnaWorkPanel messages={liveTurn({ effortUsed: 'balanced' })} streaming context={{ project: 'ONC-221', engine: 'Balanced' }} />,
+    );
+    expect(screen.getByText('ONC-221 · Balanced')).toBeTruthy();
+    rerender(<AnaWorkPanel messages={liveTurn({ effortUsed: 'thorough' })} streaming context={{ project: 'ONC-221', engine: 'Balanced' }} />);
+    expect(screen.getByText('ONC-221 · Balanced · thorough effort')).toBeTruthy();
   });
 
   it('says memory could not be read rather than that nothing matched', () => {
@@ -336,6 +326,30 @@ describe('AnaWorkPanel — used in this session', () => {
     expect(screen.queryByText(/Nothing in memory matched/)).toBeNull();
   });
 
+  it('counts a file once however many turns it rode, at the best read it got', () => {
+    const turn = (id: string, read: 'content' | 'name_only', unresolved: number): AnaChatMessage => ({
+      id,
+      role: 'assistant',
+      text: 'ok',
+      contextUsed: {
+        uploads: [{ fileId: 'f1', fileName: 'Protocol v3.pdf', mimeType: 'application/pdf', read }],
+        unresolvedUploads: unresolved,
+        memory: [],
+        memoryStatus: 'none',
+      },
+    });
+    // A pinned file named on three turns and a pinned source that failed on
+    // all three: one file, one failure.
+    const { rerender } = render(
+      <AnaWorkPanel messages={[turn('a1', 'name_only', 1), turn('a2', 'name_only', 1), turn('a3', 'name_only', 1)]} streaming={false} />,
+    );
+    expect(screen.getByText('Protocol v3.pdf')).toBeTruthy();
+    expect(screen.getByText('1 attached by name only · 1 could not be opened')).toBeTruthy();
+    // Read in full on one turn: not "by name only" because others only named it.
+    rerender(<AnaWorkPanel messages={[turn('a1', 'content', 0), turn('a2', 'name_only', 0)]} streaming={false} />);
+    expect(screen.queryByText(/by name only/)).toBeNull();
+  });
+
   it('says nothing about memory when no turn reported what it read', () => {
     render(<AnaWorkPanel messages={liveTurn()} streaming />);
     expect(screen.queryByText('Memory')).toBeNull();
@@ -346,12 +360,18 @@ describe('AnaWorkPanel — used in this session', () => {
 describe('AnaWorkPanel — structure and announcements', () => {
   it('is one h2 over h3 sections, each present only when it has something to say', () => {
     const { container } = render(
-      <AnaWorkPanel messages={liveTurn({ generatedDraft: { title: 'IB', content: '#' } })} streaming />,
+      <AnaWorkPanel
+        messages={liveTurn({
+          generatedDraft: { title: 'IB', content: '#' },
+          contextUsed: { uploads: [], unresolvedUploads: 0, memory: [], memoryStatus: 'none' },
+        })}
+        streaming
+      />,
     );
     expect(container.querySelectorAll('h2')).toHaveLength(1);
     expect(screen.getByRole('heading', { level: 2, name: 'Progress' })).toBeTruthy();
     const h3 = [...container.querySelectorAll('h3')].map((h) => h.textContent);
-    expect(h3).toEqual(['Outputs', 'Used in this session']);
+    expect(h3).toEqual(['Used in this session']);
   });
 
   it('offers a close only when the host asks for one', () => {

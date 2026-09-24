@@ -104,7 +104,7 @@
 .sbAccount:hover { background: var(--bg-200); }
 .avatar {
   width: 26px; height: 26px; border-radius: 9999px;
-  background: var(--accent-main-100); color: #fff;
+  background: var(--accent-strong); color: var(--accent-on-strong);
   font-size: 11px; font-weight: 600;
   display: inline-flex; align-items: center; justify-content: center;
   flex-shrink: 0;
@@ -313,8 +313,8 @@
 .toolPickerBadge {
   position: absolute; top: 2px; right: 2px;
   min-width: 14px; height: 14px; padding: 0 3px;
-  border-radius: 9999px; background: var(--accent-main-100); color: #fff;
-  font-size: 9px; line-height: 14px; font-weight: 600; text-align: center;
+  border-radius: 9999px; background: var(--accent-strong); color: var(--accent-on-strong);
+  font-size: 10px; line-height: 14px; font-weight: 600; text-align: center;
 }
 .toolPickerPop {
   position: absolute; bottom: calc(100% + 8px); left: 0; z-index: 30;
@@ -403,12 +403,11 @@
 
 .composerSend {
   width: 32px; height: 32px; border-radius: 9999px;
-  background: var(--accent-main-100); color: #fff;
+  background: var(--accent-strong); color: var(--accent-on-strong);
   display: inline-flex; align-items: center; justify-content: center;
   transition: background 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
   border: 0; cursor: pointer;
 }
-.composerSend:hover { background: var(--accent-main-200); }
 .composerSend:disabled { background: var(--bg-300); cursor: default; }
 
 /* ───────── Attachment chips (above the textarea) ───────── */

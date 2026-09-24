@@ -176,6 +176,80 @@ const CASES: Case[] = [
     },
     countOwn: `SELECT count(*)::int AS n FROM public.rag_chunks WHERE document_id = $1::uuid`,
   },
+  {
+    // Added 2026-09-24 (ledger L201). A device complaint hangs from its
+    // regulatory program by a TEXT program_id with no foreign key (the program's
+    // id is a uuid), so the migration compares the keys as text. With no
+    // organization column and no RLS, every tenant's complaint narratives were
+    // readable by program id from any other tenant's session.
+    child: 'complaints',
+    parent: 'regulatory_programs',
+    fk: 'program_id',
+    parentTenant: 'organization_id',
+    seed: async (q, org, tag) => {
+      const p = await q(
+        `INSERT INTO public.regulatory_programs
+           (organization_id, name, code, program_type, product_type, primary_agency, product_name)
+         VALUES ($1, $2, $3, 'device', 'samd', 'FDA', $2) RETURNING id::text AS id`,
+        [org, `program ${tag}`, tag.slice(-40)],
+      );
+      await q(
+        `INSERT INTO public.complaints
+           (program_id, complaint_code, source, channel, received_at, event_narrative)
+         VALUES ($1, $2, 'customer', 'email', now(), $3)`,
+        [p.rows[0].id, tag.slice(-40), `complaint narrative for org ${org}`],
+      );
+      return p.rows[0].id; // complaints.program_id
+    },
+    countOwn: `SELECT count(*)::int AS n FROM public.complaints WHERE program_id = $1`,
+  },
+  {
+    // Added 2026-09-24 (ledger L201). The AnA command pdev.activity.set_state
+    // read, updated and inserted activities by params.programId with no check
+    // that the program was the caller's, and a foreign key does not consult RLS.
+    child: 'pdev_program_activities',
+    parent: 'regulatory_programs',
+    fk: 'program_id',
+    parentTenant: 'organization_id',
+    seed: async (q, org, tag) => {
+      const p = await q(
+        `INSERT INTO public.regulatory_programs
+           (organization_id, name, code, program_type, product_type, primary_agency, product_name)
+         VALUES ($1, $2, $3, 'device', 'samd', 'FDA', $2) RETURNING id::text AS id`,
+        [org, `pdev program ${tag}`, `P${tag.slice(-39)}`],
+      );
+      await q(
+        `INSERT INTO public.pdev_program_activities (program_id, activity_key, workstream, stage)
+         VALUES ($1::uuid, $2, 'clinical', 'planning')`,
+        [p.rows[0].id, `activity ${org}`],
+      );
+      return p.rows[0].id;
+    },
+    countOwn: `SELECT count(*)::int AS n FROM public.pdev_program_activities WHERE program_id = $1::uuid`,
+  },
+  {
+    // Added 2026-09-24 (ledger L201). A resolution bundle's items: the actions
+    // and prepared replacement content the bundle will apply.
+    child: 'resolution_bundle_items',
+    parent: 'resolution_bundles',
+    fk: 'bundle_id',
+    parentTenant: 'organization_id',
+    seed: async (q, org, tag) => {
+      const p = await q(
+        `INSERT INTO public.resolution_bundles (organization_id, project_id, title, created_by_id)
+         VALUES ($1, 1, $2, 1) RETURNING id::text AS id`,
+        [org, `bundle ${tag}`],
+      );
+      await q(
+        `INSERT INTO public.resolution_bundle_items
+           (bundle_id, object_type, object_id, action_type, action_description)
+         VALUES ($1::uuid, 'document', $2, 'review', $3)`,
+        [p.rows[0].id, tag, `prepared change for org ${org}`],
+      );
+      return p.rows[0].id;
+    },
+    countOwn: `SELECT count(*)::int AS n FROM public.resolution_bundle_items WHERE bundle_id = $1::uuid`,
+  },
 ];
 
 /** Named by the migration; asserted as a set so a dropped entry is caught. */
@@ -194,6 +268,31 @@ const ALL_CHILD_TABLES = [
   'csr_statistical_analyses', 'csr_tables_and_figures', 'csr_treatment_arms',
   'ctd_nonclinical_studies', 'ctd_quality_data', 'ctd_submissions',
   'csr_knowledge_edges', 'ctd_cross_references',
+  // Added 2026-09-24 (ledger L201): post-market data keyed by a text program id.
+  'complaints', 'mdr_events', 'vigilance_events',
+  // Added 2026-09-24 (ledger L201): every child with a foreign key into a
+  // tenant-keyed parent that had row security OFF, bar the four grandchildren
+  // named in scripts/db/rls-coverage-check.sql's carve-out.
+  'activity_reactions', 'agency_validation_results', 'ai_ml_modifications',
+  'c2c_ana_conversation_turns', 'c2c_milestone_sections', 'c2c_secure_attachments',
+  'cer_clinical_evidence', 'cer_compliance_checks', 'cer_essential_requirements',
+  'cer_faers_data', 'cer_literature', 'cer_sections', 'cer_version_history',
+  'cer_workflows', 'charter_sections', 'cognitive_hitl_breakpoints',
+  'cognitive_reasoning_traces', 'cognitive_thread_messages',
+  'cognitive_workflow_checkpoints', 'context_members', 'dlt_events',
+  'document_attachments', 'document_audit_logs', 'document_comments', 'document_locks',
+  'doe_analysis_results', 'doe_experiments', 'doe_factors', 'doe_responses',
+  'dose_cohorts', 'dose_levels', 'ind_narrative_sections', 'ind_package_plan_documents',
+  'ind_package_plan_modalities', 'ind_package_plan_regions',
+  'ind_package_plan_requirements', 'ind_package_plan_timelines', 'leaf_citations',
+  'leaf_patches', 'lumen_collection_atoms', 'obligation_updates',
+  'pdev_program_activities', 'pdev_readiness_snapshots', 'pkpd_compartments',
+  'project_predictions', 'report_details', 'report_program_group_projects',
+  'resolution_bundle_items', 'risk_detections', 'section_patches', 'sharepoint_comments',
+  'sharepoint_file_versions', 'sharepoint_locks', 'sharepoint_shares',
+  'simple_document_versions', 'species_comparisons', 'timeline_phases',
+  'validation_findings', 'validation_harmonization_opportunities', 'validation_issues',
+  'workflow_approvals', 'workflow_history', 'workflow_steps',
 ];
 
 /**
@@ -281,6 +380,48 @@ async function ensureTables(pool: { query: (sql: string) => Promise<unknown> }):
       chunk_id    TEXT NOT NULL,
       chunk_index INTEGER NOT NULL,
       content     TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS public.regulatory_programs (
+      id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id INTEGER NOT NULL,
+      name            TEXT NOT NULL,
+      code            VARCHAR NOT NULL,
+      program_type    TEXT NOT NULL,
+      product_type    TEXT NOT NULL,
+      primary_agency  TEXT NOT NULL,
+      product_name    TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS public.pdev_program_activities (
+      id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      program_id   UUID NOT NULL REFERENCES public.regulatory_programs(id),
+      activity_key VARCHAR NOT NULL,
+      workstream   VARCHAR NOT NULL,
+      stage        VARCHAR NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS public.resolution_bundles (
+      id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id INTEGER NOT NULL,
+      project_id      INTEGER NOT NULL,
+      title           TEXT NOT NULL,
+      created_by_id   INTEGER NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS public.resolution_bundle_items (
+      id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      bundle_id          UUID NOT NULL REFERENCES public.resolution_bundles(id) ON DELETE CASCADE,
+      object_type        VARCHAR NOT NULL,
+      object_id          TEXT NOT NULL,
+      action_type        VARCHAR NOT NULL,
+      action_description TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS public.complaints (
+      id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      program_id      TEXT NOT NULL,
+      complaint_code  VARCHAR NOT NULL,
+      source          VARCHAR NOT NULL,
+      channel         VARCHAR NOT NULL,
+      received_at     TIMESTAMPTZ NOT NULL,
+      event_narrative TEXT NOT NULL
     );
   `);
 }

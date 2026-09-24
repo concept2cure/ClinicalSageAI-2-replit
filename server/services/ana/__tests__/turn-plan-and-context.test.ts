@@ -39,7 +39,7 @@ import { buildContextUsedEvent, memoryStatusOf } from '../turn-context-used';
 import { ALWAYS_ON_TOOLS, selectToolsForTurn } from '../tool-selection';
 import { describeToolPlan } from '../agentic-loop';
 import { buildMemoryContextForChat } from '../../memory-context-assembler';
-import { buildAssistantMetadata } from '../tool-trace';
+import { buildAssistantMetadata, refusalOf } from '../tool-trace';
 
 const steps = (...s: Array<[string, string]>) => s.map(([title, status]) => ({ title, status }));
 
@@ -184,5 +184,23 @@ describe('the declared plan is persisted with the turn', () => {
   it('stores nothing for a turn that declared no plan', () => {
     expect(buildAssistantMetadata([], null, null, null, undefined)).toBeUndefined();
     expect(buildAssistantMetadata([], null, null, null, [])).toBeUndefined();
+  });
+});
+
+describe('a handler that refuses is a step that did not happen', () => {
+  it('reads the refusal a handler returned instead of throwing', () => {
+    // The real case: draft_authoring_document with no project open.
+    const r = JSON.stringify({
+      error: 'draft_authoring_document needs an open project — every authoring document is filed under one.',
+    });
+    expect(refusalOf(r)).toMatch(/^draft_authoring_document needs an open project/);
+  });
+
+  it('is null for a result that did not refuse', () => {
+    expect(refusalOf(JSON.stringify({ ok: true, steps: [] }))).toBeNull();
+    expect(refusalOf(JSON.stringify({ error: '' }))).toBeNull();
+    expect(refusalOf(JSON.stringify({ error: null, results: [] }))).toBeNull();
+    expect(refusalOf(JSON.stringify(['error']))).toBeNull();
+    expect(refusalOf('plain text answer')).toBeNull();
   });
 });

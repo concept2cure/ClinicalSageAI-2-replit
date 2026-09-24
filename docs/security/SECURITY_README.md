@@ -1,179 +1,54 @@
-# TrialSage Security and Reliability Documentation
+# Security documentation — index
 
-This document details the security measures, multi-tenant isolation, and reliability features implemented in the TrialSage platform.
+This file is an index, not a restatement (`CLAUDE.md`: zero duplication). Each document below owns its subject; a
+claim about the platform's security posture belongs in exactly one of them. The previous content of this file
+described a Replit-era deployment (`index-enhanced.ts`, `scripts/setup-rls.js`, Replit secrets) that no longer
+exists and was superseded on 2026-09-24.
 
-## Table of Contents
+## Current state, in order of authority
 
-1. [Environment Configuration](#environment-configuration)
-2. [Security Measures](#security-measures)
-3. [Multi-Tenant Isolation](#multi-tenant-isolation)
-4. [Authentication & Authorization](#authentication--authorization)
-5. [Backup and Disaster Recovery](#backup-and-disaster-recovery)
-6. [Monitoring and Logging](#monitoring-and-logging)
-7. [Health Checks](#health-checks)
-8. [Performance Optimization](#performance-optimization)
+| Document | Owns |
+|---|---|
+| `SECURITY_AUDIT_2026-09-24.md` | The independent audit at commit `adbf2d18`: 81 findings with `file:line`, the verdict, the verified strengths, the disposition of every earlier assessment, and the **claims register** that re-tests the policies, the questionnaire, the trust statement and the DPA against the code. Start here. |
+| `REGULATORY_CONTROL_MAP_US_JP_EU.md` | Requirement → control → status → plan item for 21 CFR Part 11, HIPAA, the PMDA ER/ES Guideline, APPI, the Japanese cloud guidelines, EU Annex 11, GDPR, the EU AI Act, NIS2, the CRA and eIDAS. |
+| `REMEDIATION_AND_ENHANCEMENT_PLAN_2026-09-24.md` | The staged plan (P0 before any production tenant; P1 for D6 green; P2 for EU/Japan/HIPAA market entry; P3 continuous assurance), each item with an owner, an effort, a failing-first acceptance test, the launch row it moves and the clauses it satisfies; the founder decisions it waits on. |
+| `docs/evidence/D6/2026-09-24-security-audit/` | Gate outputs, test runs, the citation check and the reproductions behind the audit. |
+| `../evidence/reviews/<date>/security.md` | The weekly security lens produced by `.claude/agents/security-auditor.md` (first run 2026-09-24). |
 
-## Environment Configuration
+## Governance set (all DRAFT until the founder signs)
 
-The platform supports multiple environments (development, staging, production) with separate configurations for each:
+| Document | Owns |
+|---|---|
+| `policies/POLICY-IS-001` … `POLICY-AI-008` | The SOC 2-style policy set; every control marked Implemented / Partial / Planned with a file path. The audit's claims register (§7.4) lists the marks that are not fully true at head. |
+| `SECURITY_QUESTIONNAIRE_SIG_LITE.md` | Control-by-control questionnaire answers. Corrections owed per the claims register (§7.1): E.1, E.4, F.2, F.4, D.2, G.4. |
+| `TRUST_STATEMENT.md` | The one-page public statement. Corrections owed per §7.2 (first bullet; sub-processor list). |
+| `../SOP_KEY_MANAGEMENT.md` (SOP-SEC-001) | Keys by name, custody, rotation, the KMS signer decision. |
+| `../commercial/DATA_PROCESSING_ADDENDUM.md` | The DPA draft; Annex II corrections owed per §7.3; Annex III/IV to be completed by counsel. |
+| `../AI_SENSITIVE_DATA_PLACEMENT.md` | The sensitive-data placement contract for AI dispatch, and the list of paths outside it. |
 
-- Database connections
-- JWT secrets
-- API keys
-- Security policies
+## Tenancy and isolation
 
-Configuration is managed in `server/config/environment.ts` and automatically selects the appropriate secrets based on the `NODE_ENV` environment variable.
+| Document | Owns |
+|---|---|
+| `C2C_TENANT_ISOLATION_PROOF.md`, `WO-03_TWO_TENANT_RLS_PROOF.md` | What the two-tenant proofs cover and how they run. |
+| `TENANCY_GA_ASSESSMENT_2026-08-13.md` | The residual register (R1–R6) and `../adr/0012-tenant-key-custody-and-data-residency.md` for per-tenant keys and residency. |
+| `../RLS_ENFORCEMENT_BURNDOWN.md` | The runway to `RLS_ENFORCE=on` and the enforcement model. |
 
-## Security Measures
+## Dependencies and supply chain
 
-### HTTP Security Headers
+| Document | Owns |
+|---|---|
+| `WO-07-dependency-risk-decision.md`, `dependency-risk-ledger.json`, `DEPENDENCIES.md` | The advisory gate sealed to the lockfile and its exception ledger. |
 
-All responses include security headers set via Helmet:
+## History (kept, not authoritative)
 
-- Content-Security-Policy
-- Strict-Transport-Security (HSTS)
-- X-Content-Type-Options
-- X-Frame-Options
-- X-XSS-Protection
+`../SECURITY_SWARM_AUDIT_2026-06-17.md`, `../audit-2026-07/04-security.md` and `07-compliance-21cfr11.md`,
+`../RED_TEAM_REPORT.md`, `PLATFORM_SECURITY_ENHANCEMENT_REPORT.md`, `SECURITY_PROTOCOL.md`, `MAXIMUM_PROTECTION.md`,
+`MODULE_PROTECTION_SYSTEM.md`, `PROJECT_LOCKDOWN_MANIFEST.md`, `PROJECT_PROTECTION.md`, `CERV2_PROTECTION_SYSTEM.md`,
+`DOCUMENT_EDITOR_PROTECTION*.md`, `STABILITY_TENANT_ISOLATION_FINDING.md`, and
+`../validation/CSRA-CORTEX-001-HIPAA_FDA_SECURITY_ASSESSMENT.md` (superseded: its "implemented" marks do not describe
+the platform as built; see the audit §11). Read them for how a finding arose, not for what is true now.
 
-### CORS Configuration
+## Reporting a vulnerability
 
-Cross-Origin Resource Sharing is configured with:
-
-- Environment-specific origin restrictions (restrictive in production)
-- Credential support
-- HTTP method restrictions
-- Allowed headers
-
-### Rate Limiting
-
-API endpoints are protected by rate limiting:
-
-- Standard routes: 100 requests per 15-minute window
-- Authentication routes: 30 requests per 15-minute window
-- Rate limits are per IP address and tenant
-
-## Multi-Tenant Isolation
-
-### Database-Level Isolation
-
-Row-Level Security (RLS) is implemented in PostgreSQL:
-
-- Each tenant-scoped table has RLS policies
-- Queries automatically filter by organization ID
-- Database session variables track current tenant context
-
-### Application-Level Isolation
-
-Multiple layers ensure tenant data cannot be accessed across boundaries:
-
-- Tenant context middleware sets the organization context
-- AuthZ middleware verifies user belongs to accessed organization
-- API parameters are validated against tenant context
-
-## Authentication & Authorization
-
-### JWT Authentication
-
-- Environment-specific JWT secrets
-- Token expiration and rotation
-- CSRF protection
-
-### Role-Based Access Control
-
-- Role-based middleware for coarse-grained control
-- Permission-based middleware for fine-grained control
-- Cross-tenant access restrictions
-
-## Backup and Disaster Recovery
-
-### Automated Backups
-
-- Daily code backups using `scripts/backup.sh`
-- Database dumps for data protection
-- Backup rotation (keeps 7 most recent backups)
-
-### Disaster Recovery
-
-- Documented restore procedures
-- Verification process for backups
-- Retention policies
-
-## Monitoring and Logging
-
-### Structured Logging
-
-- JSON-formatted logs with standardized fields
-- Context-aware logging with tenant information
-- Environment-specific log levels
-
-### Request Tracking
-
-- Unique request IDs
-- Cross-component correlation
-- Performance tracking for slow requests
-
-### Error Tracking
-
-- Centralized error handling
-- Production-safe error responses
-- Unique error IDs for support reference
-
-## Health Checks
-
-Endpoints for monitoring application health:
-
-- `/api/health/live` - Liveness check
-- `/api/health/ready` - Readiness check with component status
-- `/api/health/diagnostics` - Detailed system information (admin only)
-
-## Performance Optimization
-
-- Database connection pooling
-- Automatic index creation
-- Memory usage monitoring
-- Freeze detection and recovery
-- WebSocket server monitoring
-
-## Deployment Instructions
-
-To deploy with all security features enabled:
-
-1. Set all required environment variables in Replit Secrets panel:
-
-   - `DATABASE_URL_DEV`, `DATABASE_URL_STAGING`, `DATABASE_URL_PROD`
-   - `JWT_SECRET_DEV`, `JWT_SECRET_STAGING`, `JWT_SECRET_PROD`
-   - `OPENAI_API_KEY`, `PUBMED_API_KEY`, `S3_VAULT_BUCKET_KEY`
-
-2. Set `NODE_ENV` to the appropriate environment (`development`, `staging`, or `production`)
-
-3. Initialize database with RLS policies:
-
-   ```bash
-   node scripts/setup-rls.js
-   ```
-
-4. Start the enhanced server implementation:
-
-   ```bash
-   node -r ts-node/register server/index-enhanced.ts
-   ```
-
-5. Schedule daily backups:
-   ```bash
-   node scripts/schedule-backup.js &
-   ```
-
-## Codebase Structure
-
-Critical security files:
-
-- `/server/config/environment.ts` - Environment-specific configuration
-- `/server/middleware/security.js` - Security headers, CORS, rate limiting
-- `/server/middleware/tenantContext.js` - Multi-tenant isolation
-- `/server/middleware/auth.js` - Authentication and authorization
-- `/server/utils/monitoring.js` - Logging and monitoring
-- `/server/routes/health-routes.js` - Health check endpoints
-- `/scripts/backup.sh` - Backup script
-- `/scripts/schedule-backup.js` - Automated backup scheduler
-- `/scripts/setup-rls.js` - Row-Level Security setup
+`/SECURITY.md` at the repository root and `/.well-known/security.txt` on a deployment.

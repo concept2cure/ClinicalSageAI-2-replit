@@ -165,7 +165,7 @@
 .pdev-nav-item .ico { color: var(--text-400); flex-shrink: 0; }
 .pdev-nav-item .lbl { flex: 1; min-width: 0; }
 .pdev-nav-soon {
-  font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em;
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
   color: var(--text-400); font-weight: 600;
   padding: 1px 5px; background: var(--bg-200); border-radius: 4px;
 }
@@ -276,10 +276,10 @@
 }
 .pdev-btn.ghost:hover { background: var(--bg-100); }
 .pdev-btn.primary {
-  background: var(--accent-100); color: white;
+  background: var(--accent-strong); color: var(--accent-on-strong);
   border: 1px solid var(--accent-100);
 }
-.pdev-btn.primary:hover { background: var(--accent-200); }
+.pdev-btn.primary:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
 .pdev-btn.primary:disabled {
   background: var(--bg-200); color: var(--text-400);
   border-color: var(--border-100); cursor: not-allowed;
@@ -409,7 +409,7 @@
   font-size: 12px; font-weight: 600; color: var(--text-300);
 }
 .pdev-stage-node[data-state="done"] .pdev-stage-dot { background: var(--success); color: white; border-color: var(--success); }
-.pdev-stage-node[data-state="active"] .pdev-stage-dot { background: var(--accent-100); color: white; border-color: var(--accent-100); }
+.pdev-stage-node[data-state="active"] .pdev-stage-dot { background: var(--accent-strong); color: var(--accent-on-strong); border-color: var(--accent-strong); }
 .pdev-stage-node[data-state="blocked"] .pdev-stage-dot { background: var(--error); color: white; border-color: var(--error); }
 .pdev-stage-label { font-size: 12px; font-weight: 500; color: var(--text-100); text-align: center; }
 .pdev-stage-meta { font-size: 10px; color: var(--text-400); }
@@ -521,7 +521,7 @@
 }
 .pdev-sheet-tab[disabled] { color: var(--text-400); cursor: not-allowed; opacity: 0.7; }
 .pdev-sheet-tab-soon {
-  font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em;
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
   color: var(--text-400); font-weight: 600;
   padding: 1px 5px; background: var(--bg-200); border-radius: 4px;
 }
@@ -661,7 +661,7 @@
    focus is visible. Matches the .pdev-*:focus ring elsewhere in this file. */
 .pdev-ana-composer:focus-within { box-shadow: 0 0 0 2px var(--accent-000); }
 .pdev-ana-composer textarea { flex: 1; resize: none; font-size: 12px; background: transparent; outline: 0; border: 0; }
-.pdev-ana-send { padding: 6px 8px; background: var(--accent-100); color: white; border-radius: 6px; }
+.pdev-ana-send { padding: 6px 8px; background: var(--accent-strong); color: var(--accent-on-strong); border-radius: 6px; }
 .pdev-ana-send:disabled { background: var(--bg-200); color: var(--text-400); }
 .pdev-ana-foot-meta { font-size: 10px; color: var(--text-400); text-align: center; }
 
@@ -1265,7 +1265,7 @@
   font-size: 12px; font-weight: 600;
 }
 .pdev-grade-a { background: var(--success); color: white; }
-.pdev-grade-b { background: var(--accent-100); color: white; }
+.pdev-grade-b { background: var(--accent-strong); color: var(--accent-on-strong); }
 .pdev-grade-c { background: var(--warning); color: white; }
 /* Governed-draft result panel — metadata only (no fabricated prose preview). */
 .pdev-aidraft-result { display: flex; flex-direction: column; gap: 12px; }

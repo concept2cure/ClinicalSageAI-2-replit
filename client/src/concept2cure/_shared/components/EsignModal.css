@@ -90,7 +90,7 @@
 }
 .es-meaning-opt:hover { background: var(--bg-050); color: var(--text-100); }
 .es-meaning-opt[data-active="true"] {
-  background: var(--accent-main-100); border-color: var(--accent-main-100); color: var(--text-000);
+  background: var(--accent-strong); border-color: var(--accent-strong); color: var(--accent-on-strong);
 }
 .es-meaning-opt:focus-visible {
   outline: 2px solid var(--accent-main-200); outline-offset: 2px;
@@ -115,10 +115,9 @@
 .es-btn-primary {
   flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
   padding: 9px 16px; border-radius: var(--radius-sm, 8px);
-  background: var(--accent-main-100); color: var(--text-000); font-size: 12.5px; font-weight: 600;
+  background: var(--accent-strong); color: var(--accent-on-strong); font-size: 12.5px; font-weight: 600;
   transition: background 200ms ease-out, opacity 200ms ease-out;
 }
-.es-btn-primary:hover { background: var(--accent-main-200, var(--accent-main-100)); }
 .es-btn-primary:disabled { background: var(--bg-300); color: var(--text-400); opacity: 0.8; cursor: not-allowed; }
 .es-btn-primary:focus-visible,
 .es-btn-secondary:focus-visible,

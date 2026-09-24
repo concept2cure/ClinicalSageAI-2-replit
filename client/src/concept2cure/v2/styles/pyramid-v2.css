@@ -11,7 +11,7 @@
 .c2c-v2 .py-chip[data-tone="err"]{background:var(--error-muted);color:var(--error);}
 .c2c-v2 .py-chip[data-tone="ai"]{background:var(--ai-muted);color:var(--ai);}
 .c2c-v2 .py-chip[data-tone="neutral"]{background:var(--idle-muted);color:var(--text-300);}
-.c2c-v2 .py-crit{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--accent-200);border:1px solid var(--accent-muted);background:var(--accent-000);border-radius:4px;padding:0 5px;white-space:nowrap;}
+.c2c-v2 .py-crit{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--accent-200);border:1px solid var(--accent-muted);background:var(--accent-000);border-radius:4px;padding:0 5px;white-space:nowrap;}
 
 /* type picker */
 /* screen root — same scroll column as the other planning surfaces (.reg) */
@@ -26,7 +26,7 @@
 .c2c-v2 .py-type[data-active]{border-color:var(--accent-100);}
 .c2c-v2 .py-type-h{display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .c2c-v2 .py-type-id{font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--accent-200);background:var(--accent-000);border-radius:5px;padding:1px 7px;}
-.c2c-v2 .py-type-live{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--success);}
+.c2c-v2 .py-type-live{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--success);}
 .c2c-v2 .py-type-l{font-size:12.5px;font-weight:600;color:var(--text-100);}
 .c2c-v2 .py-type-m{font-size:10.5px;color:var(--text-400);}
 
@@ -66,11 +66,11 @@
 .c2c-v2 .py-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;}
 .c2c-v2 .py-phase{display:flex;flex-direction:column;gap:5px;text-align:left;background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);padding:11px 12px;transition:border-color .2s ease-out,transform .2s ease-out;}
 .c2c-v2 .py-phase:hover{border-color:var(--text-400);transform:translateY(-1px);}
-.c2c-v2 .py-phase-n{font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--accent-200);}
+.c2c-v2 .py-phase-n{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--accent-200);}
 .c2c-v2 .py-phase-name{font-size:11.5px;font-weight:600;color:var(--text-100);line-height:1.35;min-height:31px;}
 .c2c-v2 .py-phase-bar{height:5px;border-radius:4px;background:var(--bg-100);overflow:hidden;}
 .c2c-v2 .py-phase-bar span{display:block;height:100%;background:var(--accent-100);border-radius:4px;}
-.c2c-v2 .py-phase-m{font-size:9.5px;color:var(--text-400);font-variant-numeric:tabular-nums;}
+.c2c-v2 .py-phase-m{font-size:10px;color:var(--text-400);font-variant-numeric:tabular-nums;}
 
 /* next actions */
 .c2c-v2 .py-next{display:flex;flex-direction:column;gap:6px;}
@@ -157,7 +157,7 @@
 .c2c-v2 .py-res-row .bar span{display:block;height:100%;border-radius:5px;background:var(--ai);}
 .c2c-v2 .py-res-row[data-over] .bar span{background:var(--error);}
 .c2c-v2 .py-res-row .v{text-align:right;}
-.c2c-v2 .py-over{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--error);}
+.c2c-v2 .py-over{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--error);}
 .c2c-v2 .py-over.ok{color:var(--text-500);font-weight:600;}
 .c2c-v2 .py-over svg{width:11px;height:11px;}
 .c2c-v2 .py-ana-note{font-size:11px;line-height:1.55;color:var(--text-400);padding:10px 15px;border-top:1px solid var(--bg-100);}
@@ -181,7 +181,7 @@
 .c2c-v2 .py-cp-node[data-st="in-progress"] .dot{background:var(--ai);}
 .c2c-v2 .py-cp-node[data-st="blocked"] .dot{background:var(--error);}
 .c2c-v2 .py-cp-node .t{font-size:10.5px;font-weight:600;color:var(--text-100);line-height:1.35;padding-right:12px;}
-.c2c-v2 .py-cp-node .m{font-size:9px;color:var(--text-400);}
+.c2c-v2 .py-cp-node .m{font-size:10px;color:var(--text-400);}
 .c2c-v2 .py-cp-arrow{display:flex;align-items:center;color:var(--text-500);}
 .c2c-v2 .py-cp-arrow svg{width:13px;height:13px;}
 

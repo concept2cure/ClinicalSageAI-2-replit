@@ -26,7 +26,7 @@
   .ac-pcard[data-on]{ border-color:var(--accent-200); box-shadow:0 0 0 1px var(--accent-200) inset; }
   .ac-pcard-top{ display:flex; align-items:center; justify-content:space-between; }
   .ac-pcode{ font-size:14px; font-weight:600; color:var(--text-100); letter-spacing:-.01em; white-space:nowrap; }
-  .ac-seg{ font-size:9.5px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; padding:2px 7px; border-radius:5px; }
+  .ac-seg{ font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; padding:2px 7px; border-radius:5px; }
   .ac-seg.biotech{ background:color-mix(in srgb,var(--accent-200) 13%,transparent); color:var(--accent-200); }
   .ac-seg.pharma{ background:color-mix(in srgb,var(--ai) 14%,transparent); color:var(--ai); }
   .ac-pname{ font-size:11.5px; color:var(--text-400); margin:5px 0 9px; }
@@ -92,7 +92,7 @@
   .ac-metrics{ display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
   .ac-metric{ background:var(--bg-050); border:1px solid var(--border); border-radius:9px; padding:10px 8px; text-align:center; }
   .ac-metric-v{ display:block; font-size:17px; font-weight:600; color:var(--text-100); }
-  .ac-metric-k{ display:block; font-size:9.5px; color:var(--text-400); text-transform:uppercase; letter-spacing:.03em; margin-top:2px; }
+  .ac-metric-k{ display:block; font-size:10px; color:var(--text-400); text-transform:uppercase; letter-spacing:.03em; margin-top:2px; }
 
   /* Recommendations */
   .ac-recs{ display:flex; flex-direction:column; gap:9px; margin-bottom:22px; }
@@ -101,7 +101,7 @@
   .ac-rec[data-sev=critical]{ border-left-color:var(--error); }
   .ac-rec[data-sev=high]{ border-left-color:var(--accent-200); }
   .ac-rec-top{ display:flex; align-items:center; gap:8px; }
-  .ac-chip{ font-size:9.5px; font-weight:600; text-transform:uppercase; letter-spacing:.03em; padding:2px 7px; border-radius:5px; }
+  .ac-chip{ font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.03em; padding:2px 7px; border-radius:5px; }
   .ac-chip.err{ background:color-mix(in srgb,var(--error) 13%,transparent); color:var(--error); }
   .ac-chip.warn{ background:color-mix(in srgb,var(--accent-200) 14%,transparent); color:var(--accent-200); }
   .ac-chip.ai{ background:color-mix(in srgb,var(--ai) 13%,transparent); color:var(--ai); }
@@ -155,7 +155,7 @@
     .ac-exec-step[data-st=running] .ac-exec-ic{ animation:none; }
   }
   .ac-exec-sn{ font-size:12.5px; font-weight:600; color:var(--text-100); display:flex; align-items:center; gap:7px; }
-  .ac-exec-appr{ font-size:9px; font-weight:600; text-transform:uppercase; color:var(--accent-200); background:var(--accent-000); padding:1px 6px; border-radius:4px; }
+  .ac-exec-appr{ font-size:10px; font-weight:600; text-transform:uppercase; color:var(--accent-200); background:var(--accent-000); padding:1px 6px; border-radius:4px; }
   .ac-exec-sd{ font-size:11.5px; color:var(--text-400); margin-top:1px; }
   .ac-exec-done{ display:flex; align-items:flex-start; gap:7px; font-size:12.5px; color:var(--text-200); line-height:1.5; margin-top:12px; padding-top:12px; border-top:1px solid var(--bg-100); }
   .ac-exec-done svg{ width:15px; height:15px; color:var(--success); flex-shrink:0; margin-top:1px; }
@@ -203,7 +203,7 @@
 
   /* Answer-first lead */
   .amem-lead{ display:flex; gap:16px; padding:22px 24px; border-radius:16px;
-    background:linear-gradient(180deg, color-mix(in srgb, var(--accent-100) 7%, var(--bg-000)), var(--bg-000));
+    background:var(--accent-000);
     border:1px solid color-mix(in srgb, var(--accent-100) 20%, var(--border)); margin-bottom:22px; }
   .amem-lead-badge{ flex:none; width:40px; height:40px; border-radius:11px; display:grid; place-items:center;
     background:var(--accent-100); color:#fff; }

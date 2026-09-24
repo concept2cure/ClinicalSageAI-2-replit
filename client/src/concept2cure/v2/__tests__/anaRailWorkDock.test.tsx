@@ -8,6 +8,8 @@
  * one key every host shares.
  */
 import React from 'react';
+import fs from 'node:fs';
+import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 
@@ -67,6 +69,35 @@ describe('AnaRail — the progress panel', () => {
     expect(screen.getByRole('list', { name: 'Progress' }).textContent).toContain('Running 1 step…');
   });
 
+  it('renders a turn as every host does: her work, then the answer, then the output', () => {
+    render(
+      <AnaRail
+        open
+        setOpen={() => {}}
+        surface={{ id: 'cmc', label: 'CMC' }}
+        segment="biotech"
+        mode="standard"
+        setMode={() => {}}
+        messages={[
+          { role: 'user', body: 'Draft the synopsis' },
+          {
+            role: 'ana',
+            body: 'The synopsis is drafted.',
+            activity: { toolCalls: [{ name: 'search_literature', label: 'Searching the literature', status: 'success' }] },
+            output: { generatedDraft: { title: 'CSR synopsis', content: '# Synopsis' } },
+          },
+        ]}
+        onSend={() => {}}
+        onAct={() => {}}
+      />,
+    );
+    const record = document.querySelector('.ana-activity') as Element;
+    const answer = screen.getByText('The synopsis is drafted.');
+    const card = document.querySelector('.ana-out') as Element;
+    expect(record.compareDocumentPosition(answer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(answer.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('renders no panel and no chip when the rail has no chat instance', () => {
     renderRail(false);
     expect(screen.queryByRole('heading', { name: 'Progress' })).toBeNull();
@@ -83,12 +114,19 @@ describe('AnaRail — the progress panel', () => {
     // No plan declared: the chip counts nothing.
     expect(chip.textContent).toContain('Working');
     expect(chip.textContent).not.toMatch(/of \d/);
+    // A disclosure: it says the panel is open and names the panel it opened.
+    expect(chip.getAttribute('aria-expanded')).toBe('true');
+    const panelId = chip.getAttribute('aria-controls');
+    expect(panelId).toBeTruthy();
+    expect(document.getElementById(panelId!)?.querySelector('h2')?.textContent).toBe('Progress');
     chip.focus();
     fireEvent.click(chip);
     expect(screen.queryByRole('heading', { name: 'Progress' })).toBeNull();
     // The chip stays mounted, so focus never falls to <body>.
     expect(document.activeElement).toBe(chip);
-    expect(chip.getAttribute('aria-pressed')).toBe('false');
+    expect(chip.getAttribute('aria-expanded')).toBe('false');
+    // Nothing to name once the panel is gone: no dangling reference.
+    expect(chip.hasAttribute('aria-controls')).toBe(false);
     // Remembered under the shared key, so every host honours it.
     expect(localStorage.getItem(WORK_DOCK_KEY)).toBe('hidden');
     fireEvent.click(chip);
@@ -131,5 +169,13 @@ describe('AnaRail — the progress panel', () => {
     expect(items[1].getAttribute('aria-current')).toBe('step');
     expect(items[0].textContent).toContain('done');
     expect(items[2].textContent).toContain('not started');
+  });
+});
+
+describe('the chip\'s open look follows the attribute it sets', () => {
+  it('styles the open chip by aria-expanded — the attribute the component sets — never aria-pressed', () => {
+    const css = fs.readFileSync(path.resolve(__dirname, '../styles/app-v2.css'), 'utf8');
+    expect(css).toMatch(/\.ana-step-chip\[aria-expanded="true"\]\{/);
+    expect(css).not.toMatch(/\.ana-step-chip\[aria-pressed/);
   });
 });

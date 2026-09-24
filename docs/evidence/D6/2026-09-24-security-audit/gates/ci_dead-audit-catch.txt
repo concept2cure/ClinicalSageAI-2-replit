@@ -1,0 +1,16 @@
+
+❌ A catch around `await auditService.logAction(...)` that can never fire.
+
+   server/services/templates/templateStore.ts:80
+
+   logAction swallows its persistence failures and resolves normally, so this
+   catch is unreachable — dead code that reads as handling. Write handling that
+   can actually run:
+
+     const audit = await auditService.logAction({ ... });
+     if (!audit.persisted) log.warn('audit write failed', { reason: audit.error });
+
+   If the row must EXIST for the action to be valid (a signature, a freeze, a
+   governed transmission), use writeChainedAuditRow(client, ...) on the
+   mutation's own transaction so a failure rolls it back.
+

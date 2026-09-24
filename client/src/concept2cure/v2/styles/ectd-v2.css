@@ -30,7 +30,7 @@
   .ec-topbtn:hover{ background:var(--bg-100); color:var(--text-100); }
   .ec-topbtn svg{ width:15px; height:15px; }
   .ec-topbtn.primary{ background:var(--accent-strong); border-color:var(--accent-100); color:var(--accent-on-strong); }
-  .ec-topbtn.primary:hover{ background:var(--accent-200); color:#fff; }
+  .ec-topbtn.primary:hover{box-shadow:var(--shadow-sm);transform:translateY(-1px);}
 
   /* eCTD tree */
   .ec-tree{ background:var(--bg-050); padding:14px 10px; overflow-y:auto; border-right:1px solid var(--border); min-width:0; transition:opacity 200ms var(--ease); }
@@ -111,7 +111,7 @@
   .ec-att-x:hover{ color:var(--text-100); }
   .ec-send{ width:28px; height:28px; border-radius:7px; background:var(--accent-strong); color:var(--accent-on-strong); display:inline-flex; align-items:center; justify-content:center; border:0; cursor:pointer; transition:background 160ms var(--ease), opacity 160ms var(--ease); }
   .ec-send svg{ width:15px; height:15px; }
-  .ec-send:hover{ background:var(--accent-200); }
+  .ec-send:hover{box-shadow:var(--shadow-sm);transform:translateY(-1px);}
   .ec-send:disabled{ opacity:.35; cursor:not-allowed; }
 
   /* Artifact (right) */
@@ -158,9 +158,9 @@
   .ec-prov{ position:absolute; left:calc(100% + 14px); top:0; width:212px; padding:10px 12px; background:var(--text-100); color:rgba(255,255,255,.92); border-radius:8px; font-family:var(--font-sans); font-size:10.5px; line-height:1.45; opacity:0; transform:translateY(4px); transition:opacity 180ms var(--ease), transform 180ms var(--ease); pointer-events:none; box-shadow:var(--shadow-lg); z-index:5; display:block; }
   .ec-p:hover .ec-prov{ opacity:1; transform:translateY(0); }
   .ec-prov-row{ display:flex; justify-content:space-between; gap:10px; margin-bottom:4px; }
-  .ec-prov-lbl{ color:rgba(255,255,255,.5); font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; }
+  .ec-prov-lbl{ color:rgba(255,255,255,.5); font-size:10px; letter-spacing:.06em; text-transform:uppercase; }
   .ec-prov-val{ font-family:var(--font-mono); font-size:10px; color:rgba(255,255,255,.95); text-align:right; }
-  .ec-prov-foot{ display:block; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,.14); color:rgba(255,255,255,.7); font-size:9.5px; }
+  .ec-prov-foot{ display:block; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,.14); color:rgba(255,255,255,.7); font-size:10px; }
   .ec-prov-foot b{ color:#fff; font-weight:600; }
   .ec-doc-table{ width:100%; font-family:var(--font-sans); font-size:12px; border-collapse:collapse; margin:14px 0 18px; }
   .ec-doc-table th,.ec-doc-table td{ padding:8px 10px; text-align:left; border-bottom:1px solid var(--border); vertical-align:top; }
