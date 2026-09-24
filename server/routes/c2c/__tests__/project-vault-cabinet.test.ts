@@ -106,3 +106,16 @@ describe('filingCabinet — uploads appear in the tree they were uploaded into',
     expect((m3 as { children: unknown[] }).children).toHaveLength(0);
   });
 });
+
+describe('uploadLeaf carries the file type the filing action decides on', () => {
+  // The surface offers "Place into submission" by this field, and the dialog
+  // refuses anything but a PDF before a request is made: the packager's vault
+  // branch refuses a leaf whose bytes are not a PDF. Dropped here, the client
+  // guard would be blind and a Word file could be offered for assembly again.
+  it('projects mime_type as mimeType', () => {
+    expect(uploadLeaf('pharma', row({})).mimeType).toBe('application/pdf');
+    expect(
+      uploadLeaf('pharma', row({ mime_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })).mimeType,
+    ).toBe('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+  });
+});

@@ -779,7 +779,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   /* The vault document currently being filed into a submission, if any. The
      tree id is `up-<uuid>`; the uuid is what a leaf names. */
   const [filingIntoSubmission, setFilingIntoSubmission] = React.useState<
-    { documentUuid: string; documentTitle: string } | null
+    { documentUuid: string; documentTitle: string; mimeType?: string | null } | null
   >(null);
 
   const sel =
@@ -1020,6 +1020,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         <VaultPlaceIntoSubmission
           documentUuid={filingIntoSubmission.documentUuid}
           documentTitle={filingIntoSubmission.documentTitle}
+          mimeType={filingIntoSubmission.mimeType}
           onClose={() => setFilingIntoSubmission(null)}
         />
       )}
@@ -1309,6 +1310,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                                 // prefix is refused server-side as a malformed uuid.
                                 documentUuid: sel.docId!,
                                 documentTitle: sel.title || sel.num || 'Vault document',
+                                mimeType: sel.mimeType,
                               })
                             }
                             data-testid="vault-place-into-submission"

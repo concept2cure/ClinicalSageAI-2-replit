@@ -31,7 +31,7 @@ import React from 'react';
 import { I } from '../icons';
 import { mutateVerbatim } from './SubmissionSeqWorkspaces';
 import { SC_LIFECYCLE_OPS } from '../fixtures/submission';
-import { useFilingTarget, FilingTargetFields, judgeSectionCode } from './filingTarget';
+import { useFilingTarget, FilingTargetFields, judgeSectionCode, vocabularyForApplicationType } from './filingTarget';
 
 /** PUT /sequences/:seqId/leaves → upsertLeaf() row (subset). */
 interface PlacedLeaf {
@@ -50,7 +50,23 @@ export interface VaultPlaceIntoSubmissionProps {
   onClose: () => void;
   /** Re-read the surface after a successful placement. */
   onPlaced?: () => void;
+  /**
+   * vault.documents.mime_type, verified against the file's magic bytes at
+   * ingest. Only a PDF can be filed: the packager's vault branch refuses a leaf
+   * whose bytes do not begin with %PDF- (leaf-source-resolver.ts). Undefined
+   * means the caller did not say, and the dialog behaves as it did.
+   */
+  mimeType?: string | null;
 }
+
+const PDF = 'application/pdf';
+
+/** An example section code in each vocabulary, for the input's placeholder. */
+const SECTION_PLACEHOLDER: Partial<Record<string, string>> = {
+  ctd: 'e.g. 3.2.P.8.3',
+  irb: 'e.g. irb.consent',
+  estar: 'e.g. estar.device-description',
+};
 
 type Verdict = { kind: 'error' | 'ok'; message: string } | null;
 
@@ -59,7 +75,12 @@ export function VaultPlaceIntoSubmission({
   documentTitle,
   onClose,
   onPlaced,
+  mimeType,
 }: VaultPlaceIntoSubmissionProps) {
+  /* Offering to file a non-PDF promised an assembly that cannot happen: the
+     success message said "the vault copy is what will be assembled", and the
+     packager would then refuse the leaf. Refuse here, before anything loads. */
+  const notPdf = mimeType !== undefined && mimeType !== PDF;
   const [verdict, setVerdict] = React.useState<Verdict>(null);
   const target = useFilingTarget(() => setVerdict(null));
   const { seq } = target;
@@ -118,6 +139,7 @@ export function VaultPlaceIntoSubmission({
   };
 
   React.useEffect(() => {
+    if (notPdf) return;
     target.load();
     // Loading the org's submissions is a mount-time read; `target` is stable
     // per render but re-running this on every one would re-fetch in a loop.
@@ -133,10 +155,12 @@ export function VaultPlaceIntoSubmission({
      here it read "resolves to a canonical code AND a folder", which looks
      equivalent and is not — a bare module resolves to a folder too, so that
      version happily filed a document at a container. */
-  const judged = judgeSectionCode(section);
+  const submission = target.subs.rows.find((r) => r.id === target.subId) ?? null;
+  const vocabulary = vocabularyForApplicationType(submission?.applicationType);
+  const judged = judgeSectionCode(section, vocabulary);
   const sectionUsable = judged.placeable;
 
-  const canPlace = Boolean(seq && sectionUsable && !placing && !placed);
+  const canPlace = Boolean(!notPdf && seq && sectionUsable && !placing && !placed);
 
   const place = async () => {
     if (!seq || !sectionUsable) return;
@@ -204,6 +228,13 @@ export function VaultPlaceIntoSubmission({
             Filing <b>{documentTitle}</b>.
           </div>
 
+          {notPdf ? (
+            <div className="de-err" role="status">
+              Only a PDF can be filed into a submission. This file is {mimeType || 'of an unrecorded type'}, and the
+              packager refuses any leaf that is not a PDF, so it could never be assembled. Nothing will be written.
+            </div>
+          ) : (
+          <>
           <FilingTargetFields target={target} idPrefix="vpf" />
 
           <div className="de-field half">
@@ -215,7 +246,7 @@ export function VaultPlaceIntoSubmission({
               className="c2c-input"
               value={section}
               onChange={(e) => { setSection(e.target.value); setVerdict(null); }}
-              placeholder="e.g. 3.2.P.8.3"
+              placeholder={SECTION_PLACEHOLDER[vocabulary] ?? 'e.g. 3.2.P.8.3'}
             />
             {judged.note && (
               <div
@@ -250,6 +281,8 @@ export function VaultPlaceIntoSubmission({
               the hash held for it before assembling.
             </span>
           </div>
+          </>
+          )}
 
           {verdict && (
             <div className={verdict.kind === 'error' ? 'de-err' : 'de-gov'} role="status">
@@ -271,7 +304,9 @@ export function VaultPlaceIntoSubmission({
               !seq
                 ? 'Choose a submission and a sequence that can take a leaf'
                 : !sectionUsable
-                  ? 'A CTD section code is required'
+                  ? vocabulary === 'ctd'
+                    ? 'A CTD section code is required'
+                    : "A section code in this submission's vocabulary is required"
                   : undefined
             }
           >
