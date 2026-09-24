@@ -165,12 +165,20 @@ function isTestRuntime(): boolean {
  */
 async function chainOrderColumnPresent(client: PoolClient): Promise<boolean> {
   if (orderColumnPresentByClient.has(client)) return true;
+  // The table asked about is the one this connection's unqualified
+  // `audit_logs` resolves to — the table every statement below reads and
+  // writes. It used to be `audit_logs` in current_schema(), which is only the
+  // FIRST schema on the search_path that exists. A connection whose
+  // search_path put another schema first was told chain_seq was absent: under
+  // vitest it then took the head by occurred_at and forked the chain (tenant
+  // 0, a full real-database run, 2026-09-24); outside vitest every audit write
+  // on it would have thrown. __tests__/chain-concurrency.dbtest.ts case 4.
   const res = await client.query(
     `SELECT EXISTS (
-       SELECT 1 FROM information_schema.columns
-        WHERE table_schema = current_schema()
-          AND table_name = 'audit_logs'
-          AND column_name = 'chain_seq'
+       SELECT 1 FROM pg_attribute
+        WHERE attrelid = to_regclass('audit_logs')
+          AND attname = 'chain_seq'
+          AND NOT attisdropped
      ) AS present`,
   );
   if (res.rows[0]?.present === true) {

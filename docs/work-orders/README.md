@@ -186,8 +186,8 @@ tables as unbacked. Evidence: `docs/evidence/W1/2026-09-24-launch-reach/`.
    absent" four times, and the second drops all five. The policies are inert,
    so this widens nothing, but the empty-string cast the file exists to defuse
    stays armed until the second deploy.
-3. **To the audit-trail lane (unclaimed): the system audit chain forked once in
-   four full real-database runs.** Tenant 0's `audit_logs` rows `chain_seq` 44
+3. ~~**To the audit-trail lane (unclaimed): the system audit chain forked once in
+   four full real-database runs.**~~ **Done 2026-09-24 (`…01AiwZKG`, `docs/evidence/D5/2026-09-24-audit-chain-search-path/`):** the writer asked `current_schema()` whether `audit_logs.chain_seq` existed. `master-licensing-console.dbtest.ts` puts a private schema first on its runtime role's search_path, so the writer fell back to `occurred_at` order and chained row 45 to 43. It now asks about `to_regclass('audit_logs')`. `chain-concurrency.dbtest.ts` case 4 is red without the fix and green with it. The full suite is 684/684 with 0 fallback warnings (every earlier run printed one). Originally: Tenant 0's `audit_logs` rows `chain_seq` 44
    (`user_password_reset_failed`, 20:43:00) and 45 (`module_packaging`, 20:43:11,
    the first `licensing-history` write) both commit to 43, so
    `verifyAuditChain({tenantId: 0})` reports broken and
