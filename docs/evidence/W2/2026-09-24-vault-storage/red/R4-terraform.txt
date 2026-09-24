@@ -1,0 +1,70 @@
+tests/boot_contract.tftest.hcl... in progress
+  run "renders_the_boot_contract"... fail
+╷
+│ Error: Test assertion failed
+│ 
+│   on tests/boot_contract.tftest.hcl line 120, in run "renders_the_boot_contract":
+│  120:     condition = length(setsubtract(
+│  121:       toset(concat(["APP_URL", "NODE_ENV"], regexall("[A-Z][A-Z0-9_]+", one(regex("for VAR in ([A-Z0-9_\\\\\\s]+); do", file("../../.github/workflows/deploy-aws.yml")))))),
+│  122:       toset(concat(
+│  123:         [for e in module.ecs.api_container.environment : e.name],
+│  124:         [for s in module.ecs.api_container.secrets : s.name],
+│  125:       ))
+│  126:     )) == 0
+│     ├────────────────
+│     │ module.ecs.api_container.environment is tuple with 11 elements
+│     │ module.ecs.api_container.secrets is tuple with 10 elements
+│ 
+│ The API container is missing a variable the deploy preflight requires (and
+│ the app refuses to boot without).
+╵
+╷
+│ Error: Test assertion failed
+│ 
+│   on tests/boot_contract.tftest.hcl line 132, in run "renders_the_boot_contract":
+│  132:     condition = length(setsubtract(
+│  133:       toset(concat(["APP_URL", "NODE_ENV"], regexall("[A-Z][A-Z0-9_]+", one(regex("for VAR in ([A-Z0-9_\\\\\\s]+); do", file("../../.github/workflows/deploy-aws.yml")))))),
+│  134:       toset(concat(
+│  135:         [for e in module.ecs.worker_container.environment : e.name],
+│  136:         [for s in module.ecs.worker_container.secrets : s.name],
+│  137:       ))
+│  138:     )) == 0
+│     ├────────────────
+│     │ module.ecs.worker_container.environment is tuple with 9 elements
+│     │ module.ecs.worker_container.secrets is tuple with 9 elements
+│ 
+│ The worker container is missing part of the boot contract.
+╵
+  run "production_names_are_the_ones_the_deploy_workflow_targets"... pass
+  run "staging_carries_every_name_the_deploy_preflight_requires"... fail
+╷
+│ Error: Test assertion failed
+│ 
+│   on tests/boot_contract.tftest.hcl line 292, in run "staging_carries_every_name_the_deploy_preflight_requires":
+│  292:     condition = alltrue([
+│  293:       for n in regexall("[A-Z][A-Z0-9_]+", one(regex("for VAR in ([A-Z0-9_\\\\\\s]+); do", file("../../.github/workflows/deploy-aws.yml")))) :
+│  294:       contains(output.api_task_boot_contract.names, n)
+│  295:     ])
+│     ├────────────────
+│     │ output.api_task_boot_contract.names is list of string with 21 elements
+│ 
+│ The staging API task definition lacks a name the deploy preflight requires.
+╵
+  run "staging_is_distinct_from_production"... pass
+  run "refuses_a_refresh_secret_equal_to_the_jwt_secret"... pass
+  run "refuses_a_short_audit_chain_secret"... pass
+  run "refuses_placement_approvals_that_are_not_a_json_object"... pass
+  run "refuses_equal_audit_seal_and_chain_keys"... pass
+  run "refuses_phi_approval_without_zero_retention"... pass
+  run "refuses_an_unknown_data_class"... pass
+  run "refuses_a_non_boolean_zero_retention_flag"... pass
+  run "refuses_a_non_string_intended_use"... pass
+  run "refuses_a_missing_region"... pass
+  run "accepts_the_fail_closed_interim_approvals"... pass
+  run "refuses_an_uppercase_domain_alias"... pass
+  run "refuses_a_domain_alias_with_a_scheme"... pass
+  run "refuses_a_domain_alias_with_a_trailing_dot"... pass
+tests/boot_contract.tftest.hcl... tearing down
+tests/boot_contract.tftest.hcl... fail
+
+Failure! 15 passed, 2 failed.
