@@ -519,14 +519,26 @@ export class EnhancedEmbeddingService {
     // Generate query embedding
     const queryResult = await this.embed(query, this.defaultModel);
 
-    // Push org filter INTO the query to avoid cross-tenant data leakage.
-    // When organizationUuid is provided, wrap search_atoms_hybrid with a
-    // CTE that restricts candidates to the tenant's atoms BEFORE scoring.
+    // Arguments by position, as search_atoms_hybrid declares them:
+    //   ($1 query_text, $2 query_embedding, $3 semantic_weight, $4 keyword_weight,
+    //    $5 match_count, filter_atom_type, filter_atom_ids).
+    // They were passed out of order: the org branch sent the limit as
+    // keyword_weight, the other branch sent it as semantic_weight, and neither
+    // sent match_count, so the function always returned its default 10.
+    //
+    // The org (and project) filter goes INTO the function as filter_atom_ids,
+    // so it restricts the candidates before they are ranked and limited.
+    // Joining the function's top rows to the org's atoms afterwards returned a
+    // project nothing whenever other projects' atoms scored higher, and would
+    // have ranked across tenants on any connection RLS does not filter.
+    // docs/evidence/D4/2026-09-24-atom-search/.
+    const embeddingLiteral = `[${queryResult.embedding.join(',')}]`;
+    const keywordWeight = 1 - semanticWeight;
     let rows: any[];
     if (organizationUuid) {
       const projectFilterClause = projectId
         ? `AND a.source_type IN ('artifact', 'data_room_upload') AND a.source_id IN (
-             SELECT artifact_id FROM concept2cure_artifacts WHERE project_id = $6
+             SELECT artifact_id FROM concept2cure_artifacts WHERE project_id = $7
            )`
         : '';
       const { rows: orgRows } = await this.pool.query(
@@ -535,36 +547,22 @@ export class EnhancedEmbeddingService {
           SELECT a.id
           FROM lumen_data_atoms a
           JOIN organizations o ON a.organization_id = o.id
-          WHERE o.uuid = $5
+          WHERE o.uuid = $6
             ${projectFilterClause}
-        ),
-        hybrid AS (
-          SELECT * FROM search_atoms_hybrid($1, $2::vector, $3, $4)
         )
         SELECT h.*
-        FROM hybrid h
-        INNER JOIN org_atoms oa ON h.id = oa.id
+        FROM search_atoms_hybrid($1, $2::vector, $3, $4, $5, NULL, ARRAY(SELECT id FROM org_atoms)) h
         ORDER BY h.combined_score DESC
-        LIMIT $4
         `,
         projectId
-          ? [
-              query,
-              `[${queryResult.embedding.join(',')}]`,
-              semanticWeight,
-              limit,
-              organizationUuid,
-              Number(projectId),
-            ]
-          : [query, `[${queryResult.embedding.join(',')}]`, semanticWeight, limit, organizationUuid]
+          ? [query, embeddingLiteral, semanticWeight, keywordWeight, limit, organizationUuid, Number(projectId)]
+          : [query, embeddingLiteral, semanticWeight, keywordWeight, limit, organizationUuid]
       );
       rows = orgRows;
     } else {
       const { rows: allRows } = await this.pool.query(
-        `
-        SELECT * FROM search_atoms_hybrid($1, $2::vector, $3, $4)
-        `,
-        [query, `[${queryResult.embedding.join(',')}]`, limit, semanticWeight]
+        `SELECT * FROM search_atoms_hybrid($1, $2::vector, $3, $4, $5)`,
+        [query, embeddingLiteral, semanticWeight, keywordWeight, limit]
       );
       rows = allRows;
     }

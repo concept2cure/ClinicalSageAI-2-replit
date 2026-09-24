@@ -27,6 +27,10 @@ The `ci.yml` copy stays advisory until that lands. Making it blocking now
 would turn trunk red for every lane. Its comment says which line to delete.
 This drift is the reason CI's copy should block.
 
+**Closed later on 2026-09-24.** The vault-storage lane put the bucket on its
+own KMS key (`2fe4ec4b2`). The gate's scan then exits 0 on trunk
+(`gate-scan-trunk-after-vault-fix.txt`), and `ci.yml`'s copy became blocking.
+
 ## The 16 findings and what happened to each
 
 | Rule | File | × | Disposition |

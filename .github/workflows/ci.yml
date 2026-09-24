@@ -1840,14 +1840,12 @@ jobs:
           format: table
 
       - name: Trivy config scan (Dockerfile/IaC)
-        # The same scan the deploy workflow's security-gate runs, blocking,
-        # before build-push. TRIVY-01 (2026-09-24,
-        # docs/evidence/W2/2026-09-24-trivy/) fixed or excepted, at the resource
-        # with a reason, every finding it had. Still advisory for one reason:
-        # terraform/stack/vault_storage.tf (added the same day) has AWS-0132 x2
-        # and belongs to the vault-storage lane. When this step passes, delete
-        # the next line so it blocks here too.
-        continue-on-error: true
+        # Blocking. The deploy workflow's security-gate runs this same scan,
+        # also blocking, before build-push. Without this copy a finding would
+        # show only when a release is tagged; while it was advisory, 16 findings
+        # built up unseen (TRIVY-01, docs/evidence/W2/2026-09-24-trivy/). Fix a
+        # HIGH or CRITICAL finding, or except it at its resource with a
+        # `#trivy:ignore:<id>` comment giving the reason.
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           scan-type: config

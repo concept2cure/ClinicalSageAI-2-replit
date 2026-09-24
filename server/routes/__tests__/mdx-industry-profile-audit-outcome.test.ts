@@ -7,7 +7,7 @@
  * statement position with its outcome discarded, so a profile saved with no
  * audit row answered exactly as one with a row. The change stands either way,
  * and `meta.auditTrail` now says which happened, in the canonical shape the
- * client transport turns into "Saved, but the audit trail did not record it".
+ * client transport turns into "The request completed, but the audit trail did not record it".
  */
 
 import express from 'express';

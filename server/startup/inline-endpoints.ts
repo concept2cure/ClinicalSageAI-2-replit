@@ -3,7 +3,7 @@
  *
  * Extracted from server/index.ts. Preserves:
  *  - /healthz, /readyz, /api/health (fast-path, mounted before security middleware)
- *    (/readyz covers database, schema, AnA's AI provider, Redis and the worker tier)
+ *    (/readyz covers database, schema, AnA's AI provider, the vault store, Redis and the worker tier)
  *  - /api/health/full (HealthCheckService)
  *  - /api/metrics (Prometheus text format)
  *  - /api/ai-gateway/health (provider health summary)
@@ -16,6 +16,7 @@ import type { Express, NextFunction, Request, Response } from 'express';
 import type { Pool } from 'pg';
 import { BUILD_COMMIT, PROCESS_STARTED_AT } from '../buildStamp';
 import { createScopedLogger } from '../utils/logger';
+import { probeVaultStore } from '../services/storage/store-readiness';
 import {
   getSchemaReadiness,
   getSchemaReadinessDetail,
@@ -108,6 +109,11 @@ export function mountFastPathHealthEndpoints(app: Express, pool: Pool): void {
     const ana = getAnaReadiness();
     deps.ana = isAnaReadinessServing(ana) ? 'ok' : 'down';
 
+    // Vault storage — always required: uploads refuse without it
+    // (services/storage/store-readiness.ts).
+    const storage = await probeVaultStore();
+    deps.storage = storage.status;
+
     // Redis + Bull action-queue worker tier. Only required when Redis is
     // configured; otherwise the platform runs on in-memory fallbacks, so we
     // skip (treat as healthy) rather than fail readiness.
@@ -175,6 +181,7 @@ export function mountFastPathHealthEndpoints(app: Express, pool: Pool): void {
             ? 'schema was never verified — no boot-time verdict was recorded'
             : 'schema verification did not complete');
       }
+      if (storage.detail) body.storageDetail = storage.detail;
       if (deps.ana === 'down') {
         body.anaDetail =
           anaDetail ||

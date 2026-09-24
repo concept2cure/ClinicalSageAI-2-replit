@@ -25,9 +25,13 @@
  * `apiRequest` / `apiUpload` raise `c2c:audit-row-not-persisted` when a write
  * SUCCEEDED and the server reported that its 21 CFR Part 11 §11.10(e) audit row
  * was not written (`findUnpersistedAuditRow`, client/src/lib/queryClient.ts).
- * That is not a failed save — the change stands, and saying otherwise would be
- * its own false record — so it gets its own sentence rather than "The change
- * was not saved". It is shown whether or not the surface handles its own
+ * That is not a failed request, and saying otherwise would be its own false
+ * record, so it gets its own sentence rather than "The change was not saved".
+ * Nor does it say "saved": a 2xx can answer a refusal (a refused eCTD compile
+ * answers 200 with `status: 'failed'` and the refusal's audit outcome), and
+ * nothing was saved there. "Completed" is true of every 2xx.
+ *
+ * It is shown whether or not the surface handles its own
  * errors: a surface's success path is exactly where it says "Saved", and no
  * surface reads this signal itself.
  */
@@ -95,8 +99,8 @@ export function GlobalMutationErrors() {
         <ErrorState
           key={`audit-${notice.id}`}
           variant="inline"
-          title="Saved, but the audit trail did not record it"
-          message="Your change was saved. The audit-trail entry that records who made it and when could not be written. Tell your administrator and give them the reference below."
+          title="The request completed, but the audit trail did not record it"
+          message="The server completed this request, but could not write the audit-trail entry that records who did it and when. Tell your administrator and give them the reference below."
           correlationId={notice.correlationId}
           onDismiss={() => setAuditNotices((prev) => prev.filter((p) => p.id !== notice.id))}
           testId="global-audit-row-notice"
