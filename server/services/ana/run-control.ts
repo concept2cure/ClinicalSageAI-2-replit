@@ -76,17 +76,20 @@
  *
  * ── Honesty about what is and is not exercised ───────────────────────────────
  * The row writes, the state machine, the ownership rules and the atomic drain
- * are covered by `__tests__/run-control.pglite.integration.test.ts` against a
- * real Postgres. The cross-instance NOTIFY path is NOT: PGlite is a single
- * in-process database and cannot host two servers, so `startRunControlListener`
- * ships unverified by design. That is why the poll fallback is not optional —
- * it is the path that is allowed to be the only one that works.
+ * are covered by `__tests__/run-control.pglite.integration.test.ts`. PGlite is a
+ * single in-process database and cannot host two servers, so the cross-instance
+ * path — LISTEN client, NOTIFY handler, poll fallback, the reaper across tenants
+ * and returning the LISTEN connection at shutdown — is covered separately by
+ * `__tests__/run-control-cross-instance.dbtest.ts` (`npm run test:db`): two
+ * module graphs as two instances, on a real server, as the non-superuser
+ * runtime role with RLS enforcing. The poll fallback stays mandatory: it is the
+ * path that is allowed to be the only one that works.
  *
  * @module server/services/ana/run-control
  */
 
 import { randomUUID } from 'crypto';
-import type { Pool } from 'pg';
+import type { Pool, PoolClient } from 'pg';
 
 import { runWithSystemTenantScope, runWithTenantScope } from '../../db/tenantStore.js';
 import { createScopedLogger } from '../../utils/logger';
@@ -589,6 +592,13 @@ export async function reapOrphanedRuns(pool: Pool, staleAfterMs = STALE_AFTER_MS
 
 let listenerStarted = false;
 let pollTimer: NodeJS.Timeout | null = null;
+/**
+ * The dedicated LISTEN connection, held for the life of the process. Kept so it
+ * can be RETURNED: a checked-out client is one `pool.end()` waits on forever, so
+ * without `stopRunControlListener` a graceful shutdown after the first AnA turn
+ * never reached `process.exit` and the deploy's SIGTERM ended in a SIGKILL.
+ */
+let listenerClient: PoolClient | null = null;
 
 /**
  * Start listening for control from other instances. Idempotent.
@@ -611,6 +621,12 @@ export async function startRunControlListener(pool: Pool): Promise<void> {
     // return zero rows for every other one — silently, because zero rows is not
     // an error.
     const client = await runWithSystemTenantScope('ana-run-control:listen', () => pool.connect());
+    if (!listenerStarted) {
+      // Stopped while the connection was opening — shutdown got here first.
+      client.release(true);
+      return;
+    }
+    listenerClient = client;
     client.on('notification', msg => {
       if (msg.channel !== RUN_CONTROL_CHANNEL || !msg.payload) return;
       void refreshFromRow(pool, msg.payload);
@@ -620,11 +636,23 @@ export async function startRunControlListener(pool: Pool): Promise<void> {
         `[ana-run-control] LISTEN client errored (${err?.message}); falling back to polling. ` +
           'Control still lands, with poll-interval latency instead of immediate.',
       );
+      // A broken connection goes back to the pool destroyed, not kept, so it
+      // neither blocks pool.end() nor is handed to the next caller.
+      if (listenerClient === client) {
+        listenerClient = null;
+        client.release(err instanceof Error ? err : true);
+      }
       startPollFallback(pool);
     });
     await client.query(`LISTEN ${RUN_CONTROL_CHANNEL}`);
     log.info('[ana-run-control] listening for cross-instance control');
   } catch (err: any) {
+    // Connected but LISTEN failed: the connection is not listening and must not
+    // stay checked out, or it blocks pool.end() exactly as a healthy one would.
+    if (listenerClient) {
+      listenerClient.release(err instanceof Error ? err : true);
+      listenerClient = null;
+    }
     log.error(
       `[ana-run-control] could not open a LISTEN client (${err?.message}); polling instead. ` +
         'Control still lands, with poll-interval latency instead of immediate.',
@@ -674,12 +702,28 @@ async function refreshFromRow(pool: Pool, runId: string): Promise<void> {
   if (status) driveLocalRun(runId, status);
 }
 
-/** Test seam: forget this process's local runs and stop the poll fallback. */
-export function _resetLocalRunsForTest(): void {
-  localRuns.clear();
+/**
+ * Stop cross-instance delivery: return the LISTEN connection and stop the
+ * poller. Called by graceful shutdown BEFORE the pool is closed, the same way
+ * the audit chain monitor is stopped — `pool.end()` waits for every checked-out
+ * client, and this one is never checked in on its own.
+ *
+ * Destroyed rather than recycled: a pooled connection still LISTENing would
+ * deliver this channel's notifications to whoever borrowed it next.
+ */
+export function stopRunControlListener(): void {
   if (pollTimer) clearInterval(pollTimer);
   pollTimer = null;
+  const client = listenerClient;
+  listenerClient = null;
   listenerStarted = false;
+  client?.release(true);
+}
+
+/** Test seam: forget this process's local runs and stop delivery. */
+export function _resetLocalRunsForTest(): void {
+  localRuns.clear();
+  stopRunControlListener();
 }
 
 /**
