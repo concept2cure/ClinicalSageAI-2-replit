@@ -40,6 +40,7 @@
  */
 
 import { spawnSync } from 'node:child_process';
+import { changedSince, resolvePushBase } from './lib/push-range.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -67,16 +68,6 @@ function git(args) {
   return p.status === 0 ? p.stdout : null;
 }
 
-function resolveBase(argv) {
-  const flag = argv.indexOf('--base');
-  if (flag !== -1 && argv[flag + 1]) return argv[flag + 1];
-  const upstream = git(['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}'])?.trim();
-  if (upstream && git(['rev-parse', '--verify', '--quiet', upstream])) return upstream;
-  const branch = git(['rev-parse', '--abbrev-ref', 'HEAD'])?.trim();
-  const remote = branch ? `origin/${branch}` : null;
-  if (remote && git(['rev-parse', '--verify', '--quiet', remote])) return remote;
-  return null;
-}
 
 const argv = process.argv.slice(2);
 const tracked = new Set((git(['ls-files']) ?? '').split('\n').filter(Boolean));
@@ -86,15 +77,18 @@ let files;
 if (argv.includes('--all')) {
   files = [...tracked].filter(f => SOURCE.test(f));
 } else {
-  const base = resolveBase(argv);
+  const base = resolvePushBase(argv);
   if (!base) {
     console.log(`${TAG} no upstream ref to compare against — nothing to check.`);
     process.exit(0);
   }
-  files = (git(['diff', '--name-only', '--diff-filter=ACMR', `${base}...HEAD`]) ?? '')
-    .split('\n')
-    .map(s => s.trim())
-    .filter(f => f && SOURCE.test(f) && tracked.has(f));
+  const all = changedSince(base);
+  if (all === null) {
+    // Used to be `?? ''`: a failed git diff read as "nothing changed" and the
+    // gate passed over imports it never resolved.
+    fail([`git diff against ${base} failed, so the pushed files are unknown.`]);
+  }
+  files = all.filter(f => SOURCE.test(f) && tracked.has(f));
   if (files.length === 0) {
     console.log(`${TAG} no source files changed against ${base}.`);
     process.exit(0);
