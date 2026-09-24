@@ -447,7 +447,7 @@
     width: 2.5px;
     border-radius: 2px;
     background: var(--border-strong);
-    transition: width var(--dur);
+    transition: background var(--dur);
   }
   .ed-block[data-conf='hi'] .ed-gutter {
     background: var(--accent-100);
@@ -962,7 +962,7 @@
     height: 100%;
     border-radius: 3px;
     background: var(--accent-100);
-    transition: width var(--dur);
+    transition: background var(--dur);
   }
   .dr-bar-f[data-state='complete'] {
     background: var(--success);

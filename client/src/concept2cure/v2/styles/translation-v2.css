@@ -38,7 +38,7 @@
 .txw-ready-l{font-size:10.5px;font-weight:600;color:var(--text-100);line-height:1.3;}
 .txw-ready-m{font-size:9.5px;color:var(--text-300);line-height:1.3;margin-top:1px;}
 .txw-ready-bar{height:3px;background:var(--bg-200);border-radius:2px;overflow:hidden;margin-top:8px;}
-.txw-ready-bar>span{display:block;height:100%;background:var(--success);transition:width var(--dur) var(--ease);}
+.txw-ready-bar>span{display:block;height:100%;background:var(--success);transition:background var(--dur) var(--ease);}
 
 /* ── Filter strip ── */
 .txw-filter{display:flex;gap:4px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;align-items:center;background:var(--bg-050);}

@@ -1,7 +1,4 @@
 
-import { createScopedLogger } from '../../utils/logger.js';
-
-const logger = createScopedLogger('s3-provider');
 /**
  * AWS S3 Storage Provider
  *
@@ -27,28 +24,18 @@ import {
   sanitizeProjectId,
   buildVaultFileId,
 } from './storage-provider';
-
-// S3 client types — uses @aws-sdk/client-s3 if available
-let S3Client: any;
-let PutObjectCommand: any;
-let GetObjectCommand: any;
-let DeleteObjectCommand: any;
-let ListObjectsV2Command: any;
-let getSignedUrlFn: any;
-
-try {
-  const s3Module = require('@aws-sdk/client-s3');
-  S3Client = s3Module.S3Client;
-  PutObjectCommand = s3Module.PutObjectCommand;
-  GetObjectCommand = s3Module.GetObjectCommand;
-  DeleteObjectCommand = s3Module.DeleteObjectCommand;
-  ListObjectsV2Command = s3Module.ListObjectsV2Command;
-
-  const presigner = require('@aws-sdk/s3-request-presigner');
-  getSignedUrlFn = presigner.getSignedUrl;
-} catch {
-  logger.warn('AWS SDK not installed — S3 provider unavailable');
-}
+// Static imports. These were `require()` calls inside a try/catch, which cannot
+// work in this ESM package: the production bundle turns them into a shim that
+// throws, the catch reported the SDK as "not installed", and S3 could never be
+// selected in a deployed build (storage-provider-production-bundle.test.ts).
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+  ListObjectsV2Command,
+} from '@aws-sdk/client-s3';
+import { getSignedUrl as getSignedUrlFn } from '@aws-sdk/s3-request-presigner';
 
 /**
  * Does this stored object belong to the organization making the request?
@@ -79,9 +66,6 @@ export class S3StorageProvider implements IStorageProvider {
 
     if (!bucket) {
       throw new Error('S3StorageProvider: AWS_S3_BUCKET environment variable required');
-    }
-    if (!S3Client) {
-      throw new Error('S3StorageProvider: @aws-sdk/client-s3 package not installed');
     }
 
     this.bucket = bucket;
@@ -270,10 +254,6 @@ export class S3StorageProvider implements IStorageProvider {
     orgId: number,
     ttlSeconds = 900
   ): Promise<StorageSignedUrlResult> {
-    if (!getSignedUrlFn) {
-      throw new Error('S3: @aws-sdk/s3-request-presigner not installed');
-    }
-
     const meta = await this.getMeta(vaultVersionId);
     if (!meta) throw new Error(`S3: version ${vaultVersionId} not found`);
 
