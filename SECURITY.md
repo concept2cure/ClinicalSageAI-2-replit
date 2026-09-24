@@ -40,13 +40,16 @@ security posture should be verifiable by reading the code, and the file paths
 below are given so they can be.
 
 #### Authentication & Authorization
-- Session-based authentication with secure cookies
+- Bearer-token authentication (signed JWT presented in an `Authorization` header;
+  the token is held in browser web storage, not a cookie)
 - Role-based access control (RBAC)
 - Passwords hashed with bcrypt at cost factor 12 (`server/routes/auth.ts`)
 - TOTP multi-factor authentication, available per user and opt-in — it is not
   enforced org-wide by default (`server/services/mfaService.ts`)
-- JWT tokens with short expiration, verified through a rotation-aware helper
-  rather than a bare `jwt.verify`
+- JWT access tokens (default lifetime one day; refresh tokens seven days) verified
+  through a rotation-aware helper rather than a bare `jwt.verify`. There is no
+  server-enforced inactivity timeout yet; shortening the lifetime and adding an
+  idle logoff are items P1-1 and P0-4 of `docs/security/REMEDIATION_AND_ENHANCEMENT_PLAN_2026-09-24.md`.
 
 #### Data Protection
 - **Encryption at rest is field-level, applied to specific secrets** —
@@ -84,7 +87,8 @@ these are the claims a customer's quality and security teams will audit.
 - **ISO 14971** — the product supports risk-management workflows aligned to
   ISO 14971. This is not a certification of the platform.
 - **HIPAA** — the platform is built to support HIPAA-regulated workflows
-  (access control, audit logging, field-level encryption of identifiers).
+  (access control, audit logging). Field-level encryption of identifiers is not
+  wired to any column today (see Data Protection above).
   Contact us regarding a Business Associate Agreement; deploying HIPAA
   workloads requires one.
 <!-- compliance-claim-allow: this bullet states the ABSENCE of a SOC 2 report -->
@@ -129,6 +133,11 @@ a marketing page. As of the date below:
   highest-priority security investment.
 - Encryption at rest covers specific secret fields, not all stored data.
 - Multi-factor authentication is available but not enforceable org-wide.
+- An independent audit of the whole platform at commit `adbf2d18` (2026-09-24) is
+  published at `docs/security/SECURITY_AUDIT_2026-09-24.md`, with the remediation
+  plan beside it. Its claims register re-tests every statement in this file, the
+  policy set, the questionnaire and the trust statement against the code; read it
+  before relying on any of them.
 
 ### Security Contacts
 
@@ -141,4 +150,4 @@ We thank all security researchers who have responsibly disclosed vulnerabilities
 
 ---
 
-*Last updated: July 28, 2026*
+*Last updated: September 24, 2026*
