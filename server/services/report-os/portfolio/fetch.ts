@@ -89,7 +89,17 @@ async function fetchGroupMembers(
       reportProgramGroups,
       eq(reportProgramGroups.id, reportProgramGroupProjects.programGroupId),
     )
-    .leftJoin(projects, eq(projects.id, reportProgramGroupProjects.projectId))
+    // The org on the project too, not only on the group: memberships are not
+    // RLS-protected, and until L184 a group could be given another tenant's
+    // project, whose name this join would then have returned. A member outside
+    // this org's projects is not a member of this org's portfolio.
+    .innerJoin(
+      projects,
+      and(
+        eq(projects.id, reportProgramGroupProjects.projectId),
+        eq(projects.organizationId, organizationId),
+      ),
+    )
     .where(
       and(
         eq(reportProgramGroupProjects.programGroupId, programGroupId),
