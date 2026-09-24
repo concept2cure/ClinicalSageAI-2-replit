@@ -315,10 +315,11 @@ function RbmAnaMsg({
   return (
     <div className="rbm-ana-ai">
       <div className="rbm-ana-who"><span className="mk">{'✻'}</span>AnA</div>
-      {m.text && <div className="rbm-ana-text">{m.text}</div>}
-      {/* The same record and output card every host renders. This pane used to
-          drop the tools, rounds and drafts and show "Thinking…". */}
+      {/* The same record, answer and output card, in the same order, every
+          host renders. This pane used to drop the tools, rounds and drafts and
+          show "Thinking…". */}
       {m.activity && <AnaActivity {...m.activity} />}
+      {m.text && <div className="rbm-ana-text">{m.text}</div>}
       {m.output && <AnaOutputCards message={m.output} />}
       {Array.isArray(m.executedActions) && m.executedActions.length > 0 && (
         <div className="rbm-ana-chips">
@@ -387,6 +388,7 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work, onNav, onSt
               streaming={work.streaming}
               open={dock.open}
               onToggle={dock.toggle}
+              controls={dock.panelId}
             />
           )}
           <button className="tb-btn" onClick={onClose} title="Collapse" aria-label="Collapse">{I.panelRight}</button>
@@ -395,6 +397,7 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work, onNav, onSt
       {showWork && work && (
         <div className="ana-work-host">
           <AnaWorkPanel
+            id={dock.panelId}
             messages={work.messages}
             streaming={work.streaming}
             runStatus={work.runStatus}

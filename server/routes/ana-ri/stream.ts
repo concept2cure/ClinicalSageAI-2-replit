@@ -101,9 +101,11 @@ import {
   buildTraceEntry,
   collectTracesFromHistory,
   formatTraceForContext,
+  refusalOf,
   type ToolTraceEntry,
 } from '../../services/ana/tool-trace.js';
 import { runStreamPostProcessing } from './post-processing.js';
+import { DOCUMENT_ACTIONS } from '../../services/ana-ri/document-actions.js';
 import { reflectAfterTurn } from '../../services/ana-ri/relational-profile-service.js';
 import { selectToolsForTurn } from '../../services/ana/tool-selection.js';
 import { planEventFromToolResult, type TurnPlanStep } from '../../services/ana/turn-plan.js';
@@ -1053,7 +1055,10 @@ export function mountStreamRoute(router: Router): void {
             appliedRole: orchestration.appliedRole,
             activeWorkstream: orchestration.activeWorkstream,
             workstreamHandoff: orchestration.workstreamHandoff,
-            suggestedActions: orchestration.suggestedActions,
+            // Their labels, not their ids. Every renderer shows these as
+            // buttons that ask AnA for the thing named, so "rewritten_section"
+            // was both what the person read and what the button sent.
+            suggestedActions: orchestration.suggestedActions.map(t => DOCUMENT_ACTIONS[t]?.label ?? t),
           },
         })}\n\n`
       );
@@ -1755,6 +1760,14 @@ export function mountStreamRoute(router: Router): void {
                   note: `No local handler for ${toolUse.name}; may be a server-resolved tool.`,
                 });
                 toolStatus = 'not_found';
+              }
+              // A handler that refuses returns `{ error }` rather than throwing.
+              // The step still did not happen: say so in the stream, the trace
+              // and the telemetry, never as a success.
+              const refusal = toolStatus === 'success' ? refusalOf(resultStr) : null;
+              if (refusal) {
+                toolStatus = 'error';
+                toolErrorMessage = refusal;
               }
               void logToolRun({
                 threadId: thread_id,

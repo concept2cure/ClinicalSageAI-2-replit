@@ -1031,7 +1031,7 @@
   }
   .esign-field input:focus,
   .esign-field select:focus {
-    border-color: var(--accent-100);
+    border-color: var(--accent-200);
   }
   .esign-manifest {
     font-size: 11px;
@@ -1161,7 +1161,7 @@
   .ed-guard:focus-visible {
     box-shadow:
       var(--v2-shadow-lg),
-      0 0 0 2px var(--accent-100);
+      0 0 0 2px var(--accent-200);
   }
   .ed-guard-t {
     font-size: 15px;
@@ -1556,7 +1556,7 @@
        the conversation was flexed to zero: the thread rendered, the canvas
        rendered, and neither was visible. Stacked, the conversation keeps the
        screen and the dock takes a capped share beneath it — nothing is
-       removed, so "Hide side panel" still means what it says.
+       removed, so the header's progress chip still means what it says.
 
        These three selectors belong beside `.ct-side` in app-v2.css. They are
        here because that file is another workstream's this week; the canvas

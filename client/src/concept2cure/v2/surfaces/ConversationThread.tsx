@@ -5,7 +5,7 @@ import { EmptyState } from '../dataConnect';
 import { AnaActionChips } from '../AnaActionChips';
 import { LiveDriveSwitch } from '../LiveDriveSwitch';
 import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
-import { useChatUpload, attachmentReadLabel } from '../../hooks/useChatUpload';
+import { useChatUpload, attachmentReadLabel, composeTurn, type SentAttachment } from '../../hooks/useChatUpload';
 import { DocTypeChip, DocumentContextCard } from './AnaDocContext';
 import { SignoffList } from '../SignoffList';
 import { apiCall, apiErrorText } from '../apiCall';
@@ -658,12 +658,10 @@ function ArtifactPanel({ artifacts, openId, setOpenId, onNav, projectId, pending
           the signature ceremony belongs to the sign-off prompt on the turn. */}
       <div className="ct-art-panel-sub">Governed outputs — AnA drafts, you export and route for review</div>
       <div className="ct-art-list">
-        {/* The honest empty state. It used to promise "classification reports,
-            predicate analyses, eSTAR sections", which named the three fixture
-            builders rather than anything the conversation can produce, and it
-            did not say that the list covers this session only — reloading a
-            thread rehydrates its messages, not the drafts they carried. */}
-        {artifacts.length === 0 && <div className="ct-art-empty">Documents AnA drafts in this conversation appear here, each one exportable and routable for review. The list covers this session — reopening the thread restores the messages, not the drafts.</div>}
+        {/* Mounted only with at least one artifact (see the thread's side
+            column), so there is no empty state to word. The list covers this
+            session only: reloading a thread rehydrates its messages, not the
+            drafts they carried. */}
         {artifacts.map(a => (
           <ArtifactCard
             key={a.id}
@@ -688,7 +686,12 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
   // conversation; the default is a fresh conversation. `current` means "the
   // conversation already in progress" — what this screen shows when the person
   // comes back to it after AnA took them elsewhere mid-answer.
-  const sel = ((window as any).C2C_CONVO || { id: 'new' }) as { id: string; seed?: string | null };
+  const sel = ((window as any).C2C_CONVO || { id: 'new' }) as {
+    id: string;
+    seed?: string | null;
+    /** Files the seeding composer attached, by upload id. */
+    seedFiles?: SentAttachment[];
+  };
   const isCurrent = sel.id === 'current';
   const isNew = sel.id === 'new';
 
@@ -742,7 +745,6 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
      with focus handed back to the chip. */
   const dock = useProgressDock();
   const panelCollapsed = !dock.open;
-  const sideId = React.useId();
   const [draft, setDraft] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   /* The background queue the work dock shows — read only while the side
@@ -802,7 +804,8 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
   const title = isNew
     ? 'New conversation'
     : firstUser?.text
-      ? firstUser.text.slice(0, 60)
+      ? // The first line: the composer appends "Attached: …" after a blank line.
+        firstUser.text.split('\n')[0].slice(0, 60)
       : anaChat.isLoadingThread
         ? 'Loading…'
         : 'Conversation';
@@ -829,12 +832,13 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
       // lands here. A timeout lets pass 1's cleanup cancel before any fetch
       // exists, so only pass 2 actually sends.
       const seed = sel.seed;
+      const seedFiles = sel.seedFiles;
       let cancelled = false;
       const t = setTimeout(() => {
         if (cancelled) return;
         // A new conversation starts clean in the shared chat.
         if (shellChat) shellChat.reset();
-        void anaChat.send(seed);
+        void anaChat.send(seed, seedFiles);
       }, 0);
       // From here on this screen shows the conversation in progress.
       (window as any).C2C_CONVO = shellChat ? { id: 'current', seed: null } : { ...sel, seed: null };
@@ -883,13 +887,11 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
     // Only files the server CONFIRMED it read are named. A failed upload must
     // never be described as attached — its chip stays visible with the error
     // and the message says nothing about it.
-    const names = readyAttachments.map((a) => a.name);
-    const line = names.length ? `Attached: ${names.join(', ')}` : '';
-    const body = t && line ? `${t}\n\n${line}` : t || line;
+    const { body, files } = composeTurn(t, readyAttachments);
 
     setDraft('');
     clearAttachments();
-    void anaChat.send(body);
+    void anaChat.send(body, files);
   };
 
   const loadingHistory = !isNew && anaChat.isLoadingThread && turns.length === 0;
@@ -916,6 +918,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
             streaming={anaChat.isStreaming}
             open={dock.open}
             onToggle={dock.toggle}
+            controls={dock.panelId}
           />
         </div>
       </div>
@@ -1056,7 +1059,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
         {/* Not drawn while a document canvas is expanded: the editor takes
             the conversation's full width, and its own rails are on screen. */}
         {!panelCollapsed && !expandedDocId && (
-          <div className="ct-side" id={sideId} data-artifacts={artifacts.length > 0 ? 'true' : 'false'}>
+          <div className="ct-side" id={dock.panelId} data-artifacts={artifacts.length > 0 ? 'true' : 'false'}>
             <div className="ct-side-work">
               <AnaWorkPanel
                 messages={anaChat.messages}
@@ -1064,8 +1067,6 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
                 runStatus={anaChat.runStatus}
                 pendingSteers={anaChat.pendingSteers}
                 queue={agentActivity}
-                /* Drafts are the artifact cards directly beneath; not twice. */
-                omitDrafts
                 onClose={dock.close}
                 /* Not `announce`. This surface passed it because it mounted no
                    other announcer; every AnA turn above now carries its own
@@ -1079,8 +1080,14 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
                 }}
               />
             </div>
-            <ArtifactPanel artifacts={artifacts} openId={openId} setOpenId={setOpenId} onNav={onNav}
-              projectId={shellProjectId} pendingDraftIds={pendingDraftIds} fireToast={fireToast} />
+            {/* Only when there is an artifact to list. Empty, it was a count of
+                zero and a paragraph promising "documents AnA drafts appear
+                here" — beside a drafted document, which is the canvas under
+                its turn and never listed here (conversationArtifacts). */}
+            {artifacts.length > 0 && (
+              <ArtifactPanel artifacts={artifacts} openId={openId} setOpenId={setOpenId} onNav={onNav}
+                projectId={shellProjectId} pendingDraftIds={pendingDraftIds} fireToast={fireToast} />
+            )}
           </div>
         )}
       </div>

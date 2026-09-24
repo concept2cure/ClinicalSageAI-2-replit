@@ -83,7 +83,7 @@
   .pg-field-l{font-size:11.5px;font-weight:600;color:var(--text-200);}
   .pg-req{font-weight:400;color:var(--text-400);}
   .pg-textarea,.pg-input{background:var(--bg-000);border:1px solid var(--border-control);border-radius:var(--radius-md);padding:9px 11px;font-size:12.5px;color:var(--text-100);width:100%;resize:vertical;transition:box-shadow var(--dur),border-color var(--dur);}
-  .pg-textarea:focus,.pg-input:focus{border-color:var(--accent-100);box-shadow:0 0 0 3px var(--accent-000);}
+  .pg-textarea:focus,.pg-input:focus{border-color:var(--accent-200);box-shadow:0 0 0 3px var(--accent-000);}
   .pg-field-count{font-size:10.5px;color:var(--text-400);align-self:flex-end;}
   .pg-field-count[data-ok="true"]{color:var(--success);}
   .pg-field-hint{font-size:10.5px;color:var(--text-400);}
@@ -197,11 +197,11 @@
      nothing. */
   .pd-soa-cell.ro{cursor:not-allowed;}
   .pd-soa-cell.ro:hover{background:transparent;}
-  .pd-soa-cell:focus-visible{outline:2px solid var(--accent-100);outline-offset:-2px;}
+  .pd-soa-cell:focus-visible{outline:2px solid var(--accent-200);outline-offset:-2px;}
   .pd-soa-cell[aria-busy="true"]{opacity:.55;}
   .pd-soa-reason{display:flex;flex-direction:column;gap:5px;font-size:11.5px;color:var(--text-400);margin:0 0 12px;}
   .pd-soa-reason input{border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;background:var(--bg-000);color:var(--text-100);}
-  .pd-soa-reason input:focus-visible{outline:2px solid var(--accent-100);outline-offset:1px;}
+  .pd-soa-reason input:focus-visible{outline:2px solid var(--accent-200);outline-offset:1px;}
   .pd-soa-cell:hover{background:var(--accent-000);}
   .pd-soa-cell.on{background:var(--accent-000);}
   .pd-soa-x{color:var(--accent-200);font-weight:600;font-size:11px;}
@@ -233,7 +233,7 @@
   .pd-risk{border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;background:var(--bg-000);cursor:pointer;transition:border-color var(--dur);}
   .pd-risk:hover{border-color:var(--text-400);}
   /* role="button" gets no focus ring from the button rule above it. */
-  .pd-risk:focus-visible{outline:2px solid var(--accent-100);outline-offset:2px;}
+  .pd-risk:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;}
   .pd-risk.on{border-color:var(--accent-100);background:var(--accent-000);}
   .pd-risk-top{display:flex;align-items:center;gap:10px;}
   .pd-risk-score{width:28px;height:28px;border-radius:var(--radius-md);background:var(--tm);color:var(--t);font-weight:600;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}

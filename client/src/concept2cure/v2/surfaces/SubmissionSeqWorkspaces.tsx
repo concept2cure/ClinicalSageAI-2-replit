@@ -876,7 +876,7 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
         {running && (
           <AnaActivity
             streaming
-            phase={`Reading sequence ${seq.sequenceNumber} as a ${lensL(lens)} reviewer…`}
+            phase={`Reading sequence ${seq.sequenceNumber} through the ${lensL(lens)} lens…`}
             startedAt={runningSince ?? undefined}
           />
         )}

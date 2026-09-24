@@ -39,7 +39,8 @@ function useWorkDockVisible(): [boolean, (v: boolean) => void] {
 
 /**
  * The progress dock as every host drives it: the shared show/hide memory, the
- * chip that toggles it, and a close that hands focus back to that chip. The
+ * chip that toggles it, the id the chip names as what it controls, and a close
+ * that hands focus back to that chip. The
  * panel's own close control lives INSIDE the panel, so closing it unmounts the
  * control that had focus; without the hand-back the browser drops focus to
  * <body>. Not on mount — a remembered "hidden" must not steal focus.
@@ -49,8 +50,11 @@ export function useProgressDock(): {
   toggle: () => void;
   close: () => void;
   chipRef: React.RefObject<HTMLButtonElement | null>;
+  /** Put on the element the chip reveals; the chip's aria-controls names it. */
+  panelId: string;
 } {
   const [open, setOpen] = useWorkDockVisible();
+  const panelId = React.useId();
   const chipRef = React.useRef<HTMLButtonElement>(null);
   const refocus = React.useRef(false);
   const close = React.useCallback(() => {
@@ -64,5 +68,5 @@ export function useProgressDock(): {
       chipRef.current?.focus();
     }
   }, [open]);
-  return { open, toggle, close, chipRef };
+  return { open, toggle, close, chipRef, panelId };
 }

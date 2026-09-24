@@ -34,6 +34,25 @@ function truncate(s: string, max: number): string {
 }
 
 /**
+ * The refusal a handler returned instead of throwing: a JSON object whose own
+ * top-level `error` is a non-empty string. Handlers across the tool set say "I
+ * could not do this" that way (`{ error: 'needs an open project …' }`), and a
+ * step that did not happen must not be reported — or drawn with a check mark —
+ * as one that did. Anything else, including a non-JSON result, is null.
+ */
+export function refusalOf(resultContent: string): string | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(resultContent);
+  } catch {
+    return null;
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+  const error = (parsed as { error?: unknown }).error;
+  return typeof error === 'string' && error.trim() ? error.trim() : null;
+}
+
+/**
  * Summarize a tool result (JSON string) to a single informative line. Pulls out
  * the common shapes (errors, match counts, structure counts, diff summaries,
  * result arrays); falls back to truncated text.
