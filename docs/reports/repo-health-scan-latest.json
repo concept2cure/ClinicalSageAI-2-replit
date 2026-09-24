@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-24T20:41:37.608Z",
+  "generatedAt": "2026-09-24T23:08:27.234Z",
   "git": {
-    "sha": "79db6d95b78dba092dc3a0776bfca7d3ea7281ac",
+    "sha": "f5ccffb8e61f5dc3d0dfbedfc2c6d594a0625b3c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1999,7 +1999,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 207159
+        "bytes": 209799
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2079,7 +2079,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 126510
+        "bytes": 126953
       },
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
@@ -2173,7 +2173,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 5299
+        "lines": 5353
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2261,7 +2261,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 2588
+        "lines": 2594
       },
       {
         "file": "server/routes/knowledge-base.ts",
