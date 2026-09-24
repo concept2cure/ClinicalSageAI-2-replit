@@ -126,6 +126,14 @@ module "secrets" {
       description = "Encrypts stored connector credentials"
       value       = var.connector_encryption_key
     }
+    smtp_user = {
+      description = "SMTP username (login OTP delivery)"
+      value       = var.smtp_user
+    }
+    smtp_pass = {
+      description = "SMTP password (login OTP delivery)"
+      value       = var.smtp_pass
+    }
   }
   tags = var.tags
 }
@@ -167,6 +175,10 @@ locals {
     { name = "STORAGE_PROVIDER", value = "s3" },
     { name = "AWS_S3_BUCKET", value = local.vault_bucket },
     { name = "AWS_REGION", value = var.region },
+    # Login OTP delivery. SMTP_USER and SMTP_PASS are in boot_secrets.
+    { name = "SMTP_HOST", value = var.smtp_host },
+    { name = "SMTP_PORT", value = tostring(var.smtp_port) },
+    { name = "SMTP_FROM", value = var.smtp_from },
   ]
 
   # The deployment's public origin: the first CloudFront alias. One input, so
@@ -185,6 +197,8 @@ locals {
     { name = "AUDIT_HMAC_SECRET", value_from = module.secrets.secret_arns["audit_hmac_secret"] },
     { name = "CONNECTOR_ENCRYPTION_KEY", value_from = module.secrets.secret_arns["connector_encryption_key"] },
     { name = "OPENAI_API_KEY", value_from = module.secrets.secret_arns["openai_api_key"] },
+    { name = "SMTP_USER", value_from = module.secrets.secret_arns["smtp_user"] },
+    { name = "SMTP_PASS", value_from = module.secrets.secret_arns["smtp_pass"] },
   ]
 }
 
