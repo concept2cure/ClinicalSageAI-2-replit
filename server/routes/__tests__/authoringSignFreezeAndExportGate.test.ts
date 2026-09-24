@@ -21,6 +21,7 @@
  * router carries its own §11 JWT gate, so we sign a real HS256 token rather than
  * stubbing auth.
  */
+import { createHash } from 'node:crypto';
 import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
@@ -211,7 +212,12 @@ describe('F3 — POST /docs/:id/export gates on the record being sealed', () => 
           rowCount: 1,
           rows: [{
             signer_email: 'r.okafor@test.co', signer_name: 'Rita Okafor', meaning: 'APPROVER',
-            reason: 'Approved for filing.', method: 'PIN', content_hash: 'abc',
+            /* A real digest of the section row above, not a placeholder: the
+               export verifies the binding and refuses (409
+               SIGNATURE_CONTENT_MISMATCH) when no signature covers the content.
+               A fixture that says APPROVED has to be signed over what it holds. */
+            reason: 'Approved for filing.', method: 'PIN',
+            content_hash: createHash('sha256').update('2.6.6:No adverse findings.').digest('hex'),
             covered_freeze_version: 'v3', pin_verified: true, signed_at: new Date(),
           }],
         };

@@ -22,6 +22,7 @@
  * failure mode being guarded is a well-formed file with the manifest missing
  * from it — which a status assertion cannot see.
  */
+import { createHash } from 'node:crypto';
 import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
@@ -58,13 +59,27 @@ function makeApp() {
   return app;
 }
 
+/**
+ * The hash the signing routes store for the single mock section below,
+ * derived here INDEPENDENTLY rather than imported from the module under test.
+ *
+ * The fixture carried `content_hash: 'a1b2c3d4e5f6'`, a placeholder that could
+ * never match. Harmless while the manifest only printed the hash; it is the
+ * subject now that the export verifies it and refuses (409
+ * SIGNATURE_CONTENT_MISMATCH) when no signature covers the content. A signed
+ * fixture has to be genuinely signed. Recomputed rather than imported so this
+ * file checks the router's hashing instead of restating it.
+ */
+const SECTION = { code: '2.6.6', title: 'Toxicology Written Summary', content: 'No adverse findings.' };
+const SIGNED_CONTENT_HASH = createHash('sha256').update(`${SECTION.code}:${SECTION.content}`).digest('hex');
+
 const SIGNED = {
   signer_email: 'r.okafor@test.co',
   signer_name: 'Rita Okafor',
   meaning: 'APPROVER',
   reason: 'Approved for filing.',
   method: 'PIN',
-  content_hash: 'a1b2c3d4e5f6',
+  content_hash: SIGNED_CONTENT_HASH,
   covered_freeze_version: 'v3',
   pin_verified: true,
   signed_at: new Date('2026-08-14T09:31:00.000Z'),
@@ -86,7 +101,7 @@ function mockRows(signatures: unknown[], title = 'Tox Summary') {
     if (s.includes('FROM authoring_sections')) {
       return {
         rowCount: 1,
-        rows: [{ code: '2.6.6', title: 'Toxicology Written Summary', content: 'No adverse findings.' }],
+        rows: [SECTION],
       };
     }
     if (s.includes('FROM authoring_signatures')) {
@@ -213,5 +228,63 @@ describe('the dead renderer is gone', () => {
     expect(src).not.toContain('async function buildDocx');
     expect(src).not.toContain('signature_meaning');
     expect(src).not.toContain('signature_timestamp');
+  });
+});
+
+/**
+ * §11.70 — the record and its signatures have to actually be linked.
+ *
+ * The manifest printed `Content hash at signing: <hash>` while the export route
+ * had computed the live hash of the same sections by the same function, and the
+ * two were never compared. A filed DOCX could carry a signature block over
+ * prose that hashes to something else, with nothing on the page saying so.
+ */
+describe('§11.70 — a printed hash is now a verified one', () => {
+  const docxXml = async (body: Buffer) => {
+    const { default: JSZip } = await import('jszip');
+    return (await JSZip.loadAsync(body)).file('word/document.xml')!.async('string');
+  };
+
+  it('states, per signature, that it covers the exported content', async () => {
+    mockRows([SIGNED]);
+    const res = await raw('docx');
+    expect(res.status).toBe(200);
+    expect(await docxXml(res.body as Buffer)).toContain(
+      'Verification: this signature covers the content of this document',
+    );
+  });
+
+  it('refuses the export when NO signature covers the content being filed', async () => {
+    /* The document is APPROVED — sealed — so its sections should not have moved
+       since it was signed. If they have, the manifest would attest to a record
+       the file does not contain. */
+    mockRows([{ ...SIGNED, content_hash: 'f'.repeat(64) }]);
+    const res = await raw('docx');
+    expect(res.status).toBe(409);
+    const body = JSON.parse((res.body as Buffer).toString('utf8'));
+    expect(body.code).toBe('SIGNATURE_CONTENT_MISMATCH');
+    expect(body.exportedContentHash).toBe(SIGNED_CONTENT_HASH);
+  });
+
+  it('still exports, and marks the stale one, when a LATER signature covers it', async () => {
+    /* The ordinary flow, which must not be blocked: an AUTHOR signs, editing
+       continues (an AUTHOR signature does not lock the document), an APPROVER
+       signs the final text. The author's signature legitimately covers earlier
+       content and the reviewer is entitled to see exactly that. */
+    mockRows([
+      { ...SIGNED, meaning: 'AUTHOR', signer_name: 'Ada Author', content_hash: 'a'.repeat(64) },
+      SIGNED,
+    ]);
+    const res = await raw('docx');
+    expect(res.status).toBe(200);
+    const xml = await docxXml(res.body as Buffer);
+    expect(xml).toContain('DOES NOT COVER this document');
+    expect(xml).toContain('Verification: this signature covers the content of this document');
+    expect(xml).toContain('Ada Author');
+  });
+
+  it('an unsigned document is unaffected — nothing to verify, nothing to refuse', async () => {
+    mockRows([]);
+    expect((await raw('docx')).status).toBe(200);
   });
 });
