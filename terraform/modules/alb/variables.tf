@@ -18,7 +18,7 @@ variable "public_subnet_ids" {
 
 variable "security_group_ids" {
   type        = list(string)
-  description = "Additional security groups (ALB SG is always attached)"
+  description = "Additional security groups. The module's own group, which admits CloudFront alone, is always attached."
   default     = []
 }
 
@@ -45,4 +45,22 @@ variable "access_logs_bucket" {
 variable "tags" {
   type    = map(string)
   default = {}
+}
+
+variable "origin_secret" {
+  type        = string
+  sensitive   = true
+  description = <<-EOT
+    Value CloudFront sends in the origin secret header (modules/cloudfront). The
+    HTTPS listener forwards only requests that carry it and refuses the rest 403,
+    because the security group alone admits every CloudFront distribution.
+    Letters, digits, '-' and '_' only: the listener treats '*' and '?' as
+    wildcards and compares case-insensitively. Changing it refuses API traffic
+    until CloudFront has deployed the new value.
+  EOT
+
+  validation {
+    condition     = can(regex("^[A-Za-z0-9_-]{32,128}$", var.origin_secret))
+    error_message = "origin_secret must be 32 to 128 characters of letters, digits, '-' or '_'."
+  }
 }

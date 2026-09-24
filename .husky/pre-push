@@ -419,4 +419,30 @@ if ! npm run --silent ci:pushed-lint-errors 2>&1; then
 fi
 echo "   ✅ No ESLint errors in the pushed files."
 
+# ── TypeScript, before the push rather than after ────────────────────────────
+#
+# CI fails on ANY type error (.typecheck-baseline.json is ratcheted to 0). But
+# Rule 0 means no PRs — every push lands on concept2cure-v2 directly — so CI
+# only ever reports a type error AFTER it is on trunk. Nothing here typechecked.
+# Twice on 19 Sep 2026 a red typecheck reached trunk that way, both tests not
+# updated when a signature tightened, and each time the next person to push had
+# to fix somebody else's error before their own would go green.
+#
+# This runs the SAME gate CI runs (typecheck-no-regression, with its guards for a
+# compiler that died of OOM and a tsconfig that checked zero files), in its
+# --incremental mode, and only when the push changes something that can change a
+# type — .ts/.tsx (deletions included), typed JSON, tsconfig, package manifests.
+# A docs- or SQL-only push skips it and says so. ~45 s warm, ~95 s after editing
+# a widely imported file, ~5 min once after an install while the cache builds.
+echo "   Typechecking (only if this push can change a type)..."
+if ! npm run --silent ci:pushed-typecheck 2>&1; then
+  echo ""
+  echo "🚫 ERROR: The typecheck gate failed."
+  echo "   This is the check CI would fail on — after the push had already landed."
+  echo "   Fix the errors above and re-push."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Typecheck passed (or nothing type-relevant was pushed)."
+
 echo "✅ Pre-push checks complete — all gates passed."

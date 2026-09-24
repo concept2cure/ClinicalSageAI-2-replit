@@ -724,7 +724,10 @@ jobs:
     name: Post-deploy Smoke Test
     needs: [deploy-api, deploy-frontend]
     runs-on: ubuntu-latest
-    if: always() && (needs.deploy-api.result == 'success' || needs.deploy-frontend.result == 'success')
+    # A failed or skipped API deploy is never followed by a green smoke test
+    # against the old tasks (audit SMOKE-01). A frontend-only dispatch
+    # (deploy_api=false) is still checked.
+    if: always() && (needs.deploy-api.result == 'success' || (github.event.inputs.deploy_api == 'false' && needs.deploy-frontend.result == 'success'))
 
     steps:
       - name: Configure AWS credentials
@@ -733,21 +736,42 @@ jobs:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Health check
+      # Readiness the way users reach the product: through CloudFront, on the
+      # distribution's own domain, with the certificate checked. The ALB admits
+      # CloudFront alone (terraform/modules/alb), so its DNS name no longer
+      # answers. This step used to call that name with --insecure, and passed
+      # without checking anything when the ALB could not be found.
+      #
+      # A 200 is not proof on its own: CloudFront used to answer unknown paths
+      # with 200 and the app's index.html. The body must be /readyz's verdict.
+      # The deploy role needs cloudfront:GetDistribution for the alias lookup.
+      - name: Readiness through the public URL
         run: |
-          ALB_DNS=$(aws elbv2 describe-load-balancers \
-            --names c2c-prod \
-            --query 'LoadBalancers[0].DNSName' \
-            --output text 2>/dev/null || echo "")
-
-          if [ -n "$ALB_DNS" ]; then
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://$ALB_DNS/api/health" --insecure || true)
-            if [ "$STATUS" = "200" ]; then
-              echo "✅ API health check passed"
-            else
-              echo "⚠️ API health check returned $STATUS"
-              exit 1
-            fi
-          else
-            echo "⚠️ Could not resolve ALB DNS — skipping health check"
+          set -euo pipefail
+          if [ -z "$CLOUDFRONT_DISTRIBUTION_ID" ]; then
+            echo "::error::CLOUDFRONT_DISTRIBUTION_ID is not set, so the deployment cannot be checked where users reach it. It is not reported healthy."
+            exit 1
           fi
+          HOST=$(aws cloudfront get-distribution --id "$CLOUDFRONT_DISTRIBUTION_ID" \
+            --query 'Distribution.DistributionConfig.Aliases.Items[0]' --output text)
+          if [ -z "$HOST" ] || [ "$HOST" = "None" ]; then
+            echo "::error::Distribution $CLOUDFRONT_DISTRIBUTION_ID has no custom domain; the API is routed only on one (terraform/modules/cloudfront)."
+            exit 1
+          fi
+
+          for attempt in 1 2 3 4 5; do
+            rm -f readyz.json
+            STATUS=$(curl --silent --show-error --max-time 30 --output readyz.json \
+              --write-out '%{http_code}' "https://$HOST/readyz" || true)
+            if [ "$STATUS" = "200" ] && jq -e '.ready == true' readyz.json >/dev/null 2>&1; then
+              echo "✅ https://$HOST/readyz reports ready"
+              jq '.dependencies' readyz.json
+              exit 0
+            fi
+            echo "Attempt $attempt: HTTP $STATUS"
+            head -c 2000 readyz.json 2>/dev/null || true
+            echo
+            if [ "$attempt" -lt 5 ]; then sleep 15; fi
+          done
+          echo "::error::https://$HOST/readyz did not report ready."
+          exit 1

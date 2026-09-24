@@ -94,9 +94,9 @@ module "alb" {
   vpc_id             = module.vpc.vpc_id
   vpc_cidr           = module.vpc.vpc_cidr
   public_subnet_ids  = module.vpc.public_subnet_ids
-  security_group_ids = [module.alb.alb_security_group_id]
   certificate_arn    = var.acm_certificate_arn
   api_port           = 5000
+  origin_secret      = var.cloudfront_origin_secret
   tags               = var.tags
 }
 
@@ -110,6 +110,9 @@ module "ecs" {
   private_subnet_ids    = module.vpc.private_subnet_ids
   alb_security_group_id = module.alb.alb_security_group_id
   api_target_group_arn  = module.alb.api_target_group_arn
+  # CloudFront, then the ALB. The ALB admits CloudFront alone (modules/alb), so
+  # the second-to-last X-Forwarded-For entry is CloudFront's record of the user.
+  trust_proxy_hops = 2
 
   # Immutable, parameterized image references (see var.image_tag). Never
   # deploy a mutable `:latest` tag — that breaks rollback and reproducibility.
@@ -169,6 +172,9 @@ module "cdn" {
   certificate_arn = var.cloudfront_certificate_arn
   api_domain_name = module.alb.alb_dns_name
   tags            = var.tags
+
+  api_origin_secret_header_name = module.alb.origin_secret_header_name
+  api_origin_secret             = var.cloudfront_origin_secret
 }
 
 # ── Outputs ──────────────────────────────────────────────────────────────────

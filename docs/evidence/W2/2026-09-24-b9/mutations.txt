@@ -1,0 +1,42 @@
+# Each fix reverted on its own (the rest of the change kept), module tests re-run.
+# A revert nothing catches would print 'caught by: NOTHING'.
+
+alb        M1 ingress admits the internet again
+           exit=1  Failure! 0 passed, 2 failed, 2 skipped.
+           caught by: nothing_but_https_from_cloudfront_reaches_it, the_prefix_list_is_cloudfronts_and_the_secret_opens_the_listener
+alb        M2 port 80 admitted again
+           exit=1  Failure! 3 passed, 1 failed.
+           caught by: nothing_but_https_from_cloudfront_reaches_it
+alb        M3 listener forwards without the secret
+           exit=1  Failure! 3 passed, 1 failed.
+           caught by: nothing_but_https_from_cloudfront_reaches_it
+alb        M4 module's own security group only if the caller passes it
+           exit=1  Failure! 3 passed, 1 failed.
+           caught by: nothing_but_https_from_cloudfront_reaches_it
+alb        M5 listener rule matches any header value
+           exit=1  Failure! 3 passed, 1 failed.
+           caught by: the_prefix_list_is_cloudfronts_and_the_secret_opens_the_listener
+alb        M6 secret validation accepts anything
+           exit=1  Failure! 2 passed, 1 failed, 1 skipped.
+           caught by: a_short_secret_is_refused
+cloudfront C1 distribution-wide 403 -> 200 /index.html mapping restored
+           exit=1  Failure! 7 passed, 1 failed.
+           caught by: api_errors_reach_the_browser_as_errors
+cloudfront C2 /mcp left off the ALB paths
+           exit=1  Failure! 7 passed, 1 failed.
+           caught by: every_server_path_routes_to_the_alb
+cloudfront C3 header list instead of every header
+           exit=1  Failure! 7 passed, 1 failed.
+           caught by: the_alb_sees_the_viewers_headers
+cloudfront C4 origin secret header not sent
+           exit=1  Failure! 7 passed, 1 failed.
+           caught by: the_alb_origin_carries_the_secret
+cloudfront C5 client-route rewrite not attached
+           exit=1  Failure! 7 passed, 1 failed.
+           caught by: client_routes_are_rewritten_on_the_bucket_behaviour_only
+cloudfront C6 custom-domain precondition removed
+           exit=1  Failure! 5 passed, 1 failed, 2 skipped.
+           caught by: api_routing_needs_a_custom_domain
+cloudfront C7 secret precondition removed
+           exit=1  Failure! 6 passed, 1 failed, 1 skipped.
+           caught by: api_routing_needs_the_secret
