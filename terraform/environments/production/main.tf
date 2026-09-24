@@ -6,6 +6,10 @@ terraform {
       source  = "hashicorp/aws"
       version = ">= 5.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = ">= 3.5"
+    }
   }
 
   backend "s3" {
@@ -51,6 +55,47 @@ module "ecr" {
   tags             = var.tags
 }
 
+# ── Database credentials (D1 brief B1) ──────────────────────────────────────
+#
+# Terraform owns both database passwords so it can compose real connection
+# URLs. Production used to pass the RDS-managed master secret's ARN as
+# DATABASE_URL. That secret is JSON ({"username","password"}), ECS injected it
+# verbatim, and the app reads DATABASE_URL as a connection string, so no task
+# could connect.
+#
+#   DATABASE_URL      the owner role (c2c_admin). Migrations run as it.
+#   APP_DATABASE_URL  app_service, LOGIN NOSUPERUSER NOBYPASSRLS. The runtime
+#                     connects as it; under RLS_ENFORCE=on the boot posture probe
+#                     refuses a superuser or BYPASSRLS role.
+#
+# deploy-migrate mints app_service from APP_SERVICE_DB_PASSWORD
+# (scripts/db/provision-app-role.mjs), and the migrate task is derived from the
+# API task definition, so that password rides in the API task's secrets too.
+#
+# Alphanumeric, so the passwords need no URL-encoding (40 characters, about 238
+# bits). sslmode=verify-full makes every consumer of the URL require TLS and
+# verify the server, including code paths that decide TLS from the URL alone.
+
+locals {
+  db_name = "concept2cure_ri"
+}
+
+resource "random_password" "db_master" {
+  length  = 40
+  special = false
+}
+
+resource "random_password" "db_app_service" {
+  length  = 40
+  special = false
+}
+
+locals {
+  db_host          = "${module.rds.address}:${module.rds.port}"
+  database_url     = "postgresql://${module.rds.master_username}:${random_password.db_master.result}@${local.db_host}/${local.db_name}?sslmode=verify-full"
+  app_database_url = "postgresql://app_service:${random_password.db_app_service.result}@${local.db_host}/${local.db_name}?sslmode=verify-full"
+}
+
 # ── Secrets Manager ─────────────────────────────────────────────────────────
 
 module "secrets" {
@@ -65,8 +110,70 @@ module "secrets" {
       description = "OpenAI API key"
       value       = var.openai_api_key
     }
+    database_url = {
+      description = "Owner-role connection URL (migrations)"
+      value       = local.database_url
+    }
+    app_database_url = {
+      description = "app_service connection URL (runtime, RLS enforced)"
+      value       = local.app_database_url
+    }
+    app_service_db_password = {
+      description = "app_service password, for deploy-migrate to mint the role"
+      value       = random_password.db_app_service.result
+    }
+    # The boot contract (D1 brief B3). Each is a root variable with no default,
+    # so plan stops until the founder supplies it (SOP-SEC-001 §4).
+    refresh_token_secret = {
+      description = "Refresh-token signing secret (distinct from JWT_SECRET)"
+      value       = var.refresh_token_secret
+    }
+    mfa_encryption_key = {
+      description = "Encrypts stored TOTP secrets"
+      value       = var.mfa_encryption_key
+    }
+    audit_hmac_key = {
+      description = "Audit-chain seal key"
+      value       = var.audit_hmac_key
+    }
+    audit_hmac_secret = {
+      description = "Tamper-proof audit HMAC secret"
+      value       = var.audit_hmac_secret
+    }
+    connector_encryption_key = {
+      description = "Encrypts stored connector credentials"
+      value       = var.connector_encryption_key
+    }
   }
   tags = var.tags
+}
+
+# Rules the boot contract states across variables, checked at plan rather than
+# as a crash-loop at boot (server/config/environment.ts).
+resource "terraform_data" "boot_contract" {
+  lifecycle {
+    precondition {
+      condition     = var.refresh_token_secret != var.jwt_secret
+      error_message = "refresh_token_secret must differ from jwt_secret: the app refuses to boot when they are equal (server/config/environment.ts)."
+    }
+    precondition {
+      condition     = var.audit_hmac_key != var.audit_hmac_secret
+      error_message = "audit_hmac_key and audit_hmac_secret must be different values: one seals the audit chain, the other signs tamper-proof audit rows."
+    }
+  }
+}
+
+locals {
+  # Plain (non-secret) values the deploy preflight checks by value, not name.
+  boot_environment = [
+    { name = "RLS_ENFORCE", value = "on" },
+    { name = "AI_SENSITIVE_DATA_POLICY_MODE", value = "enforce" },
+    { name = "AI_PROVIDER_PLACEMENT_APPROVALS", value = var.ai_provider_placement_approvals },
+    # Reset and invitation links are built on APP_URL and never on the Host
+    # header. The public origin is the CloudFront custom domain, which the
+    # production variables already require.
+    { name = "APP_URL", value = "https://${var.domain_aliases[0]}" },
+  ]
 }
 
 # ── Database ─────────────────────────────────────────────────────────────────
@@ -78,7 +185,8 @@ module "rds" {
   instance_class     = var.rds_instance_class
   allocated_storage  = 50
   max_allocated_storage = 500
-  database_name      = "concept2cure-ri"
+  database_name      = local.db_name
+  master_password    = random_password.db_master.result
   subnet_ids         = module.vpc.private_subnet_ids
   security_group_ids = [module.vpc.rds_sg_id]
   multi_az           = true
@@ -133,20 +241,34 @@ module "ecs" {
     "${module.cdn.frontend_bucket_arn}/*",
   ]
 
+  # Every name deploy-aws.yml's preflight requires, so the task definition this
+  # renders is the one it accepts (tests/boot_contract.tftest.hcl reads the
+  # preflight's list and checks it against this output).
   api_secrets = [
-    { name = "DATABASE_URL",    value_from = module.rds.master_user_secret_arn },
-    { name = "JWT_SECRET",      value_from = module.secrets.secret_arns["jwt_secret"] },
-    { name = "OPENAI_API_KEY",  value_from = module.secrets.secret_arns["openai_api_key"] },
+    { name = "DATABASE_URL",             value_from = module.secrets.secret_arns["database_url"] },
+    { name = "APP_DATABASE_URL",         value_from = module.secrets.secret_arns["app_database_url"] },
+    { name = "APP_SERVICE_DB_PASSWORD",  value_from = module.secrets.secret_arns["app_service_db_password"] },
+    { name = "JWT_SECRET",               value_from = module.secrets.secret_arns["jwt_secret"] },
+    { name = "REFRESH_TOKEN_SECRET",     value_from = module.secrets.secret_arns["refresh_token_secret"] },
+    { name = "MFA_ENCRYPTION_KEY",       value_from = module.secrets.secret_arns["mfa_encryption_key"] },
+    { name = "AUDIT_HMAC_KEY",           value_from = module.secrets.secret_arns["audit_hmac_key"] },
+    { name = "AUDIT_HMAC_SECRET",        value_from = module.secrets.secret_arns["audit_hmac_secret"] },
+    { name = "CONNECTOR_ENCRYPTION_KEY", value_from = module.secrets.secret_arns["connector_encryption_key"] },
+    { name = "OPENAI_API_KEY",           value_from = module.secrets.secret_arns["openai_api_key"] },
   ]
 
+  # The worker's DATABASE_URL was the same JSON secret. Whether a worker exists
+  # at all is a founder decision (D1 brief B7); its database wiring is fixed
+  # here regardless.
   worker_secrets = [
-    { name = "DATABASE_URL",    value_from = module.rds.master_user_secret_arn },
-    { name = "OPENAI_API_KEY",  value_from = module.secrets.secret_arns["openai_api_key"] },
+    { name = "DATABASE_URL",     value_from = module.secrets.secret_arns["database_url"] },
+    { name = "APP_DATABASE_URL", value_from = module.secrets.secret_arns["app_database_url"] },
+    { name = "OPENAI_API_KEY",   value_from = module.secrets.secret_arns["openai_api_key"] },
   ]
 
-  # The release signer — see release_signing.tf.
-  api_environment    = local.signer_environment
-  worker_environment = local.signer_environment
+  # The release signer (release_signing.tf) and the boot contract's plain values.
+  api_environment    = concat(local.signer_environment, local.boot_environment)
+  worker_environment = concat(local.signer_environment, [{ name = "RLS_ENFORCE", value = "on" }])
 
   tags = var.tags
 }
@@ -206,4 +328,19 @@ output "rds_endpoint" {
 
 output "ecs_cluster" {
   value = module.ecs.cluster_name
+}
+
+# What the API task definition will carry, for review before apply and for
+# tests/boot_contract.tftest.hcl. Names, plain values and secret ARNs only.
+output "api_task_boot_contract" {
+  value = {
+    names         = sort(concat([for e in module.ecs.api_container.environment : e.name], [for s in module.ecs.api_container.secrets : s.name]))
+    environment   = { for e in module.ecs.api_container.environment : e.name => e.value }
+    secret_source = { for s in module.ecs.api_container.secrets : s.name => s.valueFrom }
+    health_check  = module.ecs.api_container.healthCheck.command
+  }
+}
+
+output "rds_db_name" {
+  value = module.rds.db_name
 }
