@@ -41,9 +41,15 @@ vi.mock('node:fs', async (io) => {
 /* The canonical storage seam. The vault writes bytes through it now, so a row
    carrying a storage_version_id must be served from HERE and never from disk. */
 const { storageGet } = vi.hoisted(() => ({ storageGet: vi.fn() }));
-vi.mock('../../services/storage/index.js', () => ({
-  getStorageProvider: () => ({ name: 'local', get: storageGet, put: vi.fn(), delete: vi.fn() }),
-}));
+vi.mock('../../services/storage/index.js', () => {
+  const provider = { name: 'local', get: storageGet, put: vi.fn(), delete: vi.fn() };
+  return {
+    getStorageProvider: () => provider,
+    // 7fd5d6af reads a row from the store recorded on it; these rows record
+    // that same store, so both lookups answer with it.
+    getStorageProviderFor: () => provider,
+  };
+});
 
 import createProjectVaultRoutes from '../c2c/project-vault';
 
