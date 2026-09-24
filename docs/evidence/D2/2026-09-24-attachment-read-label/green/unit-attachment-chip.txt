@@ -1,0 +1,174 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > attachmentReadLabel > formats word counts and notes OCR 20ms
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > attachmentReadLabel > returns null when nothing was read 1ms
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > readyAttachmentLabel > says a ready file with no text was not read, never "read" 0ms
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > readyAttachmentLabel > is the read label when text was extracted 0ms
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > composeTurn > names and sends only the files the server confirmed 1ms
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > composeTurn > lets the attachment line be the message when there is no text 0ms
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > composeTurn > sends nothing extra when no file is ready 4ms
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > validateUploadFile > accepts a supported, reasonably-sized file 1ms
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > validateUploadFile > rejects an unsupported extension 1ms
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > validateUploadFile > rejects an oversized file 0ms
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > validateUploadFile > rejects an empty file 0ms
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > useChatUpload > uploads a file, captures extraction metadata, and announces status 76ms
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > useChatUpload > marks an attachment as error and announces failure on a bad response 61ms
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > useChatUpload > rejects an invalid file as an error chip without calling the network 4ms
+ ✓ tests/concept2cure/use-chat-upload.test.tsx > useChatUpload > clear() empties attachments and the status message 6ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > lists the project's real sources 358ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > says a document is readable only when its extraction succeeded 380ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > renders no lock at all when the navigation fetch fails 541ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > renders no lock when the server answers resolved:false 185ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > reports how many sources are actually usable 219ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > renders an honest empty state for a project with no sources 208ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > locks a tier-gated module, keeps it activatable, and routes to plans 203ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > distinguishes a failed read from an empty data room 178ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > leaves an entitled module completely alone 165ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > shows no locks for the master-admin owner grant 138ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > filters the list without refetching 200ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > never locks a destination the catalog has no row for 143ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > offers a way to add sources 159ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > states the real reason for a tier lock in the accessible name 144ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > states the real reason for a disabled lock in the accessible name 143ms
+ ✓ client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx > Rail licence gating > states the real reason for a industry lock in the accessible name 150ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > cannot pin a source whose text was never read 201ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > hands the pinned set to AnA 254ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > offers no pin action until something is pinned 147ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > reports the sections and documents a source is cited in 169ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'ConversationThread' composer attach > renders the paperclip as a real button, not a span 74ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > says plainly when nothing was written from a source 172ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'ConversationThread' composer attach > opens a file picker when clicked 31ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'ConversationThread' composer attach > hands a chosen file to the upload transport 28ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'ConversationThread' composer attach > accepts more than one file, because regulatory sources come in sets 16ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > flags the sections written against content the source no longer has 162ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'EctdCoauthor' composer attach > renders the paperclip as a real button, not a span 69ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'EctdCoauthor' composer attach > opens a file picker when clicked 30ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'EctdCoauthor' composer attach > hands a chosen file to the upload transport 35ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'EctdCoauthor' composer attach > accepts more than one file, because regulatory sources come in sets 27ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > shows nothing rather than a zero when the server sends no usage field 162ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > names the affected sections when a source has changed under them 206ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > shows no change banner when nothing is stale 173ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > counts a re-uploaded file once 160ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > a full window reads as a floor 144ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx > project home — device program > shows class, regulatory path, product code, regulation, panel, predicate and flags from the row 482ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx > project home — device program > states absence for a device field the row lacks — never a placeholder 245ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx > project home — device program > publishes the product type onto the open shell project so the shell can follow it 192ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDeviceProgram.test.tsx > project home — drug program is unchanged > renders the drug facts and no device block 184ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > renders sponsor, product, indication and the IND number from GET /api/c2c/projects/:id 460ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx > an answer carries its own caveats > says a turn timed out, instead of showing the partial text as final 90ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > takes product from the row, not from the navigation handoff 268ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx > an answer carries its own caveats > surfaces a degraded-mode warning from the server 41ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx > an answer carries its own caveats > shows every caveat, not just the first 28ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx > an answer carries its own caveats > does not need the disclosure opened — a caveat you must hunt for is hidden 23ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx > an answer carries its own caveats > never states a caveat in colour alone 19ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx > an answer carries its own caveats > a clean turn gets no caveat furniture at all 33ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx > an answer carries its own caveats > an empty warnings array is not a caveat 15ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > labels the number by program type 225ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > says "not assigned" when the agency has not numbered the program — never a placeholder 218ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeIdentityFacts.test.tsx > project home shows the program identity from the database > says "not recorded" for sponsor, product or indication the row lacks 158ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > does not offer project settings anywhere on the screen 256ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSettingsHonesty.test.tsx > Project home — the "Project settings" control > leaves only the honest way out of the project workspace 202ms
+ ✓ client/src/concept2cure/v2/__tests__/anaPremortemMount.test.tsx > the pre-mortem artifact is mounted > renders the panel when the turn produced one 228ms
+ ✓ client/src/concept2cure/v2/__tests__/anaPremortemMount.test.tsx > the pre-mortem artifact is mounted > shows the ranked risk bound to the precedent that grounds it 31ms
+ ✓ client/src/concept2cure/v2/__tests__/anaPremortemMount.test.tsx > the pre-mortem artifact is mounted > offers no export the rail cannot perform 29ms
+ ✓ client/src/concept2cure/v2/__tests__/anaPremortemMount.test.tsx > the pre-mortem artifact is mounted > adds no pre-mortem furniture to a turn that produced none 16ms
+stderr | client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > ConversationThread attachment chip > does not call a file "read" when no text was extracted from it
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > ConversationThread attachment chip > still says what was read, and how much
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > EctdCoauthor attachment chip > does not call a file "read" when no text was extracted from it
+An update to EctdCoauthor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCoauthor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCoauthor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > EctdCoauthor attachment chip > still says what was read, and how much
+An update to EctdCoauthor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCoauthor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCoauthor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > ConversationThread attachment chip > does not call a file "read" when no text was extracted from it 54ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > ConversationThread attachment chip > still says what was read, and how much 16ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > EctdCoauthor attachment chip > does not call a file "read" when no text was extracted from it 27ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > EctdCoauthor attachment chip > still says what was read, and how much 15ms
+
+ Test Files  10 passed (10)
+      Tests  76 passed (76)
+   Start at  21:21:18
+   Duration  8.77s (transform 3.40s, setup 1.00s, import 6.65s, tests 9.55s, environment 5.85s)
+

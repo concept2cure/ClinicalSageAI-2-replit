@@ -59,7 +59,7 @@ import { AnaOutputCards } from '../AnaOutputs';
 import { useAgentActivity } from '../useAgentActivity';
 import { useProgressDock } from '../workDock';
 import { shellProgramName } from '../shellProject';
-import { useChatUpload, attachmentReadLabel, composeTurn } from '../../hooks/useChatUpload';
+import { useChatUpload, readyAttachmentLabel, composeTurn } from '../../hooks/useChatUpload';
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import { AnswerLead } from '../AnswerLead';
@@ -832,7 +832,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
                   <span key={a.id} className="ec-att-chip" data-status={a.status}>
                     {I.paperclip} {a.name}
                     {a.status === 'uploading' && <em> · reading…</em>}
-                    {a.status === 'ready' && <em> · {attachmentReadLabel(a.extractionMethod, a.extractionWords) ?? 'read'}</em>}
+                    {a.status === 'ready' && <em> · {readyAttachmentLabel(a.extractionMethod, a.extractionWords)}</em>}
                     {a.status === 'error' && <em> · {a.error ?? 'failed'}</em>}
                     <button type="button" className="ec-att-x" aria-label={`Remove ${a.name}`} onClick={() => ecRemoveAttachment(a.id)}>×</button>
                   </span>
