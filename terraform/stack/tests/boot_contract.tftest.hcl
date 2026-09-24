@@ -98,6 +98,7 @@ variables {
   cloudfront_certificate_arn      = "arn:aws:acm:us-east-1:111122223333:certificate/cf"
   domain_aliases                  = ["app.example.com"]
   cloudfront_origin_secret        = "c2cTestOriginSecret_0123456789abcdef"
+  create_github_oidc_provider     = true
   openai_api_key                  = "test-openai-key"
   jwt_secret                      = "jwt-0123456789abcdef0123456789abcdef"
   refresh_token_secret            = "refresh-0123456789abcdef0123456789abcdef"
@@ -323,6 +324,28 @@ run "staging_is_distinct_from_production" {
 }
 
 # Refusals. Each run must fail on exactly the named check.
+
+# provision-database.yml names its targets itself; they must be production's,
+# or the first provision registers a family the deploy role cannot run
+# (github_deploy.tf) against a cluster that does not exist.
+run "provision_workflow_names_are_the_ones_terraform_creates" {
+  command = plan
+  assert {
+    condition = alltrue([
+      for k, v in merge(output.deploy_targets, { ECS_PROVISION_TASK_FAMILY = "c2c-production-provision" }) :
+      v == one(regex("\n  ${k}: ([^\\s]+)", file("../../.github/workflows/provision-database.yml")))
+      if k != "FRONTEND_BUCKET" && k != "ECS_MIGRATE_TASK_FAMILY"
+    ])
+    error_message = "A name in provision-database.yml differs from what Terraform creates."
+  }
+  assert {
+    condition = anytrue([
+      for st in jsondecode(output.github_deploy_policies.deploy).Statement :
+      contains(st.Action, "ecs:RunTask") && try(contains(st.Resource, "arn:aws:ecs:us-east-1:123456789012:task-definition/c2c-production-provision:*"), false)
+    ])
+    error_message = "The deploy role cannot run the provision family."
+  }
+}
 
 # ── Each of these must FAIL. A check only ever seen to pass has not been tested.
 

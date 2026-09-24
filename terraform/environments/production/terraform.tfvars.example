@@ -40,3 +40,11 @@ cloudfront_certificate_arn = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/REPLA
 # the ALB's certificate against these names, so acm_certificate_arn must cover them too.
 # The first alias is also APP_URL and ALLOWED_ORIGINS (the origin sign-in is accepted from).
 domain_aliases             = ["app.example.com"] # REPLACE_ME
+
+# After apply, set the pipeline's repository secrets from the outputs (the
+# roles are created by terraform/modules/github-deploy-roles; no stored keys):
+#   AWS_DEPLOY_ROLE_ARN          = terraform output -raw github_deploy_role_arn
+#   AWS_BUILD_ROLE_ARN           = terraform output -raw github_build_role_arn
+#   CLOUDFRONT_DISTRIBUTION_ID   = terraform output -raw cloudfront_distribution_id
+# and create the GitHub environment "production": its jobs are the only ones the
+# deploy role trusts.

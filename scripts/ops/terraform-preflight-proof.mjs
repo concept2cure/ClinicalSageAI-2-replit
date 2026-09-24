@@ -66,6 +66,8 @@ const tdJsonArg = args.includes('--td-json') ? args[args.indexOf('--td-json') + 
 const noInit = args.includes('--no-init');
 
 let failures = 0;
+/** name (deploy | build) → the rendered IAM policy document of that GitHub role. */
+const renderedIam = {};
 const fail = (msg) => { failures += 1; console.error(`${TAG} FAIL — ${msg}`); };
 const ok = (msg) => console.log(`${TAG} ok — ${msg}`);
 
@@ -133,6 +135,96 @@ function checkProvisionSource(tdFile, td) {
     return fail(`provision source must add DATABASE_OWNER_URL from DATABASE_URL's secret; got ${out.extra_secrets}`);
   }
   ok('provision-database.yml accepts the rendered task definition and passes the owner URL from the same secret');
+}
+
+/**
+ * Every AWS call each workflow job makes is one its role allows, and each job
+ * assumes the role its OIDC subject can reach.
+ *
+ * A pipeline that has never run against AWS fails its first deploy on the
+ * first AccessDenied, one call at a time. This reads each job's `aws` commands
+ * (and those of scripts/ops/ecs-one-off-task.sh when the job runs it), maps
+ * each to its IAM action, and checks the rendered policy of the role the job
+ * assumes. A CLI call not in the table below FAILS: an unmapped call is an
+ * unchecked one. Resource scoping is the module's own test's subject
+ * (modules/github-deploy-roles/tests); this checks that the actions are there.
+ */
+const CLI_TO_IAM = {
+  'ecs describe-task-definition': ['ecs:DescribeTaskDefinition'],
+  'ecs register-task-definition': ['ecs:RegisterTaskDefinition'],
+  'ecs describe-services': ['ecs:DescribeServices'],
+  'ecs run-task': ['ecs:RunTask'],
+  'ecs describe-tasks': ['ecs:DescribeTasks'],
+  'ecs stop-task': ['ecs:StopTask'],
+  'ecs update-service': ['ecs:UpdateService'],
+  'ecs wait services-stable': ['ecs:DescribeServices'],
+  'logs get-log-events': ['logs:GetLogEvents'],
+  'ecr describe-images': ['ecr:DescribeImages'],
+  's3 sync': ['s3:ListBucket', 's3:PutObject', 's3:DeleteObject'],
+  's3 cp': ['s3:PutObject'],
+  'cloudfront create-invalidation': ['cloudfront:CreateInvalidation'],
+  'cloudfront get-distribution': ['cloudfront:GetDistribution'],
+};
+const ECR_LOGIN = ['ecr:GetAuthorizationToken'];
+const ECR_PUSH = ['ecr:BatchCheckLayerAvailability', 'ecr:InitiateLayerUpload', 'ecr:UploadLayerPart', 'ecr:CompleteLayerUpload', 'ecr:PutImage'];
+const ROLE_FOR_SECRET = { AWS_DEPLOY_ROLE_ARN: 'deploy', AWS_BUILD_ROLE_ARN: 'build' };
+
+function awsCalls(shell) {
+  const code = shell.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
+  const calls = new Set();
+  for (const m of code.matchAll(/(?:^|[\s;(|&$])aws\s+([a-z0-9-]+)\s+([a-z0-9-]+)(?:\s+([a-z0-9-]+))?/g)) {
+    calls.add(m[2] === 'wait' ? `${m[1]} wait ${m[3]}` : `${m[1]} ${m[2]}`);
+  }
+  return calls;
+}
+
+function checkWorkflowIam() {
+  if (!renderedIam.deploy || !renderedIam.build) {
+    return fail('the rendered state has no GitHub deploy/build role policies (module.github_deploy)');
+  }
+  const allowed = (role, action) =>
+    (renderedIam[role].Statement ?? []).some((st) => st.Effect === 'Allow' && [].concat(st.Action).includes(action));
+  const runner = fs.readFileSync(path.join(repoRoot, 'scripts', 'ops', 'ecs-one-off-task.sh'), 'utf8');
+  const problems = [];
+  let checked = 0;
+  for (const file of [WORKFLOW, PROVISION_WORKFLOW]) {
+    const wf = loadYaml(fs.readFileSync(file, 'utf8'));
+    for (const [name, job] of Object.entries(wf.jobs ?? {})) {
+      const steps = job.steps ?? [];
+      const creds = steps.find((st) => String(st.uses ?? '').includes('configure-aws-credentials'));
+      if (!creds) continue;
+      const where = `${path.basename(file)} job ${name}`;
+      const secret = String(creds.with?.['role-to-assume'] ?? '').match(/secrets\.([A-Z_]+)/)?.[1];
+      const role = ROLE_FOR_SECRET[secret];
+      if (!role) { problems.push(`${where}: assumes ${creds.with?.['role-to-assume']}, which no Terraform role backs`); continue; }
+      // The deploy role trusts only jobs in the GitHub environment, the build
+      // role only jobs outside it: the subject decides which one STS allows.
+      const inEnv = Boolean(job.environment);
+      if (inEnv !== (role === 'deploy')) {
+        problems.push(`${where}: ${inEnv ? 'runs in' : 'runs outside'} the GitHub environment but assumes the ${role} role, whose trust ${role === 'deploy' ? 'admits only the environment' : 'excludes the environment'}; AssumeRoleWithWebIdentity would be refused`);
+        continue;
+      }
+      const need = new Set();
+      for (const st of steps) {
+        if (String(st.uses ?? '').includes('amazon-ecr-login')) ECR_LOGIN.forEach((a) => need.add(a));
+        const run = String(st.run ?? '');
+        if (/\bdocker push\b/.test(run)) ECR_PUSH.forEach((a) => need.add(a));
+        const calls = awsCalls(run);
+        if (run.includes('scripts/ops/ecs-one-off-task.sh')) awsCalls(runner).forEach((c) => calls.add(c));
+        for (const c of calls) {
+          const actions = CLI_TO_IAM[c];
+          if (!actions) problems.push(`${where}: \`aws ${c}\` is not in CLI_TO_IAM, so its permission is unchecked`);
+          else actions.forEach((a) => need.add(a));
+        }
+      }
+      for (const a of need) {
+        checked += 1;
+        if (!allowed(role, a)) problems.push(`${where}: needs ${a}, which the ${role} role does not grant`);
+      }
+    }
+  }
+  if (problems.length) problems.forEach((p) => fail(`workflow IAM: ${p}`));
+  else ok(`every AWS call the deploy and provision workflows make is granted to the role its job can assume (${checked} job×action pairs)`);
 }
 
 /**
@@ -211,7 +303,12 @@ function renderTaskDefinitions() {
     (m.child_modules ?? []).forEach((c) => walk(c, out));
     return out;
   };
-  const tds = walk(state.test_state.root_module).filter((r) => r.type === 'aws_ecs_task_definition');
+  const all = walk(state.test_state.root_module);
+  // The GitHub roles' rendered permissions, for checkWorkflowIam().
+  for (const r of all.filter((x) => x.type === 'aws_iam_role_policy' && x.address.includes('module.github_deploy'))) {
+    renderedIam[r.name] = JSON.parse(r.values.policy);
+  }
+  const tds = all.filter((r) => r.type === 'aws_ecs_task_definition');
   return Object.fromEntries(tds.map((r) => [r.name, {
     family: r.values.family,
     containerDefinitions: JSON.parse(r.values.container_definitions),
@@ -294,6 +391,7 @@ async function main() {
 
   checkRevisionPinning(pre);
   checkProvisionSource(tdFile, td);
+  checkWorkflowIam();
 
   // Where the preflight sits: it has to run before the production migration.
   const migrateJob = Object.entries(pre.wf.jobs).find(([, j]) => (j.steps ?? []).some((s) => s.id === 'migrate-task'));
