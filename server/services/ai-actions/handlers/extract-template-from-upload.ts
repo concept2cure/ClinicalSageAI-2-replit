@@ -111,7 +111,7 @@ const handler: AIActionHandler = {
       (typeof request.payload.name === 'string' && request.payload.name.trim()) ||
       fileName.replace(/\.(docx|pdf)$/i, '');
 
-    const record = await createTemplate({
+    const { record, auditTrail } = await createTemplate({
       orgId: ctx.user.organizationId,
       userId: ctx.user.userId,
       name,
@@ -123,6 +123,13 @@ const handler: AIActionHandler = {
       extractionWarnings: extracted.warnings,
     });
 
+    // WO-16C: the template is saved either way; when its §11.10(e) row was not
+    // written the result says so, in the warnings AnA narrates from, rather
+    // than reporting a clean save.
+    const warnings = auditTrail.persisted
+      ? extracted.warnings
+      : [...extracted.warnings, 'The template was saved, but its audit-trail entry could not be written.'];
+
     return {
       ...base,
       success: true,
@@ -132,11 +139,12 @@ const handler: AIActionHandler = {
         templateId: record.id,
         name: record.name,
         confidence: extracted.confidence,
-        warnings: extracted.warnings,
+        warnings,
         spec: record.spec,
+        auditTrail,
       },
       createdObjects: [{ type: 'template', id: record.id, title: record.name, status: 'extracted' }],
-      warnings: extracted.warnings,
+      warnings,
       errors: [],
       nextSuggestedActions: [
         {

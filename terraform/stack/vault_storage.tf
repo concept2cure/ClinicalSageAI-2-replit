@@ -14,15 +14,63 @@
 #   - Versioned: an overwrite or delete keeps the prior version, so a removed
 #     source document stays recoverable. How long noncurrent versions are kept
 #     is a records-retention decision and is not set here: nothing expires.
-#   - Encrypted at rest (SSE-S3, which the provider also requests on every put),
-#     and reachable only over TLS.
+#   - Encrypted at rest under this vault's own KMS key (SSE-KMS, bucket keys
+#     on, annual rotation), and reachable only over TLS. A customer-managed key
+#     puts every decrypt in CloudTrail, and reading the vault can be revoked
+#     at the key. The key policy mirrors release_signing.tf: the account
+#     administers the key but cannot decrypt with it, and the task role may
+#     use it only through S3.
 #   - Access is granted in the bucket's own policy to the application task role,
 #     as release_signing.tf grants kms:Sign: list the bucket; get, put and
 #     delete its objects. The provider needs exactly these
 #     (server/services/storage/s3-provider.ts), and no human principal is named.
 
 locals {
-  vault_bucket = "${local.short}-vault"
+  vault_bucket    = "${local.short}-vault"
+  vault_key_alias = "alias/${local.short}-vault"
+}
+
+resource "aws_kms_key" "vault" {
+  description             = "Concept2Cure vault documents - ${var.environment}"
+  enable_key_rotation     = true
+  deletion_window_in_days = 30
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        # Administration only: no Decrypt, Encrypt or GenerateDataKey, so no
+        # IAM policy in this account can hand a person the vault's plaintext.
+        # Granting that is a key-policy change, which CloudTrail records.
+        Sid       = "KeyAdministrationWithoutUse"
+        Effect    = "Allow"
+        Principal = { AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root" }
+        Action = [
+          "kms:Create*", "kms:Describe*", "kms:Enable*", "kms:List*", "kms:Put*",
+          "kms:Update*", "kms:Revoke*", "kms:Disable*", "kms:Get*", "kms:Delete*",
+          "kms:TagResource", "kms:UntagResource", "kms:ScheduleKeyDeletion",
+          "kms:CancelKeyDeletion",
+        ]
+        Resource = "*"
+      },
+      {
+        # The application reads and writes vault objects, and only through S3.
+        Sid       = "ApplicationUsesTheKeyThroughS3"
+        Effect    = "Allow"
+        Principal = { AWS = module.ecs.task_role_arn }
+        Action    = ["kms:Decrypt", "kms:GenerateDataKey", "kms:DescribeKey"]
+        Resource  = "*"
+        Condition = { StringEquals = { "kms:ViaService" = "s3.${var.region}.amazonaws.com" } }
+      },
+    ]
+  })
+
+  tags = merge(var.tags, { Purpose = "vault-documents" })
+}
+
+resource "aws_kms_alias" "vault" {
+  name          = local.vault_key_alias
+  target_key_id = aws_kms_key.vault.key_id
 }
 
 resource "aws_s3_bucket" "vault" {
@@ -56,8 +104,10 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "vault" {
   bucket = aws_s3_bucket.vault.id
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
+      sse_algorithm     = "aws:kms"
+      kms_master_key_id = aws_kms_key.vault.arn
     }
+    bucket_key_enabled = true
   }
 }
 

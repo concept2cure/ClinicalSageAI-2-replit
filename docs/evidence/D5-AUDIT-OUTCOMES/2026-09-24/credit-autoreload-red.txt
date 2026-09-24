@@ -1,0 +1,7 @@
+# RED — credit-autoreload: tests run against the unfixed implementation (server/services/credit-ledger.ts server/services/audit/audit-write-outcome.ts stashed at 872c47182)
+ × server/services/__tests__/credit-autoreload-audit-outcome.test.ts > setAutoReload carries its audit-row outcome > a lost row: the settings are saved and the result says the row is missing 46ms
+ × server/services/__tests__/credit-autoreload-audit-outcome.test.ts > setAutoReload carries its audit-row outcome > a writer that throws is still reported as a lost row, not as success 3ms
+ × server/services/__tests__/credit-autoreload-audit-outcome.test.ts > setAutoReload carries its audit-row outcome > a written row says so, with whether it is the chained row a reader can retrieve 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed (3)

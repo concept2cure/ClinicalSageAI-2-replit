@@ -51,6 +51,7 @@ jobs:
           - terraform/modules/alb
           - terraform/modules/cloudfront
           - terraform/modules/github-deploy-roles
+          - terraform/modules/compliance-evidence
     env:
       TF_IN_AUTOMATION: true
     steps:

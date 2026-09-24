@@ -327,6 +327,17 @@ export async function teardownTwoTenantFixture(): Promise<void> {
              (SELECT id FROM c2c_correspondence WHERE organization_id=ANY($1::int[]))`,
           [FIXTURE_ORGS]
         );
+        /* request-parent-boundary.dbtest.ts. complaints, mdr_events and
+           vigilance_events have no organization column: they hang from a
+           program by a text program_id, so they are matched through the fixture
+           orgs' programs, which the loop below then deletes. */
+        for (const table of ['vigilance_events', 'mdr_events', 'complaints']) {
+          await cleanup.query(
+            `DELETE FROM ${table} WHERE program_id IN
+               (SELECT id::text FROM regulatory_programs WHERE organization_id=ANY($1::int[]))`,
+            [FIXTURE_ORGS]
+          );
+        }
         for (const table of [
           'c2c_correspondence',
           'c2c_submissions',
@@ -339,6 +350,14 @@ export async function teardownTwoTenantFixture(): Promise<void> {
           'qmp_traceability_matrix',
           'ctq_factors',
           'quality_management_plans',
+          // request-parent-boundary.dbtest.ts. Tasks before projects (below);
+          // studies before the clients they name; profiles before users;
+          // mappings before the fixture requirement (below).
+          'project_tasks',
+          'cro_studies',
+          'cro_clients',
+          'user_intelligence_profiles',
+          'gspr_program_mappings',
           // governed-edit-boundary.dbtest.ts. PCCP plans, their modifications
           // and post-market documents all cascade from the program.
           'regulatory_programs',
@@ -348,6 +367,7 @@ export async function teardownTwoTenantFixture(): Promise<void> {
           ]);
         }
         await cleanup.query("DELETE FROM report_type_registry WHERE type_id LIKE 'wo03\\_%'");
+        await cleanup.query("DELETE FROM gspr_requirements WHERE clause LIKE 'wo03\\_%'");
         await cleanup.query('DELETE FROM documents WHERE document_code LIKE $1', [`${TAG}%`]);
         await cleanup.query('DELETE FROM projects WHERE name LIKE $1', [`${TAG}%`]);
         await cleanup.query('DELETE FROM saved_precedent_queries WHERE label LIKE $1', [`${TAG}%`]);

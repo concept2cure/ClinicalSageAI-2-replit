@@ -243,6 +243,121 @@ export function invalidateApiCache() {
   // Kept for backward compatibility with callers.
 }
 
+/**
+ * A write that committed while its 21 CFR Part 11 §11.10(e) audit row did not.
+ *
+ * `auditService.logAction` never rejects on a persistence failure; it resolves
+ * an outcome, and the routes WO-16C converted carry that outcome to the browser
+ * in one of two wire forms:
+ *
+ *   - a body object `{ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', … }`,
+ *     conventionally at `auditTrail`, `meta.auditTrail` or `details.auditTrail`
+ *     (server/services/audit/audit-write-outcome.ts, `AuditRowOutcome`);
+ *   - the headers `X-Audit-Row-Persisted: false` / `X-Audit-Row-Code`, where a
+ *     204 or a verbatim proxy leaves no body to put it in (exposed to the
+ *     browser by server/middleware/enterprise-security.ts).
+ *
+ * Until 2026-09-24 nothing under client/src read either, so the server told the
+ * truth and every surface still said "Saved". This is the one reader. It
+ * matches on the CODE, not on `persisted` alone: a draft that is "not persisted
+ * yet" is not a lost audit row, and a notice that fires on a healthy save
+ * teaches people to ignore it.
+ *
+ * Bounded (depth and node count) and cycle-safe, because it runs over every
+ * successful write's response and must never be what breaks one.
+ */
+export const AUDIT_ROW_NOT_PERSISTED_EVENT = 'c2c:audit-row-not-persisted';
+export const AUDIT_ROW_NOT_PERSISTED_CODE = 'AUDIT_ROW_NOT_PERSISTED';
+
+export interface AuditRowNotPersistedDetail {
+  method: ApiRequestMethod;
+  /** The request path without its query string. Diagnostic, not user copy. */
+  path: string;
+  code: string;
+  /** `X-Request-Id`, so the user can quote something the server log is keyed by. */
+  correlationId?: string;
+}
+
+const AUDIT_SCAN_MAX_DEPTH = 6;
+const AUDIT_SCAN_MAX_NODES = 2000;
+
+export function findUnpersistedAuditRow(headers: Headers, body: unknown): { code: string } | null {
+  if (headers.get('X-Audit-Row-Persisted') === 'false') {
+    return { code: headers.get('X-Audit-Row-Code') || AUDIT_ROW_NOT_PERSISTED_CODE };
+  }
+  const seen = new Set<object>();
+  let visited = 0;
+  const scan = (node: unknown, depth: number): boolean => {
+    if (node === null || typeof node !== 'object' || depth > AUDIT_SCAN_MAX_DEPTH) return false;
+    if (seen.has(node) || ++visited > AUDIT_SCAN_MAX_NODES) return false;
+    seen.add(node);
+    const rec = node as Record<string, unknown>;
+    if (rec.persisted === false && rec.code === AUDIT_ROW_NOT_PERSISTED_CODE) return true;
+    const children = Array.isArray(node) ? node : Object.values(rec);
+    return children.some((child) => scan(child, depth + 1));
+  };
+  return scan(body, 0) ? { code: AUDIT_ROW_NOT_PERSISTED_CODE } : null;
+}
+
+function announceUnpersistedAuditRow(detail: AuditRowNotPersistedDetail): void {
+  try {
+    window.dispatchEvent(new CustomEvent<AuditRowNotPersistedDetail>(AUDIT_ROW_NOT_PERSISTED_EVENT, { detail }));
+  } catch {
+    /* No window (SSR, a test without jsdom). The response itself still carries
+       the outcome; this channel only makes it visible. */
+  }
+}
+
+/**
+ * Inspect a successful write's response for a lost audit row, without touching
+ * the body the caller is about to read (`clone()`), and without delaying the
+ * caller (not awaited). Only JSON bodies are parsed: a streamed or binary
+ * response is never buffered for this.
+ *
+ * `apiRequest` and `apiUpload` call this on every response. It is exported for
+ * the few writes that still call `fetch` directly (onboarding sends its own
+ * headers): call it with the Response, as they are, before reading the body.
+ */
+export function probeAuditRowOutcome(method: ApiRequestMethod, url: string, response: Response): void {
+  try {
+    inspectWriteResponse(method, url, response);
+  } catch {
+    /* A response object without the full Response surface (a hand-rolled test
+       double, a polyfill). The write itself succeeded and is returned as-is. */
+  }
+}
+
+function inspectWriteResponse(method: ApiRequestMethod, url: string, response: Response): void {
+  if (method === 'GET' || !response.ok) return;
+  const detailFor = (code: string): AuditRowNotPersistedDetail => ({
+    method,
+    path: url.split('?')[0],
+    code,
+    correlationId: response.headers.get('X-Request-Id') ?? undefined,
+  });
+  const fromHeaders = findUnpersistedAuditRow(response.headers, null);
+  if (fromHeaders) {
+    announceUnpersistedAuditRow(detailFor(fromHeaders.code));
+    return;
+  }
+  if (response.status === 204 || !(response.headers.get('Content-Type') || '').includes('application/json')) return;
+  let probe: Response;
+  try {
+    probe = response.clone();
+  } catch {
+    return; // body already used by a wrapper; nothing to read
+  }
+  probe
+    .json()
+    .then((body: unknown) => {
+      const found = findUnpersistedAuditRow(new Headers(), body);
+      if (found) announceUnpersistedAuditRow(detailFor(found.code));
+    })
+    .catch(() => {
+      /* Not JSON after all. The caller's own parse reports that, not this. */
+    });
+}
+
 export const apiRequest = async (
   method: ApiRequestMethod,
   url: string,
@@ -294,6 +409,7 @@ export const apiRequest = async (
     );
   }
 
+  probeAuditRowOutcome(method, url, response);
   return response;
 };
 
@@ -319,7 +435,7 @@ export const apiUpload = async (
   customHeaders?: Record<string, string>,
 ): Promise<Response> => {
   const authToken = getCachedAuthToken();
-  return fetch(url, {
+  const response = await fetch(url, {
     method,
     credentials: 'include',
     headers: {
@@ -329,6 +445,8 @@ export const apiUpload = async (
     },
     body: form,
   });
+  probeAuditRowOutcome(method, url, response);
+  return response;
 };
 
 /**

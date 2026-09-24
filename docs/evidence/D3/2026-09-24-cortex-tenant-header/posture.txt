@@ -1,0 +1,12 @@
+# Posture, read from the catalog on 2026-09-24 after every mutation was reverted
+# Database: PostgreSQL 16 provisioned from empty by scripts/db/provision-test-db.sh at 0521402e
+
+app_service                  superuser=false bypassrls=false
+lumen_data_atoms             rls=true force=true owner=postgres
+  policy                     tenant_isolation_policy USING ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (organization_id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::integer) OR (organization_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9]+$'::text))::integer) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))
+search_atoms_hybrid          security_definer=false owner=postgres
+search_atoms_hybrid declares  structured_data jsonb
+lumen_data_atoms has         structured_data json
+
+# /api/cortex is not in SYSTEM_SCOPE_PREFIXES (server/middleware/establishRequestTenantScope.ts),
+# so the request runs under the caller's own tenant scope.
