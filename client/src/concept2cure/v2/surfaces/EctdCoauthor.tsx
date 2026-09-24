@@ -59,7 +59,7 @@ import { AnaOutputCards } from '../AnaOutputs';
 import { useAgentActivity } from '../useAgentActivity';
 import { useProgressDock } from '../workDock';
 import { shellProgramName } from '../shellProject';
-import { useChatUpload, attachmentReadLabel } from '../../hooks/useChatUpload';
+import { useChatUpload, attachmentReadLabel, composeTurn } from '../../hooks/useChatUpload';
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import { AnswerLead } from '../AnswerLead';
@@ -629,13 +629,11 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
     // Answered HERE, in the pane it was typed into. The turn streams from
     // /api/ana-ri/stream with this document as module context; nothing is
     // manufactured locally and no completed tool chip is invented.
-    const names = ecReady.map((a) => a.name);
-    const line = names.length ? `Attached: ${names.join(', ')}` : '';
     const scoped = q ? q + (activeRef ? ' (eCTD §' + activeRef + ')' : '') : '';
-    const body = scoped && line ? `${scoped}\n\n${line}` : scoped || line;
+    const { body, files } = composeTurn(scoped, ecReady);
     setDraft('');
     ecClearAttachments();
-    void anaChat.send(body);
+    void anaChat.send(body, files);
   };
 
   /* Keep the newest turn in view as tokens arrive. */
@@ -759,6 +757,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
             streaming={anaChat.isStreaming}
             open={dock.open}
             onToggle={dock.toggle}
+            controls={dock.panelId}
           />
         </div>
         <div className="ec-intel-scroll" ref={scrollRef}>
@@ -767,6 +766,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
           {dock.open && (
             <div className="ana-work-host" style={{ padding: '0 0 14px' }}>
               <AnaWorkPanel
+                id={dock.panelId}
                 messages={anaChat.messages}
                 streaming={anaChat.isStreaming}
                 runStatus={anaChat.runStatus}
@@ -794,13 +794,13 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
               <div key={i} className="ec-msg-ai">
                 <span className="ec-avatar">AnA</span>
                 <div className="ec-body">
-                  {/* The answer through the one markdown path, and the shared
-                      record of her work beneath it — the same two every host
+                  {/* The shared record of her work, then the answer through the
+                      one markdown path, then her output — the order every host
                       renders. This pane showed plain text and, while she
                       worked, the single word "Thinking…". The waiting state is
                       the record's live phase now, never an invented sentence. */}
-                  {m.text && <AnaMarkdown text={m.text} className="ana-md" />}
                   <AnaActivity {...activityPropsFor(m)} />
+                  {m.text && <AnaMarkdown text={m.text} className="ana-md" />}
                   <AnaOutputCards message={m} />
                   {Array.isArray(m.executedActions) && m.executedActions.length > 0 && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>

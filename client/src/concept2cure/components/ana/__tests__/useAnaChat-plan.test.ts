@@ -121,6 +121,22 @@ describe('the declared plan over a real stream', () => {
   });
 });
 
+describe('a turn that never got going', () => {
+  it('is marked interrupted when the connection fails before any phase arrives', async () => {
+    fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+    const { result } = renderHook(() => useAnaChat({}));
+    await act(async () => {
+      await result.current.send('draft the synopsis');
+    });
+    const turn = lastAssistant(result);
+    // No phase arrived, so none can be marked stopped — the flag is the only
+    // record that this turn did not finish.
+    expect(turn.progress ?? []).toEqual([]);
+    expect(turn.interrupted).toBe(true);
+    expect(turn.stopped).toBeUndefined();
+  });
+});
+
 describe('a reopened thread', () => {
   it('restores her last plan from the persisted metadata, and invents no plan changes', async () => {
     fetchMock.mockResolvedValue({

@@ -54,6 +54,32 @@ export interface UseChatUpload {
   clear: () => void;
 }
 
+/** A file a turn carries to the server, by the id the upload returned. */
+export type SentAttachment = Pick<ChatAttachment, 'id' | 'name' | 'fileId' | 'extractionMethod' | 'extractionWords'>;
+
+/**
+ * What a composer sends: the text with the ready files named on a last line,
+ * and those same files by id. The line is what the thread shows; the ids are
+ * what lets the stream open the files (`file_ids`) and report them in
+ * `context_used`. Only files the server confirmed are either named or sent —
+ * a failed or unfinished upload keeps its chip and is never called attached.
+ */
+export function composeTurn(text: string, attachments: ChatAttachment[]): { body: string; files: SentAttachment[] } {
+  const ready = attachments.filter((a) => a.status === 'ready');
+  const line = ready.length ? `Attached: ${ready.map((a) => a.name).join(', ')}` : '';
+  const t = text.trim();
+  return {
+    body: t && line ? `${t}\n\n${line}` : t || line,
+    files: ready.map(({ id, name, fileId, extractionMethod, extractionWords }) => ({
+      id,
+      name,
+      fileId,
+      extractionMethod,
+      extractionWords,
+    })),
+  };
+}
+
 /** File types the chat upload accepts (matches server-side extraction support). */
 export const CHAT_UPLOAD_ACCEPT = '.pdf,.png,.jpg,.jpeg,.gif,.webp,.txt,.docx,.doc';
 

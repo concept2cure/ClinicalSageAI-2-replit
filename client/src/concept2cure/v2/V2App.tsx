@@ -47,6 +47,7 @@ import { LiveDriveControlsContext } from './LiveDriveSwitch';
 import { resolveSurfaceIdForTarget, stashNavParamsForTarget } from './navParams';
 import { createDriveQueue, type DriveMove } from './driveQueue';
 import { publishShellProject } from './shellProject';
+import type { SentAttachment } from '../hooks/useChatUpload';
 import { getAuthHeaders } from '@/utils/authToken';
 import { useActiveSurfaceContext, toModuleContext } from './surfaceContext';
 import { useAuth } from '@/services/portal/authService';
@@ -864,11 +865,14 @@ export function V2App() {
      React key, so the seed is always read by a mount that happens now. */
   const [convoEpoch, setConvoEpoch] = React.useState(0);
   const startShellConversation = React.useCallback(
-    (seed: string) => {
+    (seed: string, seedFiles?: SentAttachment[]) => {
       try {
-        (window as unknown as { C2C_CONVO?: { id: string; seed?: string | null } }).C2C_CONVO = {
+        (
+          window as unknown as { C2C_CONVO?: { id: string; seed?: string | null; seedFiles?: SentAttachment[] } }
+        ).C2C_CONVO = {
           id: 'new',
           seed,
+          seedFiles,
         };
       } catch {
         /* non-fatal: the thread opens empty rather than seeded */
@@ -893,15 +897,15 @@ export function V2App() {
      nothing visible here, and your question waiting for you, opened, on the
      next surface that does draw one. The question goes to the surface that
      shows it instead. */
-  const ask = (text: string) => {
+  const ask = (text: string, files?: SentAttachment[]) => {
     const clean = text.replace(/^\[Agent\]\s*/i, '').trim();
     if (!clean) return;
     if (ownsConversation) {
-      startShellConversation(clean);
+      startShellConversation(clean, files);
       return;
     }
     if (!prefs.anaOpen) set('anaOpen', true);
-    void anaChat.send(clean);
+    void anaChat.send(clean, files);
   };
 
   /* Governed + ungoverned actions both execute through ANA, the real agentic
