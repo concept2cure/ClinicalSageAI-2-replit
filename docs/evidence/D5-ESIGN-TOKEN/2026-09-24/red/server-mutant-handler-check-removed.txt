@@ -1,0 +1,13 @@
+# MUTANT — server/routes/esignature.ts with verify-password's own user check removed
+# (userId falls back to 0). Shows the server test discriminates: in warn mode the
+# handler's check is the ONLY thing refusing an unauthenticated request.
+
+ ✓ server/routes/__tests__/esignature-requires-bearer.test.ts > authBoundary mode=enforce > refuses verify-password without a bearer token, and never checks the password 25ms
+ ✓ server/routes/__tests__/esignature-requires-bearer.test.ts > authBoundary mode=enforce > refuses verify-mfa without a bearer token 5ms
+ ✓ server/routes/__tests__/esignature-requires-bearer.test.ts > authBoundary mode=enforce > reaches the signer check WITH the bearer token the fixed hook now sends 7ms
+ × server/routes/__tests__/esignature-requires-bearer.test.ts > authBoundary mode=warn > refuses verify-password without a bearer token, and never checks the password 7ms
+   → expected 200 to be 401 // Object.is equality
+ ✓ server/routes/__tests__/esignature-requires-bearer.test.ts > authBoundary mode=warn > refuses verify-mfa without a bearer token 5ms
+ ✓ server/routes/__tests__/esignature-requires-bearer.test.ts > authBoundary mode=warn > reaches the signer check WITH the bearer token the fixed hook now sends 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 5 passed (6)

@@ -241,6 +241,25 @@ if ! npm run --silent ci:undefined-css-classes 2>&1; then
 fi
 echo "   ✅ v2 class names passed."
 
+# `credentials: 'include'` is not authentication here: the /api gate reads the
+# Authorization header and nothing else. Seven client call sites shipped without
+# the bearer token, among them the shared e-signature modal (no signer could be
+# verified) and every vault upload. authBoundary is 'warn' outside production, so
+# a missing token can pass on a laptop and 401 for every user — and URLs passed
+# as parameters or `${BASE}${path}` templates hid three of them from a sweep.
+# This checks every raw fetch() whatever its URL, against the SERVER's own
+# public allowlist. Cheap: no database, no build.
+echo "   Validating every raw client fetch() sends the bearer token..."
+if ! npm run --silent ci:unauthenticated-fetch 2>&1; then
+  echo ""
+  echo "🚫 ERROR: unauthenticated fetch check FAILED."
+  echo "   Send headers: { ...getAuthHeaders() } (or buildAuthHeaders()), or use apiRequest."
+  echo "   A public endpoint belongs on PUBLIC_API_ALLOWLIST, not in the gate's baseline."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Client fetch() authentication passed."
+
 # Cheap, no database, and guards a privilege-escalation footgun: `SET
 # app.bypass_rls` is SESSION-scoped, so it survives client.release() and the
 # next checkout — a different tenant — inherits a full RLS bypass across 142

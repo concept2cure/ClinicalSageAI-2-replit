@@ -16,6 +16,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import { PURGE_PARENT_SCOPED, PURGE_CHILD_TABLES } from '../tenant-offboarding';
+import { exportTenantFull } from '../../tenant-export/tenant-full-export.service';
 
 const ORG = 11;
 const OTHER_ORG = 22;
@@ -38,6 +39,9 @@ beforeAll(async () => {
     CREATE TABLE vault.document_chunks (
       id UUID PRIMARY KEY, document_id UUID NOT NULL
     );
+    -- The export reads the organization row first, then every tenant-keyed table.
+    CREATE TABLE organizations (id INTEGER PRIMARY KEY, slug TEXT, name TEXT, status TEXT);
+    INSERT INTO organizations VALUES (${ORG}, 'o', 'Org', 'active'), (${OTHER_ORG}, 'x', 'Other', 'active');
   `);
 });
 
@@ -152,5 +156,49 @@ describe('vault purge scope', () => {
       // $1 is the only bind slot; anything else means a value was interpolated.
       expect(predicate).not.toMatch(/\$[2-9]/);
     }
+  });
+});
+
+/**
+ * The export that authorizes a purge must contain everything the purge
+ * destroys.
+ *
+ * The purge's vault predicate reaches documents through their programme,
+ * including a programme that has been soft-deleted (whose documents carry a NULL
+ * organization_id). The export read vault.documents by `organization_id` alone,
+ * so it never contained them — and an erasure could destroy documents the
+ * customer was never given back. Found by the 2026-09-24 re-verification; the
+ * purge predicate came from this file's own fix.
+ */
+describe('the export contains what the purge destroys', () => {
+  const exportedVaultIds = async (org: number): Promise<string[]> => {
+    const out = await exportTenantFull(pglite as never, org);
+    const t = out.tables.find((x) => x.table === 'vault.documents');
+    return (t?.rows ?? []).map((r) => String((r as { id: string }).id)).sort();
+  };
+  const purgedVaultIds = async (org: number): Promise<string[]> => {
+    const r = await pglite.query(
+      `SELECT id FROM vault.documents WHERE ${PURGE_PARENT_SCOPED['vault.documents']} ORDER BY id`,
+      [org],
+    );
+    return (r.rows as Array<{ id: string }>).map((x) => String(x.id)).sort();
+  };
+
+  it('exports the document on a soft-deleted programme that the purge will erase', async () => {
+    expect(await exportedVaultIds(ORG)).toContain(DOC_NULL_ORG_SOFT_DELETED_PROGRAM);
+  });
+
+  it('for every tenant: the purge set is a subset of the export set — exactly equal here', async () => {
+    for (const org of [ORG, OTHER_ORG]) {
+      const exported = await exportedVaultIds(org);
+      const purged = await purgedVaultIds(org);
+      for (const id of purged) expect(exported, `org ${org} purges ${id} it never exported`).toContain(id);
+      expect(exported).toEqual(purged);
+    }
+  });
+
+  it("never exports another tenant's document", async () => {
+    expect(await exportedVaultIds(ORG)).not.toContain(DOC_OTHER_TENANT);
+    expect(await exportedVaultIds(OTHER_ORG)).toEqual([DOC_OTHER_TENANT]);
   });
 });
