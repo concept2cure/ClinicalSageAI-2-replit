@@ -27,6 +27,20 @@ const log = createScopedLogger('governed-decision-repository');
 
 export const GOVERNED_DECISION_REPOSITORY_VERSION = '2.0.0';
 
+/**
+ * The discriminator that marks a decision_records row as a governed-fabric
+ * decision. It lives in decision_context (JSONB, unconstrained) rather than in
+ * domain_track or recommendation_type, both of which are CHECK-constrained to
+ * clinical vocabularies with no member for "governance".
+ *
+ * Defined in the shared vocabulary because three places must agree on it — this
+ * writer, getRecentGovernedDecisions(), and the boundary rule that must NOT
+ * count machine rows as human decisions. Re-exported here for callers already
+ * importing from this module.
+ */
+export { GOVERNED_FABRIC_DECISION_KIND as GOVERNED_FABRIC_KIND } from '../../shared/constants/operating-system-vocab';
+import { GOVERNED_FABRIC_DECISION_KIND as GOVERNED_FABRIC_KIND } from '../../shared/constants/operating-system-vocab';
+
 // ═══════════════════════════════════════════════════════════════════════
 // Types
 // ═══════════════════════════════════════════════════════════════════════
@@ -186,14 +200,49 @@ export async function recordGovernedDecision(
       projectId: Number(evaluation.context.projectId) || 0,
       decisionCode: `governed-fabric:${decisionId}`,
       title: `Governed ${evaluation.context.intendedAction}: ${evaluation.decision.outcome}`.slice(0, 200),
-      domainTrack: 'governance',
-      // Governed-fabric decisions are tagged with a repository-specific
-      // discriminator that is intentionally outside the base RecommendationType
-      // enum; the column is free text and create/search use the same literal.
-      recommendationType: 'governed_fabric_decision' as RecommendationType,
+      // BOTH of these columns are CHECK-constrained in the live DDL
+      // (db/migrations/20260323_assumption_decision_contradiction.sql), so the
+      // values written here have to come from those vocabularies. They did not:
+      // this wrote domain_track='governance' and
+      // recommendation_type='governed_fabric_decision', neither of which is a
+      // member, so EVERY governed-fabric insert violated
+      // decision_records_domain_track_check and was swallowed by the catch
+      // below — the fabric persisted nothing while still handing its caller a
+      // decision reference. A comment here previously asserted the column was
+      // "free text"; it never was.
+      //
+      // The discriminator therefore lives in decision_context->>'kind', which is
+      // JSONB and unconstrained, and getRecentGovernedDecisions() reads it back
+      // by that key. No data migration is implied: the CHECK meant no row with
+      // the old literals can exist in any database.
+      domainTrack: 'regulatory',
+      recommendationType: 'regulatory_strategy' as RecommendationType,
       recommendationSummary: evaluation.decision.rationale.slice(0, 500),
       recommendationRationale: evaluation.decision.rationale,
       confidenceLevel: evaluation.readiness.score >= 75 ? 'high' : evaluation.readiness.score >= 40 ? 'moderate' : 'low',
+      // A gate evaluation has ALREADY concluded by the time it is recorded, so
+      // it must not be filed at the 'proposed' column default. 'proposed' says
+      // "a recommendation awaiting a human's answer" — false for a machine's
+      // finished evaluation, and it is what getProjectReviewQueue() and any
+      // other reader of decision_records would then show a reviewer.
+      //
+      // The state records what the evaluation concluded; only the two outcomes
+      // that genuinely want a human stay open in the review queue:
+      //   allow    -> executed     the gate permitted it; the action proceeded
+      //   block    -> rejected     the gate refused it; concluded
+      //   review   -> under_review a human is genuinely required
+      //   degraded -> under_review the evaluation could not complete; fail closed
+      //
+      // Separately, the boundary rules' requiresAllDecisionsResolved does NOT
+      // count these rows at all (governance-boundary-service excludes
+      // GOVERNED_FABRIC_KIND): an open machine evaluation of one document is
+      // for the review queue, not a lock on the whole project.
+      actionState:
+        evaluation.decision.outcome === 'allow'
+          ? 'executed'
+          : evaluation.decision.outcome === 'block'
+            ? 'rejected'
+            : 'under_review',
       decidedBy: evaluation.context.actorId || 'system',
       notes: JSON.stringify({
         fabricVersion: GOVERNED_DECISION_REPOSITORY_VERSION,
@@ -215,7 +264,7 @@ export async function recordGovernedDecision(
       }),
       decisionContext: {
         governedDecisionId: decisionId,
-        kind: 'governed-fabric-decision',
+        kind: GOVERNED_FABRIC_KIND,
         intent: evaluation.context.intendedAction,
         outcome: evaluation.decision.outcome,
         readinessLevel: evaluation.readiness.level,
@@ -308,12 +357,18 @@ export async function getRecentGovernedDecisions(options: {
     const { decisionRecordService } = await import('./decision-record-service.js');
     const limit = Math.max(1, Math.min(options.limit ?? 50, 500));
     const records = await decisionRecordService.search({
-      // Repository supports org-less queries; search's column filter treats an
-      // absent organizationId as no filter. Pass the value through unchanged.
+      // An absent organizationId is NOT "no filter". search() always binds
+      // `organization_id = $1`, so undefined becomes `= NULL` and matches no
+      // row: an org-less call returns [] however many decisions exist. That is
+      // the fail-closed direction and must stay that way — dropping the clause
+      // would make this a cross-tenant read. Callers must pass the caller's
+      // org. (This comment used to claim the opposite.)
       organizationId: (options.organizationId ? Number(options.organizationId) : undefined) as number,
       projectId: options.projectId ? Number(options.projectId) : undefined,
-      // See note above: governed-fabric discriminator is outside the base enum.
-      recommendationType: 'governed_fabric_decision' as RecommendationType,
+      // Discriminate on the JSONB key the writer stamps, not on
+      // recommendation_type — that column is CHECK-constrained and cannot carry
+      // a fabric-specific literal. See the note at the write site.
+      decisionContextKind: GOVERNED_FABRIC_KIND,
       limit,
     });
     governanceMetrics.recordQueryExecuted();
@@ -358,11 +413,24 @@ export async function getGovernedDecisionSummary(options: {
   return summary;
 }
 
+/**
+ * The organization is REQUIRED. This used to take (projectId, artifactId) and
+ * query with no org, which search() turns into `organization_id = NULL` — so
+ * every trace came back empty however many decisions the artifact had, at all
+ * three callers, including the client-facing governance route (ledger L182).
+ * Making the org a parameter rather than optional is the point: an org-less
+ * call cannot be written, so it cannot silently answer "no decisions" again.
+ */
 export async function getArtifactDecisionTrace(
   projectId: string,
-  artifactId: string
+  artifactId: string,
+  organizationId: number
 ): Promise<GovernedDecisionRecord[]> {
-  const records = await getRecentGovernedDecisions({ projectId, limit: 200 });
+  const records = await getRecentGovernedDecisions({
+    organizationId: String(organizationId),
+    projectId,
+    limit: 200,
+  });
   return records.filter(d => d.artifactId === artifactId);
 }
 

@@ -1,0 +1,4 @@
+[ci:migration-drop-safety] OK — 307 migrations, 33 DROP(s), none re-created by the set, 2 reviewed exception(s); 17 dynamic DROP(s) in 17 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+[ci:migration-set-order] OK — 307 migrations, sweep last, uuid step in the final pair, all present, no duplicates.
+[ci:unkeyed-request-tables] 1065 tables created; 590 read by a per-request path; 110 of those carry NO tenant column; 110 baselined, 104 still unreviewed
+[ci:unkeyed-request-tables] ✅ no new tables read without a tenant key.
