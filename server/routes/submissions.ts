@@ -1585,8 +1585,9 @@ router.post('/sequences/:seqId/assemble', limiter, requireRole(AUTHOR), async (r
   if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
   const parsed = assembleSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  const assembly = await import('../services/ectd/assemble-from-core');
   try {
-    const { assembleSequence, assembledTransmitBlockers } = await import('../services/ectd/assemble-from-core');
+    const { assembleSequence, assembledTransmitBlockers } = assembly;
     const result = await assembleSequence({
       sequenceId: seqId,
       organizationId: ctx.organizationId,
@@ -1614,8 +1615,20 @@ router.post('/sequences/:seqId/assemble', limiter, requireRole(AUTHOR), async (r
       unfinalized: result.unfinalized,
       unfinalizedSections: result.unfinalizedSections,
       transmitBlockers: assembledTransmitBlockers(result),
+      // What happened to the ECTD_ASSEMBLE row (§11.10(e)): an assembly that
+      // went unrecorded says so here, not only in a server log.
+      auditTrail: result.auditTrail,
     });
   } catch (err) {
+    // A refused assembly is a refusal, not an outage. It carries no `code`, so
+    // fail() answered it 500 "Request failed." and dropped the ECTD_ASSEMBLE_BLOCKED
+    // row's outcome, which IS the record that the refusal happened.
+    if (err instanceof assembly.EctdAssemblyBlockedError) {
+      return res.status(422).json({
+        error: { code: 'ECTD_ASSEMBLE_BLOCKED', message: err.message },
+        auditTrail: err.auditTrail,
+      });
+    }
     fail(res, err);
   }
 });
