@@ -86,6 +86,7 @@ entries, 106 → 104 unreviewed.
 |---|---|
 | `green/vault-catalog-tenant-isolation.green.txt` | `tests/db/vault-catalog-tenant-isolation.dbtest.ts`, **8/8** — RLS on with all four policies; each tenant sees exactly its own catalog row and receipt and not the other's (both directions, positive half first); A's overwrite of B affects 0 rows; A's forged catalog row and planted receipt are refused by the policy; A's delete of B's receipt affects 0 rows; A still writes its own rows |
 | `green/lane-dbtests-regression.txt` | the lane's seven real-PostgreSQL suites — ingest, catalog, recall, toggles, passage search, chunking-off, placement — **56/56** |
+| `green/lane-dbtests-as-app_service.txt` | **the run that matters for the write paths.** The same seven suites plus the isolation suite, **64/64**, exactly as CI's `test:db` step runs them: a database provisioned from blank by `install-fresh` + `deploy-migrate` with `APP_SERVICE_DB_PASSWORD`, `RLS_ENFORCE=on`, and the server pool on `APP_DATABASE_URL` as `app_service`. A probe confirmed the pool's `current_user` was `app_service`, not a superuser, not the owner (`postgres`). So ingest writing the extraction tier, the read receipts, `completeCatalog`, the chunking ledger and placement all ran under the new policies as the production role — no repeat of F-14, where Vault refused every upload under that role |
 | `green/posture.txt` | `document_catalog|t|f|4`, `document_read_receipts|t|f|4` |
 | `green/gates.txt` | `ci:migration-drop-safety`, `ci:migration-set-order`, `ci:unkeyed-request-tables` all OK |
 
@@ -93,8 +94,10 @@ The suite applies the committed migration file itself in `beforeAll`, so it
 proves the file as committed, not a database that happens to be ahead of it.
 It connects through `tests/db/harness.ts`, whose runtime role is provisioned
 by the real `scripts/db/provision-app-role.mjs`. The lane's other db suites
-cannot see a policy: they reach the database through the application pool on
-an owner connection, which RLS does not apply to.
+see a policy only when the application pool runs as the runtime role — which
+is why the regression run is repeated CI-shaped above; on a developer default
+(no `APP_DATABASE_URL`) the pool falls back to the owner and RLS does not
+apply.
 
 To reproduce: `TEST_DATABASE_URL=<admin url> npx vitest run --config
 vitest.db.config.ts tests/db/vault-catalog-tenant-isolation.dbtest.ts`, then

@@ -1,0 +1,66 @@
+# GREEN — migration + fixed handler.
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T00:44:01.937Z","pid":7795,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T00:44:01.938Z","pid":7795,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T00:44:01.938Z","pid":7795,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/enterprise-onboarding-intake.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/enterprise-onboarding-intake.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-24T00:44:02.237Z', poolSize: 1 }
+
+stdout | tests/db/enterprise-onboarding-intake.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/enterprise-onboarding-intake.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/enterprise-onboarding-intake.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/enterprise-onboarding-intake.dbtest.ts > POST /api/auth/license-request — the enterprise onboarding intake
+{
+  "timestamp": "2026-09-24T00:44:02.881Z",
+  "level": "info",
+  "message": "[auth] License request received",
+  "context": {
+    "email": "dbtlr-ok-7795_muet6ycb@example.invalid",
+    "organization": "dbtlr Biologics 7795_muet6ycb"
+  }
+}
+
+stderr | tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could not be stored is never reported as recorded
+{
+  "timestamp": "2026-09-24T00:44:02.902Z",
+  "level": "error",
+  "message": "[auth] recording your enterprise onboarding request failed",
+  "context": {
+    "email": "dbtlr-fail-7795_muet6ycb@example.invalid",
+    "organization": "dbtlr Biologics 7795_muet6ycb",
+    "err": "dbtlr simulated store outage",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > posture — the connection is production's > server/db talks to Postgres as the non-superuser runtime role, RLS enforcing 4ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > posture — the connection is production's > the runtime role cannot CREATE in public — so no handler can provision a table at runtime 1ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > the schema — created by an applier, not by a request > license_requests exists on the provisioned database 1ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > the schema — created by an applier, not by a request > it is under RLS with exactly the intake and platform policies 2ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > POST /api/auth/license-request — the enterprise onboarding intake > answers 200 and says the request was submitted 1ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > POST /api/auth/license-request — the enterprise onboarding intake > records exactly one row carrying what the prospect typed 2ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > who can read a prospect's request > the pre-auth scope that wrote it cannot read it back 2ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > who can read a prospect's request > a signed-in tenant member cannot read it — another company's contact details 1ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > who can read a prospect's request > the platform scope can — that is who works the request 1ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could not be stored is never reported as recorded > answers 500, not success 0ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could not be stored is never reported as recorded > stores nothing 1ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could not be stored is never reported as recorded > does not put the database error text in the response 0ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could not be stored is never reported as recorded > logs the prospect's contact so the lead can be recovered, with the real cause 0ms
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  00:43:59
+   Duration  3.58s (transform 1.65s, setup 69ms, import 172ms, tests 3.07s, environment 0ms)
+
