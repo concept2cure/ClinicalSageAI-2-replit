@@ -76,6 +76,22 @@ export function validateEnvironment(): void {
       );
       process.exit(1);
     }
+
+    // The /api boundary is default-deny in production. `warn` mode (log the
+    // unauthenticated request and let it through) exists for the staging soak;
+    // an explicit AUTH_BOUNDARY_MODE=warn in a production deploy is a
+    // misconfiguration that would turn default-deny off with an info log, so it
+    // is refused at boot like the flags above (security audit 2026-09-24,
+    // IAM-16). resolveAuthBoundaryMode() also coerces it to enforce, for any
+    // entry point that mounts the boundary without passing through here.
+    const boundaryMode = (process.env.AUTH_BOUNDARY_MODE || '').trim().toLowerCase();
+    if (boundaryMode === 'warn') {
+      console.error(
+        '[FATAL] AUTH_BOUNDARY_MODE=warn is not permitted in production: the /api boundary is ' +
+          'default-deny there. Unset the variable or set AUTH_BOUNDARY_MODE=enforce.',
+      );
+      process.exit(1);
+    }
   }
 
   if (isProduction) {
