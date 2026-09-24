@@ -21,7 +21,7 @@ to one line; edit only your own row to limit merge conflicts.
 | WO-15 finding 5 — `c2c_template_specs.doc_types` | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed |
 | WO-15 finding 8 — the two blind gates | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed `b9152a016` |
 | WO-15 finding 4 — `/api/design-risk` | `…session_01J935DZwfFEardJCv85SJds` | **released** — done `153481465` |
-| WO-16C — fabrication sweep (`server/services/`, `server/routes/`) | `…session_01E8btkB8mcLirW4rNvsMNxK` (inferred from commits) | active |
+| WO-16C — discarded §11.10(e) audit-write outcomes: the `ci:discarded-audit-write` population (148 sites / 70 files on 2026-09-24), launch-path sites first. Files another lane touched in the last 24h are skipped, not raced | `…session_01E8btkB8mcLirW4rNvsMNxK` | **claimed** 2026-09-24 — measuring which of the 148 are on launch-catalog write paths (the 2026-09-22 review's open first item), then converting those |
 | WO-15 finding 2 — `project_charters` 27 vs 48 columns | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed |
 | `KNOWN_UNLISTED` triage — 10 entries, 16 tables | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed, all ten now on the applier |
 | Schema authority — live-schema baseline + the 61 tables behind it | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **active** — gate fixed, baseline 70→61→47; DEAD surfaces deleted (7 files, §7); triage corrected (§8); CMC playbook provisioned (§9), baseline 47→42; reg_* refused with evidence |
