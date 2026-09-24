@@ -342,7 +342,7 @@ jobs:
                      REFRESH_TOKEN_SECRET MFA_ENCRYPTION_KEY AUDIT_HMAC_KEY \
                      AUDIT_HMAC_SECRET CONNECTOR_ENCRYPTION_KEY \
                      AI_SENSITIVE_DATA_POLICY_MODE AI_PROVIDER_PLACEMENT_APPROVALS \
-                     CONCEPT2CURE_SIGNER_MODE; do
+                     CONCEPT2CURE_SIGNER_MODE STORAGE_PROVIDER AWS_S3_BUCKET; do
             if ! grep -qx "$VAR" <<< "$PRESENT"; then MISSING="$MISSING $VAR"; fi
           done
 
@@ -379,6 +379,19 @@ jobs:
           ' /tmp/api-td-preflight.json)
           if [[ -n "$POLICY_MODE_VALUE" && "$POLICY_MODE_VALUE" != "enforce" ]]; then
             echo "::error::AI_SENSITIVE_DATA_POLICY_MODE must be exactly 'enforce' in production; got '$POLICY_MODE_VALUE'."
+            FAIL=1
+          fi
+          # Vault documents live where STORAGE_PROVIDER says. The server refuses
+          # to boot in production without one (storage-posture.ts), and accepts
+          # local disk when the operator states it is a durable volume. A Fargate
+          # task has no such volume: its disk is deleted with the task. So this
+          # deployment's value must be exactly `s3` (terraform/stack/vault_storage.tf).
+          STORAGE_PROVIDER_VALUE=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+            .containerDefinitions[] | select(.name == $c)
+            | (.environment // []) | map(select(.name == "STORAGE_PROVIDER")) | .[0].value // ""
+          ' /tmp/api-td-preflight.json)
+          if [[ -n "$STORAGE_PROVIDER_VALUE" && "$STORAGE_PROVIDER_VALUE" != "s3" ]]; then
+            echo "::error::STORAGE_PROVIDER must be exactly 's3' on ECS Fargate; got '$STORAGE_PROVIDER_VALUE'. A task's local disk is deleted with the task, and the vault's documents with it."
             FAIL=1
           fi
           # APP_URL is the only origin emailed reset and invitation links are
