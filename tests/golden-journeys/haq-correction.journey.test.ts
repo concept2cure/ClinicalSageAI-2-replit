@@ -562,6 +562,67 @@ describe('Journey C — HAQ correction loop (service level, canonical DDL)', () 
       };
     });
 
+    // ── 11d. The governed-decision reads return the caller's decisions ──────
+    // GET /governed/decisions, /governed/decisions/summary and
+    // /governed/trace/:projectId/:artifactId passed no organizationId, and
+    // search() binds `organization_id = $1` unconditionally — so they queried
+    // `= NULL` and answered "0 decisions" however many existed (ledger L182).
+    // Now each resolves the caller's org from the authenticated request, never
+    // from the query, body or path. Proven in both directions: the owner sees
+    // the two decisions 11b persisted; another tenant, asking for the same
+    // project by id, sees none; no org at all is refused, not answered empty.
+    await R.step('governed-decision-reads-are-tenant-scoped', async () => {
+      const { default: controlPlaneRouter } = await import(
+        '../../server/src/routes/control-plane.router'
+      );
+      const appAs = (orgId: number | null) => {
+        const app = express();
+        app.use(express.json());
+        app.use((req, _res, next) => {
+          (req as unknown as { user: unknown }).user =
+            orgId == null ? { id: AUTHOR, role: 'admin' } : { id: AUTHOR, role: 'admin', organizationId: orgId };
+          next();
+        });
+        app.use('/api/control-plane', controlPlaneRouter);
+        return app;
+      };
+
+      const own = await request(appAs(ORG)).get(`/api/control-plane/governed/decisions?projectId=${PROJECT}`);
+      expect(own.status).toBe(200);
+      expect(own.body.count, 'the owning tenant must see the decisions 11b persisted').toBe(2);
+
+      const ownSummary = await request(appAs(ORG)).get(
+        `/api/control-plane/governed/decisions/summary?projectId=${PROJECT}`,
+      );
+      expect(ownSummary.body.summary.total).toBe(2);
+
+      const ownTrace = await request(appAs(ORG)).get(
+        `/api/control-plane/governed/trace/${PROJECT}/journey-ready-doc`,
+      );
+      expect(ownTrace.body.count, 'the trace for one artifact must find its decision').toBe(1);
+
+      const foreign = await request(appAs(OTHER_ORG)).get(`/api/control-plane/governed/decisions?projectId=${PROJECT}`);
+      expect(foreign.status).toBe(200);
+      expect(foreign.body.count, 'another tenant must not see this project\'s decisions').toBe(0);
+
+      const foreignTrace = await request(appAs(OTHER_ORG)).get(
+        `/api/control-plane/governed/trace/${PROJECT}/journey-ready-doc`,
+      );
+      expect(foreignTrace.body.count).toBe(0);
+
+      const noOrg = await request(appAs(null)).get(`/api/control-plane/governed/decisions?projectId=${PROJECT}`);
+      expect(noOrg.status, 'no org context must be refused, not answered with an empty list').toBe(403);
+
+      return {
+        ownCount: own.body.count,
+        ownSummaryTotal: ownSummary.body.summary.total,
+        ownTraceCount: ownTrace.body.count,
+        foreignCount: foreign.body.count,
+        foreignTraceCount: foreignTrace.body.count,
+        noOrgStatus: noOrg.status,
+      };
+    });
+
     // ── 12. KNOWN-BAD: tenant isolation ─────────────────────────────────────
     await R.expectBlocked('cross-tenant-receipt-access', async () => {
       const v = await verifyBundleExecutionReceipt(receiptId, OTHER_ORG);
