@@ -64,7 +64,7 @@ import {
 import { listClientDocuments } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
 import { writeChainedAuditRow } from '../../services/auditService.js';
 import { requireEditorAccess } from '../../middleware/orgMembership.js';
-import { getStorageProvider } from '../../services/storage/index.js';
+import { getStorageProvider, getStorageProviderFor } from '../../services/storage/index.js';
 /* The one translation from a CMC TEXT project id to the integer the
    governed artifact registry FKs to. Its contract requires every caller to
    branch on the resolution and keep an honest degraded path. */
@@ -151,7 +151,22 @@ interface VaultDisplayShape {
   program: string;
   spine: string;
   standard: string;
+  /** Documents, not tree leaves: the sum of `documentCounts` over the branches
+   *  that could be read. */
   documentCount: number;
+  /**
+   * What `documentCount` is made of. A branch that could not be read is null —
+   * unknown, not zero (`unavailable` says why). Absent on the pending-store
+   * answer, which has no branches at all.
+   */
+  documentCounts?: {
+    /** Authored documents — one each, however many rule-pack sections. */
+    authored: number;
+    /** Governed Module 3 (CMC) artifacts filed for the programme. */
+    cmcArtifacts: number | null;
+    /** Uploads in the whole programme, not the page the tree carries. */
+    uploads: number | null;
+  };
   tree: VaultFolder[];
   /** Honest signal: the c2c document store is not provisioned in this env. */
   pendingStore?: boolean;
@@ -613,16 +628,6 @@ function documentFolder(doc: DocRow, live: Map<string, LiveSection>): VaultFolde
   };
 }
 
-/** Count leaf VaultDocs in a tree. */
-function countDocs(nodes: Array<VaultFolder | VaultDoc>): number {
-  let n = 0;
-  for (const node of nodes) {
-    if ('children' in node) n += countDocs(node.children);
-    else n += 1;
-  }
-  return n;
-}
-
 /** Missing table (42P01) / missing column (42703) — a store this environment
  *  has not provisioned. The branch degrades honestly instead of 500ing. */
 function isMissingStore(err: unknown): boolean {
@@ -681,6 +686,9 @@ export interface VaultByteSource {
   /** The caller's organization. Required: object storage sits outside Postgres
    *  RLS, so for provider-backed bytes this argument IS the tenant boundary. */
   organizationId: number;
+  /** `vault.documents.storage_provider`: the store the bytes were written to,
+   *  which is where they are read from (NULL on rows predating the column). */
+  storageProvider: string | null;
 }
 
 export async function readVerifiedVaultBytes(
@@ -695,9 +703,29 @@ export async function readVerifiedVaultBytes(
     // "belongs to another organization" — the interface refuses to distinguish
     // them, because a 403 on a foreign id confirms the id exists. Either way
     // there are no bytes to serve, and that is what we report.
+    let store: ReturnType<typeof getStorageProvider>;
+    try {
+      store = getStorageProviderFor(source.storageProvider);
+    } catch (err) {
+      // The recorded store cannot be opened here. Not "missing": the bytes may
+      // exist, and asking the configured store instead would answer for a
+      // different one. The provider is named in the log, not to the user.
+      logger.error('vault download: the store this document was saved in cannot be opened', {
+        documentId,
+        recorded: source.storageProvider,
+        reason: err instanceof Error ? err.message : 'unknown',
+      });
+      return {
+        ok: false,
+        status: 409,
+        error: 'STORED_FILE_UNREADABLE',
+        message:
+          'The vault record exists, but this server cannot open the store its file was saved in. Nothing was downloaded.',
+      };
+    }
     let got: Awaited<ReturnType<ReturnType<typeof getStorageProvider>['get']>>;
     try {
-      got = await getStorageProvider().get(source.storageVersionId, source.organizationId);
+      got = await store.get(source.storageVersionId, source.organizationId);
     } catch (err) {
       logger.error('vault download: storage provider read failed', {
         documentId,
@@ -958,10 +986,14 @@ export default function createProjectVaultRoutes(): Router {
       //    empty branch (which would read as "no documents"); any other
       //    failure is a real error and 500s.
       const unavailable: Array<{ branch: string; reason: string }> = [];
+      let cmcArtifacts: number | null = null;
       try {
         const m3 = await module3Branch(id, orgId);
         if (m3.kind === 'branch') {
           tree.push(m3.folder);
+          cmcArtifacts = m3.folder.children.length;
+        } else if (m3.kind === 'empty') {
+          cmcArtifacts = 0;
         } else if (m3.kind === 'unaddressable') {
           // Not an empty branch: the registry cannot be asked about this
           // program at all, and the resolver's own sentence says why and what
@@ -1152,11 +1184,22 @@ export default function createProjectVaultRoutes(): Router {
         }
       }
 
+      /* Documents, not leaves. `countDocs(tree)` counted every leaf: each
+         rule-pack section of an authored document (one IND with a 40-section
+         pack read "40 documents") and the capped uploads page rather than the
+         programme's uploads — beside a note saying the page was partial. */
+      const documentCounts = {
+        authored: docsRes.rows.length,
+        cmcArtifacts,
+        uploads: uploadsWindow ? uploadsWindow.total : null,
+      };
       const data: VaultDisplayShape = {
         program: project.name || 'Vault',
         spine: vaultViewLabel(view),
         standard: view,
-        documentCount: countDocs(tree),
+        documentCount:
+          documentCounts.authored + (documentCounts.cmcArtifacts ?? 0) + (documentCounts.uploads ?? 0),
+        documentCounts,
         tree,
         unfiledCount,
         ...(uploadsWindow ? { uploadsWindow } : {}),
@@ -1384,7 +1427,7 @@ export default function createProjectVaultRoutes(): Router {
 
       const docRes = await pool.query(
         `SELECT id, file_name, document_title, mime_type, file_size, s3_key,
-                storage_version_id, content_hash
+                storage_version_id, storage_provider, content_hash
            FROM vault.documents
           WHERE id = $1 AND program_id = $2 AND deleted_at IS NULL
             AND EXISTS (
@@ -1400,7 +1443,7 @@ export default function createProjectVaultRoutes(): Router {
       const doc = docRes.rows[0] as {
         id: string; file_name: string | null; document_title: string | null;
         mime_type: string | null; file_size: string | number | null;
-        s3_key: string | null; storage_version_id: string | null; content_hash: string | null;
+        s3_key: string | null; storage_version_id: string | null; storage_provider: string | null; content_hash: string | null;
       };
 
       if (!doc.storage_version_id && !doc.s3_key) {
@@ -1422,6 +1465,7 @@ export default function createProjectVaultRoutes(): Router {
           storageVersionId: doc.storage_version_id,
           storageKey: doc.s3_key,
           organizationId: orgId,
+          storageProvider: doc.storage_provider,
         },
         doc.content_hash,
         documentId,

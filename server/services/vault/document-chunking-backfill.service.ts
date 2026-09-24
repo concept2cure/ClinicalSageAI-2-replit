@@ -169,3 +169,43 @@ export async function backfillVaultChunks(
   });
   return report;
 }
+
+/**
+ * The sweep, run in the tenant it indexes — the entry point for
+ * scripts/backfill-vault-chunks.mjs.
+ *
+ * The script called backfillVaultChunks with no tenant scope, and under
+ * RLS_ENFORCE=on (the only posture production accepts) the pool refuses every
+ * query issued outside one. A scope carrying the integer id alone is not enough
+ * either: the vault's policies resolve the tenant from its UUID
+ * (identity.current_org_id() reads only that), so such a scope sees no
+ * documents and the sweep reports "examined 0" — a backlog presented as done.
+ * So the UUID is looked up first, under the audited system scope and for this
+ * one row, and the sweep then runs in the tenant's own scope, where RLS confines
+ * it to this organization. An organization that does not exist is refused, not
+ * swept as empty. Proof: tests/db/vault-chunk-backfill.dbtest.ts.
+ */
+export async function backfillVaultChunksForTenant(
+  organizationId: number,
+  opts: Omit<ChunkBackfillOptions, 'exec'> = {},
+): Promise<ChunkBackfillReport> {
+  const { runWithSystemTenantScope, runWithTenantScope } = await import('../../db/tenantStore.js');
+  const found = await runWithSystemTenantScope('scripts/backfill-vault-chunks.mjs:org-uuid', () =>
+    pool.query<{ uuid: string | null }>(`SELECT uuid FROM organizations WHERE id = $1`, [organizationId]),
+  );
+  const orgUuid = found.rows[0]?.uuid;
+  if (!orgUuid) {
+    throw new Error(`No organization ${organizationId} with a UUID; nothing was swept.`);
+  }
+  return runWithTenantScope(
+    {
+      tenantId: String(organizationId),
+      orgUuid: String(orgUuid),
+      role: null,
+      source: 'job',
+      caller: 'scripts/backfill-vault-chunks.mjs',
+    },
+    () => backfillVaultChunks(organizationId, opts),
+  );
+}
+

@@ -1,0 +1,12 @@
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > leaves the tenant exactly as it was when a table fails part-way 48ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > removes every listed table’s rows and marks the tenant purged when nothing fails 44ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > still skips a table this deployment’s schema does not have 18ms
+ ✓ tests/db/tenant-purge.dbtest.ts > a legal hold stops the purge > refuses while any hold on the tenant is active, and destroys nothing 15ms
+ ✓ tests/db/tenant-purge.dbtest.ts > a legal hold stops the purge > proceeds once the hold is lifted, by someone, for a reason 15ms
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records no receipt for a truncated export, so its digest opens nothing 12ms
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records no receipt for an export in which a table failed to read 13ms
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records one for a complete export 15ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > deletes each object from the store it was saved in, after the purge commits 35ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > keeps the bytes, and their record, when the purge fails part-way 35ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > leaves the bytes of records a purge does not remove 17ms
+      Tests  11 passed (11)

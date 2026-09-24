@@ -33,7 +33,7 @@ const THREADS = [
 
 function route(threads: 'ok' | 'empty' | 'error') {
   apiRequest.mockImplementation(async (_m: string, url: string) => {
-    if (url === `/api/c2c/projects/${PID}`) return ok({ title: 'BX-301', progress_percent: 42 });
+    if (url === `/api/c2c/projects/${PID}`) return ok({ title: 'BX-301', readiness: 42 });
     if (url.startsWith('/api/chat/threads?program_id=')) {
       if (threads === 'error') return fail(503);
       return ok({ threads: threads === 'ok' ? THREADS : [] });

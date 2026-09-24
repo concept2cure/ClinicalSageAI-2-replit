@@ -49,6 +49,10 @@ const SIGNING_TOOLS: Array<[string, Record<string, unknown>]> = [
   ['finalize_grant_closeout', { award_id: 3, reason: 'Closeout complete' }],
   ['execute_subaward', { subaward_id: 3, reason: 'Subaward executed' }],
   ['approve_no_cost_extension', { nce_id: 3, authority: 'sponsor', reason: 'Sponsor approved' }],
+  // A QMS controlled document made effective from chat: no password, no
+  // signing-authority check, no author ≠ approver check, no signature row
+  // (new-code audit 2026-09-24, finding 1; the signed route is VSR-001 F-3).
+  ['approve_qms_document', { document_id: 3, reason: 'Ready for release' }],
 ];
 
 beforeEach(() => {

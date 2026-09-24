@@ -1484,7 +1484,7 @@ registerToolHandler('remember_document_in_project', async (input, ctx) => {
       '../client-intelligence-memory.js'
     );
 
-    const profile = await getProjectIntelligence(ctx.projectId);
+    const profile = await getProjectIntelligence(ctx.projectId, ctx.organizationId);
     if (!profile?.id) {
       return JSON.stringify({
         ok: false,
@@ -13575,56 +13575,22 @@ registerToolHandler('create_qms_document', async (input, ctx) => {
   }
 });
 
-registerToolHandler('approve_qms_document', async (input, ctx) => {
-  if (!ctx?.organizationId) return JSON.stringify({ error: 'approve_qms_document requires tenant context.' });
-  if (!ctx.userId) return JSON.stringify({ error: 'approve_qms_document requires user context — an approval cannot be recorded without an identified approver (21 CFR Part 11).' });
-  const id = typeof input.document_id === 'number' ? input.document_id : NaN;
-  if (!Number.isFinite(id)) return JSON.stringify({ error: 'document_id (number) is required.' });
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const client = await getPool().connect();
-  try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    const { rows } = await client.query(
-      `UPDATE qms_documents
-          SET status = 'effective',
-              approver_id = $3,
-              approved_at = NOW(),
-              effective_date = COALESCE($4::date, effective_date, NOW()::date),
-              updated_at = NOW()
-        WHERE id = $1 AND organization_id = $2
-          AND status IN ('draft','in_review')
-          AND deleted_at IS NULL
-        RETURNING id, status, effective_date`,
-      [id, ctx.organizationId, ctx.userId,
-       typeof input.effective_date === 'string' ? input.effective_date : null],
-    );
-    if (rows.length === 0) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      return JSON.stringify({ error: 'Document not found, or not in draft/in_review state.' });
-    }
-    await recordGovernedAction(client, {
-      orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
-      target: `qms-document:${id}`,
-      reason: qmsReason(input, `Controlled document approved to effective via AnA`),
-      payload: { kind: 'approve', to: 'effective', effectiveDate: rows[0].effective_date ?? null },
-      domain: 'mdx', surface: 'ana',
-    });
-    await client.query('COMMIT');
-    return JSON.stringify({
-      ok: true, ...rows[0],
-      message: `Approved document ${id} — effective ${rows[0].effective_date}.`,
-    });
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    return JSON.stringify({
-      error: `approve_qms_document failed: ${err instanceof Error ? err.message : String(err)}`,
-    });
-  } finally {
-    client.release();
-  }
-});
+/* Making a controlled document effective is an electronic signature (21 CFR
+   11.50): the signed route, POST /api/mdx/qms/documents/:id/approve (VSR-001
+   F-3), checks signing authority, re-verifies the password and second factor,
+   refuses the author, and writes one electronic_signatures row bound to the
+   version's content digest. This tool did none of that. It set the document
+   effective, stamped the chat user as approver, and recorded a stock reason
+   when none was given. Because it wrote command 'transition' rather than
+   'sign', the sweep that took signing away from AnA (35794a160) and the
+   ci:sign-ceremony gate both missed it. New-code audit 2026-09-24, finding 1. */
+registerToolHandler('approve_qms_document', async () =>
+  refuseSignatureInChat(
+    'approve_qms_document',
+    'Approving a controlled document',
+    "the Quality register: the document's Approve button asks for your password and second factor",
+  ),
+);
 
 registerToolHandler('revise_qms_document', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'revise_qms_document requires tenant context.' });

@@ -38,7 +38,11 @@ import {
   type IncompleteLeaf,
 } from './completeness';
 import { submissionBundleRoot } from '../submission-gateways/bundle-namespace';
-import auditService from '../auditService';
+import {
+  combineAuditRowOutcomes,
+  recordAuditRow,
+  type AuditRowOutcome,
+} from '../audit/audit-write-outcome';
 import { createScopedLogger } from '../../utils/logger';
 
 const logger = createScopedLogger('assemble-from-core');
@@ -172,6 +176,22 @@ async function readSequenceLeaves(sequenceId: number, organizationId: number) {
  * it under the max-lines-per-function ceiling; the check, the audit row and the
  * thrown message are unchanged.
  */
+/**
+ * A refused assembly. The refusal is audited as ECTD_ASSEMBLE_BLOCKED, and that
+ * row IS the record that the assembly was refused, so the error carries what
+ * happened to it: a caller that reports the refusal can also report that it
+ * went unrecorded. The message is the same sentence the plain Error carried.
+ */
+export class EctdAssemblyBlockedError extends Error {
+  constructor(
+    message: string,
+    public readonly auditTrail: AuditRowOutcome,
+  ) {
+    super(message);
+    this.name = 'EctdAssemblyBlockedError';
+  }
+}
+
 async function assertLeafPathsSafe(
   files: Array<{ fileName: string; sourcePath: string }>,
   allowedRoot: string,
@@ -179,7 +199,8 @@ async function assertLeafPathsSafe(
 ): Promise<void> {
   const pathSafety = await validateLeafPaths(files, { allowedRoot });
   if (pathSafety.ok) return;
-  await auditService.logAction({
+  // WO-16C: was `await auditService.logAction(…)` with its outcome discarded.
+  const auditTrail = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
     action: 'ECTD_ASSEMBLE_BLOCKED',
@@ -187,9 +208,10 @@ async function assertLeafPathsSafe(
     resourceId: ctx.sequenceId,
     details: { reason: 'leaf_path_safety', violations: pathSafety.violations },
   });
-  throw new Error(
+  throw new EctdAssemblyBlockedError(
     `eCTD assembly blocked: ${pathSafety.violations.length} leaf path-safety violation(s): ` +
       pathSafety.violations.map((v) => `${v.fileName}:${v.code}`).join(', '),
+    auditTrail,
   );
 }
 
@@ -336,7 +358,11 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
     ),
   );
 
-  await auditService.logAction({
+  /* WO-16C: was `await auditService.logAction(…)` with its outcome discarded.
+     The result's `auditTrail` is persisted only when this row AND the
+     packager's ECTD_PACKAGED_FROM_CORE row were: a lost row anywhere in the
+     assembly is reported. */
+  const assembledAudit = await recordAuditRow({
     organizationId,
     userId,
     action: 'ECTD_ASSEMBLED',
@@ -366,7 +392,16 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
   };
 
   assembleReturned = true;
-  return { ...result, cleanup, materialized, unresolvedLeaves, unfinalized, unfinalizedSections, governanceManifestPath };
+  return {
+    ...result,
+    auditTrail: combineAuditRowOutcomes(result.auditTrail, assembledAudit),
+    cleanup,
+    materialized,
+    unresolvedLeaves,
+    unfinalized,
+    unfinalizedSections,
+    governanceManifestPath,
+  };
   } finally {
     if (!assembleReturned) {
       await fs.rm(outputDir, { recursive: true, force: true }).catch(() => {});

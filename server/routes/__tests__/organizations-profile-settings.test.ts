@@ -256,3 +256,79 @@ describe('PATCH /api/organizations/:id/settings', () => {
     expect(res.status).toBe(400);
   });
 });
+
+/**
+ * WO-16C — the §11.10(e) outcome reaches the caller.
+ *
+ * Both handlers awaited `auditService.logAction` at statement position and threw
+ * its outcome away, so a profile or settings change whose audit row was lost
+ * answered exactly like one whose row was written. The change stands either way
+ * (an audit outage must not undo an org admin's edit), and the response now says
+ * which happened: `auditTrail` is `{ persisted: true, chained }` or
+ * `{ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message }` — the shape
+ * the client's `findUnpersistedAuditRow` turns into the "The request completed, but the audit trail did not record it" notice.
+ */
+describe('organization writes carry the audit-row outcome', () => {
+  const LOST = { persisted: false, chained: false, tamperProof: false, error: 'relation "audit_logs" does not exist' };
+
+  it('profile: a lost row still answers 200 with the change, and says the row is missing', async () => {
+    nextSelectRows = [{ name: 'Old', clientType: null, industryMode: null }];
+    nextUpdateRows = [{ id: 7, name: 'Bright Bio', clientType: 'biotech', industryMode: null, updatedAt: new Date() }];
+    logActionMock.mockResolvedValueOnce(LOST as any);
+
+    const res = await request(makeApp())
+      .patch('/api/organizations/7/profile')
+      .set('x-test-user', ORG7_ADMIN)
+      .send({ name: 'Bright Bio', reason: 'Onboarding setup' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.organization.name).toBe('Bright Bio');
+    expect(res.body.auditTrail).toEqual({
+      persisted: false,
+      code: 'AUDIT_ROW_NOT_PERSISTED',
+      message: expect.any(String),
+    });
+    // The store's own text is logged, never forwarded to the tenant.
+    expect(JSON.stringify(res.body)).not.toContain('audit_logs');
+  });
+
+  it('profile: a written row says so', async () => {
+    nextSelectRows = [{ name: 'Old', clientType: null, industryMode: null }];
+    nextUpdateRows = [{ id: 7, name: 'Bright Bio', clientType: null, industryMode: null, updatedAt: new Date() }];
+    logActionMock.mockResolvedValueOnce({ persisted: true, chained: true, tamperProof: true });
+
+    const res = await request(makeApp())
+      .patch('/api/organizations/7/profile')
+      .set('x-test-user', ORG7_ADMIN)
+      .send({ name: 'Bright Bio', reason: 'Onboarding setup' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.auditTrail).toEqual({ persisted: true, chained: true });
+  });
+
+  it('settings: a lost row still answers 200, and says the row is missing', async () => {
+    nextSelectRows = [{ id: 7, settings: {} }];
+    logActionMock.mockResolvedValueOnce(LOST as any);
+
+    const res = await request(makeApp())
+      .patch('/api/organizations/7/settings')
+      .set('x-test-user', ORG7_ADMIN)
+      .send({ settings: { translation: { enabled: true } }, reason: 'Enable translation' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.auditTrail).toMatchObject({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' });
+  });
+
+  it('settings: a written row says so', async () => {
+    nextSelectRows = [{ id: 7, settings: {} }];
+    logActionMock.mockResolvedValueOnce({ persisted: true, chained: false, tamperProof: true });
+
+    const res = await request(makeApp())
+      .patch('/api/organizations/7/settings')
+      .set('x-test-user', ORG7_ADMIN)
+      .send({ settings: { translation: { enabled: true } }, reason: 'Enable translation' });
+
+    expect(res.body.auditTrail).toEqual({ persisted: true, chained: false });
+  });
+});

@@ -180,7 +180,9 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          # The BUILD role: this job runs outside the production environment, and
+          # the deploy role trusts only jobs inside it (terraform/modules/github-deploy-roles).
+          role-to-assume: ${{ secrets.AWS_BUILD_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
@@ -340,7 +342,8 @@ jobs:
                      REFRESH_TOKEN_SECRET MFA_ENCRYPTION_KEY AUDIT_HMAC_KEY \
                      AUDIT_HMAC_SECRET CONNECTOR_ENCRYPTION_KEY \
                      AI_SENSITIVE_DATA_POLICY_MODE AI_PROVIDER_PLACEMENT_APPROVALS \
-                     CONCEPT2CURE_SIGNER_MODE; do
+                     CONCEPT2CURE_SIGNER_MODE STORAGE_PROVIDER AWS_S3_BUCKET \
+                     SMTP_HOST SMTP_USER SMTP_PASS; do
             if ! grep -qx "$VAR" <<< "$PRESENT"; then MISSING="$MISSING $VAR"; fi
           done
 
@@ -358,7 +361,7 @@ jobs:
           FAIL=0
           if [[ -n "$MISSING" ]]; then
             echo "::error::Task definition $ECS_API_TASK_FAMILY (container $ECS_API_CONTAINER_NAME) is missing required production env:$MISSING"
-            echo "::error::The app refuses to boot without each of these. Add them to the task definition (terraform/environments/production) before deploying."
+            echo "::error::The app refuses to boot without each of these, except SMTP_*: without those it boots and no one can sign in (login OTP is the mandatory second factor). Add them to the task definition (terraform/stack) before deploying."
             FAIL=1
           fi
           if [[ "$NODE_ENV_VALUE" != "production" ]]; then
@@ -377,6 +380,19 @@ jobs:
           ' /tmp/api-td-preflight.json)
           if [[ -n "$POLICY_MODE_VALUE" && "$POLICY_MODE_VALUE" != "enforce" ]]; then
             echo "::error::AI_SENSITIVE_DATA_POLICY_MODE must be exactly 'enforce' in production; got '$POLICY_MODE_VALUE'."
+            FAIL=1
+          fi
+          # Vault documents live where STORAGE_PROVIDER says. The server refuses
+          # to boot in production without one (storage-posture.ts), and accepts
+          # local disk when the operator states it is a durable volume. A Fargate
+          # task has no such volume: its disk is deleted with the task. So this
+          # deployment's value must be exactly `s3` (terraform/stack/vault_storage.tf).
+          STORAGE_PROVIDER_VALUE=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+            .containerDefinitions[] | select(.name == $c)
+            | (.environment // []) | map(select(.name == "STORAGE_PROVIDER")) | .[0].value // ""
+          ' /tmp/api-td-preflight.json)
+          if [[ -n "$STORAGE_PROVIDER_VALUE" && "$STORAGE_PROVIDER_VALUE" != "s3" ]]; then
+            echo "::error::STORAGE_PROVIDER must be exactly 's3' on ECS Fargate; got '$STORAGE_PROVIDER_VALUE'. A task's local disk is deleted with the task, and the vault's documents with it."
             FAIL=1
           fi
           # APP_URL is the only origin emailed reset and invitation links are
@@ -672,7 +688,9 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          # The BUILD role: this job runs outside the production environment, and
+          # the deploy role trusts only jobs inside it (terraform/modules/github-deploy-roles).
+          role-to-assume: ${{ secrets.AWS_BUILD_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       # Readiness the way users reach the product: through CloudFront, on the

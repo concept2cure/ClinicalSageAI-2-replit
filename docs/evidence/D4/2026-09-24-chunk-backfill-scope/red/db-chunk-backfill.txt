@@ -1,0 +1,66 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T18:26:28.092Z","pid":7168,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T18:26:28.093Z","pid":7168,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T18:26:28.093Z","pid":7168,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-chunk-backfill.dbtest.ts > the chunk backfill runs in the tenant it indexes > the call the script made — no tenant scope — is refused under RLS enforcement
+[database] Database connection successful { timestamp: '2026-09-24T18:26:28.156Z', poolSize: 1 }
+
+stdout | tests/db/vault-chunk-backfill.dbtest.ts > the chunk backfill runs in the tenant it indexes > the call the script made — no tenant scope — is refused under RLS enforcement
+[database] Database connection successful
+
+{"level":40,"time":"2026-09-24T18:26:28.187Z","pid":7168,"hostname":"vm","context":{"op":"pool.query","caller":"server/services/vault/document-chunking-backfill.service.ts:100:43","queryPreview":"SELECT d.id, d.file_name, d.extracted_text, c.catalog_status, c.chunk_status FROM vault.documents d JOIN regulatory_programs p ON p.id = d.program_id LEFT JO...","enforcement":"on"},"msg":"[tenant-rls-observability] Database operation blocked because tenant scope is missing"}
+ ✓ tests/db/vault-chunk-backfill.dbtest.ts > the chunk backfill runs in the tenant it indexes > the call the script made — no tenant scope — is refused under RLS enforcement 1309ms
+stdout | tests/db/vault-chunk-backfill.dbtest.ts > the chunk backfill runs in the tenant it indexes > a scope with the integer id but no UUID sees nothing — and would report nothing to do
+{
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 292,
+    "examined": 0,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+ ✓ tests/db/vault-chunk-backfill.dbtest.ts > the chunk backfill runs in the tenant it indexes > a scope with the integer id but no UUID sees nothing — and would report nothing to do 11ms
+ × tests/db/vault-chunk-backfill.dbtest.ts > the chunk backfill runs in the tenant it indexes > backfillVaultChunksForTenant finds the document the tenant owns 1ms
+   → svc.backfillVaultChunksForTenant is not a function
+ × tests/db/vault-chunk-backfill.dbtest.ts > the chunk backfill runs in the tenant it indexes > refuses an organization that does not exist, rather than sweeping nothing 1ms
+   → svc.backfillVaultChunksForTenant is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/vault-chunk-backfill.dbtest.ts > the chunk backfill runs in the tenant it indexes > backfillVaultChunksForTenant finds the document the tenant owns
+TypeError: svc.backfillVaultChunksForTenant is not a function
+ ❯ tests/db/vault-chunk-backfill.dbtest.ts:81:25
+     79|   it('backfillVaultChunksForTenant finds the document the tenant owns'…
+     80|     const svc = await import('../../server/services/vault/document-chu…
+     81|     const r = await svc.backfillVaultChunksForTenant(orgId, { limit: 5…
+       |                         ^
+     82|     expect(r.dryRun).toBe(true);
+     83|     expect(r.examined).toBeGreaterThanOrEqual(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/vault-chunk-backfill.dbtest.ts > the chunk backfill runs in the tenant it indexes > refuses an organization that does not exist, rather than sweeping nothing
+TypeError: svc.backfillVaultChunksForTenant is not a function
+ ❯ tests/db/vault-chunk-backfill.dbtest.ts:89:22
+     87|   it('refuses an organization that does not exist, rather than sweepin…
+     88|     const svc = await import('../../server/services/vault/document-chu…
+     89|     await expect(svc.backfillVaultChunksForTenant(2147480000)).rejects…
+       |                      ^
+     90|   });
+     91| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  18:26:26
+   Duration  1.67s (transform 712ms, setup 58ms, import 14ms, tests 1.36s, environment 0ms)
+

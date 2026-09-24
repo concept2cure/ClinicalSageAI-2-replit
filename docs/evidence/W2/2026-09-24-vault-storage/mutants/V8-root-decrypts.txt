@@ -1,0 +1,38 @@
+tests/boot_contract.tftest.hcl... in progress
+  run "renders_the_boot_contract"... pass
+  run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use"... fail
+╷
+│ Error: Test assertion failed
+│ 
+│   on tests/boot_contract.tftest.hcl line 321, in run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use":
+│  321:     condition = alltrue([
+│  322:       for st in jsondecode(aws_kms_key.vault.policy).Statement :
+│  323:       st.Principal.AWS == module.ecs.task_role_arn || length(setintersection(toset(st.Action), toset(["kms:Decrypt", "kms:Encrypt", "kms:GenerateDataKey", "kms:ReEncrypt*", "kms:*"]))) == 0
+│  324:     ])
+│     ├────────────────
+│     │ aws_kms_key.vault.policy is "{\"Statement\":[{\"Action\":[\"kms:Create*\",\"kms:Describe*\",\"kms:Enable*\",\"kms:List*\",\"kms:Put*\",\"kms:Update*\",\"kms:Revoke*\",\"kms:Disable*\",\"kms:Get*\",\"kms:Delete*\",\"kms:TagResource\",\"kms:UntagResource\",\"kms:ScheduleKeyDeletion\",\"kms:CancelKeyDeletion\",\"kms:Decrypt\"],\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::123456789012:root\"},\"Resource\":\"*\",\"Sid\":\"KeyAdministrationWithoutUse\"},{\"Action\":[\"kms:Decrypt\",\"kms:GenerateDataKey\",\"kms:DescribeKey\"],\"Condition\":{\"StringEquals\":{\"kms:ViaService\":\"s3.us-east-1.amazonaws.com\"}},\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::123456789012:role/mock\"},\"Resource\":\"*\",\"Sid\":\"ApplicationUsesTheKeyThroughS3\"}],\"Version\":\"2012-10-17\"}"
+│     │ module.ecs.task_role_arn is "arn:aws:iam::123456789012:role/mock"
+│ 
+│ No principal but the task role may decrypt with the vault key.
+╵
+  run "production_names_are_the_ones_the_deploy_workflow_targets"... pass
+  run "staging_carries_every_name_the_deploy_preflight_requires"... pass
+  run "staging_is_distinct_from_production"... pass
+  run "provision_workflow_names_are_the_ones_terraform_creates"... pass
+  run "refuses_a_refresh_secret_equal_to_the_jwt_secret"... pass
+  run "refuses_a_short_audit_chain_secret"... pass
+  run "refuses_placement_approvals_that_are_not_a_json_object"... pass
+  run "refuses_equal_audit_seal_and_chain_keys"... pass
+  run "refuses_phi_approval_without_zero_retention"... pass
+  run "refuses_an_unknown_data_class"... pass
+  run "refuses_a_non_boolean_zero_retention_flag"... pass
+  run "refuses_a_non_string_intended_use"... pass
+  run "refuses_a_missing_region"... pass
+  run "accepts_the_fail_closed_interim_approvals"... pass
+  run "refuses_an_uppercase_domain_alias"... pass
+  run "refuses_a_domain_alias_with_a_scheme"... pass
+  run "refuses_a_domain_alias_with_a_trailing_dot"... pass
+tests/boot_contract.tftest.hcl... tearing down
+tests/boot_contract.tftest.hcl... fail
+
+Failure! 18 passed, 1 failed.

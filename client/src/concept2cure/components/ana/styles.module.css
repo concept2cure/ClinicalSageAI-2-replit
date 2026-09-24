@@ -585,8 +585,7 @@
   border: none; border-top: 1px solid var(--border-light, var(--bg-200));
   margin: 20px 0;
 }
-.aiProse a { color: var(--accent-main-100); text-decoration: underline; }
-.aiProse a:hover { opacity: 0.8; }
+.aiProse a { color: var(--accent-main-200); text-decoration: underline; }
 .aiProse pre {
   background: var(--bg-100); border-radius: 10px;
   padding: 14px 18px 14px 18px; margin: 0 0 14px; overflow-x: auto;
@@ -1436,7 +1435,7 @@
 }
 .premortemEstimateValue {
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 .premortemFraming {
@@ -1724,7 +1723,7 @@
 .premortemRiskHead { display: flex; align-items: center; gap: 8px; }
 .premortemRiskSeverity {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.04em;
   padding: 1px 6px;
   border-radius: 4px;
@@ -1754,7 +1753,7 @@
 .premortemFixPriority {
   flex-shrink: 0;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.04em;
   padding: 1px 6px;
   border-radius: 4px;

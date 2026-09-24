@@ -26,6 +26,7 @@ import {
   projects,
 } from '../../shared/schema';
 import auditService from './auditService.js';
+import { pickWritable } from '../utils/authedOrgId';
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -106,6 +107,39 @@ interface PlatformCapability {
 }
 
 // ─── Platform Controller ────────────────────────────────────
+
+/**
+ * What updateProject may write: a project's configuration. Not its id or
+ * organization; not its place in the hierarchy (client workspace, parent,
+ * depth, path) or the regulatory program it belongs to; not who created or
+ * owns it; and not the server-computed knowledge-token estimate.
+ */
+const PROJECT_CONFIG_FIELDS = [
+  'name',
+  'code',
+  'description',
+  'status',
+  'priority',
+  'type',
+  'startDate',
+  'targetEndDate',
+  'actualEndDate',
+  'progress',
+  'budget',
+  'budgetCurrency',
+  'budgetStatus',
+  'sponsors',
+  'tags',
+  'therapeuticArea',
+  'criticalToQualityFactors',
+  'riskLevel',
+  'riskAssessment',
+  'qualityTargets',
+  'moduleReferences',
+  'settings',
+  'metadata',
+  'retrievalMode',
+] as const satisfies readonly (keyof typeof projects.$inferInsert & string)[];
 
 class AnaPlatformController {
   // ── Authorization ───────────────────────────────────────
@@ -356,18 +390,24 @@ class AnaPlatformController {
       return { success: false, action: 'update_project', error: 'Project not found in this organization' };
     }
 
+    // Configuration only. The request body (or an AnA action's parameters)
+    // was spread into .set(), so it could name the project's organization, its
+    // client workspace, parent project or regulatory program — the last three
+    // foreign keys, which Postgres checks without RLS — or its owner and
+    // creator (ledger L195).
+    const applied = pickWritable<typeof projects.$inferInsert>(updates, PROJECT_CONFIG_FIELDS);
     await db
       .update(projects)
-      .set({ ...updates, updatedAt: new Date() } as any)
-      .where(eq(projects.id, projectId));
+      .set({ ...applied, updatedAt: new Date() })
+      .where(and(eq(projects.id, projectId), eq(projects.organizationId, orgId)));
 
     await this.auditLog(orgId, 'update_project', {
       projectId,
-      changed: Object.keys(updates),
+      changed: Object.keys(applied),
       actor: 'ana:platform-controller',
     });
 
-    return { success: true, action: 'update_project', result: { projectId, applied: Object.keys(updates) } };
+    return { success: true, action: 'update_project', result: { projectId, applied: Object.keys(applied) } };
   }
 
   // ── AI Configuration ────────────────────────────────────

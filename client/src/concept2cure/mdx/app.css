@@ -969,7 +969,6 @@
 .mdx-shell .ed-val-badge[data-tone="ok"]   { color: var(--success);  background: var(--success-muted); border-color: transparent; }
 .mdx-shell .ed-val-badge[data-tone="warn"] { color: var(--warning);  background: var(--warning-muted); border-color: transparent; }
 .mdx-shell .ed-val-badge[data-tone="err"]  { color: var(--error);    background: var(--error-muted);   border-color: transparent; }
-.mdx-shell .ed-val-badge:hover { filter: brightness(0.97); }
 
 .mdx-shell .ed-val-pop {
   position: absolute; top: calc(100% + 6px); right: 14px;
@@ -1247,7 +1246,7 @@
 .mdx-shell .ed-claude-tab-n {
   font-size: 10px; font-weight: 600;
   padding: 1px 5px; border-radius: 99px;
-  background: var(--accent-100); color: var(--text-000);
+  background: var(--accent-strong); color: var(--accent-on-strong);
   font-variant-numeric: tabular-nums;
 }
 

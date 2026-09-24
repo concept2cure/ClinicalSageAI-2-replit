@@ -478,3 +478,39 @@ describe('GET /:projectIdent/status — a program\'s readiness comes from what i
     expect(payload.sequence).toEqual({ sequenceNumber: '0000', region: 'fda', leafCount: 2 });
   });
 });
+
+/* WO-16C. The assembler's §11.10(e) rows (ECTD_PACKAGED_FROM_CORE,
+   ECTD_ASSEMBLED, or ECTD_ASSEMBLE_BLOCKED for a refusal) had their outcomes
+   discarded, so eCTD Compile reported a package whose records were lost exactly
+   as one whose records were written. The assembler now carries `auditTrail`,
+   and the compile result forwards it for the client transport to read. */
+describe('POST /:projectIdent/compile — the assembly\'s audit-row outcome reaches the surface', () => {
+  const LOST = { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message: 'The change was saved, but its audit-trail entry could not be written.' };
+
+  it('forwards a lost row on a completed compilation', async () => {
+    mockSpine();
+    const { zipPath } = await makeBundleZip(REAL_BACKBONE);
+    assembleSequenceMock.mockResolvedValue({ ...assembledResult(zipPath), auditTrail: LOST });
+
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq({ submissionType: 'initial' }), res);
+
+    const payload = res.json.mock.calls[0][0];
+    expect(payload.status).toBe('completed');
+    expect(payload.auditTrail).toEqual(LOST);
+  });
+
+  it('forwards the refusal row\'s outcome on a refused assembly', async () => {
+    mockSpine();
+    assembleSequenceMock.mockRejectedValue(
+      Object.assign(new Error('eCTD assembly blocked: 1 leaf path-safety violation(s)'), { auditTrail: LOST }),
+    );
+
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
+
+    const payload = res.json.mock.calls[0][0];
+    expect(payload.status).toBe('failed');
+    expect(payload.auditTrail).toEqual(LOST);
+  });
+});

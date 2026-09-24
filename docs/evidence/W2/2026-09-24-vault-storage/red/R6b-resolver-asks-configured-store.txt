@@ -1,0 +1,4 @@
+ × server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes in a store this server cannot open are refused, and no other store is asked 9ms
+   → expected 1 to be +0 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 11 passed (12)

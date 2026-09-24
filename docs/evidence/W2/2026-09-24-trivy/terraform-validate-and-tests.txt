@@ -1,0 +1,8 @@
+# Terraform 1.9.8, hashicorp/aws 5.70.0 + hashicorp/random 3.6.3 from a local mirror; no AWS credentials
+
+validate environments/production  Success! The configuration is valid.
+validate environments/staging     Success! The configuration is valid.
+validate bootstrap                Success! The configuration is valid.
+test modules/alb                  Success! 4 passed, 0 failed.
+test modules/cloudfront           Success! 8 passed, 0 failed.
+test stack                        Success! 17 passed, 0 failed.

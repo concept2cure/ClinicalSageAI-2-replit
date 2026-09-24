@@ -37,7 +37,7 @@ import { eq } from 'drizzle-orm';
 import { authMiddleware } from '../auth';
 import { requestDb } from '../db/requestDb';
 import { organizations } from '@shared/schema';
-import auditService from '../services/auditService';
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { createScopedLogger } from '../utils/logger';
 import { extractUploadedText } from '../services/projects/extract-text';
 import { extractOnboardingProposals } from '../services/onboarding/proposal-extraction';
@@ -268,7 +268,11 @@ router.post('/commit', async (req: Request, res: Response) => {
       .where(eq(organizations.id, orgId))
       .returning({ name: organizations.name, clientType: organizations.clientType, industryMode: organizations.industryMode });
 
-    await auditService.logAction({
+    /* WO-16C. Was `await auditService.logAction(…)` with the outcome thrown
+       away, so an applied profile change with no §11.10(e) row answered exactly
+       like one with a row. The change stands either way; `auditTrail` in the
+       response says which. */
+    const auditTrail = await recordAuditRow({
       tenantId: String(orgId),
       userId: String(userId),
       action: 'data_modify',
@@ -299,6 +303,7 @@ router.post('/commit', async (req: Request, res: Response) => {
         failures: applied.filter((a) => !a.ok).length,
         unknownIds: outcome.unknownIds,
       },
+      auditTrail,
     });
   } catch (err) {
     log.error('onboarding commit failed', { err: err instanceof Error ? err.message : String(err) });

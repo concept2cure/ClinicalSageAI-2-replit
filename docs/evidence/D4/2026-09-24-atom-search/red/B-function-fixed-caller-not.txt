@@ -1,0 +1,10 @@
+ ✓ tests/db/atom-search.dbtest.ts > search_atoms_hybrid on a from-blank database > returns rows 12ms
+ × tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > returns no more rows than the limit, all the tenant’s own 15ms
+   → expected 10 to be 3 // Object.is equality
+ × tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > weights semantic and keyword scores as the caller asked 9ms
+   → expected 1.2000000074505806 to be close to 0.7300000004470348, received difference is 0.4700000070035457, but expected 5e-7
+ × tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > returns a project's own atoms even when other projects' atoms score higher 7ms
+   → expected [] to deeply equal [ '<tag>-art-A0', …(2) ]
+ ✓ tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > never returns another tenant’s atom, even on a connection RLS does not filter 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 2 passed (5)

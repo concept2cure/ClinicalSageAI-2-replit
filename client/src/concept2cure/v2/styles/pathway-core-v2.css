@@ -39,7 +39,7 @@
     font-variant-numeric: tabular-nums;
     margin-left: 6px;
   }
-  .pwt-count.badge { background: var(--accent-100); color: var(--text-000); }
+  .pwt-count.badge { background: var(--accent-strong); color: var(--accent-on-strong); }
   .pwt-sub { font-size: 10px; color: var(--text-400); font-weight: 400; letter-spacing: 0.01em; }
 
   /* ─── Audit pane ─────────────────────────────────────────── */
@@ -156,7 +156,6 @@
   .audit-act:hover { background: var(--bg-100); }
   .audit-act svg { width: 13px; height: 13px; }
   .audit-act.primary { background: var(--text-100); color: var(--text-000); border-color: var(--text-100); }
-  .audit-act.primary:hover { filter: brightness(1.1); }
 
   /* ─── Correspondence pane ────────────────────────────────── */
   .corr-pane { display: flex; flex-direction: column; height: 100%; min-height: 0; }
@@ -301,7 +300,7 @@
   .ap-card-actions { display: flex; flex-wrap: wrap; gap: 8px; }
   .ap-sign-btn {
     display: inline-flex; align-items: center; gap: 6px;
-    padding: 7px 14px; background: var(--accent-100); color: var(--text-000);
+    padding: 7px 14px; background: var(--accent-strong); color: var(--accent-on-strong);
     border-radius: var(--radius-md); font-size: 12px; font-weight: 500;
   }
   .ap-sign-btn:hover { background: var(--accent-200); }
@@ -339,7 +338,6 @@
     display: inline-flex; align-items: center; gap: 6px;
   }
   .ap-sign-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
-  .ap-sign-confirm:not(:disabled):hover { filter: brightness(1.1); }
   .ap-sign-confirm svg { width: 13px; height: 13px; }
   .ap-sign-cancel { padding: 8px 12px; font-size: 12px; color: var(--text-400); }
   .ap-sign-cancel:hover { color: var(--text-100); }

@@ -72,10 +72,14 @@ export let savedQueryB: number;
  *
  * activeJwtSecret() resolves the secret the same way, at the same moment, as
  * the verifier that will check the token, so the two cannot drift.
+ *
+ * `role` is the claim the request's role is read from once membership is
+ * confirmed (establishRequestTenantScope sets req.userRole from it), so a case
+ * that needs an org administrator or a platform operator mints one here.
  */
-export function accessToken(userId: number, organizationId: number): string {
+export function accessToken(userId: number, organizationId: number, role = 'member'): string {
   return jwt.sign(
-    { type: 'access', userId, organizationId: String(organizationId), role: 'member' },
+    { type: 'access', userId, organizationId: String(organizationId), role },
     activeJwtSecret(),
     { expiresIn: '5m' }
   );
@@ -327,6 +331,24 @@ export async function teardownTwoTenantFixture(): Promise<void> {
              (SELECT id FROM c2c_correspondence WHERE organization_id=ANY($1::int[]))`,
           [FIXTURE_ORGS]
         );
+        /* request-parent-boundary.dbtest.ts. complaints, mdr_events and
+           vigilance_events have no organization column: they hang from a
+           program by a text program_id, so they are matched through the fixture
+           orgs' programs, which the loop below then deletes. */
+        // project-scope-boundary.dbtest.ts: csr_details has no organization
+        // column; it hangs from its report.
+        await cleanup.query(
+          `DELETE FROM csr_details WHERE report_id IN
+             (SELECT id FROM csr_reports WHERE organization_id=ANY($1::int[]))`,
+          [FIXTURE_ORGS]
+        );
+        for (const table of ['vigilance_events', 'mdr_events', 'complaints']) {
+          await cleanup.query(
+            `DELETE FROM ${table} WHERE program_id IN
+               (SELECT id::text FROM regulatory_programs WHERE organization_id=ANY($1::int[]))`,
+            [FIXTURE_ORGS]
+          );
+        }
         for (const table of [
           'c2c_correspondence',
           'c2c_submissions',
@@ -339,6 +361,22 @@ export async function teardownTwoTenantFixture(): Promise<void> {
           'qmp_traceability_matrix',
           'ctq_factors',
           'quality_management_plans',
+          // request-parent-boundary.dbtest.ts. Tasks before projects (below);
+          // studies before the clients they name; profiles before users;
+          // mappings before the fixture requirement (below).
+          'project_tasks',
+          'cro_studies',
+          'cro_clients',
+          'user_intelligence_profiles',
+          'gspr_program_mappings',
+          // project-scope-boundary.dbtest.ts. Entries before the profiles they
+          // hang from; bundle items cascade from their bundles. Plans and
+          // bundles name projects by id with no foreign key.
+          'client_memory_entries',
+          'client_intelligence_profiles',
+          'resolution_bundles',
+          'resolution_plans',
+          'csr_reports',
           // governed-edit-boundary.dbtest.ts. PCCP plans, their modifications
           // and post-market documents all cascade from the program.
           'regulatory_programs',
@@ -348,6 +386,7 @@ export async function teardownTwoTenantFixture(): Promise<void> {
           ]);
         }
         await cleanup.query("DELETE FROM report_type_registry WHERE type_id LIKE 'wo03\\_%'");
+        await cleanup.query("DELETE FROM gspr_requirements WHERE clause LIKE 'wo03\\_%'");
         await cleanup.query('DELETE FROM documents WHERE document_code LIKE $1', [`${TAG}%`]);
         await cleanup.query('DELETE FROM projects WHERE name LIKE $1', [`${TAG}%`]);
         await cleanup.query('DELETE FROM saved_precedent_queries WHERE label LIKE $1', [`${TAG}%`]);

@@ -1,0 +1,212 @@
+# Mutation B: the unfixed handlers, RLS disabled on the four tables below (read back from pg_class).
+client_memory_entries | rls=false | force=true
+project_intelligence_profiles | rls=false | force=true
+projects | rls=false | force=true
+resolution_plans | rls=false | force=true
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T18:48:48.705Z","pid":1623,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T18:48:48.706Z","pid":1623,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T18:48:48.706Z","pid":1623,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/project-scope-boundary.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-24T18:48:49.475Z', poolSize: 1 }
+
+stdout | tests/db/project-scope-boundary.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/project-scope-boundary.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > another tenant's project intelligence profile cannot be read
+[database] Database connection successful { timestamp: '2026-09-24T18:48:50.446Z', poolSize: 2 }
+
+ × tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a project intelligence profile cannot be filed against another tenant's project 106ms
+   → no profile of tenant A may hang from tenant B's project: expected 1 to be +0 // Object.is equality
+{"level":30,"time":"2026-09-24T18:48:50.553Z","pid":1623,"hostname":"vm","context":{"tenantId":90301,"resourceId":"90301"},"msg":"[audit-service] [AUDIT] ana:update_project organizations"}
+ × tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > another tenant's project intelligence profile cannot be read 34ms
+   → tenant B's profile must not be served to tenant A: expected '{"success":true,"profile":{"id":27,"p…' not to contain 'wo03_1623_mufvy2ba tenant B strategy'
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > the caller's own project profile is still written and read 30ms
+ × tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > another tenant's client memory entry cannot be archived 15ms
+   → tenant B's memory entry must stay active: expected 'archived' to be 'active' // Object.is equality
+ × tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > another tenant's client memory entry cannot be marked verified 16ms
+   → tenant B's memory entry must not be verified by tenant A's user: expected { is_verified_by_user: true, …(1) } to deeply equal { is_verified_by_user: false, …(1) }
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > the caller's own memory entry is still archived 10ms
+{"level":30,"time":"2026-09-24T18:48:50.596Z","pid":1623,"hostname":"vm","context":{"tenantId":90301,"resourceId":"90301"},"msg":"[audit-service] [AUDIT] ana:update_project organizations"}
+ × tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > AnA's project update cannot hang a project from another tenant's project or workspace 44ms
+   → tenant A's project must not point at tenant B's workspace or project: expected { client_workspace_id: 112, …(1) } to deeply equal { client_workspace_id: 111, …(1) }
+ × tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > AnA's project update cannot move a project to another tenant 42ms
+   → tenant A's project must stay in tenant A: expected 90302 to be 90301 // Object.is equality
+ × tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a resolution bundle cannot be linked to another tenant's plan 30ms
+   → tenant B's plan must not be linked to tenant A's bundle: expected 'ae69523d-b91e-4fb9-85a7-db3ef119fdbc' to be null
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a resolution bundle is still linked to the caller's own plan 14ms
+ × tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > /api/users/me refuses a password-only token awaiting its second factor 13ms
+   → a password-only session must not read the account: expected '{"id":"144","email":"wo03_1623_mufvy2…' not to contain 'wo03_1623_mufvy2ba-a@example.invalid'
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > /api/users/me still answers an access token 9ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a project intelligence profile cannot be filed against another tenant's project
+AssertionError: no profile of tenant A may hang from tenant B's project: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/db/project-scope-boundary.dbtest.ts:178:7
+    176|       ]),
+    177|       "no profile of tenant A may hang from tenant B's project"
+    178|     ).toBe(0);
+       |       ^
+    179|     expect(res.status, "another tenant's project must read as not foun…
+    180|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > another tenant's project intelligence profile cannot be read
+AssertionError: tenant B's profile must not be served to tenant A: expected '{"success":true,"profile":{"id":27,"p…' not to contain 'wo03_1623_mufvy2ba tenant B strategy'
+
+Expected: "wo03_1623_mufvy2ba tenant B strategy"
+Received: "{"success":true,"profile":{"id":27,"projectId":141,"organizationId":90302,"regulatoryStrategy":"wo03_1623_mufvy2ba tenant B strategy","targetIndication":null,"targetPopulation":null,"primaryEndpoints":null,"comparatorDevicesOrDrugs":null,"keyConstraints":null,"submissionTimeline":null,"learnedInsights":null,"keyDecisions":null,"openQuestions":null,"riskFactors":null,"totalDocumentsIngested":0,"totalTokensProcessed":0,"lastDocumentIngestedAt":null,"projectPersona":null,"customInstructions":null,"targetRegulatoryBodies":null,"projectType":null,"therapeuticArea":null,"drugDeviceName":null,"mechanismOfAction":null,"developmentPhase":null,"profileStatus":"active","lastEnrichedAt":null,"lastEnrichedBy":null,"createdBy":null,"createdAt":"2026-09-24T18:48:50.318Z","updatedAt":"2026-09-24T18:48:50.318Z"}}"
+
+ ❯ tests/db/project-scope-boundary.dbtest.ts:186:95
+    184|       .get(`/api/client-intelligence/project/${projectB2}/profile`)
+    185|       .set(auth(tokenA));
+    186|     expect(JSON.stringify(res.body), "tenant B's profile must not be s…
+       |                                                                                               ^
+    187|       secretB
+    188|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > another tenant's client memory entry cannot be archived
+AssertionError: tenant B's memory entry must stay active: expected 'archived' to be 'active' // Object.is equality
+
+Expected: "active"
+Received: "archived"
+
+ ❯ tests/db/project-scope-boundary.dbtest.ts:212:7
+    210|       (await one('SELECT status FROM client_memory_entries WHERE id=$1…
+    211|       "tenant B's memory entry must stay active"
+    212|     ).toBe('active');
+       |       ^
+    213|     expect(res.status, "another tenant's entry must read as not found"…
+    214|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > another tenant's client memory entry cannot be marked verified
+AssertionError: tenant B's memory entry must not be verified by tenant A's user: expected { is_verified_by_user: true, …(1) } to deeply equal { is_verified_by_user: false, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "is_verified_by_user": false,
+-   "verified_by": null,
++   "is_verified_by_user": true,
++   "verified_by": 144,
+  }
+
+ ❯ tests/db/project-scope-boundary.dbtest.ts:225:7
+    223|       ]),
+    224|       "tenant B's memory entry must not be verified by tenant A's user"
+    225|     ).toEqual({ is_verified_by_user: false, verified_by: null });
+       |       ^
+    226|     expect(res.status, "another tenant's entry must read as not found"…
+    227|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > AnA's project update cannot hang a project from another tenant's project or workspace
+AssertionError: tenant A's project must not point at tenant B's workspace or project: expected { client_workspace_id: 112, …(1) } to deeply equal { client_workspace_id: 111, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "client_workspace_id": 111,
+-   "parent_project_id": null,
++   "client_workspace_id": 112,
++   "parent_project_id": 140,
+  }
+
+ ❯ tests/db/project-scope-boundary.dbtest.ts:255:7
+    253|       { client_workspace_id: row.client_workspace_id, parent_project_i…
+    254|       "tenant A's project must not point at tenant B's workspace or pr…
+    255|     ).toEqual({ client_workspace_id: workspaceA, parent_project_id: nu…
+       |       ^
+    256|     expect(res.status).toBe(200);
+    257|     expect(row.description, 'the configuration the update may write is…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > AnA's project update cannot move a project to another tenant
+AssertionError: tenant A's project must stay in tenant A: expected 90302 to be 90301 // Object.is equality
+
+- Expected
++ Received
+
+- 90301
++ 90302
+
+ ❯ tests/db/project-scope-boundary.dbtest.ts:268:77
+    266|       .send({ description: `${TAG} moved?`, organizationId: ORG_B });
+    267|     const row = await one('SELECT organization_id, description FROM pr…
+    268|     expect(row.organization_id, "tenant A's project must stay in tenan…
+       |                                                                             ^
+    269|     expect(res.status).toBe(200);
+    270|     expect(row.description).toBe(`${TAG} moved?`);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a resolution bundle cannot be linked to another tenant's plan
+AssertionError: tenant B's plan must not be linked to tenant A's bundle: expected 'ae69523d-b91e-4fb9-85a7-db3ef119fdbc' to be null
+
+- Expected:
+null
+
++ Received:
+"ae69523d-b91e-4fb9-85a7-db3ef119fdbc"
+
+ ❯ tests/db/project-scope-boundary.dbtest.ts:281:7
+    279|       (await one('SELECT bundle_id FROM resolution_plans WHERE id=$1',…
+    280|       "tenant B's plan must not be linked to tenant A's bundle"
+    281|     ).toBeNull();
+       |       ^
+    282|     expect(
+    283|       await count('resolution_bundles WHERE plan_id=$1', [planB]),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > /api/users/me refuses a password-only token awaiting its second factor
+AssertionError: a password-only session must not read the account: expected '{"id":"144","email":"wo03_1623_mufvy2…' not to contain 'wo03_1623_mufvy2ba-a@example.invalid'
+
+Expected: "wo03_1623_mufvy2ba-a@example.invalid"
+Received: "{"id":"144","email":"wo03_1623_mufvy2ba-a@example.invalid","firstName":"WO03","lastName":"A","displayName":"WO03 A","title":"","department":"","bio":"","avatar":null,"preferences":{},"roles":["user"],"permissions":[],"organizationId":"90301","organizationName":"wo03_22148_mufuce4j-a","organizationClientType":"pharma","mfaEnabled":false,"mfaMethods":[{"type":"email","isEnabled":true,"isPrimary":true}],"mustChangePassword":false,"avatarUrl":null,"createdAt":"2026-09-24T18:48:50.278Z","lastLoginAt":"2026-09-24T18:48:50.678Z"}"
+
+ ❯ tests/db/project-scope-boundary.dbtest.ts:315:95
+    313|     );
+    314|     const res = await request(app).get('/api/users/me').set(auth(parti…
+    315|     expect(JSON.stringify(res.body), 'a password-only session must not…
+       |                                                                                               ^
+    316|       emailA
+    317|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 4 passed (12)
+   Start at  18:48:46
+   Duration  4.49s (transform 2.18s, setup 78ms, import 3.38s, tests 684ms, environment 0ms)
+
+
+# Restored afterwards (ENABLE + FORCE), read back:
+client_memory_entries | rls=true | force=true
+project_intelligence_profiles | rls=true | force=true
+projects | rls=true | force=true
+resolution_plans | rls=true | force=true

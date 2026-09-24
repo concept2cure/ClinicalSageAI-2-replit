@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-24T17:52:55.203Z",
+  "generatedAt": "2026-09-24T19:27:03.702Z",
   "git": {
-    "sha": "bd066f365b6634a581459884c6358b90280be0e8",
+    "sha": "534b8474feb73a9eed99925b02749e82914a59f0",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1971,7 +1971,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1058271
+        "bytes": 1056830
       },
       {
         "file": "shared/schema.ts",
@@ -2011,7 +2011,7 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "bytes": 174008
+        "bytes": 174185
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2083,7 +2083,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 125483
+        "bytes": 125721
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2143,13 +2143,13 @@
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
-        "bytes": 101987
+        "bytes": 102445
       }
     ],
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 20465
+        "lines": 20431
       },
       {
         "file": "shared/schema.ts",
@@ -2181,7 +2181,7 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "lines": 4474
+        "lines": 4477
       },
       {
         "file": "server/storage.ts",
@@ -2265,7 +2265,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 2569
+        "lines": 2575
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2320,12 +2320,12 @@
         "lines": 2175
       },
       {
-        "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
-        "lines": 2155
+        "file": "server/services/submission-service/submission-service.ts",
+        "lines": 2164
       },
       {
-        "file": "server/services/submission-service/submission-service.ts",
-        "lines": 2150
+        "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
+        "lines": 2155
       },
       {
         "file": "server/routes/report-os.ts",
@@ -2400,12 +2400,12 @@
         "lines": 1912
       },
       {
-        "file": "server/routes/regulatory-digital-twin.ts",
-        "lines": 1898
+        "file": "server/routes/ectd-compile.ts",
+        "lines": 1907
       },
       {
-        "file": "server/routes/ectd-compile.ts",
-        "lines": 1892
+        "file": "server/routes/regulatory-digital-twin.ts",
+        "lines": 1898
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
@@ -2480,12 +2480,12 @@
         "lines": 1785
       },
       {
-        "file": "server/services/cmc-write-through.ts",
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
         "lines": 1773
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 1769
+        "file": "server/services/cmc-write-through.ts",
+        "lines": 1773
       },
       {
         "file": "server/services/ana/submission-chat-handler.ts",
@@ -2497,15 +2497,15 @@
       },
       {
         "file": "server/routes/submissions.ts",
-        "lines": 1723
+        "lines": 1719
+      },
+      {
+        "file": "server/routes/c2c/projects.ts",
+        "lines": 1700
       },
       {
         "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
         "lines": 1699
-      },
-      {
-        "file": "server/routes/c2c/projects.ts",
-        "lines": 1682
       },
       {
         "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
@@ -2536,6 +2536,14 @@
         "lines": 1602
       },
       {
+        "file": "server/routes/c2c/project-vault.ts",
+        "lines": 1596
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "lines": 1557
+      },
+      {
         "file": "server/services/module3-extensions.ts",
         "lines": 1557
       },
@@ -2544,20 +2552,12 @@
         "lines": 1548
       },
       {
-        "file": "server/routes/c2c/project-vault.ts",
-        "lines": 1547
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 1538
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 1535
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
         "lines": 1532
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 1531
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",

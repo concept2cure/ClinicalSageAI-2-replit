@@ -25,6 +25,8 @@ import { getGateway } from '../services/ai-gateway/index.js';
 import type { RoutingStrategy } from '../services/ai-gateway/types.js';
 import { getEmbeddingService } from '../services/enhancedEmbeddingService.js';
 import { ragRouter } from '../services/ragRouter.js';
+import { authedOrgId, usableOrgId } from '../utils/authedOrgId.js';
+import { getTenantScope } from '../db/tenantStore.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //                          TYPE DEFINITIONS
@@ -108,6 +110,25 @@ export function initializeCortexAPI(dbPool: pg.Pool): void {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
+ * The caller's organization uuid, from the verified session only: the request's
+ * tenant scope when it carries one, else the organizations row for the session's
+ * org id. Null when the session has no usable org — `organizationId` 0 is a
+ * resolution failure, not an org (server/utils/authedOrgId.ts) — which the
+ * caller answers with 403 rather than running a query with no tenant key.
+ */
+async function sessionOrgUuid(req: Request): Promise<string | null> {
+  const orgId = usableOrgId(authedOrgId(req));
+  if (orgId === null) return null;
+  const scope = getTenantScope();
+  if (scope?.tenantId === String(orgId) && scope.orgUuid) return scope.orgUuid;
+  const { rows } = await pool!.query<{ uuid: string }>(
+    'SELECT uuid::text AS uuid FROM organizations WHERE id = $1',
+    [orgId]
+  );
+  return rows[0]?.uuid ?? null;
+}
+
+/**
  * POST /api/cortex/query
  *
  * Unified query endpoint for all Cortex capabilities
@@ -122,21 +143,26 @@ router.post('/query', async (req: Request, res: Response) => {
 
     const body = req.body as CortexQueryRequest;
     const { query, mode = 'generate', options = {}, context = {}, persistCitations } = body;
-    const organizationUuid =
-      req.tenantContext?.organizationUuid || (req.headers['x-org-uuid'] as string | undefined);
 
     if (!query || typeof query !== 'string') {
       return res.status(400).json({ error: 'Query string is required' });
     }
 
-    if (persistCitations && !organizationUuid) {
-      return res.status(400).json({
-        error: 'organizationUuid is required when persistCitations is enabled',
-      });
-    }
+    /* The tenant key comes from the verified session, never the request.
 
+       This read `req.tenantContext?.organizationUuid || req.headers['x-org-uuid']`.
+       Mounted under cortex-unified.ts, whose extractTenantContext replaces
+       req.tenantContext without an organizationUuid, the left side was always
+       undefined — so the client's header was the ONLY tenant key this route
+       ever used, and a request without one ran the search's unfiltered branch
+       and answered graph mode with an empty "successful" graph. Enforcing RLS
+       contained it (the policy keys on the session's GUC), which is why the
+       contract that pins this asserts positive controls: a caller naming another
+       tenant is served its own data, not nothing.
+       docs/evidence/D3/2026-09-24-cortex-tenant-header/. */
+    const organizationUuid = await sessionOrgUuid(req);
     if (!organizationUuid) {
-      console.warn('[Cortex] Missing organizationUuid; RLS may return empty results.');
+      return res.status(403).json({ error: 'Tenant context required' });
     }
 
     let response: CortexQueryResponse;

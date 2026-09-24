@@ -8,7 +8,7 @@ import {
 } from '@shared/schema';
 import { eq, count, inArray } from 'drizzle-orm';
 import { authMiddleware } from '../auth';
-import auditService from '../services/auditService';
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 
 const router = Router();
 
@@ -307,7 +307,13 @@ router.patch('/:id/profile', validateOrgOwnership, requireOrgAdmin, async (req, 
         updatedAt: organizations.updatedAt,
       });
 
-    await auditService.logAction({
+    /* WO-16C. Was `await auditService.logAction(…)` with its outcome thrown
+       away, so a profile change whose §11.10(e) row was lost answered exactly
+       like one whose row was written. The change stands either way — an audit
+       outage must not undo an org admin's edit — and the response now says
+       which happened. The client's transport reads `auditTrail` and shows
+       "The request completed, but the audit trail did not record it". */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId,
       userId: req.userId ?? (req as any).user?.id,
       action: 'data_modify',
@@ -327,7 +333,7 @@ router.patch('/:id/profile', validateOrgOwnership, requireOrgAdmin, async (req, 
       },
     });
 
-    res.json({ success: true, organization: updated });
+    res.json({ success: true, organization: updated, auditTrail });
   } catch (error) {
     console.error('Error updating organization profile:', req.params.id, error);
     res.status(500).json({
@@ -500,7 +506,8 @@ router.patch('/:id/settings', validateOrgOwnership, requireOrgAdmin, async (req,
 
     // Audit the changed section keys, not the values — settings sections can
     // carry integration credentials that must not be duplicated into the log.
-    await auditService.logAction({
+    // WO-16C: the outcome is carried, not discarded (see the profile route).
+    const auditTrail = await recordAuditRow({
       tenantId: parseInt(id),
       userId: req.userId ?? (req as any).user?.id,
       action: 'data_modify',
@@ -519,6 +526,7 @@ router.patch('/:id/settings', validateOrgOwnership, requireOrgAdmin, async (req,
       success: true,
       message: 'Organization settings updated successfully',
       settings: settingsUpdate,
+      auditTrail,
     });
   } catch (error) {
     console.error('Error updating organization settings:', error);
