@@ -67,24 +67,38 @@ Nothing else can break, by construction:
   to nobody, the canonical file's existing choice. None of those tables has a
   runtime reader.
 
-**Not covered, and named with reasons** in `scripts/db/rls-coverage-check.sql`:
-five grandchildren, whose parent is itself a child with no tenant column. The
-single-level spec cannot express them; this is the chained case the canonical
-file already records for three `csr_` / `ctd_` tables. Their live readers reach
-them through the parent, whose own policy filters the join.
+**The five grandchildren (ledger L202), same day.** A grandchild's parent is
+itself a child with no tenant column:
 
 - `ai_claims`
 - `ai_claim_citations`
 - `c2c_document_section_evidence`
-- `c2c_document_section_versions`, written only by the section trigger and read with an org join
-- `section_propagations`, which appeared only once its parent was covered and has no runtime reader
+- `c2c_document_section_versions`
+- `section_propagations`
+
+So the single-level predicate had no tenant column to compare. The migration
+gains a second, chained list, where each grandchild delegates to its
+**parent's own** `tenant_isolation_policy`. That works because a policy's
+subquery runs under the invoker's row security.
+
+This was shown on the database before it was written into the migration
+(`green/chained-predicate-probe.txt`), in a rolled-back transaction as the
+runtime role. Counted from the child alone, tenant A saw one of two tenants'
+section versions. Tenant A's own content edit fired the SECURITY INVOKER
+snapshot trigger, whose version insert passed WITH CHECK.
+
+A parent that carries no policy is skipped **before** the child's row security
+is enabled, so the gate fails CI rather than accepting a scope that scopes
+nothing. The three deny-all `csr_` / `ctd_` chains are left deny-all on
+purpose: nobody reads them, and the test pins that choice.
 
 ## The gate that keeps it closed
 
 `scripts/db/rls-coverage-check.sql`, which CI runs after `install-fresh` and
 `deploy-migrate`, gains a child rule. It flags any public table with no tenant
 column and row security off that has a foreign key into an RLS-protected parent.
-The carve-out above may only shrink.
+After the grandchildren, there is no carve-out left. A child that cannot be
+covered would go there, with its reason.
 
 - Before the amendment, the rule lists the 67 tables.
 - After it, the gate returns no rows.
@@ -111,15 +125,20 @@ In `tests/db/request-parent-boundary.dbtest.ts`, a new positive case shows the
 tenant's own flow still works under the new complaint and MDR policies: an MDR
 event sourced from the caller's own complaint answers 201 and links it.
 
+**The grandchildren:** red, `c2c_document_section_versions` is read across
+tenants from the child alone (`red/contract-grandchildren-before.txt`); green,
+11 of 11 (`green/contract-11-of-11.txt`). The structural list now holds 71 new
+tables.
+
 **Every real-database suite, after the amendment:** 53 of 54 files, 655 of 660
-tests (`green/all-db-suites-53-of-54.txt`). That includes all seven D3 fixture
-suites. The one failing file, `atom-search`, fails on `search_atoms_hybrid`'s
+tests (`green/all-db-suites-53-of-54.txt`), and after the grandchildren
+656 of 661 (`green/all-db-suites-after-grandchildren.txt`). That includes all
+seven D3 fixture suites. The one failing file, `atom-search`, fails on `search_atoms_hybrid`'s
 signature on a from-blank install. That predates this change and is recorded in
 the D3 launch note.
 
 ## Recorded, not fixed here
 
-- The five grandchildren above need a chained predicate.
 - **Outside `public`,** 19 child tables (30 edges) have the same shape, in
   schemas such as `global_dossier`, `manufacturing`, `audit` and
   `cognitive_audit`. Several belong to subsystems CLAUDE.md RULE 2 gives no
