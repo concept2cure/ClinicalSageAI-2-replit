@@ -125,6 +125,30 @@ export async function gsprMappingUpsert(
     return { success: false, action, message: 'applicability is required.', error: 'INVALID_INPUT' };
   }
 
+  // A program id a model supplies must be proven to be the caller's before it is
+  // written against, as the HTTP route proves it (requireProgramAccess). This
+  // tool checked only that it was a UUID (ledger L195). The canonical check,
+  // shared with AnaToolExecutor, and imported lazily for the same reason.
+  const { programBelongsToOrg } = await import('../../routes/innovation-routes.js');
+  let ownsProgram: boolean;
+  try {
+    ownsProgram = await programBelongsToOrg(programId, ctx.organizationId);
+  } catch (err: unknown) {
+    if ((err as { name?: string } | null)?.name !== 'GuardUnavailableError') throw err;
+    // The check could not run: neither "yours" nor "not yours". Nothing is
+    // written, and the model is told which, as AnaToolExecutor's tools tell it.
+    return {
+      success: false,
+      action,
+      message:
+        'Program ownership could not be verified, so nothing was written. Do not tell the user the program does not exist; retry, and report it if it persists.',
+      error: 'OWNERSHIP_UNVERIFIABLE',
+    };
+  }
+  if (!ownsProgram) {
+    return { success: false, action, message: 'Program not found.', error: 'NOT_FOUND' };
+  }
+
   try {
     const row = await upsertMapping({
       organizationId: ctx.organizationId,
