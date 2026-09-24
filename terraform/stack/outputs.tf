@@ -81,6 +81,7 @@ output "resource_names" {
     evidence_bucket = local.evidence_bucket
     evidence_kms    = "alias/${local.short}-evidence"
     frontend_bucket = local.frontend_bucket
+    vault_bucket    = local.vault_bucket
     signing_alias   = local.release_signing_key_alias
   }
 }
