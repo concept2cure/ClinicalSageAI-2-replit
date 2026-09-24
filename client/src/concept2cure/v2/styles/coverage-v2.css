@@ -98,7 +98,7 @@
 
 /* Labeling — translation coverage bar */
 .c2c-v2 .lbl-cov-bar{ height:8px; border-radius:5px; background:var(--bg-200); overflow:hidden; }
-.c2c-v2 .lbl-cov-fill{ height:100%; border-radius:5px; background:var(--success); transition:width var(--dur); }
+.c2c-v2 .lbl-cov-fill{ height:100%; border-radius:5px; background:var(--success); transition:background var(--dur); }
 .c2c-v2 .ct-row[data-fresh]{ animation:lblFresh 1.4s ease-out; }
 @keyframes lblFresh{ 0%{ background:var(--accent-000); } 100%{ background:transparent; } }
 
@@ -1199,7 +1199,7 @@
 .c2c-v2 .bd-metric-note{ margin-left:auto; font-size:10.5px; color:var(--text-400); }
 .c2c-v2 .bd-prog{ display:flex; align-items:center; gap:12px; flex:1; }
 .c2c-v2 .bd-prog-track{ flex:1; max-width:340px; height:6px; background:var(--bg-100); border-radius:100px; overflow:hidden; }
-.c2c-v2 .bd-prog-fill{ height:100%; background:var(--accent-200); border-radius:100px; transition:width var(--dur) var(--ease); }
+.c2c-v2 .bd-prog-fill{ height:100%; background:var(--accent-200); border-radius:100px; transition:background var(--dur) var(--ease); }
 .c2c-v2 .bd-prog-txt{ font-size:12px; color:var(--text-300); font-weight:500; white-space:nowrap; }
 
 /* cards */
