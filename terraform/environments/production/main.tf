@@ -84,6 +84,13 @@ module "stack" {
   audit_hmac_secret               = var.audit_hmac_secret
   connector_encryption_key        = var.connector_encryption_key
   openai_api_key                  = var.openai_api_key
+
+  # Login OTP delivery; without it no one can sign in.
+  smtp_host = var.smtp_host
+  smtp_user = var.smtp_user
+  smtp_pass = var.smtp_pass
+  smtp_from = var.smtp_from
+
   ai_provider_placement_approvals = var.ai_provider_placement_approvals
 }
 

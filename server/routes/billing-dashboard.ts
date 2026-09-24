@@ -916,7 +916,7 @@ router.put('/credits/auto-reload', authenticateToken, requireRole('admin', 'owne
       reason,
     );
     // `auditTrail` says whether the change's §11.10(e) row was written; the
-    // client transport shows "Saved, but the audit trail did not record it".
+    // client transport shows "The request completed, but the audit trail did not record it".
     res.json({ autoReload: saved, auditTrail });
   } catch (error) {
     const validation = (error as any)?.validation;

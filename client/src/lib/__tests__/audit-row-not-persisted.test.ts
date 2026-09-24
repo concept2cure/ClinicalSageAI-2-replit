@@ -42,7 +42,8 @@ import {
 const LOST = {
   persisted: false,
   code: 'AUDIT_ROW_NOT_PERSISTED',
-  message: 'The change was saved, but its audit-trail entry could not be written.',
+  // The server's own sentence (AUDIT_NOT_PERSISTED_MESSAGE, audit-write-outcome.ts).
+  message: 'The 21 CFR Part 11 audit entry for this transition could not be written. The action itself completed. This has been logged for follow-up.',
 } as const;
 const KEPT = { persisted: true, chained: true } as const;
 

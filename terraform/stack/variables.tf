@@ -203,6 +203,57 @@ variable "connector_encryption_key" {
   }
 }
 
+# ── Email (SMTP) ─────────────────────────────────────────────────────────────
+# Login OTP is the mandatory second factor. Without SMTP the app boots, reports
+# ready, and no one can sign in (server/startup/services.ts). The provider is the
+# founder's choice; the sending domain must be verified with it.
+
+variable "smtp_host" {
+  type        = string
+  description = "SMTP server hostname (e.g. email-smtp.us-east-1.amazonaws.com)."
+  validation {
+    condition     = can(regex("^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$", var.smtp_host))
+    error_message = "smtp_host must be a lowercase hostname."
+  }
+}
+
+variable "smtp_port" {
+  type        = number
+  description = "SMTP port. 465 only: the mailer uses implicit TLS on 465 and does not require TLS on any other port (server/services/emailService.ts)."
+  default     = 465
+  validation {
+    condition     = var.smtp_port == 465
+    error_message = "smtp_port must be 465. On any other port the mailer does not require TLS, so credentials and one-time codes could travel in clear."
+  }
+}
+
+variable "smtp_user" {
+  type      = string
+  sensitive = true
+  validation {
+    condition     = length(var.smtp_user) > 0
+    error_message = "smtp_user is required: without SMTP no one can sign in."
+  }
+}
+
+variable "smtp_pass" {
+  type      = string
+  sensitive = true
+  validation {
+    condition     = length(var.smtp_pass) > 0
+    error_message = "smtp_pass is required: without SMTP no one can sign in."
+  }
+}
+
+variable "smtp_from" {
+  type        = string
+  description = "Sender address. Its domain must be verified with the SMTP provider, or mail is refused or lands in spam."
+  validation {
+    condition     = can(regex("^[^@\\s]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$", var.smtp_from))
+    error_message = "smtp_from must be an email address with a lowercase domain."
+  }
+}
+
 variable "openai_api_key" {
   type      = string
   sensitive = true
