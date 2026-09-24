@@ -90,6 +90,17 @@ variable "domain_aliases" {
     condition     = length(var.domain_aliases) > 0
     error_message = "Production routes the API through CloudFront, which needs a custom domain that the ALB's certificate (acm_certificate_arn) also covers."
   }
+
+  # The first alias becomes APP_URL and ALLOWED_ORIGINS (main.tf app_origin).
+  # csrfProtection compares the browser's Origin header by string equality,
+  # and a browser sends the host lowercased with no trailing dot, so
+  # "App.example.com" would boot, pass /readyz, and 403 every sign-in.
+  validation {
+    condition = alltrue([
+      for d in var.domain_aliases : can(regex("^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$", d))
+    ])
+    error_message = "Each domain alias must be a lowercase hostname with no scheme, port, path or trailing dot, e.g. app.example.com."
+  }
 }
 
 # ── Secrets (pass via -var or TF_VAR_ env) ───────────────────────────────────
@@ -163,22 +174,6 @@ variable "connector_encryption_key" {
   validation {
     condition     = length(var.connector_encryption_key) >= 32
     error_message = "connector_encryption_key must be at least 32 characters."
-  }
-}
-
-variable "app_url" {
-  type        = string
-  description = "The deployment's public https origin. Password-reset and invitation links are built on it, never on the request's Host header (server/services/password-setup-token.ts), and it is the origin sign-in is accepted from (ALLOWED_ORIGINS, main.tf)."
-  validation {
-    # Exactly the string a browser sends as its Origin header: lowercase host,
-    # no path, no trailing slash, no default port. csrfProtection compares the
-    # header to ALLOWED_ORIGINS by string equality, so "https://App.example.com/"
-    # would boot, pass /readyz, and refuse every sign-in with 403.
-    condition = (
-      can(regex("^https://[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*(:[0-9]{1,5})?$", var.app_url))
-      && !endswith(var.app_url, ":443")
-    )
-    error_message = "app_url must be a lowercase https origin with no path or trailing slash, e.g. https://app.example.com."
   }
 }
 

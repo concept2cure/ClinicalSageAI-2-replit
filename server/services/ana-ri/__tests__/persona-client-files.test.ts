@@ -71,6 +71,25 @@ describe('persona — the client files discipline', () => {
     expect(s).not.toContain('It returns every document in the project vault');
   });
 
+  /* The document catalog is off for every new organisation — the launch
+     default — and governedToolsetFor then withholds list_project_documents and
+     the other catalog tools. This section is static text and cannot know that,
+     so it must be TRUE in both states: when the tools are not offered, AnA says
+     plainly that she cannot open the Vault files from here, keeps the files'
+     existence intact, and offers the one path that still works (a file attached
+     to the conversation). Without this the rule above sends her to a tool she
+     does not have, and a refusal naming an internal feature key was what the
+     user heard. */
+  it('says what to do when the catalog tools are not offered — without naming internal settings', () => {
+    const s = clientFilesSection();
+    expect(s).toMatch(/If list_project_documents is not among your tools/);
+    expect(s).toMatch(/cannot open/i);
+    expect(s).toMatch(/still in the Vault/i);
+    expect(s).toMatch(/read_uploaded_document/);
+    expect(s).toMatch(/never name an internal setting/i);
+    expect(s).not.toMatch(/ana\.document_catalog/);
+  });
+
   it('tells her to LOOK before reporting a file absent', () => {
     const s = clientFilesSection();
     expect(s).toContain('list_project_documents');

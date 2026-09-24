@@ -72,10 +72,12 @@ module "ecr" {
 #
 # Request-serving queries run as `app_service` (LOGIN NOSUPERUSER NOBYPASSRLS),
 # through APP_DATABASE_URL; under RLS_ENFORCE=on the boot refuses a superuser or
-# BYPASSRLS runtime role. The role is minted ONCE, by the first provision of the
-# empty database (`npm run db:provision` with APP_SERVICE_DB_PASSWORD from the
-# app_service_db_password secret below); every deploy's migration step then
-# re-grants it, identifying it from APP_DATABASE_URL (provision-app-role.mjs).
+# BYPASSRLS runtime role. The role is minted by the first provision of the empty
+# database (`npm run db:provision`) and re-aligned by every deploy's migration
+# step: the migrate task is cloned from the API task definition, which carries
+# APP_SERVICE_DB_PASSWORD for that reason (provision-app-role.mjs sends only its
+# SCRAM verifier to the server). The API itself never mints; the password adds
+# nothing to what APP_DATABASE_URL already holds.
 #
 # The owner URL (DATABASE_URL) is NOT migration-only. The API reads it at every
 # boot — ensureCoreTables / ensureAuthTables open owner pools and run DDL — and
@@ -133,15 +135,12 @@ module "secrets" {
       description = "Runtime connection string as app_service (non-superuser, NOBYPASSRLS)."
       value       = local.app_database_url
     }
-    # NOT on any task definition. The migration task is derived from the API
-    # task definition wholesale, so a password there would be re-applied by
-    # `ALTER ROLE app_service … PASSWORD` on every deploy, and the API would
-    # carry a credential it never uses. It is read once, by the provisioning
-    # run that mints the role on an empty database (scripts/db/provision.mjs);
-    # every later migration identifies the role from APP_DATABASE_URL, which
-    # embeds the same generated password.
+    # On the API task definition (api_secrets below) so the migrate task, which
+    # is cloned from it, re-aligns app_service on every deploy: LOGIN, the safe
+    # attributes, this password. Idempotent, and the server receives only the
+    # SCRAM verifier. Same value APP_DATABASE_URL already embeds.
     app_service_db_password = {
-      description = "Mints app_service on the provisioning run only (APP_SERVICE_DB_PASSWORD). Same value APP_DATABASE_URL embeds."
+      description = "app_service password, for the migrate step to mint or re-align the role (APP_SERVICE_DB_PASSWORD). Same value APP_DATABASE_URL embeds."
       value       = random_password.db_app_service.result
     }
     refresh_token_secret = {
@@ -179,14 +178,6 @@ resource "terraform_data" "boot_contract" {
     # The app does not check this one. AUDIT_HMAC_KEY seals audit records and
     # AUDIT_HMAC_SECRET chains them; one value in both collapses the two-key
     # design into one secret whose disclosure forges both.
-    # APP_URL builds reset and invitation links, and ALLOWED_ORIGINS is the only
-    # origin sign-in is accepted from; both are var.app_url. Browsers reach the
-    # app through CloudFront on domain_aliases, so an app_url on any other host
-    # boots green and 403s every sign-in.
-    precondition {
-      condition     = contains(var.domain_aliases, split(":", trimprefix(var.app_url, "https://"))[0])
-      error_message = "app_url's host must be one of domain_aliases: it is the origin browsers send, and the only one sign-in accepts."
-    }
     precondition {
       condition     = var.audit_hmac_secret != var.audit_hmac_key
       error_message = "audit_hmac_secret must differ from audit_hmac_key: one seals audit records, the other chains them."
@@ -212,6 +203,10 @@ locals {
     { name = "OPENAI_API_KEY", value_from = module.secrets.secret_arns["openai_api_key"] },
   ]
 
+  # The deployment's public origin: the first CloudFront alias. One input, so
+  # APP_URL and ALLOWED_ORIGINS cannot disagree with the domain browsers use.
+  app_origin = "https://${var.domain_aliases[0]}"
+
   boot_environment = [
     # Production accepts only the literal `on` (server/db/rlsEnforcement.ts).
     { name = "RLS_ENFORCE", value = "on" },
@@ -219,13 +214,14 @@ locals {
     # (assertSensitivePlacementConfiguration). The decision is the approvals.
     { name = "AI_SENSITIVE_DATA_POLICY_MODE", value = "enforce" },
     { name = "AI_PROVIDER_PLACEMENT_APPROVALS", value = var.ai_provider_placement_approvals },
-    { name = "APP_URL", value = var.app_url },
+    { name = "APP_URL", value = local.app_origin },
     # In production csrfProtection refuses every state-changing browser request
     # (sign-in included) whose Origin is not in ALLOWED_ORIGINS or a short
     # hardcoded list (server/middleware/enterprise-security.ts). Without this, a
     # deployment on any other domain boots, reports ready, and nobody can sign
-    # in. var.app_url is validated to be exactly an Origin header's form.
-    { name = "ALLOWED_ORIGINS", value = var.app_url },
+    # in. Both come from the first CloudFront alias: the one origin browsers
+    # use, validated to be a lowercase hostname (variables.tf).
+    { name = "ALLOWED_ORIGINS", value = local.app_origin },
   ]
 }
 
@@ -303,7 +299,11 @@ module "ecs" {
     "${module.cdn.frontend_bucket_arn}/*",
   ]
 
-  api_secrets    = local.boot_secrets
+  # The migrate task is cloned from this definition and re-aligns app_service
+  # from APP_SERVICE_DB_PASSWORD; the worker has no such clone.
+  api_secrets = concat(local.boot_secrets, [
+    { name = "APP_SERVICE_DB_PASSWORD", value_from = module.secrets.secret_arns["app_service_db_password"] },
+  ])
   worker_secrets = local.boot_secrets
 
   # The boot contract, plus the release signer (release_signing.tf).

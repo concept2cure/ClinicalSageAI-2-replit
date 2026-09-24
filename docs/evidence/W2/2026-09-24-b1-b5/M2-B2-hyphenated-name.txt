@@ -1,0 +1,24 @@
+# M2-B2-hyphenated-name: database name back to "concept2cure-ri"
+# The fix reverted in place, then restored. terraform test exit=1 (non-zero = caught)
+
+tests/boot_contract.tftest.hcl... in progress
+  run "every_name_the_deploy_preflight_requires_is_in_the_task_definition"... fail
+  run "the_database_urls_are_urls_not_the_rds_json_secret"... skip
+  run "the_database_name_is_one_rds_accepts"... skip
+  run "the_health_check_is_the_images_own_probe_on_readyz"... skip
+  run "refuses_a_refresh_secret_equal_to_the_jwt_secret"... skip
+  run "refuses_a_short_key"... skip
+  run "refuses_placement_approvals_that_are_not_a_json_object"... skip
+tests/boot_contract.tftest.hcl... tearing down
+tests/boot_contract.tftest.hcl... fail
+Failure! 0 passed, 1 failed, 6 skipped.
+Error: Invalid value for variable
+  on main.tf line 188, in module "rds":
+ 188:   database_name      = local.db_name
+    ├────────────────
+    │ var.database_name is "concept2cure-ri"
+database_name must start with a letter and contain only letters, digits and
+underscores (at most 63 characters): RDS rejects anything else at create
+time.
+This was checked by the validation rule at
+../../modules/rds/variables.tf:35,3-13.

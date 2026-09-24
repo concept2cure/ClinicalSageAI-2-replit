@@ -74,34 +74,6 @@ RUN set -eu; \
       > /usr/local/bin/verapdf; \
     chmod 0755 /usr/local/bin/verapdf
 
-# The Amazon RDS certificate bundle (B11, 2026-09-23). Production verifies the
-# database server's certificate — server/db/ssl.ts returns
-# { rejectUnauthorized: true } in production, and the migration scripts verify
-# for every non-local host (scripts/db/connection.mjs). RDS certificates chain to
-# Amazon's RDS root CAs, and NONE of Node's 144 bundled roots is one of them
-# (checked 2026-09-23: tls.rootCertificates contains no "Amazon RDS"). Without
-# this file every connection from the API, the worker and the migration task
-# fails with "self-signed certificate in certificate chain" — the same failure
-# the CI production boot smoke avoids by setting NODE_EXTRA_CA_CERTS to its own
-# server certificate (ci.yml, "Start PostgreSQL with TLS").
-#
-# Set in the IMAGE, not a task definition, so every container of it — including
-# the migration task deploy-aws.yml derives — inherits it. Pinned the same way
-# as veraPDF above: the checksum is of the global bundle fetched on 2026-09-23
-# (108 certificates, 165,408 bytes). When AWS adds a CA the download will stop
-# matching and the build FAILS; refresh the checksum deliberately, then confirm
-# the instance's ca_cert_identifier chains to a certificate in the new bundle.
-ARG RDS_CA_BUNDLE_SHA256=e5bb2084ccf45087bda1c9bffdea0eb15ee67f0b91646106e466714f9de3c7e3
-RUN set -eu; \
-    curl -fsSL -o /etc/ssl/certs/rds-global-bundle.pem \
-      https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem; \
-    echo "${RDS_CA_BUNDLE_SHA256}  /etc/ssl/certs/rds-global-bundle.pem" | sha256sum -c -
-ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/rds-global-bundle.pem
-# libpq (psql, and anything else linked against it) does not read
-# NODE_EXTRA_CA_CERTS; with sslmode=verify-full it looks for
-# ~/.postgresql/root.crt and fails. The same bundle, for the same reason.
-ENV PGSSLROOTCERT=/etc/ssl/certs/rds-global-bundle.pem
-
 # Build-time proof that the toolchain the pipeline invokes is present AND works:
 # gs --version / verapdf --version / xmllint, then a real render → PDF/A-1b
 # conversion → veraPDF PASS round-trip (and a FAIL on the unconverted source,
@@ -162,6 +134,17 @@ COPY --from=builder /app/scripts/db ./scripts/db
 # .dockerignore excludes only *.md here, so the PDFs and checksums.txt both ship
 # and template integrity still verifies at runtime.
 COPY --from=builder /app/assets ./assets
+
+# The Amazon RDS certificate bundle, from the assets copied above
+# (assets/rds-ca/README.md). Production verifies the database certificate, and
+# Node's built-in roots contain no RDS CA, so without this every connection to
+# RDS, from the API or from the migrate task that runs this image, fails
+# verification. NODE_EXTRA_CA_CERTS adds to the default roots and replaces none.
+ENV NODE_EXTRA_CA_CERTS=/app/assets/rds-ca/global-bundle.pem
+# libpq (psql, pg_dump) does not read NODE_EXTRA_CA_CERTS; with
+# sslmode=verify-full it looks for ~/.postgresql/root.crt, which the runtime
+# user does not have. The same vendored bundle, for the same reason.
+ENV PGSSLROOTCERT=/app/assets/rds-ca/global-bundle.pem
 
 # Create non-root user for security
 RUN groupadd -r appuser && useradd -r -g appuser -d /app appuser && chown -R appuser:appuser /app

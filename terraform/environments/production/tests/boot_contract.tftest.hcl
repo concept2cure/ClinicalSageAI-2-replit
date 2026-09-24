@@ -77,7 +77,6 @@ variables {
   audit_hmac_key                  = "test-audit-hmac-key-0000000000000000000000000"
   audit_hmac_secret               = "test-audit-hmac-secret-0000000000000000000000"
   connector_encryption_key        = "test-connector-key-00000000000000000000000000"
-  app_url                         = "https://app.example.com"
   domain_aliases                  = ["app.example.com"]
   cloudfront_origin_secret        = "test-origin-secret-0000000000000000000000"
   ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\"],\"approvedIntendedUses\":[\"drafting\"]}}"
@@ -86,10 +85,14 @@ variables {
 run "renders_the_boot_contract" {
   command = apply
 
-  # Every name deploy-aws.yml's preflight requires, in the API container.
+  # Every name deploy-aws.yml's preflight requires, in the API container. The
+  # list is READ from the workflow's `for VAR in … ; do` loop, so the pipeline
+  # and this suite cannot drift (if the loop's shape changes, regex() errors
+  # and the run fails); APP_URL and NODE_ENV are checked by the step's later
+  # value checks. Adopted from the parallel implementation in 752a09ab1.
   assert {
     condition = length(setsubtract(
-      toset(["RLS_ENFORCE", "DATABASE_URL", "APP_DATABASE_URL", "JWT_SECRET", "REFRESH_TOKEN_SECRET", "MFA_ENCRYPTION_KEY", "AUDIT_HMAC_KEY", "AUDIT_HMAC_SECRET", "CONNECTOR_ENCRYPTION_KEY", "AI_SENSITIVE_DATA_POLICY_MODE", "AI_PROVIDER_PLACEMENT_APPROVALS", "CONCEPT2CURE_SIGNER_MODE", "APP_URL", "NODE_ENV"]),
+      toset(concat(["APP_URL", "NODE_ENV"], regexall("[A-Z][A-Z0-9_]+", one(regex("for VAR in ([A-Z0-9_\\\\\\s]+); do", file("../../../.github/workflows/deploy-aws.yml")))))),
       toset(concat(
         [for e in jsondecode(module.ecs.api_container_definitions)[0].environment : e.name],
         [for s in jsondecode(module.ecs.api_container_definitions)[0].secrets : s.name],
@@ -101,7 +104,7 @@ run "renders_the_boot_contract" {
   # The worker runs the same image, so it carries the same contract.
   assert {
     condition = length(setsubtract(
-      toset(["RLS_ENFORCE", "DATABASE_URL", "APP_DATABASE_URL", "JWT_SECRET", "REFRESH_TOKEN_SECRET", "MFA_ENCRYPTION_KEY", "AUDIT_HMAC_KEY", "AUDIT_HMAC_SECRET", "CONNECTOR_ENCRYPTION_KEY", "AI_SENSITIVE_DATA_POLICY_MODE", "AI_PROVIDER_PLACEMENT_APPROVALS", "CONCEPT2CURE_SIGNER_MODE", "APP_URL", "NODE_ENV"]),
+      toset(concat(["APP_URL", "NODE_ENV"], regexall("[A-Z][A-Z0-9_]+", one(regex("for VAR in ([A-Z0-9_\\\\\\s]+); do", file("../../../.github/workflows/deploy-aws.yml")))))),
       toset(concat(
         [for e in jsondecode(module.ecs.worker_container_definitions)[0].environment : e.name],
         [for s in jsondecode(module.ecs.worker_container_definitions)[0].secrets : s.name],
@@ -121,8 +124,8 @@ run "renders_the_boot_contract" {
   }
 
   assert {
-    condition     = can(regex("^https://[^/]+", one([for e in jsondecode(module.ecs.api_container_definitions)[0].environment : e.value if e.name == "APP_URL"])))
-    error_message = "APP_URL must be a plain https origin in the API environment."
+    condition     = one([for e in jsondecode(module.ecs.api_container_definitions)[0].environment : e.value if e.name == "APP_URL"]) == "https://${var.domain_aliases[0]}"
+    error_message = "APP_URL must be the https origin of the first CloudFront alias, in the API environment."
   }
 
   # Sign-in is accepted only from ALLOWED_ORIGINS (csrfProtection); the
@@ -130,9 +133,9 @@ run "renders_the_boot_contract" {
   assert {
     condition = alltrue([
       for defs in [module.ecs.api_container_definitions, module.ecs.worker_container_definitions] :
-      one([for e in jsondecode(defs)[0].environment : e.value if e.name == "ALLOWED_ORIGINS"]) == var.app_url
+      one([for e in jsondecode(defs)[0].environment : e.value if e.name == "ALLOWED_ORIGINS"]) == "https://${var.domain_aliases[0]}"
     ])
-    error_message = "ALLOWED_ORIGINS must carry the deployment's own origin (app_url) in the API and worker environments."
+    error_message = "ALLOWED_ORIGINS must carry the deployment's own origin (the first CloudFront alias) in the API and worker environments."
   }
 
   # The execution role must be able to read every secret a task references —
@@ -178,18 +181,20 @@ run "renders_the_boot_contract" {
     error_message = "The runtime role must not share the owner's password."
   }
 
-  # The runtime never carries the password the provisioning run mints app_service
-  # with; the migration task is cloned from this definition, and would re-apply
-  # it. In neither container, as a secret or as a plain variable.
+  # The migrate task is cloned from the API definition and re-aligns app_service
+  # from APP_SERVICE_DB_PASSWORD, so the API carries it — as a secret, from the
+  # generated password's own secret. The worker has no such clone, and neither
+  # container may carry it as a plain variable.
   assert {
     condition = alltrue([
-      for defs in [module.ecs.api_container_definitions, module.ecs.worker_container_definitions] :
-      !contains(concat(
-        [for s in jsondecode(defs)[0].secrets : s.name],
-        [for e in jsondecode(defs)[0].environment : e.name],
-      ), "APP_SERVICE_DB_PASSWORD")
+      one([for s in jsondecode(module.ecs.api_container_definitions)[0].secrets : s.valueFrom if s.name == "APP_SERVICE_DB_PASSWORD"]) == module.secrets.secret_arns["app_service_db_password"],
+      !contains([for s in jsondecode(module.ecs.worker_container_definitions)[0].secrets : s.name], "APP_SERVICE_DB_PASSWORD"),
+      alltrue([
+        for defs in [module.ecs.api_container_definitions, module.ecs.worker_container_definitions] :
+        !contains([for e in jsondecode(defs)[0].environment : e.name], "APP_SERVICE_DB_PASSWORD")
+      ]),
     ])
-    error_message = "APP_SERVICE_DB_PASSWORD must not be on the API or worker task definition."
+    error_message = "APP_SERVICE_DB_PASSWORD must be an API secret (for the migrate clone), not on the worker, and never a plain variable."
   }
 
   # No secret value in a plain environment variable, where any caller of
@@ -250,14 +255,6 @@ run "refuses_a_short_audit_chain_secret" {
   expect_failures = [var.audit_hmac_secret]
 }
 
-run "refuses_an_app_url_that_is_not_an_https_origin" {
-  command = plan
-  variables {
-    app_url = "http://app.example.com"
-  }
-  expect_failures = [var.app_url]
-}
-
 run "refuses_placement_approvals_that_are_not_a_json_object" {
   command = plan
   variables {
@@ -272,24 +269,6 @@ run "refuses_equal_audit_seal_and_chain_keys" {
     audit_hmac_secret = "test-audit-hmac-key-0000000000000000000000000"
   }
   expect_failures = [terraform_data.boot_contract]
-}
-
-# An Origin header never ends in "/" and never carries uppercase; either would
-# boot, pass /readyz, and 403 every sign-in.
-run "refuses_an_app_url_with_a_trailing_slash" {
-  command = plan
-  variables {
-    app_url = "https://app.example.com/"
-  }
-  expect_failures = [var.app_url]
-}
-
-run "refuses_an_app_url_with_uppercase" {
-  command = plan
-  variables {
-    app_url = "https://App.example.com"
-  }
-  expect_failures = [var.app_url]
 }
 
 # Each of these parses as a JSON object, and the app still refuses to boot on it.
@@ -342,10 +321,29 @@ run "accepts_the_fail_closed_interim_approvals" {
   }
 }
 
-run "refuses_an_app_url_outside_the_cloudfront_domains" {
+# The first alias is APP_URL and ALLOWED_ORIGINS. A browser's Origin header
+# carries the host lowercased with no scheme, port or trailing dot; any other
+# form boots, passes /readyz, and 403s every sign-in.
+run "refuses_an_uppercase_domain_alias" {
   command = plan
   variables {
-    app_url = "https://elsewhere.example.com"
+    domain_aliases = ["App.example.com"]
   }
-  expect_failures = [terraform_data.boot_contract]
+  expect_failures = [var.domain_aliases]
+}
+
+run "refuses_a_domain_alias_with_a_scheme" {
+  command = plan
+  variables {
+    domain_aliases = ["https://app.example.com"]
+  }
+  expect_failures = [var.domain_aliases]
+}
+
+run "refuses_a_domain_alias_with_a_trailing_dot" {
+  command = plan
+  variables {
+    domain_aliases = ["app.example.com."]
+  }
+  expect_failures = [var.domain_aliases]
 }

@@ -23,15 +23,16 @@
  *   2. Reads the rendered API task definition out of the test's final state,
  *      and fails unless its family is the one the pipeline inspects.
  *   3. Runs the preflight step's own shell against it (`aws` stubbed).
- *   4. Fails if the preflight requires a name the test suite does not assert —
- *      the two lists are the one place drift could creep back in.
+ *   4. Checks the revision the preflight checked is the one that rolls: the
+ *      step publishes its ARN; migrate and deploy-api derive from it.
  *   5. Executes the rendered container health-check command against a stub
  *      server that answers by path: live-but-not-ready (/healthz 200, /readyz
  *      503) must pass; /healthz 503 and a closed port must fail. A regex on
  *      the command cannot find a quoting error; running it can.
- *   6. Confirms the image ships the Amazon RDS CA bundle, checksum-pinned, with
- *      NODE_EXTRA_CA_CERTS (Node) and PGSSLROOTCERT (libpq) pointing at it —
- *      the URLs above verify the server.
+ *
+ * Not here, because each has one canonical check elsewhere: the names the
+ * preflight requires are READ from deploy-aws.yml by the Terraform test itself;
+ * the image's trust of the RDS CA is tests/schema-contract/rds-ca-bundle.contract.test.ts.
  *
  * Usage:
  *   node scripts/ops/terraform-preflight-proof.mjs            # all of the above
@@ -78,13 +79,6 @@ function loadPreflight() {
   }
   console.error(`${TAG} FAIL — no step named "${PREFLIGHT_STEP}" in deploy-aws.yml; nothing to check against.`);
   process.exit(1);
-}
-
-/** The names the preflight's loop requires, parsed from its own shell. */
-function preflightRequiredNames(run) {
-  const m = run.match(/for VAR in ([\s\S]*?); do/);
-  if (!m) return null;
-  return m[1].replace(/\\\n/g, ' ').split(/\s+/).filter(Boolean);
 }
 
 /** Run the preflight shell with `aws` answering from a file. */
@@ -275,17 +269,6 @@ async function main() {
     else ok(`the preflight runs before the migration (job "${mName}")`);
   }
 
-  // 4. Drift between the pipeline's list and the suite's.
-  const required = preflightRequiredNames(pre.run);
-  const suite = fs.readFileSync(path.join(TF_DIR, TEST_FILE), 'utf8');
-  if (!required) {
-    fail('could not parse the preflight\'s `for VAR in … ; do` list');
-  } else {
-    const missingFromSuite = required.filter((n) => !suite.includes(`"${n}"`));
-    if (missingFromSuite.length) fail(`the preflight requires names ${TEST_FILE} does not assert: ${missingFromSuite.join(', ')}`);
-    else ok(`all ${required.length} names the preflight requires are asserted by ${TEST_FILE}`);
-  }
-
   // 5. The health check, executed.
   const api = rendered.api.containerDefinitions[0];
   const hc = api.healthCheck?.command;
@@ -309,38 +292,7 @@ async function main() {
   }
 }
 
-/**
- * 6. The image trusts the database it is pointed at. DATABASE_URL and
- * APP_DATABASE_URL carry sslmode=verify-full, production verifies the server
- * certificate, and no Amazon RDS root is in Node's bundled store — so the image
- * must ship the RDS bundle AND point NODE_EXTRA_CA_CERTS at it, pinned by
- * checksum. Remove either and every connection fails at the TLS handshake.
- */
-function checkImageTrustsRds() {
-  const df = fs.readFileSync(path.join(repoRoot, 'Dockerfile.optimized'), 'utf8');
-  const env = df.match(/^ENV NODE_EXTRA_CA_CERTS=(\S+)$/m);
-  if (!env) return fail('Dockerfile.optimized does not set NODE_EXTRA_CA_CERTS; the image cannot verify an RDS certificate');
-  const bundle = env[1];
-  const fetched = df.includes(`-o ${bundle}`) && df.includes('truststore.pki.rds.amazonaws.com');
-  const pinned = new RegExp(`sha256sum -c -`).test(df) && /ARG RDS_CA_BUNDLE_SHA256=[0-9a-f]{64}/.test(df);
-  if (!fetched) return fail(`NODE_EXTRA_CA_CERTS points at ${bundle}, but the image does not fetch the RDS bundle there`);
-  if (!pinned) return fail('the RDS bundle is not pinned by checksum (ARG RDS_CA_BUNDLE_SHA256 + sha256sum -c)');
-  // libpq (psql, pg_dump in the image) does not read NODE_EXTRA_CA_CERTS; with
-  // sslmode=verify-full it wants a root file, and ~/.postgresql/root.crt does
-  // not exist for the runtime user.
-  const libpq = df.match(/^ENV PGSSLROOTCERT=(\S+)$/m);
-  if (!libpq || libpq[1] !== bundle) {
-    return fail(`PGSSLROOTCERT must name the same bundle (${bundle}); libpq tools in the image cannot verify RDS otherwise`);
-  }
-  // That the URLs ask for verify-full is asserted on their RENDERED values by
-  // tests/boot_contract.tftest.hcl (step 1). It used to be a regex over
-  // main.tf's text here, which a comment satisfied: both URLs set to
-  // sslmode=disable still passed (review finding D4, 2026-09-24).
-  ok(`image trusts RDS: NODE_EXTRA_CA_CERTS and PGSSLROOTCERT=${bundle}, bundle fetched and checksum-pinned`);
-}
-
 await main();
-if (!tdJsonArg) checkImageTrustsRds();
 if (failures) {
   console.error(`\n${TAG} ${failures} check(s) failed.`);
   process.exit(1);

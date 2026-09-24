@@ -20,12 +20,12 @@ below, or listed as open with its reason.
 | B2 | `concept2cure-ri` is not a legal RDS DBName | `concept2cure_ri`, validated in `modules/rds` | `terraform-test.txt` |
 | B3 | The task definition lacked 9 of the preflight's variables; `RLS_ENFORCE` and `APP_URL` were unset | One `boot_secrets` / `boot_environment` list, shared by API and worker (the migration task is cloned from the API one). New secrets have no default, with ≥32-character validations, `refresh ≠ jwt` and `audit seal key ≠ chain key` | Before: the pipeline's own preflight refuses (`preflight-before.txt`). After: it accepts (`proof-after.txt`) |
 | B5 | The health check called `wget`, which the image lacks | `node` exec-form probe of **`/healthz`** (liveness), not `/readyz`. `/readyz` latches AnA at boot, and during a Multi-AZ failover it would get every task replaced. Grace period 120 s | `proof-after.txt` step 5 runs the check against a stub that routes by path: live-but-not-ready passes, `/healthz` 503 fails, a closed port fails |
-| B11 *(new)* | Node's 144 bundled roots include no Amazon RDS CA, so `verify-full` could never connect | The image fetches the RDS global bundle, pinned by sha256; `NODE_EXTRA_CA_CERTS` and `PGSSLROOTCERT` point at it; `rds.force_ssl=1`; `ca_cert_identifier` pinned | `rds-ca-bundle.txt`, `proof-must-fail.txt` |
+| B11 *(new)* | Node's 144 bundled roots include no Amazon RDS CA, so `verify-full` could never connect | After reconciliation (below): the bundle is vendored at `assets/rds-ca/` (the parallel session's design), and `NODE_EXTRA_CA_CERTS` and `PGSSLROOTCERT` point at it; `rds.force_ssl=1`; `ca_cert_identifier` pinned. This change also committed the bundle, which `.gitignore` had dropped | `rds-ca-bundle.txt` (the bundle's facts); `rds-ca-vendored-bundle-missing.txt`; `tests/schema-contract/rds-ca-bundle.contract.test.ts`. `proof-must-fail.txt` covers the build-time fetch this change first used, which has since been replaced |
 | B12 *(new)* | **The production image could not load its own bundle.** `server/vite.ts` imported `vite` at top level; the bundle keeps packages external; the image installs `--omit=dev`. Every container exited `ERR_MODULE_NOT_FOUND` before any app code ran. No job saw it, because every job that boots `dist/` has devDependencies installed | `vite` is imported inside `setupVite()` and loads its own config, so the dev path leaves the bundle entirely. New gate `ci:server-bundle-prod-imports` (+ `:selftest`), run in `production-boot-smoke` **and** in the Dockerfile's builder stage | `image-boot-vite-before.txt` (the gate red, the boot on a real `--omit=dev` tree dies on `vite`), `image-boot-vite-after.txt` (it gets through every import-time gate to the database connect; the gate is green; the dev server still works) |
 | B13 *(new)* | Minting `app_service` as the RDS master failed every time: `ALTER ROLE … NOSUPERUSER` is refused to a non-superuser, and `080_gcc` has always created the role by then | Superuser-only attributes are named only when the connecting role is a superuser. The result is read back, and a role the connecting user cannot make safe is **refused** | `alter-role-rds-master.txt`, on a real RDS-shaped (CREATEROLE, non-superuser) owner |
 | B14 *(new)* | The app_service password went to CloudWatch in plaintext: `log_statement=ddl` logs `ALTER ROLE … PASSWORD '…'` | A SCRAM-SHA-256 verifier computed client-side, so the plaintext never reaches the server | `scram-verifier.txt`: plaintext sent → red; the verifier equals PostgreSQL's own computation byte for byte; RFC 7677 known answer |
 | B15 *(new)* | A crash exited 0, so ECS recorded a failed boot as a clean stop | `gracefulShutdown(…, exitCode)`; `uncaughtException` exits 1 | `image-boot-vite-after.txt` §3 and §7 |
-| B16 *(new)* | Sign-in would 403 on any domain outside a hard-coded list: `csrfProtection` compares `Origin` to `ALLOWED_ORIGINS`, which was not set | `ALLOWED_ORIGINS = app_url`; `app_url` validated to be exactly the string a browser sends as `Origin` (lowercase host, no path, no trailing slash), and, since B9 landed, required to be one of CloudFront's `domain_aliases` | `terraform-test-must-fail.txt` |
+| B16 *(new)* | Sign-in would 403 on any domain outside a hard-coded list: `csrfProtection` compares `Origin` to `ALLOWED_ORIGINS`, which was not set | `APP_URL` and `ALLOWED_ORIGINS` are both `https://<first domain alias>`: one input, so they cannot disagree with the domain browsers use. Each alias is validated to be a lowercase hostname, since `Origin` is compared by string equality | `terraform-test-must-fail.txt` (recorded against the earlier `app_url` form; the alias rules have their own must-fail runs in `terraform-test.txt`) |
 | B17 *(new)* | `AI_PROVIDER_PLACEMENT_APPROVALS` passed Terraform but crash-looped every task | The variable validation mirrors the app's parser and its contradiction rule | `placement-approvals-oracle.txt`: the app's own parser agrees on all 8 test values |
 | review | The preflight checked one revision and `deploy-api` rolled whatever was latest at its start | The preflight publishes the ARN it checked; `migrate` and `deploy-api` derive from that ARN; `deploy-api` refuses if the family moved | `revision-pinning.txt`, with 3 mutations, each caught |
 | review | Service-before-listener race on a first apply | `depends_on = [module.alb]` on `module "ecs"` | `terraform-apply-ordering.txt` (graph with the edge and without it) |
@@ -36,12 +36,29 @@ Also: `deploy-aws.yml`'s preflight moved into `migrate`, ahead of the production
 DDL. Both ECS services ignore Terraform's `task_definition`, because the pipeline
 owns the API revision. The Docker `HEALTHCHECK` comment was corrected: ECS never
 reads it. `package.json` regained `db:provision`, which `25a793e0f` had dropped
-four minutes after it was added. `.github/workflows/terraform-boot-contract.yml`
-runs the mocked apply and the proof on every push that touches these paths.
+four minutes after it was added. `.github/workflows/terraform-tests.yml`
+runs the Terraform tests and the proof on every push that touches these paths.
 
 How to re-run: `cd terraform/environments/production && terraform init -backend=false && terraform test`, then
 `node scripts/ops/terraform-preflight-proof.mjs --no-init`, and
 `node scripts/build-server.mjs && npm run ci:server-bundle-prod-imports`.
+
+## Reconciliation with a parallel implementation (2026-09-24)
+
+Session `…01AiwZKG` built B1–B3, B5 and the RDS CA without a lane claim, and
+pushed `752a09ab1` and `63fbf452f` while this change was unpushed. The two
+versions were nearly identical in the modules, and zero duplication means one
+had to go. The merge (`docs/evidence/W2/2026-09-24-b1-b5/` is the other record):
+
+| Question | Kept | Why |
+|---|---|---|
+| Container health check | `/healthz` (this change) | Theirs probed `/readyz`. A readiness probe makes ECS replace tasks it cannot heal: AnA's verdict latches at boot, and a Multi-AZ failover would replace every task at once |
+| `APP_URL` | Theirs: from `domain_aliases[0]` | One input rather than a second variable plus a rule tying them together. `ALLOWED_ORIGINS` now derives from it too |
+| `APP_SERVICE_DB_PASSWORD` | Theirs: on the API task, so the migrate clone re-aligns `app_service` every deploy | The API never mints, and `APP_DATABASE_URL` already holds the password, so it adds no exposure. The mint is now safe on RDS (B13) and sends no plaintext (B14). Never on the worker, never a plain variable (asserted) |
+| Required-names list | Theirs: `terraform test` reads it from `deploy-aws.yml` | A single source. The proof's drift check was deleted |
+| RDS CA | Theirs: vendored under `assets/rds-ca/` | No network at build time, and it follows the repo's vendoring policy. Their `.pem` had never been committed (`.gitignore`), and this change commits it. Their contract test gained "tracked by git" and `PGSSLROOTCERT` cases, and the proof's CA step was deleted |
+| CI workflow | Theirs: `terraform-tests.yml` (production, alb, cloudfront, staging) | It gained the preflight proof as a job, plus concurrency. `terraform-boot-contract.yml` was deleted |
+| Everything else in this table above | This change | Theirs had no counterpart |
 
 ## Still between this and D1, in order
 
