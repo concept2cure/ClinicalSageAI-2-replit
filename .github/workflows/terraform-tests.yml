@@ -12,9 +12,11 @@ name: Terraform tests (offline)
 #
 # These tests run against mocked providers. They need no AWS account and no
 # credentials, and they create nothing.
-#   environments/production  the boot contract. It reads the required names out
-#                            of deploy-aws.yml, so this workflow also runs when
-#                            that file changes.
+#   stack                    the one deployment composition (B8). The boot
+#                            contract, for production AND staging, and
+#                            production's names. It reads both out of
+#                            deploy-aws.yml, so this workflow also runs when that
+#                            file changes.
 #   modules/alb              the ALB admits CloudFront alone (B9)
 #   modules/cloudfront       API routing through CloudFront (B9)
 
@@ -38,7 +40,7 @@ jobs:
       fail-fast: false
       matrix:
         dir:
-          - terraform/environments/production
+          - terraform/stack
           - terraform/modules/alb
           - terraform/modules/cloudfront
     env:
@@ -67,9 +69,13 @@ jobs:
         working-directory: ${{ matrix.dir }}
         run: terraform test
 
-  staging-validate:
-    name: terraform validate (staging)
+  environments-validate:
+    name: terraform validate (${{ matrix.env }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [production, staging]
     env:
       TF_IN_AUTOMATION: true
     steps:
@@ -80,7 +86,7 @@ jobs:
           terraform_version: 1.9.8
           terraform_wrapper: false
       - name: init and validate
-        working-directory: terraform/environments/staging
+        working-directory: terraform/environments/${{ matrix.env }}
         run: |
           terraform init -backend=false -input=false
           terraform validate
