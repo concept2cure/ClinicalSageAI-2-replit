@@ -238,17 +238,19 @@ export function projectModelsForPicker(models: ModelConfig[]): PickerModel[] {
  *
  * A level the model does not take is lowered to the nearest it does, never
  * raised: the person asked for at most that much work.
+ *
+ * Read from the entry's `maxApiEffort`, not from its name. See that field for
+ * why: a name rule is exactly what let every Bedrock id skip every check.
  */
 export function apiEffortForModel(
-  wireModel: string,
+  model: Pick<ModelConfig, 'maxApiEffort'>,
   effort: 'low' | 'medium' | 'high' | 'max' | undefined
 ): 'low' | 'medium' | 'high' | 'max' | undefined {
   if (!effort) return undefined;
-  const m = (wireModel || '').toLowerCase();
-  if (!m.startsWith('claude-')) return effort;
-  if (/^claude-(haiku|3|instant|2)/.test(m)) return undefined;
-  if (/^claude-sonnet-4(-5|-2|$|-\d{8})/.test(m) || /^claude-sonnet-4-0/.test(m)) return undefined;
-  if (/^claude-opus-4(-1|-0|$|-\d{8})/.test(m)) return undefined;
-  if (/^claude-opus-4-5/.test(m)) return effort === 'max' ? 'high' : effort;
+  const ceiling = model.maxApiEffort;
+  // Undeclared or null: send nothing. A missing declaration costs a turn its
+  // effort hint; sending one the model rejects costs the turn its first call.
+  if (!ceiling) return undefined;
+  if (ceiling === 'high' && effort === 'max') return 'high';
   return effort;
 }

@@ -145,6 +145,7 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-opus-4',
     provider: 'anthropic',
     model: 'claude-opus-5',
+    maxApiEffort: 'max',
     thinkingMode: 'adaptive',
     supportsSamplingParams: false,
     supportsInlineSystem: true,
@@ -185,6 +186,7 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-opus-4-legacy',
     provider: 'anthropic',
     model: 'claude-opus-4-8',
+    maxApiEffort: 'max',
     thinkingMode: 'adaptive',
     supportsSamplingParams: false,
     supportsInlineSystem: true,
@@ -211,6 +213,7 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-sonnet-4',
     provider: 'anthropic',
     model: 'claude-sonnet-5',
+    maxApiEffort: 'max',
     supportsStructuredOutputs: true,
     // Sonnet 5 shares the flagship's reasoning-only surface: adaptive
     // thinking, and temperature/top_p/top_k rejected. Note this differs from
@@ -246,6 +249,7 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-sonnet-4-legacy',
     provider: 'anthropic',
     model: 'claude-sonnet-4-6',
+    maxApiEffort: 'max',
     thinkingMode: 'budget',
     supportsSamplingParams: true,
     contextWindow: 1000000,
@@ -272,6 +276,10 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     // stale-prior artifact. Haiku keeps the 200K window — unlike the Opus and
     // Sonnet entries above, that figure is correct here.
     model: 'claude-haiku-4-5',
+    // null, not omitted: Haiku 4.5 rejects effort with a 400, and every
+    // Fast turn routes here. Declared explicitly so the reason is on the
+    // entry rather than implied by an absence.
+    maxApiEffort: null,
     supportsStructuredOutputs: true,
     thinkingMode: 'budget',
     supportsSamplingParams: true,
@@ -1972,7 +1980,7 @@ export class AIGateway {
       params.output_config = { ...(params.output_config ?? {}), format: structured.format };
     }
     // Only a level this model accepts (Haiku 4.5 rejects effort outright).
-    const modelEffort = apiEffortForModel(modelConfig.model, request.apiEffort);
+    const modelEffort = apiEffortForModel(modelConfig, request.apiEffort);
     if (modelEffort) {
       params.output_config = { ...(params.output_config ?? {}), effort: modelEffort };
     }
@@ -2194,7 +2202,7 @@ export class AIGateway {
       params.output_config = { ...(params.output_config ?? {}), format: structured.format };
     }
     // Only a level this model accepts (Haiku 4.5 rejects effort outright).
-    const modelEffort = apiEffortForModel(modelConfig.model, request.apiEffort);
+    const modelEffort = apiEffortForModel(modelConfig, request.apiEffort);
     if (modelEffort) {
       params.output_config = { ...(params.output_config ?? {}), effort: modelEffort };
     }

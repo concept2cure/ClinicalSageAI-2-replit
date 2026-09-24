@@ -654,6 +654,28 @@ export interface ModelConfig {
    * entry is one we do not use for it.
    */
   supportsInlineSystem?: boolean;
+
+  /**
+   * The highest `output_config.effort` this entry accepts, or `null` for none.
+   *
+   *   null    Haiku 4.5, Sonnet 4.5 and older — effort is a 400
+   *   'high'  Opus 4.5 — low | medium | high
+   *   'max'   Opus 4.6 and later, Sonnet 4.6 and later — every level
+   *
+   * A requested level above this is LOWERED to it, never raised: the person
+   * asked for at most that much work. Omitted means none — the same rule as
+   * the flags above, because the failure it prevents is the 400 itself.
+   *
+   * Declared per entry, not inferred from the model name. It was briefly
+   * inferred, by regexes over the wire string that began
+   * `if (!m.startsWith('claude-')) return effort;` — so every Bedrock id
+   * (`anthropic.claude-*`) skipped every check and was sent whatever it was
+   * asked for. Same weights, different substrate naming, and the one model
+   * the function existed to protect (Haiku) would have taken the 400 on
+   * Bedrock. That is the reason this whole block is data: the substrate, not
+   * the family, decides what an entry can do.
+   */
+  maxApiEffort?: 'high' | 'max' | null;
 }
 
 export interface PolicyConfig {
