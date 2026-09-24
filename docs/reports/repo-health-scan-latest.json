@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-24T17:35:50.851Z",
+  "generatedAt": "2026-09-24T17:52:55.203Z",
   "git": {
-    "sha": "9cd48abe7687c13b760a1a24683c4d9f8ffe2279",
+    "sha": "bd066f365b6634a581459884c6358b90280be0e8",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2039,7 +2039,7 @@
       },
       {
         "file": "server/storage.ts",
-        "bytes": 145065
+        "bytes": 145405
       },
       {
         "file": "server/routes/submission-ops.ts",
@@ -2545,11 +2545,11 @@
       },
       {
         "file": "server/routes/c2c/project-vault.ts",
-        "lines": 1543
+        "lines": 1547
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 1535
+        "lines": 1538
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
