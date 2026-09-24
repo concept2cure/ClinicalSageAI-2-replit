@@ -21,6 +21,9 @@ import { invalidateOrgMembershipCache } from '../../server/middleware/orgMembers
 import { runWithTenantScope } from '../../server/db/tenantStore';
 import industryContextRouter from '../../server/routes/mdx-industry-context';
 import savedPrecedentQueriesRouter from '../../server/routes/saved-precedent-queries';
+import controlPlaneRouter from '../../server/src/routes/control-plane.router';
+import { evaluateGovernedDocument } from '../../server/src/control-plane/governed-document-evaluator';
+import { GOVERNED_FABRIC_KIND } from '../../server/services/governed-decision-repository';
 
 const TAG = `wo03_${process.pid}_${Date.now().toString(36)}`;
 const APP_ROLE = process.env.APP_SERVICE_DB_ROLE || 'app_service';
@@ -433,6 +436,9 @@ afterAll(async () => {
            org-scoped deletes are safe AND idempotent: each run now also clears
            whatever its predecessors stranded. Domains whose own rows carry no
            organization_id are matched through the orgs instead. */
+        await cleanup.query('DELETE FROM decision_records WHERE organization_id=ANY($1::int[])', [
+          FIXTURE_ORGS,
+        ]);
         await cleanup.query('DELETE FROM risk_items WHERE organization_id=ANY($1::int[])', [
           FIXTURE_ORGS,
         ]);
@@ -599,5 +605,168 @@ describe('WO-03 two-tenant application isolation', () => {
       `${TAG}%`,
     ]);
     expect(bypass.rows[0].n).toBe(2);
+  });
+});
+
+/**
+ * Governed decisions — added 2026-09-24 (launch row D3).
+ *
+ * The governed-document fabric records one decision per evaluation into
+ * `public.decision_records`, and four routes read them back. None of it was in
+ * this contract. Until f55dfcec the recorder wrote values the table's CHECK
+ * constraints reject, so nothing ever persisted and the tenant question never
+ * arose; once it could persist, the control-plane "simulate" route was found
+ * recording under a BODY-supplied organization. Both were fixed and shown on
+ * PGlite — which enforces no RLS. These cases put the same paths through the
+ * production posture this file already asserts in its first case: `app_service`,
+ * not superuser, no BYPASSRLS, `app.rls_enforce=on`, the real JWT/scope
+ * middleware, and the real routers.
+ *
+ * Every row count below is read through the OWNER pool, which is exempt from
+ * RLS. Counting through the app role would be circular: a row RLS hid from the
+ * app would look exactly like a row that was never written.
+ */
+describe('WO-03 governed decisions under RLS (D3, 2026-09-24)', () => {
+  const GD_PROJECT = 903010;
+  let cp: express.Express;
+
+  beforeAll(() => {
+    // Mounted exactly as server/bootstrap/register-core-routes.ts mounts it.
+    cp = express();
+    cp.use(express.json());
+    cp.use('/api/control-plane', authenticateToken, controlPlaneRouter);
+  });
+
+  const scope = (org: number, caller: string) => ({
+    tenantId: String(org),
+    role: 'member',
+    source: 'test' as const,
+    caller,
+  });
+
+  const evaluation = (org: number, artifactId: string) => ({
+    context: {
+      organizationId: String(org),
+      projectId: String(GD_PROJECT),
+      actorId: `${TAG}-actor`,
+      intendedAction: 'promote' as const,
+      artifactId,
+    },
+    documentState: {
+      hasContent: true,
+      hasEvidence: false,
+      hasBeenReviewed: false,
+      hasApproval: false,
+      hasPlacement: false,
+      placementValid: false,
+      hasProvenance: false,
+      unresolvedContradictionCount: 0,
+      criticalContradictionCount: 0,
+    },
+  });
+
+  const fabricRows = async (org: number) =>
+    (
+      await owner.query(
+        `SELECT id::text AS id, decision_context->>'governedDecisionId' AS governed_id,
+                notes::jsonb->>'artifactId' AS artifact
+           FROM decision_records
+          WHERE organization_id = $1 AND project_id = $2 AND decision_context->>'kind' = $3
+          ORDER BY created_at`,
+        [org, GD_PROJECT, GOVERNED_FABRIC_KIND]
+      )
+    ).rows as Array<{ id: string; governed_id: string; artifact: string }>;
+
+  /** The recorder is fire-and-forget; give it time before judging a count. */
+  const settle = () => new Promise(r => setTimeout(r, 1500));
+
+  it('the recording evaluator persists the caller\'s own decision through the app role', async () => {
+    const before = (await fabricRows(ORG_A)).length;
+    // Exactly the production call: the synchronous evaluator, whose recording
+    // is an un-awaited promise. The tenant scope has to survive that hop.
+    runWithTenantScope(scope(ORG_A, 'wo03-gd-own'), () =>
+      evaluateGovernedDocument(evaluation(ORG_A, `${TAG}-own-doc`) as never)
+    );
+    await settle();
+    const after = await fabricRows(ORG_A);
+    expect(after.length, 'a decision recorded for the caller\'s own org must persist under RLS').toBe(
+      before + 1
+    );
+    // One identity: the id the fabric hands back is the row's id.
+    expect(after[after.length - 1].id).toBe(after[after.length - 1].governed_id);
+  });
+
+  it('WITH CHECK refuses a decision the recorder files for another tenant', async () => {
+    const before = (await fabricRows(ORG_B)).length;
+    // Tenant A's request, a context naming tenant B: what the simulate route did
+    // with a body-supplied org before f55dfcec. The app layer no longer issues
+    // this; the database must refuse it regardless.
+    runWithTenantScope(scope(ORG_A, 'wo03-gd-foreign'), () =>
+      evaluateGovernedDocument(evaluation(ORG_B, `${TAG}-planted-doc`) as never)
+    );
+    await settle();
+    expect(
+      (await fabricRows(ORG_B)).length,
+      'a decision filed for tenant B from tenant A\'s session must not land'
+    ).toBe(before);
+  });
+
+  it('the simulate route records nothing, for any tenant', async () => {
+    const beforeA = (await fabricRows(ORG_A)).length;
+    const beforeB = (await fabricRows(ORG_B)).length;
+    const res = await request(cp)
+      .post('/api/control-plane/governed/evaluate')
+      .set(auth(tokenA))
+      .send(evaluation(ORG_B, `${TAG}-simulated-doc`));
+    expect(res.status).toBe(200);
+    expect(res.body?.result?.evaluation?.decision?.outcome).toBeTruthy();
+    await settle();
+    expect((await fabricRows(ORG_A)).length).toBe(beforeA);
+    expect((await fabricRows(ORG_B)).length).toBe(beforeB);
+  });
+
+  it('the reads show tenant A its decision and tenant B nothing of it', async () => {
+    const own = await fabricRows(ORG_A);
+    expect(own.length, 'case 1 must have left tenant A a decision to read').toBeGreaterThan(0);
+    const mine = own[own.length - 1];
+
+    const listA = await request(cp)
+      .get(`/api/control-plane/governed/decisions?projectId=${GD_PROJECT}`)
+      .set(auth(tokenA));
+    expect(listA.status).toBe(200);
+    expect(listA.body.count).toBe(own.length);
+    const listedId: string = listA.body.entries[0].decisionId;
+
+    // Positive control for the by-id check below: tenant A can fetch its own
+    // decision by the id the list returned. Without this, B's 404 would prove
+    // nothing — it would also be what a broken lookup returns to everyone.
+    const detailA = await request(cp)
+      .get(`/api/control-plane/governed/decisions/${listedId}`)
+      .set(auth(tokenA));
+    expect(detailA.status, 'tenant A must be able to fetch its own decision by the id it was given').toBe(
+      200
+    );
+
+    const listB = await request(cp)
+      .get(`/api/control-plane/governed/decisions?projectId=${GD_PROJECT}`)
+      .set(auth(tokenB));
+    expect(listB.status).toBe(200);
+    expect(listB.body.count).toBe(0);
+
+    const detailB = await request(cp)
+      .get(`/api/control-plane/governed/decisions/${listedId}`)
+      .set(auth(tokenB));
+    expect(detailB.status).toBe(404);
+
+    const traceB = await request(cp)
+      .get(`/api/control-plane/governed/trace/${GD_PROJECT}/${mine.artifact}`)
+      .set(auth(tokenB));
+    expect(traceB.status).toBe(200);
+    expect(traceB.body.count).toBe(0);
+
+    const traceA = await request(cp)
+      .get(`/api/control-plane/governed/trace/${GD_PROJECT}/${mine.artifact}`)
+      .set(auth(tokenA));
+    expect(traceA.body.count).toBe(1);
   });
 });

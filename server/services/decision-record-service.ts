@@ -109,6 +109,15 @@ export interface CreateDecisionInput {
   decidedBy: string;
   notes?: string;
   decisionContext?: Record<string, unknown>;
+  /**
+   * Use this as the row's primary key instead of a generated one. For a caller
+   * that has already handed an id to its own caller — the governed-document
+   * fabric returns a decision reference before the insert completes — so the id
+   * it gave out is the id the row can be fetched by. Two identifiers for one
+   * decision is how GET /governed/decisions/:decisionId came to answer 404 for
+   * every decision it listed.
+   */
+  id?: string;
 }
 
 // ─── Service ─────────────────────────────────────────────────────────────────
@@ -179,8 +188,8 @@ export class DecisionRecordService {
         organization_id, project_id, decision_code, title, domain_track,
         recommendation_type, recommendation_summary, recommendation_rationale,
         confidence_level, evidence_basis, related_assumption_ids,
-        decided_by, notes, decision_context, action_state
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+        decided_by, notes, decision_context, action_state, id
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,COALESCE($16::uuid, gen_random_uuid()))
       RETURNING *
     `,
       [
@@ -201,6 +210,7 @@ export class DecisionRecordService {
         // Matches the column default when the caller says nothing, so a
         // human-authored recommendation still starts life awaiting review.
         input.actionState ?? 'proposed',
+        input.id ?? null,
       ]
     );
 
