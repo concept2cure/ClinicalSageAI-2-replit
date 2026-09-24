@@ -22,8 +22,11 @@
 data "aws_caller_identity" "current" {}
 
 locals {
-  release_signing_key_year  = "2026"
-  release_signing_key_alias = "alias/fda-signing-key-${local.release_signing_key_year}"
+  release_signing_key_year = "2026"
+  # Production's alias is the SOP's (alias/fda-signing-key-{YYYY}). Staging gets
+  # its own key under a distinct alias, so a staging signature can never be
+  # made with, or mistaken for, the production key (D1 brief B8).
+  release_signing_key_alias = var.environment == "production" ? "alias/fda-signing-key-${local.release_signing_key_year}" : "alias/fda-signing-key-${local.release_signing_key_year}-${var.environment}"
 
   # Both containers carry it: server/services/signature/signer-mode.ts refuses
   # to boot a production process whose signer posture is unset, `dev`, or
@@ -36,7 +39,7 @@ locals {
 }
 
 resource "aws_kms_key" "release_signing" {
-  description              = "Concept2Cure release signatures (21 CFR Part 11 11.70) - ${local.release_signing_key_year}"
+  description              = "Concept2Cure release signatures (21 CFR Part 11 11.70) - ${var.environment} ${local.release_signing_key_year}"
   key_usage                = "SIGN_VERIFY"
   customer_master_key_spec = "RSA_4096"
   multi_region             = true
@@ -85,9 +88,4 @@ resource "aws_kms_key" "release_signing" {
 resource "aws_kms_alias" "release_signing" {
   name          = local.release_signing_key_alias
   target_key_id = aws_kms_key.release_signing.key_id
-}
-
-# Filed as evidence for SOP_KEY_MANAGEMENT.md §10 step 1.
-output "release_signing_key_arn" {
-  value = aws_kms_key.release_signing.arn
 }

@@ -1,0 +1,8 @@
+== validate environments/production
+Success! The configuration is valid.
+== validate environments/staging
+Success! The configuration is valid.
+== test modules/alb
+Success! 4 passed, 0 failed.
+== test modules/cloudfront
+Success! 8 passed, 0 failed.

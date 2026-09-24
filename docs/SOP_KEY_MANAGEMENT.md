@@ -49,8 +49,12 @@ symmetric seal (server authenticity) in place of an asymmetric signature.
   is generated inside KMS and is not exportable. The application's IAM task role
   holds `kms:Sign`, `kms:Verify`, `kms:GetPublicKey` on that key and nothing
   else; no human principal holds `kms:Sign`. *Status: written as infrastructure
-  code, not yet applied (2026-09-23). `terraform/environments/production/release_signing.tf`
-  defines the key and its key policy:
+  code, not yet applied (2026-09-23). `terraform/stack/release_signing.tf`
+  (moved from `environments/production/` on 2026-09-24, when both environments
+  began sharing one composition) defines the key and its key policy. Production's
+  alias is `alias/fda-signing-key-{YYYY}`. Staging has its own key under
+  `alias/fda-signing-key-{YYYY}-staging`, so a staging signature can never be
+  made with the production key:
   - account principals may administer the key (the policy's administration
     statement grants no `kms:Sign`) and may Verify and read the public key;
   - only the ECS task role may Sign.

@@ -211,6 +211,20 @@ defect, one of them mine:**
 Both are scoped to the diff against the upstream ref, so they hold a lane to its
 own code. Both fail closed on an ESLint crash or an unreadable index.
 
+**For the RAG / memory owners (2026-09-24) — filtered vector search can miss:**
+the vault reader's dense arm (`AdvancedRAGPipeline.searchVaultSimilar`) put its
+tenant predicate in the `WHERE` of `ORDER BY embedding <=> $q LIMIT k`. With an
+approximate index (`ivfflat`, probes 1) the scan picks candidates from one list
+and filters afterwards, so a tenant's search returned nothing while its matching
+passages sat in unprobed lists — reproduced on real PostgreSQL, fixed with a
+`MATERIALIZED` CTE that scopes first and ranks exactly
+(`docs/evidence/D4/2026-09-24-vault-passage-recall/`). The same shape is in
+`searchRagChunksSimilar`, `searchClientMemorySimilar` and
+`searchProjectMemorySimilar` in that file. Where the table has an approximate
+index and the filter is a tenant, the same miss is possible — HNSW included,
+once a tenant is a small fraction of the table. Not changed here: not this
+lane's corpora.
+
 **ESLint ERROR cleared from another lane (2026-09-19):**
 `server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts:169` (commit
 `1e8ddb6d2`) carried four literal spaces inside a regex, which `no-regex-spaces`
