@@ -34,11 +34,16 @@ export { CTD_AUTHORING_GUIDANCE } from './authoring-guidance.js';
 export { LIFECYCLE_DOCUMENT_TYPES } from './lifecycle-document-types.js';
 
 /**
- * Normalize a section code to the canonical (plain) form used as the guidance
- * key: strip a leading eCTD "m" module prefix (e.g. "m3.2.S.4" -> "3.2.S.4")
- * and trim. Section letters (S/P/A/R) keep their case.
+ * The key a section code's authoring guidance is stored under: strip a leading
+ * eCTD "m" module prefix (e.g. "m3.2.S.4" -> "3.2.S.4") and trim. Section
+ * letters (S/P/A/R) keep their case.
+ *
+ * A lookup key, not a validator. It returns a string for anything, including a
+ * code the placement gate must refuse. It used to share its name with the
+ * refusing function in shared/regulatory/section-code.ts, and was re-exported
+ * beside it (tests/schema-contract/one-normalize-ctd-code.contract.test.ts).
  */
-export function normalizeCtdCode(code: string): string {
+export function ctdGuidanceKey(code: string): string {
   return String(code ?? '').trim().replace(/^m(?=\d)/, '');
 }
 
@@ -55,7 +60,7 @@ export function listCtdGuidanceCodes(): string[] {
  * "3.2.S" surfaces its most general child). Tolerates the "m" prefix.
  */
 export function getCtdAuthoringGuidance(code: string): CtdSection | undefined {
-  const canonical = normalizeCtdCode(code);
+  const canonical = ctdGuidanceKey(code);
   const exact = CTD_AUTHORING_GUIDANCE[canonical];
   if (exact) return exact;
 

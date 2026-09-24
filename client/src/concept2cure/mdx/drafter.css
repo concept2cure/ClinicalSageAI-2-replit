@@ -147,7 +147,7 @@
 .mdx-shell .drafter-toggle.is-on { background: var(--accent-000); color: var(--accent-200); border-color: var(--accent-100); }
 .mdx-shell .drafter-regen { color: var(--accent-200); border-color: var(--accent-100); }
 .mdx-shell .drafter-regen:hover { background: var(--accent-000); }
-.mdx-shell .drafter-regen[disabled] { opacity: 0.6; cursor: progress; }
+.mdx-shell .drafter-regen[disabled] { opacity: 0.5; cursor: progress; }
 
 /* ─── Body — two panes ───────────────────────────────────── */
 .mdx-shell .drafter-body {
@@ -342,7 +342,7 @@
   border-radius: var(--radius-md);
   font-size: 13px; font-weight: 500;
 }
-.mdx-shell .du-cta[disabled] { opacity: 0.65; cursor: progress; }
+.mdx-shell .du-cta[disabled] { opacity: 0.5; cursor: progress; }
 .mdx-shell .du-cta svg { width: 14px; height: 14px; }
 
 /* Drafted body */

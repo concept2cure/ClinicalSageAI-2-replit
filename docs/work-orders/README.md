@@ -130,7 +130,7 @@ Full record: `docs/evidence/D5-AUDIT-OUTCOMES/2026-09-24/README.md`.
    able to send the complete response that lifts it (312.42(e)), so a blanket refusal
    is its own defect. Product decision for JM (it is Click 5 of the demo). Session
    `…015weqdG` is doing unclaimed work beside this (`50e78caa4`, `3c101fc96`).
-2. **A same-named `normalizeCtdCode` with a different contract.**
+2. ~~**A same-named `normalizeCtdCode` with a different contract.**~~ **Done 2026-09-24 (`…01AiwZKG`):** the `ind/ctd` copy is `ctdGuidanceKey` (a lookup key, and says so), the registry no longer re-exports it, and `tests/schema-contract/one-normalize-ctd-code.contract.test.ts` refuses any other definition or a re-export not from the shared module (red 2/2 before, green after). Of the two private copies, `ich-headings.ts` no longer exists. `dispatch-readiness.ts`'s `normalizeCode` is a differently named private comparison key inside the dispatch gate; changing what the gate compares is the package-spine lane's call. Originally:
    `server/services/ind/ctd/index.ts:41` (re-exported at `ind-section-registry.ts:404`)
    returns a string for `m1/us/1.2`, where `shared/regulatory/section-code.ts` returns
    null — the exact input the `upsertLeaf` gate exists to refuse. An import resolved by

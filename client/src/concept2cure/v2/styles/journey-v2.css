@@ -429,7 +429,7 @@
 /* A disabled row action must look disabled. `.nda-open` carried no disabled
    state, so "Review" blocked by the two-person rule and "Build" blocked by
    having no source data both still read as live controls. */
-.c2c-v2 .nda-open:disabled,.c2c-v2 .reg-cta:disabled{opacity:.45;cursor:not-allowed;}
+.c2c-v2 .nda-open:disabled,.c2c-v2 .reg-cta:disabled{opacity:.5;cursor:not-allowed;}
 .c2c-v2 .pj-toolgrp{margin-bottom:16px;}
 .c2c-v2 .pj-toolgrp-l{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin-bottom:8px;}
 .c2c-v2 .sp-tone-err{color:var(--error);font-weight:600;}
