@@ -70,6 +70,105 @@ const SECTION_PLACEHOLDER: Partial<Record<string, string>> = {
 
 type Verdict = { kind: 'error' | 'ok'; message: string } | null;
 
+type Judged = ReturnType<typeof judgeSectionCode>;
+
+/** Why the file button is disabled, in the words of what is missing. */
+function placeBlockedReason(hasSequence: boolean, sectionUsable: boolean, vocabulary: string): string | undefined {
+  if (!hasSequence) return 'Choose a submission and a sequence that can take a leaf';
+  if (sectionUsable) return undefined;
+  return vocabulary === 'ctd'
+    ? 'A CTD section code is required'
+    : "A section code in this submission's vocabulary is required";
+}
+
+/* Offering to file a non-PDF promised an assembly that cannot happen: the
+   success message said "the vault copy is what will be assembled", and the
+   packager would then refuse the leaf. */
+function NotPdfNotice({ mimeType }: { mimeType: string | undefined }) {
+  return (
+    <div className="de-err" role="status">
+      Only a PDF can be filed into a submission. This file is {mimeType || 'of an unrecorded type'}, and the
+      packager refuses any leaf that is not a PDF, so it could never be assembled. Nothing will be written.
+    </div>
+  );
+}
+
+function SectionFields({
+  section,
+  onSection,
+  vocabulary,
+  judged,
+  op,
+  onOp,
+}: {
+  section: string;
+  onSection: (value: string) => void;
+  vocabulary: string;
+  judged: Judged;
+  op: string;
+  onOp: (value: string) => void;
+}) {
+  const note = judged.note;
+  const isErr = note?.tone === 'err';
+  return (
+    <>
+      <div className="de-field half">
+        <label className="de-label" htmlFor="vpf-section">
+          Section code<span className="req">*</span>
+        </label>
+        <input
+          id="vpf-section"
+          className="c2c-input"
+          value={section}
+          onChange={(e) => onSection(e.target.value)}
+          placeholder={SECTION_PLACEHOLDER[vocabulary] ?? 'e.g. 3.2.P.8.3'}
+        />
+        {note && (
+          <div className={isErr ? 'de-err' : 'de-desc'} role="status">
+            {note.text}
+            {isErr ? ' Nothing will be written.' : ''}
+          </div>
+        )}
+      </div>
+
+      <div className="de-field half">
+        <label className="de-label" htmlFor="vpf-op">Lifecycle operation</label>
+        <select
+          id="vpf-op"
+          className="c2c-input"
+          value={op}
+          onChange={(e) => onOp(e.target.value)}
+        >
+          {Object.entries(SC_LIFECYCLE_OPS).map(([v, m]) => (
+            <option key={v} value={v}>{m.l}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="de-gov">
+        <span className="ico">{I.lock}</span>
+        <span className="de-gov-t">
+          Placement is recorded in the submission of record — audited and org-scoped. The
+          server refuses a frozen or dispatched sequence, and re-checks the document against
+          the hash held for it before assembling.
+        </span>
+      </div>
+    </>
+  );
+}
+
+function VerdictLine({ verdict }: { verdict: NonNullable<Verdict> }) {
+  if (verdict.kind === 'error') {
+    return <div className="de-err" role="status"><span>{verdict.message}</span></div>;
+  }
+  return (
+    <div className="de-gov" role="status">
+      <span className="ico">{I.checkCircle}</span>
+      <span className="de-gov-t">{verdict.message}</span>
+    </div>
+  );
+}
+
 export function VaultPlaceIntoSubmission({
   documentUuid,
   documentTitle,
@@ -77,9 +176,7 @@ export function VaultPlaceIntoSubmission({
   onPlaced,
   mimeType,
 }: VaultPlaceIntoSubmissionProps) {
-  /* Offering to file a non-PDF promised an assembly that cannot happen: the
-     success message said "the vault copy is what will be assembled", and the
-     packager would then refuse the leaf. Refuse here, before anything loads. */
+  // Refused here, before anything loads (see NotPdfNotice).
   const notPdf = mimeType !== undefined && mimeType !== PDF;
   const [verdict, setVerdict] = React.useState<Verdict>(null);
   const target = useFilingTarget(() => setVerdict(null));
@@ -97,7 +194,6 @@ export function VaultPlaceIntoSubmission({
      claim is backed here: focus moves in on open, is held, and is returned to
      whatever opened the dialog on close. Escape closes, as a dialog must. */
   const dialogRef = React.useRef<HTMLDivElement | null>(null);
-  const firstFieldRef = React.useRef<HTMLSelectElement | HTMLInputElement | null>(null);
   const openerRef = React.useRef<Element | null>(null);
 
   React.useEffect(() => {
@@ -229,67 +325,22 @@ export function VaultPlaceIntoSubmission({
           </div>
 
           {notPdf ? (
-            <div className="de-err" role="status">
-              Only a PDF can be filed into a submission. This file is {mimeType || 'of an unrecorded type'}, and the
-              packager refuses any leaf that is not a PDF, so it could never be assembled. Nothing will be written.
-            </div>
+            <NotPdfNotice mimeType={mimeType} />
           ) : (
-          <>
-          <FilingTargetFields target={target} idPrefix="vpf" />
-
-          <div className="de-field half">
-            <label className="de-label" htmlFor="vpf-section">
-              Section code<span className="req">*</span>
-            </label>
-            <input
-              id="vpf-section"
-              className="c2c-input"
-              value={section}
-              onChange={(e) => { setSection(e.target.value); setVerdict(null); }}
-              placeholder={SECTION_PLACEHOLDER[vocabulary] ?? 'e.g. 3.2.P.8.3'}
-            />
-            {judged.note && (
-              <div
-                className={judged.note.tone === 'err' ? 'de-err' : 'de-desc'}
-                role="status"
-              >
-                {judged.note.text}
-                {judged.note.tone === 'err' ? ' Nothing will be written.' : ''}
-              </div>
-            )}
-          </div>
-
-          <div className="de-field half">
-            <label className="de-label" htmlFor="vpf-op">Lifecycle operation</label>
-            <select
-              id="vpf-op"
-              className="c2c-input"
-              value={op}
-              onChange={(e) => setOp(e.target.value)}
-            >
-              {Object.entries(SC_LIFECYCLE_OPS).map(([v, m]) => (
-                <option key={v} value={v}>{m.l}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="de-gov">
-            <span className="ico">{I.lock}</span>
-            <span className="de-gov-t">
-              Placement is recorded in the submission of record — audited and org-scoped. The
-              server refuses a frozen or dispatched sequence, and re-checks the document against
-              the hash held for it before assembling.
-            </span>
-          </div>
-          </>
+            <>
+              <FilingTargetFields target={target} idPrefix="vpf" />
+              <SectionFields
+                section={section}
+                onSection={(value) => { setSection(value); setVerdict(null); }}
+                vocabulary={vocabulary}
+                judged={judged}
+                op={op}
+                onOp={setOp}
+              />
+            </>
           )}
 
-          {verdict && (
-            <div className={verdict.kind === 'error' ? 'de-err' : 'de-gov'} role="status">
-              {verdict.kind === 'ok' ? <span className="ico">{I.checkCircle}</span> : null}
-              <span className={verdict.kind === 'ok' ? 'de-gov-t' : undefined}>{verdict.message}</span>
-            </div>
-          )}
+          {verdict && <VerdictLine verdict={verdict} />}
         </div>
 
         <div className="de-f">
@@ -300,15 +351,7 @@ export function VaultPlaceIntoSubmission({
             className="de-btn primary"
             onClick={() => void place()}
             disabled={!canPlace}
-            title={
-              !seq
-                ? 'Choose a submission and a sequence that can take a leaf'
-                : !sectionUsable
-                  ? vocabulary === 'ctd'
-                    ? 'A CTD section code is required'
-                    : "A section code in this submission's vocabulary is required"
-                  : undefined
-            }
+            title={placeBlockedReason(Boolean(seq), sectionUsable, vocabulary)}
           >
             {placing ? 'Filing…' : 'Place into submission'}
           </button>

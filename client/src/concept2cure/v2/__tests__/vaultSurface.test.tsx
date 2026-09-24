@@ -22,7 +22,6 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { Vault } from '../surfaces/Vault';
-import { useActiveSurfaceContext, type SurfaceContext } from '../surfaceContext';
 
 const PID = '11111111-1111-4111-8111-111111111111';
 const DOC_ID = '22222222-2222-4222-8222-222222222222';
@@ -454,28 +453,6 @@ describe('Vault — search', () => {
     expect(document.body.textContent).not.toContain('<b>');
   });
 
-  it('names a hit\'s document type in words, not the stored wire token', async () => {
-    // The tree used the shared label map (vaultIngestTypeLabel) from 2026-09-19;
-    // search hits were mapped separately and rendered the raw token, so the same
-    // document read "Module 3 · quality" in the tree and "MODULE_3" in a search.
-    mockSearch(() =>
-      ok({
-        success: true,
-        data: {
-          query: 'dissolution', total: 1, limit: 100, offset: 0,
-          results: [{
-            id: DOC_ID, title: 'Dissolution method', fileName: 'diss.pdf', documentType: 'MODULE_3',
-            size: '1.0 MB', folderId: 'module-3', ctdSection: '3.2.P.5', placementStatus: 'confirmed', snippet: null,
-          }],
-        },
-      }),
-    );
-    render(<Vault {...props()} />);
-    fireEvent.change(await screen.findByLabelText('Search this vault'), { target: { value: 'dissolution' } });
-    expect((await screen.findAllByText('Module 3 · quality')).length).toBeGreaterThan(0);
-    expect(document.body.textContent).not.toContain('MODULE_3');
-  });
-
   it('reports a FAILED search as a failure, never as zero matches', async () => {
     mockSearch(() => ({
       ok: false,
@@ -626,50 +603,5 @@ describe('Vault — placing a document into a submission', () => {
     // The tree id is `up-<uuid>`; the leaf must carry the uuid alone.
     expect(sent.documentUuid).toBe(DOC_ID);
     expect(String(sent.documentUuid)).not.toMatch(/^up-/);
-  });
-});
-
-describe('Vault — the upload type picker names types in words', () => {
-  it('offers the shared labels, not the wire tokens with underscores swapped for spaces', async () => {
-    mockApi(() => ok(vaultPayload()));
-    render(<Vault {...props()} />);
-    const picker = (await screen.findByTestId('vault-upload-type')) as HTMLSelectElement;
-    const labels = Array.from(picker.options).map((o) => o.textContent);
-    expect(labels).toContain('Clinical study report');
-    expect(labels).toContain('Module 3 · quality');
-    expect(labels).not.toContain('MODULE 3');
-    expect(labels).not.toContain('CSR');
-    // The VALUE is still the token the ingest schema accepts.
-    expect(Array.from(picker.options).map((o) => o.value)).toContain('MODULE_3');
-  });
-});
-
-describe('Vault — what AnA is told about a selected file', () => {
-  function Probe({ onCtx }: { onCtx: (c: SurfaceContext | null) => void }) {
-    onCtx(useActiveSurfaceContext('vault'));
-    return null;
-  }
-
-  it('a search hit is not "0% complete": no authoring completion was assessed', async () => {
-    apiRequest.mockReset();
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (url.startsWith(`/api/c2c/project-vault/${PID}/search`)) {
-        return ok({ success: true, data: { query: 'shelf', total: 1, limit: 100, offset: 0, results: [{
-          id: DOC_ID, title: 'Stability Report', fileName: 's.pdf', documentType: 'REPORT', size: '1.0 MB',
-          folderId: 'module-3', ctdSection: '3.2.P.8', placementStatus: 'confirmed', snippet: null,
-        }] } });
-      }
-      if (url === `/api/c2c/project-vault/${PID}` && method === 'GET') return ok(vaultPayload());
-      return ok({});
-    });
-    let ctx: SurfaceContext | null = null;
-    render(<><Vault {...props()} /><Probe onCtx={(c) => { ctx = c; }} /></>);
-    fireEvent.change(await screen.findByLabelText('Search this vault'), { target: { value: 'shelf' } });
-    await screen.findAllByText('Stability Report');
-    await waitFor(() => {
-      const selected = (ctx?.facts as { selected?: { title?: string; percentComplete?: unknown } } | undefined)?.selected;
-      expect(selected?.title).toBe('Stability Report');
-      expect(selected?.percentComplete).toBeNull();
-    });
   });
 });

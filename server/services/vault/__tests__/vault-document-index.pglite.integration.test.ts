@@ -32,7 +32,6 @@ import {
   isUuid,
   VaultStoreUnavailableError,
   VAULT_CLASSIFICATIONS,
-  VAULT_PROCESSING_STATUSES,
 } from '../vault-document-index.service';
 
 const ORG = 11;
@@ -306,7 +305,7 @@ describe('vault document index — honest failure', () => {
 });
 
 describe('vault document index — exported domains', () => {
-  it('exposes the schema enum values rather than a restated copy', () => {
+  it('exposes the schema enum value rather than a restated copy', () => {
     expect(VAULT_CLASSIFICATIONS).toEqual(['CONFIDENTIAL', 'INTERNAL', 'CONTROLLED', 'PUBLIC']);
   });
 
