@@ -28,6 +28,7 @@ on:
       - '.github/workflows/deploy-aws.yml'
       - '.github/workflows/terraform-tests.yml'
       - 'scripts/ops/terraform-preflight-proof.mjs'
+      - '.github/workflows/provision-database.yml'
   workflow_dispatch:
 
 permissions:
