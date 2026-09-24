@@ -608,7 +608,7 @@ export async function materializeLeafSources(
         // provider — and reading the path here would be a second byte-reading
         // implementation of exactly the kind that was just consolidated away.
         // Say what makes it filable instead of guessing.
-        miss('vault document bytes are not on the storage provider yet (storage_version_id is null) — run scripts/backfill-vault-storage.mjs for this organization, then re-assemble');
+        miss('vault document bytes are not on the storage provider yet (storage_version_id is null) — run `npm run db:backfill-vault-storage -- --org <id>` for this organization (dry run first; --apply to move the bytes), then re-assemble');
         continue;
       }
 

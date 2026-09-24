@@ -1,0 +1,65 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/executor-agentic-loop.test.ts
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/executor-agentic-loop.test.ts
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/executor-agentic-loop.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > executeAgenticLoop adapter > runs a round's tools in parallel, caps oversized results, and returns the final answer 30ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > executeAgenticLoop adapter > stops on duplicate (thrash) tool calls before the round cap 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > executeAgenticLoop adapter > short-circuits when the abort signal is already set 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > executeAgenticLoop adapter > returns immediately when the first turn requests no tools 0ms
+ × server/services/ana/__tests__/executor-agentic-loop.test.ts > the tool context carries the tenant uuid its request scope holds > fills it from the request scope when the scope is the same tenant 4ms
+   → expected undefined to be '11111111-2222-4333-8444-555555555555' // Object.is equality
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > the tool context carries the tenant uuid its request scope holds > never borrows another tenant's uuid 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > the tool context carries the tenant uuid its request scope holds > keeps a uuid the caller passed 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > the tool context carries the tenant uuid its request scope holds > invents nothing outside a scope 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/executor-agentic-loop.test.ts > the tool context carries the tenant uuid its request scope holds > fills it from the request scope when the scope is the same tenant
+AssertionError: expected undefined to be '11111111-2222-4333-8444-555555555555' // Object.is equality
+
+- Expected:
+"11111111-2222-4333-8444-555555555555"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/executor-agentic-loop.test.ts:212:35
+    210|   it('fills it from the request scope when the scope is the same tenan…
+    211|     const seen = await contextSeenByATool({ tenantId: '7', orgUuid: OR…
+    212|     expect(seen.organizationUuid).toBe(ORG_UUID);
+       |                                   ^
+    213|   });
+    214|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  17:30:56
+   Duration  4.64s (transform 3.12s, setup 81ms, import 4.26s, tests 42ms, environment 0ms)
+

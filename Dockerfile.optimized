@@ -16,7 +16,35 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Production stage
+# The production stage installs with --omit=dev, and the server bundle keeps
+# every npm package external, so an import of a devDependency that survives
+# into dist/index.js kills every container at module linking — which is what
+# `vite` did until 2026-09-24. Refuse to produce that image: this reads the
+# bundle's imports and the same lockfile the production stage installs from.
+RUN node scripts/ci/check-server-bundle-prod-imports.mjs
+
+# Provision stage — the first provision of an EMPTY database, run once as a
+# one-off ECS task (.github/workflows/provision-database.yml). Not the image
+# that serves traffic: `npm run db:provision` needs what production prunes —
+# drizzle-kit (install-fresh's table step) and psql (its governed-content
+# step) — and it must run inside the VPC, the only network RDS admits. Built
+# FROM builder, so the source, node_modules and lockfile are the exact ones the
+# production image was built from.
+FROM builder AS provision
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends postgresql-client && \
+    rm -rf /var/lib/apt/lists/*
+# The production stage's CA settings, re-declared: an ENV does not cross
+# stages. verify-full against RDS needs the RDS roots, for Node (install-fresh,
+# deploy-migrate) and for libpq (psql).
+ENV NODE_EXTRA_CA_CERTS=/app/assets/rds-ca/global-bundle.pem \
+    PGSSLROOTCERT=/app/assets/rds-ca/global-bundle.pem
+USER node
+CMD ["npm", "run", "db:provision"]
+
+# Production stage — the default target is named explicitly by the pipeline
+# (`docker build --target production`), so adding a stage never changes what
+# ships.
 FROM node:22-slim AS production
 
 WORKDIR /app
@@ -128,6 +156,17 @@ COPY --from=builder /app/scripts/db ./scripts/db
 # and template integrity still verifies at runtime.
 COPY --from=builder /app/assets ./assets
 
+# The Amazon RDS certificate bundle, from the assets copied above
+# (assets/rds-ca/README.md). Production verifies the database certificate, and
+# Node's built-in roots contain no RDS CA, so without this every connection to
+# RDS, from the API or from the migrate task that runs this image, fails
+# verification. NODE_EXTRA_CA_CERTS adds to the default roots and replaces none.
+ENV NODE_EXTRA_CA_CERTS=/app/assets/rds-ca/global-bundle.pem
+# libpq (psql, pg_dump) does not read NODE_EXTRA_CA_CERTS; with
+# sslmode=verify-full it looks for ~/.postgresql/root.crt, which the runtime
+# user does not have. The same vendored bundle, for the same reason.
+ENV PGSSLROOTCERT=/app/assets/rds-ca/global-bundle.pem
+
 # Create non-root user for security
 RUN groupadd -r appuser && useradd -r -g appuser -d /app appuser && chown -R appuser:appuser /app
 
@@ -137,12 +176,15 @@ EXPOSE 5000
 # Switch to non-root user
 USER appuser
 
-# Health check for ECS / ALB target group registration.
-# Probe /readyz (not /api/health): /api/health is a static liveness ping that
-# returns 200 even against a missing-schema DB, whereas /readyz fails closed on
-# a down database or a positively-verified missing schema.
+# Docker's own health status, for docker compose (depends_on: service_healthy).
+# NOT what ECS uses: ECS ignores this instruction and runs the task
+# definition's healthCheck, which probes /healthz (liveness) on purpose —
+# terraform/modules/ecs-fargate/main.tf says why a readiness probe there would
+# replace every task whenever AnA or the database is down. Here, where an
+# unhealthy container is reported rather than killed, readiness is the useful
+# answer: /readyz fails closed on a down database or a verified missing schema.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD ["node", "-e", "const h=require('http');h.get('http://localhost:5000/readyz',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"]
+  CMD ["node", "-e", "const h=require('http');h.get('http://localhost:'+(process.env.PORT||5000)+'/readyz',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"]
 
 # Start the application
 CMD ["npm", "run", "start"]

@@ -6,6 +6,15 @@
 -- =============================================================================
 -- NO MOCKS. NO STUBS. PRODUCTION-GRADE ONLY.
 -- =============================================================================
+-- AMENDED 2026-09-24 (W2 / D1, docs/evidence/W2/2026-09-23b/rds-shaped-provision-e2e.txt):
+-- `COMMENT ON EXTENSION vector` now runs only for the extension's owner or a
+-- superuser. PostgreSQL requires ownership to comment on an extension, and
+-- vector is untrusted, so a non-superuser owner (the RDS master; a local
+-- CREATEROLE owner) often has it created by another role. The unconditional
+-- COMMENT then aborted this file, `ai` was never created, 067 failed on it, and
+-- install-fresh reported the install INCOMPLETE, which can only be repaired on an
+-- EMPTY database. The comment is cosmetic; nothing reads it.
+-- =============================================================================
 
 BEGIN;
 
@@ -15,8 +24,15 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS vector;
 
-COMMENT ON EXTENSION vector IS 
-'pgvector: Open-source vector similarity search for PostgreSQL';
+DO $$
+BEGIN
+  IF (SELECT rolsuper FROM pg_roles WHERE rolname = current_user)
+     OR (SELECT pg_get_userbyid(extowner) FROM pg_extension WHERE extname = 'vector') = current_user
+  THEN
+    COMMENT ON EXTENSION vector IS
+      'pgvector: Open-source vector similarity search for PostgreSQL';
+  END IF;
+END $$;
 
 -- =============================================================================
 -- 2. CREATE AI SCHEMA

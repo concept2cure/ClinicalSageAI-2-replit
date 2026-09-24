@@ -1586,6 +1586,17 @@ jobs:
       - name: Build the production bundle
         run: npm run build
 
+      # This job boots dist/index.js after a FULL `npm ci`, so it cannot see a
+      # bundle that imports a devDependency: the import resolves here and fails
+      # only in the image, which installs with --omit=dev. That is how `vite`
+      # stopped every production container at module linking, unseen, until
+      # 2026-09-24. This asks the bundle what it imports and the lockfile what
+      # the image ships. Dockerfile.optimized runs the same gate in its build.
+      - name: Server bundle imports only what the image ships (npm ci --omit=dev)
+        run: |
+          npm run ci:server-bundle-prod-imports
+          npm run ci:server-bundle-prod-imports:selftest
+
       # The assertion: the built server, in production mode, under the only RLS
       # value production accepts, as the least-privilege role, reaches ready.
       - name: Boot in production mode and require /readyz=200

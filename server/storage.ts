@@ -410,8 +410,8 @@ export interface IStorage {
   updateReferenceStandard(id: number, organizationId: number | string, standard: any): Promise<any>;
   recordStandardUsage(id: number, organizationId: number | string, usage: any): Promise<any>;
   getExpiringStandards(params: any): Promise<any[]>;
-  qualifyReferenceStandard(id: number, qualification: any): Promise<any>;
-  disposeReferenceStandard(id: number, disposal: any): Promise<any>;
+  qualifyReferenceStandard(id: number, organizationId: number | string, qualification: any): Promise<any>;
+  disposeReferenceStandard(id: number, organizationId: number | string, disposal: any): Promise<any>;
   getStandardUsageLogs(id: number, organizationId: number | string): Promise<any[]>;
 
   // Section Graph methods
@@ -1599,11 +1599,11 @@ export class MemStorage {
     return [];
   }
 
-  async qualifyReferenceStandard(_id: number, _qualification: any): Promise<any> {
+  async qualifyReferenceStandard(_id: number, _organizationId: number | string, _qualification: any): Promise<any> {
     throw new Error('NOT_IMPLEMENTED: qualifyReferenceStandard');
   }
 
-  async disposeReferenceStandard(_id: number, _disposal: any): Promise<any> {
+  async disposeReferenceStandard(_id: number, _organizationId: number | string, _disposal: any): Promise<any> {
     throw new Error('NOT_IMPLEMENTED: disposeReferenceStandard');
   }
 
@@ -4133,7 +4133,7 @@ export class DatabaseStorage {
     return (rows as any[]).filter(r => r.expiryDate && new Date(r.expiryDate) <= cutoff);
   }
 
-  async qualifyReferenceStandard(id: number, qualification: any): Promise<any> {
+  async qualifyReferenceStandard(id: number, organizationId: number | string, qualification: any): Promise<any> {
     const [row] = await db
       .update(qcReferenceStandards)
       .set({
@@ -4142,13 +4142,13 @@ export class DatabaseStorage {
         qualificationData: qualification,
         updatedAt: new Date(),
       })
-      .where(eq(qcReferenceStandards.id, id))
+      .where(and(eq(qcReferenceStandards.id, id), eq(qcReferenceStandards.organizationId, Number(organizationId))))
       .returning();
     if (!row) throw new Error(`Reference standard ${id} not found`);
     return row;
   }
 
-  async disposeReferenceStandard(id: number, disposal: any): Promise<any> {
+  async disposeReferenceStandard(id: number, organizationId: number | string, disposal: any): Promise<any> {
     const [row] = await db
       .update(qcReferenceStandards)
       .set({
@@ -4160,7 +4160,7 @@ export class DatabaseStorage {
         disposalReason: disposal?.disposalReason,
         updatedAt: new Date(),
       })
-      .where(eq(qcReferenceStandards.id, id))
+      .where(and(eq(qcReferenceStandards.id, id), eq(qcReferenceStandards.organizationId, Number(organizationId))))
       .returning();
     if (!row) throw new Error(`Reference standard ${id} not found`);
     return row;

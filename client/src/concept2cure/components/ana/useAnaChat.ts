@@ -54,9 +54,20 @@ export type {
   DriveTurnControls,
   AnaSendOptions,
   AnaProgressPhase,
+  AnaPlanStep,
+  AnaPlanChange,
+  AnaContextUsed,
 } from './useAnaChat.types';
 
-import { advanceProgress, closeProgress, settleRunningCalls, CLIENT_PHASE_LABELS } from './anaProgress';
+import {
+  advanceProgress,
+  applyPlanEvent,
+  closeProgress,
+  readContextUsed,
+  readPlanSteps,
+  settleRunningCalls,
+  CLIENT_PHASE_LABELS,
+} from './anaProgress';
 import { getAnaLockedScreens } from './anaLockedScreens';
 
 import type {
@@ -469,6 +480,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
             reasoning?: string;
             toolTrace?: Array<{ tool?: string; label?: string; status?: string; resultSummary?: string }>;
             humanControls?: Array<{ action?: string; message?: string }>;
+            plan?: unknown;
           } | null;
         }>;
       };
@@ -501,10 +513,15 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                   .filter(c => c?.action === 'interject' && typeof c.message === 'string' && c.message)
                   .map(c => c.message as string)
               : [];
+          // Her last declared plan, as the server validated it. Only the final
+          // list is persisted, not when each step changed, so no plan changes
+          // are invented for it.
+          const plan = m.role === 'assistant' ? readPlanSteps(m.metadata?.plan) : null;
           return {
             id: `t-${threadId}-${idx}`,
             role: m.role as 'user' | 'assistant',
             text: m.content as string,
+            ...(plan ? { plan } : {}),
             ...(reasoning ? { thinking: reasoning } : {}),
             ...(toolCalls.length > 0 ? { toolCalls } : {}),
             ...(interjections.length > 0 ? { interjections } : {}),
@@ -1287,6 +1304,18 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                   )
                 );
               }
+            } else if (event.type === 'plan' || event.type === 'context_used') {
+              // Her declared plan, and what the turn read before answering. Both
+              // parsed and applied by pure helpers in anaProgress.ts.
+              const at = Date.now();
+              const used = event.type === 'context_used' ? readContextUsed(event) : null;
+              setMessages(prev =>
+                prev.map(m => {
+                  if (m.id !== assistantId) return m;
+                  if (event.type === 'plan') return applyPlanEvent(m, event, at);
+                  return used ? { ...m, contextUsed: used } : m;
+                })
+              );
             } else if (event.type === 'war_game_report') {
               const report = event.report;
               if (report) {

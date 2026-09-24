@@ -1667,8 +1667,8 @@
 .c2c-v2 .ana-signoff-done[data-tone="error"]{color:var(--error);}
 .c2c-v2 .ana-signoff-done svg{width:13px;height:13px;flex-shrink:0;}
 .c2c-v2 .ana-msg .bd{font-size:12.5px;line-height:1.5;}
-.c2c-v2 .ana-msg.user .bd{background:var(--bg-200);padding:8px 11px;border-radius:12px 12px 4px 12px;align-self:flex-end;max-width:88%;}
-.c2c-v2 .ana-msg.ana .bd{font-family:var(--font-serif);}
+.c2c-v2 .ana-msg.is-user .bd{background:var(--bg-200);padding:8px 11px;border-radius:12px 12px 4px 12px;align-self:flex-end;max-width:88%;}
+.c2c-v2 .ana-msg.is-ana .bd{font-family:var(--font-serif);}
 .c2c-v2 .ana-empty{font-size:12px;color:var(--text-400);line-height:1.5;}
 .c2c-v2 .ana-foot{flex-shrink:0;border-top:1px solid var(--border);padding:10px 12px;}
 .c2c-v2 .ana-composer{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-xl);padding:8px 10px;transition:border-color var(--dur);}
@@ -1843,178 +1843,166 @@
 .c2c-v2 .ana-msg-warning-ic{display:inline-flex;flex:none;margin-top:1px;}
 .c2c-v2 .ana-msg-warning-ic svg{font-size:12px;}
 
-/* ── AnA activity — what she is doing, while she is doing it ──────────────── */
-/* Text here is --text-300, never --text-400. This file's own record above
-   (see the --text-500/--text-400 note) measures --text-400 on --bg-000 at
-   3.37:1 light / 4.27:1 dark, failing SC 1.4.3 at 12.5px — and these rows run
-   10-11px, smaller still. ci:token-contrast stays green either way: it carries
-   --text-400 as a documented EXCEPTION scoped to large text, so the gate could
-   not have caught this. --text-300 is 5.21:1 / 6.82:1 and passes in both
-   themes. The glyphs keep --text-400: as icons they need 3:1, not 4.5:1. */
+/* ── AnA activity — the per-turn record in the transcript (AnaActivity) ──────── */
+/* Text is --text-300 or darker, never --text-400: --text-400 on --bg-000 is
+   3.37:1 light / 4.27:1 dark and fails SC 1.4.3 at these sizes. --text-300 is
+   5.21:1 / 6.82:1. Glyphs keep --text-400: as icons they need 3:1.
 
-/* Every row is a step that really ran. The palette is deliberately quiet: this
-   sits under a streaming answer and must be readable without competing with
-   it. Motion is one 1.6s opacity pulse on the live dot — no spinner, no
-   spring — and it stops entirely under prefers-reduced-motion, where the dot
-   still reads as present, just still. */
+   One bordered list, one row per thing that happened. The verb is muted and
+   the object is not, so the eye lands on what she worked on. Motion is one
+   1.6s opacity pulse on the live dot, removed under prefers-reduced-motion. */
 .c2c-v2 .ana-activity{margin-top:8px;}
-.c2c-v2 .ana-activity-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.c2c-v2 .ana-activity-toggle{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-300);background:none;border:0;padding:2px 0;cursor:pointer;transition:color 200ms ease-out;}
-.c2c-v2 .ana-activity-toggle:hover{color:var(--text-200);}
+.c2c-v2 .ana-activity-toggle{display:inline-flex;align-items:center;gap:4px;max-width:100%;font:inherit;font-size:12px;color:var(--text-300);background:none;border:0;padding:2px 0;cursor:pointer;text-align:left;transition:color 200ms ease-out;}
+.c2c-v2 .ana-activity-toggle:hover{color:var(--text-100);}
 .c2c-v2 .ana-activity-toggle:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;border-radius:var(--radius-md);}
-.c2c-v2 .ana-activity-toggle svg{font-size:12px;}
-.c2c-v2 .ana-activity-body{display:flex;flex-direction:column;gap:3px;margin-top:5px;padding-left:9px;border-left:1px solid var(--border);}
-/* The collapsed body stays mounted so the toggle's aria-controls resolves;
-   display:flex above would otherwise beat the user-agent [hidden] rule. */
-.c2c-v2 .ana-activity-body[hidden]{display:none;}
-.c2c-v2 .ana-activity-phase{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-300);}
-/* The running clock beside the live phase: tabular so "57s" → "1m 00s" does
-   not jiggle the line, and the same --text-300 as the phase it qualifies. */
-.c2c-v2 .ana-activity-clock{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--text-300);}
-/* Indented to the same text column as the phase and the step rows, which begin
-   after a 12px glyph and a 6px gap. Flush left, it read as a PARENT of the
-   line above it rather than a sibling. */
-.c2c-v2 .ana-activity-read{font-size:11px;color:var(--text-300);font-style:italic;margin-left:18px;}
-.c2c-v2 .ana-activity-round{display:flex;flex-direction:column;gap:3px;}
-.c2c-v2 .ana-activity-round-h{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-300);margin-top:5px;}
-/* wrap + a full-width note: the failure sentence is a SIBLING of the label in
-   the same flex row, so without this the two compete for width and a label as
-   short as "Literature search" gets squeezed into a two-line column beside a
-   wide message. Seen in a browser, not in a test — the assertions only ever
-   asked whether the text was present. */
-.c2c-v2 .ana-activity-step{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:11.5px;color:var(--text-300);}
-.c2c-v2 .ana-activity-step .ana-activity-glyph{display:inline-flex;color:var(--text-400);}
-.c2c-v2 .ana-activity-step .ana-activity-glyph svg{font-size:12px;}
-.c2c-v2 .ana-activity-step.is-success .ana-activity-glyph{color:var(--success);}
+.c2c-v2 .ana-activity-toggle svg{font-size:12px;flex:none;}
+.c2c-v2 .ana-activity-toggle-t{min-width:0;}
+.c2c-v2 .ana-activity-body{margin-top:6px;}
+/* The collapsed body stays mounted so the toggle's aria-controls resolves. */
+.c2c-v2 .ana-activity-body[hidden],.c2c-v2 .ana-activity-detail[hidden]{display:none;}
+.c2c-v2 .ana-activity-list{list-style:none;margin:0;padding:0;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg-000);overflow:hidden;}
+.c2c-v2 .ana-activity-step{display:grid;grid-template-columns:14px minmax(0,1fr);column-gap:8px;align-items:baseline;padding:8px 12px;border-top:1px solid var(--border);font-size:12.5px;line-height:1.45;color:var(--text-200);}
+.c2c-v2 .ana-activity-list > li:first-child{border-top:0;}
+.c2c-v2 .ana-activity-glyph{display:inline-flex;align-self:center;color:var(--text-400);}
+.c2c-v2 .ana-activity-glyph svg{font-size:12px;}
+.c2c-v2 .ana-activity-step.is-success .ana-activity-glyph{color:var(--text-400);}
 .c2c-v2 .ana-activity-step.is-error .ana-activity-glyph{color:var(--warning);}
-/* A step still in flight is dimmer than a settled one, but it is still text
-   a user has to read: --text-300, not the --text-400 the glyph may use. */
-.c2c-v2 .ana-activity-step.is-running{color:var(--text-300);}
-/* padding + border-box, NOT margin: `flex-basis:100%` plus an 18px MARGIN is
-   100% + 18px, which overflowed the 380px rail horizontally — measured at
-   true rail width, where the step row came out 361px inside a 343px box.
-   With border-box the indent sits inside the basis. */
-.c2c-v2 .ana-activity-note{color:var(--warning);font-size:10.5px;flex:1 0 100%;box-sizing:border-box;padding-left:18px;}
-/* Her reasoning. Bounded height rather than unbounded: a long deliberation
-   must not push the answer off the screen, and a scroll says "there is more"
-   more honestly than a truncation would. */
-.c2c-v2 .ana-activity-think{font-size:11.5px;line-height:1.6;color:var(--text-300);font-style:italic;border-left:2px solid var(--border);padding:2px 0 2px 10px;margin:2px 0;max-height:240px;overflow-y:auto;white-space:pre-wrap;}
-.c2c-v2 .ana-activity-think.is-live{max-height:none;overflow:visible;}
-/* The scroll container is a tab stop (WCAG 2.1.1), so it needs a visible focus
-   indicator like any other. */
+.c2c-v2 .ana-activity-step.is-running .ana-activity-glyph{color:var(--accent-200);}
+.c2c-v2 .ana-activity-row{display:flex;align-items:baseline;gap:8px;width:100%;min-width:0;padding:0;border:0;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer;}
+.c2c-v2 .ana-activity-row.is-static{cursor:default;}
+.c2c-v2 .ana-activity-row:focus-visible{outline:2px solid var(--accent-200);outline-offset:3px;border-radius:var(--radius-sm);}
+.c2c-v2 .ana-activity-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.c2c-v2 .ana-activity-verb{color:var(--text-300);}
+.c2c-v2 .ana-activity-obj{color:var(--text-100);}
+/* A row with no object reads whole, at body strength; the row in flight at full. */
+.c2c-v2 .ana-activity-step:not(.has-obj) .ana-activity-verb{color:var(--text-200);}
+.c2c-v2 .ana-activity-step.is-running .ana-activity-verb{color:var(--text-100);}
+.c2c-v2 button.ana-activity-row:hover .ana-activity-verb{color:var(--text-100);}
+.c2c-v2 .ana-activity-t{flex:none;font-size:11px;color:var(--text-300);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.c2c-v2 .ana-activity-chev{display:inline-flex;flex:none;align-self:center;color:var(--text-400);}
+.c2c-v2 .ana-activity-chev svg{font-size:12px;}
+/* A failure is said in the server's sentence, always visible, under the row. */
+.c2c-v2 .ana-activity-note{grid-column:2;color:var(--warning);font-size:11.5px;line-height:1.5;}
+.c2c-v2 .ana-activity-detail{grid-column:2;display:flex;flex-direction:column;gap:6px;margin-top:6px;}
+.c2c-v2 .ana-activity-kv{font-size:11.5px;color:var(--text-300);font-variant-numeric:tabular-nums;}
+.c2c-v2 .ana-activity-pre{box-sizing:border-box;margin:0;padding:6px 8px;max-height:180px;overflow:auto;font-family:var(--font-mono);font-size:11px;line-height:1.5;color:var(--text-200);background:var(--bg-050);border:1px solid var(--border);border-radius:var(--radius-sm);white-space:pre-wrap;overflow-wrap:anywhere;}
+.c2c-v2 .ana-activity-pre:focus-visible{outline:2px solid var(--accent-200);outline-offset:1px;}
+.c2c-v2 .ana-activity-plan{margin:0;padding-left:18px;font-size:12px;line-height:1.55;color:var(--text-200);}
+.c2c-v2 .ana-activity-round-h{padding:8px 12px 2px;border-top:1px solid var(--border);font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-300);}
+.c2c-v2 .ana-activity-phase{display:flex;align-items:center;gap:6px;padding:8px 12px;border-top:1px solid var(--border);font-size:12px;color:var(--text-300);}
+/* Tabular so "57s" → "1m 00s" does not jiggle the line. */
+.c2c-v2 .ana-activity-clock{margin-left:auto;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--text-300);}
+/* Her reasoning. Bounded: a long deliberation must not push the answer off the
+   screen, and a scroll says "there is more" more honestly than a cut would. */
+.c2c-v2 .ana-activity-think{grid-column:2;font-size:12px;line-height:1.6;color:var(--text-300);font-style:italic;border-left:2px solid var(--border);padding:2px 0 2px 10px;max-height:240px;overflow-y:auto;white-space:pre-wrap;}
+.c2c-v2 .ana-activity-think.is-live{max-height:none;overflow:visible;margin-top:4px;}
 .c2c-v2 .ana-activity-think:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;border-radius:var(--radius-md);}
 .c2c-v2 .ana-activity-pulse{display:inline-flex;color:var(--accent-200);animation:ana-activity-pulse 1600ms ease-out infinite;}
 .c2c-v2 .ana-activity-pulse svg{font-size:12px;}
 @keyframes ana-activity-pulse{0%,100%{opacity:.35;}50%{opacity:1;}}
 @media (prefers-reduced-motion:reduce){
   .c2c-v2 .ana-activity-pulse,
-  /* Both of these drive the same ana-activity-pulse keyframe as the selector
-     above, and neither was covered — .ana-runctl-dot only stopped via its
-     .is-paused state class, which is a run state, not a motion preference. */
+  /* These drive the same keyframe and were not covered — .ana-runctl-dot only
+     stopped via its .is-paused state class, a run state, not a preference. */
   .c2c-v2 .ana-runctl-dot,
-  .c2c-v2 .ana-drive-dot{animation:none;opacity:1;}
+  .c2c-v2 .ana-drive-dot,
+  .c2c-v2 .ana-rail-mark.is-pulsing{animation:none;opacity:1;}
   .c2c-v2 .ana-activity-toggle{transition:none;}
 }
 
 .c2c-v2 .ana-chip-gov{display:inline-flex;align-items:center;margin-left:3px;color:var(--text-400);}
 .c2c-v2 .ana-chip-gov svg{font-size:10px;}
 
-/* ── AnA at work — the live dock (AnaWorkPanel) ─────────────────────────── */
-/* Same rules as the activity record above: body text is --text-300 or darker
-   (the --text-400 exception is for large text and glyphs only), motion is the
-   one 1.6s opacity pulse reused from the activity dot, and it stops under
-   prefers-reduced-motion. Sections stack; each header is a real button. */
-.c2c-v2 .ana-work{display:flex;flex-direction:column;background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
-/* An owned pane (authoring, eCTD co-author) mounts the dock at the top of its
-   own scroll region; this is the gutter it sits in there. */
+/* ── AnA's progress — the panel and its chip (AnaWorkPanel) ─────────────── */
+/* One quiet column: the plan on a vertical rail, then Outputs and "Used in
+   this session" as one-line rows. Same text rule as the activity record
+   (--text-300 or darker), borders not shadows, and the one pulse. */
+.c2c-v2 .ana-work{display:flex;flex-direction:column;gap:14px;padding:14px 16px 16px;background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);}
+/* An owned pane (authoring, eCTD co-author, RBM) mounts the panel at the top of
+   its own scroll region; this is the gutter it sits in there. */
 .c2c-v2 .ana-work-host{padding:10px 12px 0;}
-/* The dock toggle in a pane header — the rail uses .tb-btn; owned panes
-   carry no top bar, so they get a small pressed-state button of their own. */
-.c2c-v2 .ana-work-toggle{display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:11px;color:var(--text-300);background:none;border:1px solid var(--border);border-radius:999px;padding:2px 9px;cursor:pointer;transition:color 200ms ease-out,border-color 200ms ease-out,background 200ms ease-out;}
-.c2c-v2 .ana-work-toggle svg{font-size:12px;}
-.c2c-v2 .ana-work-toggle:hover{color:var(--text-100);border-color:var(--text-300);}
-.c2c-v2 .ana-work-toggle[aria-pressed="true"]{color:var(--accent-200);border-color:var(--accent-100);background:var(--accent-000);}
-.c2c-v2 .ana-work-toggle:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;}
-.c2c-v2 .ana-work-hdr{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border);background:var(--bg-050);}
-.c2c-v2 .ana-work-title{display:inline-flex;align-items:center;gap:6px;margin:0;font:inherit;font-size:12px;font-weight:600;line-height:inherit;color:var(--text-100);}
-.c2c-v2 .ana-work-mark{display:inline-flex;color:var(--accent-200);}
-.c2c-v2 .ana-work-mark svg{font-size:13px;}
-.c2c-v2 .ana-work-elapsed{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-300);font-variant-numeric:tabular-nums;white-space:nowrap;}
-.c2c-v2 .ana-work-pulse{display:inline-flex;color:var(--accent-200);animation:ana-activity-pulse 1600ms ease-out infinite;}
-.c2c-v2 .ana-work-pulse svg{font-size:11px;}
-.c2c-v2 .ana-work-idle{padding:12px;font-size:11.5px;line-height:1.55;color:var(--text-300);}
-.c2c-v2 .ana-work-sec{border-bottom:1px solid var(--border);}
-.c2c-v2 .ana-work-sec:last-child{border-bottom:0;}
-.c2c-v2 .ana-work-sec-h{display:flex;align-items:center;gap:6px;width:100%;padding:8px 12px;border:0;background:none;font:inherit;font-size:11.5px;font-weight:600;color:var(--text-100);text-align:left;cursor:pointer;transition:background 200ms ease-out;}
-.c2c-v2 .ana-work-sec-h:hover{background:var(--bg-050);}
-.c2c-v2 .ana-work-sec-h:focus-visible{outline:2px solid var(--accent-200);outline-offset:-2px;}
-.c2c-v2 .ana-work-sec-t{flex:1;min-width:0;}
-.c2c-v2 .ana-work-sec-m{font-size:10.5px;font-weight:500;color:var(--text-300);font-variant-numeric:tabular-nums;white-space:nowrap;}
-.c2c-v2 .ana-work-sec-chev{display:inline-flex;color:var(--text-400);}
-.c2c-v2 .ana-work-sec-chev svg{font-size:12px;}
-.c2c-v2 .ana-work-sec-hh{margin:0;font:inherit;font-size:inherit;font-weight:inherit;line-height:inherit;}
-.c2c-v2 .ana-work-sec-b{display:flex;flex-direction:column;gap:8px;padding:2px 12px 10px;}
-/* `display:flex` above would otherwise beat the user-agent's [hidden] rule and
-   a collapsed section would stay visible. The body stays in the DOM collapsed
-   (aria-controls needs its target to exist); this is what hides it. */
-.c2c-v2 .ana-work-sec-b[hidden],.c2c-v2 .ana-work-pre[hidden]{display:none;}
-.c2c-v2 .ana-work-group{display:flex;flex-direction:column;gap:4px;}
-.c2c-v2 .ana-work-group-h{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-300);margin-top:4px;}
-.c2c-v2 .ana-work-round{display:flex;flex-direction:column;gap:3px;}
-.c2c-v2 .ana-work-round-h{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-300);margin-top:3px;}
-/* The numbered plan. The number sits in a ring; a done phase swaps it for a
-   check, a stopped one for a cross, and the active one carries the accent. */
-.c2c-v2 .ana-work-phases{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;}
-.c2c-v2 .ana-work-phase{display:grid;grid-template-columns:18px 1fr auto;column-gap:8px;align-items:center;font-size:11.5px;color:var(--text-300);}
-.c2c-v2 .ana-work-num{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;border:1px solid var(--border);font-size:10px;font-weight:600;color:var(--text-300);font-variant-numeric:tabular-nums;}
-.c2c-v2 .ana-work-num svg{font-size:11px;}
-.c2c-v2 .ana-work-phase.is-active{color:var(--text-100);}
-.c2c-v2 .ana-work-phase.is-active .ana-work-num{border-color:var(--accent-200);color:var(--accent-200);}
-.c2c-v2 .ana-work-phase.is-done .ana-work-num{border-color:var(--success);color:var(--success);}
-.c2c-v2 .ana-work-phase.is-stopped .ana-work-num{border-color:var(--warning);color:var(--warning);}
-.c2c-v2 .ana-work-phase-l{min-width:0;overflow-wrap:anywhere;}
-.c2c-v2 .ana-work-phase-t{font-size:10.5px;color:var(--text-300);font-variant-numeric:tabular-nums;white-space:nowrap;}
-.c2c-v2 .ana-work-current{grid-column:2 / span 2;display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-300);}
-.c2c-v2 .ana-work-current svg{font-size:11px;}
-/* Steps, queue rows and outputs share one row shape. */
-/* A grid, not a wrapping flex row: glyph | label | trailing on one line, with
-   the label free to wrap INSIDE its column. The first version wrapped the whole
-   row, so a long label ("Searching the literature for IRB accreditation
-   standards") pushed the check onto a line of its own and "done" onto a third —
-   seen in the Chromium render, not in jsdom. Notes, the inputs link and the
-   inputs block take their own line under the label. */
-.c2c-v2 .ana-work-step{display:grid;grid-template-columns:12px minmax(0,1fr) auto;column-gap:6px;row-gap:3px;align-items:start;font-size:11.5px;line-height:1.45;color:var(--text-300);}
-.c2c-v2 .ana-work-glyph{display:inline-flex;color:var(--text-400);margin-top:2px;}
-.c2c-v2 .ana-work-glyph svg{font-size:12px;}
-.c2c-v2 .ana-work-step.is-success .ana-work-glyph{color:var(--success);}
-.c2c-v2 .ana-work-step.is-error .ana-work-glyph{color:var(--warning);}
-.c2c-v2 .ana-work-step.is-running .ana-work-glyph{color:var(--accent-200);}
-.c2c-v2 .ana-work-step-l{min-width:0;overflow-wrap:anywhere;}
-.c2c-v2 .ana-work-step-t{font-size:10.5px;color:var(--text-300);font-variant-numeric:tabular-nums;white-space:nowrap;padding-top:1px;}
-.c2c-v2 .ana-work-note{grid-column:2 / -1;color:var(--warning);font-size:10.5px;}
-.c2c-v2 .ana-work-link{grid-column:2;justify-self:start;font:inherit;font-size:10.5px;color:var(--text-300);background:none;border:0;padding:0;text-decoration:underline;cursor:pointer;transition:color 200ms ease-out;}
+.c2c-v2 .ana-work-hdr{display:flex;align-items:center;gap:8px;}
+.c2c-v2 .ana-work-title{flex:1;margin:0;font:inherit;font-size:13.5px;font-weight:600;line-height:1.3;color:var(--text-100);}
+.c2c-v2 .ana-work-state{font-size:11.5px;color:var(--text-300);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.c2c-v2 .ana-work-close{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:0;border-radius:var(--radius-sm);background:none;color:var(--text-300);cursor:pointer;transition:background 200ms ease-out,color 200ms ease-out;}
+.c2c-v2 .ana-work-close:hover{background:var(--bg-100);color:var(--text-100);}
+.c2c-v2 .ana-work-close:focus-visible{outline:2px solid var(--accent-200);outline-offset:1px;}
+.c2c-v2 .ana-work-close svg{font-size:14px;}
+.c2c-v2 .ana-work-steps{display:flex;flex-direction:column;gap:10px;}
+/* The rail. Each step hangs a marker on one continuous hairline; the marker's
+   shape (check, filled, hollow, dash) and a visually hidden word carry the
+   state, never colour alone. */
+.c2c-v2 .ana-rail{list-style:none;margin:0;padding:0;}
+.c2c-v2 .ana-rail-item{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:8px;padding:0 0 12px 22px;font-size:13px;line-height:1.45;color:var(--text-200);}
+.c2c-v2 .ana-rail-item:last-child{padding-bottom:0;}
+.c2c-v2 .ana-rail-item::before{content:'';position:absolute;left:5px;top:17px;bottom:-1px;width:1px;background:var(--border);}
+.c2c-v2 .ana-rail-item:last-child::before{display:none;}
+.c2c-v2 .ana-rail-mark{position:absolute;left:0;top:4px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;width:11px;height:11px;border-radius:50%;border:1px solid var(--border-strong);background:var(--bg-000);color:var(--text-300);}
+.c2c-v2 .ana-rail-mark svg{font-size:8px;}
+.c2c-v2 .ana-rail-item.is-done{color:var(--text-300);}
+.c2c-v2 .ana-rail-item.is-done .ana-rail-mark{border-color:var(--text-400);}
+.c2c-v2 .ana-rail-item.is-current{color:var(--text-100);font-weight:500;}
+.c2c-v2 .ana-rail-item.is-current .ana-rail-mark{border-color:var(--accent-200);background:var(--accent-200);}
+.c2c-v2 .ana-rail-item.is-stopped{color:var(--text-300);}
+.c2c-v2 .ana-rail-item.is-stopped .ana-rail-mark{border-color:var(--warning);color:var(--warning);}
+.c2c-v2 .ana-rail-mark.is-pulsing{animation:ana-activity-pulse 1600ms ease-out infinite;}
+.c2c-v2 .ana-rail-l{min-width:0;overflow-wrap:anywhere;}
+.c2c-v2 .ana-rail-t{font-size:11px;font-weight:400;color:var(--text-300);font-variant-numeric:tabular-nums;white-space:nowrap;padding-top:1px;}
+.c2c-v2 .ana-rail-sub{grid-column:1 / -1;display:flex;align-items:baseline;gap:4px;margin-top:2px;font-size:12px;font-weight:400;color:var(--text-300);overflow-wrap:anywhere;}
+.c2c-v2 .ana-rail-sub svg{font-size:11px;flex:none;}
+.c2c-v2 .ana-work-steers{display:flex;flex-direction:column;gap:4px;}
+.c2c-v2 .ana-work-steers-h{font-size:11.5px;font-weight:600;color:var(--text-300);}
+.c2c-v2 .ana-work-steer{display:flex;align-items:baseline;gap:6px;font-size:12px;color:var(--text-200);overflow-wrap:anywhere;}
+.c2c-v2 .ana-work-steer svg{font-size:11px;flex:none;color:var(--text-400);}
+.c2c-v2 .ana-work-sec{display:flex;flex-direction:column;gap:8px;padding-top:14px;border-top:1px solid var(--border);}
+.c2c-v2 .ana-work-sec-t{margin:0;font:inherit;font-size:12.5px;font-weight:600;line-height:1.3;color:var(--text-100);}
+.c2c-v2 .ana-work-sec-m{margin-left:6px;font-weight:500;color:var(--text-300);font-variant-numeric:tabular-nums;}
+.c2c-v2 .ana-work-lines{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
+.c2c-v2 .ana-work-line{display:grid;grid-template-columns:16px auto minmax(0,1fr);column-gap:8px;align-items:baseline;font-size:12.5px;line-height:1.45;}
+.c2c-v2 .ana-work-line-ic{display:inline-flex;align-self:center;color:var(--text-300);}
+.c2c-v2 .ana-work-line-ic svg{font-size:13px;}
+.c2c-v2 .ana-work-line.is-warn .ana-work-line-ic{color:var(--warning);}
+.c2c-v2 .ana-work-line-l{color:var(--text-100);white-space:nowrap;}
+.c2c-v2 .ana-work-line-d{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-300);}
+.c2c-v2 .ana-work-line-n{grid-column:2 / -1;font-size:11.5px;color:var(--text-300);}
+.c2c-v2 .ana-work-sum{font-size:12px;color:var(--text-300);line-height:1.5;}
+.c2c-v2 .ana-work-empty{margin:0;font-size:12px;color:var(--text-300);line-height:1.55;}
+.c2c-v2 .ana-work-err{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:12px;color:var(--warning);}
+.c2c-v2 .ana-work-err svg{font-size:12px;}
+.c2c-v2 .ana-work-link{font:inherit;font-size:12px;color:var(--text-300);background:none;border:0;padding:0;text-decoration:underline;cursor:pointer;transition:color 200ms ease-out;}
 .c2c-v2 .ana-work-link:hover{color:var(--text-100);}
 .c2c-v2 .ana-work-link:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;border-radius:var(--radius-sm);}
-.c2c-v2 .ana-work-pre{grid-column:2 / -1;box-sizing:border-box;margin:0;padding:6px 8px;max-height:160px;overflow:auto;font-family:var(--font-mono);font-size:10.5px;line-height:1.5;color:var(--text-200);background:var(--bg-100);border:1px solid var(--border);border-radius:var(--radius-sm);white-space:pre-wrap;overflow-wrap:anywhere;}
-.c2c-v2 .ana-work-pre:focus-visible{outline:2px solid var(--accent-200);outline-offset:1px;}
-.c2c-v2 .ana-work-sum{font-size:11.5px;color:var(--text-300);line-height:1.5;}
-.c2c-v2 .ana-work-empty{font-size:11px;color:var(--text-300);line-height:1.5;}
-.c2c-v2 .ana-work-err{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:11px;color:var(--warning);}
-.c2c-v2 .ana-work-err .ana-work-link{grid-column:auto;}
-.c2c-v2 .ana-work-err svg{font-size:12px;}
-.c2c-v2 .ana-work-qi{display:flex;flex-direction:column;gap:2px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-050);}
-.c2c-v2 .ana-work-qi-q{font-size:11.5px;color:var(--text-100);overflow-wrap:anywhere;}
-.c2c-v2 .ana-work-qi-s{font-size:10.5px;color:var(--text-300);}
-.c2c-v2 .ana-work-asof{font-size:10px;color:var(--text-300);}
-.c2c-v2 .ana-work-chips{display:flex;flex-wrap:wrap;gap:5px;}
-.c2c-v2 .ana-work-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;border:1px solid var(--border);background:var(--bg-100);font-size:10.5px;color:var(--text-300);}
-.c2c-v2 .ana-work-chip svg{font-size:10px;}
-.c2c-v2 .ana-work-kv{display:grid;grid-template-columns:84px 1fr;column-gap:8px;align-items:start;font-size:11.5px;}
-.c2c-v2 .ana-work-k{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-300);font-weight:600;padding-top:2px;}
-.c2c-v2 .ana-work-v{color:var(--text-100);min-width:0;overflow-wrap:anywhere;}
+.c2c-v2 .ana-work-asof{font-size:11px;color:var(--text-300);}
+/* The chip in a host's header: "Step 2 of 5". A pressed toggle. */
+.c2c-v2 .ana-step-chip{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-000);font:inherit;font-size:12px;font-weight:500;color:var(--text-200);white-space:nowrap;font-variant-numeric:tabular-nums;cursor:pointer;transition:background 200ms ease-out,border-color 200ms ease-out,color 200ms ease-out;}
+.c2c-v2 .ana-step-chip:hover{background:var(--bg-050);color:var(--text-100);}
+.c2c-v2 .ana-step-chip[aria-pressed="true"]{background:var(--bg-100);border-color:var(--border-strong);color:var(--text-100);}
+.c2c-v2 .ana-step-chip:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;}
+.c2c-v2 .ana-step-chip-ic{display:inline-flex;color:var(--text-300);}
+.c2c-v2 .ana-step-chip-ic svg{font-size:13px;}
+.c2c-v2 .ana-step-chip[data-live="true"] .ana-step-chip-ic{color:var(--accent-200);}
+/* AnA's output beneath its turn: a file card with a miniature page of the
+   real draft (AnaOutputs). The page is decoration for sighted readers only —
+   aria-hidden — so its type may run below body size; the caption carries the
+   same title at full size. */
+.c2c-v2 .ana-out{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+.c2c-v2 .ana-out-card{display:flex;flex-direction:column;width:184px;max-width:100%;padding:0;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg-000);overflow:hidden;font:inherit;color:inherit;text-align:left;}
+.c2c-v2 .ana-out-card.is-action{cursor:pointer;transition:border-color 200ms ease-out,background 200ms ease-out;}
+.c2c-v2 .ana-out-card.is-action:hover{border-color:var(--border-strong);}
+.c2c-v2 .ana-out-card.is-action:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;}
+.c2c-v2 .ana-out-thumb{position:relative;display:block;height:118px;padding:10px 16px 0;background:var(--bg-100);border-bottom:1px solid var(--border);overflow:hidden;}
+.c2c-v2 .ana-out-page{display:block;height:100%;box-sizing:border-box;padding:8px 9px;background:var(--bg-000);border:1px solid var(--border);border-bottom:0;border-radius:var(--radius-sm) var(--radius-sm) 0 0;overflow:hidden;}
+.c2c-v2 .ana-out-page-t{display:block;margin-bottom:4px;font-family:var(--font-serif);font-size:8px;font-weight:600;line-height:1.3;color:var(--text-100);}
+/* Clamped so the page's text ends above the type badge rather than under it. */
+.c2c-v2 .ana-out-page-b{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:6;overflow:hidden;font-family:var(--font-serif);font-size:6.5px;line-height:1.5;color:var(--text-300);}
+.c2c-v2 .ana-out-badge{position:absolute;left:8px;bottom:8px;padding:1px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-000);font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text-200);}
+.c2c-v2 .ana-out-cap{display:flex;flex-direction:column;gap:2px;padding:8px 10px 10px;}
+.c2c-v2 .ana-out-title{font-size:12.5px;font-weight:500;line-height:1.35;color:var(--text-100);overflow-wrap:anywhere;}
+.c2c-v2 .ana-out-meta{font-size:11px;line-height:1.4;color:var(--text-300);}
+.c2c-v2 .ana-out-go{display:inline-flex;align-items:center;gap:4px;margin-top:4px;font-size:11.5px;color:var(--accent-200);}
+.c2c-v2 .ana-out-go svg{font-size:11px;}
 @media (prefers-reduced-motion:reduce){
-  .c2c-v2 .ana-work-pulse{animation:none;opacity:1;}
-  .c2c-v2 .ana-work-sec-h,.c2c-v2 .ana-work-link,.c2c-v2 .ana-work-toggle{transition:none;}
+  .c2c-v2 .ana-work-close,.c2c-v2 .ana-work-link,.c2c-v2 .ana-step-chip,.c2c-v2 .ana-out-card.is-action{transition:none;}
 }
 
 /* ── Page header ── */
@@ -2437,7 +2425,7 @@
 .c2c-v2 .haq-ready-l{font-size:12.5px;color:var(--text-300);white-space:nowrap;}
 .c2c-v2 .haq-ready-l b{color:var(--text-100);font-size:14px;}
 .c2c-v2 .haq-ready-bar{flex:1;height:6px;border-radius:4px;background:var(--bg-200);overflow:hidden;}
-.c2c-v2 .haq-ready-bar>span{display:block;height:100%;border-radius:4px;background:var(--accent-100);transition:width var(--dur);}
+.c2c-v2 .haq-ready-bar>span{display:block;height:100%;border-radius:4px;background:var(--accent-100);transition:background var(--dur);}
 .c2c-v2 .haq-assemble{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:8px 13px;border-radius:var(--radius-md);background:var(--accent-100);color:#fff;white-space:nowrap;}
 .c2c-v2 .haq-assemble:disabled{background:var(--bg-200);color:var(--text-500);}
 .c2c-v2 .haq-assemble .ico{font-size:14px;}

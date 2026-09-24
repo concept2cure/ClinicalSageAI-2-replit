@@ -24,7 +24,7 @@ import type { AnaTool } from '../ai-gateway/types';
 export const LIST_VAULT_DOCUMENTS: AnaTool = {
   name: 'list_vault_documents',
   description:
-    "List documents in the organization's vault (concept2cure_artifacts) — every program artifact with title, type, CTD section, status, version, and last update. Filter by a title query, lifecycle status, or CTD section prefix. Use this to see what documents exist before reading one with read_vault_document. Tenant-scoped, read-only.",
+    "List the organization's Artifacts Center documents (concept2cure_artifacts) — governed program artifacts with title, type, CTD section, status, version, and last update. This is not the files uploaded to the Vault: those are a different store, read with list_project_documents when that tool is offered. An empty result here says nothing about the Vault. Filter by a title query, lifecycle status, or CTD section prefix. Use this to see which artifacts exist before reading one with read_vault_document. Tenant-scoped, read-only.",
   input_schema: {
     type: 'object',
     properties: {
@@ -44,7 +44,7 @@ export const LIST_VAULT_DOCUMENTS: AnaTool = {
 export const READ_VAULT_DOCUMENT: AnaTool = {
   name: 'read_vault_document',
   description:
-    "Read a vault document's metadata AND content by its id (numeric id or 'artifact_…' external id). Returns title, type, category, CTD section, status, version, content hash, timestamps, and the document text (truncated to max_chars with the full length reported — raise max_chars or read again for more). Use list_vault_documents first to find the id. Tenant-scoped, read-only.",
+    "Read an Artifacts Center document's metadata AND content by its id (numeric id or 'artifact_…' external id). Returns title, type, category, CTD section, status, version, content hash, timestamps, and the document text (truncated to max_chars with the full length reported — raise max_chars or read again for more). This reads governed artifacts, not the files uploaded to the Vault (those carry UUID ids and are read with read_project_document when offered). Use list_vault_documents first to find the id. Tenant-scoped, read-only.",
   input_schema: {
     type: 'object',
     properties: {

@@ -1,0 +1,2 @@
+[ci:migration-drop-safety] OK — 308 migrations, 33 DROP(s), none re-created by the set, 2 reviewed exception(s); 17 dynamic DROP(s) in 17 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+[ci:untracked-imports] no source files changed against origin/concept2cure-v2.

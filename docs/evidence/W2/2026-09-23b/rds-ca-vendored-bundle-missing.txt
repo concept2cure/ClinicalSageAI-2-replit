@@ -1,0 +1,55 @@
+# The vendored RDS bundle (63fbf452f) was never committed: .gitignore line 20 is *.pem, so
+# assets/rds-ca/global-bundle.pem stayed in that session's working tree only. On trunk the image
+# sets NODE_EXTRA_CA_CERTS to a file that does not exist (Node warns and continues; every RDS
+# connection then fails verification), and the contract test fails on any fresh checkout.
+
+$ git ls-tree -r origin/concept2cure-v2 --name-only | grep rds-ca
+assets/rds-ca/README.md
+assets/rds-ca/checksums.txt
+$ git check-ignore -v assets/rds-ca/global-bundle.pem
+.gitignore:20:*.pem	assets/rds-ca/global-bundle.pem
+
+## tests/schema-contract/rds-ca-bundle.contract.test.ts on the tree as committed
+ ✓ tests/schema-contract/rds-ca-bundle.contract.test.ts > the image trusts the RDS certificate authority > sets NODE_EXTRA_CA_CERTS in the production stage, after assets are copied in
+ × tests/schema-contract/rds-ca-bundle.contract.test.ts > the image trusts the RDS certificate authority > names a committed file that .dockerignore does not drop
+ × tests/schema-contract/rds-ca-bundle.contract.test.ts > the image trusts the RDS certificate authority > matches the SHA-256 recorded in checksums.txt
+ × tests/schema-contract/rds-ca-bundle.contract.test.ts > the image trusts the RDS certificate authority > is loaded by Node as extra CAs, and supplies roots Node does not already have
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 1 passed (4)
+
+## After: bundle committed (sha256 matches checksums.txt), .gitignore exception added
+global-bundle.pem: OK
+ ✓ tests/schema-contract/rds-ca-bundle.contract.test.ts > the image trusts the RDS certificate authority > sets NODE_EXTRA_CA_CERTS in the production stage, after assets are copied in
+ ✓ tests/schema-contract/rds-ca-bundle.contract.test.ts > the image trusts the RDS certificate authority > names a committed file that .dockerignore does not drop
+ ✓ tests/schema-contract/rds-ca-bundle.contract.test.ts > the image trusts the RDS certificate authority > matches the SHA-256 recorded in checksums.txt
+ ✓ tests/schema-contract/rds-ca-bundle.contract.test.ts > the image trusts the RDS certificate authority > is loaded by Node as extra CAs, and supplies roots Node does not already have
+      Tests  4 passed (4)
+
+## The new 'tracked by git' case, with the file present but untracked (the 63fbf452f state)
+docs/LAUNCH_DEFINITION_OF_DONE.md: needs merge
+terraform/environments/production/main.tf: needs merge
+terraform/environments/production/tests/boot_contract.tftest.hcl: needs merge
+terraform/environments/production/variables.tf: needs merge
+terraform/modules/ecs-fargate/main.tf: needs merge
+terraform/modules/ecs-fargate/outputs.tf: needs merge
+terraform/modules/rds/main.tf: needs merge
+terraform/modules/rds/outputs.tf: needs merge
+terraform/modules/rds/variables.tf: needs merge
+(untracked, present on disk: yes)
+ ✓ sets NODE_EXTRA_CA_CERTS in the production stage, after assets are copied in
+ ✓ names a committed file that .dockerignore does not drop
+ × is tracked by git, not merely present in this working tree
+ ✓ points PGSSLROOTCERT at the same bundle, for libpq
+ ✓ matches the SHA-256 recorded in checksums.txt
+ ✓ is loaded by Node as extra CAs, and supplies roots Node does not already have
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 5 passed (6)
+
+## Tracked
+ ✓ sets NODE_EXTRA_CA_CERTS in the production stage, after assets are copied in
+ ✓ names a committed file that .dockerignore does not drop
+ ✓ is tracked by git, not merely present in this working tree
+ ✓ points PGSSLROOTCERT at the same bundle, for libpq
+ ✓ matches the SHA-256 recorded in checksums.txt
+ ✓ is loaded by Node as extra CAs, and supplies roots Node does not already have
+      Tests  6 passed (6)

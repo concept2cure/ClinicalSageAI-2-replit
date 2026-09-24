@@ -1,0 +1,36 @@
+# P11-4 server half — RED at 400576257 (tests added, source unchanged)
+# 2026-09-24T00:58:23Z
+ × server/services/__tests__/release-signature-manifestation.test.ts > findActiveReleaseSignature carries the §11.50 manifestation > returns the printed name, title, meaning and time of the active signature 10ms
+   → expected { id: 7 } to deeply equal { id: 7, signerId: 12, …(4) }
+ × server/services/__tests__/release-signature-manifestation.test.ts > findActiveReleaseSignature carries the §11.50 manifestation > states the signing time as an ISO instant, whatever form the driver returns it in 2ms
+   → expected undefined to be '2026-09-20T14:03:05.000Z' // Object.is equality
+ × server/services/__tests__/release-signature-manifestation.test.ts > findActiveReleaseSignature carries the §11.50 manifestation > says a missing field is missing rather than inventing one 1ms
+   → expected undefined to be null
+ ✓ server/services/__tests__/release-signature-manifestation.test.ts > findActiveReleaseSignature carries the §11.50 manifestation > keeps the lookup that decides the §11.70 gate unchanged 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > returns the signed manifest when every control verifies 4ms
+ × server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > carries the signer, time and meaning of the active signature (§11.50, review P11-4) 10ms
+   → expected { runId: 'run-0001', …(15) } to match object { signatureId: 7, signerId: 12, …(4) }
+ × server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > passes a missing manifestation field through as null, not as a stand-in 2ms
+   → expected undefined to be null
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > accepts an unsealed run under an unsealed posture 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when a leaf was swapped after signing (digest drift) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when the digest was forged to match a tampered manifest (seal failure) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when a seal exists but the key is gone (unverifiable control) 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when the signature was superseded or rolled back 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES as signature-unverifiable — NOT revoked — when the signature lookup could not run (WO-16B finding 14) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES a change to the identity tuple (org swap) even with intact leaves 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses an unknown or cross-tenant run 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a run with no package.sign step 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a run still awaiting a signature 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a skipped signature gate rather than treating it as signed 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a legacy run signed before snapshot persistence 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > verifyLeafBytes > passes when rendered bytes hash to the signed checksums 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > verifyLeafBytes > fails closed on a missing leaf rather than passing it 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > verifyLeafBytes > reports a leaf whose bytes do not match the signed checksum 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > refusalHttpStatus > maps integrity failures to 422, distinct from workflow-state 409s 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  5 failed | 18 passed (23)
+
+# Route case — RED with server/routes/ectd-export.ts at HEAD (git stash), rest of the change applied
+   → expected { …(3) } to deeply equal { …(8) }   (signature carried payloadDigest, signatureId, sealVerdict only)

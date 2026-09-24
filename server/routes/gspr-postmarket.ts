@@ -509,10 +509,7 @@ postMarketRouter.patch('/documents/:documentId', async (req: Request, res: Respo
     const userIdRaw = (req as any).user?.id;
     const updatedBy =
       typeof userIdRaw === 'string' ? userIdRaw : userIdRaw != null ? String(userIdRaw) : 'system';
-    const updated = await updateDocument(ctx.orgId, String(req.params.documentId), {
-      ...req.body,
-      updatedBy,
-    });
+    const updated = await updateDocument(ctx.orgId, String(req.params.documentId), req.body, updatedBy);
     if (!updated) return res.status(404).json({ error: 'Document not found' });
 
     // WO-16C #133. The patch is committed by updateDocument above. A lost

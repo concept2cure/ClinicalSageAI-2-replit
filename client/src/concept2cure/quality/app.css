@@ -169,7 +169,7 @@
 .qms-train-row { display: grid; grid-template-columns: minmax(0, 1fr) 90px 52px 84px; gap: 10px; align-items: center; font-size: 12px; }
 .qms-train-doc { color: var(--text-200); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .qms-train-bar { height: 6px; border-radius: 999px; background: var(--bg-200); overflow: hidden; }
-.qms-train-fill { display: block; height: 100%; border-radius: 999px; background: #6f8c5a; transition: width 200ms ease-out; }
+.qms-train-fill { display: block; height: 100%; border-radius: 999px; background: #6f8c5a; transition: background 200ms ease-out; }
 .qms-train-fill[data-tone="warn"] { background: #d09a3c; }
 .qms-train-fill[data-tone="err"]  { background: #c84a4a; }
 .qms-train-pct { color: var(--text-300); text-align: right; }

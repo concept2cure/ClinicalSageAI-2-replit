@@ -1,0 +1,129 @@
+name: Terraform tests (offline)
+
+# Every push that touches the infrastructure, or the deploy preflight whose
+# contract the infrastructure has to meet, runs the Terraform test suites.
+#
+# Until this workflow, no Terraform check ran in CI at all:
+# terraform-compliance.yml triggers only on pull_request, which this repository
+# does not use (docs/evidence/W2/2026-09-24-b9/README.md). As a result, the
+# production task definition carried 3 of the 12 names deploy-aws.yml's
+# preflight requires, and nothing noticed before a deploy would have been
+# refused (D1 brief B3).
+#
+# These tests run against mocked providers. They need no AWS account and no
+# credentials, and they create nothing.
+#   stack                    the one deployment composition (B8). The boot
+#                            contract, for production AND staging, and
+#                            production's names. It reads both out of
+#                            deploy-aws.yml, so this workflow also runs when that
+#                            file changes.
+#   modules/alb              the ALB admits CloudFront alone (B9)
+#   modules/cloudfront       API routing through CloudFront (B9)
+
+on:
+  push:
+    branches: ['concept2cure-v2']
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/deploy-aws.yml'
+      - '.github/workflows/terraform-tests.yml'
+      - 'scripts/ops/terraform-preflight-proof.mjs'
+      - '.github/workflows/provision-database.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: terraform-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  terraform-test:
+    name: terraform test (${{ matrix.dir }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dir:
+          - terraform/stack
+          - terraform/modules/alb
+          - terraform/modules/cloudfront
+    env:
+      TF_IN_AUTOMATION: true
+    steps:
+      # Pinned to full commit SHAs, as every `uses:` in this repository is: a
+      # tag is a mutable pointer. Same SHAs as terraform-compliance.yml.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        with:
+          # The version the evidence under docs/evidence/W2/ was produced with.
+          terraform_version: 1.9.8
+          terraform_wrapper: false
+
+      - name: init (no backend)
+        working-directory: ${{ matrix.dir }}
+        run: terraform init -backend=false -input=false
+
+      - name: validate
+        working-directory: ${{ matrix.dir }}
+        run: terraform validate
+
+      - name: test
+        working-directory: ${{ matrix.dir }}
+        run: terraform test
+
+  # The production boot contract, end to end: deploy-aws.yml's own preflight
+  # shell run against the task definition the mocked apply renders; the
+  # checked revision's ARN pinned through migrate and deploy-api; the rendered
+  # health check executed against a stub. The terraform test above says the
+  # task definition has the right names; this says the pipeline accepts it and
+  # the probe works. (Merged here from terraform-boot-contract.yml, 2026-09-24:
+  # two sessions built the same lane, and one workflow is canonical.)
+  preflight-proof:
+    name: deploy preflight against the rendered task definition
+    runs-on: ubuntu-latest
+    env:
+      TF_IN_AUTOMATION: true
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        with:
+          terraform_version: 1.9.8
+          # The wrapper re-emits stdout; the proof parses `terraform test -json`.
+          terraform_wrapper: false
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Install dependencies
+        # The proof reads deploy-aws.yml with js-yaml, the repository's own copy.
+        run: npm ci --legacy-peer-deps --ignore-scripts
+      - name: Proof
+        run: node scripts/ops/terraform-preflight-proof.mjs
+
+  environments-validate:
+    name: terraform validate (${{ matrix.env }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [production, staging]
+    env:
+      TF_IN_AUTOMATION: true
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        with:
+          terraform_version: 1.9.8
+          terraform_wrapper: false
+      - name: init and validate
+        working-directory: terraform/environments/${{ matrix.env }}
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate

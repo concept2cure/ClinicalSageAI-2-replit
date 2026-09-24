@@ -196,6 +196,12 @@ export async function recordGovernedDecision(
   try {
     const { decisionRecordService } = await import('./decision-record-service.js');
     await decisionRecordService.create({
+      // The reference returned to the caller carries decisionId; the row must
+      // be fetchable by it. Without this the row took a generated uuid, the
+      // list API reported decision_context.governedDecisionId, and
+      // GET /governed/decisions/:decisionId looked up the OTHER one — 404 for
+      // every decision, to every tenant, including the one that owned it.
+      id: decisionId,
       organizationId: orgIdNumeric,
       projectId: Number(evaluation.context.projectId) || 0,
       decisionCode: `governed-fabric:${decisionId}`,

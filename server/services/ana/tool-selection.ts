@@ -49,6 +49,10 @@ export const ALWAYS_ON_TOOLS: ReadonlySet<string> = new Set([
   'act_on_screen',
   'list_demo_scripts',
   'start_product_demo',
+  // Her declared plan (turn-plan.ts). A request's wording says nothing about
+  // whether it has several steps, so relevance scoring would drop it on
+  // exactly the long turns where a person most needs to see the plan.
+  'update_plan',
 ]);
 
 const STOPWORDS: ReadonlySet<string> = new Set([

@@ -1,35 +1,35 @@
 /**
- * What AnA is doing, while she is doing it.
+ * What AnA is doing, while she is doing it — the per-turn record in the
+ * transcript.
  *
  * ── The gap this closes ──────────────────────────────────────────────────────
  * A turn already reports a great deal about itself. `useAnaChat` captures the
  * intent lens AnA read the question through, the document type she detected,
- * every deterministic tool she invoked — with its label, its agentic-loop
- * round, its arguments and its result — her extended reasoning, and the
- * deliverable she produced.
+ * the plan she declared, every deterministic tool she invoked — with its
+ * label, its agentic-loop round, its arguments and its duration — her extended
+ * reasoning, and the deliverable she produced. The rail used to render one
+ * line of that ("Thinking…") while all of it arrived over the wire.
  *
- * The shell rail rendered exactly one line of that:
+ * ── How it reads ─────────────────────────────────────────────────────────────
+ * One quiet bordered list, one row per thing that happened, in the order it
+ * happened: "Planned 5 steps", "Searching the literature for estimand",
+ * "Drafted Clinical Overview 2.5". The verb is muted and the object is not, so
+ * the eye lands on WHAT she worked on. A row with more to say — how long a
+ * step took, the inputs she passed, the steps of her plan, the whole of her
+ * reasoning — carries its own chevron and opens in place. While she works the
+ * list is open; once the answer has landed it folds to one summary line.
  *
- *     body: m.text || (m.streaming ? m.statusPhase || 'Thinking…' : '')
+ * ── What it refuses to show ──────────────────────────────────────────────────
+ * Only things that actually happened. Each tool row is a tool AnA really
+ * called, under the label the server gave it; a plan row is a plan she
+ * declared; a failed step is shown failed, in the sentence the server wrote,
+ * never as the raw payload. A turn that ran nothing renders nothing. There is
+ * no progress bar and no percentage: the loop runs until she decides she has
+ * enough, so any bar would be a fiction with a number on it.
  *
- * So while AnA ran a sample-size calculation through a deterministic
- * biostatistics engine, swept the dossier for contradictions and checked
- * citation coverage across three rounds, the person waiting saw the word
- * "Thinking…". Every signal needed to show the work was already arriving over
- * the wire and being discarded at the render layer.
- *
- * ── What it shows, and what it refuses to ────────────────────────────────────
- * Only things that actually happened. Each row is a tool AnA really called,
- * under the label the server gave it; the rounds are her real agentic-loop
- * rounds, so a multi-round investigation reads as the progression it was. A
- * turn that ran no tools renders no tool rows rather than inventing reassuring
- * activity, and a failed step is shown failed rather than quietly dropped —
- * the point is to make the work legible, which is worth nothing if the record
- * is decorated.
- *
- * There is no progress bar and no percentage. Neither is knowable here: the
- * loop runs until AnA decides she has enough, so any bar would be a fiction
- * with a number on it.
+ * Every host renders this one component — the persistent rail, the full-page
+ * conversation, the document editor, the eCTD co-author and risk-based
+ * monitoring — through `activityPropsFor`, the one mapping from a turn.
  *
  * @module client/src/concept2cure/v2/AnaActivity
  */
@@ -38,11 +38,12 @@ import React from 'react';
 
 import { SR_ONLY_STYLE } from '../hooks/useChatUpload';
 import { I } from './icons';
-import type { AnaToolCall } from '../components/ana/useAnaChat';
-import { byRound, formatElapsed, LENS_PHRASE } from '../components/ana/anaProgress';
+import type { AnaChatMessage, AnaToolCall } from '../components/ana/useAnaChat';
+import type { AnaPlanChange, AnaPlanStep } from '../components/ana/useAnaChat.types';
+import { formatElapsed, LENS_PHRASE, PLAN_TOOL } from '../components/ana/anaProgress';
 import { statusGlyph } from './AnaWorkSections';
+import { stepDuration } from './anaWorkModel';
 import { useNow } from './useNow';
-
 
 export interface AnaActivityProps {
   /** True while the turn is still in flight. */
@@ -55,10 +56,20 @@ export interface AnaActivityProps {
   documentType?: string;
   /** Deterministic tools invoked this turn. */
   toolCalls?: AnaToolCall[];
+  /** Every change to the plan she declared, in arrival order. */
+  planChanges?: AnaPlanChange[];
+  /**
+   * Her plan as last declared. Read only when there is no change history —
+   * a thread reopened later, which persists the final plan and not when each
+   * step changed — so the row says "Plan", not "Planned".
+   */
+  plan?: AnaPlanStep[];
   /** Extended reasoning, when the model produced any. */
   thinking?: string;
   /** Title of the deliverable produced this turn, if one was. */
   draftTitle?: string;
+  /** The answer came from a fallback provider — a disclosure, never hidden. */
+  fallback?: boolean;
   /**
    * Client clock (ms) when the turn was sent, and when it ended. With both the
    * collapsed line can say how long the turn took; with only the first, the
@@ -69,7 +80,36 @@ export interface AnaActivityProps {
   completedAt?: number;
 }
 
+/** The one mapping from a turn to its record. Every host uses it. */
+export function activityPropsFor(m: AnaChatMessage): AnaActivityProps {
+  return {
+    streaming: m.streaming,
+    phase: m.statusPhase,
+    lens: m.detectedLens,
+    documentType: m.detectedDocumentType,
+    toolCalls: m.toolCalls,
+    planChanges: m.planChanges,
+    plan: m.plan,
+    thinking: m.thinking,
+    draftTitle: m.generatedDraft?.title,
+    fallback: m.fallback,
+    startedAt: m.sentAt,
+    completedAt: m.completedAt,
+  };
+}
 
+/** True when the record has something real to show for a settled turn. */
+export function hasReportableWork(a: AnaActivityProps): boolean {
+  return Boolean(
+    (a.toolCalls && a.toolCalls.length > 0) ||
+      (a.planChanges && a.planChanges.length > 0) ||
+      (a.plan && a.plan.length > 0) ||
+      (a.lens && LENS_PHRASE[a.lens]) ||
+      a.documentType ||
+      a.thinking ||
+      a.draftTitle,
+  );
+}
 
 /**
  * How much of a still-streaming thought to show. Long enough to be a real
@@ -79,28 +119,199 @@ export interface AnaActivityProps {
 const THOUGHT_TAIL = 180;
 
 /**
- * The most recent thing she has actually said to herself.
- *
- * Her extended reasoning streams token by token, and the whole of it is the
- * wrong thing to put above a streaming answer — it is long, and it grows. So
- * while the turn is in flight only the newest stretch is shown, and the full
- * text is there once the record is opened.
- *
- * It is her TEXT, truncated — never a summary of it. A paraphrase would be this
- * component inventing a thought she did not have, which is the same defect as
- * inventing a step she did not run. The leading ellipsis marks the cut so a
- * fragment is never read as a complete sentence.
+ * The most recent thing she has actually said to herself — her TEXT,
+ * truncated, never a summary of it. A paraphrase would be this component
+ * inventing a thought she did not have. The leading ellipsis marks the cut so
+ * a fragment is never read as a complete sentence.
  */
 function latestThought(thinking: string): string {
-  const lines = thinking.split(/\n+/).map(l => l.trim()).filter(Boolean);
+  const lines = thinking.split(/\n+/).map((l) => l.trim()).filter(Boolean);
   const last = lines[lines.length - 1] ?? '';
   if (last.length <= THOUGHT_TAIL) return last;
   const cut = last.slice(last.length - THOUGHT_TAIL);
-  // Start at a word boundary; a half-word reads as a rendering bug.
   const space = cut.indexOf(' ');
   return `…${space > 0 ? cut.slice(space + 1) : cut}`;
 }
 
+/**
+ * A step label split into its verb and its object. The server quotes the
+ * argument it names — `Searching the literature for "estimand"` — so the
+ * quoted span is the object; a label with none has no object and reads whole.
+ */
+export function splitLabel(label: string): { verb: string; object?: string; rest?: string } {
+  const m = /^(.*?)\s*"([^"]+)"(.*)$/.exec(label);
+  if (!m || !m[2].trim()) return { verb: label };
+  return { verb: m[1].trim(), object: m[2].trim(), ...(m[3].trim() ? { rest: m[3].trim() } : {}) };
+}
+
+/* ── Rows ─────────────────────────────────────────────────────────────────── */
+
+/** A row that may open in place. The disclosure is mounted while collapsed so aria-controls resolves. */
+function Row({
+  status,
+  glyph,
+  verb,
+  object,
+  rest,
+  trailing,
+  note,
+  detail,
+}: {
+  status: 'running' | 'success' | 'error';
+  glyph?: React.ReactElement;
+  verb: string;
+  object?: string;
+  rest?: string;
+  trailing?: string;
+  /** A sentence that must stay visible (a failure), never behind the chevron. */
+  note?: string;
+  /** What opens in place. The row's visible words are the button's name. */
+  detail?: React.ReactNode;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const id = React.useId();
+  const text = (
+    <span className="ana-activity-text">
+      <span className="ana-activity-verb">{verb}</span>
+      {/* The spaces are text nodes between the spans, not inside them, so a
+          screen reader's name for the row reads "Planned 2 steps", not
+          "Planned2 steps". */}
+      {object ? <>{' '}<span className="ana-activity-obj">{object}</span></> : null}
+      {rest ? <>{' '}<span className="ana-activity-verb">{rest}</span></> : null}
+    </span>
+  );
+  return (
+    <li className={`ana-activity-step is-${status}${object ? ' has-obj' : ''}`}>
+      <span className="ana-activity-glyph" aria-hidden="true">{glyph ?? statusGlyph(status)}</span>
+      {detail ? (
+        <button
+          type="button"
+          className="ana-activity-row"
+          aria-expanded={open}
+          aria-controls={id}
+          onClick={() => setOpen((o) => !o)}
+        >
+          {text}
+          {trailing ? <span className="ana-activity-t">{trailing}</span> : null}
+          <span className="ana-activity-chev" aria-hidden="true">{open ? I.chevDown : I.chevRight}</span>
+        </button>
+      ) : (
+        <span className="ana-activity-row is-static">
+          {text}
+          {trailing ? <span className="ana-activity-t">{trailing}</span> : null}
+        </span>
+      )}
+      {note ? <span className="ana-activity-note">{note}</span> : null}
+      {detail ? (
+        <div className="ana-activity-detail" id={id} hidden={!open}>
+          {detail}
+        </div>
+      ) : null}
+    </li>
+  );
+}
+
+function ToolRow({ c, now }: { c: AnaToolCall; now: number }) {
+  const { verb, object, rest } = splitLabel(c.label || c.name);
+  const hasInput = c.input !== undefined && c.input !== null;
+  const took = c.status === 'running' ? '' : stepDuration(c, now);
+  const detail =
+    hasInput || took ? (
+      <>
+        {took && <div className="ana-activity-kv">Took {took}{typeof c.round === 'number' ? ` · round ${c.round}` : ''}</div>}
+        {hasInput && (
+          /* A scroll container with a tab stop, named as a region (SC 2.1.1).
+             The inputs she passed — never the raw result payload, which is the
+             internals-in-copy defect this repo has already had once. */
+          <pre className="ana-activity-pre" tabIndex={0} role="region" aria-label="Inputs AnA passed to this step">
+            {JSON.stringify(c.input, null, 2)}
+          </pre>
+        )}
+      </>
+    ) : undefined;
+  return (
+    <Row
+      status={c.status}
+      verb={verb}
+      object={object}
+      rest={rest}
+      trailing={c.status === 'running' ? 'running' : took || undefined}
+      note={c.status === 'error' ? c.message || 'did not complete' : undefined}
+      detail={detail}
+    />
+  );
+}
+
+/**
+ * The folded line. Failures and deliverables are OUTCOMES and appear here
+ * rather than only inside the disclosure — an outcome you have to open a
+ * twisty to discover is one the product is hiding. So is a fallback answer.
+ */
+function foldedLine(o: {
+  changes: AnaPlanChange[];
+  finalPlan: AnaPlanStep[];
+  ran: number;
+  failed: number;
+  draftTitle?: string;
+  thinking?: string;
+  fallback?: boolean;
+  /** Set only for a turn with a recorded END; never read off the clock. */
+  duration: string;
+}): string {
+  // "Planned" only when the declaration was seen; a reopened thread knows the
+  // final list and not how it was built, so it says "Plan".
+  const persisted = o.changes.length === 0 && o.finalPlan.length > 0;
+  const planned = persisted ? o.finalPlan.length : o.changes.filter((c) => c.initial && c.kind === 'added').length;
+  const steps = (n: number) => `${n} ${n === 1 ? 'step' : 'steps'}`;
+  const parts = [
+    planned > 0 ? `${persisted ? 'Plan ·' : 'Planned'} ${steps(planned)}` : '',
+    // With a plan on the line its steps are "steps" and the tool calls are
+    // tools, so "Planned 3 steps · 4 steps completed" never reads as a contradiction.
+    o.ran > 0 ? (planned > 0 ? `${o.ran} ${o.ran === 1 ? 'tool' : 'tools'} run` : `${steps(o.ran)} completed`) : '',
+    o.failed > 0 ? `${o.failed} failed` : '',
+    o.draftTitle ? `Drafted ${o.draftTitle}` : '',
+    o.thinking ? 'reasoning' : '',
+    o.fallback ? 'answered by a fallback provider' : '',
+    o.duration ? `in ${o.duration}` : '',
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(' · ') : 'How this was read';
+}
+
+type Item =
+  | { kind: 'tool'; t: number; seq: number; call: AnaToolCall }
+  | { kind: 'plan'; t: number; seq: number; steps: string[]; persisted?: boolean }
+  | { kind: 'added'; t: number; seq: number; title: string };
+
+/**
+ * Tool rows and plan rows in the order they happened. The first plan she
+ * declared is one row ("Planned 5 steps"), not five; a step added later is
+ * its own row. Starts and completions are not rows — the panel's rail carries
+ * them — so the record stays the work, not bookkeeping. The plan tool's own
+ * call is shown as the plan it recorded; a FAILED plan call stays a failed
+ * row, because a failure is never folded away.
+ */
+function orderedItems(calls: AnaToolCall[], changes: AnaPlanChange[], plan: AnaPlanStep[]): Item[] {
+  const items: Item[] = [];
+  let seq = 0;
+  let lastT = Number.NEGATIVE_INFINITY;
+  for (const c of calls) {
+    if (c.name === PLAN_TOOL && c.status !== 'error') continue;
+    lastT = typeof c.startedAt === 'number' ? c.startedAt : lastT;
+    items.push({ kind: 'tool', t: lastT, seq: seq++, call: c });
+  }
+  const initial = changes.filter((c) => c.initial && c.kind === 'added');
+  if (initial.length > 0) {
+    items.push({ kind: 'plan', t: initial[0].at, seq: seq++, steps: initial.map((c) => c.title) });
+  } else if (changes.length === 0 && plan.length > 0) {
+    // A reopened thread: the final plan, first, with no claim about when.
+    items.push({ kind: 'plan', t: Number.NEGATIVE_INFINITY, seq: -1, steps: plan.map((s) => s.title), persisted: true });
+  }
+  for (const c of changes) {
+    if (c.initial || c.kind !== 'added') continue;
+    items.push({ kind: 'added', t: c.at, seq: seq++, title: c.title });
+  }
+  return items.sort((a, b) => (a.t === b.t ? a.seq - b.seq : a.t - b.t));
+}
 
 export function AnaActivity({
   streaming,
@@ -108,70 +319,55 @@ export function AnaActivity({
   lens,
   documentType,
   toolCalls,
+  planChanges,
+  plan,
   thinking,
   draftTitle,
+  fallback,
   startedAt,
   completedAt,
 }: AnaActivityProps) {
   const calls = toolCalls ?? [];
+  const changes = planChanges ?? [];
+  const finalPlan = plan ?? [];
   // The clock ticks only while the turn is live AND has a start; a settled turn
   // reads its recorded end, and a turn with no start claims no duration.
   const now = useNow(Boolean(streaming) && typeof startedAt === 'number');
-  const elapsed =
-    typeof startedAt === 'number' ? formatElapsed((completedAt ?? now) - startedAt) : '';
-  const rounds = byRound(calls);
-  const multiRound = rounds.length > 1;
-  const ran = calls.filter(c => c.status !== 'running').length;
-  const failed = calls.filter(c => c.status === 'error').length;
+  const elapsed = typeof startedAt === 'number' ? formatElapsed((completedAt ?? now) - startedAt) : '';
+  const work = calls.filter((c) => c.name !== PLAN_TOOL || c.status === 'error');
+  const ran = work.filter((c) => c.status !== 'running').length;
+  const failed = work.filter((c) => c.status === 'error').length;
+  const multiRound = new Set(work.map((c) => (typeof c.round === 'number' && c.round > 0 ? c.round : 1))).size > 1;
 
   // While working the record is open — that is the whole point. Once the answer
-  // has landed it collapses, because by then the answer is what matters and the
-  // work is something you go back to.
-  //
-  // Declared before the early returns below: this component legitimately
-  // renders nothing for a turn that did no reportable work, and a hook after
-  // that branch would run on some turns and not others.
+  // has landed it folds, because by then the answer is what matters and the
+  // work is something you go back to. Declared before the early returns: this
+  // component legitimately renders nothing for a turn with nothing to report.
   const [open, setOpen] = React.useState(false);
   const bodyId = React.useId();
 
-  // A settled turn that did nothing worth reporting adds nothing. Say nothing.
-  const hasDecision = Boolean(lens && LENS_PHRASE[lens]) || Boolean(documentType);
-  const hasBody = calls.length > 0 || hasDecision || Boolean(thinking) || Boolean(draftTitle);
+  const lensPhrase = lens && LENS_PHRASE[lens] ? LENS_PHRASE[lens] : null;
+  const hasDecision = Boolean(lensPhrase) || Boolean(documentType);
+  const hasBody = hasReportableWork({ toolCalls: calls, planChanges: changes, plan: finalPlan, lens, documentType, thinking, draftTitle });
   if (!streaming && !hasBody) return null;
   if (streaming && !hasBody && !phase) return null;
 
   const expanded = Boolean(streaming) || open;
+  const summary = foldedLine({
+    changes,
+    finalPlan,
+    ran,
+    failed,
+    draftTitle,
+    thinking,
+    fallback,
+    duration: elapsed && typeof completedAt === 'number' ? elapsed : '',
+  });
 
-  // What the collapsed line says. A failure and a deliverable both appear here
-  // rather than only inside the disclosure: they are OUTCOMES, and an outcome
-  // you have to expand a twisty to discover is one the product is hiding.
-  // Steps stay inside — those are the how, and the how is what you go looking
-  // for.
-  const summary = (() => {
-    const parts: string[] = [];
-    // "checks" was wrong: a sample-size calculation and a document draft are
-    // both steps here and neither is a check. `step` also matches the per-row
-    // class name, so summary and detail share one vocabulary.
-    if (ran > 0) parts.push(`${ran} ${ran === 1 ? 'step' : 'steps'} completed`);
-    if (failed > 0) parts.push(`${failed} failed`);
-    if (draftTitle) parts.push(`Drafted ${draftTitle}`);
-    if (thinking) parts.push('reasoning');
-    // Only a turn with a recorded END gets a duration on its collapsed line; a
-    // turn that settled without one (stopped, failed, or reopened from history)
-    // must not read a clock off the current time.
-    if (elapsed && typeof completedAt === 'number') parts.push(`in ${elapsed}`);
-    return parts.length > 0 ? parts.join(' · ') : 'How this was read';
-  })();
-
-  /* The spoken version of this record.
-   *
-   * Sighted users read the rows; this is the one narrow region a screen reader
-   * is told about. It carries the phase plus the OUTCOMES — a step that failed,
-   * a deliverable produced — because those are status changes a user needs and
-   * would otherwise never hear: the rows themselves are not in a live region.
-   *
-   * It is always mounted and only its text changes. A live region that appears
-   * in the same paint as its first content is the documented case AT misses. */
+  /* The spoken version of this record: the phase plus the OUTCOMES, in one
+     always-mounted polite region (a region that appears in the same paint as
+     its first content is the documented case AT misses). The rows themselves
+     are not live. */
   const spoken = [
     streaming && phase ? phase : null,
     failed > 0 ? `${failed} ${failed === 1 ? 'step' : 'steps'} did not complete` : null,
@@ -180,6 +376,7 @@ export function AnaActivity({
     .filter(Boolean)
     .join('. ');
 
+  let lastRound = 0;
   return (
     <div className="ana-activity" data-streaming={streaming ? 'true' : 'false'}>
       <span aria-live="polite" style={SR_ONLY_STYLE}>{spoken}</span>
@@ -189,101 +386,114 @@ export function AnaActivity({
           className="ana-activity-toggle"
           aria-expanded={expanded}
           aria-controls={bodyId}
-          onClick={() => setOpen(o => !o)}
+          onClick={() => setOpen((o) => !o)}
         >
+          <span className="ana-activity-toggle-t">{summary}</span>
           {open ? I.chevDown : I.chevRight}
-          <span>{summary}</span>
         </button>
       )}
 
-      {/* Mounted while collapsed and hidden with the attribute, so the
-          toggle's aria-controls always resolves (SC 4.1.2) — the same rule as
-          the dock's sections. */}
-      {(
-        <div className="ana-activity-body" id={bodyId} hidden={!expanded}>
-          {/* The live phase. `polite` so a screen-reader user hears progress
-              without it interrupting the answer as it arrives. */}
-          {streaming && phase && (
-            <div className="ana-activity-phase">
-              <span className="ana-activity-pulse" aria-hidden="true">{I.dot}</span>
-              {phase}
-              {elapsed && <span className="ana-activity-clock">· {elapsed}</span>}
-            </div>
-          )}
-
+      <div className="ana-activity-body" id={bodyId} hidden={!expanded}>
+        <ol className="ana-activity-list">
           {hasDecision && (
-            <div className="ana-activity-read">
-              {lens && LENS_PHRASE[lens] ? `Reading this as ${LENS_PHRASE[lens]}` : 'Reading this question'}
-              {documentType ? ` · ${documentType}` : ''}
-            </div>
+            <Row
+              status="success"
+              glyph={I.eye}
+              verb={
+                lensPhrase
+                  ? `Reading this as ${lensPhrase}${documentType ? ` · drafting ${documentType}` : ''}`
+                  : `Drafting ${documentType}`
+              }
+            />
           )}
 
-          {/* Her reasoning. While the turn is in flight this is the newest
-              stretch of it, live; once the record is opened after the fact it
-              is the whole thing, in a bounded scroll so a long deliberation
-              cannot push the answer off the screen. Both are her own words. */}
-          {thinking && (
-            streaming ? (
-              <div className="ana-activity-think is-live">{latestThought(thinking)}</div>
+          {/* Her reasoning: while in flight the newest stretch, live; once
+              settled the whole of it behind the row's chevron, in a bounded
+              scroll so a long deliberation cannot push the answer away. */}
+          {thinking &&
+            (streaming ? (
+              <li className="ana-activity-step is-running">
+                <span className="ana-activity-glyph" aria-hidden="true">{I.sparkles}</span>
+                <span className="ana-activity-row is-static">
+                  <span className="ana-activity-text">
+                    <span className="ana-activity-verb">Reasoning</span>
+                  </span>
+                </span>
+                <div className="ana-activity-think is-live">{latestThought(thinking)}</div>
+              </li>
             ) : (
-              /* tabIndex + a name, because this one SCROLLS. A container with
-                 `overflow-y:auto` and no tab stop is unreachable by keyboard —
-                 a sighted mouse user gets the whole deliberation and a
-                 keyboard-only user gets the first 240px of it, with no way to
-                 know more exists (WCAG 2.1.1). The live variant above does not
-                 scroll, so giving it a tab stop would only add an empty stop
-                 to the order. */
-              <div
-                className="ana-activity-think"
-                tabIndex={0}
-                role="region"
-                aria-label="AnA's reasoning"
-              >
-                {thinking}
-              </div>
-            )
-          )}
+              <Row
+                status="success"
+                glyph={I.sparkles}
+                verb="Reasoned through the question"
+                detail={
+                  <div className="ana-activity-think" tabIndex={0} role="region" aria-label="AnA's reasoning">
+                    {thinking}
+                  </div>
+                }
+              />
+            ))}
 
-          {rounds.map(({ round, calls: cs }) => (
-            <div key={round} className="ana-activity-round">
-              {multiRound && (
-                <div className="ana-activity-round-h">
-                  {/* Round 2 exists because round 1 did not settle it. Naming
-                      that is the difference between "it took a while" and
-                      "she went back for more". */}
+          {orderedItems(calls, changes, finalPlan).map((it) => {
+            if (it.kind === 'plan') {
+              return (
+                <Row
+                  key={`p-${it.seq}`}
+                  status="success"
+                  glyph={I.list}
+                  verb={it.persisted ? 'Plan ·' : 'Planned'}
+                  object={`${it.steps.length} ${it.steps.length === 1 ? 'step' : 'steps'}`}
+                  detail={
+                    <ol className="ana-activity-plan">
+                      {it.steps.map((s) => (
+                        <li key={s}>{s}</li>
+                      ))}
+                    </ol>
+                  }
+                />
+              );
+            }
+            if (it.kind === 'added') {
+              return <Row key={`a-${it.seq}`} status="success" glyph={I.plus} verb="Added step" object={it.title} />;
+            }
+            const round = typeof it.call.round === 'number' && it.call.round > 0 ? it.call.round : 1;
+            const header =
+              multiRound && round !== lastRound ? (
+                /* Round 2 exists because round 1 did not settle it. Naming
+                   that is the difference between "it took a while" and "she
+                   went back for more". */
+                <li className="ana-activity-round-h" key={`r-${round}-${it.seq}`}>
                   {round === 1 ? 'First pass' : `Went back · round ${round}`}
-                </div>
-              )}
-              {cs.map((c, i) => (
-                <div
-                  key={`${round}-${i}-${c.name}`}
-                  className={`ana-activity-step is-${c.status}`}
-                >
-                  <span className="ana-activity-glyph" aria-hidden="true">{statusGlyph(c.status)}</span>
-                  <span className="ana-activity-label">{c.label || c.name}</span>
-                  {c.status === 'error' && (
-                    /* The server writes a sentence for this — "AnA couldn't
-                       finish searching the literature. She'll continue with
-                       what she has." — which names the step and the
-                       consequence. `c.result` is deliberately NOT used here:
-                       it is the raw tool payload, and putting that in front of
-                       a customer is the internals-in-copy defect this repo has
-                       already had once. */
-                    <span className="ana-activity-note">{c.message || 'did not complete'}</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          ))}
+                </li>
+              ) : null;
+            lastRound = round;
+            return (
+              <React.Fragment key={`t-${it.seq}`}>
+                {header}
+                <ToolRow c={it.call} now={now} />
+              </React.Fragment>
+            );
+          })}
 
-          {draftTitle && (
-            <div className="ana-activity-step is-success">
-              <span className="ana-activity-glyph" aria-hidden="true">{I.fileText}</span>
-              <span className="ana-activity-label">Drafted {draftTitle}</span>
-            </div>
+          {/* One sentence, not verb + object: the title is the deliverable's
+              name, and the card beneath the turn already sets it large. */}
+          {draftTitle && <Row status="success" glyph={I.fileText} verb={`Drafted ${draftTitle}`} />}
+
+          {fallback && !streaming && (
+            <Row status="error" verb="Answered by" object="a fallback provider" />
           )}
-        </div>
-      )}
+
+          {/* The live phase, last: what she is doing right now, with a running
+              clock so a long silent window reads as time passing. */}
+          {streaming && phase && (
+            <li className="ana-activity-phase">
+              <span className="ana-activity-pulse" aria-hidden="true">{I.dot}</span>
+              <span>{phase}</span>
+              {elapsed && <span className="ana-activity-clock">{elapsed}</span>}
+            </li>
+          )}
+        </ol>
+      </div>
     </div>
   );
 }

@@ -47,6 +47,13 @@ import { assertUploadSafe, UploadSafetyError, type UploadOrigin } from '../../mi
 import { writeChainedAuditRow } from '../auditService.js';
 import { getStorageProvider } from '../storage/index.js';
 import {
+  discardUnrecordedBytes,
+  NOTHING_SAVED,
+  refusalAfterDiscard,
+  type StoredUpload,
+} from './vault-ingest-discard.js';
+import { vaultWriteRefusal } from './vault-write-authority.js';
+import {
   classifyForFiling,
   resolveVaultView,
   isFolderInView,
@@ -130,8 +137,42 @@ export type VaultIngestResult =
 /**
  * Admit a document into the governed vault. Must be called inside the acting
  * organization's tenant scope (see the module header).
+ *
+ * ── Why the admission is wrapped ─────────────────────────────────────────────
+ * The bytes are stored BEFORE the record is written — the record carries the
+ * storage version id, so it cannot be written first. Every refusal after that
+ * point (a folder outside the taxonomy, different bytes at an occupied code and
+ * version, the same bytes under a second code, a failed audit write) told the
+ * user "Nothing was changed" or "Nothing was saved" and left the file in the
+ * tenant's storage under no record. No surface lists such a copy and no
+ * deletion reaches it, so it outlives the customer deleting everything they can
+ * see. Here, one exit covers every refusal and every throw: a stored copy that
+ * no committed record holds is removed. The version id is a fresh randomUUID
+ * per put, so removing it cannot touch the bytes of a record that already
+ * exists — including the one a DUPLICATE_CONTENT refusal points at.
  */
 export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultIngestResult> {
+  const stored: StoredUpload = { versionId: null, orgId: null, committed: false };
+  let result: VaultIngestResult;
+  try {
+    result = await admitVaultDocument(args, stored);
+  } catch (err) {
+    await discardUnrecordedBytes(stored);
+    throw err;
+  }
+  if (result.ok) return result;
+  return { ...result, message: refusalAfterDiscard(result.message, await discardUnrecordedBytes(stored)) };
+}
+
+async function admitVaultDocument(
+  args: VaultIngestArgs,
+  stored: StoredUpload,
+): Promise<VaultIngestResult> {
+  // Role first, as requireEditorAccess orders it: a caller who may not write
+  // is told so before anything is stored, checked or disclosed.
+  const roleRefusal = vaultWriteRefusal();
+  if (roleRefusal) return roleRefusal;
+
   // Tenant ownership guard. `vault.documents` now carries organization_id
   // (migrations/20260905_vault_documents_organization_id.sql), and the INSERT
   // below writes it — the retrieval path filters on it, so a row left NULL is
@@ -229,7 +270,7 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
   let storageProvider: string;
   let storageFileId: string;
   try {
-    const stored = await getStorageProvider().put({
+    const written = await getStorageProvider().put({
       orgId,
       projectId: args.programId,
       filename: fileName,
@@ -237,9 +278,11 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
       mime: mimeType,
       metadata: { contentHash, documentCode: args.documentCode },
     });
-    storageVersionId = stored.vaultVersionId;
-    storageProvider = stored.provider;
-    storageFileId = stored.vaultFileId;
+    storageVersionId = written.vaultVersionId;
+    storageProvider = written.provider;
+    storageFileId = written.vaultFileId;
+    stored.versionId = storageVersionId;
+    stored.orgId = orgId;
   } catch (err) {
     logger.error('Vault file persistence failed — refusing to record the document', {
       reason: err instanceof Error ? err.message : 'unknown',
@@ -604,6 +647,7 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
     });
 
     await client.query('COMMIT');
+    stored.committed = true;
 
     /* Passage index, post-commit: chunk + embed the extracted text into
        vault.document_chunks — the store the RAG vault corpus reads — and
@@ -690,7 +734,7 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
 
     logger.error('Vault ingest failed — nothing recorded', { err: err?.message });
     return { ok: false, status: 500, code: 'INGEST_FAILED',
-      message: 'The document could not be recorded in the vault. Nothing was saved.' };
+      message: `The document could not be recorded in the vault. ${NOTHING_SAVED}` };
   } finally {
     client.release();
   }

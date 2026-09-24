@@ -1,0 +1,16 @@
+# RED — server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts (real PGlite)
+# against the export and purge as at HEAD 770dfdc3, before the shared predicate.
+
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > erases every vault document the tenant owns, including one on a soft-deleted programme 12ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > erases the chunks of those documents too 6ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > never reaches another tenant's documents 17ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > the old organization_id-only predicate leaves the bytes behind (why this changed) 22ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > scopes chunks through the same document predicate, not a weaker one 2ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > keeps the predicate map frozen and free of request-derived input 7ms
+ × server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the export contains what the purge destroys > exports the document on a soft-deleted programme that the purge will erase 36ms
+   → expected [ Array(1) ] to include '44444444-4444-4444-8444-000000000002'
+ × server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the export contains what the purge destroys > for every tenant: the purge set is a subset of the export set — exactly equal here 18ms
+   → org 11 purges 44444444-4444-4444-8444-000000000002 it never exported: expected [ Array(1) ] to include '44444444-4444-4444-8444-000000000002'
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the export contains what the purge destroys > never exports another tenant's document 50ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 7 passed (9)

@@ -25,7 +25,17 @@ interface ShutdownContext {
   pool: Pool;
 }
 
-export async function gracefulShutdown(signal: string, ctx: ShutdownContext): Promise<never> {
+/**
+ * Drain, then exit with `exitCode`: 0 for a requested stop (SIGTERM, SIGINT),
+ * non-zero for a crash. The drain is the same either way; what the process
+ * reports about itself must not be. ECS records an essential container's exit
+ * code as the task's stop reason, and a crash reported as 0 reads as success.
+ */
+export async function gracefulShutdown(
+  signal: string,
+  ctx: ShutdownContext,
+  exitCode = 0,
+): Promise<never> {
   console.log(`🔄 Graceful shutdown initiated (${signal})...`);
 
   const httpServer = ctx.getHttpServer();
@@ -74,6 +84,16 @@ export async function gracefulShutdown(signal: string, ctx: ShutdownContext): Pr
     console.warn('⚠️ Chain integrity monitor stop failed:', error.message);
   }
 
+  // AnA's run-control LISTEN connection is checked out for the life of the
+  // process, and pool.end() waits for every checked-out client — so without
+  // this the drain hung at the line below and never reached process.exit.
+  try {
+    const { stopRunControlListener } = await import('../services/ana/run-control.js');
+    stopRunControlListener();
+  } catch (error: any) {
+    console.warn('⚠️ AnA run-control listener stop failed:', error.message);
+  }
+
   try {
     if (ctx.pool) await ctx.pool.end();
     console.log('✅ Database connections closed');
@@ -81,7 +101,7 @@ export async function gracefulShutdown(signal: string, ctx: ShutdownContext): Pr
     console.error('❌ Error closing database:', error.message);
   }
 
-  process.exit(0);
+  process.exit(exitCode);
 }
 
 export function registerShutdownHandlers(ctx: ShutdownContext): void {
@@ -113,9 +133,10 @@ export function registerShutdownHandlers(ctx: ShutdownContext): void {
   process.on('uncaughtException', error => {
     console.error('UNCAUGHT EXCEPTION:', error);
     // Attempt a graceful drain before the safety exit so in-flight work and
-    // open connections are flushed/closed. gracefulShutdown ends in
-    // process.exit(0); a bounded timer guarantees we still exit(1) even if the
-    // drain wedges. We never *skip* the exit — only try to drain first.
+    // open connections are flushed/closed. The drain exits 1 when it finishes
+    // (it used to exit 0, reporting every crash as a clean stop); a bounded
+    // timer guarantees exit(1) even if the drain wedges. We never *skip* the
+    // exit — only try to drain first.
     const FORCE_EXIT_MS = 12_000;
     const forceExit = setTimeout(() => {
       console.error('⚠️ Graceful drain timed out after uncaughtException — forcing exit');
@@ -123,7 +144,7 @@ export function registerShutdownHandlers(ctx: ShutdownContext): void {
     }, FORCE_EXIT_MS);
     // Do not keep the event loop alive solely for this timer.
     if (typeof forceExit.unref === 'function') forceExit.unref();
-    gracefulShutdown('uncaughtException', ctx).catch(drainError => {
+    gracefulShutdown('uncaughtException', ctx, 1).catch(drainError => {
       console.error('❌ Graceful drain failed after uncaughtException:', drainError);
       process.exit(1);
     });

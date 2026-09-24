@@ -1,0 +1,28 @@
+# Verify-by-failing: each mutation below must make the proof exit non-zero.
+
+## Dockerfile.optimized: NODE_EXTRA_CA_CERTS line removed
+[terraform-preflight-proof] FAIL — Dockerfile.optimized does not set NODE_EXTRA_CA_CERTS; the image cannot verify an RDS certificate
+[terraform-preflight-proof] 1 check(s) failed.
+exit=1
+
+## Dockerfile.optimized: PGSSLROOTCERT line removed
+[terraform-preflight-proof] FAIL — PGSSLROOTCERT must name the same bundle (/etc/ssl/certs/rds-global-bundle.pem); libpq tools in the image cannot verify RDS otherwise
+[terraform-preflight-proof] 1 check(s) failed.
+exit=1
+
+## Dockerfile.optimized: checksum pin emptied
+[terraform-preflight-proof] FAIL — the RDS bundle is not pinned by checksum (ARG RDS_CA_BUNDLE_SHA256 + sha256sum -c)
+[terraform-preflight-proof] 1 check(s) failed.
+exit=1
+
+## terraform/environments/production/main.tf: RLS_ENFORCE removed from the rendered environment
+  Error: Test assertion failed
+  Error: Test assertion failed
+  Error: Test assertion failed
+[terraform-preflight-proof] FAIL — terraform test did not pass (fail).
+exit=1
+
+## terraform/modules/ecs-fargate/main.tf: health check restored to the pre-change wget probe
+  Error: Test assertion failed
+[terraform-preflight-proof] FAIL — terraform test did not pass (fail).
+exit=1

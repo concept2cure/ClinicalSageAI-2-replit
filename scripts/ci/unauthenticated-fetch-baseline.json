@@ -1,0 +1,10 @@
+{
+  "_comment": [
+    "Raw fetch() calls in client/src that send no bearer token and are CORRECT anyway.",
+    "A public endpoint does not belong here: put it on PUBLIC_API_ALLOWLIST in",
+    "server/middleware/authBoundary.ts, which this gate reads. An entry here needs a",
+    "written reason; an entry without one is the thing this file exists to prevent.",
+    "See scripts/ci/check-unauthenticated-fetch.mjs."
+  ],
+  "allow": []
+}
