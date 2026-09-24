@@ -15,7 +15,6 @@ import { activeJwtSecret } from '../../server/utils/jwtVerify';
 import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
 import { authenticateToken } from '../../server/middleware/auth';
-import { requestPgClient } from '../../server/db/requestDb';
 import { getPool } from '../../server/db/runtime';
 import { invalidateOrgMembershipCache } from '../../server/middleware/orgMembership';
 import { runWithTenantScope } from '../../server/db/tenantStore';
@@ -24,6 +23,7 @@ import savedPrecedentQueriesRouter from '../../server/routes/saved-precedent-que
 import controlPlaneRouter from '../../server/src/routes/control-plane.router';
 import { evaluateGovernedDocument } from '../../server/src/control-plane/governed-document-evaluator';
 import { GOVERNED_FABRIC_KIND } from '../../server/services/governed-decision-repository';
+import { domains, tableFor, mountTenantProofRoutes, type Domain } from './tenant-proof-routes';
 import reportOsRouter from '../../server/routes/report-os';
 
 const TAG = `wo03_${process.pid}_${Date.now().toString(36)}`;
@@ -34,103 +34,11 @@ const ORG_B = 90302;
    that borrowed them would be deleted with the fixtures. */
 const FIXTURE_ORGS = [ORG_A, ORG_B];
 
-/**
- * The domains this probe proves isolation FOR. Everything outside this list is
- * asserted, not proven — that distinction is the whole status of WO-3, so the
- * list is the coverage number and adding to it is the work.
- *
- * Extended 2026-09-19 from three tables to six. The three added are regulated
- * stores, chosen because each carries the canonical `tenant_isolation_policy`
- * keyed on an integer `organization_id` (verified on the provisioned database,
- * not assumed) and each is read by a shipping surface:
- *
- *   design_controls  public.c2c_design_controls  21 CFR 820.30 design history
- *                    file — the DHF surface's only store
- *   risk_items       public.risk_items           ISO 14971 hazard analysis
- *
- * Extended again 2026-09-24 (D3, docs/evidence/D3/2026-09-24-signatures-and-runs/)
- * with the two launch-catalog stores this file had left out:
- *
- *   signatures        public.electronic_signatures   21 CFR Part 11 §11.50/§11.70
- *                     — the most consequential table here: a cross-tenant read
- *                     is another company's signed approvals
- *   orchestrator_runs public.submission_orchestrator_runs  Submission Center —
- *                     every sequence build, keyed on run_id (not id), which is
- *                     why idColumnFor exists
- *
- * Signatures were excluded on 2026-09-19 for a reason that still holds and is
- * now designed around rather than worked around. `esign_block_mutation()`
- * refuses UPDATE and DELETE outright, with no archive door (unlike audit_logs'
- * `app.audit_archive_bypass`), so a signature fixture can never be removed, and
- * it pins its organization and its signer through foreign keys. So:
- *
- *   - each fixture org has a PERMANENT signer (fixed email, NULL
- *     default_organization_id, so the users-by-org delete never reaches it);
- *   - each org has ONE fixture signature, looked up before it is inserted, so a
- *     database accumulates two rows in total, not two per run;
- *   - teardown no longer deletes the two reserved organization rows, which the
- *     signatures reference. They were already upserted on every run.
- *
- * Nothing disables the trigger, and nothing in this file could: §11.70 is
- * enforced against this probe exactly as it is against the product. A
- * cross-tenant UPDATE or DELETE still answers 404, and that is itself evidence
- * about RLS: the trigger is row-level, so it only fires on a row the statement
- * can see. With the policy hiding B's signature from A, A's DELETE matches zero
- * rows and never reaches the trigger; with the policy off, it reaches it and
- * the answer is a 500. The mutation runs filed with this change show both.
- */
-type Domain =
-  | 'projects'
-  | 'documents'
-  | 'audit_logs'
-  | 'design_controls'
-  | 'risk_items'
-  | 'signatures'
-  | 'orchestrator_runs';
-const domains: Domain[] = [
-  'projects',
-  'documents',
-  'audit_logs',
-  'design_controls',
-  'risk_items',
-  'signatures',
-  'orchestrator_runs',
-];
-const tableFor: Record<Domain, string> = {
-  projects: 'public.projects',
-  documents: 'public.documents',
-  audit_logs: 'public.audit_logs',
-  design_controls: 'public.c2c_design_controls',
-  risk_items: 'public.risk_items',
-  signatures: 'public.electronic_signatures',
-  orchestrator_runs: 'public.submission_orchestrator_runs',
-};
-/** The column the generic handlers address a row by. */
-const idColumnFor: Record<Domain, string> = {
-  projects: 'id',
-  documents: 'id',
-  audit_logs: 'id',
-  design_controls: 'id',
-  risk_items: 'id',
-  signatures: 'id',
-  orchestrator_runs: 'run_id',
-};
-/**
- * A non-key column the PATCH probe writes, per domain. Replaces an inline
- * ternary whose two `status` branches were identical, which made it read as a
- * per-domain decision when it was not.
- */
-const updateColumnFor: Record<Domain, string> = {
-  projects: 'status',
-  documents: 'status',
-  audit_logs: 'action',
-  design_controls: 'req',
-  risk_items: 'status',
-  // §11.70: the trigger refuses this for any row the statement can see.
-  signatures: 'signature_purpose',
-  // Not `status`: its CHECK would refuse 'TAMPERED' and mask the RLS result.
-  orchestrator_runs: 'application_number',
-};
+/* The domains this probe proves isolation FOR, and why each is on the list —
+   including how electronic_signatures came to be on it on 2026-09-24 after being
+   excluded on 2026-09-19 — are in ./tenant-proof-routes.ts with the /proof
+   surface that addresses them. The fixtures for those two domains are seeded in
+   beforeAll below. */
 let owner: Pool;
 let app: express.Express;
 let tokenA: string;
@@ -177,10 +85,6 @@ function accessToken(userId: number, organizationId: number): string {
 
 function auth(token: string) {
   return { Authorization: `Bearer ${token}` };
-}
-
-function safeDomain(value: string): Domain | null {
-  return domains.includes(value as Domain) ? (value as Domain) : null;
 }
 
 // The setup intentionally keeps provisioning and the representative request
@@ -267,8 +171,8 @@ beforeAll(async () => {
   );
   [savedQueryA, savedQueryB] = savedQueries.rows.map(r => r.id);
 
-  /* Permanent signers — see the header. ON CONFLICT (email) makes this a
-     lookup after the first run on a database; DO UPDATE (not NOTHING) so
+  /* Permanent signers — see tenant-proof-routes.ts. ON CONFLICT (email) makes
+     this a lookup after the first run on a database; DO UPDATE (not NOTHING) so
      RETURNING yields the id either way. NULL default_organization_id keeps them
      out of the teardown's users-by-org delete, which a signature's FK to its
      signer would otherwise turn into a 23503 that strands every fixture after
@@ -383,136 +287,11 @@ beforeAll(async () => {
   // regulatory-query service entry points, not test-owned replicas.
   app.use('/actual/mdx', authenticateToken, industryContextRouter);
   app.use('/actual/saved-precedent-queries', authenticateToken, savedPrecedentQueriesRouter);
-  app.use('/proof', authenticateToken);
-  app.get('/proof/:domain', async (req, res) => {
-    const domain = safeDomain(req.params.domain);
-    if (!domain) return res.status(404).json({ error: { code: 'NOT_FOUND' } });
-    const q = String(req.query.q || '');
-    const result = await requestPgClient(req).query(
-      `SELECT ${idColumnFor[domain]}::text AS id FROM ${tableFor[domain]}
-        WHERE ($1 = '' OR ${idColumnFor[domain]}::text = $1) ORDER BY 1`,
-      [q]
-    );
-    return res.json({ ids: result.rows.map(r => r.id) });
-  });
-  // Register HEAD before GET. Express otherwise derives HEAD from GET and the
-  // explicit existence-probe implementation would never execute.
-  app.head('/proof/:domain/:id', async (req, res) => {
-    const domain = safeDomain(req.params.domain);
-    if (!domain) return res.sendStatus(404);
-    const result = await requestPgClient(req).query(
-      `SELECT 1 FROM ${tableFor[domain]} WHERE ${idColumnFor[domain]}::text=$1`,
-      [req.params.id]
-    );
-    return res.sendStatus(result.rows.length ? 204 : 404);
-  });
-  app.get('/proof/:domain/:id', async (req, res) => {
-    const domain = safeDomain(req.params.domain);
-    if (!domain) return res.status(404).json({ error: { code: 'NOT_FOUND' } });
-    const result = await requestPgClient(req).query(
-      `SELECT ${idColumnFor[domain]}::text AS id FROM ${tableFor[domain]} WHERE ${idColumnFor[domain]}::text=$1`,
-      [req.params.id]
-    );
-    return result.rows.length
-      ? res.json({ id: result.rows[0].id })
-      : res.status(404).json({ error: { code: 'NOT_FOUND' } });
-  });
-  app.post('/proof/:domain', async (req, res) => {
-    const domain = safeDomain(req.params.domain);
-    if (!domain) return res.status(404).json({ error: { code: 'NOT_FOUND' } });
-    const foreignOrg = Number(req.body?.organizationId);
-    try {
-      if (domain === 'projects') {
-        await requestPgClient(req).query(
-          `INSERT INTO projects (organization_id,client_workspace_id,name,type,created_by_id)
-           VALUES ($1,$2,$3,'regulatory',$4)`,
-          [foreignOrg, workspaceB, `${TAG}-forged-project`, userA]
-        );
-      } else if (domain === 'documents') {
-        await requestPgClient(req).query(
-          `INSERT INTO documents
-           (organization_id,client_workspace_id,document_code,title,document_type,owner_id,created_by_id)
-           VALUES ($1,$2,$3,$4,'REGULATORY',$5,$5)`,
-          [foreignOrg, workspaceB, `${TAG}-FORGED`, `${TAG}-forged-document`, userA]
-        );
-      } else if (domain === 'audit_logs') {
-        await requestPgClient(req).query(
-          `INSERT INTO audit_logs (tenant_id,user_id,action,table_name,record_id)
-           VALUES ($1,$2,'FORGED','wo03',$3)`,
-          [foreignOrg, userA, `${TAG}-forged-audit`]
-        );
-      } else if (domain === 'design_controls') {
-        await requestPgClient(req).query(
-          `INSERT INTO c2c_design_controls (id,organization_id,cat,req)
-           VALUES ($1,$2,'performance','forged')`,
-          [`${TAG}-forged-dc`, foreignOrg]
-        );
-      } else if (domain === 'risk_items') {
-        await requestPgClient(req).query(
-          `INSERT INTO risk_items (organization_id,hazard,harm,severity,probability)
-           VALUES ($1,$2,'forged',3,2)`,
-          [foreignOrg, `${TAG}-forged-hazard`]
-        );
-      } else if (domain === 'signatures') {
-        // Signed by A's PERMANENT signer: if the policy ever lets this through,
-        // the row it plants can never be deleted, and a per-run signer would
-        // then fail the teardown's users delete on the FK.
-        await requestPgClient(req).query(
-          `INSERT INTO electronic_signatures
-             (organization_id,signature_type,signature_purpose,signer_id,signer_name,signer_email,
-              authentication_method,authentication_timestamp,signature_hash,signed_target)
-           VALUES ($1,'approval','forged',$2,'forged',$3,'password',NOW(),$4,$5)`,
-          [
-            foreignOrg,
-            signerA,
-            'wo03-fixture-signer-a@example.invalid',
-            `${TAG}-forged-signature`,
-            `${TAG}-forged-target`,
-          ]
-        );
-      } else if (domain === 'orchestrator_runs') {
-        await requestPgClient(req).query(
-          `INSERT INTO submission_orchestrator_runs
-             (run_id,organization_id,submission_id,application_number,region,submission_type,started_at,status)
-           VALUES (gen_random_uuid(),$1,$2,'forged','US','IND',NOW(),'running')`,
-          [foreignOrg, `${TAG}-forged-submission`]
-        );
-      } else {
-        /* This was a bare `else` that forged a RISK ITEM. A domain added to the
-           list without its own branch would have planted into risk_items, been
-           refused by risk_items' policy, answered 404 — and passed, for the
-           wrong table. An unhandled domain now fails its test. */
-        return res.status(500).json({ error: { code: 'UNHANDLED_DOMAIN' } });
-      }
-      return res.sendStatus(201);
-    } catch (error) {
-      // Do not serialize the PostgreSQL error: it may contain schema or row
-      // details. RLS WITH CHECK denial follows the same opaque contract as a
-      // cross-tenant id probe.
-      if ((error as { code?: string }).code === '42501') {
-        return res.status(404).json({ error: { code: 'NOT_FOUND' } });
-      }
-      return res.status(500).json({ error: { code: 'INTERNAL_ERROR' } });
-    }
-  });
-  app.patch('/proof/:domain/:id', async (req, res) => {
-    const domain = safeDomain(req.params.domain);
-    if (!domain) return res.sendStatus(404);
-    const result = await requestPgClient(req).query(
-      `UPDATE ${tableFor[domain]} SET ${updateColumnFor[domain]}=$1
-         WHERE ${idColumnFor[domain]}::text=$2 RETURNING ${idColumnFor[domain]}`,
-      ['TAMPERED', req.params.id]
-    );
-    return result.rows.length ? res.sendStatus(204) : res.sendStatus(404);
-  });
-  app.delete('/proof/:domain/:id', async (req, res) => {
-    const domain = safeDomain(req.params.domain);
-    if (!domain) return res.sendStatus(404);
-    const result = await requestPgClient(req).query(
-      `DELETE FROM ${tableFor[domain]} WHERE ${idColumnFor[domain]}::text=$1 RETURNING ${idColumnFor[domain]}`,
-      [req.params.id]
-    );
-    return result.rows.length ? res.sendStatus(204) : res.sendStatus(404);
+  mountTenantProofRoutes(app, {
+    tag: TAG,
+    foreignWorkspace: workspaceB,
+    actingUser: userA,
+    permanentSigner: signerA,
   });
 }, 60_000);
 
@@ -767,6 +546,53 @@ describe('WO-03 two-tenant application isolation', () => {
   });
 });
 
+// ── Governed decisions: the fixtures the cases below share ─────────────────
+
+const GD_PROJECT = 903010;
+
+const scope = (org: number, caller: string) => ({
+  tenantId: String(org),
+  role: 'member',
+  source: 'test' as const,
+  caller,
+});
+
+const evaluation = (org: number, artifactId: string) => ({
+  context: {
+    organizationId: String(org),
+    projectId: String(GD_PROJECT),
+    actorId: `${TAG}-actor`,
+    intendedAction: 'promote' as const,
+    artifactId,
+  },
+  documentState: {
+    hasContent: true,
+    hasEvidence: false,
+    hasBeenReviewed: false,
+    hasApproval: false,
+    hasPlacement: false,
+    placementValid: false,
+    hasProvenance: false,
+    unresolvedContradictionCount: 0,
+    criticalContradictionCount: 0,
+  },
+});
+
+const fabricRows = async (org: number) =>
+  (
+    await owner.query(
+      `SELECT id::text AS id, decision_context->>'governedDecisionId' AS governed_id,
+              notes::jsonb->>'artifactId' AS artifact
+         FROM decision_records
+        WHERE organization_id = $1 AND project_id = $2 AND decision_context->>'kind' = $3
+        ORDER BY created_at`,
+      [org, GD_PROJECT, GOVERNED_FABRIC_KIND]
+    )
+  ).rows as Array<{ id: string; governed_id: string; artifact: string }>;
+
+/** The recorder is fire-and-forget; give it time before judging a count. */
+const settle = () => new Promise(r => setTimeout(r, 1500));
+
 /**
  * Governed decisions — added 2026-09-24 (launch row D3).
  *
@@ -786,7 +612,6 @@ describe('WO-03 two-tenant application isolation', () => {
  * app would look exactly like a row that was never written.
  */
 describe('WO-03 governed decisions under RLS (D3, 2026-09-24)', () => {
-  const GD_PROJECT = 903010;
   let cp: express.Express;
 
   beforeAll(() => {
@@ -796,50 +621,7 @@ describe('WO-03 governed decisions under RLS (D3, 2026-09-24)', () => {
     cp.use('/api/control-plane', authenticateToken, controlPlaneRouter);
   });
 
-  const scope = (org: number, caller: string) => ({
-    tenantId: String(org),
-    role: 'member',
-    source: 'test' as const,
-    caller,
-  });
-
-  const evaluation = (org: number, artifactId: string) => ({
-    context: {
-      organizationId: String(org),
-      projectId: String(GD_PROJECT),
-      actorId: `${TAG}-actor`,
-      intendedAction: 'promote' as const,
-      artifactId,
-    },
-    documentState: {
-      hasContent: true,
-      hasEvidence: false,
-      hasBeenReviewed: false,
-      hasApproval: false,
-      hasPlacement: false,
-      placementValid: false,
-      hasProvenance: false,
-      unresolvedContradictionCount: 0,
-      criticalContradictionCount: 0,
-    },
-  });
-
-  const fabricRows = async (org: number) =>
-    (
-      await owner.query(
-        `SELECT id::text AS id, decision_context->>'governedDecisionId' AS governed_id,
-                notes::jsonb->>'artifactId' AS artifact
-           FROM decision_records
-          WHERE organization_id = $1 AND project_id = $2 AND decision_context->>'kind' = $3
-          ORDER BY created_at`,
-        [org, GD_PROJECT, GOVERNED_FABRIC_KIND]
-      )
-    ).rows as Array<{ id: string; governed_id: string; artifact: string }>;
-
-  /** The recorder is fire-and-forget; give it time before judging a count. */
-  const settle = () => new Promise(r => setTimeout(r, 1500));
-
-  it("the recording evaluator persists the caller's own decision through the app role", async () => {
+  it('the recording evaluator persists the caller\'s own decision through the app role', async () => {
     const before = (await fabricRows(ORG_A)).length;
     // Exactly the production call: the synchronous evaluator, whose recording
     // is an un-awaited promise. The tenant scope has to survive that hop.
@@ -848,10 +630,9 @@ describe('WO-03 governed decisions under RLS (D3, 2026-09-24)', () => {
     );
     await settle();
     const after = await fabricRows(ORG_A);
-    expect(
-      after.length,
-      "a decision recorded for the caller's own org must persist under RLS"
-    ).toBe(before + 1);
+    expect(after.length, 'a decision recorded for the caller\'s own org must persist under RLS').toBe(
+      before + 1
+    );
     // One identity: the id the fabric hands back is the row's id.
     expect(after[after.length - 1].id).toBe(after[after.length - 1].governed_id);
   });
@@ -867,7 +648,7 @@ describe('WO-03 governed decisions under RLS (D3, 2026-09-24)', () => {
     await settle();
     expect(
       (await fabricRows(ORG_B)).length,
-      "a decision filed for tenant B from tenant A's session must not land"
+      'a decision filed for tenant B from tenant A\'s session must not land'
     ).toBe(before);
   });
 
@@ -903,10 +684,9 @@ describe('WO-03 governed decisions under RLS (D3, 2026-09-24)', () => {
     const detailA = await request(cp)
       .get(`/api/control-plane/governed/decisions/${listedId}`)
       .set(auth(tokenA));
-    expect(
-      detailA.status,
-      'tenant A must be able to fetch its own decision by the id it was given'
-    ).toBe(200);
+    expect(detailA.status, 'tenant A must be able to fetch its own decision by the id it was given').toBe(
+      200
+    );
 
     const listB = await request(cp)
       .get(`/api/control-plane/governed/decisions?projectId=${GD_PROJECT}`)

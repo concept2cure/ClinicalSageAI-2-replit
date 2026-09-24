@@ -90,7 +90,7 @@ distinction a signature test could pass for the wrong reason.
 
 ### A defect in the contract itself: the forge handler could test the wrong table
 
-The `POST /proof/:domain` handler had explicit branches for five domains and a
+The `POST /proof/:domain` handler (now in `tests/db/tenant-proof-routes.ts`) had explicit branches for five domains and a
 bare `else` that **forged a risk item**. A domain added to the list without its
 own branch would have planted a row into `risk_items`, been refused by *that*
 table's policy, answered 404 — and passed, having tested nothing about its own
@@ -101,6 +101,26 @@ Mutation C shows this happens. Under the old handler, with RLS removed from
 handler it fails with a 201 (mutation A). Every domain now has an explicit
 branch, and an unhandled domain answers 500 `UNHANDLED_DOMAIN`, which fails its
 test instead of passing it.
+
+## A second concurrent change: the route scaffolding moved
+
+While this was being pushed, `610049af` moved the `/proof` routes and the
+domain list out of the test file into `tests/db/tenant-proof-routes.ts` (to get
+the file under the ESLint line limit), verbatim — which meant it carried the
+five-domain list and the bare-`else` forge handler. The merge conflicted and
+was resolved onto that structure, not against it: the domain list, maps and
+forge-handler fix went into the new module, the fixtures and teardown into the
+test file, and two of that commit's lines that prettier would have reflowed were
+put back exactly as written, so the diff to its file is this change only.
+
+Because the code the evidence above ran against had moved, the resolved version
+was proven again on the same database:
+
+| File | What it shows |
+|---|---|
+| `green/contract-43-of-43-resolved-onto-proof-routes-module.txt` | **43 of 43** on the resolved code, all six new domain cases present. |
+| `red/mutation-B2-resolved-structure-rls-off-on-runs.txt` | RLS off on `submission_orchestrator_runs`, resolved code: **4 fail, 39 pass** — the moved handlers still catch the breach. |
+| `red/mutation-D-forge-branch-removed-fails-not-passes.txt` | The `orchestrator_runs` forge branch deleted: its WITH CHECK case now **fails** (`got 500`, `UNHANDLED_DOMAIN`). Under the old handler the same deletion would have forged a risk item and passed. |
 
 ## Permanent rows this work left in the scratch database, stated plainly
 
