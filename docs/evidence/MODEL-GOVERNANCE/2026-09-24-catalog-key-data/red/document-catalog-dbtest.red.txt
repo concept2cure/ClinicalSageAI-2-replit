@@ -1,0 +1,235 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T16:36:01.724Z","pid":10795,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T16:36:01.725Z","pid":10795,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T16:36:01.725Z","pid":10795,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/document-catalog.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-24T16:36:01.804Z', poolSize: 1 }
+
+stdout | tests/db/document-catalog.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/document-catalog.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-09-24T16:36:01.984Z","pid":10795,"hostname":"vm","context":{"filename":"stability-st-23-104.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+(node:10795) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a readable upload lands with catalog_status=extracted and real counts
+{
+  "timestamp": "2026-09-24T16:36:02.064Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 198,
+    "wordCount": 26,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a readable upload lands with catalog_status=extracted and real counts
+{
+  "timestamp": "2026-09-24T16:36:02.136Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "7736fc9a-23bd-4353-98f2-71acff58ffa2",
+    "code": "DBTEST-CAT-DOC-TXT",
+    "type": "OTHER",
+    "size": 198,
+    "hasText": true
+  }
+}
+
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a readable upload lands with catalog_status=extracted and real counts 183ms
+{"level":40,"time":"2026-09-24T16:36:02.236Z","pid":10795,"hostname":"vm","context":{"filename":"three-pages.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":30,"time":"2026-09-24T16:36:02.782Z","pid":10795,"hostname":"vm","context":{"pages":3,"dpi":200,"region":"full"},"msg":"[pdf-rasterizer] Rasterized PDF"}
+(node:10795) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":30,"time":"2026-09-24T16:36:03.431Z","pid":10795,"hostname":"vm","context":{"languages":"eng","chars":0,"confidence":0,"durationMs":396},"msg":"[tesseract-ocr] OCR completed"}
+{"level":30,"time":"2026-09-24T16:36:03.677Z","pid":10795,"hostname":"vm","context":{"languages":"eng","chars":0,"confidence":0,"durationMs":245},"msg":"[tesseract-ocr] OCR completed"}
+{"level":30,"time":"2026-09-24T16:36:03.906Z","pid":10795,"hostname":"vm","context":{"languages":"eng","chars":0,"confidence":0,"durationMs":228},"msg":"[tesseract-ocr] OCR completed"}
+stdout | tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a real PDF records its actual page count, not null
+{
+  "timestamp": "2026-09-24T16:36:03.906Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 44,
+    "wordCount": 15,
+    "pagesMapped": 3
+  }
+}
+
+{"level":30,"time":"2026-09-24T16:36:03.906Z","pid":10795,"hostname":"vm","context":{"pages":3,"confidence":0,"durationMs":1521},"msg":"[ocr-service] PDF text OCR completed"}
+stdout | tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a real PDF records its actual page count, not null
+{
+  "timestamp": "2026-09-24T16:36:03.920Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "5580a2a7-387c-4221-bdd1-bbe199a6082b",
+    "code": "DBTEST-CAT-DOC-PAGES",
+    "type": "REPORT",
+    "size": 598,
+    "hasText": true
+  }
+}
+
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a real PDF records its actual page count, not null 1778ms
+{"level":40,"time":"2026-09-24T16:36:03.937Z","pid":10795,"hostname":"vm","context":{"filename":"opaque-scan.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-09-24T16:36:03.940Z","pid":10795,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-09-24T16:36:03.941Z","pid":10795,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > an upload extraction cannot read is recorded as a FAILURE with a reason
+{
+  "timestamp": "2026-09-24T16:36:03.950Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "02e12692-009a-48cb-83b2-ea37cb0088fd",
+    "code": "DBTEST-CAT-DOC-PDF",
+    "type": "OTHER",
+    "size": 69,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > an upload extraction cannot read is recorded as a FAILURE with a reason 29ms
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > read_project_document refuses to pretend the opaque document has content 3188ms
+stdout | tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > after reading ALL of it, the catalog write succeeds and is durable
+✅ Enhanced Embedding Service initialized
+
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > list_project_documents shows both files with honest catalog states 33ms
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > reports the scope total while the page stays at the limit 7ms
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > counts what needs attention across the scope, not across the page 6ms
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > claims completeness only when the page really is the whole scope 6ms
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > the session-start digest carries the scope it sampled from 11ms
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > catalog_project_document REFUSES a partial read and names what is unread 21ms
+stderr | tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > after reading ALL of it, the catalog write succeeds and is durable
+{
+  "timestamp": "2026-09-24T16:36:07.272Z",
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — recorded as failed, catalog still written",
+  "context": {
+    "documentId": "7736fc9a-23bd-4353-98f2-71acff58ffa2",
+    "err": "403 Host not in allowlist: api.openai.com. Add this host to your network egress settings to allow access."
+  }
+}
+
+{"level":40,"time":"2026-09-24T16:36:07.303Z","pid":10795,"hostname":"vm","context":{"filename":"coa-23-104.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe
+{
+  "timestamp": "2026-09-24T16:36:07.303Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 245,
+    "wordCount": 35,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe
+{
+  "timestamp": "2026-09-24T16:36:07.312Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "c80c0db0-6ef4-4102-bad6-b3941886a721",
+    "code": "DBTEST-CAT-DOC-COA",
+    "type": "OTHER",
+    "size": 254,
+    "hasText": true
+  }
+}
+
+stderr | tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe > REFUSES invented values, a verdict and a nested leaf — names each, stores nothing
+{
+  "timestamp": "2026-09-24T16:36:07.336Z",
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — recorded as failed, catalog still written",
+  "context": {
+    "documentId": "c80c0db0-6ef4-4102-bad6-b3941886a721",
+    "err": "403 Host not in allowlist: api.openai.com. Add this host to your network egress settings to allow access."
+  }
+}
+
+stderr | tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe > ACCEPTS the document’s own values, in its typography or plain ASCII
+{
+  "timestamp": "2026-09-24T16:36:07.366Z",
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — recorded as failed, catalog still written",
+  "context": {
+    "documentId": "c80c0db0-6ef4-4102-bad6-b3941886a721",
+    "err": "403 Host not in allowlist: api.openai.com. Add this host to your network egress settings to allow access."
+  }
+}
+
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > after reading ALL of it, the catalog write succeeds and is durable 55ms
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > hands the comprehension record BACK on the next read, instead of starting from zero 10ms
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > another tenant cannot list or read the document 8ms
+ × tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe > REFUSES invented values, a verdict and a nested leaf — names each, stores nothing 29ms
+   → expected { catalog_status: 'cataloged', …(5) } to deeply equal { catalog_status: 'extracted', …(5) }
+ ✓ tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe > ACCEPTS the document’s own values, in its typography or plain ASCII 21ms
+{"level":40,"time":"2026-09-24T16:36:07.390Z","pid":10795,"hostname":"vm","context":{"op":"pool.query","caller":"server/services/enhancedEmbeddingService.ts:233:38","queryPreview":"SELECT id, content, title, atom_type, embedding IS NOT NULL as has_embedding FROM lumen_data_atoms WHERE id = $1","enforcement":"on"},"msg":"[tenant-rls-observability] Database operation blocked because tenant scope is missing"}
+{"level":40,"time":"2026-09-24T16:36:07.391Z","pid":10795,"hostname":"vm","context":{"sourceId":"dbtest-catalog:upload-atom","atomId":13,"err":"[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on"},"msg":"[upload-retrieval-atom] Upload atom written but not embedded — it is not retrievable yet"}
+ ✓ tests/db/document-catalog.dbtest.ts > a chat upload knows it is indexed by its opening only > writes the file length and the embedded length onto the row 21ms
+ ✓ tests/db/document-catalog.dbtest.ts > a chat upload knows it is indexed by its opening only > a second write for the same source is a no-op, not a duplicate 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe > REFUSES invented values, a verdict and a nested leaf — names each, stores nothing
+AssertionError: expected { catalog_status: 'cataloged', …(5) } to deeply equal { catalog_status: 'extracted', …(5) }
+
+- Expected
++ Received
+
+  {
+-   "catalog_status": "extracted",
+-   "cataloged_at": null,
+-   "document_kind": null,
+-   "key_data": null,
+-   "summary": null,
+-   "updated_at": 2026-09-24T16:36:07.307Z,
++   "catalog_status": "cataloged",
++   "cataloged_at": 2026-09-24T16:36:07.336Z,
++   "document_kind": "Certificate of Analysis",
++   "key_data": {
++     "assay_pct": 98.4,
++     "batch": "23-105",
++     "batch_size": "250,000 tablets",
++     "d90_um": 12,
++     "released": true,
++     "results": [
++       {
++         "test": "Assay",
++         "value": 99.2,
++       },
++       {
++         "test": "Batch size",
++         "value": 87,
++       },
++     ],
++     "stability_study": "ST-99-001",
++   },
++   "summary": "CoA for one Catalogin 10mg batch: assay, batch size, particle size; released.",
++   "updated_at": 2026-09-24T16:36:07.336Z,
+  }
+
+ ❯ tests/db/document-catalog.dbtest.ts:557:32
+    555|     // Nothing was written — not the values, the status or the timesta…
+    556|     // Asserted before the verdict so a regression shows what it STORE…
+    557|     expect(await catalogRow()).toEqual(before);
+       |                                ^
+    558|     expect(out.ok, JSON.stringify(out)).toBe(false);
+    559|     expect(out.refused).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 16 passed (17)
+   Start at  16:35:59
+   Duration  7.43s (transform 3.55s, setup 66ms, import 147ms, tests 6.95s, environment 0ms)
+

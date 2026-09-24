@@ -14,7 +14,10 @@
  *      legitimate outcome in an environment with no embedding provider);
  *   4. a successful text upload gets its extraction tier written in the same
  *      ingest that admitted the document;
- *   5. another tenant's org context cannot see the document at all.
+ *   5. another tenant's org context cannot see the document at all;
+ *   6. every key_data value must occur in the text that was read — an
+ *      invented batch, assay or study id is refused, named, and not stored,
+ *      while the document's own values (in its own Unicode) are accepted.
  *
  * Runs with ANA_DOCUMENT_CATALOG_FORCE_ON=true — the env override the flag
  * helper honors — so no toggle row is needed.
@@ -471,6 +474,114 @@ describe('the read-coverage gate, end to end through the tool handlers', () => {
     expect(read.ok).toBe(false);
     expect(read.error).toMatch(/No vault document with id/);
     expect(read.error).not.toMatch(/another organization|belongs to|exists/i);
+  });
+});
+
+/**
+ * key_data is a transcription, and is checked as one.
+ *
+ * The coverage gate proved the model was SERVED every character; nothing
+ * proved that what it then wrote into key_data came from those characters. A
+ * CoA reading batch 23‑104, protocol ST–23–104, assay 99.2 % and D90 45 µm was
+ * cataloged with batch 23-105, assay 98.4, study ST-99-001 and D90 12 — every
+ * value wrong — and the write came back ok:true, catalog_status 'cataloged'.
+ * Those values are then served as recorded fact by read_project_document, the
+ * catalog search and the connector. CLAUDE.md Rule 2: a figure the model
+ * supplies is a defect unless something deterministic checks it.
+ *
+ * The fixture is written in the document's own typography — a non-breaking
+ * hyphen, en dashes, a narrow no-break space, a micro sign — because that is
+ * what an extracted CoA looks like, and a verifier that only matched ASCII
+ * would refuse the faithful values and teach the model to stop recording them.
+ */
+describe('key_data is verified against the text it claims to transcribe', () => {
+  const COA_BODY = [
+    'Certificate of Analysis. Product: Catalogin 10mg tablets.',
+    'Batch number: 23\u2011104.',
+    'Stability protocol: ST\u201323\u2013104.',
+    'Assay (HPLC): 99.2 % of label claim.',
+    'Batch size: 120\u202F000 tablets.',
+    'Particle size D90: 45 \u00B5m.',
+    'Disposition: released for clinical supply.',
+  ].join('\n');
+  let coaDocId: string;
+
+  /** The comprehension tier as stored — what a refused write must leave untouched. */
+  const catalogRow = async () => {
+    const { rows } = await owner.query(
+      `SELECT catalog_status, document_kind, summary, key_data, cataloged_at, updated_at
+         FROM vault.document_catalog WHERE document_id = $1`,
+      [coaDocId],
+    );
+    return rows[0];
+  };
+
+  const catalogWith = (keyData: Record<string, unknown>) =>
+    callTool('catalog_project_document', {
+      document_id: coaDocId,
+      document_kind: 'Certificate of Analysis',
+      purpose: 'Release evidence for the clinical batch.',
+      summary: 'CoA for one Catalogin 10mg batch: assay, batch size, particle size; released.',
+      key_data: keyData,
+    });
+
+  beforeAll(async () => {
+    const res = await request(app)
+      .post('/api/vault/ingest')
+      .field('programId', programId)
+      .field('documentCode', `${PROBE_CODE}-COA`)
+      .field('documentTitle', 'Certificate of Analysis')
+      .field('documentType', 'OTHER')
+      .attach('file', Buffer.from(COA_BODY, 'utf8'), 'coa-23-104.txt');
+    expect(res.status).toBe(201);
+    coaDocId = res.body.document.id;
+    // Read in full first, so coverage is satisfied and only key_data can refuse.
+    const read = await callTool('read_project_document', { document_id: coaDocId, max_chars: 80_000 });
+    expect(read.coverage.complete).toBe(true);
+  });
+
+  it('REFUSES invented values, a verdict and a nested leaf — names each, stores nothing', async () => {
+    const before = await catalogRow();
+    expect(before.catalog_status).toBe('extracted');
+    const out = await catalogWith({
+      batch: '23-105',
+      assay_pct: 98.4,
+      stability_study: 'ST-99-001',
+      batch_size: '250,000 tablets',
+      d90_um: 12,
+      released: true,
+      results: [{ test: 'Assay', value: 99.2 }, { test: 'Batch size', value: 87 }],
+    });
+    // Nothing was written — not the values, the status or the timestamp.
+    // Asserted before the verdict so a regression shows what it STORED.
+    expect(await catalogRow()).toEqual(before);
+    expect(out.ok, JSON.stringify(out)).toBe(false);
+    expect(out.refused).toBe(true);
+    // Each failing leaf is named with the value it carried, and only those.
+    const named = ['batch = "23-105"', 'assay_pct = 98.4', 'stability_study = "ST-99-001"',
+      'batch_size = "250,000 tablets"', 'd90_um = 12', 'released = true', 'results[1].value = 87'];
+    for (const leaf of named) expect(out.reason).toContain(leaf);
+    expect(out.unverifiedKeyData.map((l: { path: string }) => l.path)).toEqual([
+      'batch', 'assay_pct', 'stability_study', 'batch_size', 'd90_um', 'released', 'results[1].value',
+    ]);
+  });
+
+  it('ACCEPTS the document\u2019s own values, in its typography or plain ASCII', async () => {
+    const keyData = {
+      batch: '23\u2011104',
+      stability_study: 'ST-23-104',
+      assay_pct: 99.2,
+      batch_size: 120000,
+      batch_size_as_written: '120\u202F000 tablets',
+      d90: '45 \u03BCm',
+      product: 'Catalogin 10mg',
+    };
+    const out = await catalogWith(keyData);
+    expect(out.ok, JSON.stringify(out)).toBe(true);
+    const after = await catalogRow();
+    expect(after.catalog_status).toBe('cataloged');
+    // Stored exactly as given: the normalisation is for comparison only.
+    expect(after.key_data).toEqual(keyData);
   });
 });
 

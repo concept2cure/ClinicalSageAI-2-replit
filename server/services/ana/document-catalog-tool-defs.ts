@@ -70,8 +70,13 @@ export const CATALOG_PROJECT_DOCUMENT: AnaTool = {
     'batch numbers — whatever the document actually carries). This is what makes the file remembered: the record is ' +
     'embedded for semantic recall and surfaced at the start of future sessions alongside the document\'s filed ' +
     'location. The write is REFUSED unless your read receipts cover the entire extracted text — if refused, the ' +
-    'response lists the exact unread ranges; go read them with read_project_document and try again. Never invent ' +
-    'content to fill key_data: record only what the text states.',
+    'response lists the exact unread ranges; go read them with read_project_document and try again. Every key_data ' +
+    'value is then VERIFIED against the extracted text before anything is stored: each string or number must appear ' +
+    'in the document as a whole token, so copy it exactly as the document writes it (identifiers, figures, units — ' +
+    'differences of dash, space and letter case are tolerated, a different digit is not). A figure you computed, ' +
+    'converted, corrected or inferred is not in the text and is refused; true/false/null are judgements, not ' +
+    'transcriptions, and are refused — say those in the summary. One unverifiable value refuses the whole write, and ' +
+    'the response names each one by path in unverifiedKeyData; correct or drop exactly those and catalog again.',
   input_schema: {
     type: 'object',
     properties: {
@@ -90,7 +95,11 @@ export const CATALOG_PROJECT_DOCUMENT: AnaTool = {
       },
       key_data: {
         type: 'object',
-        description: 'Structured facts extracted from the text: identifiers, dates, quantities, endpoints, results. Keys of your choosing; values exactly as stated in the document.',
+        description:
+          'Structured facts transcribed from the text: identifiers, dates, quantities, endpoints, results. Keys of your ' +
+          'choosing (they are not checked); every value a string or number copied exactly as the document writes it, ' +
+          'and verified against the text — e.g. {"batch": "23-104", "assay_pct": 99.2}. A figure a JSON number cannot ' +
+          'carry as written (99.20, 1.2×10⁶, 45µm) goes in as the string the document prints. No booleans or nulls.',
       },
     },
     required: ['document_id', 'document_kind', 'purpose', 'summary'],
