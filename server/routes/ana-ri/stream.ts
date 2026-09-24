@@ -153,6 +153,11 @@ import {
 } from '../../services/ana/run-control.js';
 import { MAX_PAUSE_MS, type HumanControlEvent } from '../../services/ana/run-status.js';
 import { classifyToolCall } from '../../services/ana/governed-tool-gate.js';
+import {
+  describeServerToolStep,
+  summariseServerToolResult,
+} from '../../services/ana/server-tool-steps.js';
+import type { GatewayServerToolUse } from '../../services/ai-gateway/types.js';
 import { resolveOrgId, resolveUserId } from '../../types/auth-request.js';
 import { clientIpOf } from '../../utils/client-ip';
 
@@ -217,6 +222,44 @@ export function mountStreamRoute(router: Router): void {
       turnCache.readTokens += read;
       turnCache.createTokens += Number(stats.cacheCreationInputTokens ?? 0);
       if (read === 0) turnCache.missedCalls += 1;
+    };
+    /**
+     * Put Anthropic-executed work — a web search, a web fetch — into AnA's work
+     * trace, so the person sees it the same way they see her own tools.
+     *
+     * The gateway used to drop these blocks entirely, so a turn that searched
+     * the web looked exactly like one that did not: the answer carried
+     * citations while the step that found them was absent, and the trace read
+     * as complete. That is the worst shape for a record to be wrong in.
+     *
+     * Each step is emitted as a `tool_use` AND its `tool_result`, back to back.
+     * The client opens a "running" row on the first and resolves it on the
+     * second, matched by name; emitting only the use would leave a spinner
+     * running forever for work that had already finished — the interface
+     * claiming something is in progress that is over.
+     *
+     * The result is summarised rather than forwarded: a web fetch returns a
+     * whole document, and the trace needs what was consulted, not its text.
+     */
+    const emitServerToolSteps = (response: unknown, round: number): void => {
+      const steps = (response as any)?.serverToolUses as GatewayServerToolUse[] | undefined;
+      if (!steps || steps.length === 0 || res.writableEnded) return;
+      for (const step of steps) {
+        const label = describeServerToolStep(step);
+        const status = step.isError ? 'error' : 'success';
+        res.write(`data: ${JSON.stringify({ type: 'tool_use', round, name: step.name, label, input: step.input ?? {} })}\n\n`);
+        res.write(
+          `data: ${JSON.stringify({
+            type: 'tool_result',
+            round,
+            name: step.name,
+            label,
+            status,
+            ...(step.isError ? { message: 'This search did not return results.' } : {}),
+            result: JSON.stringify(summariseServerToolResult(step)),
+          })}\n\n`
+        );
+      }
     };
     try {
       const {
@@ -1328,6 +1371,8 @@ export function mountStreamRoute(router: Router): void {
          because each round's calls come from that round's response. */
       let lastServedModel = servedModelOf(gwResponse);
       recordCacheUsage(gwResponse);
+      // The first model call is round 1's call; its server tools ran inside it.
+      emitServerToolSteps(gwResponse, 1);
       streamGatewayMs = Date.now() - streamGatewayStart;
 
       // Multi-round agentic tool execution via the orchestrator
@@ -2115,6 +2160,7 @@ export function mountStreamRoute(router: Router): void {
             res.write(`data: ${JSON.stringify({ type: 'text', content: roundText })}\n\n`);
           }
           recordCacheUsage(roundResponse);
+          emitServerToolSteps(roundResponse, round);
           lastServedModel = servedModelOf(roundResponse);
           const nextUses = (roundResponse as AnaGatewayResponse).toolUses;
           return { text: roundText, toolCalls: (nextUses ?? []).map(toToolCall) };

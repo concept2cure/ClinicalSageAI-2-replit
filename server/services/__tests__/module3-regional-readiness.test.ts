@@ -144,6 +144,35 @@ describe('classifyModule3Regional', () => {
     expect(classifyModule3Regional('br').coverage).toBe('not-authored');
   });
 
+  it.each([
+    ['MHRA', 'UK', 'not-authored'],
+    ['TGA', 'AU', 'not-authored'],
+    ['NMPA', 'CN', 'not-authored'],
+    ['Swissmedic', 'CH', 'not-authored'],
+    ['ANVISA', 'BR', 'not-authored'],
+    ['Health_Canada', 'CA', 'authored'],
+    ['eu', 'EU', 'authored'],
+  ] as const)('an agency name or rule region resolves: %s → %s (%s)', (input, code, coverage) => {
+    // These all used to classify 'not-applicable' — "3.2.R does not apply" —
+    // because the classifier's private resolver read canonical codes and gateway
+    // slugs only. That is the one answer that makes the gate stand down, so an
+    // agency-named MHRA transmit would have PASSED with no 3.2.R, and
+    // Health_Canada was called not-applicable for a region whose template exists.
+    const s = classifyModule3Regional(input);
+    expect(s.region).toBe(code);
+    expect(s.coverage).toBe(coverage);
+  });
+
+  it('the gate does not stand down for an agency-named region with no template', () => {
+    const r = evaluateModule3RegionalGate({
+      region: 'MHRA',
+      environment: 'production',
+      required: true,
+    });
+    expect(r.blockers).toHaveLength(1);
+    expect(r.blockers[0]).toContain('for UK');
+  });
+
   it('an unrecognised region is not-applicable rather than silently authored', () => {
     const s = classifyModule3Regional('ZZ');
     expect(s.coverage).toBe('not-applicable');

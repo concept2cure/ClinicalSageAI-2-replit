@@ -15,6 +15,7 @@ import { pool } from '../../db.js';
 import { computeAuditChainSealed, hashPayload } from '../../services/audit/chain.js';
 import {
   extractCommitments,
+  ExtractionUnavailableError,
   createCommitment,
   listCommitments,
   updateCommitmentStatus,
@@ -114,6 +115,8 @@ router.post('/extract', async (req: Request, res: Response) => {
   try {
     const extracted = await extractCommitments(text, { documentId: req.body?.documentId });
     const created: string[] = [];
+    let persistFailed = 0;
+    let persistUnavailable: string | null = null;
     if (persist && extracted.length > 0) {
       for (const c of extracted) {
         try {
@@ -126,15 +129,37 @@ router.post('/extract', async (req: Request, res: Response) => {
           });
           created.push(id);
         } catch (e: any) {
-          if (e?.message === 'COMMITMENTS_TABLE_MISSING') break;
+          if (e?.message === 'COMMITMENTS_TABLE_MISSING') { persistUnavailable = 'the commitments table is not provisioned'; break; }
+          // A swallowed persist failure used to leave `persisted` short of
+          // `count` with success:true and nothing saying why. The gap travels.
+          persistFailed += 1;
         }
       }
     }
     return res.json({
       success: true,
-      data: { extracted, createdIds: created, count: extracted.length, persisted: created.length },
+      data: {
+        extracted,
+        createdIds: created,
+        count: extracted.length,
+        persisted: created.length,
+        ...(persistFailed > 0 ? { persistFailed } : {}),
+        ...(persistUnavailable ? { persistUnavailable } : {}),
+      },
     });
   } catch (err: any) {
+    /* An extraction that could not RUN is not a document with no commitments in
+       it. Answer 503 and say so, rather than 200 with count: 0 — the false zero
+       is what would leave a PMR/PMC/REMS/Annex II obligation unregistered. */
+    if (err instanceof ExtractionUnavailableError) {
+      console.error('[c2c/commitments/extract] unavailable:', err.message);
+      return res.status(503).json({
+        error: 'EXTRACTION_UNAVAILABLE',
+        extractionFailed: true,
+        detail: err.message,
+        note: 'No commitments were extracted because the extraction could not be performed. This is NOT a finding that the document contains none.',
+      });
+    }
     console.error('[c2c/commitments/extract]', err?.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
   }

@@ -133,9 +133,33 @@ const ASSEMBLE_FORM = (def: string | undefined, packages: PackageOption[] | null
       // with the refusal rather than being restated in a field description.
       desc: 'Required for any sequence after 0000: only the original is an original by definition. FDA files from a fixed list — Original Application, Efficacy Supplement, Annual Report and others; other regions take their own term. A term that cannot be filed is refused with the list.',
     },
+    {
+      key: 'withdraw', label: 'Withdraw from the application', type: 'textarea',
+      placeholder: '2.5/clinical-overview.pdf',
+      // Withdrawal is explicit and can only be: a document simply left out of a
+      // sequence stays on file, because inferring withdrawal from absence would
+      // delete a dossier the first time somebody filed a two-document amendment.
+      desc: 'Optional. One document per line as section/filename, exactly as the filed sequence recorded it — this withdraws it from the application at the agency. Leaving a document out of a sequence does not withdraw it; it stays on file unchanged.',
+    },
     { key: 'reason', label: 'Reason (governed)', type: 'textarea', required: true, placeholder: 'At least 8 characters — recorded with the assembly.' },
   ],
 });
+
+/** `section/filename` per line → the withdrawal list the assemble route takes.
+ *  A CTD section carries dots, never a slash, so the first slash separates. */
+export function parseWithdrawals(raw: string | undefined): Array<{ ctdSection: string; fileName: string }> {
+  return (raw ?? '')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const cut = line.indexOf('/');
+      return cut > 0
+        ? { ctdSection: line.slice(0, cut).trim(), fileName: line.slice(cut + 1).trim() }
+        : { ctdSection: '', fileName: line };
+    })
+    .filter((w) => w.ctdSection && w.fileName);
+}
 
 const REGIONS = ['fda', 'ema', 'pmda', 'ca'];
 const GATEWAYS = ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg'];
@@ -426,6 +450,12 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     const body: Record<string, unknown> = { reason: v.reason };
     if (v.region) body.region = v.region;
     if (v.sequence) body.sequence = v.sequence;
+    // The form asked for these; sending them is the whole point. Without the
+    // submission type a follow-up sequence is refused for want of a value the
+    // operator supplied and this never forwarded.
+    if (v.submissionType?.trim()) body.submissionType = v.submissionType.trim();
+    const withdraw = parseWithdrawals(v.withdraw);
+    if (withdraw.length > 0) body.withdraw = withdraw;
     const id = encodeURIComponent(v.packageId);
     const { ok, status, raw } = await readData('POST', `/api/submission-ops/packages/${id}/assemble`, body);
     if (status === 404) { fireToast('Not assembled — no package with that id in this tenant.', 'error'); return; }
@@ -458,7 +488,10 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     // count that is smaller than the package.
     const life = b.lifecycle?.summary;
     const lifecycleNote = life && (b.sequence ?? '0000') !== '0000'
-      ? ` Sequence ${b.sequence}: ${life.new} new, ${life.replace} replaced, ${life.unchanged} left unchanged on file.`
+      ? ` Sequence ${b.sequence}: ${life.new} new, ${life.replace} replaced, ${life.unchanged} left unchanged on file` +
+        // A withdrawal is the one irreversible thing a sequence does to what is
+        // already at the agency, so it is never folded into the other counts.
+        (life.delete > 0 ? `, ${life.delete} withdrawn from the application.` : '.')
       : '';
     setDialog(null);
     if (errors > 0) {
