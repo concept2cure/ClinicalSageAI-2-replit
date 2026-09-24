@@ -32,6 +32,7 @@ The founder's instruction for this audit was to believe no earlier assessment. S
 | Control-tower re-reads | Every finding that decides the verdict (§3) was re-read by the control tower, not taken from an auditor. | §3, §4 |
 | Citation check | 297 `path:line` citations from the three reports resolved against `git ls-files` at the audited commit; 297 resolve, one auditor filename corrected (`server/mcp/tools/runtime.ts`). | `citations-verified.txt` |
 | Gates | 31 read-only gates plus `npm audit`: 29 pass, 2 red (`ci:server-error-leaks`, `ci:dead-audit-catch`), `npm audit` 0 critical / 0 high / 32 moderate, GA readiness probe 6 of 41 ready with 18 blockers. | `gates/SUMMARY.txt` and one file per gate |
+| Weekly lens | The new `security-auditor` definition run once on the launch catalog at the same commit; its report is `docs/evidence/reviews/2026-09-24/security.md` and its three new ids are §4.4. |
 | Tests | `npm run test:security`: 45 files, 377 tests pass. The repository's own `qms-effective-only-by-signature` and `ana-cannot-sign` tests: 28 pass (they close DP-01, see §4.2). | `tests/` |
 | Reproductions | Three defects reproduced by execution, one confirmed closed: IAM-01 against the real `/ana` namespace middleware; DP-03 and DP-04 against PostgreSQL 16.13 with the real trigger migrations; DP-01 shown closed by the repository's test. | `repro/` |
 | GitHub | Branch protection and CI history read through the API: `concept2cure-v2` is unprotected; the ten most recent completed trunk CI runs sampled on 09-19 and 09-23 all failed; twelve runs were queued within twenty minutes on 09-24 from concurrent sessions. | §4.3 INF-01 |
@@ -81,7 +82,8 @@ mechanism, the APPI and PMDA ER/ES files, the Annex 11 map with audit-trail revi
 | **Total at the auditors' commit** | **1** | **23** | **36** | **21** | **81** |
 
 Closed between the auditors' commit and the audited head by other lanes, and reported as closed: **DP-01**
-(`e1c224f6`) and most of **DP-10** (`2ddb77b0`); see §4.2. Net open at `adbf2d18`: 1 Critical, 21 High.
+(`e1c224f6`) and most of **DP-10** (`2ddb77b0`); see §4.2. The first weekly lens (§4.4) added DP-31…33 at the same
+commit. Net open at `adbf2d18`: 1 Critical, 21 High, 38 Medium, 22 Low.
 
 ### 3.2 The findings that decide the verdict (each re-read by the control tower)
 
@@ -201,6 +203,22 @@ carries the full mapping. Line numbers are at `adbf2d18` unless the citation che
 | INF-31 | Low | 32 moderate advisories need major upgrades (`@sentry/node`, `@anthropic-ai/sdk`, `csv-parse`); `crypto-js`, `node-fetch@2` and `express-session` are unused production dependencies; the risk ledger carries two stale rows and a team-string owner expiring 2026-11-25; no license tooling. | `gates/npm-audit-json.txt`; `docs/security/dependency-risk-ledger.json`; `docs/security/WO-07-dependency-risk-decision.md:54` | NIST SI-2/SR-3 | partial (50 → 32) |
 | INF-32 | Low | `security.txt` points its Policy at `/SECURITY.md`, which is not served, and builds Canonical from the Host header; `SECURITY.md` claims "secure cookies" and "short JWT expiration" (bearer tokens, 1 day); the trust statement's contact is "to be published". | `server/routes/well-known.ts:14-31`; `SECURITY.md`; `docs/security/TRUST_STATEMENT.md:61-63` | SOC 2 CC2.3 | new |
 | INF-33 | Low | `.gitignore` covers `*.tfstate` but not `*.tfvars`, while the Terraform README tells operators to copy one. | `.gitignore:167-168`; `terraform/README.md:36,46` | NIST CM-6 | new |
+
+### 4.4 Added by the first weekly security lens, same commit (`docs/evidence/reviews/2026-09-24/security.md`)
+
+The lens re-verified every §3.2 finding as still open at `adbf2d18`, sampled eleven launch-catalog mutation routes
+(ten prove tenant ownership in the handler), enumerated the ~45 AnA write tools behind the six apps (three confirm
+with a person), found no second door added in the last 48 hours, and raised three ids:
+
+| Id | Sev | Finding | Evidence | Hook | Status |
+|---|---|---|---|---|---|
+| DP-31 | Medium | A QMS change-control record is approved with no ceremony on either door: the AnA tool `qms_change_transition` is ungoverned, its "reason" is three characters of model output and its audit write is fire-and-forget after the stamp; the HTTP twin's only control on `approved` is segregation of duties. | `server/services/ana/AnaToolExecutor.ts:13765-13790`; `server/routes/mdx-qms.ts:1351-1398`; `server/services/qms/changeControl.service.ts:203-215`; `server/services/ana/governed-tool-gate.ts:96-117` | 11.10(d), 11.50, 11.200(a)(1); Annex 11 §14; ICH Q10 3.2.3 | new |
+| DP-32 | Low–Medium | An effective controlled document is retired without a ceremony from chat or HTTP; the AnA door's reason is optional. | `AnaToolExecutor.ts:13649-13690`; `mdx-qms.ts:680-700` | 11.10(d)(e), 11.50; Annex 11 §9, §14 | new |
+| DP-33 | Low | `DELETE /api/authoring/docs/:docId` is authorised by a static `x-admin-token`, deletes with no tenant predicate and writes an actor-less audit row; contained today by `authoringObjectAuthorization` in front of it and by `ADMIN_TOKEN` being unset everywhere. `ci:regulated-delete-audit` is satisfied by a row an inspector cannot attribute. | `server/routes/authoring.router.ts:4882-4920`; `server/middleware/authoringObjectAuthorization.ts:174-178`; `.env.example:817` | 11.10(d)(e)(g); Annex 11 §17 | new |
+
+With these, the register stands at **84** at the audited commit (1 Critical, 23 High, 38 Medium, 22 Low), two of the
+Highs closed at head as noted. The lens's tool-layer evidence also widens DP-08: every "reason" an AnA write captures is
+authored by the model.
 
 ## 5. Verified strengths (with the file that proves each)
 
