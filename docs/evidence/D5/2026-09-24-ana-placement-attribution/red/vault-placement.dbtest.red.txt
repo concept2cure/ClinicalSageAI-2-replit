@@ -1,0 +1,151 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T16:11:03.679Z","pid":2226,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T16:11:03.680Z","pid":2226,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T16:11:03.680Z","pid":2226,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label
+[database] Database connection successful { timestamp: '2026-09-24T16:11:03.747Z', poolSize: 1 }
+
+stdout | tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label
+[database] Database connection successful
+
+stderr | tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label 2077ms
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > left an audit row naming the location it came from and the one it went to 19ms
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > honours an explicit unfile — the Unfiled queue is a real answer 19ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses a folder from another modality's taxonomy 8ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses to confirm a suggestion that does not exist 8ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses a call that names no destination at all 8ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > confirms an existing suggestion in place, keeping the CTD section 12ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > will not let another organization move the document 5ms
+ × tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > records AnA's folder as a suggestion a person must confirm, not as a person's filing 3291ms
+   → expected { reported: 'confirmed', …(3) } to match object { reported: 'suggested', …(3) }
+(10 matching properties omitted from actual)
+ × tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > refuses to confirm a suggestion — a person confirms filing in the Vault 20ms
+   → expected true to be false // Object.is equality
+ × tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > the service itself refuses an agent's confirm, so no other agent caller can record one either 13ms
+   → expected true to be false // Object.is equality
+ × tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > unfiles with the same attribution — the Unfiled queue is where a person decides 17ms
+   → expected 6 to be null
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > leaves a person's filing through the Vault a confirmed decision with no agent marker 13ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > records AnA's folder as a suggestion a person must confirm, not as a person's filing
+AssertionError: expected { reported: 'confirmed', …(3) } to match object { reported: 'suggested', …(3) }
+(10 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "audit": {
+-     "actorKind": "agent:ana",
+-     "agentReason": "The document is a design history file extract for the AF-1000.",
+-     "rationale": "AnA's suggestion: The document is a design history file extract for the AF-1000.",
+-     "servingModel": {
+-       "model": "dbtest-place-model",
+-       "provider": "anthropic",
+-     },
+-     "threadId": "dbtest-place-thread",
++     "rationale": "The document is a design history file extract for the AF-1000.",
+      "to": {
+        "folderId": "eng",
+-       "placementStatus": "suggested",
++       "placementStatus": "confirmed",
+      },
+-     "tool": "place_project_document",
+-     "turnId": "dbtest-place-turn",
+    },
+    "auditUserId": 6,
+-   "reported": "suggested",
++   "reported": "confirmed",
+    "row": {
+      "folder_id": "eng",
+-     "placed_at": null,
+-     "placed_by": null,
+-     "placement_rationale": "AnA's suggestion: The document is a design history file extract for the AF-1000.",
+-     "placement_status": "suggested",
++     "placed_at": 2026-09-24T16:11:07.406Z,
++     "placed_by": 6,
++     "placement_rationale": "The document is a design history file extract for the AF-1000.",
++     "placement_status": "confirmed",
+    },
+  }
+
+ ❯ tests/db/vault-placement.dbtest.ts:386:8
+    384|       auditUserId: audit?.userId,
+    385|       audit: audit?.details,
+    386|     }).toMatchObject({
+       |        ^
+    387|       reported: 'suggested',
+    388|       // The state the ingest classifier writes for a machine proposal…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > refuses to confirm a suggestion — a person confirms filing in the Vault
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/db/vault-placement.dbtest.ts:428:20
+    426|     const before = await filingAuditCount();
+    427|     const out = await anaPlaces({ confirm_suggested: true, rationale: …
+    428|     expect(out.ok).toBe(false);
+       |                    ^
+    429|     expect(out.refused).toBe(true);
+    430|     expect(out.reason).toContain('Vault');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > the service itself refuses an agent's confirm, so no other agent caller can record one either
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/db/vault-placement.dbtest.ts:448:20
+    446|     const before = await filingAuditCount();
+    447|     const out = await place({ confirm: true, agent: { actorKind: 'agen…
+    448|     expect(out.ok).toBe(false);
+       |                    ^
+    449|     if (out.ok) return;
+    450|     expect(out.code).toBe('CONFIRMATION_REQUIRES_A_PERSON');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > unfiles with the same attribution — the Unfiled queue is where a person decides
+AssertionError: expected 6 to be null
+
+- Expected:
+null
+
++ Received:
+6
+
+ ❯ tests/db/vault-placement.dbtest.ts:460:25
+    458|     const r = await row();
+    459|     expect(r.placement_status).toBe('unfiled');
+    460|     expect(r.placed_by).toBeNull();
+       |                         ^
+    461|     expect(r.placed_at).toBeNull();
+    462|     const audit = await lastFilingAudit();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 9 passed (13)
+   Start at  16:11:00
+   Duration  7.46s (transform 3.55s, setup 67ms, import 36ms, tests 7.09s, environment 0ms)
+
