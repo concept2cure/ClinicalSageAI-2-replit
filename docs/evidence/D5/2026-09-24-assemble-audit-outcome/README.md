@@ -30,9 +30,11 @@ the only caller. That was wrong: the grep behind it searched the wrong path.
 - `server/services/submission-service/submission-service.ts:844`, the pre-check
   assembly before a freeze or dispatch;
 - the same file at `:1312`, the transmit assembly;
-- `server/routes/ectd-compile.ts:976`.
+- `server/routes/ectd-compile.ts:976`, which already answers it, including a
+  refusal's (`1c6f56e31`, another session, 18:27 the same day). An earlier
+  version of this note listed it as open, which was wrong.
 
-None of these passes the outcome on. The two in submission-service sit inside
+The two in submission-service do not pass the outcome on. They sit inside
 the governed freeze/dispatch/transmit chain, whose responses would have to carry
 it, and that chain is the package-spine lane's. They are left open and handed
 on. `routes/ectd-export.ts` does not call it.
