@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-24T16:32:29.253Z",
+  "generatedAt": "2026-09-24T16:45:30.084Z",
   "git": {
-    "sha": "cf54bdf022232e8f386578e157e4386c0f606816",
+    "sha": "76e12385fc43f249ad3f4a6dc6490836b5b67f51",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1991,7 +1991,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 242912
+        "bytes": 238381
       },
       {
         "file": "server/statistics-service.ts",
@@ -2071,7 +2071,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 130267
+        "bytes": 130408
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
@@ -2083,7 +2083,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 123785
+        "bytes": 125483
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2177,7 +2177,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 5277
+        "lines": 5128
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2245,7 +2245,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2844
+        "lines": 2847
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2265,7 +2265,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 2538
+        "lines": 2569
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2380,6 +2380,10 @@
         "lines": 2000
       },
       {
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1931
+      },
+      {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
         "lines": 1927
       },
@@ -2398,10 +2402,6 @@
       {
         "file": "server/routes/regulatory-digital-twin.ts",
         "lines": 1898
-      },
-      {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1897
       },
       {
         "file": "server/routes/ectd-compile.ts",
