@@ -21,7 +21,9 @@ terraform {
     key            = "production/terraform.tfstate"
     region         = "us-east-1"
     dynamodb_table = "c2c-terraform-lock"
-    encrypt        = true
+    # No `encrypt = true`: without a kms_key_id it requests SSE-S3 on every write,
+    # overriding the bucket's customer-managed key, and the bucket refuses it
+    # (terraform/bootstrap, TRIVY-01).
   }
 }
 

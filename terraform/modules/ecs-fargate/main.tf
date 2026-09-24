@@ -104,6 +104,9 @@ resource "aws_security_group" "ecs_tasks" {
     security_groups = [var.alb_security_group_id]
   }
 
+  # Outbound through the NAT to the AI providers, agency gateways and AWS APIs:
+  # hosted services with no fixed address ranges to list (TRIVY-01).
+  #trivy:ignore:AWS-0104
   egress {
     from_port   = 0
     to_port     = 0
