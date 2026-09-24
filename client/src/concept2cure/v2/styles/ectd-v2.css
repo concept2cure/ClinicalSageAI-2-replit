@@ -155,13 +155,13 @@
   .ec-p[data-conf="lo"] .ec-gutter{ background:var(--warning); }
   .ec-p:hover .ec-gutter{ width:3px; }
   .ec-cite{ display:inline-flex; align-items:center; padding:0 5px; height:15px; margin-left:3px; font-family:var(--font-mono); font-size:10px; font-weight:500; color:var(--accent-200); background:var(--accent-000); border-radius:var(--radius-sm); vertical-align:baseline; text-decoration:none; }
-  .ec-prov{ position:absolute; left:calc(100% + 14px); top:0; width:212px; padding:10px 12px; background:var(--text-100); color:rgba(255,255,255,.92); border-radius:var(--radius-lg); font-family:var(--font-sans); font-size:10.5px; line-height:1.45; opacity:0; transform:translateY(4px); transition:opacity var(--dur) var(--ease), transform var(--dur) var(--ease); pointer-events:none; box-shadow:var(--shadow-lg); z-index:5; display:block; }
+  .ec-prov{ position:absolute; left:calc(100% + 14px); top:0; width:212px; padding:10px 12px; background:var(--text-100); color:var(--bg-000); border-radius:var(--radius-lg); font-family:var(--font-sans); font-size:10.5px; line-height:1.45; opacity:0; transform:translateY(4px); transition:opacity var(--dur) var(--ease), transform var(--dur) var(--ease); pointer-events:none; box-shadow:var(--shadow-lg); z-index:5; display:block; }
   .ec-p:hover .ec-prov{ opacity:1; transform:translateY(0); }
   .ec-prov-row{ display:flex; justify-content:space-between; gap:10px; margin-bottom:4px; }
-  .ec-prov-lbl{ color:rgba(255,255,255,.5); font-size:10px; letter-spacing:.06em; text-transform:uppercase; }
-  .ec-prov-val{ font-family:var(--font-mono); font-size:10px; color:rgba(255,255,255,.95); text-align:right; }
-  .ec-prov-foot{ display:block; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,.14); color:rgba(255,255,255,.7); font-size:10px; }
-  .ec-prov-foot b{ color:#fff; font-weight:600; }
+  .ec-prov-lbl{ color:color-mix(in srgb, var(--bg-000) 55%, transparent); font-size:10px; letter-spacing:.06em; text-transform:uppercase; }
+  .ec-prov-val{ font-family:var(--font-mono); font-size:10px; color:var(--bg-000); text-align:right; }
+  .ec-prov-foot{ display:block; margin-top:6px; padding-top:6px; border-top:1px solid color-mix(in srgb, var(--bg-000) 16%, transparent); color:color-mix(in srgb, var(--bg-000) 72%, transparent); font-size:10px; }
+  .ec-prov-foot b{ color:var(--bg-000); font-weight:600; }
   .ec-doc-table{ width:100%; font-family:var(--font-sans); font-size:12px; border-collapse:collapse; margin:14px 0 18px; }
   .ec-doc-table th,.ec-doc-table td{ padding:8px 10px; text-align:left; border-bottom:1px solid var(--border); vertical-align:top; }
   .ec-doc-table th{ font-size:10px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--text-400); border-bottom:1px solid var(--border-strong); background:var(--bg-050); }

@@ -2053,8 +2053,8 @@
   align-self: flex-start;
   font-size: 12px;
   font-weight: 600;
-  color: #fff;
-  background: var(--success, #2f7d57);
+  color: var(--on-success);
+  background: var(--success);
   border: 1px solid transparent;
   border-radius: 7px;
   padding: 7px 12px;
@@ -2149,8 +2149,8 @@
   transition: background 200ms var(--ease), color 200ms var(--ease);
 }
 .labelingToggleBtn[data-active='true'] {
-  background: var(--accent-main-100, #6366f1);
-  color: #fff;
+  background: var(--accent-strong);
+  color: var(--accent-on-strong);
 }
 .labelingToggleBtn:focus-visible {
   outline: none;
@@ -2387,9 +2387,9 @@
   gap: 6px;
   font-size: 12px;
   font-weight: 500;
-  color: #fff;
-  background: var(--accent-main-100, #6366f1);
-  border: 1px solid var(--accent-main-100, #6366f1);
+  color: var(--accent-on-strong);
+  background: var(--accent-strong);
+  border: 1px solid var(--accent-strong);
   border-radius: 7px;
   padding: 6px 12px;
   cursor: pointer;
@@ -2421,13 +2421,13 @@
   font-weight: 600;
   padding: 6px 12px;
   border-radius: 7px;
-  color: #fff;
-  background: var(--accent-main-100, #6366f1);
-  border: 1px solid var(--accent-main-100, #6366f1);
+  color: var(--accent-on-strong);
+  background: var(--accent-strong);
+  border: 1px solid var(--accent-strong);
   cursor: pointer;
   transition: background 200ms var(--ease), opacity 200ms var(--ease);
 }
-.labelingExport:hover:not(:disabled) { background: var(--accent-main-200, #4f46e5); }
+.labelingExport:hover:not(:disabled) { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
 .labelingExport:disabled { opacity: 0.5; cursor: not-allowed; }
 .labelingExport:focus-visible {
   outline: none;

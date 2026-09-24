@@ -425,7 +425,7 @@
    unconditionally var(--success), so "Couldn't save — nothing was persisted"
    read as a success at a glance. */
 .c2c-v2 .de-toast[data-tone="error"]{background:var(--error);color:var(--on-error);}
-.c2c-v2 .de-toast[data-tone="error"] .ico{color:#fff;}
+.c2c-v2 .de-toast[data-tone="error"] .ico{color:var(--on-error);}
 /* A disabled row action must look disabled. `.nda-open` carried no disabled
    state, so "Review" blocked by the two-person rule and "Build" blocked by
    having no source data both still read as live controls. */
