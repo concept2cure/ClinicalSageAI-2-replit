@@ -99,11 +99,29 @@ const BASELINE = path.join(ROOT, 'scripts/ci/discarded-audit-write-baseline.json
  * row rolls the mutation back with it. There is no outcome to discard, and
  * flagging it would push authors toward the weaker helper.
  *
- * Still outside this gate, and named here so the next reader does not mistake a
- * green run for a clean audit layer: `createAuditTrail`
- * (part11ComplianceService, ~11 discarded call sites), `auditAuthEvent`,
- * `emitAuditEvent` and `createAuditEvent`. Their contracts have not been read
- * yet.
+ * The four other audit writers this note used to list as "not yet read" were
+ * read on 2026-09-24. None resolves an outcome, so none belongs in AUDIT_CALL —
+ * but two of them lose a row without telling anyone, and a green run here says
+ * nothing about those:
+ *
+ *   - `createAuditTrail` names THREE different functions. The authoring router's
+ *     (and its legacy wrapper `createAuditEvent`) delegate to
+ *     services/authoring/authoring-evidence.ts `writeAuthoringAuditTrail`, which
+ *     resolves `void` and throws when enlisted in a transaction or in
+ *     production. DocumentOrchestrationService's resolves `void` and does not
+ *     catch. part11ComplianceService's resolves the device_audit_trail row and
+ *     throws on that insert; the `auditService.logAction` inside it IS
+ *     discarded and IS counted here. So: fail-loud, nothing to discard. The
+ *     earlier "~11 discarded call sites" figure was never measured; there are
+ *     three callers of the part11 one, all in that file.
+ *   - `emitAuditEvent` (routes/ivdr-binder-routes.ts) CATCHES AND SWALLOWS a
+ *     failed insert into `audit_events` and resolves `void`: a lost row is
+ *     visible only in the server log. There is no outcome, so this gate cannot
+ *     see it. It is a silent-loss writer, not a discarded outcome.
+ *   - `auditAuthEvent` no longer exists. Its successor, `recordAuthEvent`
+ *     (services/audit/auth-event-audit.ts), reads the outcome itself and logs a
+ *     failure at warn level, by a decision its header states: an audit outage
+ *     must not lock every user out of sign-in.
  */
 const AUDIT_CALL = String.raw`(?:auditService\s*\.\s*logAction|recordAuditRow|logAuditEvent|logAuditEntry|auditTaskAction)`;
 
