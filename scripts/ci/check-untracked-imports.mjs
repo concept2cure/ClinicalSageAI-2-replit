@@ -43,6 +43,9 @@ import { spawnSync } from 'node:child_process';
 import { changedSince, resolvePushBase } from './lib/push-range.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
+import { createRequire } from 'node:module';
+
+const ts = createRequire(import.meta.url)('typescript');
 
 const TAG = '[ci:untracked-imports]';
 const SOURCE = /\.(?:m|c)?[jt]sx?$/;
@@ -95,8 +98,27 @@ if (argv.includes('--all')) {
   }
 }
 
-/** Relative specifiers in `from '…'`, `import('…')` and `require('…')`. */
-const SPECIFIER = /(?:from\s*|import\s*\(\s*|require\s*\(\s*)['"](\.[^'"]*)['"]/g;
+/**
+ * The relative module specifiers a file really imports, with their offsets.
+ *
+ * TypeScript's own pre-processor, not a regex. The first version of this gate
+ * matched `from '…'` / `import('…')` / `require('…')` anywhere in the text, so
+ * it read imports inside COMMENTS and inside STRING and TEMPLATE literals as
+ * real ones. That produced eight "resolves to nothing" findings on trunk:
+ * seven template-literal fixtures in scripts/ci/check-canvas-path.selftest.mjs
+ * (source files the self-test writes to a temp dir) and one comment in
+ * server/services/lumen-context-builder.ts that quotes a specifier. Any push
+ * touching either file would have been refused for code that is not an import
+ * at all — a gate that cries wolf is one people learn to bypass.
+ *
+ * `ts.preProcessFile` is what tsc itself uses to find a file's dependencies:
+ * static imports, `export … from`, `import type`, dynamic `import()` and
+ * `require()`, and nothing inside a comment or a string.
+ */
+function relativeSpecifiers(src) {
+  const { importedFiles } = ts.preProcessFile(src, true, true);
+  return importedFiles.filter(f => f.fileName.startsWith('.'));
+}
 
 /** `./x?raw`, `./x?url`, `./x?worker` — a bundler query, not part of the path. */
 function stripQuery(spec) {
@@ -143,10 +165,10 @@ for (const file of files) {
   } catch {
     continue; // deleted in the working tree; the diff filter already excludes deletes
   }
-  for (const m of src.matchAll(SPECIFIER)) {
-    const spec = m[1];
+  for (const ref of relativeSpecifiers(src)) {
+    const spec = ref.fileName;
     if (resolveTracked(file, spec)) continue;
-    const line = src.slice(0, m.index).split('\n').length;
+    const line = src.slice(0, ref.pos).split('\n').length;
     (existsOnDisk(file, spec) ? untracked : missing).push(`  ${file}:${line}  →  ${spec}`);
   }
 }

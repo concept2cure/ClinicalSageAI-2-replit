@@ -224,6 +224,125 @@ describe('planSequence', () => {
     })).not.toThrow();
   });
 
+  it('WITHDRAWS a named document, pointing the delete at the sequence that holds it', () => {
+    // Until this input existed, DesiredLeaf.withdraw was never set by anything,
+    // so `summary.delete` was a counter that could only ever read 0 and a
+    // document filed in error stayed current at the agency forever.
+    const plan = planSequence({
+      sequence: '0001', submissionType: 'Efficacy Supplement', filed: [SEQ_0000],
+      desired: desired([['2.5', 'clinical-overview.pdf', 'md5-co-v2']]),
+      withdraw: [{ ctdSection: '3.2.P.1', fileName: 'description.pdf' }],
+    });
+    expect(plan.summary).toMatchObject({ replace: 1, delete: 1, unchanged: 0 });
+    const gone = plan.leaves.find((l) => l.fileName === 'description.pdf')!;
+    expect(gone.operation).toBe('delete');
+    expect(gone.modifiedFile).toContain('0000');
+    // It ships no bytes, so the title and checksum cannot be recomputed: the
+    // backbone entry has to carry the ones the document was FILED under, or it
+    // names and checks nothing.
+    expect(gone.md5).toBe('md5-desc-v1');
+    expect(gone.title).toBeTruthy();
+  });
+
+  it('a sequence that ONLY withdraws is a filing', () => {
+    const plan = planSequence({
+      sequence: '0001', submissionType: 'Efficacy Supplement', filed: [SEQ_0000], desired: [],
+      withdraw: [{ ctdSection: '3.2.P.1', fileName: 'description.pdf' }],
+    });
+    expect(plan.summary.delete).toBe(1);
+    expect(plan.leaves).toHaveLength(1);
+  });
+
+  it('REFUSES a withdrawal of something that is not on file, and one that contradicts what is being filed', () => {
+    expect(() => planSequence({
+      sequence: '0001', submissionType: 'Efficacy Supplement', filed: [SEQ_0000],
+      desired: desired([['2.5', 'clinical-overview.pdf', 'md5-co-v2']]),
+      withdraw: [{ ctdSection: '3.2.P.1', fileName: 'never-filed.pdf' }],
+    })).toThrow(/nothing at the agency to withdraw/);
+    try {
+      planSequence({
+        sequence: '0001', submissionType: 'Efficacy Supplement', filed: [SEQ_0000],
+        desired: desired([['2.5', 'clinical-overview.pdf', 'md5-co-v2']]),
+        withdraw: [{ ctdSection: '2.5', fileName: 'clinical-overview.pdf' }],
+      });
+      throw new Error('expected a refusal');
+    } catch (e) {
+      expect((e as SequenceLifecycleRefusal).code).toBe('WITHDRAWAL_CONTRADICTS_CONTENT');
+    }
+  });
+
+  it('a withdrawn document leaves the prior state, so re-filing it later is NEW', () => {
+    const withdrawal: FiledSequence = {
+      ...SEQ_0000, sequence: '0001',
+      leaves: [leaf('3.2.P.1', 'description.pdf', 'md5-desc-v1', { operation: 'delete' })],
+    };
+    const plan = planSequence({
+      sequence: '0002', submissionType: 'Efficacy Supplement', filed: [SEQ_0000, withdrawal],
+      desired: desired([['3.2.P.1', 'description.pdf', 'md5-desc-v3']]),
+    });
+    expect(plan.summary).toMatchObject({ new: 1, replace: 0 });
+  });
+
+  it('follows a document through a change of FILE NAME, because the name is not its identity', () => {
+    // A leaf's file name is composed from the section key, and a section can be
+    // renamed in place. The same document then came back as `new` at the same
+    // CTD section, leaving two current copies at the agency and no finding.
+    const filed: FiledSequence = {
+      ...SEQ_0000,
+      leaves: [leaf('2.5', 'clinical-overview-overview.pdf', 'md5-co-v1', { leafKey: 'artifact:artifact_co@2.5' })],
+    };
+    const plan = planSequence({
+      sequence: '0001', submissionType: 'Efficacy Supplement', filed: [filed],
+      desired: [{ ctdSection: '2.5', fileName: 'clinical-overview-summary-overview.pdf', md5: 'md5-co-v2', title: 'x', leafKey: 'artifact:artifact_co@2.5' }],
+    });
+    expect(plan.summary).toMatchObject({ replace: 1, new: 0 });
+    expect(plan.leaves[0].fileName).toBe('clinical-overview-summary-overview.pdf');
+    expect(plan.leaves[0].modifiedFile).toContain('clinical-overview-overview.pdf');
+  });
+
+  it('a renamed section whose CONTENT is unchanged still files nothing', () => {
+    const filed: FiledSequence = {
+      ...SEQ_0000,
+      leaves: [
+        leaf('2.5', 'old-name.pdf', 'md5-co-v1', { leafKey: 'artifact:artifact_co@2.5' }),
+        leaf('3.2.P.1', 'desc.pdf', 'md5-desc-v1', { leafKey: 'artifact:artifact_d@3.2.P.1' }),
+      ],
+    };
+    expect(() => planSequence({
+      sequence: '0001', submissionType: 'Efficacy Supplement', filed: [filed],
+      desired: [
+        { ctdSection: '2.5', fileName: 'new-name.pdf', md5: 'md5-co-v1', title: 'x', leafKey: 'artifact:artifact_co@2.5' },
+        { ctdSection: '3.2.P.1', fileName: 'desc.pdf', md5: 'md5-desc-v1', title: 'y', leafKey: 'artifact:artifact_d@3.2.P.1' },
+      ],
+    })).toThrow(/would file nothing/);
+  });
+
+  it('a history filed BEFORE leaf keys existed still matches on the path — the fallback is not optional', () => {
+    // Removing it would call every document on an existing application `new`
+    // and re-file the whole thing.
+    const plan = planSequence({
+      sequence: '0001', submissionType: 'Efficacy Supplement', filed: [SEQ_0000], // no leafKey anywhere
+      desired: [{ ctdSection: '2.5', fileName: 'clinical-overview.pdf', md5: 'md5-co-v2', title: 'x', leafKey: 'artifact:artifact_co@2.5' }],
+    });
+    expect(plan.summary).toMatchObject({ replace: 1, new: 0 });
+  });
+
+  it('moving a document to a DIFFERENT CTD section is not a replace across sections', () => {
+    // Identity is the document at a section. A corrected placement files at the
+    // new section and leaves the old copy on file — withdrawing it is an
+    // explicit act, which is the honest answer until withdrawal exists here.
+    const filed: FiledSequence = {
+      ...SEQ_0000,
+      leaves: [leaf('2.5', 'a.pdf', 'm1', { leafKey: 'artifact:artifact_x@2.5' })],
+    };
+    const plan = planSequence({
+      sequence: '0001', submissionType: 'Efficacy Supplement', filed: [filed],
+      desired: [{ ctdSection: '2.7', fileName: 'a.pdf', md5: 'm1', title: 'x', leafKey: 'artifact:artifact_x@2.7' }],
+    });
+    expect(plan.summary).toMatchObject({ new: 1, replace: 0 });
+    expect(plan.leaves[0]).not.toHaveProperty('modifiedFile');
+  });
+
   it('REFUSES a gap and a backfill alike — the only ordering this knows is the sequence number', () => {
     // With 0000 filed, 0002/0007/9999 were all accepted with identical plans, a
     // gap never named. Worse the other way: with 0000 and 0002 filed, a

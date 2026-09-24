@@ -85,7 +85,7 @@ this assessment could be written at all.
 | eTMF (DIA reference model) | 1 | FAR |
 | **QMS / QualityDocs** *(added on correction)* | **3** | **CLOSE** |
 | RIM: registrations, submissions, publishing | 3 | FAR overall; publishing alone 4, **AT PARITY** |
-| Search & retrieval | 1 | **CLOSE** to functional, FAR to parity |
+| Search & retrieval | **3** *(was 1; re-verified 2026-09-19)* | Functional — FTS + passage search, both wired. FAR to parity: no saved searches, facets or VQL |
 | External collaboration / data room | **0** | **ABSENT** |
 | Bulk ops & migration | 1 | FAR |
 | Storage & scale | 1 | FAR |
@@ -517,20 +517,84 @@ in order to bind the TMF artifact to it, and it sets its own `documentCode`/`doc
 from the TMF vocabulary rather than the filename. Closing it means widening the hook's contract
 and migrating all four callers onto it.
 
-**Search.** `Vault.tsx` has exactly one `<input>` and it is the file picker at `:774`. There is
-no search box. What filtering exists is a client-side substring match over rows already in
-memory and cannot match document content. `vault.document_chunks` has no reachable caller in the
-shipped product — the entire hybrid retrieval stack is unwired. No full-text index on
-`extracted_text`. No pagination anywhere.
+**~~Search.~~ CLOSED.** *(Re-verified 2026-09-19 — every clause of the original finding is now
+false, and it is reproduced here so the correction is checkable: "`Vault.tsx` has exactly one
+`<input>` and it is the file picker at `:774`. There is no search box. What filtering exists is
+a client-side substring match over rows already in memory and cannot match document content.
+`vault.document_chunks` has no reachable caller in the shipped product — the entire hybrid
+retrieval stack is unwired. No full-text index on `extracted_text`. No pagination anywhere.")*
 
-**Storage & scale.** Bytes live on the app container's local filesystem — `s3Bucket` is the
-literal string `'local'` and `s3Key` is a `process.cwd()`-relative path
-(`vault-ingest.ts:227-247`). `docker-compose.yml:258-263` declares volumes only for Postgres and
-Redis; `infra/k8s/bff-with-predicate-shadow.yaml:18` runs `replicas: 2`. Two replicas, no shared
-volume: **half your downloads 409 on a file the other pod holds.** A storage seam exists at
-`server/services/storage/index.ts:26-48` and the vault does not use it. Uploads are buffered
-fully in memory (`multer.memoryStorage()`), capped at 50 MB. `processing_status` is written
-`PENDING` and never advanced.
+- **Document search.** `Vault.tsx:1047` is an `<input type="search">` reading "Search titles and
+  document text", served by `GET /api/c2c/project-vault/:id/search`
+  (`project-vault.ts:1196`): `websearch_to_tsquery` over
+  `vault.document_search_vector(document_title, file_name, extracted_text)`, ranked with
+  `ts_rank_cd`, with a `ts_headline` snippet so a hit on body text is legible as one. Tenant
+  predicate in the same statement as the match, and the count taken over the same predicate as
+  the page.
+- **The index exists.** `migrations/20260906_vault_documents_fulltext.sql:69` creates
+  `idx_vault_documents_fts` as a GIN index on the exact expression the query uses.
+- **Pagination.** `limit`/`offset` on the search route, capped at 100; the browse view reports
+  its own window.
+- **An empty query is not "match everything"** — it returns `EMPTY_QUERY` with no rows, because
+  returning the whole vault would make an empty box look like a search that found everything.
+- **The chunk corpus is reachable.** `vault.document_chunks` is read by
+  `server/services/vault/document-passage-search.ts` (a thin adapter over `ragRouter` with
+  `corpus: 'vault'`, not a second SQL path), exposed to AnA as the `search_document_passages`
+  tool and registered through `document-catalog-tools.ts:51`. It refuses rather than returning
+  empty when it has no usable tenant, because "nothing matched" and "I could not look" are
+  different statements.
+
+**Score raised 1 → 3.** Not higher: this is good document and passage search, but a Veeva buyer
+also expects saved searches, faceted metadata filters in the UI, search across a binder, and a
+query language in the VQL class. None of those exist.
+
+**Storage & scale.** *(Re-verified 2026-09-19 — mixed: the seam is closed, the deployment
+default is not.)*
+
+- ~~`s3Bucket` is the literal string `'local'` and `s3Key` is a `process.cwd()`-relative path;
+  a storage seam exists at `server/services/storage/index.ts` and the vault does not use it.~~
+  **CLOSED.** Ingest now writes through `getStorageProvider().put()`; `s3_key` carries the
+  provider's own handle and `s3_bucket` the provider name, so a row stays readable after a
+  backend change. `storage_version_id`/`storage_provider` columns record which provider minted
+  the handle, the read path is a dual read (rows predating the provider are still addressed by
+  `s3_key`), and `scripts/backfill-vault-storage.mjs` moves the backlog without deleting
+  originals.
+- **STILL OPEN, and now a configuration problem rather than a code one.**
+  `STORAGE_PROVIDER` defaults to `local` (`storage/index.ts:29`), and
+  `infra/k8s/bff-with-predicate-shadow.yaml:18` still runs `replicas: 2` with no shared volume.
+  A deployment that does not set `STORAGE_PROVIDER=s3` still has two pods with private disks.
+  The fix is now a one-variable change instead of a rewrite, which is the part that moved.
+- **STILL OPEN.** Uploads are buffered fully in memory (`multer.memoryStorage()`,
+  `vault-ingest.ts:47`), capped at 50 MB.
+- **`processing_status` is written `PENDING` and never advanced — still true**, and worth more
+  than the one line it had. See below.
+
+**The four-layer "draft · 64%" defect** *(found 2026-09-19 while verifying the line above; fixed
+in the same pass).* Every file uploaded into the MDX Document vault rendered as **"draft ·
+64%"** — a working copy two-thirds written, for a finished PDF nobody was authoring. Four
+independent layers each arrived at that, which is why no single-layer fix would have moved it:
+
+1. `vault.documents.processing_status` is written `PENDING` at ingest and **nothing in the repo
+   ever advances it** — no code writes `EXTRACTING`, `VECTORIZING` or `INDEXED`, although the
+   pipeline those states describe does run (text is extracted, chunked and embedded).
+2. `server/routes/mdx-vault.ts:261` mapped `processing_status === 'INDEXED' ? 'final' : 'draft'`
+   — a category error even if layer 1 had worked. Indexing is an ingest stage, not an approval.
+3. `useVault.toStatus` did not recognise `'final'` at all (only `'approved'` maps to it), so the
+   server's value fell through to the `'draft'` default. **Fixing layers 1 and 2 alone would
+   have changed nothing on screen.**
+4. `VaultSurface.fileToDoc` assigned `completion: … : 64` — the else-branch of a ternary written
+   for authored documents — and `deriveVaultKpis` counted "Drafts" as a RESIDUAL
+   (`total − locked − review`), so every uploaded PDF was tallied under "Working copies".
+
+**The interaction is the lesson.** "Fixing" layer 1 so uploads reported `INDEXED` would have
+turned *draft · 64%* into **final · 100%** — asserting an approval and a completion nobody gave,
+in a regulated vault. The honest value is neither: an ingested file is complete AS a file and
+has no drafting lifecycle. It now carries its own status, `uploaded`, and **no** completion
+percentage (rendered as an em dash), the counts are counted rather than inferred by
+subtraction, and the same reasoning is already written down twice in this codebase — beside
+`uploaded` in `v2/fixtures/vault-data.ts`, and beside `assessed: false` in
+`readinessEvaluator.ts`. Layer 1 remains open and is now inert: nothing user-facing reads
+`processing_status` as a lifecycle any more.
 
 **Project management.** The PM read-model is unreachable from the product: two id-spaces, the
 numeric `projects` spine and the UUID `regulatory_programs` spine, with
