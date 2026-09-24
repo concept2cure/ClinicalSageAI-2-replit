@@ -30,6 +30,10 @@ describe('getJwtSecret', () => {
     // Set here so each test exercises its own subject; the placement gate has
     // its own tests.
     process.env.AI_SENSITIVE_DATA_POLICY_MODE = 'enforce';
+    // Production must also name a durable vault store (storage-posture.ts),
+    // which has its own tests.
+    process.env.STORAGE_PROVIDER = 's3';
+    process.env.AWS_S3_BUCKET = 'c2c-vault-test';
     // Production requires at least ONE approval entry, not merely a parseable
     // value — an empty map is exactly the "nobody decided" state the gate
     // exists to refuse. One minimal, well-formed entry is enough here.
@@ -119,6 +123,10 @@ describe('getRefreshTokenSecret', () => {
     // Set here so each test exercises its own subject; the placement gate has
     // its own tests.
     process.env.AI_SENSITIVE_DATA_POLICY_MODE = 'enforce';
+    // Production must also name a durable vault store (storage-posture.ts),
+    // which has its own tests.
+    process.env.STORAGE_PROVIDER = 's3';
+    process.env.AWS_S3_BUCKET = 'c2c-vault-test';
     // Production requires at least ONE approval entry, not merely a parseable
     // value — an empty map is exactly the "nobody decided" state the gate
     // exists to refuse. One minimal, well-formed entry is enough here.
@@ -227,6 +235,10 @@ describe('assertMfaKeyPosture', () => {
     // Set here so each test exercises its own subject; the placement gate has
     // its own tests.
     process.env.AI_SENSITIVE_DATA_POLICY_MODE = 'enforce';
+    // Production must also name a durable vault store (storage-posture.ts),
+    // which has its own tests.
+    process.env.STORAGE_PROVIDER = 's3';
+    process.env.AWS_S3_BUCKET = 'c2c-vault-test';
     // Production requires at least ONE approval entry, not merely a parseable
     // value — an empty map is exactly the "nobody decided" state the gate
     // exists to refuse. One minimal, well-formed entry is enough here.
@@ -307,6 +319,10 @@ describe('getCurrentEnvironment', () => {
     // Set here so each test exercises its own subject; the placement gate has
     // its own tests.
     process.env.AI_SENSITIVE_DATA_POLICY_MODE = 'enforce';
+    // Production must also name a durable vault store (storage-posture.ts),
+    // which has its own tests.
+    process.env.STORAGE_PROVIDER = 's3';
+    process.env.AWS_S3_BUCKET = 'c2c-vault-test';
     // Production requires at least ONE approval entry, not merely a parseable
     // value — an empty map is exactly the "nobody decided" state the gate
     // exists to refuse. One minimal, well-formed entry is enough here.
@@ -387,6 +403,10 @@ describe('production RLS enforcement posture (fires on config import)', () => {
     // Set here so each test exercises its own subject; the placement gate has
     // its own tests.
     process.env.AI_SENSITIVE_DATA_POLICY_MODE = 'enforce';
+    // Production must also name a durable vault store (storage-posture.ts),
+    // which has its own tests.
+    process.env.STORAGE_PROVIDER = 's3';
+    process.env.AWS_S3_BUCKET = 'c2c-vault-test';
     // Production requires at least ONE approval entry, not merely a parseable
     // value — an empty map is exactly the "nobody decided" state the gate
     // exists to refuse. One minimal, well-formed entry is enough here.
@@ -475,6 +495,10 @@ describe('production audit-seal posture (fires on config import)', () => {
     // Set here so each test exercises its own subject; the placement gate has
     // its own tests.
     process.env.AI_SENSITIVE_DATA_POLICY_MODE = 'enforce';
+    // Production must also name a durable vault store (storage-posture.ts),
+    // which has its own tests.
+    process.env.STORAGE_PROVIDER = 's3';
+    process.env.AWS_S3_BUCKET = 'c2c-vault-test';
     // Production requires at least ONE approval entry, not merely a parseable
     // value — an empty map is exactly the "nobody decided" state the gate
     // exists to refuse. One minimal, well-formed entry is enough here.

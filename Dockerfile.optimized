@@ -167,8 +167,12 @@ ENV NODE_EXTRA_CA_CERTS=/app/assets/rds-ca/global-bundle.pem
 # user does not have. The same vendored bundle, for the same reason.
 ENV PGSSLROOTCERT=/app/assets/rds-ca/global-bundle.pem
 
-# Create non-root user for security
-RUN groupadd -r appuser && useradd -r -g appuser -d /app appuser && chown -R appuser:appuser /app
+# Create non-root user for security. storage/ is created here so that it is
+# owned by that user: a volume mounted there (docker-compose's `vaultdata`)
+# takes the directory's ownership on first use, and the local vault provider
+# writes to /app/storage/vault. Without it the mountpoint is root's and every
+# local-disk vault write is refused.
+RUN mkdir -p /app/storage/vault && groupadd -r appuser && useradd -r -g appuser -d /app appuser && chown -R appuser:appuser /app
 
 # Expose port
 EXPOSE 5000

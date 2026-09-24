@@ -148,6 +148,16 @@ services:
       LOG_LEVEL: info
       # Do not seed the publicly-known demo admin in a shared beta env.
       SEED_DEMO_USER: ${SEED_DEMO_USER:-false}
+      # ── Vault document storage (server/services/storage/storage-posture.ts) ──
+      # Production refuses to boot without a named durable store. This stack
+      # keeps vault bytes on the `vaultdata` volume mounted at /app/storage
+      # below, which outlives the container, so local disk is accepted. For S3,
+      # set STORAGE_PROVIDER=s3 and AWS_S3_BUCKET (with AWS credentials).
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
+      STORAGE_ACCEPT_LOCAL_DISK: 'true'
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-}
+    volumes:
+      - vaultdata:/app/storage
     logging:
       driver: 'json-file'
       options:
@@ -165,6 +175,8 @@ services:
       - c2c-beta
 
 volumes:
+  vaultdata:
+    driver: local
   pgdata:
     driver: local
   redisdata:
