@@ -81,16 +81,34 @@ two encodings of the same thing. The proof now points at `terraform/stack`.
 
 Each item names the files it touches and says whether it is verified or inferred.
 
-1. **First provision of the empty RDS database has no path** (verified). RDS
-   accepts only the ECS tasks' security group. The image has neither `psql` nor
-   `drizzle-kit`. `migrate` exits 3 on an empty database, and its remedy text
-   ("run install-fresh from a checkout") cannot reach a private instance.
-   Proposed: a `provision` target in `Dockerfile.optimized` (FROM builder, plus
-   `postgresql-client`, plus the RDS bundle with both CA variables re-declared).
-   Run it from a `workflow_dispatch` job as a one-off task on the API service's
-   network configuration, with `DATABASE_OWNER_URL` = the `database_url` secret
-   and `APP_SERVICE_DB_PASSWORD` = the `app_service_db_password` secret (both
-   already in the execution role's grant), and a hard deadline. **Next in this lane.**
+1. **First provision of the empty RDS database** — the path is BUILT, not yet run.
+   - `.github/workflows/provision-database.yml` is `workflow_dispatch` only, with a
+     typed confirmation and the production environment. It builds
+     `Dockerfile.optimized`'s new `provision` target (the builder stage plus
+     `psql` and both CA variables), pins the image by digest, and checks the API
+     task definition carries `DATABASE_URL`, `APP_DATABASE_URL` and
+     `APP_SERVICE_DB_PASSWORD`. It then runs `npm run db:provision` as a one-off
+     task on the API service's network (the only one RDS admits), with a
+     60-minute deadline.
+   - `scripts/ops/ecs-one-off-task.sh` is the one runner for this and for the
+     per-deploy migration. `deploy-aws.yml`'s migrate job moved onto it: a
+     30-minute deadline that stops the task, in place of `aws ecs wait`'s silent
+     10-minute cap. One `run-task`, never a second "to see why". Its exit-3
+     message now names this workflow. The deploy build names `--target production`.
+   - **Proven here:**
+     - `db:provision` completes on an empty database as an RDS-shaped
+       non-superuser master, over SCRAM, with no password in the DDL log
+       (`rds-shaped-provision-e2e.txt`, which also records and fixes the `059_gcc`
+       extension-ownership failure it found).
+     - The runner, against a fake `aws`: 7 cases, each mutation caught
+       (`ecs-one-off-task.txt`).
+     - The workflow's source step, run verbatim against the rendered task
+       definition (`provision-source-check.txt`).
+   - **Not proven:**
+     - Neither image was built. This session's egress policy refuses
+       `deb.debian.org` (403), so the `apt-get` in both stages cannot run here.
+     - The workflow has never run against AWS. It needs the account, and the
+       deploy role from item 2.
 2. **Deploy OIDC role and the CloudFront distribution id** are not in Terraform
    (inferred). `AWS_DEPLOY_ROLE_ARN` is a repository secret that nothing creates.
 3. **Trivy config gate** in `deploy-aws.yml` blocks on HIGH/CRITICAL IaC findings
