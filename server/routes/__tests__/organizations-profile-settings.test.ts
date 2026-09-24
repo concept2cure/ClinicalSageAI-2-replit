@@ -266,8 +266,7 @@ describe('PATCH /api/organizations/:id/settings', () => {
  * (an audit outage must not undo an org admin's edit), and the response now says
  * which happened: `auditTrail` is `{ persisted: true, chained }` or
  * `{ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message }` — the shape
- * the client's `findUnpersistedAuditRow` turns into the "Saved, but the audit
- * trail did not record it" notice.
+ * the client's `findUnpersistedAuditRow` turns into the "The request completed, but the audit trail did not record it" notice.
  */
 describe('organization writes carry the audit-row outcome', () => {
   const LOST = { persisted: false, chained: false, tamperProof: false, error: 'relation "audit_logs" does not exist' };

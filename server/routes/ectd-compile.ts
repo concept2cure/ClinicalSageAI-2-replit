@@ -359,8 +359,7 @@ interface CompilationResult {
   /**
    * Whether the assembly's §11.10(e) rows were written (ECTD_PACKAGED_FROM_CORE
    * and ECTD_ASSEMBLED, or ECTD_ASSEMBLE_BLOCKED for a refusal). Absent only
-   * when no assembly was attempted. The client transport shows "Saved, but the
-   * audit trail did not record it" when a row was lost (WO-16C).
+   * when no assembly was attempted. The client transport shows "The request completed, but the audit trail did not record it" when a row was lost (WO-16C).
    */
   auditTrail?: AuditRowOutcome;
   id: string;

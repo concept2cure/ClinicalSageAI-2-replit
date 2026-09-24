@@ -312,7 +312,7 @@ router.patch('/:id/profile', validateOrgOwnership, requireOrgAdmin, async (req, 
        like one whose row was written. The change stands either way — an audit
        outage must not undo an org admin's edit — and the response now says
        which happened. The client's transport reads `auditTrail` and shows
-       "Saved, but the audit trail did not record it". */
+       "The request completed, but the audit trail did not record it". */
     const auditTrail = await recordAuditRow({
       tenantId: orgId,
       userId: req.userId ?? (req as any).user?.id,

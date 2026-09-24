@@ -35,10 +35,13 @@ Two gaps remained, one per layer:
   `apiRequest`, so they are covered too. It raises
   `c2c:audit-row-not-persisted`.
 - `client/src/concept2cure/v2/GlobalMutationErrors.tsx` (mounted once in
-  `main.tsx`) renders that event as **"Saved, but the audit trail did not
-  record it"**, with the request's `X-Request-Id`. The notice says the change
-  WAS saved, because it was: telling the user it failed would be its own false
-  record. Retries are de-duplicated and the notice can be dismissed.
+  `main.tsx`) renders that event as **"The request completed, but the audit
+  trail did not record it"**, with the request's `X-Request-Id`. It never says
+  "not saved", which would deny a change that stands. It never says "saved"
+  either: a 2xx can answer a refusal, and a refused eCTD compile answers 200.
+  The first version of the copy said "saved"; the self-review of the day's
+  diff caught it (see *Review* below). Retries are de-duplicated and the
+  notice can be dismissed.
 - Four launch-path writes call `fetch` directly and now call
   `probeAuditRowOutcome` explicitly: Onboarding's org-name and industry-profile
   writes, Setup's industry profile (`useIndustryProfile`), and the Template
@@ -151,6 +154,20 @@ Launch-path sites remaining: **12 of 25**, 4 of them launch-app.
   fields. Converting the services alone would carry the outcome to their HTTP
   routes, which have no launch client, and drop it at the tool. They go with
   the `AnaToolExecutor` change.
+
+## Review
+
+A self-review of the day's diff (the workflow tool was unavailable for an
+independent one) found one defect in this work, now fixed. The notice said
+"Saved, but…" for any 2xx. `routes/ectd-compile.ts` answers a refused
+assembly with 200 and forwards the refusal's audit outcome, so a lost
+refusal row would have told the user their change was saved when nothing
+was. The copy now says the request completed. The render test asserts the
+body sentence (not only the title, since `ErrorState` filters its message)
+and asserts the word "saved" is absent. Checked and found sound:
+`redactInternals` passes the sentence unchanged; the probe never consumes the
+caller's body (asserted); a GET, a persisted row and an unrelated
+`persisted: false` raise nothing (asserted).
 
 ## Not done here, and why
 
