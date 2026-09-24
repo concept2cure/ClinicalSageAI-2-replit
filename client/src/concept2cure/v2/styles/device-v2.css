@@ -77,7 +77,7 @@
   .dv-mini-det{display:flex;flex-direction:column;gap:2px;padding:9px 11px;border-radius:var(--radius-md);background:var(--tm);}
   .dv-mini-detv{font-size:14px;font-weight:600;color:var(--t);}
   .dv-mini-pred{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--text-200);}
-  .dv-mini-score{font-size:10px;font-weight:600;color:#fff;background:var(--success);border-radius:var(--radius-sm);padding:1px 6px;}
+  .dv-mini-score{font-size:10px;font-weight:600;color:var(--on-success);background:var(--success);border-radius:var(--radius-sm);padding:1px 6px;}
   .dv-mini-score[data-tier="mid"]{background:var(--warning);}.dv-mini-score[data-tier="lo"]{background:var(--idle);}
   .dv-mini-matrix{display:flex;flex-direction:column;gap:3px;}
   .dv-mini-mrow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);}
@@ -224,7 +224,7 @@
   /* eValidator */
   .dv-validator{display:flex;flex-direction:column;gap:5px;margin:4px 0;}
   .dv-val-row{display:grid;grid-template-columns:auto 1fr;gap:9px;align-items:start;padding:6px 0;border-bottom:1px solid var(--border);}
-  .dv-val-mk{width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;background:var(--success);}
+  .dv-val-mk{width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--on-success);background:var(--success);}
   .dv-val-mk[data-r="fail"]{background:var(--error);}
   .dv-val-check{font-size:11.5px;font-weight:600;color:var(--text-100);}
   .dv-val-detail{font-size:10.5px;color:var(--text-400);margin-top:1px;line-height:1.4;}

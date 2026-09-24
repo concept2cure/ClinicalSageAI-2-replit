@@ -235,7 +235,7 @@
   .pdev-flow{display:flex;align-items:stretch;gap:8px;margin-bottom:26px;flex-wrap:wrap;}
   .pdev-step{flex:1;min-width:160px;display:flex;gap:11px;align-items:flex-start;border:1px solid var(--border);border-radius:var(--radius-xl);padding:14px;background:var(--bg-050);}
   .pdev-step.active{border-color:var(--accent-100);background:var(--accent-000);}
-  .pdev-step.complete .pdev-step-n{background:var(--success);color:#fff;}
+  .pdev-step.complete .pdev-step-n{background:var(--success);color:var(--on-success);}
   .pdev-step.active .pdev-step-n{background:var(--accent-strong);color:var(--accent-on-strong);}
   .pdev-step-n{width:24px;height:24px;border-radius:50%;background:var(--bg-200);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);flex-shrink:0;}
   .pdev-step-l{font-size:13px;font-weight:600;}

@@ -223,7 +223,7 @@
 .c2c-v2 .sig-chain{display:flex;flex-direction:column;gap:8px;}
 .c2c-v2 .sig-row{display:flex;align-items:center;gap:12px;border:1px solid var(--border);border-radius:var(--radius-lg);padding:11px 14px;background:var(--bg-000);}
 .c2c-v2 .sig-step{width:22px;height:22px;border-radius:50%;background:var(--bg-200);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);}
-.c2c-v2 .sig-row[data-s="signed"] .sig-step{background:var(--success);color:#fff;}
+.c2c-v2 .sig-row[data-s="signed"] .sig-step{background:var(--success);color:var(--on-success);}
 .c2c-v2 .sig-who{flex:1;display:flex;flex-direction:column;}
 .c2c-v2 .sig-who b{font-size:13px;font-weight:600;}
 .c2c-v2 .sig-who span{font-size:11px;color:var(--text-400);}

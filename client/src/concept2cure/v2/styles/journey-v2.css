@@ -73,7 +73,7 @@
 .c2c-v2 .pj-stage-dot svg{width:13px;height:13px;}
 .c2c-v2 .pj-stage-line{flex:1;height:2px;background:var(--border-strong);}
 .c2c-v2 .pj-stage:last-child .pj-stage-line{display:none;}
-.c2c-v2 .pj-stage[data-st="done"] .pj-stage-dot{background:var(--success);border-color:var(--success);color:#fff;}
+.c2c-v2 .pj-stage[data-st="done"] .pj-stage-dot{background:var(--success);border-color:var(--success);color:var(--on-success);}
 .c2c-v2 .pj-stage[data-st="done"] .pj-stage-line{background:var(--success);}
 .c2c-v2 .pj-stage[data-st="active"] .pj-stage-dot{background:var(--accent-strong);border-color:var(--accent-strong);color:var(--accent-on-strong);box-shadow:0 0 0 4px var(--accent-000);}
 .c2c-v2 .pj-stage[data-sel] .pj-stage-dot{transform:scale(1.06);}
@@ -424,7 +424,7 @@
 /* A failure toast must not wear the success tick's green. `.de-toast .ico` is
    unconditionally var(--success), so "Couldn't save — nothing was persisted"
    read as a success at a glance. */
-.c2c-v2 .de-toast[data-tone="error"]{background:var(--error);color:#fff;}
+.c2c-v2 .de-toast[data-tone="error"]{background:var(--error);color:var(--on-error);}
 .c2c-v2 .de-toast[data-tone="error"] .ico{color:#fff;}
 /* A disabled row action must look disabled. `.nda-open` carried no disabled
    state, so "Review" blocked by the two-person rule and "Build" blocked by

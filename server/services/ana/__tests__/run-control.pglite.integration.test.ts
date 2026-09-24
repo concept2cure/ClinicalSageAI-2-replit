@@ -450,10 +450,36 @@ describe('holding a run at a governed action', () => {
  * reader chasing the e-signature rules should not have to read the gate's own.
  */
 describe('deciding a held run', () => {
+  it('refuses a decision from another tenant, and leaves the run held', async () => {
+    // The route that serves this looks the run up org-scoped first and 404s, so
+    // this was never reachable through the API — but the write itself carried no
+    // tenant predicate, and /api/ana-ri is mounted without requireTenantContext
+    // so it runs on the SHARED pool. With RLS_ENFORCE off, which is today, the
+    // statement was the only thing that could enforce the boundary and it did
+    // not. A decision recorded against another tenant's run is an e-signature
+    // attached to an action its signer never saw.
+    const { runId } = await newRun();
+    await requestApproval(pool(), runId, pending());
+
+    const ok = await recordApprovalDecision(pool(), runId, OTHER_ORG, {
+      toolUseId: 'tu_1',
+      decided: 'approved',
+      decidedAt: '2026-09-19T00:01:00.000Z',
+      byUserId: USER,
+      reasonForChange: 'Should not be able to decide this',
+      result: { success: true },
+    });
+
+    expect(ok, 'another tenant must not be able to decide this run').toBe(false);
+    const row = await readRun(pool(), runId, ORG);
+    expect(row?.status, 'the run stays held').toBe('awaiting_approval');
+    expect(await readApprovalDecision(pool(), runId, 'tu_1')).toBeNull();
+  });
+
   it('releases the run when the person decides, and keeps what they decided', async () => {
     const { runId } = await newRun();
     await requestApproval(pool(), runId, pending());
-    const ok = await recordApprovalDecision(pool(), runId, {
+    const ok = await recordApprovalDecision(pool(), runId, ORG, {
       toolUseId: 'tu_1',
       decided: 'approved',
       decidedAt: '2026-09-19T00:01:00.000Z',
@@ -474,7 +500,7 @@ describe('deciding a held run', () => {
     // signature collected for one action authorises another.
     const { runId } = await newRun();
     await requestApproval(pool(), runId, pending('tu_1'));
-    const ok = await recordApprovalDecision(pool(), runId, {
+    const ok = await recordApprovalDecision(pool(), runId, ORG, {
       toolUseId: 'tu_2',
       decided: 'approved',
       decidedAt: '2026-09-19T00:01:00.000Z',
@@ -487,7 +513,7 @@ describe('deciding a held run', () => {
 
   it('a decision cannot be recorded against a run that is not waiting', async () => {
     const { runId } = await newRun();
-    const ok = await recordApprovalDecision(pool(), runId, {
+    const ok = await recordApprovalDecision(pool(), runId, ORG, {
       toolUseId: 'tu_1',
       decided: 'approved',
       decidedAt: '2026-09-19T00:01:00.000Z',
@@ -502,7 +528,7 @@ describe('deciding a held run', () => {
     // refused step.
     const { runId } = await newRun();
     await requestApproval(pool(), runId, pending());
-    await recordApprovalDecision(pool(), runId, {
+    await recordApprovalDecision(pool(), runId, ORG, {
       toolUseId: 'tu_1',
       decided: 'denied',
       decidedAt: '2026-09-19T00:01:00.000Z',
@@ -526,7 +552,7 @@ describe('deciding a held run', () => {
     // the last answer as this one.
     const { runId } = await newRun();
     await requestApproval(pool(), runId, pending('tu_1'));
-    await recordApprovalDecision(pool(), runId, {
+    await recordApprovalDecision(pool(), runId, ORG, {
       toolUseId: 'tu_1', decided: 'approved', decidedAt: 'x', byUserId: USER,
     });
     await requestApproval(pool(), runId, pending('tu_2'));

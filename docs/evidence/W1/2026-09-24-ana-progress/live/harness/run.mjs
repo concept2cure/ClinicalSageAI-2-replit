@@ -4,6 +4,8 @@
 // plays a fixed plan → search → draft → answer turn; everything else is real.
 //
 //   node run.mjs <label> <width> <height> <light|dark> [--live] [--rail]
+// getComputedStyle runs inside page.evaluate — the browser's global, not Node's.
+/* global getComputedStyle */
 import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
 import fs from 'node:fs';
 
@@ -189,5 +191,5 @@ if (flags.includes('--editor')) {
 
 check('no page errors', errors.length === 0, errors.join(' || '));
 fs.writeFileSync(`${OUT}/${label}-checks.json`, JSON.stringify(checks, null, 1));
-for (const c of checks) console.log(`${c.ok ? 'PASS' : 'FAIL'}  ${c.name}${c.ok ? '' : `  — ${c.detail}`}`);
+for (const c of checks) console.info(`${c.ok ? 'PASS' : 'FAIL'}  ${c.name}${c.ok ? '' : `  — ${c.detail}`}`);
 await browser.close();
