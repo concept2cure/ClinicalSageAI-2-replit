@@ -156,7 +156,8 @@ router.post('/extract', async (req: Request, res: Response) => {
       return res.status(503).json({
         error: 'EXTRACTION_UNAVAILABLE',
         extractionFailed: true,
-        detail: err.message,
+        // No `detail`: the error wraps whatever the model client threw, and that
+        // text is logged above, not sent (ci:server-error-leaks).
         note: 'No commitments were extracted because the extraction could not be performed. This is NOT a finding that the document contains none.',
       });
     }

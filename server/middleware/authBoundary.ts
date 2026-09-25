@@ -125,9 +125,24 @@ export function isPublicApiPath(fullPath: string): boolean {
  */
 export function resolveAuthBoundaryMode(env: NodeJS.ProcessEnv = process.env): AuthBoundaryMode {
   const explicit = (env.AUTH_BOUNDARY_MODE || '').trim().toLowerCase();
+  const production = env.NODE_ENV === 'production';
+  if (explicit === 'warn' && production) {
+    // A single variable must not turn default-deny off in production. Boot
+    // refuses the value outright (server/startup/env.ts); this is the defence
+    // in depth for a process that mounts the boundary without that check
+    // (security audit 2026-09-24, IAM-16). Logged once per process.
+    if (!warnedProductionWarnMode) {
+      warnedProductionWarnMode = true;
+      console.error(
+        '[authBoundary] AUTH_BOUNDARY_MODE=warn ignored in production: the /api boundary enforces.',
+      );
+    }
+    return 'enforce';
+  }
   if (explicit === 'enforce' || explicit === 'warn') return explicit;
-  return env.NODE_ENV === 'production' ? 'enforce' : 'warn';
+  return production ? 'enforce' : 'warn';
 }
+let warnedProductionWarnMode = false;
 
 interface AuthBoundaryOptions {
   /** Override the authenticator (tests). Defaults to the canonical authenticateToken. */

@@ -1,0 +1,7 @@
+# Full real-database suite (vitest.db.config.ts), PostgreSQL 16 + pgvector
+# counts of the writer's one-time fallback warning: '[audit/chain] audit_logs.chain_seq is absent in this test fixture'
+before the fix (dbsuite): Tests  682 passed (682); warnings 1
+before the fix (dbsuite2): Tests  3 failed | 680 passed (683); warnings 1
+before the fix (dbsuite3): Tests  683 passed (683); warnings 1
+before the fix (dbsuite-cmp): Tests  683 passed (683); warnings 1
+after the fix (dbsuite4): Tests  684 passed (684); warnings 0

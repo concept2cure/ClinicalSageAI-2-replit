@@ -21,6 +21,8 @@
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
+import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
+import { GOVERNED_ACTION_LEDGER_PGLITE_DDL } from './governed-action-ledger.fixture';
 
 let pg: PGlite;
 
@@ -50,9 +52,13 @@ const pool = {
     };
   },
 };
+// connect(): the board write and its task lineage row share one transaction
+// (command-executor boardWriteWithLineage). PGlite is one connection, so the
+// client is that connection.
+const client = { query: (sql: string, p?: unknown[]) => pool.query(sql, p), release: () => undefined };
 vi.mock('../../../db', () => ({
-  pool: { query: (sql: string, p?: unknown[]) => pool.query(sql, p) },
-  getPool: () => ({ query: (sql: string, p?: unknown[]) => pool.query(sql, p) }),
+  pool: { query: (sql: string, p?: unknown[]) => pool.query(sql, p), connect: async () => client },
+  getPool: () => ({ query: (sql: string, p?: unknown[]) => pool.query(sql, p), connect: async () => client }),
   db: {},
 }));
 
@@ -156,9 +162,17 @@ async function asConfirmedHuman(command: string, params: Record<string, unknown>
 beforeAll(async () => {
   pg = new PGlite();
   await pg.exec(DDL);
+  // A completion or transition lands only with its task.transition ledger row.
+  await pg.exec(AUDIT_LOGS_PGLITE_DDL);
+  await pg.exec(GOVERNED_ACTION_LEDGER_PGLITE_DDL);
   await pg.exec(`INSERT INTO organizations (id, name, settings) VALUES (${ORG}, 'Concept2Cure', '{}'::jsonb)`);
   await pg.exec(`INSERT INTO projects (id, organization_id, name) VALUES (${PROJECT}, ${ORG}, 'BX-099')`);
-});
+  // Load the executor here, not inside the first test. Its module graph
+  // (command-executor.ts is ~5,300 lines) takes seconds to transform on a cold
+  // run, and in the first `it` that counted against the 10s test timeout: 6.2s
+  // alone, and over 10s — a failure — beside a full lint and typecheck.
+  await import('../command-executor');
+}, 60_000);
 afterAll(async () => { await pg?.close(); });
 
 beforeEach(async () => {

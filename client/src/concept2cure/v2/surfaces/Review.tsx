@@ -846,7 +846,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
                 with this reason. The author is not notified automatically.
               </div>
               {requestErr && (
-                <div className="rv-reject-note" role="alert" style={{ color: 'var(--danger, #b42318)' }}>
+                <div className="rv-reject-note" role="alert" style={{ color: 'var(--error)' }}>
                   Not recorded — {requestErr}
                 </div>
               )}

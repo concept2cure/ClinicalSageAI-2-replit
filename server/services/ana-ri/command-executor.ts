@@ -15,6 +15,8 @@
  */
 
 import { getPool } from '../../db';
+import type { PoolClient } from 'pg';
+import type { AuditTaskActionParams } from '../tasking/task-audit.js';
 import { logGeneration, validateArtifactQuality } from './enforcement.js';
 import { executeGovernedAnaOperation } from '../governed-ana-execution.js';
 import { recordArtifactProvenanceBestEffort } from '../provenance/artifact-provenance';
@@ -963,13 +965,55 @@ export async function listArtifacts(
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Write to the canonical regulated task table and record its lineage row in ONE
+ * transaction: both commit, or neither does.
+ *
+ * `write` performs the board write on `client` and returns the lineage row to
+ * record, or null when the write changed nothing that needs one. Until
+ * 2026-09-24 AnA wrote the board row on the pool and the lineage row afterwards
+ * in its own best-effort transaction, so a lineage failure left a governed
+ * change on the board with no §11.10(e) record of it. The HTTP task routes
+ * already commit the row with the write (`auditTaskActionInTx`).
+ *
+ * Best-effort as a whole, as the mirror always was: a failure is logged and
+ * reported to the caller (false), and the project_tasks write that preceded it
+ * stands. What it can no longer do is land half.
+ */
+async function boardWriteWithLineage(
+  label: string,
+  write: (client: PoolClient) => Promise<AuditTaskActionParams | null>,
+): Promise<boolean> {
+  let client: PoolClient | undefined;
+  try {
+    client = (await pool.connect()) as PoolClient;
+    await client.query('BEGIN');
+    const lineage = await write(client);
+    if (lineage) {
+      const { auditTaskAction, TaskAuditNotRecordedError } = await import('../tasking/task-audit.js');
+      const outcome = await auditTaskAction(lineage, client);
+      if (!outcome.recorded) throw new TaskAuditNotRecordedError(outcome.reason);
+    }
+    await client.query('COMMIT');
+    return true;
+  } catch (err) {
+    await client?.query('ROLLBACK').catch(() => undefined);
+    console.warn(`[ana-ri] ${label} failed (non-fatal):`, err instanceof Error ? err.message : err);
+    return false;
+  } finally {
+    client?.release();
+  }
+}
+
+/**
  * Mirror an AnA-created project task into the canonical org board
  * (unified_tasks) so a task created in chat is visible on the Task Board —
  * previously AnA wrote project_tasks alone and the board read unified_tasks,
  * so "create a task" produced work nothing surfaced (assessment finding 3).
- * Best-effort: a mirror failure never fails the create. The unified-work view
- * excludes sourceEntityType='project_task' rows so the task is never counted
- * twice; the mirror carries a deterministic task_id so re-runs are idempotent.
+ * Best-effort: a mirror failure never fails the create, and the caller is told
+ * (false) so it does not report a board entry that is not there. The
+ * unified-work view excludes sourceEntityType='project_task' rows so the task
+ * is never counted twice; the mirror carries a deterministic task_id so re-runs
+ * are idempotent.
  */
 async function mirrorProjectTaskToUnified(
   ctx: CommandContext,
@@ -983,10 +1027,11 @@ async function mirrorProjectTaskToUnified(
     dueDate?: string;
     moduleType?: string;
   }
-): Promise<void> {
+): Promise<boolean> {
   const mirroredTaskId = `TASK-PT-${ctx.organizationId}-${projectTaskId}`;
-  try {
-    const result = await pool.query(
+  let inserted = false;
+  const onBoard = await boardWriteWithLineage('unified_tasks mirror', async (client) => {
+    const result = await client.query(
       `INSERT INTO unified_tasks
          (task_id, organization_id, project_id, module_type, title, description,
           assignee_id, priority, due_date, status, source_entity_type,
@@ -1008,48 +1053,45 @@ async function mirrorProjectTaskToUnified(
         ctx.userId,
       ]
     );
+    inserted = Boolean(result.rowCount);
     // A row landing in the canonical regulated task table is a governed
     // create, whoever wrote it: record the same `task.create` lineage the
-    // tasking routes record, and tell the assignee, so an AnA-created task is
-    // not a task with no audit trail and no notification. Skipped on a
-    // conflict (idempotent re-run wrote nothing).
-    if (result.rowCount) {
-      const [{ auditTaskAction }, { notifyTaskEvent }] = await Promise.all([
-        import('../tasking/task-audit.js'),
-        import('../tasking/task-side-effects.js'),
-      ]);
-      await auditTaskAction({
-        orgId: ctx.organizationId,
-        userId: ctx.userId,
-        command: 'task.create',
+    // tasking routes record. Nothing on a conflict (an idempotent re-run wrote
+    // nothing).
+    if (!inserted) return null;
+    return {
+      orgId: ctx.organizationId,
+      userId: ctx.userId,
+      command: 'task.create',
+      taskId: mirroredTaskId,
+      payload: {
+        moduleType: params.moduleType || 'general',
+        title: params.title,
+        priority: params.priority || 'medium',
+        status: 'pending',
+        sourceEntityType: 'project_task',
+        sourceEntityId: String(projectTaskId),
+      },
+      reason: 'Task created by AnA and mirrored to the canonical task board',
+    };
+  });
+  // Tell the assignee only about a board row that committed.
+  if (onBoard && inserted && params.assigneeId && params.assigneeId !== ctx.userId) {
+    try {
+      const { notifyTaskEvent } = await import('../tasking/task-side-effects.js');
+      notifyTaskEvent({
+        organizationId: ctx.organizationId,
+        recipientUserId: params.assigneeId,
+        category: 'task_assigned',
+        title: `Task assigned: ${params.title}`,
+        body: params.description || null,
         taskId: mirroredTaskId,
-        payload: {
-          moduleType: params.moduleType || 'general',
-          title: params.title,
-          priority: params.priority || 'medium',
-          status: 'pending',
-          sourceEntityType: 'project_task',
-          sourceEntityId: String(projectTaskId),
-        },
-        reason: 'Task created by AnA and mirrored to the canonical task board',
       });
-      if (params.assigneeId && params.assigneeId !== ctx.userId) {
-        notifyTaskEvent({
-          organizationId: ctx.organizationId,
-          recipientUserId: params.assigneeId,
-          category: 'task_assigned',
-          title: `Task assigned: ${params.title}`,
-          body: params.description || null,
-          taskId: mirroredTaskId,
-        });
-      }
+    } catch (err) {
+      console.warn('[ana-ri] task assignment notice failed (non-fatal):', err instanceof Error ? err.message : err);
     }
-  } catch (err) {
-    console.warn(
-      '[ana-ri] unified_tasks mirror failed (non-fatal):',
-      err instanceof Error ? err.message : err
-    );
   }
+  return onBoard;
 }
 
 /** project_tasks status → unified_tasks status, for the mirror. */
@@ -1098,15 +1140,18 @@ export async function createTask(
       ]
     );
     const task = result.rows[0];
-    await mirrorProjectTaskToUnified(ctx, task.id, params);
+    const onTaskBoard = await mirrorProjectTaskToUnified(ctx, task.id, params);
     const priorityLabel =
       params.priority && params.priority !== 'medium' ? `, priority: ${params.priority}` : '';
     const dueLabel = params.dueDate ? `, due: ${params.dueDate}` : '';
+    const boardNote = onTaskBoard
+      ? ''
+      : ' It is not on the task board: the board entry and its audit record could not be written.';
     return {
       success: true,
       action: 'create_task',
-      data: { taskId: task.id, name: task.name, priority: task.priority, status: task.status },
-      message: `Created task "${params.title}" — ID: ${task.id}${priorityLabel}${dueLabel}.`,
+      data: { taskId: task.id, name: task.name, priority: task.priority, status: task.status, onTaskBoard },
+      message: `Created task "${params.title}" — ID: ${task.id}${priorityLabel}${dueLabel}.${boardNote}`,
     };
   } catch (err: unknown) {
     return {
@@ -1265,26 +1310,31 @@ export async function updateTask(
     // table is a governed create, whoever wrote it"), and this path was the
     // half that had not been brought up to it: no ledger entry, no state
     // machine, no completion stamp, no unblock cascade, and no tombstone guard.
-    try {
-      const u = params.updates as Record<string, unknown>;
-      const newStatus = requestedStatus;
+    // The board write and its `task.transition` row commit together
+    // (boardWriteWithLineage), so the board never moves unrecorded.
+    const u = params.updates as Record<string, unknown>;
+    const newStatus = requestedStatus;
+    /** null: no board change was attempted; false: attempted and not written. */
+    let boardUpdated: boolean | null = null;
+    let transitioned = false;
 
-      // Only mirror onto a row we actually read above. `deleted_at IS NULL` is
-      // repeated on the write so an archived Part 11 tombstone is never
-      // silently re-written.
-      if (mirrorFrom !== null) {
-        const mirrorSets: string[] = [];
-        const mirrorVals: unknown[] = [String(params.taskId), ctx.organizationId];
-        let mi = 3;
-        if (newStatus) { mirrorSets.push(`status = $${mi++}`); mirrorVals.push(newStatus); }
-        if (typeof u.name === 'string' && u.name) { mirrorSets.push(`title = $${mi++}`); mirrorVals.push(u.name); }
-        if (typeof u.priority === 'string' && u.priority) { mirrorSets.push(`priority = $${mi++}`); mirrorVals.push(u.priority); }
-        if (newStatus === 'completed') {
-          mirrorSets.push('completed_at = NOW()', 'progress = 100', 'completion_percentage = 100');
-        }
-        if (mirrorSets.length) {
-          mirrorSets.push('updated_at = NOW()');
-          const mirrored = await pool.query(
+    // Only mirror onto a row we actually read above. `deleted_at IS NULL` is
+    // repeated on the write so an archived Part 11 tombstone is never
+    // silently re-written.
+    if (mirrorFrom !== null) {
+      const mirrorSets: string[] = [];
+      const mirrorVals: unknown[] = [String(params.taskId), ctx.organizationId];
+      let mi = 3;
+      if (newStatus) { mirrorSets.push(`status = $${mi++}`); mirrorVals.push(newStatus); }
+      if (typeof u.name === 'string' && u.name) { mirrorSets.push(`title = $${mi++}`); mirrorVals.push(u.name); }
+      if (typeof u.priority === 'string' && u.priority) { mirrorSets.push(`priority = $${mi++}`); mirrorVals.push(u.priority); }
+      if (newStatus === 'completed') {
+        mirrorSets.push('completed_at = NOW()', 'progress = 100', 'completion_percentage = 100');
+      }
+      if (mirrorSets.length) {
+        mirrorSets.push('updated_at = NOW()');
+        boardUpdated = await boardWriteWithLineage('unified_tasks mirror update', async (client) => {
+          const mirrored = await client.query(
             `UPDATE unified_tasks SET ${mirrorSets.join(', ')}
              WHERE source_entity_type = 'project_task'
                AND source_entity_id = $1
@@ -1292,40 +1342,44 @@ export async function updateTask(
                AND deleted_at IS NULL`,
             mirrorVals
           );
-
           // Governed lineage only for a status change that actually landed.
-          if (mirrored.rowCount && newStatus && newStatus !== mirrorFrom) {
-            const [{ auditTaskAction }, { cascadeUnblockOnCompletion }] = await Promise.all([
-              import('../tasking/task-audit.js'),
-              import('../tasking/task-side-effects.js'),
-            ]);
-            await auditTaskAction({
-              orgId: ctx.organizationId,
-              userId: ctx.userId,
-              command: 'task.transition',
-              taskId: mirroredTaskId,
-              payload: { from: mirrorFrom, to: newStatus },
-              reason: 'Task status changed by AnA',
-            });
-            // Completing a task wakes its dependents on every write path.
-            if (newStatus === 'completed') {
-              await cascadeUnblockOnCompletion(ctx.organizationId, mirroredTaskId);
-            }
-          }
-        }
+          transitioned = Boolean(mirrored.rowCount) && Boolean(newStatus) && newStatus !== mirrorFrom;
+          if (!transitioned) return null;
+          return {
+            orgId: ctx.organizationId,
+            userId: ctx.userId,
+            command: 'task.transition',
+            taskId: mirroredTaskId,
+            payload: { from: mirrorFrom, to: newStatus },
+            reason: 'Task status changed by AnA',
+          };
+        });
       }
-    } catch (err) {
-      console.warn(
-        '[ana-ri] unified_tasks mirror update failed (non-fatal):',
-        err instanceof Error ? err.message : err
-      );
     }
 
+    // Completing a task wakes its dependents on every write path — once the
+    // completion has committed, so the cascade reads the state it acts on.
+    if (boardUpdated && transitioned && newStatus === 'completed') {
+      try {
+        const { cascadeUnblockOnCompletion } = await import('../tasking/task-side-effects.js');
+        await cascadeUnblockOnCompletion(ctx.organizationId, mirroredTaskId);
+      } catch (err) {
+        console.warn(
+          '[ana-ri] unblock cascade failed (non-fatal):',
+          err instanceof Error ? err.message : err
+        );
+      }
+    }
+
+    const boardNote =
+      boardUpdated === false
+        ? ' The task board still shows the previous state: the board change and its audit record could not be written.'
+        : '';
     return {
       success: true,
       action: 'update_task',
-      data: { taskId: params.taskId, updated: Object.keys(params.updates) },
-      message: `Task ${params.taskId} updated.`,
+      data: { taskId: params.taskId, updated: Object.keys(params.updates), boardUpdated },
+      message: `Task ${params.taskId} updated.${boardNote}`,
     };
   } catch (err: unknown) {
     return {
