@@ -13,7 +13,7 @@
 
 import { BINDING_BASIS, manifestSignatureHash } from './part11/signature-persistence';
 import { db } from '../db';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { users, electronicSignatures } from '../../shared/schema';
 import { createScopedLogger } from '../utils/logger';
 /* The §11.70 binding evaluator is shared with part11ComplianceService rather
@@ -181,46 +181,58 @@ export async function isAccountLocked(userId: number): Promise<{
 }
 
 /**
- * Record a failed login attempt. Locks account after threshold.
+ * Record a failed login attempt. Locks the account at the threshold.
+ *
+ * One conditional UPDATE: the count and the lock are decided from the row's
+ * value at the moment of the write, under the row lock, so concurrent failures
+ * each count. Until 2026-09-25 this read the count, added one in JavaScript
+ * and wrote the sum back; twenty simultaneous wrong passwords each read 0 and
+ * the account never locked (security audit 2026-09-24, IAM-09). Postgres
+ * evaluates every SET expression against the row as it was before the
+ * statement, so the CASE sees the same pre-increment value the increment does.
+ *
+ * A failure that cannot be recorded is an error to the caller, not "not
+ * locked": sign-in answers 500 and the signing ceremony refuses, the same
+ * posture as isAccountLocked above.
  */
 export async function recordFailedLogin(userId: number): Promise<{
   locked: boolean;
   remainingAttempts: number;
 }> {
+  // Serialized the way the drizzle timestamp column serializes a Date, so the
+  // stored value reads back the same way isAccountLocked expects.
+  const lockUntil = new Date(Date.now() + LOCKOUT_DURATION_MINUTES * 60 * 1000).toISOString();
   try {
-    const result = await db
-      .select({ failedLoginAttempts: users.failedLoginAttempts })
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
-
-    const currentAttempts = (result[0]?.failedLoginAttempts || 0) + 1;
-    const shouldLock = currentAttempts >= LOCKOUT_THRESHOLD;
-
-    const lockoutTime = shouldLock
-      ? new Date(Date.now() + LOCKOUT_DURATION_MINUTES * 60 * 1000)
-      : null;
-
-    await db
+    const [updated] = await db
       .update(users)
       .set({
-        failedLoginAttempts: currentAttempts,
+        failedLoginAttempts: sql`coalesce(${users.failedLoginAttempts}, 0) + 1`,
         lastFailedLogin: new Date(),
-        lockedUntil: lockoutTime,
+        lockedUntil: sql`CASE
+          WHEN coalesce(${users.failedLoginAttempts}, 0) + 1 >= ${LOCKOUT_THRESHOLD}::int
+          THEN ${lockUntil}::timestamp
+          ELSE ${users.lockedUntil}
+        END`,
       })
-      .where(eq(users.id, userId));
+      .where(eq(users.id, userId))
+      .returning({ failedLoginAttempts: users.failedLoginAttempts });
 
-    if (shouldLock) {
+    if (!updated) {
+      throw new Error(`Failed login could not be recorded: no account row for user ${userId}`);
+    }
+    const currentAttempts = updated.failedLoginAttempts ?? 0;
+    const locked = currentAttempts >= LOCKOUT_THRESHOLD;
+    if (locked) {
       logger.warn(`Account locked for user ${userId} after ${currentAttempts} failed attempts`);
     }
-
     return {
-      locked: shouldLock,
+      locked,
       remainingAttempts: Math.max(0, LOCKOUT_THRESHOLD - currentAttempts),
     };
   } catch (error) {
     logger.error('Failed to record failed login', error);
-    return { locked: false, remainingAttempts: LOCKOUT_THRESHOLD };
+    // An unrecorded failure is not an absent one.
+    throw error;
   }
 }
 

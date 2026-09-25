@@ -240,6 +240,12 @@ function admitLiveSession(
   // in the literal: Request.user is declared identically in several
   // `declare global` blocks, which TypeScript requires to stay identical.
   Object.assign(req.user, { provider: typeof decoded.provider === 'string' ? decoded.provider : 'local-jwt' });
+  // The numeric account id, as server/auth.ts sets it (req.userId). Guards that
+  // consult a database grant by user id — requirePlatformAdmin's
+  // platform_role_grants fallback — read this field, and behind this
+  // authenticator it was never set, so that fallback never ran here (found
+  // with IAM-10 / P1-4, when the org role stopped standing in for it).
+  (req as { userId?: number }).userId = parseFiniteInt(subject) ?? undefined;
   // SECURITY (M1): the organizationId claim was minted at login; re-check
   // that the membership row still exists so a revoked user loses access
   // within the cache TTL instead of the full token lifetime.
@@ -259,11 +265,32 @@ function admitLiveSession(
   //
   // The storage quota guard runs LAST, and only on content-bearing writes. A
   // suspended tenant must be told it is suspended, not that it is out of disk.
-  enforceOrgMembership(req, res, () =>
+  enforceOrgMembership(req, res, () => {
+    applyOrganizationRole(req);
     establishRequestTenantScope(req, res, () =>
       enforceTenantLifecycle(req, res, () => enforceStorageQuota(req, res, next))
-    )
-  );
+    );
+  });
+}
+
+/**
+ * The role a guard reads is the membership row's, read on this request, not
+ * the one minted into the token at login (security audit 2026-09-24 IAM-10,
+ * plan P1-4). enforceOrgMembership attaches `organizationRole` from the row it
+ * just confirmed (cached 60 s; role changes invalidate the cache), and this
+ * applies it: `role` and `roles` (expanded through the same functional grants
+ * the token path used) now come from the database, so a demotion takes effect
+ * on the next request and a promotion needs no new sign-in. server/auth.ts,
+ * the other authenticator, has resolved its role from the same row since its
+ * membership query was added; this brings authenticateToken level with it.
+ * A membership without a role value (never the case: the column is NOT NULL
+ * with a default) leaves the token's claims in place.
+ */
+function applyOrganizationRole(req: Request): void {
+  const user = req.user as ({ organizationRole?: unknown } & NonNullable<Request['user']>) | undefined;
+  if (!user || typeof user.organizationRole !== 'string' || !user.organizationRole) return;
+  user.role = user.organizationRole;
+  user.roles = expandRoleClaims(user.organizationRole, undefined);
 }
 
 /**
