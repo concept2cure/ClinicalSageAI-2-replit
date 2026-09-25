@@ -617,7 +617,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
             {ask && <button className="reg-cta" onClick={() => ask('Explain our agency gateway posture: which gateways hold credentials and can transmit, what the unconfigured ones are missing, and which transmittals are still awaiting acknowledgement. Do not treat an unreachable dispatch layer as having no gateways.')}>{I.sparkles} Explain gateway posture</button>}
             <button className="btn" style={{ height: 32 }} onClick={() => setDialog('identifiers')}>{I.penLine} Record identifiers</button>
             <button className="btn" style={{ height: 32 }} onClick={() => setDialog('assemble')}>{I.layers} Assemble bundle</button>
-            <button className="btn primary" style={{ height: 32 }} onClick={() => setDialog('transmit')}>{I.upload || I.layers} Transmit</button>
+            <button className="btn primary" style={{ height: 32 }} onClick={() => setDialog('transmit')}>{I.upload} Transmit</button>
           </span>
         </div>
         <div className="pj-card-b" style={{ padding: 0 }}>

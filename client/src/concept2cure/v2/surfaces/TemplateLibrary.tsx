@@ -528,7 +528,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
           </p>
         </div>
         <button className="sp-primary" onClick={startExtract}>
-          {I.upload || I.plus} Upload a form
+          {I.upload} Upload a form
         </button>
         <input
           ref={fileRef} type="file" aria-label="Upload a template document" accept=".docx,.pdf" style={{ display: 'none' }}
