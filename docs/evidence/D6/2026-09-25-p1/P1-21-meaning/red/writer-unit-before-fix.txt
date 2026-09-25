@@ -1,0 +1,28 @@
+$ git rev-parse --short HEAD  # writer and vocabulary unchanged
+414f203e
+ × server/services/part11/__tests__/governed-sign-meaning.test.ts > the governed sign vocabulary > is the union of the two spellings the product uses, and nothing else 8ms
+ × server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > refuses a sign that declares no meaning before any query runs 5ms
+ × server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > refuses an empty-string meaning the same way 8ms
+   → expected Error: reached the database to match object { code: 'SIGNATURE_MEANING_REQUIRED' }
+ × server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > refuses a meaning outside the vocabulary before any query runs 3ms
+   → expected Error: reached the database to match object { code: 'SIGNATURE_MEANING_UNKNOWN' }
+ × server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > refuses a meaning that is not a string (an object, a number) rather than coercing it 3ms
+   → expected Error: reached the database to match object { code: 'SIGNATURE_MEANING_REQUIRED' }
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > lets the vocabulary meaning approval through to the signer lookup 1ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > lets the vocabulary meaning release through to the signer lookup 1ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > lets the vocabulary meaning APPROVED through to the signer lookup 1ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > lets the vocabulary meaning AUTHORSHIP through to the signer lookup 1ms
+ × server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > the refusal names the vocabulary so the caller can say what is accepted 2ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: other commands are not gated by the sign vocabulary > command approve with no payload meaning reaches the signer lookup unchanged 1ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: other commands are not gated by the sign vocabulary > command revoke-signature with no payload meaning reaches the signer lookup unchanged 1ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: other commands are not gated by the sign vocabulary > command transmit with no payload meaning reaches the signer lookup unchanged 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+TypeError: GOVERNED_SIGN_MEANINGS is not iterable
+AssertionError: The instanceof assertion needs a constructor but undefined was given.
+AssertionError: expected Error: reached the database to match object { code: 'SIGNATURE_MEANING_REQUIRED' }
+AssertionError: expected Error: reached the database to match object { code: 'SIGNATURE_MEANING_UNKNOWN' }
+AssertionError: expected Error: reached the database to match object { code: 'SIGNATURE_MEANING_REQUIRED' }
+AssertionError: The instanceof assertion needs a constructor but undefined was given.
+ Test Files  1 failed (1)
+      Tests  6 failed | 7 passed (13)
+exit=1

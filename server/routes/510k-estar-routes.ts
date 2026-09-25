@@ -1944,6 +1944,16 @@ const advanceSubmissionSchema = z
         message: 'A reason of at least 8 characters is required.',
       });
     }
+    /* §11.50(a)(3): the filer states the meaning; the route used to fill in
+       'approval' when none was sent, a meaning nobody declared, recorded as if
+       they had (security audit 2026-09-24, DP-17). */
+    if (!v.meaning) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['meaning'],
+        message: 'Filing is a signature: state its meaning (approval, review, responsibility or authorship).',
+      });
+    }
   });
 
 /**
@@ -2057,7 +2067,7 @@ router.patch('/submissions/:id', authMiddleware, requireEditorAccess, async (req
       signature = {
         artifactDocumentId: filedArtifactDocumentId!,
         reason: reason!,
-        meaning: meaning ?? 'approval',
+        meaning: meaning!, // present: the schema refuses a filing without one
         authenticationMethod: reauth?.totp ? 'password+totp' : 'password',
         secondFactorVerified: Boolean(reauth?.totp),
         ipAddress: req.ip ?? null,
