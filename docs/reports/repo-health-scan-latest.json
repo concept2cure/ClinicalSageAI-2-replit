@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-25T06:31:38.341Z",
+  "generatedAt": "2026-09-25T22:28:41.457Z",
   "git": {
-    "sha": "6e7c3fbb206864088c91eaf7ee4fe9fd76e0da85",
+    "sha": "ba25be2f3a1f483ca9409141b7a6fcb7ab7c2348",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 44,
-    "largeFilesByLines": 106
+    "largeFilesByLines": 107
   },
   "findings": {
     "duplicateBasenames": [
@@ -2551,6 +2551,10 @@
         "lines": 1602
       },
       {
+        "file": "tests/services/ana-biostats.test.ts",
+        "lines": 1564
+      },
+      {
         "file": "server/services/module3-extensions.ts",
         "lines": 1557
       },
@@ -2592,7 +2596,7 @@
       "owner": "Unassigned (TBD)",
       "duplicateGroups": 155,
       "largeByBytes": 2,
-      "largeByLines": 7
+      "largeByLines": 8
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
