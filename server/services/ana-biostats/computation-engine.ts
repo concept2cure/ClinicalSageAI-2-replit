@@ -127,7 +127,7 @@ export class ComputationEngine {
   private computeContinuous(input: StatisticalInput, assumptions: ComputationAssumption[]): ComputationResult {
     const zAlpha = this.normQuantile(1 - input.alpha / 2);
     const zBeta = this.normQuantile(input.powerTarget);
-    const sigma = input.variance ? Math.sqrt(input.variance) : input.effectSize; // assume SD = effect size if not provided
+    const sigma = this.continuousSigma(input);
     const r = input.allocationRatio;
 
     let nPerGroup: number;
@@ -185,6 +185,19 @@ export class ComputationEngine {
   }
 
   /**
+   * The SD of a continuous endpoint. With no variance the effect size IS a
+   * standardised difference (Cohen's d), so SD = 1 — what the design adapter
+   * already tells the user ("the engine will treat the effect size as
+   * standardised"), and disclosed as a default in buildAssumptions. Before
+   * 2026-09-25 (BS4) this fell back to SD = effect size, which made the
+   * standardised effect exactly 1 for every design: about 16 per group, whatever
+   * effect was asked for.
+   */
+  private continuousSigma(input: StatisticalInput): number {
+    return typeof input.variance === 'number' && input.variance > 0 ? Math.sqrt(input.variance) : 1;
+  }
+
+  /**
    * The power of the test a continuous design was SIZED for, at `nPerGroup` in
    * the reference arm (the other arm holds nPerGroup·r). One function for the
    * design's achieved power and for every re-estimate of it, so the figure the
@@ -205,7 +218,7 @@ export class ComputationEngine {
   private continuousPower(input: StatisticalInput, nPerGroup: number): number {
     if (nPerGroup <= 0) return 0;
     const zAlpha = this.normQuantile(1 - input.alpha / 2);
-    const sigma = input.variance ? Math.sqrt(input.variance) : input.effectSize;
+    const sigma = this.continuousSigma(input);
     const r = input.allocationRatio || 1;
     const se = sigma * Math.sqrt(1 / nPerGroup + 1 / (nPerGroup * r));
     if (input.studyType === 'non_inferiority' && input.nonInferiorityMargin) {
@@ -427,7 +440,7 @@ export class ComputationEngine {
   computeCrossover(input: StatisticalInput): CrossoverResult {
     const periods = input.crossoverPeriods ?? 2;
     const rho = input.withinSubjectCorrelation ?? 0.5;
-    const sigma = input.variance ? Math.sqrt(input.variance) : input.effectSize;
+    const sigma = this.continuousSigma(input);
     const zAlpha = this.normQuantile(1 - input.alpha / 2);
     const zBeta = this.normQuantile(input.powerTarget);
 
@@ -781,7 +794,7 @@ export class ComputationEngine {
       const modifiedInput = { ...input, effectSize: input.effectSize * mult };
       const zAlpha = this.normQuantile(1 - modifiedInput.alpha / 2);
       const zBeta = this.normQuantile(modifiedInput.powerTarget);
-      const sigma = modifiedInput.variance ? Math.sqrt(modifiedInput.variance) : modifiedInput.effectSize;
+      const sigma = this.continuousSigma(modifiedInput);
 
       let n: number;
 
@@ -884,6 +897,15 @@ export class ComputationEngine {
         parameter: 'variance',
         value: input.variance,
         source: 'user_provided',
+        sensitivity: 'high',
+      });
+    } else if (input.endpointType === 'continuous') {
+      // No variance: the effect size is read as a standardised difference
+      // (continuousSigma). Stated, so no document presents it as measured.
+      assumptions.push({
+        parameter: 'variance',
+        value: 1,
+        source: 'default',
         sensitivity: 'high',
       });
     }

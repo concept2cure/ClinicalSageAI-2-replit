@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-25T22:28:41.457Z",
+  "generatedAt": "2026-09-25T22:53:22.059Z",
   "git": {
-    "sha": "ba25be2f3a1f483ca9409141b7a6fcb7ab7c2348",
+    "sha": "6ba8a359fc7cb016f0b06b156f322d99cbf73876",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2006,7 +2006,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 209799
+        "bytes": 210444
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2180,7 +2180,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 5353
+        "lines": 5374
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2552,7 +2552,7 @@
       },
       {
         "file": "tests/services/ana-biostats.test.ts",
-        "lines": 1564
+        "lines": 1594
       },
       {
         "file": "server/services/module3-extensions.ts",
