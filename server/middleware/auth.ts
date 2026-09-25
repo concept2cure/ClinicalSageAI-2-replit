@@ -59,6 +59,14 @@ interface JWTPayload {
   mfaPending?: boolean;
   /** Issued-at, whole seconds; jsonwebtoken stamps it on every token it signs. */
   iat?: number;
+  /**
+   * Which authentication surface issued the token: 'saml' on a federated
+   * sign-in (routes/sso.ts); absent on a password session. Carried onto
+   * req.user as `provider` ('local-jwt' when absent) so a guard behind this
+   * gate can tell the two apart — requirePlatformAdmin's e-mail allow-list
+   * does not apply to a federated identity (audit IAM-03).
+   */
+  provider?: string;
 }
 
 // Re-exported for callers that import the guard from the auth middleware.
@@ -226,6 +234,12 @@ function admitLiveSession(
     organizationId: decoded.organizationId || decoded.orgId,
     permissions: decoded.permissions || [],
   };
+  // The token's provider, as server/auth.ts records it on req.identity: a
+  // guard behind this gate reads it to tell a federated session from a
+  // password one (requirePlatformAdmin, audit IAM-03). Set by assignment, not
+  // in the literal: Request.user is declared identically in several
+  // `declare global` blocks, which TypeScript requires to stay identical.
+  Object.assign(req.user, { provider: typeof decoded.provider === 'string' ? decoded.provider : 'local-jwt' });
   // SECURITY (M1): the organizationId claim was minted at login; re-check
   // that the membership row still exists so a revoked user loses access
   // within the cache TTL instead of the full token lifetime.

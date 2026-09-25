@@ -13,7 +13,13 @@ import jwt from 'jsonwebtoken';
 import { config } from './config/environment';
 import { verifyJwtWithRotation } from './utils/jwtVerify';
 import { isTokenRevoked } from './services/token-revocation';
-import { ACCOUNT_INACTIVE_MESSAGE, isAccountActiveBeforeTenant } from './services/account-standing';
+import {
+  ACCOUNT_INACTIVE_MESSAGE,
+  issuedAtOfClaims,
+  readAccountStandingBeforeTenant,
+  sessionPredatesPasswordChange,
+  type AccountStanding,
+} from './services/account-standing';
 import { requireAccessTokenReason } from './middleware/tokenType';
 import { runWithPreAuthScope } from './db/tenantStore';
 import { establishRequestTenantScope } from './middleware/establishRequestTenantScope';
@@ -118,21 +124,36 @@ declare global {
  * deprovisioned by the identity provider) opens nothing, whenever its token was
  * issued. Read on every request, so it takes effect on the account's next one;
  * nothing read it before, and such an account kept its sessions for their whole
- * life. Answers the request and returns true when it refused: 401 for an
- * account out of use, 503 when the standing cannot be read (never a pass).
+ * life.
+ *
+ * Security audit 2026-09-24, IAM-04: and so is the account's last password
+ * change, read in the same statement as the standing (no extra round trip). A
+ * reset or change stamps users.password_changed_at; a token issued before the
+ * stamp is a session the holder meant to end, and is answered like a revoked
+ * one. Same rule as authenticateToken (middleware/auth.ts) and verifyLiveToken.
+ *
+ * Answers the request and returns true when it refused: 401 ACCOUNT_INACTIVE
+ * for an account out of use, 401 SESSION_ENDED for a session the password
+ * change ended, 503 when the standing cannot be read (never a pass).
  */
-async function refusedAccountOutOfUse(userId: number, res: Response): Promise<boolean> {
-  let active: boolean;
+async function refusedAccountOrSessionOutOfUse(userId: number, claims: unknown, res: Response): Promise<boolean> {
+  let standing: AccountStanding;
   try {
-    active = await isAccountActiveBeforeTenant(userId);
+    standing = await readAccountStandingBeforeTenant(userId);
   } catch (err) {
     logger.error('Account standing could not be read', err);
     res.status(503).json({ error: 'The session could not be checked. Try again.', code: 'SESSION_UNCHECKED' });
     return true;
   }
-  if (active) return false;
-  res.status(401).json({ error: ACCOUNT_INACTIVE_MESSAGE, code: 'ACCOUNT_INACTIVE' });
-  return true;
+  if (!standing.active) {
+    res.status(401).json({ error: ACCOUNT_INACTIVE_MESSAGE, code: 'ACCOUNT_INACTIVE' });
+    return true;
+  }
+  if (sessionPredatesPasswordChange(issuedAtOfClaims(claims), standing.passwordChangedAtSeconds)) {
+    res.status(401).json({ error: 'This session has ended. Sign in again.', code: 'SESSION_ENDED' });
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -158,6 +179,8 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
         role?: string;
         provider?: string;
         mfaPending?: boolean;
+        /** Issued-at, whole seconds; jsonwebtoken stamps it on every token it signs. */
+        iat?: number;
       }>(token);
 
       // SECURITY: the access path requires an explicit `type: 'access'` claim.
@@ -180,7 +203,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
       const parsedUserId = parseFiniteInt(decoded.userId);
       const parsedOrganizationId = parseFiniteInt(decoded.organizationId);
 
-      if (parsedUserId !== null && (await refusedAccountOutOfUse(parsedUserId, res))) return;
+      if (parsedUserId !== null && (await refusedAccountOrSessionOutOfUse(parsedUserId, decoded, res))) return;
       // This is the query that VERIFIES the token's tenant claim, so it cannot
       // itself run inside that tenant's scope — the claim is untrusted until it
       // returns. Pool instrumentation blocks unscoped queries once
