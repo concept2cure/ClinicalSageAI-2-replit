@@ -51,7 +51,7 @@ entry today**; adding it is a build item under W2's gateway scope, not a toggle.
   evidence*, never "four models".
 - Only models with a passed PQ against `server/eval/rag/` and
   `server/eval/doc-quality/` are approved for **high-risk regulatory drafting**.
-  For launch that is Claude Opus 5 (primary) and one validated fallback. Kimi,
+  For launch that is Claude Opus 5.5 (primary, per the founder 2026-09-25; `docs/evidence/MODEL-GOVERNANCE/2026-09-25-opus-5-5/`) and one validated fallback, Opus 5. Kimi,
   Gemini, GPT and `local` ship as *available* with `riskTier` capped below
   high-risk until their PQ executes. More approved models means more validation
   surface; approve them one at a time, with evidence.

@@ -194,7 +194,8 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'sparkles',
     group: 'evidence',
     uiKit: null,
-    apiPrefixes: ['/api/biotech-artifacts', '/api/atoms', '/api/corpus'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): AdminSurfaces.tsx ArtifactsCenter reads and exports the gallery.
+    apiPrefixes: ['/api/biotech-artifacts', '/api/atoms', '/api/corpus', '/api/artifacts-center'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -212,7 +213,8 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'home',
     group: 'workspace',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/projects', '/api/programs', '/api/rim'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): ProjectHome reads and generates the schedule of events.
+    apiPrefixes: ['/api/projects', '/api/programs', '/api/rim', '/api/concept2cure/projects'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -229,6 +231,7 @@ export const UI_SURFACES: UiSurface[] = [
     group: 'authoring',
     uiKit: 'authoring',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): useFilingOutline.ts reads the filing outline.
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): authoring reads data origins, holds collaborative locks, and assigns review tasks.
     apiPrefixes: [
       '/api/document-authoring',
       '/api/authoring',
@@ -237,6 +240,9 @@ export const UI_SURFACES: UiSurface[] = [
       '/api/workflow',
       '/api/esignature',
       '/api/c2c/documents',
+      '/api/data-origins',
+      '/api/realtime-collab',
+      '/api/tasks',
     ],
     anaToolFamilies: ['get_csr_template', 'get_nonclinical_template', 'draft_clinical_overview_m2_5'],
     sharedContract: '@shared/types/document-contract',
@@ -255,7 +261,8 @@ export const UI_SURFACES: UiSurface[] = [
     group: 'authoring',
     uiKit: 'mdx',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): BiopharmaProject.tsx reads these two.
-    apiPrefixes: ['/api/document-authoring', '/api/project-sections', '/api/clinical-regulatory-evidence/findings', '/api/clinical-regulatory-evidence/outcome'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): the regulatory workspace reads its tree and the CSR board.
+    apiPrefixes: ['/api/document-authoring', '/api/project-sections', '/api/clinical-regulatory-evidence/findings', '/api/clinical-regulatory-evidence/outcome', '/api/regulatory-workspace', '/api/csr-workflow'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/authoring-context',
     discoveryCatalog: null,
@@ -288,7 +295,8 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'checkCircle',
     group: 'review',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/workflow', '/api/part11'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): Review reads its board, queue, threads and tasks.
+    apiPrefixes: ['/api/workflow', '/api/part11', '/api/review', '/api/concept2cure/review-tasks', '/api/concept2cure/review-threads', '/api/concept2cure/reviews'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -312,7 +320,8 @@ export const UI_SURFACES: UiSurface[] = [
     // here would point the next reader at a capability that was removed for
     // exactly that reason. The surface reads /api/submissions,
     // /api/region-profiles, /api/510k/estar/* and /api/c2c/projects.
-    apiPrefixes: ['/api/submissions', '/api/region-profiles', '/api/510k/estar', '/api/c2c/projects'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): the Submission Center signs governed actions.
+    apiPrefixes: ['/api/submissions', '/api/region-profiles', '/api/510k/estar', '/api/c2c/projects', '/api/c2c/actions/sign'],
     anaToolFamilies: ['plan_submission', 'validate_submission'],
     sharedContract: '@shared/types/submission-ui',
     discoveryCatalog: 'SUBMISSION_WORKSPACES (shared/types/submission-ui.ts)',
@@ -380,7 +389,8 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'gitBranch',
     group: 'submission',
     uiKit: 'ectd_coauthor',
-    apiPrefixes: ['/api/ectd-compile', '/api/ectd'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): EctdCompile reads orchestrator runs and their audit.
+    apiPrefixes: ['/api/ectd-compile', '/api/ectd', '/api/submission-orchestrator'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/submission-api',
     discoveryCatalog: null,
@@ -524,7 +534,8 @@ export const UI_SURFACES: UiSurface[] = [
     group: 'collaboration',
     uiKit: 'tasking',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): MdxSurfaceHost (useMdxPrograms, useWorkbench, useSubmissions) and the shell's TaskTray call these.
-    apiPrefixes: ['/api/task-management', '/api/regulatory/tasks', '/api/project-sections', '/api/regulatory-programs', '/api/submission-ops', '/api/approval-workflows/pending'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): the task board and the shell's task tray.
+    apiPrefixes: ['/api/task-management', '/api/regulatory/tasks', '/api/project-sections', '/api/regulatory-programs', '/api/submission-ops', '/api/approval-workflows/pending', '/api/tasks'],
     anaToolFamilies: [],
     sharedContract: '@shared/schema',
     discoveryCatalog: null,
@@ -540,7 +551,8 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'network',
     group: 'submission',
     uiKit: null,
-    apiPrefixes: ['/api/rim', '/api/global-ri'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): DossierMap reads the map.
+    apiPrefixes: ['/api/rim', '/api/global-ri', '/api/dossier-map'],
     anaToolFamilies: ['global_ri_dossier'],
     sharedContract: null,
     discoveryCatalog: null,
@@ -823,7 +835,8 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'settings',
     group: 'admin',
     uiKit: null,
-    apiPrefixes: ['/api/setup', '/api/admin', '/api/users', '/api/api-keys'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): AdminSurfaces.tsx Setup reads the GAMP 5 validation kit.
+    apiPrefixes: ['/api/setup', '/api/admin', '/api/users', '/api/api-keys', '/api/validation-kit'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -839,7 +852,8 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'scroll',
     group: 'admin',
     uiKit: null,
-    apiPrefixes: ['/api/admin/audit', '/api/part11'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): AdminSurfaces.tsx AuditTrail reads the ledger.
+    apiPrefixes: ['/api/admin/audit', '/api/part11', '/api/audit-trail/ledger'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

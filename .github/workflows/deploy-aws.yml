@@ -141,6 +141,10 @@ jobs:
         run: npm run ci:dependency-risk
 
       - name: Trivy filesystem scan (deps + secrets)
+        # Runs after an earlier failed step too, so a red job still says whether the
+        # tree carries a HIGH/CRITICAL finding (security audit INF-08). Not after a
+        # cancel. tests/ci/trivy-steps-run-after-failures.contract.test.ts
+        if: ${{ !cancelled() }}
         # Blocking: HIGH/CRITICAL findings fail the deploy gate.
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
@@ -151,6 +155,10 @@ jobs:
           format: table
 
       - name: Trivy config scan (Dockerfile/IaC)
+        # Runs after an earlier failed step too, so a red job still says whether the
+        # tree carries a HIGH/CRITICAL finding (security audit INF-08). Not after a
+        # cancel. tests/ci/trivy-steps-run-after-failures.contract.test.ts
+        if: ${{ !cancelled() }}
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           scan-type: config
@@ -314,6 +322,12 @@ jobs:
         #   MFA_ENCRYPTION_KEY       server/config/environment.ts (>=32 chars).
         #   AUDIT_HMAC_KEY           server/services/audit/auditSealPosture.ts.
         #   AUDIT_HMAC_SECRET        server/lib/tamper-proof-audit.ts.
+        #   AUDIT_TRAIL_ENABLED      server/startup/audit-enforcement.ts — the
+        #   AUDIT_REQUIRE_ENFORCE    tamper-proof trail and its integrity monitor
+        #                            run only when the first is `true`; the second
+        #                            turns a missing trail, a failed immutability
+        #                            probe or a disabled sweep into a boot refusal.
+        #                            Both exactly `true` (security plan P0-9).
         #   CONNECTOR_ENCRYPTION_KEY server/services/connectors/connector-registry.ts
         #                            — module-level throw in production.
         #   CONCEPT2CURE_SIGNER_MODE server/services/signature/signer-mode.ts —
@@ -343,7 +357,8 @@ jobs:
                      AUDIT_HMAC_SECRET CONNECTOR_ENCRYPTION_KEY \
                      AI_SENSITIVE_DATA_POLICY_MODE AI_PROVIDER_PLACEMENT_APPROVALS \
                      CONCEPT2CURE_SIGNER_MODE STORAGE_PROVIDER AWS_S3_BUCKET \
-                     SMTP_HOST SMTP_USER SMTP_PASS; do
+                     SMTP_HOST SMTP_USER SMTP_PASS \
+                     AUDIT_TRAIL_ENABLED AUDIT_REQUIRE_ENFORCE; do
             if ! grep -qx "$VAR" <<< "$PRESENT"; then MISSING="$MISSING $VAR"; fi
           done
 
@@ -361,7 +376,7 @@ jobs:
           FAIL=0
           if [[ -n "$MISSING" ]]; then
             echo "::error::Task definition $ECS_API_TASK_FAMILY (container $ECS_API_CONTAINER_NAME) is missing required production env:$MISSING"
-            echo "::error::The app refuses to boot without each of these, except SMTP_*: without those it boots and no one can sign in (login OTP is the mandatory second factor). Add them to the task definition (terraform/stack) before deploying."
+            echo "::error::The app refuses to boot without each of these, with two exceptions it would boot through: without SMTP_* no one can sign in (login OTP is the mandatory second factor), and without AUDIT_TRAIL_ENABLED / AUDIT_REQUIRE_ENFORCE the tamper-proof audit trail is off or its checks only warn. Add them to the task definition (terraform/stack) before deploying."
             FAIL=1
           fi
           if [[ "$NODE_ENV_VALUE" != "production" ]]; then
@@ -393,6 +408,38 @@ jobs:
           ' /tmp/api-td-preflight.json)
           if [[ -n "$STORAGE_PROVIDER_VALUE" && "$STORAGE_PROVIDER_VALUE" != "s3" ]]; then
             echo "::error::STORAGE_PROVIDER must be exactly 's3' on ECS Fargate; got '$STORAGE_PROVIDER_VALUE'. A task's local disk is deleted with the task, and the vault's documents with it."
+            FAIL=1
+          fi
+          # The Part 11 audit posture (security plan P0-9, DP-06). The tamper-proof
+          # trail and the chain-integrity monitor run only with
+          # AUDIT_TRAIL_ENABLED=true, and production merely WARNS without it
+          # unless AUDIT_REQUIRE_ENFORCE=true makes the missing trail, a failed
+          # immutability probe or a disabled daily sweep refuse to boot
+          # (server/startup/audit-enforcement.ts). Both exactly `true`.
+          for AUDIT_FLAG in AUDIT_TRAIL_ENABLED AUDIT_REQUIRE_ENFORCE; do
+            AUDIT_FLAG_VALUE=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" --arg n "$AUDIT_FLAG" '
+              .containerDefinitions[] | select(.name == $c)
+              | (.environment // []) | map(select(.name == $n)) | .[0].value // ""
+            ' /tmp/api-td-preflight.json)
+            if [[ -n "$AUDIT_FLAG_VALUE" && "$AUDIT_FLAG_VALUE" != "true" ]]; then
+              echo "::error::$AUDIT_FLAG must be exactly 'true' in production; got '$AUDIT_FLAG_VALUE'."
+              FAIL=1
+            fi
+          done
+          # Every *_ACCEPT_* variable is an operator override that switches a
+          # production refusal off: AUDIT_SEAL_ACCEPT_UNSEALED (an unsealed audit
+          # chain), AI_GOVERNANCE_ACCEPT_PERMISSIVE, STORAGE_ACCEPT_LOCAL_DISK,
+          # CONCEPT2CURE_SIGNER_ACCEPT_HMAC. They exist for local and compose
+          # stacks. This stack needs none (KMS signer, S3 vault, sealed chain),
+          # so a task definition carrying one, as a value or a secret, set to
+          # anything, is refused before it rolls (security plan P0-13, INF-17).
+          ACCEPT_OVERRIDES=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+            .containerDefinitions[] | select(.name == $c)
+            | ((.environment // []) + (.secrets // [])) | map(.name)
+            | map(select(test("^[A-Z0-9_]+_ACCEPT_[A-Z0-9_]+$"))) | .[]
+          ' /tmp/api-td-preflight.json | sort -u | tr '\n' ' ')
+          if [[ -n "${ACCEPT_OVERRIDES// /}" ]]; then
+            echo "::error::The task definition carries production override flag(s): ${ACCEPT_OVERRIDES% }. Each switches a production refusal off; remove it from terraform/stack."
             FAIL=1
           fi
           # APP_URL is the only origin emailed reset and invitation links are

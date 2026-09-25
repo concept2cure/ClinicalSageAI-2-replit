@@ -47,7 +47,7 @@ vi.mock('../../mdx/lib/useSampleRows', () => ({
   useSampleRows: <T,>(live: T[] | null) => (live ?? []) as T[],
   useShowingSample: () => H.sample,
 }));
-vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: { name: 'R. Approver' } }) }));
+vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ name: 'R. Approver' }) }));
 vi.mock('@/lib/queryClient', () => ({
   apiRequest: (...a: unknown[]) => H.apiRequest(...a),
   serverMessage: (p: { error?: string } | null) => p?.error ?? null,

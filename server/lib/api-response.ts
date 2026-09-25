@@ -78,7 +78,7 @@ export function noContent(res: Response): Response {
  */
 export function clientError(
   res: Response,
-  status: 400 | 401 | 403 | 404 | 409 | 412 | 422 | 423 | 502,
+  status: 400 | 401 | 403 | 404 | 409 | 412 | 422 | 423 | 428 | 502,
   error: string,
   details?: Record<string, unknown>,
 ): Response {

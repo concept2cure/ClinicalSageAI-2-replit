@@ -90,10 +90,57 @@ is updated rather than left to fail: **OQ-005 v0.6** and **URS-005 v0.4**.
 The executed records in VSR-001 are unchanged, and the next OQ execution runs
 v0.6.
 
+## Stage 2a — every launch call attributed
+
+The 52 paths launch and shell screens call that no surface claimed are now
+attributed. Per-surface ones go into `apiPrefixes`: dossier map, program
+journey, review boards and queues, IRB and CSR, the submission orchestrator,
+the artifacts center, the audit ledger, the validation kit, tenant users,
+tasks, data origins and collaborative locks. Those the shell uses whatever
+app is open go on `LAUNCH_PLATFORM_API`
+(`server/services/entitlements/launch-scope-api.ts`), each with a reason:
+AnA, the session, tenants, clients, organisations. `ci:launch-scope-api` now
+fails on an unmapped launch call too. Red on the stage-1 registry
+(`gate2a-red-unmapped.txt`, 52), green after (`gate2a-green.txt`: 264 paths,
+226 launch, 38 never-gated, 0 unmapped). The self-test gains the unmapped
+case.
+
+One consequence stated plainly: the conversation thread and project home call
+`/api/concept2cure/projects/:id/...`, and prefixes cannot express `:id`. So the
+legacy projects and artifacts subtree is launch-reachable and stays open. Only
+the rest of `/api/concept2cure` can be closed, in stage 2b.
+
+## Stage 2b — the unclaimed remainder: measured, then refused
+
+After 2a no launch call is unmapped, but most mounted prefixes are still
+claimed by nothing: the legacy `/api/concept2cure` outside the projects
+subtree, `/api/qms`, and among others `/api/demo` and `/api/integration-test`.
+Static analysis cannot see a computed path or a server-to-server caller, so
+the gate does not guess:
+
+- An unmapped `/api/*` path is recorded as a would-refuse in the existing
+  enforcement report (Master Admin → Licensing → Enforcement): module
+  `launch-scope:unattributed`, ids collapsed to `:id`, requests with no
+  organisation recorded against organisation 0. The request is served.
+- `LAUNCH_SCOPE_API_UNATTRIBUTED=enforce` refuses it 403 `LAUNCH_SCOPE`.
+  Unset means `report`. Any other value refuses to boot in production.
+  Documented in `.env.example`.
+- `LAUNCH_INFRASTRUCTURE_API` lists the non-screen callers that are never
+  refused in any mode, each with its caller: the public API (`/api/v1`),
+  Firecrawl's webhook, operator tooling. Non-`/api` paths (the app's pages and
+  assets) are never judged.
+
+Red then green: 5 failed / 31 passed of 36, then 36/36 (`stage2b-*`).
+
+**The operator decision this leaves:** run staging with the default, read the
+report, add any genuine infrastructure caller to the list with its reason,
+then set `enforce`. Until then the legacy namespaces stay callable, and every
+call to them is on record.
+
 ## Not closed here
 
-- **Unmapped paths pass.** 52 paths launch screens call, and 186 mount
-  prefixes, belong to no surface. The legacy `/api/concept2cure/*` namespace
+- **Unmapped paths are reported, not refused, until an operator sets
+  `enforce`** (stage 2b above). The legacy `/api/concept2cure/*` namespace
   and the UI-less `/api/qms` are among them. Closing them means attributing
   each mounted prefix: to a surface, to infrastructure, or to out-of-scope.
   That inventory is the next step. Refusing everything unattributed without it
