@@ -314,3 +314,82 @@ describe('vault delegation is granted by the sponsor alone (D3)', () => {
     }
   });
 });
+
+/** One statement in the system scope the platform's own jobs and admin routes use. */
+function asPlatform(sql: string, params: unknown[] = []) {
+  return runWithTenantScope(
+    {
+      tenantId: '0',
+      orgUuid: null,
+      role: 'app_super_admin',
+      source: 'request',
+      caller: 'tests/db/vault-program-ownership.dbtest.ts',
+    },
+    () => getPool().query(sql, params)
+  );
+}
+
+/** rowCount of a write, with a refusal counted as nothing written. */
+async function rowsWritten(run: () => Promise<{ rowCount: number | null }>): Promise<number> {
+  try {
+    return (await run()).rowCount ?? 0;
+  } catch (err) {
+    const code = (err as { code?: string }).code;
+    if (code === '42501') return 0;
+    throw err;
+  }
+}
+
+/** Puts both fixture orgs back on their own uuids if a case moved them. */
+async function restoreOrgUuids(): Promise<void> {
+  const { rows } = await owner.query(
+    'SELECT id, uuid::text AS uuid FROM organizations WHERE id = ANY($1::int[])',
+    [FIXTURE_ORGS]
+  );
+  const moved = rows.some(r => r.uuid !== uuidOf[r.id === ORG_A ? 'A' : 'B']);
+  if (!moved) return;
+  // Park both first so neither restore collides with the other's unique uuid.
+  await owner.query('UPDATE organizations SET uuid = gen_random_uuid() WHERE id = ANY($1::int[])', [
+    FIXTURE_ORGS,
+  ]);
+  await owner.query('UPDATE organizations SET uuid = $2 WHERE id = $1', [ORG_A, uuidOf.A]);
+  await owner.query('UPDATE organizations SET uuid = $2 WHERE id = $1', [ORG_B, uuidOf.B]);
+}
+
+describe("an organization's tenant key cannot be moved, by its own tenant or any other (D3)", () => {
+  it("A cannot hand B's organization its uuid, and B's vault stays B's", async () => {
+    // Measured before the fix as app_service with RLS enforcing: A moved its
+    // own org to a fresh uuid, gave B's org A's old one, and read B's vault —
+    // core.get_program_org_id maps a program's org to organizations.uuid.
+    try {
+      const movedOwn = await rowsWritten(() =>
+        as('A', 'UPDATE organizations SET uuid = gen_random_uuid() WHERE id = $1', [ORG_A])
+      );
+      const movedB = await rowsWritten(() =>
+        as('A', 'UPDATE organizations SET uuid = $2 WHERE id = $1', [ORG_B, uuidOf.A])
+      );
+      expect(await titlesVisibleTo('A'), "B's document reached A").toEqual([TITLE.A]);
+      expect(await titlesVisibleTo('B'), 'B lost its own document').toEqual([TITLE.B]);
+      expect({ movedOwn, movedB }).toEqual({ movedOwn: 0, movedB: 0 });
+    } finally {
+      await restoreOrgUuids();
+    }
+  });
+
+  it('the other writers still write, and none of them, the platform included, can move a key', async () => {
+    // Positive controls first: the trigger must not break an org updating its
+    // own row, nor the platform scope (admin routes, the Stripe webhook)
+    // updating any org's. A no-op write, so nothing changes either way.
+    const touch = 'UPDATE organizations SET updated_at = updated_at WHERE id = $1';
+    expect(await rowsWritten(() => as('A', touch, [ORG_A])), 'an org updating itself').toBe(1);
+    expect(await rowsWritten(() => asPlatform(touch, [ORG_B])), 'the platform scope').toBe(1);
+    try {
+      const moved = await rowsWritten(() =>
+        asPlatform('UPDATE organizations SET uuid = gen_random_uuid() WHERE id = $1', [ORG_B])
+      );
+      expect(moved, "the platform scope moved B's uuid").toBe(0);
+    } finally {
+      await restoreOrgUuids();
+    }
+  });
+});
