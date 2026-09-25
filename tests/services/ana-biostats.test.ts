@@ -1591,3 +1591,71 @@ describe('Layer 2: a continuous effect with no variance is standardised (BS4)', 
     expect(variance).toMatchObject({ value: 1, source: 'default' });
   });
 });
+
+// ═══════════════════════════════════════════════════════════════
+// Scenarios size through the design's own path (LX-16). generateScenarios
+// carried a third copy of the sizing formulas — always superiority, r = 1 — so
+// the "Base case" of a non-inferiority design was a different trial (or a null
+// N when δ = 0) from the design it was presented beside.
+// ═══════════════════════════════════════════════════════════════
+
+describe('Layer 2: the base-case scenario is the design itself', () => {
+  const designs: Array<[string, StatisticalInput]> = [
+    ['continuous superiority', pharmaInput],
+    ['continuous non-inferiority', { ...pharmaInput, studyType: 'non_inferiority', effectSize: 0, nonInferiorityMargin: -0.2, variance: 1, comparatorType: 'active' }],
+    ['continuous equivalence', { ...pharmaInput, studyType: 'equivalence', effectSize: 0, equivalenceMargin: 0.25, variance: 1 }],
+    ['binary superiority, 2:1', { ...pharmaInput, endpointType: 'binary', controlRate: 0.3, treatmentRate: 0.45, effectSize: 0.15, allocationRatio: 2 }],
+    ['time to event', { ...pharmaInput, endpointType: 'time_to_event', effectSize: 0.3, eventRate: 0.6 }],
+  ];
+
+  it.each(designs)('%s: Base case N and power equal the design', (_label, input) => {
+    const result = engine.compute(input);
+    const base = result.scenarios.find((s) => s.label === 'Base case');
+    expect(base).toBeDefined();
+    expect(base!.sampleSize.perGroup).toBe(result.sampleSize.perGroup);
+    expect(base!.sampleSize.total).toBe(result.adjustedTotal ?? result.sampleSize.total);
+    expect(base!.power).toBe(result.power);
+  });
+
+  it('no scenario carries a missing or non-finite N', () => {
+    for (const [, input] of designs) {
+      for (const s of engine.compute(input).scenarios) {
+        expect(Number.isFinite(s.sampleSize.perGroup)).toBe(true);
+        expect(Number.isFinite(s.sampleSize.total)).toBe(true);
+      }
+    }
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// Binary endpoints compute their power (LX-16). computeBinary returned the
+// TARGET as the achieved power, so a binary design always "achieved" exactly
+// what was asked and its scenarios all showed the same power.
+// ═══════════════════════════════════════════════════════════════
+
+describe('Layer 2: a binary design reports the power it computed', () => {
+  const binary: StatisticalInput = {
+    ...pharmaInput, endpointType: 'binary', controlRate: 0.3, treatmentRate: 0.45, effectSize: 0.15, powerTarget: 0.8,
+  };
+
+  it('superiority sized for 80% reports a computed power at or just above 80%, not the target echoed', () => {
+    const result = engine.compute(binary);
+    expect(result.power).toBeGreaterThanOrEqual(0.8);
+    expect(result.power).toBeLessThan(0.81);
+    expect(result.power).not.toBe(0.8);
+  });
+
+  it('non-inferiority sized for 90% reports ~90%', () => {
+    const result = engine.compute({ ...binary, studyType: 'non_inferiority', treatmentRate: 0.3, effectSize: 0, nonInferiorityMargin: -0.1, powerTarget: 0.9, comparatorType: 'active' });
+    expect(result.method).toContain('non-inferiority');
+    expect(result.power).toBeGreaterThanOrEqual(0.9);
+    expect(result.power).toBeLessThan(0.91);
+  });
+
+  it('each scenario reports the power computed for its own N, not one echoed target', () => {
+    const scen = engine.compute(binary).scenarios;
+    // Each scenario is re-sized for the target, so its power is the target it was sized for, computed:
+    for (const s of scen) expect(s.power).toBeGreaterThanOrEqual(0.8);
+    expect(new Set(scen.map((s) => s.power)).size).toBeGreaterThan(1);
+  });
+});

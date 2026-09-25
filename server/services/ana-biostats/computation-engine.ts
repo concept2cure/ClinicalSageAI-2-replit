@@ -230,6 +230,30 @@ export class ComputationEngine {
     return this.normCdf(input.effectSize / se - zAlpha) + this.normCdf(-input.effectSize / se - zAlpha);
   }
 
+  /**
+   * The power of the two-proportion test a binary design was SIZED for, at
+   * `nPerGroup` in the reference arm — the inverse of computeBinary's formulas,
+   * with the same rates, variance terms and critical value:
+   *   non-inferiority  |(p2 − p1) − Δ_NI| / √(v/n) − z_α,  v = p1(1−p1) + p2(1−p2)/r
+   *   superiority      (|p2 − p1|·√n − z_α·√((1+1/r)·p̄(1−p̄))) / √v
+   */
+  private binaryPower(input: StatisticalInput, nPerGroup: number): number {
+    if (nPerGroup <= 0) return 0;
+    const zAlpha = this.normQuantile(1 - input.alpha / 2);
+    const r = input.allocationRatio || 1;
+    const p1 = input.controlRate ?? 0.5;
+    const p2 = input.treatmentRate ?? (p1 + input.effectSize);
+    const v = p1 * (1 - p1) + p2 * (1 - p2) / r;
+    if (v <= 0) return 0;
+    if (input.studyType === 'non_inferiority' && input.nonInferiorityMargin) {
+      const delta = Math.abs((p2 - p1) - input.nonInferiorityMargin);
+      return this.normCdf(delta / Math.sqrt(v / nPerGroup) - zAlpha);
+    }
+    const pBar = (p1 + r * p2) / (1 + r);
+    const z = (Math.abs(p2 - p1) * Math.sqrt(nPerGroup) - zAlpha * Math.sqrt((1 + 1 / r) * pBar * (1 - pBar))) / Math.sqrt(v);
+    return this.normCdf(z);
+  }
+
   private computeBinary(input: StatisticalInput, assumptions: ComputationAssumption[]): ComputationResult {
     const zAlpha = this.normQuantile(1 - input.alpha / 2);
     const zBeta = this.normQuantile(input.powerTarget);
@@ -269,7 +293,9 @@ export class ComputationEngine {
     return {
       method,
       sampleSize: { perGroup: nPerGroup, total, groups },
-      power: input.powerTarget,
+      // Computed for this N by the test it was sized for (binaryPower) — before
+      // 2026-09-25 this returned the target itself as the "achieved" power.
+      power: Math.min(this.binaryPower(input, nPerGroup), 0.9999),
       effectSize: Math.abs(p2 - p1),
       alpha: input.alpha,
       adjustedSampleSize: adjustedPerGroup,
@@ -786,57 +812,57 @@ export class ComputationEngine {
   // Scenario generation helpers
   // ════════════════════════════════════════════════════════════════
 
-  private generateScenarios(input: StatisticalInput, type: string): ScenarioResult[] {
-    const scenarios: ScenarioResult[] = [];
-    const multipliers = [0.75, 1.0, 1.25, 1.5];
+  /**
+   * Effect-size scenarios, each sized through the design's OWN path (compute),
+   * so the "Base case" is the design itself and a non-inferiority, equivalence
+   * or unequal-allocation design is scenario-tested as what it is.
+   *
+   * Before 2026-09-25 (LX-16) this carried a third copy of the sizing formulas —
+   * superiority only, allocation 1:1 — and halved a per-group figure: every
+   * design's Base case disagreed with the design beside it (superiority 32 vs
+   * 63 per group, binary 2:1 82 vs 123), and a non-inferiority or equivalence
+   * design with δ = 0 got an infinite N.
+   *
+   * compute() adds scenarios to every result, so the nested calls here are
+   * guarded to one level: a scenario has no scenarios of its own. The engine is
+   * synchronous, so the guard cannot interleave.
+   */
+  private scenarioDepth = 0;
 
-    for (const mult of multipliers) {
-      const modifiedInput = { ...input, effectSize: input.effectSize * mult };
-      const zAlpha = this.normQuantile(1 - modifiedInput.alpha / 2);
-      const zBeta = this.normQuantile(modifiedInput.powerTarget);
-      const sigma = this.continuousSigma(modifiedInput);
-
-      let n: number;
-
-      if (type === 'binary') {
-        const p1 = modifiedInput.controlRate ?? 0.5;
-        const p2 = p1 + modifiedInput.effectSize;
-        const pBar = (p1 + p2) / 2;
-        n = Math.ceil(
-          ((zAlpha * Math.sqrt(2 * pBar * (1 - pBar)) +
-            zBeta * Math.sqrt(p1 * (1 - p1) + p2 * (1 - p2))) ** 2) /
-          ((p2 - p1) ** 2)
-        );
-      } else if (type === 'time_to_event') {
-        const hr = 1 - modifiedInput.effectSize;
-        const logHR = Math.log(hr > 0 ? hr : 0.5);
-        const events = Math.ceil((zAlpha + zBeta) ** 2 * 4 / (logHR * logHR));
-        const eventRate = modifiedInput.eventRate ?? 0.5;
-        n = Math.ceil(events / eventRate);
-      } else {
-        n = Math.ceil(
-          (2 * sigma * sigma * (zAlpha + zBeta) ** 2) / (modifiedInput.effectSize * modifiedInput.effectSize)
-        );
-      }
-
-      const adjustedN = Math.ceil(n / (1 - modifiedInput.attritionRate));
-      const label = mult === 1.0
-        ? 'Base case'
-        : mult < 1.0
-          ? `Conservative (${(mult * 100).toFixed(0)}% effect)`
-          : `Optimistic (${(mult * 100).toFixed(0)}% effect)`;
-
-      scenarios.push({
-        label,
-        sampleSize: { perGroup: Math.ceil(n / 2), total: adjustedN },
-        power: modifiedInput.powerTarget,
-        delta: `Effect size = ${modifiedInput.effectSize.toFixed(4)}`,
-        recommendation: mult < 1.0 ? 'Use for conservative planning' : mult > 1.25 ? 'May be overly optimistic' : undefined,
+  private generateScenarios(input: StatisticalInput, _type: string): ScenarioResult[] {
+    if (this.scenarioDepth > 0) return [];
+    this.scenarioDepth += 1;
+    try {
+      return [0.75, 1.0, 1.25, 1.5].map((mult) => {
+        // A binary design given as two rates is sized from the rates, not from
+        // effectSize — so the scenario scales the rate difference itself, or all
+        // four "effect" scenarios would be the same trial.
+        const modifiedInput: StatisticalInput = {
+          ...input,
+          effectSize: input.effectSize * mult,
+          ...(typeof input.controlRate === 'number' && typeof input.treatmentRate === 'number'
+            ? { treatmentRate: input.controlRate + (input.treatmentRate - input.controlRate) * mult }
+            : {}),
+        };
+        const r = this.compute(modifiedInput);
+        const label = mult === 1.0
+          ? 'Base case'
+          : mult < 1.0
+            ? `Conservative (${(mult * 100).toFixed(0)}% effect)`
+            : `Optimistic (${(mult * 100).toFixed(0)}% effect)`;
+        return {
+          label,
+          sampleSize: { perGroup: r.sampleSize.perGroup, total: r.adjustedTotal ?? r.sampleSize.total },
+          power: r.power,
+          delta: `Effect size = ${modifiedInput.effectSize.toFixed(4)}`,
+          recommendation: mult < 1.0 ? 'Use for conservative planning' : mult > 1.25 ? 'May be overly optimistic' : undefined,
+        };
       });
+    } finally {
+      this.scenarioDepth -= 1;
     }
-
-    return scenarios;
   }
+
 
   private generateDiagnosticScenarios(input: StatisticalInput): ScenarioResult[] {
     const scenarios: ScenarioResult[] = [];

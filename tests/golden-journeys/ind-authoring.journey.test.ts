@@ -206,6 +206,11 @@ beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: PREREQ,
     migrations: [
+      // The account columns the signing ceremony reads, from the file that adds
+      // them rather than hand-mirrored in PREREQ: the account-standing read
+      // gained password_changed_at (613c6e00) and, without it, every signature
+      // here was refused ACCOUNT_STATE_UNKNOWN — fail-closed, correctly.
+      'db/migrations/20260725_users_signing_lockout_columns.sql',
       'db/migrations/20260725_authoring_document_loop_tables.sql',
       'db/migrations/20260730_authoring_comments_router_columns.sql',
       // ALTERs doc_revisions above with the ledger columns the router now writes
@@ -330,7 +335,13 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
     await R.step('save-section-creates-revision', async () => {
       const res = await asUser(AUTHOR)(
         request(app).patch(`/api/authoring/sections/${sectionId}`),
-      ).send({ content: 'Revised rationale: effect size assumption corrected to 0.25.' });
+      ).send({
+        content: 'Revised rationale: effect size assumption corrected to 0.25.',
+        // §11.10(e): a content change carries its reason (fde9d704 made the server
+        // require it). Without one this step stopped at 400 and never reached the
+        // UPDATE, which is how a broken UPDATE shipped with this journey red.
+        changeReason: 'Corrected the effect size assumption to 0.25 per the updated prior-trial data.',
+      });
       expect(res.status).toBe(200);
       expect(res.body.revision_created).toBe(true);
       return { revisionCreated: res.body.revision_created };

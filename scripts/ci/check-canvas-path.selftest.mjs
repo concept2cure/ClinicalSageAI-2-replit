@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Self-test for ci:canvas-path — shows the gate FAILING on each of the six
- * cuts it exists to catch, per CLAUDE.md ("a gate that has only ever been
+ * Self-test for ci:canvas-path — shows the gate FAILING on each of the cuts
+ * it exists to catch (six wiring links, and the founder-path walk three ways), per CLAUDE.md ("a gate that has only ever been
  * seen to pass has not been tested"), then passing on an intact tree.
  *
  * Builds a minimal synthetic tree (the seven files the gate reads, written
@@ -54,6 +54,14 @@ export function run(name) { switch (name) { case 'draft_authoring_document': ret
   'server/routes/authoring.router.ts': `
 router.post('/docs/:docId/file-to-vault', async (req, res) => { res.json({}); });
 `,
+  'tests/lineage/founder-path-lineage.pglite.test.ts': `
+describe('LX-00', () => { it('hop 1', () => hopProject()); it('hop 8', () => hopTransmit()); });
+`,
+  'tests/lineage/founder-path-lineage.hops.ts': `
+export async function hopProject() { const hop = new Hop('project'); }
+export async function hopTransmit() { const hop = new Hop('transmit'); }
+`,
+  'tests/lineage/founder-path-lineage.baseline.json': JSON.stringify({ ceiling: 1, hops: { transmit: { 'bytes-retained': {} } } }),
 };
 
 /** Each cut: the file to rewrite and the rule that must be the one finding. */
@@ -89,6 +97,22 @@ const CUTS = [
     file: 'server/routes/authoring.router.ts',
     body: `router.post('/docs/:docId/export', async (req, res) => { res.json({}); });\n`,
   },
+  // founder-walk: the recorded-lineage walk, cut three ways.
+  {
+    rule: 'founder-walk',
+    file: 'tests/lineage/founder-path-lineage.pglite.test.ts',
+    body: `describe.skip('LX-00', () => { it('hop 1', () => hopProject()); });\n`,
+  },
+  {
+    rule: 'founder-walk',
+    file: 'tests/lineage/founder-path-lineage.hops.ts',
+    body: `export async function hopCapture() { const hop = new Hop('capture'); }\nexport async function hopTransmit() { const hop = new Hop('transmit'); }\n`,
+  },
+  {
+    rule: 'founder-walk',
+    file: 'tests/lineage/founder-path-lineage.baseline.json',
+    body: JSON.stringify({ ceiling: 1, hops: { transmit: { 'bytes-retained': {}, 'transmittal-names-sequence': {} } } }),
+  },
 ];
 
 function writeTree(root, files) {
@@ -123,7 +147,7 @@ if (good.status !== 0 || !good.parsed?.ok) {
   console.error('selftest FAILED: the gate does not pass on an intact synthetic tree\n', good.raw);
   failed = true;
 } else {
-  console.log('✅ selftest: gate passes on an intact tree (6/6 links)');
+  console.log('✅ selftest: gate passes on an intact tree (six links and the founder walk)');
 }
 
 for (const cut of CUTS) {
