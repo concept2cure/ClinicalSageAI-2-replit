@@ -133,6 +133,8 @@
     "ci:path-containment": "node scripts/ci/check-path-containment.mjs",
     "ci:path-containment:write-baseline": "node scripts/ci/check-path-containment.mjs --write-baseline",
     "ci:workflow-targets": "node scripts/ci/check-workflow-targets.mjs",
+    "ci:frontend-sync-coverage": "node scripts/ci/check-frontend-sync-coverage.mjs",
+    "ci:frontend-sync-coverage:selftest": "node scripts/ci/check-frontend-sync-coverage.mjs --self-test",
     "ci:required-workflow-concurrency": "node scripts/ci/check-required-workflow-concurrency.mjs",
     "ci:required-workflow-concurrency:self-test": "node scripts/ci/check-required-workflow-concurrency.mjs --self-test",
     "ci:workflow-targets:write-baseline": "node scripts/ci/check-workflow-targets.mjs --write-baseline",
