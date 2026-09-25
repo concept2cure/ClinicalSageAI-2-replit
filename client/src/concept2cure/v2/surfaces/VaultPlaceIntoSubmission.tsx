@@ -31,7 +31,15 @@ import React from 'react';
 import { I } from '../icons';
 import { mutateVerbatim } from './SubmissionSeqWorkspaces';
 import { SC_LIFECYCLE_OPS } from '../fixtures/submission';
-import { useFilingTarget, FilingTargetFields, judgeSectionCode, vocabularyForApplicationType } from './filingTarget';
+import {
+  useFilingTarget,
+  FilingTargetFields,
+  judgeSectionCode,
+  vocabularyForApplicationType,
+  PlacementReasonField,
+  placementReasonOk,
+  PLACEMENT_REASON_REQUIRED,
+} from './filingTarget';
 
 /** PUT /sequences/:seqId/leaves → upsertLeaf() row (subset). */
 interface PlacedLeaf {
@@ -73,12 +81,19 @@ type Verdict = { kind: 'error' | 'ok'; message: string } | null;
 type Judged = ReturnType<typeof judgeSectionCode>;
 
 /** Why the file button is disabled, in the words of what is missing. */
-function placeBlockedReason(hasSequence: boolean, sectionUsable: boolean, vocabulary: string): string | undefined {
+function placeBlockedReason(
+  hasSequence: boolean,
+  sectionUsable: boolean,
+  vocabulary: string,
+  reasonOk: boolean,
+): string | undefined {
   if (!hasSequence) return 'Choose a submission and a sequence that can take a leaf';
-  if (sectionUsable) return undefined;
-  return vocabulary === 'ctd'
-    ? 'A CTD section code is required'
-    : "A section code in this submission's vocabulary is required";
+  if (!sectionUsable) {
+    return vocabulary === 'ctd'
+      ? 'A CTD section code is required'
+      : "A section code in this submission's vocabulary is required";
+  }
+  return reasonOk ? undefined : PLACEMENT_REASON_REQUIRED;
 }
 
 /* Offering to file a non-PDF promised an assembly that cannot happen: the
@@ -184,6 +199,7 @@ export function VaultPlaceIntoSubmission({
 
   const [section, setSection] = React.useState('');
   const [op, setOp] = React.useState('new');
+  const [reason, setReason] = React.useState('');
   const [placing, setPlacing] = React.useState(false);
   const [placed, setPlaced] = React.useState<PlacedLeaf | null>(null);
 
@@ -256,7 +272,8 @@ export function VaultPlaceIntoSubmission({
   const judged = judgeSectionCode(section, vocabulary);
   const sectionUsable = judged.placeable;
 
-  const canPlace = Boolean(!notPdf && seq && sectionUsable && !placing && !placed);
+  const reasonOk = placementReasonOk(reason);
+  const canPlace = Boolean(!notPdf && seq && sectionUsable && reasonOk && !placing && !placed);
 
   const place = async () => {
     if (!seq || !sectionUsable) return;
@@ -271,6 +288,7 @@ export function VaultPlaceIntoSubmission({
         // filed bytes are the vault's own.
         documentTable: 'vault_documents',
         documentUuid,
+        reason: reason.trim(),
       });
       if (put.error || !put.data) {
         setVerdict({ kind: 'error', message: put.error ?? 'The server refused the placement without a reason.' });
@@ -337,6 +355,7 @@ export function VaultPlaceIntoSubmission({
                 op={op}
                 onOp={setOp}
               />
+              <PlacementReasonField value={reason} onChange={setReason} idPrefix="vpf" disabled={placing || Boolean(placed)} />
             </>
           )}
 
@@ -351,7 +370,7 @@ export function VaultPlaceIntoSubmission({
             className="de-btn primary"
             onClick={() => void place()}
             disabled={!canPlace}
-            title={placeBlockedReason(Boolean(seq), sectionUsable, vocabulary)}
+            title={placeBlockedReason(Boolean(seq), sectionUsable, vocabulary, reasonOk)}
           >
             {placing ? 'Filing…' : 'Place into submission'}
           </button>

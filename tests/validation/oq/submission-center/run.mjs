@@ -99,9 +99,10 @@ await step(
       documentTable: 'vault_documents',
       documentUuid: state.docId,
       lifecycleOp: 'new',
+      reason: 'Placed by the validation run for this sequence',
     });
     expect(r.status === 200, `expected 200, got ${r.status}`, r.json);
-    const bad = await api('PUT', `/api/submissions/sequences/${state.sequence.id}/leaves`, { sectionCode: 'm1.3', title: 'x', documentTable: 'not_a_table', documentId: 1 });
+    const bad = await api('PUT', `/api/submissions/sequences/${state.sequence.id}/leaves`, { sectionCode: 'm1.3', title: 'x', documentTable: 'not_a_table', documentId: 1, reason: 'Placed by the validation run for this sequence' });
     expect(bad.status === 400, `unplaceable table expected 400, got ${bad.status}`, bad.json);
     const leaves = await api('GET', `/api/submissions/sequences/${state.sequence.id}/leaves`);
     const arr = Array.isArray(leaves.json) ? leaves.json : leaves.json?.data ?? leaves.json?.leaves ?? [];

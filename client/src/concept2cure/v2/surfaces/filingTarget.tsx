@@ -24,6 +24,7 @@ import {
   vocabularyForApplicationType,
   type PlacementVocabulary,
 } from '@shared/regulatory/placement-vocabulary';
+import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 
 export { vocabularyForApplicationType };
 export type { PlacementVocabulary };
@@ -310,3 +311,67 @@ export function judgeSectionCode(section: string, vocabulary: PlacementVocabular
           };
   return { canonical, folder, placeable, note };
 }
+
+/* ── Why the placement is made ─────────────────────────────────────────────
+   A placement decides what content goes into a regulator-facing sequence. Its
+   audit row recorded what changed and never why: none of the three placement
+   forms asked (PX-1, docs/evidence/reviews/2026-09-24/lenses.md). The server
+   now refuses a placement without a reason (PUT …/leaves → REASON_REQUIRED) at
+   the one floor both sides import; these say so before the click. */
+
+/** True when `reason` meets the floor the placement route enforces. */
+export function placementReasonOk(reason: string): boolean {
+  return reason.trim().length >= GOVERNED_REASON_MIN;
+}
+
+/** The disabled-button title for a placement still missing its reason. */
+export const PLACEMENT_REASON_REQUIRED = `A reason for this placement of at least ${GOVERNED_REASON_MIN} characters is required`;
+
+const REASON_KIT = {
+  dialog: { field: 'de-field', label: 'de-label', input: 'c2c-input', note: 'de-desc' },
+  inline: { field: 'sc-field', label: undefined, input: 'sc-subpick', note: 'scaf-note' },
+} as const;
+
+export function PlacementReasonField({
+  value,
+  onChange,
+  idPrefix,
+  disabled,
+  variant = 'dialog',
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  /** Prefix for the field id, so two forms can coexist in one document. */
+  idPrefix: string;
+  disabled?: boolean;
+  /** `dialog` for the de- dialog kit, `inline` for the Submission Center form. */
+  variant?: keyof typeof REASON_KIT;
+}) {
+  const kit = REASON_KIT[variant];
+  const id = `${idPrefix}-reason`;
+  const short = value.trim().length > 0 && !placementReasonOk(value);
+  return (
+    <div className={kit.field}>
+      <label className={kit.label} htmlFor={id}>
+        Reason for this placement<span className="req">*</span>
+      </label>
+      <textarea
+        id={id}
+        className={kit.input}
+        rows={2}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="e.g. Final clinical overview, approved for this sequence"
+        aria-describedby={`${id}-note`}
+        aria-invalid={short || undefined}
+      />
+      <div id={`${id}-note`} className={kit.note}>
+        {short
+          ? `At least ${GOVERNED_REASON_MIN} characters.`
+          : 'Recorded with the placement in the audit trail.'}
+      </div>
+    </div>
+  );
+}
+
