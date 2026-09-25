@@ -29,6 +29,16 @@
  *   file-to-vault-route       authoring.router.ts registers
  *                             POST /docs/:docId/file-to-vault, and the
  *                             workbench's graph calls it.
+ *   founder-walk              The founder-path walk test
+ *                             (tests/lineage/founder-path-lineage.pglite.test.ts,
+ *                             LX-00) exists, is not skipped, still starts at the
+ *                             project hop and reaches the transmit hop, and its
+ *                             shrink-only baseline is within its ceiling. The
+ *                             six links above prove the path is WIRED; the walk
+ *                             proves what it RECORDS, hop by recorded key, from
+ *                             the project to the agency. Added 2026-09-25: the
+ *                             walk found every section save failing while all
+ *                             six links read green.
  *
  * Static and fast: string checks over a handful of files, no TypeScript
  * evaluation. Exit 1 on any finding, `--json` for machine output.
@@ -44,6 +54,12 @@ const ROOT = process.env.CANVAS_PATH_ROOT
   ? path.resolve(process.env.CANVAS_PATH_ROOT)
   : path.resolve(HERE, '..', '..');
 const JSON_MODE = process.argv.includes('--json');
+
+const WALK_DIR = 'tests/lineage';
+const WALK_TEST = `${WALK_DIR}/founder-path-lineage.pglite.test.ts`;
+const WALK_BASELINE = `${WALK_DIR}/founder-path-lineage.baseline.json`;
+/** The walk's first and last hop: every chain starts at a project and ends at the agency. */
+const WALK_ENDS = ['project', 'transmit'];
 
 export const FILES = {
   thread: 'client/src/concept2cure/v2/surfaces/ConversationThread.tsx',
@@ -156,7 +172,45 @@ export function check() {
     add('file-to-vault-route', `${FILES.workbench} (and the ./ modules it imports) never calls the ${FILE_TO_VAULT} route`);
   }
 
+  checkFounderWalk(add);
+
   return { ok: findings.length === 0, root: ROOT, findings };
+}
+
+/** founder-walk: the recorded-lineage walk is present, running, whole, and its baseline only shrinks. */
+function checkFounderWalk(add) {
+  const walk = read(WALK_TEST);
+  if (walk == null || !/\bdescribe(\.\w+)?\s*\(/.test(stripComments(walk))) {
+    add('founder-walk', `${WALK_TEST} is missing or declares no suite`);
+    return;
+  }
+  if (/\.(skip|only|todo|skipIf|runIf)\s*\(/.test(stripComments(walk))) {
+    add('founder-walk', `${WALK_TEST} skips, narrows or defers its tests (.skip / .only / .todo / .skipIf / .runIf)`);
+  }
+  const dir = path.join(ROOT, WALK_DIR);
+  const sources = fs.existsSync(dir)
+    ? fs.readdirSync(dir).filter((f) => f.endsWith('.ts')).map((f) => stripComments(read(path.join(WALK_DIR, f)) ?? ''))
+    : [];
+  for (const hop of WALK_ENDS) {
+    if (!sources.some((src) => new RegExp(`new Hop\\(\\s*['"]${hop}['"]`).test(src))) {
+      add('founder-walk', `no file under ${WALK_DIR} constructs the '${hop}' hop — the walk no longer runs from the project to the agency`);
+    }
+  }
+  const raw = read(WALK_BASELINE);
+  let baseline = null;
+  try {
+    baseline = raw == null ? null : JSON.parse(raw);
+  } catch {
+    /* reported below */
+  }
+  if (!baseline || typeof baseline.ceiling !== 'number' || typeof baseline.hops !== 'object') {
+    add('founder-walk', `${WALK_BASELINE} is missing or unreadable`);
+    return;
+  }
+  const entries = Object.values(baseline.hops).reduce((n, checks) => n + Object.keys(checks ?? {}).length, 0);
+  if (entries > baseline.ceiling) {
+    add('founder-walk', `${WALK_BASELINE} holds ${entries} entries over its ceiling of ${baseline.ceiling}; the baseline only shrinks`);
+  }
 }
 
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
@@ -165,7 +219,7 @@ if (isMain) {
   if (JSON_MODE) {
     console.log(JSON.stringify(summary, null, 2));
   } else if (summary.ok) {
-    console.log('✅ ci:canvas-path — thread → canvas → workbench, surface → workbench, tool registered, vault read, file-to-vault route: all wired');
+    console.log('✅ ci:canvas-path — thread → canvas → workbench, surface → workbench, tool registered, vault read, file-to-vault route: all wired; the founder-path walk runs project → agency within its baseline');
   } else {
     console.error('❌ ci:canvas-path — the AnA-draft → canvas → editor → vault path is cut:');
     for (const f of summary.findings) console.error(`   [${f.rule}] ${f.detail}`);

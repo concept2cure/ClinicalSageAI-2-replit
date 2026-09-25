@@ -69,3 +69,27 @@ failed with "now PASSES … the baseline only shrinks".
 
 Every hop with no project key is where the project-first principle
 (`docs/design/LINEAGE_END_TO_END_PLAN_2026-09-25.md` §0) does not yet hold.
+
+## The gate: `ci:canvas-path` gains `founder-walk`
+
+The six wiring links prove the path is *wired*. The walk proves what it *records*.
+The gate now also refuses a tree in which:
+
+- the walk test is missing, declares no suite, or skips, narrows or defers its
+  tests (`.skip` / `.only` / `.todo` / `.skipIf` / `.runIf`);
+- no file under `tests/lineage/` constructs the `project` or the `transmit` hop, so
+  the walk no longer runs from the project to the agency;
+- the baseline holds more entries than its ceiling.
+
+Evidence:
+
+- `02-gate-selftest-against-old-gate.txt`: the new selftest against the old gate.
+  "cutting founder-walk did not produce exactly that finding (exit 0, rules: none)".
+- `03-gate-selftest-new.txt`: all ten cuts (six links, and the walk three ways) are
+  caught, the intact tree passes, and the real tree passes.
+- `04-gate-red-on-real-tree-with-walk-skipped.txt`: the real walk test skipped, and
+  the gate exits 1 with "skips, narrows or defers its tests". The first attempt
+  reported "declares no suite" for a skipped walk; the suite pattern was corrected
+  so the finding names the actual cut.
+
+The gate and its selftest already run in `.github/workflows/ci.yml:323-324`.
