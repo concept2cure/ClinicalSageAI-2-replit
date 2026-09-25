@@ -76,7 +76,6 @@ import { setTenantContextTx } from '../services/tenant/governed-tenant-context.j
 import {
   AUDIT_CHAIN_HEAD_ORDER_SQL,
   AUDIT_CHAIN_ORDER_ASC_SQL,
-  verifyAuditChain,
   type ChainVerificationResult,
 } from '../services/audit/chain.js';
 
@@ -332,15 +331,11 @@ export interface AuditLedgerResponse {
  * verify-chain uses — never on the request's tenant-scoped client, which
  * would report every cross-linked legacy row as a break.
  */
-export type TenantChainVerifier = (orgId: number) => Promise<ChainVerificationResult>;
-
-async function verifyOnSuperAdminScope(orgId: number): Promise<ChainVerificationResult> {
-  const { withTenantConnection } = await import('../db/withTenantConnection.js');
-  return withTenantConnection(
-    { tenantId: '0', role: 'app_super_admin', source: 'request', caller: 'audit-trail-ledger/verdict' },
-    (c) => verifyAuditChain(c, { tenantId: orgId }),
-  );
-}
+export type { TenantChainVerifier } from '../services/audit/tenant-chain-verdict.js';
+import {
+  verifyTenantChainOnAdminScope as verifyOnSuperAdminScope,
+  type TenantChainVerifier,
+} from '../services/audit/tenant-chain-verdict.js';
 
 export async function readAuditLedger(
   client: Pick<PoolClient, 'query'>,
