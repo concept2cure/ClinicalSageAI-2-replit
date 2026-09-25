@@ -35,6 +35,10 @@ const HYBRID_ROWS = [
   { id: 'atom-2', content: 'c2', title: 't2', combined_score: '0.7', semantic_score: '0.6', keyword_score: '0.4' },
 ];
 
+/** searchHybrid runs only under a tenant key (server/db/currentTenant.ts); these
+ *  cases are about source identity, so any well-formed key will do. */
+const ORG_UUID = '11111111-1111-4111-8111-111111111111';
+
 const isEnrichment = (sql: string) => /source_id,\s*source_type\s+FROM\s+lumen_data_atoms/i.test(sql);
 
 describe('enhancedEmbeddingService source-identity enrichment', () => {
@@ -54,7 +58,7 @@ describe('enhancedEmbeddingService source-identity enrichment', () => {
       return { rows: [] };
     });
 
-    const out = await svc.searchHybrid('q', 5);
+    const out = await svc.searchHybrid('q', 5, 0.7, ORG_UUID);
 
     expect(out).toHaveLength(2);
     expect(out[0]).toMatchObject({ id: 'atom-1', content: 'c1', sourceId: 'artifact-abc', sourceType: 'data_room_upload' });
@@ -71,7 +75,7 @@ describe('enhancedEmbeddingService source-identity enrichment', () => {
       return { rows: [] };
     });
 
-    const out = await svc.searchHybrid('q', 5);
+    const out = await svc.searchHybrid('q', 5, 0.7, ORG_UUID);
 
     expect(out).toHaveLength(2); // retrieval still returns its rows
     expect(out.every((r) => r.sourceId === null && r.sourceType === null)).toBe(true);

@@ -12,7 +12,8 @@ import { z } from 'zod';
 import { authenticateToken } from '../middleware/auth';
 import { requireOrganizationContext, requireTenantContext } from '../middleware/tenantContext';
 import { createRateLimiter } from '../middleware/rateLimiter';
-import { db } from '../db';
+import { db, getPool } from '../db';
+import { currentTenantOrgUuid } from '../db/currentTenant';
 import { requestDb } from '../db/requestDb';
 import { eq, and, desc, or, inArray } from 'drizzle-orm';
 import {
@@ -2355,14 +2356,18 @@ router.post(
       (req as any).tenantContext?.organizationId ||
       (req as any).tenantId ||
       (req as any).organizationId;
-    const organizationUuid =
-      (req as any).tenantContext?.organizationUuid ||
-      (req.headers['x-org-uuid'] as string | undefined);
+    // The session's tenant key, never the client's x-org-uuid header.
+    const organizationUuid = await currentTenantOrgUuid(getPool());
     const userId = (req as any).userId || (req as any).user?.id;
     if (!organizationId) {
       return res
         .status(401)
         .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    if (!organizationUuid) {
+      return res
+        .status(403)
+        .json({ error: 'Tenant context required', code: 'TENANT_CONTEXT_REQUIRED' });
     }
     try {
       const { runCitationEngine } = await import(
@@ -2374,7 +2379,7 @@ router.post(
         {
           persist: true,
           ctdSectionOverride: parsed.data.ctdSectionOverride ?? undefined,
-          organizationUuid: organizationUuid ?? undefined,
+          organizationUuid,
           userId: userId ?? null,
         }
       );
@@ -2592,14 +2597,18 @@ router.post(
       (req as any).tenantContext?.organizationId ||
       (req as any).tenantId ||
       (req as any).organizationId;
-    const organizationUuid =
-      (req as any).tenantContext?.organizationUuid ||
-      (req.headers['x-org-uuid'] as string | undefined);
+    // The session's tenant key, never the client's x-org-uuid header.
+    const organizationUuid = await currentTenantOrgUuid(getPool());
     const userId = (req as any).userId || (req as any).user?.id;
     if (!organizationId) {
       return res
         .status(401)
         .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    if (!organizationUuid) {
+      return res
+        .status(403)
+        .json({ error: 'Tenant context required', code: 'TENANT_CONTEXT_REQUIRED' });
     }
     try {
       const { runCitationEngineForProject } = await import(
@@ -2612,7 +2621,7 @@ router.post(
           staleOnly: bodyParsed.data.staleOnly ?? true,
           ctdSectionPrefix: bodyParsed.data.ctdSectionPrefix,
           concurrency: bodyParsed.data.concurrency,
-          organizationUuid: organizationUuid ?? undefined,
+          organizationUuid,
           userId: userId ?? null,
         }
       );
@@ -4874,10 +4883,14 @@ router.post(
       (req as any).tenantContext?.organizationId ||
       (req as any).tenantId ||
       (req as any).organizationId;
-    const organizationUuid =
-      (req as any).tenantContext?.organizationUuid ||
-      (req.headers['x-org-uuid'] as string | undefined);
+    // The session's tenant key, never the client's x-org-uuid header.
+    const organizationUuid = await currentTenantOrgUuid(getPool());
     const userId = (req as any).userId || (req as any).user?.id;
+    if (!organizationUuid) {
+      return res
+        .status(403)
+        .json({ error: 'Tenant context required', code: 'TENANT_CONTEXT_REQUIRED' });
+    }
 
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
@@ -4910,7 +4923,7 @@ router.post(
           artifactId: parsed.data.artifactId,
           question: parsed.data.question,
           organizationId: organizationId ?? null,
-          organizationUuid: organizationUuid ?? null,
+          organizationUuid,
           userId: userId ?? null,
         },
         writeEvent
@@ -4947,10 +4960,14 @@ router.post(
       (req as any).tenantContext?.organizationId ||
       (req as any).tenantId ||
       (req as any).organizationId;
-    const organizationUuid =
-      (req as any).tenantContext?.organizationUuid ||
-      (req.headers['x-org-uuid'] as string | undefined);
+    // The session's tenant key, never the client's x-org-uuid header.
+    const organizationUuid = await currentTenantOrgUuid(getPool());
     const userId = (req as any).userId || (req as any).user?.id;
+    if (!organizationUuid) {
+      return res
+        .status(403)
+        .json({ error: 'Tenant context required', code: 'TENANT_CONTEXT_REQUIRED' });
+    }
 
     try {
       const { handleSubmissionChat } = await import(
@@ -4961,7 +4978,7 @@ router.post(
         artifactId: parsed.data.artifactId,
         question: parsed.data.question,
         organizationId: organizationId ?? null,
-        organizationUuid: organizationUuid ?? null,
+        organizationUuid,
         userId: userId ?? null,
       });
       return res.json(result);
@@ -5032,14 +5049,18 @@ router.post(
       (req as any).tenantContext?.organizationId ||
       (req as any).tenantId ||
       (req as any).organizationId;
-    const organizationUuid =
-      (req as any).tenantContext?.organizationUuid ||
-      (req.headers['x-org-uuid'] as string | undefined);
+    // The session's tenant key, never the client's x-org-uuid header.
+    const organizationUuid = await currentTenantOrgUuid(getPool());
     const userId = (req as any).userId || (req as any).user?.id || null;
     if (!organizationId) {
       return res
         .status(401)
         .json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+    }
+    if (!organizationUuid) {
+      return res
+        .status(403)
+        .json({ error: 'Tenant context required', code: 'TENANT_CONTEXT_REQUIRED' });
     }
     try {
       const { generateAuthoringPlan } = await import(
@@ -5048,7 +5069,7 @@ router.post(
       const plan = await generateAuthoringPlan({
         projectId: parsed.data.projectId,
         organizationId,
-        organizationUuid: organizationUuid ?? null,
+        organizationUuid,
         ctdSection: parsed.data.ctdSection,
         submissionType: parsed.data.submissionType,
         artifactId: parsed.data.artifactId ?? null,

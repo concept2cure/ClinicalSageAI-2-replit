@@ -119,7 +119,10 @@ describe('search_atoms_hybrid on a from-blank database', () => {
 
 describe("searchHybrid serves a tenant's own evidence, as asked", () => {
   it('returns no more rows than the limit, all the tenant’s own', async () => {
-    const rows = await asTenantA(() => service(getPool()).searchHybrid(QUERY, 3));
+    // With tenant A's key: a search with none is refused since the D3 change
+    // (atom-search-tenant-key.dbtest.ts), where this call once ran unfiltered and
+    // only RLS kept it to tenant A.
+    const rows = await asTenantA(() => service(getPool()).searchHybrid(QUERY, 3, 0.7, orgUuidA));
     expect(rows.length).toBe(3);
     for (const r of rows) expect(r.title).not.toMatch(/tenant-B/);
   });
