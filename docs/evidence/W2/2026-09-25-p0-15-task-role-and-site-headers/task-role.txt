@@ -1,0 +1,9 @@
+# terraform test (terraform/stack), task-role assertion added, grant not yet removed
+  run "renders_the_boot_contract"... fail
+│ Error: Test assertion failed
+│   on tests/boot_contract.tftest.hcl line 177, in run "renders_the_boot_contract":
+│ The ECS task role can reach the frontend bucket; only the deploy role may
+Failure! 20 passed, 1 failed.
+
+# with the frontend bucket removed from the task role
+Success! 21 passed, 0 failed.
