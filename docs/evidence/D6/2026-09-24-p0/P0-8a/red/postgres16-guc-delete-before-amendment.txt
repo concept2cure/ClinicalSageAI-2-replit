@@ -1,0 +1,57 @@
+# PostgreSQL 16.13 scratch cluster (port 54329), database c2c_audit_repro from the Phase A reproduction, HEAD af833c44, 2026-09-25T02:09:02Z
+# The trigger functions installed here are the ones Phase A applied from the UNAMENDED db/migrations/20260617_audit_logs_immutability.sql (index 210). Replay of transcript §7–9 before the amendment.
+
+## 0. the DELETE trigger function as installed by the UNAMENDED migration (Phase A applied it as postgres)
+SELECT proname, prosecdef, pg_get_userbyid(proowner) AS owner FROM pg_proc WHERE proname IN ('enforce_audit_logs_no_delete','audit_logs_archive_delete');
+           proname            | prosecdef |  owner   
+------------------------------+-----------+----------
+ enforce_audit_logs_no_delete | f         | postgres
+(1 row)
+
+SELECT position('app.audit_archive_bypass' in prosrc) > 0 AS trigger_reads_guc FROM pg_proc WHERE proname = 'enforce_audit_logs_no_delete';
+ trigger_reads_guc 
+-------------------
+ t
+(1 row)
+
+
+## 1. seed one audit_logs row (as owner)
+INSERT INTO audit_logs (tenant_id, action, table_name, record_id) VALUES (1, 'x', 'x', 'p0-8a-red') RETURNING id 
+INSERT 0 1
+33180a8c-db1f-4718-b315-3885197d4718
+
+## 2. as the runtime role stand-in app_service_repro (LOGIN NOSUPERUSER NOBYPASSRLS; SELECT, INSERT, UPDATE, DELETE on audit_logs, as the recipe grants on public tables)
+SET ROLE app_service_repro;
+SET
+SELECT current_user, session_user;
+   current_user    | session_user 
+-------------------+--------------
+ app_service_repro | postgres
+(1 row)
+
+
+## 3. control: a plain DELETE is refused
+DELETE FROM audit_logs WHERE id = '33180a8c-db1f-4718-b315-3885197d4718';
+psql:/tmp/p08a-red.sql:16: ERROR:  IMMUTABILITY_VIOLATION: audit_logs are append-only
+DETAIL:  DELETE is not permitted on audit_logs outside the authorized retention/archival path. Attempted to delete row id=33180a8c-db1f-4718-b315-3885197d4718. 21 CFR Part 11 §11.10(e) requires immutable audit trails.
+HINT:  Only the archival service may delete, and only after copying rows to cold storage (it sets SET LOCAL app.audit_archive_bypass = 'on'). Insert a superseding event rather than deleting history.
+CONTEXT:  PL/pgSQL function enforce_audit_logs_no_delete() line 10 at RAISE
+
+## 4. THE DEFECT (Phase A §9 replayed): the runtime role sets the GUC itself and the DELETE succeeds
+BEGIN;
+BEGIN
+SET LOCAL app.audit_archive_bypass = 'on';
+SET
+DELETE FROM audit_logs WHERE id = '33180a8c-db1f-4718-b315-3885197d4718';
+DELETE 1
+COMMIT;
+COMMIT
+SELECT count(*) AS rows_left FROM audit_logs WHERE id = '33180a8c-db1f-4718-b315-3885197d4718';
+ rows_left 
+-----------
+         0
+(1 row)
+
+RESET ROLE;
+RESET
+exit=0

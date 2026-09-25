@@ -18,7 +18,7 @@
  */
 
 import * as React from 'react';
-import { I } from './icons';
+import { I } from '../v2/icons';
 import { SopRegister, STATUS_FILTERS, type StatusFilter } from './SopRegister';
 import { ChangeControl } from './ChangeControl';
 import { useChangeRegister } from './changeHooks';
@@ -288,7 +288,7 @@ export function QualityApp({ onAskAna, initialTab = 'sop' }: QualityAppProps) {
         </div>
         <div className="qms-spacer" />
         <button className="qms-tb-btn" onClick={() => onAsk(ASK_STARTER[tab])}>
-          {I.sparkle} Ask AnA
+          {I.sparkles} Ask AnA
         </button>
       </div>
 
