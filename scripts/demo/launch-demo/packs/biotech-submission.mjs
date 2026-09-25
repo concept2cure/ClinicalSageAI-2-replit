@@ -58,6 +58,7 @@ async function ensureLeaves({ api, tally }, rec, vaultDocs) {
       documentTable: 'vault_documents',
       documentUuid: d.id,
       lifecycleOp: 'new',
+      reason: 'Placed by the launch demo pack',
     }), 200, `place leaf ${d.sectionCode} ${d.key}`);
     tally.created('leaf');
     added += 1;
