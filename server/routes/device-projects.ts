@@ -37,7 +37,7 @@ import { and, eq, desc } from 'drizzle-orm';
 import { projects } from '@shared/schema';
 import { db } from '../db';
 import { governedActorId, requireEditorAccess } from '../middleware/orgMembership';
-import { recordAuditRow, type AuditRowOutcome } from '../services/audit/audit-write-outcome';
+import { recordAuditRow, setAuditRowHeaders } from '../services/audit/audit-write-outcome';
 
 const router = Router();
 
@@ -46,7 +46,7 @@ const MAX_NAME_LENGTH = 200;
 const MAX_TEXT_LENGTH = 2000;
 const VALID_STATUSES = ['draft', 'active', 'submitted', 'approved', 'archived'];
 
-/**
+/*
  * Report a §11.10(e) audit outcome on a response whose body is a `projects` row.
  *
  * WO-16C #133. The POST answers with the inserted row and the PUT with the
@@ -63,11 +63,11 @@ const VALID_STATUSES = ['draft', 'active', 'submitted', 'approved', 'archived'];
  * pair as server/routes/client-branding.ts, the transparent proxy in
  * server/routes/predicate-intelligence.ts and the 204 in
  * server/routes/submissions.ts.
+ *
+ * The pair is written by the canonical `setAuditRowHeaders`
+ * (server/services/audit/audit-write-outcome.ts), which replaced this file's
+ * own copy.
  */
-function setAuditRowHeaders(res: Response, outcome: AuditRowOutcome): void {
-  res.setHeader('X-Audit-Row-Persisted', String(outcome.persisted));
-  if (!outcome.persisted) res.setHeader('X-Audit-Row-Code', outcome.code);
-}
 
 /** GET /api/device-projects — list device projects scoped to the authenticated user's org */
 router.get('/', async (req: Request, res: Response) => {
