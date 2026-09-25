@@ -90,10 +90,30 @@ is updated rather than left to fail: **OQ-005 v0.6** and **URS-005 v0.4**.
 The executed records in VSR-001 are unchanged, and the next OQ execution runs
 v0.6.
 
+## Stage 2a — every launch call attributed
+
+The 52 paths launch and shell screens call that no surface claimed are now
+attributed. Per-surface ones go into `apiPrefixes`: dossier map, program
+journey, review boards and queues, IRB and CSR, the submission orchestrator,
+the artifacts center, the audit ledger, the validation kit, tenant users,
+tasks, data origins and collaborative locks. Those the shell uses whatever
+app is open go on `LAUNCH_PLATFORM_API`
+(`server/services/entitlements/launch-scope-api.ts`), each with a reason:
+AnA, the session, tenants, clients, organisations. `ci:launch-scope-api` now
+fails on an unmapped launch call too. Red on the stage-1 registry
+(`gate2a-red-unmapped.txt`, 52), green after (`gate2a-green.txt`: 264 paths,
+226 launch, 38 never-gated, 0 unmapped). The self-test gains the unmapped
+case.
+
+One consequence stated plainly: the conversation thread and project home call
+`/api/concept2cure/projects/:id/...`, and prefixes cannot express `:id`. So the
+legacy projects and artifacts subtree is launch-reachable and stays open. Only
+the rest of `/api/concept2cure` can be closed, in stage 2b.
+
 ## Not closed here
 
-- **Unmapped paths pass.** 52 paths launch screens call, and 186 mount
-  prefixes, belong to no surface. The legacy `/api/concept2cure/*` namespace
+- **Unmapped paths pass (stage 2b).** After 2a no launch call is unmapped, but
+  most of the 186 mount prefixes still belong to no surface. The legacy `/api/concept2cure/*` namespace
   and the UI-less `/api/qms` are among them. Closing them means attributing
   each mounted prefix: to a surface, to infrastructure, or to out-of-scope.
   That inventory is the next step. Refusing everything unattributed without it
