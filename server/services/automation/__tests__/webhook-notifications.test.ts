@@ -63,10 +63,10 @@ describe('webhook delivery (IAM-13 / P1-6)', () => {
 
     expect(bareFetch).not.toHaveBeenCalled();
     expect(safeFetchMock).toHaveBeenCalledTimes(1);
-    const [url, init] = safeFetchMock.mock.calls[0];
+    const [url, init] = safeFetchMock.mock.calls[0] as [string, { redirect?: string; method?: string }];
     expect(url).toBe('https://hooks.example.com/p1-6');
-    expect((init as RequestInit).redirect).toBe('error');
-    expect((init as RequestInit).method).toBe('POST');
+    expect(init.redirect).toBe('error');
+    expect(init.method).toBe('POST');
     expect(delivery.status).toBe('success');
   });
 
