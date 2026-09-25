@@ -7,7 +7,7 @@ import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceAc
 import { getSegmentModules, getSurfaceMeta } from '../registryModel';
 import { isLaunchScopeLocked, useNavEntitlements } from '../navEntitlements';
 import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials, fileTone } from '../fixtures/project-home-data';
-import { useChatUpload, attachmentReadLabel as readLabel } from '../../hooks/useChatUpload';
+import { useChatUpload, readyAttachmentLabel } from '../../hooks/useChatUpload';
 import { updateShellProject } from '../shellProject';
 import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
 import { DEVICE_FAMILY_PRODUCT_TYPES } from '@shared/constants/domain/product-types';
@@ -469,9 +469,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
               style={{ fontSize: 12, border: '1px solid var(--border)', borderRadius: 'var(--radius-full)', padding: '2px 10px' }}
             >
               {a.status === 'uploading' ? `Uploading ${a.name}…` : a.name}
-              {a.status === 'ready' && readLabel(a.extractionMethod, a.extractionWords)
-                ? ` · ${readLabel(a.extractionMethod, a.extractionWords)}`
-                : ''}
+              {a.status === 'ready' ? ` · ${readyAttachmentLabel(a.extractionMethod, a.extractionWords)}` : ''}
               {a.status === 'error' && a.error ? ` · ${a.error}` : ''}
             </span>
           ))}

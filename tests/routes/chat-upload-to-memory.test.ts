@@ -211,6 +211,24 @@ describe('chat upload → extraction → project memory (e2e)', () => {
     expect(atomInsert![1][3]).not.toContain('[Uploaded via chat:');
   });
 
+  it('embeds NOTHING when extraction yields no text — the placeholder is not the document', async () => {
+    /* The project (numeric workspace) branch wrote the retrieval atom
+       unconditionally, so a file with no extractable text — a scan, an image
+       OCR cannot read, here a whitespace-only file — was embedded as
+       "[Uploaded via chat: …] (text/plain, N bytes)" and returned from
+       retrieval as if it were a passage of the document. The program branch
+       already refused this ("only real extracted content, never the filename
+       placeholder"); this pins the same rule on the project branch. */
+    const res = await runUpload({
+      originalname: 'blank.txt',
+      mimetype: 'text/plain',
+      buffer: Buffer.from('   \n\t\n   ', 'utf8'),
+    });
+    expect(res.status).not.toHaveBeenCalledWith(400);
+    expect(findAtomInsert()).toBeUndefined();
+    expect(mockEmbedAtom).not.toHaveBeenCalled();
+  });
+
   it('reports extraction status for an org-scoped upload (no project, no artifact)', async () => {
     const body = 'Org scoped note with several words here.';
     const res = await runUpload(

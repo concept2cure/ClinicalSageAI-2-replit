@@ -1,0 +1,145 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > ConversationThread attachment chip > does not call a file "read" when no text was extracted from it
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > ConversationThread attachment chip > still says what was read, and how much
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > ConversationThread attachment chip > does not call a file "read" when no text was extracted from it 83ms
+   → expected ' ProjectNew conversation Conversation…' not to match /scan\.pdf\s*·\s*read\b/
+stderr | client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > EctdCoauthor attachment chip > does not call a file "read" when no text was extracted from it
+An update to EctdCoauthor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCoauthor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCoauthor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > EctdCoauthor attachment chip > still says what was read, and how much
+An update to EctdCoauthor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCoauthor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to EctdCoauthor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > ConversationThread attachment chip > still says what was read, and how much 22ms
+ × client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > EctdCoauthor attachment chip > does not call a file "read" when no text was extracted from it 36ms
+   → expected 'eCTD Co-Author ValidateeCTD backboneM…' not to match /scan\.pdf\s*·\s*read\b/
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > EctdCoauthor attachment chip > still says what was read, and how much 19ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > ConversationThread attachment chip > does not call a file "read" when no text was extracted from it
+AssertionError: expected ' ProjectNew conversation Conversation…' not to match /scan\.pdf\s*·\s*read\b/
+
+- Expected:
+/scan\.pdf\s*·\s*read\b/
+
++ Received:
+" ProjectNew conversation Conversation AnAProgress · AnA's progress✻Talk to AnAAsk a question, or ask AnA to do the work. AnA thinks, pulls from the evidence, and streams a grounded answer — every turn is saved to your governed conversation store.File a 510(k) for our glucose monitoring patchIs the section 2.5.4 efficacy claim defensible?What blocks the Module 3 freeze? scan.pdf · read× protocol.docx · read · 1,240 words× Governed — AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.ProgressAnA has not started a turn in this conversation. Ask something and her plan and steps appear here as she works."
+
+ ❯ client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx:59:22
+     57|     const text = container.textContent ?? '';
+     58|     expect(text).toContain('scan.pdf');
+     59|     expect(text).not.toMatch(/scan\.pdf\s*·\s*read\b/);
+       |                      ^
+     60|     expect(text).toMatch(/scan\.pdf\s*·\s*no text extracted/);
+     61|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > EctdCoauthor attachment chip > does not call a file "read" when no text was extracted from it
+AssertionError: expected 'eCTD Co-Author ValidateeCTD backboneM…' not to match /scan\.pdf\s*·\s*read\b/
+
+- Expected:
+/scan\.pdf\s*·\s*read\b/
+
++ Received:
+"eCTD Co-Author ValidateeCTD backboneM1--5Loading eCTD documents…eCTD backboneReading…AnAco-authoring §— — bound to the dossierProgress · AnA's progressProgressAnA has not started a turn in this conversation. Ask something and her plan and steps appear here as she works.Used in this sessionContexteCTD co-authorAsk about this dossier — AnA answers here, grounded on the document you have open. Every turn is saved to your organization's governed conversation store. scan.pdf · read× protocol.docx · read · 1,240 words× SourceseCTD Co-AuthorNo document selectedDocumentValidationComplianceLoading eCTD documents…"
+
+ ❯ client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx:59:22
+     57|     const text = container.textContent ?? '';
+     58|     expect(text).toContain('scan.pdf');
+     59|     expect(text).not.toMatch(/scan\.pdf\s*·\s*read\b/);
+       |                      ^
+     60|     expect(text).toMatch(/scan\.pdf\s*·\s*no text extracted/);
+     61|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  21:20:32
+   Duration  7.27s (transform 2.01s, setup 282ms, import 3.02s, tests 164ms, environment 3.52s)
+

@@ -57,3 +57,11 @@ written (`95fcbffc`); every Part 11 finding in `part11-ux.md` is now fixed. The 
 
 - **Rows informed:** D2 (launch catalog), D5 (Part 11 evidence). No row turns green as a result.
 - **Performed by:** the design-system/CXO remediation session (`session_01FSu2RLBeJSq46vhQcJh85M`), on `concept2cure-v2` directly per Rule 0.
+
+### Handed-off items from 2026-09-22 closed on 2026-09-25
+
+| # | Finding (from `../2026-09-22/follow-through/README.md`) | Closed by |
+|---|---|---|
+| 6 | The MCP connector accepted suspended or deactivated accounts: `findMembership` joined memberships to organisations only, and both the bearer verifier and the OAuth provider rely on that one lookup | `findMembership` joins `users` and refuses any user whose status is not `active` and any member of a suspended organisation. `server/mcp/auth/__tests__/findMembership.pglite.test.ts` shows the suspended, inactive and suspended-org cases refused; on the previous head they returned a membership. |
+| 9 | File-to-vault left the admitted vault row behind when placement threw (not refused), then answered 500 | The placement call is wrapped: a throw reverts the ingest (soft-delete + chained audit row) before the error propagates. Test: the live-row count is unchanged after a placement that throws; on the previous head it grew by one. |
+| 13 | An AnA draft given no module was assumed to be `M2`, and file-to-vault turned the assumption into a confirmed placement in `module-2`; the dialog also read the route's folder record as a string and showed no folder | The draft records `provenance.moduleDefaulted`; file-to-vault derives a folder from the module only when someone chose it, so an assumed module leaves the document awaiting a decision. The dialog reads the folder record (`folderLabel`, else `folderId`). Test: a from-draft document with no module files with a placement that is not `confirmed`. |

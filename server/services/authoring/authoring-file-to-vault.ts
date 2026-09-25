@@ -112,8 +112,11 @@ async function readDocumentForFiling(
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    // provenance carries `moduleDefaulted` when the draft's module was assumed
+    // rather than chosen; read it only where the column exists.
+    const hasProvenance = (await columnState(pool, 'provenance')) === 'present';
     const r = await client.query(
-      `SELECT id, title, module, status, locked_at, client_program_id, version, created_at
+      `SELECT id, title, module, status, locked_at, client_program_id, version, created_at${hasProvenance ? ', provenance' : ''}
          FROM authoring_documents WHERE id = $1 AND tenant_id = $2
          FOR UPDATE NOWAIT`,
       [docId, tenantId],
@@ -299,11 +302,16 @@ async function ingestAndFile(
   });
   if (!ingested.ok) return refuse(ingested.status, ingested.code, ingested.message);
 
-  const target = args.folderId?.trim() || (await derivedFolder(doc.module, programId, tenantId));
+  // A module the draft assumed ('M2' when AnA was given none) is not a filing
+  // decision: derive a folder from the module only when someone chose it.
+  const moduleDefaulted = (doc as { provenance?: { moduleDefaulted?: unknown } | null }).provenance?.moduleDefaulted === true;
+  const target = args.folderId?.trim() || (moduleDefaulted ? null : await derivedFolder(doc.module, programId, tenantId));
   if (!target) {
     return { id: ingested.document.id, folder: { ...ingested.filing, folderLabel: ingested.filing.folderLabel ?? '' } };
   }
-  const placed = await placeVaultDocument({
+  let placed: Awaited<ReturnType<typeof placeVaultDocument>>;
+  try {
+    placed = await placeVaultDocument({
     programId,
     documentId: ingested.document.id,
     organizationId: tenantId,
@@ -316,6 +324,16 @@ async function ingestAndFile(
     ipAddress: args.ipAddress,
     userAgent: args.userAgent,
   });
+  } catch (err) {
+    // The ingest above admitted a vault row; a placement that throws (not
+    // refuses) used to leave it behind while the route answered 500 — an
+    // orphan the vault then listed as a document nobody filed.
+    await revertIngest({
+      pool: args.pool, tenantId, actorId: actor.id, vaultDocumentId: ingested.document.id, programId,
+      why: `filing threw: ${err instanceof Error ? err.message : String(err)}`,
+    });
+    throw err;
+  }
   if (!placed.ok) {
     await revertIngest({
       pool: args.pool, tenantId, actorId: actor.id, vaultDocumentId: ingested.document.id, programId,

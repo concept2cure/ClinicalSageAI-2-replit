@@ -7,8 +7,10 @@
  * 820.70 + ISO 13485 §7 expect for devices.
  *
  * The controlled lifecycle is a state machine (CHANGE_TRANSITIONS); illegal
- * transitions throw InvalidChangeTransitionError. Approval enforces segregation
- * of duties (the approver must differ from the proposer). Every transition
+ * transitions throw InvalidChangeTransitionError. Approval is not made here:
+ * it is an electronic signature, written only by approveQmsChangeSigned
+ * (change-approval-signature.ts), which also enforces that the approver is not
+ * the proposer. Every transition
  * stamps the relevant actor + timestamp on the row; the route layer writes the
  * 21 CFR Part 11 audit entry.
  *
@@ -55,7 +57,18 @@ export const CHANGE_TRANSITIONS: Record<ChangeState, ChangeState[]> = {
 };
 
 export class InvalidChangeTransitionError extends Error {}
-export class SegregationOfDutiesError extends Error {}
+/** Approval is a signed act; see approveQmsChangeSigned. Nothing was written. */
+export class ChangeApprovalRequiresSignatureError extends Error {
+  readonly code = 'CHANGE_APPROVAL_REQUIRES_SIGNATURE';
+  constructor() {
+    super(
+      'Approving a change is an electronic signature: it needs the approver\'s password and second factor. ' +
+        'Approve it on the change in the Quality register (POST /api/mdx/qms/changes/:id/approve). Nothing was changed.',
+    );
+    this.name = 'ChangeApprovalRequiresSignatureError';
+  }
+}
+
 
 export interface ChangeControlRow {
   id: number;
@@ -182,11 +195,11 @@ export async function updateChange(orgId: number, id: number, p: {
 
 /**
  * Advance a change through the controlled lifecycle. Validates the transition
- * against CHANGE_TRANSITIONS, enforces segregation of duties on approval, and
- * stamps the relevant actor + timestamp for the target state.
+ * against CHANGE_TRANSITIONS and stamps the relevant actor + timestamp for the
+ * target state. Approval is not a transition this function makes.
  *
  * Throws InvalidChangeTransitionError for an illegal move and
- * SegregationOfDutiesError when the approver equals the proposer.
+ * ChangeApprovalRequiresSignatureError for 'approved'.
  */
 export async function transitionChange(orgId: number, id: number, to: ChangeState, actor: {
   userId?: number | null; effectivenessReview?: string | null;
@@ -198,11 +211,18 @@ export async function transitionChange(orgId: number, id: number, to: ChangeStat
   if (!allowed.includes(to)) {
     throw new InvalidChangeTransitionError(`Cannot move change from ${from} to ${to}`);
   }
-  // Segregation of duties: the approver must not be the proposer (ICH Q10 /
-  // Part 11 independent review).
-  if (to === 'approved' && actor.userId != null && change.proposed_by != null
-      && Number(actor.userId) === Number(change.proposed_by)) {
-    throw new SegregationOfDutiesError('The approver must differ from the person who proposed the change.');
+  /* Approval is an electronic signature (21 CFR 11.50; ICH Q10 §3.2.3), and
+     this function cannot take one: it re-verifies nobody and writes no
+     signature row. It used to stamp approved_by / approved_at here, checked
+     only for segregation of duties, for the HTTP route and for the AnA tool
+     qms_change_transition alike (security review 2026-09-24, DP-31). The one
+     writer of an approval is now approveQmsChangeSigned
+     (change-approval-signature.ts), behind POST /api/mdx/qms/changes/:id/approve,
+     which also carries the segregation-of-duties check. Refused here, after the
+     legality check so an illegal move is still named as one, so no caller of
+     this function can approve. */
+  if (to === 'approved') {
+    throw new ChangeApprovalRequiresSignatureError();
   }
 
   // State-specific stamps.
@@ -210,10 +230,6 @@ export async function transitionChange(orgId: number, id: number, to: ChangeStat
   const args: unknown[] = [to];
   const add = (col: string, val: unknown) => { args.push(val); sets.push(`${col} = $${args.length}`); };
   switch (to) {
-    case 'approved':
-      add('approved_by', actor.userId ?? null);
-      sets.push('approved_at = now()');
-      break;
     case 'verification':
       // Entering verification means implementation is complete.
       sets.push('implemented_at = COALESCE(implemented_at, now())');
