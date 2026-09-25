@@ -1996,6 +1996,10 @@ jobs:
           if-no-files-found: warn
 
       - name: Trivy filesystem scan (deps + secrets)
+        # Runs after an earlier failed step too, so a red job still says whether the
+        # tree carries a HIGH/CRITICAL finding (security audit INF-08). Not after a
+        # cancel. tests/ci/trivy-steps-run-after-failures.contract.test.ts
+        if: ${{ !cancelled() }}
         # Blocking gate: fails the job on HIGH/CRITICAL findings so they cannot
         # be merged. (severity threshold + exit-code 1; no continue-on-error.)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
@@ -2007,6 +2011,10 @@ jobs:
           format: table
 
       - name: Trivy config scan (Dockerfile/IaC)
+        # Runs after an earlier failed step too, so a red job still says whether the
+        # tree carries a HIGH/CRITICAL finding (security audit INF-08). Not after a
+        # cancel. tests/ci/trivy-steps-run-after-failures.contract.test.ts
+        if: ${{ !cancelled() }}
         # Blocking. The deploy workflow's security-gate runs this same scan,
         # also blocking, before build-push. Without this copy a finding would
         # show only when a release is tagged; while it was advisory, 16 findings
