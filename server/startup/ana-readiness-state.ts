@@ -43,7 +43,9 @@
  *                     "nobody checked" is not a yes; if it is ever observed on
  *                     a live process, a boot path returned without recording a
  *                     verdict and a red probe is the correct, loud response.
- *   'ready'         — at least one live AI provider is enabled. AnA can answer.
+ *   'ready'         — at least one live AI provider is enabled, and among its
+ *                     enabled models is one approved for every high-risk task
+ *                     type. AnA can answer and can draft.
  *   'deterministic' — AI_GATEWAY_DETERMINISTIC is an explicit operator opt-in,
  *                     so it PASSES readiness — but it is named distinctly and
  *                     never collapsed into 'ready', because the two are not the
@@ -51,14 +53,47 @@
  *                     fixtures from a live model at a glance.
  *   'no_provider'   — the gateway initialized with zero enabled providers.
  *                     FAILS. This is the incident above.
+ *   'no_high_risk_model'
+ *                   — at least one provider is enabled, but no enabled model is
+ *                     approved for high-risk regulatory work (drafting and
+ *                     review). FAILS. See the second incident below.
  *   'error'         — the gateway could not be constructed. FAILS. Distinct
  *                     from 'no_provider' because "unknown, and we know why" is
  *                     diagnostically different from "checked, absent".
  *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * THE SECOND INCIDENT — a provider is not a drafting model (U3a, 2026-09-24).
+ *
+ * Production passed OPENAI_API_KEY and nothing else. Since 2026-09-22 the
+ * gateway refuses high-risk work (document_drafting, regulatory_review) to any
+ * model not marked `approvedForHighRisk` in ai-governance/approved-models.ts,
+ * and every model so marked is Claude (first-party, Bedrock or Vertex). So
+ * every Authoring draft was refused with MODEL_NOT_APPROVED_FOR_HIGH_RISK —
+ * while this module reported 'ready', because it counted providers and asked
+ * nothing about what their models were allowed to do. Drafting is the job the
+ * launch catalog's Authoring surface exists for; a process that refuses every
+ * draft cannot do the thing it exists to do, and must not report ready.
+ *
+ * The check below asks the gateway's own registry (enabled = model on AND its
+ * provider configured) and the canonical approval function — the same two
+ * facts `selectModel` uses — so readiness and routing cannot disagree about
+ * whether drafting has a model. Per-request placement (residency, ZDR,
+ * sensitive-data approvals) is NOT checked here: it depends on the request,
+ * and can still refuse an individual draft on a deployment that is ready.
+ * ─────────────────────────────────────────────────────────────────────────────
+ *
  * @module server/startup/ana-readiness-state
  */
 
-export type AnaReadiness = 'unknown' | 'ready' | 'deterministic' | 'no_provider' | 'error';
+import type { ModelConfig, TaskType } from '../services/ai-gateway/types';
+
+export type AnaReadiness =
+  | 'unknown'
+  | 'ready'
+  | 'deterministic'
+  | 'no_provider'
+  | 'no_high_risk_model'
+  | 'error';
 
 let anaReadiness: AnaReadiness = 'unknown';
 let anaDetail = '';
@@ -118,13 +153,74 @@ export async function evaluateAnaReadiness(): Promise<AnaReadiness> {
     if (!providers || providers.length === 0) {
       setAnaReadiness(
         'no_provider',
-        'No AI provider is configured. Set ANTHROPIC_API_KEY (or OPENAI_API_KEY / ' +
-          'KIMI_API_KEY) — without one, every AnA turn returns 503 GATEWAY_UNAVAILABLE.'
+        'No AI provider is configured. Set ANTHROPIC_API_KEY (or AI_BEDROCK_ENABLED / ' +
+          'AI_VERTEX_ENABLED) — without one, every AnA turn returns 503 GATEWAY_UNAVAILABLE. ' +
+          'OPENAI_API_KEY or KIMI_API_KEY alone answer chat but not regulatory drafting, which ' +
+          'only an approvedForHighRisk model may serve.'
       );
       return 'no_provider';
     }
 
-    setAnaReadiness('ready', `AnA has ${providers.length} provider(s): ${providers.join(', ')}`);
+    // A provider is not a drafting model. Fail closed if the gateway cannot
+    // show its registry: a posture readiness cannot inspect is not one it may
+    // pass.
+    if (typeof gw.getModels !== 'function') {
+      setAnaReadiness(
+        'error',
+        'AI gateway exposes no model registry, so whether any enabled model is approved for ' +
+          'regulatory drafting cannot be checked'
+      );
+      return 'error';
+    }
+
+    const { HIGH_RISK_TASK_TYPES, isApprovedForHighRisk } = await import(
+      '../services/ai-governance/approved-models.js'
+    );
+    const models: ModelConfig[] = gw.getModels() ?? [];
+    // The same predicate the gateway's selectModel applies to a high-risk
+    // request: enabled (model on and provider configured), capable of the
+    // task, and approved by the canonical registry. No second list.
+    const serves = (m: ModelConfig, task: TaskType) =>
+      m.capabilities.includes(task) && isApprovedForHighRisk(m.id);
+
+    const unserved: TaskType[] = [];
+    const servingIds = new Set<string>();
+    for (const task of HIGH_RISK_TASK_TYPES) {
+      const live = models.filter(m => m.enabled && serves(m, task));
+      if (live.length === 0) unserved.push(task);
+      for (const m of live) servingIds.add(m.id);
+    }
+
+    if (unserved.length > 0) {
+      // Name what would fix it, from the registry rather than from memory:
+      // every model approved for the missing work, grouped by the provider
+      // that would have to be enabled to reach it.
+      const byProvider = new Map<string, string[]>();
+      for (const m of models) {
+        if (!unserved.some(task => serves(m, task))) continue;
+        byProvider.set(m.provider, [...(byProvider.get(m.provider) ?? []), m.id]);
+      }
+      const remedy =
+        byProvider.size > 0
+          ? 'Models approved for it, by provider: ' +
+            [...byProvider].map(([p, ids]) => `${p} (${ids.join(', ')})`).join('; ') +
+            '. Enabling one of those providers is a data-placement decision, not only a key.'
+          : 'The model registry holds no model approved for it at all.';
+      setAnaReadiness(
+        'no_high_risk_model',
+        `AI provider(s) enabled: ${providers.join(', ')} — but no enabled model is approved for ` +
+          `regulatory drafting and review (${unserved.join(', ')}), so every Authoring draft is ` +
+          `refused with MODEL_NOT_APPROVED_FOR_HIGH_RISK. ${remedy} ` +
+          'See approvedForHighRisk in server/services/ai-governance/approved-models.ts.'
+      );
+      return 'no_high_risk_model';
+    }
+
+    setAnaReadiness(
+      'ready',
+      `AnA has ${providers.length} provider(s): ${providers.join(', ')}; regulatory drafting ` +
+        `and review served by ${[...servingIds].join(', ')}`
+    );
     return 'ready';
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
@@ -158,6 +254,19 @@ export function logAnaReadinessBanner(): void {
         '└─────────────────────────────────────────────────────────────────────────┘\n' +
         `  ${detail}\n` +
         '  Unset AI_GATEWAY_DETERMINISTIC to run AnA against a live provider.\n'
+    );
+    return;
+  }
+
+  if (state === 'no_high_risk_model') {
+    console.error(
+      '\n' +
+        '┌─────────────────────────────────────────────────────────────────────────┐\n' +
+        '│  AnA CANNOT DRAFT. NO ENABLED MODEL IS APPROVED FOR REGULATORY DRAFTING. │\n' +
+        '└─────────────────────────────────────────────────────────────────────────┘\n' +
+        `  ${detail}\n` +
+        '  Every drafting and regulatory-review request will be refused until this is fixed.\n' +
+        '  /readyz is reporting NOT READY for this reason.\n'
     );
     return;
   }

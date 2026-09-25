@@ -73,12 +73,29 @@ export function classifyGatewayError(err: unknown): ClassifiedGatewayError {
   }
   // Before the general policy branch: it is a GatewayPolicyError subclass, and
   // "blocked by AI gateway policy" would tell the author nothing they can act on.
+  //
+  // Neither message says "try again shortly". Until 2026-09-24 both did, and it
+  // was false: this refusal is configuration, not load, and on an OpenAI-only
+  // deployment (every approvedForHighRisk model is Claude) it answered every
+  // draft the same way forever (U3a). /readyz now reports that posture as
+  // ana 'no_high_risk_model'; this is what the author sees if it serves anyway.
   if (err instanceof ModelNotApprovedError) {
+    // `reason` is read defensively: route tests mock this class bare, and a
+    // refusal without one is treated as the configuration case.
+    if ((err as { reason?: unknown }).reason === 'explicit') {
+      return {
+        code: 'PROVIDER_UNAVAILABLE',
+        message:
+          'The model requested is not approved for regulatory drafting and review, so this ' +
+          'request was not sent to it.',
+      };
+    }
     return {
       code: 'PROVIDER_UNAVAILABLE',
       message:
-        'No model approved for regulatory drafting and review is available right now, ' +
-        'so this request was not sent to one that is not approved for it. Try again shortly.',
+        'No model approved for regulatory drafting and review is configured on this deployment ' +
+        'for this request, so it was not sent to one that is not approved for it. Retrying will ' +
+        'not change this; an administrator needs to enable an approved model.',
     };
   }
   // Matched by its code, not `instanceof MediaNotCarriedError`: route tests mock
