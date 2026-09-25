@@ -77,14 +77,14 @@ export const REVISE_QMS_DOCUMENT: AnaTool = {
 export const RETIRE_QMS_DOCUMENT: AnaTool = {
   name: 'retire_qms_document',
   description:
-    "Retire a controlled QMS document — the terminal lifecycle state. Captures an optional reason in the audit trail. Use when the user wants to retire / withdraw a procedure that is no longer in use.",
+    "Retire a controlled QMS document — the terminal lifecycle state. Requires a reason for change of at least 8 characters, recorded in the audit trail; ask the user for it if they did not give one. Use when the user wants to retire / withdraw a procedure that is no longer in use.",
   input_schema: {
     type: 'object',
     properties: {
       document_id: { type: 'number' },
       reason:      { type: 'string' },
     },
-    required: ['document_id'],
+    required: ['document_id', 'reason'],
   },
 };
 
