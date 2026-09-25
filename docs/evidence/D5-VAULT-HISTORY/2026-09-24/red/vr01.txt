@@ -1,0 +1,14 @@
+ × server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > a Vault download joins the sequenced chain > is written as a sequenced row, not a legacy one
+   → a download outside a transaction is recorded as legacy: expected null not to be null
+ × server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > a Vault download joins the sequenced chain > leaves the tenant chain verifiable
+   → expected 1 to be +0 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 3 skipped (5)
+ × client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault document history > lists who did what to this document, newest first, with the chain verdict
+   → Unable to find an element by: [data-testid="vault-document-history"]
+ × client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault document history > a failed read says so, and does not read as a document with no history
+   → Unable to find an element by: [data-testid="vault-document-history"]
+ × client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault document history > a broken chain is reported, not hidden
+   → Unable to find an element with the text: /audit chain check failed/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed (3)
