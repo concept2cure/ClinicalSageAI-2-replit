@@ -73,12 +73,15 @@ const props = () => ({
   onPlaced: vi.fn(),
 });
 
-/** Choose the submission, then type a section code. */
-async function fillTarget(section = '3.2.P.8.3', submissionId = '4') {
+const REASON = 'Stability summary approved for this sequence';
+
+/** Choose the submission, type a section code, and give the placement's reason. */
+async function fillTarget(section = '3.2.P.8.3', submissionId = '4', reason = REASON) {
   const sub = await screen.findByLabelText('Target submission');
   fireEvent.change(sub, { target: { value: submissionId } });
   await screen.findByLabelText('Sequence');
   fireEvent.change(screen.getByLabelText(/^Section code/), { target: { value: section } });
+  fireEvent.change(screen.getByLabelText(/^Reason for this placement/), { target: { value: reason } });
 }
 
 beforeEach(() => mockApi());
@@ -226,3 +229,29 @@ describe('a non-PDF is refused before anything is written', () => {
     expect((screen.getByRole('button', { name: /place into submission/i }) as HTMLButtonElement).disabled).toBe(false);
   });
 });
+
+/* PX-1 (docs/evidence/reviews/2026-09-24/lenses.md): the placement's audit row
+   recorded what changed and never why. The server now refuses a placement
+   without a reason; the dialog says so before the click and sends it. */
+describe('the placement carries its reason', () => {
+  const placeButton = () => screen.getByRole('button', { name: /^Place into submission$/ }) as HTMLButtonElement;
+
+  it('keeps Place disabled until a reason meets the floor, and says why', async () => {
+    render(<VaultPlaceIntoSubmission {...props()} />);
+    await fillTarget('3.2.P.8.3', '4', 'short');
+    expect(placeButton().disabled).toBe(true);
+    expect(placeButton().title).toMatch(/reason for this placement/i);
+    expect(screen.getByText('At least 8 characters.')).toBeTruthy();
+    fireEvent.change(screen.getByLabelText(/^Reason for this placement/), { target: { value: REASON } });
+    expect(placeButton().disabled).toBe(false);
+  });
+
+  it('sends the trimmed reason with the leaf', async () => {
+    render(<VaultPlaceIntoSubmission {...props()} />);
+    await fillTarget('3.2.P.8.3', '4', `  ${REASON}  `);
+    fireEvent.click(placeButton());
+    await waitFor(() => expect(writes.some((w) => w.method === 'PUT')).toBe(true));
+    expect((writes.find((w) => w.method === 'PUT')!.body as Record<string, unknown>).reason).toBe(REASON);
+  });
+});
+

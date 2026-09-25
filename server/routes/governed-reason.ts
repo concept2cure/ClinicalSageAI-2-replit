@@ -14,9 +14,9 @@
  * should read. It is never replaced.
  */
 import { z } from 'zod';
+import { GOVERNED_REASON_MIN, GOVERNED_REASON_MAX } from '../../shared/constants/governed-reason';
 
-export const GOVERNED_REASON_MIN = 8;
-export const GOVERNED_REASON_MAX = 2000;
+export { GOVERNED_REASON_MIN, GOVERNED_REASON_MAX };
 
 export const governedReason = z
   .string()

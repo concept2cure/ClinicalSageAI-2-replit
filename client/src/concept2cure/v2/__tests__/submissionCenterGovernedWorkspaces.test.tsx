@@ -253,6 +253,51 @@ describe('sequence selector drives the per-sequence workspaces', () => {
   });
 });
 
+/* PX-1 (docs/evidence/reviews/2026-09-24/lenses.md): a placement's audit row
+   recorded what changed and never why. The Builder's placement form now takes
+   the reason, keeps Place disabled below the server's floor, and sends it. */
+describe('placing a Co-Author document carries its reason', () => {
+  const REASON = 'Clinical summary approved for sequence 0000';
+  beforeEach(() =>
+    mockApi((method, url) => {
+      if (method === 'GET' && url === '/api/coauthor/documents') {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ documents: [{ id: 88, title: 'M2.7 Clinical Summary', moduleNumber: '2.7.3', status: 'draft' }] }),
+        };
+      }
+      if (method === 'PUT' && url === '/api/submissions/sequences/21/leaves') {
+        return { ok: true, status: 200, json: async () => ({ id: 612, sectionCode: '2.7.3' }) };
+      }
+      return undefined;
+    }),
+  );
+
+  it('keeps Place disabled without a reason, then sends it with the leaf', async () => {
+    render(<SubmissionCenter {...props()} />);
+    await waitFor(() => expect(document.body.textContent).toContain('ZX-9 First-in-Human'));
+    await openWorkspace('Builder');
+    fireEvent.click(await screen.findByRole('button', { name: /Place a Co-Author document as a leaf/ }));
+    fireEvent.change(await screen.findByLabelText('Source document'), { target: { value: '88' } });
+    const place = screen.getByRole('button', { name: /Place leaf in the sequence/ }) as HTMLButtonElement;
+    expect((screen.getByLabelText('Section code') as HTMLInputElement).value).toBe('2.7.3');
+    expect(place.disabled, 'no reason given yet').toBe(true);
+
+    fireEvent.change(screen.getByLabelText(/^Reason for this placement/), { target: { value: REASON } });
+    expect(place.disabled).toBe(false);
+    fireEvent.click(place);
+
+    await waitFor(() =>
+      expect(apiRequest).toHaveBeenCalledWith(
+        'PUT',
+        '/api/submissions/sequences/21/leaves',
+        expect.objectContaining({ documentId: 88, sectionCode: '2.7.3', reason: REASON }),
+      ),
+    );
+  });
+});
+
 describe('lifecycle transitions post the real endpoint; verdict verbatim', () => {
   it('surfaces the server refusal VERBATIM when the lifecycle refuses', async () => {
     mockApi((method, url) => {
