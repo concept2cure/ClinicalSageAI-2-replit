@@ -1659,3 +1659,48 @@ describe('Layer 2: a binary design reports the power it computed', () => {
     expect(new Set(scen.map((s) => s.power)).size).toBeGreaterThan(1);
   });
 });
+
+// ═══════════════════════════════════════════════════════════════
+// BS12 (2026-09-25): the CSR §9.7 methods section states what the inputs
+// establish, and marks every statement about CONDUCT for the sponsor. It is
+// generated from planning inputs alone, yet asserted — in the past tense, in a
+// document filed to the agency — that "Analyses followed the pre-specified SAP",
+// that efficacy "was analyzed on the ITT population", that missing data had
+// "tipping-point sensitivity analyses", and that secondary endpoints "were
+// tested within a pre-specified hierarchy". Nothing checked any of it.
+// ═══════════════════════════════════════════════════════════════
+
+describe('Layer 6: the CSR methods section does not assert conduct it cannot know (BS12)', () => {
+  const methods = (input: StatisticalInput) => {
+    const comp = engine.compute(input);
+    const jdg = judgment.judge(input, comp);
+    const domain = domainAdapter.adapt(input, comp, jdg);
+    return docGenerator.generate('statistical_methods_section', input, comp, jdg, domain, undefined, {
+      projectId: 1, organizationId: 1, userId: 1,
+    }).content;
+  };
+
+  it.each([
+    'Analyses followed the pre-specified SAP',
+    'analyzed on the ITT population',
+    'tipping-point sensitivity analyses',
+    'tested within a pre-specified hierarchy',
+    'handled per the pre-specified SAP approach',
+  ])('does not state "%s" as fact', (claim) => {
+    expect(methods(pharmaInput)).not.toContain(claim);
+    expect(methods({ ...pharmaInput, missingDataMethod: 'MMRM' })).not.toContain(claim);
+  });
+
+  it('marks what the sponsor must confirm, in the placeholder the CSR completeness check detects', async () => {
+    const { hasUnresolvedPlaceholders } = await import('../../server/services/csr-builder');
+    const content = methods(pharmaInput);
+    expect(hasUnresolvedPlaceholders(content)).toBe(true);
+    expect(content).toContain('[DATA TO BE INSERTED');
+  });
+
+  it('still states what the plan and the engine do establish', () => {
+    const content = methods({ ...pharmaInput, missingDataMethod: 'MMRM' });
+    expect(content).toMatch(/planned sample size of \d+/);
+    expect(content).toContain('MMRM');
+  });
+});

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-25T23:31:25.252Z",
+  "generatedAt": "2026-09-25T23:52:39.700Z",
   "git": {
-    "sha": "86af274517846736a496b208401f7864e4636c7f",
+    "sha": "c34bd97a1abbb6ccd9fb5d50ff5c0dc38458fe2a",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2248,7 +2248,7 @@
       },
       {
         "file": "server/src/routes/stability.router.ts",
-        "lines": 2849
+        "lines": 2852
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2515,6 +2515,10 @@
         "lines": 1713
       },
       {
+        "file": "tests/services/ana-biostats.test.ts",
+        "lines": 1707
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
         "lines": 1704
       },
@@ -2529,10 +2533,6 @@
       {
         "file": "server/routes/taskManagement.routes.ts",
         "lines": 1668
-      },
-      {
-        "file": "tests/services/ana-biostats.test.ts",
-        "lines": 1662
       },
       {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
