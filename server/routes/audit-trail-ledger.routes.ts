@@ -373,6 +373,76 @@ export async function readAuditLedger(
   return { success: true, data: merged, sources, meta: { chain } };
 }
 
+/**
+ * One record's rows from the chained ledger, newest first: a document's own
+ * audit trail (21 CFR 11.10(e), "available for review") without a second audit
+ * SQL. Same table, same row mapping and the same whole-chain verdict as
+ * readAuditLedger.
+ *
+ * The predecessor of each row is its predecessor in the TENANT chain, found by
+ * chain_seq. A LAG over the filtered rows would name the record's previous row
+ * instead, which is not what the chain links to whenever another record's event
+ * came between. A legacy row (chain_seq NULL) has no single predecessor the
+ * sequence can name; its prevHash is empty, and the verdict covers it.
+ */
+const RECORD_HISTORY_SQL = `
+  SELECT a.id, a.action, a.actor_id, a.target, a.table_name, a.record_id, a.reason,
+         a.ip_address, a.new_values, a.occurred_at, a.sha256_chain, a.chain_seq,
+         prev.sha256_chain AS prev_hash,
+         to_char(a.occurred_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI') AS when_display,
+         u.name  AS user_name,
+         u.email AS user_email
+    FROM audit_logs a
+    LEFT JOIN LATERAL (
+      SELECT p.sha256_chain
+        FROM audit_logs p
+       WHERE a.chain_seq IS NOT NULL
+         AND p.tenant_id = a.tenant_id
+         AND p.chain_seq < a.chain_seq
+       ORDER BY p.chain_seq DESC
+       LIMIT 1
+    ) prev ON TRUE
+    LEFT JOIN users u ON u.id = a.actor_id
+   WHERE a.tenant_id = $1
+     AND a.table_name = $2
+     AND a.record_id = $3
+     AND a.sha256_chain IS NOT NULL
+   ORDER BY a.chain_seq DESC NULLS LAST, a.occurred_at DESC, a.id DESC
+   LIMIT $4`;
+
+export interface RecordAuditHistory {
+  data: AuditLedgerEntry[];
+  meta: { chain: AuditLedgerChainVerdict };
+}
+
+export async function readRecordAuditHistory(
+  client: Pick<PoolClient, 'query'>,
+  orgId: number,
+  record: { tableName: string; recordId: string; limit?: number },
+  verifyTenantChain: TenantChainVerifier = verifyOnSuperAdminScope,
+): Promise<RecordAuditHistory> {
+  const limit = Math.min(Math.max(record.limit ?? 200, 1), 1000);
+  const rows = await client.query(RECORD_HISTORY_SQL, [orgId, record.tableName, record.recordId, limit]);
+  const data = rows.rows.map((r: Record<string, unknown>) => ({
+    ...auditLogEntry(r),
+    prevHash: r.prev_hash == null ? '' : String(r.prev_hash),
+  }));
+  const v = await verifyTenantChain(orgId);
+  return {
+    data,
+    meta: {
+      chain: {
+        store: 'audit_logs',
+        ok: v.ok,
+        rowsChecked: v.rowsChecked,
+        legacyRows: v.legacyRows,
+        sequencedRows: v.sequencedRows,
+        ...(v.brokenAt ? { brokenAt: v.brokenAt } : {}),
+      },
+    },
+  };
+}
+
 // ─── Router Factory ───────────────────────────────────────────────────────────
 
 /**

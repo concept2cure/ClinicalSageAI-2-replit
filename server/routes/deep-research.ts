@@ -346,10 +346,16 @@ router.post('/document/generate', requireTier('standard'), async (req: Request, 
       const { pool } = await import('../db.js');
       const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
       const embeddingService = getEmbeddingService(pool);
+      // The session's tenant key. This search used to pass none, so every
+      // section's evidence was ranked across every tenant's Data Room wherever
+      // RLS was not filtering. No key is a failed retrieval, never an unscoped one.
+      const { currentTenantOrgUuid, TenantKeyRequiredError } = await import('../db/currentTenant.js');
+      const orgUuid = await currentTenantOrgUuid(pool);
+      if (!orgUuid) throw new TenantKeyRequiredError('no tenant key for this session');
       // Retrieve evidence once for the study, indexed by section relevance
       for (const tmpl of templates) {
         const searchQuery = `${tmpl.title} ${studyInfo.title} ${studyInfo.indication || ''}`.trim();
-        const results = await embeddingService.searchHybrid(searchQuery, 3, 0.65);
+        const results = await embeddingService.searchHybrid(searchQuery, 3, 0.65, orgUuid);
         if (results.length > 0) {
           const block = results.map((r: any, i: number) => {
             const content = r.content.length > 400 ? r.content.substring(0, 400) + '…' : r.content;

@@ -306,6 +306,8 @@ export function QualityApp({ onAskAna, initialTab = 'sop' }: QualityAppProps) {
               changes={changes}
               loading={changeReg.loading}
               showingSample={showingSampleChanges}
+              error={changeReg.error}
+              onRetry={changeReg.refresh}
             />
           )}
         </div>
