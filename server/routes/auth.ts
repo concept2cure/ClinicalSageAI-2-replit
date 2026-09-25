@@ -2306,7 +2306,9 @@ router.post('/password/change', async (req: Request, res: Response) => {
 
 // ─── License Request ────────────────────────────────────────────────────────
 // Public endpoint: accepts a license / demo request from unauthenticated users.
-// Stores in DB (license_requests table) and optionally emails the sales team.
+// Stores in DB (license_requests table). It notifies no one: the platform owner
+// reads stored requests on Master Licensing → Enterprise requests
+// (server/routes/admin/master-enterprise-requests.ts). There is no email.
 
 const licenseRequestLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
