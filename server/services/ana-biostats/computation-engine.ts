@@ -161,9 +161,8 @@ export class ComputationEngine {
     const adjustedPerGroup = Math.ceil(nPerGroup / (1 - input.attritionRate));
     const adjustedTotal = adjustedPerGroup * groups;
 
-    // Verify actual power
-    const se = sigma * Math.sqrt(1 / nPerGroup + 1 / (nPerGroup * r));
-    const actualPower = this.normCdf(input.effectSize / se - zAlpha) + this.normCdf(-input.effectSize / se - zAlpha);
+    // The power of the test this N was sized for (continuousPower; BS8).
+    const actualPower = this.continuousPower(input, nPerGroup);
 
     // Generate scenarios
     const scenarios = this.generateScenarios(input, 'continuous');
@@ -183,6 +182,39 @@ export class ComputationEngine {
       assumptions,
       scenarios,
     };
+  }
+
+  /**
+   * The power of the test a continuous design was SIZED for, at `nPerGroup` in
+   * the reference arm (the other arm holds nPerGroup·r). One function for the
+   * design's achieved power and for every re-estimate of it, so the figure the
+   * engine reports is always the power of the test its N was computed for:
+   *
+   *   superiority      two-sided test of δ
+   *   non-inferiority  δ against the margin, |δ − Δ_NI| — the quantity the N
+   *                    was sized on
+   *   equivalence      the margin the TOST was sized on, at the same critical value
+   *
+   * Before 2026-09-25 (BS8) the achieved power was always the superiority power
+   * of δ. A non-inferiority design sized correctly for 90% therefore reported
+   * about 5%, the judgment called it inadequate and recommended escalation, and
+   * the figure reached SAPs and protocols. The critical value is the one the
+   * sizing used (z at 1 − α/2); what α means for a one-sided hypothesis is the
+   * input's convention and is not changed here.
+   */
+  private continuousPower(input: StatisticalInput, nPerGroup: number): number {
+    if (nPerGroup <= 0) return 0;
+    const zAlpha = this.normQuantile(1 - input.alpha / 2);
+    const sigma = input.variance ? Math.sqrt(input.variance) : input.effectSize;
+    const r = input.allocationRatio || 1;
+    const se = sigma * Math.sqrt(1 / nPerGroup + 1 / (nPerGroup * r));
+    if (input.studyType === 'non_inferiority' && input.nonInferiorityMargin) {
+      return this.normCdf(Math.abs(input.effectSize - input.nonInferiorityMargin) / se - zAlpha);
+    }
+    if (input.studyType === 'equivalence' && input.equivalenceMargin) {
+      return this.normCdf(Math.abs(input.equivalenceMargin) / se - zAlpha);
+    }
+    return this.normCdf(input.effectSize / se - zAlpha) + this.normCdf(-input.effectSize / se - zAlpha);
   }
 
   private computeBinary(input: StatisticalInput, assumptions: ComputationAssumption[]): ComputationResult {
@@ -587,15 +619,10 @@ export class ComputationEngine {
     };
   }
 
+  /** The design's power at a total of `n` evaluable subjects — the same test (continuousPower). */
   private estimatePowerAtN(input: StatisticalInput, n: number): number {
     if (n <= 0) return 0;
-    const zAlpha = this.normQuantile(1 - input.alpha / 2);
-    const sigma = input.variance ? Math.sqrt(input.variance) : input.effectSize;
-    const nPerGroup = Math.floor(n / (input.numberOfGroups ?? 2));
-    if (nPerGroup <= 0) return 0;
-    const se = sigma * Math.sqrt(2 / nPerGroup);
-    const ncp = input.effectSize / se;
-    return this.normCdf(ncp - zAlpha) + this.normCdf(-ncp - zAlpha);
+    return this.continuousPower(input, Math.floor(n / (input.numberOfGroups ?? 2)));
   }
 
   // ════════════════════════════════════════════════════════════════

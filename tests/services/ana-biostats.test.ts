@@ -1471,3 +1471,93 @@ describe('SME Fallback & Failure Behavior', () => {
     expect(enhancement.additionalGuidance.length + enhancement.provisionalNotes.length + enhancement.escalationNotes.length).toBeGreaterThan(0);
   });
 });
+
+// ═══════════════════════════════════════════════════════════════
+// BS8 (2026-09-25): the achieved power is the power of the test the N was
+// sized for. Non-inferiority was sized on (δ − Δ_NI) and its power computed
+// from δ alone with the superiority formula, so a design sized correctly for
+// 90% reported ~5% power and the judgment said 'inadequate', 'escalate' — a
+// figure that reached SAPs and protocols. Equivalence had the same defect.
+// ═══════════════════════════════════════════════════════════════
+
+describe('Layer 2: achieved power is the power of the sized test (BS8)', () => {
+  const niInput: StatisticalInput = {
+    clientTrack: 'biotech_pharma',
+    regulatoryBody: 'FDA',
+    studyType: 'non_inferiority',
+    objectiveType: 'efficacy',
+    endpointType: 'continuous',
+    alpha: 0.05,
+    powerTarget: 0.9,
+    effectSize: 0,
+    variance: 1,
+    nonInferiorityMargin: -0.2,
+    attritionRate: 0.1,
+    allocationRatio: 1,
+    numberOfGroups: 2,
+  };
+
+  it('a non-inferiority design sized for 90% reports 90%, not the superiority power of δ', () => {
+    const result = engine.compute(niInput);
+    expect(result.method).toContain('non-inferiority');
+    // (1+1)·1·(1.96+1.2816)²/0.2² = 525.4 → 526 per group
+    expect(result.sampleSize.perGroup).toBe(526);
+    expect(result.power).toBeGreaterThanOrEqual(0.9);
+    expect(result.power).toBeLessThan(0.91);
+  });
+
+  it('holds for a positive true difference and an unequal allocation', () => {
+    const result = engine.compute({ ...niInput, effectSize: 0.05, nonInferiorityMargin: -0.3, allocationRatio: 2 });
+    expect(result.power).toBeGreaterThanOrEqual(0.9);
+    expect(result.power).toBeLessThan(0.91);
+  });
+
+  it('an equivalence design sized for 80% reports 80%', () => {
+    const result = engine.compute({
+      ...niInput,
+      studyType: 'equivalence',
+      nonInferiorityMargin: undefined,
+      equivalenceMargin: 0.25,
+      powerTarget: 0.8,
+    });
+    expect(result.method).toContain('TOST');
+    expect(result.power).toBeGreaterThanOrEqual(0.8);
+    expect(result.power).toBeLessThan(0.81);
+  });
+
+  it('the judgment does not call a correctly sized non-inferiority design underpowered', () => {
+    const input = {
+      ...niInput,
+      comparatorType: 'active' as const,
+      estimandStrategy: 'treatment_policy' as const,
+      missingDataMethod: 'MMRM' as const,
+    };
+    const result = judgment.judge(input, engine.compute(input));
+    expect(result.dimensions.find((d) => d.name === 'Power Adequacy')?.verdict).toBe('adequate');
+    expect(result.actionRecommendation).not.toBe('escalate');
+  });
+
+  it('a non-inferiority trial against placebo is still flagged — for its comparator, not its power', () => {
+    const input = { ...niInput, estimandStrategy: 'treatment_policy' as const, missingDataMethod: 'MMRM' as const };
+    const result = judgment.judge(input, engine.compute(input));
+    expect(result.dimensions.find((d) => d.name === 'Power Adequacy')?.verdict).toBe('adequate');
+    expect(result.dimensions.find((d) => d.name === 'Comparator Appropriateness')?.verdict).toBe('inadequate');
+  });
+
+  it('missing-data power loss is measured against the same test, not collapsed to the superiority power', () => {
+    const base = engine.compute(niInput);
+    const impact = engine.computeMissingDataImpact(
+      { ...niInput, expectedMissingRate: 0.1, missingDataMethod: 'complete_case' },
+      base
+    );
+    // 10% fewer completers costs a few points of power, not ~85 of them.
+    expect(impact.adjustedPower).toBeGreaterThan(0.85);
+    expect(impact.powerReduction).toBeLessThan(0.06);
+  });
+
+  it('superiority is unchanged: sized for 80%, reports 80%', () => {
+    const result = engine.compute(pharmaInput);
+    expect(result.power).toBeGreaterThanOrEqual(pharmaInput.powerTarget);
+    expect(result.power).toBeLessThan(pharmaInput.powerTarget + 0.01);
+  });
+});
