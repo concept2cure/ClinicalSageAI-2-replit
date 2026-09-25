@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-24T20:41:37.608Z",
+  "generatedAt": "2026-09-25T01:13:33.904Z",
   "git": {
-    "sha": "79db6d95b78dba092dc3a0776bfca7d3ea7281ac",
+    "sha": "47e77c2d6dd2dfb4972a7995cac89e2cf4750e95",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1987,7 +1987,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 281377
+        "bytes": 281924
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -1999,7 +1999,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 207159
+        "bytes": 209799
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2007,7 +2007,7 @@
       },
       {
         "file": "server/routes/ana-features.ts",
-        "bytes": 181450
+        "bytes": 182169
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2079,7 +2079,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 126510
+        "bytes": 126953
       },
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
@@ -2161,7 +2161,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6442
+        "lines": 6449
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2169,11 +2169,11 @@
       },
       {
         "file": "server/routes/ana-features.ts",
-        "lines": 5450
+        "lines": 5471
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 5299
+        "lines": 5353
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2261,7 +2261,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 2588
+        "lines": 2594
       },
       {
         "file": "server/routes/knowledge-base.ts",
@@ -2456,12 +2456,12 @@
         "lines": 1815
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/device-pma.ts",
+        "file": "server/routes/c2c/ai-editing.ts",
         "lines": 1813
       },
       {
-        "file": "server/routes/c2c/ai-editing.ts",
-        "lines": 1809
+        "file": "server/services/ana/intelligence-questions/flows/device-pma.ts",
+        "lines": 1813
       },
       {
         "file": "ui_kits/home/Projects.jsx",
@@ -2508,10 +2508,6 @@
         "lines": 1699
       },
       {
-        "file": "server/services/advancedRAGPipeline.ts",
-        "lines": 1684
-      },
-      {
         "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
         "lines": 1678
       },
@@ -2526,6 +2522,10 @@
       {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
         "lines": 1650
+      },
+      {
+        "file": "server/services/advancedRAGPipeline.ts",
+        "lines": 1633
       },
       {
         "file": "services/regulatory/globalPyramids.ts",

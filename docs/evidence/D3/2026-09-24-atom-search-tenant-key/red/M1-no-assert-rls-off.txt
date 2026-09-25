@@ -1,0 +1,77 @@
+
+ RUN  v4.1.7 /home/user/w2
+
+{"level":30,"time":"2026-09-24T21:19:14.751Z","pid":7785,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T21:19:14.753Z","pid":7785,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T21:19:14.753Z","pid":7785,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > serves tenant A its own atoms (positive control)
+✅ Enhanced Embedding Service initialized
+
+stdout | tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > refuses a key naming another tenant, and runs no search
+✅ Enhanced Embedding Service initialized
+
+stdout | tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > refuses to run with no key at all — never the unfiltered search
+✅ Enhanced Embedding Service initialized
+
+stdout | tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > on that degraded path, a key naming another tenant is still refused
+✅ Enhanced Embedding Service initialized
+
+stdout | tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > outside any scope the key is the only boundary, and it holds on a connection RLS does not filter
+✅ Enhanced Embedding Service initialized
+
+ ✓ tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > serves tenant A its own atoms (positive control) 19ms
+ × tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > refuses a key naming another tenant, and runs no search 15ms
+   → expected '[{"id":119,"content":"tenant-B: a nep…' not to match /tenant-B/
+ ✓ tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > refuses to run with no key at all — never the unfiltered search 2ms
+ ✓ tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > resolves the session's own key when the scope carries none (the degraded membership path) 3ms
+ × tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > on that degraded path, a key naming another tenant is still refused 6ms
+   → expected '[{"id":119,"content":"tenant-B: a nep…' not to match /tenant-B/
+ ✓ tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > names no key outside a per-user scope 1ms
+ ✓ tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > outside any scope the key is the only boundary, and it holds on a connection RLS does not filter 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > refuses a key naming another tenant, and runs no search
+AssertionError: expected '[{"id":119,"content":"tenant-B: a nep…' not to match /tenant-B/
+
+- Expected:
+/tenant-B/
+
++ Received:
+"[{\"id\":119,\"content\":\"tenant-B: a nephrotoxicity signal in wo03_7785_mug1bhul\",\"title\":\"wo03_7785_mug1bhul tenant-B 0\",\"score\":0.7300000004470348,\"semanticScore\":1,\"keywordScore\":0.10000000149011612,\"sourceId\":\"wo03_7785_mug1bhul-tk-tenant-B-0\",\"sourceType\":\"document\"},{\"id\":121,\"content\":\"tenant-B: a nephrotoxicity signal in wo03_7785_mug1bhul\",\"title\":\"wo03_7785_mug1bhul tenant-B 1\",\"score\":0.7300000004470348,\"semanticScore\":1,\"keywordScore\":0.10000000149011612,\"sourceId\":\"wo03_7785_mug1bhul-tk-tenant-B-1\",\"sourceType\":\"document\"},{\"id\":123,\"content\":\"tenant-B: a nephrotoxicity signal in wo03_7785_mug1bhul\",\"title\":\"wo03_7785_mug1bhul tenant-B 2\",\"score\":0.7300000004470348,\"semanticScore\":1,\"keywordScore\":0.10000000149011612,\"sourceId\":\"wo03_7785_mug1bhul-tk-tenant-B-2\",\"sourceType\":\"document\"},{\"id\":125,\"content\":\"tenant-B: a nephrotoxicity signal in wo03_7785_mug1bhul\",\"title\":\"wo03_7785_mug1bhul tenant-B 3\",\"score\":0.7300000004470348,\"semanticScore\":1,\"keywordScore\":0.10000000149011612,\"sourceId\":\"wo03_7785_mug1bhul-tk-tenant-B-3\",\"sourceType\":\"document\"}]"
+
+ ❯ tests/db/atom-search-tenant-key.dbtest.ts:141:45
+    139|       out = err;
+    140|     }
+    141|     expect(JSON.stringify(out ?? null)).not.toMatch(/tenant-B/);
+       |                                             ^
+    142|     expect(out).toBeInstanceOf(TenantScopeMismatchError);
+    143|     expect(calls()).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > on that degraded path, a key naming another tenant is still refused
+AssertionError: expected '[{"id":119,"content":"tenant-B: a nep…' not to match /tenant-B/
+
+- Expected:
+/tenant-B/
+
++ Received:
+"[{\"id\":119,\"content\":\"tenant-B: a nephrotoxicity signal in wo03_7785_mug1bhul\",\"title\":\"wo03_7785_mug1bhul tenant-B 0\",\"score\":0.7300000004470348,\"semanticScore\":1,\"keywordScore\":0.10000000149011612,\"sourceId\":\"wo03_7785_mug1bhul-tk-tenant-B-0\",\"sourceType\":\"document\"},{\"id\":121,\"content\":\"tenant-B: a nephrotoxicity signal in wo03_7785_mug1bhul\",\"title\":\"wo03_7785_mug1bhul tenant-B 1\",\"score\":0.7300000004470348,\"semanticScore\":1,\"keywordScore\":0.10000000149011612,\"sourceId\":\"wo03_7785_mug1bhul-tk-tenant-B-1\",\"sourceType\":\"document\"},{\"id\":123,\"content\":\"tenant-B: a nephrotoxicity signal in wo03_7785_mug1bhul\",\"title\":\"wo03_7785_mug1bhul tenant-B 2\",\"score\":0.7300000004470348,\"semanticScore\":1,\"keywordScore\":0.10000000149011612,\"sourceId\":\"wo03_7785_mug1bhul-tk-tenant-B-2\",\"sourceType\":\"document\"},{\"id\":125,\"content\":\"tenant-B: a nephrotoxicity signal in wo03_7785_mug1bhul\",\"title\":\"wo03_7785_mug1bhul tenant-B 3\",\"score\":0.7300000004470348,\"semanticScore\":1,\"keywordScore\":0.10000000149011612,\"sourceId\":\"wo03_7785_mug1bhul-tk-tenant-B-3\",\"sourceType\":\"document\"}]"
+
+ ❯ tests/db/atom-search-tenant-key.dbtest.ts:172:45
+    170|       out = err;
+    171|     }
+    172|     expect(JSON.stringify(out ?? null)).not.toMatch(/tenant-B/);
+       |                                             ^
+    173|     expect(out).toBeInstanceOf(TenantScopeMismatchError);
+    174|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  21:19:12
+   Duration  2.99s (transform 1.09s, setup 88ms, import 2.10s, tests 433ms, environment 0ms)
+

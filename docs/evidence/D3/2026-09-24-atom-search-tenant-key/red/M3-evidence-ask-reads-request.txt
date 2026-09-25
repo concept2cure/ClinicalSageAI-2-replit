@@ -1,0 +1,68 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/w2
+
+stderr | server/routes/__tests__/evidence-ask.test.ts > POST /api/evidence/ask — fail-closed JWT-derived provenance > refuses (403) a session with no tenant key, and runs no search — never an unscoped one
+[Evidence Ask] Source retrieval failed: Cannot read properties of undefined (reading 'map')
+
+stderr | server/routes/__tests__/evidence-ask.test.ts > POST /api/evidence/ask — fail-closed JWT-derived provenance > fails closed (500) when retrieval provenance cannot be written
+[Evidence Ask] Retrieval provenance write failed: relation missing
+
+ × server/routes/__tests__/evidence-ask.test.ts > POST /api/evidence/ask — fail-closed JWT-derived provenance > refuses (403) a session with no tenant key, and runs no search — never an unscoped one 41ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "What does the protocol say?",
+      8,
+      0.6,
+      "11111111-1111-1111-1111-111111111111",
+      undefined,
+    ]
+
+
+Number of calls: 1
+
+ ✓ server/routes/__tests__/evidence-ask.test.ts > POST /api/evidence/ask — fail-closed JWT-derived provenance > ignores body organizationId and x-org-uuid; anchors retrieval + provenance to the principal 11ms
+ ✓ server/routes/__tests__/evidence-ask.test.ts > POST /api/evidence/ask — fail-closed JWT-derived provenance > refuses (422, no generated answer, model never called) when zero sources clear the threshold 5ms
+ ✓ server/routes/__tests__/evidence-ask.test.ts > POST /api/evidence/ask — fail-closed JWT-derived provenance > fails closed (500) when retrieval provenance cannot be written 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/evidence-ask.test.ts > POST /api/evidence/ask — fail-closed JWT-derived provenance > refuses (403) a session with no tenant key, and runs no search — never an unscoped one
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "What does the protocol say?",
+      8,
+      0.6,
+      "11111111-1111-1111-1111-111111111111",
+      undefined,
+    ]
+
+
+Number of calls: 1
+
+ ❯ server/routes/__tests__/evidence-ask.test.ts:136:30
+    134|       .send({ message: 'What does the protocol say?' });
+    135|
+    136|     expect(searchHybrid).not.toHaveBeenCalled();
+       |                              ^
+    137|     expect(res.status).toBe(403);
+    138|     expect(res.body.code).toBe('TENANT_CONTEXT_REQUIRED');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  21:19:42
+   Duration  780ms (transform 161ms, setup 95ms, import 241ms, tests 67ms, environment 0ms)
+
