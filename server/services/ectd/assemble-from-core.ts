@@ -475,6 +475,8 @@ export interface AssembleSubmissionResult {
   materialized: number;
   unresolvedLeaves: UnresolvedLeaf[];
   skipped: Array<{ sectionCode: string; reason: string }>;
+  /** The assembly's §11.10(e) outcome (both rows), from assembleSequence. */
+  auditTrail: AuditRowOutcome;
   /** DTD self-containment status from the packager. */
   // `missingStylesheets` travels with `missing`: selfContained is false when
   // EITHER is non-empty, so a consumer that reads only `missing` cannot say
