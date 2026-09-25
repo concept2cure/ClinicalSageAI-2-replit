@@ -278,10 +278,12 @@ module "ecs" {
   worker_desired_count = var.worker_desired_count
 
   secret_arns = module.secrets.secret_arns_list
+  # Not the frontend bucket: CloudFront serves the SPA from it and the deploy
+  # role publishes it. A task that could write it could rewrite the site every
+  # user loads (security plan P0-15, INF-03; tests/boot_contract.tftest.hcl).
+  # Vault documents have their own grant (vault_storage.tf).
   s3_bucket_arns = [
     module.evidence.evidence_bucket_arn,
-    module.cdn.frontend_bucket_arn,
-    "${module.cdn.frontend_bucket_arn}/*",
   ]
 
   # Every name deploy-aws.yml's preflight requires, so the task definition this

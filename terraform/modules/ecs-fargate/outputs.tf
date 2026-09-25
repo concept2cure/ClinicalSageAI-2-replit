@@ -51,6 +51,11 @@ output "execution_secrets_policy" {
   value       = aws_iam_role_policy.ecs_execution_secrets.policy
 }
 
+output "task_s3_policy" {
+  description = "The task role's S3 grant (JSON policy document), for the stack's tests"
+  value       = aws_iam_role_policy.ecs_task_s3.policy
+}
+
 # For the GitHub deploy role (modules/github-deploy-roles): the resources it
 # may act on, by ARN.
 output "cluster_arn" {
