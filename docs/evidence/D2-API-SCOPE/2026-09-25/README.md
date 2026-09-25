@@ -137,15 +137,95 @@ report, add any genuine infrastructure caller to the list with its reason,
 then set `enforce`. Until then the legacy namespaces stay callable, and every
 call to them is on record.
 
+## Stage 3 — the whole mounted API, measured
+
+The stage-2b operator step ("read the staging report, then enforce") needs a
+staging environment that does not exist yet. So the inventory was done here,
+from the running registration rather than from a grep of `app.use`.
+
+**Method** (`scripts/ci/launch-scope-route-inventory.ts`): wrap
+`Router.prototype.use`/`.route` before any route module loads, run the real
+`registerPreStartRoutes`/`registerPostStartRoutes` with production flags
+(`NODE_ENV=production`, throwaway boot secrets, a throwaway copy of the local
+database), walk the stack, and classify every route with the gate's own
+`launchScopeApiVerdict`. A grep would miss the routers mounted at bare `/api`
+and the flag-conditional mounts. Express 5 also records a layer's path only
+when a request matches it, which is why the wrap is needed.
+
+**Result:** production mounts **3,779 `/api` routes**.
+
+| verdict | before stage 3 | after |
+|---|---|---|
+| launch | 1,213 | 1,226 |
+| never-gated | 184 | 184 |
+| infrastructure | 38 | 47 |
+| out-of-scope (refused since stage 1) | 941 | 941 |
+| unmapped | 1,403 | 1,381 |
+
+Each unclaimed namespace (220) was crossed with every client file that names
+it, and which launch or shell screen reaches that file
+(`stage3-route-inventory.json`):
+
+- **What a screen's code does not show was unclaimed:** the auth boundary's
+  public paths. These are the legacy `/api/login`/`logout`/`register`
+  redirects, `/api/csp-report` (browsers), `/api/metrics` (the Prometheus
+  scrape), `/api/cortex/health`, `/api/claude/health`, `/api/claude/models`,
+  `/api/time`, `/api/diag` and `/api/setup`. Also unclaimed was `/api/user`,
+  the users router mounted a second time beside `/api/users`. Enforcing on
+  the old verdict would have refused all of them. They are now claimed:
+  `PUBLIC_API_ALLOWLIST` moved unchanged from `authBoundary.ts` to
+  `middleware/public-api-allowlist.ts` (no imports; re-exported), and the
+  verdict treats it as infrastructure. `/api/user` is on `LAUNCH_PLATFORM_API`
+  with its reason.
+- **Launch screens:** none calls an unclaimed route. Two namespaces showed up
+  at namespace level (`/api/c2c/actions`, `/api/510k`, both from
+  SubmissionCenter.tsx). The screen calls their claimed sub-paths (`…/sign`,
+  `…/estar/*`), and `ci:launch-scope-api` judges each literal.
+- **Computed paths:** no client file builds `/api/${…}`, and none uses an
+  environment-derived API base. So the static gate sees every namespace a
+  launch screen can reach. The gate now fails on a computed namespace
+  (self-test red, then green: `stage3-selftest-*`).
+- **Server self-calls:** `AnaToolExecutor` calls `/api/ind-generation` over
+  localhost with no credentials, so the auth boundary answers 401 before
+  launch scope is consulted (handed on below). The MDX preflight
+  (`/api/authoring-actions`) and IND generation's artifact write
+  (`/api/concept2cure/projects`) are claimed launch paths.
+- **Seeds and webhooks:** the GA demo seeds write to the database, not over
+  HTTP. No unclaimed route is a callback, webhook or acknowledgement from an
+  external system.
+- **The other 32 namespaces with a client caller** are called only by
+  screens outside the launch catalog (clinical operations, NDA cockpit,
+  labeling PI, research admin, …). The other 186 have no client caller at
+  all: `/api/stability`, `/api/qc`, `/api/grants`, `/api/cortex`
+  (cortex-unified, not the router WO-14 removed), most of the legacy
+  `/api/concept2cure`, `/api/qms`, and so on.
+
+Red then green for the attribution (`stage3-attribution-*`): with the verdict
+change stashed, 3 of 22 fail. These are the public paths, the `/api/user`
+alias, and a public exact path not widening to its namespace (`/api/cortex/health`
+passes, `/api/cortex/threads` does not). With it applied, 22 of 22 pass.
+
+**What this leaves: one decision.** With the inventory done, refusing the
+unclaimed remainder refuses only paths nothing legitimate calls. That is the
+production default this lane recommends (`LAUNCH_SCOPE_API_UNATTRIBUTED`
+unset → `enforce` in production, `report` as an explicit, logged override).
+The code change was held for the owner's explicit confirmation because it
+changes what production refuses. Until then the default stays `report`: every
+call to an unclaimed path is served, and recorded in Master Admin → Licensing
+→ Enforcement.
+
 ## Not closed here
 
-- **Unmapped paths are reported, not refused, until an operator sets
-  `enforce`** (stage 2b above). The legacy `/api/concept2cure/*` namespace
-  and the UI-less `/api/qms` are among them. Closing them means attributing
-  each mounted prefix: to a surface, to infrastructure, or to out-of-scope.
-  That inventory is the next step. Refusing everything unattributed without it
-  would refuse sign-in callbacks, webhooks and the public API along with the
-  product.
+- **Unmapped paths are reported, not refused, until `enforce` is set**, as
+  a deployment value or as the production default (stage 3 above; the
+  inventory that makes it safe is done). The legacy `/api/concept2cure/*`
+  namespace and the UI-less `/api/qms` are among them.
+- **Two lists of public paths.** `register-platform-routes.ts` keeps its own
+  `openPrefixes` beside `PUBLIC_API_ALLOWLIST`. They name the same paths today
+  (the boundary list matches some exactly, the other only by prefix). The
+  boundary runs first, so the second list is defence against mount
+  reordering. Folding it onto the one list is a security-lane change and was
+  not made here.
 - **AnA tools** reach services directly, not over HTTP, so this gate does not
   see them. Whether an AnA tool can drive an out-of-scope capability is a
   separate check.
