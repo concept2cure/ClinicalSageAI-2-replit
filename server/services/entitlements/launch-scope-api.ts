@@ -21,7 +21,8 @@
  *   - `never-gated`  — sign-in, billing, audit, admin and the other paths the
  *                      entitlement gate never gates (`NEVER_GATED`);
  *   - `launch`       — at least one surface claiming it is a launch or shell
- *                      surface (shared/constants/launch-scope.ts);
+ *                      surface (shared/constants/launch-scope.ts), or it is on
+ *                      the platform list below (`LAUNCH_PLATFORM_API`);
  *   - `out-of-scope` — every surface claiming it is outside the launch scope;
  *   - `unmapped`     — no surface claims it.
  * Only `out-of-scope` is refused. `unmapped` passes, because refusing what the
@@ -43,6 +44,23 @@ import { modulesForPath } from './api-prefix-map.js';
 
 export type LaunchScopeApiVerdict = 'never-gated' | 'launch' | 'out-of-scope' | 'unmapped';
 
+/**
+ * API prefixes the shell uses whatever app is open, and which therefore belong
+ * to no one surface. Each carries the reason it is here so the list cannot grow
+ * by convenience; the same rule as LAUNCH_SHELL_SURFACES.
+ */
+export const LAUNCH_PLATFORM_API: Readonly<Record<string, string>> = {
+  '/api/ana-ri': 'AnA: the stream, governed actions, agent activity and live-drive state, from every host',
+  '/api/v1/auth': 'the session the shell reads on load',
+  '/api/tenants': 'tenant context (TenantContext.tsx) on load',
+  '/api/clients': 'the client workspace list tenant context reads on load',
+  '/api/organizations': "the shell's organisation read (V2App.tsx), Setup's profile and settings, onboarding",
+};
+
+function onPrefix(path: string, prefix: string): boolean {
+  return path === prefix || path.startsWith(`${prefix}/`);
+}
+
 export function launchScopeApiVerdict(
   pathname: string,
   prefixMap: Map<string, Set<string>>,
@@ -50,7 +68,8 @@ export function launchScopeApiVerdict(
   launchSurfaceIds: ReadonlySet<string> = LAUNCH_SURFACE_IDS,
 ): LaunchScopeApiVerdict {
   const path = pathname.split('?')[0];
-  if (neverGated.some((n) => path === n || path.startsWith(`${n}/`))) return 'never-gated';
+  if (neverGated.some((n) => onPrefix(path, n))) return 'never-gated';
+  if (Object.keys(LAUNCH_PLATFORM_API).some((p) => onPrefix(path, p))) return 'launch';
   const surfaces = modulesForPath(path, prefixMap);
   if (!surfaces || surfaces.size === 0) return 'unmapped';
   for (const id of surfaces) if (launchSurfaceIds.has(id)) return 'launch';
