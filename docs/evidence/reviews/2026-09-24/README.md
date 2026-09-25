@@ -29,3 +29,29 @@ unchanged. Seven of that run's eighteen agents stopped on a session limit. `lens
 did not run. **Authoring, Submission Center and Readiness were not swept under Part 11 or honest state, and the
 design-system lens did not run anywhere**, so the next weekly review owes those first. The two new security ids are
 added to the audit register (§4.5) so there is still one register.
+
+---
+
+## Addendum, 2026-09-25 01:10–03:00 UTC: the other lenses, and what closed
+
+The three lenses this folder said were "not repeated here" were run against `f14f5510` by
+the repo's auditors (`part11-ux-auditor`, `honest-state-auditor`, `a11y-auditor`; the
+`security-auditor` run above stands), each re-verifying last week's open findings before
+looking for new ones. Their reports are filed beside `security.md`, every finding kept and
+carrying its status:
+
+| File | Lens | Result at head, after remediation |
+|---|---|---|
+| `part11-ux.md` | Part 11 / GxP compliance UX | two new blockers (Q1 quorum-version binding, Q2 QMS retire) and Q3, Q4, Q6 **fixed** (`42eb291d`, `6582e3a3`, `fde9d704`, `896e96fb`); Q5 (a reason on vault filing) open; eight of last week's findings confirmed closed |
+| `honest-state.md` | honest state | one medium (HS1, Template Library null confidence) **fixed** `896e96fb`; all 21 launch surfaces otherwise clean; last week's fixes hold |
+| `a11y.md` | WCAG 2.2 AA | one blocker (Submission Center table row, pointer-only) and two advisories **fixed** `4f0becb6`; no other blocker in scope |
+
+Also closed from `../2026-09-22`: D1 (phantom `--danger` in TSX) by `02beeb59`, which swept
+every token referenced from TSX inline styles against the token definitions.
+
+The design-system and microcopy lenses are running as this addendum is written; their
+reports are added when they return. The first fan-out of all six auditors on 2026-09-24
+23:xx UTC died on a session rate limit and produced nothing; this is the second run.
+
+- **Rows informed:** D2 (launch catalog), D5 (Part 11 evidence). No row turns green as a result.
+- **Performed by:** the design-system/CXO remediation session (`session_01FSu2RLBeJSq46vhQcJh85M`), on `concept2cure-v2` directly per Rule 0.

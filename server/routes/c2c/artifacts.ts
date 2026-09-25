@@ -2680,7 +2680,7 @@ router.put(
       // apply. A quorum that cannot be read throws, and the catch below
       // answers 500 before anything is written: an unread quorum is not met.
       if (previousStatus === 'review' && status === 'approved') {
-        const quorum = await reviewQuorumVerdict(pool, artifact.id, organizationId);
+        const quorum = await reviewQuorumVerdict(pool, artifact.id, organizationId, artifact.version);
         if (!quorum.met) {
           return sendError(res, 400, quorum.message);
         }
