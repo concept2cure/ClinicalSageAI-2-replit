@@ -1,0 +1,53 @@
+{
+  "$note": "Per-file COUNT of multer sites lacking limits.fileSize, a fileFilter, or an assertUploadSafe call in the file (see scripts/ci/check-upload-guards.mjs). Written 2026-09-25 (P1-5). Shrink only; every entry is a DEFECT with a written reason naming what is missing and who owns the fix. An entry without a reason fails the gate.",
+  "files": {
+    "server/academic-resource-upload.ts": {
+      "count": 1,
+      "reason": "DEFECT, outside the launch catalog (academic resources). Size limit and filter present; no byte check or scan before the file is stored. Owned by the D6 upload sweep (P1-5)."
+    },
+    "server/routes/authoring.router.ts": {
+      "count": 2,
+      "reason": "DEFECT, launch catalog (Authoring): image and DOCX import trust the declared MIME type (audit IAM-14); size limits present. File inside another lane's 24-hour window on 2026-09-25; owned by the D6 upload sweep (P1-5) once it closes."
+    },
+    "server/routes/c2c/knowledge-sources.ts": {
+      "count": 1,
+      "reason": "DEFECT, launch catalog (AnA knowledge sources): size limit present, no fileFilter, no byte check or scan. Owned by the D6 upload sweep (P1-5)."
+    },
+    "server/routes/c2c/templates.ts": {
+      "count": 1,
+      "reason": "DEFECT, launch catalog (Authoring templates): size limit and filter present, no byte check or scan. Owned by the D6 upload sweep (P1-5)."
+    },
+    "server/routes/chat.ts": {
+      "count": 1,
+      "reason": "GATE LIMIT, not a defect: the evidence upload runs verifyFileSignature and the virus scan directly in server/routes/chat/upload.ts (the fileSignature/virusScan pair assertUploadSafe wraps), in another file. Migrate onto assertUploadSafe to retire this entry."
+    },
+    "server/routes/client-intelligence.ts": {
+      "count": 1,
+      "reason": "DEFECT, outside the launch catalog (client intelligence): size limit and filter present, no byte check or scan. Owned by the D6 upload sweep (P1-5)."
+    },
+    "server/routes/ind-forms.routes.ts": {
+      "count": 1,
+      "reason": "DEFECT, launch catalog (Submission Center, official form upload): size limit and filter present, no byte check or scan. Owned by the D6 upload sweep (P1-5)."
+    },
+    "server/routes/knowledge-base.ts": {
+      "count": 1,
+      "reason": "DEFECT, outside the launch catalog (knowledge base): 100 MB limit, no fileFilter, no byte check or scan. Owned by the D6 upload sweep (P1-5)."
+    },
+    "server/routes/onboarding-proposals.ts": {
+      "count": 1,
+      "reason": "DEFECT, launch catalog (Projects onboarding): size limit present, no fileFilter, no byte check or scan. Owned by the D6 upload sweep (P1-5)."
+    },
+    "server/routes/preclinical.ts": {
+      "count": 1,
+      "reason": "DEFECT, outside the launch catalog (preclinical): size limit and filter present, no byte check or scan. Owned by the D6 upload sweep (P1-5)."
+    },
+    "server/routes/vault-ingest.ts": {
+      "count": 1,
+      "reason": "GATE LIMIT, not a defect: the route receives the file and server/services/vault/vault-ingest.service.ts runs assertUploadSafe inside the ingest transaction (its own tests pin it). The gate attributes the guard to the file that builds the multer instance."
+    },
+    "server/services/DocumentDataCenterService.ts": {
+      "count": 1,
+      "reason": "DEFECT, outside the launch catalog (document data center): disk storage with a size limit, no fileFilter, no byte check or scan. Owned by the D6 upload sweep (P1-5)."
+    }
+  }
+}

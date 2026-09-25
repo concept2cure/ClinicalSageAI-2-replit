@@ -787,6 +787,11 @@ describe('golden journey — drug NDA / eCTD', () => {
       const res = await asPrincipal(ORG, SIGNER)(request(app).post('/api/c2c/actions/sign')).send({
         target: `ectd-sequence:${sequenceId}`,
         reason: 'Attempting to sign without knowing the password.',
+        // A well-formed sign in every respect but the password, so the refusal
+        // this step asserts is the PASSWORD's. Since 3d09bf2a a sign without a
+        // meaning is refused first (400 SIGNATURE_MEANING_REQUIRED), which left
+        // this step proving nothing about the password check.
+        payload: { intent: 'freeze', meaning: 'approval' },
         reauth: { password: WRONG_PASSWORD },
       });
       const after = await jdb.pool.query(`SELECT count(*)::int AS n FROM electronic_signatures`);
