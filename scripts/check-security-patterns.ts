@@ -112,11 +112,17 @@ const PATTERNS: Pattern[] = [
   },
   {
     name: 'tenant-trust-header',
-    regex: /\breq\.headers\s*\[\s*['"]x-(organization|tenant)-id['"]\s*\]/i,
+    // x-org-uuid added 2026-09-24. The organization UUID is a tenant KEY — it
+    // selects lumen_data_atoms, the vault and every non-public schema — and the
+    // rule matched only the integer-id headers, so nine route reads of
+    // `tenantContext?.organizationUuid || req.headers['x-org-uuid']` passed it.
+    // docs/evidence/D3/2026-09-24-atom-search-tenant-key/.
+    regex: /\breq\.headers\s*\[\s*['"]x-(?:(?:organization|tenant)-id|org-uuid)['"]\s*\]/i,
     message:
-      'Do not read org / tenant id from request headers — validateTenantContext ' +
+      'Do not read org / tenant identity from request headers — validateTenantContext ' +
       'sources it from the JWT and emits a tenant_impersonation_attempt audit ' +
-      'event when a header tries to override it.',
+      'event when a header tries to override it. For the organization UUID use ' +
+      'currentTenantOrgUuid(db) from server/db/currentTenant.',
     // Exempt the middleware files that LEGITIMATELY inspect the
     // header for impersonation-detection purposes (they compare it
     // against the JWT and block on mismatch). Logging/telemetry

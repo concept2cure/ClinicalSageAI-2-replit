@@ -35,14 +35,20 @@ vi.mock('../../services/ai-gateway/index.js', () => ({
   getGateway: () => ({ getEnabledProviders, route: (...a: unknown[]) => route(...a) }),
 }));
 
+import { runWithTenantScope } from '../../db/tenantStore';
 import evidenceAskRouter from '../evidence-ask';
 
 const TENANT_ORG_ID = 7;
 const TENANT_USER_ID = 42;
 const TENANT_ORG_UUID = '11111111-1111-1111-1111-111111111111';
 
-/** Mount the router behind a middleware that installs a fixed principal. */
-function app() {
+/**
+ * Mount the router behind a middleware that installs a fixed principal and, as
+ * the auth boundary does (middleware/establishRequestTenantScope.ts), opens its
+ * tenant scope — the only place the route's tenant key comes from. `scoped:
+ * false` is a session with no tenant scope.
+ */
+function app({ scoped = true }: { scoped?: boolean } = {}) {
   const a = express();
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
@@ -54,7 +60,17 @@ function app() {
       userId: TENANT_USER_ID,
       organizationUuid: TENANT_ORG_UUID,
     };
-    next();
+    if (!scoped) return next();
+    runWithTenantScope(
+      {
+        tenantId: String(TENANT_ORG_ID),
+        orgUuid: TENANT_ORG_UUID,
+        role: 'member',
+        source: 'request',
+        caller: 'evidence-ask.test',
+      },
+      () => next()
+    );
   });
   a.use('/api/evidence', evidenceAskRouter);
   return a;
@@ -108,6 +124,21 @@ beforeEach(() => {
 });
 
 describe('POST /api/evidence/ask — fail-closed JWT-derived provenance', () => {
+  it('refuses (403) a session with no tenant key, and runs no search — never an unscoped one', async () => {
+    installQueryDispatcher();
+    // No tenant scope: the resolver names no key. The request still carries a
+    // tenantContext uuid and a header — neither is a key.
+    const res = await request(app({ scoped: false }))
+      .post('/api/evidence/ask')
+      .set('x-org-uuid', TENANT_ORG_UUID) // a header naming a tenant supplies no key
+      .send({ message: 'What does the protocol say?' });
+
+    expect(searchHybrid).not.toHaveBeenCalled();
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('TENANT_CONTEXT_REQUIRED');
+    expect(route).not.toHaveBeenCalled();
+  });
+
   it('ignores body organizationId and x-org-uuid; anchors retrieval + provenance to the principal', async () => {
     installQueryDispatcher();
     searchHybrid.mockResolvedValue([

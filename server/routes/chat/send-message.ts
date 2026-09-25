@@ -12,6 +12,7 @@
 
 import type { Request, Response } from 'express';
 import { pool } from '../../db.js';
+import { currentTenantOrgUuid } from '../../db/currentTenant.js';
 import {
   getOrCreateThread,
   getThreadMessages,
@@ -106,6 +107,14 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     const userId: number | string = rawUserId ?? 'anonymous';
     const numericOrgId = orgId ? (typeof orgId === 'string' ? Number(orgId) : orgId) : null;
     const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) || 0 : userId;
+    // The org's UUID tenant key, from the same session scope. Both uses below —
+    // Data Room retrieval and AnA's document tools — used to fall back to the
+    // client's x-org-uuid header, and with neither ran the search across every
+    // tenant. No key, no turn.
+    const orgUuid = await currentTenantOrgUuid(pool);
+    if (!orgUuid) {
+      return res.status(403).json({ error: 'Tenant context required', code: 'TENANT_CONTEXT_REQUIRED' });
+    }
 
     // ── STEP 2: CREATE / VALIDATE THREAD ─────────────────────────────────────────
     const requestedThreadId = Array.isArray(thread_id) ? thread_id[0] : thread_id;
@@ -185,15 +194,12 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
 
     if (shouldRunSubmissionChat) {
       try {
-        const orgUuid =
-          (req as any).tenantContext?.organizationUuid ||
-          (req.headers['x-org-uuid'] as string | undefined);
         const sub = await handleSubmissionChat({
           threadId,
           artifactId: submissionChatArtifactId,
           question: message,
           organizationId: numericOrgId ?? null,
-          organizationUuid: orgUuid ?? null,
+          organizationUuid: orgUuid,
           userId: numericUserId || null,
         });
 
@@ -287,110 +293,101 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     let retrievalRunId: string | null = null;
     let snapshotHashSha256: string | null = null;
     const chunkRows: Array<{ id: string; rank: number; atomId: string; score: number }> = [];
-    const orgUuid =
-      (req as any).tenantContext?.organizationUuid ||
-      (req.headers['x-org-uuid'] as string | undefined);
-
     try {
       const embeddingService = getEmbeddingService(pool);
-      // Bail early if org UUID is provided but clearly invalid
-      if (orgUuid && !/^[0-9a-f-]{36}$/i.test(orgUuid)) {
-        console.warn('[AnA] Invalid org UUID, skipping retrieval');
-      } else {
-        const searchResults = await embeddingService.searchHybrid(
-          message,
-          RETRIEVAL_TOP_K,
-          RETRIEVAL_THRESHOLD,
-          orgUuid,
-          normalizedProjectId
-        );
-        sources = searchResults.map(r => ({
-          id: r.id,
-          title: r.title,
-          content: r.content.length > 500 ? r.content.substring(0, 500) + '…' : r.content,
-          score: r.score,
-        }));
-        if (sources.length > 0) {
-          confidence = Math.min(1, sources.reduce((sum, s) => sum + s.score, 0) / sources.length);
-        }
+      const searchResults = await embeddingService.searchHybrid(
+        message,
+        RETRIEVAL_TOP_K,
+        RETRIEVAL_THRESHOLD,
+        orgUuid,
+        normalizedProjectId
+      );
+      sources = searchResults.map(r => ({
+        id: r.id,
+        title: r.title,
+        content: r.content.length > 500 ? r.content.substring(0, 500) + '…' : r.content,
+        score: r.score,
+      }));
+      if (sources.length > 0) {
+        confidence = Math.min(1, sources.reduce((sum, s) => sum + s.score, 0) / sources.length);
+      }
 
-        // Persist retrieval run + chunks (provenance chain)
-        if (numericOrgId) {
-          try {
-            const queryHash = sha256(message);
-            // Fix C: Snapshot hash includes sourceType + sourceRefId, sorted by rank
-            const snapshotData = sources.map((s, i) => ({
-              rank: i + 1,
-              sourceType: 'atom' as const,
-              sourceRefId: s.id,
-              score: s.score,
-            }));
-            snapshotHashSha256 = sha256(stableStringify(snapshotData));
+      // Persist retrieval run + chunks (provenance chain)
+      if (numericOrgId) {
+        try {
+          const queryHash = sha256(message);
+          // Fix C: Snapshot hash includes sourceType + sourceRefId, sorted by rank
+          const snapshotData = sources.map((s, i) => ({
+            rank: i + 1,
+            sourceType: 'atom' as const,
+            sourceRefId: s.id,
+            score: s.score,
+          }));
+          snapshotHashSha256 = sha256(stableStringify(snapshotData));
 
-            const rrResult = await pool.query(
-              `INSERT INTO ai_retrieval_runs
-                 (organization_id, project_id, user_id, scope, embedding_model,
-                  query_text, query_hash_sha256, snapshot_hash_sha256, top_k, threshold, result_count)
-               VALUES ($1, $2, $3, $4, 'text-embedding-3-small', $5, $6, $7, $8, $9, $10)
-               RETURNING id`,
-              [
-                numericOrgId,
-                project_id || null,
-                numericUserId,
-                orgUuid ? 'org' : 'global',
-                message,
-                queryHash,
-                snapshotHashSha256,
-                RETRIEVAL_TOP_K,
-                RETRIEVAL_THRESHOLD,
-                sources.length,
-              ]
-            );
-            retrievalRunId = rrResult.rows[0].id;
+          const rrResult = await pool.query(
+            `INSERT INTO ai_retrieval_runs
+               (organization_id, project_id, user_id, scope, embedding_model,
+                query_text, query_hash_sha256, snapshot_hash_sha256, top_k, threshold, result_count)
+             VALUES ($1, $2, $3, $4, 'text-embedding-3-small', $5, $6, $7, $8, $9, $10)
+             RETURNING id`,
+            [
+              numericOrgId,
+              project_id || null,
+              numericUserId,
+              'org', // every search runs under the session's tenant key; there is no 'global' one
+              message,
+              queryHash,
+              snapshotHashSha256,
+              RETRIEVAL_TOP_K,
+              RETRIEVAL_THRESHOLD,
+              sources.length,
+            ]
+          );
+          retrievalRunId = rrResult.rows[0].id;
 
-            // AnA fix F9: batch all retrieval chunks into one multi-row INSERT
-            // (replaces a sequential N+1 loop — RETRIEVAL_TOP_K queries became 1).
-            if (sources.length > 0) {
-              const valuesSql: string[] = [];
-              const params: unknown[] = [];
-              const paramsPerRow = 7;
-              for (let i = 0; i < sources.length; i++) {
-                const s = sources[i];
-                const o = i * paramsPerRow;
-                valuesSql.push(
-                  `($${o + 1}, $${o + 2}, 'atom', $${o + 3}, $${o + 4}, $${o + 5}, $${o + 6}, $${o + 7})`
-                );
-                params.push(
-                  retrievalRunId,
-                  i + 1,
-                  s.id,
-                  s.title,
-                  sha256(s.content),
-                  s.content.substring(0, 500),
-                  s.score
-                );
-              }
-              const crResult = await pool.query(
-                `INSERT INTO ai_retrieval_chunks
-                   (retrieval_run_id, rank, source_type, atom_id, title,
-                    excerpt_hash_sha256, excerpt_preview, score)
-                 VALUES ${valuesSql.join(', ')}
-                 RETURNING id, rank, atom_id, score`,
-                params
+          // AnA fix F9: batch all retrieval chunks into one multi-row INSERT
+          // (replaces a sequential N+1 loop — RETRIEVAL_TOP_K queries became 1).
+          if (sources.length > 0) {
+            const valuesSql: string[] = [];
+            const params: unknown[] = [];
+            const paramsPerRow = 7;
+            for (let i = 0; i < sources.length; i++) {
+              const s = sources[i];
+              const o = i * paramsPerRow;
+              valuesSql.push(
+                `($${o + 1}, $${o + 2}, 'atom', $${o + 3}, $${o + 4}, $${o + 5}, $${o + 6}, $${o + 7})`
               );
-              for (const row of crResult.rows) {
-                chunkRows.push({
-                  id: row.id,
-                  rank: row.rank,
-                  atomId: row.atom_id,
-                  score: Number(row.score),
-                });
-              }
-              chunkRows.sort((a, b) => a.rank - b.rank);
+              params.push(
+                retrievalRunId,
+                i + 1,
+                s.id,
+                s.title,
+                sha256(s.content),
+                s.content.substring(0, 500),
+                s.score
+              );
             }
-          } catch (e: any) {
-            if (e?.code !== '42P01') console.warn('[AnA] Retrieval persist failed:', e.message);
+            const crResult = await pool.query(
+              `INSERT INTO ai_retrieval_chunks
+                 (retrieval_run_id, rank, source_type, atom_id, title,
+                  excerpt_hash_sha256, excerpt_preview, score)
+               VALUES ${valuesSql.join(', ')}
+               RETURNING id, rank, atom_id, score`,
+              params
+            );
+            for (const row of crResult.rows) {
+              chunkRows.push({
+                id: row.id,
+                rank: row.rank,
+                atomId: row.atom_id,
+                score: Number(row.score),
+              });
+            }
+            chunkRows.sort((a, b) => a.rank - b.rank);
           }
+        } catch (e: any) {
+          if (e?.code !== '42P01') console.warn('[AnA] Retrieval persist failed:', e.message);
         }
       }
     } catch (srcErr: any) {
@@ -802,7 +799,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           projectId:
             typeof project_id === 'string' ? parseInt(project_id, 10) || null : project_id || null,
           // Tenant UUID so the project_knowledge_search tool can scope retrieval.
-          organizationUuid: orgUuid ?? null,
+          organizationUuid: orgUuid,
           // Situational context (surface/project/document type) — same signal the
           // tool selector uses; threaded to handlers for telemetry + tailoring.
           surface: tool_context && typeof tool_context === 'object' ? ((tool_context as any).surface ?? null) : null,
