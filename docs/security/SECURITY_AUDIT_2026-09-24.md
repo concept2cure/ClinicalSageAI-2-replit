@@ -220,6 +220,18 @@ With these, the register stands at **84** at the audited commit (1 Critical, 23 
 Highs closed at head as noted. The lens's tool-layer evidence also widens DP-08: every "reason" an AnA write captures is
 authored by the model.
 
+### 4.5 Added by the weekly review's second pass, 2026-09-24 (`docs/evidence/reviews/2026-09-24/lenses.md`)
+
+Found by the security-auditor lens at `5117c0cf` and re-traced by a second agent told to refute them. Both came in
+as High, and the refuting agent confirmed each one and cut it to Medium.
+
+| Id | Sev | Finding | Evidence | Hook | Status |
+|---|---|---|---|---|---|
+| DP-34 | Medium | `/api/qms/*` is a second QMS write API guarded only by `authenticateToken`. A `viewer` can retire or supersede an **effective** controlled document (no reason field, no signature, no `superseded_by_id`), requalify or revoke a supplier, and disposition nonconforming product. The supplier, nonconformance, training, audit and management-review writes record **no audit row**, and an omitted disposition rationale silently keeps the previous one. No client calls it. The canonical `/api/mdx/qms/*` doors carry the same capabilities with audit rows. | `server/routes/qms.ts:91-103,148-159,208-219`; `server/services/qms/qms.service.ts:61-89,150-162,224-234`; `server/bootstrap/register-document-routes.ts:270` | 11.10(d)(e)(g); 820.50, 820.90; Annex 11 §9 | new |
+| DP-35 | Medium | Authoring freeze locks a document and makes it count as `finalized` for eCTD leaf completeness and the IND checklist, with no re-authentication and no org-level signing authority. A document owner (every creator) or approver suffices. The sibling `/e-sign` and `/sign` handlers call both checks. | `server/routes/authoring.router.ts:3673-3880` (vs `:3901,3923`, `:5526,5548`); `server/services/coauthor/coauthor-snapshot.ts:101-103`; `server/services/ectd/leaf-source-resolver.ts:140` | 11.10(d)(g); Annex 11 §12 | new |
+
+With these, the register stands at **86**.
+
 ## 5. Verified strengths (with the file that proves each)
 
 **Boot and posture.** Production refuses to start on: an unrecognised `NODE_ENV`; missing or short JWT, previous-JWT
