@@ -15,7 +15,7 @@ vi.mock('../../db', () => ({
   pool: { query: (...a: unknown[]) => query(...a) },
   getPool: () => ({ query: (...a: unknown[]) => query(...a) }),
 }));
-const recordAuditRow = vi.fn(async () => ({ persisted: true, chained: true }));
+const recordAuditRow = vi.fn(async (..._a: unknown[]) => ({ persisted: true, chained: true }));
 vi.mock('../../services/audit/audit-write-outcome', () => ({ recordAuditRow: (...a: unknown[]) => recordAuditRow(...a) }));
 
 import mdxQmsRouter from '../mdx-qms';
