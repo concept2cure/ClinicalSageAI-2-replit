@@ -1,0 +1,44 @@
+# WITHOUT the fix (tools discard the outcome; the orchestrator discards it)
+## qms-change-tools.test.ts
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_create > raises a controlled change and persists it 27ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_create > requires change_number and title 3ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > advances a change through the lifecycle with a reason (Part 11) 6ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > refuses a transition without a reason-for-change 3ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > enforces segregation of duties (approver ≠ proposer) 6ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > rejects an illegal transition 4ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_link > links a change to a deviation 7ms
+ × server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > carries a recorded row out as auditTrail 8ms
+   → expected undefined to deeply equal { persisted: true, chained: true }
+ × server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > create: says the record was not written when it was not 5ms
+   → expected undefined to match object { persisted: false, …(1) }
+ × server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > transition: says the record was not written when it was not 6ms
+   → expected undefined to match object { persisted: false, …(1) }
+ × server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > link: says the record was not written when it was not 5ms
+   → expected undefined to match object { persisted: false, …(1) }
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > opens a controlled revision (bumps version, back to draft, clears approval) 8ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > requires a reason to revise 2ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > retires a document (terminal) 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 10 passed (14)
+
+## fact-change-audit-outcome.test.ts
+ × server/services/living-record/__tests__/fact-change-audit-outcome.test.ts > establishGovernedFact reports its audit row > carries a recorded row 7ms
+   → expected undefined to deeply equal { persisted: true, chained: true }
+ × server/services/living-record/__tests__/fact-change-audit-outcome.test.ts > establishGovernedFact reports its audit row > says so when the row was not written, without the store text 3ms
+   → expected undefined to match object { persisted: false, …(1) }
+ × server/services/living-record/__tests__/fact-change-audit-outcome.test.ts > applyFactChange reports its audit row > carries a recorded row 2ms
+   → expected undefined to deeply equal { persisted: true, chained: true }
+ × server/services/living-record/__tests__/fact-change-audit-outcome.test.ts > applyFactChange reports its audit row > says so when the row was not written, without the store text 1ms
+   → expected undefined to match object { persisted: false, …(1) }
+ × server/services/living-record/__tests__/fact-change-audit-outcome.test.ts > AnA's governed-fact tools pass the outcome on > establish_governed_fact tells AnA the record was not written 3428ms
+   → expected undefined to match object { persisted: false, …(1) }
+ × server/services/living-record/__tests__/fact-change-audit-outcome.test.ts > AnA's governed-fact tools pass the outcome on > apply_fact_change tells AnA the record was not written 2ms
+   → expected undefined to match object { persisted: false, …(1) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected undefined to deeply equal { persisted: true, chained: true }
+AssertionError: expected undefined to match object { persisted: false, …(1) }
+AssertionError: expected undefined to deeply equal { persisted: true, chained: true }
+AssertionError: expected undefined to match object { persisted: false, …(1) }
+AssertionError: expected undefined to match object { persisted: false, …(1) }
+AssertionError: expected undefined to match object { persisted: false, …(1) }
+      Tests  6 failed (6)

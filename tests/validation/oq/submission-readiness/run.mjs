@@ -47,6 +47,7 @@ await step(
       documentTable: 'vault_documents',
       documentUuid: ing.document.id,
       lifecycleOp: 'new',
+      reason: 'Placed by the validation run for this sequence',
     });
     expect(leaf.status === 200, `leaf expected 200, got ${leaf.status}`, leaf.json);
     return `program ${p.id}; submission ${submission.id}; sequence ${sequence.id}; leaf m5.3.5`;

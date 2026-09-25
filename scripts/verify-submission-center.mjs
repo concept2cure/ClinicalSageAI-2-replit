@@ -277,7 +277,7 @@ async function main() {
     const seqId = seq.json?.id;
 
     if (seqId) {
-      const leaf = await c.req('PUT', `/api/submissions/sequences/${seqId}/leaves`, { sectionCode: '2.5', title: 'Clinical Overview' });
+      const leaf = await c.req('PUT', `/api/submissions/sequences/${seqId}/leaves`, { sectionCode: '2.5', title: 'Clinical Overview', reason: 'Placed by the Submission Center verify script' });
       ok('PUT leaf (create)', leaf.status === 200 && leaf.json?.id);
 
       const leaves = await c.req('GET', `/api/submissions/sequences/${seqId}/leaves`);

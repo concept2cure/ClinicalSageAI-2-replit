@@ -501,7 +501,7 @@ describe('golden journey — drug NDA / eCTD', () => {
     await R.step('place-a-leaf-through-the-canonical-api', async () => {
       const res = await asPrincipal(ORG, USER)(
         request(app).put(`/api/submissions/sequences/${sequenceId}/leaves`),
-      ).send({
+      ).send({ reason: 'Placed by the golden journey for this sequence',
         sectionCode: '2.5',
         title: 'Clinical Overview',
         lifecycleOp: 'new',
@@ -519,7 +519,7 @@ describe('golden journey — drug NDA / eCTD', () => {
     await R.expectBlocked('a-leaf-pointing-at-another-tenants-document-is-refused', async () => {
       const res = await asPrincipal(ORG, USER)(
         request(app).put(`/api/submissions/sequences/${sequenceId}/leaves`),
-      ).send({
+      ).send({ reason: 'Placed by the golden journey for this sequence',
         sectionCode: '5.3.5',
         title: 'Cross-Tenant Study Report',
         lifecycleOp: 'new',
@@ -543,7 +543,7 @@ describe('golden journey — drug NDA / eCTD', () => {
       );
       const write = await asPrincipal(OTHER_ORG, OUTSIDER)(
         request(app).put(`/api/submissions/sequences/${sequenceId}/leaves`),
-      ).send({ sectionCode: '2.5', title: 'Intruder', lifecycleOp: 'new' });
+      ).send({ reason: 'Placed by the golden journey for this sequence', sectionCode: '2.5', title: 'Intruder', lifecycleOp: 'new' });
       return {
         blocked: read.status === 404 && write.status === 404,
         readStatus: read.status,
@@ -879,7 +879,7 @@ describe('golden journey — drug NDA / eCTD', () => {
       // edited after signing was frozen under a signature applied to other bytes.
       const placed = await asPrincipal(ORG, USER)(
         request(app).put(`/api/submissions/sequences/${sequenceId}/leaves`),
-      ).send({ sectionCode: '2.7', title: 'Clinical Summary', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 100 });
+      ).send({ reason: 'Placed by the golden journey for this sequence', sectionCode: '2.7', title: 'Clinical Summary', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 100 });
       expect(placed.status, JSON.stringify(placed.body)).toBe(200);
       const res = await asPrincipal(ORG, SIGNER)(
         request(app).post(`/api/submissions/sequences/${sequenceId}/freeze`),
@@ -968,7 +968,7 @@ describe('golden journey — drug NDA / eCTD', () => {
     await R.expectBlocked('a-frozen-sequences-leaves-are-immutable', async () => {
       const res = await asPrincipal(ORG, USER)(
         request(app).put(`/api/submissions/sequences/${sequenceId}/leaves`),
-      ).send({ sectionCode: '2.7', title: 'Late addition', lifecycleOp: 'new' });
+      ).send({ reason: 'Placed by the golden journey for this sequence', sectionCode: '2.7', title: 'Late addition', lifecycleOp: 'new' });
       return {
         blocked: res.status === 409 && res.body?.error?.code === 'INVALID_STATE',
         status: res.status,

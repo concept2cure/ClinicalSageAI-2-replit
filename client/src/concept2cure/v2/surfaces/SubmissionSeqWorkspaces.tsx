@@ -34,6 +34,7 @@ import { apiRequest, serverMessage, redactInternals } from '@/lib/queryClient';
 import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveGetOrNull, EmptyState } from '../dataConnect';
 import { assessmentStateFor } from '../assessmentState';
 import { documentSourceLabel } from '@shared/regulatory/canonical-document';
+import { PlacementReasonField, placementReasonOk } from './filingTarget';
 import {
   SC_LENSES,
   SC_LIFECYCLE_OPS,
@@ -314,6 +315,7 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
   const [docId, setDocId] = React.useState<number | null>(null);
   const [section, setSection] = React.useState('');
   const [op, setOp] = React.useState('new');
+  const [reason, setReason] = React.useState('');
   const [saving, setSaving] = React.useState(false);
   const doc = docRows.find((d) => d.id === docId) ?? null;
 
@@ -328,7 +330,7 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
   }
 
   const place = async () => {
-    if (!doc || !section.trim() || saving) return;
+    if (!doc || !section.trim() || !placementReasonOk(reason) || saving) return;
     setSaving(true);
     const r = await mutateVerbatim<LeafRow>('PUT', `/api/submissions/sequences/${seqId}/leaves`, {
       sectionCode: section.trim(),
@@ -336,6 +338,7 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
       lifecycleOp: op,
       documentTable: 'coauthor_documents',
       documentId: doc.id,
+      reason: reason.trim(),
     });
     setSaving(false);
     if (r.data && typeof r.data.id === 'number') {
@@ -345,6 +348,7 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
       });
       setDocId(null);
       setSection('');
+      setReason('');
     } else {
       onDone({ tone: 'err', text: `The leaf was not placed — ${r.error ?? 'the request failed'}.` });
     }
@@ -413,10 +417,11 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
               ))}
             </select>
           </div>
+          <PlacementReasonField value={reason} onChange={setReason} idPrefix="sc-leaf" disabled={saving} variant="inline" />
           <button
             type="button"
             className="sp-primary sc-btn"
-            disabled={!doc || !section.trim() || saving}
+            disabled={!doc || !section.trim() || !placementReasonOk(reason) || saving}
             onClick={place}
           >
             {I.layers} {saving ? 'Placing…' : 'Place leaf in the sequence'}
