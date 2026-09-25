@@ -145,3 +145,70 @@ describe('the real registry, launch scope on', () => {
     expect(await refused('/api/stripe/webhook')).toBe(false);
   });
 });
+
+/* Stage 2b. A path no surface, platform or infrastructure entry claims is outside
+   the launch scope as registered. Refusing it outright could refuse a caller
+   static analysis cannot see (a computed path, a server-to-server call), so it is
+   REPORTED by default — the would-refuse lands in the enforcement report Master
+   Admin → Licensing → Enforcement already reads — and refused only when an
+   operator sets LAUNCH_SCOPE_API_UNATTRIBUTED=enforce after reading that report. */
+describe('unattributed paths (stage 2b)', async () => {
+  const { enforcementReport, clearObservations } = await import('../../services/entitlements/enforcement-observations');
+  const snapshotObservations = () => enforcementReport('report').observations;
+  const build = (unattributed?: 'report' | 'enforce') =>
+    moduleEntitlementGate(buildPrefixMap(SURFACES), { launchScope: 'on', ...(unattributed ? { unattributed } : {}) });
+
+  beforeEach(() => clearObservations());
+
+  it('report (the default): passes the request and records the would-refuse', async () => {
+    const { passed } = await run(build(), '/api/legacy-namespace/items', 42);
+    expect(passed).toBe(true);
+    const rows = snapshotObservations();
+    expect(rows).toEqual([
+      expect.objectContaining({ path: '/api/legacy-namespace/items', organizationId: 42, enforced: false, modules: ['launch-scope:unattributed'] }),
+    ]);
+  });
+
+  it('enforce: refuses it 403 LAUNCH_SCOPE and records it as enforced', async () => {
+    const { res, passed } = await run(build('enforce'), '/api/legacy-namespace/items', 42);
+    expect(passed).toBe(false);
+    expect(res.statusCode).toBe(403);
+    expect(res.body.error.code).toBe('LAUNCH_SCOPE');
+    expect(snapshotObservations()[0]).toMatchObject({ enforced: true });
+  });
+
+  it('enforce: never refuses infrastructure (the public API, webhooks) or a non-API path (the app itself)', async () => {
+    const gate = build('enforce');
+    expect((await run(gate, '/api/v1/documents')).passed).toBe(true);
+    expect((await run(gate, '/api/firecrawl-webhooks/crawl')).passed).toBe(true);
+    expect((await run(gate, '/concept2cure/projects')).passed).toBe(true);
+    expect((await run(gate, '/assets/index.js')).passed).toBe(true);
+    expect(snapshotObservations()).toEqual([]);
+  });
+
+  it('records one row per route, not per record: numeric and uuid segments collapse to :id', async () => {
+    const gate = build();
+    await run(gate, '/api/legacy-namespace/projects/123/artifacts', 42);
+    await run(gate, '/api/legacy-namespace/projects/456/artifacts', 42);
+    await run(gate, '/api/legacy-namespace/programs/0b7f2c1e-9a4d-4c3b-8e21-5f6a7b8c9d0e', 42);
+    const rows = snapshotObservations();
+    expect(rows.map((r) => [r.path, r.count]).sort()).toEqual([
+      ['/api/legacy-namespace/programs/:id', 1],
+      ['/api/legacy-namespace/projects/:id/artifacts', 2],
+    ]);
+  });
+
+  it('a request with no organisation is recorded against organisation 0, not dropped', async () => {
+    await run(build(), '/api/legacy-namespace/items', null);
+    expect(snapshotObservations()[0]).toMatchObject({ organizationId: 0 });
+  });
+
+  it('production with LAUNCH_SCOPE_API_UNATTRIBUTED unset reports; an unknown value refuses to boot', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('LAUNCH_SCOPE_ENFORCE', '');
+    vi.stubEnv('LAUNCH_SCOPE_API_UNATTRIBUTED', '');
+    expect((await run(moduleEntitlementGate(buildPrefixMap(SURFACES)), '/api/legacy-namespace/x')).passed).toBe(true);
+    vi.stubEnv('LAUNCH_SCOPE_API_UNATTRIBUTED', 'strict');
+    expect(() => moduleEntitlementGate(buildPrefixMap(SURFACES))).toThrow(/LAUNCH_SCOPE_API_UNATTRIBUTED/);
+  });
+});

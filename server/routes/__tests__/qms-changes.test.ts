@@ -109,20 +109,17 @@ describe('POST /api/mdx/qms/changes/:id/transition — controlled lifecycle', ()
     expect(res.status).toBe(409);
   });
 
-  it('422 when the approver is the proposer (segregation of duties)', async () => {
-    // proposed_by 7 === acting user 7, moving under_assessment → approved.
-    query.mockResolvedValueOnce({ rows: [changeRow({ status: 'under_assessment', proposed_by: 7 })] });
-    const res = await request(appWith(9, 7)).post('/api/mdx/qms/changes/1/transition').send({ to: 'approved' });
-    expect(res.status).toBe(422);
-  });
-
-  it('allows approval by a different user', async () => {
-    query
-      .mockResolvedValueOnce({ rows: [changeRow({ status: 'under_assessment', proposed_by: 7 })] })  // getChange
-      .mockResolvedValueOnce({ rows: [changeRow({ status: 'approved', approved_by: 8 })] });          // update
-    const res = await request(appWith(9, 8)).post('/api/mdx/qms/changes/1/transition').send({ to: 'approved' });
-    expect(res.status).toBe(200);
-    expect(res.body.data.status).toBe('approved');
+  /* Approval is an electronic signature (DP-31 / P1-28): the transition route
+     no longer approves anyone, proposer or not. The signed door and its
+     segregation-of-duties refusal are pinned in qms-change-approval-signature.test.ts. */
+  it('428 for approval through the transition route, whoever asks', async () => {
+    for (const actor of [7, 8]) {
+      query.mockReset();
+      query.mockResolvedValueOnce({ rows: [changeRow({ status: 'under_assessment', proposed_by: 7 })] });
+      const res = await request(appWith(9, actor)).post('/api/mdx/qms/changes/1/transition').send({ to: 'approved' });
+      expect(res.status).toBe(428);
+      expect(query.mock.calls.some((c) => /UPDATE qms_change_controls/i.test(String(c[0])))).toBe(false);
+    }
   });
 });
 

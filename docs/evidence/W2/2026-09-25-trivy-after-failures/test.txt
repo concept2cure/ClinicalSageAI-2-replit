@@ -1,0 +1,12 @@
+# tests/ci/trivy-steps-run-after-failures.contract.test.ts — before
+ × tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy scans are not skipped by an earlier failure > .github/workflows/ci.yml: every Trivy step runs unless the run was cancelled 26ms
+   → .github/workflows/ci.yml › security › "Trivy filesystem scan (deps + secrets)" has no if: !cancelled() — an earlier failed step skips it: expected false to be true // Object.is equality
+ × tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy scans are not skipped by an earlier failure > .github/workflows/deploy-aws.yml: every Trivy step runs unless the run was cancelled 
+   → .github/workflows/deploy-aws.yml › security-gate › "Trivy filesystem scan (deps + secrets)" has no if: !cancelled() — an earlier failed step skips it: expected false to be true // Object.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed (2)
+
+# after
+ ✓ tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy scans are not skipped by an earlier failure > .github/workflows/ci.yml: every Trivy step r
+ ✓ tests/ci/trivy-steps-run-after-failures.contract.test.ts > Trivy scans are not skipped by an earlier failure > .github/workflows/deploy-aws.yml: every Triv
+      Tests  2 passed (2)
