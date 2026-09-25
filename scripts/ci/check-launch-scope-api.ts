@@ -67,6 +67,7 @@ function makeResolver(L: Layout) {
 
 export interface Violation {
   path: string;
+  verdict: LaunchScopeApiVerdict;
   surfaces: string[];
   files: string[];
 }
@@ -178,9 +179,12 @@ export function checkLaunchScopeApi(
       e.files.add(path.relative(L.root, f));
       ids.forEach((i) => e.surfaces.add(i));
     }
+  // `unmapped` fails too: a launch screen's call that no surface claims is one
+  // stage-2 enforcement (unmapped prefixes refused in production) would refuse.
+  // Every launch call is attributed — to its surface, or to LAUNCH_PLATFORM_API.
   const violations = [...all]
-    .filter(([, e]) => e.verdict === 'out-of-scope')
-    .map(([p, e]) => ({ path: p, surfaces: [...e.surfaces], files: [...e.files] }));
+    .filter(([, e]) => e.verdict === 'out-of-scope' || e.verdict === 'unmapped')
+    .map(([p, e]) => ({ path: p, verdict: e.verdict, surfaces: [...e.surfaces], files: [...e.files] }));
   return { violations, unresolved, all };
 }
 
@@ -232,6 +236,9 @@ function selftest(): number {
   // The fix: the launch surface declares what it calls.
   const green = checkLaunchScopeApi(L, buildPrefixMap([{ id: 'launch-app', apiPrefixes: ['/api/launch-api', '/api/hidden-api'] }, surfaces[1]]), launch);
   expect('passes once the launch surface declares the prefix it calls', green.violations.length === 0);
+  // A launch screen calling a prefix no surface claims is flagged as unmapped.
+  const unmapped = checkLaunchScopeApi(L, buildPrefixMap([{ id: 'launch-app', apiPrefixes: [] }, surfaces[1]]), launch);
+  expect('flags a launch call no surface claims (unmapped)', unmapped.violations.some((v) => v.verdict === 'unmapped' && v.path.startsWith('/api/launch-api')));
   expect('resolves every registration it was given', red.unresolved.length === 0);
   fs.rmSync(dir, { recursive: true, force: true });
   console.log(failed === 0 ? '\nselftest PASSED — the gate flags a launch screen that production would refuse.' : `\nselftest FAILED (${failed})`);
@@ -251,10 +258,11 @@ function main(): number {
     return 1;
   }
   if (violations.length) {
-    console.error(`ci:launch-scope-api: ${violations.length} API path(s) that launch or shell screens call would be REFUSED in production,`);
-    console.error('because every surface claiming them is outside the launch scope. Declare each prefix on the launch');
-    console.error('surface that calls it (shared/constants/ui-surface-registry*.ts apiPrefixes), or stop calling it.\n');
-    for (const v of violations) console.error(`  ${v.path}\n    called by ${v.surfaces.join(', ')}\n    in ${v.files.slice(0, 4).join(', ')}`);
+    console.error(`ci:launch-scope-api: ${violations.length} API path(s) that launch or shell screens call are not attributed to the launch scope:`);
+    console.error('"out-of-scope" is refused in production today; "unmapped" is claimed by no surface. Declare each prefix on the');
+    console.error('launch surface that calls it (shared/constants/ui-surface-registry*.ts apiPrefixes), or, if the shell uses it');
+    console.error('whatever app is open, on LAUNCH_PLATFORM_API with its reason — or stop calling it.\n');
+    for (const v of violations) console.error(`  [${v.verdict}] ${v.path}\n    called by ${v.surfaces.join(', ')}\n    in ${v.files.slice(0, 4).join(', ')}`);
     return 1;
   }
   const counts: Record<string, number> = {};
