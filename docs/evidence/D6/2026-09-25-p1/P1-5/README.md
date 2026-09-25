@@ -45,3 +45,14 @@ tenant scope are doubles; the size-limit case sends 26 MB and gets 413 before an
   gate limits. `authoring.router.ts` is inside another lane's window until 01:51 UTC; the rest are cold and are the
   next D6 upload session's, one commit each, shrinking the baseline.
 - **`DocumentDataCenterService.ts`** stores to disk with no filter; it is outside the launch catalog and in the baseline.
+
+## Sweep, part 1 (same day): the four launch-catalog files
+
+`sweep/catalog-four/` — `server/routes/c2c/knowledge-sources.ts` (AnA knowledge sources: gained a `fileFilter` and the
+byte check), `server/routes/c2c/templates.ts` (Authoring templates: byte check in both handlers through one helper),
+`server/routes/onboarding-proposals.ts` (Projects onboarding: `fileFilter` and byte check), `server/routes/ind-forms.routes.ts`
+(Submission Center official-form upload: the scan after its own PDF magic check). Multer's outcomes are answered by one
+shared `receiveUpload` (`server/middleware/uploadAllowlist.ts`: 413 / 415 / 400 with a code) instead of a per-router
+copy; its unit test is `server/middleware/__tests__/uploadAllowlist-receive.test.ts`. `red.txt` is the scanner on the four
+files as committed (each lacked the byte check, two also the filter); `green.txt` is 100 / 100 across the four routes'
+existing suites and the receiver's; the baseline shrank from 12 files to 8.
