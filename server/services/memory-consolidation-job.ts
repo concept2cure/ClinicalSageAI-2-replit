@@ -34,6 +34,7 @@
 import cron from 'node-cron';
 import { pool } from '../db.js';
 import { withTenantConnection } from '../db/withTenantConnection';
+import { runScheduledOnce, type ScheduledOnceResult } from '../db/scheduledOnce';
 import { createScopedLogger } from '../utils/logger.js';
 import {
   evaluateMemoryCandidate,
@@ -91,7 +92,12 @@ interface StaleMemoryRow {
  *
  * Left-joins to project_memory_entries to skip already-consolidated rows
  * (identified by category = 'conversation_summary' and the title carrying the
- * conversation_working_memory id).
+ * conversation_working_memory id as the exact marker `[cwm_<id>]`).
+ *
+ * The marker is matched exactly (strpos on the bracketed form). It used to be
+ * `title LIKE '%cwm_' || id || '%'`, under which row 1 counted as consolidated
+ * as soon as row 12 (or 10, 100, …) of the same project was — so those rows
+ * were never promoted — and `_` was a single-character wildcard besides.
  */
 async function findStaleMemories(batchSize: number): Promise<StaleMemoryRow[]> {
   // Cross-tenant by design: scans every org for stale memories. Runs under
@@ -129,7 +135,7 @@ async function findStaleMemories(batchSize: number): Promise<StaleMemoryRow[]> {
              SELECT 1 FROM project_memory_entries pme
              WHERE pme.project_id = COALESCE(cc.project_id, cwm.project_id)
                AND pme.category = 'conversation_summary'
-               AND pme.title LIKE '%cwm_' || cwm.id::text || '%'
+               AND strpos(pme.title, '[cwm_' || cwm.id::text || ']') > 0
            )
          ORDER BY cwm.generated_at ASC
          LIMIT $1`,
@@ -313,7 +319,7 @@ async function consolidateMemoryInner(
 
     const dateLabel = new Date(memory.generated_at).toISOString().split('T')[0];
     // Title encodes the cwm.id so the NOT EXISTS guard can detect duplicates
-    const title = `Conversation summary ${dateLabel} [cwm_${memory.id}]`;
+    const title = `Conversation summary ${dateLabel} ${cwmMarker(memory.id)}`;
 
     const cols = [
       'project_profile_id', 'project_id', 'organization_id',
@@ -337,17 +343,11 @@ async function consolidateMemoryInner(
       cols.push('embedding');
       values.push(embeddingLiteral);
     }
-    const placeholders = values.map((_, i) => `$${i + 1}`).concat('NOW()').join(', ');
 
-    // tenant-isolation-safe: the row IS org-scoped — `cols` starts
-    // project_profile_id, project_id, organization_id and `values` binds
-    // memory.organization_id; the scanner cannot see it because the column
-    // list is interpolated rather than written literally.
-    await client.query(
-      `INSERT INTO project_memory_entries (${cols.join(', ')}, created_at)
-       VALUES (${placeholders})`,
-      values
-    );
+    if (!(await insertSummaryOnce(client, memory, cols, values))) {
+      logger.info(`Memory ${memory.id} was consolidated by a concurrent run — not writing it twice`);
+      return 'skipped';
+    }
 
     logger.info(
       `Consolidated memory ${memory.id} into project ${memory.project_id} ` +
@@ -357,6 +357,65 @@ async function consolidateMemoryInner(
   } catch (err) {
     logger.error(`Failed to consolidate memory ${memory.id}:`, err);
     return 'skipped';
+  }
+}
+
+/** The exact title marker linking a summary to its working-memory row. */
+function cwmMarker(memoryId: number): string {
+  return `[cwm_${memoryId}]`;
+}
+
+/**
+ * Insert the summary unless one for this working-memory row already exists —
+ * atomically, so two cycles running at once (one per server process at 02:00)
+ * write it once.
+ *
+ * The existence check in findStaleMemories runs long before this insert, and
+ * every concurrent cycle passes it. Here a transaction-scoped advisory lock on
+ * the row id serializes the writers; under READ COMMITTED each statement takes
+ * a fresh snapshot, so whoever gets the lock second sees the first one's
+ * committed row and inserts nothing. No unique index (no migration) needed. The
+ * lock is released by COMMIT/ROLLBACK and never outlives the transaction.
+ *
+ * Returns true when this call wrote the row.
+ */
+async function insertSummaryOnce(
+  client: import('pg').PoolClient,
+  memory: StaleMemoryRow,
+  cols: string[],
+  values: unknown[]
+): Promise<boolean> {
+  const placeholders = values.map((_, i) => `$${i + 1}`).concat('NOW()').join(', ');
+  await client.query('BEGIN');
+  try {
+    await client.query("SELECT pg_advisory_xact_lock(hashtext('memory-consolidation'), $1::int4)", [
+      memory.id,
+    ]);
+    const already = await client.query(
+      `SELECT 1 FROM project_memory_entries
+        WHERE organization_id = $1 AND project_id = $2
+          AND category = 'conversation_summary' AND strpos(title, $3) > 0
+        LIMIT 1`,
+      [memory.organization_id, memory.project_id, cwmMarker(memory.id)]
+    );
+    if (already.rows.length > 0) {
+      await client.query('COMMIT');
+      return false;
+    }
+    // tenant-isolation-safe: the row IS org-scoped — `cols` starts
+    // project_profile_id, project_id, organization_id and `values` binds
+    // memory.organization_id; the scanner cannot see it because the column
+    // list is interpolated rather than written literally.
+    await client.query(
+      `INSERT INTO project_memory_entries (${cols.join(', ')}, created_at)
+       VALUES (${placeholders})`,
+      values
+    );
+    await client.query('COMMIT');
+    return true;
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
   }
 }
 
@@ -428,6 +487,28 @@ export async function runConsolidation(): Promise<ConsolidationResult> {
 
 // ── Scheduler ────────────────────────────────────────────────────────────────
 
+/**
+ * The nightly entry point. Every server process schedules the same 02:00 cron
+ * (production runs three), so the cycle runs under a cross-process lease
+ * (db/scheduledOnce): one process consolidates, the others return
+ * `{ ran: false }`. Returns the outcome so the caller — and the tests that
+ * fire the cron twice at once — can see which happened. Never throws.
+ */
+export async function runScheduledConsolidation(): Promise<
+  ScheduledOnceResult<ConsolidationResult> | { ran: false; reason: 'error' }
+> {
+  try {
+    const outcome = await runScheduledOnce('memory-consolidation', runConsolidation);
+    if (!outcome.ran) {
+      logger.info('Nightly consolidation is running on another process — skipping here');
+    }
+    return outcome;
+  } catch (err) {
+    logger.error('Scheduled consolidation run failed:', err);
+    return { ran: false, reason: 'error' };
+  }
+}
+
 let schedulerActive = false;
 
 /**
@@ -442,13 +523,7 @@ export function initMemoryConsolidationScheduler(): void {
     return;
   }
 
-  cron.schedule(CONSOLIDATION_SCHEDULE, async () => {
-    try {
-      await runConsolidation();
-    } catch (err) {
-      logger.error('Scheduled consolidation run failed:', err);
-    }
-  });
+  cron.schedule(CONSOLIDATION_SCHEDULE, () => runScheduledConsolidation());
 
   schedulerActive = true;
   logger.info(`Memory consolidation scheduler initialized (${CONSOLIDATION_SCHEDULE})`);

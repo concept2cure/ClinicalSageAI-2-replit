@@ -72,6 +72,29 @@ export function runWithSystemTenantScope<T>(caller: string, fn: () => T): T {
 }
 
 /**
+ * Scope for background work done ON BEHALF OF ONE organization — a scheduled
+ * job's per-org handler. Tenant id is the org, no role (no super-admin arm), so
+ * the handler's pooled queries are admitted by the fail-closed instrumentation
+ * and filtered to that org by RLS.
+ *
+ * One definition for every trigger of the same per-org work: the Bull
+ * scheduler (services/automation/scheduled-jobs.ts) and the Redis-free digest
+ * heartbeat (services/digest/digest-heartbeat.ts) both run the proactive digest
+ * through it. The heartbeat used to run it with NO scope, so under
+ * RLS_ENFORCE=on no proactive digest was ever created on a Redis-less deploy.
+ */
+export function runWithOrgJobScope<T>(organizationId: number, caller: string, fn: () => T): T {
+  if (!Number.isInteger(organizationId) || organizationId <= 0) {
+    throw new Error(`runWithOrgJobScope: a positive integer organization id is required (got ${organizationId})`);
+  }
+  if (!caller.trim()) throw new Error('runWithOrgJobScope: caller is required');
+  return runWithTenantScope(
+    { tenantId: String(organizationId), orgUuid: null, role: null, source: 'job', caller },
+    fn,
+  );
+}
+
+/**
  * Scope for work that runs BEFORE a tenant can be known — resolving an identity
  * from an email address, verifying a password, exchanging a refresh token.
  *
