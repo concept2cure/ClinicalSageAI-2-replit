@@ -165,3 +165,60 @@ window.
   suites.
 - One existing assertion changed from `toBe` to `toEqual`. Identical pointers no
   longer share a single resolution object, and that shared object was the defect.
+
+## P1-28 / DP-31 — a QMS change was approved with no ceremony (fixed 2026-09-25)
+
+Security review 2026-09-24, DP-31 (remediation plan P1-28). Two doors approved a
+change with segregation of duties as their only control. One was
+`POST /api/mdx/qms/changes/:id/transition {to:'approved'}`; the other was the AnA
+tool `qms_change_transition`, whose "reason" could be three characters of model
+output. Neither re-verified the approver, captured a meaning or wrote a
+signature. In the UI, the only way to approve was "Advance", which asked AnA to
+"capture the reason and e-signature".
+
+**Change.**
+- `transitionChange` refuses `approved`, after the legality check so an illegal
+  move is still named as one. The transition route answers 428
+  `CHANGE_APPROVAL_REQUIRES_SIGNATURE`, and the AnA tool relays the same refusal.
+  That tool's handler is `…01AiwZKG`'s claimed code and is not edited here.
+- A new `POST /api/mdx/qms/changes/:id/approve` uses the document approval's
+  body, signer check and refusals.
+- A new `services/qms/change-approval-signature.ts` locks the row, refuses the
+  proposer (`QMS_SELF_APPROVAL`) and anything not under assessment, and in one
+  transaction writes the approval stamp and `metadata.approval`, the chained
+  ledger row (command `approve`), and one signature bound to the change's
+  content digest.
+- `SegregationOfDutiesError` has no thrower any more and is deleted.
+- ChangeControl gains **Approve** on a change under assessment (the shared
+  `EsignModal`, approval meaning only, disabled on sample rows).
+- The "Advance" prompt no longer promises an e-signature.
+- The POST helper is shared with SopRegister (`quality/qmsApproval.ts`).
+- Both surfaces read the signer's name through `useAuthUser`, the display-only
+  hook, so they render outside an `AuthProvider`.
+- **Removed:** AnA approving a change, and the transition route approving one.
+  **Replacement, by path:** `ChangeControl.tsx` → `POST
+  /api/mdx/qms/changes/:id/approve`. `ChangeControlApproval.test.tsx` proves the
+  UI path and `qms-change-approval-signature.test.ts` the route.
+
+**Also fixed on the way.** `6582e3a3e` (another session) put
+`requireEditorAccess` on the QMS document writes. Three suites whose harnesses
+grant no role have been red on trunk since:
+`qms-effective-only-by-signature`, `qms-governed-writes-audited` and
+`mdx-qms-labeling-search-analytics-routes`. Each is about what an editor's write
+does, so each harness now grants the gate, which has its own tests.
+
+**Failing first.**
+- `p1-28-change-approval-red.txt`, server: 11 failures across the four suites
+  with the source unchanged. The unsigned doors approve, and the signed route is
+  a 404.
+- Same file, client: 4 failures against the unchanged ChangeControl.
+- `p1-28-change-approval-green.txt`: every QMS server suite and the whole
+  quality client folder pass.
+
+**Also run.** `tsc`: clean. ESLint ratchet: unchanged, and the new server files
+add no warnings. `ci:sign-ceremony`: 23 baselined sites, unchanged.
+
+**Handed to `…01AiwZKG` (the `qms_change_*` tool handlers).**
+- The `qms_change_transition` description should say AnA cannot approve.
+- Its handler comment still names `SegregationOfDutiesError`, which no longer
+  exists.

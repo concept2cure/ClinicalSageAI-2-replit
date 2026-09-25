@@ -57,6 +57,12 @@ vi.mock('../../db', () => ({ pool: { query: (sql: string, p?: unknown[]) => fake
 vi.mock('../../services/audit/audit-write-outcome', () => ({
   recordAuditRow: async () => ({ persisted: true, chained: true }),
 }));
+// The QMS write routes are editor-gated (6582e3a3e). The gate has its own
+// tests; this suite is about what an editor may do, so the harness grants it.
+vi.mock('../../middleware/orgMembership', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../middleware/orgMembership')>()),
+  requireEditorAccess: (_req: Request, _res: Response, next: NextFunction) => next(),
+}));
 // /api/qms authenticates itself; the harness below stands in for the session.
 vi.mock('../../middleware/auth', () => ({
   authenticateToken: (_req: Request, _res: Response, next: NextFunction) => next(),
