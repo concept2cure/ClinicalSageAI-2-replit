@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { redactInternals } from '@/lib/queryClient';
 import { I } from '../icons';
 import { PedigreeBadge } from '../intelligence/Intelligence';
 import { liveGetOrNull, unwrapList, useLiveData, EmptyState } from '../dataConnect';
@@ -222,7 +223,7 @@ function useProgramSequence(): Discovery {
         if (!cancelled) setD(next);
       })
       .catch((e: unknown) => {
-        if (!cancelled) setD({ state: 'error', detail: e instanceof Error ? e.message : String(e) });
+        if (!cancelled) setD({ state: 'error', detail: redactInternals(e instanceof Error ? e.message : '', 'the read failed') });
       });
     return () => {
       cancelled = true;
