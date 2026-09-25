@@ -45,12 +45,14 @@ carrying its status:
 | `part11-ux.md` | Part 11 / GxP compliance UX | two new blockers (Q1 quorum-version binding, Q2 QMS retire) and Q3, Q4, Q6 **fixed** (`42eb291d`, `6582e3a3`, `fde9d704`, `896e96fb`); Q5 (a reason on vault filing) open; eight of last week's findings confirmed closed |
 | `honest-state.md` | honest state | one medium (HS1, Template Library null confidence) **fixed** `896e96fb`; all 21 launch surfaces otherwise clean; last week's fixes hold |
 | `a11y.md` | WCAG 2.2 AA | one blocker (Submission Center table row, pointer-only) and two advisories **fixed** `4f0becb6`; no other blocker in scope |
+| `design-system.md` | design-system conformance and its gates | every gate green; last week's shadowing FAIL gone; G1, G3, G4, G5 **fixed** (`0f389d77`), phantom-token baseline ratcheted 14 → 9; G2 (TaskBoard's raw-hex module palette) **open as a token decision**; one gate found to rewrite files when run |
+| `microcopy.md` | voice and copy | eight unredacted error messages and one naming inconsistency **fixed** (`164f52ef`); copy gates green |
 
 Also closed from `../2026-09-22`: D1 (phantom `--danger` in TSX) by `02beeb59`, which swept
 every token referenced from TSX inline styles against the token definitions.
 
-The design-system and microcopy lenses are running as this addendum is written; their
-reports are added when they return. The first fan-out of all six auditors on 2026-09-24
+All six lenses are filed. Q5 (a reason on vault filing) closed after the addendum was first
+written (`95fcbffc`); every Part 11 finding in `part11-ux.md` is now fixed. The first fan-out of all six auditors on 2026-09-24
 23:xx UTC died on a session rate limit and produced nothing; this is the second run.
 
 - **Rows informed:** D2 (launch catalog), D5 (Part 11 evidence). No row turns green as a result.
