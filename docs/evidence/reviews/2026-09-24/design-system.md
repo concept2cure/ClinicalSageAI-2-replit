@@ -36,14 +36,17 @@ status palettes, the pathway stylesheet fork, phantom `--danger` / `--ok-600` in
 | `ci:check-chip-tones` (extra) | `138 literal tone use(s), all 28 resolve` |
 | `ci:check-orphaned-stylesheets` (extra) | `45 imported / 0 orphaned, baseline 0` |
 
-### Process note: one gate is not read-only
+### Process note: a gate the auditor reported as writing files does not
 
-`scripts/ci/check-toast-canonicality.mjs` **rewrites files in place** when run — the auditor ran it
-out of curiosity and it modified `v2/styles/misc-surfaces-v2.css` and `v2/surfaces/Vault.tsx`,
-which were restored with `git checkout --` immediately; nothing from that run is used here. A CI
-gate that edits the tree is a hazard for any read-only lens and for CI itself. **Follow-up for the
-control tower:** give it a `--check` mode (or make `--write` explicit) and note it in the gate's
-header.
+The auditor reported that `scripts/ci/check-toast-canonicality.mjs` rewrote
+`v2/styles/misc-surfaces-v2.css` and `v2/surfaces/Vault.tsx` when run, and restored them. **Re-checked
+by the control tower on 2026-09-25 03:20 UTC:** the script has no `writeFileSync`, `exec` or `spawn`
+call, and running it on a clean tree leaves `git status` empty. The two files the auditor saw modified
+were being edited by this session's Q5 remediation at that moment; the auditor's `git checkout --`
+reverted that in-progress work before it was committed, so `95fcbffc` landed with only its report
+line. The edits were re-applied and committed as the follow-up commit named in `part11-ux.md`. The
+gate is read-only. Lesson for the next fan-out: auditors are read-only by definition and must never
+run `git checkout`; the control tower should not edit while an auditor runs.
 
 ## Re-verification of `../2026-09-22/design-system.md`
 
