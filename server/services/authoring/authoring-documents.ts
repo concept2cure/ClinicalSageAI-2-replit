@@ -20,6 +20,7 @@ import crypto from 'crypto';
 import type { Pool } from 'pg';
 import { createScopedLogger } from '../../utils/logger';
 import { resolveGovernedDocument } from '../c2c/governed-document-binding.js';
+import { programInOrganization } from '../c2c/program-access';
 import {
   canonicalIdFor,
   recordDocumentAlias,
@@ -453,10 +454,16 @@ export async function createDocument(ctx: CreateContext, input: CreateDocumentIn
   if (!title) return { kind: 'refused', status: 400, error: 'Document title is required' };
 
   // Reject a malformed program id with a clean 400 rather than letting the
-  // UUID column cast throw a 500. Cross-org mis-scoping is already prevented
-  // downstream: every read is gated on tenant_id.
+  // UUID column cast throw a 500.
   if (client_program_id !== undefined && client_program_id !== null && !UUID_RE.test(String(client_program_id))) {
     return { kind: 'refused', status: 400, error: 'client_program_id must be a valid UUID' };
+  }
+  // …and anchor only to a live project this organization owns (LX-20). Reads are
+  // gated on tenant_id; the ANCHOR was not, so a document could name another
+  // organization's project, a missing one, or a deleted one. 404, not 403: the
+  // caller learns nothing about another tenant's project ids.
+  if (client_program_id && !(await programInOrganization(ctx.pool, String(client_program_id), ctx.tenantId))) {
+    return { kind: 'refused', status: 404, error: 'Project not found' };
   }
 
   let templateSections: TemplateSectionSeed[] | null = null;

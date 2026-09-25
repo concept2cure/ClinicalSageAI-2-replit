@@ -18,6 +18,7 @@
  */
 
 import { createScopedLogger } from '../../utils/logger';
+import { programInOrganization } from '../c2c/program-access';
 import type { AuthoringPool } from './authoring-documents';
 import {
   createDocumentFromDraft,
@@ -67,11 +68,7 @@ export async function resolveOpenProgram(pool: AuthoringPool, ctx: DraftToolCont
   const orgId = Number(ctx.organizationId);
   const ref = typeof ctx.projectRef === 'string' ? ctx.projectRef.trim() : '';
   if (ref && UUID_RE.test(ref)) {
-    const owns = await pool.query(
-      `SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-      [ref, orgId],
-    );
-    return owns.rows[0]?.id ? String(owns.rows[0].id) : null;
+    return (await programInOrganization(pool, ref, orgId)) ? ref : null;
   }
   const legacy = Number(ctx.projectId);
   if (Number.isSafeInteger(legacy) && legacy > 0) {
