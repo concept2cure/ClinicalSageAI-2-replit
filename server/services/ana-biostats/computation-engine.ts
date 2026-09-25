@@ -230,6 +230,30 @@ export class ComputationEngine {
     return this.normCdf(input.effectSize / se - zAlpha) + this.normCdf(-input.effectSize / se - zAlpha);
   }
 
+  /**
+   * The power of the two-proportion test a binary design was SIZED for, at
+   * `nPerGroup` in the reference arm — the inverse of computeBinary's formulas,
+   * with the same rates, variance terms and critical value:
+   *   non-inferiority  |(p2 − p1) − Δ_NI| / √(v/n) − z_α,  v = p1(1−p1) + p2(1−p2)/r
+   *   superiority      (|p2 − p1|·√n − z_α·√((1+1/r)·p̄(1−p̄))) / √v
+   */
+  private binaryPower(input: StatisticalInput, nPerGroup: number): number {
+    if (nPerGroup <= 0) return 0;
+    const zAlpha = this.normQuantile(1 - input.alpha / 2);
+    const r = input.allocationRatio || 1;
+    const p1 = input.controlRate ?? 0.5;
+    const p2 = input.treatmentRate ?? (p1 + input.effectSize);
+    const v = p1 * (1 - p1) + p2 * (1 - p2) / r;
+    if (v <= 0) return 0;
+    if (input.studyType === 'non_inferiority' && input.nonInferiorityMargin) {
+      const delta = Math.abs((p2 - p1) - input.nonInferiorityMargin);
+      return this.normCdf(delta / Math.sqrt(v / nPerGroup) - zAlpha);
+    }
+    const pBar = (p1 + r * p2) / (1 + r);
+    const z = (Math.abs(p2 - p1) * Math.sqrt(nPerGroup) - zAlpha * Math.sqrt((1 + 1 / r) * pBar * (1 - pBar))) / Math.sqrt(v);
+    return this.normCdf(z);
+  }
+
   private computeBinary(input: StatisticalInput, assumptions: ComputationAssumption[]): ComputationResult {
     const zAlpha = this.normQuantile(1 - input.alpha / 2);
     const zBeta = this.normQuantile(input.powerTarget);
@@ -269,7 +293,9 @@ export class ComputationEngine {
     return {
       method,
       sampleSize: { perGroup: nPerGroup, total, groups },
-      power: input.powerTarget,
+      // Computed for this N by the test it was sized for (binaryPower) — before
+      // 2026-09-25 this returned the target itself as the "achieved" power.
+      power: Math.min(this.binaryPower(input, nPerGroup), 0.9999),
       effectSize: Math.abs(p2 - p1),
       alpha: input.alpha,
       adjustedSampleSize: adjustedPerGroup,
@@ -808,7 +834,16 @@ export class ComputationEngine {
     this.scenarioDepth += 1;
     try {
       return [0.75, 1.0, 1.25, 1.5].map((mult) => {
-        const modifiedInput = { ...input, effectSize: input.effectSize * mult };
+        // A binary design given as two rates is sized from the rates, not from
+        // effectSize — so the scenario scales the rate difference itself, or all
+        // four "effect" scenarios would be the same trial.
+        const modifiedInput: StatisticalInput = {
+          ...input,
+          effectSize: input.effectSize * mult,
+          ...(typeof input.controlRate === 'number' && typeof input.treatmentRate === 'number'
+            ? { treatmentRate: input.controlRate + (input.treatmentRate - input.controlRate) * mult }
+            : {}),
+        };
         const r = this.compute(modifiedInput);
         const label = mult === 1.0
           ? 'Base case'
