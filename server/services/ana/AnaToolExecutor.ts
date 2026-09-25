@@ -9304,11 +9304,15 @@ registerToolHandler('check_consistency', async (input, ctx) => {
   if (right.length === 0) return JSON.stringify({ error: 'right (non-empty array) is required.' });
   try {
     const { runConsistencyCheck } = await import('../truth-engine/truth-engine-service.js');
-    const findings = await runConsistencyCheck(
+    const { findings, auditTrail } = await runConsistencyCheck(
       { submissionId, dimension, left: { ref: left.ref, text: left.text }, right },
       { organizationId: ctx.organizationId, userId: ctx.userId }
     );
-    return JSON.stringify({ ok: true, findings, conflicts: findings.filter((f) => f.status === 'conflict').length });
+    const conflicts = findings.filter((f) => f.status === 'conflict').length;
+    return JSON.stringify({
+      ok: true, findings, conflicts, auditTrail,
+      message: withAuditNote(`${findings.length} finding(s) recorded, ${conflicts} conflict(s).`, auditTrail),
+    });
   } catch (err) {
     return JSON.stringify({ error: `check_consistency failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as any)?.code });
   }

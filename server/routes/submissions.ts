@@ -51,6 +51,7 @@ import {
   runConsistencyCheck,
   listConsistencyFindings,
 } from '../services/truth-engine/truth-engine-service';
+import { setAuditRowHeaders } from '../services/audit/audit-write-outcome';
 import {
   runShadowReview,
   listShadowReviewRuns,
@@ -971,10 +972,7 @@ router.delete('/sequences/:seqId/leaves/:leafId', limiter, requireRole(AUTHOR), 
        proxy, which forwards an upstream body verbatim and therefore also reports
        through headers. */
     const removal = await removeLeaf(leafId, seqId, ctx);
-    res.set('X-Audit-Row-Persisted', String(removal.auditTrail.persisted));
-    if (!removal.auditTrail.persisted) {
-      res.set('X-Audit-Row-Code', removal.auditTrail.code);
-    }
+    setAuditRowHeaders(res, removal.auditTrail);
     res.status(204).end();
   } catch (err) {
     fail(res, err);
@@ -1113,7 +1111,11 @@ router.post('/:id/consistency', limiter, requireRole(AUTHOR), async (req, res) =
   const parsed = consistencySchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   try {
-    res.json(await runConsistencyCheck({ submissionId: id, ...parsed.data }, ctx));
+    // The body stays the findings array the Submission Center reads; the check's
+    // §11.10(e) row is reported in the header pair, as the leaf removal above does.
+    const { findings, auditTrail } = await runConsistencyCheck({ submissionId: id, ...parsed.data }, ctx);
+    setAuditRowHeaders(res, auditTrail);
+    res.json(findings);
   } catch (err) {
     fail(res, err);
   }

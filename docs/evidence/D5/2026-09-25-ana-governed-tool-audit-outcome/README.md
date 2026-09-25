@@ -57,12 +57,35 @@ Also:
   `fact-change-orchestrator.ts` from 2 to 0, and the baseline is shrunk to
   match.
 
+## The consistency check (same day, follow-on)
+
+`runConsistencyCheck` (`truth-engine-service.ts`) discarded its success-path
+AI_GENERATE row. It now returns `{ findings, auditTrail }`:
+
+- `POST /api/submissions/:id/consistency` still answers the bare findings
+  array the Submission Center reads. It reports the row through the
+  `X-Audit-Row-Persisted` / `X-Audit-Row-Code` pair via the shared
+  `setAuditRowHeaders`, and the client transport already reads that pair.
+- `check_consistency` passes `auditTrail` on and notes a lost row.
+- The leaf-removal route in the same file was the last hand-written copy of
+  that header pair, and it now uses the shared setter too.
+  `audit-outcome-headers-exposed.test.ts` found carriers by grepping route
+  files for the literal header names, so it now also searches the shared
+  setter. Shown still failing when `X-Audit-Row-Code` is dropped from its
+  list.
+
+| Suite | Without | With |
+|---|---|---|
+| `server/services/truth-engine/__tests__/consistency-audit-outcome.test.ts` (service and tool) | 3/3 fail | 3/3 |
+| `server/routes/__tests__/submissions-consistency-audit-outcome.test.ts` (body unchanged, headers set) | 2/2 fail | 2/2 |
+
+`consistency-red.txt` / `consistency-green.txt` hold the runs.
+
+Also:
+
+- The submissions, truth-engine and header suites pass: 13 files, 52 tests.
+- `ci:discarded-audit-write`: `truth-engine-service.ts` goes from 1 to 0.
+
 ## Not changed
 
-- **`check_consistency`.** `runConsistencyCheck`
-  (`truth-engine-service.ts`) discards its success-path audit outcome, and it
-  returns a bare findings array that `routes/submissions.ts` answers as the
-  body. Carrying the outcome changes that response shape, or needs the
-  `X-Audit-Row-*` headers, and that choice is for whoever owns the route. It
-  stays one baselined site.
 - **`run_shadow_review`** already spreads a result that carries `auditTrail`.
