@@ -51,7 +51,7 @@ six phantom tokens). That covers one defect class, not a lens.
 | P5 | medium | **open** | `authoring.router.ts`: the section save (`:1645`), freeze (`:3673`) and review verdict (`:2710`) validate no reason. The freeze falls back to a canned `'Document frozen for compliance'`. |
 | D1 | medium | **fixed tonight** by `02beeb59` (another session) | `Review.tsx` now reads `var(--error)` |
 | D2 | medium | **fixed tonight** by `02beeb59` | `TaskBoard.tsx` no longer references `--danger` |
-| D3 | medium | **open, and wider** | `Vault.tsx:224` `I.chevronRight \|\| '›'` and `:1052` `I.upload \|\| I.plus`. Neither key exists in `v2/icons.tsx` (`chevRight` does). The same miss occurs at `:227` (`I.folderOpen`) and `:277,290,301` (`I.inbox`), so the open-folder and data-room icons never render. |
+| D3 | medium | **open, and wider**. Fixed 2026-09-25 across 21 files, with a test that fails on any missing key (`v2/__tests__/iconKeys.test.ts`); see the commit that names D3 | `Vault.tsx:224` `I.chevronRight \|\| '›'` and `:1052` `I.upload \|\| I.plus`. Neither key exists in `v2/icons.tsx` (`chevRight` does). The same miss occurs at `:227` (`I.folderOpen`) and `:277,290,301` (`I.inbox`), so the open-folder and data-room icons never render. |
 | P6 | low | **open** | `DocumentWorkbench.tsx:4270-4276`: Revert has no `disabled`, although `docSealed` (`:868`) already disables Save and Insert. |
 | P7 | low | **open** | `ProjectHome.tsx:1073` renders `'User ' + a.actor_id`. `c2c/projects.ts:1302-1311` joins no user name. |
 | D4 | low | **open** | `ProjectHome.tsx:432,467` use `var(--border,#d0d5dd)` and `:781` uses `var(--border-subtle,#eaecf0)`. These cool-grey fallbacks disagree with the warm declared tokens. |
@@ -97,7 +97,7 @@ lost:
 - **Why this matters:** the working agreement says an error is never rendered as an empty
   result. A QA lead looking for overdue periodic reviews is shown a green all-clear by an
   outage.
-- **Status:** fixed in this session's next commit (see the commit that names HS-1).
+- **Status:** fixed in `12e12240`. Eight cases were added to the two existing QMS test files; seven of them fail against the unfixed source.
 
 ### PX-1: Medium, Vault: *Place into submission* records no reason
 

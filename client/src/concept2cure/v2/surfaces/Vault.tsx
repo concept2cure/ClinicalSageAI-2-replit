@@ -182,7 +182,7 @@ export function vaultDocFamilyCode(
 
 function fileIcon(doc: VaultDoc): React.ReactNode {
   const key = vaultFileIconKey(doc);
-  return (I as any)[key] || I.fileText || I.file;
+  return (I as any)[key] || I.fileText;
 }
 
 /* ── VaultTree — recursive folder nav ── */
@@ -221,10 +221,10 @@ function VaultTree({ nodes, depth, activeFolder, onPick, expanded, toggle }: Vau
               }}
             >
               <span className="vd-caret" data-open={isOpen || undefined}>
-                {I.chevronRight || '›'}
+                {I.chevRight}
               </span>
               <span className="vd-fico">
-                {isOpen ? I.folderOpen || I.folder : I.folder}
+                {isOpen ? I.folderOpen : I.folder}
               </span>
               <span className="vd-flabel">
                 {folder.code ? <b>{folder.code}</b> : null} {folder.label}
@@ -357,7 +357,7 @@ function DataRoomLane({
     return (
       <div className="vd-dr" data-testid="vault-data-room">
         <div className="vd-dr-head">
-          <span className="vd-dr-title">{I.inbox || I.folder} Data room</span>
+          <span className="vd-dr-title">{I.inbox} Data room</span>
         </div>
         <div className="vd-dr-err" role="alert">
           {I.alertTriangle} Unavailable — showing nothing because the room could not be
@@ -370,7 +370,7 @@ function DataRoomLane({
     return (
       <div className="vd-dr" data-testid="vault-data-room">
         <div className="vd-dr-head">
-          <span className="vd-dr-title">{I.inbox || I.folder} Data room</span>
+          <span className="vd-dr-title">{I.inbox} Data room</span>
           <span className="vd-dr-meta">No data room information for this project.</span>
         </div>
       </div>
@@ -381,7 +381,7 @@ function DataRoomLane({
   return (
     <div className="vd-dr" data-testid="vault-data-room">
       <div className="vd-dr-head">
-        <span className="vd-dr-title">{I.inbox || I.folder} Data room</span>
+        <span className="vd-dr-title">{I.inbox} Data room</span>
         <span className="vd-dr-stages">
           <span className="vd-dr-stage">Captured <b>{roomCount(block.captured, block)}</b></span>
           <span className="vd-dr-arrow">›</span>
@@ -1132,7 +1132,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           }
           data-testid="vault-upload-button"
         >
-          {I.upload || I.plus} {uploading ? 'Uploading…' : 'Upload'}
+          {I.upload} {uploading ? 'Uploading…' : 'Upload'}
         </button>
         {/* The conversational route is kept, but as what it is: a second way
             in, not the thing the upload icon promises. */}

@@ -1,0 +1,111 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T21:14:25.359Z","pid":828,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T21:14:25.361Z","pid":828,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T21:14:25.361Z","pid":828,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/master-enterprise-requests.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stderr | tests/db/master-enterprise-requests.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/master-enterprise-requests.dbtest.ts
+[database] Database connection successful
+
+{"level":40,"time":"2026-09-24T21:14:26.086Z","pid":828,"hostname":"vm","context":{"userId":2,"role":"admin","email":"dbter-customeradmin-828_mug156nu@example.invalid","path":"/api/admin/master/enterprise-requests"},"msg":"[platform-admin-guard] Master Administration access denied"}
+ × tests/db/master-enterprise-requests.dbtest.ts > GET /api/admin/master/enterprise-requests — the platform owner > lists pending requests by default, and not reviewed ones 199ms
+   → expected 404 to be 200 // Object.is equality
+ × tests/db/master-enterprise-requests.dbtest.ts > GET /api/admin/master/enterprise-requests — the platform owner > lists reviewed ones too with ?status=all 12ms
+   → expected 404 to be 200 // Object.is equality
+ × tests/db/master-enterprise-requests.dbtest.ts > GET /api/admin/master/enterprise-requests — the platform owner > refuses an unknown status filter rather than guessing 9ms
+   → expected 404 to be 400 // Object.is equality
+ ✓ tests/db/master-enterprise-requests.dbtest.ts > everyone else > a customer's organisation admin is refused — other companies' contact details 15ms
+ ✓ tests/db/master-enterprise-requests.dbtest.ts > everyone else > no token is refused 4ms
+ × tests/db/master-enterprise-requests.dbtest.ts > a read that fails is never shown as "no requests" > answers 500 with no list when the store cannot be read 10ms
+   → expected 404 to be 500 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/master-enterprise-requests.dbtest.ts > GET /api/admin/master/enterprise-requests — the platform owner > lists pending requests by default, and not reviewed ones
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/master-enterprise-requests.dbtest.ts:158:24
+    156|   it('lists pending requests by default, and not reviewed ones', async…
+    157|     const res = await request(app).get(`${MASTER}/enterprise-requests`…
+    158|     expect(res.status).toBe(200);
+       |                        ^
+    159|     expect(res.body.status).toBe('pending');
+    160|     expect(mine(res.body.requests)).toEqual([PENDING.email]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/db/master-enterprise-requests.dbtest.ts > GET /api/admin/master/enterprise-requests — the platform owner > lists reviewed ones too with ?status=all
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/master-enterprise-requests.dbtest.ts:172:24
+    170|   it('lists reviewed ones too with ?status=all', async () => {
+    171|     const res = await request(app).get(`${MASTER}/enterprise-requests?…
+    172|     expect(res.status).toBe(200);
+       |                        ^
+    173|     expect(mine(res.body.requests).sort()).toEqual([PENDING.email, REV…
+    174|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/db/master-enterprise-requests.dbtest.ts > GET /api/admin/master/enterprise-requests — the platform owner > refuses an unknown status filter rather than guessing
+AssertionError: expected 404 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 404
+
+ ❯ tests/db/master-enterprise-requests.dbtest.ts:178:24
+    176|   it('refuses an unknown status filter rather than guessing', async ()…
+    177|     const res = await request(app).get(`${MASTER}/enterprise-requests?…
+    178|     expect(res.status).toBe(400);
+       |                        ^
+    179|   });
+    180| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/db/master-enterprise-requests.dbtest.ts > a read that fails is never shown as "no requests" > answers 500 with no list when the store cannot be read
+AssertionError: expected 404 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 404
+
+ ❯ tests/db/master-enterprise-requests.dbtest.ts:200:26
+    198|     try {
+    199|       const res = await request(app).get(`${MASTER}/enterprise-request…
+    200|       expect(res.status).toBe(500);
+       |                          ^
+    201|       expect(res.body.requests).toBeUndefined();
+    202|       expect(JSON.stringify(res.body)).not.toMatch(/permission denied|…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 2 passed (6)
+   Start at  21:14:13
+   Duration  14.99s (transform 1.87s, setup 111ms, import 1.13s, tests 8.05s, environment 0ms)
+
