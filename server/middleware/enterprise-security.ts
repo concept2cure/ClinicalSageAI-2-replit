@@ -1057,8 +1057,11 @@ export function applySecurityMiddleware(app: any) {
   // CSRF protection (origin/referer validation for state-changing requests)
   app.use(csrfProtection);
 
-  // Tenant isolation
-  app.use(validateTenantContext);
+  // Tenant isolation: validateTenantContext is mounted by applyAuthBoundary
+  // (server/startup/middleware.ts), behind the auth boundary, because it can
+  // only compare the header against a session that exists. Mounted here, it
+  // ran before any session was established and detected nothing
+  // (security audit 2026-09-24, IAM-18 item 4).
 
   // Audit logging
   app.use(auditLog);

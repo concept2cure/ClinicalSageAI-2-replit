@@ -350,7 +350,12 @@ export function getCategory(path: string): string {
   if (hasSegment(path, 'login', 'register', 'auth')) {
     return 'auth';
   }
-  if (hasSegment(path, 'ai', 'generate', 'openai', 'anthropic')) {
+  // The AI surfaces this platform mounts (bootstrap/register-ai-routes.ts,
+  // register-core-routes.ts): /api/ai, /api/ai-assistance, /api/ai-gateway,
+  // /api/ana, /api/ana-ri, /api/claude, /api/cortex. Until 2026-09-25 only a
+  // bare `ai` segment counted, so the model calls that cost the most were
+  // metered as ordinary API traffic (security audit 2026-09-24, IAM-18).
+  if (hasSegment(path, 'ai', 'ai-assistance', 'ai-gateway', 'ana', 'ana-ri', 'claude', 'cortex', 'generate', 'openai', 'anthropic')) {
     return 'ai';
   }
   if (hasSegment(path, 'concept2cure')) {
