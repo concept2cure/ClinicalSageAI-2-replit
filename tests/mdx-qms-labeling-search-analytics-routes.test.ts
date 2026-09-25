@@ -24,6 +24,12 @@ const S = vi.hoisted(() => ({
   persistSignature: vi.fn(),
 }));
 
+// The QMS write routes are editor-gated (6582e3a3e). The gate has its own tests;
+// this suite is about the routes' validation and responses, so the harness grants it.
+vi.mock('../server/middleware/orgMembership', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../server/middleware/orgMembership')>()),
+  requireEditorAccess: (_req: unknown, _res: unknown, next: () => void) => next(),
+}));
 vi.mock('../server/db', () => ({
   pool: {
     query: (...args: unknown[]) => queryFn(...args),
