@@ -21,12 +21,19 @@ vi.mock('../../../../db', () => ({ get db() { return holder.db; }, pool: { query
 vi.mock('../../../auditService', () => ({ default: { logAction: vi.fn(async () => ({ persisted: true })) } }));
 const PDF = Buffer.from('%PDF-1.4\n% clinical evaluation report\ntrailer<< /Root 1 0 R >>\n%%EOF\n');
 vi.mock('../../../storage', () => ({
-  getStorageProvider: () => ({
-    name: 'test',
-    async get() {
-      return { bytes: PDF, sizeBytes: PDF.length, sha256: '', mime: 'application/pdf', filename: 'cer.pdf' };
-    },
-  }),
+  ...(() => {
+    const testProvider = {
+      name: 'test',
+      async get() {
+        return { bytes: PDF, sizeBytes: PDF.length, sha256: '', mime: 'application/pdf', filename: 'cer.pdf' };
+      },
+    };
+    return {
+      getStorageProvider: () => testProvider,
+      // The byte reader asks for the store a document was saved in (7fd5d6af).
+      getStorageProviderFor: () => testProvider,
+    };
+  })(),
 }));
 
 import { assembleTechnicalFileFromCore } from '../assemble-technical-file-from-core';
@@ -67,7 +74,10 @@ beforeAll(async () => {
     CREATE TABLE IF NOT EXISTS regulatory_programs (id UUID PRIMARY KEY, organization_id INTEGER, deleted_at TIMESTAMPTZ);
     CREATE TABLE IF NOT EXISTS vault.documents (
       id UUID PRIMARY KEY, program_id UUID NOT NULL, storage_version_id TEXT,
-      content_hash TEXT, file_name TEXT, deleted_at TIMESTAMPTZ
+      content_hash TEXT, file_name TEXT, deleted_at TIMESTAMPTZ,
+      -- Last, so the positional INSERT below is unchanged. NULL: the reader
+      -- (7fd5d6af) then asks getStorageProviderFor for the default store.
+      storage_provider TEXT
     );
     INSERT INTO regulatory_programs VALUES ('${PROGRAM}', ${ORG}, NULL);
     INSERT INTO vault.documents VALUES
