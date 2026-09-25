@@ -30,6 +30,7 @@
 
 import { Router, type Request, type Response } from 'express';
 import { pool } from '../db.js';
+import { currentTenantOrgUuid } from '../db/currentTenant.js';
 import { getEmbeddingService } from '../services/enhancedEmbeddingService.js';
 import { getGateway } from '../services/ai-gateway/index.js';
 import type { GatewayResponse } from '../services/ai-gateway/types.js';
@@ -113,6 +114,17 @@ router.post('/ask', async (req: Request, res: Response) => {
       });
     }
 
+    // The retrieval tenant key, from the same verified scope. It used to be
+    // `tenantContext?.organizationUuid || undefined`, and an undefined key ran
+    // the search unfiltered across every tenant; no key is now a refusal.
+    const orgUuid = await currentTenantOrgUuid(pool);
+    if (!orgUuid) {
+      return res.status(403).json({
+        error: 'Tenant context required',
+        code: 'TENANT_CONTEXT_REQUIRED',
+      });
+    }
+
     const rawProjectId = req.body?.projectId;
     const projectId: string | undefined =
       rawProjectId !== undefined && rawProjectId !== null && rawProjectId !== ''
@@ -185,41 +197,35 @@ router.post('/ask', async (req: Request, res: Response) => {
     }
 
     // ── RETRIEVAL (hybrid, tenant-scoped) ────────────────────────────────
-    // Org UUID is taken ONLY from the verified tenant context — never from an
-    // `x-org-uuid` request header — so the retrieval scope matches the same
-    // principal that anchors the provenance chain.
-    const orgUuid: string | undefined =
-      (req as any).tenantContext?.organizationUuid || undefined;
+    // `orgUuid` (above) is the verified scope's — never an `x-org-uuid` request
+    // header — so the retrieval scope matches the principal that anchors the
+    // provenance chain.
 
     let sources: Array<{ id: string; title: string; content: string; score: number }> =
       [];
     let confidence: number | null = null;
 
     try {
-      if (orgUuid && !/^[0-9a-f-]{36}$/i.test(orgUuid)) {
-        console.warn('[Evidence Ask] Invalid org UUID, skipping tenant-scoped retrieval');
-      } else {
-        const embeddingService = getEmbeddingService(pool);
-        const searchResults = await embeddingService.searchHybrid(
-          message,
-          topK,
-          threshold,
-          orgUuid,
-          normalizedProjectId
+      const embeddingService = getEmbeddingService(pool);
+      const searchResults = await embeddingService.searchHybrid(
+        message,
+        topK,
+        threshold,
+        orgUuid,
+        normalizedProjectId
+      );
+      sources = searchResults.map(r => ({
+        id: r.id,
+        title: r.title,
+        content:
+          r.content.length > 500 ? r.content.substring(0, 500) + '…' : r.content,
+        score: r.score,
+      }));
+      if (sources.length > 0) {
+        confidence = Math.min(
+          1,
+          sources.reduce((sum, s) => sum + s.score, 0) / sources.length
         );
-        sources = searchResults.map(r => ({
-          id: r.id,
-          title: r.title,
-          content:
-            r.content.length > 500 ? r.content.substring(0, 500) + '…' : r.content,
-          score: r.score,
-        }));
-        if (sources.length > 0) {
-          confidence = Math.min(
-            1,
-            sources.reduce((sum, s) => sum + s.score, 0) / sources.length
-          );
-        }
       }
     } catch (srcErr: any) {
       // Fail closed — no admissible evidence means we refuse below rather
@@ -279,7 +285,7 @@ router.post('/ask', async (req: Request, res: Response) => {
           numericOrgId,
           projectId || null,
           String(numericUserId),
-          orgUuid ? 'org' : 'global',
+          'org', // a search always runs under the session's tenant key now; there is no 'global' one
           message,
           queryHash,
           snapshotHashSha256,

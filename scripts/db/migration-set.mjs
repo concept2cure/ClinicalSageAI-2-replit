@@ -2585,6 +2585,16 @@ export const C2C_MIGRATION_FILES = [
   // own insert-only-for-the-public, read-only-for-the-platform policy.
   'migrations/20260924_license_requests.sql',
 
+  // ── identity.org_relationships: a grant is the sponsor's to make (D3) ────
+  // Every vault.documents / vault.document_chunks policy honours a live
+  // sponsor → delegate row here, and the table had no RLS: as app_service with
+  // RLS enforcing, a tenant wrote itself a grant from another tenant and read
+  // and rewrote that tenant's vault. Sponsor writes, both parties read. Two-key,
+  // so the one-column uuid sweep below cannot express it. Its creator, 051, is
+  // applied by deploy-migrate ahead of this set; guarded on to_regclass.
+  // Evidence docs/evidence/D3/2026-09-24-vault-program-ownership/.
+  'migrations/20260924_org_relationships_sponsor_rls.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

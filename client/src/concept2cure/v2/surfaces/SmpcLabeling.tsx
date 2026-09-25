@@ -160,7 +160,7 @@ export function SmpcLabeling({ onAsk }: SurfaceViewProps) {
           {readiness && (
             <>
               {' '}·{' '}
-              <strong style={{ color: readiness.ready ? 'var(--ok-600,#1a7f4b)' : 'var(--text-300)' }}>
+              <strong style={{ color: readiness.ready ? 'var(--success)' : 'var(--text-300)' }}>
                 {readiness.finalRequired}/{readiness.totalRequired} required sections final
               </strong>{' '}
               ({readiness.completenessPct}%) ·{' '}

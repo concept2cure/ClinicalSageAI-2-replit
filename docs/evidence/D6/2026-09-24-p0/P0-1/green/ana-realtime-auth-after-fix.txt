@@ -1,0 +1,153 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/ana-realtime-auth.test.ts
+{
+  "timestamp": "2026-09-24T21:25:36.654Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-24T21:25:36.656Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts
+{
+  "timestamp": "2026-09-24T21:25:36.656Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/ana-realtime.test.ts
+{
+  "timestamp": "2026-09-24T21:25:36.654Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-24T21:25:36.656Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/ana-realtime.test.ts
+{
+  "timestamp": "2026-09-24T21:25:36.656Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stderr | server/services/ana/__tests__/ana-realtime.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/services/ana/__tests__/ana-realtime.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/ana-realtime-auth.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana/__tests__/ana-realtime.test.ts > AnaRealtimeSession > emits thinking then done for a completed turn 2ms
+ ✓ server/services/ana/__tests__/ana-realtime.test.ts > AnaRealtimeSession > barges in: a new message cancels the in-flight turn and suppresses its output 1ms
+ ✓ server/services/ana/__tests__/ana-realtime.test.ts > AnaRealtimeSession > cancel interrupts the current turn and suppresses its done 1ms
+ ✓ server/services/ana/__tests__/ana-realtime.test.ts > AnaRealtimeSession > emits ana:error when the runner throws 0ms
+ ✓ server/services/ana/__tests__/ana-realtime.test.ts > AnaRealtimeSession > dispose aborts silently (no client to notify) 0ms
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a mfa_challenge token (not an access token)
+{
+  "timestamp": "2026-09-24T21:25:37.800Z",
+  "level": "warn",
+  "message": "[ana-realtime] [ana-realtime] Rejected non-access token (mfa_challenge) for undefined",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a mfa_partial token (not an access token)
+{
+  "timestamp": "2026-09-24T21:25:37.801Z",
+  "level": "warn",
+  "message": "[ana-realtime] [ana-realtime] Rejected non-access token (mfa_partial) for undefined",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a refresh token (not an access token)
+{
+  "timestamp": "2026-09-24T21:25:37.803Z",
+  "level": "warn",
+  "message": "[ana-realtime] [ana-realtime] Rejected non-access token (refresh) for undefined",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a token that declares no class at all
+{
+  "timestamp": "2026-09-24T21:25:37.804Z",
+  "level": "warn",
+  "message": "[ana-realtime] [ana-realtime] Rejected non-access token (missing_token_type) for undefined",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the membership check answers revoked
+{
+  "timestamp": "2026-09-24T21:25:37.806Z",
+  "level": "warn",
+  "message": "[ana-realtime] [ana-realtime] Refused socket undefined — organization membership revoked",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the membership check answers indeterminate
+{
+  "timestamp": "2026-09-24T21:25:37.807Z",
+  "level": "warn",
+  "message": "[ana-realtime] [ana-realtime] Refused socket undefined — organization membership indeterminate",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the tenant is not active
+{
+  "timestamp": "2026-09-24T21:25:37.808Z",
+  "level": "warn",
+  "message": "[ana-realtime] [ana-realtime] Refused socket undefined for org 7 — tenant not active",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > admits an access token of an active member and scopes the socket to the token tenant 6ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a mfa_challenge token (not an access token) 2ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a mfa_partial token (not an access token) 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a refresh token (not an access token) 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a token that declares no class at all 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a token offered only in the query string 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the membership check answers revoked 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the membership check answers indeterminate 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the tenant is not active 1ms
+
+ Test Files  2 passed (2)
+      Tests  14 passed (14)
+   Start at  21:25:32
+   Duration  5.06s (transform 6.83s, setup 154ms, import 9.43s, tests 26ms, environment 0ms)
+
+exit=0

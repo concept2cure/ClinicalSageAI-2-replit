@@ -1,0 +1,38 @@
+# c2c_d3, read after both mutations were reverted and the fix re-applied
+rolname | rolsuper | rolbypassrls
+app_service | f | f
+(1 row)
+rel | rls | force | app_insert
+core.program_ownerships | t | t | t
+core.programs | t | t | t
+identity.org_relationships | t | t | t
+vault.document_chunks | t | f | t
+vault.documents | t | f | t
+(5 rows)
+policyname | cmd | qual | with_check
+org_relationships_party_read | SELECT | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (sponsor_org_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'::text))::uuid) OR (delegate_org_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'::text))::uuid)) | 
+org_relationships_sponsor_delete | DELETE | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (sponsor_org_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'::text))::uuid)) | 
+org_relationships_sponsor_insert | INSERT |  | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (sponsor_org_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'::text))::uuid))
+org_relationships_sponsor_update | UPDATE | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (sponsor_org_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'::text))::uuid)) | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (sponsor_org_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'::text))::uuid))
+(4 rows)
+-- core.get_program_org_id:
+CREATE OR REPLACE FUNCTION core.get_program_org_id(p_program_id uuid)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ STABLE
+AS $function$
+BEGIN
+  -- The canonical registry first: see the 2026-09-24 note above.
+  RETURN COALESCE(
+    (SELECT o.uuid
+       FROM public.regulatory_programs rp
+       JOIN public.organizations o ON o.id = rp.organization_id
+      WHERE rp.id = p_program_id),
+    (SELECT org_id FROM core.programs WHERE id = p_program_id),
+    (SELECT org_id FROM core.program_ownerships
+      WHERE program_id = p_program_id AND is_active = TRUE
+        AND ownership_role = 'OWNER' LIMIT 1)
+  );
+END;
+$function$
+
