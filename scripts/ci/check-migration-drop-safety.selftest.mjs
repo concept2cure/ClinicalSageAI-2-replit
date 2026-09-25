@@ -86,6 +86,35 @@ const DYN_POLICY_DROP = fixture(
    $pol$;`
 );
 
+// NARROWED (found 2026-09-25 on three real constraints). Two files each replace
+// the same CHECK, the later one wider. ADD CONSTRAINT validates existing rows, so
+// replaying the earlier one over a row only the later one admits fails the deploy.
+const replace = list =>
+  `ALTER TABLE public.gadgets DROP CONSTRAINT IF EXISTS gadgets_kind_check;
+   ALTER TABLE public.gadgets ADD CONSTRAINT gadgets_kind_check CHECK (kind IN (${list}));`;
+const WIDEN_EARLY = fixture('widen-early.sql', replace(`'a','b'`));
+const WIDEN_LATE = fixture('widen-late.sql', replace(`'a','b','c'`));
+const guardedBy = name =>
+  `DO $g$ BEGIN
+     IF NOT EXISTS (SELECT 1 FROM pg_constraint
+                     WHERE conrelid = 'public.gadgets'::regclass AND conname = '${name}'
+                       AND pg_get_constraintdef(oid) LIKE '%''b''%') THEN
+       ${replace(`'a','b'`)}
+     END IF;
+   END $g$;`;
+const WIDEN_EARLY_GUARDED = fixture('widen-early-guarded.sql', guardedBy('gadgets_kind_check'));
+// Must still trip: a guard for a DIFFERENT constraint does not protect this one.
+const WIDEN_EARLY_WRONG_GUARD = fixture(
+  'widen-early-wrong-guard.sql',
+  guardedBy('gadgets_other_check')
+);
+// Must still trip: the guard described in a comment is not a guard.
+const WIDEN_EARLY_COMMENT_GUARD = fixture(
+  'widen-early-comment-guard.sql',
+  `-- guarded: IF NOT EXISTS (… conname = 'gadgets_kind_check' … pg_get_constraintdef(oid) …)
+   ${replace(`'a','b'`)}`
+);
+
 /**
  * Run the gate with C2C_MIGRATION_FILES replaced by `files`, via a shim module
  * that re-exports the real set's other bindings.
@@ -177,6 +206,30 @@ const cases = [
     expectIn: ['reviewed exception'],
   },
   {
+    name: 'NARROWED — an earlier file re-imposes a narrower CHECK a later file widened',
+    files: [WIDEN_EARLY, WIDEN_LATE],
+    expectExit: 1,
+    expectIn: ['NARROWED', 'constraint:public.gadgets.gadgets_kind_check', 'widen-early.sql'],
+  },
+  {
+    name: 'quiet — the earlier replacement is conditional on the current definition',
+    files: [WIDEN_EARLY_GUARDED, WIDEN_LATE],
+    expectExit: 0,
+    expectIn: ['OK', '1 constraint replacement(s) a later file redefines, all conditional'],
+  },
+  {
+    name: 'NARROWED — a guard that names a different constraint does not count',
+    files: [WIDEN_EARLY_WRONG_GUARD, WIDEN_LATE],
+    expectExit: 1,
+    expectIn: ['NARROWED', 'widen-early-wrong-guard.sql'],
+  },
+  {
+    name: 'NARROWED — a guard that exists only in a comment does not count',
+    files: [WIDEN_EARLY_COMMENT_GUARD, WIDEN_LATE],
+    expectExit: 1,
+    expectIn: ['NARROWED', 'widen-early-comment-guard.sql'],
+  },
+  {
     name: 'dynamic — an EXECUTE-issued DROP TABLE is caught, not silently skipped',
     files: [DYN_TABLE_DROP],
     expectExit: 1,
@@ -223,5 +276,5 @@ if (failed) {
   process.exit(1);
 }
 console.log(
-  `\n${TAG} OK — ${cases.length}/${cases.length} cases; the gate fires on both replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.`
+  `\n${TAG} OK — ${cases.length}/${cases.length} cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.`
 );

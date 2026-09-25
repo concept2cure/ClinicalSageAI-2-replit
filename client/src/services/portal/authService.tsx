@@ -609,8 +609,20 @@ export class AuthService {
   }
 
   async logout(terminateAllSessions: boolean = false): Promise<void> {
+    // The refresh token outlives the access token by days, and the server
+    // revokes only what it is handed (POST /logout: the bearer and
+    // body.refreshToken). A logout that did not name it left it able to mint
+    // new sessions from this browser profile (security audit 2026-09-24,
+    // IAM-04). The stored value is read first: a session whose access token has
+    // lapsed is never loaded into memory, but its refresh token is still live.
+    // Then the bearer is settled, so a refresh that is due rotates before the
+    // body is built rather than out from under it; if that refresh fails and
+    // clears storage, the value read first still names the live token.
+    const storedRefreshToken = SecureStorage.getItem(AUTH_STORAGE_KEYS.refreshToken);
+    await this.getValidAccessToken();
+    const refreshToken = this.tokens?.refreshToken ?? storedRefreshToken ?? undefined;
     try {
-      await this.api.post(`${this.baseUrl}/logout`, { terminateAllSessions });
+      await this.api.post(`${this.baseUrl}/logout`, { terminateAllSessions, refreshToken }, { retryOnUnauthorized: false });
     } catch {
       // Ignore errors during logout
     }

@@ -1,0 +1,673 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > isAuditTrailActive > is true only when AUDIT_TRAIL_ENABLED === "true" 7ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditTrailForProduction > is a no-op (no warn, no throw) outside production 1ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditTrailForProduction > is silent in production when the audit trail is active 0ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditTrailForProduction > warns (but does not throw) in production when the audit trail is off 13ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditTrailForProduction > fails closed (throws) when AUDIT_REQUIRE_ENFORCE=true and audit is off in production 2ms
+ ✓ server/startup/__tests__/audit-enforcement.test.ts > assertAuditTrailForProduction > does NOT fail closed when AUDIT_REQUIRE_ENFORCE=true but audit IS active 0ms
+ × server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > returns the report and refuses nothing when every trigger is present 14ms
+   → assertAuditImmutabilityForProduction is not a function
+ × server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > REFUSES TO BOOT in production when a trigger is missing, naming it 1ms
+   → assertAuditImmutabilityForProduction is not a function
+ × server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > refuses in production even without AUDIT_REQUIRE_ENFORCE (a missing trigger is not a rollout state) 2ms
+   → assertAuditImmutabilityForProduction is not a function
+ × server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > refuses in production when a trigger exists but is disabled 9ms
+   → assertAuditImmutabilityForProduction is not a function
+ × server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > warns (structured, no throw) outside production when a trigger is missing 1ms
+   → assertAuditImmutabilityForProduction is not a function
+ × server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > refuses in production when the check cannot run and AUDIT_REQUIRE_ENFORCE=true (fail closed) 1ms
+   → assertAuditImmutabilityForProduction is not a function
+ × server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > warns loudly, and never reports a pass, when the check cannot run in production without the enforce flag 15ms
+   → assertAuditImmutabilityForProduction is not a function
+ × server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > refuses in production when AUDIT_REQUIRE_ENFORCE=true and the daily sweep is switched off 0ms
+   → assertAuditImmutabilityForProduction is not a function
+ × server/startup/__tests__/audit-enforcement.test.ts > assertAuditIntegritySweepForProduction > is a no-op outside production and without the enforce flag 12ms
+   → expected [Function] to not throw an error but 'TypeError: (0 , __vite_ssr_import_2__…' was thrown
+ × server/startup/__tests__/audit-enforcement.test.ts > assertAuditIntegritySweepForProduction > throws in production when AUDIT_REQUIRE_ENFORCE=true and the sweep is disabled 1ms
+   → expected [Function] to throw error matching /FAIL-CLOSED/ but got '(0 , __vite_ssr_import_2__.assertAudi…'
+ × server/startup/__tests__/audit-enforcement.test.ts > assertAuditIntegritySweepForProduction > does not throw in production with AUDIT_REQUIRE_ENFORCE=true when the sweep is on (the production default) 9ms
+   → expected [Function] to not throw an error but 'TypeError: (0 , __vite_ssr_import_2__…' was thrown
+ × server/startup/__tests__/audit-enforcement.test.ts > resolveAuditChainSweepPosture (the sweep gating matrix, shared with the job) > ENABLE_AUDIT_CHAIN_CHECK=false never schedules 0ms
+   → resolveAuditChainSweepPosture is not a function
+ × server/startup/__tests__/audit-enforcement.test.ts > resolveAuditChainSweepPosture (the sweep gating matrix, shared with the job) > ENABLE_AUDIT_CHAIN_CHECK=true always schedules 0ms
+   → resolveAuditChainSweepPosture is not a function
+ × server/startup/__tests__/audit-enforcement.test.ts > resolveAuditChainSweepPosture (the sweep gating matrix, shared with the job) > unset: on in production, on elsewhere only with the audit trail active 0ms
+   → resolveAuditChainSweepPosture is not a function
+ × server/startup/__tests__/audit-enforcement.test.ts > resolveAuditChainSweepPosture (the sweep gating matrix, shared with the job) > names the controlling variable 0ms
+   → resolveAuditChainSweepPosture is not a function
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > schedules by default when the audit trail is enabled
+{
+  "timestamp": "2026-09-25T01:21:42.240Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain integrity sweep scheduled (0 2 * * *)",
+  "context": {
+    "enabled": true,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "schedule": "0 2 * * *"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > does NOT schedule when explicitly opted out, even if the trail is on
+{
+  "timestamp": "2026-09-25T01:21:42.246Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain integrity sweep disabled",
+  "context": {
+    "enabled": false,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "reason": "explicitly disabled (ENABLE_AUDIT_CHAIN_CHECK=false)"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > schedules when explicitly opted in, even if the trail flag is unset
+{
+  "timestamp": "2026-09-25T01:21:42.247Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain integrity sweep scheduled (0 2 * * *)",
+  "context": {
+    "enabled": true,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "schedule": "0 2 * * *"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > does NOT schedule when neither the trail nor an explicit opt-in is set
+{
+  "timestamp": "2026-09-25T01:21:42.248Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain integrity sweep disabled",
+  "context": {
+    "enabled": false,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "reason": "opt-in outside production (set ENABLE_AUDIT_CHAIN_CHECK=true or AUDIT_TRAIL_ENABLED=true)"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules by default in production with nothing else configured
+{
+  "timestamp": "2026-09-25T01:21:42.253Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain integrity sweep scheduled (0 2 * * *)",
+  "context": {
+    "enabled": true,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "schedule": "0 2 * * *"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules in production even when the audit trail flag is unset
+{
+  "timestamp": "2026-09-25T01:21:42.253Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain integrity sweep scheduled (0 2 * * *)",
+  "context": {
+    "enabled": true,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "schedule": "0 2 * * *"
+  }
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > respects an explicit production opt-out (ENABLE_AUDIT_CHAIN_CHECK=false)
+{
+  "timestamp": "2026-09-25T01:21:42.254Z",
+  "level": "warn",
+  "message": "[audit-chain-integrity] Audit chain integrity sweep DISABLED in production — Part 11 tamper-evidence monitoring is off",
+  "context": {
+    "enabled": false,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "reason": "explicitly disabled (ENABLE_AUDIT_CHAIN_CHECK=false)"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules in production with an explicit opt-in too
+{
+  "timestamp": "2026-09-25T01:21:42.254Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain integrity sweep scheduled (0 2 * * *)",
+  "context": {
+    "enabled": true,
+    "controlledBy": "ENABLE_AUDIT_CHAIN_CHECK",
+    "schedule": "0 2 * * *"
+  }
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > reports ok and raises no alert when every store verifies
+{
+  "timestamp": "2026-09-25T01:21:42.256Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain intact (12 rows verified)",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a broken audit_logs HMAC seal raises the alert path with the failing index and no row content
+{
+  "timestamp": "2026-09-25T01:21:42.277Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain intact (12 rows verified)",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a tampered audit.tamper_proof_log row raises the alert path with the sequence number
+{
+  "timestamp": "2026-09-25T01:21:42.281Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain intact (12 rows verified)",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a broken audit_events link raises the alert path with the first broken id
+{
+  "timestamp": "2026-09-25T01:21:42.283Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain intact (12 rows verified)",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a missing immutability trigger raises the alert path, naming the trigger
+{
+  "timestamp": "2026-09-25T01:21:42.284Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain intact (12 rows verified)",
+  "context": {}
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > the plain-chain break still reports brokenAt and alerts, as before
+{
+  "timestamp": "2026-09-25T01:21:42.286Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] AUDIT CHAIN BROKEN at row row-9 after 12 rows — investigate immediately",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > one verifier throwing is an incident for that store and does not hide the others
+{
+  "timestamp": "2026-09-25T01:21:42.288Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain intact (12 rows verified)",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > an absent audit.tamper_proof_log is reported as missing (an incident), never as verified
+{
+  "timestamp": "2026-09-25T01:21:42.290Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain intact (12 rows verified)",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > without AUDIT_HMAC_KEY the seals are unverifiable: not ok, not an incident, no [SECURITY] alert
+{
+  "timestamp": "2026-09-25T01:21:42.291Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain intact (12 rows verified)",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > audit_events rows that carry no record_hash are unverified, not verified
+{
+  "timestamp": "2026-09-25T01:21:42.295Z",
+  "level": "info",
+  "message": "[audit-chain-integrity] Audit chain intact (12 rows verified)",
+  "context": {}
+}
+
+stderr | server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > still never throws when the pool itself is unavailable
+{
+  "timestamp": "2026-09-25T01:21:42.297Z",
+  "level": "error",
+  "message": "[audit-chain-integrity] Audit chain integrity check could not run: pool down",
+  "context": {}
+}
+
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > schedules by default when the audit trail is enabled 15ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > does NOT schedule when explicitly opted out, even if the trail is on 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > schedules when explicitly opted in, even if the trail flag is unset 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > does NOT schedule when neither the trail nor an explicit opt-in is set 0ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules by default in production with nothing else configured 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules in production even when the audit trail flag is unset 0ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > respects an explicit production opt-out (ENABLE_AUDIT_CHAIN_CHECK=false) 1ms
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules in production with an explicit opt-in too 0ms
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > reports ok and raises no alert when every store verifies 22ms
+   → expected undefined to deeply equal []
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a broken audit_logs HMAC seal raises the alert path with the failing index and no row content 4ms
+   → expected true to be false // Object.is equality
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a tampered audit.tamper_proof_log row raises the alert path with the sequence number 2ms
+   → expected true to be false // Object.is equality
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a broken audit_events link raises the alert path with the first broken id 1ms
+   → expected true to be false // Object.is equality
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a missing immutability trigger raises the alert path, naming the trigger 1ms
+   → expected true to be false // Object.is equality
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > the plain-chain break still reports brokenAt and alerts, as before 2ms
+   → the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > one verifier throwing is an incident for that store and does not hide the others 2ms
+   → expected undefined to deeply equal [ 'audit_logs.seals', …(1) ]
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > an absent audit.tamper_proof_log is reported as missing (an incident), never as verified 1ms
+   → Cannot read properties of undefined (reading 'find')
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > without AUDIT_HMAC_KEY the seals are unverifiable: not ok, not an incident, no [SECURITY] alert 4ms
+   → expected true to be false // Object.is equality
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > audit_events rows that carry no record_hash are unverified, not verified 1ms
+   → expected true to be false // Object.is equality
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > still never throws when the pool itself is unavailable 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts [ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts ]
+Error: Cannot find module '../audit-immutability-triggers' imported from /home/user/ClinicalSageAI-2-replit/server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts
+ ❯ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts:19:1
+     17| import { fileURLToPath } from 'node:url';
+     18| import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
+     19| import {
+       | ^
+     20|   assertAuditImmutabilityTriggers,
+     21|   EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/27]⎯
+
+ FAIL  server/services/audit/__tests__/audit-immutability-triggers.test.ts [ server/services/audit/__tests__/audit-immutability-triggers.test.ts ]
+Error: Cannot find module '../audit-immutability-triggers' imported from /home/user/ClinicalSageAI-2-replit/server/services/audit/__tests__/audit-immutability-triggers.test.ts
+ ❯ server/services/audit/__tests__/audit-immutability-triggers.test.ts:15:1
+     13| import path from 'node:path';
+     14| import { fileURLToPath } from 'node:url';
+     15| import {
+       | ^
+     16|   assertAuditImmutabilityTriggers,
+     17|   describeAuditImmutabilityGap,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/27]⎯
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 25 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > reports ok and raises no alert when every store verifies
+AssertionError: expected undefined to deeply equal []
+
+- Expected:
+[]
+
++ Received:
+undefined
+
+ ❯ server/jobs/__tests__/auditChainIntegritySweep.test.ts:183:29
+    181|     expect(result.ok).toBe(true);
+    182|     expect(result.rowsChecked).toBe(12);
+    183|     expect(result.failures).toEqual([]);
+       |                             ^
+    184|     expect(result.stores.map((s) => [s.store, s.status])).toEqual([
+    185|       ['audit_logs.chain', 'ok'],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/27]⎯
+
+ FAIL  server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a broken audit_logs HMAC seal raises the alert path with the failing index and no row content
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/jobs/__tests__/auditChainIntegritySweep.test.ts:205:23
+    203|     m.verifyAuditChainSeals.mockResolvedValue({ valid: false, brokenAt…
+    204|     const result = await runAuditChainIntegrityCheck();
+    205|     expect(result.ok).toBe(false);
+       |                       ^
+    206|     expect(result.failures).toEqual(['audit_logs.seals']);
+    207|     expect(result.stores.find((s) => s.store === 'audit_logs.seals')).…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/27]⎯
+
+ FAIL  server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a tampered audit.tamper_proof_log row raises the alert path with the sequence number
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/jobs/__tests__/auditChainIntegritySweep.test.ts:223:23
+    221|     });
+    222|     const result = await runAuditChainIntegrityCheck();
+    223|     expect(result.ok).toBe(false);
+       |                       ^
+    224|     expect(result.failures).toEqual(['audit.tamper_proof_log']);
+    225|     expect(result.stores.find((s) => s.store === 'audit.tamper_proof_l…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/27]⎯
+
+ FAIL  server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a broken audit_events link raises the alert path with the first broken id
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/jobs/__tests__/auditChainIntegritySweep.test.ts:245:23
+    243|     });
+    244|     const result = await runAuditChainIntegrityCheck();
+    245|     expect(result.ok).toBe(false);
+       |                       ^
+    246|     expect(result.failures).toEqual(['audit_events.linkage']);
+    247|     expect(result.stores.find((s) => s.store === 'audit_events.linkage…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/27]⎯
+
+ FAIL  server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a missing immutability trigger raises the alert path, naming the trigger
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/jobs/__tests__/auditChainIntegritySweep.test.ts:258:23
+    256|     });
+    257|     const result = await runAuditChainIntegrityCheck();
+    258|     expect(result.ok).toBe(false);
+       |                       ^
+    259|     expect(result.failures).toEqual(['immutability_triggers']);
+    260|     expect(result.stores.find((s) => s.store === 'immutability_trigger…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/27]⎯
+
+ FAIL  server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > the plain-chain break still reports brokenAt and alerts, as before
+AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ ❯ server/jobs/__tests__/auditChainIntegritySweep.test.ts:274:29
+    272|     expect(result.ok).toBe(false);
+    273|     expect(result.brokenAt).toMatchObject({ id: 'row-9' });
+    274|     expect(result.failures).toContain('audit_logs.chain');
+       |                             ^
+    275|     expect(emitWarning).toHaveBeenCalledOnce();
+    276|     expect(m.reportSecurityAlert).toHaveBeenCalledOnce();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/27]⎯
+
+ FAIL  server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > one verifier throwing is an incident for that store and does not hide the others
+AssertionError: expected undefined to deeply equal [ 'audit_logs.seals', …(1) ]
+
+- Expected:
+[
+  "audit_logs.seals",
+  "audit.tamper_proof_log",
+]
+
++ Received:
+undefined
+
+ ❯ server/jobs/__tests__/auditChainIntegritySweep.test.ts:283:29
+    281|     m.verifyAuditChainSeals.mockResolvedValue({ valid: false, brokenAt…
+    282|     const result = await runAuditChainIntegrityCheck();
+    283|     expect(result.failures).toEqual(['audit_logs.seals', 'audit.tamper…
+       |                             ^
+    284|     expect(result.stores.find((s) => s.store === 'audit.tamper_proof_l…
+    285|     expect(m.assertAuditImmutabilityTriggers).toHaveBeenCalledOnce();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/27]⎯
+
+ FAIL  server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > an absent audit.tamper_proof_log is reported as missing (an incident), never as verified
+TypeError: Cannot read properties of undefined (reading 'find')
+ ❯ server/jobs/__tests__/auditChainIntegritySweep.test.ts:298:26
+    296|     });
+    297|     const result = await runAuditChainIntegrityCheck();
+    298|     expect(result.stores.find((s) => s.store === 'audit.tamper_proof_l…
+       |                          ^
+    299|     expect(result.failures).toContain('audit.tamper_proof_log');
+    300|     expect(m.verifyTamperProofLogRows).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/27]⎯
+
+ FAIL  server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > without AUDIT_HMAC_KEY the seals are unverifiable: not ok, not an incident, no [SECURITY] alert
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/jobs/__tests__/auditChainIntegritySweep.test.ts:306:23
+    304|     delete process.env.AUDIT_HMAC_KEY;
+    305|     const result = await runAuditChainIntegrityCheck();
+    306|     expect(result.ok).toBe(false);
+       |                       ^
+    307|     expect(result.failures).toEqual([]);
+    308|     expect(result.unverifiable).toEqual(['audit_logs.seals', 'audit_ev…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/27]⎯
+
+ FAIL  server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > audit_events rows that carry no record_hash are unverified, not verified
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/jobs/__tests__/auditChainIntegritySweep.test.ts:325:23
+    323|     });
+    324|     const result = await runAuditChainIntegrityCheck();
+    325|     expect(result.ok).toBe(false);
+       |                       ^
+    326|     expect(result.failures).toEqual([]);
+    327|     expect(result.unverifiable).toContain('audit_events.linkage');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/27]⎯
+
+ FAIL  server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > returns the report and refuses nothing when every trigger is present
+TypeError: assertAuditImmutabilityForProduction is not a function
+ ❯ server/startup/__tests__/audit-enforcement.test.ts:90:26
+     88|     const logger = quiet();
+     89|     const check = vi.fn().mockResolvedValue(healthy);
+     90|     const report = await assertAuditImmutabilityForProduction(
+       |                          ^
+     91|       client, { NODE_ENV: 'production' } as NodeJS.ProcessEnv, logger,…
+     92|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/27]⎯
+
+ FAIL  server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > REFUSES TO BOOT in production when a trigger is missing, naming it
+TypeError: assertAuditImmutabilityForProduction is not a function
+ ❯ server/startup/__tests__/audit-enforcement.test.ts:101:7
+     99|     const check = vi.fn().mockResolvedValue(missingDelete);
+    100|     await expect(
+    101|       assertAuditImmutabilityForProduction(client, { NODE_ENV: 'produc…
+       |       ^
+    102|     ).rejects.toThrow(/FAIL-CLOSED[\s\S]*public\.audit_logs\.trg_audit…
+    103|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/27]⎯
+
+ FAIL  server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > refuses in production even without AUDIT_REQUIRE_ENFORCE (a missing trigger is not a rollout state)
+TypeError: assertAuditImmutabilityForProduction is not a function
+ ❯ server/startup/__tests__/audit-enforcement.test.ts:108:7
+    106|     const check = vi.fn().mockResolvedValue(missingDelete);
+    107|     await expect(
+    108|       assertAuditImmutabilityForProduction(
+       |       ^
+    109|         client, { NODE_ENV: 'production', AUDIT_REQUIRE_ENFORCE: 'fals…
+    110|       ),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/27]⎯
+
+ FAIL  server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > refuses in production when a trigger exists but is disabled
+TypeError: assertAuditImmutabilityForProduction is not a function
+ ❯ server/startup/__tests__/audit-enforcement.test.ts:119:7
+    117|     });
+    118|     await expect(
+    119|       assertAuditImmutabilityForProduction(client, { NODE_ENV: 'produc…
+       |       ^
+    120|     ).rejects.toThrow(/trg_prevent_audit_mutation/);
+    121|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/27]⎯
+
+ FAIL  server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > warns (structured, no throw) outside production when a trigger is missing
+TypeError: assertAuditImmutabilityForProduction is not a function
+ ❯ server/startup/__tests__/audit-enforcement.test.ts:126:26
+    124|     const logger = quiet();
+    125|     const check = vi.fn().mockResolvedValue(missingDelete);
+    126|     const report = await assertAuditImmutabilityForProduction(
+       |                          ^
+    127|       client, { NODE_ENV: 'development' } as NodeJS.ProcessEnv, logger…
+    128|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/27]⎯
+
+ FAIL  server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > refuses in production when the check cannot run and AUDIT_REQUIRE_ENFORCE=true (fail closed)
+TypeError: assertAuditImmutabilityForProduction is not a function
+ ❯ server/startup/__tests__/audit-enforcement.test.ts:139:7
+    137|     const check = vi.fn().mockRejectedValue(new Error('connection refu…
+    138|     await expect(
+    139|       assertAuditImmutabilityForProduction(
+       |       ^
+    140|         client, { NODE_ENV: 'production', AUDIT_REQUIRE_ENFORCE: 'true…
+    141|       ),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/27]⎯
+
+ FAIL  server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > warns loudly, and never reports a pass, when the check cannot run in production without the enforce flag
+TypeError: assertAuditImmutabilityForProduction is not a function
+ ❯ server/startup/__tests__/audit-enforcement.test.ts:148:26
+    146|     const logger = quiet();
+    147|     const check = vi.fn().mockRejectedValue(new Error('connection refu…
+    148|     const report = await assertAuditImmutabilityForProduction(
+       |                          ^
+    149|       client, { NODE_ENV: 'production' } as NodeJS.ProcessEnv, logger,…
+    150|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/27]⎯
+
+ FAIL  server/startup/__tests__/audit-enforcement.test.ts > assertAuditImmutabilityForProduction > refuses in production when AUDIT_REQUIRE_ENFORCE=true and the daily sweep is switched off
+TypeError: assertAuditImmutabilityForProduction is not a function
+ ❯ server/startup/__tests__/audit-enforcement.test.ts:159:7
+    157|     const check = vi.fn().mockResolvedValue(healthy);
+    158|     await expect(
+    159|       assertAuditImmutabilityForProduction(
+       |       ^
+    160|         client,
+    161|         { NODE_ENV: 'production', AUDIT_REQUIRE_ENFORCE: 'true', ENABL…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/27]⎯
+
+ FAIL  server/startup/__tests__/audit-enforcement.test.ts > assertAuditIntegritySweepForProduction > is a no-op outside production and without the enforce flag
+AssertionError: expected [Function] to not throw an error but 'TypeError: (0 , __vite_ssr_import_2__…' was thrown
+
+- Expected:
+undefined
+
++ Received:
+"TypeError: (0 , __vite_ssr_import_2__.assertAuditIntegritySweepForProduction) is not a function"
+
+ ❯ server/startup/__tests__/audit-enforcement.test.ts:175:11
+    173|     expect(() =>
+    174|       assertAuditIntegritySweepForProduction({ NODE_ENV: 'development'…
+    175|     ).not.toThrow();
+       |           ^
+    176|     expect(() =>
+    177|       assertAuditIntegritySweepForProduction({ NODE_ENV: 'production',…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/27]⎯
+
+ FAIL  server/startup/__tests__/audit-enforcement.test.ts > assertAuditIntegritySweepForProduction > throws in production when AUDIT_REQUIRE_ENFORCE=true and the sweep is disabled
+AssertionError: expected [Function] to throw error matching /FAIL-CLOSED/ but got '(0 , __vite_ssr_import_2__.assertAudi…'
+
+- Expected:
+/FAIL-CLOSED/
+
++ Received:
+"(0 , __vite_ssr_import_2__.assertAuditIntegritySweepForProduction) is not a function"
+
+ ❯ server/startup/__tests__/audit-enforcement.test.ts:186:7
+    184|         NODE_ENV: 'production', AUDIT_REQUIRE_ENFORCE: 'true', ENABLE_…
+    185|       } as NodeJS.ProcessEnv),
+    186|     ).toThrow(/FAIL-CLOSED/);
+       |       ^
+    187|   });
+    188|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/27]⎯
+
+ FAIL  server/startup/__tests__/audit-enforcement.test.ts > assertAuditIntegritySweepForProduction > does not throw in production with AUDIT_REQUIRE_ENFORCE=true when the sweep is on (the production default)
+AssertionError: expected [Function] to not throw an error but 'TypeError: (0 , __vite_ssr_import_2__…' was thrown
+
+- Expected:
+undefined
+
++ Received:
+"TypeError: (0 , __vite_ssr_import_2__.assertAuditIntegritySweepForProduction) is not a function"
+
+ ❯ server/startup/__tests__/audit-enforcement.test.ts:192:11
+    190|     expect(() =>
+    191|       assertAuditIntegritySweepForProduction({ NODE_ENV: 'production',…
+    192|     ).not.toThrow();
+       |           ^
+    193|   });
+    194| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/27]⎯
+
+ FAIL  server/startup/__tests__/audit-enforcement.test.ts > resolveAuditChainSweepPosture (the sweep gating matrix, shared with the job) > ENABLE_AUDIT_CHAIN_CHECK=false never schedules
+TypeError: resolveAuditChainSweepPosture is not a function
+ ❯ server/startup/__tests__/audit-enforcement.test.ts:199:12
+    197|   const env = (o: Record<string, string>) => o as NodeJS.ProcessEnv;
+    198|   it('ENABLE_AUDIT_CHAIN_CHECK=false never schedules', () => {
+    199|     expect(resolveAuditChainSweepPosture(env({ NODE_ENV: 'production',…
+       |            ^
+    200|     expect(resolveAuditChainSweepPosture(env({ AUDIT_TRAIL_ENABLED: 't…
+    201|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/27]⎯
+
+ FAIL  server/startup/__tests__/audit-enforcement.test.ts > resolveAuditChainSweepPosture (the sweep gating matrix, shared with the job) > ENABLE_AUDIT_CHAIN_CHECK=true always schedules
+TypeError: resolveAuditChainSweepPosture is not a function
+ ❯ server/startup/__tests__/audit-enforcement.test.ts:203:12
+    201|   });
+    202|   it('ENABLE_AUDIT_CHAIN_CHECK=true always schedules', () => {
+    203|     expect(resolveAuditChainSweepPosture(env({ ENABLE_AUDIT_CHAIN_CHEC…
+       |            ^
+    204|   });
+    205|   it('unset: on in production, on elsewhere only with the audit trail …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/27]⎯
+
+ FAIL  server/startup/__tests__/audit-enforcement.test.ts > resolveAuditChainSweepPosture (the sweep gating matrix, shared with the job) > unset: on in production, on elsewhere only with the audit trail active
+TypeError: resolveAuditChainSweepPosture is not a function
+ ❯ server/startup/__tests__/audit-enforcement.test.ts:206:12
+    204|   });
+    205|   it('unset: on in production, on elsewhere only with the audit trail …
+    206|     expect(resolveAuditChainSweepPosture(env({ NODE_ENV: 'production' …
+       |            ^
+    207|     expect(resolveAuditChainSweepPosture(env({ NODE_ENV: 'development'…
+    208|     expect(resolveAuditChainSweepPosture(env({ NODE_ENV: 'development'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/27]⎯
+
+ FAIL  server/startup/__tests__/audit-enforcement.test.ts > resolveAuditChainSweepPosture (the sweep gating matrix, shared with the job) > names the controlling variable
+TypeError: resolveAuditChainSweepPosture is not a function
+ ❯ server/startup/__tests__/audit-enforcement.test.ts:211:12
+    209|   });
+    210|   it('names the controlling variable', () => {
+    211|     expect(resolveAuditChainSweepPosture(env({})).controlledBy).toBe('…
+       |            ^
+    212|   });
+    213| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/27]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  25 failed | 15 passed (40)
+   Start at  01:21:40
+   Duration  3.07s (transform 1.40s, setup 992ms, import 679ms, tests 171ms, environment 1ms)
+

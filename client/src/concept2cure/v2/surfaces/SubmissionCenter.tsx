@@ -1056,7 +1056,14 @@ export function SubmissionCenter({
                       }}
                     >
                       <td>
-                        <b>{s.title}</b>
+                        {/* The row opens on click. A <tr> cannot take focus without
+                            losing its table semantics, so the title is the keyboard
+                            affordance: a real button styled as the text it wraps.
+                            Its click (mouse or Enter/Space) bubbles to the row's
+                            handler, so there is one open path, not two (SC 2.1.1). */}
+                        <button type="button" className="sc-subrow-open" aria-label={`Open ${s.title}`}>
+                          <b>{s.title}</b>
+                        </button>
                         {s.productName ? <span className="sp-row-s"> · {s.productName}</span> : null}
                       </td>
                       <td>{regL(s.primaryRegion)}</td>

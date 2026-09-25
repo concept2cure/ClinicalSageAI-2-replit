@@ -74,6 +74,7 @@ import {
 import {
   decideSensitivePlacement,
   readProviderPlacementApprovals,
+  type PlacementReasonCode,
   type ProviderPlacementApproval,
 } from './sensitive-placement-policy';
 import { recordApiUsageSafe, usdToCents } from '../usage-recorder.js';
@@ -1334,6 +1335,123 @@ export class AIGateway {
     if (sizeRefusal) throw sizeRefusal;
     throw new GatewayAllProvidersFailedError(
       `All models failed. Tried: ${triedModels.join(', ')}. Last error: ${lastError?.message}.${skippedForSize}`
+    );
+  }
+
+  /**
+   * Placement decision for an embedding call.
+   *
+   * Embeddings are the one governed egress that does not pass through
+   * `route()`: `embeddings/embedding-provider.ts` calls the provider SDK
+   * itself, and until P0-11 (SECURITY_AUDIT_2026-09-24 DP-07) vault text
+   * reached OpenAI with no classification, no placement decision and no audit
+   * row. This runs, over a synthetic `embedding` request, the same three
+   * steps `route()` runs before a chat dispatch — the org's placement
+   * defaults, content classification, the last-mile sensitive-dispatch gate —
+   * plus the residency / zero-retention rule `selectModel()` applies to chat
+   * candidates (`meetsPlacementRequirements`): an embedding provider is fixed
+   * by `EMBEDDING_PROVIDER` rather than chosen by routing, so a request that
+   * cannot be placed on it is refused rather than re-routed.
+   *
+   * Resolves when the call may proceed. Throws {@link GatewayPolicyError}
+   * (terminal: never retried, never re-routed) with a stable reason code when
+   * it may not; the refusal is written to the audit ledger like every other
+   * content-policy block. Neither the error, the audit row nor any log line
+   * carries the text — only reason code, provider, region and data class.
+   */
+  async authorizeEmbedding(input: {
+    organizationId?: string | number;
+    provider: 'openai' | 'local';
+    texts: string[];
+    requestId?: string;
+  }): Promise<void> {
+    const requestId = input.requestId ?? randomUUID();
+    const startTime = Date.now();
+
+    let request: GatewayRequest = {
+      taskType: 'embedding',
+      organizationId: input.organizationId,
+      provider: input.provider,
+      callerModule: 'embedding-provider',
+      messages: [{ role: 'user', content: input.texts.join('\n') }],
+    };
+
+    request = await this.applyOrgPlacementDefaults(request);
+
+    // Same classification block as route(): a detector failure is 'unknown',
+    // which the enforced gate refuses (DENY_DETECTOR_FAILURE).
+    if (this.config.policy.piiDetection) {
+      try {
+        const text = extractRequestText(request);
+        const classification = text.trim()
+          ? await getContentClassifier().classify(text)
+          : { phi: false, pii: false };
+        request = {
+          ...request,
+          sensitiveDataClass: classification.phi ? 'phi' : classification.pii ? 'pii' : 'none',
+        };
+      } catch {
+        request = { ...request, sensitiveDataClass: 'unknown' };
+      }
+    }
+    const dataClass = request.sensitiveDataClass ?? 'unknown';
+
+    // (a) Residency / zero-retention — every data class, every environment.
+    // For chat this is the candidate filter in selectModel(); the org's policy
+    // has already been merged into the request by applyOrgPlacementDefaults.
+    const needsZdr =
+      request.zeroDataRetention === true ||
+      request.sensitiveTenantPolicy?.zeroDataRetention === true;
+    const residency =
+      request.dataResidency && request.dataResidency !== 'any' ? request.dataResidency : null;
+    const placement = resolvePlacement(input.provider);
+    if (!isPlacementCompliant(placement, { zeroDataRetention: needsZdr, residency })) {
+      const reasonCode: PlacementReasonCode =
+        needsZdr && !placement.zeroDataRetention
+          ? 'DENY_SHARED_PROVIDER_WITHOUT_ZDR'
+          : 'DENY_TENANT_POLICY';
+      const region = residency ?? placement.regions[0];
+      log.info('[ai-gateway] embedding placement decision', {
+        reasonCode,
+        provider: input.provider,
+        region,
+        dataClass,
+        allowed: false,
+      });
+      await this.logContentPolicyBlock(
+        {
+          ...request,
+          metadata: {
+            ...(request.metadata ?? {}),
+            sensitivePlacement: { reasonCode, provider: input.provider, region, dataClass },
+          },
+        },
+        request.strategy || this.config.defaultStrategy,
+        requestId,
+        startTime,
+        reasonCode,
+        [{
+          scope: 'pii',
+          action: 'block',
+          messageIndex: -1,
+          role: 'request',
+          detector: 'embedding_placement_policy',
+          contentClass: dataClass,
+        }],
+      );
+      throw new GatewayPolicyError(
+        `This content cannot be embedded by the configured embedding service (${reasonCode}). ` +
+          'Contact your administrator to review the approved data-placement policy.'
+      );
+    }
+
+    // (b) The last-mile sensitive-dispatch gate, exactly as executeProvider
+    // applies it before a chat SDK call, with intended use 'embedding'.
+    await this.assertSensitiveDispatchAllowed(
+      { provider: input.provider } as ModelConfig,
+      request,
+      requestId,
+      startTime,
     );
   }
 

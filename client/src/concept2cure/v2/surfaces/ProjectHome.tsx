@@ -115,6 +115,8 @@ interface ActivityRow {
   action: string | null;
   resource_type: string | null;
   actor_id: number | null;
+  /** COALESCE(users.name, users.email) for actor_id; null for system rows. */
+  actor_name: string | null;
   occurred_at: string | null;
 }
 
@@ -429,7 +431,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
           className="sp-tone-warn"
           role="status"
           style={{
-            border: '1px solid var(--border,#d0d5dd)', borderRadius: 10,
+            border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
             padding: '10px 12px', marginBottom: 12, fontSize: 12.5,
           }}
         >
@@ -464,7 +466,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
             <span
               key={a.id}
               className={a.status === 'error' ? 'sp-tone-warn' : undefined}
-              style={{ fontSize: 12, border: '1px solid var(--border,#d0d5dd)', borderRadius: 999, padding: '2px 10px' }}
+              style={{ fontSize: 12, border: '1px solid var(--border)', borderRadius: 'var(--radius-full)', padding: '2px 10px' }}
             >
               {a.status === 'uploading' ? `Uploading ${a.name}…` : a.name}
               {a.status === 'ready' && readLabel(a.extractionMethod, a.extractionWords)
@@ -778,7 +780,7 @@ function SchedulePanel({ pid, onAsk }: { pid: string | null; onAsk: (q: string) 
                         key={m.key || m.id}
                         style={{
                           display: 'flex', alignItems: 'baseline', gap: 10, padding: '7px 2px',
-                          borderBottom: '1px solid var(--border-subtle,#eaecf0)',
+                          borderBottom: '1px solid var(--border-subtle)',
                         }}
                       >
                         <span className={`rd-chip ${SCHED_STATUS_TONE[m.status] ?? 'tone-idle'}`} style={{ whiteSpace: 'nowrap' }}>
@@ -1070,7 +1072,7 @@ function AuthorWorkspace({
                 <div className="pj-acts">
                   {(d.activity ?? []).map((a, i) => (
                     <div key={i} className="pj-act">
-                      <span className="pj-act-w">{a.actor_id != null ? 'User ' + a.actor_id : 'System'}</span>
+                      <span className="pj-act-w">{a.actor_name ?? (a.actor_id != null ? 'User ' + a.actor_id : 'System')}</span>
                       <span className="pj-act-t">{String(a.action ?? '').replace(/_/g, ' ')}{a.resource_type ? ' · ' + a.resource_type : ''}</span>
                       <span className="pj-act-n">{fmtWhen(a.occurred_at) ?? ''}</span>
                     </div>

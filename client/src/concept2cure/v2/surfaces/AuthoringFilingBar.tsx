@@ -106,7 +106,7 @@ const FREEZE_FORM = (title: string, unresolved: Unresolved | null): C2CFormConfi
           ],
         }]
       : []),
-    { key: 'reason', label: 'Reason for freeze', type: 'textarea', required: true, placeholder: 'e.g. Locking for QA review prior to approval' },
+    { key: 'reason', label: 'Reason for freeze (at least 8 characters)', type: 'textarea', required: true, placeholder: 'e.g. Locking for QA review prior to approval' },
     { key: 'version', label: 'Version label (optional)', type: 'text', placeholder: 'e.g. v1.0.frozen' },
   ],
 });

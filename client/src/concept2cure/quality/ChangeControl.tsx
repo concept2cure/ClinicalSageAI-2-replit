@@ -21,7 +21,7 @@
  */
 
 import * as React from 'react';
-import { I } from './icons';
+import { I } from '../v2/icons';
 import { registerRowMinWidth } from './registerGrid';
 import { ChangeFlow } from './ChangeFlow';
 import {
@@ -48,7 +48,7 @@ import { useChangeSummary } from './changeHooks';
    screen", so the two lanes cannot answer it differently. */
 import { useSampleValue } from '../mdx/lib/useSampleRows';
 import { SampleDataBanner } from '../mdx/components/SampleDataBanner';
-import { EmptyState } from '../v2/dataConnect';
+import { EmptyState, ErrorState } from '../v2/dataConnect';
 
 export interface ChangeControlProps {
   /** Forward a prompt to the host's AnA conversation surface. */
@@ -67,6 +67,10 @@ export interface ChangeControlProps {
   loading: boolean;
   /** True when `changes` is the fixture — renders the standing sample marker. */
   showingSample: boolean;
+  /** The register read's error, when it failed. A failed read is not an empty log. */
+  error?: string | null;
+  /** Re-run the register read. */
+  onRetry?: () => void;
 }
 
 const GRID = '112px minmax(0, 1fr) 118px 80px 128px 104px 62px 120px';
@@ -100,6 +104,8 @@ export function ChangeControl({
   changes,
   loading,
   showingSample,
+  error,
+  onRetry,
 }: ChangeControlProps) {
   const sum = useChangeSummary();
 
@@ -113,6 +119,13 @@ export function ChangeControl({
   const counts = React.useMemo(() => deriveStageCounts(changes), [changes]);
 
   const visible = changes.filter((c) => stage === 'all' || c.status === stage);
+  /* Until 2026-09-25 a failed read rendered "No changes at this stage." under
+     a flowchart of zeroes, while the KPI strip above said the totals were
+     unavailable (HS-1, docs/evidence/reviews/2026-09-24/lenses.md). A resolved
+     list that is non-empty is live or explicit sample mode; an empty one with
+     an error, or still loading, is unread and may not render a count. */
+  const failed = changes.length === 0 && error != null;
+  const unread = failed || (changes.length === 0 && loading);
 
   return (
     <>
@@ -205,22 +218,30 @@ export function ChangeControl({
             <>
               <span className="spacer" />
               <button className="qms-link" onClick={() => onStageChange('all')}>
-                {I.x} Clear filter · {STATE_LABEL[stage as ChangeState] ?? stage}
+                {I.close} Clear filter · {STATE_LABEL[stage as ChangeState] ?? stage}
               </button>
             </>
           )}
         </div>
-        <ChangeFlow counts={counts} activeStage={stage} onSelectStage={onStageChange} onAsk={onAsk} />
+        {unread ? (
+          <div className="qms-empty" role="status">
+            {failed ? 'Stage counts appear once the change log can be read.' : 'Loading the change log…'}
+          </div>
+        ) : (
+          <ChangeFlow counts={counts} activeStage={stage} onSelectStage={onStageChange} onAsk={onAsk} />
+        )}
       </section>
 
       {/* ── Register / log ── */}
       <section className="qms-sec">
         <div className="qms-sec-head">
           <h2>Change control log</h2>
-          <span className="meta">
-            {visible.length} {visible.length === 1 ? 'change' : 'changes'}
-            {stage !== 'all' ? ` · ${STATE_LABEL[stage as ChangeState] ?? stage}` : ''}
-          </span>
+          {!unread && (
+            <span className="meta">
+              {visible.length} {visible.length === 1 ? 'change' : 'changes'}
+              {stage !== 'all' ? ` · ${STATE_LABEL[stage as ChangeState] ?? stage}` : ''}
+            </span>
+          )}
         </div>
 
         <div className="qms-table">
@@ -234,7 +255,18 @@ export function ChangeControl({
             <div>Links</div>
             <div />
           </div>
-          {visible.length === 0 && <div className="qms-empty">No changes at this stage.</div>}
+          {failed && (
+            <ErrorState
+              title="The change log could not be read"
+              message={error}
+              retry={onRetry}
+              testId="change-log-failed"
+            />
+          )}
+          {unread && !failed && (
+            <div className="qms-empty" role="status">Loading the change log…</div>
+          )}
+          {!unread && visible.length === 0 && <div className="qms-empty">No changes at this stage.</div>}
           {visible.map((c) => {
             const overdue = isImplementationOverdue(c);
             const open = openId === c.id;
@@ -298,7 +330,7 @@ export function ChangeControl({
                         onAsk(`Summarize change ${c.changeNumber} ${c.title}: its impact assessment, linked records, and what it needs next.`)
                       }
                     >
-                      {I.sparkle}
+                      {I.sparkles}
                     </button>
                   </div>
                 </div>

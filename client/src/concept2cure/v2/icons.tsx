@@ -49,6 +49,7 @@ import {
   FileText,
   Filter,
   Folder,
+  FolderOpen,
   Gavel,
   GitBranch,
   GitCompare,
@@ -57,6 +58,7 @@ import {
   History,
   Home,
   Image,
+  Inbox,
   Indent,
   Info,
   Key,
@@ -69,11 +71,13 @@ import {
   ListOrdered,
   Lock,
   LogOut,
+  Mail,
   Maximize,
   MessageCircle,
   MessageSquare,
   Mic,
   Microscope,
+  Minimize,
   Minus,
   MoreVertical,
   Network,
@@ -106,10 +110,12 @@ import {
   Stethoscope,
   Table,
   Tag,
+  Target,
   Telescope,
   Terminal,
   Type,
   Undo2,
+  Upload,
   User,
   Vault,
   Wand2,
@@ -117,6 +123,9 @@ import {
   X,
   Zap,
   type LucideIcon,
+  Users,
+  Flag,
+  Archive,
 } from 'lucide-react';
 
 /** Kit rendering contract: 1em glyphs, 1.75 stroke, decorative by default. */
@@ -190,6 +199,11 @@ export const I: Record<string, React.ReactElement> = {
   externalLink: el(ExternalLink),
   shieldCheck: el(ShieldCheck),
   zap: el(Zap),
+  /* QMS controlled documents (quality/) — folded in from its own copy of
+     twenty Lucide paths; these three had no shared counterpart. */
+  users: el(Users),
+  flag: el(Flag),
+  archive: el(Archive),
   play: el(Play),
   pause: el(Pause),
   rotateCcw: el(RotateCcw),
@@ -237,6 +251,15 @@ export const I: Record<string, React.ReactElement> = {
   gavel: el(Gavel),
   route: el(Route),
   activity: el(Activity),
+  // Keys call sites referenced before any existed, so they rendered nothing or
+  // a stand-in (a text '›', a '+' on Upload). Every static I.<key> in the
+  // tree is now checked against this object: __tests__/iconKeys.test.ts.
+  folderOpen: el(FolderOpen),
+  inbox: el(Inbox),
+  mail: el(Mail),
+  minimize: el(Minimize),
+  target: el(Target),
+  upload: el(Upload),
 };
 
 export default I;

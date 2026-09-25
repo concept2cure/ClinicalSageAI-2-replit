@@ -47,6 +47,7 @@ import { promises as fs } from 'node:fs';
 import { createHash } from 'node:crypto';
 
 import { pool } from '../../db.js';
+import type { PoolClient } from 'pg';
 import { createScopedLogger } from '../../utils/logger.js';
 import { productTypesToSegments } from '../../services/report-os/segment.js';
 import {
@@ -65,6 +66,8 @@ import {
 } from '../../services/vault/vault-filing.service.js';
 import { listClientDocuments } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
 import { writeChainedAuditRow } from '../../services/auditService.js';
+import { readRecordAuditHistory } from '../audit-trail-ledger.routes.js';
+import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
 import { requireEditorAccess } from '../../middleware/orgMembership.js';
 import { getStorageProvider, getStorageProviderFor } from '../../services/storage/index.js';
 /* The one translation from a CMC TEXT project id to the integer the
@@ -269,8 +272,14 @@ interface SpecNode {
  * answered with a gap, and an audit trail that drops writes under load is not
  * one. The filing path takes the same position by writing inside its
  * transaction.
+ *
+ * In a transaction of its own, because the chain requires one
+ * (services/audit/chain.ts): the position lock and the INSERT must share it.
+ * Written through the pool, each ran as its own statement and the audit_logs
+ * trigger recorded every download as a LEGACY row (chain_seq NULL), outside
+ * the sequenced chain every other governed Vault event joins.
  */
-async function recordVaultDownload(
+export async function recordVaultDownload(
   req: Request,
   d: {
     orgId: number;
@@ -282,8 +291,11 @@ async function recordVaultDownload(
     contentHash: string | null;
   },
 ): Promise<boolean> {
+  let client: PoolClient | undefined;
   try {
-    await writeChainedAuditRow(pool, {
+    client = await pool.connect();
+    await client.query('BEGIN');
+    await writeChainedAuditRow(client, {
       tenantId: d.orgId,
       userId: (req as any).user?.id ?? undefined,
       action: 'vault.document.download',
@@ -302,13 +314,17 @@ async function recordVaultDownload(
         contentHash: d.contentHash,
       },
     });
+    await client.query('COMMIT');
     return true;
   } catch (auditErr) {
+    await client?.query('ROLLBACK').catch(() => undefined);
     logger.error('vault download refused: audit write failed', {
       documentId: d.documentId,
       err: auditErr instanceof Error ? auditErr.message : String(auditErr),
     });
     return false;
+  } finally {
+    client?.release();
   }
 }
 
@@ -1465,6 +1481,62 @@ export default function createProjectVaultRoutes(): Router {
         error: 'SEARCH_FAILED',
         message: 'The vault could not be searched. This is not an empty result — nothing was searched.',
       });
+    }
+  });
+
+  /* ── GET /:id/documents/:documentId/history ──────────────────────────────
+     The document's own audit trail (VR-01, docs/design/VAULT_VEEVA_PARITY_PLAN_2026-09-24.md):
+     every chained audit_logs row recorded against it — ingest, filing
+     decisions, downloads — newest first, each with its hash and its
+     predecessor in the tenant chain, plus the server's verdict on that chain.
+     Read from the one ledger (readRecordAuditHistory beside readAuditLedger),
+     in a transaction stamped with the tenant so RLS sees the org the SQL names.
+     The document must be this program's and this org's before anything is
+     read, exactly as for a download. */
+  router.get('/:id/documents/:documentId/history', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
+    const documentId = String(req.params.documentId ?? '');
+    if (!UUID_RE.test(id) || !UUID_RE.test(documentId)) {
+      return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+    }
+    let client: PoolClient | undefined;
+    try {
+      const docRes = await pool.query(
+        `SELECT d.id FROM vault.documents d
+          WHERE d.id = $1 AND d.program_id = $2
+            AND EXISTS (
+              SELECT 1 FROM regulatory_programs rp
+               WHERE rp.id = d.program_id AND rp.organization_id = $3 AND rp.deleted_at IS NULL
+            )
+          LIMIT 1`,
+        [documentId, id, orgId],
+      );
+      if (docRes.rows.length === 0) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+
+      client = await pool.connect();
+      await client.query('BEGIN');
+      await setTenantContextTx(client, orgId);
+      const history = await readRecordAuditHistory(client, orgId, {
+        tableName: 'vault_document',
+        recordId: documentId,
+      });
+      await client.query('COMMIT');
+      return res.json({ success: true, data: { entries: history.data, chain: history.meta.chain } });
+    } catch (err) {
+      await client?.query('ROLLBACK').catch(() => undefined);
+      logger.error('vault document history read failed', {
+        documentId,
+        err: err instanceof Error ? err.message : String(err),
+      });
+      return res.status(500).json({
+        success: false,
+        error: 'HISTORY_UNAVAILABLE',
+        message: "This document's history could not be read. Nothing is shown rather than an incomplete history.",
+      });
+    } finally {
+      client?.release();
     }
   });
 

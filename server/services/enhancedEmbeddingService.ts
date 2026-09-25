@@ -23,6 +23,7 @@
 
 import { getEmbeddingProvider } from './ai-gateway/embeddings/embedding-provider';
 import pg from 'pg';
+import { assertTenantIsCurrent, isTenantUuid, TenantKeyRequiredError } from '../db/currentTenant';
 import crypto from 'crypto';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -500,9 +501,9 @@ export class EnhancedEmbeddingService {
    */
   async searchHybrid(
     query: string,
-    limit = 10,
-    semanticWeight = 0.7,
-    organizationUuid?: string,
+    limit: number,
+    semanticWeight: number,
+    organizationUuid: string,
     projectId?: string
   ): Promise<
     Array<{
@@ -516,6 +517,18 @@ export class EnhancedEmbeddingService {
       sourceType: string | null;
     }>
   > {
+    // No search without a tenant key, and the key is the session's. Without a
+    // key this ran search_atoms_hybrid unfiltered, ranking EVERY tenant's atoms
+    // wherever RLS was not filtering — and Authoring's AI draft and deep
+    // research never passed one. With a key it trusted the key, which nine
+    // routes built from the client's x-org-uuid header when the scope had none.
+    // Both refusals come before the embedding call, so a refused search costs
+    // nothing. docs/evidence/D3/2026-09-24-atom-search-tenant-key/.
+    if (!isTenantUuid(organizationUuid)) {
+      throw new TenantKeyRequiredError('atom search refused: no tenant key');
+    }
+    await assertTenantIsCurrent(this.pool, { organizationUuid });
+
     // Generate query embedding
     const queryResult = await this.embed(query, this.defaultModel);
 
@@ -534,38 +547,28 @@ export class EnhancedEmbeddingService {
     // docs/evidence/D4/2026-09-24-atom-search/.
     const embeddingLiteral = `[${queryResult.embedding.join(',')}]`;
     const keywordWeight = 1 - semanticWeight;
-    let rows: any[];
-    if (organizationUuid) {
-      const projectFilterClause = projectId
-        ? `AND a.source_type IN ('artifact', 'data_room_upload') AND a.source_id IN (
-             SELECT artifact_id FROM concept2cure_artifacts WHERE project_id = $7
-           )`
-        : '';
-      const { rows: orgRows } = await this.pool.query(
-        `
-        WITH org_atoms AS (
-          SELECT a.id
-          FROM lumen_data_atoms a
-          JOIN organizations o ON a.organization_id = o.id
-          WHERE o.uuid = $6
-            ${projectFilterClause}
-        )
-        SELECT h.*
-        FROM search_atoms_hybrid($1, $2::vector, $3, $4, $5, NULL, ARRAY(SELECT id FROM org_atoms)) h
-        ORDER BY h.combined_score DESC
-        `,
-        projectId
-          ? [query, embeddingLiteral, semanticWeight, keywordWeight, limit, organizationUuid, Number(projectId)]
-          : [query, embeddingLiteral, semanticWeight, keywordWeight, limit, organizationUuid]
-      );
-      rows = orgRows;
-    } else {
-      const { rows: allRows } = await this.pool.query(
-        `SELECT * FROM search_atoms_hybrid($1, $2::vector, $3, $4, $5)`,
-        [query, embeddingLiteral, semanticWeight, keywordWeight, limit]
-      );
-      rows = allRows;
-    }
+    const projectFilterClause = projectId
+      ? `AND a.source_type IN ('artifact', 'data_room_upload') AND a.source_id IN (
+           SELECT artifact_id FROM concept2cure_artifacts WHERE project_id = $7
+         )`
+      : '';
+    const { rows } = await this.pool.query(
+      `
+      WITH org_atoms AS (
+        SELECT a.id
+        FROM lumen_data_atoms a
+        JOIN organizations o ON a.organization_id = o.id
+        WHERE o.uuid = $6
+          ${projectFilterClause}
+      )
+      SELECT h.*
+      FROM search_atoms_hybrid($1, $2::vector, $3, $4, $5, NULL, ARRAY(SELECT id FROM org_atoms)) h
+      ORDER BY h.combined_score DESC
+      `,
+      projectId
+        ? [query, embeddingLiteral, semanticWeight, keywordWeight, limit, organizationUuid, Number(projectId)]
+        : [query, embeddingLiteral, semanticWeight, keywordWeight, limit, organizationUuid]
+    );
 
     return this.attachSourceIdentity(
       rows.map((row: any) => ({

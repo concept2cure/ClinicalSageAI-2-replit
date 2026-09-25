@@ -19,13 +19,21 @@
  * the local lane for free. Until then this is the canonical seam new code
  * should target.
  *
+ * ── Placement (P0-11, SECURITY_AUDIT_2026-09-24 DP-07) ──────────────────────
+ * This is the one egress in the gateway tree that does not pass through
+ * `AIGateway.route()`, and it used to reach the provider with no
+ * classification, placement decision or audit row. `embed()` now asks
+ * `AIGateway.authorizeEmbedding` — the org's placement policy, content
+ * classification and the last-mile sensitive-dispatch gate, with intended use
+ * `embedding` — BEFORE the SDK client is constructed. A refusal is a terminal
+ * `GatewayPolicyError`; the client is never built and nothing is sent. The
+ * organisation comes from the request, else from the running tenant scope.
+ *
  * @module server/services/ai-gateway/embeddings/embedding-provider
  */
 
 import OpenAI from 'openai';
-import { createScopedLogger } from '../../../utils/logger.js';
-
-const log = createScopedLogger('ai-gateway:embeddings');
+import { getTenantScope } from '../../../db/tenantStore.js';
 
 export type EmbeddingProviderKind = 'openai' | 'local';
 
@@ -35,6 +43,12 @@ export interface EmbeddingRequest {
   model?: string;
   /** Target dimension (passed through where the server supports it). */
   dimensions?: number;
+  /**
+   * The organisation whose content this is. It drives the placement decision
+   * (the org's residency / zero-retention policy and the sensitive-dispatch
+   * approvals). When absent, the running request's tenant scope supplies it.
+   */
+  organizationId?: string | number;
 }
 
 export interface EmbeddingProviderResult {
@@ -51,6 +65,28 @@ export interface EmbeddingProvider {
   /** Substrate this embedder runs on — mirrors the chat placement taxonomy. */
   readonly selfHosted: boolean;
   embed(req: EmbeddingRequest): Promise<EmbeddingProviderResult>;
+}
+
+/**
+ * The configured embedding lane cannot be honoured as configured. Thrown
+ * instead of falling back to another lane: a fallback would send content
+ * declared for one substrate to a different one, silently.
+ */
+export class EmbeddingConfigurationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'EmbeddingConfigurationError';
+  }
+}
+
+/**
+ * The organisation of the running request, when the caller passed none. The
+ * estate-wide system scope (`runWithSystemTenantScope`, tenantId '0') is not
+ * an organisation and is not offered as one.
+ */
+function scopedOrganizationId(): string | undefined {
+  const tenantId = getTenantScope()?.tenantId;
+  return tenantId && tenantId !== '0' ? tenantId : undefined;
 }
 
 /** Shared OpenAI-compatible embedding implementation (frontier or self-hosted). */
@@ -76,6 +112,8 @@ class OpenAICompatibleEmbeddingProvider implements EmbeddingProvider {
 
   // Lazily construct the client so resolving a provider never throws when a key
   // is absent (keyless boot / tests); the auth error surfaces at call time.
+  // Lazy construction is also what lets the placement gate in embed() refuse a
+  // call before any client exists.
   private getClient(): OpenAI {
     if (!this.client) {
       this.client = new OpenAI({
@@ -87,6 +125,18 @@ class OpenAICompatibleEmbeddingProvider implements EmbeddingProvider {
   }
 
   async embed(req: EmbeddingRequest): Promise<EmbeddingProviderResult> {
+    // Placement decision first — before the client is constructed, so a
+    // refusal leaves no client and sends nothing. The gateway is imported here
+    // rather than at module top: it is a heavy module and this seam is loaded
+    // by the corpus runtime early in boot. A refusal throws GatewayPolicyError.
+    const texts = Array.isArray(req.input) ? req.input : [req.input];
+    const { getGateway } = await import('../gateway.js');
+    await getGateway().authorizeEmbedding({
+      organizationId: req.organizationId ?? scopedOrganizationId(),
+      provider: this.kind,
+      texts,
+    });
+
     // For a self-hosted endpoint the caller's model id (an OpenAI model name,
     // chosen per corpus) is meaningless — the local server serves its own
     // configured model. Use the configured local model and honor only the
@@ -125,6 +175,11 @@ let cached: EmbeddingProvider | null = null;
  * The selected provider must produce vectors of the dimension the target
  * corpus expects (see embedding-corpus-policy.ts) — switching the embedder
  * does not migrate existing vectors.
+ *
+ * `local` with no base URL is a configuration error, not a fallback: until
+ * P0-11 it logged a warning and returned the OpenAI provider, so a deployment
+ * that declared the self-hosted lane sent its content to the shared frontier
+ * API. Fail closed and name the variable.
  */
 export function resolveEmbeddingProvider(): EmbeddingProvider {
   const kind = (process.env.EMBEDDING_PROVIDER || 'openai').toLowerCase();
@@ -132,19 +187,19 @@ export function resolveEmbeddingProvider(): EmbeddingProvider {
   if (kind === 'local' || kind === 'openai_compatible' || kind === 'self_hosted') {
     const baseURL = process.env.EMBEDDING_LOCAL_BASE_URL || process.env.LOCAL_AI_BASE_URL;
     if (!baseURL) {
-      log.warn(
-        '[AI Gateway] EMBEDDING_PROVIDER=local but EMBEDDING_LOCAL_BASE_URL is unset — ' +
-          'falling back to OpenAI embeddings.',
+      throw new EmbeddingConfigurationError(
+        `EMBEDDING_PROVIDER=${kind} requires EMBEDDING_LOCAL_BASE_URL (or LOCAL_AI_BASE_URL) to name ` +
+          'the self-hosted embedding endpoint. Refusing to fall back to OpenAI: content declared for ' +
+          'the self-hosted lane must not be sent to a shared frontier API.',
       );
-    } else {
-      return new OpenAICompatibleEmbeddingProvider({
-        kind: 'local',
-        selfHosted: true,
-        defaultModel: process.env.EMBEDDING_LOCAL_MODEL || 'bge-large-en-v1.5',
-        apiKey: process.env.EMBEDDING_LOCAL_API_KEY || 'not-required',
-        baseURL,
-      });
     }
+    return new OpenAICompatibleEmbeddingProvider({
+      kind: 'local',
+      selfHosted: true,
+      defaultModel: process.env.EMBEDDING_LOCAL_MODEL || 'bge-large-en-v1.5',
+      apiKey: process.env.EMBEDDING_LOCAL_API_KEY || 'not-required',
+      baseURL,
+    });
   }
 
   return new OpenAICompatibleEmbeddingProvider({

@@ -169,7 +169,7 @@ export function OnboardingProposalReview({
 
       {sources.length > 0 && (
         <div className="opr-sources">
-          {I.file}
+          {I.fileText}
           <span>
             From {sources.map((s) => (s.pages ? `${s.file} (${s.pages}p)` : s.file)).join(', ')}
           </span>
@@ -215,7 +215,7 @@ export function OnboardingProposalReview({
                 />
                 <div className="opr-field-foot">
                   <span className="opr-prov" title={f.provenance.snippet || undefined}>
-                    {I.link ?? I.file} {provenanceLabel(f.provenance)}
+                    {I.link} {provenanceLabel(f.provenance)}
                   </span>
                   {edited && <span className="opr-edited">edited</span>}
                   <span className="opr-actions">

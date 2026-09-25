@@ -1,0 +1,504 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/utils/__tests__/document-file-roots.test.ts > isPathWithin > accepts the root itself and real descendants 2ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > isPathWithin > REJECTS a sibling that merely shares the prefix 1ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > isPathWithin > normalises traversal before comparing 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > the tenant vault is not reachable by arbitrary path > refuses a path inside another organization’s vault 1ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > the tenant vault is not reachable by arbitrary path > refuses the vault root and the caller’s OWN vault path too 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > the tenant vault is not reachable by arbitrary path > refuses a vault path reached by traversal from an allowed root 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > the tenant vault is not reachable by arbitrary path > keeps the vault out of the allowlist itself 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > ordinary platform files still resolve > allows a file under uploads 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > ordinary platform files still resolve > allows a file under exports 1ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > ordinary platform files still resolve > allows a file under generated_documents 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > ordinary platform files still resolve > allows a file under csrs 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > ordinary platform files still resolve > allows a file under ectd 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > ordinary platform files still resolve > accepts a relative path and returns it resolved 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects absolute system path 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects traversal out of a root 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects empty 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects whitespace only 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects a NUL byte, which truncates the path in some syscalls 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects a non-string: null 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects a non-string: undefined 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects a non-string: a number 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects a non-string: an object 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > hostile input > rejects a non-string: an array 0ms
+ × server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses another organization’s file under generated_documents 9ms
+   → expected '/home/user/ClinicalSageAI-2-replit/ge…' to be null
+ × server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses another organization’s file under uploads 2ms
+   → expected '/home/user/ClinicalSageAI-2-replit/up…' to be null
+ × server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses another organization’s file under exports 1ms
+   → expected '/home/user/ClinicalSageAI-2-replit/ex…' to be null
+ × server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses a legacy flat file (no org prefix) under generated_documents 1ms
+   → expected '/home/user/ClinicalSageAI-2-replit/ge…' to be null
+ × server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses a legacy flat file (no org prefix) under uploads 1ms
+   → expected '/home/user/ClinicalSageAI-2-replit/up…' to be null
+ × server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses a legacy flat file (no org prefix) under exports 1ms
+   → expected '/home/user/ClinicalSageAI-2-replit/ex…' to be null
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > resolves the caller’s own file under generated_documents 1ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > resolves the caller’s own file under uploads 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > resolves the caller’s own file under exports 0ms
+ × server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > is containment, not a string prefix: org-77 is not inside org-7 1ms
+   → expected '/home/user/ClinicalSageAI-2-replit/ge…' to be null
+ × server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses a traversal out of the caller’s prefix into another tenant’s 1ms
+   → expected '/home/user/ClinicalSageAI-2-replit/ge…' to be null
+ × server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > fails closed when the organization is unusable: zero 2ms
+   → expected '/home/user/ClinicalSageAI-2-replit/ge…' to be null
+ × server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > fails closed when the organization is unusable: negative 2ms
+   → expected '/home/user/ClinicalSageAI-2-replit/ge…' to be null
+ × server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > fails closed when the organization is unusable: NaN 2ms
+   → expected '/home/user/ClinicalSageAI-2-replit/ge…' to be null
+ × server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > fails closed when the organization is unusable: empty string 1ms
+   → expected '/home/user/ClinicalSageAI-2-replit/ge…' to be null
+ × server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > fails closed when the organization is unusable: non-numeric string 8ms
+   → expected '/home/user/ClinicalSageAI-2-replit/ge…' to be null
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > leaves the reference corpus csrs readable with an organization given 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > leaves the reference corpus ectd readable with an organization given 0ms
+ ✓ server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > keeps the no-organization form for internal callers 0ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > GET /models advertises only what runs > lists no model as active except the rule-based extractor 28ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > GET /models advertises only what runs > claims no pretraining corpus, because nothing was pretrained 8ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > GET /models advertises only what runs > still names the retired ids, so an integrator can see what changed 6ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > GET /models advertises only what runs > states the limitations that decide whether the output is usable 5ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a request for a model that does not exist is refused, not echoed > POST /analyze rejects model=layoutlmv3 19ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a request for a model that does not exist is refused, not echoed > POST /analyze rejects model=donut 4ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a request for a model that does not exist is refused, not echoed > POST /analyze rejects model=table-transformer 3ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a request for a model that does not exist is refused, not echoed > POST /analyze rejects model=dit 3ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a request for a model that does not exist is refused, not echoed > POST /analyze rejects model=ensemble 9ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > GET /health describes the mechanism it has > names no primary model 4ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > GET /health describes the mechanism it has > does not claim an OCR fallback it never applies 3ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > GET /health describes the mechanism it has > says what its scores are 4ms
+ × server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /analyze refuses org B naming org A’s file, without the path or its contents 23ms
+   → expected [ 403, 404 ] to include 200
+ × server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-tables refuses org B naming org A’s file, without the path or its contents 6ms
+   → expected [ 403, 404 ] to include 200
+ × server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-form-fields refuses org B naming org A’s file, without the path or its contents 5ms
+   → expected [ 403, 404 ] to include 200
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /analyze still reads the caller’s own file (positive control) 6ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-tables still reads the caller’s own file (positive control) 4ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-form-fields still reads the caller’s own file (positive control) 4ms
+ × server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /analyze fails closed with no tenant context on the request 10ms
+   → expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-tables fails closed with no tenant context on the request 5ms
+   → expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-form-fields fails closed with no tenant context on the request 4ms
+   → expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /analyze does not reach a legacy flat file, whoever asks 5ms
+   → expected [ 403, 404 ] to include 200
+ × server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-tables does not reach a legacy flat file, whoever asks 23ms
+   → expected [ 403, 404 ] to include 200
+ × server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-form-fields does not reach a legacy flat file, whoever asks 3ms
+   → expected [ 403, 404 ] to include 200
+ × server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /analyze does not echo the path for a missing file inside the caller’s own prefix 6ms
+   → expected '{"error":"File not found: generated_d…' not to contain 'generated_documents/org-990101/does-n…'
+ × server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-tables does not echo the path for a missing file inside the caller’s own prefix 3ms
+   → expected '{"error":"File not found: generated_d…' not to contain 'generated_documents/org-990101/does-n…'
+ × server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-form-fields does not echo the path for a missing file inside the caller’s own prefix 2ms
+   → expected '{"error":"File not found: generated_d…' not to contain 'generated_documents/org-990101/does-n…'
+ × server/services/tools/__tests__/generate-docx-tenant-prefix.test.ts > documents.generate_docx — tenant prefix, no overwrite > writes two same-titled documents under the org prefix at distinct paths, keeping both 12ms
+   → /tmp/p06-generate-docx-8nNmou/generated_documents/Clinical_Overview_General_20260925.docx: expected false to be true // Object.is equality
+ × server/services/tools/__tests__/generate-docx-tenant-prefix.test.ts > documents.generate_docx — tenant prefix, no overwrite > fails a path collision instead of overwriting (flag wx) 15ms
+   → expected false to be true // Object.is equality
+ × server/services/tools/__tests__/generate-docx-tenant-prefix.test.ts > documents.generate_docx — tenant prefix, no overwrite > refuses and writes nothing when the organization is missing 6ms
+   → expected true to be false // Object.is equality
+ × server/services/tools/__tests__/generate-docx-tenant-prefix.test.ts > documents.generate_docx — tenant prefix, no overwrite > refuses and writes nothing when the organization is empty 2ms
+   → expected true to be false // Object.is equality
+ × server/services/tools/__tests__/generate-docx-tenant-prefix.test.ts > documents.generate_docx — tenant prefix, no overwrite > refuses and writes nothing when the organization is zero 2ms
+   → expected true to be false // Object.is equality
+ × server/services/tools/__tests__/generate-docx-tenant-prefix.test.ts > documents.generate_docx — tenant prefix, no overwrite > refuses and writes nothing when the organization is non-numeric 1ms
+   → expected true to be false // Object.is equality
+stderr | tests/routes/concept2cure-export-governance.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/routes/concept2cure-export-governance.test.ts > Concept2Cure export governance gates > blocks DOCX export when strict review gate is enabled and approval is missing 9ms
+ ✓ tests/routes/concept2cure-export-governance.test.ts > Concept2Cure export governance gates > allows DOCX export in non-strict mode and injects governance headers + review notice 8ms
+ ✓ tests/routes/concept2cure-export-governance.test.ts > Concept2Cure export governance gates > rejects a fabricated approval state without complete reviewer attribution 2ms
+ ✓ tests/routes/concept2cure-export-governance.test.ts > Concept2Cure export governance gates > labels a human-authored export as draft and not agency-validated 1ms
+ ✓ tests/routes/concept2cure-export-governance.test.ts > Concept2Cure export governance gates > allows PPTX export in strict mode when approved and includes reviewer headers 2ms
+ × tests/routes/concept2cure-export-governance.test.ts > GET /documents/download/:filename serves only the caller’s own tenant prefix > answers 404 to org B for a file org A generated, without naming the path 32ms
+   → expected 200 to be 404 // Object.is equality
+ × tests/routes/concept2cure-export-governance.test.ts > GET /documents/download/:filename serves only the caller’s own tenant prefix > still serves the owning organization (positive control) 12ms
+   → expected 'legacy-flat-bytes' to be 'tenant-a-bytes' // Object.is equality
+ × tests/routes/concept2cure-export-governance.test.ts > GET /documents/download/:filename serves only the caller’s own tenant prefix > never serves a legacy flat file, even to a tenant that would have owned it 6ms
+   → expected 200 to be 404 // Object.is equality
+ × tests/routes/concept2cure-export-governance.test.ts > GET /documents/download/:filename serves only the caller’s own tenant prefix > refuses when no tenant context is attached rather than falling back to a shared directory 7ms
+   → expected [ 403, 404 ] to include 200
+ ✓ tests/routes/concept2cure-export-governance.test.ts > GET /documents/download/:filename serves only the caller’s own tenant prefix > rejects a filename carrying separators before it reaches the filesystem 6ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 35 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/routes/concept2cure-export-governance.test.ts > GET /documents/download/:filename serves only the caller’s own tenant prefix > answers 404 to org B for a file org A generated, without naming the path
+AssertionError: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ tests/routes/concept2cure-export-governance.test.ts:261:24
+    259|     const res = await request(appAs(ORG_B)).get(`/api/concept2cure/doc…
+    260|
+    261|     expect(res.status).toBe(404);
+       |                        ^
+    262|     const body = JSON.stringify(res.body);
+    263|     expect(body).not.toContain(`org-${ORG_A}`);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/35]⎯
+
+ FAIL  tests/routes/concept2cure-export-governance.test.ts > GET /documents/download/:filename serves only the caller’s own tenant prefix > still serves the owning organization (positive control)
+AssertionError: expected 'legacy-flat-bytes' to be 'tenant-a-bytes' // Object.is equality
+
+Expected: "tenant-a-bytes"
+Received: "legacy-flat-bytes"
+
+ ❯ tests/routes/concept2cure-export-governance.test.ts:278:51
+    276|     expect(res.status).toBe(200);
+    277|     expect(res.headers['content-disposition']).toBe(`attachment; filen…
+    278|     expect((res.body as Buffer).toString('utf8')).toBe(A_BYTES);
+       |                                                   ^
+    279|   });
+    280|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/35]⎯
+
+ FAIL  tests/routes/concept2cure-export-governance.test.ts > GET /documents/download/:filename serves only the caller’s own tenant prefix > never serves a legacy flat file, even to a tenant that would have owned it
+AssertionError: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ tests/routes/concept2cure-export-governance.test.ts:287:24
+    285|       `/api/concept2cure/documents/download/${FLAT_ONLY}`
+    286|     );
+    287|     expect(res.status).toBe(404);
+       |                        ^
+    288|     expect(res.text).not.toContain('legacy-flat');
+    289|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/35]⎯
+
+ FAIL  tests/routes/concept2cure-export-governance.test.ts > GET /documents/download/:filename serves only the caller’s own tenant prefix > refuses when no tenant context is attached rather than falling back to a shared directory
+AssertionError: expected [ 403, 404 ] to include 200
+ ❯ tests/routes/concept2cure-export-governance.test.ts:293:24
+    291|   it('refuses when no tenant context is attached rather than falling b…
+    292|     const res = await request(appAs(null)).get(`/api/concept2cure/docu…
+    293|     expect([403, 404]).toContain(res.status);
+       |                        ^
+    294|     expect(res.text).not.toContain(A_BYTES);
+    295|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/35]⎯
+
+ FAIL  server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /analyze refuses org B naming org A’s file, without the path or its contents
+ FAIL  server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-tables refuses org B naming org A’s file, without the path or its contents
+ FAIL  server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-form-fields refuses org B naming org A’s file, without the path or its contents
+AssertionError: expected [ 403, 404 ] to include 200
+ ❯ server/routes/__tests__/document-understanding-honesty.contract.test.ts:177:24
+    175|       .send({ filePath: A_REL });
+    176|
+    177|     expect([403, 404]).toContain(res.status);
+       |                        ^
+    178|     expect(res.text).not.toContain(SECRET);
+    179|     expect(res.text).not.toContain(A_REL);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/35]⎯
+
+ FAIL  server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /analyze fails closed with no tenant context on the request
+ FAIL  server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-tables fails closed with no tenant context on the request
+ FAIL  server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-form-fields fails closed with no tenant context on the request
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/document-understanding-honesty.contract.test.ts:196:24
+    194|     const res = await request(app()).post(`/api/document-understanding…
+    195|
+    196|     expect(res.status).toBe(403);
+       |                        ^
+    197|     expect(res.text).not.toContain(SECRET);
+    198|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/35]⎯
+
+ FAIL  server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /analyze does not reach a legacy flat file, whoever asks
+ FAIL  server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-tables does not reach a legacy flat file, whoever asks
+ FAIL  server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-form-fields does not reach a legacy flat file, whoever asks
+AssertionError: expected [ 403, 404 ] to include 200
+ ❯ server/routes/__tests__/document-understanding-honesty.contract.test.ts:205:24
+    203|       .send({ filePath: `generated_documents/${FLAT}` });
+    204|
+    205|     expect([403, 404]).toContain(res.status);
+       |                        ^
+    206|     expect(res.text).not.toContain(SECRET);
+    207|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/35]⎯
+
+ FAIL  server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /analyze does not echo the path for a missing file inside the caller’s own prefix
+ FAIL  server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-tables does not echo the path for a missing file inside the caller’s own prefix
+ FAIL  server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-form-fields does not echo the path for a missing file inside the caller’s own prefix
+AssertionError: expected '{"error":"File not found: generated_d…' not to contain 'generated_documents/org-990101/does-n…'
+
+Expected: "generated_documents/org-990101/does-not-exist-p06-02cfe7a9.txt"
+Received: "{"error":"File not found: generated_documents/org-990101/does-not-exist-p06-02cfe7a9.txt"}"
+
+ ❯ server/routes/__tests__/document-understanding-honesty.contract.test.ts:216:26
+    214|
+    215|     expect(res.status).toBe(404);
+    216|     expect(res.text).not.toContain(missing);
+       |                          ^
+    217|     expect(res.text).not.toContain(`org-${ORG_A}`);
+    218|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/35]⎯
+
+ FAIL  server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses another organization’s file under generated_documents
+AssertionError: expected '/home/user/ClinicalSageAI-2-replit/ge…' to be null
+
+- Expected:
+null
+
++ Received:
+"/home/user/ClinicalSageAI-2-replit/generated_documents/org-9/x.docx"
+
+ ❯ server/utils/__tests__/document-file-roots.test.ts:136:64
+    134|   it.each(TENANT_ROOTS)('refuses another organization’s file under %s'…
+    135|     const victim = path.join(path.resolve(root), 'org-9', 'x.docx');
+    136|     expect(resolveDocumentPath(victim, { organizationId: 7 })).toBeNul…
+       |                                                                ^
+    137|   });
+    138|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/35]⎯
+
+ FAIL  server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses another organization’s file under uploads
+AssertionError: expected '/home/user/ClinicalSageAI-2-replit/up…' to be null
+
+- Expected:
+null
+
++ Received:
+"/home/user/ClinicalSageAI-2-replit/uploads/org-9/x.docx"
+
+ ❯ server/utils/__tests__/document-file-roots.test.ts:136:64
+    134|   it.each(TENANT_ROOTS)('refuses another organization’s file under %s'…
+    135|     const victim = path.join(path.resolve(root), 'org-9', 'x.docx');
+    136|     expect(resolveDocumentPath(victim, { organizationId: 7 })).toBeNul…
+       |                                                                ^
+    137|   });
+    138|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/35]⎯
+
+ FAIL  server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses another organization’s file under exports
+AssertionError: expected '/home/user/ClinicalSageAI-2-replit/ex…' to be null
+
+- Expected:
+null
+
++ Received:
+"/home/user/ClinicalSageAI-2-replit/exports/org-9/x.docx"
+
+ ❯ server/utils/__tests__/document-file-roots.test.ts:136:64
+    134|   it.each(TENANT_ROOTS)('refuses another organization’s file under %s'…
+    135|     const victim = path.join(path.resolve(root), 'org-9', 'x.docx');
+    136|     expect(resolveDocumentPath(victim, { organizationId: 7 })).toBeNul…
+       |                                                                ^
+    137|   });
+    138|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/35]⎯
+
+ FAIL  server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses a legacy flat file (no org prefix) under generated_documents
+AssertionError: expected '/home/user/ClinicalSageAI-2-replit/ge…' to be null
+
+- Expected:
+null
+
++ Received:
+"/home/user/ClinicalSageAI-2-replit/generated_documents/x.docx"
+
+ ❯ server/utils/__tests__/document-file-roots.test.ts:144:62
+    142|     // through this door.
+    143|     const flat = path.join(path.resolve(root), 'x.docx');
+    144|     expect(resolveDocumentPath(flat, { organizationId: 7 })).toBeNull(…
+       |                                                              ^
+    145|   });
+    146|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/35]⎯
+
+ FAIL  server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses a legacy flat file (no org prefix) under uploads
+AssertionError: expected '/home/user/ClinicalSageAI-2-replit/up…' to be null
+
+- Expected:
+null
+
++ Received:
+"/home/user/ClinicalSageAI-2-replit/uploads/x.docx"
+
+ ❯ server/utils/__tests__/document-file-roots.test.ts:144:62
+    142|     // through this door.
+    143|     const flat = path.join(path.resolve(root), 'x.docx');
+    144|     expect(resolveDocumentPath(flat, { organizationId: 7 })).toBeNull(…
+       |                                                              ^
+    145|   });
+    146|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/35]⎯
+
+ FAIL  server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses a legacy flat file (no org prefix) under exports
+AssertionError: expected '/home/user/ClinicalSageAI-2-replit/ex…' to be null
+
+- Expected:
+null
+
++ Received:
+"/home/user/ClinicalSageAI-2-replit/exports/x.docx"
+
+ ❯ server/utils/__tests__/document-file-roots.test.ts:144:62
+    142|     // through this door.
+    143|     const flat = path.join(path.resolve(root), 'x.docx');
+    144|     expect(resolveDocumentPath(flat, { organizationId: 7 })).toBeNull(…
+       |                                                              ^
+    145|   });
+    146|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/35]⎯
+
+ FAIL  server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > is containment, not a string prefix: org-77 is not inside org-7
+AssertionError: expected '/home/user/ClinicalSageAI-2-replit/ge…' to be null
+
+- Expected:
+null
+
++ Received:
+"/home/user/ClinicalSageAI-2-replit/generated_documents/org-77/x.docx"
+
+ ❯ server/utils/__tests__/document-file-roots.test.ts:156:65
+    154|   it('is containment, not a string prefix: org-77 is not inside org-7'…
+    155|     const sibling = path.join(path.resolve('generated_documents'), 'or…
+    156|     expect(resolveDocumentPath(sibling, { organizationId: 7 })).toBeNu…
+       |                                                                 ^
+    157|   });
+    158|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/35]⎯
+
+ FAIL  server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > refuses a traversal out of the caller’s prefix into another tenant’s
+AssertionError: expected '/home/user/ClinicalSageAI-2-replit/ge…' to be null
+
+- Expected:
+null
+
++ Received:
+"/home/user/ClinicalSageAI-2-replit/generated_documents/org-9/x.docx"
+
+ ❯ server/utils/__tests__/document-file-roots.test.ts:161:64
+    159|   it('refuses a traversal out of the caller’s prefix into another tena…
+    160|     const sneaky = 'generated_documents/org-7/../org-9/x.docx';
+    161|     expect(resolveDocumentPath(sneaky, { organizationId: 7 })).toBeNul…
+       |                                                                ^
+    162|   });
+    163|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/35]⎯
+
+ FAIL  server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > fails closed when the organization is unusable: zero
+ FAIL  server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > fails closed when the organization is unusable: negative
+ FAIL  server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > fails closed when the organization is unusable: NaN
+ FAIL  server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > fails closed when the organization is unusable: empty string
+ FAIL  server/utils/__tests__/document-file-roots.test.ts > tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6) > fails closed when the organization is unusable: non-numeric string
+AssertionError: expected '/home/user/ClinicalSageAI-2-replit/ge…' to be null
+
+- Expected:
+null
+
++ Received:
+"/home/user/ClinicalSageAI-2-replit/generated_documents/org-0/x.docx"
+
+ ❯ server/utils/__tests__/document-file-roots.test.ts:174:83
+    172|     // unusable id must refuse rather than resolve to a prefix nobody …
+    173|     const own = path.join(path.resolve('generated_documents'), 'org-0'…
+    174|     expect(resolveDocumentPath(own, { organizationId: organizationId a…
+       |                                                                                   ^
+    175|     const flat = path.join(path.resolve('generated_documents'), 'x.doc…
+    176|     expect(resolveDocumentPath(flat, { organizationId: organizationId …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/35]⎯
+
+ FAIL  server/services/tools/__tests__/generate-docx-tenant-prefix.test.ts > documents.generate_docx — tenant prefix, no overwrite > writes two same-titled documents under the org prefix at distinct paths, keeping both
+AssertionError: /tmp/p06-generate-docx-8nNmou/generated_documents/Clinical_Overview_General_20260925.docx: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/tools/__tests__/generate-docx-tenant-prefix.test.ts:100:52
+     98|     const p1 = String(first.artifact?.data?.path);
+     99|     const p2 = String(second.artifact?.data?.path);
+    100|     expect(p1.startsWith(orgDir() + path.sep), p1).toBe(true);
+       |                                                    ^
+    101|     expect(p2.startsWith(orgDir() + path.sep), p2).toBe(true);
+    102|     expect(p1).not.toBe(p2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/35]⎯
+
+ FAIL  server/services/tools/__tests__/generate-docx-tenant-prefix.test.ts > documents.generate_docx — tenant prefix, no overwrite > fails a path collision instead of overwriting (flag wx)
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/tools/__tests__/generate-docx-tenant-prefix.test.ts:131:57
+    129|       expect(first.ok, first.message?.content).toBe(true);
+    130|       const p1 = String(first.artifact?.data?.path);
+    131|       expect(path.basename(p1).startsWith(`${fixed}-`)).toBe(true);
+       |                                                         ^
+    132|
+    133|       const second = await tool.execute(params, ctx);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/35]⎯
+
+ FAIL  server/services/tools/__tests__/generate-docx-tenant-prefix.test.ts > documents.generate_docx — tenant prefix, no overwrite > refuses and writes nothing when the organization is missing
+ FAIL  server/services/tools/__tests__/generate-docx-tenant-prefix.test.ts > documents.generate_docx — tenant prefix, no overwrite > refuses and writes nothing when the organization is empty
+ FAIL  server/services/tools/__tests__/generate-docx-tenant-prefix.test.ts > documents.generate_docx — tenant prefix, no overwrite > refuses and writes nothing when the organization is zero
+ FAIL  server/services/tools/__tests__/generate-docx-tenant-prefix.test.ts > documents.generate_docx — tenant prefix, no overwrite > refuses and writes nothing when the organization is non-numeric
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/tools/__tests__/generate-docx-tenant-prefix.test.ts:157:23
+    155|     );
+    156|
+    157|     expect(result.ok).toBe(false);
+       |                       ^
+    158|     expect(result.artifact).toBeNull();
+    159|     expect(result.message.content).toMatch(/organization|tenant/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/35]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  35 failed | 50 passed (85)
+   Start at  01:16:24
+   Duration  5.25s (transform 2.54s, setup 383ms, import 5.03s, tests 812ms, environment 1ms)
+

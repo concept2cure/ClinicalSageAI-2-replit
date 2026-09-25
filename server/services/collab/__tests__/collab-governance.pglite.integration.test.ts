@@ -140,7 +140,7 @@ beforeAll(async () => {
   // The accounts, with the one column the connection reads of them: whether
   // each is in use (services/account-standing.ts, VSR-001 F-29), as
   // migrations/0000_sweet_joseph.sql defines it.
-  await pglite.exec(`CREATE TABLE users (id INTEGER PRIMARY KEY, status TEXT NOT NULL DEFAULT 'active');
+  await pglite.exec(`CREATE TABLE users (id INTEGER PRIMARY KEY, status TEXT NOT NULL DEFAULT 'active', password_changed_at TIMESTAMP);
     INSERT INTO users (id) VALUES (${USER_A}), (${USER_B});`);
 
   // Two tenants, one document each, one section each.

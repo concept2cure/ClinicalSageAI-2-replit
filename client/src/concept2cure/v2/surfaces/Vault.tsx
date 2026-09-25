@@ -4,7 +4,7 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { I } from '../icons';
 import { VaultPlaceIntoSubmission } from './VaultPlaceIntoSubmission';
-import { useLiveData, EmptyState } from '../dataConnect';
+import { useLiveData, EmptyState, type ShapeGuard } from '../dataConnect';
 import { useVaultUpload } from '../useVaultUpload';
 import {
   VAULT_INGEST_DOCUMENT_TYPES,
@@ -182,7 +182,7 @@ export function vaultDocFamilyCode(
 
 function fileIcon(doc: VaultDoc): React.ReactNode {
   const key = vaultFileIconKey(doc);
-  return (I as any)[key] || I.fileText || I.file;
+  return (I as any)[key] || I.fileText;
 }
 
 /* ── VaultTree — recursive folder nav ── */
@@ -221,10 +221,10 @@ function VaultTree({ nodes, depth, activeFolder, onPick, expanded, toggle }: Vau
               }}
             >
               <span className="vd-caret" data-open={isOpen || undefined}>
-                {I.chevronRight || '›'}
+                {I.chevRight}
               </span>
               <span className="vd-fico">
-                {isOpen ? I.folderOpen || I.folder : I.folder}
+                {isOpen ? I.folderOpen : I.folder}
               </span>
               <span className="vd-flabel">
                 {folder.code ? <b>{folder.code}</b> : null} {folder.label}
@@ -252,6 +252,89 @@ function VaultTree({ nodes, depth, activeFolder, onPick, expanded, toggle }: Vau
   );
 }
 
+/* ── Document history — this document's own audit trail (VR-01) ──
+   Every chained audit_logs row recorded against the document (ingest, filing
+   decisions, downloads), newest first, with the server's verdict on the
+   tenant's chain. Read from the one ledger; nothing here is derived on the
+   client. A failed read is shown as a failure: "no history" would tell an
+   inspector the document was never touched. */
+interface HistoryEntry {
+  id: string;
+  event: string;
+  actor: string;
+  at: string;
+  when: string;
+  hash: string;
+  seq: number | null;
+}
+interface HistoryShape {
+  entries: HistoryEntry[];
+  chain: { ok: boolean; rowsChecked: number; legacyRows: number; brokenAt?: string };
+}
+
+/** A body without an entries list and a chain verdict is a failed read, not an empty history. */
+const isHistoryShape: ShapeGuard<HistoryShape> = (v): v is HistoryShape =>
+  !!v && typeof v === 'object' && Array.isArray((v as HistoryShape).entries) &&
+  !!(v as HistoryShape).chain && typeof (v as HistoryShape).chain === 'object';
+
+function ChainVerdict({ chain }: { chain: HistoryShape['chain'] }) {
+  if (chain.ok) {
+    return (
+      <div className="vd-d-idx">
+        <span className="vd-idx-dot" /> Audit chain verified — {chain.rowsChecked} rows checked
+        {chain.legacyRows ? `, ${chain.legacyRows} recorded before sequencing` : ''}.
+      </div>
+    );
+  }
+  return (
+    <div className="vd-dr-err" role="alert">
+      {I.alertTriangle} Audit chain check failed{chain.brokenAt ? ` at ${chain.brokenAt}` : ''}. The entries below
+      are what is recorded; the chain that should prove them has a break.
+    </div>
+  );
+}
+
+function DocumentHistory({ projectId, documentUuid }: { projectId: string; documentUuid: string }) {
+  const path =
+    '/api/c2c/project-vault/' + encodeURIComponent(projectId) +
+    '/documents/' + encodeURIComponent(documentUuid) + '/history';
+  const st = useLiveData<HistoryShape>(path, [path], isHistoryShape);
+  let body: React.ReactNode;
+  if (st.loading) body = <div className="vd-d-idx">Loading history…</div>;
+  else if (st.error || !st.data) {
+    body = (
+      <div className="vd-dr-err" role="status">
+        {I.alertTriangle} This document's history could not be read. Nothing is shown rather than an
+        incomplete history.
+      </div>
+    );
+  } else if (st.data.entries.length === 0) {
+    body = <div className="vd-d-idx">No recorded events for this document.</div>;
+  } else {
+    body = (
+      <>
+        <ChainVerdict chain={st.data.chain} />
+        <div className="vd-vers">
+          {st.data.entries.map((e) => (
+            <div key={e.id} className="vd-ver">
+              <span className="vd-ver-v">{e.event}</span>
+              <span className="vd-ver-m">
+                {e.when || e.at} · {e.actor} · <span className="mono" title={e.hash}>{e.hash.slice(0, 12)}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  }
+  return (
+    <div data-testid="vault-document-history">
+      <div className="vd-d-seclbl">History</div>
+      {body}
+    </div>
+  );
+}
+
 /* ── Data Room lane — the capture → classify → file pipeline ──
    Every file captured for this project (AnA paperclip, Project Home drop-zone,
    Vault upload) passes through the Data Room: it lands as a source
@@ -274,7 +357,7 @@ function DataRoomLane({
     return (
       <div className="vd-dr" data-testid="vault-data-room">
         <div className="vd-dr-head">
-          <span className="vd-dr-title">{I.inbox || I.folder} Data room</span>
+          <span className="vd-dr-title">{I.inbox} Data room</span>
         </div>
         <div className="vd-dr-err" role="alert">
           {I.alertTriangle} Unavailable — showing nothing because the room could not be
@@ -287,7 +370,7 @@ function DataRoomLane({
     return (
       <div className="vd-dr" data-testid="vault-data-room">
         <div className="vd-dr-head">
-          <span className="vd-dr-title">{I.inbox || I.folder} Data room</span>
+          <span className="vd-dr-title">{I.inbox} Data room</span>
           <span className="vd-dr-meta">No data room information for this project.</span>
         </div>
       </div>
@@ -298,7 +381,7 @@ function DataRoomLane({
   return (
     <div className="vd-dr" data-testid="vault-data-room">
       <div className="vd-dr-head">
-        <span className="vd-dr-title">{I.inbox || I.folder} Data room</span>
+        <span className="vd-dr-title">{I.inbox} Data room</span>
         <span className="vd-dr-stages">
           <span className="vd-dr-stage">Captured <b>{roomCount(block.captured, block)}</b></span>
           <span className="vd-dr-arrow">›</span>
@@ -1049,7 +1132,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           }
           data-testid="vault-upload-button"
         >
-          {I.upload || I.plus} {uploading ? 'Uploading…' : 'Upload'}
+          {I.upload} {uploading ? 'Uploading…' : 'Upload'}
         </button>
         {/* The conversational route is kept, but as what it is: a second way
             in, not the thing the upload icon promises. */}
@@ -1491,6 +1574,9 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                         </div>
                       )}
                     </div>
+                    {projectId && sel.docId ? (
+                      <DocumentHistory projectId={projectId} documentUuid={sel.docId} />
+                    ) : null}
                   </>
                 ) : (
                   <>

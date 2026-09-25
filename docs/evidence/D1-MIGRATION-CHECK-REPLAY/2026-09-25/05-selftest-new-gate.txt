@@ -1,0 +1,2 @@
+[ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+[ci:migration-drop-safety] OK — 309 migrations, 33 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 17 dynamic DROP(s) in 17 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).

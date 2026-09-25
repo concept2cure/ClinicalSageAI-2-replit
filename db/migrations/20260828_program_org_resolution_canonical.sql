@@ -33,11 +33,28 @@
 -- under RLS_ENFORCE=on has therefore never worked on a fresh install; the
 -- vault-ingest dbtest is the proof that fails without this migration.
 --
--- The fix teaches the resolver the canonical registry as a fallback:
+-- The fix teaches the resolver the canonical registry:
 -- regulatory_programs.id (uuid) → organizations.uuid, which is the same value
 -- identity.current_org_id() extracts from the app.current_org_id GUC the
--- request middleware sets. The GCC branches stay first so any environment that
--- does carry core.programs rows keeps its existing resolution.
+-- request middleware sets.
+--
+-- AMENDED IN PLACE 2026-09-24 (row D3; evidence
+-- docs/evidence/D3/2026-09-24-vault-program-ownership/). The canonical registry
+-- is now consulted FIRST; the GCC tables answer only for an id it does not hold.
+-- As first written, "the GCC branches stay first so any environment that does
+-- carry core.programs rows keeps its existing resolution" — and both GCC tables
+-- accept a row from any tenant whose org_id is its own, keyed by ANY program
+-- id (core.programs' tenant policy checks org_id, not whose program the id is).
+-- Measured as app_service with app.rls_enforce=on: tenant A wrote
+-- `core.programs (id = <B's regulatory program>, org_id = A)` and was then B's
+-- program's owner — A read B's vault documents and B could no longer read its
+-- own. The same through an org-less core.programs row plus a
+-- core.program_ownerships row. A regulatory_programs row cannot be planted that
+-- way: its id is its primary key and its policy keeps organization_id the
+-- writer's own. Nothing that resolved before resolves differently now unless
+-- the two registries disagreed about the same id, which is exactly the case
+-- this closes. Amended here rather than overridden by a later file, per Rule 1
+-- (every file in the set re-runs on every deploy).
 
 -- plpgsql, not LANGUAGE sql: sql bodies validate every referenced relation at
 -- CREATE time, and this migration must also apply on paths that build a
@@ -50,15 +67,16 @@ LANGUAGE plpgsql
 STABLE
 AS $$
 BEGIN
+  -- The canonical registry first: see the 2026-09-24 note above.
   RETURN COALESCE(
-    (SELECT org_id FROM core.programs WHERE id = p_program_id),
-    (SELECT org_id FROM core.program_ownerships
-      WHERE program_id = p_program_id AND is_active = TRUE
-        AND ownership_role = 'OWNER' LIMIT 1),
     (SELECT o.uuid
        FROM public.regulatory_programs rp
        JOIN public.organizations o ON o.id = rp.organization_id
-      WHERE rp.id = p_program_id)
+      WHERE rp.id = p_program_id),
+    (SELECT org_id FROM core.programs WHERE id = p_program_id),
+    (SELECT org_id FROM core.program_ownerships
+      WHERE program_id = p_program_id AND is_active = TRUE
+        AND ownership_role = 'OWNER' LIMIT 1)
   );
 END;
 $$;

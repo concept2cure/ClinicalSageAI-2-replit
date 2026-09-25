@@ -13,7 +13,7 @@
  */
 
 import * as React from 'react';
-import { I } from './icons';
+import { I } from '../v2/icons';
 import { FLOW_STEPS, STATE_LABEL, type ChangeState } from './changeData';
 
 export interface ChangeFlowProps {
@@ -94,7 +94,7 @@ export function ChangeFlow({ counts, activeStage = 'all', onSelectStage, onAsk }
             )
           }
         >
-          {I.sparkle} Explain the pipeline
+          {I.sparkles} Explain the pipeline
         </button>
       </div>
     </div>

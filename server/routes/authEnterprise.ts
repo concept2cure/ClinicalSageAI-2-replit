@@ -28,7 +28,7 @@ import {
 
 import { config } from '../config/environment';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
-import { verifyLiveToken } from '../services/token-revocation';
+import { revokeToken, verifyLiveToken } from '../services/token-revocation';
 import { recordAuthEvent } from '../services/audit/auth-event-audit';
 import { runWithTenantScope } from '../db/tenantStore';
 import { requireAccessTokenReason } from '../middleware/tokenType';
@@ -969,6 +969,13 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
       config.jwt.secret,
       { expiresIn: '24h' }
     );
+
+    // Security audit 2026-09-24, IAM-04: rotation. The presented token is spent
+    // the moment its successor exists. Before this nothing was revoked, so any
+    // live access token renewed itself for ever, a day at a time, and logging
+    // out of the successor left its predecessor live. Revoked after minting, so
+    // a failed mint spends nothing.
+    await revokeToken(oldToken, 'rotated');
 
     res.json({
       success: true,

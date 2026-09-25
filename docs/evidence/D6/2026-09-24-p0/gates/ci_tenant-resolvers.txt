@@ -1,0 +1,3 @@
+Local tenant resolvers: 189 (baseline 189)
+
+OK: no new local tenant resolvers.

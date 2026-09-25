@@ -1,0 +1,12 @@
+ ✓ server/routes/c2c/__tests__/vault-document-history-route.test.ts > document history route > reads this document's rows from the ledger, in a tenant-stamped transaction
+ ✓ server/routes/c2c/__tests__/vault-document-history-route.test.ts > document history route > 404s a document that is not this program's or this org's, and reads nothing
+ ✓ server/routes/c2c/__tests__/vault-document-history-route.test.ts > document history route > a failed read is an error, never an empty history
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault document history > lists who did what to this document, newest first, with the chain verdict
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault document history > a failed read says so, and does not read as a document with no history
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault document history > a broken chain is reported, not hidden
+ ✓ server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > a Vault download joins the sequenced chain > is written as a sequenced row, not a legacy one
+ ✓ server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > a Vault download joins the sequenced chain > leaves the tenant chain verifiable
+ ✓ server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > readRecordAuditHistory — one document, from the one ledger > lists this document's events only, newest first, with who did them
+ ✓ server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > readRecordAuditHistory — one document, from the one ledger > names each row's predecessor in the TENANT chain, not the document's previous row
+ ✓ server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > readRecordAuditHistory — one document, from the one ledger > carries the tenant chain verdict, not a verdict of its own
+      Tests  11 passed (11)

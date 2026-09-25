@@ -12,6 +12,7 @@
 .c2c-v2 .sc-disp-actions .sc-btn { padding: 9px 16px; }
 .c2c-v2 .sc-btn-neutral { background: var(--bg-200); color: var(--text-100); }
 .c2c-v2 .sc-subrow { cursor: pointer; }
+.c2c-v2 .sc-subrow-open { background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
 .c2c-v2 .pj-card-b-flush { padding: 0; }
 .c2c-v2 .ub-r { text-align: right; }
 .c2c-v2 .sc-toast {
