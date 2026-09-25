@@ -1,0 +1,56 @@
+$ git rev-parse --short HEAD  # sources unchanged; tests added
+5c978992
+$ npx vitest run server/services/ana-ri/__tests__/propose-only-partition.test.ts server/services/ana/__tests__/governed-tool-gate.test.ts server/services/ana-ri/__tests__/part11-governance.test.ts
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > requiresPart11Signoff > gates record-altering mutations 2ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > requiresPart11Signoff > does NOT gate reads / drafting / listing 1ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > requiresEsignature (high-impact tier) > requires an e-signature for record-altering / submission-state actions 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > requiresEsignature (high-impact tier) > does NOT require an e-signature for milestone / status transitions (reason-only) 0ms
+ × server/services/ana-ri/__tests__/part11-governance.test.ts > requiresEsignature (high-impact tier) > requires an e-signature for the GDPR erasure (audit 2026-09-24 DP-08/DP-09, P0-12) 10ms
+   → expected false to be true // Object.is equality
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > requiresEsignature (high-impact tier) > the e-sign set is a subset of the governed set 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > validateSignoff (fail-closed) > accepts a verified sign-off with a sufficient reason 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > validateSignoff (fail-closed) > rejects a missing sign-off 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > validateSignoff (fail-closed) > rejects an empty reason 1ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > validateSignoff (fail-closed) > rejects a too-short reason 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > validateSignoff (fail-closed) > rejects when the signature was not server-verified (default = strict) 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > validateSignoff (fail-closed) > reason-only tier: accepts a valid reason WITHOUT a verified signature 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > validateSignoff (fail-closed) > reason-only tier still requires a sufficient reason 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > buildSignatureRequiredResult > is a fail-closed result that cues the e-sign modal 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > buildSignatureRequiredResult > echoes the command + params so the client can re-submit with a sign-off 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > buildSignatureRequiredResult > flags signatureRequired per tier (high-impact vs reason-only) 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > governed set hygiene > contains no read-shaped verbs 1ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > an unreadable call is refused, not cleared > UNDECIDABLE when the input carries no command — the streamed-empty-input case 2ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > an unreadable call is refused, not cleared > UNDECIDABLE is NOT UNGOVERNED — the distinction is the point 1ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > an unreadable call is refused, not cleared > UNDECIDABLE when the arguments failed to parse mid-stream 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > an unreadable call is refused, not cleared > UNDECIDABLE for a non-object input, however it arrived 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > an unreadable call is refused, not cleared > UNDECIDABLE for a blank or whitespace command 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the gate agrees with the partition rather than restating it > asks for approval on every propose-only command 1ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the gate agrees with the partition rather than restating it > leaves ordinary work alone 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the gate agrees with the partition rather than restating it > carries the command and params forward for the person to read 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the gate agrees with the partition rather than restating it > defaults params to an empty object rather than undefined 1ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the tier follows part11-governance, not a second opinion > demands a signature for the e-sign tier 0ms
+ × server/services/ana/__tests__/governed-tool-gate.test.ts > the tier follows part11-governance, not a second opinion > demands a signature for the GDPR erasure (audit 2026-09-24 DP-08/DP-09, P0-12) 6ms
+   → expected 'UNGOVERNED' to be 'NEEDS_APPROVAL' // Object.is equality
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the tier follows part11-governance, not a second opinion > demands only a reason for the rest 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the tier follows part11-governance, not a second opinion > every e-sign command in the partition is classified as the signature tier 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > only the command tool can be governed > a tool with its own handler is not classified here 0ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > only the command tool can be governed > a tool named like a governed command is still just a tool 0ms
+ ✓ server/services/ana-ri/__tests__/propose-only-partition.test.ts > membership > covers the three approve-class commands that sit in NEITHER Part 11 set 1ms
+ × server/services/ana-ri/__tests__/propose-only-partition.test.ts > membership > covers the GDPR erasure — model output never runs it (audit 2026-09-24 DP-08/DP-09, P0-12) 6ms
+   → expected false to be true // Object.is equality
+ ✓ server/services/ana-ri/__tests__/propose-only-partition.test.ts > membership > covers every command in both Part 11 tiers 1ms
+ ✓ server/services/ana-ri/__tests__/propose-only-partition.test.ts > membership > does NOT swallow ordinary authoring mutations 0ms
+ ✓ server/services/ana-ri/__tests__/propose-only-partition.test.ts > membership > contains only writes 0ms
+ ✓ server/services/ana-ri/__tests__/propose-only-partition.test.ts > membership > is derived, so a new governed command cannot ship outside it 1ms
+ ✓ server/services/ana-ri/__tests__/propose-only-partition.test.ts > single writer > assigns humanConfirmed in exactly one source file 233ms
+ ✓ server/services/ana-ri/__tests__/propose-only-partition.test.ts > single writer > never reads the confirmation out of command params 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana-ri/__tests__/part11-governance.test.ts > requiresEsignature (high-impact tier) > requires an e-signature for the GDPR erasure (audit 2026-09-24 DP-08/DP-09, P0-12)
+AssertionError: expected false to be true // Object.is equality
+ FAIL  server/services/ana-ri/__tests__/propose-only-partition.test.ts > membership > covers the GDPR erasure — model output never runs it (audit 2026-09-24 DP-08/DP-09, P0-12)
+AssertionError: expected false to be true // Object.is equality
+ FAIL  server/services/ana/__tests__/governed-tool-gate.test.ts > the tier follows part11-governance, not a second opinion > demands a signature for the GDPR erasure (audit 2026-09-24 DP-08/DP-09, P0-12)
+AssertionError: expected 'UNGOVERNED' to be 'NEEDS_APPROVAL' // Object.is equality
+ Test Files  3 failed (3)
+      Tests  3 failed | 37 passed (40)
+exit=1

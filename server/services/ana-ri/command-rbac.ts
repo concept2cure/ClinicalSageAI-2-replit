@@ -208,7 +208,24 @@ export const COMMAND_AUTHORIZATION: Readonly<Record<string, CommandAuthorization
   // That decision depends on params.dataSubjectId, so it is completed in the
   // handler (against rbacService, NOT against a self-asserted ctx.userRole).
   export_personal_data: { effect: 'read', object: 'personal_data', handlerAuthorized: true },
-  erase_personal_data: { effect: 'write', object: 'personal_data', handlerAuthorized: true },
+  // erase_personal_data destroys personal data and overwrites regulated
+  // artifact content. Security audit 2026-09-24 (DP-08, DP-09; plan P0-12): it
+  // was an ordinary handler-authorized write, so a model response containing
+  // the command ran it with no person in the loop. It is now a Part 11 e-sign
+  // tier command (part11-governance.ts), which puts it in PROPOSE_ONLY_COMMANDS:
+  // an agent may propose it, and it runs only through POST /governed-action
+  // after a person has given a reason for change and re-authenticated. The
+  // handler's own privacy-admin (manager+) check is unchanged; minRole records
+  // that tier for the anti-drift guard, handlerAuthorized keeps the decision
+  // where the data-subject parameters are known.
+  erase_personal_data: {
+    effect: 'write',
+    object: 'personal_data',
+    minRole: 'manager',
+    requiresReasonForChange: true,
+    requiresSignature: true,
+    handlerAuthorized: true,
+  },
 
   // ── Document lifecycle ──────────────────────────────────────────────────
   // draft_section is a lookup + drafting affordance today, but it is an

@@ -52,7 +52,8 @@ export interface AuthAuditEvent {
  * `description` from a row's payload before it falls back to the action name
  * (server/routes/audit-trail-ledger.routes.ts), and without one a refused
  * sign-in and a successful one both read "User Login". Keyed by
- * action | outcome | reason, the combinations routes/auth.ts records.
+ * action | outcome | reason, the combinations routes/auth.ts and routes/sso.ts
+ * record.
  */
 const EVENT_DESCRIPTIONS: Readonly<Record<string, string>> = {
   'user_login|success|mfa_verified': 'Signed in: password and second factor verified',
@@ -62,6 +63,14 @@ const EVENT_DESCRIPTIONS: Readonly<Record<string, string>> = {
   'user_login|failure|account_inactive': 'Sign-in refused: the account is not active (suspended or deprovisioned)',
   'user_login|failure|wrong_password': 'Sign-in refused: wrong password',
   'user_login|failure|wrong_password_threshold_exceeded': 'Sign-in refused: wrong password; the account is now locked',
+  // A SAML sign-in, recorded in the organisation that owns the IdP
+  // configuration (routes/sso.ts; audit IAM-03).
+  'user_login|success|saml_sso': "Signed in through the organisation's SAML identity provider",
+  'user_login|failure|saml_validation_failed': 'Sign-in refused: the SAML response did not validate',
+  'user_login|failure|saml_org_not_resolved': 'Sign-in refused: the SAML configuration resolved to no organisation',
+  'user_login|failure|saml_no_email': 'Sign-in refused: the SAML assertion carried no email address',
+  'user_login|failure|saml_user_not_in_organisation':
+    'Sign-in refused: the account is not a member of the organisation that owns this identity provider',
   'user_login_mfa_challenge|success|mfa_challenge_totp': 'Password verified: authenticator code requested',
   'user_login_mfa_challenge|success|mfa_challenge_email': 'Password verified: email code sent',
   'user_login_mfa_failed|failure|invalid_code': 'Second factor refused: wrong code',
