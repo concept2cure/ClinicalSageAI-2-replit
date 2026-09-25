@@ -1068,6 +1068,10 @@ export function applySecurityMiddleware(app: any) {
 
   // Route-specific rate limits
   app.use('/api/auth', rateLimiters.auth);
+  // The same auth router is also mounted at /api/v1/auth
+  // (bootstrap/register-platform-routes.ts); the sign-in limit follows it there
+  // (security audit 2026-09-24, IAM-09).
+  app.use('/api/v1/auth', rateLimiters.auth);
   app.use('/api/ai', rateLimiters.ai);
   app.use('/api/export', rateLimiters.export);
   app.use('/api/upload', rateLimiters.upload);
