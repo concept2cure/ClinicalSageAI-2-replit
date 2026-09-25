@@ -222,3 +222,33 @@ add no warnings. `ci:sign-ceremony`: 23 baselined sites, unchanged.
 - The `qms_change_transition` description should say AnA cannot approve.
 - Its handler comment still names `SegregationOfDutiesError`, which no longer
   exists.
+
+## Status, 2026-09-25 07:20 UTC
+
+Everything this lane was waiting on has been fixed by `…01FSu2RL`'s pass over
+this week's review (`docs/evidence/reviews/2026-09-24/`):
+- P5 in `fde9d704e`;
+- P6 in `896e96fb9`;
+- P7 in `896e96fb9`;
+- Q1 (audit #2, the quorum bound to the version reviewed) in `42eb291d6`.
+
+V1 has a reason on the placement in `95fcbffcc`.
+
+**The other half of Q1 is open (found here, not edited: `server/routes/c2c/artifacts.ts`
+is in WO-16C's 24h window until 19:05 UTC).** `42eb291d6` refuses an approval
+whose decisions were made against another version, and asks for "another review
+round". No route opens one:
+- the assign route puts new assignments in the highest existing round
+  (`reviewRound = existingAssignments[0].reviewRound`), and a reviewer already in
+  it comes back `already_assigned` (unique on artifact, reviewer, round);
+- the decision route refuses a second decision in the round (409 "already
+  submitted a decision for this review round");
+- a completed assignment cannot be withdrawn.
+
+So an artifact edited after any reviewer decided can never be approved. It fails
+closed, which is safe but a dead end. Reach is limited today, because the c2c
+reviewer routes have no client caller.
+
+**Fix:** in the assign route, open round `latest + 1` when any decision in the
+latest round has `version_reviewed` ≠ `artifact.version`. The quorum then reads the
+new round, which is pending until its reviewers decide on the current version.
