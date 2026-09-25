@@ -649,6 +649,15 @@ jobs:
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:frontend-sync-coverage:selftest && npm run ci:frontend-sync-coverage
 
+      # The image copies an explicit list of repository paths, and the server reads
+      # more of the repository than any checkout-based job can notice is missing:
+      # the official FDA IND forms were never copied, so production drew
+      # reconstructions. This bundles the server as production does and requires
+      # every repository path it reads to be shipped, or excepted with a reason.
+      - name: Guardrails — the production image ships what the server reads (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:image-runtime-assets:selftest && npm run ci:image-runtime-assets
+
       # A required security scan that gets cancelled by the next push produces
       # no release evidence for the commit it was meant to certify — 74 of the
       # last 100 canonical-branch CodeQL runs, before codeql.yml and
