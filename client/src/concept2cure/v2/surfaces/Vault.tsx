@@ -650,6 +650,11 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
      locally: what the Vault shows is what the Vault stored. */
   const [filing, setFiling] = useState(false);
   const [filingNote, setFilingNote] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
+  /* §11.10(e): the placement write is audited already; this is the reason the
+     person gives for it, sent as the route's `note` and recorded as the
+     placement rationale. Optional — a filing is not a signature — but when
+     given it travels with the decision rather than being lost. */
+  const [filingReason, setFilingReason] = useState('');
   /**
    * Download one uploaded vault document.
    *
@@ -742,6 +747,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           : 'Moved to Unfiled — awaiting a filing decision.',
       });
       setVaultEpoch((n) => n + 1);
+      setFilingReason('');
     } catch (e) {
       /* A refusal is reported as a refusal — the placement on screen stays
          what the server last stored, never what the click hoped for. */
@@ -1503,12 +1509,23 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                         </div>
                       )}
                       <div className="vd-d-filing-acts">
+                        {sel.docId && (sel.filing.placementStatus === 'suggested' || cabinetFolders.length > 0) && (
+                          <input
+                            className="vd-d-filing-reason"
+                            value={filingReason}
+                            onChange={(e) => setFilingReason(e.target.value)}
+                            placeholder="Reason (optional, recorded with the placement)"
+                            aria-label="Reason for this filing decision"
+                            disabled={filing}
+                            data-testid="vault-filing-reason"
+                          />
+                        )}
                         {sel.filing.placementStatus === 'suggested' && sel.docId && (
                           <button
                             className="sp-primary"
                             style={{ padding: '7px 11px' }}
                             disabled={filing}
-                            onClick={() => void fileDocument(sel.docId!, { confirm: true })}
+                            onClick={() => void fileDocument(sel.docId!, { confirm: true, ...(filingReason.trim() ? { note: filingReason.trim() } : {}) })}
                             data-testid="vault-confirm-filing"
                           >
                             {I.check || I.fileText} Confirm filing
@@ -1532,7 +1549,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                               disabled={filing || !moveTarget}
                               onClick={() => {
                                 if (moveTarget) {
-                                  void fileDocument(sel.docId!, { folderId: moveTarget });
+                                  void fileDocument(sel.docId!, { folderId: moveTarget, ...(filingReason.trim() ? { note: filingReason.trim() } : {}) });
                                   setMoveTarget('');
                                 }
                               }}
