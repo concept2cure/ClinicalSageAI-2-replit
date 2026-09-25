@@ -108,58 +108,6 @@ describe('document lifecycle spine', () => {
     });
   });
 
-  describe('the chain verifier recomputes (VR-03)', () => {
-    const sha256 = (payload: string) => createHash('sha256').update(payload).digest('hex');
-    /** Seal events exactly as canonicalDocumentStore.persistState does. */
-    function sealed(events: DocumentAuditEvent[]): DocumentAuditEvent[] {
-      const out: DocumentAuditEvent[] = [];
-      for (const e of events) {
-        const linked = { ...e, prevEventHash: out.length ? out[out.length - 1].eventHash : '' };
-        out.push({ ...linked, eventHash: sha256(canonicalAuditPayload(linked)) });
-      }
-      return out;
-    }
-    const trail = () =>
-      sealed([
-        buildAuditEvent(doc(), 'in_review', { actor: '42', at: '2026-09-25T00:00:00Z', contentHash: 'h' }),
-        buildAuditEvent(doc({ stage: 'in_review' }), 'approved', { actor: '43', at: '2026-09-25T01:00:00Z', signatureRef: 'csig:1' }),
-      ]);
-
-    it('an intact trail verifies, and reports that its hashes were recomputed', () => {
-      expect(verifyAuditChain(trail(), sha256)).toEqual({ valid: true, brokenAt: -1, hashesRecomputed: true });
-    });
-
-    it('an event whose actor was edited with its hashes left in place is broken, at that event', () => {
-      const t = trail();
-      t[1] = { ...t[1], actor: '999' };
-      // Linkage alone cannot see it: every prevEventHash still matches.
-      expect(verifyAuditChain(t).valid).toBe(true);
-      expect(verifyAuditChain(t, sha256)).toEqual({ valid: false, brokenAt: 1, hashesRecomputed: true });
-    });
-
-    it('an event with no hash at all is broken when hashes are recomputed', () => {
-      const t = trail();
-      t[0] = { ...t[0], eventHash: undefined };
-      expect(verifyAuditChain(t, sha256).valid).toBe(false);
-    });
-
-    it('without a hasher it says so: linkage only, never a claim that hashes were checked', () => {
-      expect(verifyAuditChain(trail()).hashesRecomputed).toBe(false);
-    });
-  });
-
-  describe('a signature is its own trail event', () => {
-    it('records the sign-off at the current stage, naming the signer and the signature', () => {
-      const ev = buildSignatureEvent(doc({ stage: 'in_review' }), {
-        actor: '42', role: 'admin', signatureRef: 'csig:r1', signedAt: '2026-09-25T00:00:00Z', meaning: 'reviewed',
-      }, { contentHash: 'h' });
-      expect(ev).toMatchObject({
-        from: 'in_review', to: 'in_review', actor: '42', signatureRef: 'csig:r1',
-        reason: 'signed: reviewed', at: '2026-09-25T00:00:00Z', contentHash: 'h',
-      });
-    });
-  });
-
   describe('progress + wiring', () => {
     it('progress increases monotonically across the forward spine', () => {
       const values = FORWARD_STAGE_ORDER.map(stageProgress);
@@ -170,6 +118,58 @@ describe('document lifecycle spine', () => {
 
     it('every stage has a subsystem binding (no orphaned stage)', () => {
       for (const s of DOCUMENT_STAGES) expect(STAGE_SUBSYSTEM[s]).toBeTruthy();
+    });
+  });
+});
+
+describe('the chain verifier recomputes (VR-03)', () => {
+  const sha256 = (payload: string) => createHash('sha256').update(payload).digest('hex');
+  /** Seal events exactly as canonicalDocumentStore.persistState does. */
+  function sealed(events: DocumentAuditEvent[]): DocumentAuditEvent[] {
+    const out: DocumentAuditEvent[] = [];
+    for (const e of events) {
+      const linked = { ...e, prevEventHash: out.length ? out[out.length - 1].eventHash : '' };
+      out.push({ ...linked, eventHash: sha256(canonicalAuditPayload(linked)) });
+    }
+    return out;
+  }
+  const trail = () =>
+    sealed([
+      buildAuditEvent(doc(), 'in_review', { actor: '42', at: '2026-09-25T00:00:00Z', contentHash: 'h' }),
+      buildAuditEvent(doc({ stage: 'in_review' }), 'approved', { actor: '43', at: '2026-09-25T01:00:00Z', signatureRef: 'csig:1' }),
+    ]);
+
+  it('an intact trail verifies, and reports that its hashes were recomputed', () => {
+    expect(verifyAuditChain(trail(), sha256)).toEqual({ valid: true, brokenAt: -1, hashesRecomputed: true });
+  });
+
+  it('an event whose actor was edited with its hashes left in place is broken, at that event', () => {
+    const t = trail();
+    t[1] = { ...t[1], actor: '999' };
+    // Linkage alone cannot see it: every prevEventHash still matches.
+    expect(verifyAuditChain(t).valid).toBe(true);
+    expect(verifyAuditChain(t, sha256)).toEqual({ valid: false, brokenAt: 1, hashesRecomputed: true });
+  });
+
+  it('an event with no hash at all is broken when hashes are recomputed', () => {
+    const t = trail();
+    t[0] = { ...t[0], eventHash: undefined };
+    expect(verifyAuditChain(t, sha256).valid).toBe(false);
+  });
+
+  it('without a hasher it says so: linkage only, never a claim that hashes were checked', () => {
+    expect(verifyAuditChain(trail()).hashesRecomputed).toBe(false);
+  });
+});
+
+describe('a signature is its own trail event', () => {
+  it('records the sign-off at the current stage, naming the signer and the signature', () => {
+    const ev = buildSignatureEvent(doc({ stage: 'in_review' }), {
+      actor: '42', role: 'admin', signatureRef: 'csig:r1', signedAt: '2026-09-25T00:00:00Z', meaning: 'reviewed',
+    }, { contentHash: 'h' });
+    expect(ev).toMatchObject({
+      from: 'in_review', to: 'in_review', actor: '42', signatureRef: 'csig:r1',
+      reason: 'signed: reviewed', at: '2026-09-25T00:00:00Z', contentHash: 'h',
     });
   });
 });

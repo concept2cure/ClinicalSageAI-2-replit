@@ -103,12 +103,15 @@ describe('negative control — without the guard, a raw rewrite of the trail suc
   });
 });
 
-describe('with the guard (20260925)', () => {
-  beforeEach(async () => {
-    db = new PGlite();
-    await db.exec(sql(TABLE));
-    await db.exec(sql(GUARD));
-  });
+/** A fresh database with the table and its guard, as the applier leaves it. */
+async function guarded() {
+  db = new PGlite();
+  await db.exec(sql(TABLE));
+  await db.exec(sql(GUARD));
+}
+
+describe('the guard (20260925) on the applier', () => {
+  beforeEach(guarded);
 
   it('is on the applier, after the table it guards', () => {
     const files = C2C_MIGRATION_FILES as string[];
@@ -123,164 +126,168 @@ describe('with the guard (20260925)', () => {
     );
     expect(rows[0].n).toBe(2);
   });
+});
 
-  describe('the trail only grows', () => {
-    beforeEach(() => seed('in_review', [ev('authoring', 'in_review')]));
+describe('the guard: the trail only grows', () => {
+  beforeEach(guarded);
+  beforeEach(() => seed('in_review', [ev('authoring', 'in_review')]));
 
-    it("refuses rewriting a recorded event's actor", async () => {
-      expect(
-        await attempt(
-          `UPDATE canonical_documents SET audit = jsonb_set(audit, '{0,actor}', '"999"')`
-        )
-      ).toMatch(/only grows/);
-    });
-
-    it('refuses removing a recorded event', async () => {
-      expect(await attempt(`UPDATE canonical_documents SET audit = '[]'::jsonb`)).toMatch(
-        /only grows/
-      );
-    });
-
-    it('refuses replacing the trail with something that is not an array', async () => {
-      expect(await attempt(`UPDATE canonical_documents SET audit = '{}'::jsonb`)).toMatch(
-        /must remain an array/
-      );
-    });
-
-    it('allows appending an event', async () => {
-      expect(
-        await attempt(`UPDATE canonical_documents SET audit = audit || $1::jsonb`, [
-          appendJson(ev('in_review', 'in_review', { reason: 'note' })),
-        ])
-      ).toBeNull();
-    });
+  it("refuses rewriting a recorded event's actor", async () => {
+    expect(
+      await attempt(`UPDATE canonical_documents SET audit = jsonb_set(audit, '{0,actor}', '"999"')`)
+    ).toMatch(/only grows/);
   });
 
-  describe('an approval is written once', () => {
-    beforeEach(() => seed('in_review', [ev('authoring', 'in_review')], { review: REVIEW }));
-
-    it('records it with its transition, then refuses replacing or removing it', async () => {
-      expect(
-        await attempt(
-          `UPDATE canonical_documents SET stage = 'approved', approval_signature = $1::jsonb, audit = audit || $2::jsonb`,
-          [JSON.stringify(APPROVAL), appendJson(ev('in_review', 'approved'))]
-        )
-      ).toBeNull();
-      expect(
-        await attempt(
-          `UPDATE canonical_documents SET approval_signature = $1::jsonb, audit = audit || $2::jsonb`,
-          [JSON.stringify({ ...APPROVAL, actor: '999' }), appendJson(ev('approved', 'approved'))]
-        )
-      ).toMatch(/approval .* cannot be replaced/);
-      expect(
-        await attempt(
-          `UPDATE canonical_documents SET approval_signature = NULL, audit = audit || $1::jsonb`,
-          [appendJson(ev('approved', 'approved'))]
-        )
-      ).toMatch(/approval .* cannot be replaced/);
-    });
-
-    it('refuses an approval recorded with no trail event', async () => {
-      expect(
-        await attempt(`UPDATE canonical_documents SET approval_signature = $1::jsonb`, [
-          JSON.stringify(APPROVAL),
-        ])
-      ).toMatch(/must append its own lifecycle event/);
-    });
+  it('refuses removing a recorded event', async () => {
+    expect(await attempt(`UPDATE canonical_documents SET audit = '[]'::jsonb`)).toMatch(
+      /only grows/
+    );
   });
 
-  describe('a review sign-off closes only with a recorded revision', () => {
-    beforeEach(() => seed('in_review', [ev('authoring', 'in_review')], { review: REVIEW }));
-
-    it('refuses replacing it', async () => {
-      expect(
-        await attempt(
-          `UPDATE canonical_documents SET review_signature = $1::jsonb, audit = audit || $2::jsonb`,
-          [JSON.stringify({ ...REVIEW, actor: '999' }), appendJson(ev('in_review', 'in_review'))]
-        )
-      ).toMatch(/closes only with a recorded revision/);
-    });
-
-    it('refuses clearing it without the revision transition', async () => {
-      expect(
-        await attempt(
-          `UPDATE canonical_documents SET review_signature = NULL, audit = audit || $1::jsonb`,
-          [appendJson(ev('in_review', 'in_review'))]
-        )
-      ).toMatch(/closes only with a recorded revision/);
-    });
-
-    it('clears it on in_review → authoring, in the statement that records the transition', async () => {
-      expect(
-        await attempt(
-          `UPDATE canonical_documents SET stage = 'authoring', review_signature = NULL, audit = audit || $1::jsonb`,
-          [appendJson(ev('in_review', 'authoring'))]
-        )
-      ).toBeNull();
-    });
+  it('refuses replacing the trail with something that is not an array', async () => {
+    expect(await attempt(`UPDATE canonical_documents SET audit = '{}'::jsonb`)).toMatch(
+      /must remain an array/
+    );
   });
 
-  describe('a stage change is its own recorded event', () => {
-    beforeEach(() => seed('in_review', [ev('authoring', 'in_review')], { review: REVIEW }));
+  it('allows appending an event', async () => {
+    expect(
+      await attempt(`UPDATE canonical_documents SET audit = audit || $1::jsonb`, [
+        appendJson(ev('in_review', 'in_review', { reason: 'note' })),
+      ])
+    ).toBeNull();
+  });
+});
 
-    it('refuses a stage change with no event', async () => {
-      expect(await attempt(`UPDATE canonical_documents SET stage = 'withdrawn'`)).toMatch(
-        /must append its own lifecycle event/
-      );
-    });
+describe('the guard: an approval is written once', () => {
+  beforeEach(guarded);
+  beforeEach(() => seed('in_review', [ev('authoring', 'in_review')], { review: REVIEW }));
 
-    it('refuses a stage change whose last event names another stage', async () => {
-      expect(
-        await attempt(
-          `UPDATE canonical_documents SET stage = 'withdrawn', audit = audit || $1::jsonb`,
-          [appendJson(ev('in_review', 'approved'))]
-        )
-      ).toMatch(/does not record that transition/);
-    });
+  it('records it with its transition, then refuses replacing or removing it', async () => {
+    expect(
+      await attempt(
+        `UPDATE canonical_documents SET stage = 'approved', approval_signature = $1::jsonb, audit = audit || $2::jsonb`,
+        [JSON.stringify(APPROVAL), appendJson(ev('in_review', 'approved'))]
+      )
+    ).toBeNull();
+    expect(
+      await attempt(
+        `UPDATE canonical_documents SET approval_signature = $1::jsonb, audit = audit || $2::jsonb`,
+        [JSON.stringify({ ...APPROVAL, actor: '999' }), appendJson(ev('approved', 'approved'))]
+      )
+    ).toMatch(/approval .* cannot be replaced/);
+    expect(
+      await attempt(
+        `UPDATE canonical_documents SET approval_signature = NULL, audit = audit || $1::jsonb`,
+        [appendJson(ev('approved', 'approved'))]
+      )
+    ).toMatch(/approval .* cannot be replaced/);
   });
 
-  describe('frozen columns', () => {
-    it('refuses changing the source binding, the tenant or the identity', async () => {
-      await seed('authoring', []);
-      expect(await attempt(`UPDATE canonical_documents SET source_refs = '{}'::jsonb`)).toMatch(
-        /frozen/
-      );
-      expect(await attempt(`UPDATE canonical_documents SET organization_id = 2`)).toMatch(/frozen/);
-      expect(await attempt(`UPDATE canonical_documents SET canonical_id = 'other'`)).toMatch(
-        /frozen/
-      );
-    });
+  it('refuses an approval recorded with no trail event', async () => {
+    expect(
+      await attempt(`UPDATE canonical_documents SET approval_signature = $1::jsonb`, [
+        JSON.stringify(APPROVAL),
+      ])
+    ).toMatch(/must append its own lifecycle event/);
+  });
+});
 
-    it('allows a content hash to change during authoring, and refuses it after', async () => {
-      await seed('authoring', []);
-      expect(await attempt(`UPDATE canonical_documents SET content_hash = 'sha-2'`)).toBeNull();
-      await db.query(
-        `UPDATE canonical_documents SET stage = 'in_review', audit = audit || $1::jsonb`,
-        [appendJson(ev('authoring', 'in_review'))]
-      );
-      expect(await attempt(`UPDATE canonical_documents SET content_hash = 'sha-3'`)).toMatch(
-        /content hash .* frozen once it has left authoring/
-      );
-    });
+describe('the guard: a review sign-off closes only with a recorded revision', () => {
+  beforeEach(guarded);
+  beforeEach(() => seed('in_review', [ev('authoring', 'in_review')], { review: REVIEW }));
 
-    it('freezes a withdrawn document entirely', async () => {
-      await seed('withdrawn', [ev('authoring', 'withdrawn')]);
-      expect(await attempt(`UPDATE canonical_documents SET title = 'renamed'`)).toMatch(
-        /withdrawn and can never be modified/
-      );
-      expect(await attempt(`UPDATE canonical_documents SET updated_at = now()`)).toBeNull();
-    });
+  it('refuses replacing it', async () => {
+    expect(
+      await attempt(
+        `UPDATE canonical_documents SET review_signature = $1::jsonb, audit = audit || $2::jsonb`,
+        [JSON.stringify({ ...REVIEW, actor: '999' }), appendJson(ev('in_review', 'in_review'))]
+      )
+    ).toMatch(/closes only with a recorded revision/);
   });
 
-  describe('nothing is deleted', () => {
-    beforeEach(() => seed('authoring', []));
+  it('refuses clearing it without the revision transition', async () => {
+    expect(
+      await attempt(
+        `UPDATE canonical_documents SET review_signature = NULL, audit = audit || $1::jsonb`,
+        [appendJson(ev('in_review', 'in_review'))]
+      )
+    ).toMatch(/closes only with a recorded revision/);
+  });
 
-    it('refuses DELETE', async () => {
-      expect(await attempt(`DELETE FROM canonical_documents`)).toMatch(/cannot be deleted/);
-    });
+  it('clears it on in_review → authoring, in the statement that records the transition', async () => {
+    expect(
+      await attempt(
+        `UPDATE canonical_documents SET stage = 'authoring', review_signature = NULL, audit = audit || $1::jsonb`,
+        [appendJson(ev('in_review', 'authoring'))]
+      )
+    ).toBeNull();
+  });
+});
 
-    it('refuses TRUNCATE', async () => {
-      expect(await attempt(`TRUNCATE canonical_documents`)).toMatch(/cannot be truncated/);
-    });
+describe('the guard: a stage change is its own recorded event', () => {
+  beforeEach(guarded);
+  beforeEach(() => seed('in_review', [ev('authoring', 'in_review')], { review: REVIEW }));
+
+  it('refuses a stage change with no event', async () => {
+    expect(await attempt(`UPDATE canonical_documents SET stage = 'withdrawn'`)).toMatch(
+      /must append its own lifecycle event/
+    );
+  });
+
+  it('refuses a stage change whose last event names another stage', async () => {
+    expect(
+      await attempt(
+        `UPDATE canonical_documents SET stage = 'withdrawn', audit = audit || $1::jsonb`,
+        [appendJson(ev('in_review', 'approved'))]
+      )
+    ).toMatch(/does not record that transition/);
+  });
+});
+
+describe('the guard: frozen columns', () => {
+  beforeEach(guarded);
+  it('refuses changing the source binding, the tenant or the identity', async () => {
+    await seed('authoring', []);
+    expect(await attempt(`UPDATE canonical_documents SET source_refs = '{}'::jsonb`)).toMatch(
+      /frozen/
+    );
+    expect(await attempt(`UPDATE canonical_documents SET organization_id = 2`)).toMatch(/frozen/);
+    expect(await attempt(`UPDATE canonical_documents SET canonical_id = 'other'`)).toMatch(
+      /frozen/
+    );
+  });
+
+  it('allows a content hash to change during authoring, and refuses it after', async () => {
+    await seed('authoring', []);
+    expect(await attempt(`UPDATE canonical_documents SET content_hash = 'sha-2'`)).toBeNull();
+    await db.query(
+      `UPDATE canonical_documents SET stage = 'in_review', audit = audit || $1::jsonb`,
+      [appendJson(ev('authoring', 'in_review'))]
+    );
+    expect(await attempt(`UPDATE canonical_documents SET content_hash = 'sha-3'`)).toMatch(
+      /content hash .* frozen once it has left authoring/
+    );
+  });
+
+  it('freezes a withdrawn document entirely', async () => {
+    await seed('withdrawn', [ev('authoring', 'withdrawn')]);
+    expect(await attempt(`UPDATE canonical_documents SET title = 'renamed'`)).toMatch(
+      /withdrawn and can never be modified/
+    );
+    expect(await attempt(`UPDATE canonical_documents SET updated_at = now()`)).toBeNull();
+  });
+});
+
+describe('the guard: nothing is deleted', () => {
+  beforeEach(guarded);
+  beforeEach(() => seed('authoring', []));
+
+  it('refuses DELETE', async () => {
+    expect(await attempt(`DELETE FROM canonical_documents`)).toMatch(/cannot be deleted/);
+  });
+
+  it('refuses TRUNCATE', async () => {
+    expect(await attempt(`TRUNCATE canonical_documents`)).toMatch(/cannot be truncated/);
   });
 });
