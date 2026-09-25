@@ -8,7 +8,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { recordAuditRow, type AuditRowOutcome } from '../services/audit/audit-write-outcome';
+import { recordAuditRow, setAuditRowHeaders } from '../services/audit/audit-write-outcome';
 import { createScopedLogger } from '../utils/logger';
 import { createFeatureStore } from '../utils/feature-persistence';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
@@ -44,7 +44,7 @@ function authorLabel(req: Request): string | null {
   return u.id == null ? null : `user #${String(u.id)}`;
 }
 
-/**
+/*
  * Report a §11.10(e) audit outcome on a response whose body is a stored record.
  *
  * WO-16C #133. The six audit writes in this router were
@@ -73,11 +73,11 @@ function authorLabel(req: Request): string | null {
  * header pair as the transparent proxy in
  * server/routes/predicate-intelligence.ts and the 204 in
  * server/routes/submissions.ts.
+ *
+ * The pair is written by the canonical `setAuditRowHeaders`
+ * (server/services/audit/audit-write-outcome.ts), which replaced this file's
+ * own copy.
  */
-function setAuditRowHeaders(res: Response, outcome: AuditRowOutcome): void {
-  res.setHeader('X-Audit-Row-Persisted', String(outcome.persisted));
-  if (!outcome.persisted) res.setHeader('X-Audit-Row-Code', outcome.code);
-}
 
 router.get('/settings', async (req: Request, res: Response) => {
   try {
