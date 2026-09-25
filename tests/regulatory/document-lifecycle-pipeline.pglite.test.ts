@@ -163,16 +163,23 @@ describe('governed document pipeline (HTTP → PGlite)', () => {
     expect(view.status).toBe(200);
     expect(view.body.stage).toBe('approved');
     expect(view.body.chainValid).toBe(true);
-    expect(view.body.audit).toHaveLength(2);
-    expect(view.body.audit.map((e: DocumentAuditEvent) => e.to)).toEqual(['in_review', 'approved']);
+    // The review sign-off is its own event (VR-03): a signature at the current
+    // stage, between the two transitions, inside the hashed chain.
+    expect(view.body.audit).toHaveLength(3);
+    expect(view.body.audit.map((e: DocumentAuditEvent) => [e.from, e.to])).toEqual([
+      ['authoring', 'in_review'],
+      ['in_review', 'in_review'],
+      ['in_review', 'approved'],
+    ]);
+    expect(view.body.audit[1]).toMatchObject({ reason: 'signed: reviewed', signatureRef: review.body.signature.signatureRef });
     // Every persisted event is sealed and linked (append-only, tamper-evident).
     for (let i = 0; i < view.body.audit.length; i++) {
       expect(view.body.audit[i].eventHash).toBeTruthy();
       expect(view.body.audit[i].prevEventHash ?? '').toBe(i === 0 ? '' : view.body.audit[i - 1].eventHash);
     }
-    // The org-wide trail saw the same two transitions — and nothing for the
+    // The org-wide trail saw the same three events — and nothing for the
     // refused one.
-    expect(captured.map((e) => e.to)).toEqual(['in_review', 'approved']);
+    expect(captured.map((e) => e.to)).toEqual(['in_review', 'in_review', 'approved']);
   });
 
   it('scopes reads to the tenant — another org cannot see the document', async () => {
@@ -366,5 +373,103 @@ describe('the writer\'s refusals keep their status', () => {
       .post(`/api/regulatory/documents/${id}/advance`)
       .send({ to: 'placed', placement: { ...PLACEMENT, sequenceId: 9 } });
     expect(res.status).toBe(404);
+  });
+});
+
+describe('the lifecycle record cannot be rewritten (VR-03, 2026-09-25)', () => {
+  async function created(): Promise<string> {
+    const res = await request(app)
+      .post('/api/regulatory/documents')
+      .send({ title: 'Append-only case', documentType: 'US_IND', hasContent: true, contentHash: 'h2' });
+    expect(res.status).toBe(201);
+    return res.body.canonicalId;
+  }
+  async function inReview(): Promise<string> {
+    const id = await created();
+    expect((await request(app).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'in_review' })).status).toBe(200);
+    return id;
+  }
+  const sign = (id: string, meaning: string) =>
+    request(app).post(`/api/regulatory/documents/${id}/sign`).send({ meaning, password: PASSWORD });
+  const advance = (id: string, to: string, extra: Record<string, unknown> = {}) =>
+    request(app).post(`/api/regulatory/documents/${id}/advance`).send({ to, ...extra });
+
+  it('a review sign-off is recorded once: a second is refused before the ceremony, and the first stands', async () => {
+    const id = await inReview();
+    const first = await sign(id, 'reviewed');
+    expect(first.status).toBe(200);
+
+    const before = reverifyCalls;
+    const second = await sign(id, 'reviewed');
+    expect(second.status).toBe(409);
+    expect(second.body.error).toBe('SIGNATURE_ALREADY_RECORDED');
+    expect(reverifyCalls).toBe(before);
+
+    const view = await request(app).get(`/api/regulatory/documents/${id}`);
+    const signed = view.body.audit.filter((e: DocumentAuditEvent) => e.reason === 'signed: reviewed');
+    expect(signed.map((e: DocumentAuditEvent) => e.signatureRef)).toEqual([first.body.signature.signatureRef]);
+  });
+
+  it('a review sign-off outside review is refused, before the ceremony', async () => {
+    const id = await created();
+    const before = reverifyCalls;
+    const res = await sign(id, 'reviewed');
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe('SIGNATURE_STAGE_MISMATCH');
+    expect(reverifyCalls).toBe(before);
+  });
+
+  it('an approval is not recorded by /sign: approving is the transition, which signs', async () => {
+    const id = await inReview();
+    const before = reverifyCalls;
+    const res = await sign(id, 'approved');
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe('APPROVAL_IS_RECORDED_BY_ADVANCING');
+    expect(reverifyCalls).toBe(before);
+  });
+
+  it('a revision ends the review round: the next round needs its own sign-off, and the first stays in the trail', async () => {
+    const id = await inReview();
+    const firstRound = await sign(id, 'reviewed');
+    expect(firstRound.status).toBe(200);
+    expect((await advance(id, 'authoring', { reason: 'revise section 2' })).status).toBe(200);
+    expect((await advance(id, 'in_review')).status).toBe(200);
+
+    // The first round's sign-off no longer approves anything.
+    const stale = await advance(id, 'approved', { password: PASSWORD });
+    expect(stale.status).toBe(409);
+    expect(stale.body.blockedBy).toContain('REVIEW_SIGNOFF_REQUIRED');
+
+    const secondRound = await sign(id, 'reviewed');
+    expect(secondRound.status).toBe(200);
+    expect((await advance(id, 'approved', { password: PASSWORD })).status).toBe(200);
+
+    const view = await request(app).get(`/api/regulatory/documents/${id}`);
+    expect(view.body.chainValid).toBe(true);
+    const refs = view.body.audit
+      .filter((e: DocumentAuditEvent) => e.reason === 'signed: reviewed')
+      .map((e: DocumentAuditEvent) => e.signatureRef);
+    expect(refs).toEqual([firstRound.body.signature.signatureRef, secondRound.body.signature.signatureRef]);
+  });
+
+  it('reading a document recomputes its hashes: an event edited in place reads as broken, at that event', async () => {
+    const id = await inReview();
+    expect((await sign(id, 'reviewed')).status).toBe(200);
+    // What the guard exists to stop, done the one way it cannot: by someone who
+    // can disable triggers. The verifier is the second line.
+    await harness.pglite.exec('ALTER TABLE canonical_documents DISABLE TRIGGER canonical_documents_guard_row');
+    try {
+      await harness.pglite.query(
+        `UPDATE canonical_documents SET audit = jsonb_set(audit, '{1,actor}', '"999"') WHERE canonical_id = $1`,
+        [id]
+      );
+    } finally {
+      await harness.pglite.exec('ALTER TABLE canonical_documents ENABLE TRIGGER canonical_documents_guard_row');
+    }
+    const view = await request(app).get(`/api/regulatory/documents/${id}`);
+    expect(view.status).toBe(200);
+    expect(view.body.chainValid).toBe(false);
+    expect(view.body.chainBrokenAt).toBe(1);
+    expect(view.body.chainHashesRecomputed).toBe(true);
   });
 });

@@ -1,0 +1,7 @@
+# consistency check, WITH the fix
+ ✓ server/services/truth-engine/__tests__/consistency-audit-outcome.test.ts > runConsistencyCheck reports its audit row > returns the findings with a recorded row 6ms
+ ✓ server/services/truth-engine/__tests__/consistency-audit-outcome.test.ts > runConsistencyCheck reports its audit row > says so when the row was not written, without the store text 2ms
+ ✓ server/routes/__tests__/submissions-consistency-audit-outcome.test.ts > the consistency route reports its audit row > answers the findings array unchanged, with the recorded row in a header 35ms
+ ✓ server/routes/__tests__/submissions-consistency-audit-outcome.test.ts > the consistency route reports its audit row > says so in headers when the row was not written 6ms
+ ✓ server/services/truth-engine/__tests__/consistency-audit-outcome.test.ts > AnA's check_consistency passes the outcome on > tells AnA the record was not written 3028ms
+      Tests  5 passed (5)
