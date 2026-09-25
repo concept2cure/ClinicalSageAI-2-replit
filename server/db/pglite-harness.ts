@@ -16,8 +16,20 @@
  * 20260610_ind_dispatch_snapshots.sql; keep them in sync.
  */
 
+import { readFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
+
+/**
+ * canonical_documents' append-only guard (VR-03) — the real migration file, not
+ * a copy. The table below is a copy of 20260731c, but the guard is applied from
+ * disk so every pipeline test writes against the rules production enforces: a
+ * write the database would refuse fails here too.
+ */
+const CANONICAL_DOCUMENTS_GUARD = new URL(
+  '../../migrations/20260925_canonical_documents_append_only.sql',
+  import.meta.url
+);
 
 /** CREATE TABLE statements for the IND tables (mirrors the migrations). */
 export const IND_PGLITE_DDL = `
@@ -660,6 +672,20 @@ export async function createIndPgliteDb(
   if (opts.formArtifacts) await pglite.exec(FORM_ARTIFACT_PGLITE_DDL);
   if (opts.governedSections) await pglite.exec(GOVERNED_SECTIONS_PGLITE_DDL);
   if (opts.programSpine) await pglite.exec(PROGRAM_SPINE_PGLITE_DDL);
+  // After every DDL block: canonical_documents is created by LEAF_SOURCE_PGLITE_DDL,
+  // and the guard skips itself (to_regclass) when the table is absent — so run
+  // any earlier and it silently guards nothing.
+  await pglite.exec(readFileSync(CANONICAL_DOCUMENTS_GUARD, 'utf8'));
+  const guard = await pglite.query<{ table_present: boolean; triggers: number }>(
+    `SELECT to_regclass('public.canonical_documents') IS NOT NULL AS table_present,
+            (SELECT COUNT(*)::int FROM pg_trigger
+              WHERE tgname IN ('canonical_documents_guard_row', 'canonical_documents_guard_truncate')) AS triggers`
+  );
+  if (guard.rows[0].table_present && guard.rows[0].triggers !== 2) {
+    throw new Error(
+      'pglite-harness: canonical_documents exists but its append-only guard is not attached'
+    );
+  }
   const db = drizzle(pglite);
   return { pglite, db, schemaGaps, close: () => pglite.close() };
 }
