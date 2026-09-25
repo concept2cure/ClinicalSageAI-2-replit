@@ -136,6 +136,15 @@ Full record: `docs/evidence/D5-AUDIT-OUTCOMES/2026-09-24/README.md`.
 4. **QMS owner:** `server/routes/qms.ts` is a second QMS document-control API
    (create, transition) that no client calls. The launch QMS surfaces use
    `/api/mdx/qms/*` and `/api/quality`.
+   **2026-09-25: this is also a security finding, DP-34**
+   (`docs/security/SECURITY_AUDIT_2026-09-24.md` §4.5, plan P1-31).
+   - Its only guard is `authenticateToken`.
+   - A `viewer` can retire or supersede an effective SOP, requalify or revoke a
+     supplier, and disposition nonconforming product.
+   - Most of those writes record no audit row.
+   - Every capability has an audited twin on `/api/mdx/qms/*`.
+   - Deleting it was attempted in the review session and stopped at a permission
+     check. It waits on the founder.
 5. **W1 / D2 (launch catalog):** launch scope is enforced in navigation only.
    `applyLaunchScope` locks the rail, the Apps catalog and deep links. The one
    API-level check, `server/middleware/moduleEntitlementGate.ts`, never reads
@@ -150,6 +159,34 @@ Full record: `docs/evidence/D5-AUDIT-OUTCOMES/2026-09-24/README.md`.
    that is off in production". Whether that covers the API is the row owner's
    call. As built, a signed-in organisation in production can call every one of
    those write routes.
+
+### Found by the weekly review's second pass (`…015oLV2v`, 2026-09-25) — handed on
+
+Full record: `docs/evidence/reviews/2026-09-24/lenses.md`.
+
+1. **Auth owner (D6), then Tasks (T2's UI half).** The server refuses a `viewer`
+   on every task write (`requireEditorAccess`). The task board still offers the
+   viewer *New task*, *Start workflow*, move, archive and sign, and refuses only
+   after the click (`TaskBoard.tsx:745-746,895-896`). The client cannot tell
+   who may write:
+   - `GET /api/v1/auth/session` answers `roles: ['user']` for a viewer and a
+     member alike (`server/routes/auth.ts`, `sessionRoles`).
+   - It answers `permissions: []` for everyone.
+   - Proposal: the session derives one permission from the server's own
+     `GOVERNED_WRITE_ROLES` (`orgMembership.ts:473`), for example
+     `governed:write`, so the client mirrors no role list.
+   - The board then hides or disables its write controls without it.
+   - Not taken tonight because `auth.ts` is in the D6 session's active lane.
+2. **Founder: DP-35.** Authoring freeze needs no re-authentication and no
+   signing authority. It counts as `finalized` for eCTD leaf completeness and
+   as COMPLETE on the IND checklist. `ind-checklist-view-assembler.ts:71-79`
+   already leaves "should an unsigned freeze count as complete" open. Plan row
+   P1-32.
+3. **Design-system session.**
+   `client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx` has
+   been red since the motion-token change (`92d0fe0b`). Its ease-out check
+   reads `transform var(--dur) var(--ease)` as "not ease-out", because it
+   does not resolve the token.
 
 ### Found by the IND eCTD demo lane (`…01TtwRHm`) — not fixed, not this lane's to decide
 
