@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-25T23:04:29.082Z",
+  "generatedAt": "2026-09-25T23:31:25.252Z",
   "git": {
-    "sha": "5f1e35b0265ff43137e40518cf1a446c1d21bbd8",
+    "sha": "86af274517846736a496b208401f7864e4636c7f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1994,7 +1994,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 283387
+        "bytes": 283627
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2168,7 +2168,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6474
+        "lines": 6477
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2531,6 +2531,10 @@
         "lines": 1668
       },
       {
+        "file": "tests/services/ana-biostats.test.ts",
+        "lines": 1662
+      },
+      {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
         "lines": 1650
       },
@@ -2549,10 +2553,6 @@
       {
         "file": "server/services/toxicology/toxicology-knowledge.ts",
         "lines": 1602
-      },
-      {
-        "file": "tests/services/ana-biostats.test.ts",
-        "lines": 1594
       },
       {
         "file": "server/services/module3-extensions.ts",
