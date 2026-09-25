@@ -15,6 +15,7 @@
  */
 
 import { getPool } from '../../db';
+import type { StatisticalInput } from '../ana-biostats/types';
 import type { PoolClient } from 'pg';
 import type { AuditTaskActionParams } from '../tasking/task-audit.js';
 import { logGeneration, validateArtifactQuality } from './enforcement.js';
@@ -2972,6 +2973,78 @@ export async function revertToVersion(
 // 16. BIOSTATISTICS COMMANDS
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * The engine input an AnA statistics command was GIVEN — and nothing it was not.
+ * Absent values stay absent, so the normalizer (ana-biostats/input-normalizer.ts)
+ * refuses what is required and discloses, as `prefilled`, what it fills.
+ *
+ * Before 2026-09-25 (BS4) generate_sap and compute_sample_size each built this
+ * themselves and filled effectSize 0.5, study/objective/endpoint type, alpha,
+ * power and 15% attrition first. That defeated the normalizer's "Effect size is
+ * required" refusal and emptied its disclosure. Neither passed a variance, so
+ * every continuous design was sized on SD = effect size, and the catalog's
+ * advertised `dropoutRate` was never read. "Generate a SAP for our Phase 2
+ * oncology trial" therefore produced N = 38 from numbers nobody gave.
+ */
+function commandStatisticalInput(
+  ctx: CommandContext,
+  params: Record<string, unknown>
+): Partial<StatisticalInput> {
+  const num = (...keys: string[]): number | undefined => {
+    for (const k of keys) {
+      const v = params[k];
+      if (v === undefined || v === null || v === '') continue;
+      const n = Number(v);
+      if (Number.isFinite(n)) return n;
+    }
+    return undefined;
+  };
+  const str = (k: string): string | undefined => (typeof params[k] === 'string' ? (params[k] as string) : undefined);
+  const sd = num('sd', 'standardDeviation');
+  return {
+    projectId: num('projectId') ?? ctx.activeProjectId,
+    clientTrack:
+      params.track === 'medical_device'
+        ? 'medical_device'
+        : params.track === 'diagnostics_ivd'
+        ? 'diagnostics_ivd'
+        : 'biotech_pharma',
+    regulatoryBody: str('regulatoryBody') as StatisticalInput['regulatoryBody'],
+    studyType: str('studyType') as StatisticalInput['studyType'],
+    objectiveType: str('objectiveType') as StatisticalInput['objectiveType'],
+    endpointType: str('endpointType') as StatisticalInput['endpointType'],
+    alpha: num('alpha'),
+    powerTarget: num('power', 'powerTarget'),
+    effectSize: num('effectSize'),
+    variance: num('variance') ?? (sd !== undefined ? sd * sd : undefined),
+    attritionRate: num('dropoutRate', 'attrition', 'attritionRate'),
+    allocationRatio: num('allocationRatio'),
+    controlRate: num('controlRate'),
+    treatmentRate: num('treatmentRate'),
+    eventRate: num('eventRate'),
+    nonInferiorityMargin: num('nonInferiorityMargin'),
+    equivalenceMargin: num('equivalenceMargin'),
+    prevalence: num('prevalence'),
+    sensitivity: num('sensitivity'),
+    specificity: num('specificity'),
+    indication: str('indication'),
+    phase: str('phase') as StatisticalInput['phase'],
+  };
+}
+
+/** The normalizer's refusal, in the command result shape. */
+function incompleteStatisticalInput(
+  action: string,
+  validation: { errors: Array<{ message: string }>; warnings: unknown[] }
+): CommandResult {
+  return {
+    success: false,
+    action,
+    data: { errors: validation.errors, warnings: validation.warnings },
+    message: `Computation input is incomplete: ${validation.errors.map((e) => e.message).join(' ')}`,
+  };
+}
+
 /** Generate SAP via biostats orchestrator and save as artifact */
 export async function generateSAP(
   ctx: CommandContext,
@@ -2999,30 +3072,17 @@ export async function generateSAP(
       };
     }
 
-    const normalizedClientTrack =
-      params.track === 'medical_device'
-        ? 'medical_device'
-        : params.track === 'diagnostics_ivd'
-        ? 'diagnostics_ivd'
-        : 'biotech_pharma';
+    // Refused here, with the normalizer's own reasons, before anything is drafted.
+    // The orchestrator normalizes too, but reports a refusal as a judgment
+    // ('insufficient_information'), which this handler used to call "SAP generated".
+    const input = commandStatisticalInput(ctx, params);
+    const { inputNormalizer } = await import('../ana-biostats/input-normalizer.js');
+    const validation = inputNormalizer.normalize(input);
+    if (!validation.valid) return incompleteStatisticalInput('generate_sap', validation);
+
     const result = await anaBiostatsOrchestrator.executeWorkflow({
       workflowType: 'track_aware_drafting',
-      input: {
-        projectId: Number(params.projectId || ctx.activeProjectId),
-        clientTrack: normalizedClientTrack,
-        regulatoryBody:
-          typeof params.regulatoryBody === 'string' ? (params.regulatoryBody as any) : undefined,
-        studyType: (typeof params.studyType === 'string' ? params.studyType : 'superiority') as any,
-        objectiveType: (typeof params.objectiveType === 'string' ? params.objectiveType : 'efficacy') as any,
-        endpointType: (typeof params.endpointType === 'string' ? params.endpointType : 'continuous') as any,
-        alpha: Number(params.alpha || 0.05),
-        powerTarget: Number(params.power || params.powerTarget || 0.8),
-        effectSize: Number(params.effectSize || 0.5),
-        attritionRate: Number(params.attrition || params.attritionRate || 0.15),
-        allocationRatio: Number(params.allocationRatio || 1),
-        indication: typeof params.indication === 'string' ? params.indication : undefined,
-        phase: typeof params.phase === 'string' ? params.phase : undefined,
-      },
+      input: validation.normalizedInput,
       userId: ctx.userId,
       organizationId: ctx.organizationId,
       generateDocument: true,
@@ -3076,47 +3136,8 @@ export async function computeSampleSize(
       };
     }
 
-    const normalizedClientTrack =
-      params.track === 'medical_device'
-        ? 'medical_device'
-        : params.track === 'diagnostics_ivd'
-        ? 'diagnostics_ivd'
-        : 'biotech_pharma';
-    const validation = inputNormalizer.normalize({
-      projectId: Number(params.projectId || ctx.activeProjectId),
-      clientTrack: normalizedClientTrack,
-      studyType: (typeof params.studyType === 'string' ? params.studyType : 'superiority') as any,
-      objectiveType: (typeof params.objectiveType === 'string' ? params.objectiveType : 'efficacy') as any,
-      endpointType: (typeof params.endpointType === 'string' ? params.endpointType : 'continuous') as any,
-      alpha: Number(params.alpha || 0.05),
-      powerTarget: Number(params.power || params.powerTarget || 0.8),
-      effectSize: Number(params.effectSize || 0.5),
-      attritionRate: Number(params.attrition || params.attritionRate || 0.15),
-      allocationRatio: Number(params.allocationRatio || 1),
-      controlRate: params.controlRate !== undefined ? Number(params.controlRate) : undefined,
-      treatmentRate: params.treatmentRate !== undefined ? Number(params.treatmentRate) : undefined,
-      nonInferiorityMargin:
-        params.nonInferiorityMargin !== undefined ? Number(params.nonInferiorityMargin) : undefined,
-      equivalenceMargin:
-        params.equivalenceMargin !== undefined ? Number(params.equivalenceMargin) : undefined,
-      prevalence: params.prevalence !== undefined ? Number(params.prevalence) : undefined,
-      sensitivity: params.sensitivity !== undefined ? Number(params.sensitivity) : undefined,
-      specificity: params.specificity !== undefined ? Number(params.specificity) : undefined,
-    });
-
-    if (!validation.valid) {
-      return {
-        success: false,
-        action: 'compute_sample_size',
-        data: {
-          errors: validation.errors,
-          warnings: validation.warnings,
-        },
-        message: `Computation input is incomplete: ${validation.errors
-          .map((e: { message: string }) => e.message)
-          .join(' ')}`,
-      };
-    }
+    const validation = inputNormalizer.normalize(commandStatisticalInput(ctx, params));
+    if (!validation.valid) return incompleteStatisticalInput('compute_sample_size', validation);
 
     const result = computationEngine.computeEnhanced(validation.normalizedInput);
 
@@ -4650,14 +4671,14 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
     name: 'generate_sap',
     description: 'Generate a Statistical Analysis Plan and save as artifact',
     parameters:
-      'projectId, indication, phase, primaryEndpoint, sampleSize?, alpha?, power?, missingDataStrategy?',
+      'projectId, studyType, objectiveType, endpointType (continuous/binary/survival), effectSize, variance? (or sd?), indication, phase, alpha?, power?, dropoutRate?',
     example: '"Generate a SAP for our Phase 2 oncology trial"',
   },
   {
     name: 'compute_sample_size',
     description: 'Calculate sample size and power for a study design',
     parameters:
-      'endpointType (continuous/binary/survival), effectSize, alpha?, power?, allocationRatio?, dropoutRate?',
+      'studyType, objectiveType, endpointType (continuous/binary/survival), effectSize, variance? (or sd?), alpha?, power?, allocationRatio?, dropoutRate?',
     example: '"Calculate sample size for a binary endpoint with 15% treatment difference"',
   },
   {

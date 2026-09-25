@@ -1561,3 +1561,33 @@ describe('Layer 2: achieved power is the power of the sized test (BS8)', () => {
     expect(result.power).toBeLessThan(pharmaInput.powerTarget + 0.01);
   });
 });
+
+// ═══════════════════════════════════════════════════════════════
+// BS4 (2026-09-25): with no variance, a continuous effect size is a standardised
+// difference (SD = 1) — as the design adapter already tells the user — and the
+// assumption is disclosed. The engine used SD = effect size instead, which made
+// the standardised effect exactly 1 for every design: N ≈ 16 per group whatever
+// effect was asked for.
+// ═══════════════════════════════════════════════════════════════
+
+describe('Layer 2: a continuous effect with no variance is standardised (BS4)', () => {
+  const noVariance: StatisticalInput = { ...pharmaInput, variance: undefined };
+
+  it('sizes d = 0.5 at 63 per group (80% power, two-sided 0.05), not 16', () => {
+    // 2·(1.96 + 0.8416)² / 0.5² = 62.8 → 63
+    expect(engine.compute({ ...noVariance, effectSize: 0.5 }).sampleSize.perGroup).toBe(63);
+  });
+
+  it('N depends on the effect size: d = 0.3 needs more subjects than d = 0.5', () => {
+    const small = engine.compute({ ...noVariance, effectSize: 0.3 }).sampleSize.perGroup;
+    const large = engine.compute({ ...noVariance, effectSize: 0.5 }).sampleSize.perGroup;
+    expect(small).toBe(175); // 2·(2.8016)²/0.09 = 174.4 → 175
+    expect(small).toBeGreaterThan(large);
+  });
+
+  it('discloses the standardisation as a default assumption', () => {
+    const result = engine.compute({ ...noVariance, effectSize: 0.5 });
+    const variance = result.assumptions.find((a) => a.parameter === 'variance');
+    expect(variance).toMatchObject({ value: 1, source: 'default' });
+  });
+});
