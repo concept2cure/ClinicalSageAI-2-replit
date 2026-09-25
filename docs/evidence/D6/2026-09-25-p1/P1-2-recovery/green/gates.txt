@@ -1,0 +1,3 @@
+$ npm run check:security-patterns
+check-security-patterns: 0 violations across 2843 file(s).
+exit=0

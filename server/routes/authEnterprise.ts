@@ -473,9 +473,11 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
       // One call that verifies AND consumes the code, and says which method did.
       // It was a non-consuming detectVerificationMethod followed by verifyToken:
       // a second, independent verification of the same code (removed 2026-09-23).
-      const method = await mfaService.verifySecondFactor(userId, code);
+      // The login challenge is the one place a recovery code is redeemable
+      // (P1-2, 2026-09-25); signing keeps asking for the authenticator.
+      const method = await mfaService.verifyLoginSecondFactor(userId, code);
       isValid = method !== null;
-      if (method) verifiedMethod = method;
+      if (method) verifiedMethod = method === 'recovery' ? 'backup_code' : method;
     }
 
     if (!isValid) {
