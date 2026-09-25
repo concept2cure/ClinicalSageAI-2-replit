@@ -130,9 +130,10 @@ Full record: `docs/evidence/D5-AUDIT-OUTCOMES/2026-09-24/README.md`.
    so an outcome their services carry would be dropped at the tool.
    `run_shadow_review` spreads its result and already carries `auditTrail`.
 3. ~~**eCTD callers:**~~ **Done 2026-09-24 (`…01AiwZKG`, `docs/evidence/D5/2026-09-24-assemble-audit-outcome/`):** the assemble route returns `auditTrail`, and a refusal is 422 `ECTD_ASSEMBLE_BLOCKED` with its record (it was 500). **Still open** (an earlier line here wrongly said they do not call it): `submission-service/submission-service.ts:844` (freeze/dispatch pre-check) and `:1312` (transmit), which receive the outcome and do not answer it. (`routes/ectd-compile.ts:976` also calls it and has answered it since `1c6f56e31`.) `ectd-export.ts` does not call it. Originally: `assembleSequence` now returns `auditTrail`.
-   `routes/submissions.ts`, `submission-service.ts` and `routes/ectd-export.ts`
-   receive it and do not answer it. The export sends a binary, so it needs the
-   `X-Audit-Row-Persisted` / `X-Audit-Row-Code` headers.
+   `routes/submissions.ts` and `submission-service.ts` receive it and do not
+   answer it. (`routes/ectd-export.ts` does, since 2026-09-25, as headers via
+   the canonical `setAuditRowHeaders`. The inline pair in `submissions.ts`
+   ~965 is the last hand-written copy of that helper.)
 4. **QMS owner:** `server/routes/qms.ts` is a second QMS document-control API
    (create, transition) that no client calls. The launch QMS surfaces use
    `/api/mdx/qms/*` and `/api/quality`.
