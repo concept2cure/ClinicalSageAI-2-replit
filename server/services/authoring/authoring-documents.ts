@@ -446,6 +446,26 @@ export type CreateDocumentOutcome =
       binding: Binding;
     };
 
+/**
+ * Why a document cannot be anchored to `clientProgramId`, or null when it can
+ * (including when no project is named). A malformed id is a clean 400 rather
+ * than a UUID-cast 500. Otherwise the project must be a live one this
+ * organization owns (LX-20): reads are gated on tenant_id, but the ANCHOR was
+ * not, so a document could name another organization's project, a missing one,
+ * or a deleted one. 404, not 403: the caller learns nothing about another
+ * tenant's project ids.
+ */
+async function refuseProgramAnchor(ctx: CreateContext, clientProgramId: unknown): Promise<Refusal | null> {
+  if (clientProgramId === undefined || clientProgramId === null || clientProgramId === '') return null;
+  if (!UUID_RE.test(String(clientProgramId))) {
+    return { kind: 'refused', status: 400, error: 'client_program_id must be a valid UUID' };
+  }
+  if (!(await programInOrganization(ctx.pool, String(clientProgramId), ctx.tenantId))) {
+    return { kind: 'refused', status: 404, error: 'Project not found' };
+  }
+  return null;
+}
+
 /** POST /docs. The caller has already resolved the actor (401 without one). */
 export async function createDocument(ctx: CreateContext, input: CreateDocumentInput): Promise<CreateDocumentOutcome> {
   const { title, module = 'M3', product_code, locale = 'en-US', template_id, client_program_id } = input;
@@ -453,18 +473,8 @@ export async function createDocument(ctx: CreateContext, input: CreateDocumentIn
 
   if (!title) return { kind: 'refused', status: 400, error: 'Document title is required' };
 
-  // Reject a malformed program id with a clean 400 rather than letting the
-  // UUID column cast throw a 500.
-  if (client_program_id !== undefined && client_program_id !== null && !UUID_RE.test(String(client_program_id))) {
-    return { kind: 'refused', status: 400, error: 'client_program_id must be a valid UUID' };
-  }
-  // …and anchor only to a live project this organization owns (LX-20). Reads are
-  // gated on tenant_id; the ANCHOR was not, so a document could name another
-  // organization's project, a missing one, or a deleted one. 404, not 403: the
-  // caller learns nothing about another tenant's project ids.
-  if (client_program_id && !(await programInOrganization(ctx.pool, String(client_program_id), ctx.tenantId))) {
-    return { kind: 'refused', status: 404, error: 'Project not found' };
-  }
+  const programRefusal = await refuseProgramAnchor(ctx, client_program_id);
+  if (programRefusal) return programRefusal;
 
   let templateSections: TemplateSectionSeed[] | null = null;
   if (template_id) {
