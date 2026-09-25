@@ -23,7 +23,7 @@
  */
 
 import * as React from 'react';
-import { I } from './icons';
+import { I } from '../v2/icons';
 import { registerRowMinWidth } from './registerGrid';
 import {
   SOP_TEMPLATES,
@@ -449,7 +449,7 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
                     title="Ask AnA about this document" aria-label="Ask AnA about this document"
                     onClick={() => onAsk(`Summarize ${d.docNumber} ${d.title} and tell me what it needs next.`)}
                   >
-                    {I.sparkle}
+                    {I.sparkles}
                   </button>
                 </div>
               </div>
