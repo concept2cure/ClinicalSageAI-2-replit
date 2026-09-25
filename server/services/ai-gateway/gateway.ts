@@ -143,10 +143,22 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     // `supportsSamplingParams` with it, and updating the approved-models
     // lockfile (server/services/ai-governance/approved-models.ts), whose drift
     // gate fails CI on an unreviewed swap.
+    //
+    // Opus 5.5 (2026-09-25): same 1M window, tokenizer and feature set as
+    // Opus 5, at $4 / $20. What differs on the wire, and why nothing here had
+    // to change for it: thinking cannot be disabled (the gateway never sends
+    // `disabled` or `budget_tokens` to an adaptive entry); forced tool_choice
+    // `any`/`tool` is a 400 (no caller uses either — `auto` and `none` only);
+    // thinking blocks are bound to the model and conversation (AnA's loop
+    // replays none — tool turns travel as prose); and the API's effort default
+    // is `medium`, one level below Opus 5's, which is why it is declared.
+    // Its classifiers add biology to cyber: a decline is raised as
+    // GatewayModelDeclinedError and the next rung — Opus 5 — runs it.
     id: 'claude-opus-4',
     provider: 'anthropic',
-    model: 'claude-opus-5',
+    model: 'claude-opus-5-5',
     maxApiEffort: 'max',
+    defaultApiEffort: 'medium',
     thinkingMode: 'adaptive',
     supportsSamplingParams: false,
     supportsInlineSystem: true,
@@ -159,9 +171,40 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     // were.
     contextWindow: 1000000,
     qualityScore: 99,
-    // $5 / $25 per MTok. These read 0.015/0.075 — Claude 3 Opus pricing —
-    // through four model generations, so recordApiUsageSafe and every cost
-    // report were roughly 3x over.
+    // $4 / $20 per MTok (Opus 5.5). Opus 5 below is $5 / $25. These once read
+    // 0.015/0.075 — Claude 3 Opus pricing — through four model generations, so
+    // recordApiUsageSafe and every cost report were roughly 3x over.
+    costPer1kInput: 0.004,
+    costPer1kOutput: 0.02,
+    capabilities: [
+      'chat',
+      'document_analysis',
+      'document_drafting',
+      'structured_output',
+      'regulatory_review',
+      'code_generation',
+      'summarization',
+      'general',
+    ],
+    enabled: true,
+  },
+  {
+    // Opus 5 — the flagship until 2026-09-25, and the rung directly below Opus
+    // 5.5. A request the flagship cannot serve (an outage, a model this
+    // account cannot reach yet, a classifier decline) lands here, on the model
+    // that was reviewed as primary, not on Sonnet. It has no biology
+    // classifier, so it is also what answers a biology false positive. No
+    // declared effort: Opus 5's own default (`high`) is what it ran as primary.
+    id: 'claude-opus-5',
+    provider: 'anthropic',
+    model: 'claude-opus-5',
+    maxApiEffort: 'max',
+    thinkingMode: 'adaptive',
+    supportsSamplingParams: false,
+    supportsInlineSystem: true,
+    supportsStructuredOutputs: true,
+    contextWindow: 1000000,
+    qualityScore: 98.5,
     costPer1kInput: 0.005,
     costPer1kOutput: 0.025,
     capabilities: [
@@ -177,7 +220,7 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     enabled: true,
   },
   {
-    // Opus 4.8 — the previous flagship. Kept enabled as the top intra-provider
+    // Opus 4.8 — the flagship before Opus 5. Kept enabled as the top intra-provider
     // fallback rung: if Opus 5 is not yet GA for the tenant's tier or is
     // temporarily unavailable (rate limit, overloaded), the chain drops here
     // before Sonnet. It shares the reasoning-only surface (adaptive thinking,
@@ -1067,12 +1110,7 @@ export class AIGateway {
       try {
         return await fn();
       } catch (err: any) {
-        // Governance decisions are not transient provider failures. Retrying
-        // duplicated denial audits and could never make the placement safe.
-        if (err instanceof GatewayPolicyError) throw err;
-        // Neither is a cancel. Retrying it re-runs the work the caller just
-        // stopped — the opposite of what they asked for.
-        if (err instanceof GatewayAbortedError) throw err;
+        if (isNeverRetried(err)) throw err;
         const status = err?.status || err?.statusCode;
         // Hard client errors (400/401/403/404/422, …) never succeed on retry.
         if (isHardClientError(status)) throw err;
@@ -1218,6 +1256,8 @@ export class AIGateway {
     // fallback surface.
     let lastError: Error | null = null;
     const triedModels: string[] = [];
+    // Classifier declines seen on the way down, reported if nothing answers.
+    const declines: GatewayModelDeclinedError[] = [];
 
     // Context-window admission (context-budget.ts). A model that cannot hold
     // the request is skipped BEFORE any SDK call: it goes on the tried list so
@@ -1265,7 +1305,7 @@ export class AIGateway {
         if (error instanceof GatewayAbortedError) throw error;
         lastError = error;
         triedModels.push(selectedModel.id);
-        this.recordFailure(selectedModel.provider, error);
+        this.noteRungFailure(selectedModel, error, declines);
         log.warn(
           `[AI Gateway] ${selectedModel.provider}/${selectedModel.model} failed: ${error.message}`
         );
@@ -1294,7 +1334,7 @@ export class AIGateway {
         if (error instanceof GatewayAbortedError) throw error;
         lastError = error;
         triedModels.push(fallback.id);
-        this.recordFailure(fallback.provider, error);
+        this.noteRungFailure(fallback, error, declines);
         log.warn(
           `[AI Gateway] Fallback ${fallback.provider}/${fallback.model} failed: ${error.message}`
         );
@@ -1333,8 +1373,14 @@ export class AIGateway {
     );
 
     if (sizeRefusal) throw sizeRefusal;
+    const declined =
+      declines.length > 0
+        ? ` Declined by the safety classifier on: ${declines
+            .map((d) => `${d.model} (${d.category ?? 'no category given'})`)
+            .join(', ')}.`
+        : '';
     throw new GatewayAllProvidersFailedError(
-      `All models failed. Tried: ${triedModels.join(', ')}. Last error: ${lastError?.message}.${skippedForSize}`
+      `All models failed. Tried: ${triedModels.join(', ')}. Last error: ${lastError?.message}.${declined}${skippedForSize}`
     );
   }
 
@@ -2136,6 +2182,10 @@ export class AIGateway {
       throw error;
     });
 
+    if (response.stop_reason === 'refusal') {
+      throw declineFor(modelConfig.model, (response as any).stop_details, false);
+    }
+
     // Extract text, thinking, and tool use blocks
     let content = '';
     let thinking = '';
@@ -2357,6 +2407,7 @@ export class AIGateway {
     let cacheReadInputTokens = 0;
     const serverToolUses: GatewayServerToolUse[] = [];
     let stopReason = 'unknown';
+    let stopDetails: unknown = null;
     let resolvedModel: string | undefined;
 
     // Per-chunk watchdog — detect stalled streams (no data for 30s)
@@ -2429,6 +2480,7 @@ export class AIGateway {
           }
         } else if (event.type === 'message_delta') {
           stopReason = event.delta?.stop_reason || stopReason;
+          if (event.delta?.stop_details) stopDetails = event.delta.stop_details;
           outputTokens = event.usage?.output_tokens || outputTokens;
         } else if (event.type === 'message_start') {
           // The resolved snapshot arrives once, on message_start, alongside the
@@ -2458,6 +2510,10 @@ export class AIGateway {
       finalizeToolInput(toolUses[buffered.toolIndex], buffered.json, 'the stream ended before the tool input was complete');
     }
     toolInputBuffers.clear();
+
+    if (stopReason === 'refusal') {
+      throw declineFor(modelConfig.model, stopDetails, content.length > 0);
+    }
 
     // A cancel is not a failure and not a stall: the turn ended because the
     // person ended it. Say so, so the caller can tell "she was stopped" from
@@ -3103,6 +3159,27 @@ export class AIGateway {
     health.errorRate = Math.max(0, health.errorRate * 0.95);
   }
 
+  /**
+   * Account for one rung of the ladder failing, before moving to the next.
+   *
+   * A classifier decline is not a health event — the provider answered — so it
+   * is collected for the final report instead of reaching the breaker, and one
+   * that may not run elsewhere ends the walk. Anything else is a provider
+   * failure as before.
+   */
+  private noteRungFailure(
+    model: ModelConfig,
+    error: Error,
+    declines: GatewayModelDeclinedError[],
+  ): void {
+    if (error instanceof GatewayModelDeclinedError) {
+      if (!error.retryable) throw error;
+      declines.push(error);
+      return;
+    }
+    this.recordFailure(model.provider, error);
+  }
+
   private recordFailure(provider: ProviderName, error: Error): void {
     const health = this.providerHealth.get(provider);
     if (!health) return;
@@ -3651,6 +3728,60 @@ export class GatewayAbortedError extends Error {
     super(`AI request cancelled by the caller (${phase})`);
     this.name = 'GatewayAbortedError';
   }
+}
+
+/**
+ * A model's safety classifier declined the request.
+ *
+ * Claude reports this as HTTP 200 with `stop_reason: "refusal"`, a
+ * `stop_details.category` (`cyber`, `bio`, `reasoning_extraction`, …) and no
+ * text. Returned as a response, it reached callers as an answer with nothing
+ * in it — an error rendered as an empty result. Raised instead, and handled by
+ * `route()` as neither an answer nor an outage:
+ *
+ *   • never counted against provider health — the provider is working;
+ *   • never retried on the same model — its classifier would decline again;
+ *   • otherwise passed down the approved ladder, when `retryable`.
+ *
+ * `retryable` is false for `reasoning_extraction` (Anthropic: not retried on a
+ * fallback model) and for a decline that arrived after text had already been
+ * streamed to the person, where a second model would print a second answer
+ * under the first.
+ */
+export class GatewayModelDeclinedError extends Error {
+  constructor(
+    readonly model: string,
+    readonly category: string | null,
+    readonly retryable: boolean,
+  ) {
+    super(`${model} declined the request (${category ?? 'no category given'})`);
+    this.name = 'GatewayModelDeclinedError';
+  }
+}
+
+/**
+ * Errors the backoff loop must not retry, because a retry cannot help:
+ * governance decisions (retrying duplicated denial audits and could never make
+ * a placement safe), a cancel (it would re-run what the caller just stopped),
+ * and a classifier decline (the same classifier declines the same request).
+ */
+function isNeverRetried(err: unknown): boolean {
+  return (
+    err instanceof GatewayPolicyError ||
+    err instanceof GatewayAbortedError ||
+    err instanceof GatewayModelDeclinedError
+  );
+}
+
+/** Build the decline for a refusal stop, deciding whether another model may run it. */
+function declineFor(model: string, stopDetails: unknown, textAlreadyStreamed: boolean): GatewayModelDeclinedError {
+  const raw = (stopDetails as { category?: unknown } | null | undefined)?.category;
+  const category = typeof raw === 'string' && raw ? raw : null;
+  return new GatewayModelDeclinedError(
+    model,
+    category,
+    category !== 'reasoning_extraction' && !textAlreadyStreamed,
+  );
 }
 
 export class GatewayNoProviderError extends Error {
