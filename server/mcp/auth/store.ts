@@ -73,7 +73,7 @@ export interface Membership {
   userId: number;
   role: string;
   organizationUuid: string | null;
-  /** Not read here (users is not joined pre-auth); the verifier takes it from the token claims. */
+  /** Not selected here (users is joined only for its status); the verifier takes it from the token claims. */
   email: string | null;
 }
 
@@ -96,7 +96,13 @@ export async function findMembership(userId: number, organizationId: number): Pr
       `SELECT ou.id, ou.organization_id, ou.user_id, ou.role, o.uuid, NULL::text AS email
          FROM organization_users ou
          JOIN organizations o ON o.id = ou.organization_id
+         JOIN users u ON u.id = ou.user_id
         WHERE ou.user_id = $1 AND ou.organization_id = $2
+          -- A membership row outlives the account it belongs to: a suspended or
+          -- deactivated user, or any member of a suspended organisation, is not
+          -- a member for the connector's purposes (2026-09-22 review, #6).
+          AND u.status = 'active'
+          AND COALESCE(o.status, 'active') <> 'suspended'
         LIMIT 1`,
       [userId, organizationId],
     );

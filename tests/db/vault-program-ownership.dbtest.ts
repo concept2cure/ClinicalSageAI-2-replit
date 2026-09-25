@@ -44,6 +44,10 @@ const ORG: Record<Side, number> = { A: ORG_A, B: ORG_B };
 const uuidOf: Record<Side, string> = { A: '', B: '' };
 const programOf: Record<Side, string> = { A: '', B: '' };
 const TITLE = { A: `${TAG}-vault-owned-A`, B: `${TAG}-vault-owned-B` };
+/** A submission per org in ectd_v4, one of the 43 tables whose policies go
+ *  through identity.can_access_org / can_write_org — which trust the same
+ *  identity.org_relationships the vault functions do. */
+const SUBMISSION = { A: `${TAG}-submission-A`, B: `${TAG}-submission-B` };
 
 beforeAll(async () => {
   await provisionTwoTenantFixture();
@@ -73,6 +77,11 @@ beforeAll(async () => {
         `${TITLE[side]}.txt`,
       ]
     );
+    await owner.query(
+      `INSERT INTO ectd_v4.regulatory_submissions (org_id, application_type, authority_id, sponsor_name)
+       VALUES ($1, 'IND', 'FDA', $2)`,
+      [uuidOf[side], SUBMISSION[side]]
+    );
   }
 }, 60_000);
 
@@ -94,6 +103,9 @@ async function removePlantedRows(): Promise<void> {
 afterAll(async () => {
   if (owner) {
     await removePlantedRows();
+    await owner.query('DELETE FROM ectd_v4.regulatory_submissions WHERE sponsor_name = ANY($1)', [
+      [SUBMISSION.A, SUBMISSION.B],
+    ]);
     await owner.query('DELETE FROM vault.documents WHERE organization_id = ANY($1::int[])', [
       FIXTURE_ORGS,
     ]);
@@ -127,6 +139,15 @@ async function attempt(side: Side, sql: string, params: unknown[]): Promise<'wri
     if ((err as { code?: string }).code === '42501') return 'refused';
     throw err;
   }
+}
+
+async function submissionsVisibleTo(side: Side): Promise<string[]> {
+  const { rows } = await as<{ sponsor_name: string }>(
+    side,
+    'SELECT sponsor_name FROM ectd_v4.regulatory_submissions WHERE sponsor_name = ANY($1) ORDER BY 1',
+    [[SUBMISSION.A, SUBMISSION.B]]
+  );
+  return rows.map(r => String(r.sponsor_name));
 }
 
 async function titlesVisibleTo(side: Side): Promise<string[]> {
@@ -219,6 +240,33 @@ describe('vault delegation is granted by the sponsor alone (D3)', () => {
     }
   });
 
+  it('nor does trying reach the org-policied schemas that trust the same table', async () => {
+    // identity.can_access_org / can_write_org read only identity.org_relationships,
+    // and 43 tables (ai, ectd_v4, fhir, innovation, product_master, identity.users)
+    // are policied through them. Positive control first: each sees its own.
+    expect(await submissionsVisibleTo('A')).toEqual([SUBMISSION.A]);
+    expect(await submissionsVisibleTo('B')).toEqual([SUBMISSION.B]);
+    const outcome = await attempt(
+      'A',
+      `INSERT INTO identity.org_relationships
+         (sponsor_org_id, delegate_org_id, contract_start_date, scope_all_programs)
+       VALUES ($1, $2, CURRENT_DATE, true)`,
+      [uuidOf.B, uuidOf.A]
+    );
+    try {
+      expect(outcome).toBe('refused');
+      expect(await submissionsVisibleTo('A'), "B's submission reached A").toEqual([SUBMISSION.A]);
+      const tampered = await as(
+        'A',
+        "UPDATE ectd_v4.regulatory_submissions SET sponsor_name = sponsor_name || ' (tampered)' WHERE sponsor_name = $1 RETURNING 1",
+        [SUBMISSION.B]
+      );
+      expect(tampered.rowCount, "A rewrote B's submission").toBe(0);
+    } finally {
+      await removePlantedRows();
+    }
+  });
+
   it('a grant B makes still works, a delegate cannot widen it, and revoking it ends it', async () => {
     // Positive control for the delegation feature: the policy must not have
     // broken the one legitimate writer, the sponsor granting its own data.
@@ -233,6 +281,10 @@ describe('vault delegation is granted by the sponsor alone (D3)', () => {
     try {
       expect(granted).toBe('written');
       expect(await titlesVisibleTo('A'), 'the sponsor-granted read').toEqual([TITLE.A, TITLE.B]);
+      expect(await submissionsVisibleTo('A'), 'the same grant, org-level').toEqual([
+        SUBMISSION.A,
+        SUBMISSION.B,
+      ]);
 
       // Read-only grant: the delegate may not promote it to read-write.
       const widened = await as(

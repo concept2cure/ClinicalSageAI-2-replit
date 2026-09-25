@@ -1,0 +1,15 @@
+# terraform test, headers policy defined but not attached to the SPA behavior
+  run "the_site_is_served_with_security_headers"... fail
+│ Error: Test assertion failed
+│ 
+│   on tests/boot_contract.tftest.hcl line 383, in run "the_site_is_served_with_security_headers":
+│  383:     condition     = module.cdn.spa_security_headers.attached
+│     ├────────────────
+│     │ module.cdn.spa_security_headers.attached is false
+│ 
+│ The SPA behavior carries no response-headers policy: the site is served
+│ without HSTS, nosniff or a framing refusal.
+Failure! 21 passed, 1 failed.
+
+# attached
+Success! 22 passed, 0 failed.

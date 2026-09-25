@@ -40,6 +40,14 @@ export interface FileToVaultDialogProps {
   fireToast: FireToast;
 }
 
+function readFolderLabel(raw: unknown): string | null {
+  if (typeof raw === 'string') return raw.trim() || null;
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as { folderLabel?: unknown; folderId?: unknown };
+  if (typeof r.folderLabel === 'string' && r.folderLabel.trim()) return r.folderLabel.trim();
+  return typeof r.folderId === 'string' && r.folderId.trim() ? r.folderId.trim() : null;
+}
+
 /** The route's success body, read strictly — a missing id is a failure. */
 export function readFileToVaultResult(body: unknown): FileToVaultResult | null {
   const data = (body as { data?: Record<string, unknown> } | null)?.data;
@@ -48,7 +56,9 @@ export function readFileToVaultResult(body: unknown): FileToVaultResult | null {
   if (!id) return null;
   return {
     vaultDocumentId: id,
-    folder: typeof data.folder === 'string' ? data.folder : null,
+    // The route returns the vault's filing record ({ folderId, folderLabel, … });
+    // an older shape was a bare label. Read both; a record with no folder is null.
+    folder: readFolderLabel(data.folder),
     sha256: typeof data.sha256 === 'string' ? data.sha256 : null,
     format: typeof data.format === 'string' ? data.format : '',
   };
