@@ -50,6 +50,10 @@ vi.mock('../../services/vault/document-chunking.service', () => ({
    one program do not collide on the vault's (program, content_hash) rule the
    way one shared buffer would. A real '%PDF-' header so the magic-byte check
    the ingest runs is exercised for real. */
+vi.mock('../../services/vault/vault-placement.service', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../services/vault/vault-placement.service')>();
+  return { ...actual, placeVaultDocument: vi.fn(actual.placeVaultDocument) };
+});
 vi.mock('../../export/renderers', () => ({
   renderHtmlToPdf: async (html: string) => Buffer.from(`%PDF-1.7\n% rendered by the test engine\n${html}`),
 }));
@@ -258,4 +262,37 @@ describe('POST /docs/:docId/file-to-vault', () => {
     );
     expect(reverted.rows.length).toBeGreaterThanOrEqual(1);
   });
+});
+
+/* The 2026-09-22 review's handed-off items #9 and #13, run last so their rows do
+   not enter the ledger counts the earlier cases assert. */
+describe('POST /docs/:docId/file-to-vault — handed-off items #9 and #13', () => {
+  const liveRows = async (): Promise<number> => {
+    const r = await jdb.pool.query(
+      `SELECT count(*)::int AS n FROM vault.documents WHERE program_id = $1 AND deleted_at IS NULL`, [PROGRAM],
+    );
+    return (r.rows[0] as { n: number }).n;
+  };
+
+  it('a placement that throws reverts the vault row it admitted — nothing is left behind (#9)', async () => {
+    const docId = await draftDocument('Module 2.5 — placement throws');
+    const before = await liveRows();
+    const { placeVaultDocument } = await import('../../services/vault/vault-placement.service');
+    vi.mocked(placeVaultDocument).mockRejectedValueOnce(new Error('placement exploded'));
+    const res = await author(request(app).post(`/api/authoring/docs/${docId}/file-to-vault`)).send({ format: 'pdf' });
+    expect(res.status).toBe(500);
+    // On the previous head this was before + 1: the admitted row stayed while the route answered 500.
+    expect(await liveRows()).toBe(before);
+  }, T);
+
+  it('an AnA draft with no module is not filed by the assumed M2 — it waits for a filing decision (#13)', async () => {
+    const created = await author(request(app).post('/api/authoring/docs/from-draft')).send({
+      programId: PROGRAM, title: 'Untyped AnA draft', sections: M25_SECTIONS, provenance: { source: 'ana' },
+    });
+    expect(created.status, JSON.stringify(created.body)).toBe(201);
+    const res = await author(request(app).post(`/api/authoring/docs/${created.body.data.doc.id}/file-to-vault`)).send({ format: 'pdf' });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    // On the previous head the assumed module filed it as confirmed into module-2.
+    expect(res.body.data.folder.placementStatus).not.toBe('confirmed');
+  }, T);
 });
