@@ -1,0 +1,33 @@
+$ # server/routes/knowledge-base.ts as edited (restored from the scratch copy); test server/routes/__tests__/knowledge-base-upload-guards.test.ts
+$ NODE_OPTIONS='--max-old-space-size=2048' npx vitest run --config vitest.config.ts server/routes/__tests__/knowledge-base-upload-guards.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+    "mode": "on"
+
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > refuses a body over the size limit with 413 instead of buffering it 523ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > refuses an executable named file whatever type it declares (415) 12ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > refuses a declared type the byte check cannot verify (415) 5ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > refuses bytes that are not what the declared type says (the shared byte check) 6ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > checks every file of a multi-file body, not only the first 7ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > leaves a request with no file to the handler (its own 422, unchanged) 4ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > control: a real text file passes the guard and reaches the ingestion proxy 5ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > the same guard fronts the other three multipart routes > /ocr: an image is read, but only when the bytes are that image 14ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > the same guard fronts the other three multipart routes > /extract-pdf: a binary declared as PDF is refused before any extractor sees it 4ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > the same guard fronts the other three multipart routes > /ind-autodraft/upload: an executable is refused whatever type it declares 3ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  23:49:35
+   Duration  4.03s (transform 1.71s, setup 104ms, import 2.97s, tests 589ms, environment 0ms)
+
+exit=0

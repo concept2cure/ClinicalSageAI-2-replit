@@ -1,0 +1,19 @@
+$ # server/academic-resource-upload.ts as edited (restored from the scratch copy); test server/__tests__/academic-resource-upload-guards.test.ts
+$ NODE_OPTIONS='--max-old-space-size=2048' npx vitest run --config vitest.config.ts server/__tests__/academic-resource-upload-guards.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/__tests__/academic-resource-upload-guards.test.ts > receiveAcademicResource: the upload guard > refuses a body over the size limit with 413 and leaves nothing on disk 287ms
+ ✓ server/__tests__/academic-resource-upload-guards.test.ts > receiveAcademicResource: the upload guard > refuses an executable named file whatever type it declares (415) 6ms
+ ✓ server/__tests__/academic-resource-upload-guards.test.ts > receiveAcademicResource: the upload guard > refuses a declared type this uploader does not accept (415) 4ms
+ ✓ server/__tests__/academic-resource-upload-guards.test.ts > receiveAcademicResource: the upload guard > refuses bytes that are not what the declared type says and removes the stored file 8ms
+ ✓ server/__tests__/academic-resource-upload-guards.test.ts > receiveAcademicResource: the upload guard > leaves a request with no file to the handler 5ms
+ ✓ server/__tests__/academic-resource-upload-guards.test.ts > receiveAcademicResource: the upload guard > control: a real PDF passes the guard, is stored, and reaches the handler 6ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  23:55:33
+   Duration  1.03s (transform 166ms, setup 94ms, import 276ms, tests 322ms, environment 0ms)
+
+exit=0
