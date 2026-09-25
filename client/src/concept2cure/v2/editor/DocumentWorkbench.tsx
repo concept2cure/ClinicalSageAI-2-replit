@@ -4271,6 +4271,8 @@ export function DocumentWorkbench({
                     className="nda-open"
                     style={{ marginLeft: 'auto' }}
                     onClick={() => revert(r.id)}
+                    disabled={docSealed}
+                    title={docSealed ? 'This document is frozen — its content cannot be reverted.' : undefined}
                   >
                     {I.rotateCcw} Revert
                   </button>
