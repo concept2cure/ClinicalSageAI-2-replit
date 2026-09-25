@@ -459,7 +459,13 @@ export function computationToPlanPatch(
   return {
     alpha: input.alpha,
     oneSided: false,
-    power: result.power,
+    // statisticalPlan.power is the TARGET power (study-design-types.ts: "Target
+    // power for the primary endpoint"): the adapter reads it back as powerTarget
+    // and the SAP projection prints it as "Target power". The achieved power
+    // (result.power) is not the plan's target. Writing it here made every
+    // re-apply size against a target nobody chose, so the governed N moved each
+    // time (BS-M1, 2026-09-25). The design keeps the target this N was sized for.
+    power: input.powerTarget,
     plannedSampleSize,
     dropoutRate: input.attritionRate,
     powerAssumptions: {
