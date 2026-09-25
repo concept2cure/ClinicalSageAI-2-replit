@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-25T04:05:08.180Z",
+  "generatedAt": "2026-09-25T06:04:04.370Z",
   "git": {
-    "sha": "5d51c3ad10186cfa56cf35c71f8f97489ce4e9e4",
+    "sha": "79ec77a15fb42b6879fd1d143065b4df1a6906cf",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2399,10 +2399,6 @@
         "lines": 1924
       },
       {
-        "file": "server/services/ana-ri/orchestrator.ts",
-        "lines": 1917
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
         "lines": 1912
       },
@@ -2413,6 +2409,10 @@
       {
         "file": "server/routes/regulatory-digital-twin.ts",
         "lines": 1898
+      },
+      {
+        "file": "server/services/ana-ri/orchestrator.ts",
+        "lines": 1895
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
