@@ -48,6 +48,20 @@
 -- (doc_type, agency, version) and c2c_documents carries a composite FK to it.
 -- Neither pack exists yet, so there is nothing to supersede — but the INSERTs
 -- are written the same way so the next revision of them is a new version too.
+--
+-- ── AMENDED IN PLACE 2026-09-25 (CLAUDE.md RULE 1) ────────────────────────────
+-- The doc_type CHECK is now replaced only while its current definition does not
+-- yet admit 'anda' and 'ide'. As first written the replacement was
+-- unconditional, and the applier replays this file on every deploy — after
+-- 20260810b had widened the same constraint to 'mdr' and 'ivdr'. ADD CONSTRAINT
+-- validates every existing row, so the replay was the very narrowing the
+-- section above calls unsafe, one widening later: from the first EU MDR or IVDR
+-- document on, every deploy failed at this file. Reproduced on PGlite by
+-- tests/schema-contract/check-constraint-replay.pglite.test.ts. A fresh
+-- database still goes 20260528 → here → 20260810b; a drizzle-push database with
+-- no named constraint still gets one; a widened one is left alone.
+-- ci:migration-drop-safety now refuses an unconditional replacement of a
+-- constraint that a later file in the set also defines.
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Guarded exactly as 20260804 and 20260806 are: this file lives in the durable
@@ -65,10 +79,19 @@ BEGIN
     -- a bare `text('doc_type').notNull()` with no CHECK. Adding the widened
     -- constraint there too would be an improvement, but it belongs in the
     -- schema module, not in a migration that would then fight it.
-    ALTER TABLE c2c_documents DROP CONSTRAINT IF EXISTS c2c_documents_doc_type_check;
-    ALTER TABLE c2c_documents ADD CONSTRAINT c2c_documents_doc_type_check
-      CHECK (doc_type IN ('ind','cta','nda','anda','bla','maa','jnda','k510','denovo','pma',
-                          'ide','cer','psur','ib','protocol','csr','briefing','mod3','mod2','haq'));
+    -- Never narrows what a later file widened (the 2026-09-25 amendment above).
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_constraint
+       WHERE conrelid = 'public.c2c_documents'::regclass
+         AND conname = 'c2c_documents_doc_type_check'
+         AND pg_get_constraintdef(oid) LIKE '%''anda''%'
+         AND pg_get_constraintdef(oid) LIKE '%''ide''%'
+    ) THEN
+      ALTER TABLE c2c_documents DROP CONSTRAINT IF EXISTS c2c_documents_doc_type_check;
+      ALTER TABLE c2c_documents ADD CONSTRAINT c2c_documents_doc_type_check
+        CHECK (doc_type IN ('ind','cta','nda','anda','bla','maa','jnda','k510','denovo','pma',
+                            'ide','cer','psur','ib','protocol','csr','briefing','mod3','mod2','haq'));
+    END IF;
   END IF;
 
   IF to_regclass('public.c2c_rule_packs') IS NULL THEN

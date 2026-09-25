@@ -849,7 +849,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                     }}
                   >
                     <div className="ob-model-t">
-                      {I.building || I.users} Enterprise (per-user)
+                      {I.building} Enterprise (per-user)
                     </div>
                     <div className="ob-model-d">
                       Per-user pricing tuned to your archetype, seat bundle
@@ -1177,7 +1177,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                     disabled={step === 0}
                     onClick={() => setStep((s) => Math.max(0, s - 1))}
                   >
-                    {I.arrowLeft || '‹'} Back
+                    {I.left} Back
                   </button>
                   <span className="ob-nav-c">
                     Step {step + 1} of {STEPS.length}

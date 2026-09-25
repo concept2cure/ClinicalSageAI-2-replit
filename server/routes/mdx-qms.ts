@@ -106,6 +106,8 @@ import {
   type ChangeState,
 } from '../services/qms/changeControl.service';
 import { clientIpOf } from '../utils/client-ip';
+import { requireEditorAccess } from '../middleware/orgMembership';
+import { requireGovernedReason } from './governed-reason';
 
 const router = Router();
 const log = createScopedLogger('mdx-qms');
@@ -353,7 +355,7 @@ router.get('/qms/documents', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'doc-list', err); }
 });
 
-router.post('/qms/documents', async (req: Request, res: Response) => {
+router.post('/qms/documents', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const parsed = docCreate.safeParse(req.body ?? {});
@@ -440,7 +442,7 @@ router.get('/qms/documents/:id', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'doc-get', err); }
 });
 
-router.patch('/qms/documents/:id', async (req: Request, res: Response) => {
+router.patch('/qms/documents/:id', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
@@ -625,7 +627,7 @@ router.post('/qms/documents/:id/approve', async (req: Request, res: Response) =>
    version, returns the document to draft, and clears the prior approval so it
    must be re-reviewed and re-approved. A reason for change is required and is
    captured in metadata + the audit trail (21 CFR Part 11). */
-router.post('/qms/documents/:id/revise', async (req: Request, res: Response) => {
+router.post('/qms/documents/:id/revise', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   const userId = getUserId(req);
   if (orgId === null) return orgRequired(res);
@@ -675,15 +677,18 @@ router.post('/qms/documents/:id/revise', async (req: Request, res: Response) => 
   } catch (err) { return serverError(res, log, 'doc-revise', err); }
 });
 
-/* Retire a controlled document — terminal lifecycle state. Captures an
-   optional reason in metadata + the audit trail. */
-router.post('/qms/documents/:id/retire', async (req: Request, res: Response) => {
+/* Retire a controlled document — terminal lifecycle state. Role-gated like
+   every other write here; the reason is required (§11.10(e)), validated on
+   the server and recorded as given in metadata and the audit trail. */
+router.post('/qms/documents/:id/retire', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   const userId = getUserId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
-  const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : null;
+  const reasonVerdict = requireGovernedReason(req.body?.reason);
+  if (!reasonVerdict.ok) return clientError(res, 422, reasonVerdict.error);
+  const reason = reasonVerdict.reason;
   try {
     const { rows } = await pool.query(
       `UPDATE qms_documents

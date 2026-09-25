@@ -1,0 +1,1045 @@
+$ NODE_OPTIONS='--max-old-space-size=4096' npx vitest run --config vitest.config.ts server/routes/__tests__/authSurfaceSecurity.test.ts server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts server/middleware/__tests__/auth-establishes-scope.integration.test.ts server/services/ana/__tests__/ana-realtime-auth.test.ts tests/founder-critical-path-proof.test.ts tests/build-order-14-governed-export-and-ops.test.ts server/__tests__/security/tenant-isolation-global-compliance.contract.test.ts server/routes/c2c/__tests__/reauth-second-factor.test.ts tests/routes/users-me-preferences.test.ts server/routes/__tests__/esignature-sign.test.ts tests/mdx-submission-gateway-routes.test.ts tests/mdx-submission-gateway-transmit-bundle-guard.test.ts server/middleware/__tests__/enterprise-auth-limiter-key.test.ts tests/socket-tenant-isolation.contract.test.ts tests/field-sync-auth.contract.test.ts server/services/collab/__tests__/collab-governance.pglite.integration.test.ts client/src/utils/__tests__/authToken.test.ts --reporter=verbose
+HEAD=cc1cb31a (working tree: P0-4 fix applied, uncommitted)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > documentName parsing > does not treat a SQL-injection attempt as a document id
+    "documentName": "authoring:' OR '1'='1"
+  }
+
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > documentName parsing > accepts a whole-document name and a section name 4ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > documentName parsing > refuses an unknown resource kind rather than defaulting to permitted 1ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > documentName parsing > refuses a malformed id before it can reach Postgres 1ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > documentName parsing > does not treat a SQL-injection attempt as a document id 14ms
+stderr | server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a session that was signed out (AUTH-03)
+    "error": "relation \"revoked_tokens\" does not exist"
+  }
+
+ × server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > admits a member of the document owning tenant 539ms
+   → invalid-token
+ × server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > admits a member for a section of their own document 4ms
+   → invalid-token
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a missing token 1ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a token signed with the wrong secret — no fallback identity 2ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses an expired token 2ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a session that was signed out (AUTH-03) 4ms
+ × server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses an account taken out of use since its token was issued (F-29) 9ms
+   → expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'account-inactive' }
+ × server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (refresh) 4ms
+   → expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'invalid-token-class' }
+ × server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (mfa_challenge) 7ms
+   → expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'invalid-token-class' }
+ × server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (mfa_partial) 3ms
+   → expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'invalid-token-class' }
+ × server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (mfaPending flag) 3ms
+   → expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'invalid-token-class' }
+ × server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (pending_mfa role) 3ms
+   → expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'invalid-token-class' }
+ × server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a valid token whose organization membership has been revoked 3ms
+   → expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'membership-revoked' }
+ × server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a token with no tenant claim 3ms
+   → expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'no-tenant' }
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a token with no usable subject claim 2ms
+ × server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses to open another tenant's document 3ms
+   → expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'forbidden-document' }
+ × server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses to open a section of another tenant's document 7ms
+   → expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'forbidden-document' }
+ × server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses another tenant's section even when paired with an owned document id 3ms
+   → expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'forbidden-document' }
+ × server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a document that does not exist at all 7ms
+   → expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'forbidden-document' }
+ × server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > is symmetric — the other tenant is refused in the other direction 3ms
+   → expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'forbidden-document' }
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > reports an unwritten document as absent, not as an error 2ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > survives a restart: a fresh Y.Doc reloads what the first one wrote 9ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > preserves concurrent edits rather than last-write-wins 5ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > replaces rather than appends on a second store 6ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > does not serve one tenant the bytes another tenant stored under the same name 9ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > cascades the CRDT state away with the document it belongs to 24ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > POST /update-field with NO credential is rejected (401), not executed 59ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > GET /completeness with NO credential is rejected (401) 4ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > GET /subscribe with NO credential is rejected (401) 3ms
+ × tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > POST /update-field against ANOTHER org's project returns 404, not a write 27ms
+   → expected 503 to be 404 // Object.is equality
+stderr | tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-003: task/notification/compliance/timer events never cross tenants > two organizations connected => ZERO cross-tenant receipt across all 11 events, intra-tenant delivery preserved
+
+ × tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > GET /completeness for ANOTHER org's project returns 404 75ms
+   → expected 503 to be 404 // Object.is equality
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > GET /subscribe for ANOTHER org's project returns 403 before any stream opens 13ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > a refresh token cannot open the SSE stream (non-access token rejected) 3ms
+ × tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > the caller's OWN project is still permitted (the fix is not a blanket deny) 5ms
+   → expected 503 to be 200 // Object.is equality
+stderr | tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects actor spoofing: the collaborator and the edit are attributed to the authenticated user
+
+ × tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-003: task/notification/compliance/timer events never cross tenants > two organizations connected => ZERO cross-tenant receipt across all 11 events, intra-tenant delivery preserved 180ms
+   → Invalid token
+stderr | tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects lock theft: a non-holder cannot release another user's section lock
+
+ × tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects actor spoofing: the collaborator and the edit are attributed to the authenticated user 79ms
+   → Invalid token
+stderr | tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects events aimed at a document the socket did not join
+
+stderr | tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects joining a document owned by another organization, and an id that does not exist
+
+ × tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects lock theft: a non-holder cannot release another user's section lock 80ms
+   → Invalid token
+ × tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects events aimed at a document the socket did not join 78ms
+   → Invalid token
+stderr | tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects join-room smuggling into a document room the caller was never authorized for
+
+ × tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects joining a document owned by another organization, and an id that does not exist 77ms
+   → Invalid token
+stderr | tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > refuses collaboration events from a socket that never joined a document
+
+ × tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects join-room smuggling into a document room the caller was never authorized for 75ms
+   → Invalid token
+ × tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > refuses collaboration events from a socket that never joined a document 81ms
+   → Invalid token
+ ✓ tests/founder-critical-path-proof.test.ts > Login endpoint exists > server/routes/auth.ts contains router.post /login 2ms
+ ✓ tests/founder-critical-path-proof.test.ts > Logout endpoint uses token revocation > auth.ts has a logout route that calls revokeToken 1ms
+ ✓ tests/founder-critical-path-proof.test.ts > Project CRUD endpoints exist > concept2cure.ts contains governance and project routes 1ms
+ ✓ tests/founder-critical-path-proof.test.ts > Artifact identity is canonical > getCanonicalDocumentIdentity returns concept2cureArtifacts 20ms
+stderr | tests/socket-tenant-isolation.contract.test.ts > handshake fails closed > rejects a token with no organization claim
+
+stderr | tests/socket-tenant-isolation.contract.test.ts > handshake fails closed > rejects a refresh token (non-access token class)
+
+ ✓ tests/socket-tenant-isolation.contract.test.ts > handshake fails closed > rejects a connection with no token 86ms
+stderr | tests/socket-tenant-isolation.contract.test.ts > handshake fails closed > rejects an MFA-partial token
+
+ ✓ tests/socket-tenant-isolation.contract.test.ts > handshake fails closed > rejects a token with no organization claim 95ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > handshake fails closed > rejects a refresh token (non-access token class) 86ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > handshake fails closed > rejects an MFA-partial token 82ms
+stdout | tests/founder-critical-path-proof.test.ts > Token revocation is durable > revoked token survives across isTokenRevoked calls
+    "mode": "on"
+  }
+
+stderr | tests/founder-critical-path-proof.test.ts > Token revocation is durable > revoked token survives across isTokenRevoked calls
+
+stderr | tests/founder-critical-path-proof.test.ts > Token revocation is durable > revoked token survives across isTokenRevoked calls
+    "error": "role \"test\" does not exist"
+  }
+
+stderr | tests/founder-critical-path-proof.test.ts > Token revocation is durable > revoked token survives across isTokenRevoked calls
+[database] Database connection test failed { error: 'role "test" does not exist' }
+
+stdout | tests/founder-critical-path-proof.test.ts > Token revocation is durable > revoked token survives across isTokenRevoked calls
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/founder-critical-path-proof.test.ts > Token revocation is durable > revoked token survives across isTokenRevoked calls
+[database] Initial connection test failed: role "test" does not exist
+
+ ✓ tests/founder-critical-path-proof.test.ts > Token revocation is durable > revoked token survives across isTokenRevoked calls 2184ms
+ ✓ tests/founder-critical-path-proof.test.ts > SSO hidden in production > ZenLogin.tsx contains import.meta.env.DEV guard 1ms
+ ✓ tests/founder-critical-path-proof.test.ts > Sign-out is wired > the shell renders a sign-out control that calls the auth service 1ms
+ ✓ tests/founder-critical-path-proof.test.ts > Sign-out is wired > the auth service logout reaches the server and can end every session 3ms
+stderr | server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > an unprovisioned store > reports missing rather than looking like an empty document
+    "documentName": "authoring:whatever"
+  }
+
+stderr | server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > an unprovisioned store > reports missing rather than looking like an empty document
+    "documentName": "authoring:whatever"
+  }
+
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > an unprovisioned store > reports missing rather than looking like an empty document 3691ms
+ × server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > admits a member of an ACTIVE tenant (the baseline) 5ms
+   → promise rejected "Error: invalid-token { reason: 'inva…' }" instead of resolving
+ × server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > REFUSES a member of a suspended tenant 14ms
+   → expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'tenant-suspended' }
+ × server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > DOWNGRADES a read-only tenant to a view-only socket rather than refusing 7ms
+   → promise rejected "Error: invalid-token { reason: 'inva…' }" instead of resolving
+ × server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > refuses a read-only tenant when the socket cannot be downgraded 25ms
+   → expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'tenant-read-only' }
+ × server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > refuses fail-closed when the posture cannot be read 4ms
+   → expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'tenant-state-unverified' }
+ × server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > checks the posture AFTER membership — a revoked user never reveals tenant state 3ms
+   → expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'membership-revoked' }
+ ✓ tests/routes/users-me-preferences.test.ts > PUT /api/users/me/preferences > rejects requests without a token 1464ms
+ ✓ tests/routes/users-me-preferences.test.ts > PUT /api/users/me/preferences > rejects requests with an invalid token 8ms
+ ✓ tests/routes/users-me-preferences.test.ts > PUT /api/users/me/preferences > rejects unknown preference keys (self-only: body cannot name a target user) 137ms
+ ✓ tests/routes/users-me-preferences.test.ts > PUT /api/users/me/preferences > rejects an invalid density value 6ms
+ ✓ tests/routes/users-me-preferences.test.ts > PUT /api/users/me/preferences > rejects non-boolean railGroups values and non-object railGroups 8ms
+ ✓ tests/routes/users-me-preferences.test.ts > PUT /api/users/me/preferences > rejects an empty patch 4ms
+ ✓ tests/routes/users-me-preferences.test.ts > PUT /api/users/me/preferences > merge-patches into existing preferences (top-level merge, other keys kept) 5ms
+ ✓ tests/routes/users-me-preferences.test.ts > PUT /api/users/me/preferences > a null value deletes the key (RFC 7396 top-level semantics) 6ms
+ ✓ tests/routes/users-me-preferences.test.ts > PUT /api/users/me/preferences > replaces railGroups wholesale and accepts all valid densities 5ms
+ ✓ tests/routes/users-me-preferences.test.ts > PUT /api/users/me/preferences > 404s when the session user row does not exist 4ms
+ ✓ tests/routes/users-me-preferences.test.ts > GET /api/users/me/preferences > requires a token 6ms
+ ✓ tests/routes/users-me-preferences.test.ts > GET /api/users/me/preferences > returns the session user preferences 3ms
+ ✓ tests/routes/users-me-preferences.test.ts > GET /api/users/me/preferences > returns {} when the column is empty 3ms
+ ✓ tests/routes/users-me-preferences.test.ts > GET /api/users/me and the legacy root report the session, not a placeholder > the legacy root answers the session's organization and role 6ms
+ ✓ tests/routes/users-me-preferences.test.ts > GET /api/users/me and the legacy root report the session, not a placeholder > /me reports the session's role 3ms
+ ✓ tests/routes/users-me-preferences.test.ts > GET /api/users/me and the legacy root report the session, not a placeholder > /me does not invent an organization it cannot find 9ms
+ ✓ tests/routes/users-me-preferences.test.ts > GET /api/users/me and the legacy root report the session, not a placeholder > /me does not invent a login that was never recorded 17ms
+stderr | server/middleware/__tests__/enterprise-auth-limiter-key.test.ts > enterprise /api/auth limit: keyed by the address the load balancer saw > a client that claims a new address on every attempt is still stopped at the limit
+[RATE_LIMIT] Rate limit exceeded for 203.0.113.77 on /login
+
+ ✓ server/middleware/__tests__/enterprise-auth-limiter-key.test.ts > enterprise /api/auth limit: keyed by the address the load balancer saw > a client that claims a new address on every attempt is still stopped at the limit 267ms
+stderr | server/middleware/__tests__/enterprise-auth-limiter-key.test.ts > enterprise /api/auth limit: keyed by the address the load balancer saw > control: different clients keep their own allowances
+[RATE_LIMIT] Rate limit exceeded for 203.0.113.88 on /login
+
+ ✓ server/middleware/__tests__/enterprise-auth-limiter-key.test.ts > enterprise /api/auth limit: keyed by the address the load balancer saw > control: different clients keep their own allowances 152ms
+ ✓ server/middleware/__tests__/enterprise-auth-limiter-key.test.ts > enterprise /api/auth limit: counts failures, so successful sign-in steps do not use up a shared edge > many viewers behind one CloudFront edge complete SSO steps without a refusal 173ms
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > a revoked member → 403 and the handler never runs (no scope)
+    "userId": 7,
+    "organizationId": 2
+  }
+
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > a valid token yields an active scope for the downstream handler 1574ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > no token → 401 and the handler never runs (no scope) 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > a revoked member → 403 and the handler never runs (no scope) 3ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > authenticateToken refuses a suspended account, before a scope opens 1ms
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > both answer 503, never a pass, when the standing cannot be read
+
+stdout | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > authenticateToken refuses a live member of a suspended organization
+    "organizationId": 2,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/probe"
+  }
+
+stdout | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > authMiddleware refuses a live member of a suspended organization
+    "organizationId": 2,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/probe"
+  }
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > refuses fail-closed when the organization row cannot be read
+    "organizationId": 2
+  }
+
+stdout | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > refuses fail-closed when the organization row cannot be read
+    "organizationId": 2,
+    "state": "purged",
+    "decision": "deny",
+    "method": "GET",
+    "path": "/probe"
+  }
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses an over-quota upload on authenticateToken
+    "organizationId": 2,
+    "path": "/probe",
+    "usedBytes": 5368709120,
+    "limitBytes": 5368709120,
+    "incomingBytes": 10485760
+  }
+
+stderr | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses an over-quota upload on authMiddleware (the global /api gate)
+    "organizationId": 2,
+    "path": "/probe",
+    "usedBytes": 5368709120,
+    "limitBytes": 5368709120,
+    "incomingBytes": 10485760
+  }
+
+stdout | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > tells a SUSPENDED tenant it is suspended, not that it is out of disk
+    "organizationId": 2,
+    "state": "suspended",
+    "decision": "deny",
+    "method": "POST",
+    "path": "/probe"
+  }
+
+stdout | server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses a past-due tenant on an upload, having allowed it a safe verb
+    "organizationId": 2,
+    "state": "past_due",
+    "decision": "read_only",
+    "method": "POST",
+    "path": "/probe"
+  }
+
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > authMiddleware (global /api gate) refuses a suspended account, before a scope opens 237ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > authenticateToken refuses a inactive account, before a scope opens 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > authMiddleware (global /api gate) refuses a inactive account, before a scope opens 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > both answer 503, never a pass, when the standing cannot be read 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > both gates carry the organization uuid into the scope > authenticateToken 2ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > both gates carry the organization uuid into the scope > authMiddleware (global /api gate) 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > both gates carry the organization uuid into the scope > authMiddleware behind authenticateToken leaves the published context carrying it 11ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authMiddleware (global /api gate) opens a tenant scope > a valid token yields an active scope for the downstream handler 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authMiddleware (global /api gate) opens a tenant scope > no token → 401 and the handler never runs (no scope) 0ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > authenticateToken refuses a live member of a suspended organization 10ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > authMiddleware refuses a live member of a suspended organization 2ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > a past-due organization still reaches the handler on a safe verb 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > refuses fail-closed when the organization row cannot be read 13ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses an over-quota upload on authenticateToken 12ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses an over-quota upload on authMiddleware (the global /api gate) 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > admits an upload that fits, with the scope still open for the handler 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > does not evaluate storage on a small JSON write 4ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > tells a SUSPENDED tenant it is suspended, not that it is out of disk 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses a past-due tenant on an upload, having allowed it a safe verb 1ms
+ ✓ server/__tests__/security/tenant-isolation-global-compliance.contract.test.ts > Tenant isolation — global compliance reads > serves a route org that matches the JWT org 1560ms
+ ✓ server/__tests__/security/tenant-isolation-global-compliance.contract.test.ts > Tenant isolation — global compliance reads > rejects every read of a foreign org (no data query runs) 27ms
+ ✓ server/__tests__/security/tenant-isolation-global-compliance.contract.test.ts > Tenant isolation — global compliance reads > lets a platform super-admin read across orgs 8ms
+ ✓ server/__tests__/security/tenant-isolation-global-compliance.contract.test.ts > Tenant isolation — global compliance writes > rejects every write to a foreign org (no mutation runs) 57ms
+ ✓ server/__tests__/security/tenant-isolation-global-compliance.contract.test.ts > Tenant isolation — global compliance writes > allows a same-org write 173ms
+ ✓ server/__tests__/security/tenant-isolation-global-compliance.contract.test.ts > Tenant isolation — global compliance auth > 401s without a token 28ms
+stdout | tests/mdx-submission-gateway-routes.test.ts
+    "mode": "on"
+  }
+
+stderr | tests/mdx-submission-gateway-routes.test.ts
+
+stderr | tests/mdx-submission-gateway-routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/mdx-submission-gateway-routes.test.ts
+
+stderr | server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.10(e) audit-trail invariant > CRITICAL: rolls the signature back and 500s when the audit write throws
+[esignature] sign transaction failed: audit sink down
+
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.10(e) audit-trail invariant > CRITICAL: rolls the signature back and 500s when the audit write throws 79ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.10(e) audit-trail invariant > signs successfully (201) when password verifies and the audit write succeeds 8ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.10(e) audit-trail invariant > writes the audit row on the SAME client as the signature (atomicity) 6ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.10(e) audit-trail invariant > §11.50: ignores a client-supplied signerTitle and persists the server-resolved one 6ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > rejects a reserved/unknown signatureType (allowlist) 6ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > accepts an allowed signatureType (witness) 5ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > 403s when the signer role lacks signing authority (§11.10(g)) 3ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > 401s when the password fails re-verification (§11.200) 6ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > fails closed (400) requiring mfaToken when MFA is enabled but none supplied 11ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50 signer attribution > REGRESSION: refuses to sign when the signer is not attributable in the org 4ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/verify-password — whether a second factor is enrolled > reports an enrolled second factor once the password verified 9ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/verify-password — whether a second factor is enrolled > reports none when none is enrolled 4ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/verify-password — whether a second factor is enrolled > says nothing about enrolment for a wrong password 4ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/verify-password — whether a second factor is enrolled > leaves the answer out, not false, when enrolment cannot be read 4ms
+stdout | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts
+    "mode": "on"
+  }
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts
+
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — auth gate > GET /api/mdx/gateways returns 403 without org context 26ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — auth gate > GET /api/mdx/gateways/transmittals returns 403 without org context 4ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — auth gate > GET /api/mdx/gateways/transmittals/1 returns 403 without org context 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — auth gate > POST /api/mdx/gateways/fda/esg/transmit returns 403 without org context 9ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — auth gate > GET /api/mdx/gateways/transmittals/1/status returns 403 without org context 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — auth gate > GET /api/mdx/gateways/transmittals/1/ack returns 403 without org context 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — auth gate > POST /api/mdx/gateways/transmittals/1/findings returns 403 without org context 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — auth gate > PATCH /api/mdx/gateways/findings/1/resolve returns 403 without org context 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — role gate > POST /api/mdx/gateways/fda/esg/transmit is refused for a read-only viewer 5ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — role gate > POST /api/mdx/gateways/transmittals/1/rollback is refused for a read-only viewer 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — role gate > POST /api/mdx/gateways/transmittals/1/findings is refused for a read-only viewer 2ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — role gate > PATCH /api/mdx/gateways/findings/1/resolve is refused for a read-only viewer 4ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — role gate > a viewer keeps every READ on this router — the gate is on writes only 2ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — role gate > a admin may still transmit 9ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — role gate > a manager may still transmit 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — role gate > a member may still transmit 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > GET /api/mdx/gateways/transmittals > resolves submitted_by to the person, so the log names who transmitted 2ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > GET /api/mdx/gateways > returns one row per gateway with configured flag 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > rejects unknown region 2ms
+stderr | tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > returns 201 with transmittal id on success
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > returns 201 with transmittal id on success
+    "region": "fda",
+    "gateway": "esg"
+  }
+
+stderr | tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > loads the stored bundle when only packageId is supplied (no explicit bundle)
+    "region": "fda",
+    "gateway": "esg"
+  }
+
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > rejects body without bundle hash 2ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > returns 201 with transmittal id on success 8ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > refuses a transmit that declares no §11.50 signature meaning — nothing reaches the gateway 2ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > refuses a meaning outside the §11.50 vocabulary 4ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > loads the stored bundle when only packageId is supplied (no explicit bundle) 7ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > hard-blocks transmit (422) when the stored bundle has validation errors 12ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > returns 422 when neither an explicit bundle nor a stored bundle exists 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > returns 422 when neither bundle nor packageId is supplied 2ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > maps CredentialError to 412 7ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > maps GatewayError to 502 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > transmittals listing + detail > lists transmittals filtered by region 2ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > transmittals listing + detail > rejects invalid region in query 7ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > transmittals listing + detail > detail 404 when not in tenant 4ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > transmittals listing + detail > detail returns transmittal + findings 4ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > status + ack endpoints > status routes to the correct gateway impl 2ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > status + ack endpoints > ack download returns the ack buffer with correct content-type 2ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > status + ack endpoints > tells the client who wrote the acknowledgement bytes 2ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > status + ack endpoints > names a genuine agency acknowledgement as one 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > findings routes > POST finding 404s when transmittal not in tenant 2ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > findings routes > POST finding creates with severity 2ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > findings routes > PATCH resolve marks resolved 2ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — client-supplied bundle descriptors (C2C-SUB-003) > refuses an explicit descriptor pointing at an arbitrary server-readable file 75ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — client-supplied bundle descriptors (C2C-SUB-003) > refuses an explicit descriptor using ../ traversal 34ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — client-supplied bundle descriptors (C2C-SUB-003) > refuses an explicit descriptor even when a legitimate packageId is also supplied 9ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — client-supplied bundle descriptors (C2C-SUB-003) > fails closed when NODE_ENV is unset (no environment declared => enforce) 8ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — stored descriptor constraints (C2C-SUB-003) > refuses a stored descriptor whose path escapes the bundle namespace 12ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — stored descriptor constraints (C2C-SUB-003) > refuses a stored descriptor with NO validation metadata (UNKNOWN is blocking, not zero errors) 3ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — stored descriptor constraints (C2C-SUB-003) > refuses a stored descriptor whose validation block has no numeric errorCount 10ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — stored descriptor constraints (C2C-SUB-003) > still hard-blocks a stored descriptor reporting structural errors 11ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — stored descriptor constraints (C2C-SUB-003) > refuses a stored descriptor whose durable-storage key escapes the bundle prefix 12ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects the backslash open-redirect payloads 10ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects protocol-relative and absolute URLs 1ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects non-strings / empty 0ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > accepts a legitimate same-origin path (incl. query) 0ms
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — legitimate validated package (C2C-SUB-003) > transmits a tenant-owned, in-namespace, validated package under production
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — legitimate validated package (C2C-SUB-003) > transmits a tenant-owned, in-namespace, validated package under production
+    "region": "fda",
+    "gateway": "esg"
+  }
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — filed-sequence history (C2C-SUB-003) > records the sequence it just filed, so the NEXT sequence has a baseline to diff against
+    "region": "fda",
+    "gateway": "esg"
+  }
+
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — stored descriptor constraints (C2C-SUB-003) > rejects a traversal path on a stored descriptor in ANY environment (guard is unconditional) 41ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — cross-tenant packages (C2C-SUB-003) > cannot transmit another tenant's package by id 21ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — cross-tenant packages (C2C-SUB-003) > cannot side-step tenant scoping by naming another tenant's bundle file directly 35ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — legitimate validated package (C2C-SUB-003) > transmits a tenant-owned, in-namespace, validated package under production 16ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — filed-sequence history (C2C-SUB-003) > records the sequence it just filed, so the NEXT sequence has a baseline to diff against 9ms
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — filed-sequence history (C2C-SUB-003) > a bundle that files no sequence records no history, and says so rather than reporting a failure
+    "region": "fda",
+    "gateway": "esg"
+  }
+
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects a pre-MFA partial token (no 24h access minted) 125ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects an mfa_challenge token 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token still refreshes a VALID access token 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /select-organization rejects a partial token 12ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > GET /session reports unauthenticated for a partial token 4ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > GET /session reports authenticated for a VALID access token 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/setup rejects a partial token 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/enable rejects a partial token 4ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/disable rejects a partial token 13ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /session rejects a partial token (401) 4ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /session rejects an mfa_challenge token (401) 2ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /me rejects a partial token (401) 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/setup rejects a partial token (401) 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/enable rejects a partial token (401) 6ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/disable rejects a partial token (401) 117ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /password/change rejects a partial token (401) 22ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — filed-sequence history (C2C-SUB-003) > a bundle that files no sequence records no history, and says so rather than reporting a failure 192ms
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — the sequence it filed (C2C-SUB-003) > a sequence whose leaf inventory is UNREADABLE is a lost baseline, not a non-event
+    "packageId": "5",
+    "sequence": "0000",
+    "region": "fda",
+    "gateway": "esg"
+  }
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — the sequence it filed (C2C-SUB-003) > a sequence whose leaf inventory is UNREADABLE is a lost baseline, not a non-event
+    "region": "fda",
+    "gateway": "esg"
+  }
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — the sequence it filed (C2C-SUB-003) > an eCTD sequence with no inventory at all is reported as a failure, not as "not applicable"
+    "packageId": "5",
+    "sequence": "0001",
+    "region": "fda",
+    "gateway": "esg"
+  }
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — the sequence it filed (C2C-SUB-003) > an eCTD sequence with no inventory at all is reported as a failure, not as "not applicable"
+    "region": "fda",
+    "gateway": "esg"
+  }
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — the sequence it filed (C2C-SUB-003) > the Part 11 sign row records WHICH sequence the signature filed, and whether the history took it
+    "region": "fda",
+    "gateway": "esg"
+  }
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — content changed since assembly (C2C-SUB-003) > a content change that lands WHILE the gateway is sending is recorded on the sign row and announced in the response — never silently a clean transmit
+    "region": "fda",
+    "gateway": "esg"
+  }
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — content changed since assembly (C2C-SUB-003) > warnings alone do not block a validated package
+    "region": "fda",
+    "gateway": "esg"
+  }
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — packager evidence is forwarded to the pre-transmit gate > forwards submissionGrade / dtdStatus / regionalBackbone from the stored descriptor to gw.transmit
+    "region": "fda",
+    "gateway": "esg"
+  }
+
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — packager evidence is forwarded to the pre-transmit gate > forwards the region the bundle was BUILT for (descriptor.region) as a gateway region, so device bundles are region-checked too
+    "region": "fda",
+    "gateway": "esg"
+  }
+
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — the sequence it filed (C2C-SUB-003) > a sequence whose leaf inventory is UNREADABLE is a lost baseline, not a non-event 167ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — the sequence it filed (C2C-SUB-003) > an eCTD sequence with no inventory at all is reported as a failure, not as "not applicable" 8ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — the sequence it filed (C2C-SUB-003) > the Part 11 sign row records WHICH sequence the signature filed, and whether the history took it 13ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — content changed since assembly (C2C-SUB-003) > a content change that lands WHILE the gateway is sending is recorded on the sign row and announced in the response — never silently a clean transmit 10ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — content changed since assembly (C2C-SUB-003) > refuses a stored descriptor whose package CONTENT changed since assembly (an artifact edited after the zip was built), before the gateway is reached 7ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — content changed since assembly (C2C-SUB-003) > refuses a stored descriptor with NO content fingerprint, or one from an older scheme (UNKNOWN is blocking, never a match) 10ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — content changed since assembly (C2C-SUB-003) > warnings alone do not block a validated package 3ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — packager evidence is forwarded to the pre-transmit gate > forwards submissionGrade / dtdStatus / regionalBackbone from the stored descriptor to gw.transmit 11ms
+stderr | tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — packager evidence is forwarded to the pre-transmit gate > DROPS malformed evidence blocks instead of forwarding them (`{}` as a PDF/A grade read as full compliance)
+    "region": "fda",
+    "gateway": "esg"
+  }
+
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — packager evidence is forwarded to the pre-transmit gate > forwards the region the bundle was BUILT for (descriptor.region) as a gateway region, so device bundles are region-checked too 5ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — packager evidence is forwarded to the pre-transmit gate > DROPS malformed evidence blocks instead of forwarding them (`{}` as a PDF/A grade read as full compliance) 4ms
+ ✓ tests/mdx-submission-gateway-transmit-bundle-guard.test.ts > POST transmit — packager evidence is forwarded to the pre-transmit gate > and the gate REFUSES that exact forwarded shape when the operator opts in (production + ECTD_REQUIRE_DTD / _PDFA) 2ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > CERV2 export — governed export compliance > CI guard script scopes the ZIP scan to a marker that exists 2ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > CERV2 export — governed export compliance > CI guard script forbids the sample export routes from returning 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > CERV2 export — governed export compliance > cerv2-export-routes.ts has governed export consequence for PDF 1ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > CERV2 export — governed export compliance > cerv2-export-routes.ts has governed export consequence for DOCX 1ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > CERV2 export — governed export compliance > cerv2-export-routes.ts has governed export consequence for ZIP 3ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > CERV2 export — governed export compliance > serves no export route from placeholder content 1ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > CERV2 export — governed export compliance > governed POST /zip route does NOT use archive.pipe(res) 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Scheduled maintenance — wired into job system > platform_maintenance is a registered job type 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Scheduled maintenance — wired into job system > handlePlatformMaintenance handler is registered 1ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Scheduled maintenance — wired into job system > platform_maintenance is in default schedules 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Scheduled maintenance — wired into job system > handler imports runPlatformMaintenance 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Scheduled maintenance — wired into job system > handler returns structured ScheduledJobRun 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Readiness runner — warn-only and strict modes > readiness-check.mjs script exists 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Readiness runner — warn-only and strict modes > script supports --strict flag 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Readiness runner — warn-only and strict modes > script supports warn-only mode (default) 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Readiness runner — warn-only and strict modes > npm scripts for readiness exist 1ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Readiness runner — warn-only and strict modes > script uses runStartupInvariants from startup-invariants 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Mode-based readiness — explicit behaviors > startup invariants have severity levels (critical vs warning) 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Mode-based readiness — explicit behaviors > readiness runner exits 1 in strict mode on critical failure 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > Mode-based readiness — explicit behaviors > degraded mode policy exists 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > No regression — prior build orders > token revocation still three-tier 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > No regression — prior build orders > bridge still v3 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > No regression — prior build orders > maintenance route still exists 0ms
+ ✓ tests/build-order-14-governed-export-and-ops.test.ts > No regression — prior build orders > startup invariants route still exists 0ms
+ ✓ server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts > electronic-signature verify — tenant boundary > passes the organization from the verified request, not the signature id alone 112ms
+ ✓ server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts > electronic-signature verify — tenant boundary > refuses when the request carries no organization 7ms
+ ✓ server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts > electronic-signature verify — tenant boundary > cannot be told which organization to read — the caller does not get a vote 7ms
+ ✓ server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts > electronic-signature verify — tenant boundary > rejects a non-numeric id instead of querying on NaN 3ms
+stdout | server/routes/c2c/__tests__/reauth-second-factor.test.ts
+    "mode": "on"
+  }
+
+stderr | server/routes/c2c/__tests__/reauth-second-factor.test.ts
+
+stderr | server/routes/c2c/__tests__/reauth-second-factor.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/reauth-second-factor.test.ts
+
+stderr | server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with a second factor enrolled > is refused, not waved through, when the enrolment state cannot be read
+[part11] MFA enrolment check failed during sign: users table unreachable
+
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > an account taken out of use (VSR-001 F-28) > cannot sign a governed action, with the right password and code 40ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with a second factor enrolled > cannot sign with the password alone 13ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with a second factor enrolled > signs with the password and a current code 8ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with a second factor enrolled > is refused with a wrong code 5ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with a second factor enrolled > is refused, not waved through, when the enrolment state cannot be read 7ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with no second factor enrolled > signs with the password alone 9ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > a signer with no second factor enrolled > is refused when it presents a code that does not verify — callers record a present code as verified 4ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > the first factor > is required 2ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > the first factor > must verify 13ms
+ ✓ server/routes/c2c/__tests__/reauth-second-factor.test.ts > the first factor > is refused the same way when the signer has no stored password 2ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getAuthToken — fresh, non-mutating reads > reads the canonical trialsage_access_token key fresh on every call 3ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getAuthToken — fresh, non-mutating reads > prefers sessionStorage over localStorage (tier precedence) 1ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getAuthToken — fresh, non-mutating reads > falls back to localStorage when sessionStorage has no token 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getAuthToken — fresh, non-mutating reads > does NOT mutate storage on read (no lazy migration) 2ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getAuthToken — fresh, non-mutating reads > returns null when no token is present anywhere 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > D2 — remember-me (localStorage) token survives the first API call > reading the token never deletes the persisted localStorage copy 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > D3 — a token refresh propagates > a refreshed trialsage_access_token is seen on the next read 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > D1 — no stale bearer survives logout > clearAuthToken wipes the token from both tiers so getAuthToken returns null 1ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > D1 — no stale bearer survives logout > no leftover mirror in either tier can revive the bearer after logout 3ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > setAuthToken / clearAuthToken — single-tier invariant > setAuthToken keeps the token in exactly one tier (session) and clears the other 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > setAuthToken / clearAuthToken — single-tier invariant > setAuthToken clears legacy keys from both tiers 1ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > legacy fallback — read only > resolves a legacy "token" key but never migrates or deletes it 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > legacy fallback — read only > prefers the canonical key over a legacy key 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > reads currentOrganizationId as the primary org source 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > falls back to legacy currentOrganization 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > falls back to the persisted user payload organizationId 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > defaults to "1" when nothing is persisted 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > getAuthHeaders always carries x-organization-id, and the bearer when present 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > getAuthHeaders still sends x-organization-id when no token is present 1ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > D1 (upgraded session) — logout purges legacy bearer keys > a legacy bearer left in either tier cannot outlive clearAuthToken 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > D1 (upgraded session) — logout purges legacy bearer keys > the authService logout key list stays in sync with the legacy fallback 21ms
+stdout | server/services/ana/__tests__/ana-realtime-auth.test.ts
+    "mode": "on"
+  }
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+
+stdout | server/services/ana/__tests__/ana-realtime-auth.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a mfa_challenge token (not an access token)
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a mfa_partial token (not an access token)
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a refresh token (not an access token)
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a token that declares no class at all
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the membership check answers revoked
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the membership check answers indeterminate
+
+stderr | server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the tenant is not active
+
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > admits an access token of an active member and scopes the socket to the token tenant 7ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a mfa_challenge token (not an access token) 2ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a mfa_partial token (not an access token) 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a refresh token (not an access token) 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a token that declares no class at all 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses a token offered only in the query string 0ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the membership check answers revoked 2ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the membership check answers indeterminate 1ms
+ ✓ server/services/ana/__tests__/ana-realtime-auth.test.ts > /ana namespace handshake > refuses when the tenant is not active 2ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 31 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > POST /update-field against ANOTHER org's project returns 404, not a write
+AssertionError: expected 503 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 503
+
+ ❯ tests/field-sync-auth.contract.test.ts:184:24
+    182|       .set('Authorization', `Bearer ${await tokenFor(ORG_A)}`)
+    183|       .send({ projectId: PROJECT_B, source: 'workflow', field: 'device…
+    184|     expect(res.status).toBe(404);
+       |                        ^
+    185|   }, T);
+    186|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/31]⎯
+
+ FAIL  tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > GET /completeness for ANOTHER org's project returns 404
+AssertionError: expected 503 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 503
+
+ ❯ tests/field-sync-auth.contract.test.ts:191:24
+    189|       .get(`/api/field-sync/completeness/${PROJECT_B}`)
+    190|       .set('Authorization', `Bearer ${await tokenFor(ORG_A)}`);
+    191|     expect(res.status).toBe(404);
+       |                        ^
+    192|   }, T);
+    193|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/31]⎯
+
+ FAIL  tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > the caller's OWN project is still permitted (the fix is not a blanket deny)
+AssertionError: expected 503 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 503
+
+ ❯ tests/field-sync-auth.contract.test.ts:220:24
+    218|       .set('Authorization', `Bearer ${await tokenFor(ORG_A)}`)
+    219|       .send({ projectId: PROJECT_A, source: 'workflow', field: 'device…
+    220|     expect(res.status).toBe(200);
+       |                        ^
+    221|     expect(res.body.success).toBe(true);
+    222|   }, T);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/31]⎯
+
+ FAIL  tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-003: task/notification/compliance/timer events never cross tenants > two organizations connected => ZERO cross-tenant receipt across all 11 events, intra-tenant delivery preserved
+ FAIL  tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects actor spoofing: the collaborator and the edit are attributed to the authenticated user
+ FAIL  tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects lock theft: a non-holder cannot release another user's section lock
+ FAIL  tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects events aimed at a document the socket did not join
+ FAIL  tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects joining a document owned by another organization, and an id that does not exist
+ FAIL  tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects join-room smuggling into a document room the caller was never authorized for
+ FAIL  tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > refuses collaboration events from a socket that never joined a document
+Error: Invalid token
+ ❯ Socket.onpacket node_modules/socket.io-client/build/esm-debug/socket.js:518:29
+ ❯ Manager.Emitter.emit node_modules/@socket.io/component-emitter/lib/cjs/index.js:143:20
+ ❯ node_modules/socket.io-client/build/esm-debug/manager.js:217:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { data: undefined }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/31]⎯
+
+ FAIL  server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > admits a member of the document owning tenant
+Error: invalid-token
+ ❯ denied server/services/hocuspocus-server.ts:108:24
+    106| /** Shape hocuspocus turns into a `permission-denied` message for the …
+    107| function denied(reason: string): Error & { reason: string } {
+    108|   return Object.assign(new Error(reason), { reason });
+       |                        ^
+    109| }
+    110|
+ ❯ Module.authenticateCollabConnection server/services/hocuspocus-server.ts:225:11
+ ❯ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts:223:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { reason: 'invalid-token' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/31]⎯
+
+ FAIL  server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > admits a member for a section of their own document
+Error: invalid-token
+ ❯ denied server/services/hocuspocus-server.ts:108:24
+    106| /** Shape hocuspocus turns into a `permission-denied` message for the …
+    107| function denied(reason: string): Error & { reason: string } {
+    108|   return Object.assign(new Error(reason), { reason });
+       |                        ^
+    109| }
+    110|
+ ❯ Module.authenticateCollabConnection server/services/hocuspocus-server.ts:225:11
+ ❯ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts:237:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { reason: 'invalid-token' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/31]⎯
+
+ FAIL  server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses an account taken out of use since its token was issued (F-29)
+AssertionError: expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'account-inactive' }
+
+- Expected
++ Received
+
+- {
+-   "reason": "account-inactive",
++ Error {
++   "reason": "invalid-token",
+  }
+
+ ❯ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts:290:27
+    288|       await pool.query(`UPDATE users SET status = $1 WHERE id = $2`, […
+    289|       const refused = authenticateCollabConnection({ token, documentNa…
+    290|       await expect(refused).rejects.toMatchObject({ reason: 'account-i…
+       |                           ^
+    291|     }
+    292|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/31]⎯
+
+ FAIL  server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (refresh)
+ FAIL  server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (mfa_challenge)
+ FAIL  server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (mfa_partial)
+ FAIL  server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (mfaPending flag)
+ FAIL  server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (pending_mfa role)
+AssertionError: expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'invalid-token-class' }
+
+- Expected
++ Received
+
+- {
+-   "reason": "invalid-token-class",
++ Error {
++   "reason": "invalid-token",
+  }
+
+ ❯ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts:309:5
+    307|         documentName: `authoring:${DOC_A}`,
+    308|       })
+    309|     ).rejects.toMatchObject({ reason: 'invalid-token-class' });
+       |     ^
+    310|   });
+    311|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/31]⎯
+
+ FAIL  server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a valid token whose organization membership has been revoked
+AssertionError: expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'membership-revoked' }
+
+- Expected
++ Received
+
+- {
+-   "reason": "membership-revoked",
++ Error {
++   "reason": "invalid-token",
+  }
+
+ ❯ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts:319:5
+    317|     await expect(
+    318|       authenticateCollabConnection({ token: accessToken(), documentNam…
+    319|     ).rejects.toMatchObject({ reason: 'membership-revoked' });
+       |     ^
+    320|   });
+    321|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/31]⎯
+
+ FAIL  server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a token with no tenant claim
+AssertionError: expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'no-tenant' }
+
+- Expected
++ Received
+
+- {
+-   "reason": "no-tenant",
++ Error {
++   "reason": "invalid-token",
+  }
+
+ ❯ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts:326:5
+    324|     await expect(
+    325|       authenticateCollabConnection({ token: noOrg, documentName: `auth…
+    326|     ).rejects.toMatchObject({ reason: 'no-tenant' });
+       |     ^
+    327|   });
+    328|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/31]⎯
+
+ FAIL  server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses to open another tenant's document
+AssertionError: expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'forbidden-document' }
+
+- Expected
++ Received
+
+- {
+-   "reason": "forbidden-document",
++ Error {
++   "reason": "invalid-token",
+  }
+
+ ❯ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts:340:5
+    338|     await expect(
+    339|       authenticateCollabConnection({ token: accessToken(), documentNam…
+    340|     ).rejects.toMatchObject({ reason: 'forbidden-document' });
+       |     ^
+    341|   });
+    342|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/31]⎯
+
+ FAIL  server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses to open a section of another tenant's document
+AssertionError: expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'forbidden-document' }
+
+- Expected
++ Received
+
+- {
+-   "reason": "forbidden-document",
++ Error {
++   "reason": "invalid-token",
+  }
+
+ ❯ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts:349:5
+    347|         documentName: `authoring:${DOC_B}:${SECTION_B}`,
+    348|       })
+    349|     ).rejects.toMatchObject({ reason: 'forbidden-document' });
+       |     ^
+    350|   });
+    351|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/31]⎯
+
+ FAIL  server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses another tenant's section even when paired with an owned document id
+AssertionError: expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'forbidden-document' }
+
+- Expected
++ Received
+
+- {
+-   "reason": "forbidden-document",
++ Error {
++   "reason": "invalid-token",
+  }
+
+ ❯ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts:359:5
+    357|         documentName: `authoring:${DOC_A}:${SECTION_B}`,
+    358|       })
+    359|     ).rejects.toMatchObject({ reason: 'forbidden-document' });
+       |     ^
+    360|   });
+    361|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/31]⎯
+
+ FAIL  server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a document that does not exist at all
+AssertionError: expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'forbidden-document' }
+
+- Expected
++ Received
+
+- {
+-   "reason": "forbidden-document",
++ Error {
++   "reason": "invalid-token",
+  }
+
+ ❯ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts:368:5
+    366|         documentName: 'authoring:eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+    367|       })
+    368|     ).rejects.toMatchObject({ reason: 'forbidden-document' });
+       |     ^
+    369|   });
+    370|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/31]⎯
+
+ FAIL  server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > is symmetric — the other tenant is refused in the other direction
+AssertionError: expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'forbidden-document' }
+
+- Expected
++ Received
+
+- {
+-   "reason": "forbidden-document",
++ Error {
++   "reason": "invalid-token",
+  }
+
+ ❯ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts:378:5
+    376|     await expect(
+    377|       authenticateCollabConnection({ token: tokenB, documentName: `aut…
+    378|     ).rejects.toMatchObject({ reason: 'forbidden-document' });
+       |     ^
+    379|     const ok = await authenticateCollabConnection({
+    380|       token: tokenB,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/31]⎯
+
+ FAIL  server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > admits a member of an ACTIVE tenant (the baseline)
+AssertionError: promise rejected "Error: invalid-token { reason: 'inva…' }" instead of resolving
+ ❯ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts:592:27
+    590|
+    591|   it('admits a member of an ACTIVE tenant (the baseline)', async () =>…
+    592|     await expect(openAsA()).resolves.toMatchObject({ tenantId: ORG_A }…
+       |                           ^
+    593|   });
+    594|
+
+Caused by: Error: invalid-token
+ ❯ denied server/services/hocuspocus-server.ts:108:24
+ ❯ Module.authenticateCollabConnection server/services/hocuspocus-server.ts:225:11
+ ❯ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts:592:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { reason: 'invalid-token' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/31]⎯
+
+ FAIL  server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > REFUSES a member of a suspended tenant
+AssertionError: expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'tenant-suspended' }
+
+- Expected
++ Received
+
+- {
+-   "reason": "tenant-suspended",
++ Error {
++   "reason": "invalid-token",
+  }
+
+ ❯ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts:603:27
+    601|       reason: 'suspended',
+    602|     };
+    603|     await expect(openAsA()).rejects.toMatchObject({ reason: 'tenant-su…
+       |                           ^
+    604|   });
+    605|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/31]⎯
+
+ FAIL  server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > DOWNGRADES a read-only tenant to a view-only socket rather than refusing
+AssertionError: promise rejected "Error: invalid-token { reason: 'inva…' }" instead of resolving
+ ❯ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts:618:43
+    616|     };
+    617|     const connectionConfig = { readOnly: false };
+    618|     await expect(openAsA(connectionConfig)).resolves.toMatchObject({ t…
+       |                                           ^
+    619|     expect(connectionConfig.readOnly).toBe(true);
+    620|   });
+
+Caused by: Error: invalid-token
+ ❯ denied server/services/hocuspocus-server.ts:108:24
+ ❯ Module.authenticateCollabConnection server/services/hocuspocus-server.ts:225:11
+ ❯ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts:618:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { reason: 'invalid-token' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/31]⎯
+
+ FAIL  server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > refuses a read-only tenant when the socket cannot be downgraded
+AssertionError: expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'tenant-read-only' }
+
+- Expected
++ Received
+
+- {
+-   "reason": "tenant-read-only",
++ Error {
++   "reason": "invalid-token",
+  }
+
+ ❯ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts:632:27
+    630|       reason: 'scheduled for deletion',
+    631|     };
+    632|     await expect(openAsA()).rejects.toMatchObject({ reason: 'tenant-re…
+       |                           ^
+    633|   });
+    634|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/31]⎯
+
+ FAIL  server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > refuses fail-closed when the posture cannot be read
+AssertionError: expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'tenant-state-unverified' }
+
+- Expected
++ Received
+
+- {
+-   "reason": "tenant-state-unverified",
++ Error {
++   "reason": "invalid-token",
+  }
+
+ ❯ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts:637:27
+    635|   it('refuses fail-closed when the posture cannot be read', async () =…
+    636|     tenantPosture = null;
+    637|     await expect(openAsA()).rejects.toMatchObject({ reason: 'tenant-st…
+       |                           ^
+    638|   });
+    639|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/31]⎯
+
+ FAIL  server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > checks the posture AFTER membership — a revoked user never reveals tenant state
+AssertionError: expected Error: invalid-token { reason: 'inva…' } to match object { reason: 'membership-revoked' }
+
+- Expected
++ Received
+
+- {
+-   "reason": "membership-revoked",
++ Error {
++   "reason": "invalid-token",
+  }
+
+ ❯ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts:649:27
+    647|       reason: 'suspended',
+    648|     };
+    649|     await expect(openAsA()).rejects.toMatchObject({ reason: 'membershi…
+       |                           ^
+    650|   });
+    651| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/31]⎯
+
+
+ Test Files  3 failed | 14 passed (17)
+      Tests  31 failed | 250 passed (281)
+   Start at  01:31:43
+   Duration  27.92s (transform 14.18s, setup 983ms, import 28.06s, tests 36.70s, environment 1.32s)
+
+exit=1

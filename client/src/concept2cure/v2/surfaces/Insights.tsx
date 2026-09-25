@@ -691,7 +691,7 @@ function ROReport({ report, onExport, compact }: { report: RenderedReport; onExp
           <span className="ro-gen">generated {new Date(report.generatedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
         </div>
         {report.truthfulness && report.truthfulness.reasons && report.truthfulness.reasons.length ?
-          <div className="ro-truth">{I.shield || I.info} Truthfulness gate — held at <b>{report.status}</b>: {report.truthfulness.reasons.join('; ')}.</div> : null}
+          <div className="ro-truth">{I.shieldCheck} Truthfulness gate — held at <b>{report.status}</b>: {report.truthfulness.reasons.join('; ')}.</div> : null}
       </div>
       {sections.map(sec => (
         <section key={sec.id} className="ro-sec">
@@ -781,7 +781,7 @@ function RODashboard({ dashboard, tier, onRun }: { dashboard: DashboardData; tie
             <div key={t.typeId} className="ro-pack-card is-locked">
               <div className="ro-pack-fam">{fam.label}</div>
               <div className="ro-pack-title">{t.label}</div>
-              <div className="ro-lock"><span className="ro-lock-chip">{I.lock || I.shield} {(RO_TIERS.find(x => x.id === dec.requiredTier) || { label: '' }).label} plan</span></div>
+              <div className="ro-lock"><span className="ro-lock-chip">{I.lock} {(RO_TIERS.find(x => x.id === dec.requiredTier) || { label: '' }).label} plan</span></div>
               <div className="ro-pack-sub">{RO_FEATURE_LABEL[dec.feature]} — unlock to include in this pack.</div>
             </div>
           );
@@ -1113,7 +1113,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
                 <div className="rc-bub rc-ana-bub">{m.text}</div>
                 {m.locked && (
                   <div className="rc-lock">
-                    <div className="rc-lock-h">{I.lock || I.shield} {(RO_TIERS.find(t => t.id === m.locked!.requiredTier) || { label: '' }).label} plan unlocks {m.locked.typeLabel}</div>
+                    <div className="rc-lock-h">{I.lock} {(RO_TIERS.find(t => t.id === m.locked!.requiredTier) || { label: '' }).label} plan unlocks {m.locked.typeLabel}</div>
                     <div className="rc-lock-s">{RO_FEATURE_LABEL[m.locked.feature]} is a paid capability. No estimated result is shown on a plan that has not unlocked the governed model.</div>
                     <div className="rc-lock-acts">
                       <button className="rc-lock-up" onClick={() => onNav && onNav('licensing')}>See plans {I.right}</button>
@@ -1143,7 +1143,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} />
             <button className="rc-send" disabled={!draft.trim() || busy} onClick={() => send()} aria-label="Send">{I.arrowUp || I.right}</button>
           </div>
-          <div className="rc-guardrail">{I.shield || I.info} {RO_GUARDRAIL}</div>
+          <div className="rc-guardrail">{I.shieldCheck} {RO_GUARDRAIL}</div>
         </div>
       </div>
 

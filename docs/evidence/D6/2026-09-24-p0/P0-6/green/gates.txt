@@ -1,0 +1,17 @@
+### npm run --silent ci:path-containment
+[ci:path-containment] 3 file(s) match the shape; 3 baselined
+[ci:path-containment] OK
+exit=0
+
+### npm run --silent ci:server-error-leaks
+[ci:server-error-leaks] OK — 146 baselined site(s) across 89 file(s); no file gained one.
+exit=0
+
+### npm run --silent ci:discarded-audit-write
+check-discarded-audit-write: no new occurrences. 131 baselined across 59 file(s).
+exit=0
+
+### npm run --silent check:security-patterns
+check-security-patterns: 0 violations across 2835 file(s).
+exit=0
+

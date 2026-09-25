@@ -1,0 +1,75 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > a zero-retention tenant cannot embed plain text through OpenAI, even outside production
+[AI Gateway Audit] ✗ none/none task=embedding tokens=0 1ms org=7 user=- caller=embedding-provider req=b9f9821c-cf7b-46dd-8dd6-89a6ac023344
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > a zero-retention tenant cannot embed plain text through OpenAI, even outside production
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > an EU-resident tenant cannot embed through OpenAI (global only); the self-hosted lane satisfies it
+[AI Gateway Audit] ✗ none/none task=embedding tokens=0 0ms org=7 user=- caller=embedding-provider req=37a4c394-9fb1-4826-bc19-2d95c5d0a129
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > an EU-resident tenant cannot embed through OpenAI (global only); the self-hosted lane satisfies it
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > an explicit request flag is honoured without an org policy
+[AI Gateway Audit] ✗ none/none task=embedding tokens=0 0ms org=9 user=- caller=embedding-provider req=727d7847-8752-4b78-be4f-8c466359afa4
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > an explicit request flag is honoured without an org policy
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > PHI under production enforcement with no approvals is refused (DENY_UNKNOWN_PROVIDER), content-free
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > an approval for "chat" does not cover embedding: DENY_UNAPPROVED_INTENDED_USE
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > staging with AI_SENSITIVE_DATA_POLICY_MODE=enforce enforces identically
+[AI Gateway Audit] ✗ none/none task=embedding tokens=0 0ms org=- user=- caller=embedding-provider req=50ca10c7-3947-4533-9c90-d8d83dc71fba
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > staging with AI_SENSITIVE_DATA_POLICY_MODE=enforce enforces identically
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > a classifier failure under enforcement fails closed (DENY_DETECTOR_FAILURE)
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:5613) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:5613) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:5613) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:5613) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:5613) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:5613) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:5613) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > plain text with no org policy is allowed on both lanes 10ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > a zero-retention tenant cannot embed plain text through OpenAI, even outside production 6ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > the same zero-retention tenant may embed through the self-hosted lane 1ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > an EU-resident tenant cannot embed through OpenAI (global only); the self-hosted lane satisfies it 2ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > a signed zero-retention agreement (OPENAI_ZERO_RETENTION=true) is the operator control that unlocks OpenAI 1ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > an explicit request flag is honoured without an org policy 3ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > PHI under production enforcement with no approvals is refused (DENY_UNKNOWN_PROVIDER), content-free 2ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > an approval for "chat" does not cover embedding: DENY_UNAPPROVED_INTENDED_USE 2ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > the self-hosted lane, approved for embedding, embeds PHI for an on-prem zero-retention tenant 1ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > staging with AI_SENSITIVE_DATA_POLICY_MODE=enforce enforces identically 2ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > a classifier failure under enforcement fails closed (DENY_DETECTOR_FAILURE) 2ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > development audit mode records PHI-bound embedding content-free and does not block 1ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  01:22:17
+   Duration  2.94s (transform 1.26s, setup 119ms, import 2.36s, tests 37ms, environment 0ms)
+

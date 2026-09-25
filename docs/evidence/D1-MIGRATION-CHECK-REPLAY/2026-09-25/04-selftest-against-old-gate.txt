@@ -1,0 +1,20 @@
+  ✓ REPEATED — dropper after creator (re-added and re-dropped every deploy)
+  ✓ UNDONE — dropper before creator (the drop reverts on the next deploy)
+  ✓ quiet — drop-and-re-add of the same name in one file
+  ✓ quiet — a DROP nothing in the set re-creates
+  ✓ quiet — a reviewed baseline exception suppresses a real pairing
+  ✗ NARROWED — an earlier file re-imposes a narrower CHECK a later file widened
+      expected exit 1, got 0
+      | [ci:migration-drop-safety] OK — 2 migrations, 2 DROP(s), none re-created by the set; 0 dynamic DROP(s) in 0 file(s) (names unresolvable — data-bearing kinds gated, 0 reviewed).
+  ✗ quiet — the earlier replacement is conditional on the current definition
+      | [ci:migration-drop-safety] OK — 2 migrations, 2 DROP(s), none re-created by the set; 0 dynamic DROP(s) in 0 file(s) (names unresolvable — data-bearing kinds gated, 0 reviewed).
+  ✗ NARROWED — a guard that names a different constraint does not count
+      expected exit 1, got 0
+      | [ci:migration-drop-safety] OK — 2 migrations, 2 DROP(s), none re-created by the set; 0 dynamic DROP(s) in 0 file(s) (names unresolvable — data-bearing kinds gated, 0 reviewed).
+  ✗ NARROWED — a guard that exists only in a comment does not count
+      expected exit 1, got 0
+      | [ci:migration-drop-safety] OK — 2 migrations, 2 DROP(s), none re-created by the set; 0 dynamic DROP(s) in 0 file(s) (names unresolvable — data-bearing kinds gated, 0 reviewed).
+  ✓ dynamic — an EXECUTE-issued DROP TABLE is caught, not silently skipped
+  ✓ dynamic — an EXECUTE-issued DROP POLICY is counted, not failed (carries no data)
+  ✓ dynamic — a reviewed allowDynamic entry suppresses the data-bearing case
+[ci:migration-drop-safety:selftest] FAIL — 4/12 case(s) wrong.

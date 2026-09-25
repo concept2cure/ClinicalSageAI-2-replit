@@ -1,0 +1,16 @@
+$ npm run --silent ci:jwt-verify-pinned
+[ci:jwt-verify-pinned] OK — every production jwt.verify call pins an algorithm
+exit=0
+
+$ npm run --silent check:security-patterns
+check-security-patterns: 0 violations across 2838 file(s).
+exit=0
+
+$ npm run --silent ci:client-ip-single-source
+✓ client-ip-single-source: no forwarding-header reads and no stray trust proxy in server/ or shared/
+exit=0
+
+$ npm run --silent ci:discarded-audit-write
+check-discarded-audit-write: no new occurrences. 131 baselined across 59 file(s).
+exit=0
+

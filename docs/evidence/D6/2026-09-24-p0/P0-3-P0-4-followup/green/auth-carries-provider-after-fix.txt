@@ -1,0 +1,27 @@
+$ npx vitest run server/middleware/__tests__/auth-carries-provider.test.ts   # HEAD=5c978992, working tree: fix applied, uncommitted
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/middleware/__tests__/auth-carries-provider.test.ts > PLATFORM_ADMIN_EMAILS behind authenticateToken > does not admit an allow-listed e-mail asserted by an IdP (provider saml): isPlatformAdmin false, requirePlatformAdmin 403
+{
+  "timestamp": "2026-09-25T01:49:00.422Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "path": "/api/probe"
+  }
+}
+
+ ✓ server/middleware/__tests__/auth-carries-provider.test.ts > authenticateToken carries the token provider onto req.user > a token with provider 'saml' yields req.user.provider === 'saml' 321ms
+ ✓ server/middleware/__tests__/auth-carries-provider.test.ts > authenticateToken carries the token provider onto req.user > a token with no provider claim yields req.user.provider === 'local-jwt' (a password session) 3ms
+ ✓ server/middleware/__tests__/auth-carries-provider.test.ts > authenticateToken carries the token provider onto req.user > a provider claim that is not a string is read as 'local-jwt', never as a value the guard could mistake 1ms
+ ✓ server/middleware/__tests__/auth-carries-provider.test.ts > PLATFORM_ADMIN_EMAILS behind authenticateToken > does not admit an allow-listed e-mail asserted by an IdP (provider saml): isPlatformAdmin false, requirePlatformAdmin 403 5ms
+ ✓ server/middleware/__tests__/auth-carries-provider.test.ts > PLATFORM_ADMIN_EMAILS behind authenticateToken > still admits the same e-mail on a password session (no provider claim) 2ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  01:48:59
+   Duration  813ms (transform 324ms, setup 102ms, import 84ms, tests 339ms, environment 0ms)
+
+exit=0

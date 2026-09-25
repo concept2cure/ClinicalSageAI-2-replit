@@ -100,7 +100,15 @@ constructs the real case — a DROP of `vault.documents.folder_id` against the
 `scripts/ci/migration-drop-safety-baseline.json` **with a written reason**; an
 entry without one is the thing that file exists to prevent.
 
-Two corollaries, same cause:
+Three corollaries, same cause:
+
+- **Replacing a constraint that a later file also defines must be conditional.**
+  `ADD CONSTRAINT` validates every existing row. So an earlier file's unconditional
+  `DROP`/`ADD` re-imposes its narrower CHECK over rows the later file admitted, and
+  every deploy fails from the first such row on. A fresh database never shows it.
+  This was found on three constraints at once
+  (`docs/evidence/D1-MIGRATION-CHECK-REPLAY/`). Make the replacement conditional on
+  `pg_get_constraintdef`. `ci:migration-drop-safety` refuses it otherwise (NARROWED).
 
 - **Reference/seed data reaches a deployed database only through a file in
   `C2C_MIGRATION_FILES`.** `deploy-migrate` has five steps and none is a seed; a

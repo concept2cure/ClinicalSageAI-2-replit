@@ -12,7 +12,13 @@ import { verifyJwtWithRotation } from '../utils/jwtVerify';
 import { isTokenRevoked } from '../services/token-revocation';
 import { nonAccessTokenReason, requireAccessTokenReason } from './tokenType';
 import { enforceOrgMembership, invalidateOrgMembershipCache, parseFiniteInt } from './orgMembership';
-import { ACCOUNT_INACTIVE_MESSAGE, isAccountActiveBeforeTenant } from '../services/account-standing';
+import {
+  ACCOUNT_INACTIVE_MESSAGE,
+  issuedAtOfClaims,
+  readAccountStandingBeforeTenant,
+  sessionPredatesPasswordChange,
+  type AccountStanding,
+} from '../services/account-standing';
 import { establishRequestTenantScope } from './establishRequestTenantScope';
 import { enforceTenantLifecycle } from './tenantLifecycleGuard';
 import { enforceStorageQuota } from './storageQuotaGuard';
@@ -51,6 +57,16 @@ interface JWTPayload {
   // access path MUST reject them explicitly.
   type?: string;
   mfaPending?: boolean;
+  /** Issued-at, whole seconds; jsonwebtoken stamps it on every token it signs. */
+  iat?: number;
+  /**
+   * Which authentication surface issued the token: 'saml' on a federated
+   * sign-in (routes/sso.ts); absent on a password session. Carried onto
+   * req.user as `provider` ('local-jwt' when absent) so a guard behind this
+   * gate can tell the two apart — requirePlatformAdmin's e-mail allow-list
+   * does not apply to a federated identity (audit IAM-03).
+   */
+  provider?: string;
 }
 
 // Re-exported for callers that import the guard from the auth middleware.
@@ -165,18 +181,27 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
     // administrator or deprovisioned by the identity provider opens nothing,
     // whenever its token was issued; nothing read it before. A subject that is
     // not an integer names no account row, and has no standing to read.
+    //
+    // Security audit 2026-09-24, IAM-04: and so is the account's last password
+    // change, read in the same statement. A reset or change stamps
+    // users.password_changed_at; a token issued before the stamp is a session
+    // the holder meant to end, and is answered like a revoked one.
     const accountId = parseFiniteInt(subject);
     Promise.all([
       isTokenRevoked(token),
-      accountId === null ? Promise.resolve(true) : isAccountActiveBeforeTenant(accountId),
+      accountId === null ? Promise.resolve<AccountStanding | null>(null) : readAccountStandingBeforeTenant(accountId),
     ]).then(
-      ([revoked, active]) => {
+      ([revoked, standing]) => {
         if (revoked) {
           res.status(401).json({ error: { code: 'SESSION_ENDED', message: 'This session has ended. Sign in again.' } });
           return;
         }
-        if (!active) {
+        if (standing && !standing.active) {
           res.status(401).json({ error: { code: 'ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE } });
+          return;
+        }
+        if (standing && sessionPredatesPasswordChange(issuedAtOfClaims(decoded), standing.passwordChangedAtSeconds)) {
+          res.status(401).json({ error: { code: 'SESSION_ENDED', message: 'This session has ended. Sign in again.' } });
           return;
         }
         admitLiveSession(req, res, next, decoded, subject);
@@ -209,6 +234,12 @@ function admitLiveSession(
     organizationId: decoded.organizationId || decoded.orgId,
     permissions: decoded.permissions || [],
   };
+  // The token's provider, as server/auth.ts records it on req.identity: a
+  // guard behind this gate reads it to tell a federated session from a
+  // password one (requirePlatformAdmin, audit IAM-03). Set by assignment, not
+  // in the literal: Request.user is declared identically in several
+  // `declare global` blocks, which TypeScript requires to stay identical.
+  Object.assign(req.user, { provider: typeof decoded.provider === 'string' ? decoded.provider : 'local-jwt' });
   // SECURITY (M1): the organizationId claim was minted at login; re-check
   // that the membership row still exists so a revoked user loses access
   // within the cache TTL instead of the full token lifetime.

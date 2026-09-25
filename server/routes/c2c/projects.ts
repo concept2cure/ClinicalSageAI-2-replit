@@ -1302,8 +1302,10 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
       `SELECT
          al.id, al.action, al.table_name AS resource_type, al.record_id AS resource_id,
          COALESCE(al.actor_id, al.user_id) AS actor_id, al.new_values AS details,
+         COALESCE(u.name, u.email) AS actor_name,
          al.occurred_at, al.ip_address
        FROM audit_logs al
+       LEFT JOIN users u ON u.id = COALESCE(al.actor_id, al.user_id)
        WHERE al.tenant_id = $2
          AND (al.record_id = $1 OR al.new_values->>'project_id' = $1)
        ORDER BY al.occurred_at DESC NULLS LAST

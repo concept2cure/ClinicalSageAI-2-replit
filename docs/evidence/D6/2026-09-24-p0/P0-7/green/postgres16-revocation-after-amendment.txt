@@ -1,0 +1,38 @@
+# PostgreSQL 16.13, database c2c_audit_repro from the Phase A reproduction, HEAD dac69d76, 2026-09-25T01:14:31Z
+# Re-apply the amended db/migrations/20260730_esign_audit_db_level_immutability.sql (CREATE OR REPLACE, as every deploy does), then run the exact revocation UPDATE from signature-persistence.ts:867-875 on fresh rows.
+
+## apply amended migration
+CREATE FUNCTION
+CREATE FUNCTION
+DO
+
+## seed S3 (signature) and S4 (revocation record)
+INSERT INTO electronic_signatures (document_id, version_id, signature_type, signature_purpose, signer_id, signer_name, signer_email, authentication_method, authentication_timestamp, signature_hash, organization_id) VALUES (1,1,'x','x',1,'x','x','x',now(),'h3',7),(1,1,'x','x',1,'x','x','x',now(),'h4',7) RETURNING id;
+ id 
+----
+  3
+  4
+(2 rows)
+
+INSERT 0 2
+
+## THE FORMERLY FAILING STATEMENT (Phase A transcript §4 raised IMMUTABILITY_VIOLATION)
+UPDATE electronic_signatures SET superseded_by = 4, is_valid = false, verification_status = 'revoked', verification_date = now(), updated_at = now() WHERE id = 3 AND organization_id = 7 AND superseded_by IS NULL RETURNING id, superseded_by, is_valid, verification_status;
+ id | superseded_by | is_valid | verification_status 
+----+---------------+----------+---------------------
+  3 |             4 | f        | revoked
+(1 row)
+
+UPDATE 1
+
+## still refused: touching a superseded row; changing validity outside a supersession; DELETE
+UPDATE electronic_signatures SET updated_at = now() WHERE id = 3;
+ERROR:  IMMUTABILITY_VIOLATION: signature 3 is already superseded and can never be modified again (§11.70).
+CONTEXT:  PL/pgSQL function esign_block_mutation() line 11 at RAISE
+UPDATE electronic_signatures SET is_valid = false WHERE id = 4;
+ERROR:  IMMUTABILITY_VIOLATION: electronic_signatures rows are append-only (§11.70); only the write-once superseded_by transition is permitted. Insert a correcting signature instead of modifying row 4.
+CONTEXT:  PL/pgSQL function esign_block_mutation() line 48 at RAISE
+DELETE FROM electronic_signatures WHERE id = 4;
+ERROR:  IMMUTABILITY_VIOLATION: electronic_signatures is append-only (21 CFR Part 11 §11.70) — rows cannot be deleted. Insert a superseding signature instead.
+CONTEXT:  PL/pgSQL function esign_block_mutation() line 4 at RAISE
+# end

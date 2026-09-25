@@ -1,0 +1,15 @@
+
+[tenant-trust-header] 10 violation(s)
+  Do not read org / tenant identity from request headers — validateTenantContext sources it from the JWT and emits a tenant_impersonation_attempt audit event when a header tries to override it. For the organization UUID use currentTenantOrgUuid(db) from server/db/currentTenant.
+    server/routes/ana-features.ts:2360:8  (req.headers['x-org-uuid'] as string | undefined);
+    server/routes/ana-features.ts:2597:8  (req.headers['x-org-uuid'] as string | undefined);
+    server/routes/ana-features.ts:4879:8  (req.headers['x-org-uuid'] as string | undefined);
+    server/routes/ana-features.ts:4952:8  (req.headers['x-org-uuid'] as string | undefined);
+    server/routes/ana-features.ts:5037:8  (req.headers['x-org-uuid'] as string | undefined);
+    server/routes/c2c/ai-editing.ts:149:12  (req.headers['x-org-uuid'] as string | undefined);
+    server/routes/c2c/ai-editing.ts:1073:12  (req.headers['x-org-uuid'] as string | undefined);
+    server/routes/chat/send-message.ts:190:12  (req.headers['x-org-uuid'] as string | undefined);
+    server/routes/chat/send-message.ts:292:8  (req.headers['x-org-uuid'] as string | undefined);
+    server/routes/cortexQueryRoutes.ts:153:58  This read `req.tenantContext?.organizationUuid || req.headers['x-org-uuid']`.
+
+check-security-patterns: 10 violation(s) across 2835 file(s).

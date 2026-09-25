@@ -1,0 +1,30 @@
+$ NODE_OPTIONS='--max-old-space-size=4096' npx tsc -p <scratchpad>/tsconfig.p04.json   # extends ./tsconfig.json; include: []; files: the changed files, the new tests, the two dbtests, shared/types/third-party.d.ts, server/types/*.d.ts, server/middleware/tenantContext.ts, server/db/requestDb.ts
+HEAD=df479b5f (working tree: P0-4 fix applied, uncommitted). The full-tree typecheck was not run on this host (OOM-killed under concurrent runs); the control tower runs it at push.
+files:
+  server/services/token-revocation.ts
+  server/services/account-standing.ts
+  server/middleware/auth.ts
+  server/routes/auth.ts
+  server/routes/authEnterprise.ts
+  client/src/services/portal/authService.tsx
+  server/services/__tests__/token-revocation-expiry.test.ts
+  server/services/__tests__/account-standing-session-currency.test.ts
+  server/middleware/__tests__/auth-session-currency.test.ts
+  server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts
+  server/routes/__tests__/auth-refresh-session-currency.test.ts
+  server/routes/__tests__/authSurfaceSecurity.test.ts
+  client/src/services/portal/__tests__/authService-logout.test.ts
+  tests/db/sign-in-audit-trail.dbtest.ts
+  tests/db/account-standing.dbtest.ts
+  shared/types/third-party.d.ts
+  server/types/global.d.ts
+  server/types/index.d.ts
+  server/types/ml-stat.d.ts
+  server/types/pdfkit.d.ts
+  server/types/xml2js.d.ts
+  server/middleware/tenantContext.ts
+  server/db/requestDb.ts
+
+tests/db/account-standing.dbtest.ts(53,22): error TS7016: Could not find a declaration file for module '../validation/lib/totp.mjs'. '/home/user/ClinicalSageAI-2-replit/tests/validation/lib/totp.mjs' implicitly has an 'any' type.
+tests/db/sign-in-audit-trail.dbtest.ts(77,22): error TS7016: Could not find a declaration file for module '../validation/lib/totp.mjs'. '/home/user/ClinicalSageAI-2-replit/tests/validation/lib/totp.mjs' implicitly has an 'any' type.
+exit=2 (the two lines above; nothing in the changed files)

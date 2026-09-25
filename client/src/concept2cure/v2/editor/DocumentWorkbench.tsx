@@ -1976,10 +1976,10 @@ export function DocumentWorkbench({
          button's requirement was decorative.
          Refused visibly, never silently: an author who pressed ⌘S and saw
          nothing happen would reasonably conclude their work was saved. */
-      if (!systemReason && !changeReasonRef.current.trim()) {
+      if (!systemReason && changeReasonRef.current.trim().length < 8) {
         fireToast(
-          'Not saved — say why this section changed. It is recorded with the ' +
-            'revision, and the filing keeps it.',
+          'Not saved — say why this section changed, in at least 8 characters. It is ' +
+            'recorded with the revision, and the filing keeps it.',
           'error',
         );
         throw new Error('reason-for-change required');
@@ -3296,7 +3296,7 @@ export function DocumentWorkbench({
                 style={{ height: 30, width: 260 }}
                 value={changeReason}
                 onChange={e => setChangeReason(e.target.value)}
-                placeholder="Why this changed (required to save)"
+                placeholder="Why this changed (at least 8 characters)"
                 aria-label="Reason for change"
                 data-testid="change-reason"
               />
@@ -3305,12 +3305,12 @@ export function DocumentWorkbench({
               className="btn primary"
               style={{ height: 30 }}
               onClick={() => void editorRef.current?.save()}
-              disabled={!dirty || saving || docSealed || !changeReason.trim()}
+              disabled={!dirty || saving || docSealed || changeReason.trim().length < 8}
               title={
                 docSealed
                   ? 'This document is frozen — its content cannot be edited.'
-                  : dirty && !changeReason.trim()
-                    ? 'Say why this section changed — it is recorded with the revision.'
+                  : dirty && changeReason.trim().length < 8
+                    ? 'Say why this section changed, in at least 8 characters — it is recorded with the revision.'
                     : undefined
               }
               data-testid="save-section"
@@ -4271,6 +4271,8 @@ export function DocumentWorkbench({
                     className="nda-open"
                     style={{ marginLeft: 'auto' }}
                     onClick={() => revert(r.id)}
+                    disabled={docSealed}
+                    title={docSealed ? 'This document is frozen — its content cannot be reverted.' : undefined}
                   >
                     {I.rotateCcw} Revert
                   </button>
