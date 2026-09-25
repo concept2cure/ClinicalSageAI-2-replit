@@ -32,7 +32,10 @@ import request from 'supertest';
 import { createHash } from 'node:crypto';
 
 const { query, readFile } = vi.hoisted(() => ({ query: vi.fn(), readFile: vi.fn() }));
-vi.mock('../../db.js', () => ({ pool: { query, connect: vi.fn() } }));
+/* The download's audit row is written in a transaction of its own (a chained
+   row needs one), so connect() hands back a client that shares the same
+   query mock: every assertion about the audit INSERT still sees it. */
+vi.mock('../../db.js', () => ({ pool: { query, connect: vi.fn(async () => ({ query, release: vi.fn() })) } }));
 vi.mock('node:fs', async (io) => {
   const actual = await io<typeof import('node:fs')>();
   return { ...actual, promises: { ...actual.promises, readFile } };
