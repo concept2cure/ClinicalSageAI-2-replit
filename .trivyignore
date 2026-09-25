@@ -1,56 +1,63 @@
-# Pre-existing security issues to be addressed in dedicated security hardening PR
+# .trivyignore — suppressions for the BLOCKING Trivy scans: the filesystem and
+# config scans in .github/workflows/ci.yml and the deploy security gate in
+# .github/workflows/deploy-aws.yml (severity CRITICAL,HIGH, exit-code 1).
+#
+# Rules (security audit 2026-09-24 INF-11, plan item P0-16a; enforced by
+# scripts/ci/check-trivyignore-hygiene.mjs):
+#   - every entry is `<ID> exp:YYYY-MM-DD`. Trivy honours `exp:` itself: on that
+#     date the suppression lapses and the finding fails the scan again until a
+#     person re-reviews it. At most 180 days out.
+#   - every entry names an owner: and a reason: in the comment block above it.
+#   - a per-resource property (S3 public-access block, bucket encryption,
+#     CloudTrail settings, ...) is never suppressed here for the whole tree; it
+#     is fixed, or excepted on the resource with an inline `#trivy:ignore:<ID>`
+#     and a reason (docs/evidence/W2/2026-09-24-trivy/ is the precedent).
+#   - a dependency entry mirrors a row of docs/security/dependency-risk-ledger.json
+#     (the single decision record, enforced for npm audit by
+#     scripts/ci/check-dependency-risk.mjs) and expires with it.
+#
+# Removed 2026-09-25 (P0-16a), each verified against the tree at that date;
+# evidence docs/evidence/D6/2026-09-24-p0/P0-16a/:
+#   AVD-AWS-0086 / 0087 / 0091 / 0093 (S3 public access block): every bucket in
+#     terraform/ (bootstrap tfstate, cloudfront frontend, compliance-evidence,
+#     stack vault) has an aws_s3_bucket_public_access_block with all four flags
+#     true. The tree-wide ignore only hid the next bucket without one.
+#   AVD-AWS-0016 (CloudTrail log-file validation): the one trail,
+#     aws_cloudtrail.part11_audit in terraform/modules/compliance-evidence, sets
+#     enable_log_file_validation = true.
+#   CVE-2026-45829 (chromadb): the pin is gone from every requirements file;
+#     `git grep -i chromadb` finds nothing outside documents.
+#   GHSA-qwww-vcr4-c8h2 (react-router RSC CSRF): react-router and
+#     react-router-dom are no longer in package.json or package-lock.json.
 
-# See: https://avd.aquasec.com/misconfig/ds002
+# owner: Security Engineering (D1 / W2 lane; ci.yml and the vendored skill tree)
+# reason: DS002 (image runs as root) fires on exactly one file,
+#   .claude/skills/gstack/.github/docker/Dockerfile.ci — a vendored skill's own
+#   CI image that this repository never builds, publishes or deploys. The
+#   production image, Dockerfile.optimized, runs as `appuser` (USER at its last
+#   stage). The plaintext ignore format cannot scope an ID to a path, and the
+#   ci.yml `skip-dirs` / `trivyignores` inputs that could are inside another
+#   lane's 24-hour window today; until one of those lands, this is the one
+#   tree-wide misconfiguration suppression left, and it hides a NEW Dockerfile
+#   that runs as root. Replace with a path-scoped exception (a
+#   .trivyignore.yaml `paths:` entry via `trivyignores`, or `skip-dirs:
+#   .claude/skills`) and delete this line.
+DS002 exp:2026-11-25
 
-# Dockerfile USER command (running as non-root) - requires build pipeline changes
-
-DS002
-
-# S3/CloudTrail best practices - requires Terraform module updates
-
-AVD-AWS-0016
-AVD-AWS-0086
-AVD-AWS-0087
-AVD-AWS-0091
-AVD-AWS-0093
-
-# chromadb 1.5.9 pre-auth RCE (server/services/python/requirements.txt).
-# Pre-existing pin surfaced now that Trivy scanning is blocking. No patched
-# chromadb release is published for this CVE yet (Trivy reports no fixed
-# version), so it cannot be remediated by a version bump. Allowlisted to keep
-# the Trivy gate blocking for *fixable* CRITICAL/HIGH findings.
-# TODO(security): upgrade chromadb as soon as a patched release ships, and
-# confirm chromadb is not exposed to untrusted pre-auth network input.
-CVE-2026-45829
-
-# react-router GHSA-qwww-vcr4-c8h2 (RSC-mode CSRF: an action can run before a
-# 400 response). Range >=7.12.0 <8.3.0; the only fix is the react-router 8.x
-# major. This app routes with wouter and uses react-router-dom only on a couple
-# of auth screens — no RSC / data-router server actions — so the RSC CSRF path
-# is not reachable. Trivy scans package-lock.json separately from npm audit;
-# npm-audit-side High/Critical governance lives in the reviewed risk ledger
-# (docs/security/dependency-risk-ledger.json, enforced by
-# scripts/ci/check-dependency-risk.mjs), so this suppression is Trivy's mirror
-# of that decision record, not a second authority. The other react-router
-# advisory (route-matching DoS) is genuinely fixed by react-router-dom 7.18.1.
-# TODO(security): adopt react-router 8.x in a dedicated upgrade PR, then drop this.
-GHSA-qwww-vcr4-c8h2
-
-# image-size CVE-2025-71329 (zero-valued size DoS) + CVE-2025-71330 (ICNS DoS),
-# vulnerable range <=2.0.2. The only installed copy is image-size@1.2.1, pulled
-# solely by pptxgenjs@4.0.1 (which pins "image-size": "^1.2.1"). NO fixed version
-# exists — the latest published image-size is 2.0.2, still in-range, and 2.x is
-# outside pptxgenjs's range — so this cannot be remediated by a bump/override
-# (Trivy reports no fixed version). Disposition: UNREACHABLE, per the reviewed
-# risk ledger (docs/security/dependency-risk-ledger.json, rows
-# GHSA-w3rx-r6r6-pgpr / GHSA-5p2g-fcmc-qvqq): the production PPTX generator
-# uses no image-capable pptxgenjs API and the shipped pptxgenjs Node bundle
-# never imports image-size, proven on every push by
-# scripts/ci/check-pptx-image-reachability.mjs and the require.cache runtime
-# test. Trivy scans package-lock.json separately from npm audit, so this
-# suppression mirrors the ledger decision for Trivy's scanner; the ledger is
-# the single decision record and both expire/are re-reviewed together.
-# TODO(security): drop when image-size ships a fix >2.0.2 and pptxgenjs widens
-# its range (or pptxgenjs is replaced). Re-check with `npm ls image-size --all`.
-CVE-2025-71329
-CVE-2025-71330
+# owner: Security Engineering (dependency-risk-ledger.json rows
+#   GHSA-w3rx-r6r6-pgpr / GHSA-5p2g-fcmc-qvqq; expires with the ledger, 2026-11-25)
+# reason: image-size CVE-2025-71329 (zero-valued size DoS) and CVE-2025-71330
+#   (ICNS DoS), vulnerable range <=2.0.2. The only installed copy is
+#   image-size@1.2.1, pulled solely by pptxgenjs@4.0.1 ("image-size": "^1.2.1").
+#   No fixed version exists (latest published is 2.0.2, still in range, and 2.x is
+#   outside pptxgenjs's range), so neither a bump nor an override remediates it.
+#   Disposition UNREACHABLE per the ledger: the production PPTX generator uses no
+#   image-capable pptxgenjs API and the shipped pptxgenjs Node bundle never
+#   imports image-size, proven on every push by
+#   scripts/ci/check-pptx-image-reachability.mjs and the require.cache runtime
+#   test. Trivy scans package-lock.json separately from npm audit, so this is
+#   the ledger decision mirrored for Trivy's scanner, not a second authority.
+#   Drop when image-size ships a fix >2.0.2 and pptxgenjs widens its range (or
+#   pptxgenjs is replaced). Re-check with `npm ls image-size --all`.
+CVE-2025-71329 exp:2026-11-25
+CVE-2025-71330 exp:2026-11-25
