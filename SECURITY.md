@@ -47,9 +47,15 @@ below are given so they can be.
 - TOTP multi-factor authentication, available per user and opt-in — it is not
   enforced org-wide by default (`server/services/mfaService.ts`)
 - JWT access tokens (default lifetime one day; refresh tokens seven days) verified
-  through a rotation-aware helper rather than a bare `jwt.verify`. There is no
-  server-enforced inactivity timeout yet; shortening the lifetime and adding an
-  idle logoff are items P1-1 and P0-4 of `docs/security/REMEDIATION_AND_ENHANCEMENT_PLAN_2026-09-24.md`.
+  through a rotation-aware helper rather than a bare `jwt.verify`. A revoked
+  token stays revoked for the token's own lifetime (a refresh token revoked at
+  logout no longer returns after a day), the enterprise refresh endpoint
+  revokes the token it rotates, and a password reset or change ends every
+  session issued before it (`server/services/token-revocation.ts`,
+  `server/services/account-standing.ts`, 2026-09-25). There is no
+  server-enforced inactivity timeout yet; shortening the lifetime, adding an
+  idle logoff and a per-user "sign out everywhere" are items P1-1 and P0-4b of
+  `docs/security/REMEDIATION_AND_ENHANCEMENT_PLAN_2026-09-24.md`.
 
 #### Data Protection
 - **Encryption at rest is field-level, applied to specific secrets** —

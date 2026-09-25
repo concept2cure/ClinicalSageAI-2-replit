@@ -38,6 +38,7 @@ import {
 } from './data';
 import { useSopRegister, useSopTemplates, useReviewDue, useTrainingCompliance } from './hooks';
 import { EsignModal, esignSignerOf, type EsigSignedManifest } from '../_shared/components/EsignModal';
+import { GovernedConfirmDialog } from '../_shared/components/GovernedConfirmDialog';
 import { useAuth } from '@/services/portal/authService';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { QmsDoc } from './data';
@@ -163,6 +164,11 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
   const { user } = useAuth();
   /** The document being approved, while the signature dialog is open. */
   const [approving, setApproving] = React.useState<QmsDoc | null>(null);
+  /* Retire is a governed, terminal write: a dialog that captures the reason
+     (the server requires it and refuses without it), not a prompt into chat
+     that asked AnA to ask for one. */
+  const [retiring, setRetiring] = React.useState<QmsDoc | null>(null);
+  const [retireErr, setRetireErr] = React.useState<string | null>(null);
 
   const effectiveCount = docs.filter((d) => d.status === 'effective').length;
   const underReviewCount = docs.filter((d) => d.status === 'in_review').length;
@@ -432,12 +438,7 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
                       <button
                         className="qms-chip"
                         title="Retire"
-                        onClick={() =>
-                          onAsk(
-                            `Retire ${d.docNumber} ${d.title}. Ask me for the reason, confirm there is no active dependency, ` +
-                              'then move it to retired and write the audit entry.',
-                          )
-                        }
+                        onClick={() => { setRetireErr(null); setRetiring(d); }}
                       >
                         {I.archive} Retire
                       </button>
@@ -583,6 +584,28 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
             const manifest = await approveControlledDocument(approving.id, input);
             reg.refresh?.();
             return manifest;
+          }}
+        />
+      )}
+      {retiring && (
+        <GovernedConfirmDialog
+          open
+          action="Retire controlled document"
+          target={`${retiring.docNumber} ${retiring.title} (v${retiring.version})`}
+          resource={retiring.docNumber}
+          minReason={8}
+          confirmWord="retire"
+          submitError={retireErr}
+          onCancel={() => setRetiring(null)}
+          onConfirm={async ({ reason }) => {
+            const res = await apiRequest('POST', `/api/mdx/qms/documents/${retiring.id}/retire`, { reason });
+            const json = await res.json().catch(() => null);
+            if (!res.ok) {
+              setRetireErr(serverMessage(json) ?? 'The document was not retired. Nothing changed.');
+              return;
+            }
+            setRetiring(null);
+            reg.refresh?.();
           }}
         />
       )}

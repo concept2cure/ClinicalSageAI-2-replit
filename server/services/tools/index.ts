@@ -16,6 +16,8 @@ import { generateRegulatory, type DocxInput } from '../docx/docxFactory';
 import { getTemplate, listTemplates, mergeWithTemplate } from '../docx/templateRegistry';
 import fs from 'fs/promises';
 import path from 'path';
+import crypto from 'node:crypto';
+import { usableOrgId } from '../../utils/authedOrgId';
 import {
   COMPRESSION_PROFILES,
   compressPdfBatch,
@@ -949,6 +951,23 @@ registerTool({
   ],
   aliases: ['doc.generate', 'generate.docx'],
   execute: async (params, ctx): Promise<ToolResult> => {
+    // IAM-07: the output is one tenant's document, so it is written under that
+    // tenant's own prefix — and there is no prefix to write under without a
+    // usable organization on the context. Refuse before rendering anything;
+    // a flat, shared directory is the defect, not a fallback.
+    const organizationId = usableOrgId(ctx.organizationId);
+    if (organizationId === null) {
+      return {
+        ok: false,
+        artifact: null,
+        message: {
+          role: 'assistant',
+          content:
+            'Document generation refused: no organization is attached to this request, so there is no tenant directory to write the document into. Nothing was generated.',
+        },
+      };
+    }
+
     try {
       // Parse sections from the content parameter
       let sections;
@@ -1003,13 +1022,30 @@ registerTool({
 
       const result = await generateRegulatory(input);
 
-      // Save to generated_documents/
-      const outDir = path.resolve(process.cwd(), 'generated_documents');
+      // Save to generated_documents/org-<id>/ under a name that cannot collide.
+      //
+      // The renderer's name is `<Title>_<type>_<YYYYMMDD>.docx`: predictable,
+      // and identical for two tenants (or two runs) generating the same title
+      // on the same day. It used to land in ONE directory for every tenant and
+      // `writeFile` replaced whatever was there, so the second tenant's run
+      // destroyed the first's document and the download route served the
+      // survivor to whoever asked by name (IAM-07). Now: the tenant prefix the
+      // resolver in utils/document-file-roots confines reads to, a random
+      // prefix on the name, and `wx` so a collision that somehow still occurs
+      // fails loudly instead of overwriting. The `.source.json` sidecar follows
+      // the DOCX, and runDocxPdfPipeline writes beside it, so both stay inside
+      // the prefix. Legacy flat files are unreachable by design: they have no
+      // owner recorded anywhere, so nobody may be handed them.
+      const outDir = path.join(
+        path.resolve(process.cwd(), 'generated_documents'),
+        `org-${organizationId}`
+      );
       await fs.mkdir(outDir, { recursive: true });
-      const docxPath = path.join(outDir, result.filename);
+      const storedFilename = `${crypto.randomUUID()}-${path.basename(result.filename)}`;
+      const docxPath = path.join(outDir, storedFilename);
       const jsonPath = docxPath.replace(/\.docx$/, '.source.json');
-      await fs.writeFile(docxPath, result.buffer);
-      await fs.writeFile(jsonPath, JSON.stringify(result.source, null, 2));
+      await fs.writeFile(docxPath, result.buffer, { flag: 'wx' });
+      await fs.writeFile(jsonPath, JSON.stringify(result.source, null, 2), { flag: 'wx' });
 
       const shouldExportPdf = String((params as any).exportPdf).toLowerCase() === 'true';
       const shouldCompressPdf = String((params as any).compressPdf).toLowerCase() === 'true';
@@ -1038,7 +1074,7 @@ registerTool({
           status: 'generated',
           projectId: ctx.projectId || null,
           data: {
-            filename: result.filename,
+            filename: storedFilename,
             path: docxPath,
             sourcePath: jsonPath,
             sizeBytes: result.buffer.length,
@@ -1046,13 +1082,26 @@ registerTool({
             pdfPipeline,
           },
         },
-        summary: `Generated ${result.filename} (${Math.round(result.buffer.length / 1024)}KB, ${input.sections.length} sections${params.templateId ? `, template: ${params.templateId}` : ''}${shouldExportPdf ? ', PDF pipeline: enabled' : ''})`,
+        summary: `Generated ${storedFilename} (${Math.round(result.buffer.length / 1024)}KB, ${input.sections.length} sections${params.templateId ? `, template: ${params.templateId}` : ''}${shouldExportPdf ? ', PDF pipeline: enabled' : ''})`,
         message: {
           role: 'assistant',
-          content: `Document generated: **${result.filename}** (${Math.round(result.buffer.length / 1024)}KB). The file contains ${input.sections.length} section(s) with regulatory-compliant formatting.${params.templateId ? ` Template **${params.templateId}** was used to enforce regulatory section structure.` : ''}${shouldExportPdf ? ` Python DOCX→PDF pipeline executed${shouldCompressPdf ? ` with ${pdfQuality} compression` : ''}.` : ''} A source JSON file was also saved for future regeneration.`,
+          content: `Document generated: **${storedFilename}** (${Math.round(result.buffer.length / 1024)}KB). The file contains ${input.sections.length} section(s) with regulatory-compliant formatting.${params.templateId ? ` Template **${params.templateId}** was used to enforce regulatory section structure.` : ''}${shouldExportPdf ? ` Python DOCX→PDF pipeline executed${shouldCompressPdf ? ` with ${pdfQuality} compression` : ''}.` : ''} A source JSON file was also saved for future regeneration.`,
         },
       };
     } catch (err: any) {
+      if (err?.code === 'EEXIST') {
+        // The `wx` write refused to replace an existing file. Say so without
+        // the server path; nothing was overwritten.
+        return {
+          ok: false,
+          artifact: null,
+          message: {
+            role: 'assistant',
+            content:
+              'Document generation failed: a file with that name already exists in your organization’s documents and was not overwritten. Retry to generate under a fresh name.',
+          },
+        };
+      }
       return {
         ok: false,
         artifact: null,

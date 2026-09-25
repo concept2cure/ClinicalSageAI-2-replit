@@ -1,0 +1,49 @@
+$ NODE_OPTIONS='--max-old-space-size=4096' npx vitest run --config vitest.config.ts server/__tests__/security/mcp-client-registration.contract.test.ts --reporter=verbose
+HEAD=9dba7621 (working tree: P0-2d guard applied to server/mcp/index.ts and server/mcp/config.ts, uncommitted)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "message": "[database] RLS enforcement mode resolved",
+    "mode": "on"
+  }
+stderr | server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > parses MCP_CLIENT_REDIRECT_ALLOWLIST as trimmed, lower-cased origins
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+stderr | server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > parses MCP_CLIENT_REDIRECT_ALLOWLIST as trimmed, lower-cased origins
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+stderr | server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > parses MCP_CLIENT_REDIRECT_ALLOWLIST as trimmed, lower-cased origins
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > parses MCP_CLIENT_REDIRECT_ALLOWLIST as trimmed, lower-cased origins 1863ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > is null when the variable is unset; production + null is the open state, development + null is not 1ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > throws on a malformed allowlist instead of resolving to an open or partial one (fail closed) 2ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > keeps the existing behaviour and shape of the rest of the config 1ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > allowlist set + foreign origin → 400 invalid_redirect_uri, the SDK handler never runs, and the body is not logged 29ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > allowlist set + a listed origin (any path, host case-insensitive) → next() is called 5ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > matches by origin, never by prefix: a look-alike host or a different port is refused 8ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > one bad entry refuses the whole registration 3ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — scheme, fragment and shape > production posture: an http redirect is refused even with no allowlist, and even for loopback 12ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — scheme, fragment and shape > development posture: http://localhost and http://127.0.0.1 pass; any other http host does not 7ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — scheme, fragment and shape > a fragment is refused whatever the posture 6ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — scheme, fragment and shape > not an absolute URL, or not a string → invalid_redirect_uri 8ms
+  }
+  }
+  }
+  }
+  }
+stderr | server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > production + no allowlist: openInProduction is true and exactly one warning names MCP_CLIENT_REDIRECT_ALLOWLIST, at creation, never per request
+  }
+  }
+  }
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — scheme, fragment and shape > missing, empty or non-array redirect_uris, or no JSON object at all → invalid_client_metadata 19ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > installs the /register route layer with the guard BEFORE the SDK router layer 13ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > end to end: a foreign origin is refused by the guard; a listed origin reaches the SDK handler and is registered 23ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > no path spelling reaches the SDK handler around the guard 11ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > rate-limits registration attempts per IP (20 per hour), counting refused attempts too 34ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > production + no allowlist: openInProduction is true and exactly one warning names MCP_CLIENT_REDIRECT_ALLOWLIST, at creation, never per request 16ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > an allowlist, or a non-production posture, emits no such warning 5ms
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+   Start at  01:53:20
+   Duration  2.66s (transform 1.03s, setup 107ms, import 177ms, tests 2.07s, environment 0ms)
+exit=0

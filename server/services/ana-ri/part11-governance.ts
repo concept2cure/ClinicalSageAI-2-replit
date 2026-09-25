@@ -65,6 +65,13 @@ export const PART11_GOVERNED_COMMANDS: ReadonlySet<string> = new Set<string>([
   // and enforces the status state machine, whatever tier the caller holds.
   // Escalate this only as a deliberate RBAC decision, with the tier changed in
   // the same commit.
+  // The GDPR erasure. It destroys personal data and overwrites regulated
+  // artifact content, and until 2026-09-25 a model response containing it ran
+  // it with no person in the loop (security audit 2026-09-24 DP-08/DP-09, plan
+  // P0-12). Governed and in the e-sign set below: a person gives the reason for
+  // change and re-authenticates, the sign-off is recorded, then the handler's
+  // own privacy-admin check runs as before.
+  'erase_personal_data',
 ]);
 
 /**
@@ -83,6 +90,8 @@ export const PART11_ESIGN_COMMANDS: ReadonlySet<string> = new Set<string>([
   'submit_document',
   'create_submission_package',
   'k510_workflow.transmit',
+  // Erasure is irreversible (see PART11_GOVERNED_COMMANDS above).
+  'erase_personal_data',
 ]);
 
 /** Minimum meaningful reason-for-change length (trimmed). */

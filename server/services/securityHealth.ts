@@ -24,6 +24,13 @@
  *                                AND detection.
  *   audit_chain_integrity      — hash chain of audit_events is intact
  *                                from the first row to the latest.
+ *   audit_immutability_triggers — every append-only trigger on the audit
+ *                                stores (audit_logs, audit_events,
+ *                                audit.tamper_proof_log,
+ *                                electronic_signatures) exists and is
+ *                                enabled. Critical: without them the
+ *                                stores accept UPDATE/DELETE (security
+ *                                audit 2026-09-24 DP-06, P0-9a).
  *   audit_event_coverage       — every action label the branch added
  *                                has at least one row in the last 24h
  *                                (so an inspector can see they're
@@ -328,6 +335,69 @@ async function checkAuditChainIntegrity(pool: Pool): Promise<SecurityCheckResult
 }
 
 // ---------------------------------------------------------------------------
+// Audit immutability triggers (security audit 2026-09-24, DP-06 / P0-9a)
+// ---------------------------------------------------------------------------
+
+async function checkAuditImmutabilityTriggers(pool: Pool): Promise<SecurityCheckResult> {
+  const start = Date.now();
+  const name = 'audit_immutability_triggers';
+  try {
+    const { assertAuditImmutabilityTriggers, describeAuditImmutabilityGap } = await import(
+      './audit/audit-immutability-triggers'
+    );
+    const report = await assertAuditImmutabilityTriggers(pool);
+    const durationMs = Date.now() - start;
+    if (report.ok) {
+      return {
+        name,
+        status: 'pass',
+        critical: true,
+        details: { expected: report.expected, present: report.present },
+        durationMs,
+      };
+    }
+    return {
+      name,
+      status: 'fail',
+      critical: true,
+      reason: describeAuditImmutabilityGap(report),
+      details: {
+        expected: report.expected,
+        present: report.present,
+        missing: report.missing,
+        disabled: report.disabled,
+        tablesAbsent: report.tablesAbsent,
+      },
+      durationMs,
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    // The probe reads pg_trigger and never raises for an absent store (that is
+    // reported as `missing`, a fail). A relation-not-found from the pool is the
+    // fresh-environment shape this panel maps to warn in the sibling audit
+    // checks; the boot gate (server/startup/audit-enforcement.ts) is the hard
+    // refusal and does not soften it. Anything else is a check that could not
+    // run, and fails closed.
+    if (/relation .* does not exist/i.test(message)) {
+      return {
+        name,
+        status: 'warn',
+        critical: false,
+        reason: `audit stores unavailable: ${message}`,
+        durationMs: Date.now() - start,
+      };
+    }
+    return {
+      name,
+      status: 'fail',
+      critical: true,
+      reason: `trigger catalog probe threw: ${message}`,
+      durationMs: Date.now() - start,
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Audit event coverage (last 24h)
 // ---------------------------------------------------------------------------
 
@@ -471,6 +541,7 @@ export async function runSecurityHealthChecks(pool: Pool): Promise<SecurityHealt
       checkCspMiddleware(),
       checkClamavConnectivity(),
       checkAuditChainIntegrity(pool),
+      checkAuditImmutabilityTriggers(pool),
       checkAuditEventCoverage(pool),
       checkCerReportMigration(),
     ]),
@@ -520,6 +591,7 @@ export const __testing = {
   checkCspMiddleware,
   checkClamavConnectivity,
   checkAuditChainIntegrity,
+  checkAuditImmutabilityTriggers,
   checkAuditEventCoverage,
   checkCerReportMigration,
   NEW_AUDIT_ACTIONS,

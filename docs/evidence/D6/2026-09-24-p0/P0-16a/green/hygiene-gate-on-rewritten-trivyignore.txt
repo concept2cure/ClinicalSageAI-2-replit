@@ -1,0 +1,25 @@
+$ git diff --stat HEAD -- .trivyignore
+ 1 file changed, 63 insertions(+), 56 deletions(-)
+$ node scripts/ci/check-trivyignore-hygiene.mjs
+[ci:trivyignore-hygiene] OK — 3 suppression(s) in /home/user/ClinicalSageAI-2-replit/.trivyignore, each with an owner, a reason and an expiry within 180 days.
+exit=0
+
+$ node scripts/ci/check-trivyignore-hygiene.mjs --selftest
+  ✓ clean entry passes
+  ✓ missing exp
+  ✓ expired
+  ✓ too far out
+  ✓ no owner, no reason (blank line breaks the block)
+  ✓ tree-wide S3 public access block ignore
+  ✓ the audited file shape (no exp, no owner, S3 set) fails on every rule
+  ✓ one block covers two consecutive entries
+[ci:trivyignore-hygiene] FAIL — 4 violation(s) in /tmp/trivyignore-selftest-PyxtPC/.trivyignore (1 entries):
+  - line 1: AVD-AWS-0093 (S3: restrict public buckets) is a per-resource property and may not be suppressed for the whole tree; fix the resource or except it inline with #trivy:ignore and a reason
+  - line 1: AVD-AWS-0093 has no exp:YYYY-MM-DD — a suppression with no end date is not a decision
+  - line 1: AVD-AWS-0093 has no "# owner:" in the comment block above it
+  - line 1: AVD-AWS-0093 has no "# reason:" in the comment block above it
+
+  Every entry: "<ID> exp:YYYY-MM-DD" (future, <= 180 days), preceded by "# owner:" and "# reason:" lines. Per-resource checks are never suppressed tree-wide: fix the resource or except it inline.
+  ✓ runFile exits 1 on a failing file
+[ci:trivyignore-hygiene:selftest] OK — 9 case(s) caught.
+exit=0

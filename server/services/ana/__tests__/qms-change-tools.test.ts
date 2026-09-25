@@ -172,13 +172,23 @@ describe('revise_qms_document / retire_qms_document (SOP register)', () => {
     expect(res.error).toMatch(/reason for change is required/i);
   });
 
+  it('requires a reason to retire — nothing is written and no placeholder reaches the ledger', async () => {
+    const id = await effectiveDoc('SOP-903');
+    const res = await call('retire_qms_document', { document_id: id });
+    expect(res.error).toMatch(/reason for change of at least 8 characters/i);
+    const db = await pglite.query(`SELECT status FROM qms_documents WHERE id = $1`, [id]);
+    expect((db.rows[0] as { status: string }).status).toBe('effective');
+    const led = await pglite.query(`SELECT count(*)::int AS n FROM c2c_governed_actions WHERE reason LIKE '%via AnA%'`).catch(() => ({ rows: [{ n: 0 }] }));
+    expect((led.rows[0] as { n: number }).n).toBe(0);
+  });
+
   it('retires a document (terminal)', async () => {
     const id = await effectiveDoc('SOP-902');
     const res = await call('retire_qms_document', { document_id: id, reason: 'Superseded.' });
     expect(res.ok).toBe(true);
     expect(res.status).toBe('retired');
     // Retiring an already-retired doc is refused.
-    const again = await call('retire_qms_document', { document_id: id });
+    const again = await call('retire_qms_document', { document_id: id, reason: 'Superseded.' });
     expect(again.error).toMatch(/already retired/i);
   });
 });
