@@ -685,7 +685,11 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   }, [list, stats, sel, view, liveTasks.loading, liveTasks.error]);
   usePublishSurfaceContext('tasks', anaContext);
 
-  /* Critical path: topological-ish chain over dependsOn, criticalPath:true */
+  /* The tasks a person marked critical-path (unified_tasks.critical_path), in
+     dependency order over dependsOn. Not a computed critical path: nothing here
+     weighs durations or finds a longest chain, and the header must not say it
+     does (it read "computed from the taskDependencies DAG (getCriticalPath)",
+     an endpoint this surface never calls). */
   const critChain = useMemo(() => {
     const crit = list.filter(t => t.criticalPath);
     const seen: Record<string, boolean> = {};
@@ -903,7 +907,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
 
       {view === 'path' && (
         <div className="tb-path">
-          <div className="tb-path-h">Critical path — {critChain.length} tasks — computed from the <code>taskDependencies</code> DAG (getCriticalPath)</div>
+          <div className="tb-path-h">Critical path — {critChain.length} {critChain.length === 1 ? 'task' : 'tasks'} marked critical-path, in dependency order</div>
           {critChain.map((t, i) => (
             <div
               key={t.taskId}

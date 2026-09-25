@@ -380,8 +380,12 @@ export async function getRecentGovernedDecisions(options: {
     governanceMetrics.recordQueryExecuted();
     return records.map((r: DecisionRecord) => mapRow(r as unknown as Record<string, unknown>));
   } catch (err) {
+    // A read the database could not answer is an error, never "no decisions".
+    // This returned [] here, and the summary and trace built on it inherited
+    // the empty answer, so an outage read as "this project has no governed
+    // decisions" (ledger L186). The routes above answer a rejection with 500.
     governanceMetrics.recordQueryFailure('getRecentGovernedDecisions', err);
-    return [];
+    throw err;
   }
 }
 
@@ -448,8 +452,11 @@ export async function getGovernedDecision(
     const { decisionRecordService } = await import('./decision-record-service.js');
     const record = await decisionRecordService.getById(decisionId, organizationId);
     return record ? mapRow(record as unknown as Record<string, unknown>) : null;
-  } catch {
-    return null;
+  } catch (err) {
+    // null means "this org has no such decision", which a caller answers 404. A
+    // read that failed is not that (ledger L186).
+    governanceMetrics.recordQueryFailure('getGovernedDecision', err);
+    throw err;
   }
 }
 
@@ -580,8 +587,10 @@ export async function getDecisionTimeline(
       [decisionId, organizationId]
     );
     return result.rows.map(mapTransitionRow);
-  } catch {
-    return [];
+  } catch (err) {
+    // An empty history is a claim that nothing happened (ledger L186).
+    governanceMetrics.recordQueryFailure('getDecisionTimeline', err);
+    throw err;
   }
 }
 
@@ -611,8 +620,14 @@ export async function getProjectReviewQueue(
       else if (row.to_state === 'rejected') rejected.push(id);
     }
     return { pending, escalated, deferred, rejected };
-  } catch {
-    return { pending: [], escalated: [], deferred: [], rejected: [] };
+  } catch (err) {
+    // THE GATE CASE. hasUnresolvedGovernedDecisions below is built on this
+    // queue, and two gates decide on it: the CMC final export gate and governed
+    // AnA execution. Empty queues here meant a database outage answered
+    // "nothing unresolved", so both gates opened. A rejection is what both
+    // already treat as blocking (ledger L186).
+    governanceMetrics.recordQueryFailure('getProjectReviewQueue', err);
+    throw err;
   }
 }
 

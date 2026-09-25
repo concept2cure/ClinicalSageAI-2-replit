@@ -25,12 +25,15 @@
 // [eCTD section code, CTD module, section title, tracking status]. Real eCTD codes
 // (m-prefixed) and real project_sections.status vocabulary; the assembler strips the
 // leading 'm' for display and maps approved/signed/locked → complete.
-const SECTIONS = [
+export const SECTIONS = [
   // Module 1 — Administrative & prescribing (3 of 4 complete → 75%)
   ['m1.1', 'M1', 'FDA Forms', 'approved'],
-  ['m1.3.1', 'M1', 'Draft Labeling', 'approved'],
-  ['m1.14.1', 'M1', 'Meeting Materials', 'signed'],
-  ['m1.12.4', 'M1', 'Financial Disclosure', 'drafting'],
+  // FDA's own codes (controlled-vocab/cv-v4-data.ts). These three were filed at
+  // m1.3.1, m1.14.1 and m1.12.4, which mean something else to FDA
+  // (tests/schema-contract/dossier-map-seed-module1-codes.contract.test.ts).
+  ['m1.14.1.3', 'M1', 'Draft Labeling', 'approved'],
+  ['m1.6.2', 'M1', 'Meeting Materials', 'signed'],
+  ['m1.3.4', 'M1', 'Financial Disclosure', 'drafting'],
   // Module 2 — CTD summaries (2 of 4 complete → 50%)
   ['m2.3', 'M2', 'Quality Overall Summary', 'approved'],
   ['m2.4', 'M2', 'Nonclinical Overview', 'approved'],
@@ -50,6 +53,13 @@ const SECTIONS = [
   ['m5.3.1', 'M5', 'Biopharmaceutic Study Reports', 'approved'],
   ['m5.3.5', 'M5', 'Efficacy & Safety Study Reports', 'approved'],
   ['m5.3.5.3', 'M5', 'Integrated Summary of Safety', 'drafting'],
+];
+
+/** [code, title] rows earlier versions of this seed filed under the wrong FDA code. */
+const MISFILED = [
+  ['m1.3.1', 'Draft Labeling'],
+  ['m1.14.1', 'Meeting Materials'],
+  ['m1.12.4', 'Financial Disclosure'],
 ];
 
 const PROJECT_CODE = 'BX-204';
@@ -127,6 +137,19 @@ export default async function seed(client, { org, admin }) {
       ],
     );
     projectId = ins.rows[0].id;
+  }
+
+  // Retire the rows an earlier version of this seed misfiled. ON CONFLICT DO
+  // NOTHING below would otherwise leave them beside the corrected ones on a
+  // database seeded before the fix. Scoped to this demo project, and matched on
+  // code AND title, so nothing else can match.
+  if (MISFILED.length > 0) {
+    await client.query(
+      `DELETE FROM project_sections
+        WHERE organization_id = $1 AND project_id = $2
+          AND (section_code, title) IN (SELECT * FROM unnest($3::text[], $4::text[]))`,
+      [org.id, projectId, MISFILED.map(([c]) => c), MISFILED.map(([, t]) => t)],
+    );
   }
 
   // Seed the real CTD sections; idempotent via UNIQUE (project_id, section_code).

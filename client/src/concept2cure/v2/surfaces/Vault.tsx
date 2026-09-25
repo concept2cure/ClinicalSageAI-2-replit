@@ -53,7 +53,8 @@ interface DataRoomRow {
   kind: string;
   sizeLabel: string;
   addedAt: string;
-  stage: 'captured' | 'classified' | 'filed';
+  /** 'needs_review': the classifier ran and refused to propose a folder. */
+  stage: 'captured' | 'needs_review' | 'classified' | 'filed';
   readState: string;
   suggestedFolder: string | null;
   suggestedFolderLabel: string;
@@ -66,7 +67,36 @@ interface DataRoomBlock {
   captured: number;
   classified: number;
   filed: number;
+  /** Absent on a server that predates it. */
+  needsReview?: number;
   sources: DataRoomRow[];
+  /** The newest-N window the counts cover; truncated = the program has more. */
+  window?: { shown: number; truncated: boolean };
+}
+
+/** A count over a truncated window is a floor, and reads as one. */
+function roomCount(n: number, block: DataRoomBlock): string {
+  return block.window?.truncated ? `${n}+` : String(n);
+}
+
+const ROOM_STAGE: Record<DataRoomRow['stage'], { label: string; tone: string }> = {
+  filed: { label: 'Filed', tone: 'ok' },
+  classified: { label: 'Classified', tone: 'ai' },
+  needs_review: { label: 'Needs review', tone: 'warn' },
+  captured: { label: 'Captured', tone: 'idle' },
+};
+
+/** What the lane's counts cover, and what needs a person. */
+function RoomNotes({ block }: { block: DataRoomBlock }) {
+  const review = block.needsReview ?? 0;
+  const truncated = block.window?.truncated === true;
+  if (!review && !truncated) return null;
+  return (
+    <span className="vd-dr-meta">
+      {review > 0 ? `${review} need review — the classifier would not propose a folder. ` : ''}
+      {truncated ? `Counts cover the newest ${block.window?.shown ?? block.captured} sources; this project has more.` : ''}
+    </span>
+  );
 }
 
 interface VaultDisplayShape {
@@ -270,12 +300,13 @@ function DataRoomLane({
       <div className="vd-dr-head">
         <span className="vd-dr-title">{I.inbox || I.folder} Data room</span>
         <span className="vd-dr-stages">
-          <span className="vd-dr-stage">Captured <b>{block.captured}</b></span>
+          <span className="vd-dr-stage">Captured <b>{roomCount(block.captured, block)}</b></span>
           <span className="vd-dr-arrow">›</span>
-          <span className="vd-dr-stage">Classified <b>{block.classified}</b></span>
+          <span className="vd-dr-stage">Classified <b>{roomCount(block.classified, block)}</b></span>
           <span className="vd-dr-arrow">›</span>
-          <span className="vd-dr-stage">Filed to vault <b>{block.filed}</b></span>
+          <span className="vd-dr-stage">Filed to vault <b>{roomCount(block.filed, block)}</b></span>
         </span>
+        <RoomNotes block={block} />
         {block.sources.length > 0 && (
           <button className="vd-dr-toggle" onClick={() => setOpen((o) => !o)}>
             {open ? 'Hide sources' : `Show ${block.sources.length} source${block.sources.length === 1 ? '' : 's'}`}
@@ -303,13 +334,8 @@ function DataRoomLane({
                   → {s.suggestedFolderLabel}
                 </span>
               ) : null}
-              <span
-                className={
-                  'rd-chip tone-' +
-                  (s.stage === 'filed' ? 'ok' : s.stage === 'classified' ? 'ai' : 'idle')
-                }
-              >
-                {s.stage === 'filed' ? 'Filed' : s.stage === 'classified' ? 'Classified' : 'Captured'}
+              <span className={'rd-chip tone-' + (ROOM_STAGE[s.stage] ?? ROOM_STAGE.captured).tone}>
+                {(ROOM_STAGE[s.stage] ?? ROOM_STAGE.captured).label}
               </span>
             </div>
           ))}
@@ -449,7 +475,11 @@ interface VaultSearchShape {
 /** A search hit rendered in the same row component the tree uses. */
 function searchHitToDoc(h: VaultSearchHit): VaultDoc {
   return {
-    id: h.id,
+    /* Keyed the way the tree keys the same document (`up-<uuid>`, server
+       uploadLeaf), so a hit and its tree leaf are one selection. Keyed by the
+       bare uuid, no hit ever matched, and every click fell back to the first
+       hit. */
+    id: `up-${h.id}`,
     num: h.ctdSection || '',
     title: h.title,
     // The same reader-facing name the tree shows (the server maps tree rows
@@ -792,8 +822,19 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
     { documentUuid: string; documentTitle: string; mimeType?: string | null } | null
   >(null);
 
-  const sel =
-    allDocs.find((d) => d.id === selId) || results[0] || allDocs[0] || null;
+  /* The tree's record of a document wins over a search hit for the same one:
+     it carries the filing block (Confirm, Move, Place into submission) that a
+     hit does not, and keeps the hit's matching excerpt. A document only the
+     search found is shown as its hit. */
+  const pick = (id: string | undefined): VaultDoc | undefined => {
+    if (id === undefined) return undefined;
+    const leaf = allDocs.find((d) => d.id === id);
+    const hit = searching ? results.find((d) => d.id === id) : undefined;
+    if (!leaf) return hit;
+    // While searching, the excerpt that matched is what the reader needs to see.
+    return hit?.preview ? { ...leaf, preview: hit.preview } : leaf;
+  };
+  const sel = pick(selId ?? undefined) || pick(results[0]?.id) || allDocs[0] || null;
 
   /* What AnA can see of this screen.
      Until now she knew the user was on "vault" and nothing else — not which
@@ -835,6 +876,9 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
               captured: vault.dataRoom.captured,
               classified: vault.dataRoom.classified,
               filed: vault.dataRoom.filed,
+              needsReview: vault.dataRoom.needsReview ?? null,
+              // When true, the three counts above cover the newest sources only.
+              truncated: vault.dataRoom.window?.truncated === true,
             }
           : vault?.unavailable?.some((u) => u.branch === 'Data room')
             ? 'unavailable — counts unknown, not zero'

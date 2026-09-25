@@ -841,10 +841,20 @@ export async function readPendingApproval(
  * whatever the run moved on to. Without that, a signature collected for one
  * action could be applied to another — which is the failure mode an e-signature
  * exists to make impossible.
+ *
+ * Guarded on `organization_id` for the same reason one level up: a decision
+ * must attach to a run of the tenant that made it. Every caller runs the
+ * org-scoped `readPendingApproval` first, so this was not reachable
+ * cross-tenant — but the safety lived in a different statement, and this one
+ * carried no tenant predicate of its own. With RLS_ENFORCE off the policy is
+ * inert, so the statement is the only place the boundary can live. Under
+ * RLS_ENFORCE=on the request's scoped client enforces it as well; this is the
+ * layer that does not depend on that switch. Ledger L206.
  */
 export async function recordApprovalDecision(
   pool: RunControlQuery,
   runId: string,
+  organizationId: number,
   decision: ApprovalDecision,
 ): Promise<boolean> {
   const { rowCount } = await pool.query(
@@ -854,9 +864,10 @@ export async function recordApprovalDecision(
          pending_approval = NULL,
          updated_at = now()
      WHERE id = $1
+       AND organization_id = $4
        AND status = 'awaiting_approval'
        AND pending_approval ->> 'toolUseId' = $3`,
-    [runId, JSON.stringify(decision), decision.toolUseId],
+    [runId, JSON.stringify(decision), decision.toolUseId, organizationId],
   );
   if (!rowCount) return false;
   await notifyAndDrive(pool, runId, 'running');

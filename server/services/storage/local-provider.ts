@@ -206,6 +206,9 @@ export class LocalStorageProvider implements IStorageProvider {
   async isAvailable(): Promise<boolean> {
     try {
       ensureDir(VAULT_ROOT);
+      // Existing is not enough: a volume mounted over storage/ as another user
+      // exists and refuses every write.
+      fs.accessSync(VAULT_ROOT, fs.constants.W_OK);
       return true;
     } catch {
       return false;

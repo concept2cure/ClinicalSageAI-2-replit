@@ -1,0 +1,7 @@
+ × server/routes/c2c/__tests__/project-vault-cabinet-other-view.test.ts > filingCabinet — a document filed under another view > every upload the cabinet is given appears in it exactly once
+   → expected [ 'in-view', 'unfiled' ] to deeply equal [ 'device-folder', 'in-view', …(1) ]
+ × server/routes/c2c/__tests__/project-vault-cabinet-other-view.test.ts > filingCabinet — a document filed under another view > shows it under a folder that says it was filed under another view, naming where
+   → the other-view folder must exist when such a document does: expected undefined to be truthy
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet-other-view.test.ts > filingCabinet — a document filed under another view > adds no such folder when every document is in view
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 1 passed (3)

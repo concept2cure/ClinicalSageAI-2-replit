@@ -40,6 +40,8 @@ at HEAD before it was fixed, and each fix was shown failing first.
 | `storage-provider-production-bundle.test.ts`: the storage module is built with the production options and selected in plain Node (vitest supplies a working `require`, so it cannot show #1) | 2/4: `S3StorageProvider: @aws-sdk/client-s3…`; `gcs` → `'local'` (`red/R1`) | 4/4 (`green/R1`) |
 | `s3-provider-lookup.test.ts`, against a fake that follows S3's paging contract | 6/7: missing behind 1,200 foreign keys; the 1,200th missing; `list` 500 of 700; `delete` false; `''` prefix; AccessDenied → `null` (`red/R2`) | 7/7 (`green/R2`) |
 | `storage-posture.test.ts`, which imports the real `environment.ts` in a production process | "expected 'LOADED' to match /REFUSED: .*STORAGE_PROVIDER/" before wiring (`red/R3`) | 7/7 (`green/R3`) |
+| `readyz-vault-storage.test.ts`: `/readyz` gains a `storage` dependency (`store-readiness.ts`) that is down on false, a throw, an unselectable provider, or no answer within 3 s, with no bucket name in the unauthenticated body. The local provider's probe also requires `storage/` to be writable. | 5/5: `/readyz` answered 200 whatever the store did (`red/R5`) | 5/5, and the existing readiness suites still pass, 77/77 (`green/R5`) |
+| `vault-recorded-provider.test.ts` follows the re-baseline's spec. A document is written by the real local provider, and the server is then configured for S3 with no bucket. Readers now open the store each row recorded (`getStorageProviderFor`, `vault.documents.storage_provider`). | 3/4: the `local` row read as STORED_FILE_MISSING, and an unimplemented or unopenable store was indistinguishable from a missing file (`red/R6`) | 4/4; the eCTD resolver's new case is 12/12 and fails when the resolver asks the configured store instead (`red/R6b`, `green/R6`) |
 | `terraform test` on `terraform/stack`, whose preflight names come from `deploy-aws.yml` | 15/17: API, worker and staging lack a required name (`red/R4-terraform.txt`) | 19/19 at HEAD, which includes the vault run and the deploy-role run another lane added the same hour (`green/R4-terraform.txt`) |
 
 Nine mutants of the new Terraform run (`mutants/`). Each one fails exactly one run:
@@ -85,14 +87,12 @@ registry.terraform.io. Providers were mocked, and nothing was applied.
   account.
 - **Retention of noncurrent versions** is a records-retention decision. Nothing
   expires today.
-- **A reader naming a provider mismatch.** A row stored under one provider and
-  read under another fails closed: 409, "stored file could not be read", nothing
-  served. It does not say which provider holds the bytes. A fresh S3
-  deployment has no such rows. A local-to-S3 migration would need the
-  backfill script in the image, and it is not there.
-- **`/readyz` does not probe the bucket.** A task whose role cannot reach it
-  reports ready and fails every upload. The upload refuses to record bytes it
-  could not write, so nothing is falsified.
+- **The backfill script in the image.** Readers now open the store a row
+  recorded, so a deployment that moves from local disk to S3 keeps reading the
+  documents stored before the move. Moving those bytes (`scripts/backfill-vault-storage.mjs`)
+  is still a script the production image does not carry. `rendered_leaf_files`
+  and the AI-action handlers hold a bare version id with no recorded provider,
+  so they cannot be fixed from their rows.
 - **Compose stacks** already refused to boot before this change: neither sets
   `AI_SENSITIVE_DATA_POLICY_MODE` or `CONCEPT2CURE_SIGNER_MODE`. That is not
   this lane's to change.

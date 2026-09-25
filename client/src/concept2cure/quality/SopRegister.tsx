@@ -7,11 +7,17 @@
  * read-and-understood training, change control (revise / retire), and the
  * Quality system template gallery.
  *
- * AnA-first: every action is a conversational prompt handed to the host's AnA
+ * AnA-first: actions are conversational prompts handed to the host's AnA
  * surface via `onAsk` — the same pattern as the MDX Quality kit and the
- * Intelligence cluster. No mutation is performed directly here; AnA runs the
- * governed action (and captures the reason-for-change / e-signature) so the
- * 21 CFR Part 11 audit trail stays the single path.
+ * Intelligence cluster.
+ *
+ * Approval is the exception, because it is an electronic signature and AnA
+ * cannot sign: a chat turn cannot collect a password. The row's Approve button
+ * opens the shared EsignModal, which posts to the signed route
+ * (POST /api/mdx/qms/documents/:id/approve, VSR-001 F-3). Until 2026-09-24 this
+ * button was "Ask AnA to approve", its tooltip said "you still capture the
+ * e-signature", and the tool it reached made the SOP effective with no
+ * signature at all (new-code audit 2026-09-24, finding 1).
  *
  * @module client/src/concept2cure/quality/SopRegister
  */
@@ -31,6 +37,10 @@ import {
   isReviewOverdue,
 } from './data';
 import { useSopRegister, useSopTemplates, useReviewDue, useTrainingCompliance } from './hooks';
+import { EsignModal, esignSignerOf, type EsigSignedManifest } from '../_shared/components/EsignModal';
+import { useAuth } from '@/services/portal/authService';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
+import type { QmsDoc } from './data';
 /* The canonical sample-mode guard and its marker, shared with the MDX lane —
    one definition of "may a fixture reach the screen", so two lanes cannot
    answer it differently. */
@@ -47,6 +57,42 @@ export interface SopRegisterProps {
 }
 
 export type StatusFilter = 'all' | 'effective' | 'in_review' | 'draft';
+
+/**
+ * POST the approval to the signed route with the credentials the dialog just
+ * checked; the server re-verifies them in the transaction that writes the
+ * signature. A refusal is thrown as the sentence to show, and the dialog stays
+ * open. The time shown afterwards is the server's, from the signature row.
+ */
+export async function approveControlledDocument(
+  docId: number,
+  input: { reason: string; password: string; totp?: string },
+): Promise<EsigSignedManifest> {
+  const res = await apiRequest('POST', `/api/mdx/qms/documents/${docId}/approve`, {
+    password: input.password,
+    ...(input.totp ? { mfaToken: input.totp } : {}),
+    meaning: 'APPROVED',
+    reason: input.reason,
+  });
+  const json = (await res.json().catch(() => null)) as {
+    meta?: { signature?: { signedAt?: string; boundPayloadDigest?: string } };
+  } | null;
+  // apiRequest returns a 401 rather than throwing it; here it is the signing
+  // ceremony refusing the password or code.
+  if (res.status === 401) {
+    throw new Error((serverMessage(json) ?? 'Your password or code was not verified.') + ' Nothing was signed.');
+  }
+  const sig = json?.meta?.signature;
+  if (!sig?.signedAt) {
+    throw new Error('The server did not return the signature record. Reload the register to see whether the approval was recorded.');
+  }
+  return {
+    meaning: 'approval',
+    reason: input.reason,
+    signedAt: sig.signedAt,
+    ...(sig.boundPayloadDigest ? { hash: sig.boundPayloadDigest } : {}),
+  };
+}
 
 /** The register's status chips — exported so QualityApp can belt-validate a
     driven filter against the same set the pane renders. */
@@ -113,6 +159,9 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
   /* One predicate for the whole surface: the document register is what the
      rest is derived from, so if that is sample then so is the view. */
   const showingSample = useShowingSample(reg.docs);
+  const { user } = useAuth();
+  /** The document being approved, while the signature dialog is open. */
+  const [approving, setApproving] = React.useState<QmsDoc | null>(null);
 
   const effectiveCount = docs.filter((d) => d.status === 'effective').length;
   const underReviewCount = docs.filter((d) => d.status === 'in_review').length;
@@ -296,16 +345,15 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
                   {(d.status === 'draft' || d.status === 'in_review') && (
                     <button
                       className="qms-chip"
-                      title="Opens the approval in AnA — you still capture the e-signature; it is not approved by clicking here"
-                      onClick={() =>
-                        onAsk(
-                          `Approve ${d.docNumber} ${d.title} (v${d.version}) and make it effective — confirm the reviewer ` +
-                            '(must differ from the author), capture the e-signature, set the effective date and the next ' +
-                            'periodic-review date, then write the Part 11 audit entry.',
-                        )
+                      disabled={showingSample}
+                      title={
+                        showingSample
+                          ? 'Sample rows cannot be approved'
+                          : 'Approve with your electronic signature (password and second factor). The author cannot approve their own document.'
                       }
+                      onClick={() => setApproving(d)}
                     >
-                      {I.sparkle} Ask AnA to approve
+                      {I.check} Approve
                     </button>
                   )}
                   {d.status === 'effective' && (
@@ -433,6 +481,23 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
           </div>
         </section>
       </div>
+      {approving && (
+        <EsignModal
+          open
+          action="Approve controlled document"
+          target={`${approving.docNumber} ${approving.title}`}
+          targetMeta={`v${approving.version} becomes effective when you sign. The author cannot approve their own document.`}
+          defaultMeaning="approval"
+          meanings={['approval']}
+          signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
+          onClose={() => setApproving(null)}
+          onSign={async (input) => {
+            const manifest = await approveControlledDocument(approving.id, input);
+            reg.refresh?.();
+            return manifest;
+          }}
+        />
+      )}
     </>
   );
 }

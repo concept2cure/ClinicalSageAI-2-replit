@@ -1,0 +1,2 @@
+[ci:drizzle-tenant-scope] OK — 126 site(s), all baselined; 25 fixed since the baseline was written.
+[ci:drizzle-tenant-scope] Re-run with --write-baseline to bank the 25 fix(es).

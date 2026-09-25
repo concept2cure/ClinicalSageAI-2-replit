@@ -1,0 +1,3 @@
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchSelection.test.tsx > Vault search — selection > clicking the second hit shows the second hit, not the first
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchSelection.test.tsx > Vault search — selection > a hit for a filed document keeps its filing actions
+      Tests  2 passed (2)

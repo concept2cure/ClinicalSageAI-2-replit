@@ -592,20 +592,28 @@ ${items.map(e => `- ${e.title}: ${e.content.slice(0, 200)}`).join('\n')}`);
 }
 
 /**
- * Delete a memory entry (soft-delete by archiving).
+ * Delete a memory entry (soft-delete by archiving). Scoped to the org, as the
+ * supersede transitions below are; false when no entry of this org has the id.
  */
-export async function archiveMemoryEntry(entryId: number): Promise<void> {
-  await db
+export async function archiveMemoryEntry(entryId: number, organizationId: number): Promise<boolean> {
+  const rows = await db
     .update(clientMemoryEntries)
     .set({ status: 'archived', updatedAt: new Date() })
-    .where(eq(clientMemoryEntries.id, entryId));
+    .where(and(eq(clientMemoryEntries.id, entryId), eq(clientMemoryEntries.organizationId, organizationId)))
+    .returning({ id: clientMemoryEntries.id });
+  return rows.length > 0;
 }
 
 /**
- * Verify/confirm a memory entry as accurate.
+ * Verify/confirm a memory entry as accurate. Scoped to the org; false when no
+ * entry of this org has the id.
  */
-export async function verifyMemoryEntry(entryId: number, userId: number): Promise<void> {
-  await db
+export async function verifyMemoryEntry(
+  entryId: number,
+  organizationId: number,
+  userId: number
+): Promise<boolean> {
+  const rows = await db
     .update(clientMemoryEntries)
     .set({
       isVerifiedByUser: true,
@@ -613,7 +621,9 @@ export async function verifyMemoryEntry(entryId: number, userId: number): Promis
       verifiedBy: userId,
       updatedAt: new Date(),
     })
-    .where(eq(clientMemoryEntries.id, entryId));
+    .where(and(eq(clientMemoryEntries.id, entryId), eq(clientMemoryEntries.organizationId, organizationId)))
+    .returning({ id: clientMemoryEntries.id });
+  return rows.length > 0;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -644,7 +654,12 @@ export async function upsertProjectIntelligence(
   const existing = await db
     .select()
     .from(projectIntelligenceProfiles)
-    .where(eq(projectIntelligenceProfiles.projectId, projectId))
+    .where(
+      and(
+        eq(projectIntelligenceProfiles.projectId, projectId),
+        eq(projectIntelligenceProfiles.organizationId, organizationId)
+      )
+    )
     .limit(1);
 
   const profileData = {
@@ -684,14 +699,35 @@ export async function upsertProjectIntelligence(
  * Get project intelligence profile.
  */
 export async function getProjectIntelligence(
-  projectId: number
+  projectId: number,
+  organizationId: number
 ): Promise<ProjectIntelligenceProfile | null> {
   const rows = await db
     .select()
     .from(projectIntelligenceProfiles)
-    .where(eq(projectIntelligenceProfiles.projectId, projectId))
+    .where(
+      and(
+        eq(projectIntelligenceProfiles.projectId, projectId),
+        eq(projectIntelligenceProfiles.organizationId, organizationId)
+      )
+    )
     .limit(1);
   return rows[0] || null;
+}
+
+/**
+ * Whether `projectId` is a project of `organizationId`. The /project/:projectId
+ * routes read and wrote project intelligence by project id alone; see the
+ * router.param guard in server/routes/client-intelligence.ts (ledger L195).
+ */
+export async function isOwnProject(organizationId: number, projectId: number): Promise<boolean> {
+  if (!Number.isSafeInteger(projectId)) return false;
+  const [row] = await db
+    .select({ id: projects.id })
+    .from(projects)
+    .where(and(eq(projects.id, projectId), eq(projects.organizationId, organizationId)))
+    .limit(1);
+  return Boolean(row);
 }
 
 /**
@@ -840,9 +876,10 @@ export async function getProjectIngestedDocuments(
  * Build project intelligence context for the AnA 1.0 RI system prompt.
  */
 export async function buildProjectIntelligenceContext(
-  projectId: number
+  projectId: number,
+  organizationId: number
 ): Promise<string | null> {
-  const profile = await getProjectIntelligence(projectId);
+  const profile = await getProjectIntelligence(projectId, organizationId);
   if (!profile || profile.profileStatus !== 'active') return null;
 
   const { entries } = await getProjectMemoryEntries(profile.id, { limit: 30 });

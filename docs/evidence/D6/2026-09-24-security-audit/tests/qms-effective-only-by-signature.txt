@@ -1,0 +1,40 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/ana-cannot-sign.test.ts
+Created cache directory: /home/user/ClinicalSageAI-2-replit/data/cache
+
+stdout | server/routes/__tests__/qms-effective-only-by-signature.test.ts
+{
+  "timestamp": "2026-09-24T19:43:40.923Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-24T19:43:40.924Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/qms-effective-only-by-signature.test.ts
+{
+  "timestamp": "2026-09-24T19:43:40.924Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts (8 tests) 85ms
+ ✓ server/services/ana/__tests__/ana-cannot-sign.test.ts (20 tests) 13ms
+
+ Test Files  2 passed (2)
+      Tests  28 passed (28)
+   Start at  19:43:36
+   Duration  8.44s (transform 8.02s, setup 263ms, import 11.69s, tests 98ms, environment 0ms)
+
+exit=0

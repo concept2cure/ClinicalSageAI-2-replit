@@ -105,8 +105,8 @@
     gap: 6px;
   }
   .ed-basis-chip {
-    font-size: 9.5px;
-    font-weight: 700;
+    font-size: 10px;
+    font-weight: 600;
     padding: 2px 7px;
     border-radius: 999px;
     text-transform: uppercase;
@@ -130,7 +130,7 @@
     color: var(--error);
   }
   .ed-basis-l {
-    font-size: 9.5px;
+    font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--text-400);
@@ -336,7 +336,7 @@
     flex: 1;
     min-width: 0;
   }
-  .ed-full-edit { opacity: 0; transition: opacity 120ms ease-out; }
+  .ed-full-edit { opacity: 0; transition: opacity var(--dur) var(--ease); }
   .ed-full-sec:hover .ed-full-edit,
   .ed-full-edit:focus-visible { opacity: 1; }
   @media (prefers-reduced-motion: reduce) {
@@ -379,7 +379,7 @@
     height: auto;
     margin: 16px 0;
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
   }
   .ed-full-sec-body img[data-authsrc]:not([src]),
   .bd-card-body img[data-authsrc]:not([src]) {
@@ -392,7 +392,7 @@
     color: var(--text-400);
     font-style: italic;
     border: 1px dashed var(--border);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     padding: 10px 12px;
     margin: 16px 0;
   }
@@ -478,7 +478,7 @@
     font-size: 10px;
     color: var(--accent-200);
     background: var(--accent-000);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     vertical-align: 1px;
     cursor: pointer;
   }
@@ -523,7 +523,7 @@
     font-family: var(--font-sans);
     opacity: 0;
     transform: translateY(4px);
-    transition: opacity 180ms var(--ease), transform 180ms var(--ease);
+    transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
     pointer-events: none;
     box-shadow: var(--shadow-lg);
     z-index: 5;
@@ -539,7 +539,7 @@
     padding: 2px 0;
   }
   .ed-prov-r .k {
-    font-size: 9.5px;
+    font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     opacity: 0.55;
@@ -643,7 +643,7 @@
   }
   .ana-next-action:disabled {
     cursor: not-allowed;
-    opacity: 0.55;
+    opacity: 0.5;
   }
 
   /* ── phases (IND) ── */
@@ -1031,7 +1031,7 @@
   }
   .esign-field input:focus,
   .esign-field select:focus {
-    border-color: var(--accent-100);
+    border-color: var(--accent-200);
   }
   .esign-manifest {
     font-size: 11px;
@@ -1074,8 +1074,8 @@
     position: absolute;
     top: -11px;
     left: 22px;
-    background: var(--accent-100);
-    color: #fff;
+    background: var(--accent-strong);
+    color: var(--accent-on-strong);
     font-size: 10px;
     font-weight: 600;
     padding: 4px 11px;
@@ -1161,7 +1161,7 @@
   .ed-guard:focus-visible {
     box-shadow:
       var(--v2-shadow-lg),
-      0 0 0 2px var(--accent-100);
+      0 0 0 2px var(--accent-200);
   }
   .ed-guard-t {
     font-size: 15px;
@@ -1504,7 +1504,7 @@
     font-size: 12px;
     color: var(--text-300);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     padding: 1px 5px;
     flex-shrink: 0;
   }
@@ -1556,7 +1556,7 @@
        the conversation was flexed to zero: the thread rendered, the canvas
        rendered, and neither was visible. Stacked, the conversation keeps the
        screen and the dock takes a capped share beneath it — nothing is
-       removed, so "Hide side panel" still means what it says.
+       removed, so the header's progress chip still means what it says.
 
        These three selectors belong beside `.ct-side` in app-v2.css. They are
        here because that file is another workstream's this week; the canvas
@@ -1804,7 +1804,7 @@
   }
   .pf-folder-chev {
     display: inline-flex;
-    transition: transform 150ms ease-out;
+    transition: transform var(--dur) var(--ease);
   }
   .pf-folder-chev[data-open] {
     transform: rotate(90deg);

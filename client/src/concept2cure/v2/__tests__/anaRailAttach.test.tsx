@@ -132,6 +132,9 @@ describe('send tells the truth about what was attached', () => {
     const text = onSend.mock.calls[0][0] as string;
     expect(text).toContain('Summarise this');
     expect(text).toContain('protocol.pdf');
+    // And the file itself, by the id the upload returned — the name alone
+    // gives the stream nothing to open.
+    expect(onSend.mock.calls[0][1]).toEqual([expect.objectContaining({ name: 'protocol.pdf', fileId: 'file_abc' })]);
   });
 
   it('does NOT claim an attachment when the upload failed', async () => {
@@ -151,6 +154,7 @@ describe('send tells the truth about what was attached', () => {
     expect(text).toContain('Read this');
     expect(text).not.toContain('broken.pdf');
     expect(text).not.toMatch(/attached/i);
+    expect(onSend.mock.calls[0][1]).toEqual([]);
   });
 
   it('refuses to send at all when only a failed upload is present', async () => {

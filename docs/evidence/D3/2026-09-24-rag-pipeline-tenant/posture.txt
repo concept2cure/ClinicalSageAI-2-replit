@@ -1,0 +1,43 @@
+# Read from c2c_d3 (provisioned from empty at 0521402e) on 2026-09-24T19:13:02Z, after every mutation was reverted
+rolname | rolsuper | rolbypassrls
+app_service | f | f
+(1 row)
+rel | rls | force | owner
+vault.document_chunks | t | f | postgres
+vault.documents | t | f | postgres
+(2 rows)
+?column? | policyname | cmd | qual
+vault.document_chunks | rls_vault_chunks_delete | DELETE | (EXISTS ( SELECT 1
+   FROM vault.documents d
+  WHERE ((d.id = document_chunks.document_id) AND core.can_write_program(d.program_id))))
+vault.document_chunks | rls_vault_chunks_insert | INSERT | 
+vault.document_chunks | rls_vault_chunks_select | SELECT | (EXISTS ( SELECT 1
+   FROM vault.documents d
+  WHERE ((d.id = document_chunks.document_id) AND core.can_access_program(d.program_id))))
+vault.document_chunks | rls_vault_chunks_update | UPDATE | (EXISTS ( SELECT 1
+   FROM vault.documents d
+  WHERE ((d.id = document_chunks.document_id) AND core.can_write_program(d.program_id))))
+vault.documents | rls_vault_documents_delete | DELETE | core.can_write_program(program_id)
+vault.documents | rls_vault_documents_insert | INSERT | 
+vault.documents | rls_vault_documents_select | SELECT | core.can_access_program(program_id)
+vault.documents | rls_vault_documents_update | UPDATE | core.can_write_program(program_id)
+vault.documents | vault_documents_delete_policy | DELETE | core.can_write_program(program_id)
+vault.documents | vault_documents_insert_policy | INSERT | 
+vault.documents | vault_documents_select_policy | SELECT | core.can_access_program(program_id)
+vault.documents | vault_documents_update_policy | UPDATE | core.can_write_program(program_id)
+(12 rows)
+fn | security_definer
+core.can_access_program | t
+core.get_program_org_id | f
+identity.can_access_program | t
+identity.current_org_id | t
+(4 rows)
+-- identity.current_org_id() body:
+CREATE OR REPLACE FUNCTION identity.current_org_id()
+ RETURNS uuid
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+AS $function$
+        SELECT substring(current_setting('app.current_org_id', TRUE) from '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')::UUID;
+    $function$
+

@@ -52,6 +52,8 @@ import { productTypesToSegments } from '../../services/report-os/segment.js';
 import {
   filingTypesForView,
   foldersForView,
+  VAULT_FOLDER_PRESETS,
+  VAULT_VIEWS,
   VAULT_DOC_KINDS,
   type VaultViewId,
   vaultIngestTypeLabel,
@@ -64,7 +66,7 @@ import {
 import { listClientDocuments } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
 import { writeChainedAuditRow } from '../../services/auditService.js';
 import { requireEditorAccess } from '../../middleware/orgMembership.js';
-import { getStorageProvider } from '../../services/storage/index.js';
+import { getStorageProvider, getStorageProviderFor } from '../../services/storage/index.js';
 /* The one translation from a CMC TEXT project id to the integer the
    governed artifact registry FKs to. Its contract requires every caller to
    branch on the resolution and keep an honest degraded path. */
@@ -129,9 +131,12 @@ interface DataRoomRow {
   addedAt: string;
   /** captured → classified → filed; DERIVED, never stored guesswork:
    *  'filed' = its checksum matches a vault document in this program,
-   *  'classified' = the capture path stamped a dossier classification,
-   *  'captured' = neither. */
-  stage: 'captured' | 'classified' | 'filed';
+   *  'classified' = the classifier proposed a folder for it,
+   *  'needs_review' = the classifier ran and refused to propose one,
+   *  'captured' = the classifier has not run on it.
+   *  ("Classified" used to mean "the classifier ran", so a refusal read as a
+   *  classification.) */
+  stage: 'captured' | 'needs_review' | 'classified' | 'filed';
   readState: string;
   suggestedFolder: string | null;
   suggestedFolderLabel: string;
@@ -142,10 +147,20 @@ interface DataRoomRow {
 
 interface DataRoomBlock {
   captured: number;
+  /** Sources the classifier placed, filed ones included (the pipeline is cumulative). */
   classified: number;
   filed: number;
+  /** Sources the classifier refused to place: a person has to decide. */
+  needsReview: number;
   sources: DataRoomRow[];
+  /** The lane reads the newest DATA_ROOM_WINDOW current sources. When there
+   *  are more, every count above covers the window only and is a floor. */
+  window: { shown: number; truncated: boolean };
 }
+
+/** How many current sources the lane reads. One more is asked for, so a full
+ *  window can say it is full without a second query. */
+const DATA_ROOM_WINDOW = 200;
 
 interface VaultDisplayShape {
   program: string;
@@ -472,6 +487,16 @@ export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
   return leaf;
 }
 
+/** A folder id's label and the view it belongs to, for a folder the current
+ *  view does not have. Names the raw id only when no view knows it. */
+function whereFiled(folderId: string): string {
+  for (const v of VAULT_VIEWS) {
+    const f = (VAULT_FOLDER_PRESETS[v.value] ?? []).find(x => x.id === folderId);
+    if (f) return `“${f.label}” (${v.label} view)`;
+  }
+  return `a folder this vault no longer defines (${folderId})`;
+}
+
 /**
  * The filing cabinet: the program's vault-view folder taxonomy with every
  * uploaded document placed where its (suggested or confirmed) filing says,
@@ -481,9 +506,20 @@ export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
  */
 export function filingCabinet(view: VaultViewId, uploads: UploadRow[]): VaultFolder {
   const unfiled = uploads.filter(u => !u.folder_id || (u.placement_status || 'unfiled') === 'unfiled');
+  const inView = new Set(foldersForView(view).map(f => f.id));
   const byFolder = new Map<string, UploadRow[]>();
+  /* Filed to a folder this view does not have. The view is resolved per read
+     and not stored on the row, so a document filed under a device folder on a
+     program that now reads as pharma (or one filed while the view lookup had
+     fallen back) belongs to no folder here. It used to be dropped from the tree
+     while still counted; it is shown, with where it was filed. */
+  const otherView: UploadRow[] = [];
   for (const u of uploads) {
     if (!u.folder_id || (u.placement_status || 'unfiled') === 'unfiled') continue;
+    if (!inView.has(u.folder_id)) {
+      otherView.push(u);
+      continue;
+    }
     const list = byFolder.get(u.folder_id) ?? [];
     list.push(u);
     byFolder.set(u.folder_id, list);
@@ -501,6 +537,17 @@ export function filingCabinet(view: VaultViewId, uploads: UploadRow[]): VaultFol
       code: '',
       label: folder.label,
       children: (byFolder.get(folder.id) ?? []).map(u => uploadLeaf(view, u)),
+    });
+  }
+  if (otherView.length > 0) {
+    children.push({
+      id: 'cab-other-view',
+      code: '',
+      label: 'Filed under another view · needs review',
+      children: otherView.map(u => ({
+        ...uploadLeaf(view, u),
+        flag: `Filed to ${whereFiled(u.folder_id!)}, which is not a folder in this program's current view. Move it to a folder here, or check the program's product type.`,
+      })),
     });
   }
   return {
@@ -686,6 +733,9 @@ export interface VaultByteSource {
   /** The caller's organization. Required: object storage sits outside Postgres
    *  RLS, so for provider-backed bytes this argument IS the tenant boundary. */
   organizationId: number;
+  /** `vault.documents.storage_provider`: the store the bytes were written to,
+   *  which is where they are read from (NULL on rows predating the column). */
+  storageProvider: string | null;
 }
 
 export async function readVerifiedVaultBytes(
@@ -700,9 +750,29 @@ export async function readVerifiedVaultBytes(
     // "belongs to another organization" — the interface refuses to distinguish
     // them, because a 403 on a foreign id confirms the id exists. Either way
     // there are no bytes to serve, and that is what we report.
+    let store: ReturnType<typeof getStorageProvider>;
+    try {
+      store = getStorageProviderFor(source.storageProvider);
+    } catch (err) {
+      // The recorded store cannot be opened here. Not "missing": the bytes may
+      // exist, and asking the configured store instead would answer for a
+      // different one. The provider is named in the log, not to the user.
+      logger.error('vault download: the store this document was saved in cannot be opened', {
+        documentId,
+        recorded: source.storageProvider,
+        reason: err instanceof Error ? err.message : 'unknown',
+      });
+      return {
+        ok: false,
+        status: 409,
+        error: 'STORED_FILE_UNREADABLE',
+        message:
+          'The vault record exists, but this server cannot open the store its file was saved in. Nothing was downloaded.',
+      };
+    }
     let got: Awaited<ReturnType<ReturnType<typeof getStorageProvider>['get']>>;
     try {
-      got = await getStorageProvider().get(source.storageVersionId, source.organizationId);
+      got = await store.get(source.storageVersionId, source.organizationId);
     } catch (err) {
       logger.error('vault download: storage provider read failed', {
         documentId,
@@ -1087,7 +1157,17 @@ export default function createProjectVaultRoutes(): Router {
         });
       } else {
         try {
-          const sources = await listClientDocuments(orgId, { programId: id });
+          /* Current sources only: a re-upload retires its predecessor
+             (is_current = false), and counting both made one file two. One
+             past the window, so a program with more says so; the reader's
+             default cap was 200 and nothing said when it was reached. */
+          const read = await listClientDocuments(orgId, {
+            programId: id,
+            currentOnly: true,
+            limit: DATA_ROOM_WINDOW + 1,
+          });
+          const truncated = read.length > DATA_ROOM_WINDOW;
+          const sources = truncated ? read.slice(0, DATA_ROOM_WINDOW) : read;
           // `filed` asks whether THIS source's bytes already exist in the
           // program's vault. Ask the database that, about exactly these
           // checksums, instead of deriving it from the page of documents
@@ -1117,7 +1197,9 @@ export default function createProjectVaultRoutes(): Router {
                   confidence?: string | null; needsReview?: boolean }
               | null;
             const filed = Boolean(s.checksum && vaultHashes.has(s.checksum));
-            const stage: DataRoomRow['stage'] = filed ? 'filed' : dossier ? 'classified' : 'captured';
+            const proposed = Boolean(dossier?.suggestedFolder);
+            const stage: DataRoomRow['stage'] =
+              filed ? 'filed' : proposed ? 'classified' : dossier ? 'needs_review' : 'captured';
             const mime = typeof meta.mimeType === 'string' ? meta.mimeType : '';
             const kind =
               /pdf/i.test(mime) ? 'PDF'
@@ -1148,9 +1230,11 @@ export default function createProjectVaultRoutes(): Router {
           });
           dataRoom = {
             captured: rows.length,
-            classified: rows.filter(r => r.stage !== 'captured').length,
+            classified: rows.filter(r => r.stage === 'classified' || r.stage === 'filed').length,
             filed: rows.filter(r => r.stage === 'filed').length,
+            needsReview: rows.filter(r => r.stage === 'needs_review').length,
             sources: rows,
+            window: { shown: rows.length, truncated },
           };
         } catch (err) {
           if (!isMissingStore(err)) throw err;
@@ -1404,7 +1488,7 @@ export default function createProjectVaultRoutes(): Router {
 
       const docRes = await pool.query(
         `SELECT id, file_name, document_title, mime_type, file_size, s3_key,
-                storage_version_id, content_hash
+                storage_version_id, storage_provider, content_hash
            FROM vault.documents
           WHERE id = $1 AND program_id = $2 AND deleted_at IS NULL
             AND EXISTS (
@@ -1420,7 +1504,7 @@ export default function createProjectVaultRoutes(): Router {
       const doc = docRes.rows[0] as {
         id: string; file_name: string | null; document_title: string | null;
         mime_type: string | null; file_size: string | number | null;
-        s3_key: string | null; storage_version_id: string | null; content_hash: string | null;
+        s3_key: string | null; storage_version_id: string | null; storage_provider: string | null; content_hash: string | null;
       };
 
       if (!doc.storage_version_id && !doc.s3_key) {
@@ -1442,6 +1526,7 @@ export default function createProjectVaultRoutes(): Router {
           storageVersionId: doc.storage_version_id,
           storageKey: doc.s3_key,
           organizationId: orgId,
+          storageProvider: doc.storage_provider,
         },
         doc.content_hash,
         documentId,

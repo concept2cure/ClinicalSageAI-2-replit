@@ -49,6 +49,18 @@ export async function createResolutionBundle(
   if (request.items.length === 0) {
     throw new Error('Resolution bundle must contain at least one item');
   }
+  // The plan this bundle is linked to must be this org's. The link below
+  // updates resolution_plans by id, so a plan id from another tenant was written
+  // to wherever RLS was not enforcing (ledger L195). Checked before anything is
+  // inserted, so a refused link leaves no orphan bundle behind.
+  if (request.planId) {
+    const [plan] = await db
+      .select({ id: resolutionPlans.id })
+      .from(resolutionPlans)
+      .where(and(eq(resolutionPlans.id, request.planId), eq(resolutionPlans.organizationId, organizationId)))
+      .limit(1);
+    if (!plan) throw new Error('Resolution plan not found in this organization');
+  }
 
   // Determine confidence from items
   const confidence = determinesBundleConfidence(request.items);
@@ -99,7 +111,7 @@ export async function createResolutionBundle(
     await db
       .update(resolutionPlans)
       .set({ bundleId: bundle.id, updatedAt: new Date() })
-      .where(eq(resolutionPlans.id, request.planId));
+      .where(and(eq(resolutionPlans.id, request.planId), eq(resolutionPlans.organizationId, organizationId)));
   }
 
   return { bundle, items };

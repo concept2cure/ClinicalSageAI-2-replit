@@ -3,14 +3,18 @@
  * that opens it.
  *
  * ── What it is ───────────────────────────────────────────────────────────────
- * One quiet column in three parts, read top to bottom the way a person asks
+ * One quiet column in two parts, read top to bottom the way a person asks
  * "what is she doing?":
  *
  *   Progress              her plan, or the phases the turn reported, on one
  *                         vertical rail with the current step emphasised and
  *                         the step in flight named beneath it
- *   Outputs               what the conversation has produced
  *   Used in this session  uploads, memory, tools and project context
+ *
+ * What she produced is not listed here. Every host shows it in the
+ * conversation, where it happened: a draft as its output card or document
+ * canvas, an action and a sign-off inline under the turn. A second list of the
+ * same titles in this column was the clutter the brief asked to lose.
  *
  * The chip ("Step 2 of 5") sits in each host's header and toggles the panel.
  * Every host — the persistent rail, the full-page conversation, the document
@@ -43,7 +47,6 @@ import type { AnaChatMessage, RunControlStatus } from '../components/ana/useAnaC
 import type { AgentActivityView } from './useAgentActivity';
 import { useNow } from './useNow';
 import {
-  collectOutputs,
   elapsedFor,
   progressChip,
   spokenLine,
@@ -51,7 +54,7 @@ import {
   usedInSession,
   type AnaWorkContext,
 } from './anaWorkModel';
-import { BackgroundQueue, OutputsBody, Section, SteersWaiting, StepsBody, UsedBody } from './AnaWorkSections';
+import { BackgroundQueue, Section, SteersWaiting, StepsBody, UsedBody } from './AnaWorkSections';
 
 export type { AnaWorkContext } from './anaWorkModel';
 
@@ -71,15 +74,10 @@ export interface AnaWorkPanelProps {
    * panel without a per-turn record.
    */
   announce?: boolean;
-  /**
-   * Leave drafts out of Outputs. The conversation surface renders every draft
-   * as a document canvas or an artifact card of its own, and a title that
-   * appears twice in one column is one more thing a reviewer has to read for
-   * no new information.
-   */
-  omitDrafts?: boolean;
   /** Close the panel. Omitted → no close control (the host's chip is the only one). */
   onClose?: () => void;
+  /** The id the host's chip names in aria-controls (useProgressDock().panelId). */
+  id?: string;
 }
 
 /** The title bar: a real h2 between the page title and the h3 sections (SC 1.3.1). */
@@ -113,28 +111,24 @@ export function AnaWorkPanel({
   context,
   queue,
   announce = false,
-  omitDrafts = false,
   onClose,
+  id,
 }: AnaWorkPanelProps) {
   /* Everything that depends only on the turns is derived once per change to
      them. The clock re-renders the panel every second while live and every
      streamed token re-renders it too. */
   const derived = React.useMemo(() => {
     const { turn } = latestTurns(messages);
-    return {
-      turn,
-      outputs: collectOutputs(messages, { drafts: !omitDrafts }),
-      used: usedInSession(messages, context),
-    };
-  }, [messages, omitDrafts, context]);
-  const { turn, outputs, used } = derived;
+    return { turn, used: usedInSession(messages, context) };
+  }, [messages, context]);
+  const { turn, used } = derived;
   const live = Boolean(streaming && turn?.streaming);
   const now = useNow(live);
   const stateLine = stateLineFor(turn, live, runStatus, elapsedFor(turn, now));
   const spoken = spokenLine(turn?.progress ?? [], live, stateLine, turn?.statusPhase);
 
   return (
-    <div className="ana-work" data-live={live ? 'true' : 'false'}>
+    <div className="ana-work" id={id} data-live={live ? 'true' : 'false'}>
       {announce && <span aria-live="polite" style={SR_ONLY_STYLE}>{spoken}</span>}
       <PanelHeader stateLine={stateLine} onClose={onClose} />
       {!turn ? (
@@ -148,11 +142,6 @@ export function AnaWorkPanel({
           <SteersWaiting steers={pendingSteers} />
         </div>
       )}
-      {outputs.length > 0 && (
-        <Section title="Outputs">
-          <OutputsBody outputs={outputs} />
-        </Section>
-      )}
       {used.length > 0 && (
         <Section title="Used in this session">
           <UsedBody rows={used} />
@@ -165,14 +154,17 @@ export function AnaWorkPanel({
 
 /**
  * The chip in a host's header that opens and closes the panel: "Step 2 of 5"
- * when AnA declared a plan, "Working" or "Progress" when she did not. A toggle
- * button (aria-pressed); its name starts with the visible words so a voice
- * user can say what they see (SC 2.5.3).
+ * when AnA declared a plan, "Working" or "Progress" when she did not. A
+ * disclosure — it shows and hides the panel, so it says expanded or collapsed
+ * (aria-expanded) and names the panel it reveals while that panel exists
+ * (aria-controls); "pressed" would tell a screen reader it switched a setting.
+ * Its name starts with the visible words so a voice user can say what they
+ * see (SC 2.5.3).
  */
 export const AnaProgressChip = React.forwardRef<
   HTMLButtonElement,
-  { messages: AnaChatMessage[]; streaming: boolean; open: boolean; onToggle: () => void }
->(function AnaProgressChip({ messages, streaming, open, onToggle }, ref) {
+  { messages: AnaChatMessage[]; streaming: boolean; open: boolean; onToggle: () => void; controls?: string }
+>(function AnaProgressChip({ messages, streaming, open, onToggle, controls }, ref) {
   const { turn } = latestTurns(messages);
   const live = Boolean(streaming && turn?.streaming);
   const chip = progressChip(turn, live);
@@ -182,7 +174,8 @@ export const AnaProgressChip = React.forwardRef<
       type="button"
       className="ana-step-chip"
       data-live={live ? 'true' : 'false'}
-      aria-pressed={open}
+      aria-expanded={open}
+      aria-controls={open ? controls : undefined}
       onClick={onToggle}
     >
       <span className="ana-step-chip-ic" aria-hidden="true">

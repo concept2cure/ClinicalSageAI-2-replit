@@ -1,0 +1,5 @@
+ × client/src/concept2cure/v2/__tests__/projectsPortfolioTruncation.test.tsx > Projects — a truncated portfolio read > says the list is the first page, and the count is a floor
+   → Unable to find an element with the text: /Showing the first 2 programs/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioTruncation.test.tsx > Projects — a truncated portfolio read > a complete read says nothing extra
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 1 passed (2)
