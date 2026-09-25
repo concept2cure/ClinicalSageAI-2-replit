@@ -1,0 +1,47 @@
+# P1-5 — an unbounded memory upload, and no count of upload sites without the guard (IAM-14, Medium)
+
+**Row:** D6. **Finding:** `docs/security/SECURITY_AUDIT_2026-09-24.md` IAM-14. **Plan item:** P1-5 (this commit: the
+named router and the gate; the sweep of the remaining sites is the rest of the item).
+
+## What was wrong
+
+`server/src/routes/stability.router.ts` built its uploads with `multer({ storage: multer.memoryStorage() })`: no
+`limits.fileSize`, so a client could buffer any number of bytes into the process heap before anything looked at the
+request; no `fileFilter`, so `payload.exe` declared as `text/csv` was admitted on its declared type; and a private copy
+of the signature logic instead of the platform's guard (`assertUploadSafe`, which also runs the malware scan and fails
+closed in production). Across the server, the audit counted 25 multer handlers of which 7 ran the guard, and nothing
+stopped the next one arriving without it.
+
+## What is true now
+
+- The stability router's instance is bounded (25 MB, one file), filtered through `makeUploadFileFilter` on the
+  router's own type list with the platform's blocked extensions, and its three multipart routes run `assertUploadSafe`
+  through the one `validateUploadedFile`; multer's outcomes are answered as 413 / 415 / 400 instead of a 500. The private
+  magic-number and printable-text copies are gone.
+- `scripts/ci/check-upload-guards.mjs` counts every `multer(…)` site in `server/` lacking `limits.fileSize`, a
+  `fileFilter`, or an `assertUploadSafe` call in its file; `--list` prints the population, `--selftest` constructs the
+  failing cases (a bare site, a guarded one, a comment that is not a site, a reasonless baseline entry, a file above its
+  count) and exits non-zero unless every one is caught. `scripts/ci/upload-guards-baseline.json` holds the 13 remaining
+  sites across 12 files, each with a written reason naming what is missing and who owns it; two are gate limits (the
+  guard runs in another file), ten are defects.
+
+| | File | Result |
+|---|---|---|
+| red | `red/gate-on-audited-router-and-selftest.txt` | the scanner on the router as committed at `73512fda`: one site lacking all three; `--selftest` 6 / 6 caught |
+| red | `red/upload-guard-before-fix.txt` | the behavioural test on the committed router: a 26 MB body and a `.exe` declared as CSV both reach the handler; 4 failed / 1 passed |
+| green | `green/upload-guard-after-fix.txt` | 17 / 17 across the new suite, the router's honesty suite and the signature-write-paths gate test |
+| green | `green/gates.txt` | `check:security-patterns` 0 violations; `ci:upload-guards` OK (13 sites / 12 files, none new) |
+
+Tests: `server/src/routes/__tests__/stability-upload-guards.test.ts` (supertest over the real router; the db and the
+tenant scope are doubles; the size-limit case sends 26 MB and gets 413 before any query).
+
+## Not done here
+
+- **Wiring.** `package.json` and `.husky/pre-push` were both touched by another lane at 07:23 UTC on 2026-09-25, so the
+  `ci:upload-guards` script and its pre-push line (beside `ci:sign-ceremony`) wait for that window (07:23 UTC on
+  2026-09-26), together with `ci:trivyignore-hygiene` from P0-16a. Until then the gate runs by hand.
+- **The 12 files in the baseline.** Ten defects (four in the launch catalog: Authoring's image and DOCX import, AnA
+  knowledge sources, Authoring templates, Projects onboarding, the Submission Center's official-form upload) and two
+  gate limits. `authoring.router.ts` is inside another lane's window until 01:51 UTC; the rest are cold and are the
+  next D6 upload session's, one commit each, shrinking the baseline.
+- **`DocumentDataCenterService.ts`** stores to disk with no filter; it is outside the launch catalog and in the baseline.
