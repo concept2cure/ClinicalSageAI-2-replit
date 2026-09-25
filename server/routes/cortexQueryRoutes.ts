@@ -25,8 +25,7 @@ import { getGateway } from '../services/ai-gateway/index.js';
 import type { RoutingStrategy } from '../services/ai-gateway/types.js';
 import { getEmbeddingService } from '../services/enhancedEmbeddingService.js';
 import { ragRouter } from '../services/ragRouter.js';
-import { authedOrgId, usableOrgId } from '../utils/authedOrgId.js';
-import { getTenantScope } from '../db/tenantStore.js';
+import { currentTenantOrgUuid } from '../db/currentTenant.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //                          TYPE DEFINITIONS
@@ -110,25 +109,6 @@ export function initializeCortexAPI(dbPool: pg.Pool): void {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * The caller's organization uuid, from the verified session only: the request's
- * tenant scope when it carries one, else the organizations row for the session's
- * org id. Null when the session has no usable org — `organizationId` 0 is a
- * resolution failure, not an org (server/utils/authedOrgId.ts) — which the
- * caller answers with 403 rather than running a query with no tenant key.
- */
-async function sessionOrgUuid(req: Request): Promise<string | null> {
-  const orgId = usableOrgId(authedOrgId(req));
-  if (orgId === null) return null;
-  const scope = getTenantScope();
-  if (scope?.tenantId === String(orgId) && scope.orgUuid) return scope.orgUuid;
-  const { rows } = await pool!.query<{ uuid: string }>(
-    'SELECT uuid::text AS uuid FROM organizations WHERE id = $1',
-    [orgId]
-  );
-  return rows[0]?.uuid ?? null;
-}
-
-/**
  * POST /api/cortex/query
  *
  * Unified query endpoint for all Cortex capabilities
@@ -150,7 +130,8 @@ router.post('/query', async (req: Request, res: Response) => {
 
     /* The tenant key comes from the verified session, never the request.
 
-       This read `req.tenantContext?.organizationUuid || req.headers['x-org-uuid']`.
+       This read the tenant context's uuid and fell back to the client's
+       x-org-uuid header.
        Mounted under cortex-unified.ts, whose extractTenantContext replaces
        req.tenantContext without an organizationUuid, the left side was always
        undefined — so the client's header was the ONLY tenant key this route
@@ -160,7 +141,11 @@ router.post('/query', async (req: Request, res: Response) => {
        contract that pins this asserts positive controls: a caller naming another
        tenant is served its own data, not nothing.
        docs/evidence/D3/2026-09-24-cortex-tenant-header/. */
-    const organizationUuid = await sessionOrgUuid(req);
+    // The session's key or nothing — server/db/currentTenant.ts, which this
+    // route's own resolver was folded into. A session with no usable org has
+    // no tenant scope (organizationId 0 is a resolution failure, not an org),
+    // so it is refused here rather than queried.
+    const organizationUuid = await currentTenantOrgUuid(pool);
     if (!organizationUuid) {
       return res.status(403).json({ error: 'Tenant context required' });
     }
@@ -212,13 +197,12 @@ router.post('/query', async (req: Request, res: Response) => {
 async function handleSearchMode(
   query: string,
   options: CortexQueryRequest['options'],
-  organizationUuid?: string
+  organizationUuid: string
 ): Promise<CortexQueryResponse> {
   const embeddingService = getEmbeddingService(pool!);
 
-  // Scope search to requesting org. If no org provided, RLS on the
-  // underlying lumen_data_atoms table will return empty — this is
-  // intentional defense-in-depth per multi-tenant isolation rules.
+  // Scoped to the session's tenant key; searchHybrid refuses to run without
+  // one, and refuses a key that is not the session's.
   const results = await embeddingService.searchHybrid(
     query,
     options?.limit || 10,

@@ -42,7 +42,7 @@ import type OpenAI from 'openai';
 import pg from 'pg';
 import { createHash, randomUUID } from 'node:crypto';
 import { EnhancedEmbeddingService, getEmbeddingService } from './enhancedEmbeddingService.js';
-import { getTenantScope } from '../db/tenantStore.js';
+import { assertTenantIsCurrent } from '../db/currentTenant.js';
 import { AIProviderRouter, getAIRouter, type AIRequest, type AIResponse } from './aiProviderRouter.js';
 import { getOpenAIClient } from './openai-client.js';
 import { getReranker, type Reranker } from './rag-reranker.js';
@@ -323,70 +323,16 @@ function buildLocator(row: VaultChunkRow): string | undefined {
  *  malformed org id is an authorization refusal, not a 22P02 query failure. */
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/**
- * Thrown when the pipeline is handed a tenant other than the one the request's
- * verified session scope names. A caller that does this has a defect; refusing
- * loudly keeps it from reading as "the vault has nothing on this".
- */
-export class RagTenantScopeMismatchError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'RagTenantScopeMismatchError';
-  }
-}
-
-/**
+/*
  * The tenant a retrieval may read is the REQUEST SCOPE's, not the caller's
- * argument. Added 2026-09-24 (D3, docs/evidence/D3/2026-09-24-rag-pipeline-tenant/).
- *
- * Every vault query here took its tenant from the `organizationUuid` option,
- * twice over: `withTenantContext` ran `SET LOCAL app.current_org_id = <option>`,
- * and vault RLS keys on exactly that GUC (vault.documents → core.can_access_program
- * → identity.can_access_program → identity.current_org_id()); and the vault
- * arm's explicit predicate is the same option. So the database and the SQL both
- * answered to whatever uuid the caller supplied, overriding the scope the auth
- * boundary opened from the verified session. Shown on a from-blank install as
- * app_service with RLS enforcing: tenant A's session, handed tenant B's uuid,
- * retrieved B's vault passage. chat/send-message.ts builds its tool uuid from
- * the client's x-org-uuid header when the scope has none, and the cortex query
- * route did the same until c062f4b0.
- *
- * So, inside a per-user request scope, a uuid (or integer org id, for the
- * un-RLS'd rag_chunks corpus) that is not the session's is refused. The
- * session's uuid comes from the scope, or — when the scope carries none, which is
- * precisely when a header fallback fires — from the organizations row for the
- * scope's tenant id. Outside a request scope (jobs, the eval harness) and under
- * the system scope there is no session to compare with, and this stands down; a
- * MISSING uuid keeps the vault arm's existing refusal.
+ * argument (D3, docs/evidence/D3/2026-09-24-rag-pipeline-tenant/).
+ * withTenantContext writes its uuid into app.current_org_id, the GUC vault RLS
+ * keys on, and the vault arm's predicate is the same option — so a uuid that is
+ * not the session's would override the scope the auth boundary opened. The
+ * check lives in server/db/currentTenant.ts (assertTenantIsCurrent), shared with
+ * the atom search this pipeline's project arm ends in; it was defined here
+ * first, and moved there so there is one.
  */
-async function assertCallerTenantIsSession(
-  db: Pick<pg.Pool, 'query'> | Pick<pg.PoolClient, 'query'>,
-  organizationUuid: string | undefined,
-  organizationId: number | undefined
-): Promise<void> {
-  const scope = getTenantScope();
-  if (!scope || scope.tenantId === '0') return;
-  if (organizationId != null && String(organizationId) !== scope.tenantId) {
-    throw new RagTenantScopeMismatchError(
-      `retrieval refused: tenant ${organizationId} was requested inside tenant ${scope.tenantId}'s session`
-    );
-  }
-  if (!organizationUuid) return;
-  let sessionUuid = scope.orgUuid ?? null;
-  if (!sessionUuid) {
-    const { rows } = await db.query<{ uuid: string }>(
-      'SELECT uuid::text AS uuid FROM organizations WHERE id = $1',
-      [Number(scope.tenantId)]
-    );
-    sessionUuid = rows[0]?.uuid ?? null;
-  }
-  if (!sessionUuid || sessionUuid.toLowerCase() !== organizationUuid.toLowerCase()) {
-    throw new RagTenantScopeMismatchError(
-      "retrieval refused: an organization other than the session's tenant was requested"
-    );
-  }
-}
-
 async function withTenantContext<T>(
   pool: pg.Pool,
   organizationUuid: string | undefined,
@@ -395,8 +341,8 @@ async function withTenantContext<T>(
   const client = await pool.connect();
   try {
     // The GUC below decides what vault RLS admits, so the uuid must be the
-    // session's before it is written. See assertCallerTenantIsSession.
-    await assertCallerTenantIsSession(client, organizationUuid, undefined);
+    // session's before it is written.
+    await assertTenantIsCurrent(client, { organizationUuid });
     await client.query('BEGIN');
     if (organizationUuid) {
       await client.query("SELECT set_config('app.current_org_id', $1, true)", [organizationUuid]);
@@ -537,8 +483,11 @@ export class AdvancedRAGPipeline {
     options: RetrievalOptions = { strategy: 'basic' }
   ): Promise<RAGContext> {
     // Every arm below takes its tenant from these options; refuse any that is
-    // not the session's before one of them runs (assertCallerTenantIsSession).
-    await assertCallerTenantIsSession(this.pool, options.organizationUuid, options.organizationId);
+    // not the session's before one of them runs.
+    await assertTenantIsCurrent(this.pool, {
+      organizationUuid: options.organizationUuid,
+      organizationId: options.organizationId,
+    });
     const startTime = Date.now();
     const limit = options.limit || 10;
     const threshold = options.threshold || 0.5;
