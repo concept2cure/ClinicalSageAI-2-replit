@@ -51,6 +51,7 @@ import {
   runConsistencyCheck,
   listConsistencyFindings,
 } from '../services/truth-engine/truth-engine-service';
+import { setAuditRowHeaders } from '../services/audit/audit-write-outcome';
 import {
   runShadowReview,
   listShadowReviewRuns,
@@ -58,6 +59,7 @@ import {
 } from '../services/shadow-review/shadow-review-service';
 import { generateSection } from '../services/authoring/section-generation-service';
 import { createScopedLogger } from '../utils/logger.js';
+import { requireGovernedReason } from './governed-reason';
 
 const logger = createScopedLogger('submissions-routes');
 const router = Router();
@@ -930,8 +932,16 @@ router.put('/sequences/:seqId/leaves', limiter, requireRole(AUTHOR), async (req,
   if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
   const parsed = upsertLeafSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  /* A placement decides what content goes into a regulator-facing sequence.
+     Its audit row recorded what changed and never why: no dialog asked and the
+     schema had no field (PX-1, docs/evidence/reviews/2026-09-24/lenses.md). The
+     person placing it now gives the reason, and it is recorded, never replaced. */
+  const reason = requireGovernedReason(req.body?.reason);
+  if (!reason.ok) {
+    return res.status(400).json({ error: { code: 'REASON_REQUIRED', message: reason.error }, field: 'reason' });
+  }
   try {
-    res.json(await upsertLeaf({ sequenceId: seqId, ...parsed.data }, ctx));
+    res.json(await upsertLeaf({ sequenceId: seqId, ...parsed.data, reason: reason.reason }, ctx));
   } catch (err) {
     fail(res, err);
   }
@@ -962,10 +972,7 @@ router.delete('/sequences/:seqId/leaves/:leafId', limiter, requireRole(AUTHOR), 
        proxy, which forwards an upstream body verbatim and therefore also reports
        through headers. */
     const removal = await removeLeaf(leafId, seqId, ctx);
-    res.set('X-Audit-Row-Persisted', String(removal.auditTrail.persisted));
-    if (!removal.auditTrail.persisted) {
-      res.set('X-Audit-Row-Code', removal.auditTrail.code);
-    }
+    setAuditRowHeaders(res, removal.auditTrail);
     res.status(204).end();
   } catch (err) {
     fail(res, err);
@@ -1104,7 +1111,11 @@ router.post('/:id/consistency', limiter, requireRole(AUTHOR), async (req, res) =
   const parsed = consistencySchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   try {
-    res.json(await runConsistencyCheck({ submissionId: id, ...parsed.data }, ctx));
+    // The body stays the findings array the Submission Center reads; the check's
+    // §11.10(e) row is reported in the header pair, as the leaf removal above does.
+    const { findings, auditTrail } = await runConsistencyCheck({ submissionId: id, ...parsed.data }, ctx);
+    setAuditRowHeaders(res, auditTrail);
+    res.json(findings);
   } catch (err) {
     fail(res, err);
   }

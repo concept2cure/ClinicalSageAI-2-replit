@@ -298,6 +298,18 @@ jobs:
           npm run ci:launch-scope:selftest
           npm run ci:launch-scope
 
+      # Launch scope is enforced at the API in production (moduleEntitlementGate +
+      # services/entitlements/launch-scope-api.ts): a path every claiming surface
+      # of which is outside the catalog answers 403 LAUNCH_SCOPE. This gate walks
+      # each launch and shell screen's import graph and fails when one of them
+      # calls a path production would refuse, so the registry cannot drift into
+      # refusing a working launch screen. Selftest first: it must flag a seeded one.
+      - name: Guardrails — no launch screen calls an API production refuses (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: |
+          npm run ci:launch-scope-api:selftest
+          npm run ci:launch-scope-api
+
       # The AnA-draft → canvas → editor → vault path (docs/design/ANA_DOCUMENT_CANVAS.md).
       # Five editor generations were built and deleted as "unreachable" before
       # this gate existed (CLAUDE.md, "Deleting a user-facing capability"); it
@@ -362,6 +374,146 @@ jobs:
         run: |
           npm run ci:validation-traceability:selftest
           npm run ci:validation-traceability
+
+      # ── Gates that ran only on pull requests ──────────────────────────────
+      # The steps below lived in pr-checks.yml, which triggers on
+      # `pull_request` alone. CLAUDE.md Rule 0 makes concept2cure-v2 the only
+      # branch and forbids pull requests, so those steps never ran: 18 gates,
+      # several of them hard gates with comments saying they were wired
+      # precisely because they "ran nowhere". All pass at 2026-09-25 (one after
+      # the two error-envelope reads it names were fixed) and run here, on
+      # every push. Moved, not copied — pr-checks.yml no longer runs them.
+
+      - name: Compliance claim check
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # Hard gate. Customer-facing copy must not assert compliance the
+        # platform cannot evidence. The signup screen previously advertised
+        # "SOC 2 Type II" — for which no report of any type exists — alongside
+        # blanket encryption-at-rest and mandatory MFA, none of which were true.
+        # These are exactly the claims a regulated-industry buyer's procurement
+        # team audits, so the failure mode is a security questionnaire answered
+        # wrongly in writing. Deliberate exceptions annotate the line with
+        # `compliance-claim-allow: <reason>`.
+        run: npm run check:compliance-claims
+
+      - name: Microcopy tone check
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # Hard gate. Customer-facing copy must not carry exclamation marks or
+        # pictograph emoji — a design-system non-negotiable the 2026-07 UI/UX
+        # audit found violated in the exact sites the rule was meant to
+        # govern (signup CTAs, error boundaries, AnA fallback strings). PR
+        # #1260 fixed the named sites; this gate stops the drift. The check
+        # is narrow (sentence-terminating `!` only, surrogate-pair emoji only
+        # — functional dingbats like ✓✕⚠☰ are allowed) so it does not
+        # generate noise. Deliberate exceptions annotate the line with
+        # `microcopy-allow: <reason>`.
+        run: npm run check:microcopy
+
+      - name: GA completion ledger check
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # Hard gate. docs/GA_COMPLETION_LEDGER_2026-08.md is the single register
+        # of open GA work across every space; its failure mode is going stale —
+        # a row citing a renamed file, a row marked `done` on an agent's
+        # say-so, two rows sharing an ID. All three have happened here. The
+        # check refuses a `done` row whose evidence does not exist, and refuses
+        # work specified against a document that is not in the repo. A path an
+        # `open` row names as its deliverable is reported, never failed.
+        run: npm run check:ledger
+
+      - name: No server error carries the failure text to the client
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # Ratchet, not a hard requirement. serverError() copied err.message into
+        # the response body while its docstring claimed the envelope was
+        # sanitized, so a route with a missing relation answered the browser
+        # with `relation "software_lifecycle_items" does not exist` — the exact
+        # string the MDX work order's verify step forbids, delivered to whoever
+        # holds the session. Fixing that helper closed 272 call sites and left
+        # 843 that answer a 5xx without it, mostly a copy-pasted local fail().
+        # Client-side redaction does not close this: it scrubs at render time
+        # while the API still ships the string to a proxy log or a saved HAR.
+        # The baseline may shrink and may never grow.
+        run: npm run ci:server-error-leaks
+
+      - name: No hand-rolled error-envelope reads
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # A surface that reads `json.error` / `typeof error === 'string'` by hand
+        # skips the two filters serverMessage applies — isErrorCode and
+        # looksInternal — so an enum token or an internal string reaches the UI.
+        # The gate existed with a baseline and ran nowhere; four fresh drift
+        # sites had already landed (DocumentAuthoring x2, HaqManager, Onboarding),
+        # each now routed through the canonical reader. Baseline 0.
+        run: npm run ci:error-envelope
+
+      - name: INSERT columns are declared in the model
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # A shrink-only ratchet, and it was running nowhere. The baseline had 11
+        # stale entries whose violations no longer occur; regenerating dropped
+        # exactly those 11 and absorbed nothing new (diff -11/+0). 49 real ones
+        # remain, awaiting burn-down; the ratchet now guards against the count
+        # growing.
+        run: npm run ci:insert-columns-declared
+
+      - name: No verdict for a check that did not run
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # Hard gate, and a new kind: every other gate here reads source or
+        # schema; this one makes a Part 11 surface's dependency fail and reads
+        # what the surface ANSWERS. WO-16B found ten places where "could not
+        # verify" was reported as failed (INTEGRITY_FAILURE against four named
+        # regulations because a store did not initialise) or as passed
+        # (valid:true after comparing nothing; <AuditLog count="0"> after the
+        # query threw). The inspector self-tests first, then each surface runs
+        # over a rejecting pool. Proven red on the pre-fix head.
+        run: npm run ci:unverified-verdicts
+
+      - name: A Part 11 audit row written and its outcome discarded
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # Both `void auditService.logAction(...)` and a statement-position
+        # `await auditService.logAction(...)` throw away the AuditWriteResult.
+        # logAction does not reject when persistence fails — by deliberate
+        # policy, an audit-trail outage must not break the action it records —
+        # so either call has two outcomes and one observable result: nothing
+        # downstream can tell a recorded governed action from an unrecorded one.
+        # The gate caught only the `void` form at first, and the awaited form was
+        # 134 sites against 0 remaining void ones — so it had been reporting a
+        # near-clean repository while the larger population of the same defect
+        # went unmeasured. The baseline caps the rest per file WITH ITS COUNT, so
+        # a baselined file cannot quietly grow. The self-test runs first and
+        # covers both forms, the three shapes that must NOT flag, and the ratchet
+        # case, because a baseline that admits growth would make this gate the
+        # thing it exists to catch.
+        run: |
+          npm run ci:discarded-audit-write:self-test
+          npm run ci:discarded-audit-write
+
+      - name: Gates that existed but ran nowhere
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # An audit of what CI actually executes found 88 gate files, 67 of them
+        # wired and 21 not. These twelve pass today and are enforced from here;
+        # several are load-bearing rather than cosmetic — session-scoped RLS
+        # bypass, ORM table reachability, governed export routes, and the
+        # ungated-fixture-fallback rule CLAUDE.md states as "no fixture data in
+        # governed paths".
+        #
+        # ci:error-envelope and ci:insert-columns-declared were left out because
+        # they failed; both pass now and have steps of their own above.
+        # ci:tenant-resolvers was left out for the same reason and ran nowhere;
+        # it passes at its baseline (189, 2026-09-25) and runs here.
+        # ci:fixture-fallback is not repeated: it has its own step, and it
+        # blocks in .husky/pre-push.
+        run: |
+          npm run ci:canonicalizers
+          npm run ci:commonjs-require
+          npm run ci:governed-export-consequence-shape
+          npm run ci:governed-export-consequence-shape:selftest
+          npm run ci:governed-export-routes
+          npm run ci:migration-set-order
+          npm run ci:model-migration-agreement
+          npm run ci:node-runtime
+          npm run ci:orm-reachability
+          npm run ci:reasoning-tier-ga-readiness
+          npm run ci:reasoning-tier-uat-evidence
+          npm run ci:session-scoped-rls-bypass
+          npm run ci:tenant-resolvers
 
       - name: Guardrails — no API route or table name in user-visible copy
         if: "!cancelled() && steps.install.conclusion == 'success'"

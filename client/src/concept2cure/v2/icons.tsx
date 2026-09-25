@@ -123,6 +123,9 @@ import {
   X,
   Zap,
   type LucideIcon,
+  Users,
+  Flag,
+  Archive,
 } from 'lucide-react';
 
 /** Kit rendering contract: 1em glyphs, 1.75 stroke, decorative by default. */
@@ -196,6 +199,11 @@ export const I: Record<string, React.ReactElement> = {
   externalLink: el(ExternalLink),
   shieldCheck: el(ShieldCheck),
   zap: el(Zap),
+  /* QMS controlled documents (quality/) — folded in from its own copy of
+     twenty Lucide paths; these three had no shared counterpart. */
+  users: el(Users),
+  flag: el(Flag),
+  archive: el(Archive),
   play: el(Play),
   pause: el(Pause),
   rotateCcw: el(RotateCcw),

@@ -109,7 +109,10 @@ async function openAndTarget() {
   fireEvent.change(screen.getByLabelText('Target submission'), { target: { value: '9' } });
   await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/9/sequences'));
   await waitFor(() => expect(document.body.textContent).toContain('0000'));
+  fireEvent.change(screen.getByLabelText(/^Reason for this placement/), { target: { value: REASON } });
 }
+
+const REASON = 'Clinical summary approved for sequence 0000';
 
 afterEach(cleanup);
 beforeEach(() => apiRequest.mockReset());
@@ -234,6 +237,7 @@ describe('the placement chain — snapshot then leaf, verdict verbatim', () => {
       lifecycleOp: 'new',
       documentTable: 'coauthor_documents',
       documentId: 501,
+      reason: REASON,
     });
     // The SAVED sections were re-read from the server for the snapshot.
     expect(apiRequest).toHaveBeenCalledWith('GET', '/api/authoring/docs/D1/sections');

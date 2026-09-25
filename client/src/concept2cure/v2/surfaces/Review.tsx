@@ -28,7 +28,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData } from '../dataConnect';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
-import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { apiRequest, serverMessage, redactInternals } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { useDialog } from '../useDialog';
@@ -649,7 +649,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
       }
     } catch (e) {
       setThread(prev);
-      fireToast('The comment was not resolved — ' + (e instanceof Error ? e.message : String(e)) + '. It is still open.', 'error');
+      fireToast('The comment was not resolved — ' + redactInternals(e instanceof Error ? e.message : '', 'the service could not be reached') + '. It is still open.', 'error');
     }
   };
 
@@ -681,7 +681,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
       setReply('');
       refreshBoard();
     } catch (e) {
-      fireToast('The comment was not posted — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was saved.', 'error');
+      fireToast('The comment was not posted — ' + redactInternals(e instanceof Error ? e.message : '', 'the service could not be reached') + '. Nothing was saved.', 'error');
     } finally {
       setRequesting(false);
     }

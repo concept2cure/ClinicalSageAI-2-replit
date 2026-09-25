@@ -4,7 +4,7 @@ import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
-import { apiRequest, probeAuditRowOutcome, serverMessage } from '@/lib/queryClient';
+import { apiRequest, probeAuditRowOutcome, serverMessage, redactInternals } from '@/lib/queryClient';
 import { getAuthHeaders } from '@/utils/authToken';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
@@ -354,7 +354,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
         spec: json.spec as TemplateSpec,
       });
     } catch (e) {
-      note('Extraction failed — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      note('Extraction failed — ' + redactInternals(e instanceof Error ? e.message : '', 'the server did not say why') + '.', 'error');
       setUploading(false);
     } finally {
       if (fileRef.current) fileRef.current.value = '';
@@ -385,7 +385,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
       setPendingFile(null);
       note('Template saved · ' + rec.name);
     } catch (e) {
-      note('Couldn’t save — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      note('Couldn’t save — ' + redactInternals(e instanceof Error ? e.message : '', 'the server did not say why') + '.', 'error');
     }
   };
 
@@ -434,7 +434,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
       downloadBlob(safeFileName(t.name) + '_specimen.' + format, await res.blob());
       note('Rendered ' + format.toUpperCase() + ' with the real template engine.');
     } catch (e) {
-      note('Render failed — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      note('Render failed — ' + redactInternals(e instanceof Error ? e.message : '', 'the server did not say why') + '.', 'error');
     }
   };
 

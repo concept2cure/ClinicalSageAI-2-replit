@@ -15,6 +15,7 @@
  */
 
 import { isGovernedContentWriteTool } from './governed-write-tools.js';
+import type { AuditRowOutcome } from '../audit/audit-write-outcome.js';
 import { isServedModelApprovedForHighRisk } from '../ai-governance/approved-models.js';
 import { getGateway } from '../ai-gateway/gateway';
 import { getTenantScope } from '../../db/tenantStore.js';
@@ -5750,6 +5751,16 @@ registerToolHandler('reconcile_extracted_figures', async (input: Record<string, 
 // org-scoped from ToolContext; apply_fact_change is a governed mutation that
 // requires an explicit reason and opens a resolution plan.
 
+/**
+ * A tool message, with the lost-record notice when the §11.10(e) row was not
+ * written. Governed tools carry `auditTrail` (recordAuditRow's outcome) out of
+ * the service, and the message says so when the record is missing, so AnA
+ * cannot report a governed change as simply done when its record is not.
+ */
+function withAuditNote(message: string, auditTrail: AuditRowOutcome): string {
+  return auditTrail.persisted ? message : `${message} ${auditTrail.message}`;
+}
+
 function proposedValueFromInput(input: Record<string, unknown>) {
   const proposed: { valueNum?: number; valueText?: string; unit?: string } = {};
   if (typeof input.valueNum === 'number') proposed.valueNum = input.valueNum;
@@ -5826,6 +5837,8 @@ registerToolHandler('establish_governed_fact', async (input: Record<string, unkn
       factId: result.fact.id,
       entity: result.fact.entity,
       field: result.fact.field,
+      auditTrail: result.auditTrail,
+      message: withAuditNote(`Established ${result.fact.entity}.${result.fact.field} as a governed value.`, result.auditTrail),
       instruction:
         'The value is now governed. It can be cited (scan_document_citations), previewed (preview_fact_impact), changed (apply_fact_change), and traced.',
     });
@@ -5944,6 +5957,8 @@ registerToolHandler('apply_fact_change', async (input: Record<string, unknown>, 
       cascadedClaims: result.cascadedClaims,
       resolutionPlanId: result.resolutionPlanId,
       resolutionPlanSkippedReason: result.resolutionPlanSkippedReason,
+      auditTrail: result.auditTrail,
+      message: withAuditNote(`Changed to version ${result.newFact.version} under governance.`, result.auditTrail),
       instruction:
         'The value was changed under governance. Report the impact summary and, if a resolutionPlanId was returned, offer to explain it with explain_resolution_plan.',
     });
@@ -9289,11 +9304,15 @@ registerToolHandler('check_consistency', async (input, ctx) => {
   if (right.length === 0) return JSON.stringify({ error: 'right (non-empty array) is required.' });
   try {
     const { runConsistencyCheck } = await import('../truth-engine/truth-engine-service.js');
-    const findings = await runConsistencyCheck(
+    const { findings, auditTrail } = await runConsistencyCheck(
       { submissionId, dimension, left: { ref: left.ref, text: left.text }, right },
       { organizationId: ctx.organizationId, userId: ctx.userId }
     );
-    return JSON.stringify({ ok: true, findings, conflicts: findings.filter((f) => f.status === 'conflict').length });
+    const conflicts = findings.filter((f) => f.status === 'conflict').length;
+    return JSON.stringify({
+      ok: true, findings, conflicts, auditTrail,
+      message: withAuditNote(`${findings.length} finding(s) recorded, ${conflicts} conflict(s).`, auditTrail),
+    });
   } catch (err) {
     return JSON.stringify({ error: `check_consistency failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as any)?.code });
   }
@@ -13731,7 +13750,12 @@ registerToolHandler('ack_training', async (input, ctx) => {
 
 // ── Change control (ICH Q10 / Annex 15) — call the shared service so the tool
 //    inherits the controlled lifecycle, segregation-of-duties and validation the
-//    REST routes use. Each governed action writes a 21 CFR Part 11 audit entry.
+//    REST routes use. Each governed action writes a 21 CFR Part 11 audit entry
+//    through recordAuditRow and carries its outcome out as `auditTrail`, as the
+//    REST routes do in `meta.auditTrail` (routes/mdx-qms.ts). These wrote it as
+//    `void auditService.logAction(...)`, so AnA reported the change whether or
+//    not the record of it existed (WO-16C hand-on item 2).
+
 registerToolHandler('qms_change_create', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'qms_change_create requires tenant context.' });
   const changeNumber = typeof input.change_number === 'string' ? input.change_number.trim() : '';
@@ -13752,13 +13776,16 @@ registerToolHandler('qms_change_create', async (input, ctx) => {
       qmsDocumentId: typeof input.qms_document_id === 'number' ? input.qms_document_id : null,
       proposedBy: ctx.userId ?? null,
     });
-    const auditService = (await import('../auditService.js')).default;
-    void auditService.logAction({
+    const { recordAuditRow } = await import('../audit/audit-write-outcome.js');
+    const auditTrail = await recordAuditRow({
       tenantId: ctx.organizationId, userId: ctx.userId ?? undefined,
       action: 'mdx.qms.change.create', resourceType: 'qms_change_control', resourceId: row.id,
       details: { changeNumber: row.change_number, classification: row.classification, via: 'ana' },
     });
-    return JSON.stringify({ ok: true, ...row, message: `Raised change ${row.change_number} (${row.status}).` });
+    return JSON.stringify({
+      ok: true, ...row, auditTrail,
+      message: withAuditNote(`Raised change ${row.change_number} (${row.status}).`, auditTrail),
+    });
   } catch (err: unknown) {
     if ((err as { code?: string }).code === '23505') return JSON.stringify({ error: 'A change with that number already exists in this organization.' });
     return JSON.stringify({ error: `qms_change_create failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -13780,13 +13807,16 @@ registerToolHandler('qms_change_transition', async (input, ctx) => {
       effectivenessReview: typeof input.effectiveness_review === 'string' ? input.effectiveness_review : null,
     });
     if (!row) return JSON.stringify({ error: `Change ${id} not found in this organization.` });
-    const auditService = (await import('../auditService.js')).default;
-    void auditService.logAction({
+    const { recordAuditRow } = await import('../audit/audit-write-outcome.js');
+    const auditTrail = await recordAuditRow({
       tenantId: ctx.organizationId, userId: ctx.userId ?? undefined,
       action: 'mdx.qms.change.transition', resourceType: 'qms_change_control', resourceId: id,
       details: { to, reason, via: 'ana' },
     });
-    return JSON.stringify({ ok: true, governed: true, ...row, message: `Change ${id} → ${row.status}.` });
+    return JSON.stringify({
+      ok: true, governed: true, ...row, auditTrail,
+      message: withAuditNote(`Change ${id} → ${row.status}.`, auditTrail),
+    });
   } catch (err: unknown) {
     // InvalidChangeTransitionError / SegregationOfDutiesError carry human-readable messages.
     return JSON.stringify({ error: err instanceof Error ? err.message : `qms_change_transition failed: ${String(err)}` });
@@ -13811,13 +13841,16 @@ registerToolHandler('qms_change_link', async (input, ctx) => {
       note: typeof input.note === 'string' ? input.note : null,
       createdBy: ctx.userId ?? null,
     });
-    const auditService = (await import('../auditService.js')).default;
-    void auditService.logAction({
+    const { recordAuditRow } = await import('../audit/audit-write-outcome.js');
+    const auditTrail = await recordAuditRow({
       tenantId: ctx.organizationId, userId: ctx.userId ?? undefined,
       action: 'mdx.qms.change.link', resourceType: 'qms_change_control', resourceId: id,
       details: { linkType, linkedRef, via: 'ana' },
     });
-    return JSON.stringify({ ok: true, ...row, message: `Linked ${linkType} ${linkedRef} to change ${id}.` });
+    return JSON.stringify({
+      ok: true, ...row, auditTrail,
+      message: withAuditNote(`Linked ${linkType} ${linkedRef} to change ${id}.`, auditTrail),
+    });
   } catch (err: unknown) {
     return JSON.stringify({ error: `qms_change_link failed: ${err instanceof Error ? err.message : String(err)}` });
   }
