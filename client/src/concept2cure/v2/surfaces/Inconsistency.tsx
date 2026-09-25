@@ -779,7 +779,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
           {/* Submission gate: the hero verdict -- can this filing go? */}
           <div className={'gi-gate ' + (clean ? 'is-clean' : neverScanned ? 'is-warn' : gate.blocked ? 'is-blocked' : 'is-warn')}>
             <div className="gi-gate-main">
-              <span className="gi-gate-ico">{clean ? I.shieldCheck : neverScanned ? I.helpCircle || I.clock : gate.blocked ? I.shieldAlert : I.clock}</span>
+              <span className="gi-gate-ico">{clean ? I.shieldCheck : neverScanned ? I.help : gate.blocked ? I.shieldAlert : I.clock}</span>
               <div>
                 <div className="gi-gate-verdict">{clean ? 'Submission gate — CLEAR' : neverScanned ? 'Submission gate — NOT ASSESSED' : gate.blocked ? 'Submission gate — BLOCKED' : 'Submission gate — clear, with open items'}</div>
                 <div className="gi-gate-sub">{clean

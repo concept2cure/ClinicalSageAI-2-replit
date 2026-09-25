@@ -130,6 +130,12 @@ describe('the tier follows part11-governance, not a second opinion', () => {
     expect(v.kind === 'NEEDS_APPROVAL' && v.tier).toBe('esignature');
   });
 
+  it('demands a signature for the GDPR erasure (audit 2026-09-24 DP-08/DP-09, P0-12)', () => {
+    const v = classifyToolCall(cmd('erase_personal_data', { dataSubjectId: 42 }));
+    expect(v.kind).toBe('NEEDS_APPROVAL');
+    expect(v.kind === 'NEEDS_APPROVAL' && v.tier).toBe('esignature');
+  });
+
   it('demands only a reason for the rest', () => {
     const v = classifyToolCall(cmd(A_REASON_ONLY_COMMAND));
     expect(v.kind === 'NEEDS_APPROVAL' && v.tier).toBe('reason');

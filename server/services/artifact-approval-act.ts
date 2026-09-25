@@ -44,11 +44,20 @@ export type ReviewQuorumVerdict = { met: true } | { met: false; message: string 
  * `artifactPk` is concept2cure_artifacts.id (the serial key the review tables
  * reference), not artifact_id. A read error propagates: the caller must not
  * record an approval it could not check.
+ *
+ * `currentVersion` is the artifact version the caller is about to record as
+ * approved_version_id. Every decision in the round carries version_reviewed
+ * (written at decision time from artifact.version), and each must equal it:
+ * an edit made after a reviewer decided bumps the version, and approving the
+ * bumped version on the strength of that decision would file content no
+ * reviewer saw (§11.10(a)/(e)). Reviewed version and approved version are one
+ * version, or there is no quorum.
  */
 export async function reviewQuorumVerdict(
   q: ApprovalActQueryable,
   artifactPk: number,
-  organizationId: number
+  organizationId: number,
+  currentVersion: number
 ): Promise<ReviewQuorumVerdict> {
   const assignments = (
     await q.query(
@@ -76,11 +85,11 @@ export async function reviewQuorumVerdict(
 
   const decisions = (
     await q.query(
-      `SELECT decision FROM concept2cure_review_decisions
+      `SELECT decision, version_reviewed FROM concept2cure_review_decisions
        WHERE artifact_id = $1 AND review_round = $2 AND organization_id = $3`,
       [artifactPk, latestRound, organizationId]
     )
-  ).rows as Array<{ decision: string }>;
+  ).rows as Array<{ decision: string; version_reviewed: number | string | null }>;
   const nonApprovals = decisions.filter(d => d.decision !== 'approve');
   if (nonApprovals.length > 0) {
     return {
@@ -88,6 +97,14 @@ export async function reviewQuorumVerdict(
       message: `Cannot approve: ${nonApprovals.length} reviewer(s) did not approve (decisions: ${nonApprovals
         .map(d => d.decision)
         .join(', ')})`,
+    };
+  }
+  const stale = decisions.filter(d => Number(d.version_reviewed) !== Number(currentVersion));
+  if (stale.length > 0) {
+    const seen = [...new Set(stale.map(d => String(d.version_reviewed)))].join(', ');
+    return {
+      met: false,
+      message: `Cannot approve: ${stale.length} reviewer decision(s) were recorded against version ${seen}; the artifact is now version ${currentVersion}. Route it for review again so reviewers decide on what would be approved.`,
     };
   }
   return { met: true };

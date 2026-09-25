@@ -90,8 +90,8 @@
 .c2c-v2 .ob-mods{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:20px;}
 .c2c-v2 .ob-mod{display:flex;align-items:center;gap:10px;padding:13px 14px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg-050);font-size:13px;font-weight:500;text-align:left;transition:background var(--dur), border-color var(--dur);}
 .c2c-v2 .ob-mod.on{border-color:var(--accent-100);background:var(--accent-000);}
-.c2c-v2 .ob-mod-check{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border-strong);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;flex-shrink:0;}
-.c2c-v2 .ob-mod.on .ob-mod-check{background:var(--accent-100);border-color:var(--accent-100);}
+.c2c-v2 .ob-mod-check{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border-strong);display:flex;align-items:center;justify-content:center;color:var(--accent-on-strong);font-size:12px;flex-shrink:0;}
+.c2c-v2 .ob-mod.on .ob-mod-check{background:var(--accent-strong);border-color:var(--accent-strong);}
 .c2c-v2 .ob-nav{display:flex;gap:10px;margin-top:8px;}
 .c2c-v2 .ob-nav .auth-btn{flex:1;}
 .c2c-v2 .ob-nav .auth-btn.ghost{flex:0 0 96px;}

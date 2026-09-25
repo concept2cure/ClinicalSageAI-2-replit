@@ -115,6 +115,8 @@ interface ActivityRow {
   action: string | null;
   resource_type: string | null;
   actor_id: number | null;
+  /** COALESCE(users.name, users.email) for actor_id; null for system rows. */
+  actor_name: string | null;
   occurred_at: string | null;
 }
 
@@ -1068,7 +1070,7 @@ function AuthorWorkspace({
                 <div className="pj-acts">
                   {(d.activity ?? []).map((a, i) => (
                     <div key={i} className="pj-act">
-                      <span className="pj-act-w">{a.actor_id != null ? 'User ' + a.actor_id : 'System'}</span>
+                      <span className="pj-act-w">{a.actor_name ?? (a.actor_id != null ? 'User ' + a.actor_id : 'System')}</span>
                       <span className="pj-act-t">{String(a.action ?? '').replace(/_/g, ' ')}{a.resource_type ? ' · ' + a.resource_type : ''}</span>
                       <span className="pj-act-n">{fmtWhen(a.occurred_at) ?? ''}</span>
                     </div>

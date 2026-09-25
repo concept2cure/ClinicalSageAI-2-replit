@@ -11,25 +11,53 @@
  *
  * Redis: ioredis via redis-manager.ts (already active for rate limiting/queues/locks)
  * DB: revoked_tokens table (migration 0015_document_artifact_bridge.sql)
- * TTL: 24 hours (matches JWT expiry)
+ * Expiry: the later of 24 hours and the token's own `exp` (revocationExpiryFor)
  *
  * @module server/services/token-revocation
  */
 
 import { createHash } from 'crypto';
+import jwt from 'jsonwebtoken';
 import { createScopedLogger } from '../utils/logger';
 import { runWithPreAuthScope } from '../db/tenantStore';
 import {
   ACCOUNT_INACTIVE_MESSAGE,
   accountIdOfClaims,
-  isAccountActiveBeforeTenant,
+  issuedAtOfClaims,
+  readAccountStandingBeforeTenant,
+  sessionPredatesPasswordChange,
 } from './account-standing';
 import { verifyJwtWithRotation, type JwtVerifyOptions } from '../utils/jwtVerify';
 
 const log = createScopedLogger('token-revocation');
 
 const REDIS_KEY_PREFIX = 'c2c:revoked:';
-const TOKEN_TTL_SECONDS = 24 * 60 * 60; // 24 hours
+/** The floor of a revocation's life: the access token's own 24 hours. */
+const TOKEN_TTL_SECONDS = 24 * 60 * 60;
+
+/**
+ * When a revocation may lapse: the later of 24 hours and the token's own `exp`.
+ *
+ * Security audit 2026-09-24, IAM-04 (High): every entry used to live 24 hours,
+ * the access token's life, while a refresh token lives 7 days
+ * (routes/auth.ts REFRESH_TOKEN_EXPIRES_IN). A refresh token revoked at logout
+ * therefore came back to life after a day, for the remaining six. The `exp`
+ * claim is decoded, not verified: a token that does not verify is refused
+ * before the list is ever consulted, and anything unreadable gets the floor.
+ * The memory tier never expires and is unaffected.
+ */
+export function revocationExpiryFor(token: string, now: number = Date.now()): Date {
+  const floor = now + TOKEN_TTL_SECONDS * 1000;
+  let expMs: number | null = null;
+  try {
+    const decoded = jwt.decode(token);
+    const exp = decoded && typeof decoded === 'object' ? (decoded as { exp?: unknown }).exp : undefined;
+    if (typeof exp === 'number' && Number.isFinite(exp)) expMs = exp * 1000;
+  } catch {
+    /* not a JWT: the floor applies */
+  }
+  return new Date(expMs !== null && expMs > floor ? expMs : floor);
+}
 
 // Tier 3: In-memory emergency fallback
 const memoryBlacklist = new Set<string>();
@@ -90,7 +118,9 @@ function tenantless<T>(caller: string, fn: () => Promise<T>): Promise<T> {
 export async function revokeToken(token: string, reason = 'logout'): Promise<void> {
   revokeCount++;
   const hash = hashToken(token);
-  const expiresAt = new Date(Date.now() + TOKEN_TTL_SECONDS * 1000);
+  const now = Date.now();
+  const expiresAt = revocationExpiryFor(token, now);
+  const ttlSeconds = Math.ceil((expiresAt.getTime() - now) / 1000);
 
   // Always write to memory (guaranteed)
   memoryBlacklist.add(hash);
@@ -112,7 +142,7 @@ export async function revokeToken(token: string, reason = 'logout'): Promise<voi
   const redis = await getRedis();
   if (redis) {
     try {
-      await redis.setex(`${REDIS_KEY_PREFIX}${hash}`, TOKEN_TTL_SECONDS, '1');
+      await redis.setex(`${REDIS_KEY_PREFIX}${hash}`, ttlSeconds, '1');
     } catch (err) {
       redisFails++;
       log.warn('Redis revoke failed', { error: err instanceof Error ? err.message : String(err) });
@@ -182,14 +212,18 @@ export async function isTokenRevoked(token: string): Promise<boolean> {
 }
 
 /**
- * A signed, unexpired token whose session is over: it was signed out, or its
- * account was taken out of use (suspended or deprovisioned, VSR-001 F-29).
- * One error for both, so every caller that already answers a signed-out
- * session with 401 answers an account out of use the same way.
+ * A signed, unexpired token whose session is over: it was signed out, its
+ * account was taken out of use (suspended or deprovisioned, VSR-001 F-29), or
+ * the account's password changed after it was issued (IAM-04). One error for
+ * all three, so every caller that already answers a signed-out session with
+ * 401 answers the others the same way. A password change is worded as a
+ * signed-out session: it is one, from the holder's side.
  */
+export type SessionEndedReason = 'signed-out' | 'account-inactive' | 'password-changed';
+
 export class SessionEndedError extends Error {
-  readonly reason: 'signed-out' | 'account-inactive';
-  constructor(reason: 'signed-out' | 'account-inactive' = 'signed-out') {
+  readonly reason: SessionEndedReason;
+  constructor(reason: SessionEndedReason = 'signed-out') {
     super(reason === 'account-inactive' ? ACCOUNT_INACTIVE_MESSAGE : 'This session has ended. Sign in again.');
     this.name = 'SessionEndedError';
     this.reason = reason;
@@ -214,13 +248,24 @@ export class SessionEndedError extends Error {
  * probe, the users routes, the enterprise routes and the collaboration server
  * all verify here, and each kept serving such an account until the token
  * expired. A standing that cannot be read throws, and the caller refuses.
+ *
+ * And SessionEndedError('password-changed') for a token issued before the
+ * account's last password change (security audit 2026-09-24, IAM-04): a reset
+ * or change stamps users.password_changed_at, and until this check no
+ * authenticator compared it with the token's iat, so the sessions a holder
+ * most needs ended kept working. The standing and the stamp are one read
+ * (readAccountStanding).
  */
 export async function verifyLiveToken<T = unknown>(token: string, options?: JwtVerifyOptions): Promise<T> {
   const decoded = verifyJwtWithRotation<T>(token, options);
   if (await isTokenRevoked(token)) throw new SessionEndedError();
   const accountId = accountIdOfClaims(decoded);
-  if (accountId !== null && !(await isAccountActiveBeforeTenant(accountId))) {
-    throw new SessionEndedError('account-inactive');
+  if (accountId !== null) {
+    const standing = await readAccountStandingBeforeTenant(accountId);
+    if (!standing.active) throw new SessionEndedError('account-inactive');
+    if (sessionPredatesPasswordChange(issuedAtOfClaims(decoded), standing.passwordChangedAtSeconds)) {
+      throw new SessionEndedError('password-changed');
+    }
   }
   return decoded;
 }

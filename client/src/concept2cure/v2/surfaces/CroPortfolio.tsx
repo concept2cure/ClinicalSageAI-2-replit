@@ -630,7 +630,7 @@ export function CroPortfolio({ onAsk, onNav }: SurfaceViewProps) {
               </div>
 
               <div className="cro-foot-note">
-                {I.shield} Each sponsor's data is isolated by{' '}
+                {I.shieldCheck} Each sponsor's data is isolated by{' '}
                 <code>organizationId</code>; submissions inherit the sponsor's
                 pathway and run the same freeze/dispatch gates (Part-11
                 e-signature - deterministic readiness).

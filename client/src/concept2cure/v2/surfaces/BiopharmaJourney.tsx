@@ -512,7 +512,7 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
             <div className="pj-deliv">
               {stage.deliv.map((d, i) => (
                 <div key={i} className="pj-deliv-row">
-                  <span className="dot">{I.circle || I.clock}</span>{d[0]}
+                  <span className="dot">{I.clock}</span>{d[0]}
                 </div>
               ))}
             </div>

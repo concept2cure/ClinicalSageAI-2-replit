@@ -234,7 +234,7 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, canvas }: AnaTurnProps) {
               <button key={i} className="ct-ref" data-kind={l.kind} onClick={() => onNav && onNav(CT_LINKMAP[l.kind] || 'document-authoring')} title={'Open in ' + (CT_LINKMAP[l.kind] || 'editor')}>
                 <span className="ct-ref-ic">{(I as any)[CT_LINKIC[l.kind]] || I.fileText}</span>
                 <span className="ct-ref-l">{l.label}</span>
-                <span className="ct-ref-go">{I.arrowUpRight || I.externalLink}</span>
+                <span className="ct-ref-go">{I.externalLink}</span>
               </button>
             ))}
           </div>

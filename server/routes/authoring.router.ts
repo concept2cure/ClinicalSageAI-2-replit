@@ -10,6 +10,7 @@ import { verifyJwtWithRotation } from '../utils/jwtVerify';
 import { nonAccessTokenReason } from '../middleware/tokenType';
 import { enforceOrgMembership } from '../middleware/orgMembership';
 import { getPool } from '../db';
+import { currentTenantOrgUuid, TenantKeyRequiredError } from '../db/currentTenant';
 import auditService, { writeChainedAuditRow } from '../services/auditService';
 import { isSigningAuthorized } from '../services/part11/signing-authority.js';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role.js';
@@ -58,6 +59,7 @@ import {
 // rows through the SAME code. The handlers here are the HTTP mapping they
 // always were.
 import { createDocument, createSection } from '../services/authoring/authoring-documents';
+import { requireGovernedReason, optionalGovernedReason } from './governed-reason';
 import {
   createDocumentFromDraft,
   parseDraftInput,
@@ -1793,9 +1795,18 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
 
     if (content !== undefined) {
       paramCount++;
-      updates.push(`content = $${paramCount}`);
+      updates.push(`content = ${paramCount}`);
       values.push(content);
       recordRevision = true;
+    }
+
+    // §11.10(e): a content change carries its reason, checked here rather
+    // than trusted from the client, and refused before anything is written.
+    let changeReason: string | null = null;
+    if (recordRevision) {
+      const verdict = requireGovernedReason(req.body?.changeReason);
+      if (!verdict.ok) return res.status(400).json({ error: verdict.error, field: 'changeReason' });
+      changeReason = verdict.reason;
     }
 
     if (title !== undefined) {
@@ -1917,7 +1928,7 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
           'UPDATE',
           currentSection.rows[0].content ?? null,
           content ?? null,
-          typeof req.body?.changeReason === 'string' ? req.body.changeReason : null,
+          changeReason,
           { titleChanged: title !== undefined },
           client,
         );
@@ -2711,6 +2722,16 @@ router.post('/documents/:id/review', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { review_status, review_comments } = req.body;
+    if (!['approved', 'rejected', 'changes_requested'].includes(review_status)) {
+      return res.status(400).json({ success: false, error: 'review_status must be approved, rejected or changes_requested' });
+    }
+    // §11.10(e): a change request or a rejection carries the reason the author
+    // acts on; an approval may carry one. Checked here, not only in Review.tsx.
+    const commentsVerdict = review_status === 'approved'
+      ? optionalGovernedReason(review_comments)
+      : requireGovernedReason(review_comments);
+    if (!commentsVerdict.ok) return res.status(400).json({ success: false, error: commentsVerdict.error, field: 'review_comments' });
+    const reviewComments = commentsVerdict.reason;
     const tenantId = getTenantId(req);
     // SECURITY (21 CFR Part 11): reviewer identity must come from the verified
     // JWT, never from headers / req.body — a review sign-off cannot be
@@ -2737,7 +2758,7 @@ router.post('/documents/:id/review', async (req: Request, res: Response) => {
          SET review_status = $1, review_comments = $2, reviewed_at = NOW(), updated_at = NOW()
          WHERE id = $3 AND tenant_id = $4
          RETURNING *`,
-        [review_status, review_comments, existingReview.rows[0].id, tenantId]
+        [review_status, reviewComments, existingReview.rows[0].id, tenantId]
       );
     } else {
       // Create new review
@@ -2754,7 +2775,7 @@ router.post('/documents/:id/review', async (req: Request, res: Response) => {
           reviewerName,
           reviewerEmail,
           review_status,
-          review_comments,
+          reviewComments,
           tenantId,
         ]
       );
@@ -2874,7 +2895,13 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       const searchQuery = `${section.module} ${section.code} ${section.title} ${
         section.product_code || ''
       }`.trim();
-      const searchResults = await embeddingService.searchHybrid(searchQuery, 5, 0.65);
+      // The session's tenant key. This search used to pass none, so it ranked
+      // every tenant's Data Room atoms wherever RLS was not filtering — a CTD
+      // section draft could cite another sponsor's evidence. No key is a failed
+      // retrieval, reported as one below, never an unscoped search.
+      const orgUuid = await currentTenantOrgUuid(pool);
+      if (!orgUuid) throw new TenantKeyRequiredError('no tenant key for this session');
+      const searchResults = await embeddingService.searchHybrid(searchQuery, 5, 0.65, orgUuid);
       if (searchResults.length > 0) {
         sourcesRetrieved = searchResults.length;
         for (const r of searchResults as any[]) {
@@ -3674,6 +3701,11 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
   try {
     const { docId } = req.params;
     const { reason, version } = req.body;
+    // §11.10(e): the reason is validated here and recorded as given — never
+    // replaced by a placeholder in the ledger.
+    const reasonVerdict = requireGovernedReason(reason);
+    if (!reasonVerdict.ok) return res.status(400).json({ error: reasonVerdict.error, field: 'reason' });
+    const freezeReason = reasonVerdict.reason;
     // Freeze attribution from the verified JWT; the old x-user-email ||
     // 'system' fallback let an unauthenticated caller freeze as "system".
     const email = getActorEmail(req) || null;
@@ -3812,7 +3844,7 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
          (document_id, version, frozen_content, content_hash, frozen_by, frozen_reason, tenant_id)
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [docId, versionNumber, frozenContent, contentHash, email,
-         `${reason ?? ''}${acknowledgedNote}`.trim() || null, tenantId]
+         `${freezeReason}${acknowledgedNote}`, tenantId]
       );
 
       // Update document status
@@ -3829,7 +3861,7 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
         'FREEZE',
         null,
         frozenContent,
-        `${reason || 'Document frozen for compliance'}${acknowledgedNote}`,
+        `${freezeReason}${acknowledgedNote}`,
         { contentHash, version: versionNumber, openCommentCount, pendingEdits, acknowledged },
         client,
         // This handler writes its own richer chained row below.

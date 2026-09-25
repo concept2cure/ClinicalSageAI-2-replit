@@ -109,4 +109,25 @@ describe('what the audit ledger shows for an event', () => {
     const row = auditService.logAction.mock.calls.at(-1)![0];
     expect(row.details.description).toBe('Second factor refused: wrong code');
   });
+
+  // routes/sso.ts records every SAML outcome as an auth event in the tenant that
+  // owns the IdP configuration (security audit 2026-09-24, IAM-03, P0-3). Each
+  // has its own sentence, so the ledger does not show the generic
+  // "user login: failure (saml_…)" form for a federated sign-in.
+  const samlEvents: Array<[reason: string, outcome: 'success' | 'failure', sentence: string]> = [
+    ['saml_sso', 'success', "Signed in through the organisation's SAML identity provider"],
+    ['saml_validation_failed', 'failure', 'Sign-in refused: the SAML response did not validate'],
+    ['saml_org_not_resolved', 'failure', 'Sign-in refused: the SAML configuration resolved to no organisation'],
+    ['saml_no_email', 'failure', 'Sign-in refused: the SAML assertion carried no email address'],
+    [
+      'saml_user_not_in_organisation',
+      'failure',
+      'Sign-in refused: the account is not a member of the organisation that owns this identity provider',
+    ],
+  ];
+  it.each(samlEvents)('has its own sentence for user_login | %s', (reason, outcome, sentence) => {
+    const shown = describeAuthEvent({ action: 'user_login', outcome, reason });
+    expect(shown).not.toMatch(/^user login: /);
+    expect(shown).toBe(sentence);
+  });
 });

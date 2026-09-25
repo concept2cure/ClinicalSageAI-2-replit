@@ -1390,7 +1390,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
             <div style={{ color: 'var(--text-400)', fontSize: 11.5 }}>{e.target}</div>
             <div>
               {e.sig ? (
-                <span className="esig">{I.shieldCheck}</span>
+                <span className="esig" role="img" aria-label="E-signed (21 CFR Part 11)">{I.shieldCheck}</span>
               ) : (
                 <span style={{ color: 'var(--text-500)' }}>--</span>
               )}
@@ -1472,7 +1472,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
                   Signature meaning
                 </span>
                 <span>
-                  <span className="esig" style={{ marginRight: 6 }}>
+                  <span className="esig" style={{ marginRight: 6 }} role="img" aria-label="E-signed (21 CFR Part 11)">
                     {I.shieldCheck}
                   </span>
                   {entry.meaning} (ss11.50)
@@ -2537,7 +2537,7 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
               <div style={{ color: 'var(--text-400)' }}>{a.when}</div>
               <div>
                 {a.sig ? (
-                  <span className="esig" title="E-signed (21 CFR Part 11)">
+                  <span className="esig" role="img" aria-label="E-signed (21 CFR Part 11)" title="E-signed (21 CFR Part 11)">
                     {I.shieldCheck}
                   </span>
                 ) : (

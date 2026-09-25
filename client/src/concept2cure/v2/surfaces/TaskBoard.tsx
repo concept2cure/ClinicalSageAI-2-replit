@@ -1755,7 +1755,7 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
             </>
           )}
           <button type="button" className={`tb-tog${autoAssign ? ' on' : ''}`} onClick={() => setAutoAssign(a => !a)}><span className="ico">{I.sparkles}</span>Workload-balanced auto-assign (a separate step, after the tasks are created)</button>
-          {err && <div className="scaf-note" role="alert" style={{ color: 'var(--danger, #b42318)' }}>{err}</div>}
+          {err && <div className="scaf-note" role="alert" style={{ color: 'var(--error)' }}>{err}</div>}
         </div>
         )}
 

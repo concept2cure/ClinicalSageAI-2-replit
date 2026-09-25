@@ -528,7 +528,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
           </p>
         </div>
         <button className="sp-primary" onClick={startExtract}>
-          {I.upload || I.plus} Upload a form
+          {I.upload} Upload a form
         </button>
         <input
           ref={fileRef} type="file" aria-label="Upload a template document" accept=".docx,.pdf" style={{ display: 'none' }}
@@ -614,7 +614,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
                   style={{ width: '100%', textAlign: 'left', borderRadius: 8, padding: '9px 10px', border: selId === t.id ? '1px solid var(--accent-muted)' : '1px solid transparent', background: selId === t.id ? 'var(--accent-000)' : 'transparent' }}
                   onClick={() => { setSel(t.id); setTab('preview'); }}>
                   <span className="sp-q-ic">{t.sourceFileType === 'pdf' ? I.fileText : (I.template || I.fileText)}</span>
-                  <span className="sp-row-b"><span className="sp-row-t">{t.name}</span><span className="sp-row-s">{t.sourceFileName || '—'} - {_tlConf(t.extractionConfidence)}%</span></span>
+                  <span className="sp-row-b"><span className="sp-row-t">{t.name}</span><span className="sp-row-s">{t.sourceFileName || '—'} - {t.extractionConfidence == null ? 'not extracted' : _tlConf(t.extractionConfidence) + '%'}</span></span>
                   {t.verified ? <span className="rd-chip tone-ok">verified</span> : <span className="rd-chip tone-warn">review</span>}
                 </button>
               ))}
@@ -673,10 +673,20 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
             {tab === 'extract' && (
               <div>
                 <div className="tl-conf" style={{ marginTop: 4 }}>
-                  <div className="tl-conf-bar">
-                    <span style={{ width: _tlConf(sel.extractionConfidence) + '%', background: (sel.extractionConfidence || 0) >= 0.9 ? 'var(--success)' : (sel.extractionConfidence || 0) >= 0.6 ? 'var(--accent-100)' : 'var(--warning)' }} />
-                  </div>
-                  <span className="tl-conf-l">Extraction confidence {_tlConf(sel.extractionConfidence)}%</span>
+                  {/* null is the store's honest "no extraction ran" (hand-built or
+                      pre-migration template). It is not a score, so it gets no bar
+                      and no percentage — the AnA narrative above already draws this
+                      line; the pixels now do too. */}
+                  {sel.extractionConfidence == null ? (
+                    <span className="tl-conf-l">Not extracted — this template was hand-built or predates extraction, so there is no confidence to report.</span>
+                  ) : (
+                    <>
+                      <div className="tl-conf-bar">
+                        <span style={{ width: _tlConf(sel.extractionConfidence) + '%', background: sel.extractionConfidence >= 0.9 ? 'var(--success)' : sel.extractionConfidence >= 0.6 ? 'var(--accent-100)' : 'var(--warning)' }} />
+                      </div>
+                      <span className="tl-conf-l">Extraction confidence {_tlConf(sel.extractionConfidence)}%</span>
+                    </>
+                  )}
                 </div>
                 <div className="pj-seclbl">Recovered from</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>

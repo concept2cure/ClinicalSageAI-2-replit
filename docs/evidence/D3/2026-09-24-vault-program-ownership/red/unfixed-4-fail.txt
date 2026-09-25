@@ -1,0 +1,17 @@
+# Unfixed: c2c_d3 (from empty at 0521402e + later set files re-applied), app_service, RLS_ENFORCE=on. HEAD 0b8d6e9a
+ ✓ tests/db/vault-program-ownership.dbtest.ts > vault ownership and delegation come from rows no other tenant can write (D3) > posture: the statements run as app_service, RLS enforcing, with the tenant GUC set 3ms
+ ✓ tests/db/vault-program-ownership.dbtest.ts > vault ownership and delegation come from rows no other tenant can write (D3) > positive control: each tenant sees exactly its own vault document 12ms
+ × tests/db/vault-program-ownership.dbtest.ts > vault ownership and delegation come from rows no other tenant can write (D3) > a core.programs row naming B's program does not make A its owner 38ms
+   → B's document reached A: expected [ …(2) ] to deeply equal [ 'wo03_2363_mug1bhvp-vault-owned-A' ]
+ × tests/db/vault-program-ownership.dbtest.ts > vault ownership and delegation come from rows no other tenant can write (D3) > an ownership row behind an org-less core.programs row does not either 12ms
+   → expected [ …(2) ] to deeply equal [ 'wo03_2363_mug1bhvp-vault-owned-A' ]
+ × tests/db/vault-program-ownership.dbtest.ts > vault ownership and delegation come from rows no other tenant can write (D3) > A cannot grant itself delegate access to B, and gains nothing by trying 6ms
+   → expected 'written' to be 'refused' // Object.is equality
+ × tests/db/vault-program-ownership.dbtest.ts > vault ownership and delegation come from rows no other tenant can write (D3) > a grant B makes still works, a delegate cannot widen it, and revoking it ends it 8ms
+   → the delegate widened its own grant: expected 1 to be +0 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: B's document reached A: expected [ …(2) ] to deeply equal [ 'wo03_2363_mug1bhvp-vault-owned-A' ]
+AssertionError: expected [ …(2) ] to deeply equal [ 'wo03_2363_mug1bhvp-vault-owned-A' ]
+AssertionError: expected 'written' to be 'refused' // Object.is equality
+AssertionError: the delegate widened its own grant: expected 1 to be +0 // Object.is equality
+      Tests  4 failed | 2 passed (6)

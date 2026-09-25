@@ -501,6 +501,14 @@ jobs:
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:workflow-targets
 
+      # The frontend deploy once excluded every *.json and so never uploaded the
+      # interface strings under locales/: production would have shown raw keys on
+      # the sign-in page. This models the deploy step's S3 filters against the
+      # files the build publishes (with a self-test on that exact step).
+      - name: Guardrails — the frontend deploy uploads every file the app fetches (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:frontend-sync-coverage:selftest && npm run ci:frontend-sync-coverage
+
       # A required security scan that gets cancelled by the next push produces
       # no release evidence for the commit it was meant to certify — 74 of the
       # last 100 canonical-branch CodeQL runs, before codeql.yml and

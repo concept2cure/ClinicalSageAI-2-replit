@@ -1,0 +1,31 @@
+ × server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > contains the Vault events, each with its chain hash, sequence and source
+   → expected [] to deeply equal [ 'vault.document.file', …(2) ]
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > never carries another tenant's rows
+ × server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > still carries the audit_events rows it always did
+   → expected [] to deeply equal [ 'scim.user.provisioned' ]
+ × server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > narrows to one document when asked, and the manifest says so
+   → expected [ 'scim.user.provisioned' ] to deeply equal [ 'vault.document.file', …(1) ]
+ × server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > verifies, and refuses after a one-byte change to a row
+   → expected true to be false // Object.is equality
+ × server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > states the audit_logs chain verdict it was given — and never "intact" without one
+   → expected undefined to match object { status: 'broken', brokenAt: 'row-x' }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 1 passed (6)
+ × server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > exports inside a tenant-stamped transaction, with the chain verifier
+   → expected { query: [AsyncFunction Mock], …(1) } to be { query: [Function Mock], …(1) } // Object.is equality
+ × server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > passes the record filters
+   → expected { organizationId: 7, …(8) } to match object { Object (resourceType, recordIds) }
+ × server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > refuses a malformed filter rather than exporting everything
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > rolls back and releases when the export fails
+   → expected [] to include 'ROLLBACK'
+ × server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > exports inside a tenant-stamped transaction, with the chain verifier
+   → expected { query: [AsyncFunction Mock], …(1) } to be { query: [Function Mock], …(1) } // Object.is equality
+ × server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > passes the record filters
+   → expected { organizationId: 7, …(8) } to match object { Object (resourceType, recordIds) }
+ × server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > refuses a malformed filter rather than exporting everything
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > rolls back and releases when the export fails
+   → expected [] to include 'ROLLBACK'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  8 failed (8)

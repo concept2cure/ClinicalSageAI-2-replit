@@ -1,38 +1,38 @@
 {
   "$comment": "Tenant-data entry points that do NOT reference the tenant lifecycle vocabulary. Each needs a justification saying why the surface does not need an entitlement check. This list may only SHRINK: wire the check, then re-run with --write-baseline. Adding an entry by hand is a regression, not a fix.",
   "generatedBy": "scripts/ci/check-tenant-entry-points.mjs --write-baseline",
-  "count": 10,
+  "count": 9,
   "unconsidered": {
     "server/jobs/auditChainIntegritySweep.ts": {
-      "reason": "DELIBERATELY UNCONDITIONAL. Verifies the tamper-evident audit hash chain estate-wide (zero organization_id references; runs under a system scope). Audit integrity is precisely the thing that must NOT stop when a tenant is suspended, pending deletion or purged \u2014 21 CFR Part 11 \u00a711.10(e) expects the trail to outlive the records it describes. Gating this on entitlement would blind the platform to chain damage in exactly the tenants under scrutiny.",
-      "digest": "bdf9715452a8b12b"
+      "reason": "DELIBERATELY UNCONDITIONAL. Verifies every tamper-evident audit store estate-wide (audit_logs chain and seals, audit_events linkage and seals, audit.tamper_proof_log, the immutability triggers) under a system scope. The only organization_id it reads is the grouping column of the audit_events chain, which is per organisation by construction; it is never a tenant filter. Audit integrity is precisely the thing that must NOT stop when a tenant is suspended, pending deletion or purged - 21 CFR Part 11 11.10(e) expects the trail to outlive the records it describes. Gating this on entitlement would blind the platform to chain damage in exactly the tenants under scrutiny. Re-read 2026-09-25 after the sweep grew from one store to six (security audit 2026-09-24 DP-06/DP-04, P0-9a/P0-8a, commit e8724680).",
+      "digest": "bdfe7fa89f25d1b5"
     },
     "server/jobs/corpusIngestionSweep.ts": {
-      "reason": "NO PER-TENANT FAN-OUT. Zero organization_id references; ingests into the shared regulatory corpus under a system scope. Nothing here is attributable to a tenant, so there is no tenant to be entitled. Revisit if it gains per-tenant fan-out \u2014 the content digest below will re-flag it.",
+      "reason": "NO PER-TENANT FAN-OUT. Zero organization_id references; ingests into the shared regulatory corpus under a system scope. Nothing here is attributable to a tenant, so there is no tenant to be entitled. Revisit if it gains per-tenant fan-out — the content digest below will re-flag it.",
       "digest": "dcbd16f54c0f1dc9"
     },
     "server/jobs/driftSentinelSweep.ts": {
-      "reason": "NO PER-TENANT FAN-OUT. Zero organization_id references; estate-wide drift detection under a system scope. Revisit if it gains per-tenant fan-out \u2014 the digest will re-flag it.",
+      "reason": "NO PER-TENANT FAN-OUT. Zero organization_id references; estate-wide drift detection under a system scope. Revisit if it gains per-tenant fan-out — the digest will re-flag it.",
       "digest": "b23cb89eb5f4d188"
     },
     "server/jobs/externalIntelligenceSweep.ts": {
-      "reason": "NO PER-TENANT FAN-OUT. Zero organization_id references; ingests shared external intelligence under a system scope. Revisit if it gains per-tenant fan-out \u2014 the digest will re-flag it.",
+      "reason": "NO PER-TENANT FAN-OUT. Zero organization_id references; ingests shared external intelligence under a system scope. Revisit if it gains per-tenant fan-out — the digest will re-flag it.",
       "digest": "b5ef8251c930545c"
     },
     "server/jobs/regulatoryHorizonScan.ts": {
-      "reason": "NO PER-TENANT FAN-OUT. Zero organization_id references; scans the shared regulatory horizon under a system scope. Revisit if it gains per-tenant fan-out \u2014 the digest will re-flag it.",
+      "reason": "NO PER-TENANT FAN-OUT. Zero organization_id references; scans the shared regulatory horizon under a system scope. Revisit if it gains per-tenant fan-out — the digest will re-flag it.",
       "digest": "4c3fadcd75fb5a11"
     },
     "server/jobs/retentionCron.ts": {
-      "reason": "DELIBERATELY UNCONDITIONAL. Retention deletion must run FOR non-entitled tenants \u2014 that is its purpose. A suspended or pending-deletion tenant is the primary case, and gating it on entitlement would mean data is never retained out of the tenants whose retention clock is actually running. Its only notification path (notifyAdmins) addresses PLATFORM admins with an estate summary, not tenant users. RE-READ 2026-09-10 against d32dc3c5f (\"Stop the retention sweep destroying records under legal hold\"), which is what drifted this digest. The justification is unchanged by it: a legal hold is a per-record protection applied across the whole estate, not a tenant-entitlement gate, and the sweep still runs for non-entitled tenants. Two properties worth carrying forward \u2014 loadActiveHolds reads vaultLegalHolds estate-wide and unscoped, which is correct for a platform sweep and must not be 'fixed' into a tenant-scoped read; and it FAILS CLOSED, so an unreadable hold table aborts the sweep having deleted nothing. No tenant-facing notification path was added; notifyAdmins still addresses RETENTION_ADMIN_EMAILS, i.e. platform operators.",
+      "reason": "DELIBERATELY UNCONDITIONAL. Retention deletion must run FOR non-entitled tenants — that is its purpose. A suspended or pending-deletion tenant is the primary case, and gating it on entitlement would mean data is never retained out of the tenants whose retention clock is actually running. Its only notification path (notifyAdmins) addresses PLATFORM admins with an estate summary, not tenant users. RE-READ 2026-09-10 against d32dc3c5f (\"Stop the retention sweep destroying records under legal hold\"), which is what drifted this digest. The justification is unchanged by it: a legal hold is a per-record protection applied across the whole estate, not a tenant-entitlement gate, and the sweep still runs for non-entitled tenants. Two properties worth carrying forward — loadActiveHolds reads vaultLegalHolds estate-wide and unscoped, which is correct for a platform sweep and must not be 'fixed' into a tenant-scoped read; and it FAILS CLOSED, so an unreadable hold table aborts the sweep having deleted nothing. No tenant-facing notification path was added; notifyAdmins still addresses RETENTION_ADMIN_EMAILS, i.e. platform operators.",
       "digest": "97b7e066358657db"
     },
     "server/jobs/scheduleOfEventsSweep.ts": {
-      "reason": "NO PER-TENANT FAN-OUT at the sweep level: zero organization_id references, runs under a system scope. NOTE \u2014 the RLS burndown lists this as a writer, so if it ever selects per-organization it needs filterTenantsForBackgroundWork like taskDueSweep. The digest below is what forces that re-read.",
+      "reason": "NO PER-TENANT FAN-OUT at the sweep level: zero organization_id references, runs under a system scope. NOTE — the RLS burndown lists this as a writer, so if it ever selects per-organization it needs filterTenantsForBackgroundWork like taskDueSweep. The digest below is what forces that re-read.",
       "digest": "bfd4fd54a2a03e88"
     },
     "server/routes/api-keys.ts": {
-      "reason": "FALSE POSITIVE of the shape matcher (matches on the string 'validateApiKey'). This is the session-authenticated router for MANAGING keys, mounted under /api behind the auth boundary, so enforceTenantLifecycle already covers it. It is not itself an alternative-auth surface. RE-READ 2026-09-10: the digest drifted only because WO-0's lint cleanup removed an unused type-only import (`type ApiKeyScope`), which has no runtime effect. Re-verified against the current file: router.use(authMiddleware) and router.use(requireAdminRole) at :56-57, mounted at /api/api-keys by server/bootstrap/register-document-routes.ts. The justification holds and is now stronger than as first written \u2014 the router is admin-guarded, not merely session-authenticated.",
+      "reason": "FALSE POSITIVE of the shape matcher (matches on the string 'validateApiKey'). This is the session-authenticated router for MANAGING keys, mounted under /api behind the auth boundary, so enforceTenantLifecycle already covers it. It is not itself an alternative-auth surface. RE-READ 2026-09-10: the digest drifted only because WO-0's lint cleanup removed an unused type-only import (`type ApiKeyScope`), which has no runtime effect. Re-verified against the current file: router.use(authMiddleware) and router.use(requireAdminRole) at :56-57, mounted at /api/api-keys by server/bootstrap/register-document-routes.ts. The justification holds and is now stronger than as first written — the router is admin-guarded, not merely session-authenticated.",
       "digest": "f0d2d3958e177b94"
     },
     "server/routes/mdx-admin.ts": {

@@ -59,6 +59,15 @@ describe('membership', () => {
     }
   });
 
+  it('covers the GDPR erasure — model output never runs it (audit 2026-09-24 DP-08/DP-09, P0-12)', () => {
+    // erase_personal_data overwrites regulated artifact content and destroys
+    // personal data. Until 2026-09-25 it was an ordinary handler-authorized
+    // write, so a model response containing the command ran it with no person
+    // in the loop; the handler's own privacy-admin check only asks WHO the
+    // session is, not whether a human chose this.
+    expect(isProposeOnlyCommand('erase_personal_data')).toBe(true);
+  });
+
   it('covers every command in both Part 11 tiers', () => {
     const missing = Object.entries(COMMAND_AUTHORIZATION)
       .filter(([, a]) => a.requiresSignature === true || a.requiresReasonForChange === true)

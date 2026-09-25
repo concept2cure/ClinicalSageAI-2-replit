@@ -33,15 +33,29 @@
  * router and whose test is a cross-tenant path-traversal regression guard
  * (audit findings EXP-06 / INJ-PATH-001).
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from 'vitest';
 import express from 'express';
 import request from 'supertest';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import * as nodeCrypto from 'node:crypto';
 
 import duRouter from '../document-understanding';
 
-function app() {
+/**
+ * `orgId` stands in for what the `/api` auth boundary leaves on the request
+ * (`req.user.organizationId`) once a token is verified; the router itself is
+ * mounted with no per-mount middleware. Omitted, the request carries no tenant.
+ */
+function app(orgId?: number) {
   const a = express();
   a.use(express.json());
+  if (orgId !== undefined) {
+    a.use((req, _res, next) => {
+      (req as any).user = { organizationId: orgId };
+      next();
+    });
+  }
   a.use('/api/document-understanding', duRouter);
   return a;
 }
@@ -124,5 +138,82 @@ describe('GET /health describes the mechanism it has', () => {
     const res = await request(app()).get('/api/document-understanding/health');
     expect(res.body.scoring.basis).toBe('regex_hit_rate');
     expect(res.body.scoring.note).toMatch(/not\s+calibrated probabilities/i);
+  });
+});
+
+describe('a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6)', () => {
+  // The three file-reading routes resolved `filePath` against the allowed roots
+  // with no organization predicate, and `generated_documents/` held every
+  // tenant's output in one flat directory under predictable names. Files are
+  // now laid out as `<root>/org-<id>/…` and the resolver takes the caller's
+  // organization; another tenant's prefix, a legacy flat file and a missing
+  // file all answer the same way, and none of them echoes the path.
+  const ROOT = path.resolve('generated_documents');
+  const ORG_A = 990101;
+  const ORG_B = 990102;
+  const NAME = `p06-${nodeCrypto.randomBytes(4).toString('hex')}.txt`;
+  const FLAT = `p06-flat-${nodeCrypto.randomBytes(4).toString('hex')}.txt`;
+  const A_REL = `generated_documents/org-${ORG_A}/${NAME}`;
+  const SECRET = 'Tenant-A-Confidential-Protocol-Title';
+  const TEXT = `${SECRET}\n\n1. Introduction\nSome text.\n\nField Name: value\n`;
+  const ROUTES = ['/analyze', '/extract-tables', '/extract-form-fields'] as const;
+
+  beforeAll(async () => {
+    await fs.mkdir(path.join(ROOT, `org-${ORG_A}`), { recursive: true });
+    await fs.writeFile(path.join(ROOT, `org-${ORG_A}`, NAME), TEXT);
+    await fs.writeFile(path.join(ROOT, FLAT), TEXT);
+  });
+
+  afterAll(async () => {
+    await fs.rm(path.join(ROOT, `org-${ORG_A}`), { recursive: true, force: true });
+    await fs.rm(path.join(ROOT, FLAT), { force: true });
+  });
+
+  it.each(ROUTES)('%s refuses org B naming org A’s file, without the path or its contents', async route => {
+    const res = await request(app(ORG_B))
+      .post(`/api/document-understanding${route}`)
+      .send({ filePath: A_REL });
+
+    expect([403, 404]).toContain(res.status);
+    expect(res.text).not.toContain(SECRET);
+    expect(res.text).not.toContain(A_REL);
+    expect(res.text).not.toContain(`org-${ORG_A}`);
+    expect(res.text).not.toContain(ROOT);
+  });
+
+  it.each(ROUTES)('%s still reads the caller’s own file (positive control)', async route => {
+    const res = await request(app(ORG_A))
+      .post(`/api/document-understanding${route}`)
+      .send({ filePath: A_REL });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+
+  it.each(ROUTES)('%s fails closed with no tenant context on the request', async route => {
+    const res = await request(app()).post(`/api/document-understanding${route}`).send({ filePath: A_REL });
+
+    expect(res.status).toBe(403);
+    expect(res.text).not.toContain(SECRET);
+  });
+
+  it.each(ROUTES)('%s does not reach a legacy flat file, whoever asks', async route => {
+    const res = await request(app(ORG_A))
+      .post(`/api/document-understanding${route}`)
+      .send({ filePath: `generated_documents/${FLAT}` });
+
+    expect([403, 404]).toContain(res.status);
+    expect(res.text).not.toContain(SECRET);
+  });
+
+  it.each(ROUTES)('%s does not echo the path for a missing file inside the caller’s own prefix', async route => {
+    const missing = `generated_documents/org-${ORG_A}/does-not-exist-${NAME}`;
+    const res = await request(app(ORG_A))
+      .post(`/api/document-understanding${route}`)
+      .send({ filePath: missing });
+
+    expect(res.status).toBe(404);
+    expect(res.text).not.toContain(missing);
+    expect(res.text).not.toContain(`org-${ORG_A}`);
   });
 });
