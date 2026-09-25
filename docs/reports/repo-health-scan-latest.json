@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-25T22:53:22.059Z",
+  "generatedAt": "2026-09-25T23:04:29.082Z",
   "git": {
-    "sha": "6ba8a359fc7cb016f0b06b156f322d99cbf73876",
+    "sha": "5f1e35b0265ff43137e40518cf1a446c1d21bbd8",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2348,7 +2348,7 @@
       },
       {
         "file": "server/routes/510k-estar-routes.ts",
-        "lines": 2079
+        "lines": 2089
       },
       {
         "file": ".claude/skills/gstack/browse/test/commands.test.ts",
