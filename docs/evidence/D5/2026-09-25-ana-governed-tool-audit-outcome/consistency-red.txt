@@ -1,0 +1,18 @@
+# consistency check, WITHOUT the fix
+ × server/routes/__tests__/submissions-consistency-audit-outcome.test.ts > the consistency route reports its audit row > answers the findings array unchanged, with the recorded row in a header 45ms
+   → expected { findings: [ …(2) ], …(1) } to deeply equal [ { id: 1, status: 'conflict' }, …(1) ]
+ × server/routes/__tests__/submissions-consistency-audit-outcome.test.ts > the consistency route reports its audit row > says so in headers when the row was not written 13ms
+   → expected { findings: [ …(2) ], …(1) } to deeply equal [ { id: 1, status: 'conflict' }, …(1) ]
+ × server/services/truth-engine/__tests__/consistency-audit-outcome.test.ts > runConsistencyCheck reports its audit row > returns the findings with a recorded row 10ms
+   → Target cannot be null or undefined.
+ × server/services/truth-engine/__tests__/consistency-audit-outcome.test.ts > runConsistencyCheck reports its audit row > says so when the row was not written, without the store text 1ms
+   → the persisted findings stand: Target cannot be null or undefined.
+ × server/services/truth-engine/__tests__/consistency-audit-outcome.test.ts > AnA's check_consistency passes the outcome on > tells AnA the record was not written 3110ms
+   → expected undefined to match object { persisted: false, …(1) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { findings: [ …(2) ], …(1) } to deeply equal [ { id: 1, status: 'conflict' }, …(1) ]
+AssertionError: expected { findings: [ …(2) ], …(1) } to deeply equal [ { id: 1, status: 'conflict' }, …(1) ]
+AssertionError: Target cannot be null or undefined.
+AssertionError: the persisted findings stand: Target cannot be null or undefined.
+AssertionError: expected undefined to match object { persisted: false, …(1) }
+      Tests  5 failed (5)

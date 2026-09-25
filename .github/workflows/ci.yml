@@ -298,6 +298,18 @@ jobs:
           npm run ci:launch-scope:selftest
           npm run ci:launch-scope
 
+      # Launch scope is enforced at the API in production (moduleEntitlementGate +
+      # services/entitlements/launch-scope-api.ts): a path every claiming surface
+      # of which is outside the catalog answers 403 LAUNCH_SCOPE. This gate walks
+      # each launch and shell screen's import graph and fails when one of them
+      # calls a path production would refuse, so the registry cannot drift into
+      # refusing a working launch screen. Selftest first: it must flag a seeded one.
+      - name: Guardrails — no launch screen calls an API production refuses (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: |
+          npm run ci:launch-scope-api:selftest
+          npm run ci:launch-scope-api
+
       # The AnA-draft → canvas → editor → vault path (docs/design/ANA_DOCUMENT_CANVAS.md).
       # Five editor generations were built and deleted as "unreachable" before
       # this gate existed (CLAUDE.md, "Deleting a user-facing capability"); it
