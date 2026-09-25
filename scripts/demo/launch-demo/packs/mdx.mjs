@@ -336,7 +336,7 @@ async function seedSubmission(ctx, program, vaultDocs) {
   await run.step('Submission Center: eSTAR section codes on the leaf route (probe)', async () => {
     const d = DOSSIER[0];
     const r = probe(run, 'estarLeafProbe', await api('PUT', `/api/submissions/sequences/${out.sequence.id}/leaves`, {
-      sectionCode: d.leaf.estar, title: vaultDocs[d.key].title, documentTable: 'vault_documents', documentUuid: vaultDocs[d.key].id, documentType: d.leaf.documentType, lifecycleOp: 'new',
+      sectionCode: d.leaf.estar, title: vaultDocs[d.key].title, documentTable: 'vault_documents', documentUuid: vaultDocs[d.key].id, documentType: d.leaf.documentType, lifecycleOp: 'new', reason: 'Placed by the launch demo pack',
     }), `PUT leaves with sectionCode "${d.leaf.estar}" (an eSTAR slot id) on the 510(k) sequence`);
     if (r.status === 200) throw new Error('the leaf route accepted an eSTAR section code; the CTD fallback below is no longer needed — revisit the pack');
     finding(run, `Submission Center: the sequence/leaf model is the eCTD one. PUT /api/submissions/sequences/:id/leaves refuses a non-CTD-shaped sectionCode — "${d.leaf.estar}" answered HTTP ${r.status} ${String(r.json?.error?.message ?? '').slice(0, 220)} — and the builder presents eCTD modules. There is no eSTAR section vocabulary on the leaf route, so this pack files the device documents at the closest CTD codes (3.2.P.1, 3.2.R, 5.3.1.4, 5.3.5.2, 1.16, 1.14) with eSTAR documentType tokens; an authoring document cannot be placed as a leaf at all (authoring_documents is not a placeable table).`);
@@ -353,7 +353,7 @@ async function seedSubmission(ctx, program, vaultDocs) {
       const existing = have.find((l) => (l.sectionCode ?? l.section_code) === doc.leaf.ctd);
       if (!existing) {
         must(await api('PUT', `/api/submissions/sequences/${out.sequence.id}/leaves`, {
-          sectionCode: doc.leaf.ctd, title: v.title, documentTable: 'vault_documents', documentUuid: v.id, documentType: doc.leaf.documentType, lifecycleOp: 'new',
+          sectionCode: doc.leaf.ctd, title: v.title, documentTable: 'vault_documents', documentUuid: v.id, documentType: doc.leaf.documentType, lifecycleOp: 'new', reason: 'Placed by the launch demo pack',
         }), 200, `place leaf ${doc.leaf.ctd}`);
         placed += 1;
       }
