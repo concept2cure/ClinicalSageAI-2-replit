@@ -44,6 +44,10 @@ export interface DocumentProvenance {
   /** The model id the gateway reported. Present only when a model drafted it. */
   model?: string;
   note?: string;
+  /** True when the caller gave no module and 'M2' was assumed. Set by the
+   *  service, never by the caller; a filing must not treat the assumption as
+   *  a decision (2026-09-22 review, #13). */
+  moduleDefaulted?: boolean;
   recordedAt: string;
 }
 
@@ -207,7 +211,11 @@ export async function createDocumentFromDraft(
         '), so the draft was not saved. Nothing was created. Apply migrations/20260921_authoring_document_provenance.sql.',
     };
   }
-  const provenance: DocumentProvenance = { ...input.provenance, recordedAt: new Date().toISOString() };
+  const provenance: DocumentProvenance = {
+    ...input.provenance,
+    ...(input.module ? {} : { moduleDefaulted: true }),
+    recordedAt: new Date().toISOString(),
+  };
   const docId = crypto.randomUUID();
   // The same binding rule as POST /docs: the project's filing keeps one editing
   // copy; every further document is created in the project unbound, with the
