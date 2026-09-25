@@ -515,6 +515,19 @@ First-slice blockers the critic named:
 
 No session decides these. Each lists the slices it blocks and the plan's recommendation.
 
+**Decided by the founder, 2026-09-24** (asked in session `…01KnUGoX`):
+
+| | Decision | Consequence |
+|---|---|---|
+| **FD1** | **(a) Sequential majors: 1.0 → 2.0 → 3.0.** | VR-08 assigns the next major server-side; a version label is write-once (VR-06). Approval is a lifecycle stage beside the version, never a relabel. |
+| **FD4** | **(a) Every Vault document is reviewed, then approved,** through the one ceremony; the uploader may neither review nor approve; approval authority follows `isSigningAuthorized`. | VR-13 ships the strict default; VR-14's transmit gate requires an approved, current version. |
+| **FD12** | **(a) then (b): a guest principal, designed now, built after D1–D10 are green.** New non-tenant principal, room-scoped, invitation by email, expiring and revocable grants, the org default workspace excluded, every read through the audited byte reader. | No external-room code before the launch rows are green; internal data-room slices proceed. The design is owed as a document, not code. |
+| **FD8 / FD10** | **(b)+(c): the seal and the closing archive are scheduled now as D5/D6 work,** and the archive is the byte carrier for the tenant data return. Facets (VR-18) stay deferred. | VR-19 and VR-20 follow the immutability slices; VR-20's builder is also called by the tenant data return. |
+| **FD9** | Implied by FD8's wording ("frozen under an e-signature"): **sealing is an e-signed act** (`reverifySigner` + an `electronic_signatures` row, meaning 'sealed', bound to the manifest SHA-256). Which role seals is still open; the plan's default is admin or manager. | VR-19. |
+
+Still open: FD2, FD3, FD5, FD6, FD7, FD11, and the sealing role in FD9. The plan's recommendation is the
+shipped default for each until the founder rules otherwise.
+
 ### FD1. What version numbering does a checked-in Vault upload get?
 
 - (a) Sequential majors: 1.0 → 2.0 → 3.0. Matches the existing '1.0' default (shared/schema/vault.ts:111), and every version is a new immutable row.
