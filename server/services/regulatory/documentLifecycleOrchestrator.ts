@@ -221,11 +221,19 @@ export async function advanceDocument(
   let packageSha256: string | undefined;
   let packageMd5: string | undefined;
 
-  if (to === 'approved') {
+  if (to === 'approved' && state.stage === 'in_review') {
+    // Approving signs, once. The other edge into `approved` is placed →
+    // approved (un-placing), which is not an approval: the recorded one stands
+    // and nothing is minted — before VR-03 an un-place re-signed and replaced it.
     const sig = await bindings.applySignature(document, 'approved', ctx);
     next.approvalSignature = sig;
     signatureRef = sig.signatureRef;
     await bindings.registerGovernedDocument(document, ctx);
+  } else if (state.stage === 'in_review' && to === 'authoring') {
+    // A request for revision ends this review round. Its sign-off leaves the
+    // live state (it stays in the trail, as its own signed event), so the next
+    // round must be reviewed and signed again before anything can be approved.
+    delete next.reviewSignature;
   } else if (to === 'placed') {
     // No leaf writer wired → refuse. Inventing an id here would record a
     // placement against a submission_leaves row that does not exist.

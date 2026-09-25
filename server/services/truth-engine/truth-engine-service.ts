@@ -24,6 +24,7 @@ import type { SubmissionEvidenceLink, ConsistencyFinding } from '../../../shared
 import { getGateway } from '../ai-gateway';
 import { classifyGatewayError } from '../ai-gateway/gateway-error-map';
 import auditService from '../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { createScopedLogger } from '../../utils/logger';
 import { PROMPTS_DIR } from '../ai-gateway/prompts-dir';
 
@@ -102,11 +103,21 @@ export interface RunConsistencyCheckParams {
   right: Array<{ ref: string; text: string }>;
 }
 
+export interface ConsistencyCheckResult {
+  findings: ConsistencyFinding[];
+  /**
+   * Whether the §11.10(e) AI_GENERATE row for this check exists. The findings
+   * are persisted either way; the caller is told, and says so. Until
+   * 2026-09-25 this outcome was discarded (the failure path already kept it).
+   */
+  auditTrail: AuditRowOutcome;
+}
+
 /** Run a consistency check via the gateway and persist the verdicts. */
 export async function runConsistencyCheck(
   params: RunConsistencyCheckParams,
   ctx: TruthCtx
-): Promise<ConsistencyFinding[]> {
+): Promise<ConsistencyCheckResult> {
   await assertOwnedSubmission(params.submissionId, ctx.organizationId);
 
   const systemPrompt = await loadConsistencyPrompt();
@@ -175,7 +186,7 @@ export async function runConsistencyCheck(
     inserted.push(row as ConsistencyFinding);
   }
 
-  await auditService.logAction({
+  const auditTrail = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
     action: 'AI_GENERATE',
@@ -190,7 +201,7 @@ export async function runConsistencyCheck(
     },
   });
   logger.info('Ran consistency check', { submissionId: params.submissionId, organizationId: ctx.organizationId, findings: inserted.length });
-  return inserted;
+  return { findings: inserted, auditTrail };
 }
 
 export async function listConsistencyFindings(

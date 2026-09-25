@@ -2291,6 +2291,9 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260705_research_agreements.sql', // research_agreements
   'migrations/20260728_chat_thread_store.sql', // chat_threads, chat_messages
   'migrations/20260731c_canonical_documents.sql', // canonical_documents
+  // VR-03 (D5): the lifecycle trail only grows, signatures are written once,
+  // nothing is deleted. Triggers only, created when absent; no table, no DROP.
+  'migrations/20260925_canonical_documents_append_only.sql',
 
   // The three IVDR append-only history tables carry no tenant column of their
   // own — their tenant is their parent's, reached by foreign key — so BOTH
