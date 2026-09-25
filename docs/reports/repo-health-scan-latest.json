@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-25T06:04:04.370Z",
+  "generatedAt": "2026-09-25T06:31:38.341Z",
   "git": {
-    "sha": "79ec77a15fb42b6879fd1d143065b4df1a6906cf",
+    "sha": "6e7c3fbb206864088c91eaf7ee4fe9fd76e0da85",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2021,6 +2021,10 @@
         "bytes": 174203
       },
       {
+        "file": "server/services/ai-gateway/gateway.ts",
+        "bytes": 160814
+      },
+      {
         "file": "server/routes/authoring-actions.ts",
         "bytes": 159625
       },
@@ -2031,10 +2035,6 @@
       {
         "file": "server/services/module3Composer.ts",
         "bytes": 155947
-      },
-      {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 155636
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2196,7 +2196,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 3707
+        "lines": 3838
       },
       {
         "file": "server/routes/authoring-actions.ts",
