@@ -46,6 +46,7 @@ vi.mock('../../../routes/c2c/actions', () => ({
 }));
 
 import { getToolHandler } from '../AnaToolExecutor';
+import auditService from '../../auditService';
 import { recordGovernedAction } from '../../../routes/c2c/actions';
 
 const DDL = `
@@ -145,6 +146,45 @@ describe('qms_change_link', () => {
     expect(res.ok).toBe(true);
     const db = await pglite.query(`SELECT link_type, linked_ref FROM qms_change_links WHERE change_id = $1`, [created.id]);
     expect((db.rows[0] as { linked_ref: string }).linked_ref).toBe('DEV-2026-099');
+  });
+});
+
+// WO-16C hand-on item 2. The three change-control tools wrote their §11.10(e)
+// row as `void auditService.logAction(...)`: the change committed, the outcome
+// was discarded, and AnA told the user "Raised change …" whether or not the
+// record of it existed. The REST routes (routes/mdx-qms.ts) carry the outcome
+// as `meta.auditTrail`; the tools now carry it too, and say so when it is lost.
+describe('the audit row each change-control tool writes', () => {
+  const lost = { persisted: false, chained: false, tamperProof: false, error: 'relation "audit_logs" is unavailable' };
+  const loseNextAuditRow = () => vi.mocked(auditService.logAction).mockResolvedValueOnce(lost as never);
+
+  function expectLost(res: Record<string, unknown>) {
+    expect(res.ok, 'the change itself stands').toBe(true);
+    expect(res.auditTrail).toMatchObject({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' });
+    expect(String(res.message)).toMatch(/audit entry .* could not be written/i);
+    expect(JSON.stringify(res), 'the store text stays in the log').not.toMatch(/audit_logs/);
+  }
+
+  it('carries a recorded row out as auditTrail', async () => {
+    const res = await call('qms_change_create', { change_number: 'CC-2026-060', title: 'y', reason: 'r' });
+    expect(res.auditTrail).toEqual({ persisted: true, chained: true });
+  });
+
+  it('create: says the record was not written when it was not', async () => {
+    loseNextAuditRow();
+    expectLost(await call('qms_change_create', { change_number: 'CC-2026-061', title: 'y', reason: 'r' }));
+  });
+
+  it('transition: says the record was not written when it was not', async () => {
+    const created = await call('qms_change_create', { change_number: 'CC-2026-062', title: 'y', reason: 'r' });
+    loseNextAuditRow();
+    expectLost(await call('qms_change_transition', { change_id: created.id, to: 'under_assessment', reason: 'Begin assessment.' }));
+  });
+
+  it('link: says the record was not written when it was not', async () => {
+    const created = await call('qms_change_create', { change_number: 'CC-2026-063', title: 'y', reason: 'r' });
+    loseNextAuditRow();
+    expectLost(await call('qms_change_link', { change_id: created.id, link_type: 'deviation', linked_ref: 'DEV-2026-100' }));
   });
 });
 
