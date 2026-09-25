@@ -1,0 +1,27 @@
+# PGlite, HEAD af833c44 working tree (migration and service amended), 2026-09-25T02:19:23Z — server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts
+# command: npx vitest run --config vitest.config.ts server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > a plain DELETE as the runtime role is refused with the IMMUTABILITY_VIOLATION shape
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > SET LOCAL app.audit_archive_bypass = 'on' no longer opens the door for the runtime role (Phase A §9)
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the GUC does not open the door for the superuser session either
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the service statement deletes an old, archived batch and writes the archive record
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses a batch containing a row newer than the cutoff, and writes no record
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses a cutoff inside the 24-month hot window even for old rows
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses an empty locator, an empty checksum and a checksum that is not a sha256
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses a batch naming a row that is not in audit_logs, and an empty batch
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > EXECUTE is not public: a role without the grant cannot open the door
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the door is owned by audit_archiver, is SECURITY DEFINER, and audit_archiver cannot log in
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the archive record is itself append-only
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > UPDATE and TRUNCATE on audit_logs stay refused
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the migration replays cleanly (Rule 1): a second apply changes nothing and the door still works
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the service issues only the door call: no bypass GUC, no raw DELETE, in its code
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+   Start at  02:19:24
+   Duration  2.82s (transform 90ms, setup 93ms, import 53ms, tests 2.37s, environment 0ms)
+
+exit=0

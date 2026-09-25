@@ -92,20 +92,21 @@ async function cleanupProbeRows(): Promise<void> {
   // refused with IMMUTABILITY_VIOLATION / P0A02 — correctly, and this cleanup
   // used to hit it on every run after the first, because the first run leaves
   // rows behind for the second to find. The trigger has one authorized escape:
-  // the retention/archival path opts in per transaction with
-  // `SET LOCAL app.audit_archive_bypass = 'on'`. A test tearing down its own
-  // probe rows is the same kind of caller, so it uses the same door rather than
-  // a privilege the guard does not grant. SET LOCAL scopes it to this
-  // transaction, so nothing else in the suite can delete audit history.
+  // the one DELETE door, audit_logs_archive_delete() (P0-8a), refuses rows
+  // inside the 24-month hot window, which every probe row is. A test tearing
+  // down its own probe rows does so as the table owner with the DELETE trigger
+  // disabled for this transaction only; DDL is transactional, so nothing else
+  // in the suite can delete audit history.
   const client = await owner.connect();
   try {
     await client.query('BEGIN');
-    await client.query(`SET LOCAL app.audit_archive_bypass = 'on'`);
+    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
     await client.query(
       `DELETE FROM audit_logs WHERE action = 'c2c.project.create'
          AND record_id IN (SELECT id::text FROM regulatory_programs WHERE name LIKE $1)`,
       [`${PROBE_PREFIX}%`],
     );
+    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
     await client.query('COMMIT');
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
