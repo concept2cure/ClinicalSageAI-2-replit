@@ -1,0 +1,25 @@
+$ git rev-parse --short HEAD  # socketServer.ts unchanged; test added
+a363595f
+ × server/__tests__/security/socket-main-namespace-session.test.ts > main namespace handshake > admits an access token of a current member of an active organisation 16ms
+ × server/__tests__/security/socket-main-namespace-session.test.ts > main namespace handshake > refuses a token carried only in the query string 4ms
+ × server/__tests__/security/socket-main-namespace-session.test.ts > main namespace handshake > refuses a revoked membership 2ms
+ × server/__tests__/security/socket-main-namespace-session.test.ts > main namespace handshake > refuses when the membership cannot be determined (fail closed) 2ms
+ ✓ server/__tests__/security/socket-main-namespace-session.test.ts > main namespace handshake > still refuses an inactive organisation 3ms
+ ✓ server/__tests__/security/socket-main-namespace-session.test.ts > main namespace handshake > still refuses a pre-MFA token 1ms
+ × server/__tests__/security/socket-main-namespace-session.test.ts > after connect, the session is re-checked on a timer > a member removed from the organisation is told and disconnected within 60 s 4ms
+ × server/__tests__/security/socket-main-namespace-session.test.ts > after connect, the session is re-checked on a timer > a session that has ended (revoked, account out of use, password changed) is disconnected 2ms
+ × server/__tests__/security/socket-main-namespace-session.test.ts > after connect, the session is re-checked on a timer > an organisation that stops being active is disconnected 3ms
+ × server/__tests__/security/socket-main-namespace-session.test.ts > after connect, the session is re-checked on a timer > a member in good standing is left alone 2ms
+ ✓ server/__tests__/security/socket-main-namespace-session.test.ts > after connect, the session is re-checked on a timer > the timer stops when the socket disconnects 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected "vi.fn()" to be called with arguments: [ 42, 7 ]
+AssertionError: expected undefined to be 'Missing bearer token' // Object.is equality
+AssertionError: expected undefined to be 'Organization membership not confirmed' // Object.is equality
+AssertionError: expected undefined to be 'Organization membership not confirmed' // Object.is equality
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'session:ended', …(1) ]
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'session:ended', …(1) ]
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'session:ended', …(1) ]
+AssertionError: expected 0 to be greater than or equal to 4
+ Test Files  1 failed (1)
+      Tests  8 failed | 3 passed (11)
+exit=1

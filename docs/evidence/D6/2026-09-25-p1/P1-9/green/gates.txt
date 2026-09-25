@@ -1,0 +1,9 @@
+## npm run -s check:security-patterns
+check-security-patterns: 0 violations across 2843 file(s).
+exit=0
+## npm run -s ci:jwt-verify-pinned
+[ci:jwt-verify-pinned] OK — every production jwt.verify call pins an algorithm
+exit=0
+## npm run -s ci:discarded-audit-write
+check-discarded-audit-write: no new occurrences. 125 baselined across 56 file(s).
+exit=0
