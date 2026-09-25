@@ -1,0 +1,1 @@
+[check-gateway-bypass] OK — no new bypasses (8 baselined site(s) tolerated).
