@@ -14,6 +14,12 @@ const run = await createRun({
 const { step, state } = run;
 const stamp = helpers.stamp();
 
+/** Launch scope as the server reports it (the navigation payload OQ-SRDY-08 reads). */
+async function launchScopeEnforced(api) {
+  const nav = await api('GET', '/api/module-subscriptions/navigation');
+  return nav.status === 200 && nav.json?.launchScope?.enforced === true;
+}
+
 await step(
   {
     id: 'OQ-SRDY-00',
@@ -198,9 +204,9 @@ await step(
     urs: ['URS-SRDY-005'],
     title: 'The readiness review names the project it assessed',
     action:
-      'When intake anchored the program to a project (meta.projectAnchorId): POST /api/orchestration/execute {templateId:"submission_readiness_review", projectId:<the anchored project>, module:"ind"}; GET /api/orchestration/executions/:id',
+      'When intake anchored the program to a project (meta.projectAnchorId): POST /api/orchestration/execute {templateId:"submission_readiness_review", projectId:<the anchored project>, module:"ind"}',
     expected:
-      'The run completes, its first step (inspect_project_state) names the program, and the execution is readable. A program intake did not anchor is a deviation naming the reason intake gave',
+      'The run completes, and its first step (inspect_project_state), read from the execution the response returns, names the program. A program intake did not anchor is a deviation naming the reason intake gave',
     dependsOn: ['OQ-SRDY-00'],
     note: 'The review reads the integer project spine. A program reaches it only through the anchor intake writes (services/c2c/program-project-anchor.ts), and intake writes one only when the organisation has exactly one client workspace. Signup creates none.',
   },
@@ -219,9 +225,10 @@ await step(
     expect(e.status === 200 && e.json?.status === 'completed', `expected a completed run, got HTTP ${e.status}`, e.json);
     const project = inspected(e.json);
     expect(project.name === state.programName, `the review assessed "${project.name}", not the program "${state.programName}"`, e.json.steps?.[0]);
-    const read = await api('GET', `/api/orchestration/executions/${e.json.executionId}`);
-    expect(read.status === 200 && read.json?.executionId === e.json.executionId, `execution read expected 200, got ${read.status}`, read.json);
-    return `run ${e.json.executionId} completed for "${project.name}" (${project.documents} document(s)); the execution is readable`;
+    // v0.6: the execution history (GET /api/orchestration/executions/:id) is the
+    // Orchestration board's, locked by launch scope at the API (OQ-SRDY-08). The
+    // status and steps are read from the execution the response returns.
+    return `run ${e.json.executionId} completed for "${project.name}" (${project.documents} document(s)), status and steps read from the execution returned`;
   },
 );
 
@@ -233,7 +240,7 @@ await step(
     action:
       'POST /api/governed-intelligence/contradictions/scan/<the program id>; POST /api/governed-intelligence/contradictions/scan/<a project id the organisation does not hold>',
     expected:
-      'The program id (not a project id) is refused 400 and the id the organisation does not hold 404; neither answers 200 with findings',
+      'Neither answers 200 with findings. With launch scope enforced (the posture this protocol runs in) both are refused 403 LAUNCH_SCOPE, because the scan belongs to the Inconsistency board (OQ-SRDY-08). With it off, the program id is refused 400 and the unheld id 404',
     dependsOn: ['OQ-SRDY-00'],
     note: 'VSR-001 F-25. Until v0.5 this step scanned project 1 and passed on 200 with zero findings, in an organisation that holds no project 1: a clean result for a project nothing was read from. A program id arrived as NaN, which the registry searches read as "no project filter", so the scan read the whole organisation.',
   },
@@ -241,9 +248,13 @@ await step(
     const program = await api('POST', `/api/governed-intelligence/contradictions/scan/${state.programId}`, {});
     const unheld = await api('POST', '/api/governed-intelligence/contradictions/scan/2147480000', {});
     const clean = (r) => r.status === 200 && Array.isArray(r.json?.findings);
-    expect(!clean(program) && program.status === 400, `the scan of program ${state.programId} answered ${program.status}${clean(program) ? ` with ${program.json.findings.length} finding(s)` : ''}`, program.json);
-    expect(!clean(unheld) && unheld.status === 404, `the scan of a project the organisation does not hold answered ${unheld.status}${clean(unheld) ? ` with ${unheld.json.findings.length} finding(s)` : ''}`, unheld.json);
-    return `program id refused ${program.status}: ${program.json?.error}; unheld project refused ${unheld.status}: ${unheld.json?.error}`;
+    const locked = (r) => r.status === 403 && r.json?.error?.code === 'LAUNCH_SCOPE';
+    const scoped = await launchScopeEnforced(api);
+    expect(!clean(program) && (scoped ? locked(program) : program.status === 400), `the scan of program ${state.programId} answered ${program.status}${clean(program) ? ` with ${program.json.findings.length} finding(s)` : ''}`, program.json);
+    expect(!clean(unheld) && (scoped ? locked(unheld) : unheld.status === 404), `the scan of a project the organisation does not hold answered ${unheld.status}${clean(unheld) ? ` with ${unheld.json.findings.length} finding(s)` : ''}`, unheld.json);
+    return scoped
+      ? `launch scope enforced: both scans refused 403 LAUNCH_SCOPE, neither answered as clean`
+      : `program id refused ${program.status}: ${program.json?.error}; unheld project refused ${unheld.status}: ${unheld.json?.error}`;
   },
 );
 
@@ -253,10 +264,13 @@ await step(
     urs: ['URS-SRDY-006'],
     title: 'A contradiction scan of the program\'s project runs',
     action: 'When intake anchored the program to a project (meta.projectAnchorId): POST /api/governed-intelligence/contradictions/scan/<the anchored project>',
-    expected: 'HTTP 200 with a deterministic result (possibly zero findings). A program intake did not anchor is a deviation naming the reason intake gave',
+    expected: 'With launch scope off: HTTP 200 with a deterministic result (possibly zero findings); a program intake did not anchor is a deviation naming the reason intake gave. With launch scope enforced the scan is locked (OQ-SRDY-08) and this positive half cannot be executed in this posture: a deviation that says so',
     dependsOn: ['OQ-SRDY-00'],
   },
   async ({ api, expect, deviation }) => {
+    if (await launchScopeEnforced(api)) {
+      deviation('launch scope is enforced, and the contradiction scan belongs to the Inconsistency board, which is not in this release (VSR-001 §16.5; OQ-SRDY-08). The positive half of URS-SRDY-006 is executable only with launch scope off');
+    }
     if (state.projectAnchorId == null) {
       const reason = [state.projectAnchorSkipped, state.projectAnchorDetail].filter(Boolean).join(': ');
       deviation(`intake did not anchor program ${state.programId} to a project (${reason || 'no reason given'}). The scan reads projects, so there is no project it can scan for this program`);
@@ -291,9 +305,9 @@ await step(
     id: 'OQ-SRDY-08',
     urs: ['URS-SRDY-008'],
     title: 'The Orchestration and Inconsistency boards are not in this release',
-    action: 'GET /api/module-subscriptions/navigation; open /concept2cure/orchestration and /concept2cure/inconsistency',
+    action: 'GET /api/module-subscriptions/navigation; open /concept2cure/orchestration and /concept2cure/inconsistency; POST /api/governed-intelligence/contradictions/scan/1; GET /api/orchestration/executions/<any id> (v0.6)',
     expected:
-      'launchScope.enforced=true; "orchestration" and "inconsistency" are not entitled, source "launch-scope", while "dispatch-readiness" is entitled; each deep link explains the board is not in this release',
+      'launchScope.enforced=true; "orchestration" and "inconsistency" are not entitled, source "launch-scope", while "dispatch-readiness" is entitled; each deep link explains the board is not in this release; and the boards\' own APIs answer 403 LAUNCH_SCOPE, so the lock is not only in the navigation (v0.6)',
     note: 'OQ-005 v0.5. Until then this ad-hoc step rendered both boards. In every organisation signup creates, the Orchestration board found no program and the Inconsistency board refused the program\'s id: both read the integer project spine, which a program reaches only through an anchor signup never creates (VSR-001 §14.3; decided §16).',
   },
   async (ctx) => {
@@ -314,7 +328,14 @@ await step(
     await ctx.goto('/concept2cure/inconsistency');
     await ctx.expectText(/not in this release/i);
     await ctx.screenshot('inconsistency');
-    return 'orchestration and inconsistency locked by launch-scope; dispatch-readiness entitled; both deep links show the launch-scope gate';
+    // v0.6: the lock holds at the API, not only in the navigation. Until
+    // 2026-09-25 a signed-in tenant could call both boards' routes directly.
+    const scan = await api('POST', '/api/governed-intelligence/contradictions/scan/1', {});
+    const history = await api('GET', '/api/orchestration/executions/oq-srdy-08');
+    for (const [name, r] of [['contradiction scan', scan], ['execution history', history]]) {
+      expect(r.status === 403 && r.json?.error?.code === 'LAUNCH_SCOPE', `the ${name} API answered ${r.status}, not 403 LAUNCH_SCOPE`, r.json);
+    }
+    return 'orchestration and inconsistency locked by launch-scope in the navigation, both deep links, and both boards\' APIs (403 LAUNCH_SCOPE); dispatch-readiness entitled';
   },
 );
 

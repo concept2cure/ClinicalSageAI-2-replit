@@ -228,6 +228,7 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'penLine',
     group: 'authoring',
     uiKit: 'authoring',
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): useFilingOutline.ts reads the filing outline.
     apiPrefixes: [
       '/api/document-authoring',
       '/api/authoring',
@@ -235,6 +236,7 @@ export const UI_SURFACES: UiSurface[] = [
       '/api/coauthor',
       '/api/workflow',
       '/api/esignature',
+      '/api/c2c/documents',
     ],
     anaToolFamilies: ['get_csr_template', 'get_nonclinical_template', 'draft_clinical_overview_m2_5'],
     sharedContract: '@shared/types/document-contract',
@@ -252,7 +254,8 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'layoutPanels',
     group: 'authoring',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/document-authoring', '/api/project-sections'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): BiopharmaProject.tsx reads these two.
+    apiPrefixes: ['/api/document-authoring', '/api/project-sections', '/api/clinical-regulatory-evidence/findings', '/api/clinical-regulatory-evidence/outcome'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/authoring-context',
     discoveryCatalog: null,
@@ -268,7 +271,8 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'vault',
     group: 'evidence',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/c2c/project-vault', '/api/vault/ingest'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): MdxSurfaceHost (useMdxPrograms, useWorkbench, useSubmissions) calls these for the Vault too.
+    apiPrefixes: ['/api/c2c/project-vault', '/api/vault/ingest', '/api/regulatory-programs', '/api/submission-ops'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -342,7 +346,8 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'rocket',
     group: 'submission',
     uiKit: 'submission',
-    apiPrefixes: ['/api/mdx'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): GatewayTransmittals.tsx assembles, preflights and reads identifiers through the package model.
+    apiPrefixes: ['/api/mdx', '/api/submission-ops'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -518,7 +523,8 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'checkSquare',
     group: 'collaboration',
     uiKit: 'tasking',
-    apiPrefixes: ['/api/task-management', '/api/regulatory/tasks', '/api/project-sections'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): MdxSurfaceHost (useMdxPrograms, useWorkbench, useSubmissions) and the shell's TaskTray call these.
+    apiPrefixes: ['/api/task-management', '/api/regulatory/tasks', '/api/project-sections', '/api/regulatory-programs', '/api/submission-ops', '/api/approval-workflows/pending'],
     anaToolFamilies: [],
     sharedContract: '@shared/schema',
     discoveryCatalog: null,
