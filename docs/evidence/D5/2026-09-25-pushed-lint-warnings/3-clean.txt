@@ -1,0 +1,4 @@
+# 3. The same tree without the scratch function (control)
+[ci:eslint-warning-ratchet] --since c983e493bbdca7dbaaeb68a50cd15cff4b9ecde4 (c983e493b) -- 1 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since c983e493bbdca7dbaaeb68a50cd15cff4b9ecde4.
+exit=0
