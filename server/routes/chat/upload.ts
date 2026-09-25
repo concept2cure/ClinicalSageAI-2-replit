@@ -373,13 +373,22 @@ export const uploadHandler = async (req: Request, res: Response) => {
       // Retrieval atom, through the one writer both upload paths use. It bounds
       // the content and RECORDS the bound, so the row says whether it holds the
       // whole file or its opening — see upload-retrieval-atom.ts.
-      atomBounds = await writeUploadRetrievalAtom(pool, {
-        organizationId: numericOrgId,
-        sourceId: artId,
-        fileName,
-        text: extractedText,
-        tags: ['source', 'chat_upload'],
-      });
+      //
+      // Only real extracted content, as the program branch below already
+      // required. This call was unconditional, so a file with no extractable
+      // text (a scan, an image OCR could not read) was embedded as the
+      // "[Uploaded via chat: …]" placeholder and retrieved as though it were a
+      // passage of the document. With nothing read, nothing is embedded, and
+      // atomBounds stays null — which the response reports as no atom path.
+      if (extractionMethod) {
+        atomBounds = await writeUploadRetrievalAtom(pool, {
+          organizationId: numericOrgId,
+          sourceId: artId,
+          fileName,
+          text: extractedText,
+          tags: ['source', 'chat_upload'],
+        });
+      }
     }
 
     // ── Canonical source identity ──────────────────────────────────────────
