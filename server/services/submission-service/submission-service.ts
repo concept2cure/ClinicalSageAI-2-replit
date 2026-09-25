@@ -1509,6 +1509,12 @@ export interface UpsertLeafInput {
   parentLeafId?: number | null;
   /** MD5 (or other) checksum of the leaf's rendered bytes, for the eCTD index-md5. */
   checksum?: string | null;
+  /** Why this placement was made, recorded on its audit row (21 CFR 11.10(e)).
+   *  The human door (PUT /api/submissions/sequences/:seqId/leaves) requires it
+   *  through `requireGovernedReason`; the service callers that place on a
+   *  person's earlier decision (IND lifecycle, CMC Module 3, ingestion) may omit
+   *  it. It is recorded exactly as given and never substituted. */
+  reason?: string | null;
 }
 
 /**
@@ -2018,7 +2024,11 @@ export async function upsertLeaf(
       action: 'LEAF_UPDATED',
       resourceType: 'submission_leaf',
       resourceId: input.leafId,
-      details: { sectionCode: input.sectionCode, lifecycleOp: input.lifecycleOp },
+      details: {
+        sectionCode: input.sectionCode,
+        lifecycleOp: input.lifecycleOp,
+        ...(input.reason ? { reason: input.reason } : {}),
+      },
     });
     return { ...(row as SubmissionLeaf), auditTrail };
   }
@@ -2052,7 +2062,11 @@ export async function upsertLeaf(
     action: 'LEAF_CREATED',
     resourceType: 'submission_leaf',
     resourceId: row.id,
-    details: { sequenceId: input.sequenceId, sectionCode: input.sectionCode },
+    details: {
+      sequenceId: input.sequenceId,
+      sectionCode: input.sectionCode,
+      ...(input.reason ? { reason: input.reason } : {}),
+    },
   });
   return { ...(row as SubmissionLeaf), auditTrail };
 }

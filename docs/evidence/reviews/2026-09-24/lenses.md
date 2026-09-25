@@ -109,8 +109,19 @@ lost:
     `{ sectionCode, lifecycleOp }`, which says what changed but not why.
 - **Why it matters:** the write decides which content goes into a regulator-facing eCTD
   sequence. The dialog's own note says *"audited and org-scoped"*.
-- **Status:** open. The same service carries AnA's `place_into_sequence` and the IND and
-  CMC placements, so the reason belongs in `upsertLeaf`, not in the dialog alone.
+- **Wider than filed.** None of the three human placement forms asked:
+  - Vault's *Place into submission*;
+  - Authoring's *Place into filing* (`AuthoringPlaceIntoFiling.tsx`);
+  - the Submission Center Builder's *Place a Co-Author document as a leaf*
+    (`SubmissionSeqWorkspaces.tsx`).
+- **Status:** fixed 2026-09-25, in the commit that names PX-1.
+  - The route requires a reason through the canonical `requireGovernedReason` (400
+    `REASON_REQUIRED`).
+  - `upsertLeaf` records it on both `LEAF_CREATED` and `LEAF_UPDATED`.
+  - The service callers that place on an earlier decision may omit it; nothing is
+    substituted.
+  - All three forms take it through one field in `filingTarget.tsx`, against the floor in
+    `shared/constants/governed-reason.ts`.
 
 ### Part 11 change-control approval: this is DP-31, not new
 
@@ -194,3 +205,19 @@ register:
 - **IAM-14:** the template-library upload trusts the client filename
   (`c2c/templates.ts:40`).
 - **DP-33:** unchanged.
+
+## Found after filing: 18 gates ran only on pull requests
+
+`pr-checks.yml` triggers on `pull_request` alone, and Rule 0 forbids pull requests, so its PR
+Validation job never ran. Every script it invoked was compared against every other workflow and
+both husky hooks. Eighteen ran nowhere else, and `ci:tenant-resolvers` ran nowhere at all.
+
+- **Result at head:** seventeen passed. `ci:error-envelope` failed on two real hand-rolled
+  envelope reads on launch surfaces:
+  - `EctdCompile.tsx:566`;
+  - `ProtocolDevSoa.tsx:57`, which could put an enum code on screen.
+- **Status:** fixed in `2fb69da5`.
+  - Both reads go through `serverMessage()`.
+  - All nineteen gates run in `ci.yml` on every push.
+  - The steps are moved, not copied: `pr-checks.yml` no longer runs them.
+

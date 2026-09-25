@@ -32,7 +32,8 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'explore',
     icon: 'sparkles',
     uiKit: null,
-    apiPrefixes: ['/api/orchestration/continuity', '/api/orchestration/recommendations', '/api/orchestration/templates', '/api/orchestration/execute', '/api/orchestration/pre-submission-gate', '/api/orchestration/projects/:id/readiness'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): AnaCommand.tsx reads the org portfolio.
+    apiPrefixes: ['/api/orchestration/continuity', '/api/orchestration/recommendations', '/api/orchestration/templates', '/api/orchestration/execute', '/api/orchestration/pre-submission-gate', '/api/orchestration/projects/:id/readiness', '/api/report-os/portfolio'],
     anaToolFamilies: ['generate_recommendations', 'execute_workflow', 'assess_readiness'],
     sharedContract: '@shared/types/orchestration',
     discoveryCatalog: null,
@@ -289,7 +290,8 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'workspace',
     icon: 'messageSquare',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/conversation-os', '/api/chat', '/api/authoring-actions'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): useFilingOutline.ts reads the filing outline.
+    apiPrefixes: ['/api/conversation-os', '/api/chat', '/api/authoring-actions', '/api/c2c/documents'],
     anaToolFamilies: [],
     sharedContract: '@shared/schema',
     discoveryCatalog: null,
@@ -589,7 +591,8 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'authoring',
     icon: 'clipboardList',
     uiKit: 'authoring',
-    apiPrefixes: ['/api/protocol-development', '/api/protocol-soa', '/api/protocol-risks', '/api/protocol-milestones', '/api/protocol-budget', '/api/protocol-amendments', '/api/protocol-deviations', '/api/protocol-reviews', '/api/protocol-consent', '/api/protocol-export', '/api/biostat-bridge'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): ProtocolDevDesign.tsx / ProtocolDevProjections.tsx read the study design.
+    apiPrefixes: ['/api/protocol-development', '/api/protocol-soa', '/api/protocol-risks', '/api/protocol-milestones', '/api/protocol-budget', '/api/protocol-amendments', '/api/protocol-deviations', '/api/protocol-reviews', '/api/protocol-consent', '/api/protocol-export', '/api/biostat-bridge', '/api/study-design'],
     anaToolFamilies: ['create_protocol_document', 'update_protocol_section', 'review_protocol_completeness', 'finalize_protocol_document', 'add_soa_assessment', 'review_soa_matrix'],
     sharedContract: null,
     discoveryCatalog: null,

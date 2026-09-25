@@ -506,6 +506,9 @@ describe('Vault — placing a document into a submission', () => {
     fireEvent.change(sub, { target: { value: '4' } });
     await screen.findByLabelText('Sequence');
     fireEvent.change(screen.getByLabelText(/^Section code/), { target: { value: '3.2.P.8.3' } });
+    fireEvent.change(screen.getByLabelText(/^Reason for this placement/), {
+      target: { value: 'Stability summary approved for this sequence' },
+    });
 
     // Scoped to the dialog: the trigger button behind it matches the same name,
     // and clicking that one would re-open rather than submit.

@@ -1,0 +1,61 @@
+ci:launch-scope-api: 19 API path(s) that launch or shell screens call would be REFUSED in production,
+because every surface claiming them is outside the launch scope. Declare each prefix on the launch
+surface that calls it (shared/constants/ui-surface-registry*.ts apiPrefixes), or stop calling it.
+
+  /api/regulatory-programs
+    called by tasks, vault
+    in client/src/concept2cure/mdx/hooks/useMdxPrograms.ts
+  /api/regulatory-programs/:p
+    called by tasks, vault
+    in client/src/concept2cure/mdx/hooks/useMdxPrograms.ts
+  /api/submission-ops/workload
+    called by tasks, vault
+    in client/src/concept2cure/mdx/hooks/useWorkbench.ts
+  /api/submission-ops/blockers
+    called by tasks, vault
+    in client/src/concept2cure/mdx/hooks/useWorkbench.ts
+  /api/submission-ops/unified-work
+    called by tasks, vault
+    in client/src/concept2cure/mdx/hooks/useWorkbench.ts
+  /api/submission-ops/packages
+    called by tasks, vault, gateway-transmittals
+    in client/src/concept2cure/mdx/hooks/useSubmissions.ts, client/src/concept2cure/v2/surfaces/GatewayTransmittals.tsx
+  /api/submission-ops/packages/:p/readiness
+    called by tasks, vault
+    in client/src/concept2cure/mdx/hooks/useSubmissions.ts
+  /api/submission-ops/packages/:p/milestones
+    called by tasks, vault
+    in client/src/concept2cure/mdx/hooks/useSubmissions.ts
+  /api/c2c/documents
+    called by document-authoring, conversation-thread
+    in client/src/concept2cure/v2/useFilingOutline.ts
+  /api/c2c/documents/:p/outline
+    called by document-authoring, conversation-thread
+    in client/src/concept2cure/v2/useFilingOutline.ts
+  /api/clinical-regulatory-evidence/findings
+    called by regulatory-workspace
+    in client/src/concept2cure/v2/surfaces/BiopharmaProject.tsx
+  /api/clinical-regulatory-evidence/outcome
+    called by regulatory-workspace
+    in client/src/concept2cure/v2/surfaces/BiopharmaProject.tsx
+  /api/study-design
+    called by protocol-dev
+    in client/src/concept2cure/v2/surfaces/ProtocolDevDesign.tsx
+  /api/study-design/:p/:p
+    called by protocol-dev
+    in client/src/concept2cure/v2/surfaces/ProtocolDevProjections.tsx
+  /api/submission-ops/packages/:p/regulatory-identifiers
+    called by gateway-transmittals
+    in client/src/concept2cure/v2/surfaces/GatewayTransmittals.tsx
+  /api/submission-ops/packages/:p/preflight
+    called by gateway-transmittals
+    in client/src/concept2cure/v2/surfaces/GatewayTransmittals.tsx
+  /api/submission-ops/packages/:p/assemble
+    called by gateway-transmittals
+    in client/src/concept2cure/v2/surfaces/GatewayTransmittals.tsx
+  /api/report-os/portfolio/org
+    called by ana-command
+    in client/src/concept2cure/v2/surfaces/AnaCommand.tsx
+  /api/approval-workflows/pending
+    called by (shell chrome)
+    in client/src/concept2cure/v2/TaskTray.tsx
