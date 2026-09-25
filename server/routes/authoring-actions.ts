@@ -902,7 +902,7 @@ router.post('/approve-artifact', async (req: Request, res: Response) => {
       const { queryableFromDrizzle } = await import('../db/drizzle-queryable.js');
       let quorum: Awaited<ReturnType<typeof reviewQuorumVerdict>>;
       try {
-        quorum = await reviewQuorumVerdict(queryableFromDrizzle(db), artifact.id, Number(orgId));
+        quorum = await reviewQuorumVerdict(queryableFromDrizzle(db), artifact.id, Number(orgId), artifact.version);
       } catch (quorumErr: any) {
         console.error('[authoring-actions] approve-artifact review quorum read failed:', quorumErr?.message);
         return res.status(500).json({
