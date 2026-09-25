@@ -238,7 +238,7 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
               return (
                 <div key={f.id} className={'ivd-fam tone-' + tone}>
                   <button className="ivd-fam-head" onClick={() => toggle(f.id)}>
-                    <span className="ivd-fam-caret" data-open={isOpen}>{I.chevronRight}</span>
+                    <span className="ivd-fam-caret" data-open={isOpen}>{I.chevRight}</span>
                     <span className="ivd-fam-main">
                       <span className="ivd-fam-label">{f.label}</span>
                       <span className="ivd-fam-ref">{f.ref}</span>

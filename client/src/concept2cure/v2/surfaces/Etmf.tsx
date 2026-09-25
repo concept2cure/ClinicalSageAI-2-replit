@@ -545,7 +545,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
                           title={'Attach the ' + m.name + ' document and file it to the TMF'}
                           onClick={() => beginFiling(m.code)}
                         >
-                          {I.filePlus || I.plus} {busy && pendingCode === m.code ? 'Filing…' : 'Attach & file'}
+                          {I.plus} {busy && pendingCode === m.code ? 'Filing…' : 'Attach & file'}
                         </button>
                       </div>
                     ))}

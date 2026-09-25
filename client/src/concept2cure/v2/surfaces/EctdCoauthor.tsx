@@ -651,7 +651,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
     <div className="ec-shell" data-tree-collapsed={treeCollapsed} data-focus={focus}>
       {/* Top bar */}
       <div className="ec-topbar">
-        <button className="ec-topbtn" onClick={() => setTreeCollapsed((v) => !v)} title="Toggle eCTD tree" aria-label="Toggle eCTD tree">{I.sidebar || I.menu || I.layers}</button>
+        <button className="ec-topbtn" onClick={() => setTreeCollapsed((v) => !v)} title="Toggle eCTD tree" aria-label="Toggle eCTD tree">{I.panelLeft}</button>
         <div className="ec-crumbs">
           {activeDoc ? (
             <>
@@ -672,8 +672,8 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
             {activeDoc.status}
           </span>
         )}
-        <button className="ec-topbtn" onClick={() => setFocus((v) => !v)} title="Focus mode">{focus ? (I.minimize || I.x) : (I.maximize || I.expand || I.layers)}</button>
-        <button className="ec-topbtn primary" onClick={runValidate} disabled={!activeDoc}>{I.shieldCheck || I.shield} Validate</button>
+        <button className="ec-topbtn" onClick={() => setFocus((v) => !v)} title="Focus mode">{focus ? I.minimize : I.maximize}</button>
+        <button className="ec-topbtn primary" onClick={runValidate} disabled={!activeDoc}>{I.shieldCheck} Validate</button>
       </div>
 
       {/* eCTD tree */}
@@ -692,7 +692,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
           visibleModules.map((mod) => (
             <div key={mod.m} className="ec-tree-mod">
               <button className="ec-tree-row" onClick={() => toggleModule(mod.m)}>
-                <span className="ec-caret" data-open={treeFilter ? true : !!openModules[mod.m]}>{I.chevronRight || '›'}</span>
+                <span className="ec-caret" data-open={treeFilter ? true : !!openModules[mod.m]}>{I.chevRight}</span>
                 <span className="ec-tnum">M{mod.m}</span>
                 <span className="ec-tlabel">{mod.title}</span>
               </button>
@@ -899,7 +899,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
                 />
               ) : !activeDoc ? (
                 <EmptyState
-                  icon={I.fileText || I.file}
+                  icon={I.fileText}
                   title="No eCTD documents yet"
                   hint={
                     <>
@@ -973,7 +973,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
             <div className="ec-doc-inner">
               <div className="ec-panel-head">
                 <div><div className="ec-panel-t">eCTD structural validation</div><div className="ec-panel-s">ICH M4 eCTD structural rules</div></div>
-                <button className="ec-topbtn primary" onClick={runValidate} disabled={!activeDoc}>{validating ? 'Validating...' : <>{I.refresh || I.check} Re-validate</>}</button>
+                <button className="ec-topbtn primary" onClick={runValidate} disabled={!activeDoc}>{validating ? 'Validating...' : <>{I.rotateCw} Re-validate</>}</button>
               </div>
               {!activeDoc ? (
                 <div className="ec-empty">Select an eCTD document to validate its structure against the backbone.</div>
@@ -995,7 +995,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
                       <div className="ec-findings">
                         {validation.findings.map((f, i) => (
                           <div key={i} className="ec-finding" data-sev={f.severity}>
-                            <span className="ec-fsev">{f.severity === 'error' ? (I.alertTriangle || I.x) : (I.info || I.alertCircle)}</span>
+                            <span className="ec-fsev">{f.severity === 'error' ? I.alertTriangle : I.info}</span>
                             <div><div className="ec-ftype mono">{f.type}{f.sectionId ? ' — §' + f.sectionId : ''}{f.module ? ' — M' + f.module : ''}</div><div className="ec-fmsg">{f.message}</div></div>
                           </div>
                         ))}
@@ -1013,7 +1013,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
             <div className="ec-doc-inner">
               <div className="ec-panel-head">
                 <div><div className="ec-panel-t">ICH M4 compliance</div><div className="ec-panel-s">Checked against ICH M4</div></div>
-                <button className="ec-topbtn primary" onClick={runCompliance} disabled={!activeDoc}>{checking ? 'Checking...' : <>{I.refresh || I.check} Re-check</>}</button>
+                <button className="ec-topbtn primary" onClick={runCompliance} disabled={!activeDoc}>{checking ? 'Checking...' : <>{I.rotateCw} Re-check</>}</button>
               </div>
               {!activeDoc ? (
                 <div className="ec-empty">Select an eCTD document to check its ICH M4 compliance.</div>
@@ -1035,7 +1035,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
                       <div className="ec-checks">
                         {compliance.checks.map((c, i) => (
                           <div key={i} className="ec-check" data-ok={c.status === 'compliant'}>
-                            <span className="ec-check-dot">{c.status === 'compliant' ? I.check : (I.x)}</span>
+                            <span className="ec-check-dot">{c.status === 'compliant' ? I.check : I.close}</span>
                             <span className="ec-check-id mono">{c.ruleId}</span>
                             <span className="ec-check-desc">{c.description}</span>
                             {c.module && <span className="ec-check-mod mono">M{c.module}</span>}
