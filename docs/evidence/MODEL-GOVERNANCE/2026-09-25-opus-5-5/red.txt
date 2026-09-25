@@ -1,0 +1,26 @@
+      Tests  11 failed | 5 passed (16)
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-haiku-4-5 failed: __vite_ssr_import_1__.GatewayModelDeclinedError is not a constructor",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-opus-4-8 failed: __vite_ssr_import_1__.GatewayModelDeclinedError is not a constructor",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-4-6 failed: __vite_ssr_import_1__.GatewayModelDeclinedError is not a constructor",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: __vite_ssr_import_1__.GatewayModelDeclinedError is not a constructor",
+  "message": "[ai-gateway] [AI Gateway] Fallback openai/gpt-4o failed: __vite_ssr_import_1__.GatewayModelDeclinedError is not a constructor",
+  "message": "[ai-gateway] [AI Gateway] Fallback openai/gpt-4o-mini failed: __vite_ssr_import_1__.GatewayModelDeclinedError is not a constructor",
+  "message": "[ai-gateway] [AI Gateway] anthropic/claude-opus-5 failed: __vite_ssr_import_1__.GatewayModelDeclinedError is not a constructor",
+ Test Files  2 failed (2)
+flagship-opus-5-5.test.ts > effort: a declared default applies only when the caller chose nothing > is sent when no effort was chosen 0ms
+flagship-opus-5-5.test.ts > effort: a declared default applies only when the caller chose nothing > is withheld from a model that takes no effort at all 0ms
+flagship-opus-5-5.test.ts > effort: a declared default applies only when the caller chose nothing > never overrides the person's choice 0ms
+flagship-opus-5-5.test.ts > governance moves with the registry > the drift gate is clean against the live registry 0ms
+flagship-opus-5-5.test.ts > governance moves with the registry > the lockfile pins both, and both may serve high-risk drafting 1ms
+flagship-opus-5-5.test.ts > the flagship slot serves Claude Opus 5.5 > is pinned to claude-opus-5-5 with its documented surface 8ms
+flagship-opus-5-5.test.ts > the flagship slot serves Claude Opus 5.5 > states its effort rather than inheriting an API default one level below Opus 5 1ms
+flagship-opus-5-5.test.ts > the ladder under it > drops to Opus 5, then Opus 4.8, before anything else 1ms
+flagship-opus-5-5.test.ts > the ladder under it > keeps Opus 5 on its own surface and price 1ms
+gateway-model-declined.test.ts > a decline is raised, not returned as an empty answer > non-streaming: stop_reason "refusal" throws with the category 6ms
+gateway-model-declined.test.ts > a decline is raised, not returned as an empty answer > streaming: a decline after text reached the person is terminal 1ms
+gateway-model-declined.test.ts > a decline is raised, not returned as an empty answer > streaming: a decline before any text is retryable 2ms
+gateway-model-declined.test.ts > route() — a decline moves down the ladder without blaming the provider > a biology decline on the flagship is answered by the next rung 1111ms
+gateway-model-declined.test.ts > route() — a decline moves down the ladder without blaming the provider > is not retried on the same model by the backoff loop 10ms
+gateway-model-declined.test.ts > route() — a decline moves down the ladder without blaming the provider > reasoning_extraction is terminal: no other model is asked 8269ms
+gateway-model-declined.test.ts > route() — a decline moves down the ladder without blaming the provider > says it was declined when every rung declines, rather than reporting an outage 8271ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯

@@ -39,6 +39,31 @@ export function readLaunchScopeMode(env: NodeJS.ProcessEnv = process.env): Launc
   return 'off';
 }
 
+export type UnattributedApiMode = 'report' | 'enforce';
+
+/**
+ * What the API gate does with a path nothing claims (launch-scope-api.ts
+ * `unmapped`) while launch scope is enforced. Unset means `report`: the
+ * would-refuse is recorded in the enforcement report (Master Admin → Licensing →
+ * Enforcement) and the request is served. `enforce` refuses it 403 LAUNCH_SCOPE.
+ * Any other value refuses to boot in production, like LAUNCH_SCOPE_ENFORCE.
+ */
+export function readUnattributedApiMode(env: NodeJS.ProcessEnv = process.env): UnattributedApiMode {
+  const raw = (env.LAUNCH_SCOPE_API_UNATTRIBUTED ?? '').trim().toLowerCase();
+  if (raw === '') return 'report';
+  if (raw === 'report' || raw === 'enforce') return raw;
+  if (env.NODE_ENV === 'production') {
+    throw new Error(
+      `[launch-scope] LAUNCH_SCOPE_API_UNATTRIBUTED must be "report" or "enforce" in production (got ${JSON.stringify(env.LAUNCH_SCOPE_API_UNATTRIBUTED)}). ` +
+        'Unset means report. Refusing to boot rather than guess whether to refuse unclaimed API paths.',
+    );
+  }
+  logger.warn('[launch-scope] LAUNCH_SCOPE_API_UNATTRIBUTED is not "report" or "enforce"; treating as report outside production', {
+    value: env.LAUNCH_SCOPE_API_UNATTRIBUTED,
+  });
+  return 'report';
+}
+
 export function launchScopeEnforced(env: NodeJS.ProcessEnv = process.env): boolean {
   return readLaunchScopeMode(env) === 'on';
 }

@@ -676,6 +676,19 @@ export interface ModelConfig {
    * the family, decides what an entry can do.
    */
   maxApiEffort?: 'high' | 'max' | null;
+
+  /**
+   * The effort sent when the caller chose none. Omitted: send nothing and let
+   * the API's own default apply.
+   *
+   * Declared where that default is not the level the entry was reviewed at.
+   * Claude Opus 5.5's API default is `medium`, one level below Opus 5's `high`,
+   * so omitting effort would silently change what runs on a model bump; the
+   * entry states it instead, and the record says what ran. A person's own
+   * choice (Fast / Balanced / Thorough) always wins, and `maxApiEffort` still
+   * caps it.
+   */
+  defaultApiEffort?: 'low' | 'medium' | 'high';
 }
 
 export interface PolicyConfig {

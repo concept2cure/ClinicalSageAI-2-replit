@@ -110,10 +110,37 @@ One consequence stated plainly: the conversation thread and project home call
 legacy projects and artifacts subtree is launch-reachable and stays open. Only
 the rest of `/api/concept2cure` can be closed, in stage 2b.
 
+## Stage 2b — the unclaimed remainder: measured, then refused
+
+After 2a no launch call is unmapped, but most mounted prefixes are still
+claimed by nothing: the legacy `/api/concept2cure` outside the projects
+subtree, `/api/qms`, and among others `/api/demo` and `/api/integration-test`.
+Static analysis cannot see a computed path or a server-to-server caller, so
+the gate does not guess:
+
+- An unmapped `/api/*` path is recorded as a would-refuse in the existing
+  enforcement report (Master Admin → Licensing → Enforcement): module
+  `launch-scope:unattributed`, ids collapsed to `:id`, requests with no
+  organisation recorded against organisation 0. The request is served.
+- `LAUNCH_SCOPE_API_UNATTRIBUTED=enforce` refuses it 403 `LAUNCH_SCOPE`.
+  Unset means `report`. Any other value refuses to boot in production.
+  Documented in `.env.example`.
+- `LAUNCH_INFRASTRUCTURE_API` lists the non-screen callers that are never
+  refused in any mode, each with its caller: the public API (`/api/v1`),
+  Firecrawl's webhook, operator tooling. Non-`/api` paths (the app's pages and
+  assets) are never judged.
+
+Red then green: 5 failed / 31 passed of 36, then 36/36 (`stage2b-*`).
+
+**The operator decision this leaves:** run staging with the default, read the
+report, add any genuine infrastructure caller to the list with its reason,
+then set `enforce`. Until then the legacy namespaces stay callable, and every
+call to them is on record.
+
 ## Not closed here
 
-- **Unmapped paths pass (stage 2b).** After 2a no launch call is unmapped, but
-  most of the 186 mount prefixes still belong to no surface. The legacy `/api/concept2cure/*` namespace
+- **Unmapped paths are reported, not refused, until an operator sets
+  `enforce`** (stage 2b above). The legacy `/api/concept2cure/*` namespace
   and the UI-less `/api/qms` are among them. Closing them means attributing
   each mounted prefix: to a surface, to infrastructure, or to out-of-scope.
   That inventory is the next step. Refusing everything unattributed without it

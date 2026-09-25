@@ -243,9 +243,12 @@ export function projectModelsForPicker(models: ModelConfig[]): PickerModel[] {
  * why: a name rule is exactly what let every Bedrock id skip every check.
  */
 export function apiEffortForModel(
-  model: Pick<ModelConfig, 'maxApiEffort'>,
-  effort: 'low' | 'medium' | 'high' | 'max' | undefined
+  model: Pick<ModelConfig, 'maxApiEffort' | 'defaultApiEffort'>,
+  requested: 'low' | 'medium' | 'high' | 'max' | undefined
 ): 'low' | 'medium' | 'high' | 'max' | undefined {
+  // The person's choice first; the entry's declared default only when there
+  // is none (see ModelConfig.defaultApiEffort).
+  const effort = requested ?? model.defaultApiEffort;
   if (!effort) return undefined;
   const ceiling = model.maxApiEffort;
   // Undeclared or null: send nothing. A missing declaration costs a turn its
