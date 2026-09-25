@@ -42,7 +42,7 @@ import { EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig, C2CFormField } from '../C2CForm';
-import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { apiRequest, serverMessage, redactInternals } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { downloadBlob } from '../download';
@@ -365,7 +365,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
         ? 'Agency acknowledgment downloaded — the agency’s own bytes.'
         : 'Downloaded this platform’s transmittal record. It is NOT an agency acknowledgment — obtain the agency receipt from the agency portal.');
     } catch (e) {
-      fireToast('ACK download failed — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      fireToast('ACK download failed — ' + redactInternals(e instanceof Error ? e.message : '', 'the acknowledgment could not be read') + '.', 'error');
     }
   }, [fireToast]);
 

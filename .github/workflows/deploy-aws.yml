@@ -655,15 +655,27 @@ jobs:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
+      # Three cache classes, checked by `npm run ci:frontend-sync-coverage`:
+      #   assets/     Vite names these by content hash, so a changed file gets a
+      #               new name: cached for a year. Not --delete: a tab opened on
+      #               the previous release still lazy-loads its own chunks.
+      #   the rest    fetched by a fixed name (the interface strings under
+      #               locales/, robots.txt, sitemap.xml, the web manifest):
+      #               revalidated every five minutes. The locale files were once
+      #               excluded here and never uploaded, so production would have
+      #               shown raw keys on the sign-in page.
+      #   index.html  revalidated on every load.
       - name: Sync to S3
         run: |
+          aws s3 sync dist/public/assets/ "s3://$FRONTEND_BUCKET/assets/" \
+            --cache-control "public,max-age=31536000,immutable"
+
           aws s3 sync dist/public/ "s3://$FRONTEND_BUCKET/" \
             --delete \
-            --cache-control "public,max-age=31536000,immutable" \
+            --exclude "assets/*" \
             --exclude "index.html" \
-            --exclude "*.json"
+            --cache-control "public,max-age=300,must-revalidate"
 
-          # index.html and manifests should not be cached aggressively
           aws s3 cp dist/public/index.html "s3://$FRONTEND_BUCKET/index.html" \
             --cache-control "public,max-age=0,must-revalidate"
 

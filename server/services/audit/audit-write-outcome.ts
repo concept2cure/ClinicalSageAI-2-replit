@@ -173,3 +173,24 @@ export function combineAuditRowOutcomes(first: AuditRowOutcome, ...rest: AuditRo
   if (lost) return lost;
   return { persisted: true, chained: all.every((o) => o.persisted && o.chained) };
 }
+
+/**
+ * The one writer of the `X-Audit-Row-Persisted` / `X-Audit-Row-Code` pair, for
+ * a response whose body cannot carry the outcome: a 204, a binary download, or
+ * a proxied body forwarded verbatim. The client transport
+ * (`findUnpersistedAuditRow`, client/src/lib/queryClient.ts) reads this pair,
+ * and server/middleware/enterprise-security.ts exposes it to the browser.
+ *
+ * The code is set only on the failure arm and is the stable code, never the
+ * store's own text. No outcome (no audited write happened) sets nothing. This
+ * replaced four hand-written copies (client-branding, device-projects,
+ * ivd-assessments, predicate-intelligence).
+ */
+export function setAuditRowHeaders(
+  res: { setHeader(name: string, value: string): unknown },
+  outcome: AuditRowOutcome | undefined,
+): void {
+  if (!outcome) return;
+  res.setHeader('X-Audit-Row-Persisted', String(outcome.persisted));
+  if (!outcome.persisted) res.setHeader('X-Audit-Row-Code', outcome.code);
+}

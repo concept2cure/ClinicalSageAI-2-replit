@@ -57,8 +57,9 @@
  * ── Isolation ───────────────────────────────────────────────────────────────
  * Lane "dbtsi": organisation 91800 (range 91800–91849); every email starts
  * `dbtsi-`. Every audit row this file causes belongs to tenant 91800, which
- * only this lane uses. They are removed through the documented archive door
- * (`app.audit_archive_bypass`), so no other tenant's chain is touched.
+ * only this lane uses. They are removed as the table owner with the DELETE
+ * trigger disabled for that transaction only, so no other tenant's chain is
+ * touched.
  */
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -122,9 +123,12 @@ async function cleanup(): Promise<void> {
   const client = await owner.connect();
   try {
     await client.query('BEGIN');
-    // audit_logs is append-only on the deploy path; this is its documented door.
-    await client.query("SET LOCAL app.audit_archive_bypass = 'on'");
+    // audit_logs is append-only on the deploy path. A suite tears its own rows down as the
+    // table owner with the DELETE trigger disabled for this transaction only: the archive door
+    // (audit_logs_archive_delete(), P0-8a) refuses rows inside the 24-month hot window.
+    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
     await client.query('DELETE FROM audit_logs WHERE tenant_id = $1', [ORG]);
+    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
     await client.query('COMMIT');
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
