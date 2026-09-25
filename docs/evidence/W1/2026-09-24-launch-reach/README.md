@@ -165,6 +165,38 @@ SELECT created_at, name, email, organization, message
 The query must run as the platform super-admin, or with enforcement off. The
 table's policy exists to stop anyone else reading it.
 
+### Follow-up, same day: the reader (founder's choice)
+
+The founder chose the smallest reader: a read-only list on the platform-owner
+surface, no notification and no email. Nothing is inferred about a request and
+nothing about it can be changed from here — there is no reply, decision or
+status workflow, and building one is a product decision.
+
+| | |
+|---|---|
+| Endpoint | `GET /api/admin/master/enterprise-requests?status=pending\|all` — `server/routes/admin/master-enterprise-requests.ts`, mounted inside `server/routes/admin/master-admin.ts`, so it inherits that router's `authMiddleware` + `requirePlatformAdmin`. `/api/admin/master` is a system-scope prefix, the only scope `license_requests_platform_access` admits. No bypass is added. |
+| Surface | Master Licensing → **Enterprise requests** tab — `client/src/concept2cure/v2/surfaces/licensing/EnterpriseRequestsPanel.tsx`. `master-licensing` is a shell surface in `shared/constants/launch-scope.ts`; `ci:launch-scope` passes. |
+| Honest states | A failed read is `ErrorState` with a retry, never "No pending requests". A 200 without a `requests` list is a failure (shape guard), not an empty list. A truncated list (over 200) says so. Empty says where requests come from. |
+
+Proof, on real PostgreSQL with the minted non-superuser runtime role and
+`RLS_ENFORCE=on` (`tests/db/master-enterprise-requests.dbtest.ts`):
+
+- **Red** with the route unmounted: 4 of 6 fail
+  (`enterprise-requests-red-route-unmounted.txt`). The two that pass are the
+  refusals, which the guard gives with or without the route.
+- **Green**: 6 of 6 (`enterprise-requests-green.txt`) — the owner sees pending
+  only by default and reviewed ones with `?status=all`; an unknown filter is a
+  400; a customer's organisation admin gets 403 with no contact detail in the
+  body; no token is 401; with `SELECT` revoked the answer is a 500 with no list
+  and no PostgreSQL text.
+- **Client** (`client/src/concept2cure/v2/__tests__/enterpriseRequests.test.tsx`,
+  6 tests): with the panel's error branch disabled, the two failed-read tests go
+  red; restored, 6 of 6 (`enterprise-requests-panel-mutant.txt`).
+
+Still true: **no one is notified when a request arrives.** Someone has to open
+the tab. An alert is the founder's call, and needs SMTP this deployment does
+not configure.
+
 ## Recorded, not fixed: the EULA store fails open, behind no caller
 
 `license_agreements` and `license_acceptances` are baselined absences too.

@@ -1,0 +1,46 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T21:27:37.569Z","pid":2286,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T21:27:37.571Z","pid":2286,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T21:27:37.571Z","pid":2286,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/master-enterprise-requests.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stderr | tests/db/master-enterprise-requests.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/master-enterprise-requests.dbtest.ts
+[database] Database connection successful
+
+{"level":40,"time":"2026-09-24T21:27:38.284Z","pid":2286,"hostname":"vm","context":{"userId":8,"role":"admin","email":"dbter-customeradmin-2286_mug1m763@example.invalid","path":"/api/admin/master/enterprise-requests"},"msg":"[platform-admin-guard] Master Administration access denied"}
+{"level":50,"time":"2026-09-24T21:27:38.298Z","pid":2286,"hostname":"vm","context":{"error":"permission denied for table license_requests","query":"SELECT id, created_at, name, email, organization, COALESCE(message, '') AS message,\n              COALESCE(status, 'pending') AS status, reviewed_at\n         FROM license_requests\n        WHERE ($1::text = 'all' OR COALESCE(status, 'pending') = 'pending')\n        ORDER BY created_at DESC NULLS LAST, id DESC\n        LIMIT $2","params":["pending",201]},"msg":"[database] Database query error"}
+{"level":50,"time":"2026-09-24T21:27:38.298Z","pid":2286,"hostname":"vm","context":{"err":"permission denied for table license_requests","correlationId":null,"code":"42501"},"msg":"[master-enterprise-requests] reading enterprise onboarding requests failed"}
+ ✓ tests/db/master-enterprise-requests.dbtest.ts > GET /api/admin/master/enterprise-requests — the platform owner > lists pending requests by default, and not reviewed ones 132ms
+ ✓ tests/db/master-enterprise-requests.dbtest.ts > GET /api/admin/master/enterprise-requests — the platform owner > lists reviewed ones too with ?status=all 16ms
+ ✓ tests/db/master-enterprise-requests.dbtest.ts > GET /api/admin/master/enterprise-requests — the platform owner > refuses an unknown status filter rather than guessing 8ms
+ ✓ tests/db/master-enterprise-requests.dbtest.ts > everyone else > a customer's organisation admin is refused — other companies' contact details 14ms
+ ✓ tests/db/master-enterprise-requests.dbtest.ts > everyone else > no token is refused 3ms
+ ✓ tests/db/master-enterprise-requests.dbtest.ts > a read that fails is never shown as "no requests" > answers 500 with no list when the store cannot be read 12ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  21:27:33
+   Duration  5.73s (transform 1.98s, setup 106ms, import 289ms, tests 4.87s, environment 0ms)
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/enterpriseRequests.test.tsx > the requests themselves > shows who asked, from which organisation, what they said, and when 78ms
+ ✓ client/src/concept2cure/v2/__tests__/enterpriseRequests.test.tsx > the requests themselves > asks the server for every request when the filter is changed 28ms
+ ✓ client/src/concept2cure/v2/__tests__/enterpriseRequests.test.tsx > the requests themselves > says a list is truncated rather than presenting it as all of them 11ms
+ ✓ client/src/concept2cure/v2/__tests__/enterpriseRequests.test.tsx > honest empty and failed states > an empty list says so, and where requests come from 10ms
+ ✓ client/src/concept2cure/v2/__tests__/enterpriseRequests.test.tsx > honest empty and failed states > a failed read is an error with a retry — never "No pending requests" 11ms
+ ✓ client/src/concept2cure/v2/__tests__/enterpriseRequests.test.tsx > honest empty and failed states > a body without a requests list is treated as a failure, not as empty 8ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  21:27:40
+   Duration  1.40s (transform 247ms, setup 166ms, import 376ms, tests 150ms, environment 532ms)
+
