@@ -35,7 +35,7 @@ import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { assessmentState } from '../assessmentState';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
@@ -563,7 +563,7 @@ function EvalidatorImport({ identPath, row, onImported }: { identPath: string; r
       evalidatorReport: { compilationId: Number(row.id), fileName: file.name, text },
     });
     setBusy(false);
-    if (!ok) { setError(body?.error?.message ?? 'The report was not imported.'); return; }
+    if (!ok) { setError(serverMessage(body) ?? 'The report was not imported.'); return; }
     onImported();
   };
 

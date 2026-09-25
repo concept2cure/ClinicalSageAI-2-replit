@@ -773,7 +773,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
                         <span
                           style={{
                             color: txw.targets.includes(l.id)
-                              ? 'rgba(255,255,255,.7)'
+                              ? 'color-mix(in srgb, var(--accent-on-strong) 70%, transparent)'
                               : 'var(--text-400)',
                             fontSize: 10,
                           }}
@@ -1406,7 +1406,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
           style={{
             marginTop: 16,
             padding: 16,
-            borderRadius: 10,
+            borderRadius: 'var(--radius-lg)',
             border: '1px solid var(--border)',
             background: 'var(--bg-100)',
             maxWidth: 720,
@@ -3442,7 +3442,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                     dismissed, never persisted or logged. */}
                 {mintedKey && (
                   <div
-                    style={{ marginTop: 14, padding: 14, border: '1px solid var(--accent-100, var(--border))', borderRadius: 10, background: 'var(--bg-050)' }}
+                    style={{ marginTop: 14, padding: 14, border: '1px solid var(--accent-100, var(--border))', borderRadius: 'var(--radius-lg)', background: 'var(--bg-050)' }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                       <span className="sp-q-ic">{I.key || I.terminal}</span>

@@ -431,7 +431,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
           className="sp-tone-warn"
           role="status"
           style={{
-            border: '1px solid var(--border,#d0d5dd)', borderRadius: 10,
+            border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
             padding: '10px 12px', marginBottom: 12, fontSize: 12.5,
           }}
         >
@@ -466,7 +466,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
             <span
               key={a.id}
               className={a.status === 'error' ? 'sp-tone-warn' : undefined}
-              style={{ fontSize: 12, border: '1px solid var(--border,#d0d5dd)', borderRadius: 999, padding: '2px 10px' }}
+              style={{ fontSize: 12, border: '1px solid var(--border)', borderRadius: 'var(--radius-full)', padding: '2px 10px' }}
             >
               {a.status === 'uploading' ? `Uploading ${a.name}…` : a.name}
               {a.status === 'ready' && readLabel(a.extractionMethod, a.extractionWords)
@@ -780,7 +780,7 @@ function SchedulePanel({ pid, onAsk }: { pid: string | null; onAsk: (q: string) 
                         key={m.key || m.id}
                         style={{
                           display: 'flex', alignItems: 'baseline', gap: 10, padding: '7px 2px',
-                          borderBottom: '1px solid var(--border-subtle,#eaecf0)',
+                          borderBottom: '1px solid var(--border-subtle)',
                         }}
                       >
                         <span className={`rd-chip ${SCHED_STATUS_TONE[m.status] ?? 'tone-idle'}`} style={{ whiteSpace: 'nowrap' }}>

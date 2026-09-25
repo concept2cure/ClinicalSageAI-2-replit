@@ -21,7 +21,7 @@
  */
 
 import * as React from 'react';
-import { I } from './icons';
+import { I } from '../v2/icons';
 import { registerRowMinWidth } from './registerGrid';
 import { ChangeFlow } from './ChangeFlow';
 import {
@@ -218,7 +218,7 @@ export function ChangeControl({
             <>
               <span className="spacer" />
               <button className="qms-link" onClick={() => onStageChange('all')}>
-                {I.x} Clear filter · {STATE_LABEL[stage as ChangeState] ?? stage}
+                {I.close} Clear filter · {STATE_LABEL[stage as ChangeState] ?? stage}
               </button>
             </>
           )}
@@ -330,7 +330,7 @@ export function ChangeControl({
                         onAsk(`Summarize change ${c.changeNumber} ${c.title}: its impact assessment, linked records, and what it needs next.`)
                       }
                     >
-                      {I.sparkle}
+                      {I.sparkles}
                     </button>
                   </div>
                 </div>

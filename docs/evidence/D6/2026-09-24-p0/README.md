@@ -21,7 +21,7 @@ commit was `adbf2d18`; the red runs cite the HEAD they ran against.
 | P0-12 (part 1) | DP-08, DP-09 model output ran the GDPR erasure | `8ebe3040` | erasure e-signed and human-confirmed; every-write tier designed, waits on hot files | `P0-12/` |
 | P0-3 / P0-4 follow-up | second authenticator, provider carry, SAML event sentences | `872c8648` | yes | `P0-3-P0-4-followup/` |
 | P0-2 (d) | IAM-02 open dynamic client registration | `5c10785e` | bound to `MCP_CLIENT_REDIRECT_ALLOWLIST`; whether production sets it is the founder's; parts (a)–(c) are the D8 lane's | `P0-2d/` |
-| P0-8a (archive path) | DP-04 the archive bypass is a session GUC | see folder | in flight at the time of writing | `P0-8a/` |
+| P0-8a (archive path) | DP-04 the audit-log delete door was a session setting any role could set | see `git log -- db/migrations/20260617_audit_logs_immutability.sql` (`054c1764`) | archive door + ledger + enforced floor; `app_service` DELETE grant and the anchored chain head open | `P0-8a/` |
 
 `gates/SUMMARY.txt` is the Phase A gate set re-run on the tranche's working tree at `9dba7621` (every gate green; `ci:tenant-entry-points` was red on the sweep's changed digest and its justification was re-read and refreshed in `fc3b34bb`; `npm audit` shows the two image-size highs the ledger already carries as unreachable), with the migration gates and the new
 `ci:trivyignore-hygiene` added; compare with `../2026-09-24-security-audit/gates/SUMMARY.txt`.
@@ -35,7 +35,7 @@ gate output, each ending in an `exit=` line.
 ## Not reached in this tranche, and why
 
 - **Hot files (board §0, 24-hour rule).** P0-18 (QMS trigger; `scripts/db/migration-set.mjs`), the P0-8a grant half
-  (`scripts/db/provision-app-role.mjs`), the P0-12 every-write tier (`server/routes/ana-ri/utility.ts`,
+  (`scripts/db/provision-app-role.mjs`; the archive door itself landed), the P0-12 every-write tier (`server/routes/ana-ri/utility.ts`,
   `server/services/ana-ri/command-executor.ts`, `server/routes/ana-ri/post-processing.ts`), the P0-4b migration, and the
   `ci:trivyignore-hygiene` wiring (`package.json`, `.husky/pre-push`). Each has its design written in the nearest
   item's README or the plan row.

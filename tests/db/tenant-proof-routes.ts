@@ -39,7 +39,7 @@ import { requestPgClient, type RequestSqlClient } from '../../server/db/requestD
  * Signatures were excluded on 2026-09-19 for a reason that still holds and is
  * now designed around rather than worked around. `esign_block_mutation()`
  * refuses UPDATE and DELETE outright, with no archive door (unlike audit_logs'
- * `app.audit_archive_bypass`), so a signature fixture can never be removed, and
+ * `audit_logs_archive_delete()`), so a signature fixture can never be removed, and
  * it pins its organization and its signer through foreign keys. So, in the
  * contract's beforeAll/afterAll:
  *

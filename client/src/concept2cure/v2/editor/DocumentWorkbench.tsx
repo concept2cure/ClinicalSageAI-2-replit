@@ -3768,7 +3768,7 @@ export function DocumentWorkbench({
                   style={{
                     minHeight: 460,
                     border: '1px solid var(--border)',
-                    borderRadius: 10,
+                    borderRadius: 'var(--radius-lg)',
                     overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column',
