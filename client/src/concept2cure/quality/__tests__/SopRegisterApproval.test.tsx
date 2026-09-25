@@ -20,6 +20,11 @@ import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/re
 
 const H = vi.hoisted(() => ({
   docs: null as unknown[] | null,
+  regError: null as string | null,
+  reviewRows: [] as unknown[] | null,
+  trainRows: [] as unknown[] | null,
+  trainError: null as string | null,
+  trainRefresh: vi.fn(),
   sample: false,
   apiRequest: vi.fn(),
   refresh: vi.fn(),
@@ -33,10 +38,10 @@ const DRAFT = {
 };
 
 vi.mock('../hooks', () => ({
-  useSopRegister: () => ({ docs: H.docs, loading: false, error: null, refresh: H.refresh }),
+  useSopRegister: () => ({ docs: H.docs, loading: H.docs == null && H.regError == null, error: H.regError, refresh: H.refresh }),
   useSopTemplates: () => ({ templates: [], loading: false, error: null }),
-  useReviewDue: () => ({ rows: [], loading: false, error: null }),
-  useTrainingCompliance: () => ({ rows: [], loading: false, error: null }),
+  useReviewDue: () => ({ rows: H.reviewRows, loading: false, error: null, refresh: vi.fn() }),
+  useTrainingCompliance: () => ({ rows: H.trainRows, loading: false, error: H.trainError, refresh: H.trainRefresh }),
 }));
 vi.mock('../../mdx/lib/useSampleRows', () => ({
   useSampleRows: <T,>(live: T[] | null) => (live ?? []) as T[],
@@ -46,6 +51,7 @@ vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: { name
 vi.mock('@/lib/queryClient', () => ({
   apiRequest: (...a: unknown[]) => H.apiRequest(...a),
   serverMessage: (p: { error?: string } | null) => p?.error ?? null,
+  redactInternals: (m: string) => m,
 }));
 vi.mock('../../_shared/components/EsignModal', () => ({
   esignSignerOf: (u: { name?: string } | null) => (u?.name ? { name: u.name } : undefined),
@@ -76,6 +82,11 @@ const renderRegister = () =>
 
 beforeEach(() => {
   H.docs = [DRAFT];
+  H.regError = null;
+  H.reviewRows = [];
+  H.trainRows = [];
+  H.trainError = null;
+  H.trainRefresh.mockReset();
   H.sample = false;
   H.apiRequest.mockReset();
   H.refresh.mockReset();
@@ -136,5 +147,67 @@ describe('SopRegister — approval is a signature taken here', () => {
     renderRegister();
     const btn = screen.getByRole('button', { name: /Approve/ }) as HTMLButtonElement;
     expect(btn.disabled).toBe(true);
+  });
+});
+
+/* HS-1 (docs/evidence/reviews/2026-09-24/lenses.md): the hooks computed an
+   error and the register never read it, so an outage rendered as a clean
+   register — "Effective documents 0", "Review overdue 0 — All current" in the
+   ok tone, "No documents due for review." */
+describe('SopRegister — a failed read is not an empty register', () => {
+  const kpi = (label: string) => screen.getByText(label).closest('.qms-kpi') as HTMLElement;
+
+  it('renders a failed register read as a failure, with no count and no all-clear', () => {
+    H.docs = null;
+    H.reviewRows = null;
+    H.regError = 'Request failed (500)';
+    renderRegister();
+    expect(screen.getByTestId('sop-register-failed').textContent).toMatch(
+      /controlled-document register could not be read/,
+    );
+    expect(screen.getByTestId('sop-review-failed')).toBeTruthy();
+    expect(screen.queryByText('All current')).toBeNull();
+    expect(screen.queryByText('No documents due for review.')).toBeNull();
+    expect(screen.queryByText(/No controlled documents in the register/)).toBeNull();
+    expect(kpi('Effective documents').querySelector('.val')?.textContent).toBe('—');
+    expect(kpi('Review overdue').getAttribute('data-tone')).toBe('');
+    fireEvent.click(screen.getAllByRole('button', { name: 'Try again' })[0]);
+    expect(H.refresh).toHaveBeenCalled();
+  });
+
+  it('claims nothing while the register is still loading', () => {
+    H.docs = null;
+    H.reviewRows = null;
+    renderRegister();
+    expect(screen.getByText('Loading the register…')).toBeTruthy();
+    expect(screen.queryByText('All current')).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('shows a register that answered empty as empty, not as a failure', () => {
+    H.docs = [];
+    renderRegister();
+    expect(screen.getByText('No controlled documents in the register yet.')).toBeTruthy();
+    expect(screen.getByText('All current')).toBeTruthy();
+    expect(screen.queryByTestId('sop-register-failed')).toBeNull();
+  });
+
+  it('renders a failed training read as a failure, not "no training-controlled documents"', () => {
+    H.trainRows = null;
+    H.trainError = 'Request failed (503)';
+    renderRegister();
+    expect(screen.getByTestId('sop-training-failed').textContent).toMatch(/Training records could not be read/);
+    expect(screen.queryByText('No training-controlled documents yet.')).toBeNull();
+    expect(kpi('Training compliance').querySelector('.val')?.textContent).toBe('—');
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(H.trainRefresh).toHaveBeenCalled();
+  });
+
+  it('shows no training compliance figure when nothing is training-controlled, instead of a red 0%', () => {
+    renderRegister();
+    const k = kpi('Training compliance');
+    expect(k.querySelector('.val')?.textContent).toBe('—');
+    expect(k.getAttribute('data-tone')).toBe('');
+    expect(k.textContent).toMatch(/No training-controlled documents yet/);
   });
 });
