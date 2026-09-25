@@ -626,6 +626,8 @@ export async function assembleSubmissionEctd(
       materialized: assembled.materialized,
       unresolvedLeaves: assembled.unresolvedLeaves,
       skipped: assembled.skipped,
+      // The assembly's §11.10(e) outcome; the export route answers it as headers.
+      auditTrail: assembled.auditTrail,
       dtdStatus: assembled.bundle.dtdStatus,
       stats: {
         totalModules: moduleDirs.size,

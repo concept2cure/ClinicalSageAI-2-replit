@@ -539,3 +539,48 @@ describe('POST /api/ectd/export/:submissionId — the canonical export', () => {
     expect(res.body.completeness.completenessPct).toBe(78);
   });
 });
+
+/* WO-16C. assembleSubmissionEctd now carries the assembly's §11.10(e) outcome
+   (ECTD_PACKAGED_FROM_CORE + ECTD_ASSEMBLED). The download answers a ZIP, so
+   the outcome travels as X-Audit-Row-Persisted / X-Audit-Row-Code, which the
+   client transport reads before it looks at the content type. Before this,
+   eCTD Compile's download (EctdCompile.tsx, apiRequest POST) could not tell a
+   package whose records were lost from one whose records were written. */
+describe('POST /api/ectd/export/:submissionId — the assembly\'s audit rows', () => {
+  const REVIEWED = {
+    governance: {
+      aiGenerated: true, humanReviewApproved: true, reviewerName: 'Dana Reviewer',
+      reviewerRole: 'Regulatory Affairs', reviewTimestamp: '2026-09-24T10:00:00.000Z',
+    },
+  };
+  const LOST = { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message: 'lost' };
+
+  async function withAudit(auditTrail: unknown) {
+    const base = await hoisted.assembleSubmissionEctd.getMockImplementation()?.();
+    hoisted.assembleSubmissionEctd.mockResolvedValueOnce({ ...(base as object), auditTrail });
+    return request(makeApp()).post('/api/ectd/export/42').send({ applicationNumber: '123456', ...REVIEWED });
+  }
+
+  it('a download whose rows were lost says so in its headers, and still returns the package', async () => {
+    const res = await withAudit(LOST);
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toMatch(/application\/zip/);
+    expect(res.headers['x-audit-row-persisted']).toBe('false');
+    expect(res.headers['x-audit-row-code']).toBe('AUDIT_ROW_NOT_PERSISTED');
+  });
+
+  it('a download whose rows were written says so, with no code', async () => {
+    const res = await withAudit({ persisted: true, chained: true });
+    expect(res.headers['x-audit-row-persisted']).toBe('true');
+    expect(res.headers['x-audit-row-code']).toBeUndefined();
+  });
+
+  it('a refused (invalid) package carries the outcome in its JSON body', async () => {
+    hoisted.validateEctdPackage.mockResolvedValueOnce({
+      valid: false, errors: [{ code: 'DTD_NO_BACKBONE', message: 'index.xml has no backbone' }], warnings: [],
+    });
+    const res = await withAudit(LOST);
+    expect(res.status).toBe(422);
+    expect(res.body.auditTrail).toEqual(LOST);
+  });
+});
