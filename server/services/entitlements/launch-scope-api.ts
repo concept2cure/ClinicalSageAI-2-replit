@@ -23,12 +23,14 @@
  *   - `launch`       — at least one surface claiming it is a launch or shell
  *                      surface (shared/constants/launch-scope.ts), or it is on
  *                      the platform list below (`LAUNCH_PLATFORM_API`);
+ *   - `infrastructure` — a non-screen caller (`LAUNCH_INFRASTRUCTURE_API`);
  *   - `out-of-scope` — every surface claiming it is outside the launch scope;
- *   - `unmapped`     — no surface claims it.
- * Only `out-of-scope` is refused. `unmapped` passes, because refusing what the
- * registry does not name would refuse sign-in callbacks, webhooks and the
- * public API along with the product; closing the unmapped remainder takes an
- * inventory of mounted prefixes, recorded as the next step in the evidence.
+ *   - `unmapped`     — nothing claims it.
+ * `out-of-scope` is refused. `unmapped` is reported by default and refused only
+ * when an operator sets LAUNCH_SCOPE_API_UNATTRIBUTED=enforce (the gate decides;
+ * see its header): static analysis cannot see a computed path or a
+ * server-to-server caller, so the first cost of refusing the unclaimed
+ * remainder is measured, not guessed.
  *
  * The rule is only as true as the registry. `scripts/ci/check-launch-scope-api.ts`
  * holds the registry to it: every API path a launch or shell surface's client
@@ -42,7 +44,7 @@
 import { LAUNCH_SURFACE_IDS } from '../../../shared/constants/launch-scope';
 import { modulesForPath } from './api-prefix-map.js';
 
-export type LaunchScopeApiVerdict = 'never-gated' | 'launch' | 'out-of-scope' | 'unmapped';
+export type LaunchScopeApiVerdict = 'never-gated' | 'infrastructure' | 'launch' | 'out-of-scope' | 'unmapped';
 
 /**
  * API prefixes the shell uses whatever app is open, and which therefore belong
@@ -57,6 +59,18 @@ export const LAUNCH_PLATFORM_API: Readonly<Record<string, string>> = {
   '/api/organizations': "the shell's organisation read (V2App.tsx), Setup's profile and settings, onboarding",
 };
 
+/**
+ * API prefixes called by something other than a screen: a partner's system, a
+ * webhook, an operator's tooling. Never refused by launch scope, in any mode,
+ * because nothing in the product's UI would notice their loss until an
+ * integration failed in production. Each carries its caller.
+ */
+export const LAUNCH_INFRASTRUCTURE_API: Readonly<Record<string, string>> = {
+  '/api/v1': 'the public X-API-Key API (routes/public-api) and its session route',
+  '/api/firecrawl-webhooks': "Firecrawl's crawl-completion webhook",
+  '/api/_ops': 'operator tooling, authenticated separately',
+};
+
 function onPrefix(path: string, prefix: string): boolean {
   return path === prefix || path.startsWith(`${prefix}/`);
 }
@@ -69,6 +83,7 @@ export function launchScopeApiVerdict(
 ): LaunchScopeApiVerdict {
   const path = pathname.split('?')[0];
   if (neverGated.some((n) => onPrefix(path, n))) return 'never-gated';
+  if (Object.keys(LAUNCH_INFRASTRUCTURE_API).some((p) => onPrefix(path, p))) return 'infrastructure';
   if (Object.keys(LAUNCH_PLATFORM_API).some((p) => onPrefix(path, p))) return 'launch';
   const surfaces = modulesForPath(path, prefixMap);
   if (!surfaces || surfaces.size === 0) return 'unmapped';
