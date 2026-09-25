@@ -157,6 +157,14 @@ locals {
   # Plain (non-secret) values the deploy preflight checks by value, not name.
   boot_environment = [
     { name = "RLS_ENFORCE", value = "on" },
+    # The Part 11 audit posture (security plan P0-9). The tamper-proof trail and
+    # its integrity monitor run only with AUDIT_TRAIL_ENABLED=true (they need
+    # AUDIT_HMAC_SECRET, in boot_secrets, and audit.tamper_proof_log, from the
+    # migration set). AUDIT_REQUIRE_ENFORCE=true makes a missing trail, a failed
+    # immutability probe or a disabled daily sweep refuse boot instead of warn
+    # (server/startup/audit-enforcement.ts). The preflight requires both `true`.
+    { name = "AUDIT_TRAIL_ENABLED", value = "true" },
+    { name = "AUDIT_REQUIRE_ENFORCE", value = "true" },
     { name = "AI_SENSITIVE_DATA_POLICY_MODE", value = "enforce" },
     { name = "AI_PROVIDER_PLACEMENT_APPROVALS", value = var.ai_provider_placement_approvals },
     # Reset and invitation links are built on APP_URL and never on the Host

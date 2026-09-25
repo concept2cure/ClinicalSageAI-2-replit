@@ -1835,6 +1835,13 @@ jobs:
           # durability; a deployment names S3 (terraform/stack) or a real volume.
           STORAGE_PROVIDER: local
           STORAGE_ACCEPT_LOCAL_DISK: 'true'
+          # The audit posture production ships (terraform/stack/main.tf; security
+          # plan P0-9): the tamper-proof trail on, and a missing trail, a failed
+          # immutability probe or a disabled sweep refusing boot. Without these
+          # this job boots a posture production never runs, and would not see a
+          # change that makes the real one crash-loop.
+          AUDIT_TRAIL_ENABLED: 'true'
+          AUDIT_REQUIRE_ENFORCE: 'true'
           # This job has no AI provider, and since /readyz gained its `ana`
           # dependency (startup/ana-readiness-state.ts) that is no longer a
           # silent condition: a process where AnA cannot answer refuses to
