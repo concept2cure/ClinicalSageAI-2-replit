@@ -15,6 +15,32 @@ import type { Pool } from 'pg';
 import type { Request, Response } from 'express';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
 import { clientIpOf } from '../utils/client-ip';
+import { setTenantContextTx } from '../services/tenant/governed-tenant-context.js';
+import { verifyTenantChainOnAdminScope } from '../services/audit/tenant-chain-verdict.js';
+import type { AuditExportRequest, SignedAuditExport } from '../services/audit/signedAuditExport.js';
+
+const RESOURCE_TYPE_RE = /^[a-z][a-z0-9_]{0,63}$/;
+const RECORD_ID_RE = /^[A-Za-z0-9][A-Za-z0-9_:.-]{0,127}$/;
+
+/**
+ * The record filters an export accepts: one resource type and up to 200 record
+ * ids. A malformed value is refused (null) rather than dropped: dropping it
+ * would export everything to a caller who asked for one document.
+ */
+function exportRecordFilters(q: Request['query']): { resourceType?: string; recordIds?: string[] } | null {
+  const out: { resourceType?: string; recordIds?: string[] } = {};
+  if (q.resource_type !== undefined) {
+    const t = String(q.resource_type);
+    if (!RESOURCE_TYPE_RE.test(t)) return null;
+    out.resourceType = t;
+  }
+  if (q.record_ids !== undefined) {
+    const ids = String(q.record_ids).split(',').map((x) => x.trim()).filter(Boolean);
+    if (ids.length === 0 || ids.length > 200 || !ids.every((x) => RECORD_ID_RE.test(x))) return null;
+    out.recordIds = ids;
+  }
+  return out;
+}
 
 // ---------------------------------------------------------------------------
 // Helper: derive the acting principal from the AUTHENTICATED request only.
@@ -164,6 +190,30 @@ function formatAuditRow(row: any) {
 // Factory
 // ---------------------------------------------------------------------------
 export function createAuditTrailRoutes(pool: Pool): Router {
+  /* The export reads inside a transaction stamped with the caller's org, the
+     way the audit-trail ledger reads (audit-trail-ledger.routes.ts): under
+     RLS_ENFORCE=on a pooled connection carries no tenant, and the audit_logs
+     rows the export carries would come back empty. The audit_logs chain verdict
+     comes from the one tenant verifier (services/audit/tenant-chain-verdict.ts). */
+  async function exportForTenant(orgId: number, request: AuditExportRequest): Promise<SignedAuditExport> {
+    const { generateSignedAuditExport } = await import('../services/audit/signedAuditExport.js');
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await setTenantContextTx(client, orgId);
+      const out = await generateSignedAuditExport(client, request, {
+        verifyAuditLogsChain: verifyTenantChainOnAdminScope,
+      });
+      await client.query('COMMIT');
+      return out;
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+
   const router = Router();
 
   // GET /api/audit/logs — paginated audit logs
@@ -539,13 +589,15 @@ export function createAuditTrailRoutes(pool: Pool): Router {
       const orgGuard = requireAuthedOrgId(req, res);
       if (!orgGuard.ok) return;
       // Use signed export service for tamper-evident audit packages
-      const { generateSignedAuditExport } = await import('../services/audit/signedAuditExport.js');
+      const filters = exportRecordFilters(req.query);
+      if (!filters) return res.status(400).json({ error: 'Invalid resource_type or record_ids filter' });
       const format = (req.query.format === 'json' ? 'json' : 'csv') as 'csv' | 'json';
       const userId = (req as any).userId || (req as any).user?.id || 'unknown';
       const userName = (req as any).user?.name || (req as any).user?.email || String(userId);
 
-      const signedExport = await generateSignedAuditExport(pool, {
+      const signedExport = await exportForTenant(orgGuard.orgId, {
         organizationId: orgGuard.orgId,
+        ...filters,
         startDate: req.query.start_date ? String(req.query.start_date) : undefined,
         endDate: req.query.end_date ? String(req.query.end_date) : undefined,
         eventType: req.query.event_type ? String(req.query.event_type) : undefined,
@@ -589,13 +641,15 @@ export function createAuditTrailRoutes(pool: Pool): Router {
     try {
       const orgGuard = requireAuthedOrgId(req, res);
       if (!orgGuard.ok) return;
-      const { generateSignedAuditExport } = await import('../services/audit/signedAuditExport.js');
+      const filters = exportRecordFilters(req.query);
+      if (!filters) return res.status(400).json({ error: 'Invalid resource_type or record_ids filter' });
       const format = (req.query.format === 'csv' ? 'csv' : 'json') as 'csv' | 'json';
       const userId = (req as any).userId || (req as any).user?.id || 'unknown';
       const userName = (req as any).user?.name || (req as any).user?.email || String(userId);
 
-      const signedExport = await generateSignedAuditExport(pool, {
+      const signedExport = await exportForTenant(orgGuard.orgId, {
         organizationId: orgGuard.orgId,
+        ...filters,
         startDate: req.query.start_date ? String(req.query.start_date) : undefined,
         endDate: req.query.end_date ? String(req.query.end_date) : undefined,
         eventType: req.query.event_type ? String(req.query.event_type) : undefined,

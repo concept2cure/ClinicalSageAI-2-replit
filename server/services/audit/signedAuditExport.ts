@@ -17,6 +17,7 @@
 
 import crypto from 'crypto';
 import { Pool } from 'pg';
+import type { ChainVerificationResult } from './chain.js';
 
 import { stableStringify } from '../../../shared/canonical-json.js';
 import {
@@ -35,6 +36,10 @@ export interface AuditExportRequest {
   endDate?: string;
   eventType?: string;
   userId?: number;
+  /** Narrow both stores to one record type (audit_logs.table_name / audit_events.entity_type). */
+  resourceType?: string;
+  /** Narrow both stores to these records (audit_logs.record_id / audit_events.entity_id). */
+  recordIds?: string[];
   format: 'csv' | 'json';
   exportedBy: string;
   exportedByRole?: string;
@@ -101,6 +106,27 @@ export interface ExportManifest {
    * on exports sealed before that change.
    */
   exportRecord?: { auditEventId: number };
+  /**
+   * How many rows each store contributed. The export used to read audit_events
+   * only, so no event the launch apps write to audit_logs (Vault ingest, filing,
+   * download; Submission Center; QMS) reached an inspector. Absent on exports
+   * sealed before VR-02.
+   */
+  sources?: { audit_events: number; audit_logs: number };
+  /**
+   * The verdict on the tenant's audit_logs chain. `chainIntegrity` above is
+   * about audit_events only and says nothing of these rows. Without a verifier
+   * this is 'unverified' with a reason, never 'intact'. Absent before VR-02.
+   */
+  auditLogsChain?: {
+    status: 'intact' | 'broken' | 'unverified' | 'unavailable';
+    rowsChecked?: number;
+    legacyRows?: number;
+    sequencedRows?: number;
+    brokenAt?: string;
+    verifiedAt: string;
+    reason?: string;
+  };
   compliance: {
     standard: string;
     section: string;
@@ -174,7 +200,7 @@ function sha256(data: string): string {
 // ---------------------------------------------------------------------------
 
 async function snapshotChainIntegrity(
-  pool: Pool,
+  pool: Pick<Pool, 'query'>,
   organizationId?: number
 ): Promise<ExportManifest['chainIntegrity']> {
   try {
@@ -272,7 +298,67 @@ async function snapshotChainIntegrity(
 // QUERY AUDIT DATA
 // ---------------------------------------------------------------------------
 
-async function queryAuditData(pool: Pool, req: AuditExportRequest) {
+/** What the export reads with: a Pool, or a client inside a tenant-stamped transaction. */
+type Queryable = Pick<Pool, 'query'>;
+
+export interface AuditExportDeps {
+  /** The tenant audit_logs chain verdict (services/audit/tenant-chain-verdict.ts). */
+  verifyAuditLogsChain?: (orgId: number) => Promise<ChainVerificationResult>;
+}
+
+const EXPORT_ROW_LIMIT = 50000;
+
+/**
+ * The tenant's audit_logs rows, in the same row shape as audit_events so one
+ * file carries both, each labelled by source. Every row is included, chained or
+ * not: a complete copy (§11.10(b)) does not drop the rows a chain cannot vouch
+ * for, it says which they are (sha256_chain / chain_seq NULL).
+ */
+async function queryAuditLogs(pool: Queryable, req: AuditExportRequest) {
+  const params: unknown[] = [req.organizationId];
+  const cond: string[] = ['a.tenant_id = $1'];
+  if (req.eventType) { params.push(req.eventType); cond.push(`a.action = $${params.length}`); }
+  if (req.userId) { params.push(req.userId); cond.push(`COALESCE(a.actor_id, a.user_id) = $${params.length}`); }
+  if (req.startDate) { params.push(new Date(req.startDate)); cond.push(`COALESCE(a.occurred_at, a.created_at) >= $${params.length}`); }
+  if (req.endDate) { params.push(new Date(req.endDate)); cond.push(`COALESCE(a.occurred_at, a.created_at) <= $${params.length}`); }
+  if (req.resourceType) { params.push(req.resourceType); cond.push(`a.table_name = $${params.length}`); }
+  if (req.recordIds?.length) { params.push(req.recordIds); cond.push(`a.record_id = ANY($${params.length}::text[])`); }
+  params.push(EXPORT_ROW_LIMIT + 1);
+  const { rows } = await pool.query(
+    `SELECT a.id::text AS id, a.tenant_id AS organization_id, a.action AS event_type,
+            a.table_name AS entity_type, a.record_id AS entity_id,
+            COALESCE(a.actor_id, a.user_id) AS user_id, a.ip_address,
+            COALESCE(a.occurred_at, a.created_at) AS timestamp, a.reason, a.target,
+            a.payload_hash, a.sha256_chain, a.chain_seq, a.hmac_seal
+       FROM audit_logs a
+      WHERE ${cond.join(' AND ')}
+      ORDER BY COALESCE(a.occurred_at, a.created_at) ASC, a.chain_seq ASC NULLS FIRST, a.id ASC
+      LIMIT $${params.length}`,
+    params,
+  );
+  const truncated = rows.length > EXPORT_ROW_LIMIT;
+  if (truncated) rows.length = EXPORT_ROW_LIMIT;
+  return { rows: rows.map((r: Record<string, unknown>) => ({ source: 'audit_logs', ...r })), truncated };
+}
+
+async function queryAuditData(pool: Queryable, req: AuditExportRequest) {
+  const events = await queryAuditEvents(pool, req);
+  const logs = await queryAuditLogs(pool, req);
+  const at = (r: Record<string, unknown>) => new Date(String(r.timestamp)).getTime() || 0;
+  const merged = [...events.rows, ...logs.rows].sort((a, b) => at(a) - at(b));
+  const truncated = events.truncated || logs.truncated || merged.length > EXPORT_ROW_LIMIT;
+  if (merged.length > EXPORT_ROW_LIMIT) merged.length = EXPORT_ROW_LIMIT;
+  return {
+    rows: merged,
+    truncated,
+    sources: {
+      audit_events: merged.filter((r) => r.source === 'audit_events').length,
+      audit_logs: merged.filter((r) => r.source === 'audit_logs').length,
+    },
+  };
+}
+
+async function queryAuditEvents(pool: Queryable, req: AuditExportRequest) {
   const conditions: string[] = [];
   const params: any[] = [];
   let idx = 1;
@@ -297,6 +383,14 @@ async function queryAuditData(pool: Pool, req: AuditExportRequest) {
     conditions.push(`timestamp <= $${idx++}`);
     params.push(new Date(req.endDate));
   }
+  if (req.resourceType) {
+    conditions.push(`entity_type = $${idx++}`);
+    params.push(req.resourceType);
+  }
+  if (req.recordIds?.length) {
+    conditions.push(`entity_id::text = ANY($${idx++}::text[])`);
+    params.push(req.recordIds);
+  }
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
@@ -311,12 +405,36 @@ async function queryAuditData(pool: Pool, req: AuditExportRequest) {
     params
   );
 
-  const truncated = rows.length > 50000;
+  const truncated = rows.length > EXPORT_ROW_LIMIT;
   if (truncated) {
-    rows.length = 50000; // trim to exact limit
+    rows.length = EXPORT_ROW_LIMIT; // trim to exact limit
   }
 
-  return { rows, truncated };
+  return { rows: rows.map((r: Record<string, unknown>) => ({ source: 'audit_events', ...r })), truncated };
+}
+
+/** The audit_logs chain verdict for the manifest. A missing verifier is 'unverified', never 'intact'. */
+async function auditLogsChainVerdict(
+  orgId: number | undefined,
+  verify: AuditExportDeps['verifyAuditLogsChain'],
+): Promise<NonNullable<ExportManifest['auditLogsChain']>> {
+  const verifiedAt = new Date().toISOString();
+  if (!verify || orgId == null) {
+    return { status: 'unverified', verifiedAt, reason: 'no audit_logs chain verifier was supplied to this export' };
+  }
+  try {
+    const v = await verify(orgId);
+    return {
+      status: v.ok ? 'intact' : 'broken',
+      rowsChecked: v.rowsChecked,
+      legacyRows: v.legacyRows,
+      sequencedRows: v.sequencedRows,
+      ...(v.brokenAt ? { brokenAt: String(v.brokenAt) } : {}),
+      verifiedAt,
+    };
+  } catch (err) {
+    return { status: 'unavailable', verifiedAt, reason: describeFailure(err) };
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -334,10 +452,11 @@ function sanitizeCsvValue(val: unknown): string {
 
 function formatCSV(rows: any[]): string {
   const headers = [
-    'id', 'timestamp', 'organization_id', 'event_type', 'entity_type', 'entity_id',
+    'source', 'id', 'timestamp', 'organization_id', 'event_type', 'entity_type', 'entity_id',
     'user_id', 'user_name', 'user_role', 'ip_address', 'reason',
     'regulatory_significant', 'gxp_relevant',
     'record_hash', 'previous_hash', 'sequence_number',
+    'sha256_chain', 'chain_seq', 'hmac_seal', 'payload_hash', 'target',
   ];
 
   const csvRows = rows.map(row =>
@@ -363,11 +482,12 @@ function formatJSON(rows: any[]): string {
  * the export has not been modified since generation.
  */
 export async function generateSignedAuditExport(
-  pool: Pool,
-  request: AuditExportRequest
+  pool: Queryable,
+  request: AuditExportRequest,
+  deps: AuditExportDeps = {},
 ): Promise<SignedAuditExport> {
-  // 1. Query data
-  const { rows, truncated } = await queryAuditData(pool, request);
+  // 1. Query data — both chained stores, each row labelled by source.
+  const { rows, truncated, sources } = await queryAuditData(pool, request);
 
   // 2. Format
   const data = request.format === 'csv' ? formatCSV(rows) : formatJSON(rows);
@@ -375,6 +495,7 @@ export async function generateSignedAuditExport(
 
   // 3. Snapshot chain integrity at time of export
   const chainIntegrity = await snapshotChainIntegrity(pool, request.organizationId);
+  const auditLogsChain = await auditLogsChainVerdict(request.organizationId, deps.verifyAuditLogsChain);
 
   // 4. Record the export in the audit trail — BEFORE the manifest is sealed,
   //    so the signature covers the record's id, and refusing outright when
@@ -415,12 +536,16 @@ export async function generateSignedAuditExport(
           exportId,
           dataHash,
           chainIntegrityAtExport: chainIntegrity.status,
+          auditLogsChainAtExport: auditLogsChain.status,
+          sources,
           filters: {
             organizationId: request.organizationId,
             startDate: request.startDate,
             endDate: request.endDate,
             eventType: request.eventType,
             userId: request.userId,
+            resourceType: request.resourceType,
+            recordIds: request.recordIds,
           },
         }),
       ]
@@ -449,6 +574,8 @@ export async function generateSignedAuditExport(
       endDate: request.endDate,
       eventType: request.eventType,
       userId: request.userId,
+      resourceType: request.resourceType,
+      recordIds: request.recordIds,
     },
     format: request.format,
     rowCount: rows.length,
@@ -457,6 +584,8 @@ export async function generateSignedAuditExport(
     hashAlgorithm: 'SHA-256',
     manifestVersion: 2,
     chainIntegrity,
+    auditLogsChain,
+    sources,
     exportRecord: { auditEventId: exportAuditEventId },
     compliance: {
       standard: '21 CFR Part 11',
