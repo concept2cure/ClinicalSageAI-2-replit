@@ -46,6 +46,7 @@ vi.mock('../../../routes/c2c/actions', () => ({
 }));
 
 import { getToolHandler } from '../AnaToolExecutor';
+import { recordGovernedAction } from '../../../routes/c2c/actions';
 
 const DDL = `
 CREATE TABLE qms_documents (
@@ -172,13 +173,25 @@ describe('revise_qms_document / retire_qms_document (SOP register)', () => {
     expect(res.error).toMatch(/reason for change is required/i);
   });
 
+  it('requires a reason to retire — nothing is written and no placeholder reaches the ledger', async () => {
+    const id = await effectiveDoc('SOP-903');
+    vi.mocked(recordGovernedAction).mockClear();
+    const res = await call('retire_qms_document', { document_id: id });
+    expect(res.error).toMatch(/reason for change of at least 8 characters/i);
+    const db = await pglite.query(`SELECT status FROM qms_documents WHERE id = $1`, [id]);
+    expect((db.rows[0] as { status: string }).status).toBe('effective');
+    // The ledger writer is mocked in this suite; the refusal happens before it
+    // would be asked, so it is never called — no placeholder reason, no row.
+    expect(vi.mocked(recordGovernedAction)).not.toHaveBeenCalled();
+  });
+
   it('retires a document (terminal)', async () => {
     const id = await effectiveDoc('SOP-902');
     const res = await call('retire_qms_document', { document_id: id, reason: 'Superseded.' });
     expect(res.ok).toBe(true);
     expect(res.status).toBe('retired');
     // Retiring an already-retired doc is refused.
-    const again = await call('retire_qms_document', { document_id: id });
+    const again = await call('retire_qms_document', { document_id: id, reason: 'Superseded.' });
     expect(again.error).toMatch(/already retired/i);
   });
 });

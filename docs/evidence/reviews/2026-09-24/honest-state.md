@@ -29,7 +29,7 @@ Checks run:
 
 | # | Sev | Where | Claim vs truth | Status |
 |---|---|---|---|---|
-| HS1 | medium | `v2/surfaces/TemplateLibrary.tsx:101,617,679` | `_tlConf(c)` collapses a `null` `extractionConfidence` (the store's honest "no extraction ran" for hand-built or pre-migration templates, per the type comment at :69-71) into `0`, and both call sites render it unconditionally: the list row prints "… - 0%", and the always-present Extraction tab prints "Extraction confidence 0%" in a warning-amber bar because `(null \|\| 0) < 0.6`. A user reads that AnA extracted this template and nearly failed, when no extraction ever ran. The AnA-facing narrative at :477 already gates on `!= null`; the pixels do not. | open → see follow-through |
+| HS1 | medium | `v2/surfaces/TemplateLibrary.tsx:101,617,679` | `_tlConf(c)` collapses a `null` `extractionConfidence` (the store's honest "no extraction ran" for hand-built or pre-migration templates, per the type comment at :69-71) into `0`, and both call sites render it unconditionally: the list row prints "… - 0%", and the always-present Extraction tab prints "Extraction confidence 0%" in a warning-amber bar because `(null \|\| 0) < 0.6`. A user reads that AnA extracted this template and nearly failed, when no extraction ever ran. The AnA-facing narrative at :477 already gates on `!= null`; the pixels do not. | **fixed** `896e96fb`: the list row reads "not extracted" and the Extraction tab shows a sentence, no bar, when `extractionConfidence` is null. The four dead `SC_*_RAW` exports were deleted in the same commit. |
 
 Also noted, not a finding: `v2/fixtures/submission.ts:107-200` still exports `SC_SEQUENCES_RAW`,
 `SC_FINDINGS_RAW`, `SC_SHADOW_RAW`, `SC_CROSSREGION_RAW` sample rows with zero importers anywhere in

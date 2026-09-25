@@ -13650,7 +13650,10 @@ registerToolHandler('retire_qms_document', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'retire_qms_document requires tenant context.' });
   const id = typeof input.document_id === 'number' ? input.document_id : NaN;
   if (!Number.isFinite(id)) return JSON.stringify({ error: 'document_id (number) is required.' });
-  const reason = typeof input.reason === 'string' ? input.reason.trim() : null;
+  const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
+  // §11.10(e): retirement is terminal and its reason is recorded in the
+  // hash-chained ledger — required here, never replaced by a placeholder.
+  if (reason.length < QMS_REASON_MIN) return JSON.stringify({ error: `A reason for change of at least ${QMS_REASON_MIN} characters is required to retire a controlled document — it is recorded in the audit trail.` });
   if (!ctx.userId) return JSON.stringify({ error: 'retire_qms_document requires user context — a retirement cannot be recorded without an identified actor (21 CFR Part 11).' });
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
@@ -13675,7 +13678,7 @@ registerToolHandler('retire_qms_document', async (input, ctx) => {
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
       target: `qms-document:${id}`,
-      reason: qmsReason(input, 'Controlled document retired via AnA'),
+      reason,
       payload: { kind: 'retire', to: 'retired' },
       domain: 'mdx', surface: 'ana',
     });

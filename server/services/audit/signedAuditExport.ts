@@ -413,6 +413,19 @@ async function queryAuditEvents(pool: Queryable, req: AuditExportRequest) {
   return { rows: rows.map((r: Record<string, unknown>) => ({ source: 'audit_events', ...r })), truncated };
 }
 
+/** The filters an export was produced under, as recorded and as sealed: one shape for both. */
+function exportFilters(request: AuditExportRequest): Record<string, unknown> {
+  return {
+    organizationId: request.organizationId,
+    startDate: request.startDate,
+    endDate: request.endDate,
+    eventType: request.eventType,
+    userId: request.userId,
+    resourceType: request.resourceType,
+    recordIds: request.recordIds,
+  };
+}
+
 /** The audit_logs chain verdict for the manifest. A missing verifier is 'unverified', never 'intact'. */
 async function auditLogsChainVerdict(
   orgId: number | undefined,
@@ -538,15 +551,7 @@ export async function generateSignedAuditExport(
           chainIntegrityAtExport: chainIntegrity.status,
           auditLogsChainAtExport: auditLogsChain.status,
           sources,
-          filters: {
-            organizationId: request.organizationId,
-            startDate: request.startDate,
-            endDate: request.endDate,
-            eventType: request.eventType,
-            userId: request.userId,
-            resourceType: request.resourceType,
-            recordIds: request.recordIds,
-          },
+          filters: exportFilters(request),
         }),
       ]
     );
@@ -568,15 +573,7 @@ export async function generateSignedAuditExport(
     exportedBy: request.exportedBy,
     exportedByRole: request.exportedByRole || 'unknown',
     exportSource: 'Concept2Cure / Concept2Cure Platform',
-    queryFilters: {
-      organizationId: request.organizationId,
-      startDate: request.startDate,
-      endDate: request.endDate,
-      eventType: request.eventType,
-      userId: request.userId,
-      resourceType: request.resourceType,
-      recordIds: request.recordIds,
-    },
+    queryFilters: exportFilters(request),
     format: request.format,
     rowCount: rows.length,
     truncated,
