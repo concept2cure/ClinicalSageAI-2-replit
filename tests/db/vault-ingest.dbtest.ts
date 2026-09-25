@@ -109,19 +109,20 @@ async function buildApp(): Promise<express.Express> {
 
 async function cleanupProbeRows(): Promise<void> {
   /* audit_logs is append-only at the database level
-     (db/migrations/20260617_audit_logs_immutability.sql); the retention path's
-     per-transaction opt-in is the one authorized door, and a suite tearing down
-     its own probe rows is that kind of caller. SET LOCAL keeps it to this
-     transaction. */
+     (db/migrations/20260617_audit_logs_immutability.sql); the one DELETE door,
+     audit_logs_archive_delete(), refuses rows inside the 24-month hot window,
+     so a suite tearing down its own probe rows does so as the table owner with
+     the DELETE trigger disabled for this transaction only. */
   const client = await owner.connect();
   try {
     await client.query('BEGIN');
-    await client.query(`SET LOCAL app.audit_archive_bypass = 'on'`);
+    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
     await client.query(
       `DELETE FROM audit_logs WHERE action = 'vault.document.ingest'
          AND record_id IN (SELECT id::text FROM vault.documents WHERE document_code LIKE $1)`,
       [`${PROBE_CODE}%`],
     );
+    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
     await client.query('COMMIT');
   } catch {
     await client.query('ROLLBACK').catch(() => {});

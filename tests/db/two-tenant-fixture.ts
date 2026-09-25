@@ -301,13 +301,15 @@ export async function teardownTwoTenantFixture(): Promise<void> {
         // audit_logs is append-only on the deploy path: trg_audit_logs_no_delete
         // (20260617_audit_logs_immutability.sql) aborts a bare DELETE with
         // P0A02, which would kill every remaining cleanup statement and leak
-        // the fixtures. Use the trigger's authorized archive door, SET LOCAL so
-        // the bypass dies with this transaction — the same pattern the sibling
-        // dbtest suites adopted after hitting exactly this failure.
+        // the fixtures. As the table owner, disable the DELETE trigger for this
+        // transaction only (the archive door, audit_logs_archive_delete(), refuses
+        // rows inside the 24-month window) — the same pattern the sibling dbtest
+        // suites use.
         await cleanup.query('BEGIN');
         try {
-          await cleanup.query("SET LOCAL app.audit_archive_bypass = 'on'");
+          await cleanup.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
           await cleanup.query('DELETE FROM audit_logs WHERE record_id LIKE $1', [`${TAG}%`]);
+          await cleanup.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
           await cleanup.query('COMMIT');
         } catch (err) {
           // ROLLBACK so the connection leaves the aborted transaction and the

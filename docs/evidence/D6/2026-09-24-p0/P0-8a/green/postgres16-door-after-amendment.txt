@@ -1,0 +1,251 @@
+# PostgreSQL 16.13 scratch cluster (port 54329), database c2c_audit_repro from the Phase A reproduction, HEAD af833c44 working tree, 2026-09-25T02:19:55Z
+# The amended db/migrations/20260617_audit_logs_immutability.sql (sha256 7785f054592f5dcb…) re-applied as the owner (postgres, as Phase A applied it), then the Phase A statement replayed as the runtime role app_service (LOGIN NOSUPERUSER NOBYPASSRLS, recipe grants). Red counterpart: red/postgres16-guc-delete-before-amendment.txt. The migration's own text is not echoed; its NOTICEs are.
+
+## A.0 (as postgres, the owner and applier here as in Phase A) BEFORE: the installed DELETE trigger function still reads the GUC
+SELECT proname, position('app.audit_archive_bypass' in prosrc) > 0 AS reads_guc FROM pg_proc WHERE proname = 'enforce_audit_logs_no_delete';
+           proname            | reads_guc 
+------------------------------+-----------
+ enforce_audit_logs_no_delete | t
+(1 row)
+
+## A.1 the recipe grants for the runtime role app_service in this database (LOGIN NOSUPERUSER NOBYPASSRLS; SELECT, INSERT, UPDATE, DELETE on public tables)
+GRANT USAGE ON SCHEMA public TO app_service;
+GRANT
+GRANT SELECT, INSERT, UPDATE, DELETE ON audit_logs TO app_service;
+GRANT
+## A.2 apply the AMENDED migration (CREATE OR REPLACE, as every deploy replays it)
+psql:/tmp/p08a-migration.sql:477: NOTICE:  trigger "trg_audit_log_archives_no_update" for relation "public.audit_log_archives" does not exist, skipping
+psql:/tmp/p08a-migration.sql:477: NOTICE:  trigger "trg_audit_log_archives_no_delete" for relation "public.audit_log_archives" does not exist, skipping
+psql:/tmp/p08a-migration.sql:477: NOTICE:  trigger "trg_audit_log_archives_no_truncate" for relation "public.audit_log_archives" does not exist, skipping
+DO
+psql:/tmp/p08a-migration.sql:509: NOTICE:  [audit_logs] archive door EXECUTE granted to app_service
+DO
+psql:/tmp/p08a-migration.sql:565: NOTICE:  public.audit_logs immutability enforced: 3 triggers installed (UPDATE, DELETE-except-archive-door, TRUNCATE)
+psql:/tmp/p08a-migration.sql:565: NOTICE:  public.audit_logs archive door verified: SECURITY DEFINER, owner audit_archiver, not executable by PUBLIC
+DO
+## A.3 AFTER: trigger reads no setting; the door is SECURITY DEFINER, owned by NOLOGIN audit_archiver; EXECUTE for app_service only; audit_archiver holds DELETE but not UPDATE/INSERT on audit_logs
+SELECT proname, prosecdef, pg_get_userbyid(proowner) AS owner, position('app.audit_archive_bypass' in prosrc) > 0 AS reads_guc FROM pg_proc WHERE proname IN ('enforce_audit_logs_no_delete','audit_logs_archive_delete') ORDER BY 1;
+           proname            | prosecdef |     owner      | reads_guc 
+------------------------------+-----------+----------------+-----------
+ audit_logs_archive_delete    | t         | audit_archiver | f
+ enforce_audit_logs_no_delete | f         | postgres       | t
+(2 rows)
+
+SELECT rolcanlogin, rolsuper, rolbypassrls, rolinherit FROM pg_roles WHERE rolname = 'audit_archiver';
+ rolcanlogin | rolsuper | rolbypassrls | rolinherit 
+-------------+----------+--------------+------------
+ f           | f        | f            | f
+(1 row)
+
+SELECT has_function_privilege('app_service', 'public.audit_logs_archive_delete(uuid[],text,text,timestamptz)', 'EXECUTE') AS app_service_can_execute,
+       has_function_privilege('app_service_repro', 'public.audit_logs_archive_delete(uuid[],text,text,timestamptz)', 'EXECUTE') AS ungranted_role_can_execute;
+ app_service_can_execute | ungranted_role_can_execute 
+-------------------------+----------------------------
+ t                       | f
+(1 row)
+
+SELECT has_table_privilege('audit_archiver','audit_logs','SELECT') AS sel, has_table_privilege('audit_archiver','audit_logs','DELETE') AS del, has_table_privilege('audit_archiver','audit_logs','UPDATE') AS upd, has_table_privilege('audit_archiver','audit_logs','INSERT') AS ins;
+ sel | del | upd | ins 
+-----+-----+-----+-----
+ t   | t   | f   | f
+(1 row)
+
+## A.4 seed (as owner): three rows 3 years old (batch 1), two rows 3 years old (batch 2), one row 1 day old
+INSERT INTO audit_logs (tenant_id, action, table_name, record_id, created_at) VALUES
+  (1,'x','x','p0-8a-A-old-1', now() - interval '3 years'), (2,'x','x','p0-8a-A-old-2', now() - interval '3 years'), (1,'x','x','p0-8a-A-old-3', now() - interval '3 years'),
+  (1,'x','x','p0-8a-A-old2-1', now() - interval '3 years'), (1,'x','x','p0-8a-A-old2-2', now() - interval '3 years'),
+  (1,'x','x','p0-8a-A-fresh', now() - interval '1 day');
+INSERT 0 6
+## A.5 (as app_service, logged in)
+SELECT current_user, session_user;
+ current_user | session_user 
+--------------+--------------
+ app_service  | app_service
+(1 row)
+
+## A.6 control: a plain DELETE is refused
+DELETE FROM audit_logs WHERE record_id = 'p0-8a-A-fresh';
+psql:/tmp/p08a-A-runtime.sql:4: ERROR:  IMMUTABILITY_VIOLATION: audit_logs are append-only
+DETAIL:  DELETE is not permitted on audit_logs outside the authorized retention/archival path. Attempted to delete row id=a5b44b28-d7b3-4965-b1ad-a936fb93bfa6 as app_service. 21 CFR Part 11 §11.10(e) requires immutable audit trails.
+HINT:  Only public.audit_logs_archive_delete(ids, locator, sha256, cutoff) may delete, and only rows older than the 24-month hot window that have been written to cold storage. The session setting app.audit_archive_bypass is not honoured. Insert a superseding event rather than deleting history.
+CONTEXT:  PL/pgSQL function enforce_audit_logs_no_delete() line 9 at RAISE
+## A.7 THE FORMERLY SUCCEEDING STATEMENT (Phase A §9; red/postgres16-guc-delete-before-amendment.txt §4): the GUC opens nothing
+BEGIN;
+BEGIN
+SET LOCAL app.audit_archive_bypass = 'on';
+SET
+DELETE FROM audit_logs WHERE record_id = 'p0-8a-A-fresh';
+psql:/tmp/p08a-A-runtime.sql:6: ERROR:  IMMUTABILITY_VIOLATION: audit_logs are append-only
+DETAIL:  DELETE is not permitted on audit_logs outside the authorized retention/archival path. Attempted to delete row id=a5b44b28-d7b3-4965-b1ad-a936fb93bfa6 as app_service. 21 CFR Part 11 §11.10(e) requires immutable audit trails.
+HINT:  Only public.audit_logs_archive_delete(ids, locator, sha256, cutoff) may delete, and only rows older than the 24-month hot window that have been written to cold storage. The session setting app.audit_archive_bypass is not honoured. Insert a superseding event rather than deleting history.
+CONTEXT:  PL/pgSQL function enforce_audit_logs_no_delete() line 9 at RAISE
+COMMIT;
+ROLLBACK
+SELECT count(*) AS rows_left FROM audit_logs WHERE record_id = 'p0-8a-A-fresh';
+ rows_left 
+-----------
+         1
+(1 row)
+
+BEGIN;
+BEGIN
+SET LOCAL app.audit_archive_bypass = 'on';
+SET
+DELETE FROM audit_logs WHERE record_id LIKE 'p0-8a-A-old-%';
+psql:/tmp/p08a-A-runtime.sql:8: ERROR:  IMMUTABILITY_VIOLATION: audit_logs are append-only
+DETAIL:  DELETE is not permitted on audit_logs outside the authorized retention/archival path. Attempted to delete row id=80143f13-6ac9-4664-86ae-9a247b4bbdfd as app_service. 21 CFR Part 11 §11.10(e) requires immutable audit trails.
+HINT:  Only public.audit_logs_archive_delete(ids, locator, sha256, cutoff) may delete, and only rows older than the 24-month hot window that have been written to cold storage. The session setting app.audit_archive_bypass is not honoured. Insert a superseding event rather than deleting history.
+CONTEXT:  PL/pgSQL function enforce_audit_logs_no_delete() line 9 at RAISE
+COMMIT;
+ROLLBACK
+SELECT count(*) AS rows_left FROM audit_logs WHERE record_id LIKE 'p0-8a-A-old-%';
+ rows_left 
+-----------
+         3
+(1 row)
+
+## A.8 the door: an archived batch of old rows, with the locator and checksum the sink reported and the cutoff
+SELECT public.audit_logs_archive_delete((SELECT array_agg(id) FROM audit_logs WHERE record_id LIKE 'p0-8a-A-old-%'), 's3://audit-archive/2026/09/25/A1.json', repeat('a', 64), now() - interval '25 months') AS deleted;
+ deleted 
+---------
+       3
+(1 row)
+
+SELECT count(*) AS rows_left FROM audit_logs WHERE record_id LIKE 'p0-8a-A-old-%';
+ rows_left 
+-----------
+         0
+(1 row)
+
+SELECT row_count, min_created_at < cutoff AND max_created_at < cutoff AS span_before_cutoff, cutoff <= now() - interval '24 months' AS cutoff_at_or_before_floor, locator, sha256, performed_by FROM audit_log_archives ORDER BY archived_at;
+ row_count | span_before_cutoff | cutoff_at_or_before_floor |                locator                |                              sha256                              | performed_by 
+-----------+--------------------+---------------------------+---------------------------------------+------------------------------------------------------------------+--------------
+         3 | t                  | t                         | s3://audit-archive/2026/09/25/A1.json | aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | app_service
+(1 row)
+
+## A.9 refusals: a row newer than the cutoff; a cutoff inside the 24-month window; an empty locator; a malformed checksum; a row that is not there; an empty batch — nothing deleted, no record written
+SELECT public.audit_logs_archive_delete((SELECT array_agg(id) FROM audit_logs WHERE record_id IN ('p0-8a-A-old2-1','p0-8a-A-fresh')), 's3://audit-archive/2026/09/25/A2.json', repeat('a', 64), now() - interval '25 months');
+psql:/tmp/p08a-A-runtime.sql:15: ERROR:  AUDIT_ARCHIVE_REFUSED: the batch contains a row newer than the cutoff (newest 2026-09-24 02:19:55.51201+00 >= cutoff 2024-08-25 02:19:55.559509+00)
+CONTEXT:  PL/pgSQL function audit_logs_archive_delete(uuid[],text,text,timestamp with time zone) line 60 at RAISE
+SELECT public.audit_logs_archive_delete((SELECT array_agg(id) FROM audit_logs WHERE record_id LIKE 'p0-8a-A-old2-%'), 's3://audit-archive/2026/09/25/A2.json', repeat('a', 64), now() - interval '1 month');
+psql:/tmp/p08a-A-runtime.sql:16: ERROR:  AUDIT_ARCHIVE_REFUSED: cutoff 2026-08-25 02:19:55.560022+00 is inside the 24-month hot window (floor 2024-09-25 02:19:55.560022+00)
+HINT:  docs/operations/audit-log-retention-policy.md: rows 24 months old or newer stay in the hot table.
+CONTEXT:  PL/pgSQL function audit_logs_archive_delete(uuid[],text,text,timestamp with time zone) line 37 at RAISE
+SELECT public.audit_logs_archive_delete((SELECT array_agg(id) FROM audit_logs WHERE record_id LIKE 'p0-8a-A-old2-%'), '   ', repeat('a', 64), now() - interval '25 months');
+psql:/tmp/p08a-A-runtime.sql:17: ERROR:  AUDIT_ARCHIVE_REFUSED: the archive locator is empty
+HINT:  The sink must report where the batch was written before any row leaves audit_logs.
+CONTEXT:  PL/pgSQL function audit_logs_archive_delete(uuid[],text,text,timestamp with time zone) line 27 at RAISE
+SELECT public.audit_logs_archive_delete((SELECT array_agg(id) FROM audit_logs WHERE record_id LIKE 'p0-8a-A-old2-%'), 's3://audit-archive/2026/09/25/A2.json', 'deadbeef', now() - interval '25 months');
+psql:/tmp/p08a-A-runtime.sql:18: ERROR:  AUDIT_ARCHIVE_REFUSED: the archive sha256 is missing or is not a 64-hex-character digest
+DETAIL:  got 'deadbeef'
+CONTEXT:  PL/pgSQL function audit_logs_archive_delete(uuid[],text,text,timestamp with time zone) line 32 at RAISE
+SELECT public.audit_logs_archive_delete(ARRAY['00000000-0000-4000-8000-000000000000']::uuid[] || (SELECT array_agg(id) FROM audit_logs WHERE record_id LIKE 'p0-8a-A-old2-%'), 's3://audit-archive/2026/09/25/A2.json', repeat('a', 64), now() - interval '25 months');
+psql:/tmp/p08a-A-runtime.sql:19: ERROR:  AUDIT_ARCHIVE_REFUSED: 1 of 3 named rows are not in audit_logs
+HINT:  Re-select the batch from the hot table; never delete a batch whose membership has changed.
+CONTEXT:  PL/pgSQL function audit_logs_archive_delete(uuid[],text,text,timestamp with time zone) line 55 at RAISE
+SELECT public.audit_logs_archive_delete(ARRAY[]::uuid[], 's3://audit-archive/2026/09/25/A2.json', repeat('a', 64), now() - interval '25 months');
+psql:/tmp/p08a-A-runtime.sql:20: ERROR:  AUDIT_ARCHIVE_REFUSED: the batch names no rows
+CONTEXT:  PL/pgSQL function audit_logs_archive_delete(uuid[],text,text,timestamp with time zone) line 23 at RAISE
+SELECT count(*) AS old2_rows_left FROM audit_logs WHERE record_id LIKE 'p0-8a-A-old2-%';
+ old2_rows_left 
+----------------
+              2
+(1 row)
+
+SELECT count(*) AS archive_records FROM audit_log_archives;
+ archive_records 
+-----------------
+               1
+(1 row)
+
+## A.10 UPDATE on audit_logs stays refused; the archive ledger cannot be changed by the runtime role (no DML on it in this scratch database; on a provisioned estate the recipe grants DML and the trigger below refuses)
+UPDATE audit_logs SET action = 'forged' WHERE record_id = 'p0-8a-A-fresh';
+psql:/tmp/p08a-A-runtime.sql:24: ERROR:  IMMUTABILITY_VIOLATION: audit_logs are append-only
+DETAIL:  UPDATE is not permitted on audit_logs. Attempted to update row id=a5b44b28-d7b3-4965-b1ad-a936fb93bfa6. 21 CFR Part 11 §11.10(e) requires immutable audit trails.
+HINT:  Insert a new corrective event (e.g., AMENDMENT, REVOCATION) rather than modifying history.
+CONTEXT:  PL/pgSQL function enforce_audit_logs_no_update() line 3 at RAISE
+UPDATE audit_log_archives SET sha256 = repeat('b', 64);
+psql:/tmp/p08a-A-runtime.sql:25: ERROR:  permission denied for table audit_log_archives
+DELETE FROM audit_log_archives;
+psql:/tmp/p08a-A-runtime.sql:26: ERROR:  permission denied for table audit_log_archives
+## A.11 (as postgres, SET ROLE to app_service_repro — a login role with SELECT, INSERT, UPDATE, DELETE on audit_logs but no EXECUTE grant) the door is not public
+SET ROLE app_service_repro;
+SET
+SELECT current_user;
+   current_user    
+-------------------
+ app_service_repro
+(1 row)
+
+SELECT public.audit_logs_archive_delete((SELECT array_agg(id) FROM audit_logs WHERE record_id LIKE 'p0-8a-A-old2-%'), 's3://audit-archive/2026/09/25/A2.json', repeat('a', 64), now() - interval '25 months');
+psql:/tmp/p08a-A-ungranted.sql:4: ERROR:  permission denied for function audit_logs_archive_delete
+BEGIN;
+BEGIN
+SET LOCAL app.audit_archive_bypass = 'on';
+SET
+DELETE FROM audit_logs WHERE record_id LIKE 'p0-8a-A-old2-%';
+psql:/tmp/p08a-A-ungranted.sql:5: ERROR:  IMMUTABILITY_VIOLATION: audit_logs are append-only
+DETAIL:  DELETE is not permitted on audit_logs outside the authorized retention/archival path. Attempted to delete row id=64dd596e-5fe1-4df3-a4aa-7671e149d5b4 as app_service_repro. 21 CFR Part 11 §11.10(e) requires immutable audit trails.
+HINT:  Only public.audit_logs_archive_delete(ids, locator, sha256, cutoff) may delete, and only rows older than the 24-month hot window that have been written to cold storage. The session setting app.audit_archive_bypass is not honoured. Insert a superseding event rather than deleting history.
+CONTEXT:  PL/pgSQL function enforce_audit_logs_no_delete() line 9 at RAISE
+COMMIT;
+ROLLBACK
+RESET ROLE;
+RESET
+## A.11b (as postgres, the owner) the archive ledger is append-only by trigger, owner included
+UPDATE audit_log_archives SET sha256 = repeat('b', 64);
+psql:/tmp/p08a-A-ungranted.sql:8: ERROR:  IMMUTABILITY_VIOLATION: audit_log_archives is append-only
+DETAIL:  UPDATE is not permitted on audit_log_archives. It is the record of every batch removed from audit_logs (21 CFR Part 11 §11.10(e)).
+HINT:  Write a new archive record; never modify or remove one.
+CONTEXT:  PL/pgSQL function enforce_audit_log_archives_append_only() line 3 at RAISE
+DELETE FROM audit_log_archives;
+psql:/tmp/p08a-A-ungranted.sql:9: ERROR:  IMMUTABILITY_VIOLATION: audit_log_archives is append-only
+DETAIL:  DELETE is not permitted on audit_log_archives. It is the record of every batch removed from audit_logs (21 CFR Part 11 §11.10(e)).
+HINT:  Write a new archive record; never modify or remove one.
+CONTEXT:  PL/pgSQL function enforce_audit_log_archives_append_only() line 3 at RAISE
+TRUNCATE audit_log_archives;
+psql:/tmp/p08a-A-ungranted.sql:10: ERROR:  IMMUTABILITY_VIOLATION: audit_log_archives is append-only
+DETAIL:  TRUNCATE is not permitted on audit_log_archives. It is the record of every batch removed from audit_logs (21 CFR Part 11 §11.10(e)).
+HINT:  Write a new archive record; never modify or remove one.
+CONTEXT:  PL/pgSQL function enforce_audit_log_archives_append_only() line 3 at RAISE
+## A.12 (as postgres) the migration replays (Rule 1): no change in shape
+psql:/tmp/p08a-migration.sql:477: NOTICE:  relation "audit_log_archives" already exists, skipping
+psql:/tmp/p08a-migration.sql:477: NOTICE:  relation "audit_log_archives_archived_at_idx" already exists, skipping
+DO
+psql:/tmp/p08a-migration.sql:509: NOTICE:  [audit_logs] archive door EXECUTE granted to app_service
+DO
+psql:/tmp/p08a-migration.sql:565: NOTICE:  public.audit_logs immutability enforced: 3 triggers installed (UPDATE, DELETE-except-archive-door, TRUNCATE)
+psql:/tmp/p08a-migration.sql:565: NOTICE:  public.audit_logs archive door verified: SECURITY DEFINER, owner audit_archiver, not executable by PUBLIC
+DO
+SELECT count(*) AS audit_logs_triggers FROM pg_trigger t JOIN pg_class c ON t.tgrelid = c.oid WHERE c.relname = 'audit_logs' AND t.tgname LIKE 'trg_audit_logs_no_%' AND NOT t.tgisinternal;
+ audit_logs_triggers 
+---------------------
+                   3
+(1 row)
+
+SELECT proname, prosecdef, pg_get_userbyid(proowner) AS owner FROM pg_proc WHERE proname = 'audit_logs_archive_delete';
+          proname          | prosecdef |     owner      
+---------------------------+-----------+----------------
+ audit_logs_archive_delete | t         | audit_archiver
+(1 row)
+
+## A.13 (as app_service) after the replay the door still works on the second batch
+SELECT public.audit_logs_archive_delete((SELECT array_agg(id) FROM audit_logs WHERE record_id LIKE 'p0-8a-A-old2-%'), 's3://audit-archive/2026/09/25/A2.json', repeat('c', 64), now() - interval '25 months') AS deleted;
+ deleted 
+---------
+       2
+(1 row)
+
+SELECT count(*) AS old2_rows_left FROM audit_logs WHERE record_id LIKE 'p0-8a-A-old2-%';
+ old2_rows_left 
+----------------
+              0
+(1 row)
+
+SELECT count(*) AS archive_records FROM audit_log_archives;
+ archive_records 
+-----------------
+               2
+(1 row)
+
+# end 2026-09-25T02:19:55Z
