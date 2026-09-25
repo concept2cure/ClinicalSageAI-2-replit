@@ -23,6 +23,9 @@ import {
   ACCOUNT_INACTIVE_MESSAGE,
   isAccountActive,
   isActiveAccountStatus,
+  issuedAtOfClaims,
+  passwordChangedAtSecondsOf,
+  sessionPredatesPasswordChange,
 } from '../services/account-standing';
 import {
   PASSWORD_RESET_TTL_MS,
@@ -1141,6 +1144,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
       userId: string;
       email: string;
       type: string;
+      iat?: number;
     };
 
     if (decoded.type !== 'refresh') {
@@ -1174,6 +1178,22 @@ router.post('/refresh', async (req: Request, res: Response) => {
       return res.status(403).json({
         success: false,
         error: { code: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE },
+      });
+    }
+    // Security audit 2026-09-24, IAM-04: a refresh token issued before the
+    // account's last password change mints nothing. The gate refuses the access
+    // tokens it minted for the same reason (middleware/auth.ts, verifyLiveToken);
+    // without this the client's next 401 would refresh and carry on, and the
+    // change would have ended no session at all.
+    if (
+      sessionPredatesPasswordChange(
+        issuedAtOfClaims(decoded),
+        passwordChangedAtSecondsOf(refreshUserData.passwordChangedAt),
+      )
+    ) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'This session has ended. Sign in again.' },
       });
     }
     const refreshMemberships = await db
