@@ -1591,3 +1591,38 @@ describe('Layer 2: a continuous effect with no variance is standardised (BS4)', 
     expect(variance).toMatchObject({ value: 1, source: 'default' });
   });
 });
+
+// ═══════════════════════════════════════════════════════════════
+// Scenarios size through the design's own path (LX-16). generateScenarios
+// carried a third copy of the sizing formulas — always superiority, r = 1 — so
+// the "Base case" of a non-inferiority design was a different trial (or a null
+// N when δ = 0) from the design it was presented beside.
+// ═══════════════════════════════════════════════════════════════
+
+describe('Layer 2: the base-case scenario is the design itself', () => {
+  const designs: Array<[string, StatisticalInput]> = [
+    ['continuous superiority', pharmaInput],
+    ['continuous non-inferiority', { ...pharmaInput, studyType: 'non_inferiority', effectSize: 0, nonInferiorityMargin: -0.2, variance: 1, comparatorType: 'active' }],
+    ['continuous equivalence', { ...pharmaInput, studyType: 'equivalence', effectSize: 0, equivalenceMargin: 0.25, variance: 1 }],
+    ['binary superiority, 2:1', { ...pharmaInput, endpointType: 'binary', controlRate: 0.3, treatmentRate: 0.45, effectSize: 0.15, allocationRatio: 2 }],
+    ['time to event', { ...pharmaInput, endpointType: 'time_to_event', effectSize: 0.3, eventRate: 0.6 }],
+  ];
+
+  it.each(designs)('%s: Base case N and power equal the design', (_label, input) => {
+    const result = engine.compute(input);
+    const base = result.scenarios.find((s) => s.label === 'Base case');
+    expect(base).toBeDefined();
+    expect(base!.sampleSize.perGroup).toBe(result.sampleSize.perGroup);
+    expect(base!.sampleSize.total).toBe(result.adjustedTotal ?? result.sampleSize.total);
+    expect(base!.power).toBe(result.power);
+  });
+
+  it('no scenario carries a missing or non-finite N', () => {
+    for (const [, input] of designs) {
+      for (const s of engine.compute(input).scenarios) {
+        expect(Number.isFinite(s.sampleSize.perGroup)).toBe(true);
+        expect(Number.isFinite(s.sampleSize.total)).toBe(true);
+      }
+    }
+  });
+});
