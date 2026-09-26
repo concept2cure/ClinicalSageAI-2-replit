@@ -210,3 +210,59 @@ describe('GovernedActionSignoff', () => {
     expect(confirm.disabled).toBe(true);
   });
 });
+
+/*
+ * Declining. Cancel on a live prompt closed the dialog and told the server
+ * nothing, so AnA held the turn until the ten-minute ceiling — and since every
+ * write became a proposal (P0-12), that would be most turns. A live prompt's
+ * Cancel now tells the waiting run; a prompt from a finished turn has nothing
+ * waiting, so it sends nothing.
+ */
+describe('GovernedActionSignoff — declining', () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+  beforeEach(() => {
+    fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: { declined: true } }) });
+    (global as any).fetch = fetchMock;
+  });
+
+  it('on a live prompt, Cancel tells the waiting run', async () => {
+    const onCancel = vi.fn();
+    render(
+      <GovernedActionSignoff
+        signoff={{ ...confirmOnly, runId: 'run-1', toolUseId: 'tu-1' }}
+        onResolved={() => {}}
+        onCancel={onCancel}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(onCancel).toHaveBeenCalled());
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      runId: 'run-1',
+      toolUseId: 'tu-1',
+      decision: 'decline',
+    });
+  });
+
+  it('Escape on a live prompt declines too', async () => {
+    const onCancel = vi.fn();
+    render(
+      <GovernedActionSignoff
+        signoff={{ ...reasonOnly, runId: 'run-1', toolUseId: 'tu-2' }}
+        onResolved={() => {}}
+        onCancel={onCancel}
+      />,
+    );
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    await waitFor(() => expect(onCancel).toHaveBeenCalled());
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({ toolUseId: 'tu-2', decision: 'decline' });
+  });
+
+  it('on a finished turn there is nothing waiting, and nothing is sent', async () => {
+    const onCancel = vi.fn();
+    render(<GovernedActionSignoff signoff={confirmOnly} onResolved={() => {}} onCancel={onCancel} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(onCancel).toHaveBeenCalled());
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});

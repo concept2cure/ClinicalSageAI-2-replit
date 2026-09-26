@@ -20,6 +20,8 @@
  * is its fail-soft wrapper for non-enforcement reads.
  */
 
+import { COMMAND_AUTHORIZATION } from './command-rbac';
+
 /** AnA command names whose effect alters the regulatory record and therefore
  * require, at minimum, a Part 11 reason-for-change. Scoped deliberately to
  * record-altering mutations — drafting/search/list commands are not gated. */
@@ -138,14 +140,24 @@ export function requiresPart11Signoff(command: string): boolean {
  *   · 'confirm'    — an explicit human yes, no reason, no credentials: the
  *                    ordinary writes (a task, a draft, an export), which used to
  *                    run from model output with nobody in the loop.
- * The Part 11 sets decide the first two; everything else that writes is the
- * third. A read has no tier and is never proposed.
+ * The Part 11 sets decide the first two, and the approve class is the reason
+ * tier as well; everything else that writes is the third. A read has no tier
+ * and is never proposed.
+ *
+ * The approve class — a manager-tier write carrying `requiresConfirmation`
+ * (section.approve, post_market.document.approve, post_market.document.supersede)
+ * — sits in neither Part 11 set, and its only other gate is `params.confirm`, a
+ * string the model writes. Left to the default it fell to 'confirm' and an
+ * approval ran on one click with nothing recorded about why; the tool gate had
+ * always shown it as the reason tier. An approval is not ordinary work.
  */
 export type GovernedTier = 'confirm' | 'reason' | 'esignature';
 
 export function governedTierOf(command: string): GovernedTier {
   if (PART11_ESIGN_COMMANDS.has(command)) return 'esignature';
   if (PART11_GOVERNED_COMMANDS.has(command)) return 'reason';
+  const authz = COMMAND_AUTHORIZATION[command];
+  if (authz?.requiresConfirmation === true && authz.minRole === 'manager') return 'reason';
   return 'confirm';
 }
 
