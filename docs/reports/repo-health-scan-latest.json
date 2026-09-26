@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-26T05:42:13.363Z",
+  "generatedAt": "2026-09-26T05:44:51.156Z",
   "git": {
-    "sha": "dd6632dd08b17f94ac937cf6fdcf44688161fb7c",
+    "sha": "8116fdb3b6a67cffc9e5d796262c5e20f719be43",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2006,7 +2006,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 210444
+        "bytes": 211132
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2180,7 +2180,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 5374
+        "lines": 5382
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
