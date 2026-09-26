@@ -639,13 +639,13 @@ export class AdvancedRAGPipeline {
     threshold: number,
     artifactScope: NonNullable<RetrievalOptions['artifactScope']>
   ): Promise<RetrievedDocument[]> {
-    const hits = await this.embeddingService.searchHybrid(
-      query,
+    // No floor here: the pipeline applies its own threshold to the combined score below.
+    const hits = await this.embeddingService.searchHybrid(query, {
       limit,
-      0.7,
-      artifactScope.organizationUuid,
-      String(artifactScope.projectId)
-    );
+      semanticWeight: 0.7,
+      organizationUuid: artifactScope.organizationUuid,
+      projectId: String(artifactScope.projectId),
+    });
     return hits
       .filter(h => Number.isFinite(h.score) && h.score >= threshold)
       .map(h => ({
