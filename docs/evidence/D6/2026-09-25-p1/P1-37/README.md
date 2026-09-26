@@ -88,3 +88,11 @@ npx eslint server/utils/logger.ts server/utils/logger.js server/utils/__tests__/
   array was not walked. Nothing in the two suites depends on it; a caller that logs a date should pass an ISO string.
 - **The register and plan rows** (`docs/security/*`), the D6 index (`../README.md`) and the P1-27 README cross-reference
   are proposed in this lane's structured result, not edited here.
+
+## Follow-up, 2026-09-26: the console bridge's string arguments
+
+The adversarial verifier of this item found that `server/utils/consoleBridge.ts` passed a
+string `console.*` argument through unmasked, pinned by its own suite, so a legacy
+`console.error(\`login failed for ${email}\`)` still wrote the address. `redactArgs` now runs
+`maskPersonalData` over string arguments (numbers, booleans and Error instances unchanged).
+Red: `red/console-bridge-string-before-fix.txt`. Green: `green/console-bridge-string-after-fix.txt`.

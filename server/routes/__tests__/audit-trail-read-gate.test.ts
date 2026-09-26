@@ -31,6 +31,10 @@ import request from 'supertest';
 // connect() is what tells "reached the export" from "refused before it".
 vi.mock('../../services/tenant/governed-tenant-context.js', () => ({ setTenantContextTx: vi.fn(async () => undefined) }));
 vi.mock('../../services/audit/tenant-chain-verdict.js', () => ({ verifyTenantChainOnAdminScope: vi.fn(async () => ({ ok: true })) }));
+const monitor = vi.hoisted(() => ({ runOnDemandCheck: vi.fn(async () => ({ lastRun: 'now', broken: 0 })), getChainMonitorStatus: vi.fn(() => ({ running: true })) }));
+vi.mock('../../services/audit/chainIntegrityMonitor.js', () => monitor);
+// The chain monitor is estate-wide: only a platform administrator may read or run it. The harness marks one with user.platformAdmin.
+vi.mock('../../middleware/requirePlatformAdmin.js', () => ({ isPlatformAdmin: (req: any) => req.user?.platformAdmin === true }));
 
 import { createAuditTrailRoutes } from '../audit-trail-routes';
 
@@ -189,5 +193,34 @@ describe('recording a signature marker (DP-38, P1-36)', () => {
     expect(r.status).toBe(403);
     expect(r.body.error).toBe('FORGERY_REJECTED');
     expect(inserted).toHaveLength(0);
+  });
+});
+
+describe('the chain-integrity monitor is a platform administrator\'s surface (P1-36 follow-up, 2026-09-26)', () => {
+  beforeEach(() => monitor.runOnDemandCheck.mockClear());
+
+  it.each(['owner', 'admin', 'manager', 'user', 'viewer'])('%s of an organisation cannot start the estate-wide check (403) or read its status', async role => {
+    const run = await request(app(role)).post('/api/audit/chain-monitor/check');
+    expect(run.status).toBe(403);
+    expect(run.body).toMatchObject({ error: 'PLATFORM_ADMIN_REQUIRED' });
+    expect(monitor.runOnDemandCheck).not.toHaveBeenCalled();
+    const status = await request(app(role)).get('/api/audit/chain-monitor/status');
+    expect(status.status).toBe(403);
+  });
+
+  it('a platform administrator runs the check and reads the status', async () => {
+    const run = await request(app('owner', { platformAdmin: true })).post('/api/audit/chain-monitor/check');
+    expect(run.status).toBe(200);
+    expect(monitor.runOnDemandCheck).toHaveBeenCalledTimes(1);
+    const status = await request(app('owner', { platformAdmin: true })).get('/api/audit/chain-monitor/status');
+    expect(status.status).toBe(200);
+    expect(status.body).toMatchObject({ success: true, data: { running: true } });
+  });
+
+  it('a failed check answers 500 without the caught error\'s text', async () => {
+    monitor.runOnDemandCheck.mockRejectedValueOnce(new Error('relation "audit_logs" does not exist'));
+    const run = await request(app('owner', { platformAdmin: true })).post('/api/audit/chain-monitor/check');
+    expect(run.status).toBe(500);
+    expect(JSON.stringify(run.body)).not.toMatch(/relation|audit_logs/);
   });
 });

@@ -76,3 +76,14 @@ refusal cases fail with `expected 201 to be 403`.
   that verifier.
 - No first-party client posts to `/api/audit/signatures` (`grep -rn "audit/signatures" client server` finds only the
   route, its tests and the route inventory in `server/__tests__/routes/smoke.test.ts`); no user-facing path changed.
+
+## Follow-up, 2026-09-26: the chain-integrity monitor routes
+
+The adversarial verifier of this item found that `POST /api/audit/chain-monitor/check` and
+`GET /api/audit/chain-monitor/status` had no tenant guard and no role gate at all, so any
+authenticated caller could start the estate-wide chain scan on demand, and the check's 500
+carried the caught error's text. Both routes now refuse anyone who is not a platform
+administrator (`isPlatformAdmin`, 403 `PLATFORM_ADMIN_REQUIRED`; the monitor is estate-wide,
+not one organisation's), and the 500 says a static sentence with the detail logged.
+Red: `red/chain-monitor-before-fix.txt` (five roles got 200 and the check ran; the 500 named the
+relation). Green: `green/chain-monitor-after-fix.txt`.

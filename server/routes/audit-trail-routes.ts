@@ -15,6 +15,7 @@ import type { Pool } from 'pg';
 import type { Request, Response } from 'express';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
 import { requireAuditReader, requireAuditRecorder, clientEventRefusal } from '../services/audit/audit-api-authority.js';
+import { isPlatformAdmin } from '../middleware/requirePlatformAdmin.js';
 import { clientIpOf } from '../utils/client-ip';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context.js';
 import { verifyTenantChainOnAdminScope } from '../services/audit/tenant-chain-verdict.js';
@@ -753,7 +754,12 @@ export function createAuditTrailRoutes(pool: Pool): Router {
    * GET /api/audit/chain-monitor/status
    * Returns the current status of the background chain integrity monitor.
    */
-  router.get('/audit/chain-monitor/status', async (_req: Request, res: Response) => {
+  router.get('/audit/chain-monitor/status', async (req: Request, res: Response) => {
+    // The monitor is estate-wide, not one organisation's: reading or running it
+    // is a platform administrator's act (2026-09-26 lens, P1-36 follow-up).
+    if (!isPlatformAdmin(req)) {
+      return res.status(403).json({ error: 'PLATFORM_ADMIN_REQUIRED', message: 'The chain-integrity monitor is a platform administrator surface.' });
+    }
     try {
       const { getChainMonitorStatus } = await import('../services/audit/chainIntegrityMonitor.js');
       const status = getChainMonitorStatus();
@@ -780,13 +786,18 @@ export function createAuditTrailRoutes(pool: Pool): Router {
    * POST /api/audit/chain-monitor/check
    * Trigger an on-demand chain integrity check.
    */
-  router.post('/audit/chain-monitor/check', async (_req: Request, res: Response) => {
+  router.post('/audit/chain-monitor/check', async (req: Request, res: Response) => {
+    if (!isPlatformAdmin(req)) {
+      return res.status(403).json({ error: 'PLATFORM_ADMIN_REQUIRED', message: 'The chain-integrity monitor is a platform administrator surface.' });
+    }
     try {
       const { runOnDemandCheck } = await import('../services/audit/chainIntegrityMonitor.js');
       const status = await runOnDemandCheck();
       res.json({ success: true, data: status });
-    } catch (err: any) {
-      res.status(500).json({ error: 'Chain integrity check failed', details: err.message });
+    } catch (err) {
+      // The detail goes to the log, never to the client (IAM-18 (1)).
+      console.error('Chain integrity check failed:', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ error: 'Chain integrity check failed' });
     }
   });
 
