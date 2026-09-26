@@ -126,6 +126,11 @@ CREATE INDEX IF NOT EXISTS idx_ana_turn_records_thread
   ON public.ana_turn_records (organization_id, thread_id, started_at);
 CREATE INDEX IF NOT EXISTS idx_ana_turn_records_actor
   ON public.ana_turn_records (organization_id, actor_user_id, started_at);
+-- Added 2026-09-26, same change set (D5 slice 1 follow-up): a client whose
+-- connection closed before the turn ended (Stop, a dropped network) asks for
+-- the record by the run it was served under. Additive, IF NOT EXISTS.
+CREATE INDEX IF NOT EXISTS idx_ana_turn_records_run
+  ON public.ana_turn_records (organization_id, run_id);
 
 CREATE OR REPLACE FUNCTION public.ana_turn_records_append_only()
 RETURNS trigger
