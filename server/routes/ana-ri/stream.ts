@@ -244,6 +244,10 @@ export function mountStreamRoute(router: Router): void {
         return undefined;
       }
     };
+    // Recorder calls from inside the agentic loop, as plain calls.
+    const recordStreamed = (chunk: string): void => turnRecorder?.appendStreamed(chunk);
+    const recordServed = (round: number, served: { provider: string | null; model: string | null }): void =>
+      turnRecorder?.addServed(round, served);
     const fileTurnRecord = (outcome: TurnOutcome): Promise<TurnRecordStatus> =>
       turnRecorder === undefined
         ? Promise.resolve({ status: 'not_recorded', reason: 'This turn ended before its record was opened.' })
@@ -2303,13 +2307,13 @@ export function mountStreamRoute(router: Router): void {
             roundText = roundResponse.content;
             const appended = (fullContent ? '\n\n' : '') + roundText;
             fullContent += appended;
-            turnRecorder?.appendStreamed(appended);
+            recordStreamed(appended);
             res.write(`data: ${JSON.stringify({ type: 'text', content: roundText })}\n\n`);
           }
           recordCacheUsage(roundResponse);
           emitServerToolSteps(roundResponse, round);
           lastServedModel = servedModelOf(roundResponse);
-          turnRecorder?.addServed(round, lastServedModel);
+          recordServed(round, lastServedModel);
           const nextUses = (roundResponse as AnaGatewayResponse).toolUses;
           return { text: roundText, toolCalls: (nextUses ?? []).map(toToolCall) };
         };

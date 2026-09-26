@@ -8,5 +8,5 @@ import {
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const report = await assertAuditImmutabilityTriggers(pool);
-console.log(report.ok ? `ok: ${report.present}/${report.expected} present and enabled` : describeAuditImmutabilityGap(report));
+console.info(report.ok ? `ok: ${report.present}/${report.expected} present and enabled` : describeAuditImmutabilityGap(report));
 await pool.end();

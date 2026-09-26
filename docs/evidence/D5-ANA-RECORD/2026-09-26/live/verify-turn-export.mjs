@@ -35,6 +35,6 @@ check('every text hashes to its reference', altered.length === 0, altered.join('
 check('the chain row carries the record hash', pkg.chain?.details?.recordSha256 === pkg.record.recordSha256);
 check('the chain row still hashes to its payload hash', pkg.chain && sha256(JSON.stringify(pkg.chain.details)) === pkg.chain.payloadHash, pkg.chain?.payloadHash);
 
-for (const r of results) console.log(`${r.ok ? 'PASS' : 'FAIL'}  ${r.name}${r.ok || !r.detail ? '' : ` — ${r.detail}`}`);
-console.log(`server's walk of the tenant chain at export: ${JSON.stringify(pkg.tenantChain)}`);
+for (const r of results) console.info(`${r.ok ? 'PASS' : 'FAIL'}  ${r.name}${r.ok || !r.detail ? '' : ` — ${r.detail}`}`);
+console.info(`server's walk of the tenant chain at export: ${JSON.stringify(pkg.tenantChain)}`);
 process.exitCode = results.every((r) => r.ok) ? 0 : 1;
