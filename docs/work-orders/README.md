@@ -423,6 +423,24 @@ index and the filter is a tenant, the same miss is possible — HNSW included,
 once a tenant is a small fraction of the table. Not changed here: not this
 lane's corpora.
 
+**For the D3 and D6 lanes (2026-09-26, from the AnA client-files lane): `tests/db/signup-launch-catalog.dbtest.ts` went red twice overnight.**
+1. `dd6632dd0` (D6, 05:38) refuses a password built from the account's own
+   words. The fixture's `Dbtsu-Launch-Catalog-2026!` shared the `dbtsu` tag with
+   its e-mail and company, so all seven sign-up cases answered 400. **Fixed here**
+   by giving the fixture a password with no such word. No assertion changed; 15 of
+   16 pass locally as `app_service` with RLS enforcing, on a database with current
+   migrations.
+2. The remaining case, "the boot seed: its PoolClient under enforcement, run
+   twice, writes one workspace per seeded organisation", fails with `new row
+   violates row-level security policy (USING expression) for table
+   "organizations"`. `ba797ca6d` (D3, 02:42, `migrations/20260926_organizations_own_writes.sql`)
+   admits an organization's row only to that organization or the platform.
+   `seedOrganizations` (`server/db/bootstrap/seed-default-org.ts`) upserts with
+   `ON CONFLICT (slug) DO UPDATE`, in the test on a runtime-role PoolClient with
+   neither scope. Either the boot seed must run in the platform scope (then check
+   production boot does), or the test's posture predates the policy. That call
+   belongs to the D3 lane; not changed here.
+
 **For tenant offboarding / retention, D6 (2026-09-24, from the AnA client-files lane): no stored Vault object is ever deleted.**
 Only one place in `server/` calls the storage provider's `delete()`: the
 refused-upload cleanup added today (`server/services/vault/vault-ingest-discard.ts`).
