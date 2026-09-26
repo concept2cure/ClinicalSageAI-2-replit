@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-26T05:23:42.712Z",
+  "generatedAt": "2026-09-26T05:48:26.613Z",
   "git": {
-    "sha": "ea617e43ade7cc3dbb6d454ac344cb2c179807be",
+    "sha": "65412ea59fcd7fb057f97e3eb6b4625784f5b520",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2006,7 +2006,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 210444
+        "bytes": 211132
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2180,7 +2180,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 5374
+        "lines": 5382
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2268,7 +2268,7 @@
       },
       {
         "file": "server/routes/auth.ts",
-        "lines": 2685
+        "lines": 2694
       },
       {
         "file": "server/routes/knowledge-base.ts",
@@ -2487,6 +2487,10 @@
         "lines": 1785
       },
       {
+        "file": "server/routes/c2c/projects.ts",
+        "lines": 1784
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
         "lines": 1773
       },
@@ -2509,10 +2513,6 @@
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
         "lines": 1726
-      },
-      {
-        "file": "server/routes/c2c/projects.ts",
-        "lines": 1713
       },
       {
         "file": "tests/services/ana-biostats.test.ts",

@@ -56,9 +56,43 @@ describe('compute_sample_size', () => {
 });
 
 describe('generate_sap', () => {
+  const FULL = {
+    indication: 'NSCLC', phase: 'II', endpointType: 'continuous', studyType: 'superiority',
+    objectiveType: 'efficacy', effectSize: 0.5, variance: 1,
+  };
+
   it('refuses when no effect size is given, instead of reporting "SAP generated"', async () => {
     const res = await generateSAP(ctx, { indication: 'NSCLC', phase: 'II' });
     expect(res.success).toBe(false);
     expect(res.message).toMatch(/[Ee]ffect size/);
+  });
+
+  /* PF-14 (producers MISSED-5). The drafted SAP is stored as a project artifact
+     by the workflow's create_artifact action; generate_sap ignored that
+     action's outcome and reported "SAP generated … Document prepared" with the
+     id of an in-memory draft, whether or not anything was stored. Here the
+     artifact write fails (the stubbed db cannot insert). */
+  it('reports that the SAP was not stored when the artifact write fails', async () => {
+    const res = await generateSAP(ctx, FULL);
+    expect(res.success).toBe(false);
+    expect(res.message).toMatch(/not stored/i);
+    // The computed figures are still returned; only the claim of a stored SAP is withheld.
+    expect((res.data as { sampleSize?: number } | undefined)?.sampleSize).toBeGreaterThan(0);
+  });
+
+  it('names the stored artifact when the write succeeds', async () => {
+    const { anaBiostatsOrchestrator } = await import('../../ana-biostats/orchestrator.js');
+    const real = anaBiostatsOrchestrator.executeWorkflow.bind(anaBiostatsOrchestrator);
+    const spy = vi.spyOn(anaBiostatsOrchestrator, 'executeWorkflow').mockImplementation(async (req) => ({
+      ...(await real(req)),
+      workflowActions: [{ action: 'create_artifact', success: true, artifactId: 4242, message: 'persisted' }],
+    }));
+    try {
+      const res = await generateSAP(ctx, FULL);
+      expect(res.success).toBe(true);
+      expect((res.data as { documentId: unknown }).documentId).toBe(4242);
+    } finally {
+      spy.mockRestore();
+    }
   });
 });
