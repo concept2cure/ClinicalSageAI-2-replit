@@ -1,3 +1,9 @@
+-- 2026-09-25 AMENDED IN PLACE (W2 / D1, docs/evidence/W2/2026-09-25-replay-rebuilds-nothing/):
+-- c2c_document_aliases_store_check is now replaced only when the live definition
+-- (pg_get_constraintdef) differs from the one below. Unconditional, every deploy dropped
+-- and re-added it — a full validation scan under lock (ACCESS EXCLUSIVE for a CHECK;
+-- writes blocked on child and parent for a FOREIGN KEY) while the application served.
+-- The definitions are unchanged. Pinned by npm run ci:replay-rebuilds-nothing.
 -- ============================================================================
 -- Document alias map — c2c_document_aliases
 -- (Document Identity Contract 2026-08, slice C2; approved 2026-08-13)
@@ -138,20 +144,28 @@ BEGIN
   -- proved for exactly this — reshaping a CHECK across replays — at
   -- migrations/20260806b_anda_ide_filing_types.sql:68. It is idempotent, it
   -- converges a database on any vocabulary, and it cannot diverge silently.
-  EXECUTE $q$ALTER TABLE c2c_document_aliases
-    DROP CONSTRAINT IF EXISTS c2c_document_aliases_store_check$q$;
-  EXECUTE $q$
-    ALTER TABLE c2c_document_aliases
-      ADD CONSTRAINT c2c_document_aliases_store_check
-      CHECK (store IN (
-        'authoring_documents',
-        'coauthor_documents',
-        'c2c_documents',
-        'concept2cure_artifacts',
-        'submission_leaves',
-        'unified_documents'
-      ))
-  $q$;
+  -- Replaced only when the live definition differs (2026-09-25, see the header):
+  -- unconditionally, every deploy re-validated it under lock while the app served.
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+     WHERE conrelid = to_regclass('public.c2c_document_aliases') AND conname = 'c2c_document_aliases_store_check'
+       AND pg_get_constraintdef(oid) = $def$CHECK ((store = ANY (ARRAY['authoring_documents'::text, 'coauthor_documents'::text, 'c2c_documents'::text, 'concept2cure_artifacts'::text, 'submission_leaves'::text, 'unified_documents'::text])))$def$
+  ) THEN
+    EXECUTE $q$ALTER TABLE c2c_document_aliases
+      DROP CONSTRAINT IF EXISTS c2c_document_aliases_store_check$q$;
+    EXECUTE $q$
+      ALTER TABLE c2c_document_aliases
+        ADD CONSTRAINT c2c_document_aliases_store_check
+        CHECK (store IN (
+          'authoring_documents',
+          'coauthor_documents',
+          'c2c_documents',
+          'concept2cure_artifacts',
+          'submission_leaves',
+          'unified_documents'
+        ))
+    $q$;
+  END IF;
 
   -- Neither key is org-leading, so the tenant predicate on a canonical_id read
   -- has no index to stand on without this.

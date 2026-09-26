@@ -1,0 +1,81 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-26T12:24:48.956Z","pid":3398,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-26T12:24:48.957Z","pid":3398,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-26T12:24:48.957Z","pid":3398,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/document-catalog-role.dbtest.ts > catalog_project_document — the comprehension record is a write > refuses a viewer, and the record is untouched
+[database] Database connection successful { timestamp: '2026-09-26T12:24:49.047Z', poolSize: 1 }
+
+stdout | tests/db/document-catalog-role.dbtest.ts > catalog_project_document — the comprehension record is a write > refuses a viewer, and the record is untouched
+[database] Database connection successful
+
+stdout | tests/db/document-catalog-role.dbtest.ts > catalog_project_document — the comprehension record is a write > refuses a viewer, and the record is untouched
+✅ Enhanced Embedding Service initialized
+
+stderr | tests/db/document-catalog-role.dbtest.ts > catalog_project_document — the comprehension record is a write > refuses a viewer, and the record is untouched
+{
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — recorded as failed, catalog still written",
+  "context": {
+    "documentId": "310a5ab3-1b16-465f-9f3e-169f0a36ef20",
+    "err": "403 Host not in allowlist: api.openai.com. Add this host to your network egress settings to allow access."
+  }
+}
+
+stderr | tests/db/document-catalog-role.dbtest.ts > catalog_project_document — the comprehension record is a write > accepts a member — the positive control: nothing else stood in the way
+{
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — recorded as failed, catalog still written",
+  "context": {
+    "documentId": "310a5ab3-1b16-465f-9f3e-169f0a36ef20",
+    "err": "403 Host not in allowlist: api.openai.com. Add this host to your network egress settings to allow access."
+  }
+}
+
+ × tests/db/document-catalog-role.dbtest.ts > catalog_project_document — the comprehension record is a write > refuses a viewer, and the record is untouched 5236ms
+   → expected { catalog_status: 'cataloged', …(5) } to deeply equal { catalog_status: 'extracted', …(5) }
+ ✓ tests/db/document-catalog-role.dbtest.ts > catalog_project_document — the comprehension record is a write > accepts a member — the positive control: nothing else stood in the way 24ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/document-catalog-role.dbtest.ts > catalog_project_document — the comprehension record is a write > refuses a viewer, and the record is untouched
+AssertionError: expected { catalog_status: 'cataloged', …(5) } to deeply equal { catalog_status: 'extracted', …(5) }
+
+- Expected
++ Received
+
+  {
+-   "catalog_status": "extracted",
+-   "cataloged_by": null,
+-   "document_kind": null,
+-   "key_data": null,
+-   "purpose": null,
+-   "summary": null,
++   "catalog_status": "cataloged",
++   "cataloged_by": 151,
++   "document_kind": "Certificate of Analysis",
++   "key_data": {
++     "assay_pct": 99.2,
++     "batch": "23-104",
++   },
++   "purpose": "Release evidence for one clinical batch.",
++   "summary": "CoA for batch 23-104: assay 99.2 % of label claim.",
+  }
+
+ ❯ tests/db/document-catalog-role.dbtest.ts:121:32
+    119|     const out = await catalogAs('viewer');
+    120|     // The stored record first, so a regression shows what it WROTE.
+    121|     expect(await catalogRow()).toEqual(before);
+       |                                ^
+    122|     expect(out.ok, JSON.stringify(out)).toBe(false);
+    123|     expect(out.reason).toMatch(/viewer/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  12:24:46
+   Duration  5.74s (transform 3.81s, setup 69ms, import 22ms, tests 5.38s, environment 0ms)
+
