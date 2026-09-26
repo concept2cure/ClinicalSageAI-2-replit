@@ -57,7 +57,8 @@ const fake = vi.hoisted(() => {
       throw new Error('zcard outside the script');
     },
     /** The registration script: prune, add, count, evict the oldest beyond the limit, never the new one. */
-    async eval(_script: string, _numKeys: number, key: string, cutoff: string, started: string, sid: string, _ttl: string, limit: string) {
+    async eval(_script: string, _numKeys: number, ...args: string[]) {
+      const [key, cutoff, started, sid, , limit] = args;
       state.calls.push('eval');
       if (state.failEval) throw new Error('redis away');
       const z = zset(key);
