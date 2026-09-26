@@ -25,6 +25,7 @@ import {
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 
 import { computeRedirect } from '../../auth/redirectUtils';
+import { takeSignOutReason } from '../../../utils/sessionEnd';
 import brandIcon from '../../../assets/concept2cure-icon.svg';
 import styles from './styles.module.css';
 
@@ -169,6 +170,9 @@ export const Concept2CureLogin: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<AuthError | null>(null);
+  // Why the last session ended on its own account (inactivity, lifetime), read
+  // once from where the auth service left it (P1-1).
+  const [signedOut] = useState(() => takeSignOutReason());
 
   const supportsRecoveryCodes = useMemo(
     () => availableMfaMethods.some(m => m.type === 'backup_code'),
@@ -407,6 +411,13 @@ export const Concept2CureLogin: React.FC = () => {
           </span>
           <h1 className={styles.title}>{title}</h1>
           <p className={styles.subtitle}>{subtitle}</p>
+
+          {signedOut && view === 'sign-in' && !error && (
+            <div className={styles.notice} role="status">
+              <AlertCircle size={14} strokeWidth={1.75} />
+              <span>{signedOut === 'idle' ? t('signedOut.idle') : t('signedOut.lifetime')}</span>
+            </div>
+          )}
 
           {error && (
             <div className={styles.alert} role="alert">

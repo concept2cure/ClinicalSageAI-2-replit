@@ -1,7 +1,7 @@
 # P1-1 — sessions did not end: no inactivity logoff, no lifetime (IAM-06, High)
 
 **Row:** D6 (D4 for the OQ step). **Finding:** `docs/security/SECURITY_AUDIT_2026-09-24.md` IAM-06. **Plan item:** P1-1.
-**This folder:** the server half. The client's idle timer and warning, and the OQ step, follow in their own commits.
+**This folder:** the server half (first commit) and the client half (second commit). The OQ step follows.
 
 ## What was wrong
 
@@ -44,8 +44,32 @@ lifetime only until they expire (seven days at most).
 Without Redis the activity tier is per task: a session's first request on a task that has never seen it is measured
 from its token's issue, so it can be refused as idle there while alive elsewhere. Production runs Redis (P1-3).
 
-Not in this commit: the concurrent-session limit (the plan row keeps it; it needs a per-user session registry that
-this activity store is not), the client timer and warning, and the OQ step.
+Not in the server commit: the concurrent-session limit (the plan row keeps it; it needs a per-user session registry
+that this activity store is not), and the OQ step.
+
+## The client half
+
+- `client/src/services/portal/idleSession.ts` is the person's clock: pointer, key, touch, wheel and scroll on the
+  window, and the tab becoming visible, are activity (throttled to once a second). A minute before the window ends it
+  warns; while the warning stands only "Stay signed in" extends the session, so a pointer moving to "Sign out now"
+  cannot cancel the warning under it; at the end of the window it fires once and stops.
+- `client/src/concept2cure/components/session/IdleSessionGuard.tsx`, mounted once inside the authenticated shell
+  (`ZenRouter.tsx` `ProtectedZenApp`), reads the session's clocks from `GET /session` (`idleMinutes`, `expiresAt`;
+  15 minutes and no lifetime until the server answers), shows the warning as an `alertdialog` with the seconds left,
+  signs out at the end of the window or of the lifetime with the reason kept, and reports activity to the server at
+  most every five minutes while the person works without API traffic (the server measures requests).
+- The two fetch wrappers end the session on the server's answer instead of refreshing: `authService.tsx`'s client
+  (`SESSION_IDLE` / `SESSION_LIFETIME` on a call, or on the refresh it would have tried) clears storage, keeps the
+  reason and raises `session_expired` with it; `lib/queryClient.ts`'s `apiRequest` cannot import the auth service
+  without a cycle, so it announces on the window and the auth provider ends the session. The provider's start-up
+  probe keeps the reason too.
+- The sign-in page (`Concept2CureLogin.tsx`) reads the reason once and says why the last session ended, in all
+  eighteen languages (`auth.json` `signedOut.*`; the warning's strings in `common.json` `session.*`; the
+  locale-integrity test holds the eighteen bundles to one key set).
+
+Evidence: `red/client-before-fix.txt` (the auth client refreshed an idle session; the shared wrapper announced
+nothing; no policy on the client; the guard did not exist), `green/client-after-fix.txt` (the five new suites, the
+logout suite and the locale-integrity test).
 
 ## Evidence
 

@@ -22,6 +22,7 @@ import { Switch, Route, useLocation, Redirect } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ZenSignup, ZenAuthLayout } from '../auth';
 import { Concept2CureLogin } from '../components/concept2cure-auth';
+import { IdleSessionGuard } from '../components/session/IdleSessionGuard';
 import { isFeatureEnabled } from '@/flags/featureFlags';
 // Master Administration + Business Center UI is owned by Claude Design (built
 // from HANDOFF_TO_DESIGN_master_admin_business_center.md). Only the backend +
@@ -57,6 +58,9 @@ const V2App = lazy(() => import('../v2/V2App'));
    minted its own). */
 const ProtectedZenApp: React.FC = () => (
   <ProtectedRoute>
+    {/* The inactivity clock and its warning (P1-1): the server measures
+        requests, this measures the person. */}
+    <IdleSessionGuard />
     <Suspense fallback={<ZenLoadingScreen />}>
       <V2App />
     </Suspense>

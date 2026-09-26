@@ -13,6 +13,14 @@
  */
 
 import { authLogger } from './logger';
+import {
+  SESSION_ENDED_EVENT,
+  rememberSignOutReason,
+  sessionEndReasonOf,
+  sessionEndReasonOfResponse,
+  type SessionEndReason,
+  type SessionEndedDetail,
+} from '../../utils/sessionEnd';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES & INTERFACES
@@ -392,6 +400,17 @@ class ApiClient {
 
       // Handle 401 Unauthorized
       if (response.status === 401 && retryOnUnauthorized) {
+        // P1-1: a session the server ended for inactivity or age will not
+        // refresh (the refresh refuses with the same code), so it ends here:
+        // storage cleared, the reason kept for the sign-in page, no retry.
+        const ended = await sessionEndReasonOfResponse(response as Response);
+        if (ended) {
+          this.authService.endSession(ended);
+          return {
+            success: false,
+            error: { code: AUTH_ERROR_CODES.SESSION_EXPIRED, message: 'Session expired. Please log in again.' },
+          };
+        }
         const refreshed = await this.authService.refreshToken();
         if (refreshed) {
           // Retry request with new token
@@ -471,9 +490,22 @@ class ApiClient {
 // MAIN AUTH SERVICE
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** What the server states about the session's clocks (GET /session, P1-1). */
+export interface SessionPolicy {
+  /** The idle window, in minutes; the tenant's setting, fixed at sign-in. */
+  idleMinutes: number;
+  /** The absolute lifetime, in hours. */
+  lifetimeHours: number;
+  /** When the lifetime ends (ISO), or null when the probe has not said. */
+  expiresAt: string | null;
+}
+
+const DEFAULT_SESSION_POLICY: SessionPolicy = { idleMinutes: 15, lifetimeHours: 12, expiresAt: null };
+
 export class AuthService {
   private tokens: AuthTokens | null = null;
   private user: AuthUser | null = null;
+  private sessionPolicy: SessionPolicy = DEFAULT_SESSION_POLICY;
   private refreshPromise: Promise<boolean> | null = null;
   private refreshTimer: ReturnType<typeof setTimeout> | null = null;
   private events: AuthEventEmitter = new AuthEventEmitter();
@@ -681,8 +713,10 @@ export class AuthService {
       );
 
       if (!result.success || !result.data) {
-        this.clearAuth();
-        this.events.emit('session_expired');
+        // P1-1: the refresh names why a session is over (idle, lifetime); the
+        // sign-in page shows it.
+        const details = result.error?.details as { error?: { code?: unknown } } | undefined;
+        this.endSession(sessionEndReasonOf(details?.error?.code));
         return false;
       }
 
@@ -699,10 +733,53 @@ export class AuthService {
 
       return true;
     } catch {
-      this.clearAuth();
-      this.events.emit('session_expired');
+      this.endSession(null);
       return false;
     }
+  }
+
+  /**
+   * End the client session because the server ended it (a 401 SESSION_IDLE or
+   * SESSION_LIFETIME, or a refresh it refused): storage cleared, the reason
+   * kept for the sign-in page, `session_expired` raised with it (P1-1).
+   */
+  endSession(reason: SessionEndReason | null): void {
+    this.clearAuth();
+    if (reason) rememberSignOutReason(reason);
+    this.events.emit('session_expired', reason ? { reason } : undefined);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Session policy (P1-1): the clocks the server enforces, for the client's own timer
+  // ─────────────────────────────────────────────────────────────────────────
+
+  getSessionPolicy(): SessionPolicy {
+    return this.sessionPolicy;
+  }
+
+  /** Keep what GET /session reported under `session`. Unknown or absent fields keep their defaults. */
+  rememberSessionPolicy(session: unknown): SessionPolicy {
+    const s = (session ?? {}) as { idleMinutes?: unknown; lifetimeHours?: unknown; expiresAt?: unknown };
+    const minutes = typeof s.idleMinutes === 'number' && s.idleMinutes > 0 ? s.idleMinutes : DEFAULT_SESSION_POLICY.idleMinutes;
+    const hours = typeof s.lifetimeHours === 'number' && s.lifetimeHours > 0 ? s.lifetimeHours : DEFAULT_SESSION_POLICY.lifetimeHours;
+    const expiresAt = typeof s.expiresAt === 'string' && !Number.isNaN(Date.parse(s.expiresAt)) ? s.expiresAt : null;
+    this.sessionPolicy = { idleMinutes: minutes, lifetimeHours: hours, expiresAt };
+    return this.sessionPolicy;
+  }
+
+  /**
+   * Ask the server about the session. The request is also the session's
+   * activity on the server's clock, so the guard calls this while the person
+   * works without other API traffic (keepAlive).
+   */
+  async refreshSessionPolicy(): Promise<SessionPolicy> {
+    const result = await this.api.get<{ session?: unknown }>(`${this.baseUrl}/session`, { retryOnUnauthorized: false });
+    if (result.success && result.data) return this.rememberSessionPolicy(result.data.session);
+    return this.sessionPolicy;
+  }
+
+  async keepAlive(): Promise<void> {
+    await this.refreshSessionPolicy();
   }
 
   private setupTokenRefresh(): void {
@@ -867,6 +944,7 @@ export class AuthService {
   private clearAuth(): void {
     this.tokens = null;
     this.user = null;
+    this.sessionPolicy = DEFAULT_SESSION_POLICY;
     if (this.refreshTimer) {
       clearTimeout(this.refreshTimer);
       this.refreshTimer = null;
@@ -990,12 +1068,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           const data = await res.json();
           if (data.authenticated && data.user) {
             setUser(data.user as AuthUser);
+            authService.rememberSessionPolicy(data.session);
           } else {
             authService.logout();
             setUser(null);
           }
         } else if (res.status === 401 || res.status === 403) {
-          // Token invalid/expired server-side — clear stale auth
+          // Token invalid/expired server-side — clear stale auth. A session the
+          // server ended for inactivity or age says so; the sign-in page shows it (P1-1).
+          const ended = await sessionEndReasonOfResponse(res);
+          if (ended) rememberSignOutReason(ended);
           authService.logout();
           setUser(null);
         } else {
@@ -1029,11 +1111,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser((event.data as { user: AuthUser })?.user || null);
     });
 
+    // lib/queryClient.ts cannot import this service (a cycle); it announces a
+    // session the server ended on the window, and the session ends here (P1-1).
+    const onSessionEnded = (event: Event) => {
+      authService.endSession((event as CustomEvent<SessionEndedDetail>).detail?.reason ?? null);
+    };
+    window.addEventListener(SESSION_ENDED_EVENT, onSessionEnded);
+
     return () => {
       unsubLogin();
       unsubLogout();
       unsubExpired();
       unsubUpdated();
+      window.removeEventListener(SESSION_ENDED_EVENT, onSessionEnded);
     };
   }, []);
 

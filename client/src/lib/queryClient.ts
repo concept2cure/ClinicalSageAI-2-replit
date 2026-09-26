@@ -1,5 +1,6 @@
 import { QueryClient, MutationCache, type QueryFunction } from '@tanstack/react-query';
 import { getAuthToken, getOrgId } from '@/utils/authToken';
+import { announceSessionEnded, sessionEndReasonOfResponse } from '../utils/sessionEnd';
 
 export type ApiRequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
@@ -385,6 +386,14 @@ export const apiRequest = async (
   }
 
   const response = await fetch(url, options);
+
+  // P1-1: a 401 that names SESSION_IDLE or SESSION_LIFETIME is a session the
+  // server ended on its own account. The auth provider ends the client's; this
+  // module cannot import it, so it announces. The response is the caller's.
+  if (response.status === 401) {
+    const ended = await sessionEndReasonOfResponse(response);
+    if (ended) announceSessionEnded(ended);
+  }
 
   if (!response.ok && response.status !== 401) {
     // Echoed by the server's requestId middleware and exposed to the browser via

@@ -33,5 +33,11 @@
   "language": {
     "label": "Taal",
     "select": "Selecteer taal"
+  },
+  "session": {
+    "stillThere": "Bent u er nog?",
+    "signOutIn": "U wordt over {{seconds}} seconden afgemeld wegens inactiviteit.",
+    "staySignedIn": "Aangemeld blijven",
+    "signOutNow": "Nu afmelden"
   }
 }
