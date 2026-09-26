@@ -66,6 +66,30 @@ step, the command and a compact key: value summary of its params, no reason fiel
 tiers render as before. `client/red.txt` (four cases fail on the committed components: the proposal is not surfaced, the
 confirm tier shows a reason field, confirming posts a reason) and `client/green.txt` (the four sign-off suites pass).
 
+**Follow-ups to part 2** (the AnA run-control lane, 2026-09-26). Each shown failing first against the sources above
+(`red/decline-approve-class-before-fix.txt`: 5 of 42 red) and green after (`green/decline-approve-class-after-fix.txt`,
+42 / 42):
+
+- **Declining.** Cancel or Escape on a live prompt closed the dialog and told the server nothing, so AnA held the turn
+  until the ten-minute pause ceiling — with every write a proposal, most turns. `decision: 'decline'` on a held run is
+  audited (`ana.governed_action.declined`), recorded against the run and releases it at once; nothing executes. The
+  dialog sends it for a live prompt only; a prompt from a finished turn has nothing waiting.
+  Tests: `governedActionConfirmTier.test.ts`, `governed-action-signoff.test.tsx` "declining".
+- **The approve class keeps a reason.** `governedTierOf` returned `confirm` for `section.approve`,
+  `post_market.document.approve` and `post_market.document.supersede` — in neither Part 11 set, otherwise gated only by
+  the model-written `params.confirm` — so an approval ran on one click with nothing recorded about why. The tool gate
+  had always shown them as the reason tier; they are the reason tier again. Tests: `confirm-tier.test.ts`,
+  `governedActionConfirmTier.test.ts`.
+- **`governedActionApprovalTenantPinned.test.ts` was red on trunk** after part 2 (3 of 4): its fixture was a made-up
+  `lock_section` behind mocks of `requiresPart11Signoff`, which the route no longer consults. The fixture is a real
+  reason-tier command (`update_milestone`); the tenant-binding assertions are unchanged.
+- The stream's `approval_required` frame is built by `buildHumanConfirmationRequiredResult`, so its tier and wording
+  are the builder's rather than a hand copy that had already drifted from it.
+
+Still open, beyond DP-09 below: the five direct-mutator tools (`save_document_to_vault` and siblings are not commands,
+so the partition does not reach them), and sign-off prompts on the non-SSE chat paths (`chat/send-message`,
+`ana-intelligence` return the proposal as a tool result those clients do not render as a prompt).
+
 ## Not done here
 
 - **Every state-changing command propose-only (the DP-08 body of P0-12)** — done in part 2 above (server and client). The original note follows for the record. `PROPOSE_ONLY_COMMANDS` still admits the

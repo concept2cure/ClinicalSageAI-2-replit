@@ -52,7 +52,17 @@ function summariseParams(params: Record<string, unknown>): Array<[string, string
 }
 
 export function GovernedActionSignoff({ signoff, onResolved, onCancel }: GovernedActionSignoffProps) {
-  const { submit, submitting, error } = useGovernedAction();
+  const { submit, decline, submitting, error } = useGovernedAction();
+
+  // Declining a live prompt tells the run that is waiting on it, so AnA carries
+  // on now rather than at the pause ceiling. A prompt from a finished turn has
+  // nothing waiting; closing it is the whole of declining.
+  const handleCancel = async () => {
+    if (signoff.runId && signoff.toolUseId) {
+      await decline({ runId: signoff.runId, toolUseId: signoff.toolUseId });
+    }
+    onCancel();
+  };
   const [reason, setReason] = useState('');
   const [password, setPassword] = useState('');
   const [mfaToken, setMfaToken] = useState('');
@@ -119,7 +129,7 @@ export function GovernedActionSignoff({ signoff, onResolved, onCancel }: Governe
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
       e.preventDefault();
-      onCancel();
+      void handleCancel();
       return;
     }
     if (e.key !== 'Tab' || !dialogRef.current) return;
@@ -258,7 +268,7 @@ export function GovernedActionSignoff({ signoff, onResolved, onCancel }: Governe
       )}
 
       <div className={styles.signoffActions}>
-        <button type="button" className={styles.suggestPill} onClick={onCancel} disabled={submitting}>
+        <button type="button" className={styles.suggestPill} onClick={() => void handleCancel()} disabled={submitting}>
           Cancel
         </button>
         <button
