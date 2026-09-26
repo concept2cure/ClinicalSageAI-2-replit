@@ -246,10 +246,12 @@ export default function createVaultIngestRoutes(): Router {
         .status(outcome.status)
         .json({ error: { code: outcome.code, message: outcome.message } });
     }
-    return res.status(201).json({
+    // 200, not 201, when the bytes were already recorded: nothing was created.
+    return res.status(outcome.reupload ? 200 : 201).json({
       success: true,
       document: outcome.document,
       filing: outcome.filing,
+      ...(outcome.reupload ? { reupload: outcome.reupload } : {}),
     });
   });
 

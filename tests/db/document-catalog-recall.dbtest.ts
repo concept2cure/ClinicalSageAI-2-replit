@@ -113,12 +113,12 @@ async function inTenantScope<T>(fn: () => Promise<T>): Promise<T> {
   );
 }
 
-async function callTool(name: string, input: Record<string, unknown>) {
+async function callTool(name: string, input: Record<string, unknown>, extra: { humanConfirmed?: boolean } = {}) {
   const { getToolHandler } = await import('../../server/services/ana/AnaToolExecutor');
   const handler = getToolHandler(name);
   if (!handler) throw new Error(`tool ${name} is not registered`);
   const raw = await inTenantScope(() =>
-    handler(input, { organizationId: orgId, userId, projectId, humanConfirmed: true }),
+    handler(input, { organizationId: orgId, userId, projectId, ...extra }),
   );
   return JSON.parse(raw);
 }
@@ -314,7 +314,7 @@ describe('semantic search over the catalog', () => {
       purpose: 'Supports Module 4 repeat-dose toxicology for Recallin.',
       summary: 'TOX-77-A in rats; NOAEL 50 mg/kg/day; reversible hepatocellular hypertrophy at 150.',
       key_data: { study: 'TOX-77-A', noaelMgKgDay: 50 },
-    });
+    }, { humanConfirmed: true }); // a write in the tool register (P1-34)
     expect(done.ok).toBe(true);
     expect(done.embeddingStatus).toBe('embedded');
 
@@ -578,12 +578,15 @@ describe('filing a chat upload into the vault', () => {
       ],
     );
 
-    const filed = await callTool('file_chat_upload_to_vault', {
-      file_id: FILE_ID,
-      document_title: 'CoA batch 23-104',
-      document_type: 'REPORT',
-      program_id: programId,
-    });
+    const fileArgs = { file_id: FILE_ID, document_title: 'CoA batch 23-104', document_type: 'REPORT', program_id: programId };
+    // AnA proposes and a person confirms (P0-12, 69f93d988): on AnA's word
+    // alone the call is a proposal and nothing is filed. humanConfirmed is what
+    // POST /governed-action stamps when the person says yes.
+    const proposed = await callTool('file_chat_upload_to_vault', fileArgs);
+    expect(proposed.error).toBe('HUMAN_CONFIRMATION_REQUIRED');
+    const none = await owner.query(`SELECT 1 FROM vault.documents WHERE program_id = $1 AND document_title = $2`, [programId, 'CoA batch 23-104']);
+    expect(none.rowCount).toBe(0);
+    const filed = await callTool('file_chat_upload_to_vault', fileArgs, { humanConfirmed: true });
     expect(filed.ok).toBe(true);
     const docId = filed.documentId;
 
