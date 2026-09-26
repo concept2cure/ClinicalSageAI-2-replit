@@ -149,9 +149,9 @@ describe('the real registry, launch scope on', () => {
 /* Stage 2b. A path no surface, platform or infrastructure entry claims is outside
    the launch scope as registered. Refusing it outright could refuse a caller
    static analysis cannot see (a computed path, a server-to-server call), so it is
-   REPORTED by default — the would-refuse lands in the enforcement report Master
-   Admin → Licensing → Enforcement already reads — and refused only when an
-   operator sets LAUNCH_SCOPE_API_UNATTRIBUTED=enforce after reading that report. */
+   REPORTED in report mode — the would-refuse lands in the enforcement report
+   Master Admin → Licensing → Enforcement already reads — and refused in enforce
+   mode, production's default since stage 3 (2026-09-26). */
 describe('unattributed paths (stage 2b)', async () => {
   const { enforcementReport, clearObservations } = await import('../../services/entitlements/enforcement-observations');
   const snapshotObservations = () => enforcementReport('report').observations;
@@ -203,13 +203,24 @@ describe('unattributed paths (stage 2b)', async () => {
     expect(snapshotObservations()[0]).toMatchObject({ organizationId: 0 });
   });
 
-  it('production with LAUNCH_SCOPE_API_UNATTRIBUTED unset reports; an unknown value refuses to boot', async () => {
+  it('production with LAUNCH_SCOPE_API_UNATTRIBUTED unset ENFORCES (stage 3); report is an explicit choice; an unknown value refuses to boot', async () => {
     vi.stubEnv('NODE_ENV', 'production');
     vi.stubEnv('LAUNCH_SCOPE_ENFORCE', '');
     vi.stubEnv('LAUNCH_SCOPE_API_UNATTRIBUTED', '');
+    const unset = await run(moduleEntitlementGate(buildPrefixMap(SURFACES)), '/api/legacy-namespace/x');
+    expect(unset.passed).toBe(false);
+    expect(unset.res.statusCode).toBe(403);
+    vi.stubEnv('LAUNCH_SCOPE_API_UNATTRIBUTED', 'report');
     expect((await run(moduleEntitlementGate(buildPrefixMap(SURFACES)), '/api/legacy-namespace/x')).passed).toBe(true);
     vi.stubEnv('LAUNCH_SCOPE_API_UNATTRIBUTED', 'strict');
     expect(() => moduleEntitlementGate(buildPrefixMap(SURFACES))).toThrow(/LAUNCH_SCOPE_API_UNATTRIBUTED/);
+  });
+
+  it('outside production, unset still only reports (a development server serves everything)', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('LAUNCH_SCOPE_API_UNATTRIBUTED', '');
+    const gate = moduleEntitlementGate(buildPrefixMap(SURFACES), { launchScope: 'on' });
+    expect((await run(gate, '/api/legacy-namespace/x')).passed).toBe(true);
   });
 });
 
