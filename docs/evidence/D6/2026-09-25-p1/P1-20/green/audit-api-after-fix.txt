@@ -1,0 +1,11 @@
+$ # audit-trail-routes.ts with the reader gate, the recorder gate and the vocabulary; the two existing suites' fixtures given the roles and types the routes now require
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit/logs: a member is refused (403) 16ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit-logs: a member is refused (403) 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit/events: a member is refused (403) 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit: a member is refused (403) 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > a member is refused before the export starts 7ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > an event type outside the vocabulary is refused (400) and nothing is written 19ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > in a batch, an unknown type is skipped with the reason and the known one is written 4ms
+ Test Files  6 passed (6)
+      Tests  373 passed (373)
+exit=0

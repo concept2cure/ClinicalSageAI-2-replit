@@ -44,6 +44,10 @@ const ORG: Record<Side, number> = { A: ORG_A, B: ORG_B };
 const uuidOf: Record<Side, string> = { A: '', B: '' };
 const programOf: Record<Side, string> = { A: '', B: '' };
 const TITLE = { A: `${TAG}-vault-owned-A`, B: `${TAG}-vault-owned-B` };
+/** A submission per org in ectd_v4, one of the 43 tables whose policies go
+ *  through identity.can_access_org / can_write_org — which trust the same
+ *  identity.org_relationships the vault functions do. */
+const SUBMISSION = { A: `${TAG}-submission-A`, B: `${TAG}-submission-B` };
 
 beforeAll(async () => {
   await provisionTwoTenantFixture();
@@ -73,6 +77,11 @@ beforeAll(async () => {
         `${TITLE[side]}.txt`,
       ]
     );
+    await owner.query(
+      `INSERT INTO ectd_v4.regulatory_submissions (org_id, application_type, authority_id, sponsor_name)
+       VALUES ($1, 'IND', 'FDA', $2)`,
+      [uuidOf[side], SUBMISSION[side]]
+    );
   }
 }, 60_000);
 
@@ -94,6 +103,9 @@ async function removePlantedRows(): Promise<void> {
 afterAll(async () => {
   if (owner) {
     await removePlantedRows();
+    await owner.query('DELETE FROM ectd_v4.regulatory_submissions WHERE sponsor_name = ANY($1)', [
+      [SUBMISSION.A, SUBMISSION.B],
+    ]);
     await owner.query('DELETE FROM vault.documents WHERE organization_id = ANY($1::int[])', [
       FIXTURE_ORGS,
     ]);
@@ -127,6 +139,15 @@ async function attempt(side: Side, sql: string, params: unknown[]): Promise<'wri
     if ((err as { code?: string }).code === '42501') return 'refused';
     throw err;
   }
+}
+
+async function submissionsVisibleTo(side: Side): Promise<string[]> {
+  const { rows } = await as<{ sponsor_name: string }>(
+    side,
+    'SELECT sponsor_name FROM ectd_v4.regulatory_submissions WHERE sponsor_name = ANY($1) ORDER BY 1',
+    [[SUBMISSION.A, SUBMISSION.B]]
+  );
+  return rows.map(r => String(r.sponsor_name));
 }
 
 async function titlesVisibleTo(side: Side): Promise<string[]> {
@@ -219,6 +240,33 @@ describe('vault delegation is granted by the sponsor alone (D3)', () => {
     }
   });
 
+  it('nor does trying reach the org-policied schemas that trust the same table', async () => {
+    // identity.can_access_org / can_write_org read only identity.org_relationships,
+    // and 43 tables (ai, ectd_v4, fhir, innovation, product_master, identity.users)
+    // are policied through them. Positive control first: each sees its own.
+    expect(await submissionsVisibleTo('A')).toEqual([SUBMISSION.A]);
+    expect(await submissionsVisibleTo('B')).toEqual([SUBMISSION.B]);
+    const outcome = await attempt(
+      'A',
+      `INSERT INTO identity.org_relationships
+         (sponsor_org_id, delegate_org_id, contract_start_date, scope_all_programs)
+       VALUES ($1, $2, CURRENT_DATE, true)`,
+      [uuidOf.B, uuidOf.A]
+    );
+    try {
+      expect(outcome).toBe('refused');
+      expect(await submissionsVisibleTo('A'), "B's submission reached A").toEqual([SUBMISSION.A]);
+      const tampered = await as(
+        'A',
+        "UPDATE ectd_v4.regulatory_submissions SET sponsor_name = sponsor_name || ' (tampered)' WHERE sponsor_name = $1 RETURNING 1",
+        [SUBMISSION.B]
+      );
+      expect(tampered.rowCount, "A rewrote B's submission").toBe(0);
+    } finally {
+      await removePlantedRows();
+    }
+  });
+
   it('a grant B makes still works, a delegate cannot widen it, and revoking it ends it', async () => {
     // Positive control for the delegation feature: the policy must not have
     // broken the one legitimate writer, the sponsor granting its own data.
@@ -233,6 +281,10 @@ describe('vault delegation is granted by the sponsor alone (D3)', () => {
     try {
       expect(granted).toBe('written');
       expect(await titlesVisibleTo('A'), 'the sponsor-granted read').toEqual([TITLE.A, TITLE.B]);
+      expect(await submissionsVisibleTo('A'), 'the same grant, org-level').toEqual([
+        SUBMISSION.A,
+        SUBMISSION.B,
+      ]);
 
       // Read-only grant: the delegate may not promote it to read-write.
       const widened = await as(
@@ -259,6 +311,85 @@ describe('vault delegation is granted by the sponsor alone (D3)', () => {
       expect(await titlesVisibleTo('A'), 'the revoked grant still reads').toEqual([TITLE.A]);
     } finally {
       await removePlantedRows();
+    }
+  });
+});
+
+/** One statement in the system scope the platform's own jobs and admin routes use. */
+function asPlatform(sql: string, params: unknown[] = []) {
+  return runWithTenantScope(
+    {
+      tenantId: '0',
+      orgUuid: null,
+      role: 'app_super_admin',
+      source: 'request',
+      caller: 'tests/db/vault-program-ownership.dbtest.ts',
+    },
+    () => getPool().query(sql, params)
+  );
+}
+
+/** rowCount of a write, with a refusal counted as nothing written. */
+async function rowsWritten(run: () => Promise<{ rowCount: number | null }>): Promise<number> {
+  try {
+    return (await run()).rowCount ?? 0;
+  } catch (err) {
+    const code = (err as { code?: string }).code;
+    if (code === '42501') return 0;
+    throw err;
+  }
+}
+
+/** Puts both fixture orgs back on their own uuids if a case moved them. */
+async function restoreOrgUuids(): Promise<void> {
+  const { rows } = await owner.query(
+    'SELECT id, uuid::text AS uuid FROM organizations WHERE id = ANY($1::int[])',
+    [FIXTURE_ORGS]
+  );
+  const moved = rows.some(r => r.uuid !== uuidOf[r.id === ORG_A ? 'A' : 'B']);
+  if (!moved) return;
+  // Park both first so neither restore collides with the other's unique uuid.
+  await owner.query('UPDATE organizations SET uuid = gen_random_uuid() WHERE id = ANY($1::int[])', [
+    FIXTURE_ORGS,
+  ]);
+  await owner.query('UPDATE organizations SET uuid = $2 WHERE id = $1', [ORG_A, uuidOf.A]);
+  await owner.query('UPDATE organizations SET uuid = $2 WHERE id = $1', [ORG_B, uuidOf.B]);
+}
+
+describe("an organization's tenant key cannot be moved, by its own tenant or any other (D3)", () => {
+  it("A cannot hand B's organization its uuid, and B's vault stays B's", async () => {
+    // Measured before the fix as app_service with RLS enforcing: A moved its
+    // own org to a fresh uuid, gave B's org A's old one, and read B's vault —
+    // core.get_program_org_id maps a program's org to organizations.uuid.
+    try {
+      const movedOwn = await rowsWritten(() =>
+        as('A', 'UPDATE organizations SET uuid = gen_random_uuid() WHERE id = $1', [ORG_A])
+      );
+      const movedB = await rowsWritten(() =>
+        as('A', 'UPDATE organizations SET uuid = $2 WHERE id = $1', [ORG_B, uuidOf.A])
+      );
+      expect(await titlesVisibleTo('A'), "B's document reached A").toEqual([TITLE.A]);
+      expect(await titlesVisibleTo('B'), 'B lost its own document').toEqual([TITLE.B]);
+      expect({ movedOwn, movedB }).toEqual({ movedOwn: 0, movedB: 0 });
+    } finally {
+      await restoreOrgUuids();
+    }
+  });
+
+  it('the other writers still write, and none of them, the platform included, can move a key', async () => {
+    // Positive controls first: the trigger must not break an org updating its
+    // own row, nor the platform scope (admin routes, the Stripe webhook)
+    // updating any org's. A no-op write, so nothing changes either way.
+    const touch = 'UPDATE organizations SET updated_at = updated_at WHERE id = $1';
+    expect(await rowsWritten(() => as('A', touch, [ORG_A])), 'an org updating itself').toBe(1);
+    expect(await rowsWritten(() => asPlatform(touch, [ORG_B])), 'the platform scope').toBe(1);
+    try {
+      const moved = await rowsWritten(() =>
+        asPlatform('UPDATE organizations SET uuid = gen_random_uuid() WHERE id = $1', [ORG_B])
+      );
+      expect(moved, "the platform scope moved B's uuid").toBe(0);
+    } finally {
+      await restoreOrgUuids();
     }
   });
 });

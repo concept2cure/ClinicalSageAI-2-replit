@@ -58,7 +58,7 @@ await step(
     expected: 'HTTP 400 VALIDATION with field details',
   },
   async ({ api, expect }) => {
-    const r = await api('POST', '/api/submissions', { title: 'bad', applicationType: 'IND', clientType: 'biotech', primaryRegion: 'mars' });
+    const r = await api('POST', '/api/submissions', { programId: state.programId, title: 'bad', applicationType: 'IND', clientType: 'biotech', primaryRegion: 'mars' });
     expect(r.status === 400 && r.json?.error?.code === 'VALIDATION', `expected 400 VALIDATION, got ${r.status}`, r.json);
     return `HTTP 400: ${JSON.stringify(r.json.error.details?.fieldErrors ?? r.json.error).slice(0, 160)}`;
   },
@@ -69,11 +69,16 @@ await step(
     id: 'OQ-SUBC-03',
     urs: ['URS-SUBC-002', 'URS-SUBC-003'],
     title: 'Create a submission and its first sequence',
-    action: 'POST /api/submissions {IND, biotech, fda}; POST /api/submissions/:id/sequences {fda, "0000", original}; GET sequences',
+    action: 'POST /api/c2c/projects; POST /api/submissions {programId, IND, biotech, fda}; POST /api/submissions/:id/sequences {fda, "0000", original}; GET sequences',
     expected: 'HTTP 201 for both; the audit outcome is reported on the submission; the sequence is listed with status draft',
   },
   async ({ api, expect }) => {
-    const { submission, sequence } = await createSubmissionWithSequence(api, expect, { title: `OQ-004 IND ${stamp}` });
+    // A dedicated program: the submission is anchored to the project it is
+    // created for (LX-22), and a second IND on OQ-SUBC-00's program would
+    // become that program's newest spine and change what its compile reads.
+    const own = await createProgram(api, expect, `OQ-004 Submission-create program ${stamp}`);
+    const { submission, sequence } = await createSubmissionWithSequence(api, expect, { title: `OQ-004 IND ${stamp}`, programId: own.id });
+    expect(submission.programId === own.id, 'the created submission does not name its program', submission);
     state.submission = submission;
     state.sequence = sequence;
     const list = await api('GET', `/api/submissions/${submission.id}/sequences`);

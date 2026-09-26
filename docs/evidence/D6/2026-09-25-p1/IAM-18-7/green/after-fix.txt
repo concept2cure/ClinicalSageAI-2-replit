@@ -1,0 +1,43 @@
+# 2026-09-26T04:00:51Z — after the fix (working tree on a49c5a12)
+$ npx vitest run server/startup/__tests__/pre-auth-body-limit.test.ts server/startup/__tests__/tenant-impersonation-detector.test.ts server/startup/__tests__/middleware.guards.test.ts server/startup/__tests__/stripe-webhook-raw-body.contract.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+stderr | server/startup/__tests__/tenant-impersonation-detector.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+stderr | server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > refuses a header naming another organisation (403 TENANT_MISMATCH) and audits it
+[SECURITY] Tenant impersonation attempt blocked {
+  jwtOrg: 7,
+  headerOrg: '9',
+  userId: 7,
+  path: '/api/vault/documents',
+  method: 'GET',
+  ipAddress: '203.0.113.5'
+}
+ ✓ server/startup/__tests__/middleware.guards.test.ts > startup middleware guard helpers > detects Concept2Cure API routes from originalUrl/path/url 2ms
+ ✓ server/startup/__tests__/middleware.guards.test.ts > startup middleware guard helpers > blocks only destructive audit mutations and precise bulk-delete paths 1ms
+ ↓ server/startup/__tests__/middleware.guards.test.ts > startup middleware guard helpers > protects the full audit and e-signature trail surface (Part 11 immutability)
+stdout | server/startup/__tests__/tenant-impersonation-detector.test.ts > where it is mounted > applyAuthBoundary mounts the boundary and then the detector on /api
+{
+  "timestamp": "2026-09-26T04:00:54.962Z",
+  "level": "info",
+  "message": "[startup:auth-boundary] Default-deny auth boundary mounted on /api",
+  "context": {
+    "modeAtBoot": "warn"
+  }
+}
+ ✓ server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > refuses a header naming another organisation (403 TENANT_MISMATCH) and audits it 7ms
+ ✓ server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > passes a header naming the session's own organisation 0ms
+ ✓ server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > passes a request with no header 0ms
+ ✓ server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > with no session it neither refuses nor adopts the header (the boundary already answered) 0ms
+ ✓ server/startup/__tests__/tenant-impersonation-detector.test.ts > where it is mounted > applyAuthBoundary mounts the boundary and then the detector on /api 4ms
+stderr | server/startup/__tests__/pre-auth-body-limit.test.ts > the /api/concept2cure body is read only after the auth boundary > a signed-in body is scrubbed of prototype pollution after it is parsed
+[SECURITY] Blocked prototype pollution attempt: __proto__
+ ✓ server/startup/__tests__/pre-auth-body-limit.test.ts > the /api/concept2cure body is read only after the auth boundary > an anonymous 3 MB body is refused by the boundary without being parsed: malformed JSON is 401, not 400 38ms
+ ✓ server/startup/__tests__/pre-auth-body-limit.test.ts > the /api/concept2cure body is read only after the auth boundary > a signed-in 3 MB document body is still parsed (the large limit serves document bodies) 49ms
+ ✓ server/startup/__tests__/pre-auth-body-limit.test.ts > the /api/concept2cure body is read only after the auth boundary > a signed-in body is scrubbed of prototype pollution after it is parsed 4ms
+ ✓ server/startup/__tests__/pre-auth-body-limit.test.ts > the /api/concept2cure body is read only after the auth boundary > the rest of /api keeps its 2 MB parser before the boundary: malformed JSON is 400, a 3 MB body 413 35ms
+ Test Files  4 passed (4)
+      Tests  16 passed | 1 skipped (17)
+   Start at  04:00:52
+   Duration  2.51s (transform 2.78s, setup 233ms, import 5.89s, tests 193ms, environment 0ms)
+exit=0

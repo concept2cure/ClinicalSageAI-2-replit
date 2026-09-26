@@ -90,7 +90,12 @@ vi.mock('../../db', () => {
       }),
     }),
   };
-  const pool = { query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }) };
+  // The live-token check reads the revocation list and the account's standing here.
+  const pool = {
+    query: vi.fn(async (sql: string) =>
+      /SELECT status FROM users/i.test(sql) ? { rows: [{ status: 'active', password_changed_at_seconds: null }], rowCount: 1 } : { rows: [], rowCount: 0 },
+    ),
+  };
   return { db, pool, getPool: () => pool, getDb: () => db };
 });
 
@@ -119,13 +124,14 @@ vi.mock('../../services/emailOtpService', () => ({
 vi.mock('../../services/auth-security-service', () => ({
   validatePasswordPolicy: () => ({ valid: true, errors: [] }),
   isAccountLocked: vi.fn(), recordFailedLogin: vi.fn(), resetFailedLogins: vi.fn(),
-  isPasswordExpired: vi.fn(), checkPasswordHistory: vi.fn(),
+  isPasswordExpired: vi.fn(), checkPasswordHistory: vi.fn(async () => true),
   createElectronicSignature: vi.fn(), verifySignatureIntegrity: vi.fn(),
 }));
 vi.mock('../../services/industry-context/signup-profile', () => ({
   primaryIndustryForIndustryMode: vi.fn(), pathwaysForUseCases: vi.fn(),
 }));
 vi.mock('../../db/tenantAdmission', () => ({ assertCanAdmitNewTenant: vi.fn() }));
+vi.mock('../../services/ai-actions/redis-manager.js', () => ({ isRedisAvailable: () => false, getRedisClient: () => null }));
 vi.mock('../../auth/dev-auth-policy', () => ({
   isDevAuthAllowed: () => false, devAuthDenialReason: () => 'disabled',
 }));
@@ -134,6 +140,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import authRoutes from '../auth';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 
 const app = express();
 app.use(express.json());
@@ -311,5 +319,27 @@ describe('changing the password is audited — the credential-changing event', (
     const res = await request(app).post('/api/auth/reset-password').send({ token: 'only-a-token' });
     expect(res.status).toBe(400);
     expect(actions()).toHaveLength(0);
+  });
+});
+
+describe('changing the password while signed in is audited too (IAM-17)', () => {
+  it('records user_password_changed for the account holder, in the account tenant, without the password', async () => {
+    const passwordHash = await bcrypt.hash('Current-Passphrase!1', 4);
+    dbState.selectRows = [{ id: 7, email: 'holder@example.test', passwordHash, passwordHistory: [], defaultOrganizationId: 3 }];
+    const token = jwt.sign({ userId: '7', email: 'holder@example.test', organizationId: '3', type: 'access' }, process.env.JWT_SECRET as string, { expiresIn: '5m' });
+
+    const res = await request(app)
+      .post('/api/auth/password/change')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ currentPassword: 'Current-Passphrase!1', newPassword: 'Str0ng-Passphrase!42-new' });
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const row = logAction.mock.calls.map(c => c[0] as any).find(r => r.action === 'user_password_changed');
+    expect(row, 'the change was a log line, not an audit event').toBeTruthy();
+    expect(row.details.outcome).toBe('success');
+    expect(row.details.reason).toBe('changed by the account holder');
+    expect(String(row.resourceId)).toBe('7');
+    expect(JSON.stringify(row)).not.toContain('Str0ng-Passphrase!42-new');
+    expect(JSON.stringify(row)).not.toContain('Current-Passphrase!1');
   });
 });

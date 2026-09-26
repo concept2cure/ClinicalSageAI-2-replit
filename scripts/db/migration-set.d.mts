@@ -24,6 +24,10 @@
  */
 export declare const C2C_MIGRATION_FILES: string[];
 
+/** The final pair of the set: the uuid-keyed non-public sweep, then the public sweep. */
+export declare const UUID_TENANT_ISOLATION_NONPUBLIC: string;
+export declare const TENANT_ISOLATION_SWEEP: string;
+
 export interface ApplyMigrationOptions {
   log?: (message: string) => void;
   error?: (message: string) => void;

@@ -61,6 +61,10 @@ const EVENT_DESCRIPTIONS: Readonly<Record<string, string>> = {
   'user_login|failure|unknown_email': 'Sign-in refused: no account for this address',
   'user_login|failure|account_locked': 'Sign-in refused: account locked',
   'user_login|failure|account_inactive': 'Sign-in refused: the account is not active (suspended or deprovisioned)',
+  'user_login|failure|email_unverified': 'Sign-in refused: the e-mail address has not been confirmed',
+  'user_signup|success|verification_sent': 'Signed up: the account waits on its e-mail confirmation link',
+  'user_signup|success|dev_no_verification': 'Signed up on a development server: e-mail confirmation skipped',
+  'email_verified|success|link': 'E-mail address confirmed from the sign-up link: the account is active',
   'user_login|failure|wrong_password': 'Sign-in refused: wrong password',
   'user_login|failure|wrong_password_threshold_exceeded': 'Sign-in refused: wrong password; the account is now locked',
   // A SAML sign-in, recorded in the organisation that owns the IdP
@@ -80,6 +84,7 @@ const EVENT_DESCRIPTIONS: Readonly<Record<string, string>> = {
   'user_password_reset_requested|failure|no account for this address': 'Password reset requested for an address with no account',
   'user_password_reset_failed|failure|reset token matched no account': 'Password reset refused: the reset link matched no account',
   'user_password_reset_failed|failure|reset token had expired': 'Password reset refused: the reset link had expired',
+  'user_password_changed|success|changed by the account holder': 'Password changed by the account holder (current password verified)',
   'user_password_changed|success|password reset via emailed token': 'Password changed through an emailed reset link',
   'user_mfa_setup|success|secret_issued': 'Authenticator enrolment started: a new secret was issued',
   'user_mfa_setup|failure|already_enrolled': 'Authenticator enrolment refused: two-step verification is already on',

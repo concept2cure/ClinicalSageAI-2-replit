@@ -1,0 +1,14 @@
+ × tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > continuous superiority: Base case N and power equal the design 17ms
+   → expected 32 to be 63 // Object.is equality
+ × tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > continuous non-inferiority: Base case N and power equal the design 1ms
+   → expected Infinity to be 393 // Object.is equality
+ × tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > continuous equivalence: Base case N and power equal the design 1ms
+   → expected Infinity to be 252 // Object.is equality
+ × tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > binary superiority, 2:1: Base case N and power equal the design 1ms
+   → expected 82 to be 123 // Object.is equality
+ × tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > time to event: Base case N and power equal the design 1ms
+   → expected 485 to be 486 // Object.is equality
+ × tests/services/ana-biostats.test.ts > Layer 2: the base-case scenario is the design itself > no scenario carries a missing or non-finite N 2ms
+   → expected false to be true // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 112 skipped (118)

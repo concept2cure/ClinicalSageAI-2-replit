@@ -10,8 +10,10 @@
  * @module server/routes/client-intelligence
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, NextFunction, Request, Response } from 'express';
 import multer from 'multer';
+import { makeUploadFileFilter, receiveUpload } from '../middleware/uploadAllowlist';
+import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
 import {
   upsertClientProfile,
   getClientProfile,
@@ -75,28 +77,47 @@ function sendError(res: Response, status: number, message: string) {
 }
 
 // ── Multer config for file uploads (50MB limit) ─────────────────────────────
+// The declared types the two ingest routes read. Until 2026-09-25 this list was
+// the whole check: the declared type is chosen by the client and the bytes were
+// never compared against it, and no malware scan ran (security audit
+// 2026-09-24, IAM-14; plan P1-5). Same list; the byte check and scan now run in
+// validateUploadedFile below through the shared guard.
+const UPLOAD_MAX_BYTES = 50 * 1024 * 1024;
+const UPLOAD_ALLOWED_MIME_TYPES = [
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-excel',
+  'text/csv',
+  'text/plain',
+  'text/markdown',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+];
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
-  fileFilter: (_req, file, cb) => {
-    const allowed = [
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'application/vnd.ms-excel',
-      'text/csv',
-      'text/plain',
-      'text/markdown',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    ];
-    if (allowed.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error(`Unsupported file type: ${file.mimetype}`));
-    }
-  },
+  limits: { fileSize: UPLOAD_MAX_BYTES, files: 1 },
+  fileFilter: makeUploadFileFilter({
+    extensions: [],
+    mimeTypes: UPLOAD_ALLOWED_MIME_TYPES,
+    allowMimePrefixes: [],
+  }),
 });
+
+/** Byte check + malware scan on the received file; a missing file is left to the handler. */
+async function validateUploadedFile(req: Request, res: Response, next: NextFunction) {
+  const file = req.file;
+  if (!file) return next();
+  try {
+    await assertUploadSafe(file.buffer ?? Buffer.alloc(0), file.mimetype, file.originalname);
+  } catch (err) {
+    if (err instanceof UploadSafetyError) {
+      return res.status(err.status).json({ success: false, ...err.body });
+    }
+    return next(err);
+  }
+  return next();
+}
 
 // ── Helper: extract org/user from request ────────────────────────────────────
 function getRequestContext(req: Request) {
@@ -179,7 +200,8 @@ router.post('/profile', async (req: Request, res: Response) => {
  */
 router.post(
   '/documents/upload',
-  upload.single('file'),
+  receiveUpload(upload.single('file'), { maxBytes: UPLOAD_MAX_BYTES }),
+  validateUploadedFile,
   async (req: Request, res: Response) => {
     try {
       const { organizationId, userId } = getRequestContext(req);
@@ -492,7 +514,8 @@ router.post('/project/:projectId/profile', async (req: Request, res: Response) =
  */
 router.post(
   '/project/:projectId/documents/upload',
-  upload.single('file'),
+  receiveUpload(upload.single('file'), { maxBytes: UPLOAD_MAX_BYTES }),
+  validateUploadedFile,
   async (req: Request, res: Response) => {
     try {
       const { organizationId, userId } = getRequestContext(req);

@@ -4,6 +4,8 @@ import { getPool } from '../../db';
 import { getTenantScope } from '../../db/tenantStore';
 import { v4 as uuidv4 } from 'uuid';
 import multer from 'multer';
+import { makeUploadFileFilter } from '../../middleware/uploadAllowlist';
+import { assertUploadSafe, UploadSafetyError } from '../../middleware/uploadSafety';
 import PDFDocument from 'pdfkit';
 import JSZip from 'jszip';
 import {
@@ -82,8 +84,6 @@ export const STAB_PLANNED_CONDITIONS: Record<string, { temp: string; rh: string 
   INT: { temp: '30°C', rh: '65%' },
   ACC: { temp: '40°C', rh: '75%' },
 };
-const upload = multer({ storage: multer.memoryStorage() });
-
 const ALLOWED_MIME_TYPES = new Set([
   'application/pdf',
   'text/csv',
@@ -99,67 +99,70 @@ const ALLOWED_MIME_TYPES = new Set([
   'image/jpeg',
 ]);
 
-const MAGIC_SIGNATURES = [
-  { mime: 'application/pdf', magic: Buffer.from('%PDF') },
-  { mime: 'image/png', magic: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]) },
-  { mime: 'image/jpeg', magic: Buffer.from([0xff, 0xd8, 0xff]) },
-  { mime: 'application/zip', magic: Buffer.from([0x50, 0x4b, 0x03, 0x04]) },
-];
+/**
+ * The upload receiver for this router's three multipart routes (results CSV,
+ * excursions CSV, chain-of-custody attachment). Until 2026-09-25 it was
+ * `multer({ storage: multer.memoryStorage() })`: no size limit, so a client
+ * could buffer any number of bytes into this process's heap, and no filter, so
+ * the type was checked only after the whole body had been read (security audit
+ * 2026-09-24, IAM-14; plan P1-5). Bounded here; the byte check and the malware
+ * scan run in validateUploadedFile below through the shared guard.
+ */
+const UPLOAD_MAX_BYTES = 25 * 1024 * 1024;
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: UPLOAD_MAX_BYTES, files: 1 },
+  fileFilter: makeUploadFileFilter({
+    extensions: ['pdf', 'csv', 'txt', 'json', 'xml', 'xls', 'xlsx', 'docx', 'zip', 'png', 'jpg', 'jpeg'],
+    mimeTypes: [...ALLOWED_MIME_TYPES],
+    allowMimePrefixes: [],
+  }),
+});
 
-const isLikelyText = (buffer: Buffer) => {
-  const sample = buffer.subarray(0, 2048);
-  if (sample.includes(0)) return false;
-  let printable = 0;
-  for (const byte of sample) {
-    if (byte === 9 || byte === 10 || byte === 13 || (byte >= 32 && byte <= 126)) {
-      printable += 1;
+/**
+ * Multer's outcomes answered as the 4xx they are: the size limit is 413, a
+ * refused type 415, any other multer complaint 400. Left to `next(err)` each
+ * became a 500 at the generic handler.
+ */
+const receiveSingleFile = (req: any, res: any, next: any) => {
+  upload.single('file')(req, res, (err: unknown) => {
+    if (!err) return next();
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({ error: `The file exceeds the ${UPLOAD_MAX_BYTES / (1024 * 1024)} MB limit` });
+      }
+      return res.status(400).json({ error: `Upload rejected: ${err.message}` });
     }
-  }
-  return printable / sample.length > 0.9;
+    if (err instanceof Error && /Unsupported file type/i.test(err.message)) {
+      return res.status(415).json({ error: 'Unsupported file type' });
+    }
+    return next(err);
+  });
 };
 
-const matchesMagic = (buffer: Buffer, magic: Buffer) =>
-  buffer.length >= magic.length && buffer.subarray(0, magic.length).equals(magic);
-
-const validateUploadedFile = (req: any, res: any, next: any) => {
+/**
+ * The declared type must be one this router reads, and the bytes must be what
+ * the type says (magic number, or printable text for text-shaped types) and
+ * clean (malware scan; fails closed in production when no scan could run). The
+ * check is the platform's one implementation, server/middleware/uploadSafety.ts;
+ * this router kept its own copy of the signature logic until 2026-09-25.
+ */
+const validateUploadedFile = async (req: any, res: any, next: any) => {
   const file = req.file;
   if (!file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
-
   if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
     return res.status(415).json({ error: 'Unsupported file type' });
   }
-
-  const buffer: Buffer = file.buffer || Buffer.alloc(0);
-  const zipBasedMimes = new Set([
-    'application/zip',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  ]);
-
-  const magicMatch = MAGIC_SIGNATURES.find(sig => matchesMagic(buffer, sig.magic));
-
-  if (zipBasedMimes.has(file.mimetype)) {
-    if (!matchesMagic(buffer, Buffer.from([0x50, 0x4b, 0x03, 0x04]))) {
-      return res.status(415).json({ error: 'Invalid ZIP-based file signature' });
+  try {
+    await assertUploadSafe(file.buffer ?? Buffer.alloc(0), file.mimetype, file.originalname);
+  } catch (err) {
+    if (err instanceof UploadSafetyError) {
+      return res.status(err.status).json(err.body);
     }
-  } else if (
-    file.mimetype.startsWith('text/') ||
-    file.mimetype.includes('json') ||
-    file.mimetype.includes('xml')
-  ) {
-    if (!isLikelyText(buffer)) {
-      return res.status(415).json({ error: 'Invalid text file content' });
-    }
-  } else if (
-    magicMatch &&
-    magicMatch.mime !== file.mimetype &&
-    file.mimetype !== 'application/zip'
-  ) {
-    return res.status(415).json({ error: 'File signature does not match MIME type' });
+    return next(err);
   }
-
   return next();
 };
 
@@ -914,7 +917,7 @@ router.post('/studies/:id/schedule', async (req, res) => {
 // POST /api/stability/studies/:id/results/import - Import CSV results
 router.post(
   '/studies/:id/results/import',
-  upload.single('file'),
+  receiveSingleFile,
   validateUploadedFile,
   async (req, res) => {
     const client = await pool.connect();
@@ -2196,7 +2199,7 @@ router.patch('/capa/:id', async (req, res) => {
 // POST /studies/:id/excursions/import  CSV columns: timestamp,metric(TEMP|RH),value,low,high
 router.post(
   '/studies/:id/excursions/import',
-  upload.single('file'),
+  receiveSingleFile,
   validateUploadedFile,
   async (req, res) => {
     try {
@@ -2820,7 +2823,7 @@ router.post('/samples/:sampleId/chain', async (req, res) => {
 // POST /api/stability/samples/:sampleId/chain/upload  (multipart file=attachment)
 router.post(
   '/samples/:sampleId/chain/upload',
-  upload.single('file'),
+  receiveSingleFile,
   validateUploadedFile,
   async (req, res) => {
     const sid = req.params.sampleId;

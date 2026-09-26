@@ -1,0 +1,12 @@
+✅ selftest: gate passes on an intact tree (six links and the founder walk)
+✅ selftest: gate exits 1 and names [thread-mounts-canvas] when ConversationThread.tsx cuts the link
+✅ selftest: gate exits 1 and names [canvas-mounts-workbench] when DocumentCanvas.tsx cuts the link
+✅ selftest: gate exits 1 and names [surface-mounts-workbench] when DocumentAuthoring.tsx cuts the link
+✅ selftest: gate exits 1 and names [tool-registered] when document-surface-tool-defs.ts cuts the link
+✅ selftest: gate exits 1 and names [workbench-reads-vault] when ProjectFilesPanel.tsx cuts the link
+✅ selftest: gate exits 1 and names [file-to-vault-route] when authoring.router.ts cuts the link
+✅ selftest: gate exits 1 and names [founder-walk] when founder-path-lineage.pglite.test.ts cuts the link
+✅ selftest: gate exits 1 and names [founder-walk] when founder-path-lineage.hops.ts cuts the link
+✅ selftest: gate exits 1 and names [founder-walk] when founder-path-lineage.baseline.json cuts the link
+exit 0
+✅ ci:canvas-path — thread → canvas → workbench, surface → workbench, tool registered, vault read, file-to-vault route: all wired; the founder-path walk runs project → agency within its baseline

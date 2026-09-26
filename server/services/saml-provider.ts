@@ -88,23 +88,25 @@ const ATTRIBUTE_MAP: Record<string, string> = {
 };
 
 /**
- * InResponseTo / replay validation mode. Default `ifPresent`: validate the
- * solicitation binding for SP-initiated flows (which always carry InResponseTo),
- * while still accepting IdP-initiated SSO. Override with
- * SAML_VALIDATE_INRESPONSETO=never|ifPresent|always.
+ * InResponseTo / replay validation mode. Default `always`: an assertion must
+ * answer an AuthnRequest this SP issued, which binds it to a solicitation and
+ * refuses a replayed or unsolicited one (security audit 2026-09-24, IAM-18
+ * item 6; the default was `ifPresent`, which accepted an IdP-initiated response
+ * bound to no request). An operator who runs IdP-initiated SSO sets
+ * SAML_VALIDATE_INRESPONSETO=ifPresent knowingly; `never` disables the check.
  *
  * NOTE: node-saml's default in-memory request cache is per-process. For
  * multi-instance / HA deployments, a shared cache (e.g. Redis) should back the
  * InResponseTo store; until then run SSO on a single instance or sticky routing.
  */
-function inResponseToMode(): ValidateInResponseTo {
-  switch ((process.env.SAML_VALIDATE_INRESPONSETO || '').toLowerCase()) {
+export function inResponseToMode(env: NodeJS.ProcessEnv = process.env): ValidateInResponseTo {
+  switch ((env.SAML_VALIDATE_INRESPONSETO || '').toLowerCase()) {
     case 'never':
       return ValidateInResponseTo.never;
-    case 'always':
-      return ValidateInResponseTo.always;
-    default:
+    case 'ifpresent':
       return ValidateInResponseTo.ifPresent;
+    default:
+      return ValidateInResponseTo.always;
   }
 }
 

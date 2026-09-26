@@ -35,6 +35,12 @@ export type DataResidency = 'any' | 'us' | 'eu' | 'apac' | 'on_prem';
 /** Retention posture honored for a request's payload at the provider. */
 export type RetentionPolicy = 'standard' | 'zero_retention';
 
+/**
+ * Where a request's content came from — see GatewayRequest.payloadProvenance.
+ * Absent on a request means `tenant_governed`.
+ */
+export type PayloadProvenance = 'tenant_governed' | 'tenant_derived' | 'public';
+
 export type TaskType =
   | 'chat'
   | 'document_analysis'
@@ -376,12 +382,46 @@ export interface GatewayRequest {
   /** @internal Classification captured before any policy redaction. */
   sensitiveDataClass?: 'none' | 'pii' | 'phi' | 'unknown';
 
-  /** @internal Tenant placement resolution retained for the last-mile gate. */
+  /**
+   * @internal The content classifier's regulatory signal. Recorded in the audit
+   * trail only; it does not gate dispatch until its false-positive rate on
+   * ordinary chat has been measured.
+   */
+  regulatoryContentDetected?: boolean;
+
+  /**
+   * Where this request's content came from, which decides whether the tenant's
+   * placement floor applies to it. Absent means `tenant_governed`: fail closed.
+   *
+   *  - `tenant_governed` — vault, uploads, sequences, drafts, and any tool
+   *    result computed over them.
+   *  - `tenant_derived` — engine output computed from governed content. Held to
+   *    the same floor; distinguished only in the audit trail.
+   *  - `public` — inputs are provably only public-source fetch results and
+   *    public identifiers. Only a caller module on the allowlist in
+   *    `scripts/ci/check-public-source-callers.mjs` may declare it; a model
+   *    never does. A `public` payload reaches a substrate outside the tenant's
+   *    floor only when the tenant opted in (`publicSourceFrontier`).
+   */
+  payloadProvenance?: PayloadProvenance;
+
+  /** @internal Tenant placement resolution retained for selection and the last-mile gate. */
   sensitiveTenantPolicy?: {
     resolution: 'resolved' | 'absent' | 'unknown';
+    /** Why the policy is unknown: the lookup failed, or nothing bound the call to a tenant. */
+    unknownReason?: 'lookup_failed' | 'no_tenant_binding';
+    /** The organization whose floor applies, and how it was bound. */
+    organizationId?: string | number;
+    boundFrom?: 'explicit' | 'ambient_scope' | 'platform_scope' | 'none';
     residency?: DataResidency;
     zeroDataRetention?: boolean;
     allowedSubstrates?: SubstrateClass[];
+    /** Per-tenant vendor allow-list; absent = no vendor constraint, empty = none allowed. */
+    allowedProviders?: ProviderName[];
+    /** Tenant opted in to `public` payloads reaching a shared frontier API. */
+    publicSourceFrontier?: boolean;
+    /** The request asked for a residency that contradicts the tenant's. */
+    residencyConflict?: boolean;
   };
 
   /** Maximum tokens to generate */
@@ -676,6 +716,19 @@ export interface ModelConfig {
    * the family, decides what an entry can do.
    */
   maxApiEffort?: 'high' | 'max' | null;
+
+  /**
+   * The effort sent when the caller chose none. Omitted: send nothing and let
+   * the API's own default apply.
+   *
+   * Declared where that default is not the level the entry was reviewed at.
+   * Claude Opus 5.5's API default is `medium`, one level below Opus 5's `high`,
+   * so omitting effort would silently change what runs on a model bump; the
+   * entry states it instead, and the record says what ran. A person's own
+   * choice (Fast / Balanced / Thorough) always wins, and `maxApiEffort` still
+   * caps it.
+   */
+  defaultApiEffort?: 'low' | 'medium' | 'high';
 }
 
 export interface PolicyConfig {

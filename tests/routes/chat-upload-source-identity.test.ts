@@ -185,12 +185,24 @@ describe('chat upload → canonical source identity', () => {
     expect(params.clientProgramId).toBeNull();
   });
 
+  /** regulatory_programs as the database holds it: `uuid` is org 5's project. */
+  function programsOfOrg5(...uuids: string[]) {
+    mockPoolQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
+      if (/FROM regulatory_programs/i.test(sql)) {
+        const [id, org] = params as [string, number];
+        return { rows: uuids.includes(id) && org === 5 ? [{ id }] : [] };
+      }
+      return { rows: [] };
+    });
+  }
+
   it('scopes a UUID-keyed program upload instead of rejecting it', async () => {
     // The project management module is keyed on regulatory_programs UUIDs.
     // upload.ts used to parseInt every projectId and return 400
     // GOVERNED_UPLOAD_CONTEXT_INVALID on the NaN, so a file could not be
     // uploaded at all while a UUID-keyed program was open.
     const uuid = '11111111-1111-4111-8111-111111111111';
+    programsOfOrg5(uuid);
     const res = await runUpload({ projectId: uuid });
 
     expect(res.status).not.toHaveBeenCalledWith(400);
@@ -199,6 +211,20 @@ describe('chat upload → canonical source identity', () => {
     expect(params.clientWorkspaceId).toBeNull();
     expect(params.visibilityClass).toBe('project_private');
     expect(payload(res).status).toBe('ready');
+  });
+
+  it('refuses a project the organization does not hold — another org’s, a missing or a deleted one — before anything is written', async () => {
+    // PF-02 / LX-20: a Data Room file is anchored to a project of the
+    // uploader's organization, or it is not captured. The id was checked for
+    // UUID SHAPE only, so a file could be anchored to another organization's
+    // project, or to none that exists.
+    programsOfOrg5('11111111-1111-4111-8111-111111111111');
+    const res = await runUpload({ projectId: '22222222-2222-4222-8222-222222222222' });
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(payload(res)).toMatchObject({ code: 'PROJECT_NOT_FOUND' });
+    expect(mockCreateSource).not.toHaveBeenCalled();
+    const writes = mockPoolQuery.mock.calls.filter(([sql]) => /^\s*(INSERT|UPDATE|DELETE)\b/i.test(String(sql)));
+    expect(writes).toEqual([]);
   });
 
   it('keeps an unscoped chat attachment tenant-private, not project-wide', async () => {

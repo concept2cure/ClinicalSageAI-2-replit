@@ -324,3 +324,17 @@ describe('when the copy cannot be removed, the refusal says so', () => {
     expect(message).toMatch(/check the Vault/);
   });
 });
+
+describe('the retention clock starts at admission (P1-22)', () => {
+  it('the INSERT computes retention_until from the named, active policy, bound to the same parameter as retention_policy, and a re-upload does not restart a clock that has started', async () => {
+    const { client, calls } = txClient();
+    connect.mockResolvedValue(client);
+    await ingestVaultDocument(args({ retentionPolicy: 'gxp-25y' }));
+    const insert = calls.find(c => /INSERT INTO vault\.documents/.test(c.sql));
+    expect(insert, 'no INSERT ran').toBeTruthy();
+    expect(insert!.sql).toMatch(/retention_policy, retention_until,/);
+    expect(insert!.sql).toMatch(/SELECT CURRENT_DATE \+ rp\.retention_days FROM vault\.retention_policies rp\s+WHERE rp\.policy_name = \$13 AND rp\.active/);
+    expect(insert!.params[12]).toBe('gxp-25y');
+    expect(insert!.sql).toMatch(/retention_until = COALESCE\(vault\.documents\.retention_until, EXCLUDED\.retention_until\)/);
+  });
+});

@@ -349,6 +349,17 @@ jobs:
           npm run ci:pq-evaluation-callers:selftest
           npm run ci:pq-evaluation-callers
 
+      # A tenant's AI placement policy (vendor and substrate allow-lists,
+      # residency, zero retention) is applied to the tenant the gateway is told
+      # about. AnA's own chat turns once passed no organizationId and were
+      # placement-unconstrained (launch row D6). Every AnA gateway call binds its
+      # tenant, and only allowlisted modules may declare a payload 'public'.
+      - name: Guardrails — AnA AI dispatch binds its tenant (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: |
+          npm run ci:ai-tenant-binding:selftest
+          npm run ci:ai-tenant-binding
+
       # A pin to a model not approved for high-risk work serves any request that
       # is not declared high-risk, whatever it drafts. Every such pin in server
       # code is listed with the reason it is safe; a new one, or one removed
@@ -1835,6 +1846,13 @@ jobs:
           # durability; a deployment names S3 (terraform/stack) or a real volume.
           STORAGE_PROVIDER: local
           STORAGE_ACCEPT_LOCAL_DISK: 'true'
+          # The audit posture production ships (terraform/stack/main.tf; security
+          # plan P0-9): the tamper-proof trail on, and a missing trail, a failed
+          # immutability probe or a disabled sweep refusing boot. Without these
+          # this job boots a posture production never runs, and would not see a
+          # change that makes the real one crash-loop.
+          AUDIT_TRAIL_ENABLED: 'true'
+          AUDIT_REQUIRE_ENFORCE: 'true'
           # This job has no AI provider, and since /readyz gained its `ana`
           # dependency (startup/ana-readiness-state.ts) that is no longer a
           # silent condition: a process where AnA cannot answer refuses to
@@ -1988,7 +2006,25 @@ jobs:
           # diagnostic. A missing file on a green gate is still impossible.
           if-no-files-found: warn
 
+      - name: Trivy exceptions are attached, owned and dated (with selftests)
+        # A scan cannot tell that an exception it was given is wrong. An inline
+        # #trivy:ignore that a later edit moved off its block applies to nothing
+        # (abc1c99a5 turned the config scan red that way), and a .trivyignore
+        # entry needs an owner, a reason and an expiry. Both checks run before
+        # the scans; each selftest proves its check can still fail.
+        # docs/evidence/W2/2026-09-26-trivy-inline-ignores/
+        if: ${{ !cancelled() }}
+        run: |
+          node scripts/ci/check-trivy-inline-ignores.mjs --selftest
+          node scripts/ci/check-trivy-inline-ignores.mjs
+          node scripts/ci/check-trivyignore-hygiene.mjs --selftest
+          node scripts/ci/check-trivyignore-hygiene.mjs
+
       - name: Trivy filesystem scan (deps + secrets)
+        # Runs after an earlier failed step too, so a red job still says whether the
+        # tree carries a HIGH/CRITICAL finding (security audit INF-08). Not after a
+        # cancel. tests/ci/trivy-steps-run-after-failures.contract.test.ts
+        if: ${{ !cancelled() }}
         # Blocking gate: fails the job on HIGH/CRITICAL findings so they cannot
         # be merged. (severity threshold + exit-code 1; no continue-on-error.)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
@@ -2000,6 +2036,10 @@ jobs:
           format: table
 
       - name: Trivy config scan (Dockerfile/IaC)
+        # Runs after an earlier failed step too, so a red job still says whether the
+        # tree carries a HIGH/CRITICAL finding (security audit INF-08). Not after a
+        # cancel. tests/ci/trivy-steps-run-after-failures.contract.test.ts
+        if: ${{ !cancelled() }}
         # Blocking. The deploy workflow's security-gate runs this same scan,
         # also blocking, before build-push. Without this copy a finding would
         # show only when a release is tagged; while it was advisory, 16 findings
@@ -2014,6 +2054,51 @@ jobs:
           exit-code: '1'
           format: table
           skip-dirs: node_modules
+          # DS002 (image runs as root) is excepted for this one file alone: a
+          # vendored skill's own CI image, never built, published or deployed
+          # here (Dockerfile.optimized runs as appuser). Every other Dockerfile
+          # is checked. .trivyignore could only drop DS002 for the whole tree.
+          skip-files: .claude/skills/gstack/.github/docker/Dockerfile.ci
+
+  secret-history-scan:
+    # Security plan P0-17 / audit INF-22. check-committed-secrets.mjs (Lint)
+    # scans the working tree; a credential deleted from the tree is still in its
+    # history, which is how the neondb_owner password survived. This scans every
+    # commit on the branch. Findings already in history are listed with their
+    # reasons in .gitleaksignore; a new one fails the job.
+    # docs/evidence/W2/2026-09-26-p0-17-history-secret-scan/
+    name: Secret scan (full history)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Install gitleaks (pinned module version, checksum-verified)
+        # go install checks the module against the Go checksum database
+        # (sum.golang.org), so the pin is a content pin without a third-party
+        # action or a hand-copied digest. GOTOOLCHAIN=auto fetches the Go
+        # version gitleaks declares if the runner's is older.
+        env:
+          GOTOOLCHAIN: auto
+          GOFLAGS: -mod=mod
+        run: |
+          go install github.com/zricethezav/gitleaks/v8@v8.28.0
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Scan every commit on this branch
+        # HEAD only, not --all: the stale agent branches on origin (INF-28) are
+        # not this branch's history. .gitleaksignore is read from the repo root.
+        run: gitleaks git --no-banner --redact --config .gitleaks.toml --log-opts="--full-history --diff-filter=tuxdb HEAD" .
+
+      - name: Name the history credentials not yet revoked
+        if: ${{ !cancelled() }}
+        run: |
+          n=$(grep -c '^# status: live' .gitleaksignore || true)
+          if [ "$n" -gt 0 ]; then
+            echo "::warning title=Secrets in git history::$n credential(s) in this branch's history are recorded as live in .gitleaksignore (security plan P0-17). They stay readable to anyone with the repository until revoked."
+          fi
 
   nightly-governance:
     name: Nightly Governance Strict

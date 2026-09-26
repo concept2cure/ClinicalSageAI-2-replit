@@ -1,0 +1,33 @@
+# 2026-09-26T03:59:13Z — HEAD a49c5a12, before the fix: the 50 MB parser is mounted before the boundary inside applyCoreMiddleware and there is no post-boundary parser to mount
+$ npx vitest run server/startup/__tests__/pre-auth-body-limit.test.ts
+     21|   a.use('/api', (_req: Request, res: Response, next: NextFunction) => …
+     22|   mountConcept2cureBodyParser(a);
+ ❯ server/startup/__tests__/pre-auth-body-limit.test.ts:44:29
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+ FAIL  server/startup/__tests__/pre-auth-body-limit.test.ts > the /api/concept2cure body is read only after the auth boundary > a signed-in body is scrubbed of prototype pollution after it is parsed
+TypeError: mountPreAuthBodyParsers is not a function
+ ❯ app server/startup/__tests__/pre-auth-body-limit.test.ts:20:3
+     18| function app(signedIn: boolean) {
+     19|   const a = express();
+     20|   mountPreAuthBodyParsers(a);
+       |   ^
+     21|   a.use('/api', (_req: Request, res: Response, next: NextFunction) => …
+     22|   mountConcept2cureBodyParser(a);
+ ❯ server/startup/__tests__/pre-auth-body-limit.test.ts:51:29
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+ FAIL  server/startup/__tests__/pre-auth-body-limit.test.ts > the /api/concept2cure body is read only after the auth boundary > the rest of /api keeps its 2 MB parser before the boundary: malformed JSON is 400, a 3 MB body 413
+TypeError: mountPreAuthBodyParsers is not a function
+ ❯ app server/startup/__tests__/pre-auth-body-limit.test.ts:20:3
+     18| function app(signedIn: boolean) {
+     19|   const a = express();
+     20|   mountPreAuthBodyParsers(a);
+       |   ^
+     21|   a.use('/api', (_req: Request, res: Response, next: NextFunction) => …
+     22|   mountConcept2cureBodyParser(a);
+ ❯ server/startup/__tests__/pre-auth-body-limit.test.ts:58:27
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  03:59:14
+   Duration  2.30s (transform 1.01s, setup 83ms, import 1.92s, tests 8ms, environment 0ms)
+exit=1

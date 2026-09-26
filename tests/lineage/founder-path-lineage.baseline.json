@@ -1,0 +1,210 @@
+{
+  "$comment": "LX-00 shrink-only baseline for tests/lineage/founder-path-lineage.pglite.test.ts. Each entry is a check that is broken at HEAD: the verified finding(s) from docs/design/LINEAGE_END_TO_END_PLAN_2026-09-25.md (or LX00-Fn for a defect this test found that the plan does not cover), the LX fix(es) that close it, and the value the check observes today, serialized as the test serializes it. A baselined check that passes fails the run (delete its entry); one that fails on a different value fails the run (re-examine it). Never add an entry to make the run green; the ceiling below is the size this file was written at.",
+  "ceiling": 17,
+  "hops": {
+    "capture": {
+      "bytes-durable": {
+        "findings": [
+          "DR-ANA-11"
+        ],
+        "closedBy": [
+          "LX-02"
+        ],
+        "observed": "null",
+        "why": "cre_evidence_sources.stored_artifact_ref is 'uploads/org-<n>/<fileId>', a path on the serving task's own disk written best-effort (server/routes/chat/upload.ts:166-184, :563). No storage-provider object exists for it, so the bytes behind checksum = sha256(X) cannot be read back through getStorageProviderFor."
+      }
+    },
+    "ana-draft": {
+      "tool-accepts-sources": {
+        "findings": [
+          "AC-02",
+          "DR-ANA-13"
+        ],
+        "closedBy": [
+          "LX-06"
+        ],
+        "observed": "false",
+        "why": "draft_authoring_document's input_schema declares title, module, documentType and sections only (server/services/ana/document-surface-tool-defs.ts:141-166). The model cannot hand the tool its grounding; the sources[] the test passes is dropped by parseDraftInput."
+      },
+      "model-recorded": {
+        "findings": [
+          "AC-01",
+          "DR-ANA-13"
+        ],
+        "closedBy": [
+          "LX-06"
+        ],
+        "observed": "undefined",
+        "why": "The stream's dispatch ctx carries servingModel only (server/routes/ana-ri/stream.ts:1731-1744); the tool records provenance.model from ctx.model (server/services/authoring/authoring-draft-tool.ts:136), which no dispatch sets. provenance is {source:'ana', recordedAt}."
+      },
+      "turn-recorded": {
+        "findings": [
+          "AC-01",
+          "DR-ANA-13"
+        ],
+        "closedBy": [
+          "LX-06"
+        ],
+        "observed": "[null,null]",
+        "why": "Same dispatch: no threadId or turnId reaches the tool (server/services/ana/AnaToolExecutor.ts:228-236 says 'the stream's dispatch does not pass them yet'), so provenance names no conversation and no turn."
+      },
+      "source-span": {
+        "findings": [
+          "AC-02",
+          "DR-ANA-13"
+        ],
+        "closedBy": [
+          "LX-06"
+        ],
+        "observed": "0",
+        "why": "insertDocumentTx enlists only enforceAuthorLineage with machineDraft (server/services/authoring/authoring-from-draft.ts:250, authoring-documents.ts:355-363); every clause is machine_draft and no cre_evidence_source span cites the source, although the section quotes it verbatim. LX-06 depends on LX-04 and LX-05 (a quote verified against the source's own text)."
+      }
+    },
+    "edit-save": {
+      "source-span-survives": {
+        "findings": [
+          "AC-02",
+          "AC-03"
+        ],
+        "closedBy": [
+          "LX-06",
+          "LX-08"
+        ],
+        "observed": "0",
+        "why": "No source span exists to survive (AC-02, LX-06). Once one does, a sentence inserted above the quote retires it into the saver's author_assertion (retireStaleSourceSpans, server/services/clinical-regulatory-evidence/span-lineage.service.ts:813-856; AC-03, LX-08)."
+      },
+      "spans-bound-to-revision": {
+        "findings": [
+          "AC-04"
+        ],
+        "closedBy": [
+          "LX-08"
+        ],
+        "observed": "[null]",
+        "why": "document_span_lineage.document_version is never set by an authoring caller; spans are updated in place and name no doc_revisions row (span-lineage.service.ts:283-320)."
+      }
+    },
+    "seal": {
+      "seal-binds-revision-and-lineage": {
+        "findings": [
+          "AC-04",
+          "AC-10"
+        ],
+        "closedBy": [
+          "LX-08",
+          "LX-09"
+        ],
+        "observed": "{\"heads\":2,\"bound\":0,\"lineageDigests\":0}",
+        "why": "frozen_content is {document, sections, approvedBy, documentHash, frozenAt} (server/routes/authoring.router.ts:4055-4061); it names no doc_revisions head, and doc_revisions.inputs carries citations and contributors but no lineage digest (server/services/authoring/authoring-evidence.ts:297-311)."
+      }
+    },
+    "file-to-vault": {
+      "filing-names-sealed-version": {
+        "findings": [
+          "SUB-7",
+          "AC-14"
+        ],
+        "closedBy": [
+          "LX-10"
+        ],
+        "observed": "false",
+        "why": "The filing records the vault row, the artifact sha256 and the folder (server/services/authoring/authoring-file-to-vault.ts:222-264); neither the vault row, the chained audit row nor the export history names the frozen version or its content hash. The only link is document_code 'authoring-<docId>' (:344)."
+      }
+    },
+    "transmit": {
+      "reachable-from-the-product": {
+        "findings": [
+          "SUB-1"
+        ],
+        "closedBy": [
+          "LX-13"
+        ],
+        "observed": "0",
+        "why": "The sequence transmit route (server/routes/submissions.ts:1718) has no caller in client/src; the only UI transmit is the package spine's (client/src/concept2cure/v2/surfaces/GatewayTransmittals.tsx:282). This test reaches it over the API, as the plan's A17 says a direct call can."
+      },
+      "bytes-retained": {
+        "findings": [
+          "SUB-2"
+        ],
+        "closedBy": [
+          "LX-12"
+        ],
+        "observed": "false",
+        "why": "transmitSequence removes the staged package in its finally block (server/services/submission-service/submission-service.ts:1418); submission_transmittals.bundle_path names a deleted file and no durable copy is written."
+      },
+      "transmittal-names-sequence": {
+        "findings": [
+          "SUB-2"
+        ],
+        "closedBy": [
+          "LX-12"
+        ],
+        "observed": "false",
+        "why": "submission_transmittals has no sequence_id column (migrations/20260509_submission_gateways.sql); the transmittal joins its sequence only through the ECTD_TRANSMITTED audit row. Its project is now recorded (transmit/transmittal-names-project, LX-22)."
+      },
+      "transmit-record-names-bundle": {
+        "findings": [
+          "SUB-2"
+        ],
+        "closedBy": [
+          "LX-12"
+        ],
+        "observed": "false",
+        "why": "ECTD_TRANSMITTED records transmittalId, status and gateway but not the bundle sha256 or where the bytes are kept (submission-service.ts:1440-1458)."
+      }
+    },
+    "walk-back": {
+      "vault-leaf-to-seal": {
+        "findings": [
+          "SUB-7"
+        ],
+        "closedBy": [
+          "LX-10"
+        ],
+        "observed": "0",
+        "why": "From the Vault leaf, no recorded key names the seal its bytes were rendered from (see file-to-vault/filing-names-sealed-version). The filing-copy leaf does reach its seal, through coauthor_documents.metadata.sealContentHash."
+      },
+      "document-to-source-checksum": {
+        "findings": [
+          "AC-02",
+          "DR-ANA-13",
+          "AC-03"
+        ],
+        "closedBy": [
+          "LX-06",
+          "LX-08"
+        ],
+        "observed": "0",
+        "why": "The walk back reaches the project, the seal and the authoring document, and stops there: the document's spans cite no cre_evidence_source, so cre_evidence_sources.checksum = sha256(X) is unreachable by a recorded key. Once LX-06 records the span, LX-08 must keep it through the edit."
+      }
+    },
+    "walk-forward": {
+      "source-to-documents": {
+        "findings": [
+          "AC-02",
+          "DR-ANA-13",
+          "AC-03",
+          "SUB-14"
+        ],
+        "closedBy": [
+          "LX-06",
+          "LX-08"
+        ],
+        "observed": "0",
+        "why": "listSpansCitingSource (span-lineage.service.ts:1049) finds nothing citing the source, so the forward walk from the Data Room stops at its first step. From the project's authoring document onward the forward walk to the transmittal holds (walk-forward/document-to-transmittal)."
+      },
+      "data-room-shows-use": {
+        "findings": [
+          "DR-ANA-14"
+        ],
+        "closedBy": [
+          "LX-06",
+          "LX-08",
+          "LX-14"
+        ],
+        "observed": "0",
+        "why": "The Data Room's 'Used in' (GET /api/c2c/projects/:id/sources → summarizeSourceUsage) counts authoring_citations only (server/services/clinical-regulatory-evidence/source-usage.service.ts:362-400): even once LX-06 records spans, they are invisible to it until LX-14."
+      }
+    }
+  }
+}

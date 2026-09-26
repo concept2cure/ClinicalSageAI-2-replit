@@ -1,0 +1,17 @@
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — a complete design > maps every statistical field the engine needs, with no blocking gap 7ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — a complete design > is accepted and sized by the real computation and judgment engines 3ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — honest gaps > refuses to size a design with no effect size (input null, blocking gap named) 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — honest gaps > refuses a time-to-event design with no event rate 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — honest gaps > refuses a non-inferiority frame with no margin, and carries the margin when set 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — honest gaps > refuses a design with no primary endpoint 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — honest gaps > reports every engine default it applied rather than applying it silently 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — honest gaps > translates a one-sided alpha to the engine's two-sided boundary and says so 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — honest gaps > sizes a binary endpoint from the control rate plus the effect 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — honest gaps > maps product type and regions to the engine vocabularies 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > computationToPlanPatch / applyPlanPatch — the write-back > writes the computed N, power and assumptions onto the design with a provenance stamp, preserving prior evidence 2ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > computationToPlanPatch / applyPlanPatch — the write-back > re-applying from the patched design is idempotent: N and target power stay put (BS-M1) 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > computationToPlanPatch / applyPlanPatch — the write-back > the patched design still projects a SAP whose sample-size section is rendered, not missing 2ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > statisticalReadiness — the list-row summary > scores a complete design high and reports its headline numbers 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > statisticalReadiness — the list-row summary > scores an empty plan low and names the fix for every failed check 1ms
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > statisticalReadiness — the list-row summary > only counts checks that apply (no margin check on a superiority design, one on non-inferiority) 0ms
+      Tests  16 passed (16)

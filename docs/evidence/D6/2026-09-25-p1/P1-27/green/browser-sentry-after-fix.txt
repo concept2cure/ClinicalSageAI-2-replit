@@ -1,0 +1,21 @@
+# 2026-09-26T02:57:04Z — after the fix (working tree on 1f6c8d4f)
+$ npx vitest run client/src/utils/__tests__/sentry-init.test.ts client/src/utils/__tests__/sentryScrub.test.ts
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ client/src/utils/__tests__/sentryScrub.test.ts > redactText — the carriers a key name does not announce > redacts bearer tokens, JWTs, provider keys, email addresses and SSNs inside a string 3ms
+ ✓ client/src/utils/__tests__/sentryScrub.test.ts > redactText — the carriers a key name does not announce > keeps a URL and its parameter names but not the values of secret parameters 0ms
+ ✓ client/src/utils/__tests__/sentryScrub.test.ts > redactText — the carriers a key name does not announce > leaves ordinary text alone 0ms
+ ✓ client/src/utils/__tests__/sentryScrub.test.ts > redactDeep — the key denylist, wherever the key occurs > drops sensitive keys at any depth and scrubs the remaining strings 1ms
+ ✓ client/src/utils/__tests__/sentryScrub.test.ts > redactDeep — the key denylist, wherever the key occurs > passes class instances through untouched and keeps nulls 0ms
+ ✓ client/src/utils/__tests__/sentryScrub.test.ts > scrubSentryEvent — what a browser error event may carry > keeps the pseudonymous user id and drops the address, email, username and location 1ms
+ ✓ client/src/utils/__tests__/sentryScrub.test.ts > scrubSentryEvent — what a browser error event may carry > redacts credential and tenant headers, removes cookies, and strips secret query values 0ms
+ ✓ client/src/utils/__tests__/sentryScrub.test.ts > scrubSentryEvent — what a browser error event may carry > scrubs the message, extras and breadcrumbs 0ms
+ ✓ client/src/utils/__tests__/sentryScrub.test.ts > scrubSentryEvent — what a browser error event may carry > drops the event when scrubbing throws 0ms
+ ✓ client/src/utils/__tests__/sentryScrub.test.ts > scrubSentryBreadcrumb > scrubs a breadcrumb and drops one it cannot scrub 0ms
+ ✓ client/src/utils/__tests__/sentry-init.test.ts > utils/sentry — how the browser client is initialised > does not initialise without a DSN 18ms
+ ✓ client/src/utils/__tests__/sentry-init.test.ts > utils/sentry — how the browser client is initialised > never sends default PII, and every event and breadcrumb passes the scrubber 4ms
+ ✓ client/src/utils/__tests__/sentry-init.test.ts > utils/sentry — how the browser client is initialised > replays mask every text node and input and block every image, video and canvas 1ms
+ Test Files  2 passed (2)
+      Tests  13 passed (13)
+   Start at  02:57:04
+   Duration  397ms (transform 173ms, setup 149ms, import 57ms, tests 38ms, environment 0ms)
+exit=0

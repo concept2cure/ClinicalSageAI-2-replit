@@ -213,7 +213,8 @@ describe('computationToPlanPatch / applyPlanPatch — the write-back', () => {
     expect(next).not.toBe(d);
     expect(d.statisticalPlan.plannedSampleSize).toBe(400); // untouched
     expect(next.statisticalPlan.plannedSampleSize).toBe(result.adjustedTotal ?? result.sampleSize.total);
-    expect(next.statisticalPlan.power).toBe(result.power);
+    // The design keeps the TARGET the N was sized for (BS-M1), never the achieved figure.
+    expect(next.statisticalPlan.power).toBe(input!.powerTarget);
     expect(next.statisticalPlan.plannedAnalyses).toEqual(d.statisticalPlan.plannedAnalyses);
     const evidence = next.statisticalPlan.powerAssumptions?.evidence ?? [];
     expect(evidence.some((e) => e.kind === 'prior_data')).toBe(true);
@@ -224,6 +225,26 @@ describe('computationToPlanPatch / applyPlanPatch — the write-back', () => {
     const stamps = (again.statisticalPlan.powerAssumptions?.evidence ?? []).filter((e) => e.kind === 'assumption');
     expect(stamps).toHaveLength(1);
     expect(stamps[0].ref).toBe('sha256:def');
+  });
+
+  it('re-applying from the patched design is idempotent: N and target power stay put (BS-M1)', () => {
+    // The loop the test above never ran: the second apply re-derives its input
+    // from the design the first apply wrote. Writing the engine's ACHIEVED power
+    // into statisticalPlan.power made it the next apply's TARGET, so the governed
+    // N moved on every re-apply (superiority ratcheted up; a non-inferiority
+    // design fell to single digits before BS8).
+    let d = completeDesign();
+    const target = studyDesignToStatisticalInput(d).input!.powerTarget;
+    const sizes: number[] = [];
+    const powers: number[] = [];
+    for (let i = 0; i < 3; i++) {
+      const { input } = studyDesignToStatisticalInput(d);
+      d = applyPlanPatch(d, computationToPlanPatch(input!, computationEngine.compute(input!)));
+      sizes.push(d.statisticalPlan.plannedSampleSize!);
+      powers.push(d.statisticalPlan.power!);
+    }
+    expect(new Set(sizes).size).toBe(1);
+    expect(powers).toEqual([target, target, target]);
   });
 
   it('the patched design still projects a SAP whose sample-size section is rendered, not missing', () => {

@@ -216,7 +216,7 @@ export async function assertAuditImmutabilityForProduction(
       `the audit immutability triggers could not be verified (${cause}) — this is NOT a pass: ` +
       'the audit stores may be writable and nothing has confirmed otherwise (21 CFR 11 §11.10(e)).';
     if (production && requiresEnforce(env)) {
-      throw new Error(`[audit-enforcement] FAIL-CLOSED: ${message}`);
+      throw new Error(`[audit-enforcement] FAIL-CLOSED: ${message}`, { cause: err });
     }
     logger.warn(`⚠️  [audit-enforcement] ${message}`, {
       verified: false,

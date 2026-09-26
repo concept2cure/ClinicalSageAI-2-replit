@@ -16,7 +16,7 @@ import jwt from 'jsonwebtoken';
 import * as QRCode from 'qrcode';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { db } from '../db';
-import { and, eq, isNull, lt, or } from 'drizzle-orm';
+import { and, eq, isNull, lt, or, sql } from 'drizzle-orm';
 import { users } from '../../shared/schema';
 
 // ---------------------------------------------------------------------------
@@ -441,16 +441,17 @@ const isSixDigits = (token: string) =>
   typeof token === 'string' && token.length === TOTP_DIGITS && /^\d+$/.test(token);
 
 /**
- * Verify a second factor and CONSUME it: the one entry point every sign-in,
- * enrolment and signing path goes through. Returns the method that verified,
- * or null.
+ * Verify an authenticator code and CONSUME it: the entry point the signing
+ * ceremony (reverifySigner), enrolment and disablement go through. Returns the
+ * method that verified, or null.
  *
- * Only a 6-digit TOTP code verifies. The recovery codes enableMfa issues have
- * never been redeemable here — their XXXX-XXXX form fails the digit check, as
- * tests/services/mfaService.test.ts pins — so the unreachable branch that would
- * have consumed them was removed on 2026-09-23 rather than kept as dead code.
- * Whether to make them redeemable (at the login challenge only) or stop issuing
- * them is an open D6 decision (docs/evidence/D6/2026-09-23/README.md).
+ * Only a 6-digit TOTP code verifies here. A recovery code is a sign-in factor,
+ * not a signing one: verifyLoginSecondFactor below redeems it at the login
+ * challenge; this function refuses it and leaves it unconsumed
+ * (tests/services/mfaService.test.ts and
+ * server/services/__tests__/mfa-recovery-code-redemption.pglite.integration.test.ts
+ * pin both sides). The D6 decision recorded on 2026-09-23 — redeem at the login
+ * challenge only, or stop issuing — was taken on 2026-09-25 (P1-2): redeem.
  *
  * Replaces detectVerificationMethod, which classified a code by verifying it
  * WITHOUT consuming it, and was called just before this on the enterprise path.
@@ -478,6 +479,56 @@ export async function verifySecondFactor(userId: number, token: string): Promise
  */
 export async function verifyToken(userId: number, token: string): Promise<boolean> {
   return (await verifySecondFactor(userId, token)) !== null;
+}
+
+/** The form enableMfa issues: eight hex characters, shown as XXXX-XXXX; typed with or without the dash, any case. */
+const RECOVERY_CODE_SHAPE = /^[0-9a-f]{4}-?[0-9a-f]{4}$/i;
+
+/**
+ * Redeem one recovery code for the user, once. A single conditional UPDATE
+ * removes the code's hash from mfa_backup_codes only if it is there and the
+ * enrolment is enabled: of two concurrent presentations exactly one gets the
+ * row (the second re-checks the WHERE against the committed row and matches
+ * nothing), and a code from a disabled enrolment is dead. The hash is the one
+ * enableMfa stored (hashBackupCode), so the value is never compared in the
+ * application.
+ */
+async function consumeRecoveryCode(userId: number, code: string): Promise<boolean> {
+  const hash = hashBackupCode(code);
+  const redeemed = await db
+    .update(users)
+    .set({ mfaBackupCodes: sql`(${users.mfaBackupCodes}::jsonb - ${hash}::text)::json` })
+    .where(
+      and(
+        eq(users.id, userId),
+        eq(users.mfaEnabled, true),
+        sql`${users.mfaBackupCodes}::jsonb @> to_jsonb(${hash}::text)`
+      )
+    )
+    .returning({ id: users.id });
+  return redeemed.length === 1;
+}
+
+/**
+ * The login challenge's verifier: an authenticator code, or one of the
+ * recovery codes the enrolment issued, each consumed on acceptance. Says which.
+ *
+ * Recovery codes are redeemable HERE and nowhere else (security audit
+ * 2026-09-24, IAM-08; P1-2): a person who lost the authenticator gets back in,
+ * and then re-enrols; signing, enrolment and disablement keep asking for the
+ * authenticator (verifySecondFactor / verifyToken). Anything that is neither
+ * shape is refused without a query.
+ */
+export async function verifyLoginSecondFactor(
+  userId: number,
+  token: string,
+): Promise<'totp' | 'recovery' | null> {
+  const viaAuthenticator = await verifySecondFactor(userId, token);
+  if (viaAuthenticator) return viaAuthenticator;
+  if (typeof token !== 'string') return null;
+  const presented = token.trim();
+  if (!RECOVERY_CODE_SHAPE.test(presented)) return null;
+  return (await consumeRecoveryCode(userId, presented)) ? 'recovery' : null;
 }
 
 /**

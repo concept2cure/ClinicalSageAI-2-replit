@@ -31,6 +31,7 @@ import type {
   StudyDesign,
 } from './study-design-types';
 import { validateDesign, type DesignValidationReport } from './design-validation';
+import { programInOrganization } from '../c2c/program-access';
 
 /** Discriminator stored in `metadata` so a row is recognizably a design spine. */
 export const STUDY_DESIGN_META_KIND = 'c2c.studyDesign.v1';
@@ -39,6 +40,29 @@ export const STUDY_DESIGN_META_KIND = 'c2c.studyDesign.v1';
 export interface TxClient {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
 }
+
+/**
+ * Why a design was not persisted (PF-14). A design belongs to one live project
+ * of its organization and stays there: another organization's project, a move to
+ * a different project, and a study id another organization already holds are
+ * refused before anything is written.
+ */
+export class StudyDesignPersistRefusal extends Error {
+  constructor(
+    readonly code: 'PROJECT_NOT_FOUND' | 'PROGRAM_MISMATCH' | 'STUDY_ID_TAKEN',
+    message: string,
+  ) {
+    super(message);
+    this.name = 'StudyDesignPersistRefusal';
+  }
+}
+
+/** The HTTP status each refusal carries, wherever a route surfaces one. */
+export const STUDY_DESIGN_REFUSAL_STATUS: Readonly<Record<StudyDesignPersistRefusal['code'], number>> = {
+  PROJECT_NOT_FOUND: 404,
+  PROGRAM_MISMATCH: 409,
+  STUDY_ID_TAKEN: 409,
+};
 
 /** Who is persisting, for tenant scoping and authorship columns. */
 export interface PersistContext {
@@ -232,7 +256,19 @@ export async function persistStudyDesignTx(
   const s = rows.study;
   const j = (v: unknown) => (v === null || v === undefined ? null : JSON.stringify(v));
 
-  await client.query(
+  // The project must be a live project of this organization (LX-20's check).
+  // It was taken from the request unchecked.
+  if (s.programId && !(await programInOrganization(client, s.programId, ctx.tenantId))) {
+    throw new StudyDesignPersistRefusal('PROJECT_NOT_FOUND', 'Project not found');
+  }
+
+  /* The upsert. study_id is unique across ALL organizations and comes from the
+     request, so the update runs only for this organization's row (it had no
+     tenant predicate, and a save naming another organization's study id
+     overwrote that design). The project goes from none to a project and never
+     moves: a save carrying no project keeps the one recorded (it used to write
+     NULL), and a save carrying a different one is refused. */
+  const upserted = await client.query(
     `INSERT INTO cdisc_prm_studies
        (tenant_id, study_id, program_id, protocol_id, protocol_title, protocol_version, study_phase,
         study_type, therapeutic_area, indication, primary_objective, secondary_objectives,
@@ -240,7 +276,7 @@ export async function persistStudyDesignTx(
         planned_subjects, protocol_status, metadata, created_by, last_modified_by, updated_at)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$20, now())
      ON CONFLICT (study_id) DO UPDATE SET
-        program_id = EXCLUDED.program_id,
+        program_id = COALESCE(cdisc_prm_studies.program_id, EXCLUDED.program_id),
         protocol_title = EXCLUDED.protocol_title,
         protocol_version = EXCLUDED.protocol_version,
         study_phase = EXCLUDED.study_phase,
@@ -255,7 +291,11 @@ export async function persistStudyDesignTx(
         protocol_status = EXCLUDED.protocol_status,
         metadata = EXCLUDED.metadata,
         last_modified_by = EXCLUDED.last_modified_by,
-        updated_at = now()`,
+        updated_at = now()
+      WHERE cdisc_prm_studies.tenant_id = EXCLUDED.tenant_id
+        AND (cdisc_prm_studies.program_id IS NULL OR EXCLUDED.program_id IS NULL
+             OR cdisc_prm_studies.program_id = EXCLUDED.program_id)
+     RETURNING study_id`,
     [
       ctx.tenantId, s.studyId, s.programId, s.protocolId, s.protocolTitle, s.protocolVersion, s.studyPhase,
       s.studyType, s.therapeuticArea, s.indication, s.primaryObjective, j(s.secondaryObjectives),
@@ -263,6 +303,12 @@ export async function persistStudyDesignTx(
       s.plannedSubjects, s.protocolStatus, j(s.metadata), String(ctx.userId),
     ],
   );
+  if (upserted.rows.length === 0) {
+    const { rows: held } = await client.query(`SELECT tenant_id FROM cdisc_prm_studies WHERE study_id = $1`, [s.studyId]);
+    throw Number(held[0]?.tenant_id) === ctx.tenantId
+      ? new StudyDesignPersistRefusal('PROGRAM_MISMATCH', 'This design belongs to another project. A design does not move between projects.')
+      : new StudyDesignPersistRefusal('STUDY_ID_TAKEN', 'This study id is already in use. Save the design under a new id.');
+  }
 
   // Replace arms and endpoints so the projection always matches the current design.
   await client.query(`DELETE FROM cdisc_prm_study_arms WHERE study_id = $1 AND tenant_id = $2`, [

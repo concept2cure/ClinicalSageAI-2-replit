@@ -20,6 +20,8 @@
  * is its fail-soft wrapper for non-enforcement reads.
  */
 
+import { COMMAND_AUTHORIZATION } from './command-rbac';
+
 /** AnA command names whose effect alters the regulatory record and therefore
  * require, at minimum, a Part 11 reason-for-change. Scoped deliberately to
  * record-altering mutations — drafting/search/list commands are not gated. */
@@ -130,6 +132,35 @@ export function requiresPart11Signoff(command: string): boolean {
   return PART11_GOVERNED_COMMANDS.has(command);
 }
 
+/**
+ * The three ways a person takes an action AnA proposed (audit 2026-09-24
+ * DP-08, P0-12). Every state-changing command is one of them:
+ *   · 'esignature' — reason for change and re-authentication (§11.200);
+ *   · 'reason'     — reason for change (§11.10(e));
+ *   · 'confirm'    — an explicit human yes, no reason, no credentials: the
+ *                    ordinary writes (a task, a draft, an export), which used to
+ *                    run from model output with nobody in the loop.
+ * The Part 11 sets decide the first two, and the approve class is the reason
+ * tier as well; everything else that writes is the third. A read has no tier
+ * and is never proposed.
+ *
+ * The approve class — a manager-tier write carrying `requiresConfirmation`
+ * (section.approve, post_market.document.approve, post_market.document.supersede)
+ * — sits in neither Part 11 set, and its only other gate is `params.confirm`, a
+ * string the model writes. Left to the default it fell to 'confirm' and an
+ * approval ran on one click with nothing recorded about why; the tool gate had
+ * always shown it as the reason tier. An approval is not ordinary work.
+ */
+export type GovernedTier = 'confirm' | 'reason' | 'esignature';
+
+export function governedTierOf(command: string): GovernedTier {
+  if (PART11_ESIGN_COMMANDS.has(command)) return 'esignature';
+  if (PART11_GOVERNED_COMMANDS.has(command)) return 'reason';
+  const authz = COMMAND_AUTHORIZATION[command];
+  if (authz?.requiresConfirmation === true && authz.minRole === 'manager') return 'reason';
+  return 'confirm';
+}
+
 /** Does this command additionally require a manifested electronic signature
  * (re-authentication), not just a reason-for-change? */
 export function requiresEsignature(command: string): boolean {
@@ -193,6 +224,7 @@ export function buildSignatureRequiredResult(
   message: string;
   openModal: 'esign';
   data: {
+    tier: GovernedTier;
     reasonRequired: true;
     /** True for the high-impact tier (e-signature also required). */
     signatureRequired: boolean;
@@ -213,6 +245,7 @@ export function buildSignatureRequiredResult(
         : 'This action requires a reason for change.'),
     openModal: 'esign',
     data: {
+      tier: signatureRequired ? 'esignature' : 'reason',
       reasonRequired: true,
       signatureRequired,
       code: validation.code,
@@ -246,24 +279,31 @@ export function buildHumanConfirmationRequiredResult(
   message: string;
   openModal: 'esign';
   data: {
-    reasonRequired: true;
+    tier: GovernedTier;
+    reasonRequired: boolean;
     signatureRequired: boolean;
     proposedByAgent: true;
     retry: { command: string; params: Record<string, unknown> };
   };
 } {
+  const tier = governedTierOf(command);
+  const message =
+    tier === 'confirm'
+      ? 'This action changes the record, so it is taken by a person rather than on your ' +
+        'behalf. Review it and confirm to continue.'
+      : 'This action changes the official record, so it has to be taken by a person rather ' +
+        'than on your behalf. Review it and confirm to continue — your reason for the change ' +
+        'is recorded with it.';
   return {
     success: false,
     action: command,
     error: 'HUMAN_CONFIRMATION_REQUIRED',
-    message:
-      'This action changes the official record, so it has to be taken by a person rather ' +
-      'than on your behalf. Review it and confirm to continue — your reason for the change ' +
-      'is recorded with it.',
+    message,
     openModal: 'esign',
     data: {
-      reasonRequired: true,
-      signatureRequired: requiresEsignature(command),
+      tier,
+      reasonRequired: tier !== 'confirm',
+      signatureRequired: tier === 'esignature',
       proposedByAgent: true,
       retry: { command, params: params ?? {} },
     },

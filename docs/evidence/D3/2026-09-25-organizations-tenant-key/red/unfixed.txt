@@ -1,0 +1,24 @@
+# Unfixed (the trigger absent, as before this change): c2c_d3b (provisioned from empty), app_service, RLS_ENFORCE=on
+ ✓ tests/db/vault-program-ownership.dbtest.ts > vault ownership comes from rows no other tenant can write (D3) > posture: the statements run as app_service, RLS enforcing, with the tenant GUC set 2ms
+ ✓ tests/db/vault-program-ownership.dbtest.ts > vault ownership comes from rows no other tenant can write (D3) > positive control: each tenant sees exactly its own vault document 10ms
+ ✓ tests/db/vault-program-ownership.dbtest.ts > vault ownership comes from rows no other tenant can write (D3) > a core.programs row naming B's program does not make A its owner 15ms
+ ✓ tests/db/vault-program-ownership.dbtest.ts > vault ownership comes from rows no other tenant can write (D3) > an ownership row behind an org-less core.programs row does not either 9ms
+ ✓ tests/db/vault-program-ownership.dbtest.ts > vault delegation is granted by the sponsor alone (D3) > A cannot grant itself delegate access to B, and gains nothing by trying 5ms
+ ✓ tests/db/vault-program-ownership.dbtest.ts > vault delegation is granted by the sponsor alone (D3) > nor does trying reach the org-policied schemas that trust the same table 7ms
+ ✓ tests/db/vault-program-ownership.dbtest.ts > vault delegation is granted by the sponsor alone (D3) > a grant B makes still works, a delegate cannot widen it, and revoking it ends it 9ms
+ × tests/db/vault-program-ownership.dbtest.ts > an organization's tenant key cannot be moved, by its own tenant or any other (D3) > A cannot hand B's organization its uuid, and B's vault stays B's 17ms
+   → B's document reached A: expected [ 'wo03_6783_muhm51p2-vault-owned-B' ] to deeply equal [ 'wo03_6783_muhm51p2-vault-owned-A' ]
+ × tests/db/vault-program-ownership.dbtest.ts > an organization's tenant key cannot be moved, by its own tenant or any other (D3) > the other writers still write, and none of them, the platform included, can move a key 8ms
+   → the platform scope moved B's uuid: expected 1 to be +0 // Object.is equality
+ ✓ tests/db/rls-policy-inputs.dbtest.ts > RLS inputs are out of a tenant reach (D3) > the runtime role exists, so the privilege checks below mean something 8ms
+ ✓ tests/db/rls-policy-inputs.dbtest.ts > RLS inputs are out of a tenant reach (D3) > self-test: the sweep catches a delegate-grant table with its RLS removed 178ms
+ × tests/db/rls-policy-inputs.dbtest.ts > RLS inputs are out of a tenant reach (D3) > self-test: a reviewed exception lapses when its guard is gone 8ms
+   → trigger "organizations_tenant_key_immutable" for table "organizations" does not exist
+ × tests/db/rls-policy-inputs.dbtest.ts > RLS inputs are out of a tenant reach (D3) > no table an RLS decision reads is writable by the runtime role without RLS 123ms
+   → each of these decides a tenant boundary and can be rewritten by any tenant: expected [ Array(1) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: each of these decides a tenant boundary and can be rewritten by any tenant: expected [ Array(1) ] to deeply equal []
++   "public.organizations (read by core.get_program_org_id)",
+AssertionError: B's document reached A: expected [ 'wo03_6783_muhm51p2-vault-owned-B' ] to deeply equal [ 'wo03_6783_muhm51p2-vault-owned-A' ]
+AssertionError: the platform scope moved B's uuid: expected 1 to be +0 // Object.is equality
+      Tests  4 failed | 9 passed (13)

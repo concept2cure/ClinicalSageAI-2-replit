@@ -26,6 +26,7 @@ import {
   getWindowedMessages,
   ThreadAccessError,
   saveChatMessage,
+  deleteConversation,
 } from '../services/chat-thread-helpers.js';
 import { pool } from '../db.js';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
@@ -1398,17 +1399,22 @@ router.delete('/threads/:threadId', async (req: Request, res: Response) => {
     const userId = requireAuthenticatedUserId(req, res, 'CORTEX_THREAD_DELETE_AUTH_REQUIRED');
     if (!userId) return;
 
-    // Verify the requester owns this thread before deleting
-    const ownerCheck = await pool.query(
-      'SELECT id FROM chat_threads WHERE id = $1 AND user_id = $2',
-      [threadId, userId]
-    );
-    if (ownerCheck.rows.length === 0) {
+    const orgId = Number((req as any).user?.organizationId) || Number((req as any).tenantId);
+    if (!Number.isInteger(orgId) || orgId <= 0) {
       return res.status(403).json({ success: false, error: 'Thread not found or access denied' });
     }
-
-    await pool.query('DELETE FROM chat_messages WHERE thread_id = $1', [threadId]);
-    await pool.query('DELETE FROM chat_threads WHERE id = $1', [threadId]);
+    // The one delete path (services/chat-thread-helpers.ts): owner only,
+    // audited in the same transaction, retained turn records kept.
+    const result = await deleteConversation({
+      threadId: String(threadId),
+      organizationId: orgId,
+      userId,
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent') ?? undefined,
+    });
+    if (result.status !== 'deleted') {
+      return res.status(403).json({ success: false, error: 'Thread not found or access denied' });
+    }
     res.json({ success: true });
   } catch (err: any) {
     logger.error('DELETE /threads/:threadId error:', err.message);

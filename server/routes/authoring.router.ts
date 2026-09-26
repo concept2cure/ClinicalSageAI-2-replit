@@ -1795,7 +1795,10 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
 
     if (content !== undefined) {
       paramCount++;
-      updates.push(`content = ${paramCount}`);
+      // `$$` is the placeholder's `$` followed by the interpolation. fde9d704 lost
+      // it, so the SQL read `content = 1` with the bound value unused, Postgres
+      // refused the UPDATE, and every section content save answered 500.
+      updates.push(`content = $${paramCount}`);
       values.push(content);
       recordRevision = true;
     }
@@ -2901,7 +2904,12 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       // retrieval, reported as one below, never an unscoped search.
       const orgUuid = await currentTenantOrgUuid(pool);
       if (!orgUuid) throw new TenantKeyRequiredError('no tenant key for this session');
-      const searchResults = await embeddingService.searchHybrid(searchQuery, 5, 0.65, orgUuid);
+      // 0.65 is a floor on semantic similarity; it used to go in as the ranking weight.
+      const searchResults = await embeddingService.searchHybrid(searchQuery, {
+        limit: 5,
+        organizationUuid: orgUuid,
+        minSemanticScore: 0.65,
+      });
       if (searchResults.length > 0) {
         sourcesRetrieved = searchResults.length;
         for (const r of searchResults as any[]) {

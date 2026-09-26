@@ -5,7 +5,7 @@ import { EmptyState } from '../dataConnect';
 import { AnaActionChips } from '../AnaActionChips';
 import { LiveDriveSwitch } from '../LiveDriveSwitch';
 import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
-import { useChatUpload, attachmentReadLabel, composeTurn, type SentAttachment } from '../../hooks/useChatUpload';
+import { useChatUpload, readyAttachmentLabel, composeTurn, type SentAttachment } from '../../hooks/useChatUpload';
 import { DocTypeChip, DocumentContextCard } from './AnaDocContext';
 import { SignoffList } from '../SignoffList';
 import { apiCall, apiErrorText } from '../apiCall';
@@ -1030,7 +1030,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
                   <span key={a.id} className="ct-att-chip" data-status={a.status}>
                     {I.paperclip} {a.name}
                     {a.status === 'uploading' && <em> · reading…</em>}
-                    {a.status === 'ready' && <em> · {attachmentReadLabel(a.extractionMethod, a.extractionWords) ?? 'read'}</em>}
+                    {a.status === 'ready' && <em> · {readyAttachmentLabel(a.extractionMethod, a.extractionWords)}</em>}
                     {a.status === 'error' && <em> · {a.error ?? 'failed'}</em>}
                     <button
                       type="button"

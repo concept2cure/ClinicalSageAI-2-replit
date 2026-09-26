@@ -12,10 +12,15 @@
  *   4. Link every change to deviations, CAPAs and validation documents (the
  *      per-change cross-reference panel).
  *
- * AnA-first: every governed action is a conversational prompt handed to the
- * host's AnA surface via `onAsk` — AnA runs the governed transition and captures
- * the reason-for-change / e-signature, so the 21 CFR Part 11 audit trail stays
- * the single path. No mutation is performed directly here.
+ * AnA-first: governed actions are conversational prompts handed to the host's
+ * AnA surface via `onAsk`, and AnA runs the governed transition with its reason.
+ *
+ * Approval is the exception, because it is an electronic signature and AnA
+ * cannot sign: a chat turn cannot collect a password. A change under assessment
+ * carries an Approve button that opens the shared EsignModal and posts to
+ * POST /api/mdx/qms/changes/:id/approve. Until 2026-09-25 "Advance" asked AnA to
+ * "capture the reason and e-signature", and the tool approved with segregation
+ * of duties as its only check (security review 2026-09-24, DP-31; plan P1-28).
  *
  * @module client/src/concept2cure/quality/ChangeControl
  */
@@ -49,6 +54,9 @@ import { useChangeSummary } from './changeHooks';
 import { useSampleValue } from '../mdx/lib/useSampleRows';
 import { SampleDataBanner } from '../mdx/components/SampleDataBanner';
 import { EmptyState, ErrorState } from '../v2/dataConnect';
+import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
+import { useAuthUser } from '@/services/portal/authService';
+import { postQmsApproval } from './qmsApproval';
 
 export interface ChangeControlProps {
   /** Forward a prompt to the host's AnA conversation surface. */
@@ -108,6 +116,9 @@ export function ChangeControl({
   onRetry,
 }: ChangeControlProps) {
   const sum = useChangeSummary();
+  const user = useAuthUser(); // display only; the server resolves the signer
+  /** The change being approved, while the signature dialog is open. */
+  const [approving, setApproving] = React.useState<ChangeControlRow | null>(null);
 
   /* The register read — and its sample-mode boundary — lives in QualityApp
      now, lifted because AnA's open-change action resolves free-text names
@@ -316,13 +327,27 @@ export function ChangeControl({
                       onClick={() =>
                         onAsk(
                           `Advance ${c.changeNumber} ${c.title} (currently ${STATE_LABEL[c.status]}). Tell me the next ` +
-                            'controlled step, confirm the reviewer or approver (the approver must differ from the initiator), ' +
-                            'capture the reason and e-signature, then write the Part 11 audit entry.',
+                            'controlled step and ask me for the reason for the change. If the next step is approval, ' +
+                            'tell me to approve it here with the Approve button, which takes my signature.',
                         )
                       }
                     >
                       {I.arrowRight} Advance
                     </button>
+                    {c.status === 'under_assessment' && (
+                      <button
+                        className="qms-chip"
+                        disabled={showingSample}
+                        title={
+                          showingSample
+                            ? 'Sample changes cannot be approved'
+                            : 'Approve with your electronic signature (password and second factor). The person who proposed the change cannot approve it.'
+                        }
+                        onClick={() => setApproving(c)}
+                      >
+                        {I.check} Approve
+                      </button>
+                    )}
                     <button
                       className="qms-chip ghost"
                       title="Ask AnA about this change" aria-label="Ask AnA about this change"
@@ -457,6 +482,23 @@ export function ChangeControl({
           </div>
         </section>
       </div>
+      {approving && (
+        <EsignModal
+          open
+          action="Approve change"
+          target={`${approving.changeNumber} ${approving.title}`}
+          targetMeta="Approves the change for implementation. The person who proposed it cannot approve it."
+          defaultMeaning="approval"
+          meanings={['approval']}
+          signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
+          onClose={() => setApproving(null)}
+          onSign={async (input) => {
+            const manifest = await postQmsApproval({ kind: 'change', id: approving.id }, input);
+            onRetry?.();
+            return manifest;
+          }}
+        />
+      )}
     </>
   );
 }

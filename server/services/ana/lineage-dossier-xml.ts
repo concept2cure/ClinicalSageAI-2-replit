@@ -188,6 +188,28 @@ export function serializeDocumentLineageDossierXml(
   }
   out.push(`  </HumanControls>\n`);
 
+  // Retained turn records — the immutable, chained record of each AnA turn in
+  // the conversation. `unavailable` when the store could not be read, which is
+  // not the same as none.
+  if (dossier.retainedTurnRecords !== undefined) {
+    const retained = dossier.retainedTurnRecords;
+    out.push(`  <RetainedTurnRecords`);
+    out.push(attr('status', retained === null ? 'unavailable' : 'read'));
+    out.push(attr('count', retained === null ? null : retained.length));
+    out.push(`>\n`);
+    for (const r of retained ?? []) {
+      out.push(`    <TurnRecord`);
+      out.push(attr('id', r.id));
+      out.push(attr('outcome', r.outcome));
+      out.push(attr('actorUserId', r.actorUserId));
+      out.push(attr('startedAt', r.startedAt));
+      out.push(attr('endedAt', r.endedAt));
+      out.push(attr('sha256', r.recordSha256));
+      out.push(` />\n`);
+    }
+    out.push(`  </RetainedTurnRecords>\n`);
+  }
+
   // Data lineage — evidence source → content links.
   out.push(`  <DataLineage count="${dossier.dataLineage.length}">\n`);
   for (const l of dossier.dataLineage) {

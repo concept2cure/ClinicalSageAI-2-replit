@@ -34,7 +34,7 @@
  *   - its `headers` is a variable or a local helper whose definition in the same
  *     file does, or
  *   - its first argument is a literal URL that is public per the SERVER's own
- *     PUBLIC_API_ALLOWLIST (parsed from server/middleware/authBoundary.ts, so the
+ *     PUBLIC_API_ALLOWLIST (parsed from server/middleware/public-api-allowlist.ts, so the
  *     two cannot drift), or an absolute http(s) URL that is not this API, or
  *   - it is a reviewed exception in unauthenticated-fetch-baseline.json, with
  *     the reason written down.
@@ -55,7 +55,7 @@ import { stripComments } from './lib/strip-comments.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const CLIENT = path.join(repoRoot, 'client/src');
-const BOUNDARY = path.join(repoRoot, 'server/middleware/authBoundary.ts');
+const BOUNDARY = path.join(repoRoot, 'server/middleware/public-api-allowlist.ts');
 const BASELINE = path.join(repoRoot, 'scripts/ci/unauthenticated-fetch-baseline.json');
 const LIST = process.argv.includes('--list');
 
@@ -65,7 +65,7 @@ const AUTH = /\b(getAuthHeaders|buildAuthHeaders)\s*\(|Authorization\b/;
 function readAllowlist() {
   const src = fs.readFileSync(BOUNDARY, 'utf8');
   const start = src.indexOf('PUBLIC_API_ALLOWLIST');
-  if (start < 0) throw new Error('PUBLIC_API_ALLOWLIST not found in authBoundary.ts — the gate cannot know what is public');
+  if (start < 0) throw new Error('PUBLIC_API_ALLOWLIST not found in public-api-allowlist.ts — the gate cannot know what is public');
   const body = src.slice(start, src.indexOf('];', start));
   const entries = [...body.matchAll(/\{\s*path:\s*'([^']+)',\s*match:\s*'(exact|prefix)'\s*\}/g)]
     .map((m) => ({ path: m[1], match: m[2] }));
@@ -211,7 +211,7 @@ if (fresh.length || errors.length) {
    \`credentials: 'include'\` is not authentication here: the /api gate reads the
    Authorization header only. Add headers: { ...getAuthHeaders() } (or the
    lane's buildAuthHeaders()), or go through apiRequest. If the endpoint is
-   public, it belongs on PUBLIC_API_ALLOWLIST in server/middleware/authBoundary.ts,
+   public, it belongs on PUBLIC_API_ALLOWLIST in server/middleware/public-api-allowlist.ts,
    not in this gate's baseline.`);
   }
   for (const e of errors) console.error(`❌ ci:unauthenticated-fetch — ${e}`);

@@ -1,0 +1,26 @@
+$ # audit-trail-routes.ts unchanged at 50b04d99; test added
+ × server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit/logs: a member is refused (403) 32ms
+ × server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit-logs: a member is refused (403) 5ms
+ × server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit/events: a member is refused (403) 5ms
+ × server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit: a member is refused (403) 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > owner reads it 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > admin reads it 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > manager reads it 3ms
+ × server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > a viewer is refused 3ms
+ × server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > a member is refused before the export starts 37ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > an admin gets past the gate to the export itself 5ms
+ × server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > an event type outside the vocabulary is refused (400) and nothing is written 12ms
+ × server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > the free-form default is not a type either: a body with no event type is refused 4ms
+ × server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > metadata must be an object, not a string of any length 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > a vocabulary type with a reason is recorded, attributed to the caller 5ms
+ × server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > in a batch, an unknown type is skipped with the reason and the known one is written 5ms
+ × server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > a member may not record events at all 3ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: a member read the audit trail at /api/audit/logs: expected 200 to be 403 // Object.is equality
+AssertionError: a member read the audit trail at /api/audit-logs: expected 200 to be 403 // Object.is equality
+AssertionError: a member read the audit trail at /api/audit/events: expected 200 to be 403 // Object.is equality
+AssertionError: a member read the audit trail at /api/audit: expected 200 to be 403 // Object.is equality
+AssertionError: expected 200 to be 403 // Object.is equality
+AssertionError: a member reached the signed export: expected 503 to be 403 // Object.is equality
+AssertionError: a free-text event type was written into audit_events: expected 201 to be 400 // Object.is equality
+exit=1

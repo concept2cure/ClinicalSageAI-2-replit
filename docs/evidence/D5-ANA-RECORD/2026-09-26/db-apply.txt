@@ -1,0 +1,17 @@
+# deploy-migrate on a fresh Postgres 16 (install-fresh first), run twice — every file replays on every deploy (CLAUDE.md RULE 1)
+
+## run 1
+  ✓ applied: migrations/20260926_ana_turn_records.sql
+✅ Schema migration complete — safe to roll services.
+
+## run 2
+  ✓ applied: migrations/20260926_ana_turn_records.sql
+✅ Schema migration complete — safe to roll services.
+
+## the tables after the tenant sweep: RLS forced, the sweep's policy, the four triggers enabled (O)
+     relname      | rls | force_rls |        policies         |                               triggers                                
+------------------+-----+-----------+-------------------------+-----------------------------------------------------------------------
+ ana_record_blobs | t   | t         | tenant_isolation_policy | trg_ana_record_blobs_append_only:O,trg_ana_record_blobs_no_truncate:O
+ ana_turn_records | t   | t         | tenant_isolation_policy | trg_ana_turn_records_append_only:O,trg_ana_turn_records_no_truncate:O
+(2 rows)
+

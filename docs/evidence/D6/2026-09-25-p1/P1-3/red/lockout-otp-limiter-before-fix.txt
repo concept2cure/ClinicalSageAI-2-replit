@@ -1,0 +1,17 @@
+$ git rev-parse --short HEAD  # sources unchanged; tests added
+5f1e35b0
+ × server/middleware/__tests__/enterprise-auth-limiter-v1-mount.test.ts > applySecurityMiddleware: the sign-in limit > is mounted on /api/auth and on /api/v1/auth, the two mounts of the auth router 10ms
+ × server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > twenty simultaneous wrong passwords are twenty failures, and the account is locked 2941ms
+ ✓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > control: the fifth sequential failure locks, the first four do not 25ms
+ × server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > a failure that cannot be recorded is an error, not "not locked" 14ms
+ × server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > createEmailOtp and the guess budget > re-issuing a code while one is pending keeps the attempts already spent 17ms
+ ✓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > createEmailOtp and the guess budget > a code issued when none is pending starts a fresh budget 17ms
+ ✓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > createEmailOtp and the guess budget > a code issued after the pending one expired starts a fresh budget 13ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: the v1 mount of the auth router has no sign-in limit: expected [ …(6) ] to deep equally contain [ '/api/v1/auth', [AsyncFunction] ]
+AssertionError: concurrent failures overwrote each other: expected 1 to be 20 // Object.is equality
+AssertionError: promise resolved "{ locked: false, remainingAttempts: 5 }" instead of rejecting
+AssertionError: a resend refilled the guesses: expected +0 to be 2 // Object.is equality
+ Test Files  2 failed (2)
+      Tests  4 failed | 3 passed (7)
+exit=1

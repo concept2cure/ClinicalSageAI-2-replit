@@ -1,0 +1,34 @@
+# The offline verifier on the untouched package, then on three tampered copies
+# (tampered-text: one text edited; tampered-record: the record rewritten and re-hashed; tampered-missing: one text removed)
+
+## export-turn-1
+PASS  record text hashes to the record hash
+PASS  every referenced text is present (26)
+PASS  every text hashes to its reference
+PASS  the chain row carries the record hash
+PASS  the chain row still hashes to its payload hash
+verifier exit code: 0
+
+## tampered-text
+PASS  record text hashes to the record hash
+PASS  every referenced text is present (26)
+FAIL  every text hashes to its reference — fbe238b31a6a6ebb6c4e2da02cf802419e130afdfe1cf3ae5cad1c6e7ca0f192
+PASS  the chain row carries the record hash
+PASS  the chain row still hashes to its payload hash
+verifier exit code: 1
+
+## tampered-record
+PASS  record text hashes to the record hash
+PASS  every referenced text is present (26)
+PASS  every text hashes to its reference
+FAIL  the chain row carries the record hash
+PASS  the chain row still hashes to its payload hash
+verifier exit code: 1
+
+## tampered-missing
+PASS  record text hashes to the record hash
+FAIL  every referenced text is present (26) — fbe238b31a6a6ebb6c4e2da02cf802419e130afdfe1cf3ae5cad1c6e7ca0f192
+PASS  every text hashes to its reference
+PASS  the chain row carries the record hash
+PASS  the chain row still hashes to its payload hash
+verifier exit code: 1

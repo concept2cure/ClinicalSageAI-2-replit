@@ -18,8 +18,12 @@
  *   2. That transaction is proven atomic: with the audit store unavailable the
  *      whole creation is REFUSED (503 PENDING_STORE) and NO programme, NO
  *      submission and NO anchor survive.
- *   3. Re-running intake for the same product LINKS the existing spine instead
- *      of forking a second one.
+ *   3. A second project for the same product gets ITS OWN spine, anchored to
+ *      it (submissions.program_id, LX-22). It used to adopt the first project's
+ *      submission by product name, so two projects shared one filing. A
+ *      submission created in Submission Center must name a project of the
+ *      caller's organization: another organization's is refused 404, and none
+ *      at all is refused 400.
  *   4. A sequence is created and a leaf placed through the canonical API; a leaf
  *      pointing at another organization's document is REFUSED.
  *   5. Validation is server-computed: dispatch-readiness reports 0 errors for
@@ -149,6 +153,12 @@ const R = new JourneyRecorder(
     'db/migrations/20260725_esig_gate_columns_port.sql',
     'migrations/20260813d_esignature_governed_unification.sql',
     'migrations/20260814_projects_regulatory_program_anchor.sql',
+    'migrations/20260925b_submissions_program_anchor.sql',
+    'db/migrations/20260725_authoring_document_loop_tables.sql',
+    'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
+    'db/migrations/20260730_authoring_comments_router_columns.sql',
+    'migrations/20260727_authoring_document_program_scope.sql',
+    'migrations/20260814d_document_alias_map.sql',
   ],
 );
 
@@ -209,6 +219,17 @@ beforeAll(async () => {
       'db/migrations/20260725_esig_gate_columns_port.sql',
       'migrations/20260813d_esignature_governed_unification.sql',
       'migrations/20260814_projects_regulatory_program_anchor.sql',
+      // submissions.program_id and its same-organization key (LX-22): the real
+      // constraint, so a cross-organization anchor is refused by the database
+      // as it is in production, not only by the writer.
+      'migrations/20260925b_submissions_program_anchor.sql',
+      // A placement reads its document's project (PF-11): an authoring filing
+      // copy reaches its document through the alias map. The real tables.
+      'db/migrations/20260725_authoring_document_loop_tables.sql',
+      'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
+      'db/migrations/20260730_authoring_comments_router_columns.sql',
+      'migrations/20260727_authoring_document_program_scope.sql',
+      'migrations/20260814d_document_alias_map.sql',
       // users.mfa_enabled (and the other signing-lockout columns): the governed
       // `sign` re-verifies the signer through services/part11/reverify-signer
       // since 828faf8 (2026-09-23), which reads the MFA enrolment and refuses
@@ -349,13 +370,14 @@ describe('golden journey — drug NDA / eCTD', () => {
 
     await R.step('every-row-the-intake-transaction-wrote-is-durable-and-consistent', async () => {
       const sub = await jdb.pool.query(
-        `SELECT title, product_name, application_type, client_type, primary_region, organization_id, created_by
+        `SELECT title, product_name, application_type, client_type, primary_region, organization_id, created_by, program_id
            FROM submissions WHERE id = $1`,
         [submissionId],
       );
       expect(sub.rows).toHaveLength(1);
       const s = sub.rows[0] as Record<string, unknown>;
-      // The identity keys the checklist assembler matches programme ↔ submission on.
+      // The spine is anchored to the programme it was created for (LX-22).
+      expect(s.program_id).toBe(programId);
       expect(s.title).toBe('Examplinib NDA');
       expect(s.product_name).toBe('Examplinib');
       expect(s.application_type).toBe('nda');
@@ -468,8 +490,8 @@ describe('golden journey — drug NDA / eCTD', () => {
       };
     });
 
-    // ── 3. Re-intake links the existing spine instead of forking one ────────
-    await R.step('re-intake-for-the-same-product-links-the-existing-spine', async () => {
+    // ── 3. A second project for the same product gets its own spine ─────────
+    await R.step('a-second-project-for-the-same-product-gets-its-own-spine', async () => {
       const res = await asPrincipal(ORG, USER)(request(app).post('/api/c2c/projects')).send({
         name: 'Examplinib NDA',
         productName: 'Examplinib',
@@ -477,14 +499,48 @@ describe('golden journey — drug NDA / eCTD', () => {
         primaryAgency: 'FDA',
       });
       expect(res.status).toBe(201);
-      expect(res.body.meta.submissionId).toBe(submissionId);
-      expect(res.body.meta.submissionCreated).toBe(false);
-      const n = await jdb.pool.query(
-        `SELECT count(*)::int AS n FROM submissions WHERE organization_id = $1`,
+      const secondProgramId = res.body.data.id as string;
+      expect(secondProgramId).not.toBe(programId);
+      // Never another project's submission, adopted by product name.
+      expect(res.body.meta.submissionCreated).toBe(true);
+      expect(res.body.meta.submissionId).not.toBe(submissionId);
+      const anchored = await jdb.pool.query(
+        `SELECT id, program_id FROM submissions WHERE organization_id = $1 ORDER BY id`,
         [ORG],
       );
-      expect((n.rows[0] as { n: number }).n).toBe(1);
-      return { linkedSubmissionId: res.body.meta.submissionId, submissionsInOrg: 1 };
+      expect(anchored.rows).toEqual([
+        { id: submissionId, program_id: programId },
+        { id: res.body.meta.submissionId, program_id: secondProgramId },
+      ]);
+      return { secondProgramId, secondSubmissionId: res.body.meta.submissionId, submissionsInOrg: 2 };
+    });
+
+    // ── 3b. Submission Center: a submission names a project of the caller's org
+    await R.step('a-submission-center-submission-names-its-own-project-or-is-refused', async () => {
+      const body = {
+        title: 'Examplinib NDA — Submission Center',
+        applicationType: 'nda',
+        clientType: 'pharma',
+        primaryRegion: 'fda',
+        programId,
+      };
+      const foreign = await asPrincipal(OTHER_ORG, OUTSIDER)(request(app).post('/api/submissions')).send(body);
+      expect(foreign.status, JSON.stringify(foreign.body)).toBe(404);
+      expect(foreign.body.error.code).toBe('NOT_FOUND');
+      const foreignRows = await jdb.pool.query(
+        `SELECT count(*)::int AS n FROM submissions WHERE organization_id = $1`,
+        [OTHER_ORG],
+      );
+      expect((foreignRows.rows[0] as { n: number }).n).toBe(0);
+
+      const none = await asPrincipal(ORG, USER)(request(app).post('/api/submissions')).send({ ...body, programId: undefined });
+      expect(none.status).toBe(400);
+      expect(none.body.error.code).toBe('VALIDATION');
+
+      const own = await asPrincipal(ORG, USER)(request(app).post('/api/submissions')).send(body);
+      expect(own.status, JSON.stringify(own.body)).toBe(201);
+      expect(own.body.programId).toBe(programId);
+      return { foreign: foreign.status, missing: none.status, own: own.status, ownProgramId: own.body.programId };
     });
 
     // ── 4. The canonical spine: sequence + leaf placement ───────────────────
@@ -787,6 +843,11 @@ describe('golden journey — drug NDA / eCTD', () => {
       const res = await asPrincipal(ORG, SIGNER)(request(app).post('/api/c2c/actions/sign')).send({
         target: `ectd-sequence:${sequenceId}`,
         reason: 'Attempting to sign without knowing the password.',
+        // A well-formed sign in every respect but the password, so the refusal
+        // this step asserts is the PASSWORD's. Since 3d09bf2a a sign without a
+        // meaning is refused first (400 SIGNATURE_MEANING_REQUIRED), which left
+        // this step proving nothing about the password check.
+        payload: { intent: 'freeze', meaning: 'approval' },
         reauth: { password: WRONG_PASSWORD },
       });
       const after = await jdb.pool.query(`SELECT count(*)::int AS n FROM electronic_signatures`);

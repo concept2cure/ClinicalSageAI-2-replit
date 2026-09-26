@@ -13818,10 +13818,26 @@ registerToolHandler('qms_change_transition', async (input, ctx) => {
       message: withAuditNote(`Change ${id} → ${row.status}.`, auditTrail),
     });
   } catch (err: unknown) {
-    // InvalidChangeTransitionError / SegregationOfDutiesError carry human-readable messages.
-    return JSON.stringify({ error: err instanceof Error ? err.message : `qms_change_transition failed: ${String(err)}` });
+    return qmsChangeTransitionRefusal(err);
   }
 });
+
+/**
+ * Approval is a signed act this tool cannot take (DP-31): answer the kind of
+ * refusal and where a person approves, not the service's API path.
+ * InvalidChangeTransitionError carries a human-readable message as it is.
+ */
+function qmsChangeTransitionRefusal(err: unknown): string {
+  if ((err as { code?: string }).code === 'CHANGE_APPROVAL_REQUIRES_SIGNATURE') {
+    return JSON.stringify({
+      error:
+        'Approving a change is an electronic signature, which needs the approver\'s password and second factor. ' +
+        'Approve it with the Approve button on the change in the Quality register. Nothing was changed.',
+      code: 'CHANGE_APPROVAL_REQUIRES_SIGNATURE',
+    });
+  }
+  return JSON.stringify({ error: err instanceof Error ? err.message : `qms_change_transition failed: ${String(err)}` });
+}
 
 registerToolHandler('qms_change_link', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'qms_change_link requires tenant context.' });
@@ -15246,6 +15262,7 @@ export async function executeAgenticLoop(
   // model kept generating server-side and the turn was paid for in full. The
   // streaming route has passed it since stop started landing mid-step; this is
   // the same fix for the non-SSE callers.
+  // tenant-binding: forwards the caller's GatewayRequest; every caller binds organizationId (send-message.ts, deep-investigation.ts, ana-realtime.ts, ana-intelligence.ts)
   let finalResponse = (await gateway.route({ ...request, signal })) as AnaGatewayResponse;
 
   // Fast path: the model answered without asking for any tool.
@@ -15356,6 +15373,7 @@ export async function executeAgenticLoop(
       roundRequest.toolChoice = 'none';
     }
 
+    // tenant-binding: roundRequest is built from the caller's request, which carries its organizationId
     finalResponse = (await gateway.route(roundRequest)) as AnaGatewayResponse;
     const nextUses = finalResponse.toolUses ?? [];
     return { text: finalResponse.content || '', toolCalls: nextUses.map(toToolCall) };

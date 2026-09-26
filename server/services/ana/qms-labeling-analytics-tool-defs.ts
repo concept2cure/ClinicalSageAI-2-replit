@@ -148,12 +148,12 @@ export const QMS_CHANGE_CREATE: AnaTool = {
 export const QMS_CHANGE_TRANSITION: AnaTool = {
   name: 'qms_change_transition',
   description:
-    "Advance a change through its controlled lifecycle (proposed → under_assessment → approved → in_implementation → verification → closed; or rejected/cancelled). Approval enforces segregation of duties — the approver must differ from the person who proposed the change. A reason-for-change is required (21 CFR Part 11); pass effectiveness_review when closing.",
+    "Advance a change through its controlled lifecycle (proposed → under_assessment → [approval] → in_implementation → verification → closed; or rejected/cancelled). This tool cannot approve a change: approval is an electronic signature (21 CFR 11.50) that needs the approver's password and second factor, which a chat turn cannot collect. When a change under assessment is ready for approval, tell the user to approve it with the Approve button on the change in the Quality register, which takes their signature; someone other than the person who proposed it must approve. A reason-for-change is required (21 CFR Part 11); pass effectiveness_review when closing.",
   input_schema: {
     type: 'object',
     properties: {
       change_id:            { type: 'number' },
-      to:                   { type: 'string', enum: ['proposed', 'under_assessment', 'approved', 'rejected', 'in_implementation', 'verification', 'closed', 'cancelled'] },
+      to:                   { type: 'string', enum: ['proposed', 'under_assessment', 'rejected', 'in_implementation', 'verification', 'closed', 'cancelled'] },
       reason:               { type: 'string', description: 'Reason-for-change for this governed transition.' },
       effectiveness_review: { type: 'string', description: 'Effectiveness-check outcome — provide when moving to closed.' },
     },

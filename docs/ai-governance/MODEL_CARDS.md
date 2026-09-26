@@ -11,7 +11,7 @@
 - **Human oversight.** Generated claims carry a groundedness score; below a capability's threshold, content is gated for human review before approval (`server/services/ai-governance/review-policy.ts`).
 - **Eval evidence.** Retrieval/faithfulness via `server/eval/rag/`; per-document-type accuracy is the active follow-up (not yet measured).
 
-_Models documented: 15. Generated for review; not a substitute for executed validation protocols._
+_Models documented: 16. Generated for review; not a substitute for executed validation protocols._
 
 ---
 ## gpt-4o
@@ -73,13 +73,13 @@ _Models documented: 15. Generated for review; not a substitute for executed vali
 ## claude-opus-4
 
 - **Provider:** anthropic
-- **Pinned version:** `claude-opus-5`
+- **Pinned version:** `claude-opus-5-5`
 - **Governance role:** primary
 - **Quality tier:** flagship (score 99)
 - **Context window:** 1,000,000 tokens
-- **Cost / 1k tokens:** $0.00500 in · $0.02500 out
+- **Cost / 1k tokens:** $0.00400 in · $0.02000 out
 - **Intended tasks:** chat, document_analysis, document_drafting, structured_output, regulatory_review, code_generation, summarization, general
-- **Last governance review:** 2026-09-17
+- **Last governance review:** 2026-09-25
 
 **Intended use.** Primary model for high-risk regulatory authoring, document analysis, and review where reasoning depth matters most. Outputs are decision support and require human review before approval.
 
@@ -93,7 +93,35 @@ _Models documented: 15. Generated for review; not a substitute for executed vali
 **Eval status.**
 - Version pinned in lockfile: yes
 - Per-document-type accuracy measured: no
-- Evidence: server/eval/rag/ (faithfulness); same capability profile and eval harness as the 4.8 predecessor; docs/validation/PQ-CORTEX-001 (PQ-007/008 accuracy targets, PENDING EXECUTION for this version).
+- Evidence: server/eval/pq/pq-protocol.json (PQ-DRAFT-001, draft; PENDING EXECUTION for this version — see pq below). Vendor evaluation and the surface differences: docs/evidence/MODEL-GOVERNANCE/2026-09-25-opus-5-5/README.md. Corrected 2026-09-23: this field cited docs/validation/PQ-CORTEX-001 PQ-007/008, which measure pathway-prediction accuracy and "regulatory intuition" for a different product, not drafting.
+- Note: Per-document-type extraction/generation accuracy is not yet measured; the RAG faithfulness harness and PQ protocol are the evidence path. Version pinning + the drift gate regression-test model swaps in the interim.
+
+---
+
+## claude-opus-5
+
+- **Provider:** anthropic
+- **Pinned version:** `claude-opus-5`
+- **Governance role:** fallback
+- **Quality tier:** flagship (score 98.5)
+- **Context window:** 1,000,000 tokens
+- **Cost / 1k tokens:** $0.00500 in · $0.02500 out
+- **Intended tasks:** chat, document_analysis, document_drafting, structured_output, regulatory_review, code_generation, summarization, general
+- **Last governance review:** 2026-09-25
+
+**Intended use.** Primary model for high-risk regulatory authoring, document analysis, and review where reasoning depth matters most. Outputs are decision support and require human review before approval.
+
+**Known limitations.**
+- Non-deterministic: identical inputs may produce different outputs unless a seed is supplied; every generation is recorded in the gateway audit trail (model, prompt hash, temperature, seed).
+- May produce plausible but unsupported claims (hallucination); generated claims carry a groundedness score and below-threshold content is gated for human review before approval.
+- Not fine-tuned on a proprietary regulatory corpus; regulatory expertise is supplied via system prompts and retrieval, not weights.
+- Bounded by a training-data knowledge cutoff; current guidance must be supplied via retrieval.
+- Higher cost and latency than Sonnet/Haiku; reserve for high-risk tasks.
+
+**Eval status.**
+- Version pinned in lockfile: yes
+- Per-document-type accuracy measured: no
+- Evidence: Reviewed as primary 2026-09-17 (see the claude-opus-4 entry history); covered by the gateway fallback law.
 - Note: Per-document-type extraction/generation accuracy is not yet measured; the RAG faithfulness harness and PQ protocol are the evidence path. Version pinning + the drift gate regression-test model swaps in the interim.
 
 ---

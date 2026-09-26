@@ -8,6 +8,7 @@ import { shouldProcessTenantInBackground } from './services/tenant/tenant-lifecy
 // same file. `./middleware/auth` is deliberately NOT imported — it has a stale
 // `.js` twin that silently wins under vitest.
 import { nonAccessTokenReason } from './middleware/tokenType';
+import { checkOrgMembership } from './middleware/orgMembership';
 import {
   orgRoom,
   documentRoom,
@@ -150,6 +151,73 @@ interface AuthenticatedSocket extends Socket {
   orgId?: string;
   authUserId?: string;
   authEmail?: string;
+  /** The handshake token, kept so the session can be re-verified while connected. */
+  sessionToken?: string;
+  /** The re-verification timer, cleared on disconnect. */
+  sessionRecheck?: NodeJS.Timeout;
+}
+
+// ── Session re-verification while connected (IAM-12 / P1-9) ─────────────────
+//
+// A socket is admitted on a verified token, a live membership and an active
+// tenant, and then stays open for as long as the transport lives. Until
+// 2026-09-25 nothing looked again, so a member removed from the organisation,
+// an account taken out of use, a revoked or password-change-ended session and
+// a suspended tenant all kept receiving the org room's live events for the
+// token's remaining lifetime. Every open socket now re-runs the same three
+// checks on a timer and, when one fails, is told why and disconnected. The
+// interval is generous (the HTTP paths re-check on every request; membership is
+// cached 60 s there too) and never keeps the process alive.
+
+const SOCKET_SESSION_RECHECK_MS = Math.max(5_000, Number(process.env.SOCKET_SESSION_RECHECK_MS) || 60_000);
+
+/** A token claim as a positive integer id, or null when it is anything else. */
+function positiveIntClaim(value: unknown): number | null {
+  const n = Number(value);
+  return Number.isSafeInteger(n) && n > 0 ? n : null;
+}
+
+type SessionEndReason = 'session_ended' | 'membership_revoked' | 'tenant_inactive';
+
+async function sessionEndReason(socket: AuthenticatedSocket): Promise<SessionEndReason | null> {
+  const userId = Number(socket.authUserId);
+  const organizationId = Number(socket.orgId);
+  try {
+    // Signature, revocation, account standing, the password-change rule and
+    // the session's inactivity, exactly as the handshake verified them. The
+    // re-check is not the user acting, so it is not the session's activity
+    // (P1-1): an open tab does not keep an unattended session alive.
+    await verifyLiveToken(socket.sessionToken ?? '', undefined, { activity: false });
+  } catch {
+    return 'session_ended';
+  }
+  if ((await checkOrgMembership(userId, organizationId)) !== 'member') return 'membership_revoked';
+  if (!(await shouldProcessTenantInBackground(organizationId))) return 'tenant_inactive';
+  return null;
+}
+
+function startSessionRecheck(socket: AuthenticatedSocket): void {
+  let inFlight = false;
+  const timer = setInterval(() => {
+    if (inFlight) return;
+    inFlight = true;
+    void sessionEndReason(socket)
+      .catch(() => 'session_ended' as const)
+      .then(reason => {
+        inFlight = false;
+        if (!reason) return;
+        log.warn(`[Socket.io] Ending socket ${socket.id} (org ${socket.orgId}, user ${socket.authUserId}): ${reason}`);
+        clearInterval(timer);
+        socket.emit('session:ended', { reason });
+        socket.disconnect(true);
+      });
+  }, SOCKET_SESSION_RECHECK_MS);
+  timer.unref?.();
+  socket.sessionRecheck = timer;
+  socket.on('disconnect', () => {
+    clearInterval(timer);
+    socket.sessionRecheck = undefined;
+  });
 }
 
 /**
@@ -225,8 +293,10 @@ export function initializeSocketServer(server: Server) {
   ioInstance.use((socket: AuthenticatedSocket, next) => {
     void (async () => {
       try {
-        const token = socket.handshake.auth?.token || socket.handshake.query?.token;
-        if (!token) {
+        // From `auth` only: a token in the query string lands in access logs
+        // and proxies, and no first-party client sends one there (IAM-12).
+        const token = socket.handshake.auth?.token;
+        if (!token || typeof token !== 'string') {
           return next(new Error('Missing bearer token'));
         }
 
@@ -258,11 +328,25 @@ export function initializeSocketServer(server: Server) {
         // namespace is a live event feed, and every handler on it publishes — so
         // the honest options are connect or do not. Read access to the same data
         // remains available over HTTP, which read_only permits.
-        const organizationId = Number(decoded.organizationId);
-        const entitled =
-          Number.isSafeInteger(organizationId) &&
-          organizationId > 0 &&
-          (await shouldProcessTenantInBackground(organizationId));
+        const organizationId = positiveIntClaim(decoded.organizationId);
+        const userId = positiveIntClaim(decoded.userId);
+        if (organizationId === null || userId === null) {
+          return next(new Error('Invalid token claims'));
+        }
+
+        // LIVE MEMBERSHIP (IAM-12 / P1-9). The token's organisation claim was
+        // minted at login; the membership row is what says the user is still a
+        // member now. The same check the HTTP boundary and the /ana namespace
+        // run, fail-closed on an indeterminate answer.
+        const member = await checkOrgMembership(userId, organizationId);
+        if (member !== 'member') {
+          log.warn(
+            `[Socket.io] Refused connection for user ${userId} in org ${organizationId} — membership ${member}`
+          );
+          return next(new Error('Organization membership not confirmed'));
+        }
+
+        const entitled = await shouldProcessTenantInBackground(organizationId);
         if (!entitled) {
           log.warn(
             `[Socket.io] Refused connection for org ${decoded.organizationId} — tenant not entitled`
@@ -270,9 +354,10 @@ export function initializeSocketServer(server: Server) {
           return next(new Error('Organization is not active'));
         }
 
-        socket.orgId = String(decoded.organizationId);
-        socket.authUserId = String(decoded.userId);
+        socket.orgId = String(organizationId);
+        socket.authUserId = String(userId);
         socket.authEmail = decoded.email != null ? String(decoded.email) : undefined;
+        socket.sessionToken = token;
         next();
       } catch (err: any) {
         log.warn(`[Socket.io] Auth failed for ${socket.id}: ${err?.message}`);
@@ -288,6 +373,10 @@ export function initializeSocketServer(server: Server) {
       return;
     }
     log.debug(`New WebSocket connection: ${socket.id} (org: ${orgId})`);
+
+    // The handshake's three checks again, on a timer, for as long as the
+    // socket lives (IAM-12 / P1-9).
+    startSessionRecheck(socket);
 
     // Every authenticated socket belongs to exactly one tenant room, joined
     // from the VERIFIED principal. Every tenant-bearing publish below addresses
