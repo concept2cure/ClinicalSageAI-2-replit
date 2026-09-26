@@ -12,7 +12,8 @@ import { db } from './db';
 import jwt from 'jsonwebtoken';
 import { config } from './config/environment';
 import { verifyJwtWithRotation } from './utils/jwtVerify';
-import { isTokenRevoked } from './services/token-revocation';
+import { isTokenRevoked, revokeToken } from './services/token-revocation';
+import { sessionEndCodeOf, sessionEndMessageOf, sessionInactivityReason } from './services/session-inactivity';
 import {
   ACCOUNT_INACTIVE_MESSAGE,
   issuedAtOfClaims,
@@ -157,6 +158,25 @@ async function refusedAccountOrSessionOutOfUse(userId: number, claims: unknown, 
 }
 
 /**
+ * AUTH-03: a signed-out session opens nothing (see authenticateToken). IAM-06
+ * (P1-1): nor does a session idle past its window or older than its lifetime;
+ * when admitted, this request is recorded as the session's activity (see
+ * authenticateToken and services/session-inactivity.ts). Answers 401 and
+ * returns true when it refused.
+ */
+async function refusedEndedSession(token: string, claims: unknown, res: Response): Promise<boolean> {
+  if (await isTokenRevoked(token)) {
+    res.status(401).json({ error: 'This session has ended. Sign in again.', code: 'SESSION_ENDED' });
+    return true;
+  }
+  const inactivity = await sessionInactivityReason(token, claims);
+  if (!inactivity) return false;
+  void revokeToken(token, inactivity);
+  res.status(401).json({ error: sessionEndMessageOf(inactivity), code: sessionEndCodeOf(inactivity) });
+  return true;
+}
+
+/**
  * Authentication middleware
  * Validates Bearer JWT tokens only.
  * Sets req.userId, req.userRole, req.userEmail, req.tenantId, req.tenantContext.
@@ -191,10 +211,8 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
         return res.status(401).json({ error: 'Token is not valid for this operation' });
       }
 
-      // AUTH-03: a signed-out session opens nothing (see authenticateToken).
-      if (await isTokenRevoked(token)) {
-        return res.status(401).json({ error: 'This session has ended. Sign in again.', code: 'SESSION_ENDED' });
-      }
+      // AUTH-03 and IAM-06: a signed-out, idle or out-of-time session opens nothing.
+      if (await refusedEndedSession(token, decoded, res)) return;
 
       if (!decoded.userId || !decoded.organizationId) {
         return res.status(401).json({ error: 'Invalid token payload' });

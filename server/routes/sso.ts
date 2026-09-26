@@ -17,6 +17,7 @@ import {
 import { runWithTenantScope } from '../db/tenantStore';
 import { isDevAuthAllowed } from '../auth/dev-auth-policy';
 import { recordAuthEvent } from '../services/audit/auth-event-audit';
+import { newSessionClaims } from '../services/session-inactivity';
 import { ACCOUNT_INACTIVE_MESSAGE, isActiveAccountStatus } from '../services/account-standing';
 
 const logger = createScopedLogger('sso');
@@ -452,6 +453,9 @@ router.post('/saml/callback', async (req: Request, res: Response) => {
         provider: 'saml',
         sessionIndex: samlUser.sessionIndex,
         type: 'access',
+        // The session's id, start and idle window (P1-1; the default window,
+        // the organisation's setting is not read on this path).
+        ...newSessionClaims(),
       },
       config.jwt.secret,
       { expiresIn: '24h' }
@@ -774,6 +778,7 @@ router.get('/:provider/callback', (req: Request, res: Response) => {
         role: 'client_user',
         provider,
         type: 'access',
+        ...newSessionClaims(),
       },
       config.jwt.secret,
       { expiresIn: '24h' }

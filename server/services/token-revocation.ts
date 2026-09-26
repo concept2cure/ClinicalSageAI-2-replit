@@ -28,6 +28,13 @@ import {
   sessionPredatesPasswordChange,
 } from './account-standing';
 import { verifyJwtWithRotation, type JwtVerifyOptions } from '../utils/jwtVerify';
+import {
+  SESSION_IDLE_MESSAGE,
+  SESSION_LIFETIME_MESSAGE,
+  sessionInactivityReason,
+  type SessionCheckOptions,
+  type SessionInactivityReason,
+} from './session-inactivity';
 
 const log = createScopedLogger('token-revocation');
 
@@ -219,12 +226,19 @@ export async function isTokenRevoked(token: string): Promise<boolean> {
  * 401 answers the others the same way. A password change is worded as a
  * signed-out session: it is one, from the holder's side.
  */
-export type SessionEndedReason = 'signed-out' | 'account-inactive' | 'password-changed';
+export type SessionEndedReason = 'signed-out' | 'account-inactive' | 'password-changed' | SessionInactivityReason;
+
+function sessionEndedMessage(reason: SessionEndedReason): string {
+  if (reason === 'account-inactive') return ACCOUNT_INACTIVE_MESSAGE;
+  if (reason === 'idle') return SESSION_IDLE_MESSAGE;
+  if (reason === 'lifetime') return SESSION_LIFETIME_MESSAGE;
+  return 'This session has ended. Sign in again.';
+}
 
 export class SessionEndedError extends Error {
   readonly reason: SessionEndedReason;
   constructor(reason: SessionEndedReason = 'signed-out') {
-    super(reason === 'account-inactive' ? ACCOUNT_INACTIVE_MESSAGE : 'This session has ended. Sign in again.');
+    super(sessionEndedMessage(reason));
     this.name = 'SessionEndedError';
     this.reason = reason;
   }
@@ -255,8 +269,18 @@ export class SessionEndedError extends Error {
  * authenticator compared it with the token's iat, so the sessions a holder
  * most needs ended kept working. The standing and the stamp are one read
  * (readAccountStanding).
+ *
+ * And SessionEndedError('idle' | 'lifetime') for a session idle past its window
+ * or older than its lifetime (security audit 2026-09-24, IAM-06; plan P1-1):
+ * this verification is recorded as the session's activity unless `session`
+ * says it is not the user acting (a socket's periodic re-check, a rotation).
+ * The token is revoked on the way out, so every authenticator answers alike.
  */
-export async function verifyLiveToken<T = unknown>(token: string, options?: JwtVerifyOptions): Promise<T> {
+export async function verifyLiveToken<T = unknown>(
+  token: string,
+  options?: JwtVerifyOptions,
+  session?: SessionCheckOptions,
+): Promise<T> {
   const decoded = verifyJwtWithRotation<T>(token, options);
   if (await isTokenRevoked(token)) throw new SessionEndedError();
   const accountId = accountIdOfClaims(decoded);
@@ -266,6 +290,11 @@ export async function verifyLiveToken<T = unknown>(token: string, options?: JwtV
     if (sessionPredatesPasswordChange(issuedAtOfClaims(decoded), standing.passwordChangedAtSeconds)) {
       throw new SessionEndedError('password-changed');
     }
+  }
+  const inactivity = await sessionInactivityReason(token, decoded, session);
+  if (inactivity) {
+    await revokeToken(token, inactivity);
+    throw new SessionEndedError(inactivity);
   }
   return decoded;
 }

@@ -29,6 +29,7 @@ import {
 import { config } from '../config/environment';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { revokeToken, verifyLiveToken } from '../services/token-revocation';
+import { continuedSessionClaims, idleWindowSecondsOf, newSessionClaims } from '../services/session-inactivity';
 import { recordAuthEvent } from '../services/audit/auth-event-audit';
 import { ACCOUNT_INACTIVE_MESSAGE, isAccountActive, isActiveAccountStatus } from '../services/account-standing';
 import { runWithTenantScope } from '../db/tenantStore';
@@ -545,7 +546,7 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
       db.select().from(users).where(eq(users.id, userId)).limit(1),
       mfaOrgId
         ? db
-            .select({ name: organizations.name })
+            .select({ name: organizations.name, settings: organizations.settings })
             .from(organizations)
             .where(eq(organizations.id, mfaOrgId))
             .limit(1)
@@ -561,6 +562,8 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
         organizationId: decoded.organizationId,
         role: mfaActualRole,
         type: 'access',
+        // The session's id, start and idle window (P1-1).
+        ...newSessionClaims(mfaOrgResult[0]?.settings),
       },
       config.jwt.secret,
       { expiresIn: '24h' }
@@ -871,7 +874,7 @@ router.post('/select-organization', async (req: Request, res: Response) => {
 
     // Look up org details
     const [org] = await db
-      .select({ id: organizations.id, name: organizations.name })
+      .select({ id: organizations.id, name: organizations.name, settings: organizations.settings })
       .from(organizations)
       .where(eq(organizations.id, parseInt(organizationId)))
       .limit(1);
@@ -881,7 +884,8 @@ router.post('/select-organization', async (req: Request, res: Response) => {
     // Issue new JWT scoped to the selected organization with actual role
     const jwtEmail = Array.isArray(email) ? email[0] : email;
     const token = jwt.sign(
-      { userId, email: jwtEmail, organizationId: String(organizationId), role: selectOrgRole, type: 'access' },
+      // The same session, with the selected organisation's idle window (P1-1).
+      { userId, email: jwtEmail, organizationId: String(organizationId), role: selectOrgRole, type: 'access', ...continuedSessionClaims(decoded), idl: idleWindowSecondsOf(org?.settings) },
       config.jwt.secret,
       { expiresIn: '24h' }
     );
@@ -977,7 +981,8 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
   }
 
   try {
-    const decoded = (await verifyLiveToken(oldToken)) as any;
+    // A rotation is not the user acting (P1-1): it is not the session's activity.
+    const decoded = (await verifyLiveToken(oldToken, undefined, { activity: false })) as any;
 
     // SECURITY: this endpoint re-mints a full 24h access token. A pre-MFA
     // (mfaPending / mfa_challenge) or refresh token presented here would let a
@@ -1005,6 +1010,7 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
         organizationId: decoded.organizationId,
         role: refreshRole,
         type: 'access',
+        ...continuedSessionClaims(decoded),
       },
       config.jwt.secret,
       { expiresIn: '24h' }
