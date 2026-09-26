@@ -1678,6 +1678,46 @@ router.get('/:id/source-changes', async (req: Request, res: Response) => {
 // to make a program disappear, and the audit rows below would dangle if it did.
 
 /** Shared close-out body: authorize, mutate, audit, in one transaction. */
+/**
+ * What a project holds that makes it a record rather than a draft (PF-13;
+ * founder decision 2026-09-26): a transmittal, a frozen or dispatched sequence,
+ * a document filed in its Vault, a sealed authoring document. Each counted by
+ * its recorded project key. Read inside the caller's transaction, one savepoint
+ * per store, so a store this database does not carry (42P01 / 42703) holds
+ * nothing and does not abort the transaction; any other failure propagates.
+ */
+const PROJECT_HOLD_READS: ReadonlyArray<readonly [string, string]> = [
+  ['transmitted', `SELECT count(*)::int AS n FROM submission_transmittals WHERE program_id = $1 AND organization_id = $2`],
+  ['frozenOrDispatched', `SELECT count(*)::int AS n FROM ectd_sequences e
+                            JOIN submissions s ON s.id = e.submission_id AND s.organization_id = e.organization_id
+                           WHERE s.program_id = $1 AND s.organization_id = $2
+                             AND e.status IN ('frozen', 'dispatched') AND e.deleted_at IS NULL`],
+  ['filed', `SELECT count(*)::int AS n FROM vault.documents d
+               JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $2
+              WHERE d.program_id = $1 AND d.deleted_at IS NULL`],
+  ['sealed', `SELECT count(*)::int AS n FROM frozen_documents f
+                JOIN authoring_documents d ON d.id = f.document_id AND d.tenant_id = f.tenant_id
+               WHERE d.client_program_id = $1 AND d.tenant_id = $2`],
+];
+
+async function projectHolds(client: PoolClient, programId: string, orgId: number): Promise<Record<string, number>> {
+  const holds: Record<string, number> = {};
+  for (const [kind, sql] of PROJECT_HOLD_READS) {
+    await client.query('SAVEPOINT project_hold');
+    try {
+      const { rows } = await client.query(sql, [programId, orgId]);
+      await client.query('RELEASE SAVEPOINT project_hold');
+      const n = Number((rows[0] as { n?: number } | undefined)?.n ?? 0);
+      if (n > 0) holds[kind] = n;
+    } catch (err: unknown) {
+      await client.query('ROLLBACK TO SAVEPOINT project_hold');
+      const code = (err as { code?: string })?.code;
+      if (code !== '42P01' && code !== '42703') throw err;
+    }
+  }
+  return holds;
+}
+
 async function transitionProgram(
   req: Request,
   res: Response,
@@ -1687,6 +1727,8 @@ async function transitionProgram(
     set: string;
     /** Extra guard on the current row, e.g. only archive something not archived. */
     precondition?: (row: { status: string; deleted_at: string | null }) => string | null;
+    /** A refusal that needs the project's records, read under the row lock. */
+    guard?: (client: PoolClient, programId: string, orgId: number) => Promise<{ status: number; body: Record<string, unknown> } | null>;
     details: (row: { status: string }) => Record<string, unknown>;
   },
 ): Promise<void> {
@@ -1715,6 +1757,8 @@ async function transitionProgram(
 
     const blocked = opts.precondition?.(row);
     if (blocked) { await client.query('ROLLBACK'); send400(res, blocked); return; }
+    const refused = await opts.guard?.(client, String(req.params.id), orgId);
+    if (refused) { await client.query('ROLLBACK'); res.status(refused.status).json(refused.body); return; }
 
     await client.query(
       `UPDATE regulatory_programs SET ${opts.set}, updated_at = now()
@@ -1776,6 +1820,22 @@ router.delete('/:id', async (req: Request, res: Response) => {
     action: 'c2c.project.delete',
     set: `deleted_at = now()`,
     precondition: (row) => (row.deleted_at ? 'This program is already deleted.' : null),
+    // A project that holds sealed, filed or transmitted records is archived,
+    // never deleted (PF-13; founder decision 2026-09-26): deleting it made its
+    // Vault leaves stop resolving, and its chain stopped reading.
+    guard: async (client, programId, orgId) => {
+      const holds = await projectHolds(client, programId, orgId);
+      return Object.keys(holds).length === 0
+        ? null
+        : {
+            status: 409,
+            body: {
+              error: 'PROJECT_HOLDS_RECORDS',
+              message: 'This project holds sealed, filed or transmitted records. Archive it instead.',
+              holds,
+            },
+          };
+    },
     details: (row) => ({ from_status: row.status, soft_delete: true }),
   });
 });
