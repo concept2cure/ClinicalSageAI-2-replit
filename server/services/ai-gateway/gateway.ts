@@ -66,6 +66,7 @@ import {
 import {
   resolvePlacement,
   isPlacementCompliant,
+  type ProviderPlacement,
 } from './providers/placement';
 import {
   getOrgPlacementResolver,
@@ -3056,47 +3057,13 @@ export class AIGateway {
   private tenantPlacementVerdict(
     provider: ProviderName,
     request: GatewayRequest,
-  ): { allowed: true } | { allowed: false; reasonCode: PlacementReasonCode; detail: string } {
+  ): { allowed: true } | PlacementDenial {
     const placement = resolvePlacement(provider);
-    const tenant = request.sensitiveTenantPolicy;
-    const isPublic = request.payloadProvenance === 'public';
-    const publicOptIn = isPublic && tenant?.publicSourceFrontier === true;
-    const deny = (reasonCode: PlacementReasonCode, detail: string) =>
-      ({ allowed: false, reasonCode, detail }) as const;
-
-    if (tenant?.resolution === 'unknown' && !isPublic && this.isPlacementEnforced()) {
-      return deny(
-        'DENY_TENANT_POLICY',
-        tenant.unknownReason === 'no_tenant_binding'
-          ? 'the request is not bound to an organization'
-          : "the organization's placement policy could not be read",
-      );
-    }
-    if (tenant?.resolution === 'resolved' && !publicOptIn) {
-      if (tenant.residencyConflict) {
-        return deny('DENY_TENANT_POLICY', "the requested residency contradicts the organization's");
-      }
-      if (tenant.allowedProviders && !tenant.allowedProviders.includes(provider)) {
-        return deny('DENY_TENANT_POLICY', `${provider} is not an AI service the organization allows`);
-      }
-      if (tenant.allowedSubstrates && !tenant.allowedSubstrates.includes(placement.substrate)) {
-        return deny(
-          'DENY_TENANT_POLICY',
-          `${provider} runs on ${placement.substrate}, which the organization does not allow`,
-        );
-      }
-    }
-
-    const needsZdr = request.zeroDataRetention === true;
-    const residency =
-      request.dataResidency && request.dataResidency !== 'any' ? request.dataResidency : null;
-    if (!needsZdr && !residency) return { allowed: true };
-    if (isPlacementCompliant(placement, { zeroDataRetention: needsZdr, residency })) {
-      return { allowed: true };
-    }
-    return needsZdr && !placement.zeroDataRetention
-      ? deny('DENY_SHARED_PROVIDER_WITHOUT_ZDR', `${provider} does not provide zero data retention`)
-      : deny('DENY_TENANT_POLICY', `${provider} does not serve residency ${residency}`);
+    return (
+      unknownTenantPolicyDenial(request, this.isPlacementEnforced()) ??
+      tenantAllowListDenial(provider, placement, request) ??
+      requestPlacementDenial(provider, placement, request) ?? { allowed: true }
+    );
   }
 
   /**
@@ -3131,41 +3098,9 @@ export class AIGateway {
    * resolves as unknown and a tenant payload is refused.
    */
   private async applyOrgPlacementDefaults(request: GatewayRequest): Promise<GatewayRequest> {
-    const explicit =
-      request.organizationId === undefined || request.organizationId === null
-        ? undefined
-        : request.organizationId;
-    const scope = getTenantScope();
-    const ambient = scope?.tenantId && scope.tenantId !== '0' ? scope.tenantId : undefined;
-    if (explicit !== undefined && ambient !== undefined && String(explicit) !== String(ambient)) {
-      log.warn('[ai-gateway] placement: explicit organizationId differs from the ambient tenant scope', {
-        explicit: String(explicit),
-        ambient,
-        callerModule: request.callerModule,
-      });
-    }
-    const organizationId = explicit ?? ambient;
-    const boundFrom = explicit !== undefined ? 'explicit' : 'ambient_scope';
-
-    if (organizationId === undefined) {
-      if (scope) {
-        return {
-          ...request,
-          sensitiveTenantPolicy: { resolution: 'absent', boundFrom: 'platform_scope' },
-        };
-      }
-      if (process.env.NODE_ENV === 'production') {
-        return {
-          ...request,
-          sensitiveTenantPolicy: {
-            resolution: 'unknown',
-            unknownReason: 'no_tenant_binding',
-            boundFrom: 'none',
-          },
-        };
-      }
-      return { ...request, sensitiveTenantPolicy: { resolution: 'absent', boundFrom: 'none' } };
-    }
+    const binding = bindTenant(request);
+    if ('unbound' in binding) return { ...request, sensitiveTenantPolicy: binding.unbound };
+    const { organizationId, boundFrom } = binding;
 
     try {
       const policy = await getOrgPlacementResolver().resolve(organizationId);
@@ -3198,7 +3133,7 @@ export class AIGateway {
           allowedSubstrates: policy.allowedSubstrates,
           allowedProviders: policy.allowedProviders,
           publicSourceFrontier: policy.publicSourceFrontier,
-          residencyConflict: 'residencyConflict' in merged && merged.residencyConflict === true,
+          residencyConflict: 'residencyConflict' in merged && merged.residencyConflict,
         },
       };
     } catch (err) {
@@ -3500,7 +3435,7 @@ export class AIGateway {
         resolvedModel: response.resolvedModel,
         taskType: request.taskType,
         strategy,
-        organizationId: request.organizationId ?? request.sensitiveTenantPolicy?.organizationId,
+        organizationId: auditOrganizationId(request),
         userId: request.userId,
         projectId: request.projectId,
         callerModule: request.callerModule,
@@ -3559,16 +3494,7 @@ export class AIGateway {
         metadata: {
           ...(request.metadata ?? {}),
           ...(contentPolicy ? { contentPolicy } : {}),
-          // Which tenant floor this call was placed under, and how the tenant
-          // was bound. Content-free. The PHI/PII class and the classifier's
-          // regulatory signal are recorded here audit-only: they do not gate.
-          tenantPlacement: {
-            resolution: request.sensitiveTenantPolicy?.resolution,
-            boundFrom: request.sensitiveTenantPolicy?.boundFrom,
-            payloadProvenance: request.payloadProvenance ?? 'tenant_governed',
-            dataClass: request.sensitiveDataClass,
-            regulatoryContentDetected: request.regulatoryContentDetected,
-          },
+          tenantPlacement: tenantPlacementAuditMetadata(request),
         },
       });
     } catch (auditError: any) {
@@ -3601,7 +3527,7 @@ export class AIGateway {
         model: 'none',
         taskType: request.taskType,
         strategy,
-        organizationId: request.organizationId ?? request.sensitiveTenantPolicy?.organizationId,
+        organizationId: auditOrganizationId(request),
         userId: request.userId,
         projectId: request.projectId,
         callerModule: request.callerModule,
@@ -3649,7 +3575,7 @@ export class AIGateway {
         model: 'none',
         taskType: request.taskType,
         strategy,
-        organizationId: request.organizationId ?? request.sensitiveTenantPolicy?.organizationId,
+        organizationId: auditOrganizationId(request),
         userId: request.userId,
         projectId: request.projectId,
         callerModule: request.callerModule,
@@ -3940,6 +3866,119 @@ export class ModelNotApprovedError extends GatewayPolicyError {
  * never walked down the fallback ladder (falling back would turn a placement
  * refusal into a routing hint), never counted against a provider's health.
  */
+type PlacementDenial = { allowed: false; reasonCode: PlacementReasonCode; detail: string };
+
+function placementDenial(reasonCode: PlacementReasonCode, detail: string): PlacementDenial {
+  return { allowed: false, reasonCode, detail };
+}
+
+/** An unknown tenant policy refuses a non-public payload wherever placement is enforced. */
+function unknownTenantPolicyDenial(request: GatewayRequest, enforced: boolean): PlacementDenial | null {
+  const tenant = request.sensitiveTenantPolicy;
+  if (tenant?.resolution !== 'unknown' || request.payloadProvenance === 'public' || !enforced) return null;
+  return placementDenial(
+    'DENY_TENANT_POLICY',
+    tenant.unknownReason === 'no_tenant_binding'
+      ? 'the request is not bound to an organization'
+      : "the organization's placement policy could not be read",
+  );
+}
+
+/**
+ * The tenant's own lists: a residency conflict, the vendor allow-list, the
+ * substrate allow-list. Skipped for a public payload the tenant opted in.
+ */
+function tenantAllowListDenial(
+  provider: ProviderName,
+  placement: ProviderPlacement,
+  request: GatewayRequest,
+): PlacementDenial | null {
+  const tenant = request.sensitiveTenantPolicy;
+  if (tenant?.resolution !== 'resolved') return null;
+  if (request.payloadProvenance === 'public' && tenant.publicSourceFrontier === true) return null;
+  if (tenant.residencyConflict) {
+    return placementDenial('DENY_TENANT_POLICY', "the requested residency contradicts the organization's");
+  }
+  if (tenant.allowedProviders && !tenant.allowedProviders.includes(provider)) {
+    return placementDenial('DENY_TENANT_POLICY', `${provider} is not an AI service the organization allows`);
+  }
+  if (tenant.allowedSubstrates && !tenant.allowedSubstrates.includes(placement.substrate)) {
+    return placementDenial(
+      'DENY_TENANT_POLICY',
+      `${provider} runs on ${placement.substrate}, which the organization does not allow`,
+    );
+  }
+  return null;
+}
+
+/** The request's residency and zero retention, with the tenant floor already merged in. */
+function requestPlacementDenial(
+  provider: ProviderName,
+  placement: ProviderPlacement,
+  request: GatewayRequest,
+): PlacementDenial | null {
+  const needsZdr = request.zeroDataRetention === true;
+  const residency =
+    request.dataResidency && request.dataResidency !== 'any' ? request.dataResidency : null;
+  if (!needsZdr && !residency) return null;
+  if (isPlacementCompliant(placement, { zeroDataRetention: needsZdr, residency })) return null;
+  return needsZdr && !placement.zeroDataRetention
+    ? placementDenial('DENY_SHARED_PROVIDER_WITHOUT_ZDR', `${provider} does not provide zero data retention`)
+    : placementDenial('DENY_TENANT_POLICY', `${provider} does not serve residency ${residency}`);
+}
+
+type TenantPolicySnapshot = NonNullable<GatewayRequest['sensitiveTenantPolicy']>;
+
+/**
+ * Which tenant the request belongs to: the explicit organizationId, else the
+ * ambient tenant scope. With neither, the unbound snapshot to record — platform
+ * work in a system or pre-auth scope carries no tenant; no scope at all in
+ * production is a lost binding (unknown).
+ */
+function bindTenant(
+  request: GatewayRequest,
+):
+  | { organizationId: string | number; boundFrom: 'explicit' | 'ambient_scope' }
+  | { unbound: TenantPolicySnapshot } {
+  const explicit = request.organizationId ?? undefined;
+  const scope = getTenantScope();
+  const ambient = scope?.tenantId && scope.tenantId !== '0' ? scope.tenantId : undefined;
+  if (explicit !== undefined && ambient !== undefined && String(explicit) !== String(ambient)) {
+    log.warn('[ai-gateway] placement: explicit organizationId differs from the ambient tenant scope', {
+      explicit: String(explicit),
+      ambient,
+      callerModule: request.callerModule,
+    });
+  }
+  if (explicit !== undefined) return { organizationId: explicit, boundFrom: 'explicit' };
+  if (ambient !== undefined) return { organizationId: ambient, boundFrom: 'ambient_scope' };
+  if (scope) return { unbound: { resolution: 'absent', boundFrom: 'platform_scope' } };
+  if (process.env.NODE_ENV === 'production') {
+    return { unbound: { resolution: 'unknown', unknownReason: 'no_tenant_binding', boundFrom: 'none' } };
+  }
+  return { unbound: { resolution: 'absent', boundFrom: 'none' } };
+}
+
+/** The organization an audit row is attributed to: explicit, else the bound tenant. */
+function auditOrganizationId(request: GatewayRequest): string | number | undefined {
+  return request.organizationId ?? request.sensitiveTenantPolicy?.organizationId;
+}
+
+/**
+ * Which tenant floor a call was placed under, and how the tenant was bound.
+ * Content-free. The PHI/PII class and the classifier's regulatory signal are
+ * recorded here audit-only: they do not gate.
+ */
+function tenantPlacementAuditMetadata(request: GatewayRequest): Record<string, unknown> {
+  return {
+    resolution: request.sensitiveTenantPolicy?.resolution,
+    boundFrom: request.sensitiveTenantPolicy?.boundFrom,
+    payloadProvenance: request.payloadProvenance ?? 'tenant_governed',
+    dataClass: request.sensitiveDataClass,
+    regulatoryContentDetected: request.regulatoryContentDetected,
+  };
+}
+
 export class TenantPlacementError extends GatewayPolicyError {
   constructor(
     readonly reasonCode: PlacementReasonCode,

@@ -127,259 +127,258 @@ function enforceLikeProduction() {
   process.env.AI_SENSITIVE_DATA_POLICY_MODE = 'enforce';
 }
 
-describe('tenant placement boundary (D6)', () => {
-  const saved = { ...process.env };
+// Environment and resolver state, reset around every case in this file.
+const saved = { ...process.env };
 
-  beforeEach(() => {
-    process.env.NODE_ENV = 'test';
-    delete process.env.AI_SENSITIVE_DATA_POLICY_MODE;
-    delete process.env.AI_PII_ENFORCEMENT;
-    delete process.env.AI_PROVIDER_PLACEMENT_APPROVALS;
-    delete process.env.ANTHROPIC_ZERO_RETENTION;
-    delete process.env.OPENAI_ZERO_RETENTION;
-    delete process.env.AI_BEDROCK_RESIDENCY;
+beforeEach(() => {
+  process.env.NODE_ENV = 'test';
+  delete process.env.AI_SENSITIVE_DATA_POLICY_MODE;
+  delete process.env.AI_PII_ENFORCEMENT;
+  delete process.env.AI_PROVIDER_PLACEMENT_APPROVALS;
+  delete process.env.ANTHROPIC_ZERO_RETENTION;
+  delete process.env.OPENAI_ZERO_RETENTION;
+  delete process.env.AI_BEDROCK_RESIDENCY;
+  resetPlacementRegistry();
+});
+
+afterEach(() => {
+  process.env = { ...saved };
+  resetPlacementRegistry();
+  resetOrgPlacementResolver();
+  vi.restoreAllMocks();
+  logSpies.info.mockClear();
+  logSpies.warn.mockClear();
+});
+
+describe('tenant placement boundary (D6) — selection honours the tenant floor for every data class', () => {
+  it('a tenant restricted to self_hosted is served only on the self-hosted lane', async () => {
+    useTenantPolicy({ allowedSubstrates: ['self_hosted'] });
+    const gateway = buildGateway(['anthropic', 'openai', 'moonshot', 'local']);
+    const dispatch = stubDispatch(gateway);
+
+    await gateway.route(chat({ organizationId: ORG }));
+
+    const providers = dispatchedProviders(dispatch);
+    expect(providers.length).toBeGreaterThan(0);
+    for (const provider of providers) {
+      expect(resolvePlacement(provider).substrate).toBe('self_hosted');
+    }
+  });
+
+  it('with no permitted lane the request is refused as a tenant-policy decision and no SDK is called', async () => {
+    useTenantPolicy({ allowedSubstrates: ['self_hosted'] });
+    const gateway = buildGateway(['anthropic', 'openai', 'moonshot']);
+    const dispatch = stubDispatch(gateway);
+
+    await expect(gateway.route(chat({ organizationId: ORG }))).rejects.toMatchObject({
+      name: GatewayPolicyError.name,
+      message: expect.stringContaining('DENY_TENANT_POLICY'),
+    });
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it('the vendor allow-list is honoured on every rung: Kimi is never reached when the tenant lists only Claude and OpenAI', async () => {
+    useTenantPolicy({ allowedProviders: ['anthropic', 'openai'] });
+    const gateway = buildGateway(['anthropic', 'openai', 'moonshot']);
+    const dispatch = stubDispatch(gateway, ['anthropic', 'openai']);
+
+    await expect(gateway.route(chat({ organizationId: ORG }))).rejects.toThrow();
+    expect(dispatchedProviders(dispatch)).not.toContain('moonshot');
+    expect(dispatchedProviders(dispatch).length).toBeGreaterThan(0);
+  });
+
+  it('the fallback ladder never crosses into a substrate the tenant has not allowed', async () => {
+    useTenantPolicy({ allowedSubstrates: ['frontier_private'] });
+    const gateway = buildGateway(['bedrock', 'anthropic', 'openai', 'moonshot']);
+    const dispatch = stubDispatch(gateway, ['bedrock']);
+
+    await expect(gateway.route(chat({ organizationId: ORG }))).rejects.toThrow();
+    for (const provider of dispatchedProviders(dispatch)) {
+      expect(resolvePlacement(provider).substrate).toBe('frontier_private');
+    }
+  });
+});
+
+describe('tenant placement boundary (D6) — the tenant floor cannot be lowered by the request', () => {
+  it('a request zeroDataRetention:false does not defeat the org zero-retention floor', async () => {
+    useTenantPolicy({ zeroDataRetention: true });
+    const gateway = buildGateway(['anthropic', 'openai', 'moonshot']); // none contractually ZDR here
+    const dispatch = stubDispatch(gateway);
+
+    await expect(
+      gateway.route(chat({ organizationId: ORG, zeroDataRetention: false })),
+    ).rejects.toMatchObject({ name: GatewayPolicyError.name });
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it('a request residency that contradicts the tenant residency is refused, not silently honoured', async () => {
+    process.env.AI_BEDROCK_RESIDENCY = 'us';
     resetPlacementRegistry();
+    useTenantPolicy({ residency: 'eu' });
+    const gateway = buildGateway(['bedrock', 'anthropic']);
+    const dispatch = stubDispatch(gateway);
+
+    await expect(
+      gateway.route(chat({ organizationId: ORG, dataResidency: 'us' })),
+    ).rejects.toMatchObject({
+      name: GatewayPolicyError.name,
+      message: expect.stringContaining('DENY_TENANT_POLICY'),
+    });
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+});
+
+describe('tenant placement boundary (D6) — the tenant is bound even when the caller forgets to say which', () => {
+  it('binds the tenant from the ambient request scope when organizationId is omitted', async () => {
+    useTenantPolicy({ allowedSubstrates: ['self_hosted'] });
+    const gateway = buildGateway(['anthropic', 'openai']);
+    const dispatch = stubDispatch(gateway);
+
+    await expect(
+      runWithTenantScope({ tenantId: String(ORG), role: null, source: 'request' }, () =>
+        gateway.route(chat()),
+      ),
+    ).rejects.toMatchObject({ name: GatewayPolicyError.name });
+    expect(dispatch).not.toHaveBeenCalled();
   });
 
-  afterEach(() => {
-    process.env = { ...saved };
-    resetPlacementRegistry();
-    resetOrgPlacementResolver();
-    vi.restoreAllMocks();
-    logSpies.info.mockClear();
-    logSpies.warn.mockClear();
+  it('under enforcement, a call with no tenant binding at all is refused for a tenant payload', async () => {
+    enforceLikeProduction();
+    const gateway = buildGateway(['anthropic']);
+    const dispatch = stubDispatch(gateway);
+
+    await expect(gateway.route(chat())).rejects.toMatchObject({
+      name: GatewayPolicyError.name,
+      message: expect.stringContaining('DENY_TENANT_POLICY'),
+    });
+    expect(dispatch).not.toHaveBeenCalled();
   });
 
-  describe('selection honours the tenant floor for every data class', () => {
-    it('a tenant restricted to self_hosted is served only on the self-hosted lane', async () => {
-      useTenantPolicy({ allowedSubstrates: ['self_hosted'] });
-      const gateway = buildGateway(['anthropic', 'openai', 'moonshot', 'local']);
-      const dispatch = stubDispatch(gateway);
+  it('platform work in the explicit system scope is not refused (it carries no tenant)', async () => {
+    enforceLikeProduction();
+    const gateway = buildGateway(['anthropic']);
+    const dispatch = stubDispatch(gateway);
 
-      await gateway.route(chat({ organizationId: ORG }));
+    await runWithSystemTenantScope('tenant-placement-boundary.test', () => gateway.route(chat()));
+    expect(dispatchedProviders(dispatch)).toEqual(['anthropic']);
+  });
+});
 
-      const providers = dispatchedProviders(dispatch);
-      expect(providers.length).toBeGreaterThan(0);
-      for (const provider of providers) {
-        expect(resolvePlacement(provider).substrate).toBe('self_hosted');
-      }
+describe('tenant placement boundary (D6) — an unknown policy fails closed where enforcement is on', () => {
+  it('under enforcement, a policy lookup failure refuses the tenant payload', async () => {
+    enforceLikeProduction();
+    useTenantPolicy(new Error('connection terminated'));
+    const gateway = buildGateway(['anthropic']);
+    const dispatch = stubDispatch(gateway);
+
+    await expect(gateway.route(chat({ organizationId: ORG }))).rejects.toMatchObject({
+      name: GatewayPolicyError.name,
+      message: expect.stringContaining('DENY_TENANT_POLICY'),
     });
-
-    it('with no permitted lane the request is refused as a tenant-policy decision and no SDK is called', async () => {
-      useTenantPolicy({ allowedSubstrates: ['self_hosted'] });
-      const gateway = buildGateway(['anthropic', 'openai', 'moonshot']);
-      const dispatch = stubDispatch(gateway);
-
-      await expect(gateway.route(chat({ organizationId: ORG }))).rejects.toMatchObject({
-        name: GatewayPolicyError.name,
-        message: expect.stringContaining('DENY_TENANT_POLICY'),
-      });
-      expect(dispatch).not.toHaveBeenCalled();
-    });
-
-    it('the vendor allow-list is honoured on every rung: Kimi is never reached when the tenant lists only Claude and OpenAI', async () => {
-      useTenantPolicy({ allowedProviders: ['anthropic', 'openai'] });
-      const gateway = buildGateway(['anthropic', 'openai', 'moonshot']);
-      const dispatch = stubDispatch(gateway, ['anthropic', 'openai']);
-
-      await expect(gateway.route(chat({ organizationId: ORG }))).rejects.toThrow();
-      expect(dispatchedProviders(dispatch)).not.toContain('moonshot');
-      expect(dispatchedProviders(dispatch).length).toBeGreaterThan(0);
-    });
-
-    it('the fallback ladder never crosses into a substrate the tenant has not allowed', async () => {
-      useTenantPolicy({ allowedSubstrates: ['frontier_private'] });
-      const gateway = buildGateway(['bedrock', 'anthropic', 'openai', 'moonshot']);
-      const dispatch = stubDispatch(gateway, ['bedrock']);
-
-      await expect(gateway.route(chat({ organizationId: ORG }))).rejects.toThrow();
-      for (const provider of dispatchedProviders(dispatch)) {
-        expect(resolvePlacement(provider).substrate).toBe('frontier_private');
-      }
-    });
+    expect(dispatch).not.toHaveBeenCalled();
   });
 
-  describe('the tenant floor cannot be lowered by the request', () => {
-    it('a request zeroDataRetention:false does not defeat the org zero-retention floor', async () => {
-      useTenantPolicy({ zeroDataRetention: true });
-      const gateway = buildGateway(['anthropic', 'openai', 'moonshot']); // none contractually ZDR here
-      const dispatch = stubDispatch(gateway);
+  it('outside enforcement, a lookup failure is recorded and the request still runs', async () => {
+    useTenantPolicy(new Error('connection terminated'));
+    const gateway = buildGateway(['anthropic']);
+    const dispatch = stubDispatch(gateway);
 
-      await expect(
-        gateway.route(chat({ organizationId: ORG, zeroDataRetention: false })),
-      ).rejects.toMatchObject({ name: GatewayPolicyError.name });
-      expect(dispatch).not.toHaveBeenCalled();
-    });
-
-    it('a request residency that contradicts the tenant residency is refused, not silently honoured', async () => {
-      process.env.AI_BEDROCK_RESIDENCY = 'us';
-      resetPlacementRegistry();
-      useTenantPolicy({ residency: 'eu' });
-      const gateway = buildGateway(['bedrock', 'anthropic']);
-      const dispatch = stubDispatch(gateway);
-
-      await expect(
-        gateway.route(chat({ organizationId: ORG, dataResidency: 'us' })),
-      ).rejects.toMatchObject({
-        name: GatewayPolicyError.name,
-        message: expect.stringContaining('DENY_TENANT_POLICY'),
-      });
-      expect(dispatch).not.toHaveBeenCalled();
-    });
+    await gateway.route(chat({ organizationId: ORG }));
+    expect(dispatch).toHaveBeenCalledTimes(1);
   });
 
-  describe('the tenant is bound even when the caller forgets to say which', () => {
-    it('binds the tenant from the ambient request scope when organizationId is omitted', async () => {
-      useTenantPolicy({ allowedSubstrates: ['self_hosted'] });
-      const gateway = buildGateway(['anthropic', 'openai']);
-      const dispatch = stubDispatch(gateway);
+  it('an on-prem tenant with no self-hosted lane gets a placement refusal, not "No AI provider is configured"', async () => {
+    enforceLikeProduction();
+    useTenantPolicy({ residency: 'on_prem' });
+    const gateway = buildGateway(['anthropic', 'openai']);
+    const dispatch = stubDispatch(gateway);
 
-      await expect(
-        runWithTenantScope({ tenantId: String(ORG), role: null, source: 'request' }, () =>
-          gateway.route(chat()),
-        ),
-      ).rejects.toMatchObject({ name: GatewayPolicyError.name });
-      expect(dispatch).not.toHaveBeenCalled();
+    await expect(gateway.route(chat({ organizationId: ORG }))).rejects.toMatchObject({
+      name: GatewayPolicyError.name,
+      message: expect.stringContaining('DENY_TENANT_POLICY'),
     });
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+});
 
-    it('under enforcement, a call with no tenant binding at all is refused for a tenant payload', async () => {
-      enforceLikeProduction();
-      const gateway = buildGateway(['anthropic']);
-      const dispatch = stubDispatch(gateway);
+describe('tenant placement boundary (D6) — the last mile re-checks the floor before any SDK call', () => {
+  it('refuses a disallowed substrate even when selection is bypassed', async () => {
+    const gateway = buildGateway(['anthropic']);
+    const dispatch = stubDispatch(gateway);
+    const anthropicModel = (gateway as any).models.find(
+      (m: { provider: string; enabled: boolean }) => m.provider === 'anthropic' && m.enabled,
+    );
+    expect(anthropicModel).toBeTruthy();
 
-      await expect(gateway.route(chat())).rejects.toMatchObject({
-        name: GatewayPolicyError.name,
-        message: expect.stringContaining('DENY_TENANT_POLICY'),
-      });
-      expect(dispatch).not.toHaveBeenCalled();
+    const request: GatewayRequest = {
+      ...chat({ organizationId: ORG }),
+      sensitiveDataClass: 'none',
+      sensitiveTenantPolicy: { resolution: 'resolved', allowedSubstrates: ['self_hosted'] },
+    };
+    await expect(
+      (gateway as any).executeProvider(anthropicModel, request, 'req-1', Date.now()),
+    ).rejects.toMatchObject({
+      name: GatewayPolicyError.name,
+      message: expect.stringContaining('DENY_TENANT_POLICY'),
     });
-
-    it('platform work in the explicit system scope is not refused (it carries no tenant)', async () => {
-      enforceLikeProduction();
-      const gateway = buildGateway(['anthropic']);
-      const dispatch = stubDispatch(gateway);
-
-      await runWithSystemTenantScope('tenant-placement-boundary.test', () => gateway.route(chat()));
-      expect(dispatchedProviders(dispatch)).toEqual(['anthropic']);
-    });
+    expect(dispatch).not.toHaveBeenCalled();
   });
 
-  describe('an unknown policy fails closed where enforcement is on', () => {
-    it('under enforcement, a policy lookup failure refuses the tenant payload', async () => {
-      enforceLikeProduction();
-      useTenantPolicy(new Error('connection terminated'));
-      const gateway = buildGateway(['anthropic']);
-      const dispatch = stubDispatch(gateway);
+  it('performance qualification resolves the tenant floor before it reaches a model', async () => {
+    useTenantPolicy({ allowedSubstrates: ['self_hosted'] });
+    const gateway = buildGateway(['anthropic']);
+    const dispatch = stubDispatch(gateway);
+    const anthropicModel = (gateway as any).models.find(
+      (m: { provider: string; enabled: boolean }) => m.provider === 'anthropic' && m.enabled,
+    );
 
-      await expect(gateway.route(chat({ organizationId: ORG }))).rejects.toMatchObject({
-        name: GatewayPolicyError.name,
-        message: expect.stringContaining('DENY_TENANT_POLICY'),
-      });
-      expect(dispatch).not.toHaveBeenCalled();
-    });
+    await expect(
+      gateway.evaluateModel(anthropicModel.id, chat({ organizationId: ORG })),
+    ).rejects.toMatchObject({ name: GatewayPolicyError.name });
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+});
 
-    it('outside enforcement, a lookup failure is recorded and the request still runs', async () => {
-      useTenantPolicy(new Error('connection terminated'));
-      const gateway = buildGateway(['anthropic']);
-      const dispatch = stubDispatch(gateway);
+describe('tenant placement boundary (D6) — embeddings are held to the same floor', () => {
+  it('refuses to embed a self_hosted-only tenant on a shared embedding service', async () => {
+    useTenantPolicy({ allowedSubstrates: ['self_hosted'] });
+    const gateway = buildGateway(['openai']);
 
-      await gateway.route(chat({ organizationId: ORG }));
-      expect(dispatch).toHaveBeenCalledTimes(1);
-    });
+    await expect(
+      gateway.authorizeEmbedding({ organizationId: ORG, provider: 'openai', texts: [CONFIDENTIAL_TEXT] }),
+    ).rejects.toMatchObject({ name: GatewayPolicyError.name });
+  });
+});
 
-    it('an on-prem tenant with no self-hosted lane gets a placement refusal, not "No AI provider is configured"', async () => {
-      enforceLikeProduction();
-      useTenantPolicy({ residency: 'on_prem' });
-      const gateway = buildGateway(['anthropic', 'openai']);
-      const dispatch = stubDispatch(gateway);
+describe('tenant placement boundary (D6) — public-source payloads reach a shared API only on the tenant\'s opt-in', () => {
+  it('without the opt-in, a public payload stays on the tenant\'s allowed lane', async () => {
+    useTenantPolicy({ allowedSubstrates: ['self_hosted'], publicSourceFrontier: false });
+    const gateway = buildGateway(['anthropic', 'local']);
+    const dispatch = stubDispatch(gateway);
 
-      await expect(gateway.route(chat({ organizationId: ORG }))).rejects.toMatchObject({
-        name: GatewayPolicyError.name,
-        message: expect.stringContaining('DENY_TENANT_POLICY'),
-      });
-      expect(dispatch).not.toHaveBeenCalled();
-    });
+    await gateway.route(chat({ organizationId: ORG, payloadProvenance: 'public' }));
+    for (const provider of dispatchedProviders(dispatch)) {
+      expect(resolvePlacement(provider).substrate).toBe('self_hosted');
+    }
   });
 
-  describe('the last mile re-checks the floor before any SDK call', () => {
-    it('refuses a disallowed substrate even when selection is bypassed', async () => {
-      const gateway = buildGateway(['anthropic']);
-      const dispatch = stubDispatch(gateway);
-      const anthropicModel = (gateway as any).models.find(
-        (m: { provider: string; enabled: boolean }) => m.provider === 'anthropic' && m.enabled,
-      );
-      expect(anthropicModel).toBeTruthy();
+  it('with the opt-in, a public payload may reach a shared frontier API', async () => {
+    useTenantPolicy({ allowedSubstrates: ['self_hosted'], publicSourceFrontier: true });
+    const gateway = buildGateway(['anthropic']);
+    const dispatch = stubDispatch(gateway);
 
-      const request: GatewayRequest = {
-        ...chat({ organizationId: ORG }),
-        sensitiveDataClass: 'none',
-        sensitiveTenantPolicy: { resolution: 'resolved', allowedSubstrates: ['self_hosted'] },
-      };
-      await expect(
-        (gateway as any).executeProvider(anthropicModel, request, 'req-1', Date.now()),
-      ).rejects.toMatchObject({
-        name: GatewayPolicyError.name,
-        message: expect.stringContaining('DENY_TENANT_POLICY'),
-      });
-      expect(dispatch).not.toHaveBeenCalled();
-    });
-
-    it('performance qualification resolves the tenant floor before it reaches a model', async () => {
-      useTenantPolicy({ allowedSubstrates: ['self_hosted'] });
-      const gateway = buildGateway(['anthropic']);
-      const dispatch = stubDispatch(gateway);
-      const anthropicModel = (gateway as any).models.find(
-        (m: { provider: string; enabled: boolean }) => m.provider === 'anthropic' && m.enabled,
-      );
-
-      await expect(
-        gateway.evaluateModel(anthropicModel.id, chat({ organizationId: ORG })),
-      ).rejects.toMatchObject({ name: GatewayPolicyError.name });
-      expect(dispatch).not.toHaveBeenCalled();
-    });
+    await gateway.route(chat({ organizationId: ORG, payloadProvenance: 'public' }));
+    expect(dispatchedProviders(dispatch)).toEqual(['anthropic']);
   });
 
-  describe('embeddings are held to the same floor', () => {
-    it('refuses to embed a self_hosted-only tenant on a shared embedding service', async () => {
-      useTenantPolicy({ allowedSubstrates: ['self_hosted'] });
-      const gateway = buildGateway(['openai']);
+  it('the opt-in never opens the shared API to a tenant payload', async () => {
+    useTenantPolicy({ allowedSubstrates: ['self_hosted'], publicSourceFrontier: true });
+    const gateway = buildGateway(['anthropic']);
+    const dispatch = stubDispatch(gateway);
 
-      await expect(
-        gateway.authorizeEmbedding({ organizationId: ORG, provider: 'openai', texts: [CONFIDENTIAL_TEXT] }),
-      ).rejects.toMatchObject({ name: GatewayPolicyError.name });
+    await expect(gateway.route(chat({ organizationId: ORG }))).rejects.toMatchObject({
+      name: GatewayPolicyError.name,
     });
-  });
-
-  describe('public-source payloads reach a shared API only on the tenant\'s opt-in', () => {
-    it('without the opt-in, a public payload stays on the tenant\'s allowed lane', async () => {
-      useTenantPolicy({ allowedSubstrates: ['self_hosted'], publicSourceFrontier: false });
-      const gateway = buildGateway(['anthropic', 'local']);
-      const dispatch = stubDispatch(gateway);
-
-      await gateway.route(chat({ organizationId: ORG, payloadProvenance: 'public' }));
-      for (const provider of dispatchedProviders(dispatch)) {
-        expect(resolvePlacement(provider).substrate).toBe('self_hosted');
-      }
-    });
-
-    it('with the opt-in, a public payload may reach a shared frontier API', async () => {
-      useTenantPolicy({ allowedSubstrates: ['self_hosted'], publicSourceFrontier: true });
-      const gateway = buildGateway(['anthropic']);
-      const dispatch = stubDispatch(gateway);
-
-      await gateway.route(chat({ organizationId: ORG, payloadProvenance: 'public' }));
-      expect(dispatchedProviders(dispatch)).toEqual(['anthropic']);
-    });
-
-    it('the opt-in never opens the shared API to a tenant payload', async () => {
-      useTenantPolicy({ allowedSubstrates: ['self_hosted'], publicSourceFrontier: true });
-      const gateway = buildGateway(['anthropic']);
-      const dispatch = stubDispatch(gateway);
-
-      await expect(gateway.route(chat({ organizationId: ORG }))).rejects.toMatchObject({
-        name: GatewayPolicyError.name,
-      });
-      expect(dispatch).not.toHaveBeenCalled();
-    });
+    expect(dispatch).not.toHaveBeenCalled();
   });
 });
