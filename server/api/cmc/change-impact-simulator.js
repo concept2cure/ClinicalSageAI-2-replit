@@ -14,6 +14,10 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
+import { serverError } from '../../lib/api-response.js';
+import { createScopedLogger } from '../../utils/logger.js';
+
+const logger = createScopedLogger('cmc-change-impact-simulator');
 
 // Rate limiter for impact simulation (more permissive)
 const impactSimulationLimiter = rateLimit({
@@ -146,11 +150,7 @@ router.post('/simulate', checkForOpenAIKey, impactSimulationLimiter, async (req,
       downloadUrl: `/api/cmc/change-impact-simulator/download/${simulationId}`,
     });
   } catch (error) {
-    console.error('Error in impact simulation:', error);
-    return res.status(500).json({
-      error: 'An error occurred while simulating change impact',
-      details: error.message,
-    });
+    return serverError(res, logger, 'simulating change impact', error);
   }
 });
 
@@ -234,11 +234,7 @@ router.post('/market-report', checkForOpenAIKey, impactSimulationLimiter, async 
       downloadUrl: `/api/cmc/change-impact-simulator/download/${simulationId}`,
     });
   } catch (error) {
-    console.error('Error in market report generation:', error);
-    return res.status(500).json({
-      error: 'An error occurred while generating the market report',
-      details: error.message,
-    });
+    return serverError(res, logger, 'generating the market report', error);
   }
 });
 
@@ -279,11 +275,7 @@ router.get('/download/:simulationId', (req, res) => {
       return res.json(simulationData);
     }
   } catch (error) {
-    console.error('Error in simulation download:', error);
-    return res.status(500).json({
-      error: 'An error occurred while downloading the simulation',
-      details: error.message,
-    });
+    return serverError(res, logger, 'downloading the simulation', error);
   }
 });
 
