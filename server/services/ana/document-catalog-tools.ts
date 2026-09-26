@@ -49,6 +49,7 @@ import {
 } from './document-tools-shared.js';
 import { registerDocumentPlacementHandlers } from './document-placement-tools.js';
 import { registerDocumentPassageHandlers } from './document-passage-tools.js';
+import { vaultWriteRefusal } from '../vault/vault-write-authority.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Handlers
@@ -386,6 +387,14 @@ async function handleCatalogProjectDocument(
   const gate = await requireCatalog(ctx, 'catalog_project_document');
   if ('refusal' in gate) return JSON.stringify({ error: gate.refusal });
   const { svc, orgId } = gate;
+  /* The comprehension record is a write, and a shared one: its purpose line is
+     in every member's session recall and its summary in every read. So the role
+     that may not change the Vault may not write this either (the Vault's RLS
+     scopes by program, not role). Checked here because this handler is
+     completeCatalog's only caller; the Vault write services check the same way
+     (server/services/vault/vault-write-authority.ts). */
+  const roleRefusal = vaultWriteRefusal();
+  if (roleRefusal) return JSON.stringify({ ok: false, refused: true, reason: roleRefusal.message });
 
   const parsed = parseCatalogInput(input);
   if ('error' in parsed) return JSON.stringify(parsed);
