@@ -28,7 +28,6 @@ import { getPool } from '../../db.js';
 import { runWithTenantScope } from '../../db/tenantStore.js';
 import { selectToolsForTurn, type ToolSelectionContext } from './tool-selection.js';
 import { executeAgenticLoop } from './AnaToolExecutor.js';
-import { getPool } from '../../db.js';
 import { loopToolCollector, recordLoopTurn } from './turn-record-loop.js';
 import type { TurnRecordStatus } from './turn-record.js';
 
