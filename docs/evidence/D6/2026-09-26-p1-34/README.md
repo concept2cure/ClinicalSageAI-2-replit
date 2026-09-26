@@ -46,7 +46,11 @@ register marks them `refusedBy: "handler"` and lets the handler answer.
 the register and the pinned set ever differ. The two new refusals are
 `cast_committee_vote` (casts, or overwrites, any member's vote) and
 `ack_training` (a training attestation in the user's name with a model-supplied
-quiz score).
+quiz score). Two conditional branches are handler-owned the same way:
+`qms_change_transition` to `approved` (the change-control service refuses it
+and names the signed Approve button; pinned in `qms-change-tools.test.ts`) and
+`place_project_document` with `confirm_suggested` (the handler says what AnA can
+do instead; pinned in `tests/db/vault-placement.dbtest.ts`).
 
 The conditional rules refuse the branch that would take a person's act —
 `qms_change_transition` to `approved` or `closed`; `update_tmf_artifact_status` /
@@ -119,6 +123,12 @@ Decisions taken on the verdicts, where a reviewer's call was changed:
 - `green.txt` — the seven files: **173 passed**. Every AnA suite
   (`server/services/ana`, `server/routes/ana-ri`, `server/services/ana-ri`,
   `server/mcp`, `server/services/ai-gateway`): **3875 passed, 3 skipped, 0 failed.**
+  The whole server suite: 20662 passed; the failures left are `run-pq` and
+  `signer-org-scope` (red on trunk before this change) and three audit-outcome
+  tests fixed in the follow-up commit. The six real-database tests that call
+  these handlers, against a deploy-shaped database built the way CI builds it
+  (`install-fresh` + `deploy-migrate`, `RLS_ENFORCE=on`, the runtime role):
+  **55 passed**; the founder-path lineage test: **14 passed**.
 
 ### Tests changed, and why
 
