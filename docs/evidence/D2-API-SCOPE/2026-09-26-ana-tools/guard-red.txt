@@ -1,0 +1,7 @@
+# RED — the new-tool guard: 'search_literature' removed from the inventory, as if a tool were added without classification
+ × server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > classifies every enabled tool: a new one must be added as hiddenApp or inScope 12ms
+   → expected [ 'search_literature' ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'search_literature' ] to deeply equal []
++   "search_literature",
+      Tests  1 failed | 6 skipped (7)
