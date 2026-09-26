@@ -1,0 +1,227 @@
+$ # HEAD 7fbe51c5 + P1-36 change to server/routes/audit-trail-routes.ts (requireAuditRecorder after the org guard on POST /audit/signatures)
+$ NODE_OPTIONS=--max-old-space-size=1536 npx vitest run server/routes/__tests__/audit-trail-read-gate.test.ts server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts server/routes/__tests__/audit-export-tenant-scope.test.ts server/routes/__tests__/audit-trail-ledger.routes.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/audit-trail-ledger.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/audit-trail-ledger.routes.test.ts
+{
+  "timestamp": "2026-09-26T13:10:18.507Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit reads > GET /audit/logs scopes to the JWT org and ignores a spoofed query org_id
+{
+  "timestamp": "2026-09-26T13:10:18.564Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T13:10:18.566Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit reads > GET /audit/logs scopes to the JWT org and ignores a spoofed query org_id
+{
+  "timestamp": "2026-09-26T13:10:18.567Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/audit-trail-read-gate.test.ts
+{
+  "timestamp": "2026-09-26T13:10:18.562Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T13:10:18.563Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts
+{
+  "timestamp": "2026-09-26T13:10:18.563Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/audit-trail-read-gate.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit reads > GET /audit/logs scopes to the JWT org and ignores a spoofed query org_id
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit reads > GET /audit/logs scopes to the JWT org and ignores a spoofed query org_id
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit reads > GET /audit/logs scopes to the JWT org and ignores a spoofed query org_id
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit/logs: a member is refused (403) 40ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit-logs: a member is refused (403) 7ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit/events: a member is refused (403) 12ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit: a member is refused (403) 6ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > owner reads it 7ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > admin reads it 5ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > manager reads it 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > a viewer is refused 4ms
+ ✓ server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit reads > GET /audit/logs scopes to the JWT org and ignores a spoofed query org_id 1774ms
+ ✓ server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit reads > GET /audit/events and /audit are JWT-scoped too 15ms
+ ✓ server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit reads > signature verify is scoped by organization_id 5ms
+ ✓ server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit reads > returns 403 when there is no authenticated org context 16ms
+stderr | server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit writes > F3: POST /audit/events attributes to the JWT principal, never the body
+[SECURITY] audit-trail: body user id (4242) differs from authenticated principal (1). Body value ignored. path=/audit/events
+
+stderr | server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit writes > F4: POST /audit/signatures writes a non-authoritative marker attributed to the principal
+[SECURITY] audit-trail: body user id (4242) differs from authenticated principal (1). Body value ignored. path=/audit/signatures
+
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > an admin gets past the gate to the export itself
+{
+  "timestamp": "2026-09-26T13:10:18.812Z",
+  "level": "error",
+  "message": "[audit-trail-routes] recording the audit export could not be run",
+  "context": {
+    "reason": "audit-export record could not be run: INSERT returned no row id",
+    "correlationId": null
+  }
+}
+
+ ✓ server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit writes > POST /audit/events writes the JWT org, not body.organizationId 12ms
+ ✓ server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit writes > POST /audit/signatures writes the JWT org, not body.organizationId 4ms
+ ✓ server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit writes > F3: POST /audit/events attributes to the JWT principal, never the body 3ms
+ ✓ server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit writes > F10: POST /audit/events requires a reason when regulatory/GxP significant 5ms
+ ✓ server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit writes > F10: batch skips regulatory/GxP events missing a reason 4ms
+ ✓ server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit writes > F4: POST /audit/signatures rejects an attempt to forge a signed status 4ms
+ ✓ server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit writes > F4: POST /audit/signatures writes a non-authoritative marker attributed to the principal 4ms
+ ✓ server/__tests__/security/tenant-isolation-audit-trail.contract.test.ts > Tenant isolation — Audit writes > write endpoints 403 without an authenticated org 8ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > a member is refused before the export starts 13ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > an admin gets past the gate to the export itself 38ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > an event type outside the vocabulary is refused (400) and nothing is written 15ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > the free-form default is not a type either: a body with no event type is refused 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > metadata must be an object, not a string of any length 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > a vocabulary type with a reason is recorded, attributed to the caller 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > in a batch, an unknown type is skipped with the reason and the known one is written 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > a member may not record events at all 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > viewer: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > user: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > member: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > the role answers before the body: a viewer claiming a signed status meets the gate, not the forgery guard 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > owner: records the non-authoritative marker (201), one signature.create row 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > admin: records the non-authoritative marker (201), one signature.create row 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > manager: records the non-authoritative marker (201), one signature.create row 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > an owner still may not claim a binding signature here (forgery guard unchanged) 4ms
+stdout | server/routes/__tests__/audit-export-tenant-scope.test.ts
+{
+  "timestamp": "2026-09-26T13:10:20.029Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T13:10:20.031Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/audit-export-tenant-scope.test.ts
+{
+  "timestamp": "2026-09-26T13:10:20.031Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/audit-export-tenant-scope.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/audit-export-tenant-scope.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/audit-export-tenant-scope.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > rolls back and releases when the export fails
+Failed to export audit logs: Error: boom
+    at /home/user/ClinicalSageAI-2-replit/server/routes/__tests__/audit-export-tenant-scope.test.ts:80:32
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > rolls back and releases when the export fails
+Failed to generate signed audit export: Error: boom
+    at /home/user/ClinicalSageAI-2-replit/server/routes/__tests__/audit-export-tenant-scope.test.ts:80:32
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > exports inside a tenant-stamped transaction, with the chain verifier 40ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > passes the record filters 6ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > refuses a malformed filter rather than exporting everything 4ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > rolls back and releases when the export fails 7ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > exports inside a tenant-stamped transaction, with the chain verifier 5ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > passes the record filters 3ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > refuses a malformed filter rather than exporting everything 3ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > rolls back and releases when the export fails 3ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > shows a governed write the moment it is chained (audit_logs), labelled by source 60ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > never shows another tenant's governed writes (organisation from the verified JWT) 26ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > merges audit_events (SCIM / projects-management / IVDR) newest-first with their own chain values 21ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > applies limit across both stores 29ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > refuses a member (403) before reading anything: the ledger names every user in the organisation 5ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > refuses without tenant context (403) rather than reading anything 7ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > fails closed (503, not an empty ledger) when the chained schema is missing 1815ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — the verdict sees cross-tenant legacy links > verifies a legacy row that linked to ANOTHER tenant's head (the pre-fix global recipe) 33ms
+
+ Test Files  4 passed (4)
+      Tests  52 passed (52)
+   Start at  13:10:16
+   Duration  7.33s (transform 1.92s, setup 335ms, import 5.22s, tests 7.14s, environment 0ms)
+
+exit=0

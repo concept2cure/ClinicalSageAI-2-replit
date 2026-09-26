@@ -1,0 +1,164 @@
+$ # HEAD 7fbe51c5; server/routes/audit-trail-routes.ts unchanged; P1-36 cases added to server/routes/__tests__/audit-trail-read-gate.test.ts
+$ NODE_OPTIONS=--max-old-space-size=1536 npx vitest run server/routes/__tests__/audit-trail-read-gate.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/audit-trail-read-gate.test.ts
+{
+  "timestamp": "2026-09-26T13:09:43.660Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T13:09:43.662Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts
+{
+  "timestamp": "2026-09-26T13:09:43.662Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/audit-trail-read-gate.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit/logs: a member is refused (403) 28ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit-logs: a member is refused (403) 5ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit/events: a member is refused (403) 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit: a member is refused (403) 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > owner reads it 6ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > admin reads it 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > manager reads it 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > a viewer is refused 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > a member is refused before the export starts 11ms
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > an admin gets past the gate to the export itself
+{
+  "timestamp": "2026-09-26T13:09:43.877Z",
+  "level": "error",
+  "message": "[audit-trail-routes] recording the audit export could not be run",
+  "context": {
+    "reason": "audit-export record could not be run: INSERT returned no row id",
+    "correlationId": null
+  }
+}
+
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > an admin gets past the gate to the export itself 42ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > an event type outside the vocabulary is refused (400) and nothing is written 14ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > the free-form default is not a type either: a body with no event type is refused 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > metadata must be an object, not a string of any length 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > a vocabulary type with a reason is recorded, attributed to the caller 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > in a batch, an unknown type is skipped with the reason and the known one is written 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > a member may not record events at all 4ms
+ × server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > viewer: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written 10ms
+   → a viewer recorded a signature marker into audit_events: expected 201 to be 403 // Object.is equality
+ × server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > user: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written 4ms
+   → a user recorded a signature marker into audit_events: expected 201 to be 403 // Object.is equality
+ × server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > member: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written 4ms
+   → a member recorded a signature marker into audit_events: expected 201 to be 403 // Object.is equality
+ × server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > the role answers before the body: a viewer claiming a signed status meets the gate, not the forgery guard 6ms
+   → expected 'FORGERY_REJECTED' to be 'AUDIT_WRITE_RESTRICTED' // Object.is equality
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > owner: records the non-authoritative marker (201), one signature.create row 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > admin: records the non-authoritative marker (201), one signature.create row 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > manager: records the non-authoritative marker (201), one signature.create row 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > an owner still may not claim a binding signature here (forgery guard unchanged) 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > viewer: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written
+AssertionError: a viewer recorded a signature marker into audit_events: expected 201 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 201
+
+ ❯ server/routes/__tests__/audit-trail-read-gate.test.ts:162:81
+    160|   it.each(['viewer', 'user', 'member'])('%s: refused (403 AUDIT_WRITE_…
+    161|     const r = await request(app(role)).post('/api/audit/signatures').s…
+    162|     expect(r.status, `a ${role} recorded a signature marker into audit…
+       |                                                                                 ^
+    163|     expect(r.body.error).toBe('AUDIT_WRITE_RESTRICTED');
+    164|     expect(inserted).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > user: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written
+AssertionError: a user recorded a signature marker into audit_events: expected 201 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 201
+
+ ❯ server/routes/__tests__/audit-trail-read-gate.test.ts:162:81
+    160|   it.each(['viewer', 'user', 'member'])('%s: refused (403 AUDIT_WRITE_…
+    161|     const r = await request(app(role)).post('/api/audit/signatures').s…
+    162|     expect(r.status, `a ${role} recorded a signature marker into audit…
+       |                                                                                 ^
+    163|     expect(r.body.error).toBe('AUDIT_WRITE_RESTRICTED');
+    164|     expect(inserted).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > member: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written
+AssertionError: a member recorded a signature marker into audit_events: expected 201 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 201
+
+ ❯ server/routes/__tests__/audit-trail-read-gate.test.ts:162:81
+    160|   it.each(['viewer', 'user', 'member'])('%s: refused (403 AUDIT_WRITE_…
+    161|     const r = await request(app(role)).post('/api/audit/signatures').s…
+    162|     expect(r.status, `a ${role} recorded a signature marker into audit…
+       |                                                                                 ^
+    163|     expect(r.body.error).toBe('AUDIT_WRITE_RESTRICTED');
+    164|     expect(inserted).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > the role answers before the body: a viewer claiming a signed status meets the gate, not the forgery guard
+AssertionError: expected 'FORGERY_REJECTED' to be 'AUDIT_WRITE_RESTRICTED' // Object.is equality
+
+Expected: "AUDIT_WRITE_RESTRICTED"
+Received: "FORGERY_REJECTED"
+
+ ❯ server/routes/__tests__/audit-trail-read-gate.test.ts:171:26
+    169|     const r = await request(app('viewer')).post('/api/audit/signatures…
+    170|     expect(r.status).toBe(403);
+    171|     expect(r.body.error).toBe('AUDIT_WRITE_RESTRICTED');
+       |                          ^
+    172|     expect(inserted).toHaveLength(0);
+    173|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 20 passed (24)
+   Start at  13:09:41
+   Duration  2.50s (transform 963ms, setup 88ms, import 1.88s, tests 184ms, environment 0ms)
+
+exit=1

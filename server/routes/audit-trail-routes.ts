@@ -465,11 +465,19 @@ export function createAuditTrailRoutes(pool: Pool): Router {
   //   * sources signed_by/user_id from the authenticated principal, never the
   //     body (F3);
   //   * writes the event with signature_status 'unverified' so it is clearly a
-  //     non-binding marker, not a legal signature.
+  //     non-binding marker, not a legal signature;
+  //   * is recorded by the same set that records any audit event by hand
+  //     (requireAuditRecorder: owner, admin, manager or a platform
+  //     administrator), after the tenant guard and before the body is read,
+  //     as /audit/events and /audit/events/batch are (audit DP-38, P1-36).
+  //     The row it writes is regulatory_significant and gxp_relevant with a
+  //     body-supplied entity, meaning, reason and metadata; a viewer could
+  //     write one on the tenant guard alone.
   router.post('/audit/signatures', async (req: Request, res: Response) => {
     try {
       const guard = requireAuthedOrgId(req, res);
       if (!guard.ok) return;
+      if (!requireAuditRecorder(req, res)) return;
       const body = req.body || {};
       const principal = getActingPrincipal(req);
 

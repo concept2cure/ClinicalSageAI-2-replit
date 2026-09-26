@@ -17,6 +17,11 @@
  * batch, skipped with the reason). The router is the real one over a pool
  * double; the export service is a double so the gate, not the export, is what
  * these cases see.
+ *
+ * P1-36 (DP-38, the 2026-09-26 lens): POST /audit/signatures writes a
+ * signature.create row into the same store and answered to the tenant guard
+ * alone. It is a hand-recorded audit event like its siblings and is pinned to
+ * the same recorder gate below.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import express, { type NextFunction, type Request, type Response } from 'express';
@@ -61,6 +66,7 @@ function app(role: string, extra: Record<string, unknown> = {}) {
 afterEach(() => {
   inserted.length = 0;
   pool.connect.mockClear();
+  pool.query.mockClear();
 });
 
 describe('reading the audit trail', () => {
@@ -137,6 +143,51 @@ describe('recording an event from a client', () => {
   it('a member may not record events at all', async () => {
     const r = await request(app('member')).post('/api/audit/events').send({ eventType: 'orchestration.gate_decision', entityType: 'gate', entityId: 1, reason: 'gate decided' });
     expect(r.status).toBe(403);
+    expect(inserted).toHaveLength(0);
+  });
+});
+
+describe('recording a signature marker (DP-38, P1-36)', () => {
+  // POST /audit/signatures inserts a signature.create row into audit_events
+  // (regulatory_significant and gxp_relevant both true; entity, meaning, reason
+  // and metadata from the body). Recording it by hand is the administrative act
+  // the recorder gate names, so the gate runs after the tenant guard and before
+  // the body is read, as it does for /audit/events and /audit/events/batch.
+  const marker = { entityType: 'document', entityId: 1, reason: 'reviewed', metadata: { page: 3 } };
+  const signatureInserts = () =>
+    pool.query.mock.calls.map((c) => String(c[0])).filter((sql) => /INSERT INTO audit_events/i.test(sql));
+
+  it.each(['viewer', 'user', 'member'])('%s: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written', async (role) => {
+    const r = await request(app(role)).post('/api/audit/signatures').send(marker);
+    expect(r.status, `a ${role} recorded a signature marker into audit_events`).toBe(403);
+    expect(r.body.error).toBe('AUDIT_WRITE_RESTRICTED');
+    expect(inserted).toHaveLength(0);
+    expect(signatureInserts()).toHaveLength(0);
+  });
+
+  it('the role answers before the body: a viewer claiming a signed status meets the gate, not the forgery guard', async () => {
+    const r = await request(app('viewer')).post('/api/audit/signatures').send({ ...marker, signatureStatus: 'signed' });
+    expect(r.status).toBe(403);
+    expect(r.body.error).toBe('AUDIT_WRITE_RESTRICTED');
+    expect(inserted).toHaveLength(0);
+  });
+
+  it.each(['owner', 'admin', 'manager'])('%s: records the non-authoritative marker (201), one signature.create row', async (role) => {
+    const r = await request(app(role)).post('/api/audit/signatures').send(marker);
+    expect(r.status).toBe(201);
+    expect(r.body.authoritative).toBe(false);
+    expect(inserted).toHaveLength(1);
+    const sql = signatureInserts();
+    expect(sql).toHaveLength(1);
+    expect(sql[0]).toMatch(/'signature\.create'/);
+    expect(sql[0]).toMatch(/'unverified'/);
+    expect(sql[0]).not.toMatch(/'signed'/);
+  });
+
+  it('an owner still may not claim a binding signature here (forgery guard unchanged)', async () => {
+    const r = await request(app('owner')).post('/api/audit/signatures').send({ ...marker, signatureStatus: 'signed' });
+    expect(r.status).toBe(403);
+    expect(r.body.error).toBe('FORGERY_REJECTED');
     expect(inserted).toHaveLength(0);
   });
 });
