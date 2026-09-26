@@ -154,6 +154,11 @@ const R = new JourneyRecorder(
     'migrations/20260813d_esignature_governed_unification.sql',
     'migrations/20260814_projects_regulatory_program_anchor.sql',
     'migrations/20260925b_submissions_program_anchor.sql',
+    'db/migrations/20260725_authoring_document_loop_tables.sql',
+    'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
+    'db/migrations/20260730_authoring_comments_router_columns.sql',
+    'migrations/20260727_authoring_document_program_scope.sql',
+    'migrations/20260814d_document_alias_map.sql',
   ],
 );
 
@@ -218,6 +223,13 @@ beforeAll(async () => {
       // constraint, so a cross-organization anchor is refused by the database
       // as it is in production, not only by the writer.
       'migrations/20260925b_submissions_program_anchor.sql',
+      // A placement reads its document's project (PF-11): an authoring filing
+      // copy reaches its document through the alias map. The real tables.
+      'db/migrations/20260725_authoring_document_loop_tables.sql',
+      'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
+      'db/migrations/20260730_authoring_comments_router_columns.sql',
+      'migrations/20260727_authoring_document_program_scope.sql',
+      'migrations/20260814d_document_alias_map.sql',
       // users.mfa_enabled (and the other signing-lockout columns): the governed
       // `sign` re-verifies the signer through services/part11/reverify-signer
       // since 828faf8 (2026-09-23), which reads the MFA enrolment and refuses
