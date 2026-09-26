@@ -268,3 +268,17 @@ describe('the envelopes', () => {
     expect(r.message).toMatch(/Nothing was recorded or changed\. Do it from /);
   });
 });
+
+describe('the wrapper-wired slice agrees with the registry', () => {
+  it('every tool on CONFIRM_TIER_TOOLS (governed-tool-gate.ts) is a confirm-tier proposal in the registry', async () => {
+    const { CONFIRM_TIER_TOOLS } = await import('../governed-tool-gate');
+    const { PROPOSE_ONLY_TOOLS } = await import('../propose-only-tools');
+    for (const name of CONFIRM_TIER_TOOLS) {
+      expect(PROPOSE_ONLY_TOOLS[name], `${name} is wired at every door but missing from the registry`).toBeDefined();
+      // The wrapper asks for one click (confirm) for all five today; the registry
+      // marks the two vault writers reason-tier (a person's reason replaces the
+      // model's when the registry folds into the wrapper). A proposal either way.
+      expect(['confirm', 'reason'], `${name}: the registry must classify it as a proposal`).toContain(PROPOSE_ONLY_TOOLS[name].tier);
+    }
+  });
+});

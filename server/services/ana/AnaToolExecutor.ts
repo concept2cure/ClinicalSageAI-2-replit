@@ -15,6 +15,8 @@
  */
 
 import { isGovernedContentWriteTool } from './governed-write-tools.js';
+import { CONFIRM_TIER_TOOLS } from './governed-tool-gate.js';
+import { buildHumanConfirmationRequiredResult } from '../ana-ri/part11-governance.js';
 import type { AuditRowOutcome } from '../audit/audit-write-outcome.js';
 import { isServedModelApprovedForHighRisk } from '../ai-governance/approved-models.js';
 import { getGateway } from '../ai-gateway/gateway';
@@ -205,6 +207,13 @@ export interface ToolContext {
    * See server/services/ana/governed-write-tools.ts.
    */
   servingModel?: { provider?: string | null; model?: string | null } | null;
+  /**
+   * True only when a person confirmed THIS call — set by POST
+   * /api/ana-ri/governed-action and nowhere else, like the command context's
+   * flag of the same name. The CONFIRM_TIER_TOOLS refuse to run without it.
+   * Never read from tool input: that is the model's channel.
+   */
+  humanConfirmed?: boolean;
   organizationId?: number | null;
   userId?: number | null;
   projectId?: number | null;
@@ -293,17 +302,47 @@ function getRequiredInputKeys(tool: string): string[] {
  * report-only input-contract check — every dispatch path resolves handlers
  * from this map, so coverage is total with no call-site changes.
  */
+/**
+ * The refusals every handler is wrapped in, checked before it runs. Wrapped at
+ * registration, so every way of reaching a handler is covered: the stream's
+ * dispatch, the agentic loop, and a tool that calls another tool's handler
+ * directly. A refusal is a tool result the model reads and relays, not a throw,
+ * so the turn continues honestly.
+ *
+ *   1. Governed content is written only by an approved model.
+ *   2. A tool that changes records on its own handler (CONFIRM_TIER_TOOLS) runs
+ *      only on a person's yes (P0-12). The stream holds the turn and asks
+ *      before it gets here; a path that cannot ask gets the same proposal a
+ *      gated command returns, and nothing is written. After the model gate, so
+ *      nobody is asked to confirm content that would be refused anyway.
+ */
+function preHandlerRefusal(
+  name: string,
+  input: Record<string, any>,
+  ctx: ToolContext | undefined,
+): { code: string; result: string } | null {
+  if (isGovernedContentWriteTool(name) && !isServedModelApprovedForHighRisk(ctx?.servingModel)) {
+    return {
+      code: 'MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE',
+      result: JSON.stringify(governedWriteRefusal(name, ctx?.servingModel)),
+    };
+  }
+  if (CONFIRM_TIER_TOOLS.has(name) && ctx?.humanConfirmed !== true) {
+    return {
+      code: 'HUMAN_CONFIRMATION_REQUIRED',
+      result: JSON.stringify(buildHumanConfirmationRequiredResult(name, input ?? {})),
+    };
+  }
+  return null;
+}
+
 export function registerToolHandler(name: string, handler: ToolHandler): void {
   const instrumented: ToolHandler = async (input, ctx) => {
     const orgId = ctx?.organizationId ?? undefined;
-    /* Governed content is written only by an approved model. Wrapped HERE, at
-       registration, so every way of reaching the handler is covered: the
-       stream's dispatch, the agentic loop, and a tool that calls another
-       tool's handler directly. The refusal is a tool result the model reads
-       and relays, not a throw, so the turn continues honestly. */
-    if (isGovernedContentWriteTool(name) && !isServedModelApprovedForHighRisk(ctx?.servingModel)) {
-      recordToolOutcome(name, 'failure', 0, 'MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE', orgId);
-      return JSON.stringify(governedWriteRefusal(name, ctx?.servingModel));
+    const refusal = preHandlerRefusal(name, input, ctx);
+    if (refusal) {
+      recordToolOutcome(name, 'failure', 0, refusal.code, orgId);
+      return refusal.result;
     }
     // Report-only contract check: note when the model omitted required fields.
     const missing = getRequiredInputKeys(name).filter(k => input?.[k] === undefined);

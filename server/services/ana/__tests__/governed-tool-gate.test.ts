@@ -159,18 +159,25 @@ describe('the tier follows part11-governance, not a second opinion', () => {
   });
 });
 
-describe('classifyToolCall still speaks only for the command tool', () => {
-  it('a tool with its own handler is UNGOVERNED to classifyToolCall — until the stream door consults classifyDirectToolCall', () => {
-    // This pin documents the gap DP-36 found, not a judgment: the direct-tool
-    // registry (propose-only-tools.ts) classifies save_document_to_vault as a
-    // proposal, and classifyDirectToolCall below says so. classifyToolCall's
-    // return union is left unchanged because routes/ana-ri/stream.ts:1596
-    // (awaitDecision) narrows on it and that file is hot until
-    // 2026-09-27 04:52 UTC. When settleApprovals there calls
-    // classifyDirectToolCall as well, this case flips to NEEDS_APPROVAL.
-    expect(classifyToolCall({ name: 'save_document_to_vault', input: { title: 'x' } }).kind).toBe(
-      'UNGOVERNED',
-    );
+describe('the command tool, and the tools that write on their own handlers', () => {
+  it('a tool that writes on its own handler is a confirm-tier proposal (P0-12)', () => {
+    // Until 2026-09-26 this read "a tool with its own handler is not classified
+    // here": the vault save and TMF seed ran unasked because they are not
+    // commands. They are CONFIRM_TIER_TOOLS now; the full list and the
+    // registry-side gate are pinned in direct-mutator-confirm-gate.test.ts.
+    expect(classifyToolCall({ name: 'save_document_to_vault', input: { title: 'x' } })).toMatchObject({
+      kind: 'NEEDS_APPROVAL',
+      tier: 'confirm',
+    });
+  });
+
+  it('a direct write tool outside CONFIRM_TIER_TOOLS is UNGOVERNED to classifyToolCall — the registry classifies it', () => {
+    // The five on CONFIRM_TIER_TOOLS are the first slice of the direct-tool
+    // registry (propose-only-tools.ts, P1-34) wired at every door. The rest of
+    // the registry — revise_qms_document is a reason-tier proposal there — is
+    // classified by classifyDirectToolCall below and not yet by this function;
+    // folding the registry into CONFIRM_TIER_TOOLS is the recorded next step.
+    expect(classifyToolCall({ name: 'revise_qms_document', input: { document_id: 3, reason: 'x'.repeat(12) } }).kind).toBe('UNGOVERNED');
   });
 
   it('a tool named like a governed command is still just a tool', () => {

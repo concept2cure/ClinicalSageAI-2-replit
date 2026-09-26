@@ -21,6 +21,12 @@
  * call, and `server/routes/__tests__/chat-path-parity.test.ts` asserts every
  * canonical chat path calls it.
  *
+ * ── Anthropic-hosted tools ──────────────────────────────────────────────────
+ * Web search, web fetch and code execution run on Anthropic's infrastructure,
+ * so they are offered only when the tenant's AI placement policy opts in
+ * (server-tool-policy.ts). Until 2026-09-26 three environment flags offered
+ * them to every tenant on the deployment alike.
+ *
  * ── What it does NOT do ─────────────────────────────────────────────────────
  * Only the deny-list is applied, exactly as `filterToolsByPolicy` documents:
  * `allow` is scoped to governed mutations and enforced at execution, and
@@ -28,6 +34,14 @@
  * tenant allowlisted one mutation. Relevance selection stays with the caller —
  * each path pins different tools for its own reasons, and governance must not
  * be entangled with relevance.
+ *
+ * ── Launch scope ────────────────────────────────────────────────────────────
+ * With launch scope enforced (production by default), tools that serve only
+ * apps outside the release are withheld too (ana-launch-scope.ts, 2026-09-26).
+ * The API refuses those apps' routes, but AnA reaches their services
+ * in-process, so this is the only place their tools can be taken away from
+ * every chat door at once. Unlike the tenant policy it does not depend on the
+ * organisation, and it applies to an org-less turn as well.
  *
  * Fail-soft on an unreadable policy (default-allow), because
  * `loadAnaToolPolicy` is the read/display variant; a governed WRITE resolves
@@ -39,6 +53,11 @@
 import { getAllEnabledTools } from './AnaToolDefinitions.js';
 import { loadAnaToolPolicy, filterToolsByPolicy } from '../ana-ri/mdx-tool-policy.js';
 import { CATALOG_GATED_TOOLS } from './document-tools-shared.js';
+import { getOrgPlacementResolver } from '../ai-gateway/providers/org-placement.js';
+import { isServerTool, serverToolWithheldReason } from '../ai-gateway/server-tool-policy.js';
+import type { GatewayRequest } from '../ai-gateway/types.js';
+import { withoutHiddenAppTools } from './ana-launch-scope.js';
+import { launchScopeEnforced } from '../entitlements/launch-scope.js';
 
 type PolicyPool = { query: (sql: string, params: unknown[]) => Promise<{ rows: any[] }> };
 
@@ -53,14 +72,58 @@ export async function governedToolsetFor(
   pool: PolicyPool,
   organizationId: number | null | undefined,
 ): Promise<ReturnType<typeof getAllEnabledTools>> {
-  const all = getAllEnabledTools();
+  const all = launchScopeEnforced() ? withoutHiddenAppTools(getAllEnabledTools()) : getAllEnabledTools();
   if (organizationId == null || !Number.isFinite(Number(organizationId))) {
-    // The catalog tools refuse an org-less call outright, so they are not offered.
-    return withoutCatalogTools(all);
+    // The catalog tools refuse an org-less call outright, so they are not
+    // offered; nor are Anthropic-hosted tools, which need a tenant's opt-in.
+    return withPermittedServerTools(withoutCatalogTools(all), {
+      resolution: 'unknown',
+      unknownReason: 'no_tenant_binding',
+    });
   }
-  const policy = await loadAnaToolPolicy(pool, Number(organizationId));
-  const permitted = filterToolsByPolicy(all, policy);
-  return (await catalogEnabledFor(Number(organizationId))) ? permitted : withoutCatalogTools(permitted);
+  const orgId = Number(organizationId);
+  const [policy, tenant] = await Promise.all([loadAnaToolPolicy(pool, orgId), tenantPlacementFor(orgId)]);
+  const permitted = withPermittedServerTools(filterToolsByPolicy(all, policy), tenant);
+  return (await catalogEnabledFor(orgId)) ? permitted : withoutCatalogTools(permitted);
+}
+
+type TenantSnapshot = GatewayRequest['sensitiveTenantPolicy'];
+
+/**
+ * The organization's AI placement policy, in the shape the server-tool rule
+ * reads. An unreadable policy is `unknown`, which withholds every hosted tool:
+ * the same fail-closed reading the gateway gives it at dispatch.
+ */
+async function tenantPlacementFor(organizationId: number): Promise<TenantSnapshot> {
+  try {
+    const policy = await getOrgPlacementResolver().resolve(organizationId);
+    if (!policy) return { resolution: 'absent', organizationId };
+    return {
+      resolution: 'resolved',
+      organizationId,
+      residency: policy.residency,
+      zeroDataRetention: policy.zeroDataRetention,
+      allowedSubstrates: policy.allowedSubstrates,
+      allowedProviders: policy.allowedProviders,
+      publicSourceFrontier: policy.publicSourceFrontier,
+      publicSourceEgress: policy.publicSourceEgress,
+    };
+  } catch {
+    return { resolution: 'unknown', unknownReason: 'lookup_failed', organizationId };
+  }
+}
+
+/**
+ * Anthropic-hosted tools (web search, web fetch, code execution) only when the
+ * tenant's placement policy permits them (server-tool-policy.ts). AnA's turns
+ * are tenant payloads, so code execution is never offered here. The gateway
+ * applies the same rule again per lane at dispatch; this keeps a tenant from
+ * being offered a tool the gateway would only withhold.
+ */
+function withPermittedServerTools<T>(tools: T[], tenant: TenantSnapshot): T[] {
+  return tools.filter(
+    tool => !isServerTool(tool) || serverToolWithheldReason(tool, { tenant }) === null,
+  );
 }
 
 /**

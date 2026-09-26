@@ -86,9 +86,33 @@ confirm tier shows a reason field, confirming posts a reason) and `client/green.
 - The stream's `approval_required` frame is built by `buildHumanConfirmationRequiredResult`, so its tier and wording
   are the builder's rather than a hand copy that had already drifted from it.
 
-Still open, beyond DP-09 below: the five direct-mutator tools (`save_document_to_vault` and siblings are not commands,
-so the partition does not reach them), and sign-off prompts on the non-SSE chat paths (`chat/send-message`,
+Still open, beyond DP-09 below: sign-off prompts on the non-SSE chat paths (`chat/send-message`,
 `ana-intelligence` return the proposal as a tool result those clients do not render as a prompt).
+
+**The tools that write on their own handlers** (the AnA run-control lane, 2026-09-26). Five tools change records
+without being platform commands, so the every-write partition never reached them and AnA ran them unasked:
+`save_document_to_vault`, `update_vault_document`, `file_chat_upload_to_vault`, `seed_tmf`, `save_report_definition`.
+They are `CONFIRM_TIER_TOOLS` (`server/services/ana/governed-tool-gate.ts`) now, enforced in two places that are one
+list:
+
+- the tool gate classifies each as a confirm-tier proposal, so the live chat stream holds the turn and asks;
+- the `registerToolHandler` wrapper — the one every handler is registered through, reached by the stream, the agentic
+  loop (`/api/chat`, deep investigation), MCP and one tool calling another — refuses to run one without
+  `ToolContext.humanConfirmed`, answering with the same proposal a gated command returns. After the approved-model
+  gate, so nobody is asked to confirm content that would be refused anyway.
+
+POST /governed-action runs a confirmed tool through the same registry, and only from a held run: its context — the
+project, and the model that wrote the content, which the approved-model gate checks — is what the waiting turn
+recorded on the run row (`PendingToolApproval.toolContext`), never the browser's body. `humanConfirmed` is still stamped
+only in that route. Red first: `red/direct-mutator-tools-before-fix.txt` (12 of 94; on the old code the report was
+written with no one asked); green `green/direct-mutator-tools-after-fix.txt` (94 / 94), and 3,992 across the AnA, vault,
+MCP and route suites. Three existing tests pinned the old rule and were rewritten, not deleted: "a tool with its own
+handler is not classified here"; the agentic-loop model hand-off now uses `update_protocol_section`, with a new case
+that `save_document_to_vault` is proposed on that door even from an approved model; the vault atomicity contract
+dispatches as the confirmed route does.
+
+On a path that cannot hold a turn (`/api/chat`, deep investigation), these tools now come back as proposals the model
+relays; the prompt to confirm them appears only on the live chat stream. That is the non-SSE item below.
 
 ## Not done here
 

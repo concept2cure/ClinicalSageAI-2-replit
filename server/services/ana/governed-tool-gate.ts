@@ -76,6 +76,31 @@ export type ToolGateVerdict =
    */
   | { kind: 'UNDECIDABLE'; why: string };
 
+/**
+ * Tools that change records through their own handlers rather than through the
+ * platform-command surface, so the every-write partition (P0-12) does not reach
+ * them. Each is a confirm-tier proposal like any command that writes:
+ *
+ *   save_document_to_vault     a new governed artifact and its first version
+ *   update_vault_document      a new version of an existing artifact
+ *   file_chat_upload_to_vault  a document filed into the project Vault
+ *   seed_tmf                   the trial master file's reference model
+ *   save_report_definition     a saved report the organisation will use
+ *
+ * Enforced twice, and the two are one list: here, so the live chat stream holds
+ * the turn and asks; and in AnaToolExecutor's registerToolHandler wrapper, so a
+ * path that cannot ask refuses to run one no person confirmed. A new tool that
+ * writes on its own handler belongs on this list, and the anti-drift test
+ * (direct-mutator-confirm-gate.test.ts) names it.
+ */
+export const CONFIRM_TIER_TOOLS: ReadonlySet<string> = new Set([
+  'save_document_to_vault',
+  'update_vault_document',
+  'file_chat_upload_to_vault',
+  'seed_tmf',
+  'save_report_definition',
+]);
+
 /** A tool call as the agentic loop holds one. */
 export interface ClassifiableToolCall {
   name: string;
@@ -91,23 +116,30 @@ function asRecord(v: unknown): Record<string, unknown> | null {
 /**
  * Classify one call of the command tool.
  *
- * This function speaks for `execute_platform_command` only: it unwraps the
- * command and asks the command partition. Any other tool is UNGOVERNED to it —
- * not because those tools are ungoverned, but because they are classified by
- * `classifyDirectToolCall` below against the tool-name registry. Until the
- * 2026-09-26 lens (audit DP-36, plan P1-34) this docstring said the direct
- * handlers were out of scope by design, on the reasoning that ordinary
- * authoring mutations were "work, not attestation"; P0-12 had already reversed
- * that for commands (every write is a proposal at the confirm tier), and
- * DP-36 found the consequence of not reversing it for tools: a model response
- * could save to the vault, revise a controlled document or approve an import
- * with nobody confirming. The stream door still consults only this function;
- * routes/ana-ri/stream.ts settleApprovals adds classifyDirectToolCall when its
- * window opens, and governed-tool-gate.test.ts pins the interim.
+ * Two kinds of call are governed here: `execute_platform_command`, whose
+ * command is judged by the propose-only partition and its tier; and the tools
+ * on CONFIRM_TIER_TOOLS, which write through their own handlers and are always
+ * the confirm tier (P0-12, 69f93d98: the registerToolHandler wrapper in
+ * AnaToolExecutor.ts refuses to run one without ToolContext.humanConfirmed,
+ * and POST /governed-action runs a confirmed one). Everything else is
+ * UNGOVERNED to this function — not because those tools are ungoverned, but
+ * because the whole population of directly registered write tools is
+ * classified by `classifyDirectToolCall` below against the tool-name registry
+ * (propose-only-tools.ts, P1-34 / audit DP-36: about 170 writers, not five).
+ * CONFIRM_TIER_TOOLS is the first slice of that registry wired at every door;
+ * the registry's anti-drift test pins that the five are proposals there too,
+ * so the two cannot disagree, and folding the rest of the registry into the
+ * wrapper is one change whose size (the confirm tier for ~160 more tools) is
+ * the founder's call, recorded on the work-order board.
  */
 export function classifyToolCall(call: ClassifiableToolCall): ToolGateVerdict {
   if (call.inputParseError) {
     return { kind: 'UNDECIDABLE', why: `arguments did not parse: ${call.inputParseError}` };
+  }
+  if (CONFIRM_TIER_TOOLS.has(call.name)) {
+    const toolInput = asRecord(call.input);
+    if (!toolInput) return { kind: 'UNDECIDABLE', why: 'the call carried no arguments object' };
+    return { kind: 'NEEDS_APPROVAL', command: call.name, params: toolInput, tier: 'confirm' };
   }
   if (call.name !== PLATFORM_COMMAND_TOOL) return { kind: 'UNGOVERNED' };
 
