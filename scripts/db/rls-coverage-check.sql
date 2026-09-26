@@ -140,6 +140,17 @@ WHERE c.table_schema NOT IN ('pg_catalog', 'information_schema')
 -- An edge into identity.users does not count. A row that names a user is
 -- that user's, not a tenant's, and those children (cognitive_audit.*,
 -- federated_ml.*) are recorded, not policied.
+--
+-- Nor does the edge OUT of public.users into organizations (2026-09-26, W2 / D1,
+-- docs/evidence/W2/2026-09-25-replay-rebuilds-nothing/). users.default_organization_id
+-- is a preference pointer: a user belongs to organizations through
+-- organization_users, may belong to several, and is looked up by email before any
+-- tenant scope exists (sign-in), so the row is the user's, not one tenant's. The
+-- edge started counting when 20260926_organizations_own_writes.sql put RLS on
+-- organizations (ba797ca6d), and from then every install from blank exited 1 here.
+-- This is a classification, not a clearance: public.users itself (password hash,
+-- MFA secret) is readable from any tenant scope, recorded for D3 in
+-- docs/work-orders/README.md beside the organization_users item.
 UNION ALL
 SELECT DISTINCT cn.nspname || '.' || c.relname || ' (child of ' || pn.nspname || '.' || p.relname || ', row security off)'
 FROM pg_class c
@@ -149,6 +160,7 @@ JOIN pg_class p ON p.oid = k.confrelid
 JOIN pg_namespace pn ON pn.oid = p.relnamespace
 WHERE cn.nspname NOT IN ('pg_catalog', 'information_schema')
   AND NOT (pn.nspname = 'identity' AND p.relname = 'users')
+  AND NOT (cn.nspname = 'public' AND c.relname = 'users' AND pn.nspname = 'public' AND p.relname = 'organizations')
   AND c.relkind = 'r'
   AND p.relrowsecurity
   AND NOT EXISTS (
