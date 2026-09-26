@@ -43,6 +43,7 @@ import { writeChainedAuditRow } from '../auditService';
 import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { deriveGovernedTargetBinding, BINDING_BASIS, isSignatureWithdrawn } from '../part11/signature-persistence';
 import { createScopedLogger } from '../../utils/logger';
+import { programInOrganization } from '../c2c/program-access';
 import {
   validateSectionCode,
   vocabularyForApplicationType,
@@ -59,7 +60,8 @@ export type SubmissionErrorCode =
   | 'VALIDATION'
   | 'GOVERNED_REQUIRED'
   | 'DISPATCH_BLOCKED'
-  | 'FORBIDDEN';
+  | 'FORBIDDEN'
+  | 'CROSS_PROJECT';
 
 /**
  * Transitions that are irreversible / outward-facing and must go through the
@@ -87,6 +89,7 @@ export const SUBMISSION_ERROR_STATUS: Readonly<Record<SubmissionErrorCode, numbe
   GOVERNED_REQUIRED: 403,
   DISPATCH_BLOCKED: 422,
   FORBIDDEN: 403,
+  CROSS_PROJECT: 409,
 };
 
 // ── Pure lifecycle rules ────────────────────────────────────────────────────
@@ -123,6 +126,10 @@ export interface CreateSubmissionInput {
   clientType: string;
   primaryRegion: string;
   lifecycleStage?: string;
+  /** The project this submission belongs to (regulatory_programs.id). Checked
+   *  against the caller's organization before anything is written. Optional
+   *  here; POST /api/submissions requires it, and intake always passes it. */
+  programId?: string | null;
 }
 
 /** Anything that can run the canonical submissions INSERT — the pool-backed
@@ -150,9 +157,29 @@ async function insertSubmissionRow(
       lifecycleStage: input.lifecycleStage ?? 'planning',
       organizationId: ctx.organizationId,
       createdBy: ctx.userId,
+      programId: input.programId ?? null,
     })
     .returning();
   return row as Submission;
+}
+
+/**
+ * A submission is anchored only to a live project of its OWN organization
+ * (LX-22). Refused as NOT_FOUND (404), before anything is written — 404 rather
+ * than 403, so the caller learns nothing about another tenant's ids. The
+ * same-organization foreign key (submissions_program_same_org_fk) is the
+ * database backstop; it does not see a deleted project, and its 23503 would
+ * reach the caller as a 500, so it is never the first line.
+ */
+async function refuseForeignProgram(
+  q: Parameters<typeof programInOrganization>[0],
+  programId: string | null | undefined,
+  organizationId: number,
+): Promise<void> {
+  if (programId === undefined || programId === null) return;
+  if (!(await programInOrganization(q, programId, organizationId))) {
+    throw new SubmissionError('NOT_FOUND', 'Project not found for this organization.');
+  }
 }
 
 /**
@@ -180,6 +207,7 @@ export async function createSubmission(
   input: CreateSubmissionInput,
   ctx: { organizationId: number; userId: number }
 ): Promise<CreatedSubmission> {
+  if (input.programId != null) await refuseForeignProgram(pool, input.programId, ctx.organizationId);
   const row = await insertSubmissionRow(db, input, ctx);
   // Part 11 §11.10(e). `recordAuditRow` neither throws nor rejects, and the
   // INSERT above is already committed when it runs, so the submission stands
@@ -194,7 +222,12 @@ export async function createSubmission(
     action: 'SUBMISSION_CREATED',
     resourceType: 'submission',
     resourceId: row.id,
-    details: { applicationType: input.applicationType, primaryRegion: input.primaryRegion, clientType: input.clientType },
+    details: {
+      applicationType: input.applicationType,
+      primaryRegion: input.primaryRegion,
+      clientType: input.clientType,
+      programId: input.programId ?? null,
+    },
   });
   logger.info('Created submission', { submissionId: row.id, organizationId: ctx.organizationId });
   return { ...row, auditTrail };
@@ -216,11 +249,14 @@ export async function createSubmission(
  * on the same client (the C2C intake route writes a hash-chained audit_logs row
  * covering both creations).
  */
-export function createSubmissionTx(
+export async function createSubmissionTx(
   client: PoolClient,
   input: CreateSubmissionInput,
   ctx: { organizationId: number; userId: number }
 ): Promise<Submission> {
+  // On the caller's client, so a project inserted earlier in the same
+  // uncommitted transaction (intake) is seen.
+  await refuseForeignProgram(client, input.programId, ctx.organizationId);
   return insertSubmissionRow(drizzle(client), input, ctx);
 }
 
@@ -1389,7 +1425,10 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     result = await gw.transmit({
       organizationId: ctx.organizationId,
       userId: ctx.userId,
-      programId: null,
+      // The transmittal names the project its submission belongs to (LX-22):
+      // submission_transmittals.program_id, which every gateway copies from
+      // here, was always NULL on this path.
+      programId: submission.programId ?? null,
       packageId: null,
       bundle: assembled.bundle,
       environment,
@@ -1781,17 +1820,73 @@ export type UpsertedLeaf = SubmissionLeaf & { auditTrail: AuditRowOutcome };
 async function placementVocabularyForSequence(
   seq: EctdSequence,
   ctx: { organizationId: number },
-): Promise<PlacementVocabulary> {
+): Promise<{ vocabulary: PlacementVocabulary; programId: string | null }> {
   const rows = await db
-    .select({ applicationType: submissions.applicationType })
+    .select({ applicationType: submissions.applicationType, programId: submissions.programId })
     .from(submissions)
     .where(and(eq(submissions.id, seq.submissionId), eq(submissions.organizationId, ctx.organizationId)))
     .limit(1);
   // Defensive destructure rather than `const [row] =`: this read only decides
   // how STRICT the code gate is, and a shape it did not expect must narrow to
-  // `ctd`, never throw a placement away.
-  const applicationType = Array.isArray(rows) ? rows[0]?.applicationType : undefined;
-  return vocabularyForApplicationType(applicationType ?? null);
+  // `ctd`, never throw a placement away. The same read gives the project the
+  // submission belongs to (LX-22), which a placement must stay inside.
+  const row = Array.isArray(rows) ? rows[0] : undefined;
+  return {
+    vocabulary: vocabularyForApplicationType(row?.applicationType ?? null),
+    programId: row?.programId ?? null,
+  };
+}
+
+type LeafRef = { documentId: number | null; documentUuid: string | null };
+
+/** Per store that records a project: the read of a document's project. */
+const LEAF_PROGRAM_READS: Record<string, (ref: LeafRef, organizationId: number) => ReturnType<typeof sql> | null> = {
+  vault_documents: (ref) =>
+    ref.documentUuid ? sql`SELECT program_id::text AS program_id FROM vault.documents WHERE id = ${ref.documentUuid}::uuid` : null,
+  c2c_document_sections: (ref, organizationId) =>
+    ref.documentId
+      ? sql`
+      SELECT d.project_id::text AS program_id
+        FROM c2c_document_sections s JOIN c2c_documents d ON d.id = s.document_id
+       WHERE s.id = ${ref.documentId} AND d.org_id = ${organizationId}`
+      : null,
+  coauthor_documents: (ref, organizationId) =>
+    ref.documentId
+      ? sql`
+      SELECT ad.client_program_id::text AS program_id
+        FROM c2c_document_aliases a JOIN authoring_documents ad ON ad.id = a.canonical_id
+       WHERE a.store = 'coauthor_documents' AND a.native_id = ${String(ref.documentId)}
+         AND a.organization_id = ${organizationId} AND ad.tenant_id = ${organizationId}`
+      : null,
+};
+
+/** The SQLSTATE of a failed statement; Drizzle wraps the driver's error. */
+function sqlStateOf(err: unknown): string | undefined {
+  const e = err as { code?: string; cause?: { code?: string } } | null;
+  return e?.code ?? e?.cause?.code;
+}
+
+/**
+ * The project (regulatory_programs.id) a leaf's document belongs to, where its
+ * store records one: a Vault document's program, a governed section's filing
+ * document's project, an authoring filing copy's document's project (through
+ * its alias). Null where the store records none. Called after verifyLeafSource,
+ * so tenancy is already proven. A store this database does not carry (42P01 /
+ * 42703) records nothing; any other failure propagates — a placement is never
+ * allowed because its project could not be read.
+ */
+async function leafSourceProgram(documentTable: string, ref: LeafRef, organizationId: number): Promise<string | null> {
+  const query = LEAF_PROGRAM_READS[documentTable]?.(ref, organizationId) ?? null;
+  if (!query) return null;
+  try {
+    const res = (await db.execute(query)) as unknown as { rows?: unknown[] } | unknown[] | undefined;
+    const rows = ((res && !Array.isArray(res) ? res.rows : res) ?? []) as Array<{ program_id: string | null }>;
+    return rows[0]?.program_id ?? null;
+  } catch (err) {
+    const code = sqlStateOf(err);
+    if (code === '42P01' || code === '42703') return null;
+    throw err;
+  }
 }
 
 /** A transaction handle from `db.transaction` — what a locked leaf write runs on. */
@@ -1883,7 +1978,7 @@ export async function upsertLeaf(
      application type resolves to `ctd`, so every existing caller behaves
      exactly as before. A bare module ('3') is still a CONTAINER, never a
      place a document can go. */
-  const vocabulary = await placementVocabularyForSequence(seq, ctx);
+  const { vocabulary, programId: submissionProgramId } = await placementVocabularyForSequence(seq, ctx);
   const verdict = validateSectionCode(input.sectionCode, vocabulary);
   if (!verdict.ok) {
     throw new SubmissionError('VALIDATION', verdict.message ?? `Section code "${input.sectionCode}" is not valid for this submission.`);
@@ -1953,6 +2048,39 @@ export async function upsertLeaf(
           ctx.organizationId,
         )
       : null;
+
+  /* A filing holds only its own project's documents (PF-11). When both are
+     recorded — the document's project and the project of the submission this
+     sequence belongs to (LX-22) — they must be the same. The organization check
+     above let a Vault document of project B be placed, pinned and transmitted
+     in project A's filing. A submission that records no project cannot be
+     judged; the placement stands and the ledger names both sides. Checked
+     before anything is written, on the create and the re-point alike. */
+  const documentProgramId =
+    input.documentTable && (input.documentId || input.documentUuid)
+      ? await leafSourceProgram(
+          input.documentTable,
+          { documentId: input.documentId ?? null, documentUuid: input.documentUuid ?? null },
+          ctx.organizationId,
+        )
+      : null;
+  if (submissionProgramId && documentProgramId && documentProgramId !== submissionProgramId) {
+    throw new SubmissionError(
+      'CROSS_PROJECT',
+      'This document belongs to another project. A filing can hold only its own project’s documents.',
+    );
+  }
+  /* What the ledger records about the document placed (LX-11): which document,
+     the pin it took, and both projects. The row said only the sequence, the
+     section and a reason. */
+  const placedDocument = {
+    documentTable: input.documentTable ?? null,
+    documentId: input.documentId ?? null,
+    documentUuid: input.documentUuid ?? null,
+    documentContentSha256,
+    programId: submissionProgramId,
+    documentProgramId,
+  };
 
   // A lifecycle op that supersedes a prior leaf (replace|append|delete) carries a
   // parentLeafId — the GUID of the leaf it acts on. That parent MUST belong to the
@@ -2025,8 +2153,10 @@ export async function upsertLeaf(
       resourceType: 'submission_leaf',
       resourceId: input.leafId,
       details: {
+        sequenceId: input.sequenceId,
         sectionCode: input.sectionCode,
         lifecycleOp: input.lifecycleOp,
+        ...placedDocument,
         ...(input.reason ? { reason: input.reason } : {}),
       },
     });
@@ -2065,6 +2195,7 @@ export async function upsertLeaf(
     details: {
       sequenceId: input.sequenceId,
       sectionCode: input.sectionCode,
+      ...placedDocument,
       ...(input.reason ? { reason: input.reason } : {}),
     },
   });

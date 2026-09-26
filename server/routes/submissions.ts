@@ -165,6 +165,13 @@ const idParam = (v: string | string[] | undefined) => {
 
 // ── Schemas ───────────────────────────────────────────────────────────────
 const createSubmissionSchema = z.object({
+  /* The project this submission belongs to (regulatory_programs.id). Required:
+     every chain of governed records starts at a project, and a submission with
+     none reaches its project only by a name match (LX-22). Without the field
+     here the plain z.object stripped the id the Submission Center form had made
+     the user pick. Tenancy is checked by createSubmission (404 for another
+     organization's project), not here. */
+  programId: z.string().uuid(),
   title: z.string().min(1).max(500),
   productName: z.string().max(500).optional(),
   applicationType: z.string().min(1).max(64),

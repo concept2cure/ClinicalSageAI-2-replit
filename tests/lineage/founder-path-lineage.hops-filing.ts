@@ -188,10 +188,13 @@ export async function hopTransmit(w: World): Promise<void> {
     expect(kept).toBe(true);
     expect(sha256(fs.readFileSync(String(tx.bundle_path)))).toBe(tx.bundle_sha256);
   });
-  await hop.check('transmittal-names-sequence', 'the transmittal row names its sequence and its project', async (observe) => {
-    observe({ sequenceIdColumn: 'sequence_id' in tx, programId: tx.program_id ?? null });
-    expect(tx.sequence_id).toBe(k.sequenceId);
+  await hop.check('transmittal-names-project', 'the transmittal row names its project, taken from its submission', async (observe) => {
+    observe(tx.program_id === k.programId);
     expect(tx.program_id).toBe(k.programId);
+  });
+  await hop.check('transmittal-names-sequence', 'the transmittal row names its sequence', async (observe) => {
+    observe('sequence_id' in tx);
+    expect(tx.sequence_id).toBe(k.sequenceId);
   });
   await hop.check('transmit-record-names-bundle', 'the ECTD_TRANSMITTED ledger row carries the bundle sha256', async (observe) => {
     const carries = JSON.stringify(json((await transmitted()).new_values)).includes(String(tx.bundle_sha256));
@@ -240,11 +243,15 @@ export async function walkBack(w: World): Promise<void> {
     observe([...programIds].map((p) => p === k.programId));
     expect([...programIds]).toEqual([k.programId]);
   });
-  await hop.check('sequence-to-project', 'the sequence’s submission reaches the same project (the project-creation record names it)', async (observe) => {
-    const [s] = await q<{ submission_id: number }>('SELECT submission_id FROM ectd_sequences WHERE id = $1', [trail.sequenceId]);
+  await hop.check('sequence-to-project', 'the sequence’s submission reaches the same project by a column (submissions.program_id), and the project-creation record agrees', async (observe) => {
+    const [s] = await q<{ submission_id: number; program_id: string | null }>(
+      `SELECT e.submission_id, s.program_id FROM ectd_sequences e
+         JOIN submissions s ON s.id = e.submission_id AND s.organization_id = e.organization_id
+        WHERE e.id = $1`, [trail.sequenceId]);
+    observe(s.program_id === k.programId);
+    expect(s.program_id).toBe(k.programId);
     const rows = await q<{ target: string }>(`SELECT target FROM audit_logs WHERE action = 'c2c.project.create' AND (new_values->>'submission_id')::int = $1`, [s.submission_id]);
     const programs = [...new Set(rows.map((r) => r.target.replace(/^regulatory_program:/, '')))];
-    observe(programs.length);
     expect(programs).toEqual([k.programId]);
   });
   await hop.check('filing-copy-leaf-to-seal', 'the filing-copy leaf reaches the seal: the copy names it, the seal verifies, the pin still matches the copy', async (observe) => {
@@ -312,10 +319,32 @@ export async function walkForward(w: World): Promise<void> {
       (await q('SELECT id FROM cre_evidence_sources WHERE client_program_id = $1', [k.programId])).length,
       (await q('SELECT id FROM authoring_documents WHERE client_program_id = $1', [k.programId])).length,
       (await q('SELECT id FROM vault.documents WHERE program_id = $1 AND deleted_at IS NULL', [k.programId])).length,
-      (await q(`SELECT 1 FROM audit_logs WHERE action = 'c2c.project.create' AND target = $1 AND new_values->>'submission_id' IS NOT NULL`, [`regulatory_program:${k.programId}`])).length,
+      (await q('SELECT id FROM submissions WHERE program_id = $1 AND deleted_at IS NULL', [k.programId])).length,
     ];
     observe(counts);
     expect(counts).toEqual([1, 1, 1, 1]);
+  });
+  await hop.check('project-read-lists-its-records', 'one read from the project (GET /api/c2c/projects/:id/records) lists its submission, source, authoring document, Vault copy and filing document, by their project keys', async (observe) => {
+    const res = await asPrincipal(ORG_A, 3)(request(w.app).get(`/api/c2c/projects/${k.programId}/records`));
+    const r = res.body?.records ?? {};
+    const ids = (section: string) => (r[section]?.rows ?? []).map((row: { id: unknown }) => String(row.id));
+    observe({ status: res.status, sections: Object.keys(r).sort() });
+    expect(res.status).toBe(200);
+    expect(ids('submissions')).toEqual([String(k.submissionId)]);
+    expect(ids('sources')).toEqual([String(k.sourceId)]);
+    expect(ids('authoringDocuments')).toContain(String(k.docId));
+    expect(ids('vaultDocuments')).toContain(String(k.vaultDocumentId));
+    expect(ids('filingDocuments')).toContain(String(k.filingDocumentId));
+  });
+  await hop.check('project-activity-shows-its-records', 'the project activity feed shows the governed actions on its own records, not only rows keyed to the project id', async (observe) => {
+    const res = await asPrincipal(ORG_A, 3)(request(w.app).get(`/api/c2c/projects/${k.programId}/activity?limit=50`));
+    const actions: Array<{ action: string; resource_id: string }> = res.body?.activity ?? [];
+    const scaffold = actions.some((a) => a.action === 'c2c.work.transition' && String(a.resource_id) === String(k.filingDocumentId));
+    const placement = actions.some((a) => a.action === 'LEAF_CREATED');
+    observe({ status: res.status, scaffold, placement });
+    expect(res.status).toBe(200);
+    expect(scaffold).toBe(true);
+    expect(placement).toBe(true);
   });
   await hop.check('source-to-documents', 'from the source: the spans citing it reach an authoring document of the project', async (observe) => {
     const { listSpansCitingSource } = await import('../../server/services/clinical-regulatory-evidence/span-lineage.service');
@@ -338,6 +367,50 @@ export async function walkForward(w: World): Promise<void> {
     const hit = (dr.body.sources ?? []).find((s: { id: number }) => s.id === k.sourceId);
     observe(hit?.usage?.documents ?? null);
     expect(hit?.usage?.documents).toBeGreaterThanOrEqual(1);
+  });
+  hop.verdict();
+}
+
+/**
+ * Retention (PF-13; founder decision 2026-09-26): a project that holds sealed,
+ * filed or transmitted records is archived, never deleted, and its chain still
+ * reads; a project that holds only drafts may be deleted, with its audit row.
+ * DELETE was a soft delete guarded only against deleting twice, after which the
+ * project's Vault leaves stopped resolving (the verifiers require a live project).
+ */
+export async function hopRetention(w: World): Promise<void> {
+  const { k, q } = w;
+  const hop = new Hop('retention');
+  const as3 = asPrincipal(ORG_A, 3);
+
+  await hop.check('filed-project-not-deleted', 'deleting a project that holds filed and transmitted records is refused 409, naming them, and the project stays live', async (observe) => {
+    const res = await as3(request(w.app).delete(`/api/c2c/projects/${k.programId}`));
+    const [p] = await q<{ deleted_at: unknown }>('SELECT deleted_at FROM regulatory_programs WHERE id = $1', [k.programId]);
+    observe({ status: res.status, holds: Object.keys(res.body?.holds ?? {}).sort(), deleted: p.deleted_at !== null });
+    expect(res.status).toBe(409);
+    expect(Object.keys(res.body.holds)).toEqual(expect.arrayContaining(['filed', 'transmitted']));
+    expect(p.deleted_at).toBeNull();
+  });
+  await hop.check('filed-project-archived', 'the same project can be archived, and its records still read from it', async (observe) => {
+    const archived = await as3(request(w.app).post(`/api/c2c/projects/${k.programId}/archive`)).send({});
+    const records = await as3(request(w.app).get(`/api/c2c/projects/${k.programId}/records`));
+    observe({ archived: archived.status, records: records.status });
+    expect(archived.status).toBe(200);
+    expect(records.status).toBe(200);
+    expect(records.body.records.submissions.rows).toHaveLength(1);
+    expect(records.body.records.vaultDocuments.rows.length).toBeGreaterThan(0);
+  });
+  await hop.check('draft-project-deleted', 'a project that holds only drafts can be deleted, and the deletion is audited', async (observe) => {
+    const created = await as3(request(w.app).post('/api/c2c/projects')).send({
+      name: 'Draft-only IND', productName: 'D-1', programType: 'ind', productType: 'drug', primaryAgency: 'FDA', indication: 'Exploratory',
+    });
+    const id = String(created.body?.data?.id);
+    const deleted = await as3(request(w.app).delete(`/api/c2c/projects/${id}`));
+    const audit = await q(`SELECT 1 FROM audit_logs WHERE action = 'c2c.project.delete' AND record_id = $1`, [id]);
+    observe({ created: created.status, deleted: deleted.status, audited: audit.length });
+    expect(created.status).toBe(201);
+    expect(deleted.status).toBe(200);
+    expect(audit).toHaveLength(1);
   });
   hop.verdict();
 }

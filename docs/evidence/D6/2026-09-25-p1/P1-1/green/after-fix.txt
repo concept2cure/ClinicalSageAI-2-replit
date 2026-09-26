@@ -1,0 +1,31 @@
+# 2026-09-26T03:15:27Z — after the fix (working tree on e38c9c2f)
+$ npx vitest run server/services/__tests__/session-inactivity.test.ts server/middleware/__tests__/auth-inactivity-logoff.test.ts server/routes/__tests__/auth-refresh-inactivity.test.ts
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ server/services/__tests__/session-inactivity.test.ts > the idle window > is the tenant setting in minutes, clamped to [1 min, 24 h], and the default when unset or malformed 2ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the idle window > read back from a token is the idl claim, else the default 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the session claims > a new session has a fresh id, starts now and carries the tenant window 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the session claims > a continued session keeps its id, start and window; a token from before sessions had ids starts at its own issue 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the session claims > keys activity by the session id, else by the token itself 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > sessionInactivityReason — an access token > a session never seen is measured from its token: within the window it is admitted and recorded, past it it is idle 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > sessionInactivityReason — an access token > each admitted request extends the window; a gap longer than the window ends the session 4ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > sessionInactivityReason — an access token > a check that is not the user acting does not extend the window 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > sessionInactivityReason — an access token > an idle session is not touched by being asked 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > sessionInactivityReason — an access token > a session older than the lifetime is over however active 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > sessionInactivityReason — an access token > tokens minted before sessions had ids are independent of one another 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > refreshInactivityReason — a refresh token > reads the session's activity and never records any 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > refreshInactivityReason — a refresh token > a session with no record is measured from its start; a lifetime is a lifetime 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > refreshInactivityReason — a refresh token > a refresh token from before sessions had ids is checked for its lifetime only 0ms
+ ✓ server/middleware/__tests__/auth-inactivity-logoff.test.ts > authenticateToken — inactivity logoff > answers 401 SESSION_IDLE for a session with no activity for longer than its idle window, and the handler never runs 281ms
+ ✓ server/middleware/__tests__/auth-inactivity-logoff.test.ts > authenticateToken — inactivity logoff > a request is activity: a session used every 14 minutes stays open, and one left alone for 16 is over 5ms
+ ✓ server/middleware/__tests__/auth-inactivity-logoff.test.ts > authenticateToken — inactivity logoff > honours the window the tenant set at sign-in (idl), not the default 2ms
+ ✓ server/middleware/__tests__/auth-inactivity-logoff.test.ts > authenticateToken — inactivity logoff > answers 401 SESSION_LIFETIME for a session that began more than 12 hours ago, however active 2ms
+ ✓ server/middleware/__tests__/auth-inactivity-logoff.test.ts > authenticateToken — inactivity logoff > a token minted before sessions had ids is measured from its own issue 3ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session idle past its window (401 SESSION_IDLE) 41ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session that began more than 12 hours ago (401 SESSION_LIFETIME) 7ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > refreshes an active session and carries its id, start and window into both new tokens 8ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > a refresh token minted before sessions had ids is checked for its lifetime only 15ms
+ Test Files  3 passed (3)
+      Tests  23 passed (23)
+   Start at  03:15:28
+   Duration  1.97s (transform 1.27s, setup 246ms, import 1.70s, tests 388ms, environment 0ms)
+exit=0

@@ -837,14 +837,14 @@ router.post('/', async (req: Request, res: Response) => {
       // row, so every canonical-core surface (IndLifecycle checklist,
       // NdaCockpit, SubmissionCenter, DispatchReadiness) stayed permanently
       // empty for self-serve drug programs. Drug application types only;
-      // device/CER/MDR programs run on their own pathway stores. Title and
-      // product_name are set from the program's name/product_name so the
-      // ind-checklist-view-assembler's identity match (program ↔ submission by
-      // product_name/title) holds by construction. A failure here rolls the
-      // whole creation back — no program without its spine.
+      // device/CER/MDR programs run on their own pathway stores. The spine is
+      // anchored to THIS program (submissions.program_id, LX-22) and reused
+      // only if already anchored to it — never adopted from another project by
+      // product name. A failure here rolls the whole creation back — no
+      // program without its spine.
       if (applicationType) {
         submissionSpine = await ensureSubmissionSpine({
-          client, orgId, userId, name, productName, applicationType, productType, primaryAgency,
+          client, orgId, userId, programId: newId, name, productName, applicationType, productType, primaryAgency,
         });
       }
 
@@ -886,7 +886,7 @@ router.post('/', async (req: Request, res: Response) => {
         created_via: 'v2-new-project-wizard',
         // The audit row covers EVERY creation this transaction performed: the
         // linked canonical submission is part of the record, whether newly
-        // created here or matched to an existing spine by identity.
+        // created here or already anchored to this program (a replay).
         ...(submissionSpine
           ? {
               submission_id: submissionSpine.id,
@@ -955,8 +955,8 @@ router.post('/', async (req: Request, res: Response) => {
         scaffoldedSections: scaffold.sectionCount,
         ...(scaffold.skipped ? { scaffoldSkipped: scaffold.skipped, scaffoldDetail: scaffold.detail } : {}),
         // Surfaced so the spine linkage is never silent: present for drug
-        // programs (submissionCreated=false means an existing spine was
-        // matched by identity), absent for device/CER/MDR program types.
+        // programs (submissionCreated=false means a spine already anchored to
+        // this program was reused), absent for device/CER/MDR program types.
         ...(submissionSpine
           ? { submissionId: submissionSpine.id, submissionCreated: submissionSpine.created }
           : {}),
@@ -1283,6 +1283,8 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
   if (!orgId) return send403(res);
 
   const limit = Math.min(parseInt(String((req.query as any).limit ?? '5'), 10) || 5, 50);
+  // Guard the uuid comparisons below — a non-uuid id would raise 22P02 → 500.
+  if (!UUID_RE.test(String(req.params.id))) return send404(res);
 
   try {
     const check = await pool.query(
@@ -1307,7 +1309,15 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
        FROM audit_logs al
        LEFT JOIN users u ON u.id = COALESCE(al.actor_id, al.user_id)
        WHERE al.tenant_id = $2
-         AND (al.record_id = $1 OR al.new_values->>'project_id' = $1)
+         AND (al.record_id = $1
+              OR al.target = 'regulatory_program:' || $1
+              OR al.new_values->>'project_id' = $1
+              OR al.new_values->>'programId' = $1
+              -- A governed action on one of the project's own filing documents
+              -- names its target (document:<id>), not the project (PF-17): the
+              -- scaffold that created the project's dossier was invisible here.
+              OR (al.target_type = 'document' AND al.target_id IN (
+                    SELECT d.id::text FROM c2c_documents d WHERE d.project_id = $1::uuid AND d.org_id = $2)))
        ORDER BY al.occurred_at DESC NULLS LAST
        LIMIT $3`,
       [req.params.id, orgId, limit],
@@ -1323,6 +1333,67 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
       return serverError(res, logger, 'reading the activity feed', err);
     }
     return serverError(res, logger, 'loading the project activity', err, { programId: String(req.params.id) });
+  }
+});
+
+// ── GET /api/c2c/projects/:id/records ────────────────────────────────────────
+//
+// From the project, every record anchored to it (PF-17): one read, each store
+// by its recorded project key — never by name. A store this database cannot
+// read is reported as unavailable with its reason, never as an empty list.
+
+type RecordSection = { available: boolean; rows: unknown[]; reason?: string };
+
+const PROJECT_RECORD_READS: ReadonlyArray<readonly [string, string]> = [
+  ['submissions', `SELECT id, title, application_type, primary_region, status, lifecycle_stage
+                     FROM submissions WHERE program_id = $1 AND organization_id = $2 AND deleted_at IS NULL
+                    ORDER BY updated_at DESC NULLS LAST, id DESC LIMIT 200`],
+  ['sources', `SELECT id, title, source_type, checksum, created_at
+                 FROM cre_evidence_sources WHERE client_program_id = $1 AND organization_id = $2
+                ORDER BY created_at DESC LIMIT 200`],
+  ['authoringDocuments', `SELECT id, title, status, created_at
+                            FROM authoring_documents WHERE client_program_id = $1 AND tenant_id = $2
+                           ORDER BY created_at DESC LIMIT 200`],
+  ['vaultDocuments', `SELECT d.id, d.document_code, d.document_title, d.version, d.created_at
+                        FROM vault.documents d
+                        JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $2
+                       WHERE d.program_id = $1 AND d.deleted_at IS NULL
+                       ORDER BY d.created_at DESC LIMIT 200`],
+  ['studyDesigns', `SELECT study_id AS id, protocol_title AS title, study_phase, protocol_status
+                      FROM cdisc_prm_studies WHERE program_id = $1 AND tenant_id = $2
+                     ORDER BY updated_at DESC NULLS LAST LIMIT 200`],
+  ['filingDocuments', `SELECT id, title, doc_type
+                         FROM c2c_documents WHERE project_id = $1 AND org_id = $2 LIMIT 200`],
+];
+
+async function readRecordSection(sql: string, programId: string, orgId: number): Promise<RecordSection> {
+  try {
+    const { rows } = await pool.query(sql, [programId, orgId]);
+    return { available: true, rows };
+  } catch (err: unknown) {
+    const code = (err as { code?: string })?.code;
+    if (code === '42P01' || code === '42703') return { available: false, rows: [], reason: 'not provisioned in this environment' };
+    logger.warn('project records: a section could not be read', { programId, code, err: (err as Error)?.message });
+    return { available: false, rows: [], reason: 'could not be read' };
+  }
+}
+
+router.get('/:id/records', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return send403(res);
+  const id = String(req.params.id);
+  if (!UUID_RE.test(id)) return send404(res);
+  try {
+    const check = await pool.query(
+      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+      [id, orgId],
+    );
+    if (check.rows.length === 0) return send404(res);
+    const records: Record<string, RecordSection> = {};
+    for (const [section, sql] of PROJECT_RECORD_READS) records[section] = await readRecordSection(sql, id, orgId);
+    return res.json({ projectId: id, records });
+  } catch (err: unknown) {
+    return serverError(res, logger, 'listing the project records', err, { programId: id });
   }
 });
 
@@ -1607,6 +1678,46 @@ router.get('/:id/source-changes', async (req: Request, res: Response) => {
 // to make a program disappear, and the audit rows below would dangle if it did.
 
 /** Shared close-out body: authorize, mutate, audit, in one transaction. */
+/**
+ * What a project holds that makes it a record rather than a draft (PF-13;
+ * founder decision 2026-09-26): a transmittal, a frozen or dispatched sequence,
+ * a document filed in its Vault, a sealed authoring document. Each counted by
+ * its recorded project key. Read inside the caller's transaction, one savepoint
+ * per store, so a store this database does not carry (42P01 / 42703) holds
+ * nothing and does not abort the transaction; any other failure propagates.
+ */
+const PROJECT_HOLD_READS: ReadonlyArray<readonly [string, string]> = [
+  ['transmitted', `SELECT count(*)::int AS n FROM submission_transmittals WHERE program_id = $1 AND organization_id = $2`],
+  ['frozenOrDispatched', `SELECT count(*)::int AS n FROM ectd_sequences e
+                            JOIN submissions s ON s.id = e.submission_id AND s.organization_id = e.organization_id
+                           WHERE s.program_id = $1 AND s.organization_id = $2
+                             AND e.status IN ('frozen', 'dispatched') AND e.deleted_at IS NULL`],
+  ['filed', `SELECT count(*)::int AS n FROM vault.documents d
+               JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $2
+              WHERE d.program_id = $1 AND d.deleted_at IS NULL`],
+  ['sealed', `SELECT count(*)::int AS n FROM frozen_documents f
+                JOIN authoring_documents d ON d.id = f.document_id AND d.tenant_id = f.tenant_id
+               WHERE d.client_program_id = $1 AND d.tenant_id = $2`],
+];
+
+async function projectHolds(client: PoolClient, programId: string, orgId: number): Promise<Record<string, number>> {
+  const holds: Record<string, number> = {};
+  for (const [kind, sql] of PROJECT_HOLD_READS) {
+    await client.query('SAVEPOINT project_hold');
+    try {
+      const { rows } = await client.query(sql, [programId, orgId]);
+      await client.query('RELEASE SAVEPOINT project_hold');
+      const n = Number((rows[0] as { n?: number } | undefined)?.n ?? 0);
+      if (n > 0) holds[kind] = n;
+    } catch (err: unknown) {
+      await client.query('ROLLBACK TO SAVEPOINT project_hold');
+      const code = (err as { code?: string })?.code;
+      if (code !== '42P01' && code !== '42703') throw err;
+    }
+  }
+  return holds;
+}
+
 async function transitionProgram(
   req: Request,
   res: Response,
@@ -1616,6 +1727,8 @@ async function transitionProgram(
     set: string;
     /** Extra guard on the current row, e.g. only archive something not archived. */
     precondition?: (row: { status: string; deleted_at: string | null }) => string | null;
+    /** A refusal that needs the project's records, read under the row lock. */
+    guard?: (client: PoolClient, programId: string, orgId: number) => Promise<{ status: number; body: Record<string, unknown> } | null>;
     details: (row: { status: string }) => Record<string, unknown>;
   },
 ): Promise<void> {
@@ -1644,6 +1757,8 @@ async function transitionProgram(
 
     const blocked = opts.precondition?.(row);
     if (blocked) { await client.query('ROLLBACK'); send400(res, blocked); return; }
+    const refused = await opts.guard?.(client, String(req.params.id), orgId);
+    if (refused) { await client.query('ROLLBACK'); res.status(refused.status).json(refused.body); return; }
 
     await client.query(
       `UPDATE regulatory_programs SET ${opts.set}, updated_at = now()
@@ -1705,6 +1820,22 @@ router.delete('/:id', async (req: Request, res: Response) => {
     action: 'c2c.project.delete',
     set: `deleted_at = now()`,
     precondition: (row) => (row.deleted_at ? 'This program is already deleted.' : null),
+    // A project that holds sealed, filed or transmitted records is archived,
+    // never deleted (PF-13; founder decision 2026-09-26): deleting it made its
+    // Vault leaves stop resolving, and its chain stopped reading.
+    guard: async (client, programId, orgId) => {
+      const holds = await projectHolds(client, programId, orgId);
+      return Object.keys(holds).length === 0
+        ? null
+        : {
+            status: 409,
+            body: {
+              error: 'PROJECT_HOLDS_RECORDS',
+              message: 'This project holds sealed, filed or transmitted records. Archive it instead.',
+              holds,
+            },
+          };
+    },
     details: (row) => ({ from_status: row.status, soft_delete: true }),
   });
 });

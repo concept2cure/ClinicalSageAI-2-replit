@@ -229,5 +229,24 @@ export function useGovernedAction() {
     }
   }, []);
 
-  return { submit, submitting, error };
+  /**
+   * A person's no to an action AnA is holding a turn on. Releases the run at
+   * once; without it the turn waited out the pause ceiling. Best-effort: if it
+   * cannot be sent, the run still ends at the ceiling and records the lapse.
+   */
+  const decline = useCallback(async (held: { runId: string; toolUseId: string }): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/ana-ri/governed-action', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({ runId: held.runId, toolUseId: held.toolUseId, decision: 'decline' }),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  return { submit, decline, submitting, error };
 }

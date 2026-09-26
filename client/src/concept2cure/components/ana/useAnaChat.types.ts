@@ -148,6 +148,22 @@ export interface AnaPlanChange {
  * its name reached the model; a memory read that failed is `unavailable`,
  * never an empty list that reads as "nothing matched".
  */
+/**
+ * Whether the server filed this turn's retained record (21 CFR Part 11): the
+ * record's id and SHA-256 when it did, the reason when it did not. Absent when
+ * the server said nothing — an older server, or a turn that never closed —
+ * which is shown as nothing, never as recorded.
+ */
+export type AnaTurnRecordStatus =
+  | { status: 'recorded'; id: string; sha256: string }
+  | { status: 'not_recorded'; reason: string }
+  /**
+   * Client-side only: the turn ended here — timed out, stopped, or the
+   * connection closed — before the server said whether it filed the record.
+   * The server may well have; this view cannot say so.
+   */
+  | { status: 'unconfirmed' };
+
 export interface AnaContextUsed {
   uploads: Array<{ fileId: string; fileName: string; mimeType: string; read: 'content' | 'name_only' }>;
   unresolvedUploads: number;
@@ -355,6 +371,8 @@ export interface AnaChatMessage {
   planChanges?: AnaPlanChange[];
   /** What the turn read before answering (uploads, memory). Absent until the event arrives. */
   contextUsed?: AnaContextUsed;
+  /** Whether this turn's retained record was filed. See {@link AnaTurnRecordStatus}. */
+  turnRecord?: AnaTurnRecordStatus;
   /**
    * Draft produced by a document-generating tool this turn. The rail reads
    * `title` only; nothing routes `content` anywhere, so this is NOT

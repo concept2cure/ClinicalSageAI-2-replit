@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-26T02:56:01.652Z",
+  "generatedAt": "2026-09-26T12:31:44.247Z",
   "git": {
-    "sha": "feb2df3d4d3334d1fc7f7a96a468c5c6d50baded",
+    "sha": "c821bb61264862cf32c3862b4f94980d394c3a08",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -15,8 +15,8 @@
     "duplicateBasenames": 208,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 44,
-    "largeFilesByLines": 107
+    "largeFilesByBytes": 45,
+    "largeFilesByLines": 108
   },
   "findings": {
     "duplicateBasenames": [
@@ -341,17 +341,6 @@
         ]
       },
       {
-        "basename": "templates",
-        "count": 5,
-        "paths": [
-          "server/routes/c2c/templates.ts",
-          "server/routes/templates.ts",
-          "server/services/projects/schedule-of-events/templates.ts",
-          "ui_kits/mdx/data/templates.js",
-          "ui_kits/mdx/surfaces/Templates.jsx"
-        ]
-      },
-      {
         "basename": "analytics",
         "count": 4,
         "paths": [
@@ -459,6 +448,16 @@
           "server/routes/c2c/shared.ts",
           "server/routes/chat/shared.ts",
           "server/routes/ind-lifecycle/shared.ts"
+        ]
+      },
+      {
+        "basename": "templates",
+        "count": 4,
+        "paths": [
+          "server/routes/c2c/templates.ts",
+          "server/services/projects/schedule-of-events/templates.ts",
+          "ui_kits/mdx/data/templates.js",
+          "ui_kits/mdx/surfaces/Templates.jsx"
         ]
       },
       {
@@ -1978,7 +1977,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1058988
+        "bytes": 1059635
       },
       {
         "file": "shared/schema.ts",
@@ -2006,7 +2005,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 210444
+        "bytes": 211132
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2022,7 +2021,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 172558
+        "bytes": 174181
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2065,6 +2064,10 @@
         "bytes": 134822
       },
       {
+        "file": "server/routes/ana-ri/stream.ts",
+        "bytes": 133696
+      },
+      {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
         "bytes": 133645
       },
@@ -2079,10 +2082,6 @@
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
         "bytes": 130408
-      },
-      {
-        "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 127768
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
@@ -2129,6 +2128,10 @@
         "bytes": 109447
       },
       {
+        "file": "server/services/submission-service/submission-service.ts",
+        "bytes": 109313
+      },
+      {
         "file": "shared/regulatory/project-bootstrap.ts",
         "bytes": 109047
       },
@@ -2149,14 +2152,14 @@
         "bytes": 105559
       },
       {
-        "file": "server/services/submission-service/submission-service.ts",
-        "bytes": 103012
+        "file": "server/src/routes/stability.router.ts",
+        "bytes": 102387
       }
     ],
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 20469
+        "lines": 20485
       },
       {
         "file": "shared/schema.ts",
@@ -2180,7 +2183,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 5374
+        "lines": 5382
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2196,7 +2199,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 4101
+        "lines": 4140
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2248,7 +2251,7 @@
       },
       {
         "file": "server/src/routes/stability.router.ts",
-        "lines": 2852
+        "lines": 2934
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2263,6 +2266,14 @@
         "lines": 2717
       },
       {
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 2712
+      },
+      {
+        "file": "server/routes/auth.ts",
+        "lines": 2706
+      },
+      {
         "file": "server/routes/knowledge-base.ts",
         "lines": 2666
       },
@@ -2271,16 +2282,8 @@
         "lines": 2609
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 2605
-      },
-      {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "lines": 2504
-      },
-      {
-        "file": "server/routes/auth.ts",
-        "lines": 2445
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2311,6 +2314,10 @@
         "lines": 2320
       },
       {
+        "file": "server/services/submission-service/submission-service.ts",
+        "lines": 2309
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
         "lines": 2278
       },
@@ -2321,10 +2328,6 @@
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
         "lines": 2197
-      },
-      {
-        "file": "server/services/submission-service/submission-service.ts",
-        "lines": 2178
       },
       {
         "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
@@ -2443,6 +2446,10 @@
         "lines": 1849
       },
       {
+        "file": "server/routes/c2c/projects.ts",
+        "lines": 1844
+      },
+      {
         "file": "server/services/ana/citation-engine.ts",
         "lines": 1844
       },
@@ -2500,7 +2507,7 @@
       },
       {
         "file": "server/routes/submissions.ts",
-        "lines": 1743
+        "lines": 1750
       },
       {
         "file": "server/routes/c2c/project-vault.ts",
@@ -2509,10 +2516,6 @@
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
         "lines": 1726
-      },
-      {
-        "file": "server/routes/c2c/projects.ts",
-        "lines": 1713
       },
       {
         "file": "tests/services/ana-biostats.test.ts",
@@ -2555,28 +2558,32 @@
         "lines": 1602
       },
       {
-        "file": "server/services/module3-extensions.ts",
-        "lines": 1557
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+        "lines": 1561
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "lines": 1555
+        "file": "server/services/module3-extensions.ts",
+        "lines": 1557
       },
       {
         "file": "server/routes/mdx-qms.ts",
         "lines": 1552
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
+        "lines": 1551
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
         "lines": 1550
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
         "lines": 1541
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
-        "lines": 1532
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 1541
       },
       {
         "file": "server/services/grdhe/grdheService.ts",
@@ -2588,8 +2595,8 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 406,
-      "largeByBytes": 34,
+      "duplicateGroups": 405,
+      "largeByBytes": 35,
       "largeByLines": 85
     },
     {
@@ -2608,7 +2615,7 @@
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 54,
       "largeByBytes": 5,
-      "largeByLines": 13
+      "largeByLines": 14
     },
     {
       "owner": "Frontend Platform (client/src maintainers)",

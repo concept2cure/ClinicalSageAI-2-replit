@@ -50,7 +50,7 @@ describe('validateTenantContext, given a session', () => {
     expect(res.statusCode).toBe(403);
     expect(res.body).toMatchObject({ code: 'TENANT_MISMATCH' });
     expect(next).not.toHaveBeenCalled();
-    await new Promise((r) => setImmediate(r)); // the audit is fire-and-forget
+    await new Promise(r => setTimeout(r, 0)); // the audit is fire-and-forget
     expect(audit.logAction).toHaveBeenCalledWith(expect.objectContaining({ action: 'tenant_impersonation_attempt', tenantId: 7 }));
   });
 
@@ -78,7 +78,11 @@ describe('where it is mounted', () => {
     const before = stack().length;
     applyAuthBoundary(app);
     const added = stack().slice(before).map((l) => l.handle.name);
-    expect(added, 'the detector is not mounted behind the boundary').toHaveLength(2);
+    // The boundary, then the detector; then, since 2026-09-26, the Concept2Cure
+    // body parsers and their scrub, which read a body only for a session that
+    // passed the boundary (security audit IAM-18 item 7).
+    expect(added.slice(0, 2), 'the detector is not mounted behind the boundary').toHaveLength(2);
     expect(added[1]).toBe('validateTenantContext');
+    expect(added.slice(2), 'the Concept2Cure parsers do not follow the boundary').toEqual(['jsonParser', 'urlencodedParser', 'sanitizeInput']);
   });
 });

@@ -28,6 +28,9 @@ import { getPool } from '../../db.js';
 import { runWithTenantScope } from '../../db/tenantStore.js';
 import { selectToolsForTurn, type ToolSelectionContext } from './tool-selection.js';
 import { executeAgenticLoop } from './AnaToolExecutor.js';
+import { getPool } from '../../db.js';
+import { loopToolCollector, recordLoopTurn } from './turn-record-loop.js';
+import type { TurnRecordStatus } from './turn-record.js';
 
 const log = createScopedLogger('ana-realtime');
 
@@ -48,6 +51,8 @@ export interface TurnInput {
 
 export interface TurnResult {
   text: string;
+  /** Whether the turn's retained record was filed (services/ana/turn-record.ts). */
+  turnRecord?: TurnRecordStatus;
 }
 
 export type RunTurn = (input: TurnInput, signal: AbortSignal, emit: RealtimeEmit) => Promise<TurnResult>;
@@ -79,11 +84,12 @@ export class AnaRealtimeSession {
     try {
       const result = await this.runTurn(input, controller.signal, this.emit);
       if (!controller.signal.aborted) {
-        this.emit('ana:done', { turnId: input.turnId, text: result.text });
+        this.emit('ana:done', { turnId: input.turnId, text: result.text, turnRecord: result.turnRecord });
       }
     } catch (err) {
       if (!controller.signal.aborted) {
-        this.emit('ana:error', { turnId: input.turnId, error: err instanceof Error ? err.message : String(err) });
+        const turnRecord = (err as { turnRecord?: TurnRecordStatus } | null)?.turnRecord;
+        this.emit('ana:error', { turnId: input.turnId, error: err instanceof Error ? err.message : String(err), turnRecord });
       }
     } finally {
       if (this.current === controller) this.current = null;
@@ -134,12 +140,28 @@ const runAgenticTurnInScope: RunTurn = async (input, signal, emit) => {
     context: input.context,
   });
 
+  const messages = [
+    ...(input.history ?? []).map(m => ({ role: m.role, content: m.content })),
+    { role: 'user' as const, content: input.message },
+  ];
+  const collected = loopToolCollector();
+  // Recorded however the turn ends: answered, stopped by barge-in, or failed.
+  const recordTurn = (outcome: 'answered' | 'stopped' | 'failed', response?: unknown, error?: unknown) =>
+    recordLoopTurn(getPool(), {
+      orgId: input.organizationId,
+      userId: input.userId,
+      surface: 'socket:ana',
+      projectId: input.projectId ?? null,
+      typed: input.message,
+      messages,
+      calls: collected.calls,
+      response: response as Parameters<typeof recordLoopTurn>[1]['response'],
+      outcome,
+      error,
+    });
   const request: GatewayRequest = {
     taskType: 'chat',
-    messages: [
-      ...(input.history ?? []).map(m => ({ role: m.role, content: m.content })),
-      { role: 'user' as const, content: input.message },
-    ],
+    messages,
     maxTokens: 4096,
     temperature: 0.6,
     stream: true,
@@ -161,14 +183,19 @@ const runAgenticTurnInScope: RunTurn = async (input, signal, emit) => {
       userId: input.userId,
       projectId: input.projectId ?? null,
     },
-    onToolExecution: toolName => {
+    onToolExecution: (toolName, toolInput, result) => {
+      collected.onToolExecution(toolName, toolInput, result);
       if (!signal.aborted) emit('ana:tool', { turnId: input.turnId, tool: toolName });
     },
+  }).catch(async (err: unknown) => {
+    const turnRecord = await recordTurn(signal.aborted ? 'stopped' : 'failed', undefined, err);
+    throw Object.assign(err instanceof Error ? err : new Error(String(err)), { turnRecord });
   });
 
-   
   const raw = (response as any)?.content ?? (response as any)?.text ?? (response as any)?.message ?? '';
-  return { text: typeof raw === 'string' ? raw : String(raw ?? '') };
+  const text = typeof raw === 'string' ? raw : String(raw ?? '');
+  const turnRecord = await recordTurn(signal.aborted ? 'stopped' : 'answered', { ...(response as object), content: text });
+  return { text, turnRecord };
 };
 
 interface AuthedSocket extends Socket {

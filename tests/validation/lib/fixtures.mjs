@@ -73,17 +73,20 @@ export async function ingestPdf(api, expect, { programId, title, documentType = 
  * A submission with one sequence. Pass `submissionId` to build the sequence on
  * an EXISTING submission — the program's own spine (createProgram's
  * `spineSubmissionId`) when the step is about the open program's sequence
- * (OQ-SRDY-07, VSR-001 F-8): a submission created here with an unrelated title
- * is, by the platform's identity convention, not that program's.
+ * (OQ-SRDY-07, VSR-001 F-8). Otherwise a new submission is created, anchored to
+ * `programId`: POST /api/submissions requires the project it belongs to
+ * (submissions.program_id, LX-22).
  */
-export async function createSubmissionWithSequence(api, expect, { title, sequenceNumber = '0000', submissionId = null }) {
+export async function createSubmissionWithSequence(api, expect, { title, sequenceNumber = '0000', submissionId = null, programId = null }) {
   let submission;
   if (submissionId != null) {
     const g = await api('GET', `/api/submissions/${submissionId}`);
     expect(g.status === 200, `submission read expected 200, got ${g.status}`, g.json);
     submission = g.json;
   } else {
+    expect(programId != null, 'a new submission needs the program it belongs to (programId)', { title });
     const s = await api('POST', '/api/submissions', {
+      programId,
       title,
       productName: title,
       applicationType: 'IND',

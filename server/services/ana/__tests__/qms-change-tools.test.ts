@@ -134,9 +134,27 @@ describe('qms_change_transition', () => {
     await call('qms_change_transition', { change_id: created.id, to: 'under_assessment', reason: 'assess' });
     const res = await call('qms_change_transition', { change_id: created.id, to: 'approved', reason: 'approve' }, { organizationId: 1, userId: 11 });
     expect(res.error).toMatch(/electronic signature/i);
+    // AnA tells the person what to do, so it needs the kind of refusal and a
+    // place a person can go: the Approve button, not an API path.
+    expect(res.code).toBe('CHANGE_APPROVAL_REQUIRES_SIGNATURE');
+    expect(res.error).toMatch(/Approve button/);
+    expect(res.error).not.toMatch(/\/api\//);
     const { rows } = await pglite.query<{ status: string; approved_by: number | null }>(
       `SELECT status, approved_by FROM qms_change_controls WHERE id = $1`, [created.id]);
     expect(rows[0]).toMatchObject({ status: 'under_assessment', approved_by: null });
+  });
+
+  /* Hand-on from the review follow-through lane: after DP-31 the definition
+     still offered `approved` and promised a segregation-of-duties check, so AnA
+     would offer the user an approval that transitionChange refuses for every
+     caller. What the model is told has to match what the tool can do. */
+  it('does not offer AnA an approval, and says where a change is approved', async () => {
+    const { QMS_CHANGE_TRANSITION } = await import('../qms-labeling-analytics-tool-defs');
+    const to = (QMS_CHANGE_TRANSITION.input_schema.properties as Record<string, { enum?: string[] }>).to;
+    expect(to.enum).not.toContain('approved');
+    expect(QMS_CHANGE_TRANSITION.description).not.toMatch(/segregation of duties/i);
+    expect(QMS_CHANGE_TRANSITION.description).toMatch(/cannot approve/i);
+    expect(QMS_CHANGE_TRANSITION.description).toMatch(/Approve button/);
   });
 
   it('rejects an illegal transition', async () => {

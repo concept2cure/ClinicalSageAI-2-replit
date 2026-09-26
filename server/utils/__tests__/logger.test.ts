@@ -13,7 +13,7 @@
 import { describe, expect, it } from 'vitest';
 import { __testing } from '../logger';
 
-const { redactContext, SENSITIVE_KEYS } = __testing;
+const { redactContext, SENSITIVE_KEYS, maskPersonalData } = __testing;
 
 describe('logger SENSITIVE_KEYS coverage', () => {
   it('includes every credential category', () => {
@@ -135,7 +135,7 @@ describe('redactContext — nested objects', () => {
       user: { id: 1, email: 'a@b.com', password: 'secret' },
     });
     expect((out.user as any).id).toBe(1);
-    expect((out.user as any).email).toBe('a@b.com');
+    expect((out.user as any).email, 'an address is masked, not dropped (DP-26)').toBe('a***@b.com');
     expect((out.user as any).password).toBe('[REDACTED]');
   });
 
@@ -187,5 +187,50 @@ describe('redactContext — Authorization-header common shapes', () => {
   it('redacts Set-Cookie header', () => {
     const out = redactContext({ headers: { 'set-cookie': 'session=abc' } });
     expect((out.headers as any)['set-cookie']).toBe('[REDACTED]');
+  });
+});
+
+describe('maskPersonalData — e-mail and IP addresses in log values (DP-26)', () => {
+  it('keeps the first character and the domain of an address', () => {
+    expect(maskPersonalData('ada.lovelace@example.test')).toBe('a***@example.test');
+    expect(maskPersonalData('Sign-in for ada@example.test refused')).toBe('Sign-in for a***@example.test refused');
+    expect(maskPersonalData('a@b.co, c@d.org')).toBe('a***@b.co, c***@d.org');
+  });
+
+  it('keeps the network part of an IP address', () => {
+    expect(maskPersonalData('203.0.113.42')).toBe('203.0.113.xxx');
+    expect(maskPersonalData('from 198.51.100.7:443')).toBe('from 198.51.100.xxx:443');
+    expect(maskPersonalData('2001:db8:85a3:0:0:8a2e:370:7334')).toBe('2001:db8:85a3::xxxx');
+  });
+
+  it('leaves other strings alone, including long ones', () => {
+    expect(maskPersonalData('order 42 shipped')).toBe('order 42 shipped');
+    expect(maskPersonalData('at 12:30:05')).toBe('at 12:30:05');
+    const long = `${'x'.repeat(3000)} ada@example.test`;
+    expect(maskPersonalData(long)).toBe(long);
+  });
+});
+
+describe('redactContext — masks personal data under ordinary keys, redacts sensitive keys entirely', () => {
+  it('masks an address or an IP wherever it is a string value, at any depth', () => {
+    const out = redactContext({
+      email: 'ada.lovelace@example.test',
+      ip: '203.0.113.42',
+      nested: { to: 'bob@example.test', note: 'ok' },
+      count: 3,
+      flag: true,
+    });
+    expect(out).toEqual({
+      email: 'a***@example.test',
+      ip: '203.0.113.xxx',
+      nested: { to: 'b***@example.test', note: 'ok' },
+      count: 3,
+      flag: true,
+    });
+  });
+
+  it('a sensitive key is still redacted whole, never merely masked', () => {
+    expect(redactContext({ password: 'ada@example.test' })).toEqual({ password: '[REDACTED]' });
+    expect(redactContext({ authorization: 'Bearer 203.0.113.42' })).toEqual({ authorization: '[REDACTED]' });
   });
 });

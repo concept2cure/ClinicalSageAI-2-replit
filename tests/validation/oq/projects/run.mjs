@@ -7,6 +7,7 @@
  */
 import { createRun, devLogin, helpers, passwordLogin, runCredential } from '../../lib/harness.mjs';
 import { ACCOUNT_STANDING_TEXT, accountStandingStep } from './account-standing.mjs';
+import { INACTIVITY_TEXT, inactivityStep } from './inactivity.mjs';
 import { freshTotp, totp, TOTP_PERIOD_SECONDS } from '../../lib/totp.mjs';
 
 const run = await createRun({
@@ -487,6 +488,8 @@ await step(
 );
 
 await step({ id: 'OQ-PROJ-18', urs: ['URS-PROJ-012'], ...ACCOUNT_STANDING_TEXT }, accountStandingStep);
+
+await step({ id: 'OQ-PROJ-19', urs: ['URS-PROJ-013'], ...INACTIVITY_TEXT }, inactivityStep);
 
 const result = await run.finish();
 process.exit(result.counts.fail > 0 ? 1 : 0);

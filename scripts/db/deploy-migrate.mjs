@@ -75,7 +75,12 @@ import {
   AUTHORING_SUBSYSTEM_TABLES,
   AUTHORING_SUBSYSTEM_FK_CONSTRAINTS,
 } from './authoring-subsystem.mjs';
-import { C2C_MIGRATION_FILES, applyMigrationFiles } from './migration-set.mjs';
+import {
+  C2C_MIGRATION_FILES,
+  applyMigrationFiles,
+  migrationLockPolicy,
+  retryOnLockTimeout,
+} from './migration-set.mjs';
 import { resolveDatabaseUrl, sslFor, APPLY_URL_VARS } from './connection.mjs';
 import { ensureRuntimeRole } from './provision-app-role.mjs';
 import { verifyReadinessContract as verifyCoreReadinessContract } from './readiness-contract.mjs';
@@ -342,7 +347,23 @@ async function main() {
     log('  ✓ lock held (released automatically if this task dies)');
 
     log('\n▶ 3/5 Apply migrations');
-    await applyAuthoringSubsystem(client, REPO_ROOT, { log });
+    // The authoring tables are live in production (the launch catalog's
+    // Authoring), so the subsystem's replay is held to the same lock-wait cap
+    // as the set below: see "Lock waits on a live database" in migration-set.mjs.
+    // It is one transaction and rolls itself back, so a timed-out attempt is
+    // retried whole. The set restores lock_timeout itself; this restores it here.
+    const lockPolicy = migrationLockPolicy();
+    await client.query(`SET lock_timeout = ${lockPolicy.lockTimeoutMs}`);
+    try {
+      await retryOnLockTimeout(() => applyAuthoringSubsystem(client, REPO_ROOT, { log }), {
+        label: 'authoring subsystem',
+        attempts: lockPolicy.lockAttempts,
+        backoffMs: lockPolicy.lockBackoffMs,
+        log: m => errorLog(`  ${m}`),
+      });
+    } finally {
+      await client.query('RESET lock_timeout');
+    }
     const { applied, failures } = await applyMigrationFiles(client, REPO_ROOT, C2C_MIGRATION_FILES, {
       log: (m) => log(`  ${m}`),
       error: (m) => errorLog(`  ${m}`),

@@ -9,7 +9,8 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { verifyJwtWithRotation } from '../utils/jwtVerify';
-import { isTokenRevoked } from '../services/token-revocation';
+import { isTokenRevoked, revokeToken, verifyLiveToken } from '../services/token-revocation';
+import { sessionEndCodeOf, sessionEndMessageOf, sessionInactivityReason } from '../services/session-inactivity';
 import { nonAccessTokenReason, requireAccessTokenReason } from './tokenType';
 import { enforceOrgMembership, invalidateOrgMembershipCache, parseFiniteInt } from './orgMembership';
 import {
@@ -59,6 +60,10 @@ interface JWTPayload {
   mfaPending?: boolean;
   /** Issued-at, whole seconds; jsonwebtoken stamps it on every token it signs. */
   iat?: number;
+  /** The session's id, start and idle window (services/session-inactivity.ts). */
+  sid?: string;
+  sst?: number;
+  idl?: number;
   /**
    * Which authentication surface issued the token: 'saml' on a federated
    * sign-in (routes/sso.ts); absent on a password session. Carried onto
@@ -190,8 +195,9 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
     Promise.all([
       isTokenRevoked(token),
       accountId === null ? Promise.resolve<AccountStanding | null>(null) : readAccountStandingBeforeTenant(accountId),
+      sessionInactivityReason(token, decoded),
     ]).then(
-      ([revoked, standing]) => {
+      ([revoked, standing, inactivity]) => {
         if (revoked) {
           res.status(401).json({ error: { code: 'SESSION_ENDED', message: 'This session has ended. Sign in again.' } });
           return;
@@ -202,6 +208,16 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
         }
         if (standing && sessionPredatesPasswordChange(issuedAtOfClaims(decoded), standing.passwordChangedAtSeconds)) {
           res.status(401).json({ error: { code: 'SESSION_ENDED', message: 'This session has ended. Sign in again.' } });
+          return;
+        }
+        // Security audit 2026-09-24, IAM-06 (P1-1): a session idle past its
+        // window, or older than its lifetime, is over. This request was
+        // measured against the session's last recorded activity and, when
+        // admitted, recorded as it (services/session-inactivity.ts). The token
+        // is revoked so every other authenticator answers the same way.
+        if (inactivity) {
+          void revokeToken(token, inactivity);
+          res.status(401).json({ error: { code: sessionEndCodeOf(inactivity), message: sessionEndMessageOf(inactivity) } });
           return;
         }
         admitLiveSession(req, res, next, decoded, subject);
@@ -572,21 +588,22 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
   if (nonAccessTokenReason(decoded) || subject === undefined || subject === null || subject === '' || subject === 0) {
     return next();
   }
-  // Nor from a signed-out session (AUTH-03). If the check itself fails, the
+  // Nor from a session that is over: signed out (AUTH-03), the account
+  // inactive, the password changed since (IAM-04), idle past its window,
+  // past its lifetime or superseded (IAM-06) — the same verification the
+  // other authenticators apply, in one call. If the check itself fails, the
   // request continues unauthenticated rather than as the token's user.
-  isTokenRevoked(token).then(
-    (revoked) => {
-      if (!revoked) {
-        req.user = {
-          id: subject,
-          userId: subject,
-          email: decoded.email,
-          role: decoded.role || 'user',
-          roles: expandRoleClaims(decoded.role, decoded.roles),
-          organizationId: decoded.organizationId || decoded.orgId,
-          permissions: decoded.permissions || [],
-        };
-      }
+  verifyLiveToken(token).then(
+    () => {
+      req.user = {
+        id: subject,
+        userId: subject,
+        email: decoded.email,
+        role: decoded.role || 'user',
+        roles: expandRoleClaims(decoded.role, decoded.roles),
+        organizationId: decoded.organizationId || decoded.orgId,
+        permissions: decoded.permissions || [],
+      };
       next();
     },
     () => next(),

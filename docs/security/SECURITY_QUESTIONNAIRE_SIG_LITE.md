@@ -77,7 +77,7 @@ running infrastructure say so.
 | G.1 | Backups and restore testing? | RDS automated backups (terraform); restore drill script and CI proof workflow; not yet timed on production. | Partial | `scripts/ops/dr-restore-drill.sh`; `.github/workflows/database-dr-restore-proof.yml` |
 | G.2 | RTO/RPO? | Targets: RPO ≤5 min, RTO ≤4 h; not yet measured. | Planned | `POLICY-BR-005` |
 | G.3 | Incident response plan? | Written (DRAFT); no tabletop; no incidents to date. | Partial | `POLICY-IR-004` |
-| G.4 | Breach notification? | 72 hours to affected tenants is the intended commitment; the DPA draft still says 48 hours and neither document yet states the regulator timelines (HIPAA §164.410, GDPR Art. 33, APPI Art. 26). To be reconciled before contracting (INF-07, `docs/security/SECURITY_AUDIT_2026-09-24.md`). | Planned | `docs/commercial/` |
+| G.4 | Breach notification? | Affected tenants are notified without undue delay and within 72 hours of awareness, with the content GDPR Art. 33(3) lists; POLICY-IR-004 §3a is the matrix of the clocks that follow (HIPAA §164.410 to the covered entity, GDPR Arts. 33–34, APPI Art. 26 to the PPC, NIS2 Art. 23) and who owes each. The DPA draft still brackets 48 hours; counsel aligns it to 72 before contracting (INF-07). No incident has been recorded (`docs/security/INCIDENT_LOG.md`). | Partial | `docs/security/policies/POLICY-IR-004-incident-response.md` §3a |
 | G.5 | Monitoring? | Boot security self-test; readiness probe; CloudTrail in terraform; no GuardDuty/WAF. | Partial | `server/services/securityHealth.ts`; `server/startup/inline-endpoints.ts` |
 
 ## H. AI and model governance

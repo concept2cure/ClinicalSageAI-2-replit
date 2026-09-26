@@ -23,7 +23,7 @@
  * UNAUTHORIZED_ACCESS events) and BEFORE any route registration.
  */
 
-import type { Express, NextFunction, Request, Response } from 'express';
+import type { Express, NextFunction, Request, RequestHandler, Response } from 'express';
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import { betaFlowTelemetryMiddleware } from '../middleware/betaFlowTelemetry';
@@ -91,10 +91,13 @@ export function applyCoreMiddleware(app: Express, debugLog: DebugLogger): void {
    */
   app.use('/api/billing/webhooks', express.raw({ type: 'application/json' }));
 
-  // 6. Body parsers. Concept2Cure routes get 50MB for base64 document bodies.
-  app.use('/api/concept2cure', express.json({ limit: '50mb' }));
-  app.use('/api', express.json({ limit: '2mb' }));
-  app.use('/api', express.urlencoded({ extended: true, limit: '2mb' }));
+  // 6. Body parsers, before the auth boundary: 2 MB for /api. Concept2Cure
+  //    bodies are not read here at all — their 50 MB parser mounts after the
+  //    boundary (mountConcept2cureBodyParser, from applyAuthBoundary). It used
+  //    to mount here, so an anonymous request could make the process read and
+  //    parse fifty megabytes before being refused (security audit 2026-09-24,
+  //    IAM-18 item 7).
+  mountPreAuthBodyParsers(app);
 
   // 6b. Prototype-pollution scrub. MUST run after the body parsers —
   //     Express does not populate req.body until express.json /
@@ -155,9 +158,41 @@ export function applyAuthBoundary(app: Express): void {
   // before the boundary, so it never saw a session and never refused or
   // audited anything (security audit 2026-09-24, IAM-18 item 4).
   app.use('/api', validateTenantContext);
+  // Only a session that passed the boundary gets fifty megabytes read for it.
+  mountConcept2cureBodyParser(app);
   createScopedLogger('startup:auth-boundary').info('Default-deny auth boundary mounted on /api', {
     modeAtBoot: resolveAuthBoundaryMode(),
   });
+}
+
+/** The largest body a signed-in Concept2Cure request may carry (base64 document bodies). */
+export const CONCEPT2CURE_BODY_LIMIT = '50mb';
+
+/**
+ * The parsers that run before the auth boundary: 2 MB JSON and urlencoded for
+ * /api, skipping /api/concept2cure, whose bodies are read only after the
+ * boundary (mountConcept2cureBodyParser). Anonymous traffic to Concept2Cure
+ * routes is therefore refused with its body unread.
+ */
+export function mountPreAuthBodyParsers(app: Express): void {
+  const unlessConcept2cure =
+    (parser: RequestHandler): RequestHandler =>
+    (req, res, next) =>
+      isConcept2cureApiRoute(req) ? next() : parser(req, res, next);
+  app.use('/api', unlessConcept2cure(express.json({ limit: '2mb' })));
+  app.use('/api', unlessConcept2cure(express.urlencoded({ extended: true, limit: '2mb' })));
+}
+
+/**
+ * The Concept2Cure body parser, mounted by applyAuthBoundary after the boundary
+ * so only a session that passed it gets a large body read. The prototype-
+ * pollution scrub follows the parser, as it does for the rest of /api (step 6b
+ * of applyCoreMiddleware ran before this body existed).
+ */
+export function mountConcept2cureBodyParser(app: Express): void {
+  app.use('/api/concept2cure', express.json({ limit: CONCEPT2CURE_BODY_LIMIT }));
+  app.use('/api/concept2cure', express.urlencoded({ extended: true, limit: '2mb' }));
+  app.use('/api/concept2cure', sanitizeInput);
 }
 
 // Append-only trails protected by the 21 CFR Part 11 immutability policy. A

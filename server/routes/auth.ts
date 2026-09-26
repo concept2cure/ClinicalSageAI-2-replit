@@ -17,16 +17,37 @@ import { createScopedLogger } from '../utils/logger.js';
 import { serverError } from '../lib/api-response';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { verifyLiveToken } from '../services/token-revocation';
+import {
+  ABSOLUTE_SESSION_HOURS,
+  continuedSessionClaims,
+  idleWindowSecondsOfClaims,
+  openSession,
+  refreshInactivityReason,
+  sessionEndCodeOf,
+  sessionEndMessageOf,
+  sessionStartSecondsOf,
+  unregisterSession,
+} from '../services/session-inactivity';
 import { requireAccessTokenReason } from '../middleware/tokenType';
 import { recordAuthEvent } from '../services/audit/auth-event-audit';
 import {
   ACCOUNT_INACTIVE_MESSAGE,
+  ACCOUNT_STATUS_ACTIVE,
+  ACCOUNT_STATUS_PENDING_VERIFICATION,
   isAccountActive,
   isActiveAccountStatus,
+  isPendingVerificationStatus,
   issuedAtOfClaims,
   passwordChangedAtSecondsOf,
   sessionPredatesPasswordChange,
 } from '../services/account-standing';
+import {
+  EMAIL_UNVERIFIED_MESSAGE,
+  VERIFICATION_LINK_INVALID_MESSAGE,
+  emailVerificationUrl,
+  mintEmailVerificationToken,
+  readEmailVerificationToken,
+} from '../services/email-verification';
 import {
   PASSWORD_RESET_TTL_MS,
   hashPasswordSetupToken,
@@ -53,7 +74,7 @@ import {
   primaryIndustryForIndustryMode,
   pathwaysForUseCases,
 } from '../services/industry-context/signup-profile';
-import { sendPasswordResetEmail, sendLoginOtpEmail } from '../services/emailService';
+import { isEmailConfigured, sendPasswordResetEmail, sendLoginOtpEmail, sendVerificationEmail, sendWelcomeEmail } from '../services/emailService';
 import * as mfaService from '../services/mfaService';
 import { mfaEnrolmentOf, sessionMfaFields } from '../services/mfa-enrolment';
 import * as emailOtpService from '../services/emailOtpService';
@@ -114,6 +135,18 @@ const signupLimiter = rateLimit({
   message: {
     success: false,
     error: { code: 'RATE_LIMIT', message: 'Too many signup attempts. Please try again later.' },
+  },
+});
+
+/** Sign-up verification (verify, resend): 10 per hour per IP */
+const verificationLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: { code: 'RATE_LIMIT', message: 'Too many attempts. Please try again later.' },
   },
 });
 
@@ -228,6 +261,10 @@ router.get('/session', async (req: Request, res: Response) => {
       type?: string;
       role?: string | null;
       mfaPending?: boolean;
+      iat?: number;
+      sid?: string;
+      sst?: number;
+      idl?: number;
     };
 
     // SECURITY: a pre-MFA (mfaPending / mfa_challenge) or refresh token is not an
@@ -300,6 +337,7 @@ router.get('/session', async (req: Request, res: Response) => {
       }
     }
 
+    const sessionStartedAt = new Date((sessionStartSecondsOf(decoded) ?? Math.floor(Date.now() / 1000)) * 1000);
     res.json({
       authenticated: true,
       user: {
@@ -317,11 +355,15 @@ router.get('/session', async (req: Request, res: Response) => {
         ...sessionMfaFields(userData),
         mustChangePassword: userData.mustChangePassword === true,
       },
+      // The session as its token states it (P1-1): id, start, the end of its
+      // lifetime, and the idle window the client's own timer mirrors.
       session: {
-        id: `session-${userData.id}`,
-        createdAt: new Date(),
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        id: decoded.sid ?? `session-${userData.id}`,
+        createdAt: sessionStartedAt,
+        expiresAt: new Date(sessionStartedAt.getTime() + ABSOLUTE_SESSION_HOURS * 60 * 60 * 1000),
         lastActivityAt: new Date(),
+        idleMinutes: idleWindowSecondsOfClaims(decoded) / 60,
+        lifetimeHours: ABSOLUTE_SESSION_HOURS,
       },
       tokenExpiry: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     });
@@ -466,6 +508,27 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       });
     }
 
+    // A signed-up account whose address is not yet confirmed signs in to
+    // nothing either (security audit 2026-09-24, IAM-17): the holder is told to
+    // open the link, after the password, so nobody else learns the account
+    // exists.
+    if (isPendingVerificationStatus(userData.status)) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId: userData.id,
+        tenantId: userData.defaultOrganizationId,
+        email: userData.email,
+        outcome: 'failure',
+        reason: 'email_unverified',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(403).json({
+        success: false,
+        error: { code: 'AUTH_EMAIL_UNVERIFIED', message: EMAIL_UNVERIFIED_MESSAGE },
+      });
+    }
+
     // An account taken out of use (suspended by an administrator, deprovisioned
     // by the identity provider) signs in to nothing (VSR-001 F-29). Checked
     // after the password, so only whoever holds it learns the account's state;
@@ -531,7 +594,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     }
 
     const [organization] = await db
-      .select({ id: organizations.id, name: organizations.name, uuid: organizations.uuid })
+      .select({ id: organizations.id, name: organizations.name, uuid: organizations.uuid, settings: organizations.settings })
       .from(organizations)
       .where(eq(organizations.id, organizationId))
       .limit(1);
@@ -561,6 +624,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     // NODE_ENV=development AND ALLOW_DEV_AUTH=1. Staging, beta, e2e, and
     // production never satisfy this.
     if (isDevAuthAllowed()) {
+      const session = await openSession(userData.id, organization?.settings);
       const accessToken = jwt.sign(
         {
           userId: userData.id.toString(),
@@ -569,12 +633,13 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
           organizationUuid: organization?.uuid || null,
           role: jwtRole,
           type: 'access',
+          ...session,
         },
         config.jwt.secret,
         { expiresIn: JWT_EXPIRES_IN }
       );
       const refreshToken = jwt.sign(
-        { userId: userData.id.toString(), email: userData.email, type: 'refresh' },
+        { userId: userData.id.toString(), email: userData.email, type: 'refresh', ...session },
         getRefreshTokenSecret(),
         { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
       );
@@ -741,7 +806,7 @@ router.post('/dev-login', async (req: Request, res: Response) => {
     }
 
     const [organization] = await db
-      .select({ id: organizations.id, name: organizations.name, uuid: organizations.uuid })
+      .select({ id: organizations.id, name: organizations.name, uuid: organizations.uuid, settings: organizations.settings })
       .from(organizations)
       .where(eq(organizations.id, organizationId))
       .limit(1);
@@ -758,6 +823,9 @@ router.post('/dev-login', async (req: Request, res: Response) => {
         ? ['admin', 'user']
         : [jwtRole, 'user'].filter((v, i, a) => a.indexOf(v) === i);
 
+    // The session's id, start and idle window, into both tokens; registered
+    // against the account's concurrent-session limit (P1-1).
+    const session = await openSession(userData.id, organization?.settings);
     const accessToken = jwt.sign(
       {
         userId: userData.id.toString(),
@@ -766,13 +834,14 @@ router.post('/dev-login', async (req: Request, res: Response) => {
         organizationUuid: organization?.uuid || null,
         role: jwtRole,
         type: 'access',
+        ...session,
       },
       config.jwt.secret,
       { expiresIn: JWT_EXPIRES_IN }
     );
 
     const refreshToken = jwt.sign(
-      { userId: userData.id.toString(), email: userData.email, type: 'refresh' },
+      { userId: userData.id.toString(), email: userData.email, type: 'refresh', ...session },
       getRefreshTokenSecret(),
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
@@ -835,8 +904,13 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
     } = parsed.data;
     const email = parsed.data.email.trim().toLowerCase();
 
-    // Enforce enterprise password policy (NIST 800-63B)
-    const policyResult = validatePasswordPolicy(password);
+    // Enforce enterprise password policy (NIST 800-63B), against what the
+    // account will be: this address, this name, this organisation.
+    const policyResult = validatePasswordPolicy(password, {
+      email,
+      name: [firstName, lastName].filter(Boolean).join(' '),
+      organizationName: companyName,
+    });
     if (!policyResult.valid) {
       return res.status(400).json({
         success: false,
@@ -849,6 +923,36 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
     }
 
     if (!requireDb(res)) return;
+
+    // Security audit 2026-09-24, IAM-17: the account cannot act until its
+    // address is confirmed by the link mailed to it (services/email-verification.ts).
+    // Only a development server with dev auth allowed skips that. A deployment
+    // that cannot mail the link, or has no public origin to build it on,
+    // refuses the sign-up rather than create an account nobody can activate;
+    // resolved before the address lookup, so the refusal is the same for every
+    // address.
+    const verificationRequired = !isDevAuthAllowed();
+    let verifyBaseUrl = '';
+    if (verificationRequired) {
+      if (!isEmailConfigured()) {
+        logger.error('Sign-up refused: e-mail is not configured, so the verification link cannot be sent');
+        return res.status(503).json({
+          success: false,
+          error: { code: 'AUTH_SIGNUP_UNAVAILABLE', message: 'Sign-up is not available right now. Try again later.' },
+        });
+      }
+      try {
+        verifyBaseUrl = resolveAppBaseUrl(req);
+      } catch (err) {
+        if (!(err instanceof PublicOriginNotConfiguredError)) throw err;
+        logger.error('Sign-up refused: no public origin configured for the verification link', { err: err.message });
+        return res.status(503).json({
+          success: false,
+          error: { code: 'AUTH_SIGNUP_UNAVAILABLE', message: 'Sign-up is not available right now. Try again later.' },
+        });
+      }
+    }
+
     const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
     if (existing.length) {
       // SECURITY: Return generic message to prevent email enumeration
@@ -918,6 +1022,8 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
           passwordHash,
           name: fullName,
           defaultOrganizationId: org.id,
+          // Waits on the e-mail link (IAM-17); a development server skips it.
+          status: verificationRequired ? ACCOUNT_STATUS_PENDING_VERIFICATION : ACCOUNT_STATUS_ACTIVE,
         })
         .returning();
 
@@ -1005,33 +1111,8 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
       },
     );
 
-    const token = jwt.sign(
-      {
-        userId: result.user.id.toString(),
-        email: result.user.email,
-        organizationId: result.org.id.toString(),
-        organizationUuid: result.org.uuid,
-        role: 'admin',
-        type: 'access',
-      },
-      config.jwt.secret,
-      { expiresIn: JWT_EXPIRES_IN }
-    );
-
-    // Send welcome email (non-blocking — don't fail signup if email fails)
-    try {
-      const { sendWelcomeEmail } = await import('../services/emailService.js');
-      const userName = [firstName, lastName].filter(Boolean).join(' ') || email.split('@')[0];
-      sendWelcomeEmail(email, userName).catch(err =>
-        logger.error('Welcome email failed (non-blocking)', { err: err?.message ?? String(err) })
-      );
-    } catch {
-      // Email service not available — continue
-    }
-
-    return res.status(201).json({
-      success: true,
-      token,
+    const userName = [firstName, lastName].filter(Boolean).join(' ') || email.split('@')[0];
+    const created = {
       organization: {
         id: result.org.id,
         name: result.org.name,
@@ -1043,7 +1124,58 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
         email: result.user.email,
         name: result.user.name,
       },
+    };
+
+    if (verificationRequired) {
+      // The account waits on its link; no session is handed out here. The
+      // mail is not awaited: the account exists whether or not the first
+      // attempt delivers, and POST /resend-verification sends it again.
+      const verifyUrl = emailVerificationUrl(verifyBaseUrl, mintEmailVerificationToken(result.user.id, email));
+      sendVerificationEmail(email, firstName || userName, verifyUrl).catch(err =>
+        logger.error('Sign-up verification email failed', { err: err instanceof Error ? err.message : String(err) })
+      );
+      await recordAuthEvent({
+        action: 'user_signup',
+        userId: result.user.id,
+        tenantId: result.org.id,
+        email,
+        outcome: 'success',
+        reason: 'verification_sent',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(201).json({ success: true, verification: { required: true, email }, ...created });
+    }
+
+    const signupSession = await openSession(result.user.id);
+    const token = jwt.sign(
+      {
+        userId: result.user.id.toString(),
+        email: result.user.email,
+        organizationId: result.org.id.toString(),
+        organizationUuid: result.org.uuid,
+        role: 'admin',
+        type: 'access',
+        ...signupSession,
+      },
+      config.jwt.secret,
+      { expiresIn: JWT_EXPIRES_IN }
+    );
+    sendWelcomeEmail(email, userName).catch(err =>
+      logger.error('Welcome email failed (non-blocking)', { err: err instanceof Error ? err.message : String(err) })
+    );
+    await recordAuthEvent({
+      action: 'user_signup',
+      userId: result.user.id,
+      tenantId: result.org.id,
+      email,
+      outcome: 'success',
+      reason: 'dev_no_verification',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
     });
+
+    return res.status(201).json({ success: true, token, verification: { required: false }, ...created });
   } catch (error: any) {
     logger.error('Signup error', { err: error?.message ?? String(error) });
     return res.status(500).json({
@@ -1063,6 +1195,91 @@ export function isTokenBlacklisted(token: string): boolean {
   const { isTokenRevokedSync } = require('../services/token-revocation');
   return isTokenRevokedSync(token);
 }
+
+/**
+ * POST /api/auth/verify-email  { token }
+ *
+ * The sign-up link's landing (security audit 2026-09-24, IAM-17). The token
+ * names the account and the address it was created with; the account moves
+ * from `pending_verification` to `active`, and only from there, so a link used
+ * twice does nothing the second time and a suspended account is not revived.
+ * The welcome mail goes out now, not at sign-up. No session is minted: the
+ * link proves the address, the password and second factor prove the person.
+ */
+router.post('/verify-email', verificationLimiter, async (req: Request, res: Response) => {
+  try {
+    const subject = readEmailVerificationToken(req.body?.token);
+    if (!subject) {
+      return res.status(400).json({ success: false, error: { code: 'AUTH_VERIFY_INVALID', message: VERIFICATION_LINK_INVALID_MESSAGE } });
+    }
+    if (!requireDb(res)) return;
+    const activated = await db
+      .update(users)
+      .set({ status: ACCOUNT_STATUS_ACTIVE })
+      .where(and(eq(users.id, subject.userId), eq(users.email, subject.email), eq(users.status, ACCOUNT_STATUS_PENDING_VERIFICATION)))
+      .returning({ id: users.id, name: users.name, defaultOrganizationId: users.defaultOrganizationId });
+    if (activated.length === 0) {
+      // Already confirmed: the same answer, nothing written. Anything else
+      // (no such account, another status) is the one refusal.
+      const [current] = await db.select({ status: users.status }).from(users).where(and(eq(users.id, subject.userId), eq(users.email, subject.email))).limit(1);
+      if (current && isActiveAccountStatus(current.status)) {
+        return res.json({ success: true, alreadyVerified: true });
+      }
+      return res.status(400).json({ success: false, error: { code: 'AUTH_VERIFY_INVALID', message: VERIFICATION_LINK_INVALID_MESSAGE } });
+    }
+    const [account] = activated;
+    await recordAuthEvent({
+      action: 'email_verified',
+      userId: account.id,
+      tenantId: account.defaultOrganizationId,
+      email: subject.email,
+      outcome: 'success',
+      reason: 'link',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+    sendWelcomeEmail(subject.email, account.name || subject.email.split('@')[0]).catch(err =>
+      logger.error('Welcome email failed (non-blocking)', { err: err instanceof Error ? err.message : String(err) })
+    );
+    return res.json({ success: true });
+  } catch (error) {
+    logger.error('E-mail verification failed', { err: error instanceof Error ? error.message : String(error) });
+    return res.status(500).json({ success: false, error: { code: 'AUTH_010', message: 'Internal server error' } });
+  }
+});
+
+/**
+ * POST /api/auth/resend-verification  { email }
+ *
+ * Sends the sign-up link again to an account that is still waiting on it.
+ * Answers 202 whatever the address names (no account, an active one, a
+ * pending one), so it tells nobody which addresses are registered; the
+ * origin is resolved first for the same reason.
+ */
+router.post('/resend-verification', verificationLimiter, async (req: Request, res: Response) => {
+  const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  if (!email || email.length > 320) {
+    return res.status(400).json({ success: false, error: { code: 'AUTH_001', message: 'Email is required' } });
+  }
+  if (!requireDb(res)) return;
+  try {
+    const baseUrl = resolveAppBaseUrl(req);
+    const [account] = await db
+      .select({ id: users.id, name: users.name, status: users.status })
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+    if (account && isPendingVerificationStatus(account.status) && isEmailConfigured()) {
+      const verifyUrl = emailVerificationUrl(baseUrl, mintEmailVerificationToken(account.id, email));
+      sendVerificationEmail(email, account.name || email.split('@')[0], verifyUrl).catch(err =>
+        logger.error('Sign-up verification email failed', { err: err instanceof Error ? err.message : String(err) })
+      );
+    }
+  } catch (err) {
+    logger.error('Resend of the sign-up verification link failed', { err: err instanceof Error ? err.message : String(err) });
+  }
+  return res.status(202).json({ success: true });
+});
 
 /**
  * POST /api/auth/logout
@@ -1091,6 +1308,8 @@ router.post('/logout', async (req: Request, res: Response) => {
         auditUserId = (verified?.userId as string) ?? (verified?.sub as string);
         auditOrgId = verified?.organizationId as string | undefined;
         auditEmail = verified?.email as string | undefined;
+        // The session's slot under the account's concurrent-session limit is free again (P1-1).
+        await unregisterSession(auditUserId, verified?.sid);
       } catch {
         /* not a token this server signed: record an anonymous logout */
       }
@@ -1159,6 +1378,9 @@ router.post('/refresh', async (req: Request, res: Response) => {
       email: string;
       type: string;
       iat?: number;
+      sid?: string;
+      sst?: number;
+      idl?: number;
     };
 
     if (decoded.type !== 'refresh') {
@@ -1210,6 +1432,21 @@ router.post('/refresh', async (req: Request, res: Response) => {
         error: { code: 'AUTH_006', message: 'This session has ended. Sign in again.' },
       });
     }
+    // Security audit 2026-09-24, IAM-06 (P1-1): a refresh is not activity. A
+    // session idle past its window, or older than its lifetime, mints nothing
+    // here either; without this the client's answer to the gate's refusal
+    // would have been a refresh, and the idle session would have carried on.
+    const inactivity = await refreshInactivityReason(decoded);
+    if (inactivity) {
+      const { revokeToken: revokeEndedRefresh } = await import('../services/token-revocation.js');
+      await revokeEndedRefresh(refreshToken, inactivity);
+      return res.status(401).json({
+        success: false,
+        error: { code: sessionEndCodeOf(inactivity), message: sessionEndMessageOf(inactivity) },
+      });
+    }
+    // The session continues: its id, start and window travel into the new pair.
+    const session = continuedSessionClaims(decoded);
     const refreshMemberships = await db
       .select({ organizationId: organizationUsers.organizationId, role: organizationUsers.role })
       .from(organizationUsers)
@@ -1246,13 +1483,14 @@ router.post('/refresh', async (req: Request, res: Response) => {
         organizationId: refreshOrgId.toString(),
         role: refreshMembershipRole.role,
         type: 'access',
+        ...session,
       },
       config.jwt.secret,
       { expiresIn: JWT_EXPIRES_IN }
     );
 
     const newRefreshToken = jwt.sign(
-      { userId: decoded.userId, email: decoded.email, type: 'refresh' },
+      { userId: decoded.userId, email: decoded.email, type: 'refresh', ...session },
       getRefreshTokenSecret(),
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
@@ -1515,6 +1753,12 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
       });
     }
 
+    // The session's idle window is the organisation's setting, fixed now (P1-1).
+    const sessionOrgId = parseInt(String(challenge.organizationId ?? ''), 10);
+    const [sessionOrg] = Number.isFinite(sessionOrgId)
+      ? await db.select({ settings: organizations.settings }).from(organizations).where(eq(organizations.id, sessionOrgId)).limit(1)
+      : [];
+    const session = await openSession(challenge.userId, sessionOrg?.settings);
     const accessToken = jwt.sign(
       {
         userId: challenge.userId,
@@ -1523,13 +1767,14 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
         organizationUuid: challenge.organizationUuid,
         role: challenge.role,
         type: 'access',
+        ...session,
       },
       config.jwt.secret,
       { expiresIn: JWT_EXPIRES_IN }
     );
 
     const refreshToken = jwt.sign(
-      { userId: challenge.userId, email: challenge.email, type: 'refresh' },
+      { userId: challenge.userId, email: challenge.email, type: 'refresh', ...session },
       getRefreshTokenSecret(),
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
@@ -2059,19 +2304,6 @@ async function handleResetPassword(req: Request, res: Response) {
       });
     }
 
-    // Enforce enterprise password policy (NIST 800-63B)
-    const resetPolicyResult = validatePasswordPolicy(newPassword);
-    if (!resetPolicyResult.valid) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'AUTH_001',
-          message: resetPolicyResult.errors[0],
-          details: { errors: resetPolicyResult.errors },
-        },
-      });
-    }
-
     if (!requireDb(res)) return;
 
     // Hash the incoming token to compare against stored hash
@@ -2080,6 +2312,8 @@ async function handleResetPassword(req: Request, res: Response) {
     const user = await db
       .select({
         id: users.id,
+        email: users.email,
+        name: users.name,
         resetToken: users.resetToken,
         resetTokenExpiresAt: users.resetTokenExpiresAt,
       })
@@ -2131,6 +2365,21 @@ async function handleResetPassword(req: Request, res: Response) {
     }
 
     // Hash new password and clear reset token
+    // Enforce enterprise password policy (NIST 800-63B), against the account
+    // the token names, once the token has proved it: a bad token is refused
+    // before a bad password is discussed.
+    const resetPolicyResult = validatePasswordPolicy(newPassword, { email: userData.email, name: userData.name });
+    if (!resetPolicyResult.valid) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'AUTH_001',
+          message: resetPolicyResult.errors[0],
+          details: { errors: resetPolicyResult.errors },
+        },
+      });
+    }
+
     const passwordHash = await bcrypt.hash(newPassword, 12);
 
     // Set the password only if the token is STILL this account's and unexpired,
@@ -2261,7 +2510,7 @@ router.post('/password/change', async (req: Request, res: Response) => {
     }
 
     // Enforce enterprise password policy
-    const changePolicyResult = validatePasswordPolicy(newPassword);
+    const changePolicyResult = validatePasswordPolicy(newPassword, { email: decoded.email });
     if (!changePolicyResult.valid) {
       return res.status(400).json({
         success: false,
@@ -2344,7 +2593,19 @@ router.post('/password/change', async (req: Request, res: Response) => {
       })
       .where(eq(users.id, userData.id));
 
-    logger.info('Password changed', { userId: userData.id });
+    // The credential-changing event, in the account's tenant (21 CFR Part 11
+    // §11.10(e); security audit 2026-09-24, IAM-17): until 2026-09-26 this
+    // was a log line, while the reset path already wrote the event.
+    await recordAuthEvent({
+      action: 'user_password_changed',
+      userId: userData.id,
+      tenantId: userData.defaultOrganizationId,
+      email: userData.email,
+      outcome: 'success',
+      reason: 'changed by the account holder',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
 
     return res.json({
       success: true,

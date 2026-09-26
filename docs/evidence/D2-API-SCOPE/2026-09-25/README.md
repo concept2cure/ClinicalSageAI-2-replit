@@ -205,21 +205,23 @@ change stashed, 3 of 22 fail. These are the public paths, the `/api/user`
 alias, and a public exact path not widening to its namespace (`/api/cortex/health`
 passes, `/api/cortex/threads` does not). With it applied, 22 of 22 pass.
 
-**What this leaves: one decision.** With the inventory done, refusing the
-unclaimed remainder refuses only paths nothing legitimate calls. That is the
-production default this lane recommends (`LAUNCH_SCOPE_API_UNATTRIBUTED`
-unset → `enforce` in production, `report` as an explicit, logged override).
-The code change was held for the owner's explicit confirmation because it
-changes what production refuses. Until then the default stays `report`: every
-call to an unclaimed path is served, and recorded in Master Admin → Licensing
-→ Enforcement.
+**Decision (owner, 2026-09-26): production enforces.** An unset
+`LAUNCH_SCOPE_API_UNATTRIBUTED` now means `enforce` in production and `report`
+elsewhere (`readUnattributedApiMode`, services/entitlements/launch-scope.ts).
+`report` in production is an explicit deployment value, logged at boot. Every
+refusal is recorded in Master Admin → Licensing → Enforcement, so a wrongly
+refused caller shows up there, not as a silent failure. Red then green
+(`stage3-default-*`): the default test fails 1 of 23 on the old reader, and
+passes 23 of 23 after the change. The OQ-005 v0.6 run calls no unclaimed path.
+Its only refused paths are the five locked-board calls it already expects to
+get 403. The production boot smoke reads `/readyz`, outside `/api`.
 
 ## Not closed here
 
-- **Unmapped paths are reported, not refused, until `enforce` is set**, as
-  a deployment value or as the production default (stage 3 above; the
-  inventory that makes it safe is done). The legacy `/api/concept2cure/*`
-  namespace and the UI-less `/api/qms` are among them.
+- **The legacy `/api/concept2cure/projects` subtree stays open**, because
+  launch screens call it and prefixes cannot express `:id` (stage 2a). The rest
+  of `/api/concept2cure`, `/api/qms`, `/api/demo` and every other unclaimed
+  namespace is refused in production from stage 3.
 - **Two lists of public paths.** `register-platform-routes.ts` keeps its own
   `openPrefixes` beside `PUBLIC_API_ALLOWLIST`. They name the same paths today
   (the boundary list matches some exactly, the other only by prefix). The

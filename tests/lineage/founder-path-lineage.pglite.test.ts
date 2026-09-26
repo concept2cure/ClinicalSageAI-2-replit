@@ -62,7 +62,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { assertNoSchemaGaps, assertNoDegradedTenantEnrichment } from '../golden-journeys/harness';
 import { T, buildWorld, baselineProblems, type World } from './founder-path-lineage.world';
 import { hopProject, hopCapture, hopAnaDraft, hopEditSave, hopSeal, hopFileToVault } from './founder-path-lineage.hops-authoring';
-import { hopPlace, hopTransmit, walkBack, walkForward } from './founder-path-lineage.hops-filing';
+import { hopPlace, hopTransmit, walkBack, walkForward, hopRetention } from './founder-path-lineage.hops-filing';
 
 const h = vi.hoisted(() => ({
   db: null as unknown,
@@ -190,6 +190,8 @@ const MIGRATIONS = [
   'migrations/20260529_phase9_backfill.sql',
   'migrations/20260804_phase9_rule_pack_outlines.sql',
   'migrations/20260814_projects_regulatory_program_anchor.sql',
+  'migrations/20260925b_submissions_program_anchor.sql',
+  'db/migrations/20260727_prm_program_link.sql',
   // The Data Room: the evidence spine and the upload ledger.
   'db/migrations/20260724_clinical_regulatory_evidence_spine.sql',
   'migrations/20260726_cre_source_program_scope.sql',
@@ -245,6 +247,7 @@ describe('LX-00 — the founder path: project → Data Room → AnA → editor �
   it('hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)', () => hopTransmit(world), T);
   it('walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project', () => walkBack(world), T);
   it('walk forward · from the project and from the source to the transmittal', () => walkForward(world), T);
+  it('retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted', () => hopRetention(world), T);
 
   it('the database the walk ran on held every table and column the code asked for', async () => {
     await assertNoDegradedTenantEnrichment();

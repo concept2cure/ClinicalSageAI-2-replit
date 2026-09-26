@@ -32,6 +32,7 @@ import { sha256Hex } from '../../services/ana/uploaded-file-access';
 // unlike the evidence spine below, which is imported lazily so a database
 // without the cre_* tables cannot break the route's module graph.
 import { determineSourceVersion } from '../../services/clinical-regulatory-evidence/source-version.js';
+import { programInOrganization } from '../../services/c2c/program-access.js';
 
 const logger = createScopedLogger('chat-upload');
 
@@ -154,6 +155,21 @@ export const uploadHandler = async (req: Request, res: Response) => {
       }
     }
 
+    // Which project id-space this upload arrived with, resolved once and used
+    // by the ownership check here, the governed-artifact block and the source
+    // identity below.
+    const projectScope = resolveProjectScope(projectId);
+
+    // PROJECT FIRST (PF-02, LX-20). A Data Room file is anchored to a live
+    // project of the uploader's organization, or it is not captured. The id
+    // was checked for UUID shape only, so a file could be anchored to another
+    // organization's project, or to one that does not exist or was deleted.
+    // Refused before the bytes are stored or any row is written; 404, not 403,
+    // so nothing is learned about another tenant's ids.
+    if (projectScope.programId != null && !(await programInOrganization(pool, projectScope.programId, Number(orgId)))) {
+      return res.status(404).json({ error: 'Project not found', code: 'PROJECT_NOT_FOUND' });
+    }
+
     // SECURITY: tenant-scoped storage path. The legacy `uploads/${fileId}`
     // flat layout meant any process that read by file id alone could
     // retrieve another tenant's file — and the file id, while
@@ -236,10 +252,6 @@ export const uploadHandler = async (req: Request, res: Response) => {
         logger.warn('Upload text extraction failed (non-fatal)', { err: extractErr?.message, fileId });
       }
     }
-
-    // Which project id-space this upload arrived with, resolved once and used
-    // by both the governed-artifact block and the source identity below.
-    const projectScope = resolveProjectScope(projectId);
 
     // ── Data Room convergence: create artifact + embed for retrieval ──
     //

@@ -1,0 +1,6 @@
+ FAIL  server/services/__tests__/password-blocklist.test.ts [ server/services/__tests__/password-blocklist.test.ts ]
+Error: Cannot find module '../password-blocklist' imported from /home/user/ClinicalSageAI-2-replit/server/services/__tests__/password-blocklist.test.ts
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+ Test Files  1 failed (1)
+      Tests  no tests
+exit=1

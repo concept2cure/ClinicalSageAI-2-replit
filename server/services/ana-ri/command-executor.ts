@@ -3091,17 +3091,25 @@ export async function generateSAP(
       reviewRequired: params.reviewRequired !== false,
     });
 
+    // The drafted SAP is stored by the workflow's create_artifact action. Its
+    // outcome decides what is reported (PF-14): this used to say "SAP generated
+    // … Document prepared" with the id of an in-memory draft, whether or not
+    // anything was stored.
+    const stored = result?.workflowActions?.find((a) => a.action === 'create_artifact');
+    const sampleSize = result?.computation?.sampleSize?.total;
+    if (!stored?.success || stored.artifactId == null) {
+      return {
+        success: false,
+        action: 'generate_sap',
+        data: { sampleSize, power: result?.computation?.power, documentId: null },
+        message: `The SAP was drafted but not stored${stored?.message ? `: ${stored.message}` : '.'} Sample size total: ${sampleSize ?? 'not computed'}.`,
+      };
+    }
     return {
       success: true,
       action: 'generate_sap',
-      data: {
-        sampleSize: result?.computation?.sampleSize?.total,
-        power: result?.computation?.power,
-        documentId: result?.document?.id || null,
-      },
-      message: `SAP generated. Sample size total: ${
-        result?.computation?.sampleSize?.total || 'calculated'
-      }. Document prepared.`,
+      data: { sampleSize, power: result?.computation?.power, documentId: stored.artifactId },
+      message: `SAP stored as artifact ${stored.artifactId}. Sample size total: ${sampleSize ?? 'not computed'}.`,
     };
   } catch (err: unknown) {
     return {

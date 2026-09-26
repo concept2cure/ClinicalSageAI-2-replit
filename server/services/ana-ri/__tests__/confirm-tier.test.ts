@@ -66,6 +66,17 @@ describe('the three tiers', () => {
   });
 });
 
+describe('the approve class keeps a reason', () => {
+  it('section and post-market approvals are the reason tier, not a click', () => {
+    // Manager-tier writes whose only other gate is params.confirm — a string
+    // the model writes. They sit in neither Part 11 set; without this they fell
+    // to 'confirm' and ran on one click with no record of why.
+    for (const c of ['section.approve', 'post_market.document.approve', 'post_market.document.supersede']) {
+      expect(governedTierOf(c), c).toBe('reason');
+    }
+  });
+});
+
 describe('what the agent is told', () => {
   it('a confirm-tier proposal asks for a confirmation, not a reason or a signature', () => {
     const r = buildHumanConfirmationRequiredResult('create_task', { title: 'x' });

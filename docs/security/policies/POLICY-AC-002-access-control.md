@@ -34,11 +34,42 @@
 ## 4. Access reviews and offboarding
 | Control | Status | Evidence |
 |---|---|---|
-| Quarterly access review of tenant admins and platform operators | **Planned** — no review has been performed | — |
+| Quarterly access review of tenant admins and platform operators | **Partial** — the procedure is written (§4a); no review has been performed | §4a; records under `docs/evidence/D6/access-reviews/` |
 | Offboarding within one business day | **Planned** | — |
 | Privileged access to production (AWS console, database) limited to the founder, MFA-protected | **Planned** — no production account exists yet (row D1) | — |
+
+## 4a. Access-review procedure
+
+Run quarterly (first week of January, April, July, October) and after any change of platform operator. The reviewer
+is the founder until a second operator exists; then the two review each other's access. The record is one Markdown
+file per review at `docs/evidence/D6/access-reviews/<yyyy-mm-dd>.md`, with the lists as reviewed (copied in, not
+linked), the reviewer, the date, each decision and the change that carried it out.
+
+**Platform operators** — every identity that can reach production or the repository as an operator:
+
+1. AWS: IAM users, roles and their attached policies in the production account (`aws iam list-users`,
+   `list-roles`, `list-attached-*-policies`); the root account's MFA state. Expected: no IAM users with console
+   access other than the founder's, MFA on every human identity, the deploy roles of `terraform/modules/github-deploy-roles`
+   trusting only the repository's environments.
+2. GitHub: organisation members and outside collaborators with write to `concept2cure/ClinicalSageAI-2-replit`, and
+   the installed GitHub Apps' permissions. Expected: the founder and the agents the founder has authorised, nothing else.
+3. Platform roles in the product: `platform_role_grants` rows and `PLATFORM_ADMIN_EMAILS` in the task definition,
+   read through Master Administration (`/api/admin/master/*`). Expected: the founder alone until a second operator
+   is appointed in writing.
+4. Secrets: the age of every secret in Secrets Manager against `docs/SOP_KEY_MANAGEMENT.md`'s rotation periods.
+
+**Tenant administrators** — for each organisation, the memberships with role owner, admin or manager
+(`organization_users`), read through the admin console (`AdminAccess.tsx`, `GET /api/tenants/:id/users`) or Master
+Administration. The tenant's own owner confirms each; a membership nobody confirms is set to member, and an account
+whose person has left is suspended (POLICY-AC-002 §4 offboarding; `PATCH /api/admin/master/users/:id/status`).
+
+**Decisions and evidence.** Each line of the lists gets one of: keep, reduce (to what), remove (how, and the ledger
+entry that shows it). The review is complete when every line has a decision, every remove or reduce has landed, and
+the file names the audit-ledger entries of the changes (`GET /api/audit-trail/ledger`). A review that finds nothing
+to change still produces the file: the record is the control.
 
 ## Revision history
 | Version | Date | Author | Change |
 |---|---|---|---|
 | 0.1 DRAFT | 2026-09-20 | W3b session | First draft |
+| 0.2 DRAFT | 2026-09-26 | D6 session | §4a access-review procedure (operators: AWS, GitHub, platform roles, secrets; tenant administrators through the tenant's owner), quarterly, with the record format; the first review is the founder's (security audit 2026-09-24, INF-07 / plan P1-13). |

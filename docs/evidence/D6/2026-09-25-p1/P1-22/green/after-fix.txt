@@ -1,0 +1,73 @@
+# 2026-09-26T03:46:31Z — after the fix (working tree on ebf9266a)
+$ npx vitest run server/jobs/__tests__/retentionCron.legal-hold.test.ts server/jobs/__tests__/retentionCron.schedule.test.ts server/routes/__tests__/vault-legal-holds.test.ts server/services/vault/__tests__/vault-ingest-storage.test.ts
+  "level": "info",
+  "message": "[retention-sweep] Expired document left in place: legal hold",
+  "context": {
+    "documentId": "22222222-2222-2222-2222-222222222222",
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "retentionUntil": "2020-01-01",
+    "heldBy": "program"
+  }
+}
+ ✓ server/jobs/__tests__/retentionCron.schedule.test.ts > resolveRetentionSweepPosture > explicit false disables, explicit true enables, production defaults on, otherwise opt-in 2ms
+ ✓ server/jobs/__tests__/retentionCron.schedule.test.ts > startRetentionSchedule > schedules the nightly sweep in production with nothing else configured, at the default hour 2ms
+ ✓ server/jobs/__tests__/retentionCron.schedule.test.ts > startRetentionSchedule > honours RETENTION_SWEEP_CRON and an explicit opt-in outside production 2ms
+ ✓ server/jobs/__tests__/retentionCron.schedule.test.ts > startRetentionSchedule > does not schedule when explicitly disabled, even in production 1ms
+ ✓ server/jobs/__tests__/retentionCron.schedule.test.ts > startRetentionSchedule > does not schedule outside production without an opt-in 1ms
+stderr | server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > a deletion whose audit row cannot be written is rolled back and counted as an error
+{
+  "timestamp": "2026-09-26T03:46:32.942Z",
+  "level": "error",
+  "message": "[retention-sweep] Expired document not disposed of",
+  "context": {
+    "documentId": "22222222-2222-2222-2222-222222222222",
+    "error": "chain unavailable"
+  }
+}
+stderr | server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > a document with no organisation to chain the row under is left in place (nothing is committed unaudited)
+{
+  "timestamp": "2026-09-26T03:46:32.944Z",
+  "level": "error",
+  "message": "[retention-sweep] Expired document not disposed of",
+  "context": {
+    "documentId": "22222222-2222-2222-2222-222222222222",
+    "error": "no organisation for the document: the deletion cannot be audited, so it is not made"
+  }
+}
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold stops disposition > a DOCUMENT-scoped hold prevents the hard delete 4ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold stops disposition > a PROGRAM-scoped hold covers every document of that program 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold stops disposition > is checked before the policy resolves, so no archive is written either 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold that does not apply does not block > deletes when no hold exists — the guard is not a blanket stop 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold that does not apply does not block > deletes when the only hold covers a DIFFERENT program 0ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold that does not apply does not block > a LIFTED hold does not block — the query already excludes it 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > the sweep fails closed when holds cannot be read > aborts having deleted nothing, rather than proceeding as if none existed 2ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > hard delete: BEGIN, the organisation, the delete, the chained audit row, COMMIT — and the row names the document 2ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > archive then soft delete, in the same transaction, under the document's own organisation 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > a deletion whose audit row cannot be written is rolled back and counted as an error 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > a document with no organisation to chain the row under is left in place (nothing is committed unaudited) 1ms
+stderr | server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > rolls the hold back when its audit row cannot be written (500): a hold nobody can account for is not placed
+{
+  "timestamp": "2026-09-26T03:46:33.068Z",
+  "level": "error",
+  "message": "[vault-legal-holds] Legal hold could not be placed",
+  "context": {
+    "orgId": 7,
+    "error": "chain unavailable"
+  }
+}
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > a member may not (403), and nothing is written 26ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > owner places a program hold: one transaction, the hold, then its chained audit row, then COMMIT (201) 8ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > admin places a program hold: one transaction, the hold, then its chained audit row, then COMMIT (201) 4ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > manager places a program hold: one transaction, the hold, then its chained audit row, then COMMIT (201) 4ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > refuses a program the organisation does not own (404) and writes nothing 4ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > refuses a body that names no target or no reason (400) 10ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > rolls the hold back when its audit row cannot be written (500): a hold nobody can account for is not placed 6ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > lifting a hold > records who lifted it and why, with its chained audit row (200) 4ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > lifting a hold > needs a reason (400), and a hold that is not active in this organisation is 404 with nothing committed 7ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > lifting a hold > a member may not (403) 4ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > listing holds > lists the organisation's holds for the same roles, and refuses a member 6ms
+ Test Files  4 passed (4)
+      Tests  44 passed (44)
+   Start at  03:46:32
+   Duration  1.02s (transform 589ms, setup 262ms, import 1.38s, tests 163ms, environment 0ms)
+exit=0

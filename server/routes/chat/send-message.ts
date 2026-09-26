@@ -11,7 +11,7 @@
  */
 
 import type { Request, Response } from 'express';
-import { pool } from '../../db.js';
+import { getPool, pool } from '../../db.js';
 import { currentTenantOrgUuid } from '../../db/currentTenant.js';
 import {
   getOrCreateThread,
@@ -32,6 +32,8 @@ import { interceptChatResponse } from '../../services/intelligence/rim-intercept
 import { governedToolsetFor } from '../../services/ana/governed-toolset.js';
 import { selectToolsForTurn } from '../../services/ana/tool-selection.js';
 import { executeAgenticLoop } from '../../services/ana/AnaToolExecutor.js';
+import { loopToolCollector, recordLoopTurn } from '../../services/ana/turn-record-loop.js';
+import type { TurnRecordStatus } from '../../services/ana/turn-record.js';
 import { requestsGovernedDraft } from '../../services/ana/governed-write-tools.js';
 import { resolveMaxRounds } from '../../services/ana/agentic-loop.js';
 import {
@@ -431,6 +433,28 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     // offer-chips here too (this route never applies anything live).
     const collectedSurfaceActions: SurfaceActionDirective[] = [];
     const collectedDemoStarts: DemoStartDirective[] = [];
+    // The turn's retained record (services/ana/turn-record-loop.ts): the tool
+    // calls as the loop reports them, filed when the turn answers or fails.
+    const loopCalls = loopToolCollector();
+    let loopMessages: Array<{ role: string; content: unknown }> = [];
+    const fileTurn = (outcome: 'answered' | 'failed', response?: unknown, error?: unknown): Promise<TurnRecordStatus> =>
+      recordLoopTurn(
+        getPool(),
+        {
+          orgId: numericOrgId,
+          userId: numericUserId,
+          surface: 'api:chat/send-message',
+          projectId: project_id ?? null,
+          threadId,
+          typed: typeof message === 'string' ? message : String(message ?? ''),
+          messages: loopMessages,
+          calls: loopCalls.calls,
+          response: response as Parameters<typeof recordLoopTurn>[1]['response'],
+          outcome,
+          error,
+        },
+        { ipAddress: req.ip, userAgent: req.get('user-agent') ?? undefined },
+      );
 
     // ── STEP 6: GENERATE (no silent demo fallback) ─────────────────────
     const gw = ensureGateway();
@@ -792,6 +816,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       // Use agentic loop for multi-turn tool execution. This generic path has no
       // effort picker, so it runs at the default (Balanced) round ceiling — up
       // from the old flat 5 so a deeper investigation can run to completion.
+      loopMessages = baseRequest.messages as Array<{ role: string; content: unknown }>;
       const gwResponse: AnaGatewayResponse = await executeAgenticLoop(baseRequest, {
         maxRounds: resolveMaxRounds('balanced'),
         toolContext: {
@@ -808,6 +833,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           documentType: tool_context && typeof tool_context === 'object' ? ((tool_context as any).documentType ?? null) : null,
         },
         onToolExecution: (toolName, input, result) => {
+          loopCalls.onToolExecution(toolName, input, result);
           // A navigate_to that resolved against the governed registry becomes
           // an offer-chip in the response (same contract as the SSE path;
           // refusals yield null here and never become one).
@@ -899,9 +925,11 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         outcome: 'failed',
         errorMessage: gwError?.message || 'AI Gateway call failed',
       });
+      const turnRecord = await fileTurn('failed', undefined, gwError);
       return res.status(503).json({
         error: 'AI provider call failed',
         code: 'AI_PROVIDER_UNAVAILABLE',
+        turnRecord,
       });
     }
 
@@ -968,6 +996,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     // Save to legacy chat_messages for backward compat
     await saveMessage(threadId, 'user', message, model);
     await saveMessage(threadId, 'assistant', assistantMessage, model, usage.total_tokens);
+    const turnRecord = await fileTurn('answered', { content: assistantMessage, model, provider });
 
     // ── STEP 7: PERSIST GENERATION RUN (provenance chain) ──────────────
     let generationRunId: string | null = null;
@@ -1301,6 +1330,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       },
       // AnA 1.0 RI — Executed guidance actions
       executedActions: executedActions.length > 0 ? executedActions : undefined,
+      turnRecord,
     });
   } catch (error: any) {
     console.error('[AnA] Chat error:', error);

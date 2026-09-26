@@ -4,9 +4,11 @@
  * `users.status` is how an account is taken out of use. An administrator
  * suspends it (routes/admin/master-admin.ts, PATCH /users/:id/status →
  * 'suspended'); the identity provider deprovisions it (routes/scim.ts, DELETE
- * or active=false → 'inactive'). The column is NOT NULL DEFAULT 'active', and
- * every path that creates an account writes 'active'. So 'active' is the one
- * value in use: any other, and an account that is not there, is not.
+ * or active=false → 'inactive'); a self-serve sign-up creates it as
+ * 'pending_verification' until the address is confirmed (routes/auth.ts,
+ * services/email-verification.ts; IAM-17). The column is NOT NULL DEFAULT
+ * 'active'. 'active' is the one value in use: any other, and an account that
+ * is not there, is not.
  *
  * Until 2026-09-23 the column was read at exactly one moment, the submission
  * release signature's own password check. Nothing else read it: a suspended or
@@ -25,6 +27,13 @@ import { runWithPreAuthScope } from '../db/tenantStore';
 
 /** The one status in which an account may act. */
 export const ACCOUNT_STATUS_ACTIVE = 'active';
+/** A signed-up account whose address has not yet been confirmed (security audit 2026-09-24, IAM-17). */
+export const ACCOUNT_STATUS_PENDING_VERIFICATION = 'pending_verification';
+
+/** Whether a `users.status` value is the sign-up state that waits on the e-mail link. */
+export function isPendingVerificationStatus(status: unknown): boolean {
+  return status === ACCOUNT_STATUS_PENDING_VERIFICATION;
+}
 
 /**
  * What the account holder is told, wherever an account out of use is refused.
@@ -86,7 +95,7 @@ export async function readAccountStanding(userId: number): Promise<AccountStandi
   // the global identity table.
   const result = await pool.query(
     `SELECT (SELECT status FROM users WHERE id = $1 LIMIT 1) AS status,
-            (SELECT floor(extract(epoch FROM password_changed_at))::bigint FROM users WHERE id = $1 LIMIT 1)
+            (SELECT floor(date_part('epoch', password_changed_at))::bigint FROM users WHERE id = $1 LIMIT 1)
               AS password_changed_at_seconds`,
     [userId],
   );
