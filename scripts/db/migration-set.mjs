@@ -2624,6 +2624,20 @@ export const C2C_MIGRATION_FILES = [
   // creation audit rows. No DROP; replay decides nothing twice.
   'migrations/20260925b_submissions_program_anchor.sql',
 
+  // ── ai_placement_policies: the tenant's AI placement floor (D6, 2026-09-25) ─
+  // Vendor / substrate allow-lists, residency, zero retention and the
+  // public-source switches the AI gateway enforces on every dispatch
+  // (server/services/ai-gateway/providers/org-placement-db.ts). Until this entry
+  // only install-fresh applied the file, so a database upgraded by
+  // deploy-migrate alone had no table, and the gateway read every tenant as
+  // "no policy". Additive and IF NOT EXISTS-guarded: CREATE TABLE, then ADD
+  // COLUMN for the three 2026-09-25 columns, ENABLE/FORCE RLS and its own
+  // tenant policy (DROP POLICY IF EXISTS + CREATE of the same policy, replayed
+  // every deploy by design). organizations, its FK target, comes from the
+  // schema push that runs before this set. Public schema, integer
+  // organization_id, so the sweep below covers it too.
+  'migrations/20260608_ai_placement_policies.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

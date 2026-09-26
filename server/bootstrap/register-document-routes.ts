@@ -44,6 +44,7 @@ import ivdAssessments from '../routes/ivd-assessments.js';
 import opsPredicateShadow from '../routes/_ops-predicate-shadow.js';
 import tenantExport from '../routes/tenant-export.js';
 import anaToolPolicy from '../routes/ana-tool-policy.js';
+import aiPlacementPolicy from '../routes/ai-placement-policy.js';
 import anaMdxContext from '../routes/ana-mdx-context.js';
 import k510DocumentPreview from '../routes/k510-document-preview.js';
 
@@ -274,6 +275,7 @@ export async function registerDocumentRoutes({
     { path: '/api/_ops/predicate-intelligence', router: opsPredicateShadow, name: 'Predicate Intelligence — ops probes' },
     { path: '/api/tenant-export', router: tenantExport, name: 'Tenant data export + attestation' },
     { path: '/api/ana-tool-policy', router: anaToolPolicy, name: 'AnA tool policy (per-tenant allow/deny)' },
+    { path: '/api/ai-placement-policy', router: aiPlacementPolicy, name: 'AI placement policy (per-tenant residency / ZDR / substrate and vendor allow-lists)' },
     { path: '/api/ana', router: anaMdxContext, name: 'AnA MDX context snapshot (UI consumption)' },
     { path: '/api/510k/projects', router: k510DocumentPreview, name: '510(k) live document preview (assembled view + Markdown)' },
   ]);

@@ -349,6 +349,17 @@ jobs:
           npm run ci:pq-evaluation-callers:selftest
           npm run ci:pq-evaluation-callers
 
+      # A tenant's AI placement policy (vendor and substrate allow-lists,
+      # residency, zero retention) is applied to the tenant the gateway is told
+      # about. AnA's own chat turns once passed no organizationId and were
+      # placement-unconstrained (launch row D6). Every AnA gateway call binds its
+      # tenant, and only allowlisted modules may declare a payload 'public'.
+      - name: Guardrails — AnA AI dispatch binds its tenant (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: |
+          npm run ci:ai-tenant-binding:selftest
+          npm run ci:ai-tenant-binding
+
       # A pin to a model not approved for high-risk work serves any request that
       # is not declared high-risk, whatever it drafts. Every such pin in server
       # code is listed with the reason it is safe; a new one, or one removed
