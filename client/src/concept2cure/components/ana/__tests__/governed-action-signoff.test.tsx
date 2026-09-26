@@ -28,6 +28,21 @@ describe('extractPendingSignoffs', () => {
     expect(extractPendingSignoffs(undefined)).toEqual([]);
     expect(extractPendingSignoffs(null)).toEqual([]);
   });
+
+  it("surfaces an agent's proposal (HUMAN_CONFIRMATION_REQUIRED) with its tier — the confirm tier asks for no reason", () => {
+    // Until 2026-09-26 only PART11_SIGNATURE_REQUIRED was read here, so an
+    // end-of-turn proposal never rendered (audit DP-08, P0-12).
+    const out = extractPendingSignoffs([
+      { error: 'HUMAN_CONFIRMATION_REQUIRED', message: 'Confirm to continue.', data: { tier: 'confirm', reasonRequired: false, signatureRequired: false, retry: { command: 'create_task', params: { title: 'Draft the SAP' } } } },
+      { error: 'HUMAN_CONFIRMATION_REQUIRED', message: 'Reason recorded.', data: { tier: 'reason', signatureRequired: false, retry: { command: 'update_milestone', params: {} } } },
+      { error: 'HUMAN_CONFIRMATION_REQUIRED', data: { signatureRequired: true, retry: { command: 'erase_personal_data', params: {} } } }, // older server: no tier
+    ]);
+    expect(out.map(o => [o.command, o.tier, o.signatureRequired])).toEqual([
+      ['create_task', 'confirm', false],
+      ['update_milestone', 'reason', false],
+      ['erase_personal_data', 'esignature', true],
+    ]);
+  });
 });
 
 const reasonOnly: PendingSignoff = {
@@ -42,6 +57,49 @@ const highImpact: PendingSignoff = {
   signatureRequired: true,
   message: 'This action requires a reason for change and an electronic signature.',
 };
+
+const confirmOnly: PendingSignoff = {
+  command: 'create_task',
+  params: { projectId: 4, title: 'Draft the SAP', assigneeIds: [2, 3] },
+  signatureRequired: false,
+  tier: 'confirm',
+  message: 'AnA proposed this action. Confirm to run it under your name.',
+};
+
+describe('GovernedActionSignoff — the confirm tier', () => {
+  beforeEach(() => {
+    (global as any).fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { success: true, message: 'Task created.' } }),
+    });
+  });
+
+  it('asks for neither a reason nor credentials, and says what AnA proposed', () => {
+    render(<GovernedActionSignoff signoff={confirmOnly} onResolved={() => {}} onCancel={() => {}} />);
+    expect(screen.queryByLabelText('Reason for change')).toBeNull();
+    expect(screen.queryByLabelText('Password (electronic signature)')).toBeNull();
+    expect(screen.getByText('Confirm the proposed action')).toBeTruthy();
+    expect(screen.getByText('create_task')).toBeTruthy();
+    expect(screen.getByText('Draft the SAP')).toBeTruthy();
+    expect(screen.getByText('2 items')).toBeTruthy();
+  });
+
+  it('confirming posts { confirm: true } with the command and params, and no reason or password', async () => {
+    const onResolved = vi.fn();
+    render(<GovernedActionSignoff signoff={confirmOnly} onResolved={onResolved} onCancel={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm and run' }));
+    await waitFor(() => expect(onResolved).toHaveBeenCalledWith({ success: true, message: 'Task created.' }));
+    const body = JSON.parse(((global as any).fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
+    expect(body).toEqual({ command: 'create_task', params: confirmOnly.params, confirm: true });
+    expect(body).not.toHaveProperty('reasonForChange');
+    expect(body).not.toHaveProperty('password');
+  });
+
+  it('the reason tier still needs its reason before the button enables', () => {
+    render(<GovernedActionSignoff signoff={reasonOnly} onResolved={() => {}} onCancel={() => {}} />);
+    expect((screen.getByRole('button', { name: 'Confirm and run' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+});
 
 describe('GovernedActionSignoff', () => {
   beforeEach(() => {

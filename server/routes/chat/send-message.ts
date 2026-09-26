@@ -295,13 +295,14 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     const chunkRows: Array<{ id: string; rank: number; atomId: string; score: number }> = [];
     try {
       const embeddingService = getEmbeddingService(pool);
-      const searchResults = await embeddingService.searchHybrid(
-        message,
-        RETRIEVAL_TOP_K,
-        RETRIEVAL_THRESHOLD,
-        orgUuid,
-        normalizedProjectId
-      );
+      // RETRIEVAL_THRESHOLD is a floor on semantic similarity, and the one
+      // recorded in ai_retrieval_runs below; it used to go in as the ranking weight.
+      const searchResults = await embeddingService.searchHybrid(message, {
+        limit: RETRIEVAL_TOP_K,
+        organizationUuid: orgUuid,
+        projectId: normalizedProjectId,
+        minSemanticScore: RETRIEVAL_THRESHOLD,
+      });
       sources = searchResults.map(r => ({
         id: r.id,
         title: r.title,

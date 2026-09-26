@@ -1,0 +1,42 @@
+# repo gates on this change (origin/concept2cure-v2 038b41d5 + working tree)
+ci:ai-tenant-binding:selftest rc=0 :: ✓ self-test: 13 cases, every violation caught and the controls clean
+ci:ai-tenant-binding rc=0 :: ✓ ai-tenant-binding: every AnA gateway call binds its tenant; payloadProvenance 'public' only in allowlisted modules
+ci:migration-set-order rc=0 :: [ci:migration-set-order] OK — 312 migrations, sweep last, uuid step in the final pair, all present, no duplicates.
+ci:migration-drop-safety rc=0 :: [ci:migration-drop-safety] OK — 312 migrations, 33 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2
+ci:column-reachability rc=0 :: [ci:column-reachability] OK — 2134 column add(s) on no applier, 0 queried by the server.
+ci:runtime-ddl rc=0 :: [ci:runtime-ddl] ✅ no new runtime DDL.
+ci:discarded-audit-write rc=0 :: check-discarded-audit-write: no new occurrences. 125 baselined across 56 file(s).
+ci:fabricated-identity rc=0 :: [ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+ci:no-mock-in-prod-routes rc=0 :: ✅ no-mock-in-prod-routes check passed (current=0, baseline=0, new=0)
+ci:client-ip-single-source rc=0 :: ✓ client-ip-single-source: no forwarding-header reads and no stray trust proxy in server/ or shared/
+ci:untracked-imports rc=0 :: [ci:untracked-imports] no source files changed against origin/concept2cure-v2.
+ci:drizzle-tenant-scope rc=0 :: [ci:drizzle-tenant-scope] Re-run with --write-baseline to bank the 26 fix(es).
+ci:session-scoped-rls-bypass rc=0 :: [ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 34 baselined occurrence(s) remain in 7 unmounted innovation service(s), every one of the
+ci:unauthenticated-fetch rc=0 :: ✅ ci:unauthenticated-fetch — 64 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+ci:risk-codes rc=0 :: OK: Generated risk code types are up to date.
+ci:ectd-stubs rc=0 :: [ectd-validate] All eCTD stubs validated successfully (AJV schema + hash + layout + cross-ref).
+ci:fixture-fallback rc=0 :: ✅ no new ungated fixture fallback. 0 baselined.
+ci:sign-ceremony rc=0 :: [ci:sign-ceremony] OK — no new sign write without the ceremony. 23 baselined site(s) remain, exactly as baselined.
+db:sync-manifest:check rc=0 :: Manifest is in sync.
+ci:gateway-bypass rc=0 :: [check-gateway-bypass] OK — no new bypasses (8 baselined site(s) tolerated).
+ci:audit-route-mounts:no-regression rc=0 :: Baseline delta: +0 new errors, +0 new warnings (baseline: docs/reports/route-mount-audit-baseline.json)
+ci:check-route-collisions rc=0 :: ✅ no route is defined twice under a shared prefix.
+ci:error-envelope rc=0 :: [ci:error-envelope] OK — 0 hand-rolled read(s) (baseline 0), none new.
+ci:route-ownership-matrix:check rc=0 :: ✅ Route ownership matrix check passed.
+ci:tenant-entry-points rc=0 :: [ci:tenant-entry-points] OK — no unclassified tenant entry points.
+ci:tenant-resolvers rc=0 :: OK: no new local tenant resolvers.
+ci:tenant-isolation:no-regression rc=0 :: [ci:tenant-isolation] OK — no new findings above baseline (8 current, 9 baseline)
+ci:tenant-blind-models rc=0 :: [ci:tenant-blind-models] OK — no unjustified tenant-blind models.
+ci:tenant-column-types rc=0 :: [ci:tenant-column-types] OK — all tenant columns are integer-typed
+ci:pq-evaluation-callers rc=0 :: ✓ pq-evaluation-callers: AIGateway.evaluateModel is called only from server/eval/pq/ and tests
+ci:dead-audit-catch rc=0 :: check-dead-audit-catch: no new occurrences. 0 baselined across 0 file(s).
+audit:orphaned-endpoints:strict rc=0 ::     10  Submission Workflows
+ci:governed-export-routes rc=0 :: ✅ Governed export route contract check passed.
+ci:regulated-delete-audit rc=0 :: [regulated-delete-audit] OK — every regulated-table delete has an audit call (or is operator-allow-listed).
+
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+[ci:typecheck-no-regression] OK — error count 0 matches baseline.
+
+Test Files  283 passed | 1 skipped (284); Tests  3780 passed | 3 skipped (3783) — server/services/{ai-gateway,ai-actions,ana}, server/config, server/routes/__tests__/ai-placement-policy.test.ts, on origin/concept2cure-v2 038b41d5 + this change
+exit=0

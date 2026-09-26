@@ -38,7 +38,6 @@ import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
 import { createJourneyDb, type JourneyDb } from '../golden-journeys/harness';
-import { REASON_NOT_STATED } from '../../server/services/c2c/commit-section-to-filing';
 
 const JWT_SECRET = 'commit-section-to-filing-contract';
 process.env.JWT_SECRET = JWT_SECRET;
@@ -204,9 +203,10 @@ const save = (code: string, content: string) =>
     content, changeReason: 'drafting the overview',
   });
 
-/** A save exactly as the document editor makes it: no reason, because the
- *  editor has no field to give one. Every assertion above sends a reason, so
- *  the path nearly every real save takes had no coverage at all. */
+/** A content save with no reason. Since fde9d704 the server requires one on
+ *  every content change (§11.10(e), server/routes/governed-reason.ts) and the
+ *  document editor has a reason field that gates its Save; this is what a
+ *  client that sends none gets. */
 const saveWithoutReason = (code: string, content: string) =>
   as(request(app).patch(`/api/authoring/sections/${sectionIds[code]}`)).send({ content });
 
@@ -278,32 +278,23 @@ describe('a save in the editor reaches the filing', () => {
 });
 
 describe('the reason for change is recorded, never invented', () => {
-  it('records that no reason was given, rather than inventing one', async () => {
-    /* The path nearly every real save takes. Only AuthoringAiDraft sends a
-       `changeReason`; the document editor has no field for one, so this is
-       what the ledger receives on an ordinary save.
-
-       It used to receive the literal 'authored in the document editor' —
-       supplied here, not by anyone — sitting in the reason column of the
-       filing's immutable version ledger, indistinguishable on the page an
-       inspector reads from a sentence a person actually wrote. It also
-       defeated the gate built for this: the snapshot trigger RAISES on an
-       empty app.reason ("Part 11 reason-for-change is mandatory"), and a
-       constant satisfies that on every save, so the mandatory-reason gate had
-       never once fired for this editor.
-
-       The trigger will not accept empty, so the honest value has to SAY it was
-       not stated — the same answer `author_kind` gives with 'unspecified'
-       rather than guessing 'human'. Asserted against the exported constant so
-       the check cannot drift from the writer. */
+  it('refuses a content save with no reason, and writes nothing', async () => {
+    /* A reason used to be optional here: the editor had no field for one and
+       the ledger received REASON_NOT_STATED (before that, an invented
+       sentence). fde9d704 made it mandatory on every content change, so the
+       honest outcome of a save without one is a refusal before anything is
+       written — neither the working copy nor the filing's version ledger
+       moves. */
+    const before = await q<{ n: number }>(`SELECT count(*)::int AS n FROM c2c_document_section_versions`);
     const res = await saveWithoutReason('2.5', 'Saved with no reason given.');
-    expect(res.status).toBe(200);
-
-    const versions = await q<{ reason: string }>(
-      `SELECT reason FROM c2c_document_section_versions ORDER BY version DESC LIMIT 1`,
+    expect(res.status).toBe(400);
+    expect(res.body.field).toBe('changeReason');
+    const after = await q<{ n: number }>(`SELECT count(*)::int AS n FROM c2c_document_section_versions`);
+    expect(after[0].n).toBe(before[0].n);
+    const [row] = await q<{ content: string }>(
+      `SELECT content FROM authoring_sections WHERE id = $1`, [sectionIds['2.5']],
     );
-    expect(versions[0].reason).toBe(REASON_NOT_STATED);
-    expect(versions[0].reason).not.toMatch(/authored in the document editor/i);
+    expect(row.content).not.toBe('Saved with no reason given.');
   }, T);
 
   it('still records a real reason verbatim when the save gives one', async () => {
@@ -317,17 +308,17 @@ describe('the reason for change is recorded, never invented', () => {
     expect(newest.reason).toBe('drafting the overview');
   }, T);
 
-  it('treats a whitespace-only reason as not stated', async () => {
+  it('refuses a whitespace-only reason as no reason at all', async () => {
     /* "   " is not a reason. Storing it would satisfy the trigger's non-empty
-       check while telling a reader nothing, which is the same fabrication in a
-       quieter form. */
+       check while telling a reader nothing; it is refused like a missing one. */
     const res = await as(request(app).patch(`/api/authoring/sections/${sectionIds['2.5']}`))
       .send({ content: 'Saved with a blank reason.', changeReason: '   ' });
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(400);
+    expect(res.body.field).toBe('changeReason');
     const [newest] = await q<{ reason: string }>(
       `SELECT reason FROM c2c_document_section_versions ORDER BY version DESC LIMIT 1`,
     );
-    expect(newest.reason).toBe(REASON_NOT_STATED);
+    expect(newest.reason).not.toBe('   ');
   }, T);
 
 });
@@ -791,7 +782,7 @@ describe('what it deliberately does NOT do', () => {
     });
 
     const res = await as(request(app).patch(`/api/authoring/sections/${s.body.section.id}`))
-      .send({ content: 'Notes that belong to no filing.' });
+      .send({ content: 'Notes that belong to no filing.', changeReason: 'drafting an internal note' });
 
     expect(res.status).toBe(200);
     expect(res.body.filing).toMatchObject({ committed: false });

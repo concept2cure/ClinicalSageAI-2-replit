@@ -26,7 +26,7 @@
 | Every selectable model is an approved-models registry entry with pinned version, rationale and eval reference | **Implemented** | `server/services/ai-governance/approved-models.ts` |
 | Only PQ-passed models serve high-risk regulatory drafting; `riskTier` capped otherwise | **Partial** — tiers exist; PQ evidence for the launch model not yet filed | `server/eval/rag/`, `server/eval/doc-quality/` |
 | Every model call goes through the gateway (CI-enforced) | **Implemented** | `scripts/ci/check-gateway-bypass.mjs`; `server/services/ai-gateway/gateway.ts` |
-| Provider placement (region, ZDR) is an explicit approval; failover never crosses residency/ZDR | **Implemented** | `AI_PROVIDER_PLACEMENT_APPROVALS`, `server/services/ai-gateway/sensitive-placement-policy.ts`; `gateway.ts:2298-2344` |
+| Provider placement (region, ZDR) is an explicit approval; failover never crosses residency/ZDR | **Implemented** | `AI_PROVIDER_PLACEMENT_APPROVALS`, `server/services/ai-gateway/sensitive-placement-policy.ts`; `gateway.ts` `tenantPlacementVerdict` / `assertTenantPlacement`, with the per-tenant vendor allow-list (`ai_placement_policies.allowed_providers`); evidence `docs/evidence/D6/2026-09-25-tenant-boundary/` |
 | PII screen and groundedness gate on AI traffic, visible at boot | **Implemented** (defaults: PII `block`; posture warned at boot) | `server/startup/ai-governance-posture.ts` |
 | Numbers, verdicts and governed content come from deterministic engines; the model narrates | **Implemented as rule; enforced per-tool** | `CLAUDE.md` Rule 2; `docs/LAUNCH_DEFINITION_OF_DONE.md` |
 | Model change = change under POLICY-CM-003 with eval re-run | **Planned** | — |

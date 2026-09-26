@@ -16,8 +16,13 @@
 import express from 'express';
 import request from 'supertest';
 import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
+import { runWithTenantScope } from '../../db/tenantStore';
 
-const logActionMock = vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true }));
+const logActionMock = vi.fn(async (..._a: any[]) => ({
+  persisted: true,
+  chained: true,
+  tamperProof: true,
+}));
 
 // Minimal Drizzle-shaped chainables — model only what these handlers call.
 type Row = Record<string, unknown>;
@@ -83,9 +88,22 @@ vi.mock('../../auth', () => ({
       req.user = u;
       req.userRole = u.role;
       req.userId = u.id;
+      // As the real authMiddleware does: the request runs in the caller's own
+      // tenant scope, which staffCrossOrgScope compares the target with.
+      return runWithTenantScope(
+        { tenantId: String(u.organizationId), role: u.role, source: 'request', caller: 'test' },
+        () => next()
+      );
     }
     next();
   },
+}));
+
+// The system scope itself needs a real pool; it is proven end to end in
+// tests/db/organizations-writes.dbtest.ts. Here: WHEN the router asks for it.
+const systemScopeMock = vi.fn((_req: any, _res: any, next: any) => next());
+vi.mock('../../middleware/establishRequestTenantScope', () => ({
+  establishRequestSystemScope: (...a: any[]) => (systemScopeMock as any)(...a),
 }));
 
 // Imported dynamically after module scope initializes — a static import would
@@ -109,6 +127,7 @@ const PLATFORM = JSON.stringify({ id: 4, role: 'super_admin', organizationId: 1 
 
 beforeEach(() => {
   logActionMock.mockReset();
+  systemScopeMock.mockClear();
   nextSelectRows = [];
   nextUpdateRows = [];
   lastUpdate.values = undefined;
@@ -117,7 +136,7 @@ beforeEach(() => {
 describe('PATCH /api/organizations/:id/profile', () => {
   const body = { name: 'Bright Bio', clientType: 'biotech', reason: 'Onboarding setup' };
 
-  it("403s an admin of a DIFFERENT organization (tenant scoping)", async () => {
+  it('403s an admin of a DIFFERENT organization (tenant scoping)', async () => {
     const res = await request(makeApp())
       .patch('/api/organizations/7/profile')
       .set('x-test-user', ORG9_ADMIN)
@@ -153,7 +172,13 @@ describe('PATCH /api/organizations/:id/profile', () => {
   it('updates and audits for an org admin (reason recorded)', async () => {
     nextSelectRows = [{ name: 'Old Name', clientType: 'pharma', industryMode: null }];
     nextUpdateRows = [
-      { id: 7, name: 'Bright Bio', clientType: 'biotech', industryMode: 'virtual_biotech', updatedAt: new Date() },
+      {
+        id: 7,
+        name: 'Bright Bio',
+        clientType: 'biotech',
+        industryMode: 'virtual_biotech',
+        updatedAt: new Date(),
+      },
     ];
     const res = await request(makeApp())
       .patch('/api/organizations/7/profile')
@@ -172,12 +197,22 @@ describe('PATCH /api/organizations/:id/profile', () => {
 
   it('allows platform staff into any org', async () => {
     nextSelectRows = [{ name: 'Old', clientType: 'pharma', industryMode: null }];
-    nextUpdateRows = [{ id: 7, name: 'Bright Bio', clientType: 'biotech', industryMode: null, updatedAt: new Date() }];
+    nextUpdateRows = [
+      {
+        id: 7,
+        name: 'Bright Bio',
+        clientType: 'biotech',
+        industryMode: null,
+        updatedAt: new Date(),
+      },
+    ];
     const res = await request(makeApp())
       .patch('/api/organizations/7/profile')
       .set('x-test-user', PLATFORM)
       .send(body);
     expect(res.status).toBe(200);
+    // Staff (org 1) acting on org 7: the write must run in the system scope.
+    expect(systemScopeMock).toHaveBeenCalledTimes(1);
   });
 
   it('404s when the organization does not exist', async () => {
@@ -187,6 +222,44 @@ describe('PATCH /api/organizations/:id/profile', () => {
       .set('x-test-user', ORG7_ADMIN)
       .send(body);
     expect(res.status).toBe(404);
+  });
+});
+
+describe('platform staff acting on another organization', () => {
+  const body = { name: 'Bright Bio', clientType: 'biotech', reason: 'Onboarding setup' };
+
+  it('opens the system scope only for staff acting on ANOTHER org', async () => {
+    nextSelectRows = [{ name: 'Old', clientType: 'pharma', industryMode: null }];
+    nextUpdateRows = [
+      {
+        id: 1,
+        name: 'Bright Bio',
+        clientType: 'biotech',
+        industryMode: null,
+        updatedAt: new Date(),
+      },
+    ];
+    await request(makeApp())
+      .patch('/api/organizations/1/profile')
+      .set('x-test-user', PLATFORM)
+      .send(body);
+    nextUpdateRows = [
+      {
+        id: 7,
+        name: 'Bright Bio',
+        clientType: 'biotech',
+        industryMode: null,
+        updatedAt: new Date(),
+      },
+    ];
+    await request(makeApp())
+      .patch('/api/organizations/7/profile')
+      .set('x-test-user', ORG7_ADMIN)
+      .send(body);
+    expect(
+      systemScopeMock,
+      'staff on their own org, or an org admin on theirs'
+    ).not.toHaveBeenCalled();
   });
 });
 
@@ -211,6 +284,7 @@ describe('PATCH /api/organizations/:id/settings', () => {
 
   it('applies the governed form and audits section keys + reason (never values)', async () => {
     nextSelectRows = [orgRow];
+    nextUpdateRows = [{ id: 7 }];
     const res = await request(makeApp())
       .patch('/api/organizations/7/settings')
       .set('x-test-user', ORG7_ADMIN)
@@ -238,6 +312,7 @@ describe('PATCH /api/organizations/:id/settings', () => {
 
   it('still accepts the legacy bare-partial body (audited with reason null)', async () => {
     nextSelectRows = [orgRow];
+    nextUpdateRows = [{ id: 7 }];
     const res = await request(makeApp())
       .patch('/api/organizations/7/settings')
       .set('x-test-user', ORG7_ADMIN)
@@ -246,6 +321,17 @@ describe('PATCH /api/organizations/:id/settings', () => {
     const entry = logActionMock.mock.calls[0][0];
     expect(entry.details.reason).toBeNull();
     expect(entry.details.sections).toEqual(['notifications']);
+  });
+
+  it('404s an update that matched no row, and audits nothing (it used to answer success)', async () => {
+    nextSelectRows = [orgRow];
+    nextUpdateRows = [];
+    const res = await request(makeApp())
+      .patch('/api/organizations/7/settings')
+      .set('x-test-user', ORG7_ADMIN)
+      .send({ settings: { branding: { primaryColor: '#000' } }, reason: 'rebrand' });
+    expect(res.status).toBe(404);
+    expect(logActionMock).not.toHaveBeenCalled();
   });
 
   it('400s an empty settings object', async () => {
@@ -269,11 +355,24 @@ describe('PATCH /api/organizations/:id/settings', () => {
  * the client's `findUnpersistedAuditRow` turns into the "The request completed, but the audit trail did not record it" notice.
  */
 describe('organization writes carry the audit-row outcome', () => {
-  const LOST = { persisted: false, chained: false, tamperProof: false, error: 'relation "audit_logs" does not exist' };
+  const LOST = {
+    persisted: false,
+    chained: false,
+    tamperProof: false,
+    error: 'relation "audit_logs" does not exist',
+  };
 
   it('profile: a lost row still answers 200 with the change, and says the row is missing', async () => {
     nextSelectRows = [{ name: 'Old', clientType: null, industryMode: null }];
-    nextUpdateRows = [{ id: 7, name: 'Bright Bio', clientType: 'biotech', industryMode: null, updatedAt: new Date() }];
+    nextUpdateRows = [
+      {
+        id: 7,
+        name: 'Bright Bio',
+        clientType: 'biotech',
+        industryMode: null,
+        updatedAt: new Date(),
+      },
+    ];
     logActionMock.mockResolvedValueOnce(LOST as any);
 
     const res = await request(makeApp())
@@ -294,7 +393,9 @@ describe('organization writes carry the audit-row outcome', () => {
 
   it('profile: a written row says so', async () => {
     nextSelectRows = [{ name: 'Old', clientType: null, industryMode: null }];
-    nextUpdateRows = [{ id: 7, name: 'Bright Bio', clientType: null, industryMode: null, updatedAt: new Date() }];
+    nextUpdateRows = [
+      { id: 7, name: 'Bright Bio', clientType: null, industryMode: null, updatedAt: new Date() },
+    ];
     logActionMock.mockResolvedValueOnce({ persisted: true, chained: true, tamperProof: true });
 
     const res = await request(makeApp())
@@ -308,6 +409,7 @@ describe('organization writes carry the audit-row outcome', () => {
 
   it('settings: a lost row still answers 200, and says the row is missing', async () => {
     nextSelectRows = [{ id: 7, settings: {} }];
+    nextUpdateRows = [{ id: 7 }];
     logActionMock.mockResolvedValueOnce(LOST as any);
 
     const res = await request(makeApp())
@@ -317,11 +419,15 @@ describe('organization writes carry the audit-row outcome', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.auditTrail).toMatchObject({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' });
+    expect(res.body.auditTrail).toMatchObject({
+      persisted: false,
+      code: 'AUDIT_ROW_NOT_PERSISTED',
+    });
   });
 
   it('settings: a written row says so', async () => {
     nextSelectRows = [{ id: 7, settings: {} }];
+    nextUpdateRows = [{ id: 7 }];
     logActionMock.mockResolvedValueOnce({ persisted: true, chained: false, tamperProof: true });
 
     const res = await request(makeApp())

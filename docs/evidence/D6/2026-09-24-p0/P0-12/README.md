@@ -58,15 +58,17 @@ Test: `server/services/ana-ri/__tests__/confirm-tier.test.ts`. One inherited fai
 "allows /stream in deterministic mode", fails identically with the committed versions of the five files (the merge of
 trunk at `8d74e73f`), and is not this change's.
 
-**The client half is not in this commit.** `useGovernedAction.ts`, `GovernedActionSignoff.tsx` and `SignoffList.tsx`
-still render every proposal as the reason tier: until they read `data.tier` and render a confirm-only step that posts
-`{ command, params, confirm: true }`, a person confirming an ordinary write is asked for a reason the server does not
-require (the route accepts the body either way, so nothing is blocked). A helper agent was dispatched for it and did not
-report back; the contract it was given is recorded in the tranche index.
+**The client half** (the next commit): `useGovernedAction.ts` reads `data.tier` from both envelopes (deriving it from
+the signature flag for an older server) and now also surfaces `HUMAN_CONFIRMATION_REQUIRED` results, which no client
+code read before, so an end-of-turn proposal never rendered; `GovernedActionSignoff.tsx` renders the confirm tier as one
+step, the command and a compact key: value summary of its params, no reason field, no credentials, and posts
+`{ command, params, confirm: true }` (with the run and tool ids when AnA is holding a turn). The reason and e-signature
+tiers render as before. `client/red.txt` (four cases fail on the committed components: the proposal is not surfaced, the
+confirm tier shows a reason field, confirming posts a reason) and `client/green.txt` (the four sign-off suites pass).
 
 ## Not done here
 
-- **Every state-changing command propose-only (the DP-08 body of P0-12)** — done in part 2 above (server); the client's confirm-only step remains. The original note follows for the record. `PROPOSE_ONLY_COMMANDS` still admits the
+- **Every state-changing command propose-only (the DP-08 body of P0-12)** — done in part 2 above (server and client). The original note follows for the record. `PROPOSE_ONLY_COMMANDS` still admits the
   ordinary writes the model runs unaided (`update_artifact`, `update_project`, `export_document`, `create_task`, …; 53
   `effect: 'write'` entries in total). Widening the partition is one line in `command-rbac.ts`, but a widened partition
   is only usable if a proposal can then be executed, and today `POST /governed-action`

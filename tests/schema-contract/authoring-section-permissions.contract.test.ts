@@ -174,12 +174,12 @@ describe('G-01: object-level section-permission enforcement', () => {
 
     // 1. Creator can edit their own section (auto-grant).
     const edit = await asUser(AUTHOR)(request(app).patch(`/api/authoring/sections/${sectionId1}`))
-      .send({ content: 'v2 by author' });
+      .send({ content: 'v2 by author', changeReason: 'contract test edit' });
     expect(edit.status).toBe(200);
 
     // 2. Unrelated same-tenant user is denied.
     const denied = await asUser(UNRELATED)(request(app).patch(`/api/authoring/sections/${sectionId1}`))
-      .send({ content: 'v3 by unrelated' });
+      .send({ content: 'v3 by unrelated', changeReason: 'contract test edit' });
     expect(denied.status).toBe(403);
 
     // 3. A grant on ANOTHER document must NOT authorise this section (OR-bug fix).
@@ -198,7 +198,7 @@ describe('G-01: object-level section-permission enforcement', () => {
       [docId2, UNRELATED.email],
     );
     const stillDenied = await asUser(UNRELATED)(request(app).patch(`/api/authoring/sections/${sectionId1}`))
-      .send({ content: 'v3 via cross-doc grant' });
+      .send({ content: 'v3 via cross-doc grant', changeReason: 'contract test edit' });
     expect(stillDenied.status).toBe(403);
 
     // 4. A bare QA role does NOT override the object grant.
@@ -212,7 +212,7 @@ describe('G-01: object-level section-permission enforcement', () => {
     // the two agree, and a job title is not an authorization to alter a
     // regulated record.
     const qaEdit = await asUser(QA)(request(app).patch(`/api/authoring/sections/${sectionId1}`))
-      .send({ content: 'v4 by qa' });
+      .send({ content: 'v4 by qa', changeReason: 'contract test edit' });
     expect(qaEdit.status).toBe(403);
 
     // 5. Commenting is gated by the SAME section permission as editing.
@@ -229,7 +229,7 @@ describe('G-01: object-level section-permission enforcement', () => {
 
     // 6. A cross-tenant caller is denied.
     const crossTenant = await asUser(OUTSIDER)(request(app).patch(`/api/authoring/sections/${sectionId1}`))
-      .send({ content: 'v5 by outsider' });
+      .send({ content: 'v5 by outsider', changeReason: 'contract test edit' });
     expect(crossTenant.status).toBe(403);
 
     // 7. An APPROVED document is read-only even to the author.
@@ -238,7 +238,7 @@ describe('G-01: object-level section-permission enforcement', () => {
       [docId1],
     );
     const frozenEdit = await asUser(AUTHOR)(request(app).patch(`/api/authoring/sections/${sectionId1}`))
-      .send({ content: 'v6 after approval' });
+      .send({ content: 'v6 after approval', changeReason: 'contract test edit' });
     expect(frozenEdit.status).toBe(403);
   }, T);
 });

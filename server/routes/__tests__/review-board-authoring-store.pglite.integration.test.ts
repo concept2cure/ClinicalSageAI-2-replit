@@ -52,9 +52,9 @@ const PREREQ = `
     ('${REVIEWER.id}', '${REVIEWER.name}', '${REVIEWER.email}'),
     ('${BYSTANDER.id}', '${BYSTANDER.name}', '${BYSTANDER.email}'),
     ('${OUTSIDER.id}', '${OUTSIDER.name}', '${OUTSIDER.email}');
-  /* The columns the board's program join reads (name, organization_id). */
-  -- deleted_at: createDocument anchors a document only to a live project of
-  -- its organization (programInOrganization, LX-20), and reads it.
+  /* The columns the board's program join reads (name, organization_id), and
+     deleted_at, which document creation's project-anchor check reads
+     (programInOrganization, 8eaccfa6a) — the deployed table has it. */
   CREATE TABLE regulatory_programs (
     id UUID PRIMARY KEY, organization_id INTEGER NOT NULL, name TEXT NOT NULL, code TEXT,
     deleted_at TIMESTAMPTZ

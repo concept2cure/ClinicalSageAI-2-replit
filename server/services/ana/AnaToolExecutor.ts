@@ -15246,6 +15246,7 @@ export async function executeAgenticLoop(
   // model kept generating server-side and the turn was paid for in full. The
   // streaming route has passed it since stop started landing mid-step; this is
   // the same fix for the non-SSE callers.
+  // tenant-binding: forwards the caller's GatewayRequest; every caller binds organizationId (send-message.ts, deep-investigation.ts, ana-realtime.ts, ana-intelligence.ts)
   let finalResponse = (await gateway.route({ ...request, signal })) as AnaGatewayResponse;
 
   // Fast path: the model answered without asking for any tool.
@@ -15356,6 +15357,7 @@ export async function executeAgenticLoop(
       roundRequest.toolChoice = 'none';
     }
 
+    // tenant-binding: roundRequest is built from the caller's request, which carries its organizationId
     finalResponse = (await gateway.route(roundRequest)) as AnaGatewayResponse;
     const nextUses = finalResponse.toolUses ?? [];
     return { text: finalResponse.content || '', toolCalls: nextUses.map(toToolCall) };

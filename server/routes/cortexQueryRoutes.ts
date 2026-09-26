@@ -203,12 +203,11 @@ async function handleSearchMode(
 
   // Scoped to the session's tenant key; searchHybrid refuses to run without
   // one, and refuses a key that is not the session's.
-  const results = await embeddingService.searchHybrid(
-    query,
-    options?.limit || 10,
-    0.7, // semantic weight
-    organizationUuid
-  );
+  const results = await embeddingService.searchHybrid(query, {
+    limit: options?.limit || 10,
+    semanticWeight: 0.7,
+    organizationUuid,
+  });
 
   return {
     success: true,
