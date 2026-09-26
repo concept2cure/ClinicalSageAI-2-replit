@@ -30,9 +30,10 @@
  */
 import { describe, it, expect } from 'vitest';
 
-import { classifyToolCall, PLATFORM_COMMAND_TOOL } from '../governed-tool-gate.js';
+import { classifyDirectToolCall, classifyToolCall, PLATFORM_COMMAND_TOOL } from '../governed-tool-gate.js';
 import { PROPOSE_ONLY_COMMANDS, isProposeOnlyCommand } from '../../ana-ri/command-rbac.js';
 import { PART11_ESIGN_COMMANDS, PART11_GOVERNED_COMMANDS } from '../../ana-ri/part11-governance.js';
+import { PROPOSE_ONLY_TOOLS, REFUSE_IN_CHAT_TOOLS, toolTierOf } from '../propose-only-tools.js';
 
 const cmd = (command: unknown, params?: unknown) => ({
   name: PLATFORM_COMMAND_TOOL,
@@ -158,11 +159,15 @@ describe('the tier follows part11-governance, not a second opinion', () => {
   });
 });
 
-describe('only the command tool can be governed', () => {
-  it('a tool with its own handler is not classified here', () => {
-    // Not an omission — see the module docstring. Escalating an authoring tool
-    // is a product decision about what AnA may do unaided, taken with the tier
-    // changed in the same commit, not something this translation layer invents.
+describe('classifyToolCall still speaks only for the command tool', () => {
+  it('a tool with its own handler is UNGOVERNED to classifyToolCall — until the stream door consults classifyDirectToolCall', () => {
+    // This pin documents the gap DP-36 found, not a judgment: the direct-tool
+    // registry (propose-only-tools.ts) classifies save_document_to_vault as a
+    // proposal, and classifyDirectToolCall below says so. classifyToolCall's
+    // return union is left unchanged because routes/ana-ri/stream.ts:1596
+    // (awaitDecision) narrows on it and that file is hot until
+    // 2026-09-27 04:52 UTC. When settleApprovals there calls
+    // classifyDirectToolCall as well, this case flips to NEEDS_APPROVAL.
     expect(classifyToolCall({ name: 'save_document_to_vault', input: { title: 'x' } }).kind).toBe(
       'UNGOVERNED',
     );
@@ -170,5 +175,74 @@ describe('only the command tool can be governed', () => {
 
   it('a tool named like a governed command is still just a tool', () => {
     expect(classifyToolCall({ name: 'freeze_document', input: {} }).kind).toBe('UNGOVERNED');
+  });
+});
+
+describe('classifyDirectToolCall: the tool registry, with the same discipline', () => {
+  const call = (name: string, input: unknown) => ({ name, input });
+
+  it('UNDECIDABLE when the arguments failed to parse, whatever the tool', () => {
+    for (const name of ['save_document_to_vault', 'retire_qms_document', 'list_vault_documents']) {
+      const v = classifyDirectToolCall({ name, input: {}, inputParseError: 'Unexpected end of JSON input' });
+      expect(v.kind, name).toBe('UNDECIDABLE');
+      expect(v.kind === 'UNDECIDABLE' && v.why).toMatch(/did not parse/);
+    }
+  });
+
+  it('UNDECIDABLE for a governed tool whose input is not an object — refused, not cleared', () => {
+    for (const input of [null, undefined, 'x', 42, ['x']]) {
+      expect(classifyDirectToolCall(call('save_document_to_vault', input)).kind, JSON.stringify(input)).toBe('UNDECIDABLE');
+      expect(classifyDirectToolCall(call('approve_import', input)).kind, JSON.stringify(input)).toBe('UNDECIDABLE');
+    }
+  });
+
+  it('NEEDS_APPROVAL, with the registry’s tier and a {tool, input} payload, for every propose-only tool', () => {
+    expect(Object.keys(PROPOSE_ONLY_TOOLS).length).toBeGreaterThan(100);
+    for (const [tool, entry] of Object.entries(PROPOSE_ONLY_TOOLS)) {
+      const v = classifyDirectToolCall(call(tool, { a: 1 }));
+      expect(v, tool).toEqual({ kind: 'NEEDS_APPROVAL', tool, input: { a: 1 }, tier: entry.tier });
+    }
+  });
+
+  it('REFUSE_IN_CHAT, naming the act and where a person takes it, for every unconditional refusal', () => {
+    for (const [tool, entry] of Object.entries(REFUSE_IN_CHAT_TOOLS)) {
+      if (entry.when) continue;
+      const v = classifyDirectToolCall(call(tool, { id: 1 }));
+      expect(v, tool).toEqual({ kind: 'REFUSE_IN_CHAT', tool, act: entry.act, where: entry.where, why: entry.why });
+    }
+  });
+
+  it('qms_change_transition: a refusal for approved, a reason-tier proposal for under_assessment, UNDECIDABLE with no target', () => {
+    expect(classifyDirectToolCall(call('qms_change_transition', { change_id: 1, to: 'approved', reason: 'r' })).kind).toBe('REFUSE_IN_CHAT');
+    expect(classifyDirectToolCall(call('qms_change_transition', { change_id: 1, to: 'closed' })).kind).toBe('REFUSE_IN_CHAT');
+    const proposal = classifyDirectToolCall(call('qms_change_transition', { change_id: 1, to: 'under_assessment', reason: 'r' }));
+    expect(proposal).toEqual({
+      kind: 'NEEDS_APPROVAL',
+      tool: 'qms_change_transition',
+      input: { change_id: 1, to: 'under_assessment', reason: 'r' },
+      tier: 'reason',
+    });
+    expect(toolTierOf('qms_change_transition')).toBe('reason');
+    for (const input of [{ change_id: 1 }, { change_id: 1, to: '' }, { change_id: 1, to: 7 }]) {
+      const v = classifyDirectToolCall(call('qms_change_transition', input));
+      expect(v.kind, JSON.stringify(input)).toBe('UNDECIDABLE');
+      expect(v.kind === 'UNDECIDABLE' && v.why).toMatch(/no transition target/);
+    }
+  });
+
+  it('UNGOVERNED for a read, and for the command tool, which classifyToolCall owns', () => {
+    expect(classifyDirectToolCall(call('list_vault_documents', { limit: 5 }))).toEqual({ kind: 'UNGOVERNED' });
+    expect(classifyDirectToolCall(call('search_documents', 'not even an object'))).toEqual({ kind: 'UNGOVERNED' });
+    expect(classifyDirectToolCall(call(PLATFORM_COMMAND_TOOL, { command: 'create_task' }))).toEqual({ kind: 'UNGOVERNED' });
+    expect(classifyToolCall(call(PLATFORM_COMMAND_TOOL, { command: 'create_task' })).kind).toBe('NEEDS_APPROVAL');
+  });
+
+  it("the finding's exemplars (DP-36)", () => {
+    expect(classifyDirectToolCall(call('save_document_to_vault', { title: 'x', content: 'y', reason: 'z' })).kind).toBe('NEEDS_APPROVAL');
+    expect(classifyDirectToolCall(call('update_vault_document', { id: 1 })).kind).toBe('NEEDS_APPROVAL');
+    expect(classifyDirectToolCall(call('draft_authoring_document', { title: 'x' })).kind).toBe('NEEDS_APPROVAL');
+    expect(classifyDirectToolCall(call('create_qms_document', { title: 'x' })).kind).toBe('NEEDS_APPROVAL');
+    expect(classifyDirectToolCall(call('retire_qms_document', { document_id: 1, reason: 'obsolete now' })).kind).toBe('REFUSE_IN_CHAT');
+    expect(classifyDirectToolCall(call('approve_import', { import_job_id: 1, project_id: 2 })).kind).toBe('REFUSE_IN_CHAT');
   });
 });

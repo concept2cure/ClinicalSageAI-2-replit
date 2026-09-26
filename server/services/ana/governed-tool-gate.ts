@@ -2,18 +2,31 @@
  * Which of AnA's tool calls a person has to authorise before they run.
  *
  * ── This module decides nothing ──────────────────────────────────────────────
- * It is a classifier over TOOL CALLS that delegates every judgment to
- * `command-rbac.ts`'s `isProposeOnlyCommand`, which is itself DERIVED from
- * `COMMAND_AUTHORIZATION` rather than hand-listed — so a new governed handler
- * joins the partition the moment it is registered. Restating that membership
- * here would create the hand-maintained copy that derivation exists to prevent,
- * and the copy would drift silently: a new approve-shaped command would simply
- * become executable by the agent, with nothing to say so.
+ * It is a classifier over TOOL CALLS that delegates every judgment to a
+ * registry it does not own. For the one tool that carries a platform command,
+ * `execute_platform_command`, that is `command-rbac.ts`'s `isProposeOnlyCommand`,
+ * DERIVED from `COMMAND_AUTHORIZATION` rather than hand-listed — so a new
+ * governed handler joins the partition the moment it is registered. For every
+ * other tool it is `propose-only-tools.ts`, the tool-name-keyed sibling that
+ * classifies the directly registered handlers and is held to its sources by
+ * an anti-drift test. Restating either membership here would create the
+ * hand-maintained copy that derivation and that test exist to prevent, and
+ * the copy would drift silently: a new approve-shaped command or a new vault
+ * writer would simply become executable by the agent, with nothing to say so.
  *
- * What this module adds is only the translation. The gate speaks COMMANDS; the
- * agentic loop speaks TOOL CALLS. `execute_platform_command` carries the
- * command in `input.command`, so somebody has to unwrap it, and doing that
- * inline at the call site is how the unwrapping comes to disagree with itself.
+ * What this module adds is only the translation. The registries speak COMMANDS
+ * and TOOL NAMES; the agentic loop speaks TOOL CALLS. `execute_platform_command`
+ * carries the command in `input.command`, so somebody has to unwrap it, and
+ * doing that inline at the call site is how the unwrapping comes to disagree
+ * with itself. `qms_change_transition` carries its refused-or-proposed target in
+ * `input.to`, and the same applies.
+ *
+ * Two classifiers, one discipline: `classifyToolCall` answers for the command
+ * tool and `classifyDirectToolCall` for the rest. They are separate exports
+ * rather than one function because `classifyToolCall`'s return union is what
+ * `routes/ana-ri/stream.ts` narrows on (`Extract<…, {kind:'NEEDS_APPROVAL'}>`
+ * in awaitDecision); widening it there is the second step, taken when that
+ * file's window opens.
  *
  * ── Why a missing command is its own answer ──────────────────────────────────
  * `UNDECIDABLE` is not a tidier spelling of "not governed", and collapsing the
@@ -39,6 +52,7 @@
 
 import { isProposeOnlyCommand } from '../ana-ri/command-rbac.js';
 import { governedTierOf } from '../ana-ri/part11-governance.js';
+import { REFUSE_IN_CHAT_TOOLS, isProposeOnlyTool, refusedInChatTool, toolTierOf } from './propose-only-tools.js';
 
 /** The tool that carries a platform command in its input. */
 export const PLATFORM_COMMAND_TOOL = 'execute_platform_command';
@@ -75,18 +89,21 @@ function asRecord(v: unknown): Record<string, unknown> | null {
 }
 
 /**
- * Classify one tool call.
+ * Classify one call of the command tool.
  *
- * Only `execute_platform_command` can be governed today, because the propose-
- * only partition is defined over the command surface. Tools with their own
- * handlers — saving a document to the vault, seeding a TMF — are NOT treated as
- * governed here, and that is the existing judgment rather than an omission:
- * `PROPOSE_ONLY_COMMANDS` deliberately excludes ordinary authoring mutations
- * ("work, not attestation"), on the reasoning that making AnA unable to do them
- * trades a real capability for no control. Escalating any of them is a product
- * decision about what AnA may do unaided, to be taken with the tier changed in
- * the same commit — not something this translation layer should decide on its
- * own.
+ * This function speaks for `execute_platform_command` only: it unwraps the
+ * command and asks the command partition. Any other tool is UNGOVERNED to it —
+ * not because those tools are ungoverned, but because they are classified by
+ * `classifyDirectToolCall` below against the tool-name registry. Until the
+ * 2026-09-26 lens (audit DP-36, plan P1-34) this docstring said the direct
+ * handlers were out of scope by design, on the reasoning that ordinary
+ * authoring mutations were "work, not attestation"; P0-12 had already reversed
+ * that for commands (every write is a proposal at the confirm tier), and
+ * DP-36 found the consequence of not reversing it for tools: a model response
+ * could save to the vault, revise a controlled document or approve an import
+ * with nobody confirming. The stream door still consults only this function;
+ * routes/ana-ri/stream.ts settleApprovals adds classifyDirectToolCall when its
+ * window opens, and governed-tool-gate.test.ts pins the interim.
  */
 export function classifyToolCall(call: ClassifiableToolCall): ToolGateVerdict {
   if (call.inputParseError) {
@@ -114,4 +131,58 @@ export function classifyToolCall(call: ClassifiableToolCall): ToolGateVerdict {
     params: asRecord(input.params) ?? {},
     tier: governedTierOf(command),
   };
+}
+
+export type DirectToolVerdict =
+  /** A read, or the command tool (classifyToolCall owns it). Nothing to ask. */
+  | { kind: 'UNGOVERNED' }
+  /** A person must authorise it. Carries what they are authorising, and the tier they authorise at. */
+  | { kind: 'NEEDS_APPROVAL'; tool: string; input: Record<string, unknown>; tier: ApprovalTier }
+  /** An act no chat confirmation can supply — an approval, attestation, signature or transmission. Refused, with where a person takes it. */
+  | { kind: 'REFUSE_IN_CHAT'; tool: string; act: string; where: string; why: string }
+  /** The call could not be read, so it cannot be cleared. See the module docstring. */
+  | { kind: 'UNDECIDABLE'; why: string };
+
+/**
+ * Classify one call of a directly registered tool against propose-only-tools.ts.
+ *
+ * Same discipline as classifyToolCall: arguments that failed to parse, or a
+ * governed tool whose input is not an object, are UNDECIDABLE — refused, never
+ * passed. A refusal that depends on one input value (qms_change_transition on
+ * `to`) is UNDECIDABLE when that value cannot be read, because a gate must not
+ * open widest when it can see least. `execute_platform_command` is UNGOVERNED
+ * here so that the two classifiers never answer for the same call.
+ */
+export function classifyDirectToolCall(call: ClassifiableToolCall): DirectToolVerdict {
+  if (call.inputParseError) {
+    return { kind: 'UNDECIDABLE', why: `arguments did not parse: ${call.inputParseError}` };
+  }
+  if (call.name === PLATFORM_COMMAND_TOOL) return { kind: 'UNGOVERNED' };
+
+  const isRefusalClass = Object.prototype.hasOwnProperty.call(REFUSE_IN_CHAT_TOOLS, call.name);
+  if (!isRefusalClass && !isProposeOnlyTool(call.name)) return { kind: 'UNGOVERNED' };
+
+  const input = asRecord(call.input);
+  if (!input) {
+    return { kind: 'UNDECIDABLE', why: 'the call carried no arguments object' };
+  }
+
+  if (isRefusalClass) {
+    const refusal = refusedInChatTool(call.name, input);
+    if (refusal) {
+      if (refusal.target === null) {
+        return { kind: 'UNDECIDABLE', why: `no transition target (${REFUSE_IN_CHAT_TOOLS[call.name].when?.field}) in the call` };
+      }
+      return { kind: 'REFUSE_IN_CHAT', tool: refusal.tool, act: refusal.act, where: refusal.where, why: refusal.why };
+    }
+  }
+
+  const tier = toolTierOf(call.name);
+  if (tier === null) {
+    // A refusal-class tool with no proposal side and no refusal for this input
+    // cannot happen (an unconditional entry always refuses); named rather than
+    // assumed, and refused rather than cleared.
+    return { kind: 'UNDECIDABLE', why: `${call.name} is governed but has no tier for this call` };
+  }
+  return { kind: 'NEEDS_APPROVAL', tool: call.name, input, tier };
 }
