@@ -374,7 +374,7 @@ export function apiErrorOfResponse(
   status: number,
   statusText: string,
   body: unknown
-): { code: string; message: string; details: unknown } {
+): AuthError {
   const top = (body && typeof body === 'object' ? body : {}) as Record<string, unknown>;
   const nested = (top.error && typeof top.error === 'object' ? top.error : {}) as Record<string, unknown>;
   const text = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() ? v : undefined);
@@ -383,7 +383,7 @@ export function apiErrorOfResponse(
   return {
     code: code ?? `HTTP_${status}`,
     message: message ?? (statusText || `Request failed (${status})`),
-    details: body,
+    details: body && typeof body === 'object' ? top : undefined,
   };
 }
 

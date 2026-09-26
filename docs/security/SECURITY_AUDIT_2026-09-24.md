@@ -331,7 +331,7 @@ needs a deployed environment or a live account. The correction to each refuted o
 | # | Claim (abridged) | Verdict | What decides it |
 |---|---|---|---|
 | A.1 | Documented information-security policy (DRAFT) | partial | eight policies exist, all unsigned 0.1 drafts; no recurring risk register (`policies/README.md`) |
-| B.1 | Tenant data segregated by RLS, enforced at boot, non-superuser role | verified in code; unverifiable here in deployment | `server/db/rlsEnforcement.ts`; `scripts/db/provision-app-role.mjs:245`; nine client-supplied keys remain contained by RLS only (IAM-15) |
+| B.1 | Tenant data segregated by RLS, enforced at boot, non-superuser role | verified in code; unverifiable here in deployment | `server/db/rlsEnforcement.ts`; `scripts/db/provision-app-role.mjs:245`; the nine client-supplied tenant keys are gone since `b1618c69` and the workspace header is verified since the P1-7b commit (IAM-15 closed 2026-09-26) (IAM-15) |
 | B.2 | An isolation test exists | verified | 54 `tests/db/*.dbtest.ts`; full-schema two-tenant contract in CI |
 | B.3 | AI provider placement honours residency; failover never crosses | partial | true for gateway dispatch (`sensitive-placement-policy.ts:117-127`); embeddings bypass the gateway entirely (DP-07) |
 | B.4 | Retention and deletion policy documented; governed records immutable | partial | immutability triggers exist with a session-settable bypass (DP-04); retention clock and legal-hold API not implemented (DP-20) |
@@ -384,7 +384,7 @@ needs a deployed environment or a live account. The correction to each refuted o
 | An integrity verifier walks every chain; proved by corrupting a row | verified | W3b evidence; scheduled by nothing (DP-06) |
 | One signature substrate; re-entry of password and TOTP at signing; binding; append-only supersession | partial | DP-02, DP-03, DP-16, DP-17 |
 | Fail-closed production boot (secrets, RLS, seal keys, signer mode) | verified for those four; partial overall | `AUTH_BOUNDARY_MODE=warn` and five `*_ACCEPT_*` flags are honoured in production (IAM-16, INF-17) |
-| Tenant isolation: RLS enforced, least-privilege role, CI gates | verified in code | deployment unverifiable here; IAM-15 residual |
+| Tenant isolation: RLS enforced, least-privilege role, CI gates | verified in code | deployment unverifiable here; IAM-15 closed 2026-09-26 (residual: `cortex-unified.ts:128` until its window closes) |
 | Governed AI: engines produce figures; approved registry; placement never crosses; PII screening on | partial | DP-07 (embeddings), DP-08 (auto-run writes), DP-29 |
 | Secure development: single branch, CodeQL and Semgrep, sealed dependency gate, ratchet | partial | Semgrep advisory (INF-10); the branch is unprotected and trunk CI red (INF-01) |
 

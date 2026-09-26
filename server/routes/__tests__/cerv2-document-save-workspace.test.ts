@@ -91,7 +91,7 @@ describe('POST /documents/:id/save and the workspace the request names', () => {
   });
 
   it('the header aliases and the query parameter are the same claim', async () => {
-    for (const headers of [{ 'x-client-workspace-id': '9' }, { 'x-client-workspace': '9' }]) {
+    for (const headers of [{ 'x-client-workspace-id': '9' }, { 'x-client-workspace': '9' }] as Record<string, string>[]) {
       const res = await save(headers);
       expect(res.status, JSON.stringify(headers)).toBe(403);
     }

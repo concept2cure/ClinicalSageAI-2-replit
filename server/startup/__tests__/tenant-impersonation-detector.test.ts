@@ -14,7 +14,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import type { NextFunction, Request, Response } from 'express';
 
-const audit = vi.hoisted(() => ({ logAction: vi.fn(async () => undefined) }));
+const audit = vi.hoisted(() => ({ logAction: vi.fn(async (..._args: any[]) => undefined) }));
 vi.mock('../../services/auditService', () => ({ default: audit }));
 
 import { validateTenantContext } from '../../middleware/enterprise-security';
