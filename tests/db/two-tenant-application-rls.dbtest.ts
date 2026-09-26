@@ -31,7 +31,6 @@ import {
   tokenA,
   tokenB,
   userA,
-  userB,
   signerA,
   workspaceB,
   ids,
@@ -42,6 +41,7 @@ import {
   auth,
   accessToken,
   provisionTwoTenantFixture,
+  provisionMember,
   teardownTwoTenantFixture,
 } from './two-tenant-fixture';
 
@@ -278,17 +278,19 @@ describe('WO-03 governed decisions under RLS (D3, 2026-09-24)', () => {
   let cp: express.Express;
   // The control plane's tenant-scoped routes are for each org's administrators
   // (ledger L183). These cases passed as members only because the guard let
-  // everyone in outside production by default, which it no longer does.
+  // everyone in outside production by default, which it no longer does. An
+  // administrator is a membership row that says `admin`: since 414f203e1
+  // (IAM-10) the row, not the token's claim, is the request's role.
   let adminA: string;
   let adminB: string;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     // Mounted exactly as server/bootstrap/register-core-routes.ts mounts it.
     cp = express();
     cp.use(express.json());
     cp.use('/api/control-plane', authenticateToken, controlPlaneRouter);
-    adminA = accessToken(userA, ORG_A, 'admin');
-    adminB = accessToken(userB, ORG_B, 'admin');
+    adminA = accessToken(await provisionMember(ORG_A, 'admin', 'gd-admin-a'), ORG_A, 'admin');
+    adminB = accessToken(await provisionMember(ORG_B, 'admin', 'gd-admin-b'), ORG_B, 'admin');
   });
 
   it('the recording evaluator persists the caller\'s own decision through the app role', async () => {

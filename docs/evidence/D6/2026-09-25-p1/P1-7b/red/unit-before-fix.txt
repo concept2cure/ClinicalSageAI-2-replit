@@ -1,0 +1,344 @@
+# P1-7b red run — the four suites against unchanged code (HEAD 7fbe51c5, 2026-09-26T12:56Z)
+# NODE_OPTIONS=--max-old-space-size=1536 npx vitest run server/middleware/__tests__/featureToggleMiddleware.workspace.test.ts server/services/__tests__/featureToggleService.workspace.test.ts server/routes/__tests__/cerv2-document-save-workspace.test.ts server/routes/__tests__/regulatory-submissions-workspace.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/middleware/__tests__/featureToggleMiddleware.workspace.test.ts > requireFeature and the X-Client-ID workspace > resolves with the workspace when it is the organisation's own 29ms
+   → expected "vi.fn()" to be called with arguments: [ 5, 7 ]
+
+Number of calls: 0
+
+ × server/middleware/__tests__/featureToggleMiddleware.workspace.test.ts > requireFeature and the X-Client-ID workspace > ignores a workspace of another organisation and resolves at organisation level 4ms
+   → expected "vi.fn()" to be called with arguments: [ 9, 7 ]
+
+Number of calls: 0
+
+ × server/middleware/__tests__/featureToggleMiddleware.workspace.test.ts > requireFeature and the X-Client-ID workspace > never trusts a workspace id when the session has no organisation to check it against 7ms
+   → expected "vi.fn()" to be called with arguments: [ …(3) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "UNIFIED_REGULATORY_SUBMISSIONS",
+    undefined,
+-   undefined,
++   5,
+  ]
+
+
+Number of calls: 1
+
+ ✓ server/middleware/__tests__/featureToggleMiddleware.workspace.test.ts > requireFeature and the X-Client-ID workspace > makes no ownership read when no workspace header was sent 3ms
+ × server/middleware/__tests__/featureToggleMiddleware.workspace.test.ts > requireFeature and the X-Client-ID workspace > a non-numeric workspace header is not a workspace 5ms
+   → expected "vi.fn()" to be called with arguments: [ …(3) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "UNIFIED_REGULATORY_SUBMISSIONS",
+    7,
+-   undefined,
++   NaN,
+  ]
+
+
+Number of calls: 1
+
+ ✓ server/middleware/__tests__/featureToggleMiddleware.workspace.test.ts > requireFeature and the X-Client-ID workspace > a feature that is off is 404, whichever workspace was named 3ms
+ ✓ server/routes/__tests__/cerv2-document-save-workspace.test.ts > POST /documents/:id/save and the workspace the request names > writes the document into the organisation's own workspace 52ms
+ × server/routes/__tests__/cerv2-document-save-workspace.test.ts > POST /documents/:id/save and the workspace the request names > refuses a workspace of another organisation before anything is read or written 10ms
+   → expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/cerv2-document-save-workspace.test.ts > POST /documents/:id/save and the workspace the request names > the header aliases and the query parameter are the same claim 4ms
+   → {"x-client-workspace-id":"9"}: expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/cerv2-document-save-workspace.test.ts > POST /documents/:id/save and the workspace the request names > verifies the claim against the session organisation, not against itself 5ms
+   → expected "vi.fn()" to be called with arguments: [ 5, 7 ]
+
+Number of calls: 0
+
+ × server/routes/__tests__/cerv2-document-save-workspace.test.ts > POST /documents/:id/save and the workspace the request names > a request that names no workspace is a 400, not an unhandled error 9ms
+   → expected 500 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/regulatory-submissions-workspace.test.ts > regulatory submissions and the workspace the request names > POST /projects records the organisation's own workspace 30ms
+ × server/routes/__tests__/regulatory-submissions-workspace.test.ts > regulatory submissions and the workspace the request names > POST /projects refuses a workspace of another organisation and writes nothing 10ms
+   → expected 201 to be 403 // Object.is equality
+ × server/routes/__tests__/regulatory-submissions-workspace.test.ts > regulatory submissions and the workspace the request names > GET /projects with a foreign workspace is refused, not answered with an empty list 5ms
+   → expected 200 to be 403 // Object.is equality
+ ✓ server/routes/__tests__/regulatory-submissions-workspace.test.ts > regulatory submissions and the workspace the request names > with no workspace named, the write is at organisation level as before 4ms
+ × server/services/__tests__/featureToggleService.workspace.test.ts > workspaceInOrganization > is true when the workspace row exists for that organisation 8ms
+   → FeatureToggleService.workspaceInOrganization is not a function
+ × server/services/__tests__/featureToggleService.workspace.test.ts > workspaceInOrganization > is false when no such row exists for that organisation 3ms
+   → FeatureToggleService.workspaceInOrganization is not a function
+ × server/services/__tests__/featureToggleService.workspace.test.ts > workspaceInOrganization > fails closed when the read cannot be made 1ms
+   → FeatureToggleService.workspaceInOrganization is not a function
+ × server/services/__tests__/featureToggleService.workspace.test.ts > workspaceInOrganization > refuses non-integer ids without reading 1ms
+   → FeatureToggleService.workspaceInOrganization is not a function
+ × server/services/__tests__/featureToggleService.workspace.test.ts > workspaceInOrganization > keeps the caller's scope when it has one and takes the system scope only when it has none 1ms
+   → FeatureToggleService.workspaceInOrganization is not a function
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/middleware/__tests__/featureToggleMiddleware.workspace.test.ts > requireFeature and the X-Client-ID workspace > resolves with the workspace when it is the organisation's own
+AssertionError: expected "vi.fn()" to be called with arguments: [ 5, 7 ]
+
+Number of calls: 0
+
+ ❯ server/middleware/__tests__/featureToggleMiddleware.workspace.test.ts:45:45
+     43|     const res = await request(app('7', '5')).get('/gated');
+     44|     expect(res.status).toBe(200);
+     45|     expect(service.workspaceInOrganization).toHaveBeenCalledWith(5, 7);
+       |                                             ^
+     46|     expect(service.isFeatureEnabled).toHaveBeenCalledWith('UNIFIED_REG…
+     47|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  server/middleware/__tests__/featureToggleMiddleware.workspace.test.ts > requireFeature and the X-Client-ID workspace > ignores a workspace of another organisation and resolves at organisation level
+AssertionError: expected "vi.fn()" to be called with arguments: [ 9, 7 ]
+
+Number of calls: 0
+
+ ❯ server/middleware/__tests__/featureToggleMiddleware.workspace.test.ts:52:45
+     50|     const res = await request(app('7', '9')).get('/gated');
+     51|     expect(res.status).toBe(200);
+     52|     expect(service.workspaceInOrganization).toHaveBeenCalledWith(9, 7);
+       |                                             ^
+     53|     expect(service.isFeatureEnabled).toHaveBeenCalledWith('UNIFIED_REG…
+     54|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  server/middleware/__tests__/featureToggleMiddleware.workspace.test.ts > requireFeature and the X-Client-ID workspace > never trusts a workspace id when the session has no organisation to check it against
+AssertionError: expected "vi.fn()" to be called with arguments: [ …(3) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "UNIFIED_REGULATORY_SUBMISSIONS",
+    undefined,
+-   undefined,
++   5,
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/middleware/__tests__/featureToggleMiddleware.workspace.test.ts:59:38
+     57|     await request(app(null, '5')).get('/gated');
+     58|     expect(service.workspaceInOrganization).not.toHaveBeenCalled();
+     59|     expect(service.isFeatureEnabled).toHaveBeenCalledWith('UNIFIED_REG…
+       |                                      ^
+     60|   });
+     61|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  server/middleware/__tests__/featureToggleMiddleware.workspace.test.ts > requireFeature and the X-Client-ID workspace > a non-numeric workspace header is not a workspace
+AssertionError: expected "vi.fn()" to be called with arguments: [ …(3) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "UNIFIED_REGULATORY_SUBMISSIONS",
+    7,
+-   undefined,
++   NaN,
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/middleware/__tests__/featureToggleMiddleware.workspace.test.ts:71:38
+     69|     await request(app('7', 'abc')).get('/gated');
+     70|     expect(service.workspaceInOrganization).not.toHaveBeenCalled();
+     71|     expect(service.isFeatureEnabled).toHaveBeenCalledWith('UNIFIED_REG…
+       |                                      ^
+     72|   });
+     73|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  server/routes/__tests__/cerv2-document-save-workspace.test.ts > POST /documents/:id/save and the workspace the request names > refuses a workspace of another organisation before anything is read or written
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/cerv2-document-save-workspace.test.ts:87:24
+     85|   it("refuses a workspace of another organisation before anything is r…
+     86|     const res = await save({ 'x-client-id': '9' });
+     87|     expect(res.status).toBe(403);
+       |                        ^
+     88|     expect(JSON.stringify(res.body)).not.toContain('9');
+     89|     expect(inserted).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  server/routes/__tests__/cerv2-document-save-workspace.test.ts > POST /documents/:id/save and the workspace the request names > the header aliases and the query parameter are the same claim
+AssertionError: {"x-client-workspace-id":"9"}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/cerv2-document-save-workspace.test.ts:96:51
+     94|     for (const headers of [{ 'x-client-workspace-id': '9' }, { 'x-clie…
+     95|       const res = await save(headers);
+     96|       expect(res.status, JSON.stringify(headers)).toBe(403);
+       |                                                   ^
+     97|     }
+     98|     const viaQuery = await save({}, '/api/cerv2/documents/new/save?cli…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  server/routes/__tests__/cerv2-document-save-workspace.test.ts > POST /documents/:id/save and the workspace the request names > verifies the claim against the session organisation, not against itself
+AssertionError: expected "vi.fn()" to be called with arguments: [ 5, 7 ]
+
+Number of calls: 0
+
+ ❯ server/routes/__tests__/cerv2-document-save-workspace.test.ts:105:47
+    103|   it('verifies the claim against the session organisation, not against…
+    104|     await save({ 'x-client-id': '5' });
+    105|     expect(ownership.workspaceInOrganization).toHaveBeenCalledWith(5, …
+       |                                               ^
+    106|   });
+    107|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  server/routes/__tests__/cerv2-document-save-workspace.test.ts > POST /documents/:id/save and the workspace the request names > a request that names no workspace is a 400, not an unhandled error
+AssertionError: expected 500 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 500
+
+ ❯ server/routes/__tests__/cerv2-document-save-workspace.test.ts:110:24
+    108|   it('a request that names no workspace is a 400, not an unhandled err…
+    109|     const res = await save({});
+    110|     expect(res.status).toBe(400);
+       |                        ^
+    111|     expect(inserted).toEqual([]);
+    112|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+ FAIL  server/routes/__tests__/regulatory-submissions-workspace.test.ts > regulatory submissions and the workspace the request names > POST /projects refuses a workspace of another organisation and writes nothing
+AssertionError: expected 201 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 201
+
+ ❯ server/routes/__tests__/regulatory-submissions-workspace.test.ts:79:24
+     77|       .set({ 'x-client-workspace-id': '9' })
+     78|       .send(submission);
+     79|     expect(res.status).toBe(403);
+       |                        ^
+     80|     expect(JSON.stringify(res.body)).not.toContain('9');
+     81|     expect(inserted).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+
+ FAIL  server/routes/__tests__/regulatory-submissions-workspace.test.ts > regulatory submissions and the workspace the request names > GET /projects with a foreign workspace is refused, not answered with an empty list
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/regulatory-submissions-workspace.test.ts:88:24
+     86|       .get('/api/regulatory-submissions/projects')
+     87|       .query({ clientWorkspaceId: 9 });
+     88|     expect(res.status).toBe(403);
+       |                        ^
+     89|     expect(dbMock.select).not.toHaveBeenCalled();
+     90|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+
+ FAIL  server/services/__tests__/featureToggleService.workspace.test.ts > workspaceInOrganization > is true when the workspace row exists for that organisation
+TypeError: FeatureToggleService.workspaceInOrganization is not a function
+ ❯ server/services/__tests__/featureToggleService.workspace.test.ts:46:39
+     44|   it('is true when the workspace row exists for that organisation', as…
+     45|     dbState.rows = [{ id: 5 }];
+     46|     expect(await FeatureToggleService.workspaceInOrganization(5, 7)).t…
+       |                                       ^
+     47|     expect(dbState.calls).toBe(1);
+     48|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/15]⎯
+
+ FAIL  server/services/__tests__/featureToggleService.workspace.test.ts > workspaceInOrganization > is false when no such row exists for that organisation
+TypeError: FeatureToggleService.workspaceInOrganization is not a function
+ ❯ server/services/__tests__/featureToggleService.workspace.test.ts:51:39
+     49|
+     50|   it('is false when no such row exists for that organisation', async (…
+     51|     expect(await FeatureToggleService.workspaceInOrganization(9, 7)).t…
+       |                                       ^
+     52|   });
+     53|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/15]⎯
+
+ FAIL  server/services/__tests__/featureToggleService.workspace.test.ts > workspaceInOrganization > fails closed when the read cannot be made
+TypeError: FeatureToggleService.workspaceInOrganization is not a function
+ ❯ server/services/__tests__/featureToggleService.workspace.test.ts:56:39
+     54|   it('fails closed when the read cannot be made', async () => {
+     55|     dbState.throws = true;
+     56|     expect(await FeatureToggleService.workspaceInOrganization(5, 7)).t…
+       |                                       ^
+     57|   });
+     58|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/15]⎯
+
+ FAIL  server/services/__tests__/featureToggleService.workspace.test.ts > workspaceInOrganization > refuses non-integer ids without reading
+TypeError: FeatureToggleService.workspaceInOrganization is not a function
+ ❯ server/services/__tests__/featureToggleService.workspace.test.ts:60:39
+     58|
+     59|   it('refuses non-integer ids without reading', async () => {
+     60|     expect(await FeatureToggleService.workspaceInOrganization(Number.N…
+       |                                       ^
+     61|     expect(await FeatureToggleService.workspaceInOrganization(5, 7.5))…
+     62|     expect(dbState.calls).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/15]⎯
+
+ FAIL  server/services/__tests__/featureToggleService.workspace.test.ts > workspaceInOrganization > keeps the caller's scope when it has one and takes the system scope only when it has none
+TypeError: FeatureToggleService.workspaceInOrganization is not a function
+ ❯ server/services/__tests__/featureToggleService.workspace.test.ts:67:32
+     65|   it('keeps the caller\'s scope when it has one and takes the system s…
+     66|     dbState.rows = [{ id: 5 }];
+     67|     await FeatureToggleService.workspaceInOrganization(5, 7);
+       |                                ^
+     68|     expect(scope.systemRuns).toBe(0);
+     69|     scope.current = undefined;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/15]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  15 failed | 5 passed (20)
+   Start at  12:56:16
+   Duration  2.10s (transform 2.10s, setup 272ms, import 4.58s, tests 208ms, environment 0ms)
+
+exit=1

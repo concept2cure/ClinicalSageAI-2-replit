@@ -5,6 +5,10 @@
 import { createRun, helpers } from '../../lib/harness.mjs';
 import { requireSigner, signerCode } from '../../lib/credentials.mjs';
 import { computeQmsDocumentContentDigest, qmsDocumentDigestInput } from '../../lib/qms-digest.mjs';
+import {
+  inDays, errCode, dataOf, isApprovalRow, isQmsSignatureRow, isRetirementStamp, signatureRowsFor,
+  postSigned, approveSigned, retireSigned, retirementDigestReport,
+} from './signed-acts.mjs';
 
 const run = await createRun({
   app: 'QMS',
@@ -14,7 +18,6 @@ const run = await createRun({
 });
 const { step, state } = run;
 const stamp = helpers.stamp();
-const inDays = (n) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
 
 await step(
   {
@@ -91,52 +94,6 @@ await step(
     return 'HTTP 409';
   },
 );
-
-const APPROVE_HEX64 = /^[0-9a-f]{64}$/;
-const BINDING_BASIS = 'qms-document-version-content-sha256';
-/** The mdx-qms error envelope is { error: <message>, details: { code, fieldErrors? } } (server/lib/api-response.ts clientError). */
-const errCode = (r) => r.json?.details?.code ?? r.json?.error?.code ?? null;
-/** The approval stamps the route commits to: effective, approver = signer, approved_at set. */
-const isEffectiveBy = (d, userId) => d?.status === 'effective' && String(d?.approver_id) === String(userId) && Boolean(d?.approved_at);
-/** meta.signature as the signed approve returns it (docs/evidence/WB/2026-09-21/README.md). */
-const isApprovalSignature = (sig) =>
-  Boolean(sig && sig.id && sig.meaning === 'APPROVED' && APPROVE_HEX64.test(String(sig.boundPayloadDigest)) && sig.bindingBasis === BINDING_BASIS);
-/** The electronic_signatures row GET /api/part11/signatures/by-target returns for a QMS approval. */
-const isApprovalRow = (row, signerId) =>
-  String(row.signer_id) === String(signerId) &&
-  row.signature_meaning === 'APPROVED' &&
-  row.signature_type === 'qms-document-approval' &&
-  row.binding_basis === BINDING_BASIS &&
-  row.is_valid === true;
-
-/**
- * A signed approval by the credentialed signer (the second identity). Shared by
- * the positive step (05) and the fixture approval of SOP B (06d). Asserts the
- * response shape the product commits to (docs/evidence/WB/2026-09-21/README.md).
- */
-async function approveSigned(ctx, docId, reason) {
-  const { expect } = ctx;
-  const signer = ctx.state.signer;
-  const asSigner = ctx.apiAs(signer.session);
-  const mfaToken = await signerCode(signer);
-  const r = await asSigner('POST', `/api/mdx/qms/documents/${docId}/approve`, {
-    password: signer.password,
-    ...(mfaToken ? { mfaToken } : {}),
-    meaning: 'APPROVED',
-    reason,
-    effectiveDate: inDays(0),
-  });
-  expect(r.status === 200, `signed approve expected 200, got ${r.status}`, r.json);
-  const d = r.json?.data ?? {};
-  const meta = r.json?.meta ?? {};
-  expect(isEffectiveBy(d, signer.session.user.id), 'approval stamps wrong (status/approver/approved_at)', d);
-  expect(meta.auditTrail?.persisted === true, 'meta.auditTrail not reported as persisted', meta);
-  const sig = meta.signature;
-  expect(isApprovalSignature(sig), 'meta.signature lacks id / meaning APPROVED / sha256 boundPayloadDigest / bindingBasis', sig);
-  const approval = d.metadata?.approval ?? {};
-  expect(approval.contentDigest === sig.boundPayloadDigest, 'document metadata.approval.contentDigest differs from the signature digest', { approval, sig });
-  return { response: r, document: d, signature: sig };
-}
 
 await step(
   {
@@ -399,17 +356,56 @@ await step(
 
 await step(
   {
-    id: 'OQ-QMS-10',
+    id: 'OQ-QMS-10b',
     urs: ['URS-QMS-007'],
-    title: 'Retire a document with a recorded reason',
-    action: 'POST /documents/:id/retire {reason}',
-    expected: 'HTTP 200; status retired; the reason is kept',
+    title: 'A reason alone does not retire a controlled document',
+    action: 'as the run identity (an editor), POST /documents/:docB/retire {reason} with no password and no meaning',
+    expected: 'HTTP 400 ESIGNATURE_COMPONENT_MISSING; fieldErrors name password and meaning; docB keeps the status it had; no new signature row',
     dependsOn: ['OQ-QMS-06a'],
+    note: 'Security review 2026-09-24, DP-32 / P1-29: until 2026-09-26 this request retired the document (OQ-QMS-10 as executed on 2026-09-23c is the record of that). Retirement is now the same electronic signature as approval (§11.50, §11.200); this step runs with or without the signer credential, so the refusal is observed on every execution.',
   },
   async ({ api, expect }) => {
-    const r = await api('POST', `/api/mdx/qms/documents/${state.docB.id}/retire`, { reason: 'OQ-006 step 10: superseded by validation' });
-    expect(r.status === 200 && r.json?.data?.status === 'retired', `expected retired, got ${r.status}`, r.json);
-    return `retired; metadata: ${JSON.stringify(r.json.data.metadata).slice(0, 160)}`;
+    const docPath = `/api/mdx/qms/documents/${state.docB.id}`;
+    const before = { status: dataOf(await api('GET', docPath)).status, rows: (await signatureRowsFor(api, state.docB.id)).length };
+    const r = await api('POST', `${docPath}/retire`, { reason: 'OQ-006 step 10b: a reason alone must not retire' });
+    expect(r.status === 400 && errCode(r) === 'ESIGNATURE_COMPONENT_MISSING', `expected 400 ESIGNATURE_COMPONENT_MISSING, got ${r.status}`, r.json);
+    const fields = Object.keys(r.json?.details?.fieldErrors ?? {});
+    expect(['password', 'meaning'].every((f) => fields.includes(f)), 'fieldErrors do not name password and meaning', r.json);
+    const after = { status: dataOf(await api('GET', docPath)).status, rows: (await signatureRowsFor(api, state.docB.id)).length };
+    expect(after.status === before.status && after.status !== 'retired' && after.rows === before.rows, 'docB changed, or a signature row was written, on a reason-only retire', { before, after });
+    return `HTTP 400 ESIGNATURE_COMPONENT_MISSING (fieldErrors: ${fields.join(', ')}); docB still ${after.status}; signature rows unchanged (${after.rows})`;
+  },
+);
+
+await step(
+  {
+    id: 'OQ-QMS-10',
+    urs: ['URS-QMS-007'],
+    title: 'CREDENTIALED: the signer retires SOP B as an electronic signature; the retirement is stamped, audited and signed; a second retirement is refused',
+    action: 'as the signer, POST /documents/:docB/retire {password, mfaToken?, meaning:"APPROVED", reason}; read the signatures by target; recompute the §11.70 digest from the stored row; retire again',
+    expected: 'HTTP 200: status retired, metadata.retired {reason, meaning APPROVED, contentDigest, bindingBasis, by = signer, at, fromStatus effective}, meta.auditTrail {persisted, chained}, meta.signature {id, meaning APPROVED, boundPayloadDigest (sha256), bindingBasis qms-document-version-content-sha256}; metadata.retired.contentDigest equals the signature digest; the signatures for docB are now two, the new one signature_type qms-document-retirement by the signer; the digest recomputed from the stored row (version content minus metadata.approval and metadata.retired) equals the signature digest; second retire → 409 QMS_INVALID_STATE',
+    dependsOn: ['OQ-QMS-06d'],
+    note: 'Security review 2026-09-24, DP-32 / P1-29. Retiring is the terminal transition of an effective procedure and a signed record (§11.50, §11.200), taken with the same ceremony as the approval: signing authority, password and enrolled second factor re-verified, the meaning, one electronic_signatures row bound to the version content, the UPDATE and the chained audit row in one transaction (server/services/qms/document-approval-signature.ts retireQmsDocumentSigned).',
+  },
+  async (ctx) => {
+    const { expect, attach } = ctx;
+    const signer = ctx.state.signer;
+    const signerId = signer.session.user.id;
+    const asSigner = ctx.apiAs(signer.session);
+    const { response, document: d, signature: sig } = await retireSigned(ctx, state.docB.id, 'OQ-006 step 10: superseded by validation (signed)');
+    const retired = d.metadata?.retired ?? {};
+    expect(isRetirementStamp(retired, sig, signerId), 'metadata.retired stamps wrong (contentDigest/by/fromStatus/meaning/at)', { retired, sig });
+    const rows = await signatureRowsFor(asSigner, d.id);
+    const row = rows.find((x) => x.signature_type === 'qms-document-retirement');
+    expect(rows.length === 2 && row && isQmsSignatureRow(row, signerId, 'qms-document-retirement') && String(row.id) === String(sig.id), `expected 2 signature rows for docB with one valid retirement row id ${sig.id}, got ${rows.length}`, rows);
+    // §11.70: the retirement digest is the version-content recipe with the stamp the retirement writes removed.
+    const report = retirementDigestReport(dataOf(await asSigner('GET', `/api/mdx/qms/documents/${d.id}`)), sig, retired, row);
+    attach('retirement-digest-recomputation.json', report);
+    expect(report.match, 'recomputed §11.70 retirement digest does not match the signature / the stored document', report);
+    const again = await postSigned(ctx, `/api/mdx/qms/documents/${d.id}/retire`, { reason: 'OQ-006 step 10: second retirement must be refused' });
+    expect(again.status === 409 && errCode(again) === 'QMS_INVALID_STATE', `second retire expected 409 QMS_INVALID_STATE, got ${again.status}`, again.json);
+    state.docB = d;
+    return `retired by ${retired.by} (${signer.session.user.email}) from ${retired.fromStatus} at ${retired.at}; signature ${sig.id} meaning ${sig.meaning}, ${sig.authenticationMethod}, digest ${String(sig.boundPayloadDigest).slice(0, 12)}… (recomputed match ${report.match}); 2 rows for docB; auditTrail=${JSON.stringify(response.json.meta.auditTrail)}; re-retire → 409 QMS_INVALID_STATE`;
   },
 );
 

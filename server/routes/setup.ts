@@ -20,6 +20,7 @@ import { config } from '../config/environment';
 import { createScopedLogger } from '../utils/logger.js';
 import { assertCanAdmitNewTenant } from '../db/tenantAdmission';
 import { provisionLaunchModules } from '../services/entitlements/launch-scope.js';
+import { openSession } from '../services/session-inactivity';
 import {
   drizzleWorkspaceStore,
   ensureOrganizationDefaultWorkspace,
@@ -144,6 +145,10 @@ router.post('/initialize', setupLimiter, async (req: Request, res: Response) => 
 
     logger.info('First-run setup completed', { orgId: result.org.id });
 
+    // The bootstrap token is a session like any sign-in's: its id, start and
+    // idle window from the new organisation's settings, registered against the
+    // account's concurrent-session limit (P1-1; P1-38 brought this door in).
+    const session = await openSession(result.user.id, result.org.settings);
     const token = jwt.sign(
       {
         userId: result.user.id.toString(),
@@ -152,6 +157,7 @@ router.post('/initialize', setupLimiter, async (req: Request, res: Response) => 
         organizationUuid: result.org.uuid,
         role: 'admin',
         type: 'access',
+        ...session,
       },
       config.jwt.secret,
       { expiresIn: config.jwt.expiresIn }

@@ -2599,6 +2599,11 @@ export const users = pgTable('users', {
   emailOtpHash: text('email_otp_hash'),
   emailOtpExpiresAt: timestamp('email_otp_expires_at'),
   emailOtpAttempts: integer('email_otp_attempts').default(0),
+  // Codes re-issued to the current sign-in challenge (POST /mfa/resend), refused
+  // past emailOtpService.MAX_RESENDS and started again only by a fresh challenge
+  // (the password). migrations/20260923_users_mfa_totp_last_step.sql, amended
+  // in place 2026-09-26 (CLAUDE.md Rule 1).
+  emailOtpResends: integer('email_otp_resends').default(0),
   // Account lockout fields
   failedLoginAttempts: integer('failed_login_attempts').default(0),
   lockedUntil: timestamp('locked_until'),

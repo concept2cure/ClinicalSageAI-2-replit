@@ -1,0 +1,3872 @@
+{
+ "$comment": "AnA tool register (P1-34). One entry per registered tool: its class, what it writes, where. Classes and the input rules are explained in tool-authorization.ts. Classification evidence: docs/evidence/D6/2026-09-26-p1-34/.",
+ "tools": {
+  "ack_training": {
+   "class": "refuse",
+   "writes": "training attestation in the user's name (method 'attestation', model-supplied quiz_score)",
+   "site": "AnaToolExecutor.ts:13771",
+   "why": "A training acknowledgement is the trainee’s own attestation; they record it themselves on the document’s training record."
+  },
+  "act_on_screen": {
+   "class": "self",
+   "writes": "view-only screen directive and in-turn program focus",
+   "site": "AnaToolExecutor.ts:17134"
+  },
+  "add_amendment_change": {
+   "class": "confirm",
+   "writes": "INSERT protocol_amendment_changes + governed-action row",
+   "site": "protocol-amendments-service.ts:151"
+  },
+  "add_biological_agent": {
+   "class": "confirm",
+   "writes": "INSERT ibc_biological_agents + audit",
+   "site": "AnaToolExecutor.ts:10492"
+  },
+  "add_capa_action": {
+   "class": "confirm",
+   "writes": "INSERT protocol_capa_actions; deviation -> capa_pending + governed-action row",
+   "site": "protocol-deviations-service.ts:171"
+  },
+  "add_committee_agenda_item": {
+   "class": "confirm",
+   "writes": "INSERT committee_agenda_items + governed-action row",
+   "site": "AnaToolExecutor.ts:11798"
+  },
+  "add_coverage_item": {
+   "class": "confirm",
+   "writes": "INSERT coverage_analysis_items + governed-action row",
+   "site": "AnaToolExecutor.ts:11961"
+  },
+  "add_ctq_factor": {
+   "class": "confirm",
+   "writes": "INSERT rbm_risk_items",
+   "site": "rbm/rbm-actuator.ts:82"
+  },
+  "add_disclosure_interest": {
+   "class": "confirm",
+   "writes": "INSERT disclosure_interests + governed-action row",
+   "site": "AnaToolExecutor.ts:10077"
+  },
+  "add_effort_line": {
+   "class": "confirm",
+   "writes": "INSERT effort_lines + audit",
+   "site": "AnaToolExecutor.ts:13224"
+  },
+  "add_eligibility_criterion": {
+   "class": "confirm",
+   "writes": "INSERT protocol_eligibility_criteria + governed-action row",
+   "site": "AnaToolExecutor.ts:11530"
+  },
+  "add_grant_budget_line": {
+   "class": "confirm",
+   "writes": "INSERT grant_budget_lines + governed-action row",
+   "site": "AnaToolExecutor.ts:12322"
+  },
+  "add_irb_site": {
+   "class": "confirm",
+   "writes": "INSERT irb_sites + governed-action row",
+   "site": "AnaToolExecutor.ts:10389"
+  },
+  "add_labeling_symbol": {
+   "class": "confirm",
+   "writes": "INSERT labeling_symbols",
+   "site": "AnaToolExecutor.ts:14204"
+  },
+  "add_labeling_translation": {
+   "class": "conditional",
+   "writes": "INSERT labeling_translations",
+   "site": "AnaToolExecutor.ts:14161",
+   "rule": "input.back_translation_verified === true -> refuse (verification claim); else confirm"
+  },
+  "add_other_support_entry": {
+   "class": "confirm",
+   "writes": "INSERT other_support_entries + governed-action row",
+   "site": "other-support-service.ts:92"
+  },
+  "add_personnel_training": {
+   "class": "confirm",
+   "writes": "INSERT personnel_training + governed-action row",
+   "site": "AnaToolExecutor.ts:13156"
+  },
+  "add_protocol_budget_item": {
+   "class": "confirm",
+   "writes": "INSERT protocol_budget_items + governed-action row",
+   "site": "protocol-budget-service.ts:33"
+  },
+  "add_protocol_milestone": {
+   "class": "confirm",
+   "writes": "INSERT protocol_milestones + governed-action row",
+   "site": "protocol-milestones-service.ts:31"
+  },
+  "add_protocol_objective": {
+   "class": "confirm",
+   "writes": "INSERT protocol_objectives + governed-action row",
+   "site": "AnaToolExecutor.ts:11506"
+  },
+  "add_protocol_review_comment": {
+   "class": "confirm",
+   "writes": "INSERT protocol_review_comments + governed-action row",
+   "site": "protocol-reviews-service.ts:203"
+  },
+  "add_protocol_risk": {
+   "class": "confirm",
+   "writes": "INSERT protocol_risks + audit",
+   "site": "AnaToolExecutor.ts:11399"
+  },
+  "add_risk_control": {
+   "class": "conditional",
+   "writes": "INSERT risk_controls",
+   "site": "AnaToolExecutor.ts:8006",
+   "rule": "input.status in (verified, effective) or verification_evidence/effectiveness_evidence supplied -> refuse; else confirm"
+  },
+  "add_soa_assessment": {
+   "class": "confirm",
+   "writes": "INSERT protocol_soa_assessments + governed-action row",
+   "site": "protocol-soa-service.ts:31"
+  },
+  "adjust_multiplicity": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15609"
+  },
+  "advise_coa_selection": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2877"
+  },
+  "advise_ctd_structure": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2832"
+  },
+  "advise_data_integrity": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2086"
+  },
+  "advise_device_readiness": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2097"
+  },
+  "advise_estimand": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2795"
+  },
+  "advise_eu_technical_file_readiness": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2128"
+  },
+  "advise_gcp": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2860"
+  },
+  "advise_global_market_strategy": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2105"
+  },
+  "advise_global_submission_plan": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2145"
+  },
+  "advise_labeling_structure": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2584"
+  },
+  "advise_medical_information": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2785"
+  },
+  "advise_midd": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17701"
+  },
+  "advise_pharmacovigilance": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2818"
+  },
+  "advise_pma_readiness": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2137"
+  },
+  "advise_regulatory_pathway": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:3445"
+  },
+  "advise_reporting_guideline": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2076"
+  },
+  "advise_risk_management": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2895"
+  },
+  "advise_rwe_design": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2546"
+  },
+  "advise_special_designation": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2846"
+  },
+  "advise_study_design": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2555"
+  },
+  "amend_fda_form": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:418"
+  },
+  "amend_schedule_of_events": {
+   "class": "confirm",
+   "writes": "UPDATE project_workflow_stages, schedule revision row",
+   "site": "AnaToolExecutor.ts:2408"
+  },
+  "ana_tool_pedigree": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2162"
+  },
+  "analyze_exposure_response": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17694"
+  },
+  "analyze_external_control_borrow": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15578"
+  },
+  "analyze_missing_data_impact": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5484"
+  },
+  "analyze_predicate_device": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:4304"
+  },
+  "analyze_rmst": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15557"
+  },
+  "analyze_safety_signal": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15585"
+  },
+  "analyze_win_ratio": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15545"
+  },
+  "answer_intelligence_question": {
+   "class": "self",
+   "writes": "AnA interview session state (tenant record written by commit_intelligence_flow)",
+   "site": "AnaToolExecutor.ts:19109"
+  },
+  "apply_fact_change": {
+   "class": "confirm",
+   "writes": "re-versions a canonical fact; drift cascade; audit",
+   "site": "AnaToolExecutor.ts:5964"
+  },
+  "apply_protocol_design_derivation": {
+   "class": "confirm",
+   "writes": "overwrites bound study design + governed-action row",
+   "site": "AnaToolExecutor.ts:20436"
+  },
+  "approve_import": {
+   "class": "confirm",
+   "writes": "INSERT concept2cure_artifacts (draft); import job completed; human route needs no e-signature",
+   "site": "AnaToolExecutor.ts:14455"
+  },
+  "approve_no_cost_extension": {
+   "class": "refuse",
+   "writes": "none; the handler already refuses (e-signed route)",
+   "site": "AnaToolExecutor.ts:12476",
+   "refusedBy": "handler",
+   "why": "An approval is an e-signed act: the person does it with the Approve button, which asks for their password and second factor."
+  },
+  "approve_qms_document": {
+   "class": "refuse",
+   "writes": "none; the handler already refuses (e-signed route)",
+   "site": "AnaToolExecutor.ts:13645",
+   "refusedBy": "handler",
+   "why": "An approval is an e-signed act: the person does it with the Approve button, which asks for their password and second factor."
+  },
+  "approve_rbm_assessment": {
+   "class": "refuse",
+   "writes": "none; the handler already refuses (signed route)",
+   "site": "AnaToolExecutor.ts:3406",
+   "refusedBy": "handler",
+   "why": "An approval is an e-signed act: the person does it with the Approve button, which asks for their password and second factor."
+  },
+  "approve_rbm_plan": {
+   "class": "refuse",
+   "writes": "none; the handler already refuses (signed route)",
+   "site": "AnaToolExecutor.ts:3428",
+   "refusedBy": "handler",
+   "why": "An approval is an e-signed act: the person does it with the Approve button, which asks for their password and second factor."
+  },
+  "assemble_briefing_book": {
+   "class": "conditional",
+   "writes": "INSERT submission_twin_challenges",
+   "site": "submission-twin-service.ts:506",
+   "rule": "run_premortem !== false with numeric package_id and assessment_id -> confirm; else read"
+  },
+  "assemble_crl_premortem_artifact": {
+   "class": "self",
+   "writes": "scratch .docx under tmp/docbuilder when export is true",
+   "site": "AnaToolExecutor.ts:6951"
+  },
+  "assemble_device_submission": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15865"
+  },
+  "assemble_ectd_module_from_artifacts": {
+   "class": "self",
+   "writes": "scratch .docx/.pdf under tmp/docbuilder, not filed",
+   "site": "docx/masterDocumentBuilder.ts:373"
+  },
+  "assess_abuse_liability": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18268"
+  },
+  "assess_accelerated_stability": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:6163"
+  },
+  "assess_ai_ml_device": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18817"
+  },
+  "assess_analytical_method_validation": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:16906"
+  },
+  "assess_analytical_similarity": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5555"
+  },
+  "assess_analytical_similarity_biosimilar": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18041"
+  },
+  "assess_api_gmp": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18543"
+  },
+  "assess_atmp_comparability": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17840"
+  },
+  "assess_batch_poolability": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:16097"
+  },
+  "assess_benefit_risk": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:16778"
+  },
+  "assess_benefit_risk_balance": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18920"
+  },
+  "assess_biomarker_analytical_validation": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18639"
+  },
+  "assess_biomarker_clinical_validation": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18646"
+  },
+  "assess_biosimilar_cmc": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18076"
+  },
+  "assess_biowaiver": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17664"
+  },
+  "assess_bla_filing_risk": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5609"
+  },
+  "assess_boxed_warning": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18144"
+  },
+  "assess_br_uncertainty": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18934"
+  },
+  "assess_carcinogenicity_need": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17745"
+  },
+  "assess_cardiovascular_safety_pharmacology": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18240"
+  },
+  "assess_cart_requirements": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17826"
+  },
+  "assess_cell_therapy_manufacturing": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17819"
+  },
+  "assess_claim_evidence_integrity": {
+   "class": "confirm",
+   "writes": "INSERT submission_twin_evidence_links on every call",
+   "site": "submission-twin-service.ts:219"
+  },
+  "assess_cns_safety_pharmacology": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18247"
+  },
+  "assess_coa_fit_for_purpose": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18350"
+  },
+  "assess_coa_validation": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18336"
+  },
+  "assess_combination_product": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9818"
+  },
+  "assess_comparability": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5573"
+  },
+  "assess_comparability_protocol": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17980"
+  },
+  "assess_computer_system_validation": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18557"
+  },
+  "assess_concentration_qtc": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5313"
+  },
+  "assess_correlate_of_protection": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18865"
+  },
+  "assess_data_integrity": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18522"
+  },
+  "assess_ddi_risk": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5362"
+  },
+  "assess_device_constituent_controls": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18454"
+  },
+  "assess_device_cybersecurity": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18845"
+  },
+  "assess_device_evidence_structure": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9650"
+  },
+  "assess_dispatch_readiness": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9884"
+  },
+  "assess_dissolution_similarity": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17657"
+  },
+  "assess_dose_exposure_response": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18412"
+  },
+  "assess_essential_principles": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18790"
+  },
+  "assess_established_conditions": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18961"
+  },
+  "assess_expedited_program": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17993"
+  },
+  "assess_food_effect": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17932"
+  },
+  "assess_gcp_compliance": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18728"
+  },
+  "assess_gene_therapy_requirements": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17812"
+  },
+  "assess_gmlp": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18831"
+  },
+  "assess_immunogenicity": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5591"
+  },
+  "assess_immunogenicity_comparability": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18220"
+  },
+  "assess_immunogenicity_risk": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18185"
+  },
+  "assess_indication_extrapolation": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18055"
+  },
+  "assess_inspection_readiness": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18721"
+  },
+  "assess_interchangeability": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18062"
+  },
+  "assess_intercurrent_event_strategy": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18481"
+  },
+  "assess_iso17511_traceability": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:6126"
+  },
+  "assess_ivd_analytical_extensions": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15736"
+  },
+  "assess_lot_consistency": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18879"
+  },
+  "assess_mdr_reportability": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:6288"
+  },
+  "assess_metabolite_safety": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18584"
+  },
+  "assess_nitrosamine_risk": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18117"
+  },
+  "assess_nonclinical_program": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5285"
+  },
+  "assess_nonclinical_safety": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5259"
+  },
+  "assess_orphan_designation": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18007"
+  },
+  "assess_otc_labeling": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18172"
+  },
+  "assess_output_confidence": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:943"
+  },
+  "assess_pathway_eligibility": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9604"
+  },
+  "assess_pathway_readiness": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9360"
+  },
+  "assess_pediatric_extrapolation": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17775"
+  },
+  "assess_pediatric_requirements": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17796"
+  },
+  "assess_plr_structure": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18137"
+  },
+  "assess_postapproval_comparability": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18982"
+  },
+  "assess_pregnancy_lactation_labeling": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18158"
+  },
+  "assess_process_validation": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17973"
+  },
+  "assess_project_optimus_alignment": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18384"
+  },
+  "assess_protein_binding": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18605"
+  },
+  "assess_pv_causality": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18288"
+  },
+  "assess_qms": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9837"
+  },
+  "assess_qtc_risk": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17904"
+  },
+  "assess_rare_disease_endpoint": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18694"
+  },
+  "assess_readability": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:3543"
+  },
+  "assess_recorded_batch_poolability": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:16625"
+  },
+  "assess_recorded_process_capability": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:16524"
+  },
+  "assess_recorded_stability_trend": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:16472"
+  },
+  "assess_regulatory_landscape": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:3645"
+  },
+  "assess_respiratory_safety_pharmacology": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18254"
+  },
+  "assess_rolling_submission": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18021"
+  },
+  "assess_rwe_bias_risk": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17877"
+  },
+  "assess_rwe_regulatory_acceptability": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17884"
+  },
+  "assess_scientific_validity": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:6135"
+  },
+  "assess_shelf_life_stability": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:6154"
+  },
+  "assess_signal_priority": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18309"
+  },
+  "assess_site_risk": {
+   "class": "confirm",
+   "writes": "deletes and re-inserts the program's rbm_site_risk_scores snapshot (also when no snapshot exists, without persist)",
+   "site": "rbm/site-risk-engine.ts:105"
+  },
+  "assess_small_population_design": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18680"
+  },
+  "assess_statistical_defensibility": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5449"
+  },
+  "assess_stored_cer": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9868"
+  },
+  "assess_structural_alerts": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18103"
+  },
+  "assess_study_onboarding": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:13339"
+  },
+  "assess_submission_package": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15833"
+  },
+  "assess_substantial_equivalence": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18776"
+  },
+  "assess_trial_feasibility": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:3812"
+  },
+  "assess_vaccine_platform": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18886"
+  },
+  "assign_committee_member": {
+   "class": "confirm",
+   "writes": "INSERT committee_members + governed-action row",
+   "site": "AnaToolExecutor.ts:11742"
+  },
+  "assign_protocol_reviewer": {
+   "class": "confirm",
+   "writes": "INSERT protocol_review_assignments + audit",
+   "site": "AnaToolExecutor.ts:10952"
+  },
+  "author_docx_native": {
+   "class": "self",
+   "writes": "scratch .docx under tmp/docbuilder, not filed",
+   "site": "AnaToolExecutor.ts:6880"
+  },
+  "batch_draft_sections": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:14969"
+  },
+  "benchmark_precedent_trials": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15821"
+  },
+  "bind_protocol_to_study_design": {
+   "class": "confirm",
+   "writes": "UPDATE protocol_documents study_design link + governed-action row",
+   "site": "AnaToolExecutor.ts:20395"
+  },
+  "build_abbreviation_list": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:3553"
+  },
+  "build_device_blueprint": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9719"
+  },
+  "build_effects_table": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18913"
+  },
+  "build_from_template": {
+   "class": "self",
+   "writes": "scratch .docx under tmp/docbuilder, not filed",
+   "site": "docx/masterDocumentBuilder.ts:262"
+  },
+  "build_global_device_strategy": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9742"
+  },
+  "build_pathway_manifest": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9385"
+  },
+  "build_postmarket_report": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:6182"
+  },
+  "build_sae_line_listing": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17411"
+  },
+  "calculate_safety_margin": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17731"
+  },
+  "calculate_ttc": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18096"
+  },
+  "cast_committee_vote": {
+   "class": "refuse",
+   "writes": "casts/overwrites a member's vote — the member's own act",
+   "site": "AnaToolExecutor.ts:11826",
+   "why": "A committee vote is the member’s own act; each member casts it from the agenda item."
+  },
+  "catalog_project_document": {
+   "class": "confirm",
+   "writes": "UPDATE vault.document_catalog (shared comprehension record)",
+   "site": "vault/document-catalog.service.ts:354"
+  },
+  "categorize_clia_complexity": {
+   "class": "confirm",
+   "writes": "INSERT ivd_clia_categorization",
+   "site": "AnaToolExecutor.ts:8444"
+  },
+  "certify_other_support": {
+   "class": "refuse",
+   "writes": "none; the handler already refuses (certification is the investigator's own)",
+   "site": "AnaToolExecutor.ts:11141",
+   "refusedBy": "handler",
+   "why": "Certifying Other Support is the investigator’s own certification, which they sign."
+  },
+  "characterize_pk": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5334"
+  },
+  "check_consistency": {
+   "class": "confirm",
+   "writes": "INSERT consistency_findings + audit",
+   "site": "truth-engine/truth-engine-service.ts:174"
+  },
+  "check_dataset_conformance": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17359"
+  },
+  "check_deep_investigation": {
+   "class": "read",
+   "writes": "none",
+   "site": "agentic-workflow-tools.ts:288"
+  },
+  "check_dossier_consistency": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5687"
+  },
+  "check_ectd_cross_references": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9042"
+  },
+  "check_grounding": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:987"
+  },
+  "check_guidance_freshness": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17534"
+  },
+  "check_numerical_integrity": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:4792"
+  },
+  "check_regulatory_compliance": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:4215"
+  },
+  "check_regulatory_currency": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15769"
+  },
+  "check_submission_status": {
+   "class": "confirm",
+   "writes": "agency-polling gateways UPDATE submission_transmittals.status (target-dependent; fail closed)",
+   "site": "submission-gateways/rest-gateway-helpers.ts:143"
+  },
+  "classify_atmp": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17805"
+  },
+  "classify_bcs": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17643"
+  },
+  "classify_biomarker": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18618"
+  },
+  "classify_combination_product": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18433"
+  },
+  "classify_coverage_item": {
+   "class": "confirm",
+   "writes": "UPDATE coverage_analysis_items + governed-action row",
+   "site": "AnaToolExecutor.ts:11984"
+  },
+  "classify_cyp_phenotype": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17918"
+  },
+  "classify_ddi_risk": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17897"
+  },
+  "classify_device": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9674"
+  },
+  "classify_expedited_reporting": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18281"
+  },
+  "classify_gmp_deviation": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18536"
+  },
+  "classify_immunogenicity_clinical_impact": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18199"
+  },
+  "classify_impurity": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17959"
+  },
+  "classify_ivd_device": {
+   "class": "confirm",
+   "writes": "INSERT ivdr_classifications",
+   "site": "AnaToolExecutor.ts:8362"
+  },
+  "classify_medical_device": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18762"
+  },
+  "classify_mutagenic_impurity": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18089"
+  },
+  "classify_pediatric_age": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17761"
+  },
+  "classify_post_approval_change": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18954"
+  },
+  "classify_post_submission_change": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9626"
+  },
+  "classify_protocol_deviation": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18742"
+  },
+  "classify_samd": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18810"
+  },
+  "classify_submission_document": {
+   "class": "confirm",
+   "writes": "UPDATE coauthor_documents classification; can place a leaf into a sequence",
+   "site": "ingestion/ingestion-service.ts:337"
+  },
+  "classify_tmf_artifact": {
+   "class": "conditional",
+   "writes": "INSERT tmf_artifacts + governed-action row (status unvalidated)",
+   "site": "AnaToolExecutor.ts:13059",
+   "rule": "input.status === final -> refuse; else confirm"
+  },
+  "classify_tox_findings": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:4956"
+  },
+  "clone_protocol_template": {
+   "class": "confirm",
+   "writes": "INSERT protocol_documents + sections + governed-action row",
+   "site": "protocol-templates-service.ts:64"
+  },
+  "code_drug": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15949"
+  },
+  "code_meddra": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:16003"
+  },
+  "code_whodrug": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:16030"
+  },
+  "commit_document_revision": {
+   "class": "confirm",
+   "writes": "new artifact version; status -> review by default; audit",
+   "site": "document-spine.ts:414"
+  },
+  "commit_intelligence_flow": {
+   "class": "conditional",
+   "writes": "creates CMC register records + audit",
+   "site": "AnaToolExecutor.ts:19244",
+   "rule": "input.dry_run === true -> read; else confirm"
+  },
+  "compare_document_versions": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:4368"
+  },
+  "compare_global_pathways": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18028"
+  },
+  "compare_proposed_design_to_precedent": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:13943"
+  },
+  "compare_recorded_dissolution": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:16321"
+  },
+  "compare_statistical_scenarios": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5409"
+  },
+  "compare_submission_against_precedent": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:6648"
+  },
+  "compare_vault_versions": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:19889"
+  },
+  "compile_correspondence_response_package": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2264"
+  },
+  "compose_510k_summary": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:16873"
+  },
+  "compose_correspondence_cover_letter": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:16853"
+  },
+  "compose_e2b_icsr": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17447"
+  },
+  "compute_analytical_performance": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15651"
+  },
+  "compute_assurance": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15698"
+  },
+  "compute_diagnostic_accuracy": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15616"
+  },
+  "compute_fih_dose": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:4934"
+  },
+  "compute_lifecycle_operations": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:8901"
+  },
+  "compute_sample_size": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:4884"
+  },
+  "control_mutagenic_impurity": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18124"
+  },
+  "convene_committee_meeting": {
+   "class": "confirm",
+   "writes": "UPSERT attendance; meeting status convened + governed-action row",
+   "site": "AnaToolExecutor.ts:11786"
+  },
+  "convene_drafting_council": {
+   "class": "self",
+   "writes": "lumen council working/audit rows; final text not saved to a tenant record",
+   "site": "agentic-workflow-tools.ts:124"
+  },
+  "convert_docx_to_pdf": {
+   "class": "conditional",
+   "writes": "writes or overwrites a PDF next to the input or at output_pdf_path",
+   "site": "scripts/docx_pdf_pipeline.py:77",
+   "rule": "output path under tmp/ -> self; otherwise (uploads/) -> confirm"
+  },
+  "convert_to_rps_v4": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:8968"
+  },
+  "create_biosketch": {
+   "class": "confirm",
+   "writes": "INSERT biosketches + sections + audit",
+   "site": "AnaToolExecutor.ts:11148"
+  },
+  "create_calendar_event": {
+   "class": "confirm",
+   "writes": "external Google Calendar event",
+   "site": "AnaToolExecutor.ts:4035"
+  },
+  "create_clinical_investigator": {
+   "class": "confirm",
+   "writes": "INSERT clinical_investigators + governed-action row",
+   "site": "AnaToolExecutor.ts:10022"
+  },
+  "create_clinical_study": {
+   "class": "conditional",
+   "writes": "INSERT clinical_studies; irb_approved records an IRB approval fact",
+   "site": "AnaToolExecutor.ts:9981",
+   "rule": "input.irb_approved === true -> refuse; else confirm"
+  },
+  "create_coi_disclosure": {
+   "class": "confirm",
+   "writes": "INSERT coi_disclosures (status submitted) + audit",
+   "site": "AnaToolExecutor.ts:13259"
+  },
+  "create_complaint": {
+   "class": "confirm",
+   "writes": "INSERT complaints + vigilance event",
+   "site": "AnaToolExecutor.ts:6349"
+  },
+  "create_consent_form": {
+   "class": "confirm",
+   "writes": "INSERT consent_forms + elements + governed-action row",
+   "site": "AnaToolExecutor.ts:11000"
+  },
+  "create_coverage_analysis": {
+   "class": "confirm",
+   "writes": "INSERT coverage_analyses + governed-action row",
+   "site": "AnaToolExecutor.ts:11880"
+  },
+  "create_dms_plan": {
+   "class": "confirm",
+   "writes": "INSERT dms_plans + elements + audit",
+   "site": "AnaToolExecutor.ts:11040"
+  },
+  "create_effort_certification": {
+   "class": "confirm",
+   "writes": "INSERT effort_certifications (draft) + governed-action row",
+   "site": "AnaToolExecutor.ts:13195"
+  },
+  "create_export_control_review": {
+   "class": "confirm",
+   "writes": "INSERT export_control_reviews + governed-action row",
+   "site": "AnaToolExecutor.ts:11269"
+  },
+  "create_financial_disclosure": {
+   "class": "confirm",
+   "writes": "INSERT financial_disclosures (draft) + governed-action row",
+   "site": "AnaToolExecutor.ts:10042"
+  },
+  "create_grant_proposal": {
+   "class": "confirm",
+   "writes": "INSERT grant_proposals + audit",
+   "site": "AnaToolExecutor.ts:12047"
+  },
+  "create_ha_interaction": {
+   "class": "confirm",
+   "writes": "INSERT ha_interactions + governed-action row",
+   "site": "AnaToolExecutor.ts:10143"
+  },
+  "create_iacuc_protocol": {
+   "class": "confirm",
+   "writes": "INSERT iacuc_protocols (draft) + governed-action row",
+   "site": "AnaToolExecutor.ts:10257"
+  },
+  "create_ibc_registration": {
+   "class": "confirm",
+   "writes": "INSERT/UPDATE ibc_registrations + governed-action row",
+   "site": "AnaToolExecutor.ts:10452"
+  },
+  "create_inspection": {
+   "class": "confirm",
+   "writes": "INSERT inspections + audit",
+   "site": "AnaToolExecutor.ts:12788"
+  },
+  "create_invention_disclosure": {
+   "class": "confirm",
+   "writes": "INSERT invention_disclosures + governed-action row",
+   "site": "AnaToolExecutor.ts:11196"
+  },
+  "create_irb_submission": {
+   "class": "confirm",
+   "writes": "INSERT irb_submissions + governed-action row",
+   "site": "AnaToolExecutor.ts:10364"
+  },
+  "create_labeling_document": {
+   "class": "confirm",
+   "writes": "INSERT labeling_documents",
+   "site": "AnaToolExecutor.ts:14127"
+  },
+  "create_lifecycle_obligation": {
+   "class": "confirm",
+   "writes": "INSERT lifecycle_obligations + events + audit",
+   "site": "AnaToolExecutor.ts:12968"
+  },
+  "create_monitoring_action": {
+   "class": "confirm",
+   "writes": "INSERT rbm_monitoring_actions",
+   "site": "AnaToolExecutor.ts:3364"
+  },
+  "create_nonclinical_study": {
+   "class": "confirm",
+   "writes": "INSERT nonclinical_studies + provenance + governed-action row",
+   "site": "AnaToolExecutor.ts:10574"
+  },
+  "create_other_support": {
+   "class": "confirm",
+   "writes": "INSERT other_support_documents + governed-action row",
+   "site": "AnaToolExecutor.ts:11087"
+  },
+  "create_per_document": {
+   "class": "conditional",
+   "writes": "INSERT ivdr_per_documents with model-chosen status",
+   "site": "AnaToolExecutor.ts:8395",
+   "rule": "input.per_status in (approved, superseded) -> refuse; else confirm"
+  },
+  "create_protocol_amendment": {
+   "class": "confirm",
+   "writes": "INSERT protocol_amendments + snapshot + governed-action row",
+   "site": "AnaToolExecutor.ts:10857"
+  },
+  "create_protocol_document": {
+   "class": "confirm",
+   "writes": "INSERT protocol_documents + sections + governed-action row",
+   "site": "AnaToolExecutor.ts:11460"
+  },
+  "create_protocol_template": {
+   "class": "confirm",
+   "writes": "INSERT protocol_templates + sections + governed-action row",
+   "site": "AnaToolExecutor.ts:10708"
+  },
+  "create_q_sub": {
+   "class": "confirm",
+   "writes": "INSERT q_submissions + audit",
+   "site": "AnaToolExecutor.ts:7691"
+  },
+  "create_qms_document": {
+   "class": "confirm",
+   "writes": "INSERT qms_documents (draft) + governed-action row",
+   "site": "AnaToolExecutor.ts:13583"
+  },
+  "create_regulatory_commitment": {
+   "class": "confirm",
+   "writes": "INSERT regulatory_commitments + provenance + governed-action row",
+   "site": "AnaToolExecutor.ts:10193"
+  },
+  "create_research_agreement": {
+   "class": "confirm",
+   "writes": "INSERT research_agreements (draft) + governed-action row",
+   "site": "AnaToolExecutor.ts:11326"
+  },
+  "create_rim_product": {
+   "class": "confirm",
+   "writes": "INSERT rim_products + audit",
+   "site": "AnaToolExecutor.ts:12696"
+  },
+  "create_risk_item": {
+   "class": "confirm",
+   "writes": "INSERT risk_items",
+   "site": "AnaToolExecutor.ts:7956"
+  },
+  "create_software_lifecycle_item": {
+   "class": "conditional",
+   "writes": "INSERT software_lifecycle_items with model-chosen status",
+   "site": "AnaToolExecutor.ts:8086",
+   "rule": "status in (approved, superseded) -> refuse; else confirm"
+  },
+  "create_tmf": {
+   "class": "confirm",
+   "writes": "INSERT tmf_files + governed-action row",
+   "site": "AnaToolExecutor.ts:13032"
+  },
+  "create_udi_record": {
+   "class": "confirm",
+   "writes": "INSERT udi_records",
+   "site": "AnaToolExecutor.ts:7907"
+  },
+  "cross_region_gap_analysis": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9270"
+  },
+  "define_estimand": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18474"
+  },
+  "define_kri": {
+   "class": "confirm",
+   "writes": "INSERT rbm_kris",
+   "site": "rbm/rbm-actuator.ts:117"
+  },
+  "describe_capabilities": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:3575"
+  },
+  "design_ada_assay_strategy": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18192"
+  },
+  "design_adaptive_design": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18495"
+  },
+  "design_adme_program": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18570"
+  },
+  "design_backfill_strategy": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18405"
+  },
+  "design_bayesian_device": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15640"
+  },
+  "design_be_study": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17650"
+  },
+  "design_bioanalytical_method": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17925"
+  },
+  "design_biosimilar_clinical": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18048"
+  },
+  "design_capa": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18529"
+  },
+  "design_cdx_codevelopment": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18632"
+  },
+  "design_core_battery": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18233"
+  },
+  "design_device_clinical_evidence": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18783"
+  },
+  "design_dose_finding": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15527"
+  },
+  "design_external_control": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18673"
+  },
+  "design_followup_safety_study": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18261"
+  },
+  "design_genotox_battery": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17738"
+  },
+  "design_group_sequential": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15508"
+  },
+  "design_human_factors_study": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18447"
+  },
+  "design_informed_consent": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18735"
+  },
+  "design_mass_balance_study": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18577"
+  },
+  "design_mmrm": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15501"
+  },
+  "design_monitoring_plan": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18714"
+  },
+  "design_mrmc_reader_study": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15569"
+  },
+  "design_nab_assay": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18206"
+  },
+  "design_natural_history_study": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18666"
+  },
+  "design_organ_impairment_study": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17911"
+  },
+  "design_pacmp": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18968"
+  },
+  "design_pccp": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18824"
+  },
+  "design_pediatric_investigation": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17768"
+  },
+  "design_popk_study": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17680"
+  },
+  "design_propensity_analysis": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17863"
+  },
+  "design_purge_study": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18110"
+  },
+  "design_pv_system": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18316"
+  },
+  "design_randomized_dose_comparison": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18391"
+  },
+  "design_reaction_phenotyping": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18598"
+  },
+  "design_rems": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18151"
+  },
+  "design_repeat_dose_study": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17724"
+  },
+  "design_repro_tox_study": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17752"
+  },
+  "design_samd_clinical_validation": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18838"
+  },
+  "design_stability_study": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17945"
+  },
+  "design_sterile_controls": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18550"
+  },
+  "design_target_trial": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17849"
+  },
+  "design_toxicokinetics": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18591"
+  },
+  "design_vaccine_clinical_program": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18872"
+  },
+  "design_vaccine_cmc": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18858"
+  },
+  "design_value_tree": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18927"
+  },
+  "detect_evidence_contradictions": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2176"
+  },
+  "detect_evidence_gaps": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2183"
+  },
+  "detect_safety_signal": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18302"
+  },
+  "determine_assay_cutoff": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:6144"
+  },
+  "determine_meaningful_change": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18343"
+  },
+  "determine_primary_mode_of_action": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18426"
+  },
+  "dispatch_qc_check": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9292"
+  },
+  "draft_510k_substantial_equivalence": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:14777"
+  },
+  "draft_authoring_document": {
+   "class": "confirm",
+   "writes": "creates an authoring document, sections, revisions + audit",
+   "site": "authoring/authoring-from-draft.ts:229"
+  },
+  "draft_clinical_overview_m2_5": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:14856"
+  },
+  "draft_clinical_summary_m2_7": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5379"
+  },
+  "draft_fda_ir_response": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15044"
+  },
+  "draft_monitoring_plan": {
+   "class": "confirm",
+   "writes": "INSERT rbm_monitoring_plans (draft)",
+   "site": "rbm/rbm-actuator.ts:289"
+  },
+  "draft_nonclinical_overview_m2_4": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5010"
+  },
+  "draft_nonclinical_summaries_m2_6": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5232"
+  },
+  "draft_quality_overall_summary_m2_3": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5200"
+  },
+  "draft_safety_narrative": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:3470"
+  },
+  "edit_spreadsheet": {
+   "class": "confirm",
+   "writes": "new .xlsx upload + file_uploads row",
+   "site": "AnaToolExecutor.ts:4727"
+  },
+  "establish_governed_fact": {
+   "class": "confirm",
+   "writes": "inserts an active canonical fact + audit",
+   "site": "living-record/fact-change-orchestrator.ts:437"
+  },
+  "estimate_recorded_shelf_life": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:16416"
+  },
+  "estimate_sample_size": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18509"
+  },
+  "estimate_shelf_life": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:16796"
+  },
+  "evaluate_kris_qtls": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:3011"
+  },
+  "evaluate_pbpk_model": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17687"
+  },
+  "execute_platform_command": {
+   "class": "command",
+   "writes": "whatever the command does; the command partition (command-rbac.ts, part11-governance.ts) classifies it",
+   "site": "AnaToolExecutor.ts:5162",
+   "rule": "command effect read -> read; write -> confirm (proposed by the command partition); PART11 e-sign command -> refuse"
+  },
+  "execute_research_agreement": {
+   "class": "refuse",
+   "writes": "none; the handler already refuses (execution is a signed act)",
+   "site": "AnaToolExecutor.ts:11393",
+   "refusedBy": "handler",
+   "why": "Executing an agreement is a signed act a person performs on the agreement."
+  },
+  "execute_subaward": {
+   "class": "refuse",
+   "writes": "none; the handler already refuses (execution is a signed act)",
+   "site": "AnaToolExecutor.ts:12303",
+   "refusedBy": "handler",
+   "why": "Executing a subaward is a signed act a person performs on the subaward."
+  },
+  "explain_design_risk": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:13972"
+  },
+  "explain_report_blockers": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20224"
+  },
+  "explain_resolution_plan": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:6076"
+  },
+  "explain_validation_findings": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9250"
+  },
+  "export_protocol_document": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:10790"
+  },
+  "extract_document_structure": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:4347"
+  },
+  "extract_submission_document": {
+   "class": "confirm",
+   "writes": "UPDATE coauthor_documents metadata; INSERT submission_evidence_links",
+   "site": "ingestion/ingestion-service.ts:506"
+  },
+  "fetch_fda_guidance_list": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17512"
+  },
+  "fetch_ich_guideline_updates": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17524"
+  },
+  "fetch_template_and_fill": {
+   "class": "self",
+   "writes": "scratch filled .docx under tmp/docbuilder, not filed",
+   "site": "docx/masterDocumentBuilder.ts:262"
+  },
+  "file_chat_upload_to_vault": {
+   "class": "confirm",
+   "writes": "INSERT vault.documents + catalog + audit",
+   "site": "vault/vault-ingest.service.ts:452"
+  },
+  "finalize_biosketch": {
+   "class": "refuse",
+   "writes": "none; the handler already refuses",
+   "site": "AnaToolExecutor.ts:11189",
+   "refusedBy": "handler",
+   "why": "Finalizing is a signed act the person performs on its own surface."
+  },
+  "finalize_committee_determination": {
+   "class": "refuse",
+   "writes": "none; the handler already refuses",
+   "site": "AnaToolExecutor.ts:11853",
+   "refusedBy": "handler",
+   "why": "Finalizing is a signed act the person performs on its own surface."
+  },
+  "finalize_dms_plan": {
+   "class": "refuse",
+   "writes": "none; the handler already refuses",
+   "site": "AnaToolExecutor.ts:11080",
+   "refusedBy": "handler",
+   "why": "Finalizing is a signed act the person performs on its own surface."
+  },
+  "finalize_export_control_determination": {
+   "class": "refuse",
+   "writes": "none; the handler already refuses",
+   "site": "AnaToolExecutor.ts:11319",
+   "refusedBy": "handler",
+   "why": "Finalizing is a signed act the person performs on its own surface."
+  },
+  "finalize_grant_closeout": {
+   "class": "refuse",
+   "writes": "none; the handler already refuses",
+   "site": "AnaToolExecutor.ts:12228",
+   "refusedBy": "handler",
+   "why": "Finalizing is a signed act the person performs on its own surface."
+  },
+  "finalize_protocol_document": {
+   "class": "refuse",
+   "writes": "none; the handler already refuses (signatureRequired)",
+   "site": "AnaToolExecutor.ts:11572",
+   "refusedBy": "handler",
+   "why": "Finalizing is a signed act the person performs on its own surface."
+  },
+  "find_grant_opportunities": {
+   "class": "read",
+   "writes": "none (Grants.gov GET)",
+   "site": "AnaToolExecutor.ts:11713"
+  },
+  "fire_notification": {
+   "class": "confirm",
+   "writes": "INSERT mdx_notifications to users/roles",
+   "site": "AnaToolExecutor.ts:9905"
+  },
+  "forecast_enrollment": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15676"
+  },
+  "format_references": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17385"
+  },
+  "fulfill_regulatory_commitment": {
+   "class": "confirm",
+   "writes": "UPDATE regulatory_commitments fulfilled (terminal)",
+   "site": "AnaToolExecutor.ts:12598"
+  },
+  "gateway_configuration_status": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:8872"
+  },
+  "generate_citation": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:4281"
+  },
+  "generate_ctgov_registration_draft": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:10803"
+  },
+  "generate_declaration_of_conformity": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:6172"
+  },
+  "generate_define_xml": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17592"
+  },
+  "generate_document": {
+   "class": "conditional",
+   "writes": "scratch DOCX/PDF/XML under tmp/docbuilder",
+   "site": "docx/masterDocumentBuilder.ts:335",
+   "rule": "input.output_format === 'xml' -> confirm (its path is built from the unsanitised title); else self"
+  },
+  "generate_dsur_structure": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17569"
+  },
+  "generate_psur_structure": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17562"
+  },
+  "generate_rbm_plan": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:3048"
+  },
+  "generate_rbm_report": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:3179"
+  },
+  "generate_report": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20186"
+  },
+  "generate_schedule_of_events": {
+   "class": "confirm",
+   "writes": "replaces AnA-sourced milestones; revision row",
+   "site": "AnaToolExecutor.ts:2351"
+  },
+  "generate_se_matrix": {
+   "class": "confirm",
+   "writes": "POST to the shadow review service with an admin token (unverified whether it persists; fail closed)",
+   "site": "AnaToolExecutor.ts:6233"
+  },
+  "generate_sop": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5627"
+  },
+  "generate_spl": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17323"
+  },
+  "generate_spl_xml": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17548"
+  },
+  "generate_statistical_document": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5509"
+  },
+  "generate_stf": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9017"
+  },
+  "get_billing_credits": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20067"
+  },
+  "get_biocompatibility_endpoints": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9705"
+  },
+  "get_biotech_program_status": {
+   "class": "read",
+   "writes": "none",
+   "site": "biotech-program.ts:554"
+  },
+  "get_client_journey": {
+   "class": "read",
+   "writes": "none",
+   "site": "agentic-workflow-tools.ts:206"
+  },
+  "get_csr_template": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5075"
+  },
+  "get_ctd_module_home": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5669"
+  },
+  "get_device_labeling": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9849"
+  },
+  "get_device_reviewer_checklist": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9690"
+  },
+  "get_document_template": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9498"
+  },
+  "get_document_versions": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:19506"
+  },
+  "get_electrical_standards": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9778"
+  },
+  "get_market_submission_spec": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9472"
+  },
+  "get_nonclinical_template": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5050"
+  },
+  "get_org_capabilities": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20083"
+  },
+  "get_plan_usage": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20052"
+  },
+  "get_portfolio_readiness": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20148"
+  },
+  "get_predicate_defense_preview": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:6274"
+  },
+  "get_rbm_attention": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:3195"
+  },
+  "get_regulatory_timeline": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9754"
+  },
+  "get_session_briefing": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2491"
+  },
+  "get_sterilization_requirements": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9795"
+  },
+  "get_submission_ack": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:8744"
+  },
+  "get_submission_readiness_twin": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:16705"
+  },
+  "get_submission_requirements": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9580"
+  },
+  "get_tmf_view": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:19623"
+  },
+  "get_usage_and_license_status": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:429"
+  },
+  "global_ri_advanced_therapy": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_ri_bcs_biowaiver": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_ri_bioequivalence_criteria": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_ri_cmc_specifications": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_ri_companion_diagnostic": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_ri_controlled_substance": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_ri_device_classification": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_ri_dossier_classifier": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_ri_establishment_registration": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_ri_evidence_standard": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_ri_exclusivity": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_ri_expanded_access": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_ri_expedited_programs": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_ri_fee_estimate": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_ri_import_export": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_ri_lifecycle_schedule": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_ri_pediatric_plan": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_ri_post_approval_change": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_ri_process_validation": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_ri_promotional_compliance": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_ri_regulatory_pathway": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_ri_reliance_pathways": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_ri_safety_reporting": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_ri_special_designations": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_ri_stability_conditions": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_ri_strategy_brief": {
+   "class": "read",
+   "writes": "none (pure global-RI knowledge service)",
+   "site": "global-ri/ana-tools-dispatch.ts"
+  },
+  "global_search": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:14245"
+  },
+  "guidance_change_radar": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15806"
+  },
+  "guidance_for_anda": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17671"
+  },
+  "import_citi_records": {
+   "class": "confirm",
+   "writes": "INSERT training records + governed-action row",
+   "site": "AnaToolExecutor.ts:11610"
+  },
+  "import_ris_references": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17373"
+  },
+  "ind_generate_section": {
+   "class": "confirm",
+   "writes": "loopback POST that creates an artifact for the given project",
+   "site": "routes/ind-generation.ts:338"
+  },
+  "ind_get_status": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:6563"
+  },
+  "insert_clause_template": {
+   "class": "self",
+   "writes": "writes edited .docx copy to tmp/docbuilder",
+   "site": "AnaToolExecutor.ts:7421"
+  },
+  "insert_document_content": {
+   "class": "self",
+   "writes": "writes an edited .docx under tmp/docbuilder",
+   "site": "AnaToolExecutor.ts:7179"
+  },
+  "inspect_uploaded_document": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:4422"
+  },
+  "ivd_knowledge_lookup": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2119"
+  },
+  "link_program_clinical_study": {
+   "class": "confirm",
+   "writes": "UPDATE regulatory_programs.metadata (clinicalStudyId)",
+   "site": "AnaToolExecutor.ts:7824"
+  },
+  "lint_references": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17397"
+  },
+  "list_app_screens": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:16926"
+  },
+  "list_cmc_registers": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:16128"
+  },
+  "list_demo_scripts": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17186"
+  },
+  "list_fda_forms": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:410"
+  },
+  "list_governed_documents": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:19534"
+  },
+  "list_governed_facts": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5815"
+  },
+  "list_intelligence_flows": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:19317"
+  },
+  "list_platform_commands": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5143"
+  },
+  "list_project_documents": {
+   "class": "read",
+   "writes": "none",
+   "site": "document-catalog-tools.ts:624"
+  },
+  "list_protocol_templates": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:10744"
+  },
+  "list_regulatory_capabilities": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9808"
+  },
+  "list_report_definitions": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20316"
+  },
+  "list_report_types": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20100"
+  },
+  "list_screen_actions": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17071"
+  },
+  "list_validation_rules": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9415"
+  },
+  "list_vault_documents": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:19388"
+  },
+  "load_nonclinical_program": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5100"
+  },
+  "log_cs_transaction": {
+   "class": "conditional",
+   "writes": "INSERT cs_transactions + balance update + governed-action row",
+   "site": "AnaToolExecutor.ts:12911",
+   "rule": "input.witnessed_by non-empty -> refuse (third-party witness attestation); else confirm"
+  },
+  "log_inspection_finding": {
+   "class": "confirm",
+   "writes": "INSERT inspection_findings + governed-action row",
+   "site": "AnaToolExecutor.ts:12838"
+  },
+  "log_nonconforming_product": {
+   "class": "confirm",
+   "writes": "INSERT qms_nonconforming_products",
+   "site": "AnaToolExecutor.ts:14093"
+  },
+  "log_study_ae": {
+   "class": "confirm",
+   "writes": "INSERT clinical_study_aes",
+   "site": "AnaToolExecutor.ts:13414"
+  },
+  "log_study_deviation": {
+   "class": "confirm",
+   "writes": "INSERT clinical_study_deviations",
+   "site": "AnaToolExecutor.ts:13361"
+  },
+  "lookup_fda_guidance": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:4120"
+  },
+  "lookup_icd10_code": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:3517"
+  },
+  "lookup_ich_guideline": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:4186"
+  },
+  "lookup_published_label": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:16055"
+  },
+  "lookup_regulatory_pathway": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9431"
+  },
+  "lookup_regulatory_precedents": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:6613"
+  },
+  "lookup_submission_deficiencies": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2193"
+  },
+  "medical_writing_guidance": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2000"
+  },
+  "medical_writing_review": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:3560"
+  },
+  "mine_precedents": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:4750"
+  },
+  "model_budget_impact": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17283"
+  },
+  "model_budget_impact_mix": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17308"
+  },
+  "model_cost_effectiveness": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17295"
+  },
+  "model_cost_effectiveness_nmb": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17315"
+  },
+  "model_markov_cohort": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:16814"
+  },
+  "narrate_statistical_result": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2027"
+  },
+  "navigate_to": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:16961"
+  },
+  "ocr_document_pages": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:4571"
+  },
+  "open_device_capa": {
+   "class": "confirm",
+   "writes": "INSERT capa_records",
+   "site": "AnaToolExecutor.ts:6404"
+  },
+  "open_grant_closeout": {
+   "class": "confirm",
+   "writes": "INSERT grant_closeout_records + governed-action row",
+   "site": "AnaToolExecutor.ts:12166"
+  },
+  "override_import_mapping": {
+   "class": "confirm",
+   "writes": "UPDATE import_job_files mapping",
+   "site": "AnaToolExecutor.ts:14375"
+  },
+  "package_ectd_for_region": {
+   "class": "confirm",
+   "writes": "writes an eCTD zip to output_dir",
+   "site": "submission-gateways/regional-packager.ts:1042"
+  },
+  "pair_companion_diagnostic": {
+   "class": "confirm",
+   "writes": "INSERT cdx_pairings",
+   "site": "AnaToolExecutor.ts:8483"
+  },
+  "pdf_overlay": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:6592"
+  },
+  "place_into_sequence": {
+   "class": "confirm",
+   "writes": "UPSERT submission_leaves (unlocked sequence) + audit row",
+   "site": "AnaToolExecutor.ts:9169"
+  },
+  "place_project_document": {
+   "class": "conditional",
+   "writes": "UPDATE vault.documents placement + audit",
+   "site": "vault/vault-placement.service.ts:309",
+   "rule": "input.confirm_suggested === true -> refuse (the handler already refuses); else confirm"
+  },
+  "plan_aggregate_safety_report": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18295"
+  },
+  "plan_annual_report": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18975"
+  },
+  "plan_bayesian_borrowing": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18687"
+  },
+  "plan_biomarker_qualification": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18625"
+  },
+  "plan_biosimilar_ip_strategy": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18069"
+  },
+  "plan_br_communication": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18941"
+  },
+  "plan_coa_development": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18364"
+  },
+  "plan_combination_cgmp": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18440"
+  },
+  "plan_device_submission": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18797"
+  },
+  "plan_enrichment_strategy": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18653"
+  },
+  "plan_essential_documents": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18749"
+  },
+  "plan_fda_meeting": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18000"
+  },
+  "plan_immunogenicity_sampling": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18213"
+  },
+  "plan_ind_module_authoring": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2723"
+  },
+  "plan_labeling_authoring": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2599"
+  },
+  "plan_lifecycle_management": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18989"
+  },
+  "plan_multiplicity_control": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18488"
+  },
+  "plan_orphan_drug_designation": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2637"
+  },
+  "plan_rare_disease_program": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18701"
+  },
+  "plan_submission": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9228"
+  },
+  "plan_vaccine_special_populations": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18893"
+  },
+  "position_coa_endpoint": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18357"
+  },
+  "predict_change_impact": {
+   "class": "confirm",
+   "writes": "INSERT submission_twin_change_impacts",
+   "site": "submission-twin-service.ts:610"
+  },
+  "prepare_award_closeout": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:12522"
+  },
+  "prepare_fda_form": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:414"
+  },
+  "prepare_meeting_package": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:12638"
+  },
+  "preview_fact_impact": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5931"
+  },
+  "prioritize_monitoring_queries": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:3084"
+  },
+  "project_csr_evidence": {
+   "class": "confirm",
+   "writes": "bulk-creates evidence sources, studies and relationships",
+   "site": "clinical-regulatory-evidence/csr-adapter.service.ts:85"
+  },
+  "project_events": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15687"
+  },
+  "project_knowledge_search": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:527"
+  },
+  "project_knowledge_search_multi": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:619"
+  },
+  "qms_change_create": {
+   "class": "confirm",
+   "writes": "INSERT qms_change_controls + audit row",
+   "site": "AnaToolExecutor.ts:13798"
+  },
+  "qms_change_link": {
+   "class": "confirm",
+   "writes": "INSERT qms_change_links + audit",
+   "site": "AnaToolExecutor.ts:13881"
+  },
+  "qms_change_transition": {
+   "class": "conditional",
+   "writes": "UPDATE qms_change_controls + audit",
+   "site": "AnaToolExecutor.ts:13834",
+   "rule": "input.to in (approved, closed) -> refuse; else confirm"
+  },
+  "query_rim_patterns_by_domain": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:769"
+  },
+  "raise_monitoring_signal": {
+   "class": "confirm",
+   "writes": "INSERT rbm_signals",
+   "site": "rbm/rbm-actuator.ts:221"
+  },
+  "rasterize_page": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:6575"
+  },
+  "read_governed_document": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:19569"
+  },
+  "read_project_document": {
+   "class": "self",
+   "writes": "her read-coverage receipt; extraction outcome backfill",
+   "site": "vault/document-catalog.service.ts:224"
+  },
+  "read_spreadsheet": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:4656"
+  },
+  "read_uploaded_document": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:4473"
+  },
+  "read_vault_document": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:19463"
+  },
+  "read_vigilance_timeline": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:6329"
+  },
+  "recall_rim_patterns": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:738"
+  },
+  "recall_session_context": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:696"
+  },
+  "reconcile_device_documents": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:6045"
+  },
+  "reconcile_dossier_numbers": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17485"
+  },
+  "reconcile_extracted_figures": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5763"
+  },
+  "record_analytical_performance_study": {
+   "class": "confirm",
+   "writes": "INSERT ivd_analytical_performance",
+   "site": "AnaToolExecutor.ts:8258"
+  },
+  "record_clinical_performance_study": {
+   "class": "confirm",
+   "writes": "INSERT ivd_clinical_performance (incl. endpoint-met flag)",
+   "site": "AnaToolExecutor.ts:8292"
+  },
+  "record_cost_share_contribution": {
+   "class": "confirm",
+   "writes": "INSERT grant_cost_share_contributions + audit",
+   "site": "AnaToolExecutor.ts:12395"
+  },
+  "record_endpoint_result": {
+   "class": "confirm",
+   "writes": "INSERT clinical_study_endpoints",
+   "site": "AnaToolExecutor.ts:13466"
+  },
+  "record_grant_award": {
+   "class": "confirm",
+   "writes": "INSERT grant_awards; proposal -> awarded + governed-action row",
+   "site": "AnaToolExecutor.ts:12094"
+  },
+  "record_grant_expenditure": {
+   "class": "confirm",
+   "writes": "INSERT grant_expenditures + governed-action row",
+   "site": "AnaToolExecutor.ts:12343"
+  },
+  "record_grant_opportunity": {
+   "class": "confirm",
+   "writes": "INSERT grant_opportunities + audit",
+   "site": "AnaToolExecutor.ts:12482"
+  },
+  "record_kri_reading": {
+   "class": "confirm",
+   "writes": "INSERT rbm_kri_values + KRI status",
+   "site": "AnaToolExecutor.ts:3270"
+  },
+  "record_literature": {
+   "class": "confirm",
+   "writes": "UPSERT literature_entries",
+   "site": "AnaToolExecutor.ts:1791"
+  },
+  "record_subaward": {
+   "class": "confirm",
+   "writes": "INSERT grant_subawards + governed-action row",
+   "site": "AnaToolExecutor.ts:12230"
+  },
+  "record_validation_finding": {
+   "class": "confirm",
+   "writes": "INSERT submission_validation_findings",
+   "site": "AnaToolExecutor.ts:8779"
+  },
+  "register_animal_cohort": {
+   "class": "confirm",
+   "writes": "INSERT iacuc_animal_cohorts + governed-action row",
+   "site": "AnaToolExecutor.ts:10281"
+  },
+  "register_controlled_substance": {
+   "class": "confirm",
+   "writes": "INSERT controlled_substances + governed-action row",
+   "site": "AnaToolExecutor.ts:12671"
+  },
+  "register_dea": {
+   "class": "confirm",
+   "writes": "INSERT dea_registrations + governed-action row",
+   "site": "AnaToolExecutor.ts:12876"
+  },
+  "register_ldt": {
+   "class": "confirm",
+   "writes": "INSERT ldt_inventory",
+   "site": "AnaToolExecutor.ts:8530"
+  },
+  "register_supplier": {
+   "class": "confirm",
+   "writes": "INSERT qms_suppliers (pending)",
+   "site": "AnaToolExecutor.ts:14056"
+  },
+  "regulatory_deadline_radar": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2233"
+  },
+  "remember_document_in_project": {
+   "class": "confirm",
+   "writes": "INSERT project_ingested_documents (tenant-visible) + memory entries",
+   "site": "AnaToolExecutor.ts:1537"
+  },
+  "render_signature_manifestation": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:872"
+  },
+  "report_protocol_deviation": {
+   "class": "conditional",
+   "writes": "INSERT protocol_deviations + governed-action row",
+   "site": "AnaToolExecutor.ts:10905",
+   "rule": "input.severity and input.affects_safety both supplied -> refuse (stamps the person's reportability assessment); else confirm"
+  },
+  "request_no_cost_extension": {
+   "class": "confirm",
+   "writes": "INSERT grant_nce_records + audit",
+   "site": "AnaToolExecutor.ts:12448"
+  },
+  "research_compliance_briefing": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:12542"
+  },
+  "reset_project_goals": {
+   "class": "confirm",
+   "writes": "revises goals, org-wide notification",
+   "site": "AnaToolExecutor.ts:2451"
+  },
+  "resolve_regulatory_structure": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9454"
+  },
+  "resolve_submission_plan": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:5650"
+  },
+  "resolve_validation_finding": {
+   "class": "confirm",
+   "writes": "UPDATE submission_validation_findings resolved",
+   "site": "AnaToolExecutor.ts:8844"
+  },
+  "resume_intelligence_flow": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:19204"
+  },
+  "retire_qms_document": {
+   "class": "confirm",
+   "writes": "retires a controlled document (terminal); the handler requires a reason of 8+ characters and records a governed action",
+   "site": "AnaToolExecutor.ts:13707"
+  },
+  "review_amendment": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:10893"
+  },
+  "review_biosketch_completeness": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:11177"
+  },
+  "review_commitment_portfolio": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:10215"
+  },
+  "review_consent_completeness": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:11023"
+  },
+  "review_cost_share": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:12430"
+  },
+  "review_coverage_analysis": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:12019"
+  },
+  "review_cs_balance": {
+   "class": "read",
+   "writes": "SELECT only",
+   "site": "AnaToolExecutor.ts:12951"
+  },
+  "review_deviation": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:10937"
+  },
+  "review_dms_plan_completeness": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:11068"
+  },
+  "review_expiring_training": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:11651"
+  },
+  "review_export_control": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:11307"
+  },
+  "review_financial_disclosure": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:10112"
+  },
+  "review_grant_budget": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:12378"
+  },
+  "review_grant_reporting": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:12117"
+  },
+  "review_ha_interaction": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:12614"
+  },
+  "review_iacuc_protocol": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:10317"
+  },
+  "review_ibc_registration": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:10526"
+  },
+  "review_informed_consent": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2870"
+  },
+  "review_inspection_readiness": {
+   "class": "read",
+   "writes": "SELECT + scoring",
+   "site": "AnaToolExecutor.ts:12860"
+  },
+  "review_invention_disclosure": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:11235"
+  },
+  "review_irb_submission": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:10421"
+  },
+  "review_label_currency": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:12765"
+  },
+  "review_lifecycle_calendar": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:13010"
+  },
+  "review_other_support": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:11129"
+  },
+  "review_protocol_budget": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:10650"
+  },
+  "review_protocol_completeness": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:11555"
+  },
+  "review_protocol_design_derivation": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20407"
+  },
+  "review_protocol_design_gates": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20496"
+  },
+  "review_protocol_portfolio": {
+   "class": "read",
+   "writes": "SELECT only",
+   "site": "AnaToolExecutor.ts:11859"
+  },
+  "review_protocol_portfolio_analytics": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:11663"
+  },
+  "review_protocol_regulatory_rules": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20472"
+  },
+  "review_protocol_review_status": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:10983"
+  },
+  "review_protocol_risk_register": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:11430"
+  },
+  "review_protocol_timeline": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:10778"
+  },
+  "review_research_agreement": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:11381"
+  },
+  "review_schedule_of_events_health": {
+   "class": "conditional",
+   "writes": "milestone status changes, tasks, org notifications (apply defaults true)",
+   "site": "AnaToolExecutor.ts:2428",
+   "rule": "input.apply === false -> read; else confirm"
+  },
+  "review_send_readiness": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:10598"
+  },
+  "review_soa_matrix": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:10690"
+  },
+  "review_tmf_completeness": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:13092"
+  },
+  "review_training_gate": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:13176"
+  },
+  "review_training_matrix": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:11640"
+  },
+  "revise_qms_document": {
+   "class": "confirm",
+   "writes": "opens a controlled revision (reason required): document back to draft, approval cleared; the effective version is withdrawn in place (hand-on) + governed-action row",
+   "site": "AnaToolExecutor.ts:13653"
+  },
+  "run_cdisc_pipeline": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:16838"
+  },
+  "run_central_monitoring": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:3114"
+  },
+  "run_compliance_checklist": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:13132"
+  },
+  "run_in_container": {
+   "class": "confirm",
+   "writes": "runs model-written script in Docker",
+   "site": "AnaToolExecutor.ts:7614"
+  },
+  "run_monte_carlo_simulation": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15714"
+  },
+  "run_probabilistic_sensitivity": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:16826"
+  },
+  "run_python_script": {
+   "class": "confirm",
+   "writes": "runs model code, writes output files to tmp",
+   "site": "AnaToolExecutor.ts:7124"
+  },
+  "run_rbm_assessment": {
+   "class": "conditional",
+   "writes": "seeds rbm_risk_assessments + items",
+   "site": "AnaToolExecutor.ts:2915",
+   "rule": "input.seed === true -> confirm; else read"
+  },
+  "run_shadow_review": {
+   "class": "confirm",
+   "writes": "INSERT shadow_review_runs + findings + audit",
+   "site": "shadow-review/shadow-review-service.ts:169"
+  },
+  "run_submission_premortem": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:1021"
+  },
+  "save_document_as_template": {
+   "class": "confirm",
+   "writes": "INSERT protocol_templates + sections + audit",
+   "site": "AnaToolExecutor.ts:10732"
+  },
+  "save_document_to_vault": {
+   "class": "confirm",
+   "writes": "new governed artifact + version + governed-action row",
+   "site": "AnaToolExecutor.ts:19670"
+  },
+  "save_report_definition": {
+   "class": "confirm",
+   "writes": "INSERT report definition",
+   "site": "AnaToolExecutor.ts:20293"
+  },
+  "scan_document_citations": {
+   "class": "conditional",
+   "writes": "binds citations to governed facts, writes drift rows",
+   "site": "living-record/document-binder.ts:248",
+   "rule": "input.persist === true -> confirm; else read"
+  },
+  "scan_patient_profiles": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:3149"
+  },
+  "scan_project_risks": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2305"
+  },
+  "scan_regulatory_deficiencies": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:1381"
+  },
+  "score_predicate_adequacy": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15920"
+  },
+  "score_rwe_data_source": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17856"
+  },
+  "screen_compound_liabilities": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:3843"
+  },
+  "screen_promotional_language": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:3463"
+  },
+  "screen_restricted_party": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:13316"
+  },
+  "screen_signal_panel": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:6114"
+  },
+  "screen_subaward": {
+   "class": "conditional",
+   "writes": "UPDATE grant_subawards screen + audit",
+   "site": "AnaToolExecutor.ts:12268",
+   "rule": "input.screen_status === 'cleared' -> refuse (compliance clearance); else confirm"
+  },
+  "search_all_documents": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20015"
+  },
+  "search_chembl_compound": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:3721"
+  },
+  "search_clinical_evidence": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:1570"
+  },
+  "search_clinical_regulatory_evidence": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:13916"
+  },
+  "search_connected_repositories": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:1959"
+  },
+  "search_crm": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:4007"
+  },
+  "search_device_adverse_events": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:1633"
+  },
+  "search_device_recalls": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:3964"
+  },
+  "search_document": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:4387"
+  },
+  "search_document_passages": {
+   "class": "read",
+   "writes": "none",
+   "site": "document-passage-tools.ts:162"
+  },
+  "search_drug_adverse_events": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:1675"
+  },
+  "search_drug_approvals": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:3676"
+  },
+  "search_drug_labels": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:3925"
+  },
+  "search_ema_epar": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:1866"
+  },
+  "search_eu_ctis": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:1911"
+  },
+  "search_eudamed": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:1821"
+  },
+  "search_grants_gov": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:13296"
+  },
+  "search_ivd_knowledge": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9519"
+  },
+  "search_large_document": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:1445"
+  },
+  "search_literature": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:1717"
+  },
+  "search_medicare_coverage": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:4077"
+  },
+  "search_preprints": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:3769"
+  },
+  "search_project_documents": {
+   "class": "read",
+   "writes": "none",
+   "site": "document-catalog-tools.ts:630"
+  },
+  "search_regulatory_correspondence": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:4055"
+  },
+  "seed_tmf": {
+   "class": "confirm",
+   "writes": "INSERT tmf_artifacts + governed-action row",
+   "site": "AnaToolExecutor.ts:19939"
+  },
+  "select_505_pathway": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18014"
+  },
+  "select_atmp_pathway": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17833"
+  },
+  "select_coa_type": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18329"
+  },
+  "select_combination_submission_pathway": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18461"
+  },
+  "select_device_pathway": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18769"
+  },
+  "select_dose": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17708"
+  },
+  "select_dose_finding_design": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18377"
+  },
+  "select_exposure_response_dose": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:4978"
+  },
+  "select_missing_data_strategy": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18502"
+  },
+  "select_pediatric_dose": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17789"
+  },
+  "select_pediatric_formulation": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17782"
+  },
+  "select_rp2d": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18398"
+  },
+  "select_rwe_design": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17870"
+  },
+  "select_tox_species": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17717"
+  },
+  "set_coverage_qualifying_determination": {
+   "class": "confirm",
+   "writes": "UPDATE coverage_analyses determination + governed-action row",
+   "site": "AnaToolExecutor.ts:11927"
+  },
+  "set_funding_profile": {
+   "class": "confirm",
+   "writes": "UPSERT grant_funding_profiles + governed-action row",
+   "site": "AnaToolExecutor.ts:11685"
+  },
+  "set_grant_milestone_status": {
+   "class": "confirm",
+   "writes": "UPDATE grant_milestones + audit",
+   "site": "AnaToolExecutor.ts:12136"
+  },
+  "set_program_metadata": {
+   "class": "confirm",
+   "writes": "UPDATE regulatory_programs.metadata",
+   "site": "AnaToolExecutor.ts:7815"
+  },
+  "set_protocol_budget_params": {
+   "class": "confirm",
+   "writes": "UPSERT protocol_budget_params + governed-action row",
+   "site": "protocol-budget-service.ts:42"
+  },
+  "set_protocol_milestone_status": {
+   "class": "confirm",
+   "writes": "UPDATE protocol_milestones + governed-action row",
+   "site": "protocol-milestones-service.ts:42"
+  },
+  "set_qtl": {
+   "class": "confirm",
+   "writes": "INSERT rbm_qtls",
+   "site": "rbm/rbm-actuator.ts:195"
+  },
+  "set_registration_status": {
+   "class": "conditional",
+   "writes": "UPSERT rim_registrations + governed-action row",
+   "site": "AnaToolExecutor.ts:12728",
+   "rule": "input.market_status === 'approved' -> refuse (asserts a marketing authorization); else confirm"
+  },
+  "set_soa_cell": {
+   "class": "confirm",
+   "writes": "UPSERT protocol_soa_cells + governed-action row",
+   "site": "protocol-soa-service.ts:46"
+  },
+  "set_specifications": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17966"
+  },
+  "simulate_reviewer_challenges": {
+   "class": "confirm",
+   "writes": "INSERT submission_twin_challenges",
+   "site": "submission-twin-service.ts:507"
+  },
+  "simulate_study_design": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:458"
+  },
+  "size_diagnostic_study": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:15626"
+  },
+  "start_deep_investigation": {
+   "class": "confirm",
+   "writes": "INSERT ana_deep_investigations and starts an unattended background run",
+   "site": "ana/deep-investigation.ts:148"
+  },
+  "start_intelligence_flow": {
+   "class": "self",
+   "writes": "INSERT cmc_interview_sessions (AnA interview state)",
+   "site": "AnaToolExecutor.ts:19066"
+  },
+  "start_legacy_import": {
+   "class": "confirm",
+   "writes": "INSERT import_jobs/files/findings",
+   "site": "AnaToolExecutor.ts:14289"
+  },
+  "start_product_demo": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17214"
+  },
+  "start_war_game": {
+   "class": "self",
+   "writes": "her own WAR_GAME_RUN audit entry; engine is pure",
+   "site": "AnaToolExecutor.ts:19340"
+  },
+  "stress_test_protocol": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:13994"
+  },
+  "structure_benefit_risk_framework": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18906"
+  },
+  "structure_smpc": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:18165"
+  },
+  "submit_invention_disclosure": {
+   "class": "confirm",
+   "writes": "internal routing to TTO + audit",
+   "site": "AnaToolExecutor.ts:11248"
+  },
+  "suggest_predicate_devices": {
+   "class": "confirm",
+   "writes": "POST to the shadow review service with an admin token (unverified whether it persists; fail closed)",
+   "site": "AnaToolExecutor.ts:6234"
+  },
+  "suggest_reports": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20258"
+  },
+  "summarize_onboarding_readiness": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:1622"
+  },
+  "summarize_rim_intelligence": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:805"
+  },
+  "surgical_docx_xml_edit": {
+   "class": "self",
+   "writes": "scratch edited .docx under tmp/docbuilder, not filed",
+   "site": "AnaToolExecutor.ts:7268"
+  },
+  "trace_design_recommendation": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:14016"
+  },
+  "trace_fact_to_source": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:6009"
+  },
+  "trace_provenance": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9315"
+  },
+  "transmit_submission": {
+   "class": "refuse",
+   "writes": "none; the handler already refuses (transmission is a person's signed act)",
+   "site": "AnaToolExecutor.ts:8660",
+   "refusedBy": "handler",
+   "why": "Transmitting a submission to an agency is a person’s authorised, signed act, done from the Submission Center."
+  },
+  "triage_capa_mdr_queue": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:6311"
+  },
+  "triage_compliance_attention": {
+   "class": "confirm",
+   "writes": "creates review tasks + governed-action row",
+   "site": "AnaToolExecutor.ts:12562"
+  },
+  "triage_signal": {
+   "class": "confirm",
+   "writes": "UPDATE rbm_signals status/severity",
+   "site": "rbm/rbm-actuator.ts:253"
+  },
+  "update_biosketch_section": {
+   "class": "confirm",
+   "writes": "UPDATE biosketch_sections + lineage + governed-action row",
+   "site": "AnaToolExecutor.ts:11164"
+  },
+  "update_consent_element": {
+   "class": "confirm",
+   "writes": "UPDATE consent_form_elements + audit",
+   "site": "AnaToolExecutor.ts:11010"
+  },
+  "update_dms_plan_element": {
+   "class": "confirm",
+   "writes": "UPDATE dms_plan_elements + governed-action row",
+   "site": "AnaToolExecutor.ts:11055"
+  },
+  "update_export_control_review": {
+   "class": "confirm",
+   "writes": "UPDATE export_control_reviews + governed-action row",
+   "site": "AnaToolExecutor.ts:11292"
+  },
+  "update_grant_closeout": {
+   "class": "confirm",
+   "writes": "UPDATE grant_closeout_records + governed-action row",
+   "site": "AnaToolExecutor.ts:12193"
+  },
+  "update_invention_disclosure": {
+   "class": "conditional",
+   "writes": "UPDATE invention_disclosures + audit",
+   "site": "AnaToolExecutor.ts:11215",
+   "rule": "input.status in (elected, patent_filed, licensed, released, abandoned) or input.election_date -> refuse; else confirm"
+  },
+  "update_monitoring_action": {
+   "class": "confirm",
+   "writes": "UPDATE rbm_monitoring_actions",
+   "site": "AnaToolExecutor.ts:3386"
+  },
+  "update_plan": {
+   "class": "read",
+   "writes": "no side effect; plan UI event",
+   "site": "agentic-workflow-tools.ts:343"
+  },
+  "update_protocol_section": {
+   "class": "confirm",
+   "writes": "UPDATE protocol_sections + lineage + governed-action row",
+   "site": "AnaToolExecutor.ts:11493"
+  },
+  "update_q_sub_commitment_rolled_in": {
+   "class": "confirm",
+   "writes": "UPDATE q_sub_commitments + audit row",
+   "site": "AnaToolExecutor.ts:7754"
+  },
+  "update_research_agreement": {
+   "class": "confirm",
+   "writes": "UPDATE research_agreements + audit (executed refused by service)",
+   "site": "AnaToolExecutor.ts:11354"
+  },
+  "update_tmf_artifact_status": {
+   "class": "conditional",
+   "writes": "UPDATE tmf_artifacts + governed-action row",
+   "site": "AnaToolExecutor.ts:19978",
+   "rule": "input.status === 'final' -> refuse (TMF QC finalization); else confirm"
+  },
+  "update_vault_document": {
+   "class": "confirm",
+   "writes": "new artifact version (approved-status overwrite noted as finding)",
+   "site": "AnaToolExecutor.ts:19829"
+  },
+  "validate_adam_dataset": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17585"
+  },
+  "validate_analytical_method": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17952"
+  },
+  "validate_cdisc_dataset": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17346"
+  },
+  "validate_cross_references": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:4264"
+  },
+  "validate_docx": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:7475"
+  },
+  "validate_ectd_package": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9123"
+  },
+  "validate_market_formatting": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9557"
+  },
+  "validate_sdtm_dataset": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17578"
+  },
+  "validate_spl": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17334"
+  },
+  "validate_spl_structure": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:17555"
+  },
+  "validate_udi": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:9766"
+  },
+  "value_dossier_guidance": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:2059"
+  },
+  "verify_docx_against_source": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:7514"
+  },
+  "verify_memory_atom": {
+   "class": "confirm",
+   "writes": "marks a memory atom verified by the user (the yes is the verification)",
+   "site": "AnaToolExecutor.ts:13530"
+  },
+  "write_kit_section": {
+   "class": "confirm",
+   "writes": "UPDATE cerv2_510k_sections + version + audit",
+   "site": "AnaToolExecutor.ts:14526"
+  },
+  "write_q_sub_section": {
+   "class": "confirm",
+   "writes": "UPSERT q_sub_section_bodies (clears acceptance) + lineage",
+   "site": "AnaToolExecutor.ts:8112"
+  }
+ }
+}

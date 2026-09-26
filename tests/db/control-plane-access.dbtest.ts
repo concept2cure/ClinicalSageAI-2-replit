@@ -36,6 +36,8 @@ import {
   accessToken,
   auth,
   provisionTwoTenantFixture,
+  provisionMember,
+  grantPlatformRole,
   teardownTwoTenantFixture,
 } from './two-tenant-fixture';
 
@@ -56,16 +58,32 @@ describe('The control plane gives platform data to platform operators and org da
     else process.env[key] = value;
   };
   const inLog = () => getRecentKernelDecisions(2000).some(e => e.path === planted);
-  /** Tenant A's user, with the role the token claims (req.userRole reads it). */
-  const as = (role: string) => auth(accessToken(userA, ORG_A, role));
+  /**
+   * A user of tenant A whose membership ROW holds `role`. Since 414f203e1
+   * (IAM-10) the request's role is the row's, not the token's claim, so a
+   * token claiming `admin` for userA's `member` row is a member, and the admin
+   * refusals below would refuse a member.
+   */
+  const callers: Record<string, number> = {};
+  const as = (role: string) => {
+    if (!callers[role]) throw new Error(`no tenant-A caller provisioned with role ${role}`);
+    return auth(accessToken(callers[role], ORG_A, role));
+  };
+  /** Its own org row says `member`; its platform role is a platform_role_grants row. */
+  let operator: number;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     // Mounted exactly as server/bootstrap/register-core-routes.ts mounts it.
     cp = express();
     cp.use(express.json());
     cp.use('/api/control-plane', authenticateToken, controlPlaneRouter);
     delete process.env.ANA_ALLOW_NONPROD_CONTROL_PLANE; // the default
     process.env.ANA_OPS_TOKEN = OPS_TOKEN;
+    callers.member = userA;
+    callers.admin = await provisionMember(ORG_A, 'admin', 'cp-admin');
+    callers.research_admin = await provisionMember(ORG_A, 'research_admin', 'cp-research-admin');
+    operator = await provisionMember(ORG_A, 'member', 'cp-operator');
+    await grantPlatformRole(operator, 'platform_admin');
   });
   afterAll(() => {
     restore('ANA_ALLOW_NONPROD_CONTROL_PLANE', saved.bypass);
@@ -134,7 +152,9 @@ describe('The control plane gives platform data to platform operators and org da
   });
 
   it('a platform operator reads the kernel log', async () => {
-    const res = await request(cp).get('/api/control-plane/kernel/recent?limit=500').set(as('platform_admin'));
+    const res = await request(cp)
+      .get('/api/control-plane/kernel/recent?limit=500')
+      .set(auth(accessToken(operator, ORG_A, 'member')));
     expect(res.status).toBe(200);
     expect(JSON.stringify(res.body)).toContain(planted);
   });

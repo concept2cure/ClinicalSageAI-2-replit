@@ -27,6 +27,14 @@
  *   4. a caller that sends no token keeps the old behaviour (deliberate: the
  *      MDX dossier drawer PATCHes without having read one, and failing those
  *      closed would break saving to fix a race they cannot hit)
+ *
+ * ── Every save carries a reason for change ───────────────────────────────────
+ * Since fde9d704e the SERVER refuses a content save without a reason of at
+ * least 8 characters (400, `field: 'changeReason'`) — 21 CFR 11.10(e), see
+ * server/routes/governed-reason.ts. That rule is orthogonal to the token: it
+ * applies whether or not `expectedUpdatedAt` is sent. So every PATCH here sends
+ * a valid `changeReason`, exactly as the editor does, and the stale save in
+ * particular is refused for its token and nothing else.
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
@@ -36,6 +44,8 @@ import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
 
 const PROBE = 'dbtest-concurrency';
+/** A reason that clears the server's 8-character floor (governed-reason.ts). */
+const REASON = 'Updated the filter validation statement.';
 
 let owner: Pool;
 let orgId: number;
@@ -178,13 +188,22 @@ describe('a second author cannot silently overwrite the first', () => {
     /* Author A saves first and moves the row. */
     const first = await request(app)
       .patch(`/api/authoring/sections/${sectionId}`).set('Authorization', `Bearer ${bearer}`)
-      .send({ content: '<p>Author A: the filter is validated to 0.22 µm.</p>', expectedUpdatedAt: sharedToken });
+      .send({
+        content: '<p>Author A: the filter is validated to 0.22 µm.</p>',
+        expectedUpdatedAt: sharedToken,
+        changeReason: REASON,
+      });
     expect(first.status, 'the first save should succeed').toBe(200);
 
-    /* Author B saves against the timestamp they loaded — now stale. */
+    /* Author B saves against the timestamp they loaded — now stale. A valid
+       reason, so the token is the only thing wrong with this request. */
     const second = await request(app)
       .patch(`/api/authoring/sections/${sectionId}`).set('Authorization', `Bearer ${bearer}`)
-      .send({ content: '<p>Author B: REPLACED EVERYTHING.</p>', expectedUpdatedAt: sharedToken });
+      .send({
+        content: '<p>Author B: REPLACED EVERYTHING.</p>',
+        expectedUpdatedAt: sharedToken,
+        changeReason: REASON,
+      });
 
     expect(second.status, 'a stale save was accepted — the first author was overwritten').toBe(409);
     expect(String(second.body?.error?.code)).toBe('SECTION_CHANGED');
@@ -209,6 +228,7 @@ describe('a second author cannot silently overwrite the first', () => {
       .send({
         content: '<p>Author B: reapplied after reloading.</p>',
         expectedUpdatedAt: new Date(fresh.rows[0].updated_at).toISOString(),
+        changeReason: REASON,
       });
     expect(res.status).toBe(200);
 
@@ -223,7 +243,10 @@ describe('a second author cannot silently overwrite the first', () => {
        less safe than yesterday; they are simply not yet opted in. */
     const res = await request(app)
       .patch(`/api/authoring/sections/${sectionId}`).set('Authorization', `Bearer ${bearer}`)
-      .send({ content: '<p>Legacy caller with no token.</p>' });
+      .send({ content: '<p>Legacy caller with no token.</p>', changeReason: REASON });
     expect(res.status).toBe(200);
+
+    const after = await owner.query('SELECT content FROM authoring_sections WHERE id = $1', [sectionId]);
+    expect(after.rows[0].content).toContain('Legacy caller with no token');
   });
 });

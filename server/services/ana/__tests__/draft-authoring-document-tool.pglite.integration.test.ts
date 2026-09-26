@@ -81,20 +81,20 @@ describe('draft_authoring_document', () => {
 
   it('refuses verbatim without an open project, and writes nothing', async () => {
     const before = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM authoring_documents');
-    const out = JSON.parse(await handler(input, { organizationId: ORG, userId: Number(AUTHOR.id) }));
+    const out = JSON.parse(await handler(input, { organizationId: ORG, userId: Number(AUTHOR.id), humanConfirmed: true }));
     expect(out).toEqual({ error: DRAFT_AUTHORING_DOCUMENT_NO_PROJECT });
     const after = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM authoring_documents');
     expect(after.rows[0]).toEqual(before.rows[0]);
   });
 
   it('refuses a project another organization owns as "no project" — never a cross-tenant write', async () => {
-    const out = JSON.parse(await handler(input, { organizationId: ORG, userId: Number(AUTHOR.id), projectRef: OTHER_PROGRAM }));
+    const out = JSON.parse(await handler(input, { organizationId: ORG, userId: Number(AUTHOR.id), humanConfirmed: true, projectRef: OTHER_PROGRAM }));
     expect(out).toEqual({ error: DRAFT_AUTHORING_DOCUMENT_NO_PROJECT });
   });
 
   it('with the open program (uuid projectRef): the document, its sections and its provenance exist', async () => {
     const out = JSON.parse(
-      await handler(input, { organizationId: ORG, userId: Number(AUTHOR.id), projectRef: PROGRAM, projectId: null, threadId: 'thread_42' }),
+      await handler(input, { organizationId: ORG, userId: Number(AUTHOR.id), humanConfirmed: true, projectRef: PROGRAM, projectId: null, threadId: 'thread_42' }),
     );
     expect(out.error, JSON.stringify(out)).toBeUndefined();
     expect(out).toMatchObject({ status: 'generated', programId: PROGRAM, title: input.title, sectionCount: 3, documentType: 'clinical_overview' });
@@ -123,13 +123,13 @@ describe('draft_authoring_document', () => {
   });
 
   it('resolves a legacy integer project through its regulatory_program_id anchor', async () => {
-    const out = JSON.parse(await handler({ ...input, title: 'Legacy anchor draft' }, { organizationId: ORG, userId: Number(AUTHOR.id), projectId: 42 }));
+    const out = JSON.parse(await handler({ ...input, title: 'Legacy anchor draft' }, { organizationId: ORG, userId: Number(AUTHOR.id), humanConfirmed: true, projectId: 42 }));
     expect(out.error, JSON.stringify(out)).toBeUndefined();
     expect(out.programId).toBe(PROGRAM);
   });
 
   it('a second document in the same program is created too (many documents per program)', async () => {
-    const out = JSON.parse(await handler({ ...input, title: 'Protocol synopsis draft' }, { organizationId: ORG, userId: Number(AUTHOR.id), projectRef: PROGRAM }));
+    const out = JSON.parse(await handler({ ...input, title: 'Protocol synopsis draft' }, { organizationId: ORG, userId: Number(AUTHOR.id), humanConfirmed: true, projectRef: PROGRAM }));
     expect(out.error, JSON.stringify(out)).toBeUndefined();
     const inProgram = await jdb.pool.query(
       'SELECT COUNT(*)::int AS n FROM authoring_documents WHERE client_program_id = $1 AND tenant_id = $2',
@@ -139,7 +139,7 @@ describe('draft_authoring_document', () => {
   });
 
   it('refuses malformed input as an error the model can read, not a crash', async () => {
-    const out = JSON.parse(await handler({ title: 'No sections', sections: [] }, { organizationId: ORG, userId: Number(AUTHOR.id), projectRef: PROGRAM }));
+    const out = JSON.parse(await handler({ title: 'No sections', sections: [] }, { organizationId: ORG, userId: Number(AUTHOR.id), humanConfirmed: true, projectRef: PROGRAM }));
     expect(String(out.error)).toMatch(/sections/);
   });
 });

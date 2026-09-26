@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-26T13:06:52.076Z",
+  "generatedAt": "2026-09-26T14:09:39.709Z",
   "git": {
-    "sha": "f5c16f30f3a77330a1516da69af79491e3f6089d",
+    "sha": "1d96cfe12c895e1b9ca9c4e35b9d6fe554589cc8",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1977,11 +1977,11 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1061091
+        "bytes": 1061714
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 859174
+        "bytes": 859522
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2013,15 +2013,15 @@
       },
       {
         "file": "server/routes/ana-features.ts",
-        "bytes": 182169
+        "bytes": 182431
+      },
+      {
+        "file": "server/services/ai-gateway/gateway.ts",
+        "bytes": 177008
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
         "bytes": 174203
-      },
-      {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 174181
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2060,12 +2060,12 @@
         "bytes": 136488
       },
       {
-        "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
-        "bytes": 134822
+        "file": "server/routes/ana-ri/stream.ts",
+        "bytes": 135508
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 134499
+        "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
+        "bytes": 134822
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
@@ -2081,7 +2081,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 130408
+        "bytes": 130893
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
@@ -2159,11 +2159,11 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 20524
+        "lines": 20534
       },
       {
         "file": "shared/schema.ts",
-        "lines": 20198
+        "lines": 20203
       },
       {
         "file": "server/statistics-service.ts",
@@ -2179,7 +2179,7 @@
       },
       {
         "file": "server/routes/ana-features.ts",
-        "lines": 5471
+        "lines": 5473
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2199,7 +2199,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 4140
+        "lines": 4201
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2255,7 +2255,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2847
+        "lines": 2861
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2263,15 +2263,15 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 2732
+        "lines": 2752
+      },
+      {
+        "file": "server/routes/auth.ts",
+        "lines": 2734
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
         "lines": 2717
-      },
-      {
-        "file": "server/routes/auth.ts",
-        "lines": 2715
       },
       {
         "file": "server/routes/knowledge-base.ts",
@@ -2394,6 +2394,10 @@
         "lines": 1930
       },
       {
+        "file": "server/routes/c2c/projects.ts",
+        "lines": 1928
+      },
+      {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
         "lines": 1927
       },
@@ -2446,10 +2450,6 @@
         "lines": 1849
       },
       {
-        "file": "server/routes/c2c/projects.ts",
-        "lines": 1844
-      },
-      {
         "file": "server/services/ana/citation-engine.ts",
         "lines": 1844
       },
@@ -2491,7 +2491,7 @@
       },
       {
         "file": "server/routes/ana-cortex-ft.ts",
-        "lines": 1785
+        "lines": 1787
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
@@ -2558,16 +2558,16 @@
         "lines": 1602
       },
       {
+        "file": "server/routes/mdx-qms.ts",
+        "lines": 1576
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
         "lines": 1561
       },
       {
         "file": "server/services/module3-extensions.ts",
         "lines": 1557
-      },
-      {
-        "file": "server/routes/mdx-qms.ts",
-        "lines": 1552
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",

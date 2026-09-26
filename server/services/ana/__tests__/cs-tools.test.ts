@@ -17,19 +17,19 @@ describe('Controlled Substances AnA tools — registration', () => {
 
 describe('Controlled Substances AnA tools — context + input guards', () => {
   it('register_dea refuses without tenant/user context', async () => {
-    const out = JSON.parse(await getToolHandler('register_dea')!({ registrant_name: 'Lab', dea_number: 'X', business_activity: 'researcher' }, {} as any));
+    const out = JSON.parse(await getToolHandler('register_dea')!({ registrant_name: 'Lab', dea_number: 'X', business_activity: 'researcher' }, { humanConfirmed: true } as any));
     expect(out.error).toMatch(/tenant \+ user context/);
   });
   it('register_dea rejects an invalid business_activity', async () => {
-    const out = JSON.parse(await getToolHandler('register_dea')!({ registrant_name: 'Lab', dea_number: 'X', business_activity: 'smuggler' }, { organizationId: 1, userId: 1 } as any));
+    const out = JSON.parse(await getToolHandler('register_dea')!({ registrant_name: 'Lab', dea_number: 'X', business_activity: 'smuggler' }, { organizationId: 1, userId: 1, humanConfirmed: true } as any));
     expect(out.error).toMatch(/valid business_activity/);
   });
   it('log_cs_transaction validates type + quantity', async () => {
-    const out = JSON.parse(await getToolHandler('log_cs_transaction')!({ substance_id: 1, transaction_type: 'teleport', quantity: 1 }, { organizationId: 1, userId: 1 } as any));
+    const out = JSON.parse(await getToolHandler('log_cs_transaction')!({ substance_id: 1, transaction_type: 'teleport', quantity: 1 }, { organizationId: 1, userId: 1, humanConfirmed: true } as any));
     expect(out.error).toMatch(/valid transaction_type/);
   });
   it('review_cs_balance requires tenant context', async () => {
-    const out = JSON.parse(await getToolHandler('review_cs_balance')!({}, {} as any));
+    const out = JSON.parse(await getToolHandler('review_cs_balance')!({}, { humanConfirmed: true } as any));
     expect(out.error).toMatch(/tenant context/);
   });
 });

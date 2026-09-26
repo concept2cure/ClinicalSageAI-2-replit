@@ -1,0 +1,87 @@
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+{"level":30,"time":"2026-09-26T14:06:41.733Z","pid":21072,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-26T14:06:41.734Z","pid":21072,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-26T14:06:41.734Z","pid":21072,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > refuses a change without a reason, and changes nothing
+[database] Database connection successful { timestamp: '2026-09-26T14:06:41.799Z', poolSize: 1 }
+stdout | tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > refuses a change without a reason, and changes nothing
+[database] Database connection successful
+stderr | tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > refuses a change without a reason, and changes nothing
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+ × tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > refuses a change without a reason, and changes nothing 1583ms
+   → expected { ok: true, unchanged: false, …(1) } to match object { ok: false, status: 422, …(1) }
+(2 matching properties omitted from actual)
+ × tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > with a reason, changes the fields and records each before and after, with the reason, once 12ms
+   → expected [ { new_values: { …(2) } }, …(1) ] to have a length of 1 but got 2
+ × tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > a change to the values already recorded writes nothing 5ms
+   → expected [ { new_values: { …(2) } }, …(1) ] to have a length of 1 but got 2
+ ✓ tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > refuses a type or classification outside the Vault vocabulary 2ms
+ ✓ tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > refuses a viewer before anything is read or written 1ms
+ × tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > reports another organization's document as absent 5ms
+   → expected [ { new_values: { …(2) } }, …(1) ] to have a length of 1 but got 2
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > refuses a change without a reason, and changes nothing
+AssertionError: expected { ok: true, unchanged: false, …(1) } to match object { ok: false, status: 422, …(1) }
+(2 matching properties omitted from actual)
+- Expected
++ Received
+  {
+-   "code": "REASON_REQUIRED",
+-   "ok": false,
+-   "status": 422,
++   "ok": true,
+  }
+ ❯ tests/db/vault-metadata-edit.dbtest.ts:128:64
+    126| describe('Edit details on a Vault version (VR-05, D5)', () => {
+    127|   it('refuses a change without a reason, and changes nothing', async (…
+    128|     expect(await edit({ documentTitle: 'Clinical protocol' })).toMatch…
+       |                                                                ^
+    129|     expect(await edit({ documentTitle: 'Clinical protocol', reason: 's…
+    130|     expect(await row()).toMatchObject({ document_title: 'Protocol' });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+ FAIL  tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > with a reason, changes the fields and records each before and after, with the reason, once
+AssertionError: expected [ { new_values: { …(2) } }, …(1) ] to have a length of 1 but got 2
+- Expected
++ Received
+- 1
++ 2
+ ❯ tests/db/vault-metadata-edit.dbtest.ts:140:18
+    138|     expect(await row()).toEqual({ document_title: 'Clinical protocol',…
+    139|     const rows = await auditRows();
+    140|     expect(rows).toHaveLength(1);
+       |                  ^
+    141|     expect(rows[0].new_values.reason).toBe(reason);
+    142|     expect(rows[0].new_values.changes).toEqual([
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+ FAIL  tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > a change to the values already recorded writes nothing
+AssertionError: expected [ { new_values: { …(2) } }, …(1) ] to have a length of 1 but got 2
+- Expected
++ Received
+- 1
++ 2
+ ❯ tests/db/vault-metadata-edit.dbtest.ts:152:31
+    150|     const r = await edit({ classification: 'CONFIDENTIAL', reason: 'Co…
+    151|     expect(r).toEqual({ ok: true, unchanged: true, changes: [] });
+    152|     expect(await auditRows()).toHaveLength(1);
+       |                               ^
+    153|   });
+    154|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+ FAIL  tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > reports another organization's document as absent
+AssertionError: expected [ { new_values: { …(2) } }, …(1) ] to have a length of 1 but got 2
+- Expected
++ Received
+- 1
++ 2
+ ❯ tests/db/vault-metadata-edit.dbtest.ts:177:31
+    175|     expect(r).toMatchObject({ ok: false, status: 404, code: 'DOCUMENT_…
+    176|     expect(await row()).toMatchObject({ document_title: 'Clinical prot…
+    177|     expect(await auditRows()).toHaveLength(1);
+       |                               ^
+    178|   });
+    179| });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 2 passed (6)
+   Start at  14:06:39
+   Duration  2.07s (transform 894ms, setup 76ms, import 28ms, tests 1.67s, environment 0ms)

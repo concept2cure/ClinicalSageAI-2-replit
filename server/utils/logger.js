@@ -98,28 +98,42 @@ const redactValue = value => {
   return '[REDACTED]';
 };
 
+/**
+ * Walk the context tree replacing values under sensitive keys with
+ * '[REDACTED]' and masking personal data in every other string. Recurses
+ * into objects AND arrays up to depth 6. An array element has no key to
+ * match against SENSITIVE_KEYS, so a string element is masked and an object
+ * element is walked; before the security review of 2026-09-26 (DP-39)
+ * arrays were passed through unscanned. Mirrors logger.ts; edit both.
+ */
 const redactContext = (context, depth = 0) => {
   if (!context || typeof context !== 'object') return context;
   if (depth > 6) return context;
-  if (Array.isArray(context)) return context;
+  if (Array.isArray(context)) return context.map(item => maskValue(item, depth));
 
   const output = {};
   for (const [key, value] of Object.entries(context)) {
     const lowerKey = key.toLowerCase();
     const shouldRedact = SENSITIVE_KEYS.some(sensitive => lowerKey.includes(sensitive));
-
-    if (shouldRedact) {
-      output[key] = redactValue(value);
-    } else if (value && typeof value === 'object') {
-      output[key] = redactContext(value, depth + 1);
-    } else if (typeof value === 'string') {
-      output[key] = maskPersonalData(value);
-    } else {
-      output[key] = value;
-    }
+    output[key] = shouldRedact ? redactValue(value) : maskValue(value, depth);
   }
   return output;
 };
+
+/** A value under an ordinary key, or an array element: walked, masked, or passed through. */
+function maskValue(value, depth) {
+  if (value && typeof value === 'object') return redactContext(value, depth + 1);
+  if (typeof value === 'string') return maskPersonalData(value);
+  return value;
+}
+
+/**
+ * The message is a string the caller composed, often by interpolation, and
+ * it is masked like any other string (DP-39). A non-string message — a legacy
+ * caller passing an object or an Error — is handed on as before; the logger
+ * must not throw inside the request that is logging. Mirrors logger.ts.
+ */
+const maskMessage = message => (typeof message === 'string' ? maskPersonalData(message) : message);
 
 // Create a simple logger that outputs to console
 const baseLogger = {
@@ -129,7 +143,7 @@ const baseLogger = {
         {
           timestamp: new Date().toISOString(),
           level: 'info',
-          message,
+          message: maskMessage(message),
           context: redactContext(context),
         },
         null,
@@ -144,7 +158,7 @@ const baseLogger = {
         {
           timestamp: new Date().toISOString(),
           level: 'error',
-          message,
+          message: maskMessage(message),
           context: redactContext(context),
         },
         null,
@@ -159,7 +173,7 @@ const baseLogger = {
         {
           timestamp: new Date().toISOString(),
           level: 'warn',
-          message,
+          message: maskMessage(message),
           context: redactContext(context),
         },
         null,
@@ -175,7 +189,7 @@ const baseLogger = {
           {
             timestamp: new Date().toISOString(),
             level: 'debug',
-            message,
+            message: maskMessage(message),
             context: redactContext(context),
           },
           null,

@@ -1,0 +1,59 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/utils/__tests__/consoleBridge.test.ts > consoleBridge — environment gating > does not patch in development 2ms
+ ✓ server/utils/__tests__/consoleBridge.test.ts > consoleBridge — environment gating > does not patch in test 1ms
+ ✓ server/utils/__tests__/consoleBridge.test.ts > consoleBridge — environment gating > patches in production 0ms
+ ✓ server/utils/__tests__/consoleBridge.test.ts > consoleBridge — environment gating > is idempotent — calling install twice does not double-wrap 0ms
+ ✓ server/utils/__tests__/consoleBridge.test.ts > consoleBridge — redaction (production) > redacts password fields in an object argument 1ms
+ ✓ server/utils/__tests__/consoleBridge.test.ts > consoleBridge — redaction (production) > redacts HIPAA PHI (mrn) nested in objects 1ms
+ ✓ server/utils/__tests__/consoleBridge.test.ts > consoleBridge — redaction (production) > passes string + number + boolean arguments through unchanged 1ms
+ ✓ server/utils/__tests__/consoleBridge.test.ts > consoleBridge — redaction (production) > passes Error instances through unchanged (preserves stack) 3ms
+ ✓ server/utils/__tests__/consoleBridge.test.ts > consoleBridge — redaction (production) > does not mutate the original argument object 1ms
+ ✓ server/utils/__tests__/consoleBridge.test.ts > consoleBridge.redactArgs unit > null / undefined pass through 1ms
+ ✓ server/utils/__tests__/consoleBridge.test.ts > consoleBridge.redactArgs unit > arrays of objects are walked element-wise via redactContext 1ms
+ ✓ server/utils/__tests__/logger.test.ts > logger SENSITIVE_KEYS coverage > includes every credential category 3ms
+ ✓ server/utils/__tests__/logger.test.ts > logger SENSITIVE_KEYS coverage > includes API key variants 0ms
+ ✓ server/utils/__tests__/logger.test.ts > logger SENSITIVE_KEYS coverage > includes the HIPAA PHI identifiers 1ms
+ ✓ server/utils/__tests__/logger.test.ts > logger SENSITIVE_KEYS coverage > includes PII (ssn, dob) 0ms
+ ✓ server/utils/__tests__/logger.test.ts > logger SENSITIVE_KEYS coverage > includes payment fields 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — exact key matches > redacts a top-level password field 1ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — exact key matches > redacts a top-level mrn (HIPAA PHI) 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — exact key matches > redacts every variant credential field 1ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — substring matches (case-insensitive) > catches variant casings and camelCase 1ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — substring matches (case-insensitive) > catches mrn, MRN, medical_record_number 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — substring matches (case-insensitive) > catches bearerToken, accessToken, refreshToken 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — nested objects > redacts secrets inside nested user objects 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — nested objects > redacts deeply nested PHI 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — nested objects > stops recursing past depth 6 (DoS guard) 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — value handling > leaves null and undefined alone 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — value handling > replaces non-string sensitive values too (object credentials) 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — value handling > walks arrays: an object element has its sensitive keys redacted (DP-39) 1ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — Authorization-header common shapes > redacts req.headers.authorization 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — Authorization-header common shapes > redacts Set-Cookie header 0ms
+ ✓ server/utils/__tests__/logger.test.ts > maskPersonalData — e-mail and IP addresses in log values (DP-26) > keeps the first character and the domain of an address 0ms
+ ✓ server/utils/__tests__/logger.test.ts > maskPersonalData — e-mail and IP addresses in log values (DP-26) > keeps the network part of an IP address 1ms
+ ✓ server/utils/__tests__/logger.test.ts > maskPersonalData — e-mail and IP addresses in log values (DP-26) > leaves other strings alone, including long ones 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — masks personal data under ordinary keys, redacts sensitive keys entirely > masks an address or an IP wherever it is a string value, at any depth 0ms
+ ✓ server/utils/__tests__/logger.test.ts > redactContext — masks personal data under ordinary keys, redacts sensitive keys entirely > a sensitive key is still redacted whole, never merely masked 0ms
+ ✓ server/utils/__tests__/logger.test.ts > DP-39 — the log message string is masked (logger.js mirror) > a message-only warn masks the address and the IPv4 in the message field 1ms
+ ✓ server/utils/__tests__/logger.test.ts > DP-39 — the log message string is masked (logger.js mirror) > a scoped logger masks the message after prefixing the scope 0ms
+ ✓ server/utils/__tests__/logger.test.ts > DP-39 — the log message string is masked (logger.js mirror) > a message over the scan limit is left alone (MASK_SCAN_LIMIT), the context still masked 1ms
+ ✓ server/utils/__tests__/logger.test.ts > DP-39 — the log message string is masked (logger.ts, pino) > a message-only warn hands pino the masked message 20ms
+ ✓ server/utils/__tests__/logger.test.ts > DP-39 — the log message string is masked (logger.ts, pino) > every level masks the message, and a scoped logger masks after the scope prefix 1ms
+ ✓ server/utils/__tests__/logger.test.ts > DP-39 — the log message string is masked (logger.ts, pino) > a message over the scan limit is left alone (MASK_SCAN_LIMIT) 0ms
+ ✓ server/utils/__tests__/logger.test.ts > DP-39 — redactContext walks arrays (logger.js) > masks strings inside arrays and redacts sensitive keys of objects inside arrays 0ms
+ ✓ server/utils/__tests__/logger.test.ts > DP-39 — redactContext walks arrays (logger.js) > an array under a sensitive key is still redacted whole, never walked 0ms
+ ✓ server/utils/__tests__/logger.test.ts > DP-39 — redactContext walks arrays (logger.js) > keeps the per-string scan limit for array elements and does not mutate the input 0ms
+ ✓ server/utils/__tests__/logger.test.ts > DP-39 — redactContext walks arrays (logger.ts) > masks strings inside arrays and redacts sensitive keys of objects inside arrays 1ms
+ ✓ server/utils/__tests__/logger.test.ts > DP-39 — redactContext walks arrays (logger.ts) > an array under a sensitive key is still redacted whole, never walked 0ms
+ ✓ server/utils/__tests__/logger.test.ts > DP-39 — redactContext walks arrays (logger.ts) > keeps the per-string scan limit for array elements and does not mutate the input 0ms
+ ✓ server/utils/__tests__/logger.test.ts > DP-39 — an array passed as the whole context reaches neither sink in clear > logger.js 0ms
+ ✓ server/utils/__tests__/logger.test.ts > DP-39 — an array passed as the whole context reaches neither sink in clear > logger.ts 0ms
+
+ Test Files  2 passed (2)
+      Tests  49 passed (49)
+   Start at  13:19:49
+   Duration  664ms (transform 328ms, setup 225ms, import 168ms, tests 57ms, environment 0ms)
+

@@ -232,6 +232,9 @@ const filingAuditCount = async () =>
 /* The provenance the chat stream hands a tool, tagged so a row it leaves is
    recognisably this suite's. */
 const ANA_CTX = {
+  // place_project_document is a write in the tool register (P1-34); these
+  // cases pin the handler as it runs on a person's yes.
+  humanConfirmed: true,
   servingModel: { provider: 'anthropic', model: 'dbtest-place-model' },
   threadId: 'dbtest-place-thread',
   turnId: 'dbtest-place-turn',

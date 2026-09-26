@@ -140,13 +140,13 @@ beforeAll(async () => {
   tokenA = platformToken(A);
   tokenB = platformToken(B);
   const { mintAccessToken } = await import('../auth/platform-token');
-  readOnlyTokenA = mintAccessToken({
+  readOnlyTokenA = (await mintAccessToken({
     membership: { membershipId: A.membershipId, organizationId: A.orgId, userId: A.userId, role: 'admin', organizationUuid: A.orgUuid, email: null },
     clientId: 'w7-readonly-client',
     scopes: ['c2c:read'],
     resource: resourceUrl,
     ttlSeconds: 600,
-  }).token;
+  })).token;
 });
 
 afterAll(async () => {

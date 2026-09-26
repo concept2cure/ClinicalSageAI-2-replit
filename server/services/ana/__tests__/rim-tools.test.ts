@@ -17,15 +17,15 @@ describe('RIM-lite AnA tools — registration', () => {
 
 describe('RIM-lite AnA tools — context + input guards', () => {
   it('create_rim_product refuses without tenant/user context', async () => {
-    const out = JSON.parse(await getToolHandler('create_rim_product')!({ product_name: 'X' }, {} as any));
+    const out = JSON.parse(await getToolHandler('create_rim_product')!({ product_name: 'X' }, { humanConfirmed: true } as any));
     expect(out.error).toMatch(/tenant \+ user context/);
   });
   it('set_registration_status validates required inputs', async () => {
-    const out = JSON.parse(await getToolHandler('set_registration_status')!({ product_id: 1 }, { organizationId: 1, userId: 1 } as any));
+    const out = JSON.parse(await getToolHandler('set_registration_status')!({ product_id: 1 }, { organizationId: 1, userId: 1, humanConfirmed: true } as any));
     expect(out.error).toMatch(/country are required/);
   });
   it('set_registration_status rejects an invalid market_status', async () => {
-    const out = JSON.parse(await getToolHandler('set_registration_status')!({ product_id: 1, country: 'US', market_status: 'bogus' }, { organizationId: 1, userId: 1 } as any));
+    const out = JSON.parse(await getToolHandler('set_registration_status')!({ product_id: 1, country: 'US', market_status: 'bogus' }, { organizationId: 1, userId: 1, humanConfirmed: true } as any));
     expect(out.error).toMatch(/valid status/);
   });
   it('review_label_currency requires a product_id', async () => {

@@ -1,0 +1,2 @@
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 23 baselined site(s) remain, exactly as baselined.
+exit=0

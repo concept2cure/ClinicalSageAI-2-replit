@@ -22,6 +22,18 @@ import {
   type TelemetryBackend,
   type TelemetrySnapshot,
 } from '../tool-telemetry';
+// The __test_* probe tools registered below are not AnA tools, so the tool
+// register (P1-34) would fail them closed — proposed, never run. Here they stand
+// for read-only tools; every real tool keeps its real class.
+vi.mock('../tool-authorization.js', async importOriginal => {
+  const real = await importOriginal<typeof import('../tool-authorization.js')>();
+  return {
+    ...real,
+    toolAuthorizationOf: (name: string, input: unknown) =>
+      name.startsWith('__test') ? { class: 'read' as const } : real.toolAuthorizationOf(name, input),
+  };
+});
+
 import { registerToolHandler, getToolHandler } from '../AnaToolExecutor.js';
 
 describe('tool-telemetry (module)', () => {

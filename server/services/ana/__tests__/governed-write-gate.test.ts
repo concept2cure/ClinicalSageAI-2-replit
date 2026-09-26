@@ -19,11 +19,13 @@ vi.hoisted(() => {
   process.env.SKIP_DB_STARTUP_TEST = 'true';
 });
 
-const gatewayState = vi.hoisted(() => ({ responses: [] as any[] }));
+const gatewayState = vi.hoisted(() => ({ responses: [] as any[], requests: [] as any[] }));
 vi.mock('../../ai-gateway/gateway', () => ({
   getGateway: () => ({
-    route: async () =>
-      gatewayState.responses.shift() ?? { content: 'done', toolUses: [], usage: {}, provider: 'anthropic', model: 'claude-opus-5' },
+    route: async (req: unknown) => {
+      gatewayState.requests.push(req);
+      return gatewayState.responses.shift() ?? { content: 'done', toolUses: [], usage: {}, provider: 'anthropic', model: 'claude-opus-5' };
+    },
   }),
 }));
 
@@ -155,9 +157,22 @@ describe('the /api/chat door: the agentic loop tells the gate which model produc
     expect(inner).not.toHaveBeenCalled();
   });
 
-  it('a call produced by Opus reaches the handler', async () => {
+  it('a call produced by Opus clears the model gate — and, being a write, is put to a person, not run (P1-34)', async () => {
+    gatewayState.requests = [];
     gatewayState.responses.push(toolRound(OPUS));
     await executeAgenticLoop(request as any, { toolContext: { organizationId: 1 } } as any);
+    expect(inner).not.toHaveBeenCalled();
+    const fedBack = JSON.stringify(gatewayState.requests.at(-1));
+    expect(fedBack).toContain('HUMAN_CONFIRMATION_REQUIRED');
+    expect(fedBack).not.toContain('MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE');
+  });
+
+  it('and on a person\'s yes, the Opus-written content reaches the handler', async () => {
+    await getToolHandler('update_protocol_section')!({ section_id: 1, content: 'x' }, {
+      organizationId: 1,
+      servingModel: OPUS,
+      humanConfirmed: true,
+    } as any);
     expect(inner).toHaveBeenCalledTimes(1);
   });
 

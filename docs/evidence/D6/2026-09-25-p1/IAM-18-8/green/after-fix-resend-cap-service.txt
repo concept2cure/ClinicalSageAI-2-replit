@@ -1,0 +1,208 @@
+# HEAD 7fbe51c5 + this change (uncommitted), migrations/20260923_users_mfa_totp_last_step.sql amended in place. 2026-09-26T13:21Z
+$ NODE_OPTIONS=--max-old-space-size=1536 npx vitest run server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-26T13:21:26.442Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > twenty simultaneous wrong passwords are twenty failures, and the account is locked
+{
+  "timestamp": "2026-09-26T13:21:28.640Z",
+  "level": "warn",
+  "message": "[auth-security] Account locked for user 7 after 5 failed attempts",
+  "context": {}
+}
+
+stderr | server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > twenty simultaneous wrong passwords are twenty failures, and the account is locked
+{
+  "timestamp": "2026-09-26T13:21:28.643Z",
+  "level": "warn",
+  "message": "[auth-security] Account locked for user 7 after 6 failed attempts",
+  "context": {}
+}
+
+stderr | server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > twenty simultaneous wrong passwords are twenty failures, and the account is locked
+{
+  "timestamp": "2026-09-26T13:21:28.644Z",
+  "level": "warn",
+  "message": "[auth-security] Account locked for user 7 after 7 failed attempts",
+  "context": {}
+}
+
+stderr | server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > twenty simultaneous wrong passwords are twenty failures, and the account is locked
+{
+  "timestamp": "2026-09-26T13:21:28.645Z",
+  "level": "warn",
+  "message": "[auth-security] Account locked for user 7 after 8 failed attempts",
+  "context": {}
+}
+
+stderr | server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > twenty simultaneous wrong passwords are twenty failures, and the account is locked
+{
+  "timestamp": "2026-09-26T13:21:28.646Z",
+  "level": "warn",
+  "message": "[auth-security] Account locked for user 7 after 9 failed attempts",
+  "context": {}
+}
+
+stderr | server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > twenty simultaneous wrong passwords are twenty failures, and the account is locked
+{
+  "timestamp": "2026-09-26T13:21:28.648Z",
+  "level": "warn",
+  "message": "[auth-security] Account locked for user 7 after 10 failed attempts",
+  "context": {}
+}
+
+stderr | server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > twenty simultaneous wrong passwords are twenty failures, and the account is locked
+{
+  "timestamp": "2026-09-26T13:21:28.649Z",
+  "level": "warn",
+  "message": "[auth-security] Account locked for user 7 after 11 failed attempts",
+  "context": {}
+}
+
+stderr | server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > twenty simultaneous wrong passwords are twenty failures, and the account is locked
+{
+  "timestamp": "2026-09-26T13:21:28.650Z",
+  "level": "warn",
+  "message": "[auth-security] Account locked for user 7 after 12 failed attempts",
+  "context": {}
+}
+
+stderr | server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > twenty simultaneous wrong passwords are twenty failures, and the account is locked
+{
+  "timestamp": "2026-09-26T13:21:28.651Z",
+  "level": "warn",
+  "message": "[auth-security] Account locked for user 7 after 13 failed attempts",
+  "context": {}
+}
+
+stderr | server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > twenty simultaneous wrong passwords are twenty failures, and the account is locked
+{
+  "timestamp": "2026-09-26T13:21:28.652Z",
+  "level": "warn",
+  "message": "[auth-security] Account locked for user 7 after 14 failed attempts",
+  "context": {}
+}
+
+stderr | server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > twenty simultaneous wrong passwords are twenty failures, and the account is locked
+{
+  "timestamp": "2026-09-26T13:21:28.653Z",
+  "level": "warn",
+  "message": "[auth-security] Account locked for user 7 after 15 failed attempts",
+  "context": {}
+}
+
+stderr | server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > twenty simultaneous wrong passwords are twenty failures, and the account is locked
+{
+  "timestamp": "2026-09-26T13:21:28.654Z",
+  "level": "warn",
+  "message": "[auth-security] Account locked for user 7 after 16 failed attempts",
+  "context": {}
+}
+
+stderr | server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > twenty simultaneous wrong passwords are twenty failures, and the account is locked
+{
+  "timestamp": "2026-09-26T13:21:28.655Z",
+  "level": "warn",
+  "message": "[auth-security] Account locked for user 7 after 17 failed attempts",
+  "context": {}
+}
+
+stderr | server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > twenty simultaneous wrong passwords are twenty failures, and the account is locked
+{
+  "timestamp": "2026-09-26T13:21:28.657Z",
+  "level": "warn",
+  "message": "[auth-security] Account locked for user 7 after 18 failed attempts",
+  "context": {}
+}
+
+stderr | server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > twenty simultaneous wrong passwords are twenty failures, and the account is locked
+{
+  "timestamp": "2026-09-26T13:21:28.657Z",
+  "level": "warn",
+  "message": "[auth-security] Account locked for user 7 after 19 failed attempts",
+  "context": {}
+}
+
+stderr | server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > twenty simultaneous wrong passwords are twenty failures, and the account is locked
+{
+  "timestamp": "2026-09-26T13:21:28.658Z",
+  "level": "warn",
+  "message": "[auth-security] Account locked for user 7 after 20 failed attempts",
+  "context": {}
+}
+
+stderr | server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > control: the fifth sequential failure locks, the first four do not
+{
+  "timestamp": "2026-09-26T13:21:28.678Z",
+  "level": "warn",
+  "message": "[auth-security] Account locked for user 7 after 5 failed attempts",
+  "context": {}
+}
+
+stderr | server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > a failure that cannot be recorded is an error, not "not locked"
+{
+  "timestamp": "2026-09-26T13:21:28.690Z",
+  "level": "error",
+  "message": "[auth-security] Failed to record failed login",
+  "context": {
+    "query": "update \"users\" set \"failed_login_attempts\" = coalesce(\"users\".\"failed_login_attempts\", 0) + 1, \"locked_until\" = CASE\n          WHEN coalesce(\"users\".\"failed_login_attempts\", 0) + 1 >= $1::int\n          THEN $2::timestamp\n          ELSE \"users\".\"locked_until\"\n        END, \"last_failed_login\" = $3 where \"users\".\"id\" = $4 returning \"failed_login_attempts\"",
+    "params": [
+      5,
+      "2026-09-26T13:51:28.688Z",
+      "2026-09-26T13:21:28.688Z",
+      7
+    ],
+    "cause": {
+      "length": 122,
+      "name": "error",
+      "severity": "ERROR",
+      "code": "42703",
+      "position": "332",
+      "file": "parse_relation.c",
+      "line": "3827",
+      "routine": "errorMissingColumn",
+      "query": "update \"users\" set \"failed_login_attempts\" = coalesce(\"users\".\"failed_login_attempts\", 0) + 1, \"locked_until\" = CASE\n          WHEN coalesce(\"users\".\"failed_login_attempts\", 0) + 1 >= $1::int\n          THEN $2::timestamp\n          ELSE \"users\".\"locked_until\"\n        END, \"last_failed_login\" = $3 where \"users\".\"id\" = $4 returning \"failed_login_attempts\"",
+      "params": [
+        5,
+        "2026-09-26T13:51:28.688Z",
+        "2026-09-26T13:21:28.688Z",
+        7
+      ],
+      "queryOptions": {
+        "rowMode": "array",
+        "parsers": {}
+      }
+    }
+  }
+}
+
+ ✓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > twenty simultaneous wrong passwords are twenty failures, and the account is locked 2182ms
+ ✓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > control: the fifth sequential failure locks, the first four do not 17ms
+ ✓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > a failure that cannot be recorded is an error, not "not locked" 12ms
+ ✓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > createEmailOtp and the guess budget > re-issuing a code while one is pending keeps the attempts already spent 14ms
+ ✓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > createEmailOtp and the guess budget > a code issued when none is pending starts a fresh budget 12ms
+ ✓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > createEmailOtp and the guess budget > a code issued after the pending one expired starts a fresh budget 11ms
+ ✓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > reissueEmailOtp and the per-challenge cap (P1-3 residual, 2026-09-26) > a challenge receives MAX_RESENDS (3) re-issued codes, then none: the refusal leaves the pending code and its expiry untouched 19ms
+ ✓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > reissueEmailOtp and the per-challenge cap (P1-3 residual, 2026-09-26) > a re-issued code keeps the guesses already spent, and is the code that now verifies 12ms
+ ✓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > reissueEmailOtp and the per-challenge cap (P1-3 residual, 2026-09-26) > exhausting the guesses and clearing the row does not refill the codes: the cap counts the whole challenge 19ms
+ ✓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > reissueEmailOtp and the per-challenge cap (P1-3 residual, 2026-09-26) > a fresh challenge (createEmailOtp, what the password step calls) starts the count again 16ms
+ ✓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > reissueEmailOtp and the per-challenge cap (P1-3 residual, 2026-09-26) > ten simultaneous re-issues mint exactly MAX_RESENDS codes, and exactly one of them is the pending code 20ms
+ ✓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > the migration the set runs gives the row what the service writes (Rule 1; the C-20 mode) > migrations/20260923_users_mfa_totp_last_step.sql adds email_otp_resends, so createEmailOtp does not fail with 42703 after a deploy 22ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  13:21:24
+   Duration  4.21s (transform 809ms, setup 77ms, import 1.43s, tests 2.38s, environment 0ms)
+
+exit=0

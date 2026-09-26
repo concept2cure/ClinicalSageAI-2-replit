@@ -1,0 +1,44 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > inserts the first upload 7ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > is idempotent for identical bytes — a retry still succeeds 2ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > returns NO row for different bytes, which the route turns into a 409 2ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > leaves the original hash and storage key untouched 2ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > accepts the new bytes under a new version 2ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > the second unique constraint > raises 23505 for the same bytes under a different code 4ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > the second unique constraint > is handled by the route rather than falling through to INGEST_FAILED 0ms
+ × server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > a same-bytes retry keeps what was recorded (VR-05) > keeps the stored copy it names, its file name, retention policy and lineage 13ms
+   → expected { s3_key: 'uploads/k2.pdf', …(5) } to match object { s3_key: 'uploads/k1.pdf', …(5) }
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > a same-bytes retry keeps what was recorded (VR-05) > a record with no storage handle takes the retry's as one unit 4ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > the defect the predicate prevents is still demonstrable > WITHOUT the predicate, the same upload overwrites the recorded hash 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > a same-bytes retry keeps what was recorded (VR-05) > keeps the stored copy it names, its file name, retention policy and lineage
+AssertionError: expected { s3_key: 'uploads/k2.pdf', …(5) } to match object { s3_key: 'uploads/k1.pdf', …(5) }
+- Expected
++ Received
+  {
+-   "file_name": "Kept.pdf",
+-   "parent_document_id": "22222222-2222-4222-8222-222222222222",
+-   "retention_policy": "GCP-15Y",
+-   "s3_key": "uploads/k1.pdf",
+-   "storage_version_id": "v1",
+-   "supersedes_id": "22222222-2222-4222-8222-222222222222",
++   "file_name": "renamed.pdf",
++   "parent_document_id": null,
++   "retention_policy": null,
++   "s3_key": "uploads/k2.pdf",
++   "storage_version_id": "v2",
++   "supersedes_id": null,
+  }
+ ❯ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts:255:35
+    253|     const retry = await admit('Kept.pdf', 'HASH_K', { key: 'uploads/k2…
+    254|     expect(retry.rows).toHaveLength(1);
+    255|     expect(await row('Kept.pdf')).toMatchObject({
+       |                                   ^
+    256|       s3_key: 'uploads/k1.pdf',
+    257|       storage_version_id: 'v1',
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  13:34:56
+   Duration  2.70s (transform 97ms, setup 94ms, import 49ms, tests 2.27s, environment 0ms)

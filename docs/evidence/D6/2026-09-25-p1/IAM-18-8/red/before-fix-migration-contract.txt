@@ -1,0 +1,79 @@
+# State: service and schema changed; migrations/20260923_users_mfa_totp_last_step.sql NOT yet amended. 2026-09-26T13:20Z
+# The real set file applied to the pre-2026-09-26 users shape must add the column createEmailOtp writes.
+$ git diff --stat -- migrations/
+$ NODE_OPTIONS=--max-old-space-size=1536 npx vitest run server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts -t 'migration the set runs'
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-26T13:20:10.320Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+ ↓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > twenty simultaneous wrong passwords are twenty failures, and the account is locked
+ ↓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > control: the fifth sequential failure locks, the first four do not
+ ↓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > recordFailedLogin under concurrency > a failure that cannot be recorded is an error, not "not locked"
+ ↓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > createEmailOtp and the guess budget > re-issuing a code while one is pending keeps the attempts already spent
+ ↓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > createEmailOtp and the guess budget > a code issued when none is pending starts a fresh budget
+ ↓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > createEmailOtp and the guess budget > a code issued after the pending one expired starts a fresh budget
+ ↓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > reissueEmailOtp and the per-challenge cap (P1-3 residual, 2026-09-26) > a challenge receives MAX_RESENDS (3) re-issued codes, then none: the refusal leaves the pending code and its expiry untouched
+ ↓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > reissueEmailOtp and the per-challenge cap (P1-3 residual, 2026-09-26) > a re-issued code keeps the guesses already spent, and is the code that now verifies
+ ↓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > reissueEmailOtp and the per-challenge cap (P1-3 residual, 2026-09-26) > exhausting the guesses and clearing the row does not refill the codes: the cap counts the whole challenge
+ ↓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > reissueEmailOtp and the per-challenge cap (P1-3 residual, 2026-09-26) > a fresh challenge (createEmailOtp, what the password step calls) starts the count again
+ ↓ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > reissueEmailOtp and the per-challenge cap (P1-3 residual, 2026-09-26) > ten simultaneous re-issues mint exactly MAX_RESENDS codes, and exactly one of them is the pending code
+ × server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > the migration the set runs gives the row what the service writes (Rule 1; the C-20 mode) > migrations/20260923_users_mfa_totp_last_step.sql adds email_otp_resends, so createEmailOtp does not fail with 42703 after a deploy 2319ms
+   → promise rejected "Error: Failed query: update "users" set "… { …(2) }" instead of resolving
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts > the migration the set runs gives the row what the service writes (Rule 1; the C-20 mode) > migrations/20260923_users_mfa_totp_last_step.sql adds email_otp_resends, so createEmailOtp does not fail with 42703 after a deploy
+AssertionError: promise rejected "Error: Failed query: update "users" set "… { …(2) }" instead of resolving
+ ❯ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts:234:93
+    232|     const sql = readFileSync(MIGRATION, 'utf8');
+    233|     await pg.exec(sql);
+    234|     await expect(createEmailOtp(7), 'the set file did not add the colu…
+       |                                                                                             ^
+    235|     const col = await pg.query<{ data_type: string; column_default: st…
+    236|       `SELECT data_type, column_default FROM information_schema.column…
+
+Caused by: Error: Failed query: update "users" set "email_otp_hash" = $1, "email_otp_expires_at" = $2, "email_otp_attempts" = CASE
+    WHEN "users"."email_otp_hash" IS NOT NULL AND "users"."email_otp_expires_at" > $3::timestamp
+    THEN coalesce("users"."email_otp_attempts", 0)
+    ELSE 0
+  END, "email_otp_resends" = $4 where "users"."id" = $5
+params: feee5df3bdbe748f64fd51b3858587ff94110620987d6992df43bc7d47059927,2026-09-26T13:30:12.667Z,2026-09-26T13:20:12.667Z,0,7
+ ❯ PglitePreparedQuery.queryWithCache node_modules/drizzle-orm/pg-core/session.js:41:15
+ ❯ Module.createEmailOtp server/services/emailOtpService.ts:109:3
+ ❯ server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts:234:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { query: 'update "users" set "email_otp_hash" = $1, "email_otp_expires_at" = $2, "email_otp_attempts" = CASE\n    WHEN "users"."email_otp_hash" IS NOT NULL AND "users"."email_otp_expires_at" > $3::timestamp\n    THEN coalesce("users"."email_otp_attempts", 0)\n    ELSE 0\n  END, "email_otp_resends" = $4 where "users"."id" = $5', params: [ 'feee5df3bdbe748f64fd51b3858587ff94110620987d6992df43bc7d47059927', '2026-09-26T13:30:12.667Z', '2026-09-26T13:20:12.667Z', +0, 7 ] }
+Caused by: error: column "email_otp_resends" of relation "users" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572
+ ❯ pe.Xe node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961
+ ❯ pe.parse node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713
+ ❯ O.qe node_modules/@electric-sql/pglite/dist/index.js:5:1762
+ ❯ node_modules/@electric-sql/pglite/dist/index.js:5:1155
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 138, severity: 'ERROR', code: '42703', detail: undefined, hint: undefined, position: '266', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'analyze.c', routine: 'transformUpdateTargetList', query: 'update "users" set "email_otp_hash" = $1, "email_otp_expires_at" = $2, "email_otp_attempts" = CASE\n    WHEN "users"."email_otp_hash" IS NOT NULL AND "users"."email_otp_expires_at" > $3::timestamp\n    THEN coalesce("users"."email_otp_attempts", 0)\n    ELSE 0\n  END, "email_otp_resends" = $4 where "users"."id" = $5', params: [ 'feee5df3bdbe748f64fd51b3858587ff94110620987d6992df43bc7d47059927', '2026-09-26T13:30:12.667Z', '2026-09-26T13:20:12.667Z', +0, 7 ], queryOptions: { rowMode: 'object', parsers: { '1082': 'Function<1082>', '1114': 'Function<1114>', '1115': 'Function<1115>', '1182': 'Function<1182>', '1184': 'Function<1184>', '1185': 'Function<1185>', '1186': 'Function<1186>', '1187': 'Function<1187>', '1231': 'Function<1231>' } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+   Start at  13:20:08
+   Duration  4.29s (transform 875ms, setup 75ms, import 1.57s, tests 2.34s, environment 0ms)
+
+exit=1

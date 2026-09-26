@@ -462,6 +462,23 @@ if ! npm run --silent ci:trivyignore-hygiene 2>&1; then
 fi
 echo "   ✅ .trivyignore entries are bounded and owned."
 
+# ── No 5xx body carries the caught error's text ──────────────────────────────
+#
+# serverError() answers with a static envelope and logs the detail against the
+# request id; a 5xx that reads .message off a caught error tells the client the
+# relation, driver or provider that failed (security audit 2026-09-24, IAM-18).
+# The baseline is per file and only shrinks: npm run ci:server-error-leaks:write-baseline
+# after the gate reports sites fixed, never before it is green.
+echo "   Checking that no 5xx body carries the caught error's text..."
+if ! npm run --silent ci:server-error-leaks 2>&1; then
+  echo ""
+  echo "🚫 ERROR: a 5xx response body reads .message (or the stack/detail) off a caught error."
+  echo "   Answer through serverError(res, log, where, err) from server/lib/api-response.ts."
+  echo ""
+  exit 1
+fi
+echo "   ✅ No 5xx body carries the caught error's text."
+
 # ── The commit has to build for somebody other than you ──────────────────────
 #
 # On 19 Sep 2026 an unanchored `uploads/` in .gitignore -- meant for the runtime

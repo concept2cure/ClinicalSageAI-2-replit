@@ -77,6 +77,9 @@ const EVENT_DESCRIPTIONS: Readonly<Record<string, string>> = {
     'Sign-in refused: the account is not a member of the organisation that owns this identity provider',
   'user_login_mfa_challenge|success|mfa_challenge_totp': 'Password verified: authenticator code requested',
   'user_login_mfa_challenge|success|mfa_challenge_email': 'Password verified: email code sent',
+  // POST /mfa/resend refuses a challenge that has had its limit of re-issued
+  // codes (emailOtpService.MAX_RESENDS; IAM-09, plan P1-3's resend cap).
+  'user_login_mfa_challenge|failure|resend_limit': 'Emailed code not re-sent: this sign-in has already received its limit of emailed codes',
   'user_login_mfa_failed|failure|invalid_code': 'Second factor refused: wrong code',
   'user_login_mfa_failed|failure|invalid_or_expired_challenge': 'Second factor refused: invalid or expired challenge',
   'user_logout|success|': 'Signed out',

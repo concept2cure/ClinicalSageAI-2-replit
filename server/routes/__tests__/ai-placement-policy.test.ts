@@ -26,11 +26,15 @@ vi.mock('../../middleware/auth', async importOriginal => ({
 
 import placementRouter from '../ai-placement-policy';
 
+// The request-scoped client the global auth gate attaches.
+const REQUEST_CLIENT = { query: vi.fn(async () => ({ rows: [] })) };
+
 function appAs(user: Record<string, unknown> | null) {
   const app = express();
   app.use(express.json());
   app.use((req: Request, _res: Response, next: NextFunction) => {
     if (user) (req as unknown as { user: unknown }).user = user;
+    (req as unknown as { dbClient: unknown }).dbClient = REQUEST_CLIENT;
     next();
   });
   app.use('/api/ai-placement-policy', placementRouter);
@@ -69,7 +73,11 @@ describe('PUT /api/ai-placement-policy', () => {
       .put('/api/ai-placement-policy')
       .send({ ...POLICY, reasonForChange: REASON });
     expect(res.status).toBe(200);
-    const [, orgId, policy, reason, actor] = writeOrgPlacementPolicy.mock.calls[0];
+    const [conn, orgId, policy, reason, actor] = writeOrgPlacementPolicy.mock.calls[0];
+    // The writer's transaction runs on the request's own connection.
+    const client = await conn.connect();
+    await client.query('SELECT 1');
+    expect(REQUEST_CLIENT.query).toHaveBeenCalledWith('SELECT 1', undefined);
     expect(orgId).toBe(42);
     expect(policy).toEqual(POLICY);
     expect(reason).toBe(REASON);
@@ -108,6 +116,7 @@ describe('GET /api/ai-placement-policy', () => {
     readOrgPlacementPolicy.mockResolvedValue(null);
     const res = await request(appAs(ADMIN)).get('/api/ai-placement-policy');
     expect(res.status).toBe(200);
+    expect(readOrgPlacementPolicy.mock.calls[0][0]).toBe(REQUEST_CLIENT);
     expect(readOrgPlacementPolicy.mock.calls[0][1]).toBe(42);
     expect(res.body).toEqual({ organizationId: 42, policy: null });
   });

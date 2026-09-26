@@ -80,7 +80,7 @@ describe("AnA's check_consistency passes the outcome on", () => {
     const res = JSON.parse(
       await getToolHandler('check_consistency')!(
         { submission_id: 11, dimension: 'enrollment', left: PARAMS.left, right: PARAMS.right },
-        CTX as never,
+        { ...CTX, humanConfirmed: true } as never,
       ),
     );
     expect(res.ok).toBe(true);

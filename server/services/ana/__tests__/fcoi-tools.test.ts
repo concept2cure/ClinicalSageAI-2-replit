@@ -24,19 +24,19 @@ describe('FCOI AnA tools — registration', () => {
 
 describe('FCOI AnA tools — context + input guards', () => {
   it('create_clinical_investigator refuses without tenant/user context', async () => {
-    const out = JSON.parse(await getToolHandler('create_clinical_investigator')!({ full_name: 'Dr X', role: 'principal_investigator' }, {} as any));
+    const out = JSON.parse(await getToolHandler('create_clinical_investigator')!({ full_name: 'Dr X', role: 'principal_investigator' }, { humanConfirmed: true } as any));
     expect(out.error).toMatch(/tenant \+ user context/);
   });
 
   it('create_financial_disclosure validates required inputs', async () => {
-    const out = JSON.parse(await getToolHandler('create_financial_disclosure')!({}, { organizationId: 1, userId: 1 } as any));
+    const out = JSON.parse(await getToolHandler('create_financial_disclosure')!({}, { organizationId: 1, userId: 1, humanConfirmed: true } as any));
     expect(out.error).toMatch(/investigator_id and has_disclosable_interests/);
   });
 
   it('add_disclosure_interest rejects an invalid interest_type', async () => {
     const out = JSON.parse(await getToolHandler('add_disclosure_interest')!(
       { disclosure_id: 1, interest_type: 'BRIBE', description: 'x' },
-      { organizationId: 1, userId: 1 } as any,
+      { organizationId: 1, userId: 1, humanConfirmed: true } as any,
     ));
     expect(out.error).toMatch(/valid interest_type/);
   });

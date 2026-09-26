@@ -164,7 +164,7 @@ import {
   type RunHandle,
 } from '../../services/ana/run-control.js';
 import { MAX_PAUSE_MS, type HumanControlEvent } from '../../services/ana/run-status.js';
-import { classifyToolCall, CONFIRM_TIER_TOOLS } from '../../services/ana/governed-tool-gate.js';
+import { classifyToolCall, PLATFORM_COMMAND_TOOL } from '../../services/ana/governed-tool-gate.js';
 import { buildHumanConfirmationRequiredResult } from '../../services/ana-ri/part11-governance.js';
 import {
   describeServerToolStep,
@@ -186,17 +186,17 @@ const dbPool = {
 
 /** Register POST /stream on the given router. */
 /**
- * For a tool that writes on its own handler (CONFIRM_TIER_TOOLS), the context
- * the loop would have run it with — recorded on the held run so the
- * governed-action route runs the tool from it, never from the browser's body.
- * Undefined for anything else, which JSON drops from the row.
+ * For a tool that writes on its own handler (anything but the command carrier),
+ * the context the loop would have run it with — recorded on the held run so
+ * the governed-action route runs the tool from it, never from the browser's
+ * body. Undefined for a platform command, which JSON drops from the row.
  */
 function heldToolContext(
   toolName: string,
   projectId: unknown,
   servingModel: { provider?: string | null; model?: string | null } | null | undefined,
 ) {
-  if (!CONFIRM_TIER_TOOLS.has(toolName)) return undefined;
+  if (toolName === PLATFORM_COMMAND_TOOL) return undefined;
   return {
     projectId: projectId ? Number(projectId) || null : null,
     projectRef: projectId ? String(projectId) : null,
@@ -1574,6 +1574,13 @@ export function mountStreamRoute(router: Router): void {
           for (const toolUse of calls) {
             const verdict = classifyToolCall(toolUse);
             if (verdict.kind === 'UNGOVERNED') continue;
+
+            if (verdict.kind === 'REFUSED') {
+              // A person's own act. Not put to anyone — a yes would not make
+              // it hers to take — and not dispatched.
+              out.set(toolUse.id, { ok: false, why: verdict.why, result: verdict.result });
+              continue;
+            }
 
             if (verdict.kind === 'UNDECIDABLE') {
               // A call nobody could read is refused, never dispatched. Before

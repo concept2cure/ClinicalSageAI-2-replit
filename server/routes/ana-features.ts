@@ -4994,7 +4994,8 @@ router.post(
         return res.status(400).json({ error: error.message, code });
       }
       if (code === 'AI_PROVIDER_UNAVAILABLE') {
-        return res.status(503).json({ error: error.message, code });
+        logger.error('[AnA submission-chat] AI provider unavailable', { err: error?.message });
+        return res.status(503).json({ error: 'The AI provider is unavailable.', code });
       }
       logger.error('[AnA submission-chat] failed:', { error: error?.message || error });
       return res.status(500).json({
@@ -5085,8 +5086,9 @@ router.post(
         return res.status(400).json({ error: err.message, code });
       }
       if (code === 'MIGRATION_PENDING') {
+        logger.error('[AnA authoring-plan generate] store not provisioned', { err: err?.message });
         return res.status(503).json({
-          error: err.message,
+          error: 'This feature is not yet provisioned in this deployment.',
           code,
         });
       }
