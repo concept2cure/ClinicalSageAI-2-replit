@@ -119,129 +119,131 @@ async function targetOwned(orgId: number, body: z.infer<typeof placeSchema>): Pr
 
 const WRITE_FAILED = { error: 'HOLD_WRITE_FAILED', message: 'The hold could not be recorded. Nothing was changed.' };
 
+/** The organisation's holds, active first. */
+async function listHolds(req: Request, res: Response): Promise<void> {
+  const auth = holdAuthority(req, res);
+  if (!auth) return;
+  try {
+    // tenant-isolation-safe: holds are read by the session's organisation.
+    const r = await pool.query(
+      `SELECT ${HOLD_COLUMNS} FROM vault.legal_holds
+        WHERE organization_id = $1
+        ORDER BY (lifted_at IS NULL) DESC, placed_at DESC
+        LIMIT 500`,
+      [auth.orgId],
+    );
+    res.json({ holds: (r.rows as HoldRow[]).map(presentHold) });
+  } catch (err) {
+    log.error('Legal holds could not be listed', { orgId: auth.orgId, error: err instanceof Error ? err.message : String(err) });
+    res.status(500).json({ error: 'HOLDS_UNAVAILABLE', message: 'The holds could not be read.' });
+  }
+}
+
+/** Place a hold: the row and its chained audit row, in one transaction. */
+async function placeHold(req: Request, res: Response): Promise<void> {
+  const auth = holdAuthority(req, res);
+  if (!auth) return;
+  const parsed = placeSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: 'HOLD_INVALID', message: parsed.error.issues[0]?.message ?? 'Invalid hold.' });
+    return;
+  }
+  const body = parsed.data;
+  if (!(await targetOwned(auth.orgId, body))) {
+    res.status(404).json({ error: 'HOLD_TARGET_NOT_FOUND', message: 'No such program or document in this organisation.' });
+    return;
+  }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const inserted = await client.query(
+      `INSERT INTO vault.legal_holds (organization_id, reference, reason, scope, program_id, document_id, placed_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING ${HOLD_COLUMNS}`,
+      [auth.orgId, body.reference, body.reason, body.scope, body.programId ?? null, body.documentId ?? null, auth.actorId],
+    );
+    const hold = inserted.rows[0] as HoldRow;
+    await writeChainedAuditRow(
+      client,
+      {
+        action: 'vault.legal_hold.placed',
+        userId: auth.actorId,
+        resourceType: 'vault_legal_hold',
+        resourceId: hold.id,
+        details: { scope: body.scope, programId: body.programId ?? null, documentId: body.documentId ?? null, reference: body.reference, reason: body.reason },
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      },
+      auth.orgId,
+      hold.id,
+    );
+    await client.query('COMMIT');
+    res.status(201).json({ hold: presentHold(hold) });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    log.error('Legal hold could not be placed', { orgId: auth.orgId, error: err instanceof Error ? err.message : String(err) });
+    res.status(500).json(WRITE_FAILED);
+  } finally {
+    client.release();
+  }
+}
+
+/** Lift a hold: who, why and when, with its chained audit row, in one transaction. */
+async function liftHold(req: Request, res: Response): Promise<void> {
+  const auth = holdAuthority(req, res);
+  if (!auth) return;
+  const id = z.string().uuid().safeParse(req.params.id);
+  const parsed = liftSchema.safeParse(req.body);
+  if (!id.success || !parsed.success) {
+    res.status(400).json({ error: 'HOLD_INVALID', message: 'A lift names the hold and gives a reason.' });
+    return;
+  }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    // tenant-isolation-safe: the hold is updated by id within the session's organisation only.
+    const updated = await client.query(
+      `UPDATE vault.legal_holds SET lifted_at = NOW(), lifted_by = $2, lift_reason = $3
+        WHERE id = $1 AND organization_id = $4 AND lifted_at IS NULL
+        RETURNING ${HOLD_COLUMNS}`,
+      [id.data, auth.actorId, parsed.data.liftReason, auth.orgId],
+    );
+    if (updated.rowCount !== 1) {
+      await client.query('ROLLBACK');
+      res.status(404).json({ error: 'HOLD_NOT_ACTIVE', message: 'No active hold with that id in this organisation.' });
+      return;
+    }
+    const hold = updated.rows[0] as HoldRow;
+    await writeChainedAuditRow(
+      client,
+      {
+        action: 'vault.legal_hold.lifted',
+        userId: auth.actorId,
+        resourceType: 'vault_legal_hold',
+        resourceId: hold.id,
+        details: { scope: hold.scope, programId: hold.program_id, documentId: hold.document_id, reference: hold.reference, liftReason: parsed.data.liftReason },
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      },
+      auth.orgId,
+      hold.id,
+    );
+    await client.query('COMMIT');
+    res.json({ hold: presentHold(hold) });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    log.error('Legal hold could not be lifted', { orgId: auth.orgId, error: err instanceof Error ? err.message : String(err) });
+    res.status(500).json(WRITE_FAILED);
+  } finally {
+    client.release();
+  }
+}
+
 export function createVaultLegalHoldRoutes(): Router {
   const router = Router();
-
-  /** The organisation's holds, active first. */
-  router.get('/', async (req: Request, res: Response) => {
-    const auth = holdAuthority(req, res);
-    if (!auth) return;
-    try {
-      // tenant-isolation-safe: holds are read by the session's organisation.
-      const r = await pool.query(
-        `SELECT ${HOLD_COLUMNS} FROM vault.legal_holds
-          WHERE organization_id = $1
-          ORDER BY (lifted_at IS NULL) DESC, placed_at DESC
-          LIMIT 500`,
-        [auth.orgId],
-      );
-      res.json({ holds: (r.rows as HoldRow[]).map(presentHold) });
-    } catch (err) {
-      log.error('Legal holds could not be listed', { orgId: auth.orgId, error: err instanceof Error ? err.message : String(err) });
-      res.status(500).json({ error: 'HOLDS_UNAVAILABLE', message: 'The holds could not be read.' });
-    }
-  });
-
-  /** Place a hold: the row and its chained audit row, in one transaction. */
-  router.post('/', async (req: Request, res: Response) => {
-    const auth = holdAuthority(req, res);
-    if (!auth) return;
-    const parsed = placeSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({ error: 'HOLD_INVALID', message: parsed.error.issues[0]?.message ?? 'Invalid hold.' });
-      return;
-    }
-    const body = parsed.data;
-    if (!(await targetOwned(auth.orgId, body))) {
-      res.status(404).json({ error: 'HOLD_TARGET_NOT_FOUND', message: 'No such program or document in this organisation.' });
-      return;
-    }
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-      const inserted = await client.query(
-        `INSERT INTO vault.legal_holds (organization_id, reference, reason, scope, program_id, document_id, placed_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
-         RETURNING ${HOLD_COLUMNS}`,
-        [auth.orgId, body.reference, body.reason, body.scope, body.programId ?? null, body.documentId ?? null, auth.actorId],
-      );
-      const hold = inserted.rows[0] as HoldRow;
-      await writeChainedAuditRow(
-        client,
-        {
-          action: 'vault.legal_hold.placed',
-          userId: auth.actorId,
-          resourceType: 'vault_legal_hold',
-          resourceId: hold.id,
-          details: { scope: body.scope, programId: body.programId ?? null, documentId: body.documentId ?? null, reference: body.reference, reason: body.reason },
-          ipAddress: req.ip,
-          userAgent: req.headers['user-agent'],
-        },
-        auth.orgId,
-        hold.id,
-      );
-      await client.query('COMMIT');
-      res.status(201).json({ hold: presentHold(hold) });
-    } catch (err) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      log.error('Legal hold could not be placed', { orgId: auth.orgId, error: err instanceof Error ? err.message : String(err) });
-      res.status(500).json(WRITE_FAILED);
-    } finally {
-      client.release();
-    }
-  });
-
-  /** Lift a hold: who, why and when, with its chained audit row, in one transaction. */
-  router.post('/:id/lift', async (req: Request, res: Response) => {
-    const auth = holdAuthority(req, res);
-    if (!auth) return;
-    const id = z.string().uuid().safeParse(req.params.id);
-    const parsed = liftSchema.safeParse(req.body);
-    if (!id.success || !parsed.success) {
-      res.status(400).json({ error: 'HOLD_INVALID', message: 'A lift names the hold and gives a reason.' });
-      return;
-    }
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-      // tenant-isolation-safe: the hold is updated by id within the session's organisation only.
-      const updated = await client.query(
-        `UPDATE vault.legal_holds SET lifted_at = NOW(), lifted_by = $2, lift_reason = $3
-          WHERE id = $1 AND organization_id = $4 AND lifted_at IS NULL
-          RETURNING ${HOLD_COLUMNS}`,
-        [id.data, auth.actorId, parsed.data.liftReason, auth.orgId],
-      );
-      if (updated.rowCount !== 1) {
-        await client.query('ROLLBACK');
-        res.status(404).json({ error: 'HOLD_NOT_ACTIVE', message: 'No active hold with that id in this organisation.' });
-        return;
-      }
-      const hold = updated.rows[0] as HoldRow;
-      await writeChainedAuditRow(
-        client,
-        {
-          action: 'vault.legal_hold.lifted',
-          userId: auth.actorId,
-          resourceType: 'vault_legal_hold',
-          resourceId: hold.id,
-          details: { scope: hold.scope, programId: hold.program_id, documentId: hold.document_id, reference: hold.reference, liftReason: parsed.data.liftReason },
-          ipAddress: req.ip,
-          userAgent: req.headers['user-agent'],
-        },
-        auth.orgId,
-        hold.id,
-      );
-      await client.query('COMMIT');
-      res.json({ hold: presentHold(hold) });
-    } catch (err) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      log.error('Legal hold could not be lifted', { orgId: auth.orgId, error: err instanceof Error ? err.message : String(err) });
-      res.status(500).json(WRITE_FAILED);
-    } finally {
-      client.release();
-    }
-  });
-
+  router.get('/', listHolds);
+  router.post('/', placeHold);
+  router.post('/:id/lift', liftHold);
   return router;
 }
 

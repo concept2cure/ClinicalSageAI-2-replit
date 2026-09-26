@@ -50,7 +50,7 @@ describe('validateTenantContext, given a session', () => {
     expect(res.statusCode).toBe(403);
     expect(res.body).toMatchObject({ code: 'TENANT_MISMATCH' });
     expect(next).not.toHaveBeenCalled();
-    await new Promise((r) => setImmediate(r)); // the audit is fire-and-forget
+    await new Promise(r => setTimeout(r, 0)); // the audit is fire-and-forget
     expect(audit.logAction).toHaveBeenCalledWith(expect.objectContaining({ action: 'tenant_impersonation_attempt', tenantId: 7 }));
   });
 

@@ -249,36 +249,31 @@ function loadSamlTenants(): void {
 
   const baseUrl = process.env.APP_BASE_URL || 'https://app.concept2cure.ai';
   for (const [slug, value] of Object.entries(parsed as Record<string, unknown>)) {
-    if (!value || typeof value !== 'object') continue;
-    const cfg = value as Record<string, unknown>;
-    const idpSsoUrl = cfg.idpSsoUrl;
-    const idpEntityId = cfg.idpEntityId;
-    const idpCertificate = cfg.idpCertificate;
-    if (
-      typeof idpSsoUrl !== 'string' ||
-      typeof idpEntityId !== 'string' ||
-      typeof idpCertificate !== 'string'
-    ) {
-      continue;
-    }
-    samlConfigs.set(slug, {
-      entityId:
-        typeof cfg.entityId === 'string' ? cfg.entityId : `${baseUrl}/saml/${slug}/metadata`,
-      assertionConsumerServiceUrl:
-        typeof cfg.assertionConsumerServiceUrl === 'string'
-          ? cfg.assertionConsumerServiceUrl
-          : `${baseUrl}/api/auth/sso/saml/callback`,
-      idpSsoUrl,
-      idpEntityId,
-      idpCertificate,
-      signRequests: cfg.signRequests === true,
-      spPrivateKey: typeof cfg.spPrivateKey === 'string' ? cfg.spPrivateKey : undefined,
-      spCertificate: typeof cfg.spCertificate === 'string' ? cfg.spCertificate : undefined,
-      nameIdFormat: typeof cfg.nameIdFormat === 'string' ? cfg.nameIdFormat : undefined,
-      idpSloUrl: typeof cfg.idpSloUrl === 'string' ? cfg.idpSloUrl : undefined,
-    });
+    const config = samlTenantConfigOf(slug, value, baseUrl);
+    if (config) samlConfigs.set(slug, config);
   }
   logger.info(`Loaded ${samlConfigs.size} SAML tenant config(s) from SAML_TENANTS`);
+}
+
+/** One SAML_TENANTS entry as a config, or null when it lacks the IdP's URL, entity id or certificate. */
+function samlTenantConfigOf(slug: string, value: unknown, baseUrl: string): SAMLConfig | null {
+  if (!value || typeof value !== 'object') return null;
+  const cfg = value as Record<string, unknown>;
+  const { idpSsoUrl, idpEntityId, idpCertificate } = cfg;
+  if (typeof idpSsoUrl !== 'string' || typeof idpEntityId !== 'string' || typeof idpCertificate !== 'string') return null;
+  const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
+  return {
+    entityId: str(cfg.entityId) ?? `${baseUrl}/saml/${slug}/metadata`,
+    assertionConsumerServiceUrl: str(cfg.assertionConsumerServiceUrl) ?? `${baseUrl}/api/auth/sso/saml/callback`,
+    idpSsoUrl,
+    idpEntityId,
+    idpCertificate,
+    signRequests: cfg.signRequests === true,
+    spPrivateKey: str(cfg.spPrivateKey),
+    spCertificate: str(cfg.spCertificate),
+    nameIdFormat: str(cfg.nameIdFormat),
+    idpSloUrl: str(cfg.idpSloUrl),
+  };
 }
 
 loadSamlTenants();
@@ -383,6 +378,96 @@ export function sanitizeReturnTo(value: unknown): string | undefined {
  *   - SAMLResponse: base64-encoded SAML Response XML
  *   - RelayState: (optional) original URL to redirect back to
  */
+/**
+ * The SAML callback's refusals, each recorded as a failure event in the tenant
+ * it concerns (21 CFR Part 11 §11.10(e)): a response that does not validate, a
+ * slug that names no organisation, a user outside the config organisation, an
+ * account that is not active, and anything else.
+ */
+async function refuseSamlCallback(
+  err: unknown,
+  res: Response,
+  configOrgId: number | undefined,
+  requestContext: { ipAddress: string | undefined; userAgent: string | undefined },
+): Promise<Response> {
+  if (err instanceof SAMLValidationError) {
+    logger.warn(`SAML validation failed: ${err.message}`);
+    await recordAuthEvent({
+      action: 'user_login',
+      tenantId: configOrgId,
+      outcome: 'failure',
+      reason: 'saml_validation_failed',
+      ...requestContext,
+    });
+    return res.status(401).json({
+      success: false,
+      error: 'SAML_VALIDATION_FAILED',
+      message: err.message,
+    });
+  }
+
+  if (err instanceof SamlOrgResolutionError) {
+    // Fail closed: do not provision into a default org we can't verify.
+    logger.error(`SAML org resolution failed: ${err.message}`);
+    await recordAuthEvent({
+      action: 'user_login',
+      outcome: 'failure',
+      reason: 'saml_org_not_resolved',
+      ...requestContext,
+    });
+    return res.status(403).json({
+      success: false,
+      error: 'SAML_ORG_NOT_RESOLVED',
+      message:
+        'Could not resolve the organization for this SAML login. Please contact your administrator.',
+    });
+  }
+
+  if (err instanceof SamlUserNotInOrganisationError) {
+    logger.warn(`SAML sign-in refused: user ${err.userId} is not a member of org ${err.organizationId}`);
+    await recordAuthEvent({
+      action: 'user_login',
+      userId: err.userId,
+      tenantId: err.organizationId,
+      email: err.email,
+      outcome: 'failure',
+      reason: 'saml_user_not_in_organisation',
+      ...requestContext,
+    });
+    return res.status(403).json({
+      success: false,
+      error: 'SSO_USER_NOT_IN_ORGANISATION',
+      message:
+        'This account is not a member of the organization that owns this SSO configuration. Please contact your administrator.',
+    });
+  }
+
+  if (err instanceof SamlAccountInactiveError) {
+    logger.warn(`SAML sign-in refused: account ${err.userId} is not active`);
+    await recordAuthEvent({
+      action: 'user_login',
+      userId: err.userId,
+      tenantId: configOrgId,
+      email: err.email,
+      outcome: 'failure',
+      reason: 'account_inactive',
+      ...requestContext,
+    });
+    return res.status(403).json({
+      success: false,
+      error: 'SSO_ACCOUNT_INACTIVE',
+      message: ACCOUNT_INACTIVE_MESSAGE,
+    });
+  }
+
+  logger.error('SAML callback error', err as Record<string, unknown>);
+  return res.status(500).json({
+    success: false,
+    error: 'SAML_CALLBACK_FAILED',
+    message: 'Failed to process SAML response. Please contact your administrator.',
+  });
+}
+
 router.post('/saml/callback', async (req: Request, res: Response) => {
   // Every sign-in attempt, admitted or refused, is an auth event in the
   // tenant it concerns (21 CFR Part 11 §11.10(e)), as the password path's are.
@@ -514,82 +599,7 @@ router.post('/saml/callback', async (req: Request, res: Response) => {
       },
     });
   } catch (err) {
-    if (err instanceof SAMLValidationError) {
-      logger.warn(`SAML validation failed: ${err.message}`);
-      await recordAuthEvent({
-        action: 'user_login',
-        tenantId: configOrgId,
-        outcome: 'failure',
-        reason: 'saml_validation_failed',
-        ...requestContext,
-      });
-      return res.status(401).json({
-        success: false,
-        error: 'SAML_VALIDATION_FAILED',
-        message: err.message,
-      });
-    }
-
-    if (err instanceof SamlOrgResolutionError) {
-      // Fail closed: do not provision into a default org we can't verify.
-      logger.error(`SAML org resolution failed: ${err.message}`);
-      await recordAuthEvent({
-        action: 'user_login',
-        outcome: 'failure',
-        reason: 'saml_org_not_resolved',
-        ...requestContext,
-      });
-      return res.status(403).json({
-        success: false,
-        error: 'SAML_ORG_NOT_RESOLVED',
-        message:
-          'Could not resolve the organization for this SAML login. Please contact your administrator.',
-      });
-    }
-
-    if (err instanceof SamlUserNotInOrganisationError) {
-      logger.warn(`SAML sign-in refused: user ${err.userId} is not a member of org ${err.organizationId}`);
-      await recordAuthEvent({
-        action: 'user_login',
-        userId: err.userId,
-        tenantId: err.organizationId,
-        email: err.email,
-        outcome: 'failure',
-        reason: 'saml_user_not_in_organisation',
-        ...requestContext,
-      });
-      return res.status(403).json({
-        success: false,
-        error: 'SSO_USER_NOT_IN_ORGANISATION',
-        message:
-          'This account is not a member of the organization that owns this SSO configuration. Please contact your administrator.',
-      });
-    }
-
-    if (err instanceof SamlAccountInactiveError) {
-      logger.warn(`SAML sign-in refused: account ${err.userId} is not active`);
-      await recordAuthEvent({
-        action: 'user_login',
-        userId: err.userId,
-        tenantId: configOrgId,
-        email: err.email,
-        outcome: 'failure',
-        reason: 'account_inactive',
-        ...requestContext,
-      });
-      return res.status(403).json({
-        success: false,
-        error: 'SSO_ACCOUNT_INACTIVE',
-        message: ACCOUNT_INACTIVE_MESSAGE,
-      });
-    }
-
-    logger.error('SAML callback error', err as Record<string, unknown>);
-    return res.status(500).json({
-      success: false,
-      error: 'SAML_CALLBACK_FAILED',
-      message: 'Failed to process SAML response. Please contact your administrator.',
-    });
+    return refuseSamlCallback(err, res, configOrgId, requestContext);
   }
 });
 
@@ -637,13 +647,24 @@ router.get('/saml/metadata', (req: Request, res: Response) => {
  * Query: ?org=<slug> selects the IdP (default 'default'). The IdP validates the
  * LogoutRequest, so org selection cannot be abused to forge a logout elsewhere.
  */
+/** The session token a logout presents: the Authorization header or, on a POST, the `token` body field; never the query string. */
+function logoutTokenOf(req: Request): string {
+  const bearer = /^Bearer\s+(\S+)$/i.exec(req.headers.authorization ?? '');
+  const bodyToken = req.method === 'POST' && typeof req.body?.token === 'string' ? req.body.token : '';
+  return bearer?.[1] || bodyToken;
+}
+
+/** The IdP session a federated token names, else null: only a SAML session has an IdP session to terminate. */
+function federatedSessionOf(claims: Record<string, unknown>): { sessionIndex: string; email: string } | null {
+  const { sessionIndex, email } = claims;
+  if (claims.provider !== 'saml' || typeof sessionIndex !== 'string' || typeof email !== 'string') return null;
+  return { sessionIndex, email };
+}
+
 async function handleSpInitiatedLogout(req: Request, res: Response): Promise<void | Response> {
   const loginUrl = '/concept2cure/login';
   try {
-    const bearer = /^Bearer\s+(\S+)$/i.exec(req.headers.authorization ?? '');
-    const bodyToken =
-      req.method === 'POST' && typeof req.body?.token === 'string' ? req.body.token : '';
-    const token = bearer?.[1] || bodyToken;
+    const token = logoutTokenOf(req);
     if (!token) return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
 
     let claims: Record<string, unknown>;
@@ -654,16 +675,9 @@ async function handleSpInitiatedLogout(req: Request, res: Response): Promise<voi
       return res.status(401).json({ success: false, error: 'INVALID_TOKEN' });
     }
 
-    const sessionIndex = claims.sessionIndex;
-    const email = claims.email;
-    // Only federated (SAML) sessions have an IdP session to terminate.
-    if (
-      claims.provider !== 'saml' ||
-      typeof sessionIndex !== 'string' ||
-      typeof email !== 'string'
-    ) {
-      return res.redirect(302, loginUrl);
-    }
+    const federated = federatedSessionOf(claims);
+    if (!federated) return res.redirect(302, loginUrl);
+    const { sessionIndex, email } = federated;
 
     const orgSlug = (req.query.org as string) || DEFAULT_SAML_ORG_SLUG;
     const samlConfig = getSamlConfig(orgSlug);
@@ -778,7 +792,6 @@ router.get('/:provider/initiate', (req: Request, res: Response) => {
 // GET /api/auth/sso/:provider/callback
 router.get('/:provider/callback', async (req: Request, res: Response) => {
   const { provider } = req.params;
-  const { code } = req.query;
 
   // For dev mode, accept the mock code and return a token + user info
   if (isDevAuthAllowed()) {

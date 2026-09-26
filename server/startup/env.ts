@@ -25,6 +25,42 @@ export interface StartupFlags {
   testRoutesEnabled: boolean;
 }
 
+/**
+ * Production refuses the dev/mock route flags and AUTH_BOUNDARY_MODE=warn at
+ * boot: a flag flipped on in a production deploy is a misconfiguration to catch
+ * before a dev surface is served to customers (security audit 2026-09-24, IAM-16).
+ */
+function refuseForbiddenProductionPosture(): void {
+  const PROD_FORBIDDEN_FLAGS = [
+    'ENABLE_ANA_FEATURES_MOCK_ROUTES',
+    'ENABLE_EXPERIMENTAL_ROUTES',
+    'ENABLE_DEMO_ROUTES',
+  ];
+  const enabled = PROD_FORBIDDEN_FLAGS.filter(k => process.env[k] === 'true');
+  if (enabled.length > 0) {
+    console.error(
+      `[FATAL] Dev/mock route flags must not be enabled in production: ${enabled.join(', ')}`,
+    );
+    process.exit(1);
+  }
+
+  // The /api boundary is default-deny in production. `warn` mode (log the
+  // unauthenticated request and let it through) exists for the staging soak;
+  // an explicit AUTH_BOUNDARY_MODE=warn in a production deploy is a
+  // misconfiguration that would turn default-deny off with an info log, so it
+  // is refused at boot like the flags above (security audit 2026-09-24,
+  // IAM-16). resolveAuthBoundaryMode() also coerces it to enforce, for any
+  // entry point that mounts the boundary without passing through here.
+  const boundaryMode = (process.env.AUTH_BOUNDARY_MODE || '').trim().toLowerCase();
+  if (boundaryMode === 'warn') {
+    console.error(
+      '[FATAL] AUTH_BOUNDARY_MODE=warn is not permitted in production: the /api boundary is ' +
+        'default-deny there. Unset the variable or set AUTH_BOUNDARY_MODE=enforce.',
+    );
+    process.exit(1);
+  }
+}
+
 export function validateEnvironment(): void {
   const isProduction = process.env.NODE_ENV === 'production';
   const required: string[] = ['DATABASE_URL', 'DATABASE_NEON_NEW_SECRET'].some(k => process.env[k])
@@ -63,36 +99,7 @@ export function validateEnvironment(): void {
   // re-check NODE_ENV, but a flag flipped on in a production deploy is a
   // misconfiguration we want to catch at boot — not silently tolerate. Refuse
   // to start rather than serve a dev surface to paying customers.
-  if (isProduction) {
-    const PROD_FORBIDDEN_FLAGS = [
-      'ENABLE_ANA_FEATURES_MOCK_ROUTES',
-      'ENABLE_EXPERIMENTAL_ROUTES',
-      'ENABLE_DEMO_ROUTES',
-    ];
-    const enabled = PROD_FORBIDDEN_FLAGS.filter(k => process.env[k] === 'true');
-    if (enabled.length > 0) {
-      console.error(
-        `[FATAL] Dev/mock route flags must not be enabled in production: ${enabled.join(', ')}`,
-      );
-      process.exit(1);
-    }
-
-    // The /api boundary is default-deny in production. `warn` mode (log the
-    // unauthenticated request and let it through) exists for the staging soak;
-    // an explicit AUTH_BOUNDARY_MODE=warn in a production deploy is a
-    // misconfiguration that would turn default-deny off with an info log, so it
-    // is refused at boot like the flags above (security audit 2026-09-24,
-    // IAM-16). resolveAuthBoundaryMode() also coerces it to enforce, for any
-    // entry point that mounts the boundary without passing through here.
-    const boundaryMode = (process.env.AUTH_BOUNDARY_MODE || '').trim().toLowerCase();
-    if (boundaryMode === 'warn') {
-      console.error(
-        '[FATAL] AUTH_BOUNDARY_MODE=warn is not permitted in production: the /api boundary is ' +
-          'default-deny there. Unset the variable or set AUTH_BOUNDARY_MODE=enforce.',
-      );
-      process.exit(1);
-    }
-  }
+  if (isProduction) refuseForbiddenProductionPosture();
 
   if (isProduction) {
     const recommended = ['SENTRY_DSN', 'REDIS_URL'];
