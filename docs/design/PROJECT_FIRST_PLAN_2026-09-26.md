@@ -787,7 +787,28 @@ Rechecked at HEAD b8cd6c2c, 2026-09-26T02:55Z. The critic read HEAD 5882a1b6; th
 
 8. LINE REFERENCES. The plan's references in LX-02, LX-11, LX-12, LX-13 and LX-18 must be re-read at HEAD before any edit. Examples: stream.ts tool context is now :1740-1741, the recordGovernedAction insert is actions.ts:375-397, and the ind-forms call site is :1153.
 
-## 6. Status
+## 6. Founder decisions, 2026-09-26
+
+The founder chose the plan's recommended option in each case:
+
+- **PF-07, a record with no project.** Every governed record belongs to a project.
+  A chat file with no project open stays a conversation file. It becomes a Data
+  Room source only when someone adopts it into a project, through one audited
+  adopt action.
+- **PF-13, deleting a project.** A project that holds only drafts can be deleted,
+  with an audit row. A project with any sealed, filed or transmitted record can
+  only be archived, and its chain stays readable.
+- **PF-10, switching project mid-conversation.** The conversation forks: a new one
+  starts in the new project, with a visible "new conversation in <project>"
+  marker, and the old one stays bound to its own project.
+- **PF-16, QMS scope.** SOPs, work instructions, forms and quality manuals stay
+  organization-level, as named exceptions to the project rule. Product-specific
+  quality records carry a project: specifications, product change controls and
+  product protocols.
+- **PF-11, cross-project references.** Refuse by default. This was taken as the
+  plan's default in `39dfd9b7`; a recorded cross-program reference is not built.
+
+## 7. Status
 
 - **LX-22 part 1** landed as `041976f2`: `submissions.program_id`, the same-organization key (`ON DELETE SET NULL (program_id)`, so a tenant purge is not blocked) and the one-to-one backfill.
 - **The LX-20 red test (§5 item 5)** is fixed in `c0a95ede`, with a second suite the same sweep found.
