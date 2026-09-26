@@ -114,6 +114,42 @@ describe('IndLifecycle — program scoping', () => {
     expect(screen.getByTestId('indl-scope-note').textContent).toMatch(/Open a program to scope/);
   });
 
+  /* LX-22 part 2b: a checklist row carries its submission's project
+     (`programId`) once the assembler returns it. A same-named IND of ANOTHER
+     project is never the open program's; a name match is used only for a row
+     with no recorded project, and the note says so. */
+  it('shows the IND anchored to the open program, not a same-named IND of another project', async () => {
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: 'prog-uuid', title: 'BX-701 IND', product: 'BX-701' };
+    wire([
+      row({ submissionId: 1, code: 'BX-701', drugName: 'BX-701', productName: 'BX-701 IND', programId: 'other-uuid' }),
+      row({ submissionId: 2, code: 'BX-701', drugName: 'BX-701', productName: 'BX-701 IND (program 2)', programId: 'prog-uuid' }),
+    ]);
+    render(<IndLifecycle {...surfaceProps()} />);
+
+    expect(await screen.findByRole('heading', { name: /BX-701 — Initial IND/ })).toBeTruthy();
+    const note = screen.getByTestId('indl-scope-note').textContent ?? '';
+    expect(note).toMatch(/open program's IND \(BX-701 IND \(program 2\)\)/);
+    expect(note).not.toMatch(/matched by name/i);
+  });
+
+  it('a same-named IND anchored to another project is not the open program’s', async () => {
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: 'prog-uuid', title: 'BX-701 IND', product: 'BX-701' };
+    wire([row({ submissionId: 1, code: 'BX-701', drugName: 'BX-701', productName: 'BX-701 IND', programId: 'other-uuid' })]);
+    render(<IndLifecycle {...surfaceProps()} />);
+
+    expect(await screen.findByRole('heading', { name: /BX-701 — Initial IND/ })).toBeTruthy();
+    expect(screen.getByTestId('indl-scope-note').textContent).toMatch(/open program \(BX-701 IND\) has no IND checklist yet/);
+  });
+
+  it('an IND with no recorded project is matched by name only, and the note says so', async () => {
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: 'prog-uuid', title: 'BX-701 IND', product: 'BX-701' };
+    wire([row({ submissionId: 2, code: 'BX-701', drugName: 'BX-701', productName: 'BX-701 IND' })]);
+    render(<IndLifecycle {...surfaceProps()} />);
+
+    expect(await screen.findByRole('heading', { name: /BX-701 — Initial IND/ })).toBeTruthy();
+    expect(screen.getByTestId('indl-scope-note').textContent).toMatch(/matched by name/i);
+  });
+
   it('a single IND with no program open needs no note — nothing to disambiguate', async () => {
     wire([TWO_ROWS[0]]);
     render(<IndLifecycle {...surfaceProps()} />);
