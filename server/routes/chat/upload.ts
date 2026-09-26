@@ -412,24 +412,30 @@ export const uploadHandler = async (req: Request, res: Response) => {
     // which can answer "which dossier sections use this file, and what changed
     // when it was replaced".
     //
-    // Runs for any authenticated org, not just project-scoped uploads: a file
-    // attached in chat without a project still deserves an identity, otherwise
-    // it can never be adopted into one later.
+    // Runs for a PROJECT-scoped upload only (PF-07; founder decision
+    // 2026-09-26: every governed record belongs to a project). A file attached
+    // in chat with no project open stays a conversation file — its bytes and
+    // its file_uploads row — and becomes a Data Room source only when it is
+    // adopted into a project. It used to become an org-wide source that no
+    // project listed.
     //
-    // Idempotent on the raw-byte checksum — re-uploading the same document
-    // resolves the existing source instead of minting a second identity for it.
+    // Idempotent on the raw-byte checksum WITHIN the project (PF-07 / VR-10):
+    // re-uploading the same document into the same project resolves its source;
+    // the same bytes in another project are that project's own source. It used
+    // to resolve across the whole organization, so a file dropped into project
+    // B silently became project A's record.
     //
-    // Best-effort by design: a CRE failure must not fail an upload the user has
-    // already completed. It is logged at error level (not warn) because a miss
-    // means that file has no canonical identity, which is a real gap rather
-    // than a degraded nicety. `sourceId` is returned so callers and tests can
-    // observe whether identity resolution actually happened.
+    // A project-scoped source that cannot be written fails the request with 503
+    // (below): the bytes are stored, and the answer says the Data Room does not
+    // hold them. It used to answer 200 "ready" with sourceId null.
     let sourceId: number | null = null;
+    let sourceWriteFailed = false;
+    const scopedToProject = projectScope.programId != null || projectScope.workspaceId != null;
     // The org must resolve to a real numeric id. `tenantContext.organizationId`
     // is not guaranteed numeric, and passing NaN through would write a garbage
     // owner onto the canonical identity — worse than having no identity.
     const numericOrgId = orgId != null ? Number(orgId) : NaN;
-    if (Number.isFinite(numericOrgId) && numericOrgId > 0) {
+    if (scopedToProject && Number.isFinite(numericOrgId) && numericOrgId > 0) {
       try {
         // Checksum the raw bytes, not the truncated extracted text: file
         // identity is the document itself.
@@ -454,6 +460,8 @@ export const uploadHandler = async (req: Request, res: Response) => {
 
         const existing = await findSourceByChecksum(numericOrgId, checksum, {
           sourceType: 'client_document',
+          clientProgramId: projectScope.programId,
+          clientWorkspaceId: projectScope.workspaceId,
         });
         if (existing) {
           sourceId = existing.id;
@@ -468,7 +476,6 @@ export const uploadHandler = async (req: Request, res: Response) => {
           // management module selects) or the numeric workspace id. Stamp
           // whichever we actually got rather than assuming one.
           const scope = projectScope;
-          const scopedToProject = scope.programId != null || scope.workspaceId != null;
 
           // ── Dossier classification (capture → classify) ────────────────────
           // The same deterministic classifier the Vault ingest runs, stamped
@@ -564,9 +571,9 @@ export const uploadHandler = async (req: Request, res: Response) => {
           // the two statuses) instead of widening them to string.
           const sourceParams: Parameters<typeof createSource>[1] = {
             sourceType: 'client_document',
-            // Project uploads are scoped to the project; an unscoped chat
-            // attachment stays tenant-private rather than leaking project-wide.
-            visibilityClass: scopedToProject ? 'project_private' : 'tenant_private',
+            // A Data Room source belongs to its project (only project-scoped
+            // uploads reach here).
+            visibilityClass: 'project_private',
             clientProgramId: scope.programId,
             clientWorkspaceId: scope.workspaceId,
             title: fileName,
@@ -634,12 +641,20 @@ export const uploadHandler = async (req: Request, res: Response) => {
           );
         }
       } catch (sourceErr: any) {
+        sourceWriteFailed = true;
         logger.error('Canonical source identity not created for upload', {
           err: sourceErr?.message,
           fileId,
           orgId,
         });
       }
+    }
+    if (sourceWriteFailed) {
+      return res.status(503).json({
+        error: 'The file was stored, but it could not be recorded in the project’s Data Room. Try again.',
+        code: 'SOURCE_NOT_RECORDED',
+        fileId,
+      });
     }
 
     // ── Retrieval embedding for program-scoped (UUID) uploads ──────────────
@@ -693,10 +708,19 @@ export const uploadHandler = async (req: Request, res: Response) => {
       status: 'ready',
       fileName,
       artifactId,
-      // Canonical `cre_evidence_sources` id for this document. Null means
-      // identity resolution did not happen (no org context, or a CRE failure —
-      // see the error log), not that the upload failed.
+      // Canonical `cre_evidence_sources` id for this document; null when no
+      // project was open (a conversation file) or no org context.
       sourceId,
+      // Whether the Data Room holds this file (PF-07). With no project open it
+      // stays in the conversation until it is adopted into a project.
+      dataRoom: scopedToProject && sourceId != null
+        ? { recorded: true }
+        : {
+            recorded: false,
+            reason: scopedToProject
+              ? 'The organization could not be resolved, so no Data Room source was recorded.'
+              : 'No project was open, so this file stays in the conversation. Adopt it into a project to add it to that project’s Data Room.',
+          },
       // Extraction summary for the chat UI: which method read the file and how
       // many words landed in memory (null/0 when unscoped or extraction failed).
       extractionMethod,
