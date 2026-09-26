@@ -1,0 +1,10 @@
+ ✓ tests/db/feature-toggle-workspace-header.dbtest.ts > requireFeature and the X-Client-ID workspace, on a real database (IAM-15, P1-7b) > positive control: B, naming its own workspace, reaches the feature enabled for 
+ ✓ tests/db/feature-toggle-workspace-header.dbtest.ts > requireFeature and the X-Client-ID workspace, on a real database (IAM-15, P1-7b) > A, naming B's workspace, is answered 404: the toggle is B's and the header is a
+ ✓ tests/db/feature-toggle-workspace-header.dbtest.ts > requireFeature and the X-Client-ID workspace, on a real database (IAM-15, P1-7b) > A, naming its own workspace, is answered 404 while the toggle is B's alone 12ms
+ ✓ tests/db/feature-toggle-workspace-header.dbtest.ts > requireFeature and the X-Client-ID workspace, on a real database (IAM-15, P1-7b) > …and 200 once the toggle names A's workspace: the header counts when the work
+ ✓ tests/db/feature-toggle-workspace-header.dbtest.ts > requireFeature and the X-Client-ID workspace, on a real database (IAM-15, P1-7b) > with no header, the feature resolves at organisation level 19ms
+ ✓ tests/db/feature-toggle-workspace-header.dbtest.ts > requireFeature and the X-Client-ID workspace, on a real database (IAM-15, P1-7b) > a non-numeric header is not a workspace 8ms
+ ✓ tests/db/feature-toggle-workspace-header.dbtest.ts > requireFeature and the X-Client-ID workspace, on a real database (IAM-15, P1-7b) > no token, no gate: the boundary answers first 5ms
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+exit=0

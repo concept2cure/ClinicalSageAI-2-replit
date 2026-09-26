@@ -128,3 +128,11 @@ npm run check:security-patterns && npm run ci:server-error-leaks
 - **`server/routes/authEnterprise.ts` is shared with the IAM-18-8 lane's uncommitted `/verify-password` hunks** in the
   same working tree; the control tower separates the two hunks at commit time (theirs: lines ~43, ~274-278, ~348-357;
   this item's: the `/verify-mfa` block at ~533-570).
+
+## Executed 2026-09-26 against a real database
+
+`server/mcp/__tests__/mcp-connector.dbtest.ts`, updated for the async connector mint, was unexecuted
+when this item landed (no database). Run later the same day against the locally provisioned
+deploy-shaped test database: 10 of 10 pass (discovery and authentication, the curated tool list,
+tenant-scoped tool calls for two organisations, the governed write's scope refusal and audit, the
+gateway refusal without a provider key). `green/connector-dbtest-executed-2026-09-26.txt`.

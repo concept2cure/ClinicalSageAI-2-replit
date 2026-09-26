@@ -144,3 +144,14 @@ npx vitest run --config vitest.db.config.ts tests/db/feature-toggle-workspace-he
   it answered 200 or 500; the regulatory-submissions handlers answer 403 for a foreign workspace where
   reads returned `[]` and the write carried the foreign key. No client sends these headers; a caller of
   `?client_workspace_id=` now needs one of its own organisation's workspaces.
+
+## Executed 2026-09-26 against a real database
+
+`tests/db/feature-toggle-workspace-header.dbtest.ts` was written with no database in the container.
+Later the same day the deploy-shaped test database was provisioned locally
+(`npm run db:provision-test`, PostgreSQL 16 with pgvector, the whole migration set, the
+`app_service` role) and the suite run with `APP_DATABASE_URL` on that role and `RLS_ENFORCE=on`,
+as the two-tenant fixture requires: 7 of 7 pass — B naming its own workspace reaches the feature,
+A naming B's workspace is answered 404, A naming its own is 404 until the toggle names it and 200
+after, no header resolves at organisation level, a non-numeric header is not a workspace, no token
+meets the boundary first. `green/dbtest-executed-2026-09-26.txt`.
