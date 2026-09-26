@@ -1,0 +1,41 @@
+add_committee_agenda_item | confirm | - | AnaToolExecutor.ts:11798 | INSERT committee_agenda_items + governed-action row
+add_eligibility_criterion | confirm | - | AnaToolExecutor.ts:11530 | INSERT protocol_eligibility_criteria + governed-action row
+add_labeling_translation | conditional | input.back_translation_verified === true -> refuse (verification claim); else confirm | AnaToolExecutor.ts:14161 | INSERT labeling_translations
+add_risk_control | conditional | input.status in (verified, effective) or verification_evidence/effectiveness_evidence supplied -> refuse; else confirm | AnaToolExecutor.ts:8006 | INSERT risk_controls
+apply_protocol_design_derivation | confirm | - | AnaToolExecutor.ts:20436 | overwrites bound study design + governed-action row
+author_docx_native | self | - | AnaToolExecutor.ts:6880 | scratch .docx under tmp/docbuilder, not filed
+classify_coverage_item | confirm | - | AnaToolExecutor.ts:11984 | UPDATE coverage_analysis_items + governed-action row
+commit_intelligence_flow | conditional | input.dry_run === true -> read; else confirm | AnaToolExecutor.ts:19244 | creates CMC register records + audit
+create_calendar_event | confirm | - | AnaToolExecutor.ts:4035 | external Google Calendar event
+create_complaint | confirm | - | AnaToolExecutor.ts:6349 | INSERT complaints + vigilance event
+create_effort_certification | confirm | - | AnaToolExecutor.ts:13195 | INSERT effort_certifications (draft) + governed-action row
+create_ha_interaction | confirm | - | AnaToolExecutor.ts:10143 | INSERT ha_interactions + governed-action row
+create_invention_disclosure | confirm | - | AnaToolExecutor.ts:11196 | INSERT invention_disclosures + governed-action row
+create_monitoring_action | confirm | - | AnaToolExecutor.ts:3364 | INSERT rbm_monitoring_actions
+create_protocol_amendment | confirm | - | AnaToolExecutor.ts:10857 | INSERT protocol_amendments + snapshot + governed-action row
+create_qms_document | confirm | - | AnaToolExecutor.ts:13583 | INSERT qms_documents (draft) + governed-action row
+create_risk_item | confirm | - | AnaToolExecutor.ts:7956 | INSERT risk_items
+draft_fda_ir_response | read | - | AnaToolExecutor.ts:15044 | none
+fire_notification | confirm | - | AnaToolExecutor.ts:9905 | INSERT mdx_notifications to users/roles
+import_citi_records | confirm | - | AnaToolExecutor.ts:11610 | INSERT training records + governed-action row
+log_cs_transaction | conditional | input.witnessed_by non-empty -> refuse (third-party witness attestation); else confirm | AnaToolExecutor.ts:12911 | INSERT cs_transactions + balance update + governed-action row
+log_study_deviation | confirm | - | AnaToolExecutor.ts:13361 | INSERT clinical_study_deviations
+pair_companion_diagnostic | confirm | - | AnaToolExecutor.ts:8483 | INSERT cdx_pairings
+qms_change_transition | conditional | input.to in (approved, closed) -> refuse; else confirm | AnaToolExecutor.ts:13834 | UPDATE qms_change_controls + audit
+record_endpoint_result | confirm | - | AnaToolExecutor.ts:13466 | INSERT clinical_study_endpoints
+record_kri_reading | confirm | - | AnaToolExecutor.ts:3270 | INSERT rbm_kri_values + KRI status
+register_animal_cohort | confirm | - | AnaToolExecutor.ts:10281 | INSERT iacuc_animal_cohorts + governed-action row
+register_supplier | confirm | - | AnaToolExecutor.ts:14056 | INSERT qms_suppliers (pending)
+reset_project_goals | confirm | - | AnaToolExecutor.ts:2451 | revises goals, org-wide notification
+review_coverage_analysis | read | - | AnaToolExecutor.ts:12019 | none
+review_ibc_registration | read | - | AnaToolExecutor.ts:10526 | none
+review_lifecycle_calendar | read | - | AnaToolExecutor.ts:13010 | none
+run_in_container | confirm | - | AnaToolExecutor.ts:7614 | runs model-written script in Docker
+save_document_to_vault | confirm | - | AnaToolExecutor.ts:19670 | new governed artifact + version + governed-action row
+seed_tmf | confirm | - | AnaToolExecutor.ts:19939 | INSERT tmf_artifacts + governed-action row
+set_registration_status | conditional | input.market_status === 'approved' -> refuse (asserts a marketing authorization); else confirm | AnaToolExecutor.ts:12728 | UPSERT rim_registrations + governed-action row
+surgical_docx_xml_edit | self | - | AnaToolExecutor.ts:7268 | scratch edited .docx under tmp/docbuilder, not filed
+update_dms_plan_element | confirm | - | AnaToolExecutor.ts:11055 | UPDATE dms_plan_elements + governed-action row
+update_monitoring_action | confirm | - | AnaToolExecutor.ts:3386 | UPDATE rbm_monitoring_actions
+update_tmf_artifact_status | conditional | input.status === 'final' -> refuse (TMF QC finalization); else confirm | AnaToolExecutor.ts:19978 | UPDATE tmf_artifacts + governed-action row
+write_q_sub_section | confirm | - | AnaToolExecutor.ts:8112 | UPSERT q_sub_section_bodies (clears acceptance) + lineage

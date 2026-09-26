@@ -228,7 +228,7 @@ describe('create_qms_document — controlled document creation is audited atomic
     const res = await call(
       'create_qms_document',
       { doc_number: 'SOP-102', title: 'x', doc_type: 'sop' },
-      { organizationId: 1 },
+      { organizationId: 1, humanConfirmed: true },
     );
     expect(res.error).toMatch(/requires user context/i);
     expect((await pglite.query(`SELECT * FROM qms_documents`)).rows).toHaveLength(0);

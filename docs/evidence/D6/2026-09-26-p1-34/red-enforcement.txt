@@ -1,0 +1,17 @@
+ × server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the registry wrapper > a write the scanner took for a read is proposed, not run 10ms
+ × server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the registry wrapper > a person's own act is refused, and a confirmation does not change that 406ms
+ × server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the registry wrapper > a conditional tool is refused only on the call that would take the person’s act 2ms
+ × server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the registry wrapper > a tool nobody classified > is proposed rather than run — it fails closed 2ms
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the registry wrapper > a tool nobody classified > runs once a person has confirmed it 1ms
+ × server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the registry wrapper > a tool nobody classified > never takes the confirmation from what the model wrote 1ms
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > list_vault_documents {} → UNGOVERNED 1ms
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > answer_intelligence_question {"answer":"x"} → UNGOVERNED 0ms
+ × server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > raise_monitoring_signal {"title":"t"} → NEEDS_APPROVAL 2ms
+ × server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > cast_committee_vote {"vote":"approve"} → REFUSED 1ms
+ × server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > qms_change_transition {"to":"closed"} → REFUSED 1ms
+ × server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > qms_change_transition {"to":"verification"} → NEEDS_APPROVAL 1ms
+ × server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > puts a write to a person at the confirm tier, carrying the call 1ms
+ × server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > does not ask a person about an act that is not AnA’s to take 1ms
+ × server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > a write it cannot read is refused, not proposed 1ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  12 failed | 3 passed (15)

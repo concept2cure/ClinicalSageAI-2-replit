@@ -1,0 +1,1 @@
+assess_site_risk | confirm | - | rbm/site-risk-engine.ts:105 | deletes and re-inserts the program's rbm_site_risk_scores snapshot (also when no snapshot exists, without persist)

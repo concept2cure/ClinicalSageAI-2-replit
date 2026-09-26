@@ -98,7 +98,7 @@ async function catalogAs(role: string) {
           summary: 'CoA for batch 23-104: assay 99.2 % of label claim.',
           key_data: { batch: '23-104', assay_pct: 99.2 },
         },
-        { organizationId: orgId, userId },
+        { organizationId: orgId, userId, humanConfirmed: true },
       ),
   );
   return JSON.parse(raw);
