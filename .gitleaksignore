@@ -88,3 +88,15 @@ f457478c87a6bc557da7683c7b591b829fee4896:_test_neon.cjs:c2c-neon-password:2
 8d122653210b4cfddc3793d0537205436abc8e04:server/services/ind/ctd/authoring-guidance.ts:generic-api-key:2822
 9b77ee3d873d9275a6cda77f0c4d82cf1a2ac2d0:tests/validation-totp.test.ts:generic-api-key:14
 cb158a7f1ff227577302cb9a87f554bc2c0603bd:tests/export-contract/xlsx-export.proof.test.ts:generic-api-key:39
+
+# status: not a secret
+# reason: two test JWTs read by the jwt rule, found by this job on 2026-09-26.
+#   VerifyEmail.test.tsx:20 is a hand-built token whose signature segment is the
+#   literal text "signature-part-long-enough" — it verifies against nothing.
+#   IAM-18-6/red/before-fix.txt:10 is a failing assertion's output quoting a
+#   token ssoRoutes.test.ts minted with the unit tests' JWT secret for
+#   alice@acme.test in org 42; no deployment accepts it. Both from the D6 lane
+#   (6aa4e70c7, 4b08f26ec); recorded by the AnA client-files lane when trunk's
+#   secret scan went red on them.
+6aa4e70c7d6df567931400881fe9ed222536b36c:client/src/concept2cure/auth/__tests__/VerifyEmail.test.tsx:jwt:20
+4b08f26ec3e7ff20de97778c45e74541aaeabcbf:docs/evidence/D6/2026-09-25-p1/IAM-18-6/red/before-fix.txt:jwt:10
