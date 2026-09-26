@@ -12,15 +12,21 @@ vi.mock('../ai-actions/redis-manager.js', () => ({ isRedisAvailable: () => false
 import {
   ABSOLUTE_SESSION_HOURS,
   DEFAULT_IDLE_MINUTES,
+  DEFAULT_MAX_CONCURRENT_SESSIONS,
   continuedSessionClaims,
   idleWindowSecondsOf,
   idleWindowSecondsOfClaims,
+  maxConcurrentSessionsOf,
   newSessionClaims,
+  openSession,
   refreshInactivityReason,
+  registerSession,
   resetSessionActivityForTests,
+  sessionEndCodeOf,
   sessionInactivityReason,
   sessionKeyOf,
   sessionLifetimeExceeded,
+  unregisterSession,
 } from '../session-inactivity';
 
 const MINUTE = 60_000;
@@ -129,5 +135,69 @@ describe('refreshInactivityReason — a refresh token', () => {
   it('a refresh token from before sessions had ids is checked for its lifetime only', async () => {
     expect(await refreshInactivityReason({ iat: s(T0 - 3 * HOUR) }, T0)).toBeNull();
     expect(await refreshInactivityReason({ iat: s(T0 - 13 * HOUR) }, T0)).toBe('lifetime');
+  });
+});
+
+describe('the concurrent-session limit', () => {
+  const settings = (n: unknown) => ({ security: { maxConcurrentSessions: n } });
+  /** The access-token claims of a session, as an authenticator sees them. */
+  const tokenClaims = (session: { sid: string; sst: number; idl: number }, userId = '42') => ({ ...session, iat: session.sst, userId });
+
+  it('is the tenant setting, clamped to [1, 20], and 5 when unset or malformed', () => {
+    expect(DEFAULT_MAX_CONCURRENT_SESSIONS).toBe(5);
+    expect(maxConcurrentSessionsOf(undefined)).toBe(5);
+    expect(maxConcurrentSessionsOf({ security: {} })).toBe(5);
+    expect(maxConcurrentSessionsOf(settings(2))).toBe(2);
+    expect(maxConcurrentSessionsOf(settings(0))).toBe(1);
+    expect(maxConcurrentSessionsOf(settings(99))).toBe(20);
+    expect(maxConcurrentSessionsOf(settings('3'))).toBe(5);
+    expect(sessionEndCodeOf('superseded')).toBe('SESSION_SUPERSEDED');
+  });
+
+  it('a sign-in beyond the limit ends the oldest session: its next request and its refresh are refused, the others are not', async () => {
+    const first = await openSession(42, settings(2), T0);
+    const second = await openSession(42, settings(2), T0 + MINUTE);
+    expect(await sessionInactivityReason('t1', tokenClaims(first), { now: T0 + 2 * MINUTE })).toBeNull();
+    const third = await openSession(42, settings(2), T0 + 3 * MINUTE);
+    expect(await sessionInactivityReason('t1', tokenClaims(first), { now: T0 + 4 * MINUTE }), 'the oldest session survived a third sign-in').toBe('superseded');
+    expect(await refreshInactivityReason(tokenClaims(first), T0 + 4 * MINUTE)).toBe('superseded');
+    expect(await sessionInactivityReason('t2', tokenClaims(second), { now: T0 + 4 * MINUTE })).toBeNull();
+    expect(await sessionInactivityReason('t3', tokenClaims(third), { now: T0 + 4 * MINUTE })).toBeNull();
+  });
+
+  it('the newest session is never the one that ends, whatever the limit', async () => {
+    const a = await openSession(42, settings(1), T0);
+    const b = await openSession(42, settings(1), T0 + MINUTE);
+    expect(await sessionInactivityReason('a', tokenClaims(a), { now: T0 + 2 * MINUTE })).toBe('superseded');
+    expect(await sessionInactivityReason('b', tokenClaims(b), { now: T0 + 2 * MINUTE })).toBeNull();
+  });
+
+  it('registerSession names the sessions it ended; a signed-out session frees its slot; accounts do not count against one another', async () => {
+    const a = newSessionClaims(undefined, T0);
+    expect(await registerSession(42, a, 1, T0)).toEqual([]);
+    await unregisterSession(42, a.sid);
+    const b = newSessionClaims(undefined, T0 + MINUTE);
+    expect(await registerSession(42, b, 1, T0 + MINUTE), 'a signed-out session still held its slot').toEqual([]);
+    const other = newSessionClaims(undefined, T0 + 2 * MINUTE);
+    expect(await registerSession(43, other, 1, T0 + 2 * MINUTE)).toEqual([]);
+    const c = newSessionClaims(undefined, T0 + 3 * MINUTE);
+    expect(await registerSession(42, c, 1, T0 + 3 * MINUTE)).toEqual([b.sid]);
+    expect(await sessionInactivityReason('o', tokenClaims(other, '43'), { now: T0 + 4 * MINUTE })).toBeNull();
+  });
+
+  it('a session past its lifetime holds no slot', async () => {
+    const stale = newSessionClaims(undefined, T0 - 13 * HOUR);
+    expect(await registerSession(42, stale, 1, T0 - 13 * HOUR)).toEqual([]);
+    const fresh = newSessionClaims(undefined, T0);
+    expect(await registerSession(42, fresh, 1, T0), 'a session 13 hours old kept a live sign-in out').toEqual([]);
+  });
+
+  it('a superseded session stays superseded for the lifetime it could still be presented in, and is not revived by being asked', async () => {
+    const a = await openSession(42, settings(1), T0);
+    await openSession(42, settings(1), T0 + MINUTE);
+    for (const at of [T0 + 2 * MINUTE, T0 + 6 * HOUR, T0 + 11 * HOUR]) {
+      expect(await sessionInactivityReason('a', tokenClaims(a), { now: at })).toBe('superseded');
+    }
+    expect(await sessionInactivityReason('a', tokenClaims(a), { now: T0 + 13 * HOUR })).toBe('lifetime');
   });
 });

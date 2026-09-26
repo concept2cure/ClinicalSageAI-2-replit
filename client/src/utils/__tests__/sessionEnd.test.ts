@@ -17,9 +17,10 @@ beforeEach(() => sessionStorage.clear());
 afterEach(() => vi.restoreAllMocks());
 
 describe('sessionEndReasonOf / sessionEndReasonOfResponse', () => {
-  it('names the two codes and nothing else', () => {
+  it('names the three codes and nothing else', () => {
     expect(sessionEndReasonOf('SESSION_IDLE')).toBe('idle');
     expect(sessionEndReasonOf('SESSION_LIFETIME')).toBe('lifetime');
+    expect(sessionEndReasonOf('SESSION_SUPERSEDED')).toBe('superseded');
     expect(sessionEndReasonOf('SESSION_ENDED')).toBeNull();
     expect(sessionEndReasonOf(undefined)).toBeNull();
   });
@@ -40,6 +41,8 @@ describe('the remembered reason', () => {
     rememberSignOutReason('idle');
     expect(takeSignOutReason()).toBe('idle');
     expect(takeSignOutReason()).toBeNull();
+    rememberSignOutReason('superseded');
+    expect(takeSignOutReason()).toBe('superseded');
   });
 
   it('ignores a value it did not write', () => {

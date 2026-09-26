@@ -17,7 +17,7 @@ import {
 import { runWithTenantScope } from '../db/tenantStore';
 import { isDevAuthAllowed } from '../auth/dev-auth-policy';
 import { recordAuthEvent } from '../services/audit/auth-event-audit';
-import { newSessionClaims } from '../services/session-inactivity';
+import { openSession } from '../services/session-inactivity';
 import { ACCOUNT_INACTIVE_MESSAGE, isActiveAccountStatus } from '../services/account-standing';
 
 const logger = createScopedLogger('sso');
@@ -457,6 +457,10 @@ router.post('/saml/callback', async (req: Request, res: Response) => {
     // Issue JWT
     // SECURITY: JWT must include organizationId so downstream tenant middleware
     // derives the org context from the token, not from user-supplied headers.
+    // The session's id, start and idle window, registered against the account's
+    // concurrent-session limit (P1-1; the defaults, the organisation's settings
+    // are not read on this path).
+    const session = await openSession(dbUser.id);
     const token = jwt.sign(
       {
         userId: String(dbUser.id),
@@ -466,9 +470,7 @@ router.post('/saml/callback', async (req: Request, res: Response) => {
         provider: 'saml',
         sessionIndex: samlUser.sessionIndex,
         type: 'access',
-        // The session's id, start and idle window (P1-1; the default window,
-        // the organisation's setting is not read on this path).
-        ...newSessionClaims(),
+        ...session,
       },
       config.jwt.secret,
       { expiresIn: '24h' }
@@ -774,7 +776,7 @@ router.get('/:provider/initiate', (req: Request, res: Response) => {
 });
 
 // GET /api/auth/sso/:provider/callback
-router.get('/:provider/callback', (req: Request, res: Response) => {
+router.get('/:provider/callback', async (req: Request, res: Response) => {
   const { provider } = req.params;
   const { code } = req.query;
 
@@ -782,6 +784,7 @@ router.get('/:provider/callback', (req: Request, res: Response) => {
   if (isDevAuthAllowed()) {
     // SECURITY: JWT must include organizationId so downstream tenant middleware
     // derives the org context from the token, not from user-supplied headers.
+    const devSession = await openSession('1');
     const token = jwt.sign(
       {
         userId: '1',
@@ -790,7 +793,7 @@ router.get('/:provider/callback', (req: Request, res: Response) => {
         role: 'client_user',
         provider,
         type: 'access',
-        ...newSessionClaims(),
+        ...devSession,
       },
       config.jwt.secret,
       { expiresIn: '24h' }

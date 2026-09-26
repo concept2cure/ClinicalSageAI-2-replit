@@ -1,17 +1,18 @@
 /**
- * The server's two "your session is over on its own account" answers, and the
- * one place the client keeps the reason until the sign-in page can show it
+ * The server's three "your session is over on its own account" answers, and
+ * the one place the client keeps the reason until the sign-in page can show it
  * (security audit 2026-09-24, IAM-06; plan P1-1).
  *
- * `SESSION_IDLE` and `SESSION_LIFETIME` come from every authenticator and from
- * the refresh (`server/services/session-inactivity.ts`). A refresh will not
- * mint past them, so the fetch wrappers end the session rather than retry.
+ * `SESSION_IDLE`, `SESSION_LIFETIME` and `SESSION_SUPERSEDED` (a later sign-in
+ * beyond the account's concurrent-session limit) come from every authenticator
+ * and from the refresh (`server/services/session-inactivity.ts`). A refresh
+ * will not mint past them, so the fetch wrappers end the session rather than retry.
  * `lib/queryClient.ts` cannot import the auth service without a cycle, so it
  * announces the end on `window` and the auth provider listens.
  */
-export type SessionEndReason = 'idle' | 'lifetime';
+export type SessionEndReason = 'idle' | 'lifetime' | 'superseded';
 
-const CODES: Record<string, SessionEndReason> = { SESSION_IDLE: 'idle', SESSION_LIFETIME: 'lifetime' };
+const CODES: Record<string, SessionEndReason> = { SESSION_IDLE: 'idle', SESSION_LIFETIME: 'lifetime', SESSION_SUPERSEDED: 'superseded' };
 
 /** The reason an error code names, else null. */
 export function sessionEndReasonOf(code: unknown): SessionEndReason | null {
@@ -46,7 +47,7 @@ export function takeSignOutReason(): SessionEndReason | null {
   try {
     const raw = sessionStorage.getItem(REASON_KEY);
     if (raw !== null) sessionStorage.removeItem(REASON_KEY);
-    return raw === 'idle' || raw === 'lifetime' ? raw : null;
+    return raw === 'idle' || raw === 'lifetime' || raw === 'superseded' ? raw : null;
   } catch {
     return null;
   }

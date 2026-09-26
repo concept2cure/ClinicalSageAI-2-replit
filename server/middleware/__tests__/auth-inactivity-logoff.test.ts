@@ -54,7 +54,7 @@ vi.mock('../storageQuotaGuard', async importOriginal => ({
   enforceStorageQuota: passThrough,
 }));
 
-import { resetSessionActivityForTests } from '../../services/session-inactivity';
+import { openSession, resetSessionActivityForTests } from '../../services/session-inactivity';
 
 const AUTH_TS_MODULE = '../auth.ts';
 const importRealMiddlewareAuth = (): Promise<any> => import(/* @vite-ignore */ AUTH_TS_MODULE);
@@ -151,5 +151,19 @@ describe('authenticateToken — inactivity logoff', () => {
     expect(r.body?.error?.code).toBe('SESSION_IDLE');
     const fresh = jwt.sign({ ...baseClaims, iat: seconds(T0 - 2 * MINUTE) }, secret, { expiresIn: '30d' });
     expect((await drive(fresh)).reachedHandler).toBe(true);
+  });
+
+  it('answers 401 SESSION_SUPERSEDED for a session ended by a later sign-in beyond the account\'s limit', async () => {
+    const limitOne = { security: { maxConcurrentSessions: 1 } };
+    const first = await openSession('42', limitOne, T0);
+    const token = jwt.sign({ ...baseClaims, ...first, iat: seconds(T0) }, secret, { expiresIn: '30d' });
+    clock = T0 + MINUTE;
+    expect((await drive(token)).reachedHandler).toBe(true);
+    await openSession('42', limitOne, T0 + 2 * MINUTE);
+    clock = T0 + 3 * MINUTE;
+    const r = await drive(token);
+    expect(r.reachedHandler, 'a session the account signed past kept opening the gate').toBe(false);
+    expect(r.status).toBe(401);
+    expect(r.body?.error?.code).toBe('SESSION_SUPERSEDED');
   });
 });

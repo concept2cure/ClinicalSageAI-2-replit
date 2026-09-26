@@ -25,9 +25,16 @@ import {
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 
 import { computeRedirect, parseSsoHandoff } from '../../auth/redirectUtils';
-import { takeSignOutReason } from '../../../utils/sessionEnd';
+import { takeSignOutReason, type SessionEndReason } from '../../../utils/sessionEnd';
 import brandIcon from '../../../assets/concept2cure-icon.svg';
 import styles from './styles.module.css';
+
+/** The sign-in page's notice for each way a session ends on its own account (P1-1). */
+const SIGNED_OUT_NOTICE: Record<SessionEndReason, string> = {
+  idle: 'signedOut.idle',
+  lifetime: 'signedOut.lifetime',
+  superseded: 'signedOut.superseded',
+};
 
 type View = 'sign-in' | 'mfa' | 'forgot-password' | 'reset-password' | 'reset-sent' | 'success';
 
@@ -439,7 +446,7 @@ export const Concept2CureLogin: React.FC = () => {
           {signedOut && view === 'sign-in' && !error && (
             <div className={styles.notice} role="status">
               <AlertCircle size={14} strokeWidth={1.75} />
-              <span>{signedOut === 'idle' ? t('signedOut.idle') : t('signedOut.lifetime')}</span>
+              <span>{t(SIGNED_OUT_NOTICE[signedOut])}</span>
             </div>
           )}
 

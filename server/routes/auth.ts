@@ -21,11 +21,12 @@ import {
   ABSOLUTE_SESSION_HOURS,
   continuedSessionClaims,
   idleWindowSecondsOfClaims,
-  newSessionClaims,
+  openSession,
   refreshInactivityReason,
   sessionEndCodeOf,
   sessionEndMessageOf,
   sessionStartSecondsOf,
+  unregisterSession,
 } from '../services/session-inactivity';
 import { requireAccessTokenReason } from '../middleware/tokenType';
 import { recordAuthEvent } from '../services/audit/auth-event-audit';
@@ -580,7 +581,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     // NODE_ENV=development AND ALLOW_DEV_AUTH=1. Staging, beta, e2e, and
     // production never satisfy this.
     if (isDevAuthAllowed()) {
-      const session = newSessionClaims(organization?.settings);
+      const session = await openSession(userData.id, organization?.settings);
       const accessToken = jwt.sign(
         {
           userId: userData.id.toString(),
@@ -779,8 +780,9 @@ router.post('/dev-login', async (req: Request, res: Response) => {
         ? ['admin', 'user']
         : [jwtRole, 'user'].filter((v, i, a) => a.indexOf(v) === i);
 
-    // The session's id, start and idle window, into both tokens (P1-1).
-    const session = newSessionClaims(organization?.settings);
+    // The session's id, start and idle window, into both tokens; registered
+    // against the account's concurrent-session limit (P1-1).
+    const session = await openSession(userData.id, organization?.settings);
     const accessToken = jwt.sign(
       {
         userId: userData.id.toString(),
@@ -1029,6 +1031,7 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
       },
     );
 
+    const signupSession = await openSession(result.user.id);
     const token = jwt.sign(
       {
         userId: result.user.id.toString(),
@@ -1037,7 +1040,7 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
         organizationUuid: result.org.uuid,
         role: 'admin',
         type: 'access',
-        ...newSessionClaims(),
+        ...signupSession,
       },
       config.jwt.secret,
       { expiresIn: JWT_EXPIRES_IN }
@@ -1116,6 +1119,8 @@ router.post('/logout', async (req: Request, res: Response) => {
         auditUserId = (verified?.userId as string) ?? (verified?.sub as string);
         auditOrgId = verified?.organizationId as string | undefined;
         auditEmail = verified?.email as string | undefined;
+        // The session's slot under the account's concurrent-session limit is free again (P1-1).
+        await unregisterSession(auditUserId, verified?.sid);
       } catch {
         /* not a token this server signed: record an anonymous logout */
       }
@@ -1564,7 +1569,7 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
     const [sessionOrg] = Number.isFinite(sessionOrgId)
       ? await db.select({ settings: organizations.settings }).from(organizations).where(eq(organizations.id, sessionOrgId)).limit(1)
       : [];
-    const session = newSessionClaims(sessionOrg?.settings);
+    const session = await openSession(challenge.userId, sessionOrg?.settings);
     const accessToken = jwt.sign(
       {
         userId: challenge.userId,
