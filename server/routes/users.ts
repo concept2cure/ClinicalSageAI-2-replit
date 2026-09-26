@@ -8,6 +8,7 @@
 
 import { Router, Request, Response } from 'express';
 import { db } from '../db';
+import { runWithTenantScope } from '../db/tenantStore';
 import { and, eq } from 'drizzle-orm';
 import { users, organizations, organizationUsers, notificationPreferences } from '../../shared/schema';
 import {
@@ -544,11 +545,21 @@ router.put('/me/persona', async (req: Request, res: Response) => {
       });
     }
 
-    const [updated] = await db
-      .update(organizationUsers)
-      .set({ persona: (persona as string | null), updatedAt: new Date() })
-      .where(and(eq(organizationUsers.userId, userId), eq(organizationUsers.organizationId, organizationId)))
-      .returning({ persona: organizationUsers.persona, role: organizationUsers.role });
+    // /api/users runs in the pre-auth scope. A membership row is written only in
+    // its own organisation's scope (D3, 2026-09-26;
+    // docs/evidence/D3/2026-09-26-memberships/), so this write runs in the
+    // verified token's organisation — the one the WHERE clause names. Awaited
+    // inside the scope: a Drizzle builder is lazy, and one returned unawaited
+    // would start after the scope had exited.
+    const [updated] = await runWithTenantScope(
+      { tenantId: String(organizationId), role: null, source: 'request', caller: 'users:PUT /me/persona' },
+      async () =>
+        await db
+          .update(organizationUsers)
+          .set({ persona: (persona as string | null), updatedAt: new Date() })
+          .where(and(eq(organizationUsers.userId, userId), eq(organizationUsers.organizationId, organizationId)))
+          .returning({ persona: organizationUsers.persona, role: organizationUsers.role })
+    );
 
     if (!updated) {
       return res.status(404).json({ error: { code: 'MEMBERSHIP_NOT_FOUND', message: 'No membership in this organization' } });
