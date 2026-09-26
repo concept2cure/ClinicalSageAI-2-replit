@@ -365,15 +365,19 @@ async function writePlacement(
         programId,
         documentTitle: before.document_title,
         view,
+        // The evidence kind on both ends too (VR-05): a move can change what
+        // the document is taken to be, and the row said nothing of it.
         from: {
           folderId: before.folder_id,
           placementStatus: before.placement_status,
           ctdSection: before.ctd_section,
+          evidenceKind: before.evidence_kind,
         },
         to: {
           folderId: after.folder_id,
           placementStatus: after.placement_status,
           ctdSection: after.ctd_section,
+          evidenceKind: after.evidence_kind,
         },
         rationale,
       },
