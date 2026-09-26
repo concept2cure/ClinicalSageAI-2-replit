@@ -64,6 +64,7 @@ interface ApprovalRequiredEvent {
   message?: unknown;
   data?: {
     tier?: unknown;
+    reasonRequired?: boolean;
     signatureRequired?: boolean;
     retry?: { command?: string; params?: Record<string, unknown> };
   };
@@ -112,6 +113,7 @@ interface ExecutedCommandResult {
   message?: string;
   data?: {
     tier?: unknown;
+    reasonRequired?: boolean;
     signatureRequired?: boolean;
     retry?: { command?: string; params?: Record<string, unknown> };
   };
