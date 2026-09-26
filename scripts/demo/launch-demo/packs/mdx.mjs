@@ -312,12 +312,12 @@ async function seedSubmission(ctx, program, vaultDocs) {
   await run.step('Submission Center: 510(k) submission for the program', async () => {
     const list = await api('GET', '/api/submissions');
     must(list, 200, 'list submissions');
-    let sub = rowsOf(list).find((s) => s.title === program.title) || null;
+    // The program's submission is the one anchored to it (submissions.program_id,
+    // LX-22) — never one found by a matching title.
+    let sub = rowsOf(list).find((s) => s.programId === program.id && s.applicationType === '510k') || null;
     const created = !sub;
     if (!sub) {
-      // Identity convention: title/product_name equal the program name — how the
-      // platform (and the Dispatch Readiness surface) links program ↔ submission.
-      sub = must(await api('POST', '/api/submissions', { title: program.title, productName: program.title, applicationType: '510k', clientType: 'ivd', primaryRegion: 'fda' }), 201, 'create submission');
+      sub = must(await api('POST', '/api/submissions', { programId: program.id, title: program.title, productName: program.title, applicationType: '510k', clientType: 'ivd', primaryRegion: 'fda' }), 201, 'create submission');
     }
     out.submission = sub;
     run.record('submission', { id: sub.id, title: sub.title, applicationType: sub.applicationType, clientType: sub.clientType, primaryRegion: sub.primaryRegion, status: sub.status, created });

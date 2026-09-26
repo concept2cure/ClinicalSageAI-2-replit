@@ -1,0 +1,53 @@
+# 2026-09-26T03:11:10Z — HEAD e38c9c2f, before the fix (the service module exists; no authenticator or refresh reads it yet)
+$ npx vitest run server/routes/__tests__/auth-refresh-inactivity.test.ts
+       |                                                          ^
+    124|     expect(r.body?.error?.code).toBe('SESSION_IDLE');
+    125|     expect(r.body?.accessToken).toBeUndefined();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+ FAIL  server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session that began more than 12 hours ago (401 SESSION_LIFETIME)
+AssertionError: a 13-hour-old session refreshed itself: expected 200 to be 401 // Object.is equality
+- Expected
++ Received
+- 401
++ 200
+ ❯ server/routes/__tests__/auth-refresh-inactivity.test.ts:130:64
+    128|   it('mints nothing for a session that began more than 12 hours ago (4…
+    129|     const r = await request(app()).post('/api/auth/refresh').send({ re…
+    130|     expect(r.status, 'a 13-hour-old session refreshed itself').toBe(40…
+       |                                                                ^
+    131|     expect(r.body?.error?.code).toBe('SESSION_LIFETIME');
+    132|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+ FAIL  server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > refreshes an active session and carries its id, start and window into both new tokens
+AssertionError: expected undefined to be 'sid-1790412900000-0.6377376033637436' // Object.is equality
+- Expected:
+"sid-1790412900000-0.6377376033637436"
++ Received:
+undefined
+ ❯ server/routes/__tests__/auth-refresh-inactivity.test.ts:142:26
+    140|     for (const minted of [r.body.accessToken, r.body.refreshToken] as …
+    141|       const claims = jwt.decode(minted) as Record<string, unknown>;
+    142|       expect(claims.sid).toBe(oldClaims.sid);
+       |                          ^
+    143|       expect(claims.sst).toBe(seconds(started));
+    144|       expect(claims.idl).toBe(15 * 60);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+ FAIL  server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > a refresh token minted before sessions had ids is checked for its lifetime only
+AssertionError: expected 200 to be 401 // Object.is equality
+- Expected
++ Received
+- 401
++ 200
+ ❯ server/routes/__tests__/auth-refresh-inactivity.test.ts:153:22
+    151|     const old = jwt.sign({ userId: '7', email: 'a@acme.test', type: 'r…
+    152|     const r = await request(app()).post('/api/auth/refresh').send({ re…
+    153|     expect(r.status).toBe(401);
+       |                      ^
+    154|     expect(r.body?.error?.code).toBe('SESSION_LIFETIME');
+    155|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  03:11:11
+   Duration  1.84s (transform 809ms, setup 76ms, import 1.43s, tests 57ms, environment 0ms)
+exit=1

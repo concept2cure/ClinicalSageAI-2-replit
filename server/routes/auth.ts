@@ -17,6 +17,16 @@ import { createScopedLogger } from '../utils/logger.js';
 import { serverError } from '../lib/api-response';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { verifyLiveToken } from '../services/token-revocation';
+import {
+  ABSOLUTE_SESSION_HOURS,
+  continuedSessionClaims,
+  idleWindowSecondsOfClaims,
+  newSessionClaims,
+  refreshInactivityReason,
+  sessionEndCodeOf,
+  sessionEndMessageOf,
+  sessionStartSecondsOf,
+} from '../services/session-inactivity';
 import { requireAccessTokenReason } from '../middleware/tokenType';
 import { recordAuthEvent } from '../services/audit/auth-event-audit';
 import {
@@ -228,6 +238,10 @@ router.get('/session', async (req: Request, res: Response) => {
       type?: string;
       role?: string | null;
       mfaPending?: boolean;
+      iat?: number;
+      sid?: string;
+      sst?: number;
+      idl?: number;
     };
 
     // SECURITY: a pre-MFA (mfaPending / mfa_challenge) or refresh token is not an
@@ -300,6 +314,7 @@ router.get('/session', async (req: Request, res: Response) => {
       }
     }
 
+    const sessionStartedAt = new Date((sessionStartSecondsOf(decoded) ?? Math.floor(Date.now() / 1000)) * 1000);
     res.json({
       authenticated: true,
       user: {
@@ -317,11 +332,15 @@ router.get('/session', async (req: Request, res: Response) => {
         ...sessionMfaFields(userData),
         mustChangePassword: userData.mustChangePassword === true,
       },
+      // The session as its token states it (P1-1): id, start, the end of its
+      // lifetime, and the idle window the client's own timer mirrors.
       session: {
-        id: `session-${userData.id}`,
-        createdAt: new Date(),
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        id: decoded.sid ?? `session-${userData.id}`,
+        createdAt: sessionStartedAt,
+        expiresAt: new Date(sessionStartedAt.getTime() + ABSOLUTE_SESSION_HOURS * 60 * 60 * 1000),
         lastActivityAt: new Date(),
+        idleMinutes: idleWindowSecondsOfClaims(decoded) / 60,
+        lifetimeHours: ABSOLUTE_SESSION_HOURS,
       },
       tokenExpiry: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     });
@@ -362,6 +381,17 @@ router.get('/session', async (req: Request, res: Response) => {
  * POST /api/auth/login
  * Login with email and password
  */
+/**
+ * A bcrypt comparison against a hash nobody can sign in with, run when the
+ * e-mail is unknown, so an unknown e-mail costs what a wrong password costs
+ * (cost 12, the same as the stored hashes). Built once, on first use.
+ */
+let unknownEmailTimingHash: string | null = null;
+async function padUnknownEmailTiming(password: string): Promise<void> {
+  unknownEmailTimingHash ??= await bcrypt.hash('unknown-email-timing-pad', 12);
+  await bcrypt.compare(String(password ?? ''), unknownEmailTimingHash);
+}
+
 router.post('/login', loginLimiter, async (req: Request, res: Response) => {
   try {
     const { email, password, deviceInfo, rememberDevice } = req.body;
@@ -379,6 +409,9 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     const user = await db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
 
     if (!user.length) {
+      // The same bcrypt cost a wrong password pays, so the response time does
+      // not say whether the e-mail is enrolled (audit IAM-18 item 8).
+      await padUnknownEmailTiming(password);
       // Audit: unknown-email login attempt. Log with the attempted email
       // (no userId since none exists) so SOC tooling can correlate
       // credential-stuffing attempts. We deliberately store the email
@@ -517,7 +550,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     }
 
     const [organization] = await db
-      .select({ id: organizations.id, name: organizations.name, uuid: organizations.uuid })
+      .select({ id: organizations.id, name: organizations.name, uuid: organizations.uuid, settings: organizations.settings })
       .from(organizations)
       .where(eq(organizations.id, organizationId))
       .limit(1);
@@ -547,6 +580,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     // NODE_ENV=development AND ALLOW_DEV_AUTH=1. Staging, beta, e2e, and
     // production never satisfy this.
     if (isDevAuthAllowed()) {
+      const session = newSessionClaims(organization?.settings);
       const accessToken = jwt.sign(
         {
           userId: userData.id.toString(),
@@ -555,12 +589,13 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
           organizationUuid: organization?.uuid || null,
           role: jwtRole,
           type: 'access',
+          ...session,
         },
         config.jwt.secret,
         { expiresIn: JWT_EXPIRES_IN }
       );
       const refreshToken = jwt.sign(
-        { userId: userData.id.toString(), email: userData.email, type: 'refresh' },
+        { userId: userData.id.toString(), email: userData.email, type: 'refresh', ...session },
         getRefreshTokenSecret(),
         { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
       );
@@ -727,7 +762,7 @@ router.post('/dev-login', async (req: Request, res: Response) => {
     }
 
     const [organization] = await db
-      .select({ id: organizations.id, name: organizations.name, uuid: organizations.uuid })
+      .select({ id: organizations.id, name: organizations.name, uuid: organizations.uuid, settings: organizations.settings })
       .from(organizations)
       .where(eq(organizations.id, organizationId))
       .limit(1);
@@ -744,6 +779,8 @@ router.post('/dev-login', async (req: Request, res: Response) => {
         ? ['admin', 'user']
         : [jwtRole, 'user'].filter((v, i, a) => a.indexOf(v) === i);
 
+    // The session's id, start and idle window, into both tokens (P1-1).
+    const session = newSessionClaims(organization?.settings);
     const accessToken = jwt.sign(
       {
         userId: userData.id.toString(),
@@ -752,13 +789,14 @@ router.post('/dev-login', async (req: Request, res: Response) => {
         organizationUuid: organization?.uuid || null,
         role: jwtRole,
         type: 'access',
+        ...session,
       },
       config.jwt.secret,
       { expiresIn: JWT_EXPIRES_IN }
     );
 
     const refreshToken = jwt.sign(
-      { userId: userData.id.toString(), email: userData.email, type: 'refresh' },
+      { userId: userData.id.toString(), email: userData.email, type: 'refresh', ...session },
       getRefreshTokenSecret(),
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
@@ -999,6 +1037,7 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
         organizationUuid: result.org.uuid,
         role: 'admin',
         type: 'access',
+        ...newSessionClaims(),
       },
       config.jwt.secret,
       { expiresIn: JWT_EXPIRES_IN }
@@ -1145,6 +1184,9 @@ router.post('/refresh', async (req: Request, res: Response) => {
       email: string;
       type: string;
       iat?: number;
+      sid?: string;
+      sst?: number;
+      idl?: number;
     };
 
     if (decoded.type !== 'refresh') {
@@ -1196,6 +1238,21 @@ router.post('/refresh', async (req: Request, res: Response) => {
         error: { code: 'AUTH_006', message: 'This session has ended. Sign in again.' },
       });
     }
+    // Security audit 2026-09-24, IAM-06 (P1-1): a refresh is not activity. A
+    // session idle past its window, or older than its lifetime, mints nothing
+    // here either; without this the client's answer to the gate's refusal
+    // would have been a refresh, and the idle session would have carried on.
+    const inactivity = await refreshInactivityReason(decoded);
+    if (inactivity) {
+      const { revokeToken: revokeEndedRefresh } = await import('../services/token-revocation.js');
+      await revokeEndedRefresh(refreshToken, inactivity);
+      return res.status(401).json({
+        success: false,
+        error: { code: sessionEndCodeOf(inactivity), message: sessionEndMessageOf(inactivity) },
+      });
+    }
+    // The session continues: its id, start and window travel into the new pair.
+    const session = continuedSessionClaims(decoded);
     const refreshMemberships = await db
       .select({ organizationId: organizationUsers.organizationId, role: organizationUsers.role })
       .from(organizationUsers)
@@ -1232,13 +1289,14 @@ router.post('/refresh', async (req: Request, res: Response) => {
         organizationId: refreshOrgId.toString(),
         role: refreshMembershipRole.role,
         type: 'access',
+        ...session,
       },
       config.jwt.secret,
       { expiresIn: JWT_EXPIRES_IN }
     );
 
     const newRefreshToken = jwt.sign(
-      { userId: decoded.userId, email: decoded.email, type: 'refresh' },
+      { userId: decoded.userId, email: decoded.email, type: 'refresh', ...session },
       getRefreshTokenSecret(),
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
@@ -1444,17 +1502,27 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
       });
     }
 
-    // Verify the code — try email OTP first (default), then TOTP
+    // The factor this account signs in with (mfa-enrolment.ts). An account with
+    // an authenticator never completes sign-in with an emailed code: the emailed
+    // code is the factor of accounts WITHOUT one, and /mfa/resend mints none for
+    // an authenticator account (audit IAM-08, P1-2).
+    const [enrolmentRow] = await db
+      .select({ mfaEnabled: users.mfaEnabled, mfaMethod: users.mfaMethod })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    const authenticatorAccount = mfaEnrolmentOf(enrolmentRow ?? {}).signInFactor === 'totp';
     const verificationMethod = method || 'email';
     let isValid = false;
 
-    if (verificationMethod === 'email') {
+    if (verificationMethod === 'email' && !authenticatorAccount) {
       isValid = await emailOtpService.verifyEmailOtp(userId, code);
     }
 
-    // Fall back to TOTP verification (for users with authenticator apps)
+    // The authenticator, or one of the recovery codes the enrolment issued
+    // (redeemable here and nowhere else; each once).
     if (!isValid) {
-      isValid = await mfaService.verifyToken(userId, code);
+      isValid = (await mfaService.verifyLoginSecondFactor(userId, code)) !== null;
     }
 
     if (!isValid) {
@@ -1491,6 +1559,12 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
       });
     }
 
+    // The session's idle window is the organisation's setting, fixed now (P1-1).
+    const sessionOrgId = parseInt(String(challenge.organizationId ?? ''), 10);
+    const [sessionOrg] = Number.isFinite(sessionOrgId)
+      ? await db.select({ settings: organizations.settings }).from(organizations).where(eq(organizations.id, sessionOrgId)).limit(1)
+      : [];
+    const session = newSessionClaims(sessionOrg?.settings);
     const accessToken = jwt.sign(
       {
         userId: challenge.userId,
@@ -1499,13 +1573,14 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
         organizationUuid: challenge.organizationUuid,
         role: challenge.role,
         type: 'access',
+        ...session,
       },
       config.jwt.secret,
       { expiresIn: JWT_EXPIRES_IN }
     );
 
     const refreshToken = jwt.sign(
-      { userId: challenge.userId, email: challenge.email, type: 'refresh' },
+      { userId: challenge.userId, email: challenge.email, type: 'refresh', ...session },
       getRefreshTokenSecret(),
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
@@ -1602,6 +1677,24 @@ router.post('/mfa/resend', mfaLimiter, async (req: Request, res: Response) => {
     }
 
     const userId = parseInt(challenge.userId);
+
+    // An authenticator account has no emailed code to resend: minting one here
+    // was the fallback that let such an account finish sign-in without the
+    // authenticator (audit IAM-08, P1-2). Recovery codes are its way back in.
+    const [enrolmentRow] = await db
+      .select({ mfaEnabled: users.mfaEnabled, mfaMethod: users.mfaMethod })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    if (mfaEnrolmentOf(enrolmentRow ?? {}).signInFactor === 'totp') {
+      return res.status(409).json({
+        success: false,
+        error: {
+          code: 'MFA_AUTHENTICATOR_REQUIRED',
+          message: 'This account signs in with an authenticator app. Enter a code from it, or one of your recovery codes.',
+        },
+      });
+    }
 
     // Generate a new OTP and send it
     const otp = await emailOtpService.createEmailOtp(userId);

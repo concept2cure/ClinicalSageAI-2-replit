@@ -73,7 +73,10 @@ const USER = 1;
 
 async function command(name: string, params: Record<string, unknown>) {
   const { executeCommands } = await import('../command-executor');
-  const res = await executeCommands([{ command: name, params }] as never, { organizationId: ORG, userId: USER } as never);
+  // A person confirmed the proposal: since 2026-09-26 (audit DP-08, P0-12)
+  // every write is a proposal, and the ledger atomicity these cases pin is
+  // the execution after that confirmation.
+  const res = await executeCommands([{ command: name, params }] as never, { organizationId: ORG, userId: USER, humanConfirmed: true } as never);
   return (res as Array<{ success: boolean; message?: string; data?: Row }>)[0];
 }
 

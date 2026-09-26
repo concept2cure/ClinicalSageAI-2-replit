@@ -24,7 +24,8 @@ import {
 } from '@/services/portal/authService';
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 
-import { computeRedirect } from '../../auth/redirectUtils';
+import { computeRedirect, parseSsoHandoff } from '../../auth/redirectUtils';
+import { takeSignOutReason } from '../../../utils/sessionEnd';
 import brandIcon from '../../../assets/concept2cure-icon.svg';
 import styles from './styles.module.css';
 
@@ -169,6 +170,9 @@ export const Concept2CureLogin: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<AuthError | null>(null);
+  // Why the last session ended on its own account (inactivity, lifetime), read
+  // once from where the auth service left it (P1-1).
+  const [signedOut] = useState(() => takeSignOutReason());
 
   const supportsRecoveryCodes = useMemo(
     () => availableMfaMethods.some(m => m.type === 'backup_code'),
@@ -184,6 +188,30 @@ export const Concept2CureLogin: React.FC = () => {
   useEffect(() => {
     setError(null);
   }, [email, password, mfaCode, newPassword, confirmPassword]);
+
+  // A single sign-on hand-off arrives in the URL fragment, never the query
+  // string (IAM-18 item 6). It is dropped from the address bar before anything
+  // else and adopted only when the server confirms the session; a second run
+  // of this effect finds no fragment and does nothing.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handoff = parseSsoHandoff(window.location.hash);
+    if (!handoff) return;
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+    setIsLoading(true);
+    void authService
+      .adoptSession(handoff.token, true)
+      .then(user => {
+        if (!user) {
+          setError({ message: t('error.signInFailed') });
+          return;
+        }
+        setView('success');
+        setSuccessMessage(t('success.signedIn'));
+        setLocation(computeRedirect(handoff.returnTo ? `?returnTo=${encodeURIComponent(handoff.returnTo)}` : '', user));
+      })
+      .finally(() => setIsLoading(false));
+  }, [setLocation, t]);
 
   const validateEmail = useCallback((v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), []);
 
@@ -407,6 +435,13 @@ export const Concept2CureLogin: React.FC = () => {
           </span>
           <h1 className={styles.title}>{title}</h1>
           <p className={styles.subtitle}>{subtitle}</p>
+
+          {signedOut && view === 'sign-in' && !error && (
+            <div className={styles.notice} role="status">
+              <AlertCircle size={14} strokeWidth={1.75} />
+              <span>{signedOut === 'idle' ? t('signedOut.idle') : t('signedOut.lifetime')}</span>
+            </div>
+          )}
 
           {error && (
             <div className={styles.alert} role="alert">

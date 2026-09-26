@@ -18,9 +18,11 @@
  *   REVIEW_ADMIN_TOKEN   — shared admin token
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, NextFunction, Request, Response } from 'express';
 import multer from 'multer';
 import { authenticateToken } from '../middleware/auth.js';
+import { makeUploadFileFilter, receiveUpload } from '../middleware/uploadAllowlist';
+import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
 import {
   Document,
   Packer,
@@ -56,7 +58,66 @@ import { createScopedLogger } from '../utils/logger';
 const router = Router();
 
 const logger = createScopedLogger('knowledge-base');
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
+
+/**
+ * The receiver for this router's four multipart routes (/upload, /extract-pdf,
+ * /ocr, /ind-autodraft/upload). Until 2026-09-25 it was a bare 100 MB memory
+ * store with no filter: any declared type was buffered whole and handed to the
+ * extractors, the ingestion proxy and the OCR path on its declared type alone,
+ * and no malware scan ran (security audit 2026-09-24, IAM-14; plan P1-5). The
+ * declared types below are the ones the handlers read — documents for the
+ * ingest and autodraft routes, PNG/JPEG/GIF for /ocr — and each is one the
+ * shared byte check can verify. The limit is unchanged; the byte check and scan
+ * run in validateUploadedFiles below through the shared guard.
+ */
+const UPLOAD_MAX_BYTES = 100 * 1024 * 1024;
+const UPLOAD_ALLOWED_MIME_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/zip',
+  'application/json',
+  'application/xml',
+  'text/csv',
+  'text/plain',
+  'text/markdown',
+  'text/html',
+  'text/xml',
+  'image/png',
+  'image/jpeg',
+  'image/gif',
+];
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: UPLOAD_MAX_BYTES },
+  fileFilter: makeUploadFileFilter({
+    extensions: [],
+    mimeTypes: UPLOAD_ALLOWED_MIME_TYPES,
+    allowMimePrefixes: [],
+  }),
+});
+
+/**
+ * Byte check + malware scan on every received file (`req.file` or `req.files`);
+ * a request with no file is left to the handler, which has its own answer.
+ */
+async function validateUploadedFiles(req: Request, res: Response, next: NextFunction) {
+  const files = req.file ? [req.file] : Array.isArray(req.files) ? req.files : [];
+  try {
+    for (const file of files) {
+      await assertUploadSafe(file.buffer ?? Buffer.alloc(0), file.mimetype, file.originalname);
+    }
+  } catch (err) {
+    if (err instanceof UploadSafetyError) {
+      return res.status(err.status).json(err.body);
+    }
+    return next(err);
+  }
+  return next();
+}
 
 router.use(authenticateToken);
 
@@ -724,7 +785,11 @@ async function renderDocxNodeFallback(
 // Accepts multipart/form-data with project_id (field) + files[]
 // ═════════════════════════════════════════════════════════════════════════════
 
-router.post('/upload', upload.array('files'), async (req: Request, res: Response) => {
+router.post(
+  '/upload',
+  receiveUpload(upload.array('files'), { maxBytes: UPLOAD_MAX_BYTES }),
+  validateUploadedFiles,
+  async (req: Request, res: Response) => {
   if (!requireToken(res)) return;
   const projectId = String(req.body?.project_id || '');
   if (!projectId) return void res.status(422).json({ error: 'project_id is required' });
@@ -1524,7 +1589,11 @@ router.post('/save-docx-as-artifact', async (req: Request, res: Response) => {
 // PDF Extraction — direct endpoint for the Universal Import handler
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.post('/extract-pdf', upload.single('file'), async (req: Request, res: Response) => {
+router.post(
+  '/extract-pdf',
+  receiveUpload(upload.single('file'), { maxBytes: UPLOAD_MAX_BYTES }),
+  validateUploadedFiles,
+  async (req: Request, res: Response) => {
   try {
     const file = (req as any).file;
     if (!file) {
@@ -1614,7 +1683,11 @@ router.post('/extract-pdf', upload.single('file'), async (req: Request, res: Res
 // OCR — Image text extraction endpoint for the Universal Import handler
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.post('/ocr', upload.single('file'), async (req: Request, res: Response) => {
+router.post(
+  '/ocr',
+  receiveUpload(upload.single('file'), { maxBytes: UPLOAD_MAX_BYTES }),
+  validateUploadedFiles,
+  async (req: Request, res: Response) => {
   try {
     const file = (req as any).file;
     if (!file) {
@@ -2198,7 +2271,8 @@ function detectMetadataFromText(texts: string[]): {
  */
 router.post(
   '/ind-autodraft/upload',
-  upload.array('files', 20),
+  receiveUpload(upload.array('files', 20), { maxBytes: UPLOAD_MAX_BYTES }),
+  validateUploadedFiles,
   async (req: Request, res: Response) => {
     try {
       const files = (req as any).files as Express.Multer.File[];

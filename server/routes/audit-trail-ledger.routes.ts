@@ -72,6 +72,7 @@ import type { Pool, PoolClient } from 'pg';
 
 import { createScopedLogger } from '../utils/logger.js';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
+import { requireAuditReader } from '../services/audit/audit-api-authority.js';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context.js';
 import {
   AUDIT_CHAIN_HEAD_ORDER_SQL,
@@ -463,6 +464,9 @@ export default function createAuditTrailLedgerRoutes(
   router.get('/ledger', async (req: Request, res: Response) => {
     const guard = requireAuthedOrgId(req, res);
     if (!guard.ok) return; // 403 already sent — tenant context is mandatory
+    // The ledger names every user in the organisation; it is read by owners,
+    // admins and managers, or a platform administrator (audit DP-18, P1-20).
+    if (!requireAuditReader(req, res)) return;
 
     const limit = Math.min(
       1000,

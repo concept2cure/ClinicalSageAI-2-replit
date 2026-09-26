@@ -38,7 +38,7 @@
  */
 
 import { isProposeOnlyCommand } from '../ana-ri/command-rbac.js';
-import { requiresEsignature } from '../ana-ri/part11-governance.js';
+import { governedTierOf } from '../ana-ri/part11-governance.js';
 
 /** The tool that carries a platform command in its input. */
 export const PLATFORM_COMMAND_TOOL = 'execute_platform_command';
@@ -49,7 +49,7 @@ export const PLATFORM_COMMAND_TOOL = 'execute_platform_command';
  *   reason       a reason-for-change, recorded verbatim
  *   esignature   re-authentication as well (§11.200), for the high-impact tier
  */
-export type ApprovalTier = 'reason' | 'esignature';
+export type ApprovalTier = 'confirm' | 'reason' | 'esignature';
 
 export type ToolGateVerdict =
   /** Runs as usual. Nothing to ask. */
@@ -112,6 +112,6 @@ export function classifyToolCall(call: ClassifiableToolCall): ToolGateVerdict {
     kind: 'NEEDS_APPROVAL',
     command,
     params: asRecord(input.params) ?? {},
-    tier: requiresEsignature(command) ? 'esignature' : 'reason',
+    tier: governedTierOf(command),
   };
 }

@@ -71,7 +71,7 @@ design targets in the plan because a buyer's questionnaire already asks for them
 | 164.308(a)(8) | Periodic technical and non-technical evaluation | This audit; weekly review now has a security lens (`security-auditor`) | partial (first run) | — | P1-18 |
 | 164.308(b) / 164.314 | Business associate contracts | BAA templates referenced; none signed (Anthropic, AWS) | absent | DP-07 | P2-7 |
 | 164.310 | Physical safeguards | AWS responsibility; no workstation policy | partial | — | P1-13 (policy) |
-| 164.312(a)(1) | Access control: unique user id, emergency access, automatic logoff, encryption/decryption | Unique ids; **no automatic logoff**; field encryption only for secrets; cross-tenant file read by name | partial | IAM-06, IAM-07, DP-23 | P1-1, P0-6, P2-7 |
+| 164.312(a)(1) | Access control: unique user id, emergency access, automatic logoff, encryption/decryption | Unique ids; automatic logoff: server-enforced idle window (15 min default, tenant-set) and 12-hour lifetime since 2026-09-26 (P1-1); the client's warning timer follows; field encryption only for secrets; cross-tenant file read by name | partial | IAM-06, IAM-07, DP-23 | P1-1, P0-6, P2-7 |
 | 164.312(b) | Audit controls | Chained stores; monitor off in production config; `pgaudit` not loaded; no access logs | partial | DP-06, INF-13, INF-05 | P0-16, P1-11, P1-10 |
 | 164.312(c) | Integrity controls | HMAC seals; runtime role can delete `audit_logs` via a setting; owner credential in the API task | partial | DP-04, DP-05 | P0-15, P2-10 |
 | 164.312(d) | Person or entity authentication | Password + emailed code or TOTP; pre-MFA token admitted on `/ana` | partial | IAM-01, IAM-08 | P0-1, P1-2 |
@@ -174,7 +174,7 @@ on its behalf. Pharmaceutical sponsors' regulatory content is normally outside i
 | 12.1 | Physical and logical controls restricting access to authorised persons | as 11.10(d) | partial | IAM-01…05, IAM-16 | P0-1…P0-8 |
 | 12.2 | Creation, change and cancellation of access authorisations recorded | Auth events audited; SSO sign-ins not; SCIM writes cross-tenant | partial | IAM-03, IAM-05 | P0-3, P0-5 |
 | 12.3 | Management systems for data and documents record the identity of operators entering or confirming critical data | Attribution on governed rows; `old_values` never recorded | partial | DP-13 | P1-19 |
-| 12.4 | Record of the identity of operators, date and time (and inactivity logoff by convention) | **No inactivity logoff**; timestamps from two clocks | partial | IAM-06, DP-25 | P1-1, P1-26 |
+| 12.4 | Record of the identity of operators, date and time (and inactivity logoff by convention) | Inactivity logoff server-enforced since 2026-09-26 (P1-1, idle window and 12-hour lifetime); timestamps from two clocks | partial | IAM-06, DP-25 | P1-1, P1-26 |
 | 13 | Incident management: reported, assessed, root cause identified, CAPA | IR-004 drafted; no log; no tabletop; contradictory timelines | partial | INF-07 | P1-13 |
 | 14 | Electronic signature: same impact as hand-written within the company; permanently linked to the record; time and date | as 11.50/11.70 | partial | DP-02, DP-03, DP-16, DP-17 | P0-14, P0-19, P1-21 |
 | 15 | Batch release by a Qualified Person | not applicable to the launch catalog | n/a | — | — |
@@ -223,7 +223,7 @@ on its behalf. Pharmaceutical sponsors' regulatory content is normally outside i
 |---|---|---|---|---|---|
 | Audit trail | 11.10(e) generated, secure, time-stamped | 真正性 + 保存性 with the record | Annex 11 §9 **regularly reviewed** | no review workflow; monitor off; deletable by a setting | P1-25, P0-16, P0-15 |
 | Electronic signature | 11.50/11.70/11.200 | signatory identity confirmed before issuance | Annex 11 §14; eIDAS levels optional | 23 writers skip the ceremony; revocation broken; no proofing | P0-19, P0-14, P1-21 |
-| Session control | 11.10(d); HIPAA automatic logoff | 真正性 access control | Annex 11 §12.4 | no idle logoff; refresh outlives revocation | P1-1, P0-4 |
+| Session control | 11.10(d); HIPAA automatic logoff | 真正性 access control | Annex 11 §12.4 | idle logoff and 12-hour lifetime server-enforced (P1-1, 2026-09-26); refresh outlives revocation closed (P0-4) | P1-1, P0-4 |
 | Breach notification | HIPAA §164.410 (≤60 days, BA→CE) | APPI Art. 26 (prompt + ≤30/60 days, PPC + subjects) | GDPR 33/34 (processor→controller without undue delay; 72 h to the SA) | three documents, two numbers, no regulator rows | P1-13 |
 | Cross-border transfer | — | APPI Art. 28 (consent with country information, or equivalent measures) | GDPR 44–49 (SCCs + TIA, or DPF) | US-only hosting; blank annexes | P2-1, P2-2, P2-3 |
 | Sub-processors | HIPAA BAAs | APPI Art. 25 trustee supervision | GDPR 28(2)(4) | lists disagree; OpenAI default for embeddings; no BAAs | P1-14, P0-17, P2-7 |

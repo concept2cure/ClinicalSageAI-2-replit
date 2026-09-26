@@ -9,7 +9,8 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { verifyJwtWithRotation } from '../utils/jwtVerify';
-import { isTokenRevoked } from '../services/token-revocation';
+import { isTokenRevoked, revokeToken } from '../services/token-revocation';
+import { sessionEndCodeOf, sessionEndMessageOf, sessionInactivityReason } from '../services/session-inactivity';
 import { nonAccessTokenReason, requireAccessTokenReason } from './tokenType';
 import { enforceOrgMembership, invalidateOrgMembershipCache, parseFiniteInt } from './orgMembership';
 import {
@@ -59,6 +60,10 @@ interface JWTPayload {
   mfaPending?: boolean;
   /** Issued-at, whole seconds; jsonwebtoken stamps it on every token it signs. */
   iat?: number;
+  /** The session's id, start and idle window (services/session-inactivity.ts). */
+  sid?: string;
+  sst?: number;
+  idl?: number;
   /**
    * Which authentication surface issued the token: 'saml' on a federated
    * sign-in (routes/sso.ts); absent on a password session. Carried onto
@@ -190,8 +195,9 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
     Promise.all([
       isTokenRevoked(token),
       accountId === null ? Promise.resolve<AccountStanding | null>(null) : readAccountStandingBeforeTenant(accountId),
+      sessionInactivityReason(token, decoded),
     ]).then(
-      ([revoked, standing]) => {
+      ([revoked, standing, inactivity]) => {
         if (revoked) {
           res.status(401).json({ error: { code: 'SESSION_ENDED', message: 'This session has ended. Sign in again.' } });
           return;
@@ -202,6 +208,16 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
         }
         if (standing && sessionPredatesPasswordChange(issuedAtOfClaims(decoded), standing.passwordChangedAtSeconds)) {
           res.status(401).json({ error: { code: 'SESSION_ENDED', message: 'This session has ended. Sign in again.' } });
+          return;
+        }
+        // Security audit 2026-09-24, IAM-06 (P1-1): a session idle past its
+        // window, or older than its lifetime, is over. This request was
+        // measured against the session's last recorded activity and, when
+        // admitted, recorded as it (services/session-inactivity.ts). The token
+        // is revoked so every other authenticator answers the same way.
+        if (inactivity) {
+          void revokeToken(token, inactivity);
+          res.status(401).json({ error: { code: sessionEndCodeOf(inactivity), message: sessionEndMessageOf(inactivity) } });
           return;
         }
         admitLiveSession(req, res, next, decoded, subject);

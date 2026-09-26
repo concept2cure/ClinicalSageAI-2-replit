@@ -30,6 +30,21 @@ import crypto from 'crypto';
 //                          TYPE DEFINITIONS
 // ═══════════════════════════════════════════════════════════════════════════
 
+/**
+ * searchHybrid's options, named: six callers passed their similarity THRESHOLD
+ * where `semanticWeight` went, so no floor ran while their provenance recorded
+ * one (docs/evidence/D4/2026-09-26-retrieval-floor/). `semanticWeight` ranks
+ * (default 0.7); `minSemanticScore` is the floor on cosine similarity, and the
+ * only value a caller may record as ai_retrieval_runs.threshold.
+ */
+export interface HybridSearchOptions {
+  limit: number;
+  organizationUuid: string; // the session's key (server/db/currentTenant.ts)
+  projectId?: string;
+  semanticWeight?: number;
+  minSemanticScore?: number;
+}
+
 export type EmbeddingModel =
   | 'text-embedding-3-small'
   | 'text-embedding-3-large'
@@ -119,7 +134,7 @@ export class EnhancedEmbeddingService {
     // EMBEDDING_PROVIDER=local) — no hard OpenAI dependency at construction, so
     // this service boots in an air-gapped deployment.
     this.pool = pool;
-    console.log('✅ Enhanced Embedding Service initialized');
+    console.info('✅ Enhanced Embedding Service initialized');
   }
 
   /**
@@ -459,7 +474,7 @@ export class EnhancedEmbeddingService {
       params.push(filters.domain);
     }
     if (filters?.source) {
-      filterSql += ` AND a.source = $${paramIndex++}`;
+      filterSql += ` AND a.source = $${paramIndex}`;
       params.push(filters.source);
     }
 
@@ -501,10 +516,7 @@ export class EnhancedEmbeddingService {
    */
   async searchHybrid(
     query: string,
-    limit: number,
-    semanticWeight: number,
-    organizationUuid: string,
-    projectId?: string
+    options: HybridSearchOptions
   ): Promise<
     Array<{
       id: string;
@@ -524,6 +536,7 @@ export class EnhancedEmbeddingService {
     // routes built from the client's x-org-uuid header when the scope had none.
     // Both refusals come before the embedding call, so a refused search costs
     // nothing. docs/evidence/D3/2026-09-24-atom-search-tenant-key/.
+    const { limit, organizationUuid, projectId, semanticWeight = 0.7, minSemanticScore } = options;
     if (!isTenantUuid(organizationUuid)) {
       throw new TenantKeyRequiredError('atom search refused: no tenant key');
     }
@@ -547,6 +560,10 @@ export class EnhancedEmbeddingService {
     // docs/evidence/D4/2026-09-24-atom-search/.
     const embeddingLiteral = `[${queryResult.embedding.join(',')}]`;
     const keywordWeight = 1 - semanticWeight;
+    // With a floor, fetch past the limit before filtering: the function ranks by
+    // the COMBINED score, so atoms below the floor can outrank ones above it,
+    // and filtering only the top `limit` would drop evidence that qualifies.
+    const fetchCount = minSemanticScore === undefined ? limit : limit * 3;
     const projectFilterClause = projectId
       ? `AND a.source_type IN ('artifact', 'data_room_upload') AND a.source_id IN (
            SELECT artifact_id FROM concept2cure_artifacts WHERE project_id = $7
@@ -566,20 +583,25 @@ export class EnhancedEmbeddingService {
       ORDER BY h.combined_score DESC
       `,
       projectId
-        ? [query, embeddingLiteral, semanticWeight, keywordWeight, limit, organizationUuid, Number(projectId)]
-        : [query, embeddingLiteral, semanticWeight, keywordWeight, limit, organizationUuid]
+        ? [query, embeddingLiteral, semanticWeight, keywordWeight, fetchCount, organizationUuid, Number(projectId)]
+        : [query, embeddingLiteral, semanticWeight, keywordWeight, fetchCount, organizationUuid]
     );
 
-    return this.attachSourceIdentity(
-      rows.map((row: any) => ({
-        id: row.id,
-        content: row.content,
-        title: row.title,
-        score: parseFloat(row.combined_score),
-        semanticScore: parseFloat(row.semantic_score),
-        keywordScore: parseFloat(row.keyword_score),
-      }))
-    );
+    const hits = rows.map((row: any) => ({
+      id: row.id,
+      content: row.content,
+      title: row.title,
+      score: parseFloat(row.combined_score),
+      semanticScore: parseFloat(row.semantic_score),
+      keywordScore: parseFloat(row.keyword_score),
+    }));
+    // The floor is on cosine similarity to the query. A keyword-only match has
+    // no semantic score (0) and does not clear any positive floor.
+    const admitted =
+      minSemanticScore === undefined
+        ? hits
+        : hits.filter(h => Number.isFinite(h.semanticScore) && h.semanticScore >= minSemanticScore).slice(0, limit);
+    return this.attachSourceIdentity(admitted);
   }
 
   /**

@@ -165,6 +165,7 @@ import {
 } from '../../services/ana/run-control.js';
 import { MAX_PAUSE_MS, type HumanControlEvent } from '../../services/ana/run-status.js';
 import { classifyToolCall } from '../../services/ana/governed-tool-gate.js';
+import { buildHumanConfirmationRequiredResult } from '../../services/ana-ri/part11-governance.js';
 import {
   describeServerToolStep,
   summariseServerToolResult,
@@ -1406,6 +1407,11 @@ export function mountStreamRoute(router: Router): void {
       turnRecorder?.setModelInput(messages);
       const gwResponse = await gw.route({
         taskType: routingPlan.taskType,
+        // Binds the turn to its tenant, so the org's placement policy (vendor and
+        // substrate allow-lists, residency, zero retention) governs which AI
+        // service may serve it. Until 2026-09-25 this was absent and AnA turns
+        // were placement-unconstrained (docs/evidence/D6/2026-09-25-tenant-boundary/).
+        organizationId: orgId ?? undefined,
         // The kernel's risk judgment, not its surface label: every turn here is
         // labelled regulatory_review, and the gateway reads riskTier to decide
         // whether only an approved model may serve it.
@@ -1620,27 +1626,21 @@ export function mountStreamRoute(router: Router): void {
             );
           }
 
-          // The envelope the client already understands — the same shape
-          // buildHumanConfirmationRequiredResult produces, so GovernedActionSignoff
-          // opens on it unchanged. runId + toolUseId are what let the decision
+          // The envelope the client already understands, built by
+          // buildHumanConfirmationRequiredResult itself rather than restated, so
+          // the tier and what it asks for are said one way. GovernedActionSignoff
+          // opens on it. runId + toolUseId are what let the decision
           // come back to THIS waiting turn instead of running on its own.
+          const proposal = buildHumanConfirmationRequiredResult(verdict.command, verdict.params);
           emitControl({
             type: 'approval_required',
             round,
             runId,
             toolUseId: toolUse.id,
-            action: verdict.command,
-            openModal: 'esign',
-            data: {
-              reasonRequired: true,
-              signatureRequired: verdict.tier === 'esignature',
-              proposedByAgent: true,
-              retry: { command: verdict.command, params: verdict.params },
-            },
-            message:
-              'This action changes the official record, so it has to be taken by a person rather ' +
-              'than on your behalf. Review it and confirm to continue — your reason for the change ' +
-              'is recorded with it. AnA is waiting on this before she goes on.',
+            action: proposal.action,
+            openModal: proposal.openModal,
+            data: proposal.data,
+            message: `${proposal.message} AnA is waiting on this before she goes on.`,
           });
 
           // The wait. Same machinery as pause: woken by the decision, with the
@@ -2244,6 +2244,8 @@ export function mountStreamRoute(router: Router): void {
           let roundText = '';
           const roundResponse = await gw.route({
             taskType: routingPlan.taskType,
+            // Every agentic round is bound to the same tenant as the first.
+            organizationId: orgId ?? undefined,
             riskTier: routingPlan.riskTier,
             messages: loopMessages,
             maxTokens: routingPlan.maxTokens,

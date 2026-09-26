@@ -866,6 +866,17 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Vault ingest route:', error);
   }
 
+  // Legal holds on vault records: placed and lifted by QA and administration,
+  // each change one transaction with its chained audit row; the retention
+  // sweep honours them (P1-22). Nothing could write a hold before this.
+  try {
+    const { createVaultLegalHoldRoutes } = await import('../routes/vault-legal-holds');
+    app.use('/api/vault/legal-holds', authMiddleware, createVaultLegalHoldRoutes());
+    console.info('✅ Vault legal-hold routes mounted (/api/vault/legal-holds)');
+  } catch (error) {
+    console.error('❌ Failed to mount Vault legal-hold routes:', error);
+  }
+
   // PDEV Evidence Picker library — org-scoped searchable evidence pool read by
   // GET /api/evidence-objects (own sub-prefix, mounted nowhere else). Populates
   // the picker's result list; before this the fetch 404'd to a permanent empty

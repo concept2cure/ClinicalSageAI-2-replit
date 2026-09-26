@@ -1,0 +1,94 @@
+# the part-2b tests, with the fix
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — the program’s submission is the one anchored to it (LX-22) > gates the anchored submission, not a newer same-named one of another project
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — the program’s submission is the one anchored to it (LX-22) > a same-named submission of another project is not this program’s: no submission
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — the program’s submission is the one anchored to it (LX-22) > a submission with no recorded project is matched by name only, and says so
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > gates the open program's sequence, not the organisation's first submission
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a program whose submission has no sequence yet is an honest empty state — never another program's gate
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a program with no submission at all says so, naming the program
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > with no program open the gate is not run against anything
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a failed discovery is an error, not an empty state
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > shows the open program’s IND, not rows[0], when a match exists
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > falls back to the first IND and SAYS the open program has none
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > with no program open and several INDs, says which one is shown and how to scope
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > shows the IND anchored to the open program, not a same-named IND of another project
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > a same-named IND anchored to another project is not the open program’s
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > an IND with no recorded project is matched by name only, and the note says so
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > a single IND with no program open needs no note — nothing to disambiguate
+ ✓ server/services/cmc/__tests__/submission-spine.pglite.test.ts > resolveSubmissionSpine — the program’s submission is the one anchored to it > two projects for one product each resolve to their own submission
+ ✓ server/services/cmc/__tests__/submission-spine.pglite.test.ts > resolveSubmissionSpine — the program’s submission is the one anchored to it > prefers the anchored submission over a newer same-named one with no project
+ ✓ server/services/cmc/__tests__/submission-spine.pglite.test.ts > resolveSubmissionSpine — the program’s submission is the one anchored to it > never takes a submission anchored to ANOTHER program by name
+ ✓ server/services/cmc/__tests__/submission-spine.pglite.test.ts > resolveSubmissionSpine — the program’s submission is the one anchored to it > matches an unanchored submission by name only when that is unambiguous both ways, and says so
+ ✓ server/services/cmc/__tests__/submission-spine.pglite.test.ts > resolveSubmissionSpine — the program’s submission is the one anchored to it > resolves nothing when two programs could equally claim one unanchored submission
+ ✓ server/services/cmc/__tests__/submission-spine.pglite.test.ts > resolveSubmissionSpine — the program’s submission is the one anchored to it > resolves nothing when two unanchored submissions match one program
+ ✓ server/services/cmc/__tests__/submission-spine.pglite.test.ts > resolveSubmissionSpine — the program’s submission is the one anchored to it > is organization-scoped: another organization resolves nothing for this program
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > assembles the sequence and returns the package's REAL index.xml + rendered-leaf count
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > refuses submission-ready while placed leaves cannot be materialized
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > a placed leaf with no document behind it does not satisfy its required section
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces a DTD-incomplete package as a blocker, never as ready
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > surfaces an assembly refusal as a structured failed compilation, not a 500
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — spine-backed compiles run the real generator > records the compilation with the real sequence identity (continuity gate feed)
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/validate — spine-backed programs validate leaf placement > reports placement findings from the sequence's leaves, not the empty section store
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/status — spine leaf state drives the blockers > names the placed-document count and defers readiness to compile-time verification
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > stamps the RECORDED agency application number when the program has one
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > falls back to the program code when no agency number is recorded — never invents one
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > says "unassigned" when the program has neither a number nor a code
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — which identifier reaches <application-number> > an empty or whitespace application_number is not a recorded number
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > returns every file the package holds, the FDA regional backbone and the MD5 index
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a package whose PDFs were not converted to PDF/A is not ready, and names them
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > an FDA form shipped as FDA issued is named as such — neither converted nor a PDF/A failure
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the package, not just its backbone > a compilation that could not be recorded says so — its manifest is what the next sequence is diffed against
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a recorded compilation says so
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > a form filed at 1.1 satisfies the pack's per-form requirement by its form type
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > refuses a region that is not the region the sequence was created for
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the record, the forms, the region > accepts the sequence's own region however it is spelled
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/history — which sequence, and whether it can anchor the next one > names the sequence each compilation covered and whether it carries a leaf manifest
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/history — which sequence, and whether it can anchor the next one > a history that could not be read is an error, never an empty history
+ ✓ tests/routes/ectd-compile-spine.test.ts > GET /:projectIdent/status — a program's readiness comes from what is placed > counts required sections covered by placed leaves, and names the sequence and its region
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards a lost row on a completed compilation
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — the assembly's audit-row outcome reaches the surface > forwards the refusal row's outcome on a refused assembly
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > auth + RBAC > 401/403 unauthenticated or wrong role
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > form discovery + build > GET / → 200 lists the supported form ids
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > form discovery + build > POST /FDA_1571/build → 200 returns a field map + missingRequired
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > form discovery + build > POST /nope/build → 400 for an unsupported form
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > cross-form QC > POST /qc → 200 ready for a complete, consistent IND form set
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > cross-form QC > POST /qc → 200 not ready when sponsor name diverges
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > cross-form QC > POST /qc → 400 without forms[]
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /FDA_3674/pdf → 200 application/pdf with X-Form-* headers
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /FDA_356H/pdf → X-Form-Required-Blank names the required boxes still empty
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /FDA_3674/pdf → the header is present and EMPTY when none is blank
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /nope/pdf → 400 for an unsupported form
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /1572/pdf-all → 200 returns base64 PDFs per investigator
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /3455/pdf-all → 200 returns one disclosure PDF per disclosing investigator
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /3455/pdf-all → 200 with an empty documents array when none disclose
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > 401 when unauthenticated
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > POST /1571/pdf-from-records → 200 PDF from stored sponsor
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > POST /1572/pdf-from-records → 200 with investigator records
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > POST /1571/pdf-from-records → 404 for an unknown sponsor
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > does not load another org's sponsor (tenant scoping → 404)
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > governed artifact (DB-backed) > 401 when unauthenticated
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > governed artifact (DB-backed) > 400 without a projectId (a governed artifact must associate with a project)
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > governed artifact (DB-backed) > 404 for a project in another org (never create an artifact under another tenant)
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > governed artifact (DB-backed) > 201 persists a governed form artifact (structured field map) the platform now knows exists
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 201 persists ONE governed artifact per investigator for 1572
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 201 persists one artifact per DISCLOSING investigator for 3455 (non-disclosing excluded)
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 201 with an empty artifacts array for 3455 when no investigator discloses (certify none on 3454)
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 400 for a form that is not per-investigator (use /:formId/artifact instead)
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 404 for a project in another org (never create per-investigator artifacts under another tenant)
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > GET /?projectIdent → the program record, what each form will produce, and nothing placed yet
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > GET / without a program still lists the forms and their plans
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > GET /?projectIdent → 404 for a program that is not this organization's
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > POST /FDA_1571/build fills sponsor, drug, indication and IND number from the record — none of them typed
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > a stated value wins over the record, and a blank one does not erase it
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > a build that NAMES an unresolvable program is refused, not answered from typed fields
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > places the signed form as a Module 1 leaf pointing at the retained bytes
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > re-attaching a corrected signature replaces the leaf instead of filing the form twice
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > files the financial certification at its own catalogued section, not with the forms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > refuses a file that is not a PDF by its bytes, whatever it claims to be
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > refuses the BLANK official template — attaching it would file an unsigned form as a signed one
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > will not invent a sequence to file into
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > will not file into a program that has no submission record at all
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > never files into another organization's program
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > requires the open program, and refuses an unsupported form
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > requires the regulatory-author role
+ Test Files  5 passed (5)
+      Tests  91 passed (91)

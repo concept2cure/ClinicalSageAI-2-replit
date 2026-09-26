@@ -183,9 +183,11 @@ async function sessionEndReason(socket: AuthenticatedSocket): Promise<SessionEnd
   const userId = Number(socket.authUserId);
   const organizationId = Number(socket.orgId);
   try {
-    // Signature, revocation, account standing and the password-change rule,
-    // exactly as the handshake verified them.
-    await verifyLiveToken(socket.sessionToken ?? '');
+    // Signature, revocation, account standing, the password-change rule and
+    // the session's inactivity, exactly as the handshake verified them. The
+    // re-check is not the user acting, so it is not the session's activity
+    // (P1-1): an open tab does not keep an unattended session alive.
+    await verifyLiveToken(socket.sessionToken ?? '', undefined, { activity: false });
   } catch {
     return 'session_ended';
   }

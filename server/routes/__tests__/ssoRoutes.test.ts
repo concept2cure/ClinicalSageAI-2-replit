@@ -204,16 +204,22 @@ describe('SSO helper routes', () => {
     expect(res.headers.location).toContain('/api/auth/sso/microsoft/callback');
   });
 
-  it('GET /api/auth/sso/:provider/callback should return token and user in dev', async () => {
-    // The callback now redirects 302 to the frontend SSO handler page
-    // with the JWT in the sso_token query param (was: 200 JSON body).
-    // Verify the redirect carries an sso_token and an sso_email so the
-    // frontend can complete the SSO flow.
+  it('GET /api/auth/sso/:provider/callback hands the session to the sign-in page in the URL fragment, never the query string', async () => {
+    // Until 2026-09-26 the redirect carried the JWT as ?sso_token= (with the
+    // e-mail, name and organisation beside it): a query string is sent to the
+    // server on the next request, kept in browser history and access logs
+    // (security audit 2026-09-24, IAM-18 item 6). A fragment is neither sent
+    // nor logged; the sign-in page reads it once and drops it.
     const res = await request(app).get('/api/auth/sso/microsoft/callback?code=dev');
     expect(res.status).toBe(302);
-    expect(res.headers.location).toBeDefined();
-    expect(res.headers.location).toMatch(/sso_token=/);
-    expect(res.headers.location).toMatch(/sso_email=/);
+    const location = String(res.headers.location);
+    const [beforeHash, fragment] = location.split('#');
+    expect(beforeHash).toBe('/concept2cure/login');
+    expect(beforeHash, 'the token travelled in the query string').not.toMatch(/token=|sso_email=/);
+    const params = new URLSearchParams(fragment);
+    expect(params.get('sso')).toMatch(/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/);
+    expect(params.get('provider')).toBe('microsoft');
+    expect(params.get('sso_email')).toBeNull();
   });
 
   // ── The security property ────────────────────────────────────────────────
@@ -379,6 +385,30 @@ describe('SAML SSO — the organisation is the one that owns the matched IdP con
         email: alice.email,
       })
     );
+  });
+
+  it('callback: a return path rides in the fragment with the session, never in a query string (IAM-18 item 6)', async () => {
+    dbState.rows.users = [alice];
+    dbState.rows.organization_users = [membership(alice.id, ACME_ORG, 'manager')];
+    saml.validateResponse.mockResolvedValue(assertion(alice.email));
+    const relayWithReturn = Buffer.from(JSON.stringify({ org: 'acme', returnTo: '/concept2cure/projects?tab=1' }), 'utf-8').toString('base64url');
+
+    const res = await request(app)
+      .post('/api/auth/sso/saml/callback')
+      .type('form')
+      .send({ SAMLResponse: 'c3R1Yg==', RelayState: relayWithReturn });
+
+    expect(res.status).toBe(302);
+    const location = String(res.headers.location);
+    const [beforeHash, fragment] = location.split('#');
+    expect(beforeHash).toBe('/concept2cure/login');
+    expect(beforeHash, 'the token travelled in the query string').not.toMatch(/token=/);
+    const params = new URLSearchParams(fragment);
+    const claims = jwt.decode(String(params.get('sso'))) as Record<string, unknown> | null;
+    expect(claims?.organizationId).toBe(String(ACME_ORG));
+    expect(claims?.provider).toBe('saml');
+    expect(params.get('returnTo')).toBe('/concept2cure/projects?tab=1');
+    expect(params.get('provider')).toBe('saml');
   });
 
   it('callback: the membership lookup is constrained to the config org in the statement itself', async () => {

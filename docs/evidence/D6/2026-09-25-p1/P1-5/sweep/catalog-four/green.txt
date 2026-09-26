@@ -1,0 +1,8 @@
+$ # the four routes with the guard, plus the shared receiver
+ ✓ server/middleware/__tests__/uploadAllowlist-receive.test.ts > receiveUpload > a body over the limit is 413 FILE_TOO_LARGE, naming the limit 56ms
+ ✓ server/middleware/__tests__/uploadAllowlist-receive.test.ts > receiveUpload > a type the filter refuses is 415 UNSUPPORTED_FILE_TYPE 6ms
+ ✓ server/middleware/__tests__/uploadAllowlist-receive.test.ts > receiveUpload > a second file where one is allowed is 400 UPLOAD_INVALID 5ms
+ ✓ server/middleware/__tests__/uploadAllowlist-receive.test.ts > receiveUpload > an admitted file reaches the handler 5ms
+ Test Files  8 passed (8)
+      Tests  100 passed (100)
+exit=0

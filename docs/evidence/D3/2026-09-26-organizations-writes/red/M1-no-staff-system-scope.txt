@@ -1,0 +1,19 @@
+# M1: staffCrossOrgScope made a pass-through (policy in place, the zero-row checks in place). c2c_d3b
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > a tenant scope cannot write another organization at the database 5ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still updates its own organization's settings 104ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still cannot touch another organization's settings 11ms
+ × tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff edit another organization's settings, and the change is really there 23ms
+   → expected 404 to be 200 // Object.is equality
+ × tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff edit another organization's profile 15ms
+   → expected 404 to be 200 // Object.is equality
+ × tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff update another tenant's configuration through tenant-config 25ms
+   → expected 404 to be 200 // Object.is equality
+ ✓ tests/db/rls-policy-inputs.dbtest.ts > RLS inputs are out of a tenant reach (D3) > the runtime role exists, so the privilege checks below mean something 9ms
+ ✓ tests/db/rls-policy-inputs.dbtest.ts > RLS inputs are out of a tenant reach (D3) > self-test: the sweep catches a delegate-grant table with its RLS removed 161ms
+ ✓ tests/db/rls-policy-inputs.dbtest.ts > RLS inputs are out of a tenant reach (D3) > self-test: the sweep catches the organizations table with its RLS removed 81ms
+ ✓ tests/db/rls-policy-inputs.dbtest.ts > RLS inputs are out of a tenant reach (D3) > no table an RLS decision reads is writable by the runtime role without RLS 80ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 404 to be 200 // Object.is equality
+AssertionError: expected 404 to be 200 // Object.is equality
+AssertionError: expected 404 to be 200 // Object.is equality
+      Tests  3 failed | 7 passed (10)

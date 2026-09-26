@@ -68,7 +68,9 @@ export function mockSpineOn(poolQuery: Mock) {
         return { rows: opts.pack ? [{ version: 'v2.3-test', required_sections: opts.pack }] : [] };
       }
       if (/FROM regulatory_programs/i.test(sql)) return { rows: [program] };
-      if (/FROM submissions/i.test(sql)) return { rows: [{ id: 55, application_type: 'ind' }] };
+      // The program's own submission, anchored to it (submissions.program_id,
+      // LX-22): resolveSubmissionSpine takes an anchored row as the program's.
+      if (/FROM submissions/i.test(sql)) return { rows: [{ id: 55, application_type: 'ind', anchored: true }] };
       if (/FROM ectd_sequences/i.test(sql)) {
         return { rows: [{ id: 9, sequence_number: opts.sequenceNumber ?? '0000', region: 'fda' }] };
       }

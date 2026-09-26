@@ -90,6 +90,39 @@ export function isAllowedPathname(candidate: string): boolean {
   return false;
 }
 
+const JWT_SHAPE = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
+const PROVIDER_SHAPE = /^[a-z0-9-]{1,32}$/i;
+
+export interface SsoHandoff {
+  token: string;
+  provider: string | null;
+  /** A same-origin path this app allows, else null. */
+  returnTo: string | null;
+}
+
+/**
+ * The single sign-on hand-off the sign-in page reads from the URL fragment
+ * (`#sso=…&provider=…&returnTo=…`). The server puts the session there because a
+ * fragment is never sent to a server and never logged (security audit
+ * 2026-09-24, IAM-18 item 6). Null unless the fragment carries a JWT-shaped
+ * token; the return path is followed only when it passes the same allow-list as
+ * every other redirect here.
+ */
+export function parseSsoHandoff(hash: string | null | undefined): SsoHandoff | null {
+  const raw = (hash ?? '').replace(/^#/, '');
+  if (!raw) return null;
+  const params = new URLSearchParams(raw);
+  const token = params.get('sso') ?? '';
+  if (!JWT_SHAPE.test(token)) return null;
+  const provider = params.get('provider');
+  const candidate = normalizeRedirectCandidate(params.get('returnTo'));
+  return {
+    token,
+    provider: provider && PROVIDER_SHAPE.test(provider) ? provider : null,
+    returnTo: candidate && isAllowedPathname(candidate) ? candidate : null,
+  };
+}
+
 export const computeRedirect = (
   search: string = typeof window !== 'undefined' ? window.location.search : '',
   userArg?: any,

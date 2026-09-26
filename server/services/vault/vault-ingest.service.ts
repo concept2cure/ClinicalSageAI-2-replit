@@ -452,7 +452,7 @@ async function admitVaultDocument(
       `INSERT INTO vault.documents (
         program_id, document_code, document_title, document_type,
         version, s3_bucket, s3_key, file_name, file_size, mime_type,
-        content_hash, classification, retention_policy,
+        content_hash, classification, retention_policy, retention_until,
         parent_document_id, supersedes_id,
         extracted_text, page_count, word_count,
         folder_id, evidence_kind, ctd_section,
@@ -464,6 +464,12 @@ async function admitVaultDocument(
         $1, $2, $3, $4,
         $5, $6, $7, $8, $9, $10,
         $11, $12, $13,
+        -- The retention clock starts at admission (P1-22): the named, active
+        -- policy's days from today; NULL (kept indefinitely) when the document
+        -- names no policy or an unknown one. The sweep never destroys a
+        -- document with no date.
+        (SELECT CURRENT_DATE + rp.retention_days FROM vault.retention_policies rp
+          WHERE rp.policy_name = $13 AND rp.active LIMIT 1),
         $14, $15,
         $16, $17, $18,
         $19, $20, $21,
@@ -485,6 +491,8 @@ async function admitVaultDocument(
         content_hash = EXCLUDED.content_hash,
         classification = EXCLUDED.classification,
         retention_policy = EXCLUDED.retention_policy,
+        -- A clock that has started is not restarted by a re-upload.
+        retention_until = COALESCE(vault.documents.retention_until, EXCLUDED.retention_until),
         parent_document_id = EXCLUDED.parent_document_id,
         supersedes_id = EXCLUDED.supersedes_id,
         extracted_text = EXCLUDED.extracted_text,
