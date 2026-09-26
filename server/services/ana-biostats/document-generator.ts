@@ -775,14 +775,24 @@ export class DocumentGenerator {
     _regulatory?: RegulatoryCustomization
   ): string {
     const n = comp.adjustedTotal ?? comp.sampleSize.total;
+    // A CSR states what was DONE. This section is generated from planning inputs
+    // and the engine's computation alone, so it states the plan and the engine's
+    // figures, and marks every statement about conduct for the sponsor with the
+    // placeholder the CSR completeness check detects (csr-builder
+    // hasUnresolvedPlaceholders) — a section with one cannot read as complete.
+    // Until 2026-09-25 (BS12) it asserted, as fact, that the analyses followed the
+    // SAP, that efficacy used the ITT population, that tipping-point analyses were
+    // run and that secondaries were tested in a hierarchy: nothing established any
+    // of it.
+    const toConfirm = (what: string) => `[DATA TO BE INSERTED: ${what}]`;
     let c = `# Statistical Methods (CSR §9.7, ICH E3)\n\n`;
-    c += `## 9.7.1 Statistical and Analytical Plans\n\nThe study was a ${input.studyType} design with a ${input.endpointType} primary endpoint analyzed by ${comp.method}. Analyses followed the pre-specified SAP.\n\n`;
-    c += `## 9.7.1.1 Analysis Populations\n\nEfficacy was analyzed on the ITT population; the PP population was supportive. Safety was summarized on the as-treated population.\n\n`;
-    c += `## 9.7.1.2 Primary Endpoint Analysis\n\nThe primary endpoint was compared between arms using ${comp.method} at a two-sided α = ${input.alpha}. The point estimate is reported with its ${((1 - input.alpha) * 100).toFixed(0)}% confidence interval${comp.confidenceInterval ? ` (planned CI [${comp.confidenceInterval.lower}, ${comp.confidenceInterval.upper}])` : ''}.\n\n`;
+    c += `## 9.7.1 Statistical and Analytical Plans\n\nThe study was planned as a ${input.studyType} design with a ${input.endpointType} primary endpoint, to be analyzed by ${comp.method}. ${toConfirm('whether the analyses followed the pre-specified SAP, and every deviation from it')}\n\n`;
+    c += `## 9.7.1.1 Analysis Populations\n\n${toConfirm('the efficacy and safety analysis populations as analyzed, and their definitions')}\n\n`;
+    c += `## 9.7.1.2 Primary Endpoint Analysis\n\nThe primary endpoint was planned to be compared between arms using ${comp.method} at a two-sided α = ${input.alpha}, with the point estimate reported with its ${((1 - input.alpha) * 100).toFixed(0)}% confidence interval${comp.confidenceInterval ? ` (planned CI [${comp.confidenceInterval.lower}, ${comp.confidenceInterval.upper}])` : ''}.\n\n`;
     c += `## 9.7.1.3 Sample Size\n\nThe planned sample size of ${n} (${comp.sampleSize.perGroup}/group) provided ${(comp.power * 100).toFixed(1)}% power. ${comp.formula}\n\n`;
-    c += `## 9.7.2 Multiplicity\n\n${comp.multiplicityResult && comp.multiplicityResult.endpointCount > 1 ? comp.multiplicityResult.recommendation : 'A single primary comparison was performed; secondary endpoints were tested within a pre-specified hierarchy.'}\n\n`;
-    c += `## 9.7.3 Handling of Missing Data\n\n${input.missingDataMethod ? `Missing data were handled by ${input.missingDataMethod}, with tipping-point sensitivity analyses.` : 'Missing data were handled per the pre-specified SAP approach with sensitivity analyses.'}\n\n`;
-    c += `## 9.7.4 Interim Analyses\n\n${input.interimAnalyses && input.interimAnalyses > 0 ? `${input.interimAnalyses} interim ${input.interimAnalyses === 1 ? 'analysis was' : 'analyses were'} conducted under a pre-specified alpha-spending function with DSMB oversight.` : 'No interim efficacy analyses were conducted.'}\n\n`;
+    c += `## 9.7.2 Multiplicity\n\n${comp.multiplicityResult && comp.multiplicityResult.endpointCount > 1 ? comp.multiplicityResult.recommendation : `One primary comparison is planned. ${toConfirm('how secondary endpoints were tested and how multiplicity was controlled')}`}\n\n`;
+    c += `## 9.7.3 Handling of Missing Data\n\n${input.missingDataMethod ? `The plan specifies ${input.missingDataMethod} for missing data. ${toConfirm('the method used and the sensitivity analyses performed')}` : toConfirm('how missing data were handled, and the sensitivity analyses performed')}\n\n`;
+    c += `## 9.7.4 Interim Analyses\n\n${input.interimAnalyses && input.interimAnalyses > 0 ? `The plan specifies ${input.interimAnalyses} interim ${input.interimAnalyses === 1 ? 'analysis' : 'analyses'} under a pre-specified alpha-spending function with DSMB oversight. ${toConfirm('the interim analyses conducted and their outcomes')}` : `No interim efficacy analysis is specified in the plan. ${toConfirm('whether any interim analysis was conducted')}`}\n\n`;
     if (judgment.fragility.category !== 'robust') {
       c += `## 9.7.5 Robustness\n\nResult robustness was assessed (fragility index ${judgment.fragility.fragilityIndex}); conclusions were examined under alternative assumptions.\n\n`;
     }

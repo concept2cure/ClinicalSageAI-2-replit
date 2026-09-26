@@ -1795,7 +1795,10 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
 
     if (content !== undefined) {
       paramCount++;
-      updates.push(`content = ${paramCount}`);
+      // `$$` is the placeholder's `$` followed by the interpolation. fde9d704 lost
+      // it, so the SQL read `content = 1` with the bound value unused, Postgres
+      // refused the UPDATE, and every section content save answered 500.
+      updates.push(`content = $${paramCount}`);
       values.push(content);
       recordRevision = true;
     }

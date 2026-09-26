@@ -35,7 +35,17 @@ import { verifyPqClaim } from '../../../eval/pq/pq-verdict';
 import { planKernelExecution } from '../../kernel-router';
 import { resolveModelTier, resolveTierModel } from '../reasoning';
 
-const APPROVED = ['claude-opus-4', 'claude-opus-4-legacy', 'claude-opus-4-bedrock', 'claude-opus-4-vertex'];
+// Opus 5.5 (the flagship slot), Opus 5 beneath it (added 2026-09-25 when the
+// flagship moved), Opus 4.8, and the two private-cloud Opus entries.
+const APPROVED = [
+  'claude-opus-4',
+  'claude-opus-5',
+  'claude-opus-4-legacy',
+  'claude-opus-4-bedrock',
+  'claude-opus-4-vertex',
+];
+/** Every first-party Opus rung — failing all of them is the outage case. */
+const FIRST_PARTY_OPUS = ['claude-opus-4', 'claude-opus-5', 'claude-opus-4-legacy'];
 
 function makeGateway(providers: Array<'anthropic' | 'openai' | 'bedrock' | 'vertex'> = ['anthropic', 'openai']) {
   return new AIGateway({
@@ -84,7 +94,7 @@ function stubProviders(gateway: AIGateway, fail: string[] = []) {
 const msg = [{ role: 'user' as const, content: 'Draft section 3.2.S.2.2.' }];
 
 describe('registry: which models may serve high-risk regulatory work', () => {
-  it('approves exactly the four Opus entries — changing this set is a governance act, not a refactor', () => {
+  it('approves exactly the five Opus entries — changing this set is a governance act, not a refactor', () => {
     expect(APPROVED_MODELS.filter((m) => m.approvedForHighRisk).map((m) => m.id).sort()).toEqual([...APPROVED].sort());
   });
 
@@ -138,17 +148,17 @@ describe('the gateway enforces it at every selection point', () => {
     expect(APPROVED, `served by ${invoked[0]}`).toContain(invoked[0]);
   });
 
-  it('when both approved Opus models fail, drafting refuses — it does not fall to Sonnet', async () => {
+  it('when every approved Opus model fails, drafting refuses — it does not fall to Sonnet', async () => {
     const gw = makeGateway();
-    const invoked = stubProviders(gw, ['claude-opus-4', 'claude-opus-4-legacy']);
+    const invoked = stubProviders(gw, FIRST_PARTY_OPUS);
     await expect(gw.route({ taskType: 'document_drafting', messages: msg })).rejects.toThrow();
     for (const id of invoked) expect(APPROVED, `${id} served a drafting request`).toContain(id);
-    expect(invoked).toEqual(expect.arrayContaining(['claude-opus-4', 'claude-opus-4-legacy']));
+    expect(invoked).toEqual(expect.arrayContaining(FIRST_PARTY_OPUS));
   }, 20_000);
 
   it('when the approved models fail, regulatory review does not cross to GPT-4o', async () => {
     const gw = makeGateway();
-    const invoked = stubProviders(gw, ['claude-opus-4', 'claude-opus-4-legacy']);
+    const invoked = stubProviders(gw, FIRST_PARTY_OPUS);
     await expect(gw.route({ taskType: 'regulatory_review', messages: msg })).rejects.toThrow();
     expect(invoked).not.toContain('gpt-4o');
     expect(invoked).not.toContain('claude-sonnet-4');
@@ -219,7 +229,7 @@ describe('the gateway enforces it at every selection point', () => {
       expect(APPROVED).not.toContain(invoked[0]);
     });
 
-    it('the default path for drafting is unchanged: Opus 5 serves it', async () => {
+    it('the default path for drafting is unchanged: the flagship slot (Opus 5.5) serves it', async () => {
       const gw = makeGateway();
       const invoked = stubProviders(gw);
       await gw.route({ taskType: 'document_drafting', messages: msg });

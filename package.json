@@ -252,6 +252,7 @@
     "ci:dependency-risk:reseal": "node scripts/ci/reseal-dependency-risk-ledger.mjs",
     "ci:eslint-ratchet": "node scripts/ci/check-eslint-warning-ratchet.mjs",
     "ci:pushed-lint-errors": "node scripts/ci/check-pushed-lint-errors.mjs",
+    "ci:pushed-lint-warnings": "node scripts/ci/check-pushed-lint-warnings.mjs",
     "ci:pushed-typecheck": "node scripts/ci/check-pushed-typecheck.mjs",
     "ci:untracked-imports": "node scripts/ci/check-untracked-imports.mjs",
     "ci:untracked-imports:selftest": "node scripts/ci/check-untracked-imports.selftest.mjs",

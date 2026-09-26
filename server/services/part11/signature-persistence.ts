@@ -60,6 +60,7 @@ import { createHash } from 'crypto';
 import type { SQL } from 'drizzle-orm';
 import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { resolveSignerIdentity } from './resolve-signer-identity.js';
+import { GOVERNED_SIGN_MEANINGS, isGovernedSignMeaning, type GovernedSignMeaning } from './signature-meanings.js';
 
 /** Minimal pg-compatible client: node-pg Pool, PoolClient, or a test shim. */
 export interface SignatureDbClient {
@@ -659,6 +660,40 @@ export interface GovernedActionSignatureParams extends GovernedSignParams {
 }
 
 /**
+ * A governed `sign` declared no meaning, or one outside GOVERNED_SIGN_MEANINGS.
+ * Thrown before any query, so nothing was written when a caller sees it; the
+ * HTTP routes map it to 400 with the code.
+ */
+export class SignatureMeaningError extends Error {
+  readonly code: 'SIGNATURE_MEANING_REQUIRED' | 'SIGNATURE_MEANING_UNKNOWN';
+  constructor(code: 'SIGNATURE_MEANING_REQUIRED' | 'SIGNATURE_MEANING_UNKNOWN', message: string) {
+    super(message);
+    this.name = 'SignatureMeaningError';
+    this.code = code;
+  }
+}
+
+/**
+ * The §11.50(a)(3) rule for a governed sign: the declared meaning is a string
+ * from the closed vocabulary. The value is not echoed back (it is caller
+ * text); the message names what is accepted instead.
+ */
+export function assertGovernedSignMeaning(meaning: unknown): asserts meaning is GovernedSignMeaning {
+  if (isGovernedSignMeaning(meaning)) return;
+  const accepted = GOVERNED_SIGN_MEANINGS.join(', ');
+  if (typeof meaning !== 'string' || meaning.length === 0) {
+    throw new SignatureMeaningError(
+      'SIGNATURE_MEANING_REQUIRED',
+      `A signature meaning is required, one of: ${accepted}. Nothing was signed.`,
+    );
+  }
+  throw new SignatureMeaningError(
+    'SIGNATURE_MEANING_UNKNOWN',
+    `The declared meaning is not a signature meaning; use one of: ${accepted}. Nothing was signed.`,
+  );
+}
+
+/**
  * Compose + persist ONE governed electronic_signatures row on the caller's
  * client/transaction: signer snapshot + declared meaning + manifest +
  * attribution hash + INSERT. Throwing rolls the caller's whole governed write
@@ -669,6 +704,13 @@ export async function persistGovernedActionSignature(
   params: GovernedActionSignatureParams,
 ): Promise<{ id: number; signedAt: Date }> {
   const command = params.command ?? 'sign';
+
+  // §11.50(a)(3): a governed sign states a meaning from the closed vocabulary,
+  // or nothing is signed. Checked before the signer lookup so a refusal does no
+  // database work and the caller's transaction has nothing of ours to roll
+  // back. Other commands (approve, revoke-signature, transmit) fix their
+  // meaning in their own writer and are not gated here (audit DP-17).
+  if (command === 'sign') assertGovernedSignMeaning(params.payload?.meaning);
 
   // Signer snapshot (printed name — §11.50), on the caller's client so the
   // lookup participates in the same transaction. Fails closed if unresolvable.

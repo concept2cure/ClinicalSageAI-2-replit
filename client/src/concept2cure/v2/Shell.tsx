@@ -20,7 +20,7 @@ import { useTenant } from '@/contexts/TenantContext';
 import brandMark from '@/assets/concept2cure-icon.svg';
 import {
   useChatUpload,
-  attachmentReadLabel,
+  readyAttachmentLabel,
   composeTurn,
   CHAT_UPLOAD_ACCEPT,
   SR_ONLY_STYLE,
@@ -1243,15 +1243,12 @@ export function AnaRail({
                 // The chip states what actually happened. A chip that shows a
                 // filename and nothing else is what let the old composer imply
                 // a file had been received when it had not.
-                const read = attachmentReadLabel(a.extractionMethod, a.extractionWords);
                 const label =
                   a.status === 'uploading'
                     ? `Uploading ${a.name}…`
                     : a.status === 'error'
                       ? `${a.name} — ${a.error || 'upload failed'}`
-                      : read
-                        ? `${a.name} · ${read}`
-                        : a.name;
+                      : `${a.name} · ${readyAttachmentLabel(a.extractionMethod, a.extractionWords)}`;
                 return (
                   <span
                     key={a.id}

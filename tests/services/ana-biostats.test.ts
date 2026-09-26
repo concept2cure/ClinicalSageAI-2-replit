@@ -1471,3 +1471,236 @@ describe('SME Fallback & Failure Behavior', () => {
     expect(enhancement.additionalGuidance.length + enhancement.provisionalNotes.length + enhancement.escalationNotes.length).toBeGreaterThan(0);
   });
 });
+
+// ═══════════════════════════════════════════════════════════════
+// BS8 (2026-09-25): the achieved power is the power of the test the N was
+// sized for. Non-inferiority was sized on (δ − Δ_NI) and its power computed
+// from δ alone with the superiority formula, so a design sized correctly for
+// 90% reported ~5% power and the judgment said 'inadequate', 'escalate' — a
+// figure that reached SAPs and protocols. Equivalence had the same defect.
+// ═══════════════════════════════════════════════════════════════
+
+describe('Layer 2: achieved power is the power of the sized test (BS8)', () => {
+  const niInput: StatisticalInput = {
+    clientTrack: 'biotech_pharma',
+    regulatoryBody: 'FDA',
+    studyType: 'non_inferiority',
+    objectiveType: 'efficacy',
+    endpointType: 'continuous',
+    alpha: 0.05,
+    powerTarget: 0.9,
+    effectSize: 0,
+    variance: 1,
+    nonInferiorityMargin: -0.2,
+    attritionRate: 0.1,
+    allocationRatio: 1,
+    numberOfGroups: 2,
+  };
+
+  it('a non-inferiority design sized for 90% reports 90%, not the superiority power of δ', () => {
+    const result = engine.compute(niInput);
+    expect(result.method).toContain('non-inferiority');
+    // (1+1)·1·(1.96+1.2816)²/0.2² = 525.4 → 526 per group
+    expect(result.sampleSize.perGroup).toBe(526);
+    expect(result.power).toBeGreaterThanOrEqual(0.9);
+    expect(result.power).toBeLessThan(0.91);
+  });
+
+  it('holds for a positive true difference and an unequal allocation', () => {
+    const result = engine.compute({ ...niInput, effectSize: 0.05, nonInferiorityMargin: -0.3, allocationRatio: 2 });
+    expect(result.power).toBeGreaterThanOrEqual(0.9);
+    expect(result.power).toBeLessThan(0.91);
+  });
+
+  it('an equivalence design sized for 80% reports 80%', () => {
+    const result = engine.compute({
+      ...niInput,
+      studyType: 'equivalence',
+      nonInferiorityMargin: undefined,
+      equivalenceMargin: 0.25,
+      powerTarget: 0.8,
+    });
+    expect(result.method).toContain('TOST');
+    expect(result.power).toBeGreaterThanOrEqual(0.8);
+    expect(result.power).toBeLessThan(0.81);
+  });
+
+  it('the judgment does not call a correctly sized non-inferiority design underpowered', () => {
+    const input = {
+      ...niInput,
+      comparatorType: 'active' as const,
+      estimandStrategy: 'treatment_policy' as const,
+      missingDataMethod: 'MMRM' as const,
+    };
+    const result = judgment.judge(input, engine.compute(input));
+    expect(result.dimensions.find((d) => d.name === 'Power Adequacy')?.verdict).toBe('adequate');
+    expect(result.actionRecommendation).not.toBe('escalate');
+  });
+
+  it('a non-inferiority trial against placebo is still flagged — for its comparator, not its power', () => {
+    const input = { ...niInput, estimandStrategy: 'treatment_policy' as const, missingDataMethod: 'MMRM' as const };
+    const result = judgment.judge(input, engine.compute(input));
+    expect(result.dimensions.find((d) => d.name === 'Power Adequacy')?.verdict).toBe('adequate');
+    expect(result.dimensions.find((d) => d.name === 'Comparator Appropriateness')?.verdict).toBe('inadequate');
+  });
+
+  it('missing-data power loss is measured against the same test, not collapsed to the superiority power', () => {
+    const base = engine.compute(niInput);
+    const impact = engine.computeMissingDataImpact(
+      { ...niInput, expectedMissingRate: 0.1, missingDataMethod: 'complete_case' },
+      base
+    );
+    // 10% fewer completers costs a few points of power, not ~85 of them.
+    expect(impact.adjustedPower).toBeGreaterThan(0.85);
+    expect(impact.powerReduction).toBeLessThan(0.06);
+  });
+
+  it('superiority is unchanged: sized for 80%, reports 80%', () => {
+    const result = engine.compute(pharmaInput);
+    expect(result.power).toBeGreaterThanOrEqual(pharmaInput.powerTarget);
+    expect(result.power).toBeLessThan(pharmaInput.powerTarget + 0.01);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// BS4 (2026-09-25): with no variance, a continuous effect size is a standardised
+// difference (SD = 1) — as the design adapter already tells the user — and the
+// assumption is disclosed. The engine used SD = effect size instead, which made
+// the standardised effect exactly 1 for every design: N ≈ 16 per group whatever
+// effect was asked for.
+// ═══════════════════════════════════════════════════════════════
+
+describe('Layer 2: a continuous effect with no variance is standardised (BS4)', () => {
+  const noVariance: StatisticalInput = { ...pharmaInput, variance: undefined };
+
+  it('sizes d = 0.5 at 63 per group (80% power, two-sided 0.05), not 16', () => {
+    // 2·(1.96 + 0.8416)² / 0.5² = 62.8 → 63
+    expect(engine.compute({ ...noVariance, effectSize: 0.5 }).sampleSize.perGroup).toBe(63);
+  });
+
+  it('N depends on the effect size: d = 0.3 needs more subjects than d = 0.5', () => {
+    const small = engine.compute({ ...noVariance, effectSize: 0.3 }).sampleSize.perGroup;
+    const large = engine.compute({ ...noVariance, effectSize: 0.5 }).sampleSize.perGroup;
+    expect(small).toBe(175); // 2·(2.8016)²/0.09 = 174.4 → 175
+    expect(small).toBeGreaterThan(large);
+  });
+
+  it('discloses the standardisation as a default assumption', () => {
+    const result = engine.compute({ ...noVariance, effectSize: 0.5 });
+    const variance = result.assumptions.find((a) => a.parameter === 'variance');
+    expect(variance).toMatchObject({ value: 1, source: 'default' });
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// Scenarios size through the design's own path (LX-16). generateScenarios
+// carried a third copy of the sizing formulas — always superiority, r = 1 — so
+// the "Base case" of a non-inferiority design was a different trial (or a null
+// N when δ = 0) from the design it was presented beside.
+// ═══════════════════════════════════════════════════════════════
+
+describe('Layer 2: the base-case scenario is the design itself', () => {
+  const designs: Array<[string, StatisticalInput]> = [
+    ['continuous superiority', pharmaInput],
+    ['continuous non-inferiority', { ...pharmaInput, studyType: 'non_inferiority', effectSize: 0, nonInferiorityMargin: -0.2, variance: 1, comparatorType: 'active' }],
+    ['continuous equivalence', { ...pharmaInput, studyType: 'equivalence', effectSize: 0, equivalenceMargin: 0.25, variance: 1 }],
+    ['binary superiority, 2:1', { ...pharmaInput, endpointType: 'binary', controlRate: 0.3, treatmentRate: 0.45, effectSize: 0.15, allocationRatio: 2 }],
+    ['time to event', { ...pharmaInput, endpointType: 'time_to_event', effectSize: 0.3, eventRate: 0.6 }],
+  ];
+
+  it.each(designs)('%s: Base case N and power equal the design', (_label, input) => {
+    const result = engine.compute(input);
+    const base = result.scenarios.find((s) => s.label === 'Base case');
+    expect(base).toBeDefined();
+    expect(base!.sampleSize.perGroup).toBe(result.sampleSize.perGroup);
+    expect(base!.sampleSize.total).toBe(result.adjustedTotal ?? result.sampleSize.total);
+    expect(base!.power).toBe(result.power);
+  });
+
+  it('no scenario carries a missing or non-finite N', () => {
+    for (const [, input] of designs) {
+      for (const s of engine.compute(input).scenarios) {
+        expect(Number.isFinite(s.sampleSize.perGroup)).toBe(true);
+        expect(Number.isFinite(s.sampleSize.total)).toBe(true);
+      }
+    }
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// Binary endpoints compute their power (LX-16). computeBinary returned the
+// TARGET as the achieved power, so a binary design always "achieved" exactly
+// what was asked and its scenarios all showed the same power.
+// ═══════════════════════════════════════════════════════════════
+
+describe('Layer 2: a binary design reports the power it computed', () => {
+  const binary: StatisticalInput = {
+    ...pharmaInput, endpointType: 'binary', controlRate: 0.3, treatmentRate: 0.45, effectSize: 0.15, powerTarget: 0.8,
+  };
+
+  it('superiority sized for 80% reports a computed power at or just above 80%, not the target echoed', () => {
+    const result = engine.compute(binary);
+    expect(result.power).toBeGreaterThanOrEqual(0.8);
+    expect(result.power).toBeLessThan(0.81);
+    expect(result.power).not.toBe(0.8);
+  });
+
+  it('non-inferiority sized for 90% reports ~90%', () => {
+    const result = engine.compute({ ...binary, studyType: 'non_inferiority', treatmentRate: 0.3, effectSize: 0, nonInferiorityMargin: -0.1, powerTarget: 0.9, comparatorType: 'active' });
+    expect(result.method).toContain('non-inferiority');
+    expect(result.power).toBeGreaterThanOrEqual(0.9);
+    expect(result.power).toBeLessThan(0.91);
+  });
+
+  it('each scenario reports the power computed for its own N, not one echoed target', () => {
+    const scen = engine.compute(binary).scenarios;
+    // Each scenario is re-sized for the target, so its power is the target it was sized for, computed:
+    for (const s of scen) expect(s.power).toBeGreaterThanOrEqual(0.8);
+    expect(new Set(scen.map((s) => s.power)).size).toBeGreaterThan(1);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// BS12 (2026-09-25): the CSR §9.7 methods section states what the inputs
+// establish, and marks every statement about CONDUCT for the sponsor. It is
+// generated from planning inputs alone, yet asserted — in the past tense, in a
+// document filed to the agency — that "Analyses followed the pre-specified SAP",
+// that efficacy "was analyzed on the ITT population", that missing data had
+// "tipping-point sensitivity analyses", and that secondary endpoints "were
+// tested within a pre-specified hierarchy". Nothing checked any of it.
+// ═══════════════════════════════════════════════════════════════
+
+describe('Layer 6: the CSR methods section does not assert conduct it cannot know (BS12)', () => {
+  const methods = (input: StatisticalInput) => {
+    const comp = engine.compute(input);
+    const jdg = judgment.judge(input, comp);
+    const domain = domainAdapter.adapt(input, comp, jdg);
+    return docGenerator.generate('statistical_methods_section', input, comp, jdg, domain, undefined, {
+      projectId: 1, organizationId: 1, userId: 1,
+    }).content;
+  };
+
+  it.each([
+    'Analyses followed the pre-specified SAP',
+    'analyzed on the ITT population',
+    'tipping-point sensitivity analyses',
+    'tested within a pre-specified hierarchy',
+    'handled per the pre-specified SAP approach',
+  ])('does not state "%s" as fact', (claim) => {
+    expect(methods(pharmaInput)).not.toContain(claim);
+    expect(methods({ ...pharmaInput, missingDataMethod: 'MMRM' })).not.toContain(claim);
+  });
+
+  it('marks what the sponsor must confirm, in the placeholder the CSR completeness check detects', async () => {
+    const { hasUnresolvedPlaceholders } = await import('../../server/services/csr-builder');
+    const content = methods(pharmaInput);
+    expect(hasUnresolvedPlaceholders(content)).toBe(true);
+    expect(content).toContain('[DATA TO BE INSERTED');
+  });
+
+  it('still states what the plan and the engine do establish', () => {
+    const content = methods({ ...pharmaInput, missingDataMethod: 'MMRM' });
+    expect(content).toMatch(/planned sample size of \d+/);
+    expect(content).toContain('MMRM');
+  });
+});

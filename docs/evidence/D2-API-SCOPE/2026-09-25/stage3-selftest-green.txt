@@ -1,0 +1,4 @@
+  ✓ resolves every registration it was given
+  ✓ flags a launch screen that computes the /api namespace
+
+selftest PASSED — the gate flags a launch screen that production would refuse.

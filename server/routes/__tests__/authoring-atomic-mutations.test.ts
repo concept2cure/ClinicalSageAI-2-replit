@@ -179,7 +179,8 @@ describe('PATCH /sections/:id — revision + update + audit are atomic', () => {
     const res = await request(makeApp())
       .patch('/api/authoring/sections/S1')
       .set('Authorization', await bearer())
-      .send({ content: 'new text' });
+      // fde9d704: a content change carries its reason, or it is refused (400) before the transaction under test.
+      .send({ content: 'new text', changeReason: 'Corrected the section text after review.' });
 
     expect(res.status).toBe(200);
 
@@ -206,7 +207,8 @@ describe('PATCH /sections/:id — revision + update + audit are atomic', () => {
     const res = await request(makeApp())
       .patch('/api/authoring/sections/S1')
       .set('Authorization', await bearer())
-      .send({ content: 'new text' });
+      // fde9d704: a content change carries its reason, or it is refused (400) before the transaction under test.
+      .send({ content: 'new text', changeReason: 'Corrected the section text after review.' });
 
     expect(res.status).toBe(500);
     expect(sawBegin()).toBe(0);

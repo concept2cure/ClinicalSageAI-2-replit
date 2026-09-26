@@ -125,11 +125,18 @@ describe('qms_change_transition', () => {
     expect(res.error).toMatch(/reason for change is required/i);
   });
 
-  it('enforces segregation of duties (approver ≠ proposer)', async () => {
+  /* AnA cannot approve a change: approval is an electronic signature (DP-31 /
+     P1-28) and a chat turn cannot collect a password. The refusal comes from
+     transitionChange itself, so it holds for any caller, and it holds for a
+     user who is not the proposer (so it is not the segregation-of-duties check). */
+  it('cannot approve a change from chat, and the change stays under assessment', async () => {
     const created = await call('qms_change_create', { change_number: 'CC-2026-053', title: 'y', reason: 'r' }); // proposed_by = 10
     await call('qms_change_transition', { change_id: created.id, to: 'under_assessment', reason: 'assess' });
-    const res = await call('qms_change_transition', { change_id: created.id, to: 'approved', reason: 'approve' }, CTX); // same user 10
-    expect(res.error).toMatch(/approver must differ/i);
+    const res = await call('qms_change_transition', { change_id: created.id, to: 'approved', reason: 'approve' }, { organizationId: 1, userId: 11 });
+    expect(res.error).toMatch(/electronic signature/i);
+    const { rows } = await pglite.query<{ status: string; approved_by: number | null }>(
+      `SELECT status, approved_by FROM qms_change_controls WHERE id = $1`, [created.id]);
+    expect(rows[0]).toMatchObject({ status: 'under_assessment', approved_by: null });
   });
 
   it('rejects an illegal transition', async () => {

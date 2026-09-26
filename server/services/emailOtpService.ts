@@ -67,14 +67,25 @@ function generateOtp(): string {
 export async function createEmailOtp(userId: number): Promise<string> {
   const otp = generateOtp();
   const otpHash = hashOtp(otp);
-  const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + OTP_EXPIRY_MINUTES * 60 * 1000);
 
   await db
     .update(users)
     .set({
       emailOtpHash: otpHash,
       emailOtpExpiresAt: expiresAt,
-      emailOtpAttempts: 0,
+      // A code re-issued while one is pending and unexpired (what /mfa/resend
+      // does) keeps the guesses already spent on this challenge; a fresh
+      // challenge — nothing pending, or the pending code expired — starts at
+      // 0. Until 2026-09-25 every issue reset the count, so each resend
+      // refilled MAX_ATTEMPTS guesses (security audit 2026-09-24, IAM-09).
+      // The SET expressions read the row as it was before this statement.
+      emailOtpAttempts: sql`CASE
+        WHEN ${users.emailOtpHash} IS NOT NULL AND ${users.emailOtpExpiresAt} > ${now.toISOString()}::timestamp
+        THEN coalesce(${users.emailOtpAttempts}, 0)
+        ELSE 0
+      END`,
     } as any)
     .where(eq(users.id, userId));
 

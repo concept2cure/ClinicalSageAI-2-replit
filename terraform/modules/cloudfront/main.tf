@@ -114,6 +114,44 @@ resource "aws_cloudfront_function" "spa_routes" {
 # AnA turns. Until then the ALB admits CloudFront alone, and sign-in and API
 # rate limits are applied in the app.
 #trivy:ignore:AWS-0011
+# Security headers for the SPA (security plan P0-15, INF-04). The API paths
+# carry the server's own headers (server/middleware/enterprise-security.ts);
+# the SPA is served straight from S3 and had none.
+#
+# The CSP here is the part a static bundle can hold without breaking: framing,
+# base URI, plugins and form targets. The server's script and style policy
+# rests on a per-request nonce injected into index.html, which a file on S3
+# cannot carry, so copying it would block the bundle. A script-src for the
+# static SPA needs a browser check through a real distribution first.
+resource "aws_cloudfront_response_headers_policy" "spa" {
+  name    = "${replace(var.bucket_name, ".", "-")}-spa-security"
+  comment = "Security headers for the SPA (HSTS, nosniff, no framing)"
+
+  security_headers_config {
+    strict_transport_security {
+      access_control_max_age_sec = 31536000
+      include_subdomains         = true
+      preload                    = true
+      override                   = true
+    }
+    content_type_options {
+      override = true
+    }
+    frame_options {
+      frame_option = "DENY"
+      override     = true
+    }
+    referrer_policy {
+      referrer_policy = "strict-origin-when-cross-origin"
+      override        = true
+    }
+    content_security_policy {
+      content_security_policy = "frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'"
+      override                = true
+    }
+  }
+}
+
 resource "aws_cloudfront_distribution" "this" {
   enabled             = true
   is_ipv6_enabled     = true
@@ -149,11 +187,12 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   default_cache_behavior {
-    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
-    cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = "s3-frontend"
-    viewer_protocol_policy = "redirect-to-https"
-    compress               = true
+    allowed_methods            = ["GET", "HEAD", "OPTIONS"]
+    cached_methods             = ["GET", "HEAD"]
+    target_origin_id           = "s3-frontend"
+    viewer_protocol_policy     = "redirect-to-https"
+    compress                   = true
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.spa.id
 
     forwarded_values {
       query_string = false
@@ -211,9 +250,9 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   viewer_certificate {
-    acm_certificate_arn      = var.certificate_arn
-    ssl_support_method       = var.certificate_arn != "" ? "sni-only" : null
-    minimum_protocol_version = var.certificate_arn != "" ? "TLSv1.2_2021" : null
+    acm_certificate_arn            = var.certificate_arn
+    ssl_support_method             = var.certificate_arn != "" ? "sni-only" : null
+    minimum_protocol_version       = var.certificate_arn != "" ? "TLSv1.2_2021" : null
     cloudfront_default_certificate = var.certificate_arn == ""
   }
 

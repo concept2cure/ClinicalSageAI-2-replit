@@ -475,6 +475,26 @@ if ! npm run --silent ci:pushed-lint-errors 2>&1; then
 fi
 echo "   ✅ No ESLint errors in the pushed files."
 
+# ── ESLint WARNINGS: the pushed files must not gain any ───────────────────────
+#
+# ci:eslint-warning-ratchet holds the repo's warning total at its baseline, in CI
+# only, so a lane could add a warning, push, and leave the Lint job red for the
+# next lane. A red Lint job also skips Build and Release Evidence. On 2026-09-25
+# the ratchet stood at +11 across sixteen files, one to four each. This runs the
+# ratchet's own --since mode on the pushed files (both versions of each; seconds)
+# and refuses net growth. The warnings already on trunk are not this push's and
+# do not block it.
+echo "   Checking that the pushed files gained no ESLint warnings..."
+if ! npm run --silent ci:pushed-lint-warnings 2>&1; then
+  echo ""
+  echo "🚫 ERROR: the files this push changes gained ESLint warnings (listed above)."
+  echo "   They would turn CI's warning ratchet red for every lane. Fix them here;"
+  echo "   do not regenerate the baseline to make room."
+  echo ""
+  exit 1
+fi
+echo "   ✅ The pushed files gained no ESLint warnings."
+
 # ── TypeScript, before the push rather than after ────────────────────────────
 #
 # CI fails on ANY type error (.typecheck-baseline.json is ratcheted to 0). But

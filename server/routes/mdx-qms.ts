@@ -102,9 +102,10 @@ import {
   listLinks, addLink, removeLink, changeControlSummary,
   CHANGE_TYPES, CHANGE_CLASSIFICATIONS, CHANGE_RISK_LEVELS, CHANGE_STATES,
   LINK_TYPES, LINK_RELATIONSHIPS,
-  InvalidChangeTransitionError, SegregationOfDutiesError,
+  InvalidChangeTransitionError, ChangeApprovalRequiresSignatureError,
   type ChangeState,
 } from '../services/qms/changeControl.service';
+import { approveQmsChangeSigned } from '../services/qms/change-approval-signature';
 import { clientIpOf } from '../utils/client-ip';
 import { requireEditorAccess } from '../middleware/orgMembership';
 import { requireGovernedReason } from './governed-reason';
@@ -565,8 +566,8 @@ async function verifyApprovalSigner(
   return { secondFactorVerified: signoff.secondFactorVerified };
 }
 
-function approvalRefusal(res: Response, err: QmsApprovalRefusedError): Response {
-  if (err.code === 'NOT_FOUND') return notFoundInTenant(res, 'Document');
+function approvalRefusal(res: Response, err: QmsApprovalRefusedError, what: 'Document' | 'Change' = 'Document'): Response {
+  if (err.code === 'NOT_FOUND') return notFoundInTenant(res, what);
   if (err.code === 'SELF_APPROVAL') return clientError(res, 403, err.message, { code: 'QMS_SELF_APPROVAL' });
   return clientError(res, 409, err.message, { code: 'QMS_INVALID_STATE' });
 }
@@ -1394,8 +1395,70 @@ router.post('/qms/changes/:id/transition', async (req: Request, res: Response) =
     return ok(res, row, { auditTrail });
   } catch (err) {
     if (err instanceof InvalidChangeTransitionError) return clientError(res, 409, err.message);
-    if (err instanceof SegregationOfDutiesError) return clientError(res, 422, err.message);
+    // 428: the approval exists, through the signed route below (DP-31 / P1-28).
+    if (err instanceof ChangeApprovalRequiresSignatureError) {
+      return clientError(res, 428, err.message, { code: err.code });
+    }
     return serverError(res, log, 'change-transition', err);
+  }
+});
+
+/* Approval of a change = electronic signature (security review 2026-09-24,
+   DP-31; plan P1-28). The same body, ceremony and refusals as the controlled-
+   document approval above: 400 for a missing component, 403 without signing
+   authority (checked before the credential), 401 when the password or code does
+   not verify, 404 outside the tenant, 409 unless the change is under
+   assessment, 403 QMS_SELF_APPROVAL for the proposer. On success the approval
+   stamp, the chained ledger row and one signature bound to the change's content
+   digest commit together (services/qms/change-approval-signature.ts). */
+router.post('/qms/changes/:id/approve', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  const userId = getUserId(req);
+  if (orgId === null) return orgRequired(res);
+  if (userId === null) return clientError(res, 401, 'User context required');
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+
+  const parsed = approveBody.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    const fieldErrors = parsed.error.flatten().fieldErrors;
+    return clientError(
+      res,
+      400,
+      `Approval is an electronic signature and requires a password, the signature meaning '${QMS_DOCUMENT_APPROVAL_MEANING}' and a reason for change; missing or invalid: ${Object.keys(fieldErrors).join(', ')}`,
+      { code: 'ESIGNATURE_COMPONENT_MISSING', fieldErrors },
+    );
+  }
+  const body = parsed.data;
+
+  let verified: { secondFactorVerified: boolean } | null;
+  try {
+    verified = await verifyApprovalSigner(req, res, userId, orgId, body);
+  } catch (err) { return serverError(res, log, 'change-approve-verify', err); }
+  if (!verified) return res;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await approveQmsChangeSigned(client, {
+      orgId, userId, changeId: id,
+      reason: body.reason,
+      meaning: body.meaning,
+      authenticationMethod: verified.secondFactorVerified ? 'password+totp' : 'password',
+      secondFactorVerified: verified.secondFactorVerified,
+      ipAddress: resolveIpAddress(req),
+    });
+    await client.query('COMMIT');
+    return ok(res, result.change, {
+      auditTrail: { persisted: true, chained: true },
+      signature: result.signature,
+    });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    if (err instanceof QmsApprovalRefusedError) return approvalRefusal(res, err, 'Change');
+    return serverError(res, log, 'change-approve', err);
+  } finally {
+    client.release();
   }
 });
 

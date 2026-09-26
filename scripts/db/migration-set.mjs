@@ -2598,6 +2598,16 @@ export const C2C_MIGRATION_FILES = [
   // Evidence docs/evidence/D3/2026-09-24-vault-program-ownership/.
   'migrations/20260924_org_relationships_sponsor_rls.sql',
 
+  // ── public.organizations: the tenant key is immutable (D3) ───────────────
+  // organizations.uuid is the tenant key of every uuid-keyed schema, and what
+  // core.get_program_org_id maps a program's org to. The table has no RLS and
+  // the runtime role may write it: as app_service with RLS enforcing, a tenant
+  // gave another org its own uuid and read that org's vault. id and uuid are
+  // now immutable once set (a trigger). Narrowing writes to the other columns
+  // is recorded and handed on, not done here; see the file.
+  // Evidence docs/evidence/D3/2026-09-25-organizations-tenant-key/.
+  'migrations/20260925_organizations_tenant_key_immutable.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

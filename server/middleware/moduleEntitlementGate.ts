@@ -74,7 +74,12 @@ import { currentEnforcementMode } from '../services/entitlements/enforcement-mod
 import { createScopedLogger } from '../utils/logger.js';
 import { NEVER_GATED, buildPrefixMap, modulesForPath } from '../services/entitlements/api-prefix-map.js';
 import { launchScopeApiVerdict } from '../services/entitlements/launch-scope-api.js';
-import { readLaunchScopeMode, type LaunchScopeMode } from '../services/entitlements/launch-scope.js';
+import {
+  readLaunchScopeMode,
+  readUnattributedApiMode,
+  type LaunchScopeMode,
+  type UnattributedApiMode,
+} from '../services/entitlements/launch-scope.js';
 
 const logger = createScopedLogger('module-entitlement-gate');
 
@@ -85,12 +90,45 @@ export type { EnforcementMode } from '../services/entitlements/enforcement-mode.
 // launch-scope API verdict also reads; re-exported so importers are unchanged.
 export { NEVER_GATED, buildPrefixMap, modulesForPath };
 
-/** Answer 403 LAUNCH_SCOPE when every surface claiming the path is outside the launch catalog. */
-function refusedAsOutOfScope(pathname: string, prefixMap: Map<string, Set<string>>, res: Response): boolean {
-  if (launchScopeApiVerdict(pathname, prefixMap, NEVER_GATED) !== 'out-of-scope') return false;
-  res.status(403).json({
-    error: { code: 'LAUNCH_SCOPE', message: 'This part of the product is not in this release.' },
+const LAUNCH_SCOPE_REFUSAL = {
+  error: { code: 'LAUNCH_SCOPE', message: 'This part of the product is not in this release.' },
+} as const;
+
+/**
+ * Launch scope at the API. Answers 403 LAUNCH_SCOPE, and returns true, when the
+ * path is outside the launch scope: always for `out-of-scope`, and for an
+ * `unmapped` /api path only in `enforce`. An unmapped path is otherwise
+ * recorded as a would-refuse in the enforcement report and served. Only /api
+ * paths are judged: the gate is mounted globally, and the app's own pages and
+ * assets are not API calls.
+ */
+function refusedByLaunchScope(
+  req: Request,
+  pathname: string,
+  prefixMap: Map<string, Set<string>>,
+  unattributed: UnattributedApiMode,
+  res: Response,
+): boolean {
+  if (!pathname.startsWith('/api/')) return false;
+  const verdict = launchScopeApiVerdict(pathname, prefixMap, NEVER_GATED);
+  if (verdict === 'out-of-scope') {
+    res.status(403).json(LAUNCH_SCOPE_REFUSAL);
+    return true;
+  }
+  if (verdict !== 'unmapped') return false;
+  const orgId =
+    (req as any).tenantContext?.organizationId ?? (req as any).user?.organizationId ?? null;
+  recordObservation({
+    // Ids collapsed to `:id`, so the bounded report holds one row per route an
+    // operator must decide on, not one per record somebody opened.
+    path: pathname.replace(/\/(\d+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?=\/|$)/gi, '/:id'),
+    organizationId: orgId == null ? 0 : Number(orgId),
+    modules: ['launch-scope:unattributed'],
+    reasons: ['No surface, platform or infrastructure entry claims this path, so it is outside the launch scope as registered.'],
+    enforced: unattributed === 'enforce',
   });
+  if (unattributed !== 'enforce') return false;
+  res.status(403).json(LAUNCH_SCOPE_REFUSAL);
   return true;
 }
 
@@ -110,18 +148,26 @@ function refusedAsOutOfScope(pathname: string, prefixMap: Map<string, Set<string
  * with none. Until 2026-09-25 scope was enforced in navigation only, and a
  * signed-in tenant could call every write route of a surface the product hid.
  *
- * `LAUNCH_SCOPE_ENFORCE` is read once, here, when the gate is built at boot:
- * a value production cannot parse refuses to boot (launch-scope.ts) instead of
- * failing every request. `opts.launchScope` overrides it for tests.
+ * A path NOTHING claims (no surface, no platform or infrastructure entry) is
+ * recorded as a would-refuse in the enforcement report and served, unless
+ * `LAUNCH_SCOPE_API_UNATTRIBUTED=enforce`: static analysis cannot see a
+ * computed path or a server-to-server caller, so the cost of refusing the
+ * unclaimed remainder is read from traffic before it is paid.
+ *
+ * `LAUNCH_SCOPE_ENFORCE` and `LAUNCH_SCOPE_API_UNATTRIBUTED` are read once, here,
+ * when the gate is built at boot: a value production cannot parse refuses to
+ * boot (launch-scope.ts) instead of failing every request. `opts` overrides
+ * both for tests.
  */
 export function moduleEntitlementGate(
   prefixMap: Map<string, Set<string>> = buildPrefixMap(),
-  opts: { launchScope?: LaunchScopeMode } = {},
+  opts: { launchScope?: LaunchScopeMode; unattributed?: UnattributedApiMode } = {},
 ) {
   const launchScopeOn = (opts.launchScope ?? readLaunchScopeMode()) === 'on';
+  const unattributed = opts.unattributed ?? readUnattributedApiMode();
   return async function gate(req: Request, res: Response, next: NextFunction) {
     const pathname = (req.path || req.originalUrl || '').split('?')[0];
-    if (launchScopeOn && refusedAsOutOfScope(pathname, prefixMap, res)) return;
+    if (launchScopeOn && refusedByLaunchScope(req, pathname, prefixMap, unattributed, res)) return;
 
     const { mode } = await currentEnforcementMode();
     if (mode === 'off') return next();

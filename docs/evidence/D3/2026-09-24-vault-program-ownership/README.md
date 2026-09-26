@@ -108,6 +108,27 @@ Gates: `ci:migration-set-order`, `ci:migration-drop-safety`,
 `ci:migration-reachability` and `ci:migration-prefix-collisions` all OK. The
 migration-list contract tests pass (73 of 73, and the manifest test 9 of 9).
 
+## Wider than the vault (added 2026-09-25)
+
+`identity.can_access_org` and `identity.can_write_org` grant access to another
+org's rows on a live `identity.org_relationships` row, and read nothing else.
+**43 tables** have policies that go through them: `ai.*` (RAG conversations,
+messages, document embeddings, search queries), `ectd_v4.*` (submissions,
+submission units, documents, context of use), `fhir.*`, `innovation.*`,
+`product_master.*` and `identity.users`. They are listed by a `pg_policies`
+query on the from-empty database. So the self-written grant reached all of them,
+not only the vault. The sponsor-only RLS above closes that path for all 43 with
+no further change, and that is now shown, not inferred:
+
+| File                                                    | Shows                                                                                                                                                                                                                                                                                               |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `red/psql-self-granted-delegation-ectd_v4.txt`          | With `org_relationships` as it was (no RLS, inside a rolled-back transaction), tenant A's self-written grant lets it **rewrite B's `ectd_v4.regulatory_submissions` row**. With the change, the same INSERT is refused: _"new row violates row-level security policy for table org_relationships"_. |
+| `green/fixed-7-of-7-with-org-policied.txt`              | A seventh case, run as `app_service` through the application pool: A's self-grant is refused and A neither reads nor rewrites B's submission. The sponsor-grant positive control now also shows the grant working org-level (A reads B's submission while granted). **7 of 7.**                     |
+| `red/M2b-org-relationships-rls-off-reaches-ectd_v4.txt` | Only the new RLS removed: **3 fail**, the new case included.                                                                                                                                                                                                                                        |
+
+This does not audit those 43 tables' own policies. It shows that the one input
+they share is no longer tenant-writable.
+
 ## Still asserted, not proven
 
 - **A GCC-only program with an org-less `core.programs` row** can still be

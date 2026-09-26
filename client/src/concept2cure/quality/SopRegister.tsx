@@ -37,9 +37,10 @@ import {
   isReviewOverdue,
 } from './data';
 import { useSopRegister, useSopTemplates, useReviewDue, useTrainingCompliance } from './hooks';
-import { EsignModal, esignSignerOf, type EsigSignedManifest } from '../_shared/components/EsignModal';
+import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
+import { postQmsApproval } from './qmsApproval';
 import { GovernedConfirmDialog } from '../_shared/components/GovernedConfirmDialog';
-import { useAuth } from '@/services/portal/authService';
+import { useAuthUser } from '@/services/portal/authService';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { QmsDoc } from './data';
 /* The canonical sample-mode guard and its marker, shared with the MDX lane —
@@ -59,42 +60,6 @@ export interface SopRegisterProps {
 }
 
 export type StatusFilter = 'all' | 'effective' | 'in_review' | 'draft';
-
-/**
- * POST the approval to the signed route with the credentials the dialog just
- * checked; the server re-verifies them in the transaction that writes the
- * signature. A refusal is thrown as the sentence to show, and the dialog stays
- * open. The time shown afterwards is the server's, from the signature row.
- */
-export async function approveControlledDocument(
-  docId: number,
-  input: { reason: string; password: string; totp?: string },
-): Promise<EsigSignedManifest> {
-  const res = await apiRequest('POST', `/api/mdx/qms/documents/${docId}/approve`, {
-    password: input.password,
-    ...(input.totp ? { mfaToken: input.totp } : {}),
-    meaning: 'APPROVED',
-    reason: input.reason,
-  });
-  const json = (await res.json().catch(() => null)) as {
-    meta?: { signature?: { signedAt?: string; boundPayloadDigest?: string } };
-  } | null;
-  // apiRequest returns a 401 rather than throwing it; here it is the signing
-  // ceremony refusing the password or code.
-  if (res.status === 401) {
-    throw new Error((serverMessage(json) ?? 'Your password or code was not verified.') + ' Nothing was signed.');
-  }
-  const sig = json?.meta?.signature;
-  if (!sig?.signedAt) {
-    throw new Error('The server did not return the signature record. Reload the register to see whether the approval was recorded.');
-  }
-  return {
-    meaning: 'approval',
-    reason: input.reason,
-    signedAt: sig.signedAt,
-    ...(sig.boundPayloadDigest ? { hash: sig.boundPayloadDigest } : {}),
-  };
-}
 
 /** The register's status chips — exported so QualityApp can belt-validate a
     driven filter against the same set the pane renders. */
@@ -161,7 +126,7 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
   /* One predicate for the whole surface: the document register is what the
      rest is derived from, so if that is sample then so is the view. */
   const showingSample = useShowingSample(reg.docs);
-  const { user } = useAuth();
+  const user = useAuthUser(); // display only; the server resolves the signer
   /** The document being approved, while the signature dialog is open. */
   const [approving, setApproving] = React.useState<QmsDoc | null>(null);
   /* Retire is a governed, terminal write: a dialog that captures the reason
@@ -581,7 +546,7 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
           signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
           onClose={() => setApproving(null)}
           onSign={async (input) => {
-            const manifest = await approveControlledDocument(approving.id, input);
+            const manifest = await postQmsApproval({ kind: 'document', id: approving.id }, input);
             reg.refresh?.();
             return manifest;
           }}
