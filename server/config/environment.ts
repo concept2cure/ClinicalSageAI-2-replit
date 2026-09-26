@@ -15,6 +15,7 @@ import {
 } from '../services/audit/auditSealPosture';
 import { assertAiGovernancePostureForProduction } from '../startup/ai-governance-posture';
 import { assertSensitivePlacementConfiguration } from '../services/ai-gateway/sensitive-placement-policy';
+import { assertPlacementRegistryConsistency } from '../services/ai-gateway/providers/placement';
 import { assertDurableStorageForProduction } from '../services/storage/storage-posture';
 
 type Environment = 'development' | 'staging' | 'production' | 'test';
@@ -313,6 +314,11 @@ assertAuditChainSecretForProduction();
 // server/startup/ai-governance-posture.ts.
 assertAiGovernancePostureForProduction();
 assertSensitivePlacementConfiguration();
+// Private-cloud residency (D6, 2026-09-25): a declared AI_BEDROCK_RESIDENCY /
+// AI_VERTEX_RESIDENCY that the region the client calls does not serve refuses
+// to boot, instead of making every residency-constrained tenant "compliant" on
+// the wrong continent. No-op outside production. See providers/placement.ts.
+assertPlacementRegistryConsistency();
 
 // Export configuration for the current environment
 export const config = {

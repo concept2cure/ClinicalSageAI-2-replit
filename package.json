@@ -95,6 +95,8 @@
     "pq:run": "tsx server/eval/pq/run-pq.ts",
     "ci:pq-evaluation-callers": "node scripts/ci/check-pq-evaluation-callers.mjs",
     "ci:pq-evaluation-callers:selftest": "node scripts/ci/check-pq-evaluation-callers.mjs --self-test",
+    "ci:ai-tenant-binding": "node scripts/ci/check-ai-tenant-binding.mjs",
+    "ci:ai-tenant-binding:selftest": "node scripts/ci/check-ai-tenant-binding.mjs --self-test",
     "ci:unapproved-model-pins": "node scripts/ci/check-unapproved-model-pins.mjs",
     "ci:unapproved-model-pins:selftest": "node scripts/ci/check-unapproved-model-pins.mjs --self-test",
     "ci:client-ip-single-source": "node scripts/ci/check-client-ip-single-source.mjs",

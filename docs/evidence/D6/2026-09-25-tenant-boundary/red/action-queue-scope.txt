@@ -1,0 +1,10 @@
+# against 038b41d5 (pre-change action-queue.ts)
+ × server/services/ai-actions/__tests__/action-queue-tenant-scope.test.ts > inRequesterScope > runs the job in the tenant scope of the requesting organization 5ms
+   → inRequesterScope is not a function
+ × server/services/ai-actions/__tests__/action-queue-tenant-scope.test.ts > inRequesterScope > a job with no organization is not given one 1ms
+   → inRequesterScope is not a function
+ × server/services/ai-actions/__tests__/action-queue-tenant-scope.test.ts > inRequesterScope > a non-positive or non-integer organization id is not trusted as a tenant 1ms
+   → inRequesterScope is not a function
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed (3)
+exit=1

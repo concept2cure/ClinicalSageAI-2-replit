@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-26T02:34:14.478Z",
+  "generatedAt": "2026-09-26T02:56:01.652Z",
   "git": {
-    "sha": "0bc045c7ef714646c3a2d9abdeb56c5bfb892262",
+    "sha": "feb2df3d4d3334d1fc7f7a96a468c5c6d50baded",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1978,7 +1978,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1058711
+        "bytes": 1058988
       },
       {
         "file": "shared/schema.ts",
@@ -1994,7 +1994,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 283627
+        "bytes": 283794
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2022,7 +2022,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 160814
+        "bytes": 172558
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2081,12 +2081,12 @@
         "bytes": 130408
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
-        "bytes": 127662
+        "file": "server/routes/ana-ri/stream.ts",
+        "bytes": 127768
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 127270
+        "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+        "bytes": 127662
       },
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
@@ -2156,7 +2156,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 20467
+        "lines": 20469
       },
       {
         "file": "shared/schema.ts",
@@ -2168,7 +2168,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6477
+        "lines": 6482
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2196,7 +2196,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 3838
+        "lines": 4101
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2272,7 +2272,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 2598
+        "lines": 2605
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2459,12 +2459,12 @@
         "lines": 1824
       },
       {
-        "file": "server/services/safety-pharmacology/safety-pharmacology-knowledge.ts",
-        "lines": 1815
+        "file": "server/routes/c2c/ai-editing.ts",
+        "lines": 1818
       },
       {
-        "file": "server/routes/c2c/ai-editing.ts",
-        "lines": 1813
+        "file": "server/services/safety-pharmacology/safety-pharmacology-knowledge.ts",
+        "lines": 1815
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/device-pma.ts",

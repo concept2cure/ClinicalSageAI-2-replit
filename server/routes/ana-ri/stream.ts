@@ -1339,6 +1339,11 @@ export function mountStreamRoute(router: Router): void {
 
       const gwResponse = await gw.route({
         taskType: routingPlan.taskType,
+        // Binds the turn to its tenant, so the org's placement policy (vendor and
+        // substrate allow-lists, residency, zero retention) governs which AI
+        // service may serve it. Until 2026-09-25 this was absent and AnA turns
+        // were placement-unconstrained (docs/evidence/D6/2026-09-25-tenant-boundary/).
+        organizationId: orgId ?? undefined,
         // The kernel's risk judgment, not its surface label: every turn here is
         // labelled regulatory_review, and the gateway reads riskTier to decide
         // whether only an approved model may serve it.
@@ -2161,6 +2166,8 @@ export function mountStreamRoute(router: Router): void {
           let roundText = '';
           const roundResponse = await gw.route({
             taskType: routingPlan.taskType,
+            // Every agentic round is bound to the same tenant as the first.
+            organizationId: orgId ?? undefined,
             riskTier: routingPlan.riskTier,
             messages: loopMessages,
             maxTokens: routingPlan.maxTokens,
