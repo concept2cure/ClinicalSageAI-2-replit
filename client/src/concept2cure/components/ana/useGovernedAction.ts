@@ -16,12 +16,30 @@ import { useState, useCallback } from 'react';
 import { extractApiError } from '@/lib/queryClient';
 import { getAuthHeaders } from '../../../utils/authToken';
 
+/**
+ * The three ways a person takes an action AnA proposed (the server's
+ * governedTierOf): 'esignature' — reason and re-authentication; 'reason' — a
+ * reason for change; 'confirm' — an explicit yes, no reason, no credentials
+ * (the ordinary writes, since 2026-09-26 proposals rather than actions AnA
+ * takes unaided; security audit 2026-09-24 DP-08, P0-12).
+ */
+export type GovernedTier = 'confirm' | 'reason' | 'esignature';
+
+/** The tier a server envelope names, or the one its signature flag implies (older servers). */
+export function tierOf(data: { tier?: unknown; signatureRequired?: unknown } | undefined | null): GovernedTier {
+  const t = data?.tier;
+  if (t === 'confirm' || t === 'reason' || t === 'esignature') return t;
+  return data?.signatureRequired === true ? 'esignature' : 'reason';
+}
+
 /** A governed action AnA proposed that needs the user's sign-off to run. */
 export interface PendingSignoff {
   command: string;
   params: Record<string, unknown>;
   /** True for high-impact actions: an e-signature (re-auth) is also required. */
   signatureRequired: boolean;
+  /** Which of the three tiers; absent on older fixtures, derived from signatureRequired then. */
+  tier?: GovernedTier;
   /** Server's human-readable explanation of what is being signed off. */
   message: string;
   /**
@@ -45,6 +63,7 @@ interface ApprovalRequiredEvent {
   action?: unknown;
   message?: unknown;
   data?: {
+    tier?: unknown;
     signatureRequired?: boolean;
     retry?: { command?: string; params?: Record<string, unknown> };
   };
@@ -67,17 +86,22 @@ export function pendingSignoffFromApproval(event: ApprovalRequiredEvent): Pendin
   if (typeof command !== 'string' || !command) return null;
   if (typeof runId !== 'string' || !runId) return null;
   if (typeof toolUseId !== 'string' || !toolUseId) return null;
+  const tier = tierOf(event.data);
   return {
     command,
     params: event.data?.retry?.params ?? {},
-    signatureRequired: event.data?.signatureRequired === true,
-    message:
-      typeof event.message === 'string'
-        ? event.message
-        : 'This action requires a reason for change.',
+    signatureRequired: tier === 'esignature',
+    tier,
+    message: typeof event.message === 'string' ? event.message : defaultMessageFor(tier),
     runId,
     toolUseId,
   };
+}
+
+function defaultMessageFor(tier: GovernedTier): string {
+  return tier === 'confirm'
+    ? 'AnA proposed this action. Confirm to run it under your name.'
+    : 'This action requires a reason for change.';
 }
 
 /** A raw command result as it arrives in post_done.executedCommands. */
@@ -87,10 +111,14 @@ interface ExecutedCommandResult {
   error?: string;
   message?: string;
   data?: {
+    tier?: unknown;
     signatureRequired?: boolean;
     retry?: { command?: string; params?: Record<string, unknown> };
   };
 }
+
+/** The two envelopes a blocked command answers with: the Part 11 gate's, and the proposal gate's. */
+const PENDING_SIGNOFF_ERRORS: ReadonlySet<string> = new Set(['PART11_SIGNATURE_REQUIRED', 'HUMAN_CONFIRMATION_REQUIRED']);
 
 /**
  * Pure: pull the governed actions that were blocked pending a Part 11 sign-off
@@ -103,14 +131,19 @@ export function extractPendingSignoffs(
   if (!Array.isArray(executedCommands)) return [];
   const out: PendingSignoff[] = [];
   for (const r of executedCommands) {
-    if (r?.error !== 'PART11_SIGNATURE_REQUIRED') continue;
+    // HUMAN_CONFIRMATION_REQUIRED (an agent proposed something only a person
+    // may do) had no reader here at all, so an end-of-turn proposal never
+    // rendered; only the live stream path did (audit DP-08, P0-12).
+    if (typeof r?.error !== 'string' || !PENDING_SIGNOFF_ERRORS.has(r.error)) continue;
     const command = r.data?.retry?.command;
     if (typeof command !== 'string' || command.length === 0) continue;
+    const tier = tierOf(r.data);
     out.push({
       command,
       params: r.data?.retry?.params ?? {},
-      signatureRequired: r.data?.signatureRequired === true,
-      message: typeof r.message === 'string' ? r.message : 'This action requires a reason for change.',
+      signatureRequired: tier === 'esignature',
+      tier,
+      message: typeof r.message === 'string' ? r.message : defaultMessageFor(tier),
     });
   }
   return out;
@@ -119,7 +152,10 @@ export function extractPendingSignoffs(
 export interface SubmitSignoffArgs {
   command: string;
   params: Record<string, unknown>;
-  reasonForChange: string;
+  /** Required for the reason and e-signature tiers; absent for the confirm tier. */
+  reasonForChange?: string;
+  /** The confirm tier's explicit yes; the server requires it for that tier and ignores it otherwise. */
+  confirm?: true;
   /** Required only for the high-impact (e-signature) tier. */
   password?: string;
   /** Required when the signer has MFA enabled (high-impact tier). */
