@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-26T04:14:33.304Z",
+  "generatedAt": "2026-09-26T04:42:44.651Z",
   "git": {
-    "sha": "1706c05b6982d7b8bca694ce946d47061d5888e7",
+    "sha": "99862840ebbec1371a6e5a47854876e50eca84b7",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2567,16 +2567,16 @@
         "lines": 1552
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
+        "lines": 1551
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
         "lines": 1550
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
         "lines": 1541
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
-        "lines": 1532
       },
       {
         "file": "server/services/grdhe/grdheService.ts",

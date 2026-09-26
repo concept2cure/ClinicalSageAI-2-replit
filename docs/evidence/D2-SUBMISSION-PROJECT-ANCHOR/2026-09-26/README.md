@@ -205,3 +205,62 @@ PF-SUB-1, PF-SUB-3, creation MISSED-1) and mapped by the part-2 scout
   The package-spine transmit already writes that column today. The
   Drizzle-declared table (`shared/schema.ts`) has no such key, and `20260509` is not
   on the applier. This is handed to the offboarding owner on the board.
+
+---
+
+# LX-22 (D2), part 2b (PF-06): readers find a program's submission by its project
+
+## The defect
+
+Three readers related a program to its submission by product name or title, newest
+first:
+
+- the server's `resolveSubmissionSpine` (`server/services/cmc/submission-spine.ts`).
+  Its callers are the eCTD compile (four routes), the Module 1 forms and their
+  official upload, which is a governed write, and the Module 3 compile;
+- Dispatch Readiness;
+- IND Lifecycle.
+
+So two projects for one product resolved to the same filing, and whichever
+submission was touched last won. A submission anchored to another project was taken
+if its name matched.
+
+## The fix: one rule, the same in all three
+
+- **An anchored submission is the program's.** A submission anchored to the program
+  (`submissions.program_id`) belongs to it. One anchored to another program never
+  does, whatever its name.
+- **An unanchored submission is matched by name, and the match is labelled.** This
+  covers a submission created before submissions recorded their project.
+  - The server matches only when that is unambiguous in both directions: exactly
+    one such submission for this program, and no other live program of the
+    organization, of the same type, that it could equally belong to. Anything
+    ambiguous gives no spine (fail closed).
+  - The result says how it was found: `match: 'program' | 'legacy-name'`.
+  - Dispatch Readiness and IND Lifecycle show "matched by name: … no project
+    recorded".
+- **Removal.** The name fallback goes when no unanchored submission remains. That
+  needs a governed "anchor this submission to a project" action, which is PD-2 in
+  the scout's design and a follow-up.
+- **eCTD compile harness.** The mock submission row in
+  `tests/routes/ectd-compile-spine.harness.ts` is now the program's own anchored
+  submission. The reverse check fails closed on a row with no title or product
+  name, which the old mock was.
+
+## Tests, red before (`05-red-part2b.txt`), green after (`06-green-part2b.txt`)
+
+- **`server/services/cmc/__tests__/submission-spine.pglite.test.ts`** (new, real
+  DDL). These cases were red:
+  - two projects for one product each resolve to their own submission;
+  - the anchored submission is preferred over a newer same-named unanchored one;
+  - a submission anchored to another program is never taken by name;
+  - an unambiguous unanchored match resolves, labelled `legacy-name`;
+  - two programs claiming one unanchored submission resolve nothing;
+  - two unanchored submissions for one program resolve nothing.
+
+  Organization scoping already held.
+- **`dispatchReadinessProgramScope.test.tsx`**: the anchored submission is gated,
+  not a newer same-named one of another project; a same-named submission of another
+  project gives "No submission"; and an unanchored match is labelled.
+- **`indLifecycleProgramScope.test.tsx`**: the same three cases for the IND
+  checklist row.
