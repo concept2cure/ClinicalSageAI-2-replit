@@ -14,39 +14,38 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import request from 'supertest';
 
-const recorder = vi.hoisted(() => ({
-  statements: [] as string[],
-  audit: vi.fn(async (_client: unknown, _entry: unknown, _tenant?: unknown, _resource?: unknown) => {
-    recorder.statements.push('AUDIT');
-  }),
-  targetExists: true,
-  liftReturns: true,
-  auditThrows: false,
-}));
-
-vi.mock('../../db', () => {
+const recorder = vi.hoisted(() => {
   const HOLD = { id: 'h-1', organization_id: 7, reference: 'INSP-2026-09', reason: 'FDA inspection announced', scope: 'program', program_id: '11111111-1111-4111-8111-111111111111', document_id: null, placed_by: 2, placed_at: new Date('2026-09-26T09:00:00Z'), lifted_at: null, lifted_by: null, lift_reason: null };
-  const client = {
-    query: vi.fn(async (sql: string) => {
-      const s = String(sql);
-      recorder.statements.push(s.trim().split(/\s+/).slice(0, 3).join(' '));
-      if (/INSERT INTO vault\.legal_holds/i.test(s)) return { rows: [HOLD], rowCount: 1 };
-      if (/UPDATE vault\.legal_holds/i.test(s)) return recorder.liftReturns ? { rows: [{ ...HOLD, lifted_at: new Date(), lifted_by: 2, lift_reason: 'Inspection closed' }], rowCount: 1 } : { rows: [], rowCount: 0 };
-      return { rows: [], rowCount: 0 };
+  const r = {
+    statements: [] as string[],
+    audit: vi.fn(async (_client: unknown, _entry: unknown, _tenant?: unknown, _resource?: unknown) => {
+      r.statements.push('AUDIT');
     }),
-    release: vi.fn(),
+    targetExists: true,
+    liftReturns: true,
+    auditThrows: false,
+    // The request's own client (req.dbClient, what requestPgClient returns):
+    // the reads and the transaction go through it. Reads are answered but not
+    // recorded, so the transaction order below is what is asserted. The router
+    // no longer imports the shared pool, so the client lives here, not in a
+    // module mock that would never run.
+    client: {
+      query: vi.fn(async (sql: string) => {
+        const s = String(sql);
+        if (/FROM regulatory_programs|FROM vault\.documents/i.test(s)) return r.targetExists ? { rows: [{ id: 'x' }], rowCount: 1 } : { rows: [], rowCount: 0 };
+        if (/^\s*SELECT[\s\S]*FROM vault\.legal_holds/i.test(s)) return { rows: [HOLD], rowCount: 1 };
+        r.statements.push(s.trim().split(/\s+/).slice(0, 3).join(' '));
+        if (/INSERT INTO vault\.legal_holds/i.test(s)) return { rows: [HOLD], rowCount: 1 };
+        if (/UPDATE vault\.legal_holds/i.test(s)) return r.liftReturns ? { rows: [{ ...HOLD, lifted_at: new Date(), lifted_by: 2, lift_reason: 'Inspection closed' }], rowCount: 1 } : { rows: [], rowCount: 0 };
+        return { rows: [], rowCount: 0 };
+      }),
+    },
   };
-  const pool = {
-    connect: vi.fn(async () => client),
-    query: vi.fn(async (sql: string) => {
-      const s = String(sql);
-      if (/FROM regulatory_programs|FROM vault\.documents/i.test(s)) return recorder.targetExists ? { rows: [{ id: 'x' }], rowCount: 1 } : { rows: [], rowCount: 0 };
-      if (/FROM vault\.legal_holds/i.test(s)) return { rows: [HOLD], rowCount: 1 };
-      return { rows: [], rowCount: 0 };
-    }),
-  };
-  return { pool, db: {} };
+  return r;
 });
+
+// The shared pool is not what the router uses; a double stands in so nothing reaches a database.
+vi.mock('../../db', () => ({ pool: { connect: vi.fn(), query: vi.fn() }, db: {} }));
 vi.mock('../../services/auditService', () => ({
   writeChainedAuditRow: (client: unknown, entry: unknown, tenant?: unknown, resource?: unknown) => {
     if (recorder.auditThrows) throw new Error('chain unavailable');
@@ -66,6 +65,7 @@ function app(role: string) {
     (req as any).user = { id: 2, email: 'qa@acme.test', organizationId: 7, role, roles: [role] };
     (req as any).userId = 2;
     (req as any).tenantContext = { organizationId: 7 };
+    (req as any).dbClient = recorder.client;
     next();
   });
   a.use('/api/vault/legal-holds', createVaultLegalHoldRoutes());
