@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-26T05:16:13.683Z",
+  "generatedAt": "2026-09-26T05:23:42.712Z",
   "git": {
-    "sha": "7676eb902b38668ca78d333b9dbeb89afa64be4a",
+    "sha": "ea617e43ade7cc3dbb6d454ac344cb2c179807be",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2267,6 +2267,10 @@
         "lines": 2712
       },
       {
+        "file": "server/routes/auth.ts",
+        "lines": 2685
+      },
+      {
         "file": "server/routes/knowledge-base.ts",
         "lines": 2666
       },
@@ -2277,10 +2281,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "lines": 2504
-      },
-      {
-        "file": "server/routes/auth.ts",
-        "lines": 2501
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
