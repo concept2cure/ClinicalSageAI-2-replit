@@ -67,3 +67,12 @@ lane added no failing step: Lint ("server SQL references a table nothing creates
 As in the P0 tranche: `README.md` states what was wrong (with `file:line`), what is true now, a red/green table naming
 the tests and the HEAD the red ran against, and what is not done; `red/` and `green/` hold verbatim output ending in an
 `exit=` line.
+
+## Database tier executed against a real database, 2026-09-26
+
+Every earlier row that says "unexecuted here" or "no database" was written when this container had no
+PostgreSQL. On 2026-09-26 the deploy-shaped test database was provisioned locally (PostgreSQL 16 with
+pgvector, the whole migration set, the `app_service` role) and the whole `tests/db` and
+`server/**/__tests__/*.dbtest.ts` tier run as the fixtures require (`APP_DATABASE_URL` on the application
+role, `RLS_ENFORCE=on`): **69 files, 748 tests, all passing**, including the P1-7b two-tenant
+feature-toggle suite and the P1-38 connector suite. Record: `db-tier-2026-09-26.md`.
