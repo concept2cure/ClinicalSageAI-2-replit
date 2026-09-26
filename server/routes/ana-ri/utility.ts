@@ -134,7 +134,7 @@ async function releaseWaitingRun(
   toolUseId: string,
   userId: number,
   reasonForChange: string,
-  outcome: { result?: unknown; error?: string },
+  outcome: { result?: unknown; error?: string; declined?: true },
 ): Promise<void> {
   // Bound with the SAME resolver the lookup used (resolveAuthorisedAction), so
   // the decision is written against exactly the tenant whose run was proven to
@@ -148,7 +148,7 @@ async function releaseWaitingRun(
   try {
     await recordApprovalDecision(requestPgClient(req), runId, organizationId, {
       toolUseId,
-      decided: outcome.error ? 'denied' : 'approved',
+      decided: outcome.error || outcome.declined ? 'denied' : 'approved',
       decidedAt: new Date().toISOString(),
       byUserId: userId,
       reasonForChange,
@@ -161,6 +161,47 @@ async function releaseWaitingRun(
       error: err?.message,
     });
   }
+}
+
+/**
+ * A person's no to an action AnA is holding a turn on.
+ *
+ * Cancelling a live prompt used to close the dialog and tell the server
+ * nothing, so the turn waited out the pause ceiling — and with every write now
+ * proposed (P0-12), that would be most turns. The decision is audited (a
+ * person chose it) and recorded against the run, whose waiting turn tells the
+ * model the action was declined and must not be retried. Nothing executes.
+ *
+ * Only meaningful for a held run: a proposal from a finished turn has nothing
+ * waiting on it, and dismissing it is already the whole of declining.
+ */
+async function declineHeldAction(
+  req: Request,
+  res: Response,
+  held: {
+    pendingForRun: Awaited<ReturnType<typeof readPendingApproval>>;
+    runId: string;
+    toolUseId: string;
+    command: string;
+    userId: number;
+    numericOrgId: number;
+  },
+): Promise<Response> {
+  if (!held.pendingForRun) {
+    return sendError(res, 400, 'A decline needs the run that is waiting on it', null, 'NO_PENDING_APPROVAL');
+  }
+  await auditService.logAction({
+    tenantId: held.numericOrgId,
+    userId: held.userId,
+    action: 'ana.governed_action.declined',
+    resourceType: 'ana_command',
+    resourceId: held.command,
+    ipAddress: clientIpOf(req) ?? undefined,
+    userAgent: req.headers['user-agent'] as string | undefined,
+    details: { command: held.command, runId: held.runId, toolUseId: held.toolUseId, proposedByAgent: true },
+  });
+  await releaseWaitingRun(req, held.runId, held.toolUseId, held.userId, '', { declined: true });
+  return sendSuccess(res, { success: true, declined: true, message: 'Declined. AnA will carry on without it.' });
 }
 
 /** Register utility endpoints on the given router. */
@@ -432,6 +473,12 @@ export function mountUtilityRoutes(router: Router): void {
     const { pendingForRun, runId, toolUseId, command, params } = authorised;
     const password = typeof body.password === 'string' ? body.password : '';
     const mfaToken = typeof body.mfaToken === 'string' ? body.mfaToken : undefined;
+
+    // A person's no to an action AnA is holding a turn on. Checked before any
+    // tier rule: declining asks for nothing, whatever the tier.
+    if (body.decision === 'decline') {
+      return declineHeldAction(req, res, { pendingForRun, runId, toolUseId, command, userId, numericOrgId });
+    }
 
     // This route is ONLY for proposed commands — every write (P0-12); reads go
     // through chat. The tier decides what the person supplies: 'confirm' an

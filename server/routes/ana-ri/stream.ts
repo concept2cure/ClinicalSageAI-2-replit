@@ -157,6 +157,7 @@ import {
 } from '../../services/ana/run-control.js';
 import { MAX_PAUSE_MS, type HumanControlEvent } from '../../services/ana/run-status.js';
 import { classifyToolCall } from '../../services/ana/governed-tool-gate.js';
+import { buildHumanConfirmationRequiredResult } from '../../services/ana-ri/part11-governance.js';
 import {
   describeServerToolStep,
   summariseServerToolResult,
@@ -1556,31 +1557,21 @@ export function mountStreamRoute(router: Router): void {
             );
           }
 
-          // The envelope the client already understands — the same shape
-          // buildHumanConfirmationRequiredResult produces, so GovernedActionSignoff
-          // opens on it unchanged. runId + toolUseId are what let the decision
+          // The envelope the client already understands, built by
+          // buildHumanConfirmationRequiredResult itself rather than restated, so
+          // the tier and what it asks for are said one way. GovernedActionSignoff
+          // opens on it. runId + toolUseId are what let the decision
           // come back to THIS waiting turn instead of running on its own.
+          const proposal = buildHumanConfirmationRequiredResult(verdict.command, verdict.params);
           emitControl({
             type: 'approval_required',
             round,
             runId,
             toolUseId: toolUse.id,
-            action: verdict.command,
-            openModal: 'esign',
-            data: {
-              tier: verdict.tier,
-              reasonRequired: verdict.tier !== 'confirm',
-              signatureRequired: verdict.tier === 'esignature',
-              proposedByAgent: true,
-              retry: { command: verdict.command, params: verdict.params },
-            },
-            message:
-              verdict.tier === 'confirm'
-                ? 'This action changes the record, so it is taken by a person rather than on your ' +
-                  'behalf. Review it and confirm to continue. AnA is waiting on this before she goes on.'
-                : 'This action changes the official record, so it has to be taken by a person rather ' +
-                  'than on your behalf. Review it and confirm to continue — your reason for the change ' +
-                  'is recorded with it. AnA is waiting on this before she goes on.',
+            action: proposal.action,
+            openModal: proposal.openModal,
+            data: proposal.data,
+            message: `${proposal.message} AnA is waiting on this before she goes on.`,
           });
 
           // The wait. Same machinery as pause: woken by the decision, with the
