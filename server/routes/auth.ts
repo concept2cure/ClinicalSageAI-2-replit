@@ -1027,6 +1027,15 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
         })
         .returning();
 
+      // Enter the new organisation's tenant before its first membership row.
+      // organization_users is written only in the membership's own
+      // organisation (or the platform scope), and signup runs in the pre-auth
+      // scope, so without this every sign-up answered 500 (D3, 2026-09-26;
+      // docs/evidence/D3/2026-09-26-memberships/). The same transaction-local
+      // switch the workspace step below makes, through the same binding; it
+      // stays set for the rest of this transaction.
+      const workspaceStore = drizzleWorkspaceStore(tx);
+      await workspaceStore.enterOrganizationScope(org.id);
       await tx.insert(organizationUsers).values({
         organizationId: org.id,
         userId: user.id,
@@ -1041,7 +1050,7 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
       // Inside the transaction, unlike provisionLaunchModules below: a module
       // grant an administrator can re-run is not the same as the PM spine's
       // NOT NULL parent, which every later write assumes.
-      await ensureOrganizationDefaultWorkspace(drizzleWorkspaceStore(tx), {
+      await ensureOrganizationDefaultWorkspace(workspaceStore, {
         orgId: org.id,
         orgName: org.name,
         orgSlug: org.slug,

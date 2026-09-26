@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { randomUUID } from 'crypto';
 import { z } from 'zod';
 import { pool } from '../db';
+import { inVerifiedOrgScope } from '../services/tenant/verified-org-scope';
 import { createScopedLogger } from '../utils/logger.js';
 import { invalidateOrgMembershipCache } from '../middleware/auth';
 import auditService from '../services/auditService';
@@ -46,20 +46,21 @@ const updateUserRoleSchema = z.object({
  * list, create, re-role, or remove users in any organization. A platform
  * super_admin is allowed anywhere; otherwise the caller must belong to the
  * target org (membership for reads, admin/owner for mutations).
+ * Returns the verified role in the target org (truthy), or false once answered.
  */
 async function authorizeOrgAccess(
   req: any,
   res: any,
   targetOrgId: number,
   opts: { requireAdmin: boolean }
-): Promise<boolean> {
+): Promise<string | false> {
   const callerId = Number(req.user?.id ?? req.userId);
   const callerRole = req.userRole ?? req.user?.role;
   if (!callerId || Number.isNaN(callerId)) {
     res.status(401).json({ error: 'Authentication required' });
     return false;
   }
-  if (callerRole === 'super_admin') return true;
+  if (callerRole === 'super_admin') return 'super_admin';
   const membership = await pool.query(
     'SELECT role FROM organization_users WHERE user_id = $1 AND organization_id = $2 LIMIT 1',
     [callerId, targetOrgId]
@@ -73,8 +74,9 @@ async function authorizeOrgAccess(
     res.status(403).json({ error: 'Admin of the target organization required' });
     return false;
   }
-  return true;
+  return role;
 }
+
 
 /** Resolve the authenticated user's id from the request (set upstream). */
 function getCallerId(req: any): number | null {
@@ -424,7 +426,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Organization ID is required' });
     }
 
-    if (!(await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }))) return;
+    const verifiedRole = await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }); if (!verifiedRole) return;
 
     // The origin a new member's activation link is built on, resolved BEFORE
     // anything is created. In production it is APP_URL or nothing, never the
@@ -480,14 +482,16 @@ router.post('/', async (req, res) => {
         quotaInfo?: unknown;
       }>;
     };
-    const result = await atomicQuotaService.atomicCreateUser(organizationId, {
-      email: validatedData.email,
-      name: validatedData.name,
-      role: validatedData.role,
-      title: validatedData.title,
-      department: validatedData.department,
-      invitedById: getCallerId(req),
-    });
+    const result = await inVerifiedOrgScope(req, organizationId, verifiedRole, () =>
+      atomicQuotaService.atomicCreateUser(organizationId, {
+        email: validatedData.email,
+        name: validatedData.name,
+        role: validatedData.role,
+        title: validatedData.title,
+        department: validatedData.department,
+        invitedById: getCallerId(req),
+      })
+    );
 
     if (!result.success) {
       if (result.error === 'QUOTA_EXCEEDED') {
@@ -591,7 +595,7 @@ router.patch('/:organizationId/:userId', async (req, res) => {
       return res.status(400).json({ error: 'Invalid organization ID or user ID' });
     }
 
-    if (!(await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }))) return;
+    const verifiedRole = await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }); if (!verifiedRole) return;
 
     const validatedData = updateUserRoleSchema.parse(req.body);
 
@@ -602,7 +606,7 @@ router.patch('/:organizationId/:userId', async (req, res) => {
       RETURNING *
     `;
 
-    const result = await pool.query(updateQuery, [validatedData.role, organizationId, userId]);
+    const result = await inVerifiedOrgScope(req, organizationId, verifiedRole, () => pool.query(updateQuery, [validatedData.role, organizationId, userId]));
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'User not found in organization' });
@@ -637,7 +641,7 @@ router.delete('/:organizationId/:userId', async (req, res) => {
       return res.status(400).json({ error: 'Invalid organization ID or user ID' });
     }
 
-    if (!(await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }))) return;
+    const verifiedRole = await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }); if (!verifiedRole) return;
 
     const deleteQuery = `
       DELETE FROM organization_users
@@ -645,7 +649,7 @@ router.delete('/:organizationId/:userId', async (req, res) => {
       RETURNING *
     `;
 
-    const result = await pool.query(deleteQuery, [organizationId, userId]);
+    const result = await inVerifiedOrgScope(req, organizationId, verifiedRole, () => pool.query(deleteQuery, [organizationId, userId]));
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'User not found in organization' });

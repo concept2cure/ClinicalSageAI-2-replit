@@ -41,6 +41,9 @@ const P_A = '0a000000-0000-4000-8000-00000000000a';
 const P_B = '0b000000-0000-4000-8000-00000000000b';
 const V_A = 'a1000000-0000-4000-8000-0000000000a1';
 const V_B = 'b1000000-0000-4000-8000-0000000000b1';
+// P_B's, with no organization attribution: vault.documents.organization_id is
+// nullable (20260905 leaves rows it cannot attribute NULL).
+const V_N = 'b2000000-0000-4000-8000-0000000000b2';
 
 let SEQ_A = 0; // on a submission anchored to P_A
 let SEQ_L = 0; // on a submission with no recorded project
@@ -87,6 +90,11 @@ beforeAll(async () => {
       [id, programId, CTX.organizationId, `doc-${id.slice(0, 2)}`, hash],
     );
   }
+  await q(
+    `INSERT INTO vault.documents (id, program_id, organization_id, document_code, document_title, document_type, content_hash)
+     VALUES ($1, $2, NULL, 'doc-n', 'doc-n', 'PROTOCOL', $3)`,
+    [V_N, P_B, 'c'.repeat(64)],
+  );
   await q(
     `INSERT INTO c2c_documents (id, org_id, project_id, doc_type, agency, rule_pack_version, title)
      VALUES ('doc-b', $1, $2, 'ind', 'fda', '1.0', 'Program B filing')`,
@@ -149,6 +157,17 @@ describe('upsertLeaf keeps a filing inside its project', () => {
   it('refuses a Vault document of another project, and writes nothing', async () => {
     const before = await leafCount(SEQ_A);
     const err = await vaultLeaf(SEQ_A, V_B).catch((e) => e);
+    expect(err).toBeInstanceOf(SubmissionError);
+    expect(err.code).toBe('CROSS_PROJECT');
+    expect(await leafCount(SEQ_A)).toBe(before);
+  });
+
+  it('refuses another project’s Vault document that carries no organization attribution', async () => {
+    // Its project is read through the program, the scope the tenancy check
+    // uses. Filtering on the nullable organization_id would read no project,
+    // and a placement with no document project is not judged.
+    const before = await leafCount(SEQ_A);
+    const err = await vaultLeaf(SEQ_A, V_N).catch((e) => e);
     expect(err).toBeInstanceOf(SubmissionError);
     expect(err.code).toBe('CROSS_PROJECT');
     expect(await leafCount(SEQ_A)).toBe(before);

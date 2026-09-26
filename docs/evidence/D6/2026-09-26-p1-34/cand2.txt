@@ -1,0 +1,41 @@
+add_committee_agenda_item	server/services/ana/AnaToolExecutor.ts:11798	gov:recordGovernedAction, verb:recordGovernedAction
+add_eligibility_criterion	server/services/ana/AnaToolExecutor.ts:11530	gov:recordGovernedAction, verb:recordGovernedAction
+add_labeling_translation	server/services/ana/AnaToolExecutor.ts:14161	sql:INSERT INTO
+add_risk_control	server/services/ana/AnaToolExecutor.ts:8006	sql:INSERT INTO
+apply_protocol_design_derivation	server/services/ana/AnaToolExecutor.ts:20436	gov:recordGovernedAction, verb:applyDerivationTx, verb:recordGovernedAction
+author_docx_native	server/services/ana/AnaToolExecutor.ts:6880	fs:mkdir, fs:writeFile, verb:writeFile
+classify_coverage_item	server/services/ana/AnaToolExecutor.ts:11984	gov:recordGovernedAction, verb:recordGovernedAction
+commit_intelligence_flow	server/services/ana/AnaToolExecutor.ts:19244	verb:commitInterviewSession
+create_calendar_event	server/services/ana/AnaToolExecutor.ts:4035	verb:createCalendarEvent
+create_complaint	server/services/ana/AnaToolExecutor.ts:6349	verb:createComplaint
+create_effort_certification	server/services/ana/AnaToolExecutor.ts:13195	gov:recordGovernedAction, verb:createCertificationTx, verb:recordGovernedAction
+create_ha_interaction	server/services/ana/AnaToolExecutor.ts:10143	gov:recordGovernedAction, verb:createInteractionTx, verb:recordGovernedAction
+create_invention_disclosure	server/services/ana/AnaToolExecutor.ts:11196	verb:createDisclosureTx
+create_monitoring_action	server/services/ana/AnaToolExecutor.ts:3364	verb:createAction
+create_protocol_amendment	server/services/ana/AnaToolExecutor.ts:10857	verb:createAmendmentTx
+create_qms_document	server/services/ana/AnaToolExecutor.ts:13583	gov:recordGovernedAction, sql:INSERT INTO, verb:recordGovernedAction
+create_risk_item	server/services/ana/AnaToolExecutor.ts:7956	sql:INSERT INTO
+draft_fda_ir_response	server/services/ana/AnaToolExecutor.ts:15044	verb:executeAgenticLoop, verb:executeTools
+fire_notification	server/services/ana/AnaToolExecutor.ts:9905	verb:createNotification
+import_citi_records	server/services/ana/AnaToolExecutor.ts:11610	gov:recordGovernedAction, verb:importCitiRecordsTx, verb:recordGovernedAction
+log_cs_transaction	server/services/ana/AnaToolExecutor.ts:12911	gov:recordGovernedAction, verb:recordGovernedAction, verb:recordTransactionTx
+log_study_deviation	server/services/ana/AnaToolExecutor.ts:13361	sql:INSERT INTO
+pair_companion_diagnostic	server/services/ana/AnaToolExecutor.ts:8483	sql:INSERT INTO
+qms_change_transition	server/services/ana/AnaToolExecutor.ts:13834	verb:recordAuditRow, verb:transitionChange
+record_endpoint_result	server/services/ana/AnaToolExecutor.ts:13466	sql:INSERT INTO
+record_kri_reading	server/services/ana/AnaToolExecutor.ts:3270	verb:recordKriReading
+register_animal_cohort	server/services/ana/AnaToolExecutor.ts:10281	gov:recordGovernedAction, verb:recordGovernedAction
+register_supplier	server/services/ana/AnaToolExecutor.ts:14056	sql:INSERT INTO
+reset_project_goals	server/services/ana/AnaToolExecutor.ts:2451	verb:scheduleToolContext
+review_coverage_analysis	server/services/ana/AnaToolExecutor.ts:12019	gov:recordGovernedAction
+review_ibc_registration	server/services/ana/AnaToolExecutor.ts:10526	gov:recordGovernedAction
+review_lifecycle_calendar	server/services/ana/AnaToolExecutor.ts:13010	gov:recordGovernedAction
+run_in_container	server/services/ana/AnaToolExecutor.ts:7614	fs:mkdir, fs:writeFile, verb:writeFile
+save_document_to_vault	server/services/ana/AnaToolExecutor.ts:19670	gov:enforceAuthorLineage, gov:recordArtifactProvenance, gov:recordGovernedAction, orm:.update(c, sql:INSERT INTO, verb:createHash, verb:recordArtifactProvenance, verb:recordGovernedAction
+seed_tmf	server/services/ana/AnaToolExecutor.ts:19939	gov:recordGovernedAction, verb:recordGovernedAction, verb:seedReferenceModelTx
+set_registration_status	server/services/ana/AnaToolExecutor.ts:12728	gov:recordGovernedAction, verb:recordGovernedAction, verb:upsertRegistrationTx
+surgical_docx_xml_edit	server/services/ana/AnaToolExecutor.ts:7268	fs:mkdir, fs:writeFile, verb:writeFile
+update_dms_plan_element	server/services/ana/AnaToolExecutor.ts:11055	verb:updateElementTx
+update_monitoring_action	server/services/ana/AnaToolExecutor.ts:3386	verb:updateAction
+update_tmf_artifact_status	server/services/ana/AnaToolExecutor.ts:19978	gov:recordGovernedAction, verb:recordGovernedAction
+write_q_sub_section	server/services/ana/AnaToolExecutor.ts:8112	gov:enforceAuthorLineage, sql:INSERT INTO, sql:ON CONFLICT
