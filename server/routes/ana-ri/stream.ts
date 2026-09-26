@@ -164,7 +164,7 @@ import {
   type RunHandle,
 } from '../../services/ana/run-control.js';
 import { MAX_PAUSE_MS, type HumanControlEvent } from '../../services/ana/run-status.js';
-import { classifyToolCall } from '../../services/ana/governed-tool-gate.js';
+import { classifyToolCall, CONFIRM_TIER_TOOLS } from '../../services/ana/governed-tool-gate.js';
 import { buildHumanConfirmationRequiredResult } from '../../services/ana-ri/part11-governance.js';
 import {
   describeServerToolStep,
@@ -184,6 +184,25 @@ const dbPool = {
 };
 
 /** Register POST /stream on the given router. */
+/**
+ * For a tool that writes on its own handler (CONFIRM_TIER_TOOLS), the context
+ * the loop would have run it with — recorded on the held run so the
+ * governed-action route runs the tool from it, never from the browser's body.
+ * Undefined for anything else, which JSON drops from the row.
+ */
+function heldToolContext(
+  toolName: string,
+  projectId: unknown,
+  servingModel: { provider?: string | null; model?: string | null } | null | undefined,
+) {
+  if (!CONFIRM_TIER_TOOLS.has(toolName)) return undefined;
+  return {
+    projectId: projectId ? Number(projectId) || null : null,
+    projectRef: projectId ? String(projectId) : null,
+    servingModel: servingModel ?? null,
+  };
+}
+
 export function mountStreamRoute(router: Router): void {
   router.post('/stream', async (req: Request, res: Response) => {
     // Opaque id for this run, emitted to the client as `run_started` so it can
@@ -1621,6 +1640,7 @@ export function mountStreamRoute(router: Router): void {
             rationale: typeof (verdict.params as any)?.reason === 'string'
               ? String((verdict.params as any).reason)
               : undefined,
+            toolContext: heldToolContext(toolUse.name, streamProjectId, lastServedModel),
           }).catch(() => false);
           if (!opened) {
             return refused(
