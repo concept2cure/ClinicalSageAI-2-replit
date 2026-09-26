@@ -98,6 +98,9 @@ import type {
  */
 const STREAM_IDLE_TIMEOUT_MS = 90_000;
 
+/** When to ask the server, by run id, for the record of a turn that ended here first. */
+const RECORD_CONFIRM_WAITS_MS = [1_500, 4_000];
+
 
 
 /** Client-side cap on the tool result kept for the inspect disclosure (state size). */
@@ -401,6 +404,40 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     [control],
   );
 
+  /**
+   * A turn that ended here before the server said whether it filed the
+   * record — Stop, a timeout, a dropped connection — is shown "not confirmed".
+   * The server usually did file it (a stopped turn is recorded as stopped), and
+   * the record carries the run id, so ask for it: once shortly after, once
+   * more a little later. Only a turn still unconfirmed is updated; anything
+   * the server cannot confirm stays unconfirmed, never recorded by default.
+   */
+  const confirmTurnRecordByRun = useCallback((runId: string, messageId: string) => {
+    void (async () => {
+      for (const waitMs of RECORD_CONFIRM_WAITS_MS) {
+        await new Promise((r) => setTimeout(r, waitMs));
+        try {
+          const res = await fetch(`/api/ana-ri/turn-records?run_id=${encodeURIComponent(runId)}&limit=1`, {
+            headers: getAuthHeaders(),
+            credentials: 'include',
+          });
+          if (!res.ok) return;
+          const body = await res.json().catch(() => null);
+          const rec = body?.data?.records?.[0];
+          const turnRecord = rec ? readTurnRecord({ status: 'recorded', id: rec.id, sha256: rec.recordSha256 }) : undefined;
+          if (turnRecord) {
+            setMessages((prev) =>
+              prev.map((m) => (m.id === messageId && m.turnRecord?.status === 'unconfirmed' ? { ...m, turnRecord } : m)),
+            );
+            return;
+          }
+        } catch {
+          return;
+        }
+      }
+    })();
+  }, []);
+
   const stop = useCallback(async () => {
     // Cancel server-side too (the fetch abort alone leaves the server
     // generating and running the tool loop to completion — the pre-existing
@@ -596,6 +633,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       // user-initiated stop so the message reads correctly.
       let idleTimer: ReturnType<typeof setTimeout> | null = null;
       let didTimeout = false;
+      // Set when the server's closing event said whether the turn was recorded;
+      // only a turn it did not speak for is looked up afterwards.
+      let serverStatedRecord = false;
       const clearIdleTimer = () => {
         if (idleTimer) {
           clearTimeout(idleTimer);
@@ -1351,6 +1391,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               // closes it, so the record line is not lost with the turn.
               const turnRecord = readTurnRecord(event.turnRecord);
               if (turnRecord) {
+                serverStatedRecord = true;
                 setMessages(prev => prev.map(m => (m.id === assistantId ? { ...m, turnRecord } : m)));
               }
               throw new Error(event.error || 'Stream error');
@@ -1359,6 +1400,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         }
         if (!turnClosed) throw new Error('The stream ended before the turn finished');
       } catch (err: any) {
+        // The run this turn was served under, while it is still known: the
+        // record of an interrupted turn is looked up by it.
+        const interruptedRunId = runIdRef.current;
+        if (interruptedRunId && !serverStatedRecord) confirmTurnRecordByRun(interruptedRunId, assistantId);
         if (err?.name === 'AbortError' && didTimeout) {
           // Idle timeout — the stream went silent. Seal any partial tokens and
           // tell the user, rather than leaving a half-rendered reply.
@@ -1473,6 +1518,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       options.liveDrive,
       options.onDriveEvent,
       options.onArtifactSaved,
+      confirmTurnRecordByRun,
     ]
   );
 

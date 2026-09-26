@@ -189,11 +189,14 @@ pre-push and CI run are green, and `ci:pushed-lint-warnings` shows net −1.
   - Accept or reject of an AI suggestion, linked to the turn record id.
   - The verbatim draft preserved.
   - `authoring_comments` / `authoring_audit_trail` made append-only.
-- **Other routes in `ana-intelligence.ts`.** They read `req.organizationId`
-  like the agent door did, and so likely pass no tenant to their services. Not
-  changed here, because each needs its own test.
+- ~~**Other routes in `ana-intelligence.ts`.**~~ Done in `f5122fe99`: every
+  route took no tenant, and `/batch` preferred an organization named in the
+  request body. Evidence: `docs/evidence/D6/2026-09-26-claude-identity/`.
 - **Deep investigation.** A background deep investigation's own model calls are
   not turn records. The turn whose tool started it is.
-- **A stopped turn and the client.** When the person presses Stop, the client
-  shows *Record not confirmed*, but the server files the record (§3). Looking
-  it up by `run_id` would let the client confirm it.
+- ~~**A stopped turn and the client.**~~ Done: after Stop, a timeout or a
+  dropped connection, the client asks `GET /api/ana-ri/turn-records?run_id=`
+  (1.5 s, then 4 s) and shows the record the server filed. A turn the server
+  cannot confirm stays *Record not confirmed*. Pinned by
+  `useAnaChat-turn-record.test.ts` and the `run_id` case in
+  `turn-records.pglite.test.ts`; each fails when its guard is removed.

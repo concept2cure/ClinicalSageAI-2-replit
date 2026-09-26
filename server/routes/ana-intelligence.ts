@@ -65,6 +65,23 @@ function failRequest(res: Response, where: string, error: unknown): Response {
 }
 
 /**
+ * The caller's organization and user, taken from the authenticated request and
+ * nowhere else.
+ *
+ * This router read `req.organizationId`, which the auth chain does not set on
+ * the /api/claude mount, so every call reached the gateway with no tenant: the
+ * tenant's AI placement policy (vendors, residency, zero retention) was never
+ * applied, usage was not metered to the tenant, and the provenance row below
+ * was filed under no organization. /batch also let each request in the BODY
+ * name its own organizationId and userId, and preferred them — a caller could
+ * draft under another organization's placement policy and bill it. Now the
+ * server's identity always wins.
+ */
+function identityOf(req: Request): { organizationId: number | undefined; userId: number | undefined } {
+  return { organizationId: resolveOrgId(req) ?? undefined, userId: resolveUserId(req) ?? undefined };
+}
+
+/**
  * Model-governance provenance (decision register #727 item 8): every
  * generation on a regulated-drafting surface writes an append-only audit
  * row recording WHICH pinned model produced WHAT content (sha256 of the
@@ -83,9 +100,10 @@ function recordModelProvenance(params: {
   void (async () => {
     try {
       const { default: auditService } = await import('../services/auditService');
+      const { organizationId, userId } = identityOf(params.req);
       await auditService.logAction({
-        tenantId: (params.req as any).organizationId,
-        userId: (params.req as any).userId,
+        tenantId: organizationId,
+        userId,
         action: 'ai_generation',
         resourceType: 'ai_drafting_surface',
         resourceId: params.surface,
@@ -144,8 +162,7 @@ router.post('/draft', async (req: Request, res: Response) => {
       enableThinking: enableThinking ?? true,
       thinkingBudget,
       enableTools: enableTools ?? true,
-      organizationId: (req as any).organizationId,
-      userId: (req as any).userId,
+      ...identityOf(req),
     });
 
     recordModelProvenance({
@@ -210,8 +227,7 @@ router.post('/draft/stream', async (req: Request, res: Response) => {
       enableThinking: enableThinking ?? true,
       thinkingBudget,
       enableTools: enableTools ?? true,
-      organizationId: (req as any).organizationId,
-      userId: (req as any).userId,
+      ...identityOf(req),
       onStream: (chunk, metadata) => {
         const event = {
           type: metadata?.type || 'text',
@@ -284,8 +300,7 @@ router.post('/review', async (req: Request, res: Response) => {
     const service = getAnaDraftingService();
     const result = await service.reviewCompliance(content, submissionType ?? framework, {
       enableThinking: enableThinking ?? true,
-      organizationId: (req as any).organizationId,
-      userId: (req as any).userId,
+      ...identityOf(req),
     });
 
     recordModelProvenance({
@@ -328,8 +343,7 @@ router.post('/gap-analysis', async (req: Request, res: Response) => {
       targetSections,
       {
         enableThinking: enableThinking ?? true,
-        organizationId: (req as any).organizationId,
-        userId: (req as any).userId,
+        ...identityOf(req),
       }
     );
 
@@ -373,8 +387,7 @@ router.post('/vision', async (req: Request, res: Response) => {
       instructions,
       framework,
       enableThinking,
-      organizationId: (req as any).organizationId,
-      userId: (req as any).userId,
+      ...identityOf(req),
     });
 
     recordModelProvenance({
@@ -418,12 +431,10 @@ router.post('/batch', async (req: Request, res: Response) => {
 
     const service = getAnaDraftingService();
 
-    // Add org/user context to each request
-    const enrichedRequests = requests.map((r: any) => ({
-      ...r,
-      organizationId: r.organizationId || (req as any).organizationId,
-      userId: r.userId || (req as any).userId,
-    }));
+    // The server's identity on every request; a body-supplied organizationId
+    // or userId is overwritten, never preferred.
+    const identity = identityOf(req);
+    const enrichedRequests = requests.map((r: any) => ({ ...r, ...identity }));
 
     const results = await service.batchDraft({
       requests: enrichedRequests,
@@ -491,8 +502,7 @@ router.post('/quick', async (req: Request, res: Response) => {
     const result = await service.quickComplete(prompt, {
       framework,
       maxTokens,
-      organizationId: (req as any).organizationId,
-      userId: (req as any).userId,
+      ...identityOf(req),
     });
 
     recordModelProvenance({
@@ -548,11 +558,9 @@ router.post('/agent', async (req: Request, res: Response) => {
       { role: 'system' as const, content: system },
       { role: 'user' as const, content: prompt },
     ];
-    // The canonical resolvers. `req.organizationId` alone is not set on this
-    // mount, so this door ran its tools with no tenant and — the turn record
-    // showed it on first run — could not file the turn under one either.
-    const organizationId = resolveOrgId(req) ?? undefined;
-    const userId = resolveUserId(req) ?? (req as any).userId;
+    // identityOf: see above. This door ran its tools with no tenant and — the
+    // turn record showed it on first run — could not file the turn under one.
+    const { organizationId, userId } = identityOf(req);
     const collected = loopToolCollector();
     recordTurn = (outcome, response, error) =>
       recordLoopTurn(

@@ -1,0 +1,9 @@
+ × server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /batch overwrites an organizationId and userId named in the body 29ms
+   → expected [ 99, 55 ] to deeply equal [ 7, 3 ]
+ × server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /draft passes the tenant the auth chain attached 7ms
+   → expected [ undefined, undefined ] to deeply equal [ 7, 3 ]
+ × server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /quick passes it too, and files its provenance under the tenant 5ms
+   → expected [ undefined, undefined ] to deeply equal [ 7, 3 ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
