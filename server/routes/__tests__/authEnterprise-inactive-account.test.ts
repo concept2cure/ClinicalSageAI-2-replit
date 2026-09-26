@@ -26,7 +26,7 @@ const state = vi.hoisted(() => ({
   userRow: null as Record<string, unknown> | null,
 }));
 const authEvents = vi.hoisted(() => vi.fn(async (_e: unknown) => undefined));
-const verifyEmailOtp = vi.hoisted(() => vi.fn(async () => true));
+const verifyEmailOtp = vi.hoisted(() => vi.fn(async (_userId: number, _code: string) => true));
 
 const dbDouble = vi.hoisted(() => {
   const pool = {
