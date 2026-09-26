@@ -29,7 +29,7 @@ import {
 import { config } from '../config/environment';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { revokeToken, verifyLiveToken } from '../services/token-revocation';
-import { continuedSessionClaims, idleWindowSecondsOf, newSessionClaims } from '../services/session-inactivity';
+import { continuedSessionClaims, idleWindowSecondsOf, openSession } from '../services/session-inactivity';
 import { recordAuthEvent } from '../services/audit/auth-event-audit';
 import { ACCOUNT_INACTIVE_MESSAGE, isAccountActive, isActiveAccountStatus } from '../services/account-standing';
 import { runWithTenantScope } from '../db/tenantStore';
@@ -555,6 +555,9 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
     const user = mfaUserData;
     const mfaVerifyOrgName = mfaOrgResult[0]?.name || 'Organization';
 
+    // The session's id, start and idle window, registered against the
+    // account's concurrent-session limit (P1-1).
+    const session = await openSession(userId, mfaOrgResult[0]?.settings);
     const token = jwt.sign(
       {
         userId: decoded.userId,
@@ -562,8 +565,7 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
         organizationId: decoded.organizationId,
         role: mfaActualRole,
         type: 'access',
-        // The session's id, start and idle window (P1-1).
-        ...newSessionClaims(mfaOrgResult[0]?.settings),
+        ...session,
       },
       config.jwt.secret,
       { expiresIn: '24h' }

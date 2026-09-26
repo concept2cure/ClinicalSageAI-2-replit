@@ -22,9 +22,18 @@
  * finds Redis away records in memory and the session stays alive on that task.
  * Production runs Redis (plan P1-3).
  *
+ * A concurrent-session limit, the tenant's `settings.security.maxConcurrentSessions`
+ * (DEFAULT_MAX_CONCURRENT_SESSIONS when unset): every sign-in registers its
+ * session against the account, and when the account then holds more sessions
+ * than the limit the oldest are superseded. A superseded session's next request
+ * and its refresh are refused (SESSION_SUPERSEDED); the marker outlives the
+ * session's own lifetime, so nothing revives it. Signing out frees the slot,
+ * and a session found idle or past its lifetime frees it too. The registry
+ * lives beside the activity store, in Redis with the memory tier behind it.
+ *
  * Tokens minted before this change carry no `sid`. Their activity is keyed by
- * the token itself, and their refresh tokens can be checked for their lifetime
- * only, until they expire (seven days at most).
+ * the token itself, their refresh tokens can be checked for their lifetime
+ * only, until they expire (seven days at most), and they hold no slot.
  */
 import { createHash, randomUUID } from 'crypto';
 
@@ -36,14 +45,23 @@ export const DEFAULT_IDLE_MINUTES = 15;
 export const MIN_IDLE_MINUTES = 1;
 export const MAX_IDLE_MINUTES = 24 * 60;
 export const ABSOLUTE_SESSION_HOURS = 12;
+export const DEFAULT_MAX_CONCURRENT_SESSIONS = 5;
+export const MIN_MAX_CONCURRENT_SESSIONS = 1;
+export const MAX_MAX_CONCURRENT_SESSIONS = 20;
 
 const REDIS_KEY_PREFIX = 'c2c:session-seen:';
+const SESSIONS_KEY_PREFIX = 'c2c:user-sessions:';
+const SUPERSEDED_KEY_PREFIX = 'c2c:session-superseded:';
 const MEMORY_CAP = 50_000;
+const LIFETIME_MS = ABSOLUTE_SESSION_HOURS * 3600 * 1000;
+/** How long a superseded marker must outlive the sign-in that set it: the session's lifetime, and a minute. */
+const SUPERSEDED_TTL_SECONDS = ABSOLUTE_SESSION_HOURS * 3600 + 60;
 
-export type SessionInactivityReason = 'idle' | 'lifetime';
+export type SessionInactivityReason = 'idle' | 'lifetime' | 'superseded';
 
 export const SESSION_IDLE_MESSAGE = 'Signed out after a period of inactivity. Sign in again.';
 export const SESSION_LIFETIME_MESSAGE = 'This session reached its time limit. Sign in again.';
+export const SESSION_SUPERSEDED_MESSAGE = 'This session was closed when the account signed in elsewhere. Sign in again.';
 
 /** The claims a sign-in mints into both its tokens. */
 export interface SessionClaims {
@@ -60,6 +78,8 @@ interface SessionClaimLike {
   sst?: unknown;
   idl?: unknown;
   iat?: unknown;
+  userId?: unknown;
+  sub?: unknown;
 }
 
 function wholeSeconds(value: unknown): number | null {
@@ -76,6 +96,14 @@ export function idleWindowSecondsOf(settings: unknown): number {
   const minutes = security?.sessionTimeoutMinutes;
   if (typeof minutes !== 'number' || !Number.isFinite(minutes)) return DEFAULT_IDLE_MINUTES * 60;
   return Math.min(MAX_IDLE_MINUTES, Math.max(MIN_IDLE_MINUTES, Math.floor(minutes))) * 60;
+}
+
+/** The tenant's concurrent-session limit from its settings object, clamped; the default when unset. */
+export function maxConcurrentSessionsOf(settings: unknown): number {
+  const security = (settings as { security?: { maxConcurrentSessions?: unknown } } | null | undefined)?.security;
+  const limit = security?.maxConcurrentSessions;
+  if (typeof limit !== 'number' || !Number.isFinite(limit)) return DEFAULT_MAX_CONCURRENT_SESSIONS;
+  return Math.min(MAX_MAX_CONCURRENT_SESSIONS, Math.max(MIN_MAX_CONCURRENT_SESSIONS, Math.floor(limit)));
 }
 
 /** The idle window a token carries, else the default. */
@@ -120,43 +148,95 @@ export function sessionLifetimeExceeded(claims: unknown, now: number = Date.now(
   return start !== null && now / 1000 - start > ABSOLUTE_SESSION_HOURS * 3600;
 }
 
-export function sessionEndCodeOf(reason: SessionInactivityReason): 'SESSION_IDLE' | 'SESSION_LIFETIME' {
-  return reason === 'idle' ? 'SESSION_IDLE' : 'SESSION_LIFETIME';
+export function sessionEndCodeOf(reason: SessionInactivityReason): 'SESSION_IDLE' | 'SESSION_LIFETIME' | 'SESSION_SUPERSEDED' {
+  if (reason === 'idle') return 'SESSION_IDLE';
+  return reason === 'lifetime' ? 'SESSION_LIFETIME' : 'SESSION_SUPERSEDED';
 }
 
 export function sessionEndMessageOf(reason: SessionInactivityReason): string {
-  return reason === 'idle' ? SESSION_IDLE_MESSAGE : SESSION_LIFETIME_MESSAGE;
+  if (reason === 'idle') return SESSION_IDLE_MESSAGE;
+  return reason === 'lifetime' ? SESSION_LIFETIME_MESSAGE : SESSION_SUPERSEDED_MESSAGE;
 }
 
-// ── Activity store: Redis, then memory ──────────────────────────────────────
+/** The session id a token carries, else null. */
+function sidOf(claims: SessionClaimLike): string | null {
+  return typeof claims.sid === 'string' && claims.sid ? claims.sid : null;
+}
+
+/** The account a token names, as the registry keys it, else null. */
+function accountKeyOf(claims: SessionClaimLike): string | null {
+  const id = claims.userId ?? claims.sub;
+  return typeof id === 'string' || typeof id === 'number' ? String(id) : null;
+}
+
+// ── Activity store and session registry: Redis, then memory ─────────────────
 
 const memoryLastSeen = new Map<string, number>();
+/** account → session id → session start (ms). */
+const memoryUserSessions = new Map<string, Map<string, number>>();
+/** superseded session id → the marker's expiry (ms). */
+const memorySuperseded = new Map<string, number>();
 
-async function getRedis() {
+interface RedisLike {
+  get(key: string): Promise<string | null>;
+  mget(...keys: string[]): Promise<(string | null)[]>;
+  set(key: string, value: string, mode: 'EX', seconds: number): Promise<unknown>;
+  del(...keys: string[]): Promise<unknown>;
+  zadd(key: string, score: string, member: string): Promise<unknown>;
+  zcard(key: string): Promise<number>;
+  zrange(key: string, start: number, stop: number): Promise<string[]>;
+  zrem(key: string, ...members: string[]): Promise<unknown>;
+  zremrangebyscore(key: string, min: string, max: string): Promise<unknown>;
+  expire(key: string, seconds: number): Promise<unknown>;
+}
+
+async function getRedis(): Promise<RedisLike | null> {
   try {
     const { getRedisClient, isRedisAvailable } = await import('./ai-actions/redis-manager.js');
-    return isRedisAvailable() ? getRedisClient() : null;
+    return isRedisAvailable() ? (getRedisClient() as unknown as RedisLike | null) : null;
   } catch {
     return null;
   }
 }
 
-async function readLastSeen(key: string): Promise<number | null> {
+function memorySupersededHas(sid: string, now: number): boolean {
+  const expires = memorySuperseded.get(sid);
+  if (expires === undefined) return false;
+  if (expires > now) return true;
+  memorySuperseded.delete(sid);
+  return false;
+}
+
+interface SessionState {
+  lastSeen: number | null;
+  superseded: boolean;
+}
+
+/**
+ * The session's last recorded activity and whether a later sign-in superseded
+ * it: one Redis round trip, the memory tier when Redis is away or fails. The
+ * memory tier's superseded marker counts either way, so a task that ended the
+ * session refuses it whatever Redis says.
+ */
+async function readSessionState(key: string, sid: string | null, now: number): Promise<SessionState> {
+  const state: SessionState = { lastSeen: memoryLastSeen.get(key) ?? null, superseded: sid !== null && memorySupersededHas(sid, now) };
   const redis = await getRedis();
-  if (redis) {
-    try {
-      const raw = await redis.get(REDIS_KEY_PREFIX + key);
-      if (raw !== null) {
-        const seen = Number(raw);
-        if (Number.isFinite(seen)) return seen;
-      }
-    } catch (err) {
-      log.warn('Session activity could not be read from Redis; memory tier consulted', {
-        error: err instanceof Error ? err.message : String(err),
-      });
+  if (!redis) return state;
+  try {
+    const [seenRaw, supersededRaw] = sid
+      ? await redis.mget(REDIS_KEY_PREFIX + key, SUPERSEDED_KEY_PREFIX + sid)
+      : [await redis.get(REDIS_KEY_PREFIX + key), null];
+    if (seenRaw !== null) {
+      const seen = Number(seenRaw);
+      if (Number.isFinite(seen)) state.lastSeen = seen;
     }
+    if (supersededRaw !== null) state.superseded = true;
+  } catch (err) {
+    log.warn('Session state could not be read from Redis; memory tier consulted', {
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
-  return memoryLastSeen.get(key) ?? null;
+  return state;
 }
 
 async function recordActivity(key: string, now: number, idleSeconds: number): Promise<void> {
@@ -177,6 +257,115 @@ async function recordActivity(key: string, now: number, idleSeconds: number): Pr
   }
 }
 
+function capMap<V>(map: Map<string, V>): void {
+  if (map.size <= MEMORY_CAP) return;
+  const oldest = map.keys().next().value;
+  if (oldest !== undefined) map.delete(oldest);
+}
+
+/** Register in memory; returns the sessions the limit ends, oldest first, never the one registered. */
+function memoryRegister(account: string, sid: string, startedMs: number, limit: number, now: number): string[] {
+  let sessions = memoryUserSessions.get(account);
+  if (!sessions) {
+    sessions = new Map();
+    memoryUserSessions.set(account, sessions);
+    capMap(memoryUserSessions);
+  }
+  for (const [id, started] of sessions) if (now - started > LIFETIME_MS) sessions.delete(id);
+  sessions.set(sid, startedMs);
+  const excess = sessions.size - limit;
+  if (excess <= 0) return [];
+  const evicted = [...sessions.entries()]
+    .filter(([id]) => id !== sid)
+    .sort((a, b) => a[1] - b[1])
+    .slice(0, excess)
+    .map(([id]) => id);
+  for (const id of evicted) sessions.delete(id);
+  return evicted;
+}
+
+/** The same in Redis, shared by every task; null when Redis is away or fails. */
+async function redisRegister(account: string, sid: string, startedMs: number, limit: number, now: number): Promise<string[] | null> {
+  const redis = await getRedis();
+  if (!redis) return null;
+  const key = SESSIONS_KEY_PREFIX + account;
+  try {
+    await redis.zremrangebyscore(key, '-inf', String(now - LIFETIME_MS));
+    await redis.zadd(key, String(startedMs), sid);
+    await redis.expire(key, SUPERSEDED_TTL_SECONDS);
+    const excess = (await redis.zcard(key)) - limit;
+    if (excess <= 0) return [];
+    // The oldest `excess` sessions; the one just registered is never among the ended.
+    const oldest = (await redis.zrange(key, 0, excess)).filter(id => id !== sid).slice(0, excess);
+    if (oldest.length > 0) await redis.zrem(key, ...oldest);
+    return oldest;
+  } catch (err) {
+    log.warn('Session registry could not be written to Redis; memory tier holds it', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  }
+}
+
+async function markSuperseded(sids: string[], now: number): Promise<void> {
+  for (const sid of sids) {
+    memorySuperseded.set(sid, now + SUPERSEDED_TTL_SECONDS * 1000);
+    capMap(memorySuperseded);
+  }
+  const redis = await getRedis();
+  if (!redis || sids.length === 0) return;
+  try {
+    await Promise.all(sids.map(sid => redis.set(SUPERSEDED_KEY_PREFIX + sid, '1', 'EX', SUPERSEDED_TTL_SECONDS)));
+  } catch (err) {
+    log.warn('Superseded sessions could not be marked in Redis; memory tier holds them', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
+/**
+ * Register a session against its account's concurrent-session limit. Returns
+ * the session ids the limit ended (the oldest), which are marked superseded so
+ * their next request and their refresh are refused.
+ */
+export async function registerSession(userId: string | number, claims: SessionClaims, limit: number, now: number = Date.now()): Promise<string[]> {
+  const account = String(userId);
+  const startedMs = claims.sst * 1000;
+  const fromMemory = memoryRegister(account, claims.sid, startedMs, limit, now);
+  const fromRedis = await redisRegister(account, claims.sid, startedMs, limit, now);
+  const evicted = [...new Set([...fromMemory, ...(fromRedis ?? [])])];
+  if (evicted.length > 0) {
+    await markSuperseded(evicted, now);
+    log.info('Sessions ended by a sign-in beyond the account limit', { account, limit, ended: evicted.length });
+  }
+  return evicted;
+}
+
+/** Free a session's slot: at sign-out, and when a session is found over. */
+export async function unregisterSession(userId: unknown, sid: unknown): Promise<void> {
+  if ((typeof userId !== 'string' && typeof userId !== 'number') || typeof sid !== 'string' || !sid) return;
+  const account = String(userId);
+  memoryUserSessions.get(account)?.delete(sid);
+  const redis = await getRedis();
+  if (!redis) return;
+  try {
+    await redis.zrem(SESSIONS_KEY_PREFIX + account, sid);
+  } catch (err) {
+    log.warn('Session could not be removed from the Redis registry', { error: err instanceof Error ? err.message : String(err) });
+  }
+}
+
+/**
+ * A new session at sign-in: its claims, registered against the account's
+ * limit read from the same settings as its idle window. The one door every
+ * sign-in mints through (routes/__tests__/session-open-contract.test.ts).
+ */
+export async function openSession(userId: string | number, organizationSettings?: unknown, now: number = Date.now()): Promise<SessionClaims> {
+  const claims = newSessionClaims(organizationSettings, now);
+  await registerSession(userId, claims, maxConcurrentSessionsOf(organizationSettings), now);
+  return claims;
+}
+
 export interface SessionCheckOptions {
   /** False for a check that is not the user acting (a socket's periodic re-check, a rotation). Default true. */
   activity?: boolean;
@@ -184,10 +373,16 @@ export interface SessionCheckOptions {
   now?: number;
 }
 
+/** A session found over frees its slot; the answer itself is unchanged by it. */
+function ended(reason: SessionInactivityReason, c: SessionClaimLike): SessionInactivityReason {
+  if (reason !== 'superseded') void unregisterSession(accountKeyOf(c), sidOf(c));
+  return reason;
+}
+
 /**
  * Why a signed, unexpired access token's session is over, or null. Records
  * this request as the session's activity unless `activity: false`. A session
- * found idle is not touched, so the answer does not change by being asked.
+ * found over is not touched, so the answer does not change by being asked.
  */
 export async function sessionInactivityReason(
   token: string,
@@ -195,13 +390,15 @@ export async function sessionInactivityReason(
   options: SessionCheckOptions = {},
 ): Promise<SessionInactivityReason | null> {
   const now = options.now ?? Date.now();
-  if (sessionLifetimeExceeded(claims, now)) return 'lifetime';
   const c = claimsOf(claims);
+  if (sessionLifetimeExceeded(c, now)) return ended('lifetime', c);
   const idleSeconds = idleWindowSecondsOfClaims(c);
   const key = sessionKeyOf(token, c);
+  const state = await readSessionState(key, sidOf(c), now);
+  if (state.superseded) return 'superseded';
   const issued = wholeSeconds(c.iat);
-  const lastSeen = (await readLastSeen(key)) ?? (issued !== null ? issued * 1000 : now);
-  if (now - lastSeen > idleSeconds * 1000) return 'idle';
+  const lastSeen = state.lastSeen ?? (issued !== null ? issued * 1000 : now);
+  if (now - lastSeen > idleSeconds * 1000) return ended('idle', c);
   if (options.activity !== false) await recordActivity(key, now, idleSeconds);
   return null;
 }
@@ -213,15 +410,19 @@ export async function sessionInactivityReason(
  * for its lifetime only.
  */
 export async function refreshInactivityReason(claims: unknown, now: number = Date.now()): Promise<SessionInactivityReason | null> {
-  if (sessionLifetimeExceeded(claims, now)) return 'lifetime';
   const c = claimsOf(claims);
-  if (typeof c.sid !== 'string' || !c.sid) return null;
+  if (sessionLifetimeExceeded(c, now)) return ended('lifetime', c);
+  const sid = sidOf(c);
+  if (sid === null) return null;
   const start = wholeSeconds(c.sst) ?? wholeSeconds(c.iat) ?? Math.floor(now / 1000);
-  const lastSeen = (await readLastSeen(`sid:${c.sid}`)) ?? start * 1000;
-  return now - lastSeen > idleWindowSecondsOfClaims(c) * 1000 ? 'idle' : null;
+  const state = await readSessionState(`sid:${sid}`, sid, now);
+  if (state.superseded) return 'superseded';
+  return now - (state.lastSeen ?? start * 1000) > idleWindowSecondsOfClaims(c) * 1000 ? ended('idle', c) : null;
 }
 
-/** Test seam: forget every session's activity held in memory. */
+/** Test seam: forget every session's activity, registration and marker held in memory. */
 export function resetSessionActivityForTests(): void {
   memoryLastSeen.clear();
+  memoryUserSessions.clear();
+  memorySuperseded.clear();
 }

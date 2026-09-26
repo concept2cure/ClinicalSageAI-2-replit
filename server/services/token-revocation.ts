@@ -31,6 +31,7 @@ import { verifyJwtWithRotation, type JwtVerifyOptions } from '../utils/jwtVerify
 import {
   SESSION_IDLE_MESSAGE,
   SESSION_LIFETIME_MESSAGE,
+  SESSION_SUPERSEDED_MESSAGE,
   sessionInactivityReason,
   type SessionCheckOptions,
   type SessionInactivityReason,
@@ -232,6 +233,7 @@ function sessionEndedMessage(reason: SessionEndedReason): string {
   if (reason === 'account-inactive') return ACCOUNT_INACTIVE_MESSAGE;
   if (reason === 'idle') return SESSION_IDLE_MESSAGE;
   if (reason === 'lifetime') return SESSION_LIFETIME_MESSAGE;
+  if (reason === 'superseded') return SESSION_SUPERSEDED_MESSAGE;
   return 'This session has ended. Sign in again.';
 }
 
@@ -270,8 +272,9 @@ export class SessionEndedError extends Error {
  * most needs ended kept working. The standing and the stamp are one read
  * (readAccountStanding).
  *
- * And SessionEndedError('idle' | 'lifetime') for a session idle past its window
- * or older than its lifetime (security audit 2026-09-24, IAM-06; plan P1-1):
+ * And SessionEndedError('idle' | 'lifetime' | 'superseded') for a session idle
+ * past its window, older than its lifetime, or ended by a later sign-in beyond
+ * the account's limit (security audit 2026-09-24, IAM-06; plan P1-1):
  * this verification is recorded as the session's activity unless `session`
  * says it is not the user acting (a socket's periodic re-check, a rotation).
  * The token is revoked on the way out, so every authenticator answers alike.

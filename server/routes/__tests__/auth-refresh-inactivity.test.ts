@@ -86,7 +86,7 @@ import request from 'supertest';
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import authRoutes from '../auth';
-import { resetSessionActivityForTests } from '../../services/session-inactivity';
+import { openSession, resetSessionActivityForTests } from '../../services/session-inactivity';
 import { config } from '../../config/environment';
 
 function app() {
@@ -152,5 +152,16 @@ describe('POST /api/auth/refresh — a refresh is not activity', () => {
     const r = await request(app()).post('/api/auth/refresh').send({ refreshToken: old });
     expect(r.status).toBe(401);
     expect(r.body?.error?.code).toBe('SESSION_LIFETIME');
+  });
+
+  it('mints nothing for a session ended by a later sign-in beyond the account\'s limit (401 SESSION_SUPERSEDED)', async () => {
+    const limitOne = { security: { maxConcurrentSessions: 1 } };
+    const first = await openSession('7', limitOne, T0);
+    await openSession('7', limitOne, T0 + MINUTE);
+    clock = T0 + 2 * MINUTE;
+    const r = await request(app()).post('/api/auth/refresh').send({ refreshToken: refreshTokenOf(T0, T0, { sid: first.sid }) });
+    expect(r.status, 'a session the account signed past refreshed itself').toBe(401);
+    expect(r.body?.error?.code).toBe('SESSION_SUPERSEDED');
+    expect(r.body?.accessToken).toBeUndefined();
   });
 });
