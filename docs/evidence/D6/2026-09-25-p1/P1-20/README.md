@@ -40,3 +40,9 @@ the routes require; their assertions about tenant scoping, principal attribution
   by any member; it returns the same rows. The same `requireAuditReader` applies there; the file left another lane's
   window at 01:39 UTC and is the next commit's.
 - **Audit-trail review records** (P1-25) and the export key (P1-19) are separate items.
+
+## Follow-up (same day): the ledger list route
+
+`GET /api/audit-trail/ledger` (`server/routes/audit-trail-ledger.routes.ts`, the admin console's list) reads through the
+same `requireAuditReader`; `red/ledger-before-fix.txt` (a member read it: 200) and `green/ledger-after-fix.txt` (16 / 16
+with the vault history suites; the suite's fixture is an admin unless a case says otherwise).
