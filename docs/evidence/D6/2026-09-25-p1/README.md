@@ -25,6 +25,7 @@ smallest change that closes the finding, shown passing (`green/`), committed on 
 | P1-27 (second part) | DP-26 browser Sentry events unscrubbed; DP-27 `Math.random` organisation API key | commit of 2026-09-26 | yes for both; DP-28 (`tamper_proof_log` tenant column) and the logger key list open | `P1-27/` |
 | P1-1 | IAM-06 no inactivity logoff, no session lifetime; a refresh renewed any session | three commits of 2026-09-26 | server: idle window (tenant-set, 15 min default) and 12-hour lifetime at both authenticators, the verifier and the refresh; client: idle warning, sign-out with the reason on the sign-in page; OQ-PROJ-19 written (not yet executed); the concurrent-session limit follows | `P1-1/` |
 | P1-22 | DP-20 retention sweep unscheduled, no retention date ever set, no way to place or lift a legal hold, deletion audit in a file | commit of 2026-09-26 | yes but for per-organisation policies: sweep scheduled at boot, clock at admission, legal-hold routes, each disposition one transaction with its chained row | `P1-22/` |
+| P1-13 (documents half) | INF-07 breach governance contradictory (DPA 48 h vs 72 h), no regulator timelines, no incident log, no access-review procedure, no training record | commit of 2026-09-26 | documents: IR-004 §3a matrix and the 72-hour tenant clock, `INCIDENT_LOG.md`, AC-002 §4a, `TRAINING_RECORD.md`, SIG G.4; the DPA figure (counsel), tabletop, first review and first completion are the founder's | — (policy files; no test) |
 
 ## Not reached in this tranche, and why
 
