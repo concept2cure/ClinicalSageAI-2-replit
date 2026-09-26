@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-26T03:52:47.589Z",
+  "generatedAt": "2026-09-26T04:14:33.304Z",
   "git": {
-    "sha": "031b73c01ae93f336bce057948861c23a7b7c319",
+    "sha": "1706c05b6982d7b8bca694ce946d47061d5888e7",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2150,7 +2150,7 @@
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
-        "bytes": 103012
+        "bytes": 104820
       }
     ],
     "largeFilesByLines": [
@@ -2319,12 +2319,12 @@
         "lines": 2240
       },
       {
-        "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
-        "lines": 2197
+        "file": "server/services/submission-service/submission-service.ts",
+        "lines": 2215
       },
       {
-        "file": "server/services/submission-service/submission-service.ts",
-        "lines": 2178
+        "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
+        "lines": 2197
       },
       {
         "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
@@ -2500,7 +2500,7 @@
       },
       {
         "file": "server/routes/submissions.ts",
-        "lines": 1743
+        "lines": 1750
       },
       {
         "file": "server/routes/c2c/project-vault.ts",
@@ -2555,12 +2555,12 @@
         "lines": 1602
       },
       {
-        "file": "server/services/module3-extensions.ts",
-        "lines": 1557
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+        "lines": 1561
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "lines": 1555
+        "file": "server/services/module3-extensions.ts",
+        "lines": 1557
       },
       {
         "file": "server/routes/mdx-qms.ts",

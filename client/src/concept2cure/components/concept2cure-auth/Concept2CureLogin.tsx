@@ -24,7 +24,7 @@ import {
 } from '@/services/portal/authService';
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 
-import { computeRedirect } from '../../auth/redirectUtils';
+import { computeRedirect, parseSsoHandoff } from '../../auth/redirectUtils';
 import { takeSignOutReason } from '../../../utils/sessionEnd';
 import brandIcon from '../../../assets/concept2cure-icon.svg';
 import styles from './styles.module.css';
@@ -188,6 +188,30 @@ export const Concept2CureLogin: React.FC = () => {
   useEffect(() => {
     setError(null);
   }, [email, password, mfaCode, newPassword, confirmPassword]);
+
+  // A single sign-on hand-off arrives in the URL fragment, never the query
+  // string (IAM-18 item 6). It is dropped from the address bar before anything
+  // else and adopted only when the server confirms the session; a second run
+  // of this effect finds no fragment and does nothing.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handoff = parseSsoHandoff(window.location.hash);
+    if (!handoff) return;
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+    setIsLoading(true);
+    void authService
+      .adoptSession(handoff.token, true)
+      .then(user => {
+        if (!user) {
+          setError({ message: t('error.signInFailed') });
+          return;
+        }
+        setView('success');
+        setSuccessMessage(t('success.signedIn'));
+        setLocation(computeRedirect(handoff.returnTo ? `?returnTo=${encodeURIComponent(handoff.returnTo)}` : '', user));
+      })
+      .finally(() => setIsLoading(false));
+  }, [setLocation, t]);
 
   const validateEmail = useCallback((v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), []);
 

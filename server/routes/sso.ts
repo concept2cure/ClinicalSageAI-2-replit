@@ -98,6 +98,19 @@ function encodeRelayState(state: { org: string; returnTo?: string }): string {
   return Buffer.from(JSON.stringify(state), 'utf-8').toString('base64url');
 }
 
+/**
+ * The sign-in page's SSO hand-off. The session travels in the URL fragment,
+ * which the browser never sends to a server and no access log, proxy or
+ * referrer records; the page reads it once and drops it from the address bar
+ * (security audit 2026-09-24, IAM-18 item 6). A query string was the carrier
+ * before, and no page read it.
+ */
+function loginHandoffUrl(token: string, extra: { provider: string; returnTo?: string }): string {
+  const params = new URLSearchParams({ sso: token, provider: extra.provider });
+  if (extra.returnTo) params.set('returnTo', extra.returnTo);
+  return `/concept2cure/login#${params.toString()}`;
+}
+
 function decodeRelayState(relayState: unknown): { org: string; returnTo?: string } {
   if (typeof relayState !== 'string' || relayState.length === 0) {
     return { org: DEFAULT_SAML_ORG_SLUG };
@@ -473,15 +486,14 @@ router.post('/saml/callback', async (req: Request, res: Response) => {
 
     logger.info(`SAML SSO login successful for user=${dbUser.email}, org=${organizationId}`);
 
-    // Redirect to a SAME-ORIGIN return path with the token, when one was
-    // requested. RelayState round-trips through the IdP unauthenticated, so the
-    // return path is re-validated here as same-origin; an attacker-supplied
-    // absolute URL is rejected (would otherwise leak the token cross-origin).
+    // Hand the session to the sign-in page in the URL fragment, with the
+    // SAME-ORIGIN return path when one was requested. RelayState round-trips
+    // through the IdP unauthenticated, so the return path is re-validated here
+    // as same-origin; an attacker-supplied absolute URL is rejected (would
+    // otherwise send the person, and the token, cross-origin).
     const safeReturnTo = sanitizeReturnTo(returnTo);
     if (safeReturnTo) {
-      const params = new URLSearchParams({ token });
-      const sep = safeReturnTo.includes('?') ? '&' : '?';
-      return res.redirect(302, `${safeReturnTo}${sep}${params.toString()}`);
+      return res.redirect(302, loginHandoffUrl(token, { provider: 'saml', returnTo: safeReturnTo }));
     }
 
     // Otherwise return JSON response
@@ -784,15 +796,9 @@ router.get('/:provider/callback', (req: Request, res: Response) => {
       { expiresIn: '24h' }
     );
 
-    // Redirect to frontend SSO handler page with token in URL fragment (not query string for security)
-    const redirectUrl = `/concept2cure/login?sso_provider=${encodeURIComponent(
-      provider as string
-    )}&sso_token=${encodeURIComponent(token)}&sso_email=${encodeURIComponent(
-      'sso-user@example.com'
-    )}&sso_name=${encodeURIComponent('SSO User')}&sso_org_id=2&sso_org_name=${encodeURIComponent(
-      'Concept2Cure'
-    )}`;
-    return res.redirect(302, redirectUrl);
+    // The sign-in page adopts the session from the fragment and reads the
+    // account from GET /session; nothing about the person travels in the URL.
+    return res.redirect(302, loginHandoffUrl(token, { provider: String(provider) }));
   }
 
   res.status(501).json({ success: false, error: 'SSO_NOT_IMPLEMENTED' });
