@@ -1,0 +1,41 @@
+add_biological_agent	server/services/ana/AnaToolExecutor.ts:10492	gov:recordGovernedAction, verb:recordGovernedAction
+add_effort_line	server/services/ana/AnaToolExecutor.ts:13224	gov:recordGovernedAction, verb:recordGovernedAction
+add_labeling_symbol	server/services/ana/AnaToolExecutor.ts:14204	sql:INSERT INTO
+add_protocol_risk	server/services/ana/AnaToolExecutor.ts:11399	gov:recordGovernedAction, verb:recordGovernedAction
+apply_fact_change	server/services/ana/AnaToolExecutor.ts:5964	verb:applyFactChange
+assign_protocol_reviewer	server/services/ana/AnaToolExecutor.ts:10952	verb:assignReviewerTx
+categorize_clia_complexity	server/services/ana/AnaToolExecutor.ts:8444	sql:INSERT INTO
+commit_document_revision	server/services/ana/document-spine.ts:414	verb:commitCanonicalRevision
+create_biosketch	server/services/ana/AnaToolExecutor.ts:11148	verb:createBiosketchTx
+create_coi_disclosure	server/services/ana/AnaToolExecutor.ts:13259	gov:recordGovernedAction, verb:createDisclosureTx, verb:recordGovernedAction
+create_dms_plan	server/services/ana/AnaToolExecutor.ts:11040	verb:createPlanTx
+create_grant_proposal	server/services/ana/AnaToolExecutor.ts:12047	gov:recordGovernedAction, verb:createProposalTx, verb:recordGovernedAction
+create_inspection	server/services/ana/AnaToolExecutor.ts:12788	gov:recordGovernedAction, verb:createInspectionTx, verb:recordGovernedAction
+create_lifecycle_obligation	server/services/ana/AnaToolExecutor.ts:12968	gov:recordGovernedAction, verb:createObligationTx, verb:recordGovernedAction
+create_per_document	server/services/ana/AnaToolExecutor.ts:8395	sql:INSERT INTO
+create_q_sub	server/services/ana/AnaToolExecutor.ts:7691	verb:createQSubmission
+create_rim_product	server/services/ana/AnaToolExecutor.ts:12696	gov:recordGovernedAction, verb:createProductTx, verb:recordGovernedAction
+create_udi_record	server/services/ana/AnaToolExecutor.ts:7907	sql:INSERT INTO
+find_grant_opportunities	server/services/ana/AnaToolExecutor.ts:11713	gov:recordGovernedAction
+generate_schedule_of_events	server/services/ana/AnaToolExecutor.ts:2351	verb:scheduleToolContext
+list_report_definitions	server/services/ana/AnaToolExecutor.ts:20316	gov:recordGovernedAction
+log_study_ae	server/services/ana/AnaToolExecutor.ts:13414	sql:INSERT INTO
+override_import_mapping	server/services/ana/AnaToolExecutor.ts:14375	sql:UPDATE import_job_files SET
+qms_change_link	server/services/ana/AnaToolExecutor.ts:13881	verb:recordAuditRow
+record_cost_share_contribution	server/services/ana/AnaToolExecutor.ts:12395	gov:recordGovernedAction, verb:recordCostShareContributionTx, verb:recordGovernedAction
+record_grant_opportunity	server/services/ana/AnaToolExecutor.ts:12482	gov:recordGovernedAction, verb:createOpportunityTx, verb:recordGovernedAction
+record_validation_finding	server/services/ana/AnaToolExecutor.ts:8779	sql:INSERT INTO
+register_ldt	server/services/ana/AnaToolExecutor.ts:8530	sql:INSERT INTO
+request_no_cost_extension	server/services/ana/AnaToolExecutor.ts:12448	gov:recordGovernedAction, verb:recordGovernedAction
+review_commitment_portfolio	server/services/ana/AnaToolExecutor.ts:10215	gov:recordGovernedAction
+review_iacuc_protocol	server/services/ana/AnaToolExecutor.ts:10317	gov:recordGovernedAction
+review_label_currency	server/services/ana/AnaToolExecutor.ts:12765	gov:recordGovernedAction
+revise_qms_document	server/services/ana/AnaToolExecutor.ts:13653	gov:recordGovernedAction, sql:UPDATE qms_documents SET, verb:recordGovernedAction
+save_document_as_template	server/services/ana/AnaToolExecutor.ts:10732	verb:saveDocumentAsTemplateTx
+screen_subaward	server/services/ana/AnaToolExecutor.ts:12268	gov:recordGovernedAction, verb:recordGovernedAction
+set_grant_milestone_status	server/services/ana/AnaToolExecutor.ts:12136	gov:recordGovernedAction, verb:recordGovernedAction
+submit_invention_disclosure	server/services/ana/AnaToolExecutor.ts:11248	verb:submitDisclosureTx
+update_consent_element	server/services/ana/AnaToolExecutor.ts:11010	verb:updateElementTx
+update_invention_disclosure	server/services/ana/AnaToolExecutor.ts:11215	verb:updateDisclosureTx
+update_research_agreement	server/services/ana/AnaToolExecutor.ts:11354	verb:updateAgreementTx
+write_kit_section	server/services/ana/AnaToolExecutor.ts:14526	verb:writeKitSectionTx

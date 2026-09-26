@@ -2053,30 +2053,112 @@ router.post('/studies/:id/results', async (req, res) => {
   }
 });
 
+/**
+ * The tenant's own result, locked for update inside the caller's transaction,
+ * or null. The predicate is stab_results.tenant_id, the integer the
+ * tenant-isolation migration keeps on every stab_* row; RLS is the second
+ * line, not the first. Audit finding IAM-11 (plan P1-8): PATCH and DELETE
+ * below wrote by result_id alone, answered ok whether or not a row existed,
+ * and recorded nothing, while result_add and result_review beside them audit.
+ */
+type StabResultRow = { result_id: string; study_id: string; value: string | null; unit: string | null; pass: boolean | null; remarks: string | null };
+async function ownResultForUpdate(client: PoolClient, resultId: string, tenantId: number): Promise<StabResultRow | null> {
+  const { rows } = await client.query<StabResultRow>(
+    `select result_id, study_id, value, unit, pass, remarks from stab_results where result_id=$1 and tenant_id=$2 for update`,
+    [resultId, tenantId]
+  );
+  return rows[0] ?? null;
+}
+
+/** The request's tenant as the integer the stab_* rows carry, or null. */
+function requestTenantId(req: any): number | null {
+  const raw = getTenantScope()?.tenantId ?? req.tenantId ?? req.tenantContext?.organizationId;
+  const n = parseInt(String(raw ?? ''), 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/** The fields a result change names, and nothing it does not. */
+function resultChangesOf(b: any): Partial<Pick<StabResultRow, 'value' | 'unit' | 'pass' | 'remarks'>> {
+  const out: Partial<Pick<StabResultRow, 'value' | 'unit' | 'pass' | 'remarks'>> = {};
+  if (b.value !== undefined) out.value = b.value;
+  if (b.unit !== undefined) out.unit = b.unit;
+  if (b.pass !== undefined) out.pass = b.pass;
+  if (b.remarks !== undefined) out.remarks = b.remarks;
+  return out;
+}
+
 // PATCH /api/stability/results/:resultId  { value?, unit?, pass?, remarks? }
+// One transaction: the tenant's own row read for update, the change, and the
+// audit record carrying the previous values (21 CFR 11.10(e)).
 router.patch('/results/:resultId', async (req, res) => {
+  const rid = String(req.params.resultId);
+  if (!auditActor(req)) return res.status(401).json({ error: 'Actor identity required' });
+  const tenantId = requestTenantId(req);
+  if (!tenantId) return res.status(401).json({ error: 'Tenant context required' });
+  const changes = resultChangesOf(req.body || {});
+  const client = await pool.connect();
   try {
-    const rid = req.params.resultId;
-    const b = req.body || {};
-    await pool.query(
-      `update stab_results set value=coalesce($2,value), unit=coalesce($3,unit), pass=coalesce($4,pass), remarks=coalesce($5,remarks) where result_id=$1`,
-      [rid, b.value || null, b.unit || null, b.pass ?? null, b.remarks || null]
+    await client.query('BEGIN');
+    const previous = await ownResultForUpdate(client, rid, tenantId);
+    if (!previous) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Result not found' });
+    }
+    await client.query(
+      `update stab_results set value=coalesce($3,value), unit=coalesce($4,unit), pass=coalesce($5,pass), remarks=coalesce($6,remarks)
+        where result_id=$1 and tenant_id=$2`,
+      [rid, tenantId, changes.value ?? null, changes.unit ?? null, changes.pass ?? null, changes.remarks ?? null]
     );
+    await audit(
+      previous.study_id,
+      'result_update',
+      { resultId: rid, previous: { value: previous.value, unit: previous.unit, pass: previous.pass, remarks: previous.remarks }, changes },
+      req,
+      client
+    );
+    await client.query('COMMIT');
     res.json({ ok: true });
   } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
     console.error('Error updating result:', error);
     res.status(500).json({ error: 'Failed to update result' });
+  } finally {
+    client.release();
   }
 });
 
 // DELETE /api/stability/results/:resultId
+// One transaction: the tenant's own row read for update, the deletion, and the
+// audit record of what was deleted.
 router.delete('/results/:resultId', async (req, res) => {
+  const rid = String(req.params.resultId);
+  if (!auditActor(req)) return res.status(401).json({ error: 'Actor identity required' });
+  const tenantId = requestTenantId(req);
+  if (!tenantId) return res.status(401).json({ error: 'Tenant context required' });
+  const client = await pool.connect();
   try {
-    await pool.query(`delete from stab_results where result_id=$1`, [req.params.resultId]);
+    await client.query('BEGIN');
+    const previous = await ownResultForUpdate(client, rid, tenantId);
+    if (!previous) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Result not found' });
+    }
+    await client.query(`delete from stab_results where result_id=$1 and tenant_id=$2`, [rid, tenantId]);
+    await audit(
+      previous.study_id,
+      'result_delete',
+      { resultId: rid, previous: { value: previous.value, unit: previous.unit, pass: previous.pass, remarks: previous.remarks } },
+      req,
+      client
+    );
+    await client.query('COMMIT');
     res.json({ ok: true });
   } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
     console.error('Error deleting result:', error);
     res.status(500).json({ error: 'Failed to delete result' });
+  } finally {
+    client.release();
   }
 });
 

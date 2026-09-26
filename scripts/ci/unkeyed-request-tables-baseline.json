@@ -1,7 +1,7 @@
 {
   "$comment": "Tables a per-request server path reads that carry NO tenant column, so no RLS sweep in this repository can policy them. Each entry needs a reason whose first word is one of: global | derived | exempt | unreviewed. \"unreviewed\" is a DEFECT awaiting triage, not a category — three cross-tenant disclosures on 2026-09-10 were all tables that would have sat here as \"unreviewed\". Shrink this file; never grow it. See docs/work-orders/WO-13-grdhe-tenant-scoping.md.",
   "generatedAt": "2026-09-19T02:40:04.942Z",
-  "total": 110,
+  "total": 113,
   "entries": {
     "adversarial.regulatory_adversarial_precedents": "unreviewed — no one has classified this table yet",
     "ai_claim_citations": "unreviewed — no one has classified this table yet",
@@ -49,6 +49,7 @@
     "conversation_os_tool_manifests": "unreviewed — no one has classified this table yet",
     "ctd_nonclinical_studies": "unreviewed — no one has classified this table yet",
     "document_audit_logs": "unreviewed — no one has classified this table yet",
+    "drafting_tasks": "derived — a drafting task (migrations/0008_ga_hardening.sql, applied by install-fresh only). Keyed through its program: project_id text names a regulatory_programs row, and regulatory_programs.organization_id integer NOT NULL is the tenant; there is no foreign key, so the join is the only link. Both per-request paths, POST /api/v1/drafting/start_task and GET /api/v1/drafting/task_status/:task_id in server/routes/misc-inline-routes.ts (83849bfdd, P1-8 / IAM-11), take the organisation from getSecureOrgId(req) (401 when absent): the write first reads the program with organization_id = $2 (404 otherwise), and the read joins regulatory_programs p ON p.id::text = t.project_id with p.organization_id = $2. No RLS policy covers the table, so isolation rests on those predicates. The table became visible to this gate when the handlers moved from drizzle to SQL, not when it gained a reader. Follow-up: an organization_id column needs a new applier migration (0008 is not replayed on deploy) and belongs to the P1-8 lane. Classified 2026-09-26.",
     "ectd.module_structure": "unreviewed — no one has classified this table yet",
     "ectd.project_folders": "unreviewed — no one has classified this table yet",
     "embedding_audit_log": "unreviewed — no one has classified this table yet",
@@ -72,17 +73,17 @@
     "knowledge_graph_edges": "unreviewed — no one has classified this table yet",
     "knowledge_graph_nodes": "unreviewed — no one has classified this table yet",
     "license_agreements": "unreviewed — no one has classified this table yet",
-    "lumen_atom_citations": "unreviewed — no one has classified this table yet",
-    "lumen_atom_conflicts": "unreviewed — no one has classified this table yet",
-    "lumen_atom_quality_scores": "unreviewed — no one has classified this table yet",
-    "lumen_atom_versions": "unreviewed — no one has classified this table yet",
-    "lumen_knowledge_graph_edges": "unreviewed — no one has classified this table yet",
     "lumen.agent_executions": "unreviewed — no one has classified this table yet",
     "lumen.agent_registry": "unreviewed — no one has classified this table yet",
     "lumen.council_sessions": "unreviewed — no one has classified this table yet",
     "lumen.data_atoms": "unreviewed — no one has classified this table yet",
     "lumen.data_bindings": "unreviewed — no one has classified this table yet",
     "lumen.data_verifications": "unreviewed — no one has classified this table yet",
+    "lumen_atom_citations": "unreviewed — no one has classified this table yet",
+    "lumen_atom_conflicts": "unreviewed — no one has classified this table yet",
+    "lumen_atom_quality_scores": "unreviewed — no one has classified this table yet",
+    "lumen_atom_versions": "unreviewed — no one has classified this table yet",
+    "lumen_knowledge_graph_edges": "unreviewed — no one has classified this table yet",
     "maud_algorithms": "unreviewed — no one has classified this table yet",
     "mcp_oauth_clients": "global — the RFC 7591 dynamic client registry of the MCP connector's OAuth 2.1 authorization server (migrations/20260920_mcp_oauth.sql, whose Notes record the decision). Registration happens BEFORE any user authenticates, so there is no tenant to bind a row to; a row holds only the client's own metadata (client_id, redirect URIs, display name, optional client_secret) and nothing about any organisation. Read only by getClient() in server/mcp/auth/store.ts, by client_id, under runWithPreAuthScope — a tenant policy would hide every client from that pre-auth lookup. Tenant binding lives on the grant: mcp_oauth_authorization_codes and mcp_oauth_refresh_tokens carry organization_id INTEGER NOT NULL and a membership_id FK to organization_users, and are swept. Classified 2026-09-23.",
     "pdev_program_activities": "unreviewed — no one has classified this table yet",
@@ -112,6 +113,8 @@
     "submission_projects": "unreviewed — no one has classified this table yet",
     "submission_tasks": "unreviewed — no one has classified this table yet",
     "templates": "unreviewed — no one has classified this table yet",
+    "vault.document_archives": "derived — an archive snapshot of one vault document, keyed by original_document_id and program_id, both of tenant-keyed rows; written only by the scheduled retention sweep under the system scope (server/jobs/retentionCron.ts), read by no request path. Follow-up (P1-22): an organization_id column by amending migrations/20260608_vault_retention.sql in place (Rule 1), then a policy, once the migration window opens.",
+    "vault.retention_policies": "global — platform-wide retention policies keyed by policy_name, read at vault admission to set retention_until (server/services/vault/vault-ingest.service.ts); no tenant data. Per-organisation policies are the P1-22 residual and would add the tenant key with them.",
     "vigilance_events": "unreviewed — no one has classified this table yet"
   }
 }

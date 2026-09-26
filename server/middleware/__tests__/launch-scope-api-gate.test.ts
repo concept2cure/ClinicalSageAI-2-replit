@@ -139,6 +139,29 @@ describe('the real registry, launch scope on', () => {
     }
   });
 
+  /* `gateway-transmittals` claimed all of /api/mdx from 2026-07-21 (its own
+     note says its routes are /api/mdx/gateways), so every device-kit API
+     answered as launch: risk items, clinical studies, IVD, labeling. Found by
+     the AnA tool measurement (2026-09-26); the device kit is outside the launch
+     catalog. */
+  it('refuses the device kit under /api/mdx, and passes the launch apps that live there', async () => {
+    for (const p of ['/api/mdx/risk-items/1', '/api/mdx/clinical-studies', '/api/mdx/labeling/documents', '/api/mdx/rbm-kris']) {
+      expect(await refused(p), p).toBe(true);
+    }
+    for (const p of [
+      '/api/mdx/gateways/transmittals',
+      '/api/mdx/vault',
+      '/api/mdx/vault/7/versions',
+      '/api/mdx/qms/documents',
+      '/api/mdx/admin/users',
+      '/api/mdx/industry-profile',
+      '/api/mdx/notifications/unread-count',
+      '/api/mdx/ana/memory',
+    ]) {
+      expect(await refused(p), p).toBe(false);
+    }
+  });
+
   it('refuses a surface outside the catalog, and leaves the public API and webhooks alone', async () => {
     expect(await refused('/api/pharmacovigilance/cases')).toBe(true);
     expect(await refused('/api/v1/documents')).toBe(false);
@@ -149,9 +172,9 @@ describe('the real registry, launch scope on', () => {
 /* Stage 2b. A path no surface, platform or infrastructure entry claims is outside
    the launch scope as registered. Refusing it outright could refuse a caller
    static analysis cannot see (a computed path, a server-to-server call), so it is
-   REPORTED by default — the would-refuse lands in the enforcement report Master
-   Admin → Licensing → Enforcement already reads — and refused only when an
-   operator sets LAUNCH_SCOPE_API_UNATTRIBUTED=enforce after reading that report. */
+   REPORTED in report mode — the would-refuse lands in the enforcement report
+   Master Admin → Licensing → Enforcement already reads — and refused in enforce
+   mode, production's default since stage 3 (2026-09-26). */
 describe('unattributed paths (stage 2b)', async () => {
   const { enforcementReport, clearObservations } = await import('../../services/entitlements/enforcement-observations');
   const snapshotObservations = () => enforcementReport('report').observations;
@@ -203,13 +226,24 @@ describe('unattributed paths (stage 2b)', async () => {
     expect(snapshotObservations()[0]).toMatchObject({ organizationId: 0 });
   });
 
-  it('production with LAUNCH_SCOPE_API_UNATTRIBUTED unset reports; an unknown value refuses to boot', async () => {
+  it('production with LAUNCH_SCOPE_API_UNATTRIBUTED unset ENFORCES (stage 3); report is an explicit choice; an unknown value refuses to boot', async () => {
     vi.stubEnv('NODE_ENV', 'production');
     vi.stubEnv('LAUNCH_SCOPE_ENFORCE', '');
     vi.stubEnv('LAUNCH_SCOPE_API_UNATTRIBUTED', '');
+    const unset = await run(moduleEntitlementGate(buildPrefixMap(SURFACES)), '/api/legacy-namespace/x');
+    expect(unset.passed).toBe(false);
+    expect(unset.res.statusCode).toBe(403);
+    vi.stubEnv('LAUNCH_SCOPE_API_UNATTRIBUTED', 'report');
     expect((await run(moduleEntitlementGate(buildPrefixMap(SURFACES)), '/api/legacy-namespace/x')).passed).toBe(true);
     vi.stubEnv('LAUNCH_SCOPE_API_UNATTRIBUTED', 'strict');
     expect(() => moduleEntitlementGate(buildPrefixMap(SURFACES))).toThrow(/LAUNCH_SCOPE_API_UNATTRIBUTED/);
+  });
+
+  it('outside production, unset still only reports (a development server serves everything)', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('LAUNCH_SCOPE_API_UNATTRIBUTED', '');
+    const gate = moduleEntitlementGate(buildPrefixMap(SURFACES), { launchScope: 'on' });
+    expect((await run(gate, '/api/legacy-namespace/x')).passed).toBe(true);
   });
 });
 

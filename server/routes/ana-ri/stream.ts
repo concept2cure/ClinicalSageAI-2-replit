@@ -164,10 +164,11 @@ import {
   type RunHandle,
 } from '../../services/ana/run-control.js';
 import { MAX_PAUSE_MS, type HumanControlEvent } from '../../services/ana/run-status.js';
-import { classifyToolCall } from '../../services/ana/governed-tool-gate.js';
+import { classifyToolCall, CONFIRM_TIER_TOOLS } from '../../services/ana/governed-tool-gate.js';
 import { buildHumanConfirmationRequiredResult } from '../../services/ana-ri/part11-governance.js';
 import {
   describeServerToolStep,
+  serverToolEvidence,
   summariseServerToolResult,
 } from '../../services/ana/server-tool-steps.js';
 import type { GatewayServerToolUse } from '../../services/ai-gateway/types.js';
@@ -184,6 +185,25 @@ const dbPool = {
 };
 
 /** Register POST /stream on the given router. */
+/**
+ * For a tool that writes on its own handler (CONFIRM_TIER_TOOLS), the context
+ * the loop would have run it with — recorded on the held run so the
+ * governed-action route runs the tool from it, never from the browser's body.
+ * Undefined for anything else, which JSON drops from the row.
+ */
+function heldToolContext(
+  toolName: string,
+  projectId: unknown,
+  servingModel: { provider?: string | null; model?: string | null } | null | undefined,
+) {
+  if (!CONFIRM_TIER_TOOLS.has(toolName)) return undefined;
+  return {
+    projectId: projectId ? Number(projectId) || null : null,
+    projectRef: projectId ? String(projectId) : null,
+    servingModel: servingModel ?? null,
+  };
+}
+
 export function mountStreamRoute(router: Router): void {
   router.post('/stream', async (req: Request, res: Response) => {
     // Opaque id for this run, emitted to the client as `run_started` so it can
@@ -1279,6 +1299,16 @@ export function mountStreamRoute(router: Router): void {
       // Raw tool output this turn — the evidence corpus the final answer is
       // verified against in the self-verification round (see answer-grounding.ts).
       const toolEvidenceCorpus: string[] = [];
+      // Hosted web steps (Anthropic ran them inside a model call) are evidence
+      // too: their sources and fetched text join the corpus the answer is
+      // grounded against, so a citation taken from one can be credited.
+      const recordServerToolEvidence = (response: unknown): void => {
+        const steps = (response as AnaGatewayResponse | undefined)?.serverToolUses ?? [];
+        for (const step of steps) {
+          const evidence = serverToolEvidence(step);
+          if (evidence) toolEvidenceCorpus.push(evidence);
+        }
+      };
       // Provenance envelopes emitted by evidence tools this turn — persisted to the
       // durable lineage trail (data_lineage_records) by post-processing. Capped so a
       // pathological multi-round turn can't accumulate unbounded records.
@@ -1486,6 +1516,7 @@ export function mountStreamRoute(router: Router): void {
       recordCacheUsage(gwResponse);
       // The first model call is round 1's call; its server tools ran inside it.
       emitServerToolSteps(gwResponse, 1);
+      recordServerToolEvidence(gwResponse);
       streamGatewayMs = Date.now() - streamGatewayStart;
 
       // Multi-round agentic tool execution via the orchestrator
@@ -1621,6 +1652,7 @@ export function mountStreamRoute(router: Router): void {
             rationale: typeof (verdict.params as any)?.reason === 'string'
               ? String((verdict.params as any).reason)
               : undefined,
+            toolContext: heldToolContext(toolUse.name, streamProjectId, lastServedModel),
           }).catch(() => false);
           if (!opened) {
             return refused(
@@ -2312,6 +2344,7 @@ export function mountStreamRoute(router: Router): void {
           }
           recordCacheUsage(roundResponse);
           emitServerToolSteps(roundResponse, round);
+          recordServerToolEvidence(roundResponse);
           lastServedModel = servedModelOf(roundResponse);
           recordServed(round, lastServedModel);
           const nextUses = (roundResponse as AnaGatewayResponse).toolUses;

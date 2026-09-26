@@ -525,12 +525,6 @@ export const C2C_MIGRATION_FILES = [
      idempotent. */
   'db/migrations/20260224_ai_claims_verifier_flags.sql',
 
-  /* source_type / source_atom_id / source_retrieval_chunk_id on
-     ivdr_binder_evidence — the IVDR pack manifest SELECTs all three and
-     ai-claims-routes INSERTs source_type, so attaching evidence to a claim and
-     building the manifest both raised 42703. Same pair of 2026-02-24/25 files
-     that fell off the applier together; same measurement. */
-  'db/migrations/20260224_binder_evidence_source_types.sql',
   'db/migrations/20260730_cmc_projects_reconstruction.sql',
   'db/migrations/20260730_manufacturing_processes_reconstruction.sql',
   'db/migrations/20260730_fk_delete_policies_port.sql',
@@ -658,6 +652,18 @@ export const C2C_MIGRATION_FILES = [
   'db/migrations/20260206_phase5_evidence_fabric.sql',
   'db/migrations/20260207_phase6_6_predicate_intelligence.sql',
   'db/migrations/20260223_ivdr_binder_packs.sql',
+
+  /* source_type / source_atom_id / source_retrieval_chunk_id on
+     ivdr_binder_evidence — the IVDR pack manifest SELECTs all three and
+     ai-claims-routes INSERTs source_type, so attaching evidence to a claim and
+     building the manifest both raised 42703. Same pair of 2026-02-24/25 files
+     that fell off the applier together; same measurement.
+     Moved here, directly after its creator, 2026-09-26 (W2 / D1): it stood 25
+     entries earlier, so on a database the set was building for the first time
+     its to_regclass guard found no table and skipped, and the columns, CHECK and
+     indexes arrived only on the SECOND deploy. ci:replay-rebuilds-nothing
+     measured it (5 objects created by a replay). */
+  'db/migrations/20260224_binder_evidence_source_types.sql',
 
   /* The artifact hashes, sizes and warnings ivdr-pack-worker writes in its
      final promotion step (`UPDATE ivdr_packs SET … manifest_sha256 … zip_sha256,
@@ -2616,6 +2622,18 @@ export const C2C_MIGRATION_FILES = [
   // policy made one route answer success while writing nothing.
   // Evidence docs/evidence/D3/2026-09-26-organizations-writes/.
   'migrations/20260926_organizations_own_writes.sql',
+
+  // ── public.organization_users: own-org-or-platform writes (D3) ────────────
+  // Memberships decide tenancy (authMiddleware admits a token on one row) and
+  // "platform staff" is a role on that row. No RLS, runtime role may write it:
+  // a member's scope placed its user in another tenant and minted super_admin
+  // in its own. Stays on RLS_ALLOWLIST (reads stay unscoped: the pre-auth
+  // membership check, a user's organization list); writes are own-org or
+  // platform, and a staff role is minted by the platform scope only (trigger).
+  // Signup, persona and tenant-users' cross-org admin writes moved into the
+  // membership's own organization in the same change.
+  // Evidence docs/evidence/D3/2026-09-26-memberships/.
+  'migrations/20260926_organization_users_own_writes.sql',
 
   // ── submissions.program_id: a submission carries its project (LX-22) ─────
   // The project → submission link was guessed from product names; two projects

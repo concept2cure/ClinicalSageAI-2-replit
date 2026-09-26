@@ -1,0 +1,42 @@
+# psql on c2c_d3b (from empty), SET LOCAL ROLE app_service, RLS enforcing, a MEMBER's tenant scope; both runs rolled back.
+## BEFORE. Script:
+\set ON_ERROR_STOP 1
+BEGIN;
+INSERT INTO organizations (id, name, slug) VALUES (90397,'probe-A','probe-a-90397'),(90398,'probe-B','probe-b-90398');
+INSERT INTO users (email, name, password_hash) VALUES ('probe-a-user@example.invalid','A user','x') RETURNING id AS auser \gset
+INSERT INTO organization_users (organization_id, user_id, role) VALUES (90397, :auser, 'member');
+\echo '-- organization_users as on trunk (inside this transaction only):'
+ALTER TABLE organization_users NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE organization_users DISABLE ROW LEVEL SECURITY;
+ALTER TABLE organization_users DISABLE TRIGGER organization_users_staff_role_platform_only;
+SET LOCAL ROLE app_service;
+SELECT set_config('app.rls_enforce','on',true), set_config('app.current_tenant_id','90397',true), set_config('app.current_user_role','member',true) \g /dev/null
+\echo '-- tenant A (a member) writes its own user an ADMIN membership in tenant B:'
+INSERT INTO organization_users (organization_id, user_id, role) VALUES (90398, :auser, 'admin') RETURNING organization_id, role;
+\echo '-- and promotes itself to platform staff in its own org:'
+UPDATE organization_users SET role = 'super_admin' WHERE organization_id = 90397 AND user_id = :auser RETURNING organization_id, role;
+\echo '-- the row authMiddleware reads to accept a token for org B (server/auth.ts, membership check):'
+SELECT role FROM organization_users WHERE user_id = :auser AND organization_id = 90398;
+ROLLBACK;
+## Output:
+-- organization_users as on trunk (inside this transaction only):
+-- tenant A (a member) writes its own user an ADMIN membership in tenant B:
+organization_id|role
+90398|admin
+(1 row)
+-- and promotes itself to platform staff in its own org:
+organization_id|role
+90397|super_admin
+(1 row)
+-- the row authMiddleware reads to accept a token for org B (server/auth.ts, membership check):
+role
+admin
+(1 row)
+
+## AFTER (committed state; stops at the first refusal). Output:
+-- tenant A (a member) writes its own user an ADMIN membership in tenant B:
+psql:membership_after.sql:9: ERROR:  new row violates row-level security policy for table "organization_users"
+-- and promotes itself to platform staff in its own org:
+psql:membership_after.sql:11: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+-- the row authMiddleware reads to accept a token for org B (server/auth.ts, membership check):
+psql:membership_after.sql:13: ERROR:  current transaction is aborted, commands ignored until end of transaction block

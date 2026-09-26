@@ -120,7 +120,11 @@ const ALLOWED_COMMANDS = [
   'unclaim', 'transition-back', 'reopen', 'revoke-signature', 'reject-ai-suggestion', 'unlock',
 ];
 
-const CTX = { organizationId: 1, userId: 10, projectId: 77 };
+// humanConfirmed: the vault tools run only on a person's yes (P0-12,
+// CONFIRM_TIER_TOOLS), stamped by POST /governed-action. This file tests what
+// the handler does once it runs — its one transaction — so it dispatches as that
+// route does.
+const CTX = { organizationId: 1, userId: 10, projectId: 77, humanConfirmed: true };
 
 /**
  * Break the Part 11 audit write from INSIDE the caller's transaction. A
@@ -356,7 +360,7 @@ describe('save_document_to_vault — vault artifact + version + audit are one tr
   });
 
   it('REFUSES without a project — a vault document belonging to no project is an orphaned capture', async () => {
-    const res = await call('save_document_to_vault', INPUT, { organizationId: 1, userId: 10 });
+    const res = await call('save_document_to_vault', INPUT, { organizationId: 1, userId: 10, humanConfirmed: true });
     expect(res.error).toMatch(/needs an open project/i);
     expect((await pglite.query(`SELECT * FROM concept2cure_artifacts`)).rows).toHaveLength(0);
     expect(await auditRows()).toHaveLength(0);

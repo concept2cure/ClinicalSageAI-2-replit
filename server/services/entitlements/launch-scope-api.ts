@@ -28,11 +28,14 @@
  *                      (`PUBLIC_API_ALLOWLIST`, middleware/public-api-allowlist.ts);
  *   - `out-of-scope` — every surface claiming it is outside the launch scope;
  *   - `unmapped`     — nothing claims it.
- * `out-of-scope` is refused. `unmapped` is reported by default and refused only
- * when an operator sets LAUNCH_SCOPE_API_UNATTRIBUTED=enforce (the gate decides;
- * see its header): static analysis cannot see a computed path or a
- * server-to-server caller, so the first cost of refusing the unclaimed
- * remainder is measured, not guessed.
+ * `out-of-scope` is refused. `unmapped` is refused too in production
+ * (LAUNCH_SCOPE_API_UNATTRIBUTED, unset = enforce there; the gate decides — see
+ * its header). That default rests on a measurement: every route production
+ * mounts was listed from the running registration and classified
+ * (docs/evidence/D2-API-SCOPE/2026-09-25/, Stage 3). The callers no screen's
+ * code shows were the public paths and the `/api/user` alias, both attributed
+ * here; nothing a launch screen, a credentialed server self-call, a seed or an
+ * external system calls is left unmapped.
  *
  * The rule is only as true as the registry. `scripts/ci/check-launch-scope-api.ts`
  * holds the registry to it: every API path a launch or shell surface's client
@@ -61,6 +64,8 @@ export const LAUNCH_PLATFORM_API: Readonly<Record<string, string>> = {
   '/api/clients': 'the client workspace list tenant context reads on load',
   '/api/organizations': "the shell's organisation read (V2App.tsx), Setup's profile and settings, onboarding",
   '/api/user': 'identity: the users router mounted a second time (register-platform-routes.ts), beside /api/users, which NEVER_GATED already passes',
+  '/api/mdx/industry-profile': "the organisation's industry profile (useIndustryProfile.ts), read by the shell's surfaces and written by Setup and onboarding",
+  '/api/mdx/notifications': "the shell's task tray (TaskTray.tsx): the list, the unread count, mark read",
 };
 
 /**

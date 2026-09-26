@@ -25,6 +25,7 @@ import {
   MIN_REASON_FOR_CHANGE_LEN,
 } from '../../services/ana-ri/part11-governance.js';
 import { isProposeOnlyCommand } from '../../services/ana-ri/command-rbac.js';
+import { CONFIRM_TIER_TOOLS } from '../../services/ana/governed-tool-gate.js';
 import { reverifySigner } from '../../services/part11/reverify-signer.js';
 import { signerReverificationDeps } from '../../services/part11/reverify-signer-deps.js';
 import {
@@ -160,6 +161,51 @@ async function releaseWaitingRun(
       toolUseId,
       error: err?.message,
     });
+  }
+}
+
+/**
+ * A tool that writes on its own handler is confirmed like a command, but only
+ * from a held run: its context — the project, and the model that wrote the
+ * content — comes from the run row (runConfirmedTool), never from the browser.
+ */
+function refuseToolWithoutHeldRun(res: Response): Response {
+  return sendError(res, 400, 'This action can only be confirmed while AnA is waiting on it', null, 'TOOL_NEEDS_HELD_RUN');
+}
+
+/**
+ * Run a confirmed tool from CONFIRM_TIER_TOOLS with the context the waiting run
+ * recorded when it asked.
+ *
+ * The handler is reached through the same registry every path uses, so its own
+ * gates still run: the approved-model check reads the recorded serving model,
+ * and the confirm gate reads the flag stamped here — a person's yes to exactly
+ * this call. Loaded lazily: the tool module is large and this route rarely
+ * needs it.
+ */
+async function runConfirmedTool(
+  name: string,
+  params: Record<string, unknown>,
+  held: NonNullable<Awaited<ReturnType<typeof readPendingApproval>>>,
+  organizationId: number,
+  userId: number,
+): Promise<unknown> {
+  const { getToolHandler } = await import('../../services/ana/AnaToolExecutor.js');
+  const handler = getToolHandler(name);
+  if (!handler) throw new Error(`${name} is not an available tool`);
+  const recorded = held.toolContext;
+  const out = await handler(params, {
+    organizationId,
+    userId,
+    projectId: recorded?.projectId ?? null,
+    projectRef: recorded?.projectRef ?? null,
+    servingModel: recorded?.servingModel ?? null,
+    humanConfirmed: true,
+  });
+  try {
+    return JSON.parse(out);
+  } catch {
+    return out;
   }
 }
 
@@ -501,7 +547,9 @@ export function mountUtilityRoutes(router: Router): void {
     // through chat. The tier decides what the person supplies: 'confirm' an
     // explicit yes, 'reason' a reason for change, 'esignature' the reason and
     // re-authentication.
-    if (!command || !isProposeOnlyCommand(command)) {
+    const isTool = CONFIRM_TIER_TOOLS.has(command);
+    if (isTool && !pendingForRun) return refuseToolWithoutHeldRun(res);
+    if (!command || !(isProposeOnlyCommand(command) || isTool)) {
       return sendError(res, 400, 'A governed command name is required', null, 'NOT_A_GOVERNED_COMMAND');
     }
     const tier = governedTierOf(command);
@@ -576,7 +624,8 @@ export function mountUtilityRoutes(router: Router): void {
       userId,
       organizationId: numericOrgId,
       part11Enforce: true,
-      // THE ONLY ASSIGNMENT OF THIS FIELD IN THE CODEBASE.
+      // ONE OF THE TWO ASSIGNMENTS OF THIS FIELD, BOTH IN THIS ROUTE (the other
+      // is runConfirmedTool's, for the tools that write on their own handlers).
       //
       // executeCommands refuses every propose-only command unless it is true,
       // so this literal is the sole path by which an agent-proposed governed
@@ -607,7 +656,7 @@ export function mountUtilityRoutes(router: Router): void {
           }),
     };
     try {
-      const [result] = await executeCommands([{ command, params } as any], ctx);
+      const [result] = isTool ? [await runConfirmedTool(command, params, pendingForRun!, numericOrgId, userId)] : await executeCommands([{ command, params } as any], ctx);
       // The execution stays HERE, in the one place that stamps humanConfirmed.
       // The waiting turn is handed the RESULT, not the right to run the command
       // itself — a second dispatcher would be a second writer of that flag, and
