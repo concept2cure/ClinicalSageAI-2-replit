@@ -418,8 +418,13 @@ export interface GatewayRequest {
     allowedSubstrates?: SubstrateClass[];
     /** Per-tenant vendor allow-list; absent = no vendor constraint, empty = none allowed. */
     allowedProviders?: ProviderName[];
-    /** Tenant opted in to `public` payloads reaching a shared frontier API. */
+    /**
+     * Tenant opted in to `public` payloads reaching a shared frontier API, and to
+     * Anthropic-hosted research tools (server-tool-policy.ts).
+     */
     publicSourceFrontier?: boolean;
+    /** Tenant allows outbound public-source requests at all (default on). */
+    publicSourceEgress?: boolean;
     /** The request asked for a residency that contradicts the tenant's. */
     residencyConflict?: boolean;
   };
@@ -615,6 +620,14 @@ export interface GatewayResponse {
 
   /** Finish reason from provider */
   finishReason?: string;
+
+  /**
+   * Anthropic-hosted tools the request offered that were not sent to the
+   * serving lane, and why (server-tool-policy.ts). Absent when none were
+   * withheld. Recorded in the ledger row so a turn that ran without web search
+   * says so, rather than looking like one that chose not to search.
+   */
+  withheldServerTools?: Array<{ name: string; reason: string }>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

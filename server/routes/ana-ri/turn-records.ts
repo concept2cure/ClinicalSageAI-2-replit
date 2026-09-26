@@ -28,7 +28,7 @@
 
 import type { Request, Response, Router } from 'express';
 
-import { getPool } from '../../db.js';
+import { requestConnectable, requestPgClient } from '../../db/requestDb.js';
 import { writeChainedAuditRow } from '../../services/auditService.js';
 import { verifyTenantChainOnAdminScope } from '../../services/audit/tenant-chain-verdict.js';
 import { TURN_RECORD_RESOURCE } from '../../services/ana/turn-record.js';
@@ -83,7 +83,7 @@ async function recordFor(req: Request, res: Response, access: Extract<Access, { 
     sendError(res, 404, 'Turn record not found', null, 'TURN_RECORD_NOT_FOUND');
     return null;
   }
-  const record = await loadTurnRecord(getPool(), access.orgId, id);
+  const record = await loadTurnRecord(requestPgClient(req), access.orgId, id);
   if (!record) {
     sendError(res, 404, 'Turn record not found', null, 'TURN_RECORD_NOT_FOUND');
     return null;
@@ -125,7 +125,7 @@ async function listRecords(req: Request, res: Response) {
     ? Number.isInteger(requestedActor) && requestedActor > 0 ? requestedActor : null
     : access.userId;
   try {
-    const records = await listTurnRecords(getPool(), access.orgId, {
+    const records = await listTurnRecords(requestPgClient(req), access.orgId, {
       threadId,
       runId,
       actorUserId,
@@ -187,7 +187,7 @@ async function exportRecord(req: Request, res: Response) {
 
   const exportedAt = new Date().toISOString();
   // The export is recorded before anything leaves; no row, no export.
-  const client = await getPool().connect();
+  const client = await requestConnectable(req).connect();
   try {
     await client.query('BEGIN');
     await writeChainedAuditRow(client, {
