@@ -31,7 +31,8 @@ import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { revokeToken, verifyLiveToken } from '../services/token-revocation';
 import { continuedSessionClaims, idleWindowSecondsOf, openSession } from '../services/session-inactivity';
 import { recordAuthEvent } from '../services/audit/auth-event-audit';
-import { ACCOUNT_INACTIVE_MESSAGE, isAccountActive, isActiveAccountStatus } from '../services/account-standing';
+import { ACCOUNT_INACTIVE_MESSAGE, isAccountActive, isActiveAccountStatus, isPendingVerificationStatus } from '../services/account-standing';
+import { EMAIL_UNVERIFIED_MESSAGE } from '../services/email-verification';
 import { runWithTenantScope } from '../db/tenantStore';
 import { requireAccessTokenReason } from '../middleware/tokenType';
 import { authMiddleware } from '../auth';
@@ -290,6 +291,21 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
     // this step admitted it and minted the MFA-partial token (security audit
     // 2026-09-24, IAM-18 item 5). Refused before the lockout and the password,
     // so a suspended account spends neither.
+    // A signed-up account whose address is not yet confirmed (IAM-17) is told
+    // so, with the same code the main login uses.
+    if (isPendingVerificationStatus(user.status)) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId: user.id,
+        tenantId: user.defaultOrganizationId,
+        email: user.email,
+        outcome: 'failure',
+        reason: 'email_unverified',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(403).json({ error: 'AUTH_EMAIL_UNVERIFIED', message: EMAIL_UNVERIFIED_MESSAGE });
+    }
     if (!isActiveAccountStatus(user.status)) {
       await recordAuthEvent({
         action: 'user_login',

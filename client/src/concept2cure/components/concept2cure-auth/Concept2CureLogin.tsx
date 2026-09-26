@@ -41,6 +41,8 @@ type View = 'sign-in' | 'mfa' | 'forgot-password' | 'reset-password' | 'reset-se
 interface AuthError {
   field?: 'email' | 'password' | 'mfa' | 'reset';
   message: string;
+  /** The server's code, when the page offers a way on from it (AUTH_EMAIL_UNVERIFIED → the verify page). */
+  code?: string;
 }
 
 /* ─── Password field with show/hide toggle ─── */
@@ -274,6 +276,7 @@ export const Concept2CureLogin: React.FC = () => {
         setError({
           field: 'password',
           message: result.error?.message || t('error.signInFailed'),
+          code: result.error?.code,
         });
         return;
       }
@@ -455,6 +458,11 @@ export const Concept2CureLogin: React.FC = () => {
               <AlertCircle size={14} strokeWidth={1.75} />
               <span>{error.message}</span>
             </div>
+          )}
+          {error?.code === 'AUTH_EMAIL_UNVERIFIED' && (
+            <button type="button" className={styles.ghost} onClick={() => setLocation('/concept2cure/verify-email')}>
+              {t('error.emailUnverifiedLink')}
+            </button>
           )}
 
           {/* ─── Sign in ─── */}
