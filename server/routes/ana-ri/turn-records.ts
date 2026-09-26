@@ -2,7 +2,7 @@
  * AnA turn records — read, verify and export, for the person who asked and for
  * an inspector.
  *
- *   GET /api/ana-ri/turn-records?thread_id=&limit=   the records, newest first
+ *   GET /api/ana-ri/turn-records?thread_id=&run_id=&limit=   the records, newest first
  *   GET /api/ana-ri/turn-records/:id                 one record, re-verified now
  *   GET /api/ana-ri/turn-records/:id/export          a self-contained package an
  *                                                    inspector can check offline
@@ -117,6 +117,9 @@ async function listRecords(req: Request, res: Response) {
     return sendError(res, 403, 'A signed-in person is required', null, 'USER_REQUIRED');
   }
   const threadId = typeof req.query.thread_id === 'string' && req.query.thread_id ? req.query.thread_id : null;
+  // The run a turn was served under — how a client that closed its connection
+  // before the turn ended (Stop, a dropped network) learns what was filed.
+  const runId = typeof req.query.run_id === 'string' && req.query.run_id ? req.query.run_id : null;
   const requestedActor = Number(req.query.actor_user_id);
   const actorUserId = access.everyRecord
     ? Number.isInteger(requestedActor) && requestedActor > 0 ? requestedActor : null
@@ -124,6 +127,7 @@ async function listRecords(req: Request, res: Response) {
   try {
     const records = await listTurnRecords(getPool(), access.orgId, {
       threadId,
+      runId,
       actorUserId,
       limit: Number(req.query.limit) || 100,
     });

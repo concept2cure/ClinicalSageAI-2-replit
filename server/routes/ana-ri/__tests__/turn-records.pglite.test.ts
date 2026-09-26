@@ -155,6 +155,17 @@ describe('reading a turn record', () => {
     expect(admin.body.data.records.length).toBe(own.body.data.records.length);
   });
 
+  it('finds a turn by the run it was served under — how a client that stopped listening learns it was filed', async () => {
+    const { id } = await recordTurn('a turn the person stopped');
+    const own = await request(appAs()).get('/api/ana-ri/turn-records?run_id=run_x&limit=50').set('x-as', 'owner');
+    expect(own.body.data.records.map((r: any) => r.id)).toContain(id);
+    const other = await request(appAs()).get('/api/ana-ri/turn-records?run_id=run_nobody').set('x-as', 'owner');
+    expect(other.body.data.records).toEqual([]);
+    // A colleague learns nothing about someone else's run.
+    const colleague = await request(appAs()).get('/api/ana-ri/turn-records?run_id=run_x').set('x-as', 'colleague');
+    expect(colleague.body.data.records).toEqual([]);
+  });
+
   it('a record rewritten past the trigger reads as not intact', async () => {
     const { id } = await recordTurn('the question as asked');
     const forged = new TurnRecorder();
