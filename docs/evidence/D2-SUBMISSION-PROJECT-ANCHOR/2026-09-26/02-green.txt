@@ -1,0 +1,9 @@
+# 20260925b as committed
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > is on the applier, after both tables it joins
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > backfills the one-to-one, same-tenant link from the creation audit row
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > leaves a submission two projects both claim unanchored — never resolved by guessing
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > does not anchor to another organization’s project, and reads only creation rows
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > refuses, at the database, a submission anchored to another organization’s project
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > replays cleanly, as every deploy does, and changes nothing it already decided
+ ✓ tests/schema-contract/submissions-program-anchor.pglite.test.ts > submissions.program_id (20260925b) > lets a program be deleted: the submission stays, its organization intact, un-anchored
+      Tests  7 passed (7)
