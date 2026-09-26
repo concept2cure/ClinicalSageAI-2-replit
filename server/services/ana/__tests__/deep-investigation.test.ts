@@ -124,7 +124,7 @@ describe('start handler validation (no DB touched)', () => {
 
   it('rejects a missing/too-short question', async () => {
     const handler = getToolHandler('start_deep_investigation')!;
-    const result = JSON.parse(await handler({ question: 'why?' }, {}));
+    const result = JSON.parse(await handler({ question: 'why?' }, { humanConfirmed: true }));
     expect(result.error).toContain('self-contained research question');
   });
 
@@ -132,7 +132,7 @@ describe('start handler validation (no DB touched)', () => {
     process.env.ANA_ENABLE_DEEP_INVESTIGATIONS = 'false';
     const handler = getToolHandler('start_deep_investigation')!;
     const result = JSON.parse(
-      await handler({ question: 'a perfectly reasonable long research question' }, {}),
+      await handler({ question: 'a perfectly reasonable long research question' }, { humanConfirmed: true }),
     );
     expect(result.status).toBe('disabled');
   });

@@ -25,19 +25,19 @@ describe('Research-compliance AnA tools — context + behavior', () => {
     expect(out.requiredApprovals.some((a: any) => a.committee === 'IRB')).toBe(true);
   });
   it('add_personnel_training refuses without tenant/user context', async () => {
-    const out = JSON.parse(await getToolHandler('add_personnel_training')!({ personnel_id: 1, training_type: 'biosafety' }, {} as any));
+    const out = JSON.parse(await getToolHandler('add_personnel_training')!({ personnel_id: 1, training_type: 'biosafety' }, { humanConfirmed: true } as any));
     expect(out.error).toMatch(/tenant \+ user context/);
   });
   it('add_personnel_training rejects an invalid training_type', async () => {
-    const out = JSON.parse(await getToolHandler('add_personnel_training')!({ personnel_id: 1, training_type: 'jedi' }, { organizationId: 1, userId: 1 } as any));
+    const out = JSON.parse(await getToolHandler('add_personnel_training')!({ personnel_id: 1, training_type: 'jedi' }, { organizationId: 1, userId: 1, humanConfirmed: true } as any));
     expect(out.error).toMatch(/valid training_type/);
   });
   it('review_training_gate requires tenant context', async () => {
-    const out = JSON.parse(await getToolHandler('review_training_gate')!({ personnel_ids: [1] }, {} as any));
+    const out = JSON.parse(await getToolHandler('review_training_gate')!({ personnel_ids: [1] }, { humanConfirmed: true } as any));
     expect(out.error).toMatch(/tenant context/);
   });
   it('assess_study_onboarding requires tenant context', async () => {
-    const out = JSON.parse(await getToolHandler('assess_study_onboarding')!({ involves_human_subjects: true }, {} as any));
+    const out = JSON.parse(await getToolHandler('assess_study_onboarding')!({ involves_human_subjects: true }, { humanConfirmed: true } as any));
     expect(out.error).toMatch(/tenant context/);
   });
 });

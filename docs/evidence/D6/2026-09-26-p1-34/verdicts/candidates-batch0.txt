@@ -1,0 +1,41 @@
+ack_training | refuse | - | AnaToolExecutor.ts:13771 | training attestation in the user's name (method 'attestation', model-supplied quiz_score)
+add_disclosure_interest | confirm | - | AnaToolExecutor.ts:10077 | INSERT disclosure_interests + governed-action row
+add_irb_site | confirm | - | AnaToolExecutor.ts:10389 | INSERT irb_sites + governed-action row
+add_protocol_objective | confirm | - | AnaToolExecutor.ts:11506 | INSERT protocol_objectives + governed-action row
+answer_intelligence_question | self | - | AnaToolExecutor.ts:19109 | AnA interview session state (tenant record written by commit_intelligence_flow)
+assign_committee_member | confirm | - | AnaToolExecutor.ts:11742 | INSERT committee_members + governed-action row
+cast_committee_vote | refuse | - | AnaToolExecutor.ts:11826 | casts/overwrites a member's vote — the member's own act
+classify_tmf_artifact | conditional | input.status === final -> refuse; else confirm | AnaToolExecutor.ts:13059 | INSERT tmf_artifacts + governed-action row (status unvalidated)
+convene_drafting_council | self | - | agentic-workflow-tools.ts:124 | lumen council working/audit rows; final text not saved to a tenant record
+create_clinical_study | conditional | input.irb_approved === true -> refuse; else confirm | AnaToolExecutor.ts:9981 | INSERT clinical_studies; irb_approved records an IRB approval fact
+create_coverage_analysis | confirm | - | AnaToolExecutor.ts:11880 | INSERT coverage_analyses + governed-action row
+create_financial_disclosure | confirm | - | AnaToolExecutor.ts:10042 | INSERT financial_disclosures (draft) + governed-action row
+create_ibc_registration | confirm | - | AnaToolExecutor.ts:10452 | INSERT/UPDATE ibc_registrations + governed-action row
+create_labeling_document | confirm | - | AnaToolExecutor.ts:14127 | INSERT labeling_documents
+create_other_support | confirm | - | AnaToolExecutor.ts:11087 | INSERT other_support_documents + governed-action row
+create_protocol_template | confirm | - | AnaToolExecutor.ts:10708 | INSERT protocol_templates + sections + governed-action row
+create_research_agreement | confirm | - | AnaToolExecutor.ts:11326 | INSERT research_agreements (draft) + governed-action row
+create_tmf | confirm | - | AnaToolExecutor.ts:13032 | INSERT tmf_files + governed-action row
+execute_platform_command | conditional | command effect read -> read; write -> confirm (proposed by the command partition); PART11 e-sign command -> refuse | AnaToolExecutor.ts:5162 | whatever the command writes; already proposal-gated by command-executor
+generate_ctgov_registration_draft | read | - | AnaToolExecutor.ts:10803 | none
+insert_document_content | self | - | AnaToolExecutor.ts:7179 | writes an edited .docx under tmp/docbuilder
+log_nonconforming_product | confirm | - | AnaToolExecutor.ts:14093 | INSERT qms_nonconforming_products
+open_grant_closeout | confirm | - | AnaToolExecutor.ts:12166 | INSERT grant_closeout_records + governed-action row
+qms_change_create | confirm | - | AnaToolExecutor.ts:13798 | INSERT qms_change_controls + audit row
+record_clinical_performance_study | confirm | - | AnaToolExecutor.ts:8292 | INSERT ivd_clinical_performance (incl. endpoint-met flag)
+record_grant_expenditure | confirm | - | AnaToolExecutor.ts:12343 | INSERT grant_expenditures + governed-action row
+record_subaward | confirm | - | AnaToolExecutor.ts:12230 | INSERT grant_subawards + governed-action row
+register_dea | confirm | - | AnaToolExecutor.ts:12876 | INSERT dea_registrations + governed-action row
+report_protocol_deviation | conditional | input.severity and input.affects_safety both supplied -> refuse (stamps the person's reportability assessment); else confirm | AnaToolExecutor.ts:10905 | INSERT protocol_deviations + governed-action row
+retire_qms_document | confirm | - | AnaToolExecutor.ts:13707 | retires a controlled document (terminal); the handler requires a reason of 8+ characters and records a governed action
+review_financial_disclosure | read | - | AnaToolExecutor.ts:10112 | none
+review_irb_submission | read | - | AnaToolExecutor.ts:10421 | none
+review_schedule_of_events_health | conditional | input.apply === false -> read; else confirm | AnaToolExecutor.ts:2428 | milestone status changes, tasks, org notifications (apply defaults true)
+run_rbm_assessment | conditional | input.seed === true -> confirm; else read | AnaToolExecutor.ts:2915 | seeds rbm_risk_assessments + items
+scan_project_risks | read | - | AnaToolExecutor.ts:2305 | none
+set_funding_profile | confirm | - | AnaToolExecutor.ts:11685 | UPSERT grant_funding_profiles + governed-action row
+start_legacy_import | confirm | - | AnaToolExecutor.ts:14289 | INSERT import_jobs/files/findings
+update_biosketch_section | confirm | - | AnaToolExecutor.ts:11164 | UPDATE biosketch_sections + lineage + governed-action row
+update_grant_closeout | confirm | - | AnaToolExecutor.ts:12193 | UPDATE grant_closeout_records + governed-action row
+update_q_sub_commitment_rolled_in | confirm | - | AnaToolExecutor.ts:7754 | UPDATE q_sub_commitments + audit row
+verify_memory_atom | confirm | - | AnaToolExecutor.ts:13530 | marks a memory atom verified by the user (the yes is the verification)

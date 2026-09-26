@@ -56,7 +56,7 @@ const { startFlow } = await import('../intelligence-questions/engine.js');
 
 const ORG = 42;
 const SESSION_ID = '5f1c2a7e-9c41-4b6a-8d3e-2f0a1b2c3d4e';
-const CTX = { organizationId: ORG, userId: 7, projectId: 91, projectType: 'pharma' as const };
+const CTX = { organizationId: ORG, userId: 7, projectId: 91, projectType: 'pharma' as const, humanConfirmed: true };
 
 type Statement = { text: string; params: unknown[] };
 
@@ -430,7 +430,7 @@ describe('commit_intelligence_flow', () => {
         ? [sessionRow(completeState, { status: 'complete', project_id: null })]
         : null,
     );
-    const out = await call('commit_intelligence_flow', { session_id: SESSION_ID }, { organizationId: ORG, userId: 7 });
+    const out = await call('commit_intelligence_flow', { session_id: SESSION_ID }, { organizationId: ORG, userId: 7, humanConfirmed: true });
     expect(out.code).toBe('PROJECT_REQUIRED');
   });
 });

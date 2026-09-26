@@ -253,4 +253,28 @@ describe('a confirmed tool', () => {
     expect(toolCalls).toHaveLength(0);
     expect(decisions).toEqual([{ runId: 'run-1', orgId: ORG, decided: 'denied' }]);
   });
+
+  // P1-34: which tools this route will run is the tool register's answer, asked
+  // again on the params the run recorded — not a list of five kept beside it.
+  it('any write the register classes confirm runs on a yes — not only the original five', async () => {
+    pending = { ...heldTool(), command: 'raise_monitoring_signal', params: { title: 'Site 12 AE lag' } };
+    const res = await post({ runId: 'run-1', toolUseId: 'tu-9', confirm: true });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(toolCalls[0]).toMatchObject({ name: 'raise_monitoring_signal', ctx: { humanConfirmed: true } });
+  });
+
+  it("never runs a person's own act, whatever the held row says and whatever was clicked", async () => {
+    pending = { ...heldTool(), command: 'qms_change_transition', params: { change_id: 3, to: 'closed' } };
+    const res = await post({ runId: 'run-1', toolUseId: 'tu-9', confirm: true });
+    expect(res.status).toBe(400);
+    expect(JSON.stringify(res.body)).toMatch(/NOT_AN_ANA_ACTION/);
+    expect(toolCalls).toHaveLength(0);
+  });
+
+  it('a tool the register does not know is still a tool, confirmed like any write (it failed closed)', async () => {
+    pending = { ...heldTool(), command: 'a_tool_added_tomorrow', params: { x: 1 } };
+    const res = await post({ runId: 'run-1', toolUseId: 'tu-9', confirm: true });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(toolCalls[0]?.name).toBe('a_tool_added_tomorrow');
+  });
 });

@@ -766,7 +766,7 @@ export interface PendingToolApproval {
   requestedAt: string;
   /** The reason AnA gave for proposing it, if she gave one. */
   rationale?: string;
-  /** CONFIRM_TIER_TOOLS only: the context the loop would have run it with. The route runs it from this, never the body. */
+  /** A tool (not a platform command) only: the context the loop would have run it with. The route runs it from this, never the body. */
   toolContext?: { projectId: number | null; projectRef: string | null; servingModel: { provider?: string | null; model?: string | null } | null };
 }
 

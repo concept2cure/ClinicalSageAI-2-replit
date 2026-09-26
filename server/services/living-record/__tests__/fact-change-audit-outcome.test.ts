@@ -119,7 +119,7 @@ describe("AnA's governed-fact tools pass the outcome on", () => {
     const { getToolHandler } = await import('../../ana/AnaToolExecutor');
     const handler = getToolHandler(name);
     expect(handler, `${name} must be registered`).toBeTypeOf('function');
-    return JSON.parse(await handler!(input, { organizationId: 7, userId: 3 } as never));
+    return JSON.parse(await handler!(input, { organizationId: 7, userId: 3, humanConfirmed: true } as never));
   }
 
   it('establish_governed_fact tells AnA the record was not written', async () => {

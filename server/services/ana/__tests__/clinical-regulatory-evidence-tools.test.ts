@@ -35,7 +35,7 @@ vi.mock('../../clinical-regulatory-evidence/csr-adapter.service', () => ({
 import { getToolHandler } from '../AnaToolExecutor';
 import { createSource, createFinding, upsertStudy, addRelationship } from '../../clinical-regulatory-evidence/evidence-spine.service';
 
-const CTX = { organizationId: 42, userId: 1 };
+const CTX = { organizationId: 42, userId: 1, humanConfirmed: true };
 
 beforeAll(async () => {
   pglite = new PGlite();

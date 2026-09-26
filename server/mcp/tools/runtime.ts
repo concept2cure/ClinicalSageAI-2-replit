@@ -19,29 +19,12 @@ import type { CallToolResult, ToolAnnotations } from '@modelcontextprotocol/sdk/
 import { runWithTenantScope } from '../../db/tenantStore';
 import type { McpConfig, McpScope } from '../config';
 import { principalOf, type McpPrincipal } from '../auth/platform-token';
-import {
-  buildToolProposalResult,
-  buildToolRefusalResult,
-  isProposeOnlyTool,
-  refusedInChatTool,
-} from '../../services/ana/propose-only-tools';
 
 export interface ToolRunContext {
   principal: McpPrincipal;
   config: McpConfig;
   /** The shape AnA's registered handlers take (ToolContext in AnaToolExecutor). */
-  ana: {
-    organizationId: number;
-    userId: number;
-    organizationUuid: string | null;
-    /**
-     * A person's confirmation of a proposed tool call. Never set on this
-     * surface: a connector call has no person in the loop, so a propose-only
-     * tool is refused here in practice. Read, not written — its one writer
-     * anywhere is routes/ana-ri/utility.ts (propose-only-partition.test.ts).
-     */
-    humanConfirmed?: boolean;
-  };
+  ana: { organizationId: number; userId: number; organizationUuid: string | null };
 }
 
 export type ToolOutcome =
@@ -101,31 +84,12 @@ export function parseAnaResult(raw: string): ToolOutcome {
   return ok('', { value: parsed });
 }
 
-/**
- * Call one of AnA's registered deterministic handlers with the caller's tenant.
- *
- * This is a door into the handler map with no other classifier in front of it,
- * so the propose-only partition for direct tools (propose-only-tools.ts; audit
- * DP-36, P1-34) is held here: an act a chat cannot perform is refused with
- * where a person takes it, and a proposal is refused HUMAN_CONFIRMATION_REQUIRED
- * unless the context carries a person's confirmation — which nothing on this
- * surface ever stamps. Both are audited as denials, like a scope denial. The
- * confirmation is read from the context and never from the tool's input.
- */
+/** Call one of AnA's registered deterministic handlers with the caller's tenant. */
 export async function callAnaHandler(
   name: string,
   input: Record<string, unknown>,
   ctx: ToolRunContext,
 ): Promise<ToolOutcome> {
-  const refusal = refusedInChatTool(name, input);
-  if (refusal) {
-    await writeAudit({ principal: ctx.principal, tool: name, governed: true, outcome: 'denied', durationMs: 0, detail: `REFUSED_IN_CHAT: ${refusal.act}` });
-    return parseAnaResult(JSON.stringify(buildToolRefusalResult(refusal)));
-  }
-  if (isProposeOnlyTool(name) && ctx.ana.humanConfirmed !== true) {
-    await writeAudit({ principal: ctx.principal, tool: name, governed: true, outcome: 'denied', durationMs: 0, detail: 'HUMAN_CONFIRMATION_REQUIRED: no person in the loop on the connector surface' });
-    return parseAnaResult(JSON.stringify(buildToolProposalResult(name, input)));
-  }
   const { getToolHandler } = await import('../../services/ana/AnaToolExecutor');
   const handler = getToolHandler(name);
   if (!handler) return refused(`Platform tool "${name}" is not registered on this deployment.`);

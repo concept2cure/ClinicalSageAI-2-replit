@@ -314,7 +314,7 @@ describe('semantic search over the catalog', () => {
       purpose: 'Supports Module 4 repeat-dose toxicology for Recallin.',
       summary: 'TOX-77-A in rats; NOAEL 50 mg/kg/day; reversible hepatocellular hypertrophy at 150.',
       key_data: { study: 'TOX-77-A', noaelMgKgDay: 50 },
-    });
+    }, { humanConfirmed: true }); // a write in the tool register (P1-34)
     expect(done.ok).toBe(true);
     expect(done.embeddingStatus).toBe('embedded');
 

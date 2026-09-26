@@ -24,7 +24,7 @@ import {
 } from '../../submission-gateways/region-constants';
 import { listGateways } from '../../submission-gateways/index';
 
-const CTX = { organizationId: 1, userId: 1 };
+const CTX = { organizationId: 1, userId: 1, humanConfirmed: true };
 
 function enumOf(tool: typeof PACKAGE_ECTD_FOR_REGION, property: string): string[] {
   const props = (tool.input_schema as { properties?: Record<string, { enum?: string[] }> })

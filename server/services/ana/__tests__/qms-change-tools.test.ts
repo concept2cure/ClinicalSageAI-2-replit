@@ -75,7 +75,7 @@ CREATE TABLE qms_change_links (
 );
 `;
 
-const CTX = { organizationId: 1, userId: 10 };
+const CTX = { organizationId: 1, userId: 10, humanConfirmed: true };
 
 beforeAll(async () => {
   pglite = new PGlite();
@@ -132,7 +132,7 @@ describe('qms_change_transition', () => {
   it('cannot approve a change from chat, and the change stays under assessment', async () => {
     const created = await call('qms_change_create', { change_number: 'CC-2026-053', title: 'y', reason: 'r' }); // proposed_by = 10
     await call('qms_change_transition', { change_id: created.id, to: 'under_assessment', reason: 'assess' });
-    const res = await call('qms_change_transition', { change_id: created.id, to: 'approved', reason: 'approve' }, { organizationId: 1, userId: 11 });
+    const res = await call('qms_change_transition', { change_id: created.id, to: 'approved', reason: 'approve' }, { organizationId: 1, userId: 11, humanConfirmed: true });
     expect(res.error).toMatch(/electronic signature/i);
     // AnA tells the person what to do, so it needs the kind of refusal and a
     // place a person can go: the Approve button, not an API path.
@@ -159,7 +159,10 @@ describe('qms_change_transition', () => {
 
   it('rejects an illegal transition', async () => {
     const created = await call('qms_change_create', { change_number: 'CC-2026-054', title: 'y', reason: 'r' });
-    const res = await call('qms_change_transition', { change_id: created.id, to: 'closed', reason: 'skip ahead' });
+    // Not 'closed': AnA may not close a change at all (the tool register refuses
+    // it before the state machine is asked — tool-authorization.test.ts). This
+    // pins the state machine on a target she may otherwise request.
+    const res = await call('qms_change_transition', { change_id: created.id, to: 'in_implementation', reason: 'skip ahead' });
     expect(res.error).toMatch(/cannot move change/i);
   });
 });

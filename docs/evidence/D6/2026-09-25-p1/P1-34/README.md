@@ -1,3 +1,13 @@
+> **Superseded the same day.** While this cold-file half was being verified, lane `…01471vSK` landed
+> `aa4d5552` ("P1-34: every AnA tool is classified, and the class is enforced"): one register of all 763
+> tools (`server/services/ana/tool-authorization.ts` + `.register.json`), enforced in the registry
+> wrapper, the stream gate and the governed-action route, with its own red-then-green evidence under
+> `docs/evidence/D6/2026-09-26-p1-34/`. Under the zero-duplication rule this lane's
+> `propose-only-tools.ts`, its anti-drift test, `classifyDirectToolCall` and the MCP-door refusal were
+> withdrawn before pushing; nothing of them is on trunk. What stands from this folder: the count
+> correction (about 170 writers, not 40), the red/green record of the withdrawn work, and
+> `superseded-cross-check.md`, the classification disagreements handed to the register's lane.
+
 # P1-34 — the directly registered AnA write tools join the propose-only partition (DP-36)
 
 **Row moved:** D6 (D5 for the Part 11 half: 11.10(d)).

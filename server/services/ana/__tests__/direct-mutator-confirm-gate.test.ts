@@ -26,7 +26,8 @@ vi.mock('../../report-os/canvas/definition-service.js', () => ({
   listDefinitions: vi.fn(async () => []),
 }));
 
-import { classifyToolCall, CONFIRM_TIER_TOOLS } from '../governed-tool-gate.js';
+import { classifyToolCall } from '../governed-tool-gate.js';
+import { toolAuthorizationOf } from '../tool-authorization.js';
 import { getToolHandler } from '../AnaToolExecutor.js';
 
 const FIVE = [
@@ -38,8 +39,8 @@ const FIVE = [
 ] as const;
 
 describe('the tool gate puts each one to a person', () => {
-  it('names exactly the five', () => {
-    expect([...CONFIRM_TIER_TOOLS].sort()).toEqual([...FIVE].sort());
+  it('each is a confirm-tier write in the tool register (P1-34 folded the list of five into it)', () => {
+    for (const tool of FIVE) expect(toolAuthorizationOf(tool, {}).class, tool).toBe('confirm');
   });
 
   it.each(FIVE)('%s is proposed at the confirm tier, carrying what it would do', tool => {

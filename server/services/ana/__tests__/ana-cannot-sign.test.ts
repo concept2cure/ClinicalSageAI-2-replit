@@ -78,3 +78,35 @@ describe('AnA refuses every act that is an electronic signature', () => {
     expect(def?.description).toMatch(/AnA cannot sign/);
   });
 });
+
+/*
+ * P1-34: the tool register (tool-authorization.register.json) marks each of
+ * these `refuse`, refused by the handler itself — so the registry wrapper and
+ * the tool gate let the handler answer rather than replacing its answer with a
+ * generic one. That is only safe while every such handler is pinned to write
+ * nothing; this file is the pin, and the last case holds the two lists equal.
+ */
+const OTHER_HANDLER_REFUSALS: Array<[string, Record<string, unknown>]> = [
+  ['approve_rbm_assessment', { assessmentId: 3, reason: 'Assessment reviewed' }],
+  ['approve_rbm_plan', { planId: 3, reason: 'Plan reviewed' }],
+  ['transmit_submission', { region: 'fda', gateway: 'esg', environment: 'production', bundle_path: '/tmp/x.zip' }],
+];
+/** Pinned in its own file: finalize-protocol-tool.test.ts. */
+const PINNED_ELSEWHERE = ['finalize_protocol_document'];
+
+describe('the register lets a handler refuse only where the handler is pinned', () => {
+  it.each(OTHER_HANDLER_REFUSALS)('%s writes nothing, even on a confirmation', async (name, input) => {
+    const out = JSON.parse(await getToolHandler(name)!(input, { organizationId: 7, userId: 42, humanConfirmed: true } as never));
+    expect(connect).not.toHaveBeenCalled();
+    expect(recordGovernedAction).not.toHaveBeenCalled();
+    expect(out.ok === false || typeof out.error === 'string').toBe(true);
+    expect(JSON.stringify(out)).toMatch(/password|second factor|re-authentication/i);
+  });
+
+  it('every handler-refused tool in the register is pinned here or named', async () => {
+    const { TOOL_REGISTER } = await import('../tool-authorization');
+    const refusedByHandler = Object.entries(TOOL_REGISTER).filter(([, e]) => e.refusedBy === 'handler').map(([n]) => n).sort();
+    const pinned = [...SIGNING_TOOLS, ...OTHER_HANDLER_REFUSALS].map(([n]) => n).concat(PINNED_ELSEWHERE).sort();
+    expect(refusedByHandler).toEqual(pinned);
+  });
+});
