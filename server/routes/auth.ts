@@ -2593,7 +2593,19 @@ router.post('/password/change', async (req: Request, res: Response) => {
       })
       .where(eq(users.id, userData.id));
 
-    logger.info('Password changed', { userId: userData.id });
+    // The credential-changing event, in the account's tenant (21 CFR Part 11
+    // §11.10(e); security audit 2026-09-24, IAM-17): until 2026-09-26 this
+    // was a log line, while the reset path already wrote the event.
+    await recordAuthEvent({
+      action: 'user_password_changed',
+      userId: userData.id,
+      tenantId: userData.defaultOrganizationId,
+      email: userData.email,
+      outcome: 'success',
+      reason: 'changed by the account holder',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
 
     return res.json({
       success: true,

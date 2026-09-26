@@ -29,6 +29,13 @@ A breach-corpus lookup (a k-anonymity range query against a third party) is a fo
 characters of a SHA-1 to an outside service on every password change. The bundled list is the "commonly used"
 half of the requirement; the "compromised" half waits on that decision (work-order board hand-off).
 
+## Same commit series: the password-change audit event
+
+`POST /api/auth/password/change` verified the current password, wrote the new hash and stamped
+`password_changed_at`, then logged a line. The reset path already recorded `user_password_changed`; the change
+path now does too, in the account's tenant, with the reason "changed by the account holder" and never the
+password (`red/change-event-before-fix.txt`, `green/change-event-after-fix.txt`).
+
 ## Evidence
 
 - `red/before-fix.txt` — the new test against the previous code: the module does not exist.

@@ -84,6 +84,7 @@ const EVENT_DESCRIPTIONS: Readonly<Record<string, string>> = {
   'user_password_reset_requested|failure|no account for this address': 'Password reset requested for an address with no account',
   'user_password_reset_failed|failure|reset token matched no account': 'Password reset refused: the reset link matched no account',
   'user_password_reset_failed|failure|reset token had expired': 'Password reset refused: the reset link had expired',
+  'user_password_changed|success|changed by the account holder': 'Password changed by the account holder (current password verified)',
   'user_password_changed|success|password reset via emailed token': 'Password changed through an emailed reset link',
   'user_mfa_setup|success|secret_issued': 'Authenticator enrolment started: a new secret was issued',
   'user_mfa_setup|failure|already_enrolled': 'Authenticator enrolment refused: two-step verification is already on',
