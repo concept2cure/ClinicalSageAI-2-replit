@@ -17,7 +17,7 @@
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 
-import { pool } from '../db';
+import { requestPgClient, type RequestSqlClient } from '../db/requestDb';
 import { isPlatformAdmin } from '../middleware/requirePlatformAdmin';
 import { AUDIT_READER_ROLES } from '../services/audit/audit-api-authority';
 import { writeChainedAuditRow } from '../services/auditService';
@@ -99,22 +99,26 @@ function holdAuthority(req: Request, res: Response): { orgId: number; actorId: n
   return { orgId, actorId };
 }
 
-/** Whether the target is this organisation's own program or (undeleted) document. */
-async function targetOwned(orgId: number, body: z.infer<typeof placeSchema>): Promise<boolean> {
+/**
+ * Whether the target is this organisation's own program or (undeleted)
+ * document. Read on the request's own client, which carries the session's
+ * tenant scope (RLS) as well as the predicate below.
+ */
+async function targetOwned(client: RequestSqlClient, orgId: number, body: z.infer<typeof placeSchema>): Promise<boolean> {
   if (body.scope === 'program') {
     // tenant-isolation-safe: the program is read with the session's organisation as a predicate.
-    const r = await pool.query('SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1', [body.programId, orgId]);
-    return r.rowCount === 1;
+    const r = await client.query('SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1', [body.programId, orgId]);
+    return r.rows.length === 1;
   }
   // tenant-isolation-safe: the document's program must belong to the session's organisation.
-  const r = await pool.query(
+  const r = await client.query(
     `SELECT d.id FROM vault.documents d
        JOIN regulatory_programs p ON p.id = d.program_id
       WHERE d.id = $1 AND p.organization_id = $2 AND d.deleted_at IS NULL
       LIMIT 1`,
     [body.documentId, orgId],
   );
-  return r.rowCount === 1;
+  return r.rows.length === 1;
 }
 
 const WRITE_FAILED = { error: 'HOLD_WRITE_FAILED', message: 'The hold could not be recorded. Nothing was changed.' };
@@ -124,15 +128,15 @@ async function listHolds(req: Request, res: Response): Promise<void> {
   const auth = holdAuthority(req, res);
   if (!auth) return;
   try {
-    // tenant-isolation-safe: holds are read by the session's organisation.
-    const r = await pool.query(
+    // tenant-isolation-safe: holds are read by the session's organisation, on the request's own client.
+    const r = await requestPgClient(req).query(
       `SELECT ${HOLD_COLUMNS} FROM vault.legal_holds
         WHERE organization_id = $1
         ORDER BY (lifted_at IS NULL) DESC, placed_at DESC
         LIMIT 500`,
       [auth.orgId],
     );
-    res.json({ holds: (r.rows as HoldRow[]).map(presentHold) });
+    res.json({ holds: (r.rows as unknown as HoldRow[]).map(presentHold) });
   } catch (err) {
     log.error('Legal holds could not be listed', { orgId: auth.orgId, error: err instanceof Error ? err.message : String(err) });
     res.status(500).json({ error: 'HOLDS_UNAVAILABLE', message: 'The holds could not be read.' });
@@ -149,11 +153,13 @@ async function placeHold(req: Request, res: Response): Promise<void> {
     return;
   }
   const body = parsed.data;
-  if (!(await targetOwned(auth.orgId, body))) {
+  // The request's own client (RLS-scoped to the session's tenant) carries the
+  // read, the write and the audit row, in one transaction.
+  const client = requestPgClient(req);
+  if (!(await targetOwned(client, auth.orgId, body))) {
     res.status(404).json({ error: 'HOLD_TARGET_NOT_FOUND', message: 'No such program or document in this organisation.' });
     return;
   }
-  const client = await pool.connect();
   try {
     await client.query('BEGIN');
     const inserted = await client.query(
@@ -162,7 +168,7 @@ async function placeHold(req: Request, res: Response): Promise<void> {
        RETURNING ${HOLD_COLUMNS}`,
       [auth.orgId, body.reference, body.reason, body.scope, body.programId ?? null, body.documentId ?? null, auth.actorId],
     );
-    const hold = inserted.rows[0] as HoldRow;
+    const hold = inserted.rows[0] as unknown as HoldRow;
     await writeChainedAuditRow(
       client,
       {
@@ -183,8 +189,6 @@ async function placeHold(req: Request, res: Response): Promise<void> {
     await client.query('ROLLBACK').catch(() => undefined);
     log.error('Legal hold could not be placed', { orgId: auth.orgId, error: err instanceof Error ? err.message : String(err) });
     res.status(500).json(WRITE_FAILED);
-  } finally {
-    client.release();
   }
 }
 
@@ -198,7 +202,7 @@ async function liftHold(req: Request, res: Response): Promise<void> {
     res.status(400).json({ error: 'HOLD_INVALID', message: 'A lift names the hold and gives a reason.' });
     return;
   }
-  const client = await pool.connect();
+  const client = requestPgClient(req);
   try {
     await client.query('BEGIN');
     // tenant-isolation-safe: the hold is updated by id within the session's organisation only.
@@ -208,12 +212,12 @@ async function liftHold(req: Request, res: Response): Promise<void> {
         RETURNING ${HOLD_COLUMNS}`,
       [id.data, auth.actorId, parsed.data.liftReason, auth.orgId],
     );
-    if (updated.rowCount !== 1) {
+    if (updated.rows.length !== 1) {
       await client.query('ROLLBACK');
       res.status(404).json({ error: 'HOLD_NOT_ACTIVE', message: 'No active hold with that id in this organisation.' });
       return;
     }
-    const hold = updated.rows[0] as HoldRow;
+    const hold = updated.rows[0] as unknown as HoldRow;
     await writeChainedAuditRow(
       client,
       {
@@ -234,8 +238,6 @@ async function liftHold(req: Request, res: Response): Promise<void> {
     await client.query('ROLLBACK').catch(() => undefined);
     log.error('Legal hold could not be lifted', { orgId: auth.orgId, error: err instanceof Error ? err.message : String(err) });
     res.status(500).json(WRITE_FAILED);
-  } finally {
-    client.release();
   }
 }
 
