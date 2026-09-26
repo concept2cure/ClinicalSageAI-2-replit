@@ -2638,6 +2638,15 @@ export const C2C_MIGRATION_FILES = [
   // organization_id, so the sweep below covers it too.
   'migrations/20260608_ai_placement_policies.sql',
 
+  // ── AnA turn records: one immutable record per turn (D5) ─────────────────
+  // What the person asked, what the model was given, what AnA did and what
+  // she answered, stored as the exact canonical JSON that was hashed, with the
+  // hash carried by a chained audit_logs row in the same transaction. The
+  // engine refuses UPDATE, DELETE and TRUNCATE for every role; the record does
+  // not go with its thread. public + organization_id INTEGER, so the sweep
+  // below polices it. Evidence docs/evidence/D5-ANA-RECORD/2026-09-26/.
+  'migrations/20260926_ana_turn_records.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

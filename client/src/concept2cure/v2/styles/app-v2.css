@@ -1889,6 +1889,11 @@
 .c2c-v2 .ana-activity-chev svg{font-size:12px;}
 /* A failure is said in the server's sentence, always visible, under the row. */
 .c2c-v2 .ana-activity-note{grid-column:2;color:var(--warning);font-size:11.5px;line-height:1.5;}
+/* A turn that was not recorded, said under the turn and never folded. */
+.c2c-v2 .ana-activity-unrecorded{display:flex;align-items:baseline;gap:6px;margin:4px 0 0;font-size:12px;line-height:1.5;font-weight:500;color:var(--text-100);}
+/* A hash or an id reads as one, beside the full hash set in the same face. */
+.c2c-v2 .ana-activity-obj.is-mono{font-family:var(--font-mono);font-size:11.5px;}
+.c2c-v2 .ana-activity-unrecorded .ana-activity-glyph{color:var(--warning);}
 .c2c-v2 .ana-activity-detail{grid-column:2;display:flex;flex-direction:column;gap:6px;margin-top:6px;}
 .c2c-v2 .ana-activity-kv{font-size:11.5px;color:var(--text-300);font-variant-numeric:tabular-nums;}
 .c2c-v2 .ana-activity-pre{box-sizing:border-box;margin:0;padding:6px 8px;max-height:180px;overflow:auto;font-family:var(--font-mono);font-size:11px;line-height:1.5;color:var(--text-200);background:var(--bg-050);border:1px solid var(--border);border-radius:var(--radius-sm);white-space:pre-wrap;overflow-wrap:anywhere;}

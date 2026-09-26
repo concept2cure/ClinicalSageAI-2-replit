@@ -512,3 +512,58 @@ describe('AnaActivity — her plan, live and reopened', () => {
     expect(splitLabel('Sample size — biostatistics engine')).toEqual({ verb: 'Sample size — biostatistics engine' });
   });
 });
+
+describe('AnaActivity — whether the turn was recorded', () => {
+  const sha = 'ab12cd34ef56'.padEnd(64, '0');
+
+  it('a recorded turn carries one quiet row with the start of its hash, and the whole of it behind the row', () => {
+    const { container } = render(
+      <AnaActivity toolCalls={[call()]} turnRecord={{ status: 'recorded', id: 'rec-1', sha256: sha }} completedAt={2} startedAt={1} />,
+    );
+    // Settled, the record is folded; the row is one of its rows.
+    fireEvent.click(container.querySelector('.ana-activity-toggle') as HTMLElement);
+    const body = within(container.querySelector('.ana-activity-body') as HTMLElement);
+    expect(body.getByText('Recorded')).toBeTruthy();
+    expect(body.getByText(sha.slice(0, 12))).toBeTruthy();
+    fireEvent.click(body.getByRole('button', { name: /Recorded/ }));
+    expect(body.getByText(`SHA-256 ${sha}`)).toBeTruthy();
+    expect(container.querySelector('.ana-activity-unrecorded')).toBeNull();
+  });
+
+  it('a turn that was not recorded says so under the turn, unfolded, with the reason', () => {
+    const { container } = render(
+      <AnaActivity
+        toolCalls={[call()]}
+        turnRecord={{ status: 'not_recorded', reason: 'The record of this turn could not be written.' }}
+      />,
+    );
+    const note = container.querySelector('.ana-activity-unrecorded') as HTMLElement;
+    expect(note).toBeTruthy();
+    // Outside the folded body: visible without opening anything.
+    expect(container.querySelector('.ana-activity-body')?.contains(note)).toBe(false);
+    expect(note.textContent).toContain('Not recorded — The record of this turn could not be written.');
+  });
+
+  it('says it even for a turn with nothing else to report', () => {
+    const { container } = render(
+      <AnaActivity turnRecord={{ status: 'not_recorded', reason: 'This turn had no organization to file it under.' }} />,
+    );
+    expect(container.textContent).toContain('Not recorded — This turn had no organization to file it under.');
+  });
+
+  it('claims nothing while the turn is in flight, or when the server said nothing', () => {
+    const live = render(
+      <AnaActivity streaming phase="Working…" toolCalls={[call({ status: 'running' })]} turnRecord={{ status: 'recorded', id: 'r', sha256: sha }} />,
+    );
+    expect(live.container.textContent).not.toContain('Recorded');
+    cleanup();
+    const silent = render(<AnaActivity toolCalls={[call()]} />);
+    expect(silent.container.textContent).not.toContain('Recorded');
+    expect(silent.container.textContent).not.toContain('Not recorded');
+  });
+
+  it('activityPropsFor carries the status from the turn', () => {
+    const m = { id: 'a', role: 'assistant', text: '', turnRecord: { status: 'recorded', id: 'r', sha256: sha } } as AnaChatMessage;
+    expect(activityPropsFor(m).turnRecord).toEqual({ status: 'recorded', id: 'r', sha256: sha });
+  });
+});

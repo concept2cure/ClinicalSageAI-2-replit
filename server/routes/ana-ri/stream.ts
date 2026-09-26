@@ -105,6 +105,14 @@ import {
   type ToolTraceEntry,
 } from '../../services/ana/tool-trace.js';
 import { runStreamPostProcessing } from './post-processing.js';
+import {
+  canonicalJson,
+  openTurnRecorder,
+  writeTurnRecordSafely,
+  type TurnOutcome,
+  type TurnRecorder,
+  type TurnRecordStatus,
+} from '../../services/ana/turn-record.js';
 import { DOCUMENT_ACTIONS } from '../../services/ana-ri/document-actions.js';
 import { reflectAfterTurn } from '../../services/ana-ri/relational-profile-service.js';
 import { selectToolsForTurn } from '../../services/ana/tool-selection.js';
@@ -198,6 +206,55 @@ export function mountStreamRoute(router: Router): void {
     // The round the keepalive stamps on each heartbeat. Updated at every
     // checkpoint so a reaped-and-resumed row still reports where it got to.
     let heartbeatRound = 0;
+    // The retained record of this turn (services/ana/turn-record.ts): filled
+    // as each fact becomes known, sealed and written once when the turn ends —
+    // answered, stopped or failed — and chained. Undefined until the tenant is
+    // known; null for a turn that has none, which cannot be filed.
+    let turnRecorder: TurnRecorder | null | undefined;
+    /**
+     * The human controls taken during this turn, read back from the run row
+     * at turn end and projected onto the assistant message's metadata, which
+     * is what the lineage dossier reads. The projection is what the dossier
+     * is built from; the run row is operational state, purged with the tenant
+     * and not part of the retained record — the turn record carries them too.
+     *
+     * Declared out here so a turn that fails or is stopped mid-call records
+     * the controls as well.
+     *
+     * Read from the ROW rather than accumulated in this process, for two
+     * reasons: a control may have been accepted by a different instance and
+     * would otherwise be missing from the lineage, and the row is written at
+     * the moment of acceptance so a crash during the turn cannot lose a
+     * decision a person made. One writer, one source of truth, one derived
+     * projection.
+     */
+    const readControlEvents = async (): Promise<HumanControlEvent[] | undefined> => {
+      if (!runId || runOrgIdForEvents === null) return [];
+      try {
+        const row = await readRun(getPool(), runId, runOrgIdForEvents);
+        return row?.controlEvents ?? [];
+      } catch (err: any) {
+        // A FAILED read is not "no controls were taken". Returning [] here
+        // would write an empty decision lineage onto the turn and make a
+        // person's pause or steer disappear from the record — an error
+        // rendered as an empty result, in a Part 11 audit surface. Undefined
+        // omits the key instead, so the projection carries no claim rather
+        // than a false one.
+        console.error('[AnA RI Stream] control lineage read failed:', err?.message);
+        return undefined;
+      }
+    };
+    // Recorder calls from inside the agentic loop, as plain calls.
+    const recordStreamed = (chunk: string): void => turnRecorder?.appendStreamed(chunk);
+    const recordServed = (round: number, served: { provider: string | null; model: string | null }): void =>
+      turnRecorder?.addServed(round, served);
+    const fileTurnRecord = (outcome: TurnOutcome): Promise<TurnRecordStatus> =>
+      turnRecorder === undefined
+        ? Promise.resolve({ status: 'not_recorded', reason: 'This turn ended before its record was opened.' })
+        : writeTurnRecordSafely(getPool(), turnRecorder, outcome, {
+            ipAddress: req.ip,
+            userAgent: req.get('user-agent') ?? undefined,
+          });
     /**
      * Prompt-cache totals for the WHOLE turn, every model call included.
      *
@@ -248,7 +305,22 @@ export function mountStreamRoute(router: Router): void {
      */
     const emitServerToolSteps = (response: unknown, round: number): void => {
       const steps = (response as any)?.serverToolUses as GatewayServerToolUse[] | undefined;
-      if (!steps || steps.length === 0 || res.writableEnded) return;
+      if (!steps || steps.length === 0) return;
+      // Recorded whether or not anyone is still listening: the search ran.
+      // The result is kept verbatim in the record, not summarised as it is
+      // for the trace.
+      for (const step of steps) {
+        turnRecorder?.addStep({
+          round,
+          tool: step.name,
+          label: describeServerToolStep(step),
+          status: step.isError ? 'error' : 'success',
+          input: step.input ?? {},
+          result: step.result === undefined ? null : canonicalJson(step.result),
+          runBy: 'server',
+        });
+      }
+      if (res.writableEnded) return;
       for (const step of steps) {
         const label = describeServerToolStep(step);
         const status = step.isError ? 'error' : 'success';
@@ -469,6 +541,14 @@ export function mountStreamRoute(router: Router): void {
 
       // Resolve context
       const { orgId, userId } = extractRequestContext(req);
+      turnRecorder = openTurnRecorder({
+        orgId,
+        userId,
+        runId,
+        typed: message,
+        projectId: project_id || resolveProjectIdFromBody(req.body),
+        surface: req.body.context?.screenName,
+      });
       /* The tenant's permitted tool surface, resolved in parallel with context
          assembly. Composed by governedToolsetFor so this path and
          POST /api/chat/send-message cannot drift on whether the deny-list is
@@ -493,18 +573,58 @@ export function mountStreamRoute(router: Router): void {
       // the full AI pipeline and call the tool handler directly.
       const INTELLIGENCE_ANSWER_PREFIX = '[INTELLIGENCE_ANSWER]';
       if (typeof message === 'string' && message.startsWith(INTELLIGENCE_ANSWER_PREFIX)) {
+        // No model runs on this path, but it is still a turn: the answer is
+        // recorded, and the record says which tool took it and what it said.
+        const say = (content: string) => {
+          turnRecorder?.appendStreamed(content);
+          res.write(`data: ${JSON.stringify({ type: 'text', content })}\n\n`);
+        };
+        const closeFastPath = async (outcome: TurnOutcome) => {
+          res.write(
+            `data: ${JSON.stringify({
+              type: 'done',
+              latencyMs: Date.now() - streamPhaseStart,
+            })}\n\n`
+          );
+          turnRecorder?.setAnswer({ streamed: turnRecorder.streamedText });
+          const turnRecord = await fileTurnRecord(outcome);
+          res.write(`data: ${JSON.stringify({ type: 'post_done', turnRecord })}\n\n`);
+          stopKeepalive();
+          res.end();
+        };
+        let fastOutcome: TurnOutcome = 'answered';
         try {
           const payload = JSON.parse(message.slice(INTELLIGENCE_ANSWER_PREFIX.length));
           const handler = getToolHandler('answer_intelligence_question');
           if (!handler) throw new Error('answer_intelligence_question handler not registered');
           const streamProjectId = project_id || resolveProjectIdFromBody(req.body);
+          const fastStart = Date.now();
           const resultStr = await handler(payload, {
             organizationId: orgId,
             userId: userId || null,
             projectId: streamProjectId ? Number(streamProjectId) || null : null,
             projectRef: streamProjectId ? String(streamProjectId) : null,
           });
-          const parsed = JSON.parse(resultStr);
+          let parsed: any = null;
+          try {
+            parsed = JSON.parse(resultStr);
+          } catch {
+            parsed = null;
+          }
+          const fastError = parsed ? (typeof parsed.error === 'string' ? parsed.error : null) : 'The result was not JSON.';
+          turnRecorder?.addStep({
+            round: 1,
+            tool: 'answer_intelligence_question',
+            label: describeToolPlan([{ id: 'intelligence_answer', name: 'answer_intelligence_question', input: payload ?? {} }])[0].label,
+            status: fastError ? 'error' : 'success',
+            latencyMs: Date.now() - fastStart,
+            input: payload,
+            result: resultStr,
+            error: fastError,
+          });
+          if (!parsed) throw new Error('answer_intelligence_question returned a result that is not JSON');
+          // The person was given the error, not an answer.
+          if (fastError) fastOutcome = 'failed';
           if (parsed?.status === 'intelligence_question' && parsed.question) {
             res.write(
               `data: ${JSON.stringify({
@@ -517,14 +637,7 @@ export function mountStreamRoute(router: Router): void {
                 sessionId: parsed.session_id ?? null,
               })}\n\n`
             );
-            res.write(
-              `data: ${JSON.stringify({
-                type: 'text',
-                content: `**${parsed.question.node.question}**\n\n${
-                  parsed.question.node.guidance || ''
-                }`,
-              })}\n\n`
-            );
+            say(`**${parsed.question.node.question}**\n\n${parsed.question.node.guidance || ''}`);
           } else if (parsed?.status === 'intelligence_flow_complete' && parsed.completion) {
             res.write(
               `data: ${JSON.stringify({
@@ -534,42 +647,17 @@ export function mountStreamRoute(router: Router): void {
                 sessionId: parsed.session_id ?? null,
               })}\n\n`
             );
-            res.write(
-              `data: ${JSON.stringify({ type: 'text', content: parsed.completion.summary })}\n\n`
-            );
+            say(parsed.completion.summary);
           } else if (parsed?.error) {
-            res.write(
-              `data: ${JSON.stringify({ type: 'text', content: `Error: ${parsed.error}` })}\n\n`
-            );
+            say(`Error: ${parsed.error}`);
           }
-          res.write(
-            `data: ${JSON.stringify({
-              type: 'done',
-              latencyMs: Date.now() - streamPhaseStart,
-            })}\n\n`
-          );
-          res.write(`data: ${JSON.stringify({ type: 'post_done' })}\n\n`);
-          stopKeepalive();
-          res.end();
-          return;
         } catch (err: any) {
-          res.write(
-            `data: ${JSON.stringify({
-              type: 'text',
-              content: `Error processing intelligence answer: ${err?.message}`,
-            })}\n\n`
-          );
-          res.write(
-            `data: ${JSON.stringify({
-              type: 'done',
-              latencyMs: Date.now() - streamPhaseStart,
-            })}\n\n`
-          );
-          res.write(`data: ${JSON.stringify({ type: 'post_done' })}\n\n`);
-          stopKeepalive();
-          res.end();
-          return;
+          fastOutcome = 'failed';
+          turnRecorder?.warn(`The answer could not be processed: ${String(err?.message ?? err).slice(0, 500)}`);
+          say(`Error processing intelligence answer: ${err?.message}`);
         }
+        await closeFastPath(fastOutcome);
+        return;
       }
 
       const validatedLens: IntentLens | undefined =
@@ -747,15 +835,22 @@ export function mountStreamRoute(router: Router): void {
             // the thread can be listed under — and resumed from — that project.
             programIdForThread(project_id || resolveProjectIdFromBody(req.body))
           );
-          await saveMessage(threadId, 'user', message);
+          const userMessageId = await saveMessage(threadId, 'user', message);
+          turnRecorder?.setThread(threadId);
+          turnRecorder?.setMessageIds({ user: userMessageId });
         } catch (e: any) {
           if (e instanceof ThreadAccessError) {
             console.warn('[AnA RI Stream] Refused caller-supplied thread id:', e.code);
+            // Refused before any model ran — still a turn someone attempted,
+            // and recorded as one.
+            turnRecorder?.warn('Refused: the conversation named in this turn belongs to another user.');
+            const turnRecord = await fileTurnRecord('failed');
             res.write(
               `data: ${JSON.stringify({
                 type: 'error',
                 code: e.code,
                 error: 'That conversation belongs to another user.',
+                turnRecord,
               })}\n\n`
             );
             res.end();
@@ -876,6 +971,9 @@ export function mountStreamRoute(router: Router): void {
       // saying whether its content or only its name reached the model. A
       // selected source with no readable upload counts as requested.
       const contextUploads: ContextUpload[] = [];
+      // Each resolved upload's SHA-256 as recorded at upload, for the turn
+      // record: which exact bytes the turn was given.
+      const uploadChecksums = new Map<string, string | null>();
       const contentReadIds = new Set<string>();
       let unreadableSources = 0;
       if (Array.isArray(req.body.file_ids)) {
@@ -932,6 +1030,7 @@ export function mountStreamRoute(router: Router): void {
           }
           for (const f of attachedFiles) {
             contextUploads.push({ fileId: f.fileId, fileName: f.fileName, mimeType: f.mimeType, read: 'name_only' });
+            uploadChecksums.set(f.fileId, f.checksumSha256);
           }
           if (attachedFiles.length > 0) {
             const fileContext = attachedFiles
@@ -1002,17 +1101,15 @@ export function mountStreamRoute(router: Router): void {
 
       // What this turn read before answering — uploads and memory — so the
       // work panel's "Used in this session" states facts, not an attempt.
-      res.write(
-        `data: ${JSON.stringify(
-          buildContextUsedEvent({
-            requestedUploads: streamFileIds.length + unreadableSources,
-            uploads: contextUploads.map(u =>
-              contentReadIds.has(u.fileId) ? { ...u, read: 'content' as const } : u
-            ),
-            memory: memoryResult,
-          })
-        )}\n\n`
-      );
+      const contextUsedEvent = buildContextUsedEvent({
+        requestedUploads: streamFileIds.length + unreadableSources,
+        uploads: contextUploads.map(u =>
+          contentReadIds.has(u.fileId) ? { ...u, read: 'content' as const } : u
+        ),
+        memory: memoryResult,
+      });
+      turnRecorder?.setContext(contextUsedEvent, uploadChecksums);
+      res.write(`data: ${JSON.stringify(contextUsedEvent)}\n\n`);
 
       // Status: generating (context is built, about to stream tokens from the model)
       res.write(
@@ -1162,36 +1259,6 @@ export function mountStreamRoute(router: Router): void {
       // so the thought process survives reload and is auditable — it was
       // previously live-only and lost on reload.
       let fullThinking = '';
-      /**
-       * The human controls taken during this turn, read back from the run row
-       * at turn end and projected onto the assistant message's metadata, which
-       * is what the lineage dossier reads. The projection is what the dossier
-       * is built from; the run row is operational state, purged with the tenant
-       * and not part of the retained record.
-       *
-       * Read from the ROW rather than accumulated in this process, for two
-       * reasons: a control may have been accepted by a different instance and
-       * would otherwise be missing from the lineage, and the row is written at
-       * the moment of acceptance so a crash during the turn cannot lose a
-       * decision a person made. One writer, one source of truth, one derived
-       * projection.
-       */
-      const readControlEvents = async (): Promise<HumanControlEvent[] | undefined> => {
-        if (!runId || runOrgIdForEvents === null) return [];
-        try {
-          const row = await readRun(getPool(), runId, runOrgIdForEvents);
-          return row?.controlEvents ?? [];
-        } catch (err: any) {
-          // A FAILED read is not "no controls were taken". Returning [] here
-          // would write an empty decision lineage onto the turn and make a
-          // person's pause or steer disappear from the record — an error
-          // rendered as an empty result, in a Part 11 audit surface. Undefined
-          // omits the key instead, so the projection carries no claim rather
-          // than a false one.
-          console.error('[AnA RI Stream] control lineage read failed:', err?.message);
-          return undefined;
-        }
-      };
       // A steering interjection queued by the checkpoint, spliced into the next
       // model turn's user message (same mechanism as the adaptation note).
       // Steers accepted at a round boundary, held as OPERATOR TURNS rather
@@ -1338,6 +1405,10 @@ export function mountStreamRoute(router: Router): void {
         }
       );
 
+      // The question as the model was given it (encapsulated when the injection
+      // guard wraps it), and the first call's whole input.
+      turnRecorder?.setRequest(message, injectionGuard.encapsulated ? injectionGuard.text : effectiveMessage);
+      turnRecorder?.setModelInput(messages);
       const gwResponse = await gw.route({
         taskType: routingPlan.taskType,
         // Binds the turn to its tenant, so the org's placement policy (vendor and
@@ -1395,6 +1466,7 @@ export function mountStreamRoute(router: Router): void {
             return;
           }
           fullContent += chunk;
+          turnRecorder?.appendStreamed(chunk);
           res.write(
             `data: ${JSON.stringify({
               type: 'text',
@@ -1410,6 +1482,7 @@ export function mountStreamRoute(router: Router): void {
          model is approved for high-risk work. Updated after every round,
          because each round's calls come from that round's response. */
       let lastServedModel = servedModelOf(gwResponse);
+      turnRecorder?.addServed(1, lastServedModel);
       recordCacheUsage(gwResponse);
       // The first model call is round 1's call; its server tools ran inside it.
       emitServerToolSteps(gwResponse, 1);
@@ -1819,6 +1892,17 @@ export function mountStreamRoute(router: Router): void {
           for (const { toolUse, resultStr, toolStatus, toolErrorMessage, latencyMs } of ran) {
             entries.push({ tool_use_id: toolUse.id, content: resultStr, name: toolUse.name });
             const stepLabel = describeToolPlan([toolUse])[0].label;
+            turnRecorder?.addStep({
+              toolUseId: toolUse.id,
+              round,
+              tool: toolUse.name,
+              label: stepLabel,
+              status: toolStatus,
+              latencyMs,
+              input: toolUse.input,
+              result: resultStr,
+              error: toolErrorMessage ?? null,
+            });
             // Record this call in the turn's tool-trace memory + evidence corpus.
             toolTrace.push(buildTraceEntry(toolUse.name, stepLabel, toolStatus, resultStr));
             // Failures collected for the round's adaptation note (see below).
@@ -1866,6 +1950,7 @@ export function mountStreamRoute(router: Router): void {
             const planEvent = planEventFromToolResult(toolUse.name, toolStatus, resultStr, round);
             if (planEvent) {
               lastPlan = planEvent.steps;
+              turnRecorder?.addPlan(round, planEvent.steps);
               res.write(`data: ${JSON.stringify(planEvent)}\n\n`);
             }
             if (toolStatus === 'success') {
@@ -2061,6 +2146,9 @@ export function mountStreamRoute(router: Router): void {
           // carry all prior results forward). Small rounds pass through under the
           // classic per-result caps, byte-identical to before.
           const budgeted = budgetToolResultsForModel(entries);
+          // What the model will read of each result, where the budget or the
+          // drive-budget amendment changed it from what the tool returned.
+          turnRecorder?.setSentToModel(budgeted);
           // Ground against what the MODEL saw, not the raw results. If the
           // grounding round verified the answer against fuller text than the model
           // was fed, a claim sitting in the truncated-away middle would be marked
@@ -2100,7 +2188,8 @@ export function mountStreamRoute(router: Router): void {
            closure variables and callModel is where the round's MODEL decisions
            live; reading them interleaved made both harder to follow, and the
            mix pushed callModel past the complexity limit. */
-        const stageRound = (results: ToolResultEntry[], priorText: string): void => {
+        const stageRound = (results: ToolResultEntry[], priorText: string, round: number): void => {
+          const stagedFrom = loopMessages.length;
           loopMessages.push({ role: 'assistant', content: assistantTurnContent(priorText, results) });
           // Entries arrive pre-budgeted from executeTools, so the per-result cap
           // here is a no-op safety net. The adaptation note (when a tool failed
@@ -2130,6 +2219,8 @@ export function mountStreamRoute(router: Router): void {
             loopMessages.push(...pendingOperatorTurns);
             pendingOperatorTurns = [];
           }
+          // Everything staged here is the next model call's new input.
+          turnRecorder?.addRoundInput(round, loopMessages.slice(stagedFrom));
         };
 
         const callModel = async (
@@ -2138,7 +2229,7 @@ export function mountStreamRoute(router: Router): void {
           round: number,
           includeTools: boolean
         ): Promise<ModelTurn> => {
-          stageRound(results, priorText);
+          stageRound(results, priorText, round);
 
           // Model tiering (S3) — opt-in via ANA_LOOP_TIERING=on, default OFF so
           // production behavior is byte-identical until deliberately enabled and
@@ -2207,18 +2298,22 @@ export function mountStreamRoute(router: Router): void {
               }
               roundText += chunk;
               fullContent += chunk;
+              turnRecorder?.appendStreamed(chunk);
               res.write(`data: ${JSON.stringify({ type: 'text', content: chunk })}\n\n`);
             },
             callerModule: 'ana-ri-stream-followup',
           });
           if (!roundText && roundResponse.content) {
             roundText = roundResponse.content;
-            fullContent += (fullContent ? '\n\n' : '') + roundText;
+            const appended = (fullContent ? '\n\n' : '') + roundText;
+            fullContent += appended;
+            recordStreamed(appended);
             res.write(`data: ${JSON.stringify({ type: 'text', content: roundText })}\n\n`);
           }
           recordCacheUsage(roundResponse);
           emitServerToolSteps(roundResponse, round);
           lastServedModel = servedModelOf(roundResponse);
+          recordServed(round, lastServedModel);
           const nextUses = (roundResponse as AnaGatewayResponse).toolUses;
           return { text: roundText, toolCalls: (nextUses ?? []).map(toToolCall) };
         };
@@ -2445,6 +2540,9 @@ export function mountStreamRoute(router: Router): void {
       // top level — the client already has `done`. When the executors finish
       // (or fail) we emit `post_done` with cleanedResponse + executed actions/
       // commands + evidence, then close the stream.
+      turnRecorder?.setModel({ provider: gwResponse.provider, model: gwResponse.model, effort: effortUsed });
+      turnRecorder?.setReasoning(fullThinking);
+      turnRecorder?.setAnswer({ streamed: fullContent });
       void runStreamPostProcessing({
         res,
         fullContent,
@@ -2470,15 +2568,33 @@ export function mountStreamRoute(router: Router): void {
         model: gwResponse.model,
         provider: gwResponse.provider,
         enrichment,
+        turnRecorder,
+        // Stop ends the loop at a round boundary, and the turn still closes
+        // through here; the record says it was stopped, not answered.
+        stopped: Boolean(runSignal?.aborted),
+        fileTurnRecord,
       });
     } catch (error: any) {
       streamFailed = true;
       console.error('[AnA RI Stream] Error:', error.message);
+      // The turn is recorded as it ended: with the part of the answer the
+      // person saw, and why it stopped. A stop that aborted the model call
+      // lands here too, and is recorded as stopped, not failed.
+      const stoppedByPerson = Boolean(runHandle?.cancelSignal.aborted);
+      if (turnRecorder) {
+        turnRecorder.setAnswer({ streamed: turnRecorder.streamedText });
+        turnRecorder.setControls(await readControlEvents());
+        if (!stoppedByPerson) {
+          turnRecorder.warn(`The turn ended with an error: ${String(error?.message ?? error).slice(0, 500)}`);
+        }
+      }
+      const turnRecord = await fileTurnRecord(stoppedByPerson ? 'stopped' : 'failed');
       if (res.headersSent) {
         res.write(
           `data: ${JSON.stringify({
             type: 'error',
             error: 'An error occurred while generating the response',
+            turnRecord,
           })}\n\n`
         );
         res.end();
