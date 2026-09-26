@@ -525,12 +525,6 @@ export const C2C_MIGRATION_FILES = [
      idempotent. */
   'db/migrations/20260224_ai_claims_verifier_flags.sql',
 
-  /* source_type / source_atom_id / source_retrieval_chunk_id on
-     ivdr_binder_evidence — the IVDR pack manifest SELECTs all three and
-     ai-claims-routes INSERTs source_type, so attaching evidence to a claim and
-     building the manifest both raised 42703. Same pair of 2026-02-24/25 files
-     that fell off the applier together; same measurement. */
-  'db/migrations/20260224_binder_evidence_source_types.sql',
   'db/migrations/20260730_cmc_projects_reconstruction.sql',
   'db/migrations/20260730_manufacturing_processes_reconstruction.sql',
   'db/migrations/20260730_fk_delete_policies_port.sql',
@@ -658,6 +652,18 @@ export const C2C_MIGRATION_FILES = [
   'db/migrations/20260206_phase5_evidence_fabric.sql',
   'db/migrations/20260207_phase6_6_predicate_intelligence.sql',
   'db/migrations/20260223_ivdr_binder_packs.sql',
+
+  /* source_type / source_atom_id / source_retrieval_chunk_id on
+     ivdr_binder_evidence — the IVDR pack manifest SELECTs all three and
+     ai-claims-routes INSERTs source_type, so attaching evidence to a claim and
+     building the manifest both raised 42703. Same pair of 2026-02-24/25 files
+     that fell off the applier together; same measurement.
+     Moved here, directly after its creator, 2026-09-26 (W2 / D1): it stood 25
+     entries earlier, so on a database the set was building for the first time
+     its to_regclass guard found no table and skipped, and the columns, CHECK and
+     indexes arrived only on the SECOND deploy. ci:replay-rebuilds-nothing
+     measured it (5 objects created by a replay). */
+  'db/migrations/20260224_binder_evidence_source_types.sql',
 
   /* The artifact hashes, sizes and warnings ivdr-pack-worker writes in its
      final promotion step (`UPDATE ivdr_packs SET … manifest_sha256 … zip_sha256,
