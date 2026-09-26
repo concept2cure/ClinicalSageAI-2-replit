@@ -1,3 +1,9 @@
+-- 2026-09-25 AMENDED IN PLACE (W2 / D1, docs/evidence/W2/2026-09-25-replay-rebuilds-nothing/):
+-- cmc_interview_sessions_status_chk is now replaced only when the live definition
+-- (pg_get_constraintdef) differs from the one below. Unconditional, every deploy dropped
+-- and re-added it — a full validation scan under lock (ACCESS EXCLUSIVE for a CHECK;
+-- writes blocked on child and parent for a FOREIGN KEY) while the application served.
+-- The definitions are unchanged. Pinned by npm run ci:replay-rebuilds-nothing.
 -- =============================================================================
 --
 -- AMENDED IN PLACE 2026-09-07 (CLAUDE.md Rule 1 — the set re-runs every deploy,
@@ -87,6 +93,18 @@ CREATE INDEX IF NOT EXISTS idx_cmc_interview_sessions_org_status
 
 -- Replay: a database created by an earlier run of this file holds the
 -- four-value CHECK under the same constraint name; re-add it with 'committing'.
-ALTER TABLE cmc_interview_sessions DROP CONSTRAINT IF EXISTS cmc_interview_sessions_status_chk;
-ALTER TABLE cmc_interview_sessions ADD CONSTRAINT cmc_interview_sessions_status_chk
-  CHECK (status IN ('active', 'complete', 'committing', 'committed', 'abandoned'));
+-- Replaced only when the live definition differs (2026-09-25, see the header):
+-- unconditionally, every deploy re-validated it under lock while the app served.
+DO $keep_chk$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+     WHERE conrelid = to_regclass('public.cmc_interview_sessions') AND conname = 'cmc_interview_sessions_status_chk'
+       AND pg_get_constraintdef(oid) = $def$CHECK ((status = ANY (ARRAY['active'::text, 'complete'::text, 'committing'::text, 'committed'::text, 'abandoned'::text])))$def$
+  ) THEN
+    ALTER TABLE cmc_interview_sessions DROP CONSTRAINT IF EXISTS cmc_interview_sessions_status_chk;
+    ALTER TABLE cmc_interview_sessions ADD CONSTRAINT cmc_interview_sessions_status_chk
+      CHECK (status IN ('active', 'complete', 'committing', 'committed', 'abandoned'));
+  END IF;
+END
+$keep_chk$;

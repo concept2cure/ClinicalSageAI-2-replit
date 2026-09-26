@@ -1,3 +1,9 @@
+-- 2026-09-25 AMENDED IN PLACE (W2 / D1, docs/evidence/W2/2026-09-25-replay-rebuilds-nothing/):
+-- client_workspaces_organization_id_organizations_id_fk, connector_credentials_organization_id_organizations_id_fk, supply_chain_suppliers_organization_id_organizations_id_fk, supply_chain_materials_organization_id_organizations_id_fk, supply_chain_batches_organization_id_organizations_id_fk are now replaced only when the live definition
+-- (pg_get_constraintdef) differs from the one below. Unconditional, every deploy dropped
+-- and re-added them — a full validation scan under lock (ACCESS EXCLUSIVE for a CHECK;
+-- writes blocked on child and parent for a FOREIGN KEY) while the application served.
+-- The definitions are unchanged. Pinned by npm run ci:replay-rebuilds-nothing.
 -- ============================================================================
 -- 20260730_fk_delete_policies_port.sql
 --
@@ -52,33 +58,53 @@ BEGIN
   END IF;
 
   -- CONNECTOR CREDENTIALS: cascade on organization deletion.
-  IF to_regclass('public.connector_credentials') IS NOT NULL THEN
+  IF to_regclass('public.connector_credentials') IS NOT NULL AND NOT EXISTS (
+      SELECT 1 FROM pg_constraint
+       WHERE conrelid = 'public.connector_credentials'::regclass AND conname = 'connector_credentials_organization_id_organizations_id_fk'
+         AND pg_get_constraintdef(oid) = $def$FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE$def$
+  ) THEN
     ALTER TABLE connector_credentials DROP CONSTRAINT IF EXISTS connector_credentials_organization_id_organizations_id_fk;
     ALTER TABLE connector_credentials ADD CONSTRAINT connector_credentials_organization_id_organizations_id_fk
       FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE;
   END IF;
 
   -- CLIENT WORKSPACES: cascade on organization deletion.
-  IF to_regclass('public.client_workspaces') IS NOT NULL THEN
+  IF to_regclass('public.client_workspaces') IS NOT NULL AND NOT EXISTS (
+      SELECT 1 FROM pg_constraint
+       WHERE conrelid = 'public.client_workspaces'::regclass AND conname = 'client_workspaces_organization_id_organizations_id_fk'
+         AND pg_get_constraintdef(oid) = $def$FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE$def$
+  ) THEN
     ALTER TABLE client_workspaces DROP CONSTRAINT IF EXISTS client_workspaces_organization_id_organizations_id_fk;
     ALTER TABLE client_workspaces ADD CONSTRAINT client_workspaces_organization_id_organizations_id_fk
       FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE;
   END IF;
 
   -- SUPPLY CHAIN: cascade on organization deletion.
-  IF to_regclass('public.supply_chain_suppliers') IS NOT NULL THEN
+  IF to_regclass('public.supply_chain_suppliers') IS NOT NULL AND NOT EXISTS (
+      SELECT 1 FROM pg_constraint
+       WHERE conrelid = 'public.supply_chain_suppliers'::regclass AND conname = 'supply_chain_suppliers_organization_id_organizations_id_fk'
+         AND pg_get_constraintdef(oid) = $def$FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE$def$
+  ) THEN
     ALTER TABLE supply_chain_suppliers DROP CONSTRAINT IF EXISTS supply_chain_suppliers_organization_id_organizations_id_fk;
     ALTER TABLE supply_chain_suppliers ADD CONSTRAINT supply_chain_suppliers_organization_id_organizations_id_fk
       FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE;
   END IF;
 
-  IF to_regclass('public.supply_chain_materials') IS NOT NULL THEN
+  IF to_regclass('public.supply_chain_materials') IS NOT NULL AND NOT EXISTS (
+      SELECT 1 FROM pg_constraint
+       WHERE conrelid = 'public.supply_chain_materials'::regclass AND conname = 'supply_chain_materials_organization_id_organizations_id_fk'
+         AND pg_get_constraintdef(oid) = $def$FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE$def$
+  ) THEN
     ALTER TABLE supply_chain_materials DROP CONSTRAINT IF EXISTS supply_chain_materials_organization_id_organizations_id_fk;
     ALTER TABLE supply_chain_materials ADD CONSTRAINT supply_chain_materials_organization_id_organizations_id_fk
       FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE;
   END IF;
 
-  IF to_regclass('public.supply_chain_batches') IS NOT NULL THEN
+  IF to_regclass('public.supply_chain_batches') IS NOT NULL AND NOT EXISTS (
+      SELECT 1 FROM pg_constraint
+       WHERE conrelid = 'public.supply_chain_batches'::regclass AND conname = 'supply_chain_batches_organization_id_organizations_id_fk'
+         AND pg_get_constraintdef(oid) = $def$FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE$def$
+  ) THEN
     ALTER TABLE supply_chain_batches DROP CONSTRAINT IF EXISTS supply_chain_batches_organization_id_organizations_id_fk;
     ALTER TABLE supply_chain_batches ADD CONSTRAINT supply_chain_batches_organization_id_organizations_id_fk
       FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE;
