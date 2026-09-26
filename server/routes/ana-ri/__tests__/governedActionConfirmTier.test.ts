@@ -148,6 +148,17 @@ describe('a live prompt', () => {
     expect(audits.map(a => a.action)).toEqual(['ana.governed_action.declined']);
   });
 
+  it('a decline whose audit row was lost still releases the run, and says so', async () => {
+    pending = { toolUseId: 'tu-1', command: 'update_artifact', params: { artifactId: 7 } };
+    auditPersists = false;
+    const res = await post({ runId: 'run-1', toolUseId: 'tu-1', decision: 'decline' });
+
+    expect(res.status).toBe(200);
+    expect(executed).toHaveLength(0);
+    expect(decisions).toEqual([{ runId: 'run-1', orgId: ORG, decided: 'denied' }]);
+    expect(JSON.stringify(res.body)).toMatch(/could not be written to the audit trail/);
+  });
+
   it('a decline needs a run to apply to', async () => {
     const res = await post({ command: 'create_task', decision: 'decline' });
     expect(res.status).toBe(400);

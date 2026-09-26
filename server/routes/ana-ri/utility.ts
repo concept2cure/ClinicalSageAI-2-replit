@@ -190,7 +190,7 @@ async function declineHeldAction(
   if (!held.pendingForRun) {
     return sendError(res, 400, 'A decline needs the run that is waiting on it', null, 'NO_PENDING_APPROVAL');
   }
-  await auditService.logAction({
+  const audit = await auditService.logAction({
     tenantId: held.numericOrgId,
     userId: held.userId,
     action: 'ana.governed_action.declined',
@@ -200,8 +200,25 @@ async function declineHeldAction(
     userAgent: req.headers['user-agent'] as string | undefined,
     details: { command: held.command, runId: held.runId, toolUseId: held.toolUseId, proposedByAgent: true },
   });
+  // A decline runs nothing, so a lost audit row does not stop it — refusing
+  // would leave AnA holding the turn for a decision already made. It is not
+  // hidden either: logged, and carried to the client, which says so.
+  if (!audit.persisted) {
+    log.error('Decline recorded against the run but its audit row was not persisted', {
+      command: held.command,
+      runId: held.runId,
+      reason: audit.error ?? 'no durable store accepted the row',
+    });
+  }
   await releaseWaitingRun(req, held.runId, held.toolUseId, held.userId, '', { declined: true });
-  return sendSuccess(res, { success: true, declined: true, message: 'Declined. AnA will carry on without it.' });
+  return sendSuccess(res, {
+    success: true,
+    declined: true,
+    auditRecorded: audit.persisted,
+    message: audit.persisted
+      ? 'Declined. AnA will carry on without it.'
+      : 'Declined, and AnA will carry on without it — but the decline could not be written to the audit trail.',
+  });
 }
 
 /** Register utility endpoints on the given router. */
