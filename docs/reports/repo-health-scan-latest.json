@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-26T04:45:23.080Z",
+  "generatedAt": "2026-09-26T05:04:28.905Z",
   "git": {
-    "sha": "dc365682b10abae6425c37b47e61bd6f084e0cbf",
+    "sha": "2232a04cfb4b00b51b32547b086508e60c12eb52",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2065,6 +2065,10 @@
         "bytes": 134822
       },
       {
+        "file": "server/routes/ana-ri/stream.ts",
+        "bytes": 133696
+      },
+      {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
         "bytes": 133645
       },
@@ -2083,10 +2087,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
         "bytes": 127662
-      },
-      {
-        "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 127285
       },
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
@@ -2263,16 +2263,16 @@
         "lines": 2717
       },
       {
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 2712
+      },
+      {
         "file": "server/routes/knowledge-base.ts",
         "lines": 2666
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
         "lines": 2609
-      },
-      {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 2596
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
