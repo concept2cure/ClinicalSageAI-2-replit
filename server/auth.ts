@@ -158,17 +158,21 @@ async function refusedAccountOrSessionOutOfUse(userId: number, claims: unknown, 
 }
 
 /**
- * AUTH-03: a signed-out session opens nothing (see authenticateToken). IAM-06
- * (P1-1): nor does a session idle past its window or older than its lifetime;
- * when admitted, this request is recorded as the session's activity (see
- * authenticateToken and services/session-inactivity.ts). Answers 401 and
- * returns true when it refused.
+ * Every way a signed, unexpired token's session can be over, in the order the
+ * main authenticator (middleware/auth.ts) answers them: signed out (AUTH-03),
+ * the account out of use or the password changed since (F-29, IAM-04), then
+ * idle past its window, past its lifetime or superseded (IAM-06, P1-1). The
+ * order is what the holder is told: a session a password change ended reads
+ * as ended, not as idle. When admitted, this request is recorded as the
+ * session's activity (services/session-inactivity.ts). Answers 401 (503 when
+ * the standing cannot be read) and returns true when it refused.
  */
-async function refusedEndedSession(token: string, claims: unknown, res: Response): Promise<boolean> {
+async function refusedEndedSession(token: string, userId: number | null, claims: unknown, res: Response): Promise<boolean> {
   if (await isTokenRevoked(token)) {
     res.status(401).json({ error: 'This session has ended. Sign in again.', code: 'SESSION_ENDED' });
     return true;
   }
+  if (userId !== null && (await refusedAccountOrSessionOutOfUse(userId, claims, res))) return true;
   const inactivity = await sessionInactivityReason(token, claims);
   if (!inactivity) return false;
   void revokeToken(token, inactivity);
@@ -211,9 +215,6 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
         return res.status(401).json({ error: 'Token is not valid for this operation' });
       }
 
-      // AUTH-03 and IAM-06: a signed-out, idle or out-of-time session opens nothing.
-      if (await refusedEndedSession(token, decoded, res)) return;
-
       if (!decoded.userId || !decoded.organizationId) {
         return res.status(401).json({ error: 'Invalid token payload' });
       }
@@ -221,7 +222,10 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
       const parsedUserId = parseFiniteInt(decoded.userId);
       const parsedOrganizationId = parseFiniteInt(decoded.organizationId);
 
-      if (parsedUserId !== null && (await refusedAccountOrSessionOutOfUse(parsedUserId, decoded, res))) return;
+      // AUTH-03, F-29, IAM-04 and IAM-06: a signed-out session, an account out
+      // of use, a session the password change ended, and an idle, out-of-time
+      // or superseded session open nothing, in that order.
+      if (await refusedEndedSession(token, parsedUserId, decoded, res)) return;
       // This is the query that VERIFIES the token's tenant claim, so it cannot
       // itself run inside that tenant's scope — the claim is untrusted until it
       // returns. Pool instrumentation blocks unscoped queries once
