@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-26T12:31:44.247Z",
+  "generatedAt": "2026-09-26T12:53:07.485Z",
   "git": {
-    "sha": "c821bb61264862cf32c3862b4f94980d394c3a08",
+    "sha": "2a91be06156cc00cf13a8fa12d279fca9f87c8f4",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1977,7 +1977,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1059635
+        "bytes": 1061091
       },
       {
         "file": "shared/schema.ts",
@@ -2065,7 +2065,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 133696
+        "bytes": 134499
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
@@ -2159,7 +2159,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 20485
+        "lines": 20524
       },
       {
         "file": "shared/schema.ts",
@@ -2262,16 +2262,16 @@
         "lines": 2796
       },
       {
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 2732
+      },
+      {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
         "lines": 2717
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 2712
-      },
-      {
         "file": "server/routes/auth.ts",
-        "lines": 2706
+        "lines": 2715
       },
       {
         "file": "server/routes/knowledge-base.ts",

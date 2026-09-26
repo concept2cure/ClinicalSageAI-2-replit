@@ -279,7 +279,8 @@ export const UI_SURFACES: UiSurface[] = [
     group: 'evidence',
     uiKit: 'mdx',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): MdxSurfaceHost (useMdxPrograms, useWorkbench, useSubmissions) calls these for the Vault too.
-    apiPrefixes: ['/api/c2c/project-vault', '/api/vault/ingest', '/api/regulatory-programs', '/api/submission-ops'],
+    // '/api/mdx/vault' (2026-09-26): mdx/hooks/useVault.ts, the list and version reads.
+    apiPrefixes: ['/api/c2c/project-vault', '/api/vault/ingest', '/api/regulatory-programs', '/api/submission-ops', '/api/mdx/vault'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -356,7 +357,13 @@ export const UI_SURFACES: UiSurface[] = [
     group: 'submission',
     uiKit: 'submission',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): GatewayTransmittals.tsx assembles, preflights and reads identifiers through the package model.
-    apiPrefixes: ['/api/mdx', '/api/submission-ops'],
+    // 2026-09-26: '/api/mdx' narrowed to '/api/mdx/gateways' (the routes this
+    // surface owns, per `engineering` below). The whole namespace made every
+    // device-kit API — risk items, clinical studies, IVD, labeling — answer as
+    // launch in production. The other launch callers under /api/mdx are
+    // claimed by their own surfaces (vault, admin-console) or on
+    // LAUNCH_PLATFORM_API (industry profile, notifications).
+    apiPrefixes: ['/api/mdx/gateways', '/api/submission-ops'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
