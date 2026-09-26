@@ -25,7 +25,9 @@ import { findMembership } from '../store';
 beforeAll(async () => {
   pglite = new PGlite();
   await pglite.exec(`
-    CREATE TABLE organizations (id SERIAL PRIMARY KEY, uuid UUID NOT NULL DEFAULT gen_random_uuid(), status TEXT NOT NULL DEFAULT 'active');
+    -- settings: read by the lookup since fc5f5d31f (P1-38) for the connector
+    -- session limit; json and nullable, as the real column is.
+    CREATE TABLE organizations (id SERIAL PRIMARY KEY, uuid UUID NOT NULL DEFAULT gen_random_uuid(), status TEXT NOT NULL DEFAULT 'active', settings JSON);
     CREATE TABLE users (id SERIAL PRIMARY KEY, email TEXT, status TEXT NOT NULL DEFAULT 'active');
     CREATE TABLE organization_users (id SERIAL PRIMARY KEY, organization_id INT NOT NULL, user_id INT NOT NULL, role TEXT NOT NULL);
     INSERT INTO organizations (id, status) VALUES (1, 'active'), (2, 'suspended');
