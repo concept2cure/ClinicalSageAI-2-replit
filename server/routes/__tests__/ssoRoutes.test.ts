@@ -387,6 +387,21 @@ describe('SAML SSO — the organisation is the one that owns the matched IdP con
     );
   });
 
+  it("callback: the session carries the config organisation's idle window and session limit, not the platform defaults", async () => {
+    dbState.rows.organizations = dbState.rows.organizations.map(o =>
+      o.id === ACME_ORG ? { ...o, settings: { security: { sessionTimeoutMinutes: 30, maxConcurrentSessions: 2 } } } : o,
+    );
+    dbState.rows.users = [alice];
+    dbState.rows.organization_users = [membership(alice.id, ACME_ORG, 'manager')];
+    saml.validateResponse.mockResolvedValue(assertion(alice.email));
+
+    const res = await callback('acme');
+
+    expect(res.status).toBe(200);
+    const claims = jwt.decode(res.body.accessToken) as Record<string, unknown>;
+    expect(claims.idl, "the SSO session ignored the tenant's idle window").toBe(30 * 60);
+  });
+
   it('callback: a return path rides in the fragment with the session, never in a query string (IAM-18 item 6)', async () => {
     dbState.rows.users = [alice];
     dbState.rows.organization_users = [membership(alice.id, ACME_ORG, 'manager')];

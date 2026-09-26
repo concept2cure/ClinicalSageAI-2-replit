@@ -29,7 +29,12 @@
  * and its refresh are refused (SESSION_SUPERSEDED); the marker outlives the
  * session's own lifetime, so nothing revives it. Signing out frees the slot,
  * and a session found idle or past its lifetime frees it too. The registry
- * lives beside the activity store, in Redis with the memory tier behind it.
+ * lives beside the activity store: in Redis, where one atomic script prunes,
+ * adds, counts and evicts, so two sign-ins at once cannot both read the same
+ * count; and when Redis answers, its decision is the only one, because the
+ * memory tier knows just the sessions this task opened and still lists the
+ * ones signed out elsewhere. Without Redis each task enforces the limit over
+ * the sessions it opened, and production runs Redis (plan P1-3).
  *
  * Tokens minted before this change carry no `sid`. Their activity is keyed by
  * the token itself, their refresh tokens can be checked for their lifetime
@@ -181,14 +186,31 @@ interface RedisLike {
   get(key: string): Promise<string | null>;
   mget(...keys: string[]): Promise<(string | null)[]>;
   set(key: string, value: string, mode: 'EX', seconds: number): Promise<unknown>;
-  del(...keys: string[]): Promise<unknown>;
-  zadd(key: string, score: string, member: string): Promise<unknown>;
-  zcard(key: string): Promise<number>;
-  zrange(key: string, start: number, stop: number): Promise<string[]>;
   zrem(key: string, ...members: string[]): Promise<unknown>;
-  zremrangebyscore(key: string, min: string, max: string): Promise<unknown>;
-  expire(key: string, seconds: number): Promise<unknown>;
+  eval(script: string, numKeys: number, ...args: (string | number)[]): Promise<unknown>;
 }
+
+/**
+ * Register one session and decide the evictions in one step on the Redis
+ * side. KEYS[1] the account's sorted set (score: session start, ms);
+ * ARGV: the lifetime cutoff (ms), the session's start (ms), its id, the key's
+ * TTL (s), the limit. Returns the ids the limit ends, oldest first, never the
+ * one just registered.
+ */
+const REGISTER_SCRIPT = `
+redis.call('ZREMRANGEBYSCORE', KEYS[1], '-inf', ARGV[1])
+redis.call('ZADD', KEYS[1], ARGV[2], ARGV[3])
+redis.call('EXPIRE', KEYS[1], ARGV[4])
+local excess = redis.call('ZCARD', KEYS[1]) - tonumber(ARGV[5])
+if excess <= 0 then return {} end
+local oldest = redis.call('ZRANGE', KEYS[1], 0, excess)
+local evicted = {}
+for _, id in ipairs(oldest) do
+  if id ~= ARGV[3] and #evicted < excess then evicted[#evicted + 1] = id end
+end
+if #evicted > 0 then redis.call('ZREM', KEYS[1], unpack(evicted)) end
+return evicted
+`;
 
 async function getRedis(): Promise<RedisLike | null> {
   try {
@@ -284,21 +306,22 @@ function memoryRegister(account: string, sid: string, startedMs: number, limit: 
   return evicted;
 }
 
-/** The same in Redis, shared by every task; null when Redis is away or fails. */
+/** The same in Redis, shared by every task, as one atomic script; null when Redis is away or fails. */
 async function redisRegister(account: string, sid: string, startedMs: number, limit: number, now: number): Promise<string[] | null> {
   const redis = await getRedis();
   if (!redis) return null;
-  const key = SESSIONS_KEY_PREFIX + account;
   try {
-    await redis.zremrangebyscore(key, '-inf', String(now - LIFETIME_MS));
-    await redis.zadd(key, String(startedMs), sid);
-    await redis.expire(key, SUPERSEDED_TTL_SECONDS);
-    const excess = (await redis.zcard(key)) - limit;
-    if (excess <= 0) return [];
-    // The oldest `excess` sessions; the one just registered is never among the ended.
-    const oldest = (await redis.zrange(key, 0, excess)).filter(id => id !== sid).slice(0, excess);
-    if (oldest.length > 0) await redis.zrem(key, ...oldest);
-    return oldest;
+    const evicted = await redis.eval(
+      REGISTER_SCRIPT,
+      1,
+      SESSIONS_KEY_PREFIX + account,
+      String(now - LIFETIME_MS),
+      String(startedMs),
+      sid,
+      String(SUPERSEDED_TTL_SECONDS),
+      String(limit),
+    );
+    return Array.isArray(evicted) ? evicted.filter((id): id is string => typeof id === 'string' && id !== sid) : [];
   } catch (err) {
     log.warn('Session registry could not be written to Redis; memory tier holds it', {
       error: err instanceof Error ? err.message : String(err),
@@ -326,14 +349,16 @@ async function markSuperseded(sids: string[], now: number): Promise<void> {
 /**
  * Register a session against its account's concurrent-session limit. Returns
  * the session ids the limit ended (the oldest), which are marked superseded so
- * their next request and their refresh are refused.
+ * their next request and their refresh are refused. When Redis answers, its
+ * decision is the only one; the memory tier is kept current so it can decide
+ * for this task when Redis is away.
  */
 export async function registerSession(userId: string | number, claims: SessionClaims, limit: number, now: number = Date.now()): Promise<string[]> {
   const account = String(userId);
   const startedMs = claims.sst * 1000;
   const fromMemory = memoryRegister(account, claims.sid, startedMs, limit, now);
   const fromRedis = await redisRegister(account, claims.sid, startedMs, limit, now);
-  const evicted = [...new Set([...fromMemory, ...(fromRedis ?? [])])];
+  const evicted = fromRedis ?? fromMemory;
   if (evicted.length > 0) {
     await markSuperseded(evicted, now);
     log.info('Sessions ended by a sign-in beyond the account limit', { account, limit, ended: evicted.length });

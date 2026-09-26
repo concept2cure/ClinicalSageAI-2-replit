@@ -891,6 +891,11 @@ router.post('/select-organization', async (req: Request, res: Response) => {
       config.jwt.secret,
       { expiresIn: '24h' }
     );
+    // Rotation, as at /refresh-token and POST /api/auth/refresh (IAM-04): the
+    // presented token is spent the moment its successor exists. Until 2026-09-26
+    // the switch revoked nothing, so the old organisation's token and the new
+    // one stayed live together for the rest of the session.
+    await revokeToken(existingToken, 'rotated');
 
     // AUDIT: this is a tenant-boundary crossing and it was previously silent.
     //

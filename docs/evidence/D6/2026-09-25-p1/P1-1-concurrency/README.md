@@ -41,6 +41,33 @@ the in-memory tier behind it).
 - The OQ step for the limit (OQ-001) follows the knob: it needs a limit of one to run in bounded time.
 - The default of five is an engineering default, recorded here for the founder to confirm or change.
 
+## Follow-up, same day: the security-auditor lens on this change
+
+The repository's `security-auditor` agent read the change and named four things, all fixed in the follow-up commit
+(red: `red/followup-before-fix.txt`, five failing cases; green: `green/followup-after-fix.txt`):
+
+- **The Redis registration was six round trips** (prune, add, expire, count, range, remove), so two sign-ins at once
+  could both read the same count and one eviction was lost. It is now one Lua script (`REGISTER_SCRIPT`), atomic on
+  the Redis side; the double in `session-registry-redis.test.ts` counts the calls.
+- **The memory tier's vote was unioned into Redis's decision.** The memory tier knows only the sessions this task
+  opened and still lists the ones signed out on another task, so it could end a live session Redis kept. When Redis
+  answers, its decision is now the only one; the memory tier decides only when Redis is away.
+- **The SAML sign-in opened its session with the platform defaults**, ignoring the tenant's idle window and limit.
+  It now reads the config organisation's settings like every other door.
+- **`optionalAuth` checked only the revocation list.** It has no caller today, but the next router that reaches for
+  it would have attached a user from an idle, superseded, suspended or password-changed session. It now verifies
+  through `verifyLiveToken`, as the other authenticators do.
+
+And one pre-existing neighbour: **`POST /select-organization` revoked nothing**, so the old organisation's token and
+the new one stayed live together. It now rotates like `/refresh-token`
+(`authEnterprise-select-organization-rotation.test.ts`).
+
+**Residual, recorded, not fixed here:** without Redis each task enforces the limit over the sessions it opened
+(the activity store degrades the same way). Production runs Redis under plan P1-3, which is the founder's
+decision to make a boot requirement; until then a fleet without Redis holds up to the limit per task.
+The `InResponseTo` replay cache is per process (node-saml's default), noted in the code; a fleet without sticky
+routing needs a shared cache before SAML sign-in is offered at scale.
+
 ## Evidence
 
 - `red/before-fix.txt` — the new cases against HEAD `932d4517`: 12 failing, all on the missing limit

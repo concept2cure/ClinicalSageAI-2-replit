@@ -458,9 +458,9 @@ router.post('/saml/callback', async (req: Request, res: Response) => {
     // SECURITY: JWT must include organizationId so downstream tenant middleware
     // derives the org context from the token, not from user-supplied headers.
     // The session's id, start and idle window, registered against the account's
-    // concurrent-session limit (P1-1; the defaults, the organisation's settings
-    // are not read on this path).
-    const session = await openSession(dbUser.id);
+    // concurrent-session limit, both from the config organisation's settings
+    // as at every other sign-in door (P1-1).
+    const session = await openSession(dbUser.id, await organizationSettingsOf(Number(organizationId)));
     const token = jwt.sign(
       {
         userId: String(dbUser.id),
@@ -838,6 +838,16 @@ interface DbUserResult {
  *   - an account that is not active is refused (SamlAccountInactiveError);
  *   - nothing on an existing account is rewritten from the assertion.
  */
+/** The organisation's settings object (session window and limit), or undefined when the row is not there. */
+async function organizationSettingsOf(organizationId: number): Promise<unknown> {
+  const [row] = await db
+    .select({ settings: organizations.settings })
+    .from(organizations)
+    .where(eq(organizations.id, organizationId))
+    .limit(1);
+  return row?.settings;
+}
+
 async function findOrCreateSamlUser(samlUser: SAMLUser, configOrgId: number): Promise<DbUserResult> {
   const email = samlUser.email.toLowerCase().trim();
 

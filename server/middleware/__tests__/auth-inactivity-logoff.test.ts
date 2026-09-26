@@ -166,4 +166,17 @@ describe('authenticateToken — inactivity logoff', () => {
     expect(r.status).toBe(401);
     expect(r.body?.error?.code).toBe('SESSION_SUPERSEDED');
   });
+
+  it('optionalAuth attaches no user from a session that is over, and the request continues anonymous', async () => {
+    const { optionalAuth } = await importRealMiddlewareAuth();
+    const attach = (token: string) =>
+      new Promise<unknown>((resolve, reject) => {
+        const req = { headers: { authorization: `Bearer ${token}` } } as unknown as Request & { user?: unknown };
+        optionalAuth(req, {} as Response, (err?: unknown) => (err ? reject(err) : resolve(req.user)));
+      });
+    clock = T0;
+    expect(await attach(sessionToken(T0 - 2 * MINUTE)), 'a live session attaches its user').toBeTruthy();
+    expect(await attach(sessionToken(T0 - 20 * MINUTE)), 'an idle session attached a user').toBeUndefined();
+    expect(await attach(sessionToken(T0 - 13 * HOUR, { sst: seconds(T0 - 13 * HOUR) })), 'a 13-hour session attached a user').toBeUndefined();
+  });
 });

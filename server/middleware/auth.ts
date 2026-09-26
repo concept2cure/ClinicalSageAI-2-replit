@@ -9,7 +9,7 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { verifyJwtWithRotation } from '../utils/jwtVerify';
-import { isTokenRevoked, revokeToken } from '../services/token-revocation';
+import { isTokenRevoked, revokeToken, verifyLiveToken } from '../services/token-revocation';
 import { sessionEndCodeOf, sessionEndMessageOf, sessionInactivityReason } from '../services/session-inactivity';
 import { nonAccessTokenReason, requireAccessTokenReason } from './tokenType';
 import { enforceOrgMembership, invalidateOrgMembershipCache, parseFiniteInt } from './orgMembership';
@@ -588,21 +588,22 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
   if (nonAccessTokenReason(decoded) || subject === undefined || subject === null || subject === '' || subject === 0) {
     return next();
   }
-  // Nor from a signed-out session (AUTH-03). If the check itself fails, the
+  // Nor from a session that is over: signed out (AUTH-03), the account
+  // inactive, the password changed since (IAM-04), idle past its window,
+  // past its lifetime or superseded (IAM-06) — the same verification the
+  // other authenticators apply, in one call. If the check itself fails, the
   // request continues unauthenticated rather than as the token's user.
-  isTokenRevoked(token).then(
-    (revoked) => {
-      if (!revoked) {
-        req.user = {
-          id: subject,
-          userId: subject,
-          email: decoded.email,
-          role: decoded.role || 'user',
-          roles: expandRoleClaims(decoded.role, decoded.roles),
-          organizationId: decoded.organizationId || decoded.orgId,
-          permissions: decoded.permissions || [],
-        };
-      }
+  verifyLiveToken(token).then(
+    () => {
+      req.user = {
+        id: subject,
+        userId: subject,
+        email: decoded.email,
+        role: decoded.role || 'user',
+        roles: expandRoleClaims(decoded.role, decoded.roles),
+        organizationId: decoded.organizationId || decoded.orgId,
+        permissions: decoded.permissions || [],
+      };
       next();
     },
     () => next(),
