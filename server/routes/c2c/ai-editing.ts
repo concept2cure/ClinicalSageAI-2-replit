@@ -160,12 +160,13 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
           .filter(Boolean)
           .join(' ');
 
-        const searchResults = await embeddingService.searchHybrid(
-          searchQuery,
-          RETRIEVAL_TOP_K,
-          RETRIEVAL_THRESHOLD,
-          orgUuid
-        );
+        // RETRIEVAL_THRESHOLD is a floor on semantic similarity, and the one
+        // recorded in ai_retrieval_runs below; it used to go in as the ranking weight.
+        const searchResults = await embeddingService.searchHybrid(searchQuery, {
+          limit: RETRIEVAL_TOP_K,
+          organizationUuid: orgUuid,
+          minSemanticScore: RETRIEVAL_THRESHOLD,
+        });
         sources = searchResults.map((r: any) => ({
           id: r.id,
           title: r.title,
@@ -1080,7 +1081,11 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
           .filter(Boolean)
           .join(' ')
           .substring(0, 300);
-        const searchResults = await embeddingService.searchHybrid(searchQuery, 5, 0.65, orgUuid);
+        const searchResults = await embeddingService.searchHybrid(searchQuery, {
+          limit: 5,
+          organizationUuid: orgUuid,
+          minSemanticScore: 0.65,
+        });
         if (searchResults.length > 0) {
           sourcesRetrieved = searchResults.length;
           evidenceBlock =
