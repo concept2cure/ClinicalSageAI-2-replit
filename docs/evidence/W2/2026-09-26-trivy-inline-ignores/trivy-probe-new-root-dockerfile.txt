@@ -1,0 +1,14 @@
+# probe: ds002-probe/Dockerfile (FROM node:22-alpine, no USER) added to the tree, then removed
+
+## before: trunk .trivyignore (DS002 suppressed for the whole tree)
+$ trivy config ... --skip-dirs node_modules --ignorefile <trunk .trivyignore> .
+│ ds002-probe/Dockerfile                             │ dockerfile │         0         │
+exit 0   <- a new image running as root passed the blocking scan
+
+## after: this change
+$ trivy config ... --skip-dirs node_modules --skip-files .claude/skills/gstack/.github/docker/Dockerfile.ci .
+│ ds002-probe/Dockerfile                        │ dockerfile │         1         │
+ds002-probe/Dockerfile (dockerfile)
+Failures: 1 (HIGH: 1, CRITICAL: 0)
+DS-0002 (HIGH): Specify at least 1 USER command in Dockerfile with non-root user as argument
+exit 1
