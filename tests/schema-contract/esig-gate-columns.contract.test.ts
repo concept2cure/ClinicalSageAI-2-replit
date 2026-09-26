@@ -191,8 +191,29 @@ describe('C-17: the e-sig gate columns are only in the push surface', () => {
     const original = read(ROOT_ORIGINAL);
     const port = read(PORT_MIGRATION);
     // Everything from the original's own header onward is byte-identical; only a
-    // provenance preamble was prepended.
-    expect(port.endsWith(original)).toBe(true);
+    // provenance preamble was prepended — with ONE amendment (2026-09-25, W2 /
+    // D1, CLAUDE.md Rule 1): the status CHECK's DROP/ADD pair runs only when the
+    // live definition differs, so a replay no longer re-validates the table
+    // under ACCESS EXCLUSIVE on every deploy. Undo that wrapper and the port must
+    // again end with the original, and the pair inside it must be the original's
+    // two statements, character for character.
+    const pairStart = original.indexOf('ALTER TABLE submission_orchestrator_runs\n  DROP CONSTRAINT');
+    const pairEnd = original.indexOf("'partial'));", pairStart) + "'partial'));".length;
+    expect(pairStart).toBeGreaterThan(-1);
+    const pair = original.slice(pairStart, pairEnd);
+
+    const wrapStart = port.indexOf('-- Replaced only when the live definition differs');
+    const wrapEnd = port.indexOf('$keep_check$;', wrapStart) + '$keep_check$;'.length;
+    expect(wrapStart).toBeGreaterThan(-1);
+    const wrapper = port.slice(wrapStart, wrapEnd);
+    const indentedPair = pair
+      .split('\n')
+      .map(l => (l ? `    ${l}` : l))
+      .join('\n');
+    expect(wrapper).toContain(indentedPair);
+
+    const unwrapped = port.slice(0, wrapStart) + pair + port.slice(wrapEnd);
+    expect(unwrapped.endsWith(original)).toBe(true);
   });
 });
 

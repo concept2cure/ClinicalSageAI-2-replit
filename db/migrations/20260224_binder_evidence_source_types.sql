@@ -1,3 +1,9 @@
+-- 2026-09-25 AMENDED IN PLACE (W2 / D1, docs/evidence/W2/2026-09-25-replay-rebuilds-nothing/):
+-- chk_binder_evidence_source_integrity is now replaced only when the live definition
+-- (pg_get_constraintdef) differs from the one below. Unconditional, every deploy dropped
+-- and re-added it — a full validation scan under lock (ACCESS EXCLUSIVE for a CHECK;
+-- writes blocked on child and parent for a FOREIGN KEY) while the application served.
+-- The definitions are unchanged. Pinned by npm run ci:replay-rebuilds-nothing.
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- Migration: Extend ivdr_binder_evidence to support atom-sourced evidence
 -- Date: 2026-02-24
@@ -80,26 +86,39 @@ BEGIN
 
   -- ── 3. Tightened CHECK constraint (strict mutual exclusivity) ──────────────────
 
-  ALTER TABLE ivdr_binder_evidence
-  DROP CONSTRAINT IF EXISTS chk_binder_evidence_source_integrity;
+  -- Replaced only when the live definition differs (2026-09-25, see the header):
+  -- unconditionally, every deploy re-validated it under lock while the app served.
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+     WHERE conrelid = to_regclass('public.ivdr_binder_evidence') AND conname = 'chk_binder_evidence_source_integrity'
+       AND pg_get_constraintdef(oid) = $def$CHECK (
+CASE source_type
+    WHEN 'vault'::text THEN ((vault_file_id IS NOT NULL) AND (vault_version_id IS NOT NULL) AND (source_atom_id IS NULL) AND (source_retrieval_chunk_id IS NULL))
+    WHEN 'atom'::text THEN ((source_atom_id IS NOT NULL) AND (source_retrieval_chunk_id IS NOT NULL) AND (vault_file_id IS NULL) AND (vault_version_id IS NULL))
+    ELSE false
+END)$def$
+  ) THEN
+    ALTER TABLE ivdr_binder_evidence
+    DROP CONSTRAINT IF EXISTS chk_binder_evidence_source_integrity;
 
-  ALTER TABLE ivdr_binder_evidence
-  ADD CONSTRAINT chk_binder_evidence_source_integrity
-  CHECK (
-    CASE source_type
-      WHEN 'vault' THEN
-        vault_file_id IS NOT NULL
-        AND vault_version_id IS NOT NULL
-        AND source_atom_id IS NULL
-        AND source_retrieval_chunk_id IS NULL
-      WHEN 'atom' THEN
-        source_atom_id IS NOT NULL
-        AND source_retrieval_chunk_id IS NOT NULL
-        AND vault_file_id IS NULL
-        AND vault_version_id IS NULL
-      ELSE FALSE
-    END
-  );
+    ALTER TABLE ivdr_binder_evidence
+    ADD CONSTRAINT chk_binder_evidence_source_integrity
+    CHECK (
+      CASE source_type
+        WHEN 'vault' THEN
+          vault_file_id IS NOT NULL
+          AND vault_version_id IS NOT NULL
+          AND source_atom_id IS NULL
+          AND source_retrieval_chunk_id IS NULL
+        WHEN 'atom' THEN
+          source_atom_id IS NOT NULL
+          AND source_retrieval_chunk_id IS NOT NULL
+          AND vault_file_id IS NULL
+          AND vault_version_id IS NULL
+        ELSE FALSE
+      END
+    );
+  END IF;
 
 
   -- ── 4. Indexes ─────────────────────────────────────────────────────────────────

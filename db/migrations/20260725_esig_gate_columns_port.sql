@@ -1,3 +1,9 @@
+-- 2026-09-25 AMENDED IN PLACE (W2 / D1, docs/evidence/W2/2026-09-25-replay-rebuilds-nothing/):
+-- submission_orchestrator_runs_status_check is now replaced only when the live definition
+-- (pg_get_constraintdef) differs from the one below. Unconditional, every deploy dropped
+-- and re-added it — a full validation scan under lock (ACCESS EXCLUSIVE for a CHECK;
+-- writes blocked on child and parent for a FOREIGN KEY) while the application served.
+-- The definitions are unchanged. Pinned by npm run ci:replay-rebuilds-nothing.
 -- ============================================================================
 -- PORT (ledger C-17): Path-to-GA §C.11 e-sig gate, moved into the canonical
 -- lineage so it actually runs.
@@ -99,12 +105,24 @@ BEGIN;
 
 -- ── 1. Widen submission_orchestrator_runs.status CHECK ──────────────────────
 
-ALTER TABLE submission_orchestrator_runs
-  DROP CONSTRAINT IF EXISTS submission_orchestrator_runs_status_check;
+-- Replaced only when the live definition differs (2026-09-25, see the header):
+-- unconditionally, every deploy re-validated it under lock while the app served.
+DO $keep_check$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+     WHERE conrelid = to_regclass('public.submission_orchestrator_runs') AND conname = 'submission_orchestrator_runs_status_check'
+       AND pg_get_constraintdef(oid) = $def$CHECK ((status = ANY (ARRAY['running'::text, 'awaiting-async'::text, 'awaiting-signature'::text, 'complete'::text, 'failed'::text, 'partial'::text])))$def$
+  ) THEN
+    ALTER TABLE submission_orchestrator_runs
+      DROP CONSTRAINT IF EXISTS submission_orchestrator_runs_status_check;
 
-ALTER TABLE submission_orchestrator_runs
-  ADD CONSTRAINT submission_orchestrator_runs_status_check
-  CHECK (status IN ('running', 'awaiting-async', 'awaiting-signature', 'complete', 'failed', 'partial'));
+    ALTER TABLE submission_orchestrator_runs
+      ADD CONSTRAINT submission_orchestrator_runs_status_check
+      CHECK (status IN ('running', 'awaiting-async', 'awaiting-signature', 'complete', 'failed', 'partial'));
+  END IF;
+END
+$keep_check$;
 
 -- ── 2. electronic_signatures: organization_id (tenant scoping) ──────────────
 
