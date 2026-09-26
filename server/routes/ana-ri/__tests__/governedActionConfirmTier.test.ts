@@ -56,6 +56,14 @@ vi.mock('../../../services/ana-ri/command-executor.js', () => ({
   }),
 }));
 
+const toolCalls: Array<{ name: string; input: Record<string, unknown>; ctx: Record<string, unknown> }> = [];
+vi.mock('../../../services/ana/AnaToolExecutor.js', () => ({
+  getToolHandler: vi.fn((name: string) => async (input: Record<string, unknown>, ctx: Record<string, unknown>) => {
+    toolCalls.push({ name, input, ctx });
+    return JSON.stringify({ success: true, seeded: 42 });
+  }),
+}));
+
 let app: express.Express;
 
 beforeAll(async () => {
@@ -79,6 +87,7 @@ beforeEach(() => {
   pending = null;
   auditPersists = true;
   reverify.mockClear();
+  toolCalls.length = 0;
 });
 
 const post = (body: Record<string, unknown>) => request(app).post('/api/ana-ri/governed-action').send(body);
@@ -179,5 +188,69 @@ describe('a live prompt', () => {
     expect(reasoned.status, JSON.stringify(reasoned.body)).toBe(200);
     expect(executed).toHaveLength(1);
     expect(audits.at(-1)?.action).toBe('ana.governed_action.reason');
+  });
+});
+
+/*
+ * A tool that writes on its own handler (CONFIRM_TIER_TOOLS) is confirmed the
+ * same way — but it can only be run from a held run, because the context the
+ * handler needs (the project, and the model that wrote the content, which the
+ * approved-model gate checks) is what the waiting turn recorded, not anything
+ * the browser could be trusted to supply.
+ */
+describe('a confirmed tool', () => {
+  const heldTool = () => ({
+    toolUseId: 'tu-9',
+    command: 'seed_tmf',
+    params: { reason: 'Seeding the TMF for the Phase 1 study' },
+    tier: 'confirm',
+    toolContext: {
+      projectId: 5,
+      projectRef: '5',
+      servingModel: { provider: 'anthropic', model: 'claude-opus-5-5' },
+    },
+  });
+
+  it('runs on a yes, with the run\'s own context and the confirmation stamped', async () => {
+    pending = heldTool();
+    const res = await post({ runId: 'run-1', toolUseId: 'tu-9', confirm: true });
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(executed).toHaveLength(0); // not a command
+    expect(toolCalls).toHaveLength(1);
+    expect(toolCalls[0]).toMatchObject({
+      name: 'seed_tmf',
+      input: { reason: 'Seeding the TMF for the Phase 1 study' },
+      ctx: {
+        humanConfirmed: true,
+        organizationId: ORG,
+        userId: USER,
+        projectId: 5,
+        servingModel: { provider: 'anthropic', model: 'claude-opus-5-5' },
+      },
+    });
+    expect(decisions).toEqual([{ runId: 'run-1', orgId: ORG, decided: 'approved' }]);
+    expect(audits.map(a => a.action)).toEqual(['ana.governed_action.confirm']);
+  });
+
+  it('is not run without an explicit yes', async () => {
+    pending = heldTool();
+    const res = await post({ runId: 'run-1', toolUseId: 'tu-9' });
+    expect(res.status).toBe(400);
+    expect(toolCalls).toHaveLength(0);
+  });
+
+  it('is not run from a body alone — there is no held run to take its context from', async () => {
+    const res = await post({ command: 'seed_tmf', params: { reason: 'x'.repeat(20) }, confirm: true });
+    expect(res.status).toBe(400);
+    expect(toolCalls).toHaveLength(0);
+  });
+
+  it('can be declined like any proposal', async () => {
+    pending = heldTool();
+    const res = await post({ runId: 'run-1', toolUseId: 'tu-9', decision: 'decline' });
+    expect(res.status).toBe(200);
+    expect(toolCalls).toHaveLength(0);
+    expect(decisions).toEqual([{ runId: 'run-1', orgId: ORG, decided: 'denied' }]);
   });
 });

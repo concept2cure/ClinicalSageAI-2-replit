@@ -158,14 +158,16 @@ describe('the tier follows part11-governance, not a second opinion', () => {
   });
 });
 
-describe('only the command tool can be governed', () => {
-  it('a tool with its own handler is not classified here', () => {
-    // Not an omission — see the module docstring. Escalating an authoring tool
-    // is a product decision about what AnA may do unaided, taken with the tier
-    // changed in the same commit, not something this translation layer invents.
-    expect(classifyToolCall({ name: 'save_document_to_vault', input: { title: 'x' } }).kind).toBe(
-      'UNGOVERNED',
-    );
+describe('the command tool, and the tools that write on their own handlers', () => {
+  it('a tool that writes on its own handler is a confirm-tier proposal (P0-12)', () => {
+    // Until 2026-09-26 this read "a tool with its own handler is not classified
+    // here": the vault save and TMF seed ran unasked because they are not
+    // commands. They are CONFIRM_TIER_TOOLS now; the full list and the
+    // registry-side gate are pinned in direct-mutator-confirm-gate.test.ts.
+    expect(classifyToolCall({ name: 'save_document_to_vault', input: { title: 'x' } })).toMatchObject({
+      kind: 'NEEDS_APPROVAL',
+      tier: 'confirm',
+    });
   });
 
   it('a tool named like a governed command is still just a tool', () => {

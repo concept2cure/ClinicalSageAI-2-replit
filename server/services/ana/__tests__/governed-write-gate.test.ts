@@ -131,19 +131,22 @@ describe('the gate, on the real registered handlers', () => {
 });
 
 describe('the /api/chat door: the agentic loop tells the gate which model produced each call', () => {
+  // A governed write outside CONFIRM_TIER_TOOLS, so this pins the model hand-off
+  // alone. (save_document_to_vault was the example until P0-12 put it behind a
+  // person's confirmation; on this door it is now proposed — pinned below.)
   const inner = vi.fn(async () => JSON.stringify({ status: 'saved' }));
   beforeEach(() => {
     inner.mockClear();
     gatewayState.responses = [];
-    registerToolHandler('save_document_to_vault', inner);
+    registerToolHandler('update_protocol_section', inner);
   });
-  const request = { taskType: 'chat' as const, messages: [{ role: 'user' as const, content: 'save it' }], maxTokens: 512, tools: [{ name: 'save_document_to_vault' }] as any };
+  const request = { taskType: 'chat' as const, messages: [{ role: 'user' as const, content: 'save it' }], maxTokens: 512, tools: [{ name: 'update_protocol_section' }] as any };
   const toolRound = (served: { provider: string; model: string }) => ({
     content: '',
     provider: served.provider,
     model: served.model,
     usage: {},
-    toolUses: [{ id: 'tu1', name: 'save_document_to_vault', input: { title: 't', content: 'model-written', reason: 'reason text' } }],
+    toolUses: [{ id: 'tu1', name: 'update_protocol_section', input: { title: 't', content: 'model-written', reason: 'reason text' } }],
   });
 
   it('a call produced by Sonnet is refused and nothing is stored', async () => {
@@ -162,6 +165,20 @@ describe('the /api/chat door: the agentic loop tells the gate which model produc
     gatewayState.responses.push(toolRound(SONNET));
     await executeAgenticLoop(request as any, { toolContext: { organizationId: 1, servingModel: OPUS } } as any);
     expect(inner).not.toHaveBeenCalled();
+  });
+
+  it('a confirm-tier tool is proposed on this door, even from an approved model — nothing is stored', async () => {
+    const vaultSave = vi.fn(async () => JSON.stringify({ status: 'saved' }));
+    registerToolHandler('save_document_to_vault', vaultSave);
+    gatewayState.responses.push({
+      ...toolRound(OPUS),
+      toolUses: [{ id: 'tu2', name: 'save_document_to_vault', input: { title: 't', content: 'x', reason: 'reason text' } }],
+    });
+    await executeAgenticLoop(
+      { ...request, tools: [{ name: 'save_document_to_vault' }] } as any,
+      { toolContext: { organizationId: 1 } } as any,
+    );
+    expect(vaultSave).not.toHaveBeenCalled();
   });
 });
 
