@@ -39,7 +39,7 @@ every concurrent call's SELECT runs before any call's UPDATE);
 
 ## Not done here
 
-- **A cap on resends per challenge.** The `users` row has no column for it and `/mfa/resend` (`server/routes/auth.ts`)
+- **A cap on resends per challenge.** Done 2026-09-26 in `../IAM-18-8/` (a counter column on the users row, not the token). At the time: the `users` row had no column for it and `/mfa/resend` (`server/routes/auth.ts`)
   is inside another lane's 24-hour window until 2026-09-26 01:44 UTC. The route's own `mfaLimiter` bounds resends per
   address; a per-challenge cap needs a counter column (an additive migration, Rule 1) or a resend count folded into the
   challenge token. Open on P1-3.

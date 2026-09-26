@@ -20,7 +20,15 @@ vi.hoisted(() => {
  * account's included, so enrolling an authenticator raised nothing: the
  * account could still finish sign-in with a code from its inbox. And an
  * unknown e-mail answered without a bcrypt comparison, so the response time
- * said whether the e-mail was enrolled.
+ * said whether the e-mail was enrolled (the pad is services/login-timing-pad.ts
+ * since 2026-09-26, shared with the enterprise door).
+ *
+ * POST /mfa/resend also minted every code through createEmailOtp, and nothing
+ * counted the codes one challenge received: inside its five minutes a challenge
+ * could be mailed codes without limit, and a sixth wrong guess cleared the row
+ * so the next resend refilled the five guesses (IAM-09; plan P1-3's resend cap,
+ * 2026-09-26). The route now goes through reissueEmailOtp, which refuses past
+ * MAX_RESENDS, and answers 429 MFA_RESEND_LIMIT with an audit row.
  */
 const state = vi.hoisted(() => ({
   rows: [] as Record<string, unknown>[],
@@ -38,7 +46,12 @@ const mfa = vi.hoisted(() => ({
 }));
 const otp = vi.hoisted(() => ({
   createEmailOtp: vi.fn(async (_u: number) => '123456'),
+  reissueEmailOtp: vi.fn(async (_u: number): Promise<string | null> => '654321'),
   verifyEmailOtp: vi.fn(async (_u: number, _c: string) => true),
+}));
+const mail = vi.hoisted(() => ({
+  sendPasswordResetEmail: vi.fn(),
+  sendLoginOtpEmail: vi.fn(async (_to: string, _code: string) => undefined),
 }));
 const authEvents = vi.hoisted(() => vi.fn(async (_e: unknown) => undefined));
 
@@ -74,7 +87,7 @@ vi.mock('../../middleware/auth.js', () => ({
   requireAuth: (_req: any, _res: any, next: any) => next(),
 }));
 vi.mock('../../services/auditService', () => ({ default: { log: vi.fn(), logAction: vi.fn() } }));
-vi.mock('../../services/emailService', () => ({ sendPasswordResetEmail: vi.fn(), sendLoginOtpEmail: vi.fn(async () => undefined) }));
+vi.mock('../../services/emailService', () => mail);
 vi.mock('../../services/mfaService', () => mfa);
 vi.mock('../../services/emailOtpService', () => otp);
 vi.mock('../../services/audit/auth-event-audit', () => ({ recordAuthEvent: (e: unknown) => authEvents(e) }));
@@ -112,7 +125,9 @@ beforeEach(() => {
   state.rows = [AUTHENTICATOR_ACCOUNT];
   for (const f of Object.values(mfa)) (f as { mockClear?: () => void }).mockClear?.();
   otp.createEmailOtp.mockClear();
+  otp.reissueEmailOtp.mockClear();
   otp.verifyEmailOtp.mockClear();
+  mail.sendLoginOtpEmail.mockClear();
   authEvents.mockClear();
 });
 afterEach(() => vi.restoreAllMocks());
@@ -146,14 +161,41 @@ describe('POST /api/auth/mfa/resend', () => {
     const r = await request(app()).post('/api/auth/mfa/resend').send({ challengeId: 'c' });
     expect(r.status, 'an authenticator account was sent an emailed code').toBe(409);
     expect(otp.createEmailOtp).not.toHaveBeenCalled();
+    expect(otp.reissueEmailOtp).not.toHaveBeenCalled();
     expect(JSON.stringify(r.body)).toMatch(/recovery code/i);
   });
 
-  it('still resends for an account without an authenticator', async () => {
+  it('re-issues a code for an account without an authenticator through the capped re-issue, never a fresh challenge', async () => {
     state.rows = [EMAIL_ACCOUNT];
     const r = await request(app()).post('/api/auth/mfa/resend').send({ challengeId: 'c' });
     expect(r.status).toBe(200);
+    expect(otp.reissueEmailOtp, 'the resend did not go through the capped re-issue').toHaveBeenCalledWith(7);
+    expect(otp.createEmailOtp, 'the resend minted a fresh challenge, which starts the cap again').not.toHaveBeenCalled();
+    expect(mail.sendLoginOtpEmail).toHaveBeenCalledWith('a@acme.test', '654321');
+  });
+
+  it('refuses a challenge that has had its limit of codes: 429 MFA_RESEND_LIMIT, no mail, one audit row', async () => {
+    state.rows = [EMAIL_ACCOUNT];
+    otp.reissueEmailOtp.mockResolvedValueOnce(null);
+    const r = await request(app()).post('/api/auth/mfa/resend').send({ challengeId: 'c' });
+    expect(r.status, 'a capped challenge was still answered as if a code had been sent').toBe(429);
+    expect(r.body).toMatchObject({ success: false, error: { code: 'MFA_RESEND_LIMIT' } });
+    expect(r.body.error.message).toMatch(/limit of emailed codes/);
+    expect(mail.sendLoginOtpEmail).not.toHaveBeenCalled();
+    expect(authEvents).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'user_login_mfa_challenge', outcome: 'failure', reason: 'resend_limit', userId: 7 }),
+    );
+  });
+});
+
+describe('POST /api/auth/login for a known account', () => {
+  it('control: issues a fresh challenge through createEmailOtp, never the capped re-issue, so the count of codes starts again with the password', async () => {
+    // The chain answers every read with this row: the account, then its one membership.
+    state.rows = [{ ...EMAIL_ACCOUNT, name: 'A. Rivera', organizationId: 1, passwordHash: bcrypt.hashSync('right-password', 4) }];
+    const r = await request(app()).post('/api/auth/login').send({ email: 'a@acme.test', password: 'right-password' });
+    expect(r.status).toBe(200);
     expect(otp.createEmailOtp).toHaveBeenCalledWith(7);
+    expect(otp.reissueEmailOtp).not.toHaveBeenCalled();
   });
 });
 

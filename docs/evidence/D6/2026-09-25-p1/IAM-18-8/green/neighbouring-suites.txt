@@ -1,0 +1,115 @@
+# HEAD 7fbe51c5 + this change (uncommitted). 2026-09-26T13:23Z
+# The other suites that load routes/auth.ts or routes/authEnterprise.ts, each mocking emailOtpService with a fixed export list.
+$ NODE_OPTIONS=--max-old-space-size=1536 npx vitest run server/routes/__tests__/authEnterprise-inactive-account.test.ts server/routes/__tests__/auth-signup-verification.test.ts server/routes/__tests__/authSurfaceSecurity.test.ts server/routes/__tests__/passwordResetAuditTrail.test.ts server/routes/__tests__/auth-refresh-inactivity.test.ts server/routes/__tests__/auth-refresh-session-currency.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/passwordResetAuditTrail.test.ts > a reset link is built on the deployment's address, never the request's Host (D6) > in production without APP_URL, every address is refused alike and no token is issued
+{
+  "timestamp": "2026-09-26T13:23:12.043Z",
+  "level": "error",
+  "message": "[auth] Password reset refused: no public origin configured",
+  "context": {
+    "err": "Emailed links need APP_URL, the deployment's public https origin: APP_URL is not set"
+  }
+}
+
+stderr | server/routes/__tests__/passwordResetAuditTrail.test.ts > a reset link is built on the deployment's address, never the request's Host (D6) > in production without APP_URL, every address is refused alike and no token is issued
+{
+  "timestamp": "2026-09-26T13:23:12.047Z",
+  "level": "error",
+  "message": "[auth] Password reset refused: no public origin configured",
+  "context": {
+    "err": "Emailed links need APP_URL, the deployment's public https origin: APP_URL is not set"
+  }
+}
+
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > requesting a password reset is audited > records the request for a real account 26ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > requesting a password reset is audited > records an attempt against an address with no account 5ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > requesting a password reset is audited > still says exactly the same thing either way 7ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > a reset link is built on the deployment's address, never the request's Host (D6) > in production, a forged Host does not become the link the victim is emailed 4ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > a reset link is built on the deployment's address, never the request's Host (D6) > in production without APP_URL, every address is refused alike and no token is issued 8ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects the backslash open-redirect payloads 2ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects protocol-relative and absolute URLs 0ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects non-strings / empty 0ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > accepts a legitimate same-origin path (incl. query) 0ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects a pre-MFA partial token (no 24h access minted) 72ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects an mfa_challenge token 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token still refreshes a VALID access token 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /select-organization rejects a partial token 12ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > GET /session reports unauthenticated for a partial token 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > GET /session reports authenticated for a VALID access token 4ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/setup rejects a partial token 13ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/enable rejects a partial token 4ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/disable rejects a partial token 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /session rejects a partial token (401) 4ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /session rejects an mfa_challenge token (401) 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /me rejects a partial token (401) 4ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/setup rejects a partial token (401) 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/enable rejects a partial token (401) 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/disable rejects a partial token (401) 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /password/change rejects a partial token (401) 4ms
+stderr | server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > refuses sign-up when the deployment cannot send mail, and creates nothing
+{
+  "timestamp": "2026-09-26T13:23:12.406Z",
+  "level": "error",
+  "message": "[auth] Sign-up refused: e-mail is not configured, so the verification link cannot be sent",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records the change itself, which used to be only a logger line
+{
+  "timestamp": "2026-09-26T13:23:12.440Z",
+  "level": "info",
+  "message": "[auth] Password reset completed",
+  "context": {
+    "userId": 7
+  }
+}
+
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > creates the account pending verification, mails the link, and answers without a token 454ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > refuses sign-up when the deployment cannot send mail, and creates nothing 6ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records the change itself, which used to be only a logger line 393ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > on a development server with dev auth allowed, the account is active and the token is returned (as before) 362ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/verify-email > moves the account from pending to active, once, and never from any other status 14ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/verify-email > refuses a token of another class, a forged one, and a missing one alike 10ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/resend-verification > answers 202 for every address; mails only an account that is pending 8ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/login for an unconfirmed account > refuses with AUTH_EMAIL_UNVERIFIED after the password is checked, and records the refusal 11ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > refuses, and records, a token another request used first — no second success 366ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records a token that matched no account 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records an expired token 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > does not audit a change it refused before looking anything up 2ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password while signed in is audited too (IAM-17) > records user_password_changed for the account holder, in the account tenant, without the password 376ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-password > a suspended account is refused (403 AUTH_ACCOUNT_INACTIVE) before its password is compared, and the refusal is audited 41ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-password > control: an active account with the wrong password is 401 9ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > a challenge for an account suspended since it was issued does not become a session; no code is spent 14ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > control: an active account with a verified code proceeds past the standing check 34ms
+stdout | server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session ended by a later sign-in beyond the account's limit (401 SESSION_SUPERSEDED)
+{
+  "timestamp": "2026-09-26T13:23:13.990Z",
+  "level": "info",
+  "message": "[session-inactivity] Sessions ended by a sign-in beyond the account limit",
+  "context": {
+    "account": "7",
+    "limit": 1,
+    "ended": 1
+  }
+}
+
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session idle past its window (401 SESSION_IDLE) 33ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session that began more than 12 hours ago (401 SESSION_LIFETIME) 6ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > refreshes an active session and carries its id, start and window into both new tokens 6ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > a refresh token minted before sessions had ids is checked for its lifetime only 10ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session ended by a later sign-in beyond the account's limit (401 SESSION_SUPERSEDED) 6ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a password change > refuses a refresh token issued before password_changed_at: no new session, nothing rotated 56ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a password change > mints from a refresh token issued after the change, and rotates it (existing behaviour) 8ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a password change > mints for an account that never changed its password 5ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/logout > revokes the refresh token the client sends in the body, as well as the bearer 6ms
+
+ Test Files  6 passed (6)
+      Tests  51 passed (51)
+   Start at  13:23:09
+   Duration  4.72s (transform 2.73s, setup 311ms, import 8.76s, tests 2.48s, environment 1ms)
+
+exit=0

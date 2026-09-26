@@ -359,6 +359,34 @@ interface ApiRequestOptions {
   retryOnUnauthorized?: boolean;
 }
 
+/**
+ * The error a failed response carries, whichever way the route wrote it.
+ *
+ * The auth routes answer refusals as `{ error: { code, message } }`
+ * (`/mfa/resend`'s 429 MFA_RESEND_LIMIT, MFA_001, MFA_002, …); other routes
+ * write `{ code, message }` at the top level, and a few `{ error: '<text>' }`.
+ * Until 2026-09-26 this client read the top level only, so a nested refusal
+ * reached the sign-in page as the response's status text and the page showed
+ * its generic sentence instead of the server's (security audit IAM-18 (8) /
+ * P1-3 follow-up). PURE.
+ */
+export function apiErrorOfResponse(
+  status: number,
+  statusText: string,
+  body: unknown
+): { code: string; message: string; details: unknown } {
+  const top = (body && typeof body === 'object' ? body : {}) as Record<string, unknown>;
+  const nested = (top.error && typeof top.error === 'object' ? top.error : {}) as Record<string, unknown>;
+  const text = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() ? v : undefined);
+  const code = text(nested.code) ?? text(top.code);
+  const message = text(nested.message) ?? text(top.message) ?? text(top.error);
+  return {
+    code: code ?? `HTTP_${status}`,
+    message: message ?? (statusText || `Request failed (${status})`),
+    details: body,
+  };
+}
+
 class ApiClient {
   private baseUrl: string;
   private authService: AuthService;
@@ -428,14 +456,7 @@ class ApiClient {
       // Handle other errors
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        return {
-          success: false,
-          error: {
-            code: errorData.code || `HTTP_${response.status}`,
-            message: errorData.message || response.statusText,
-            details: errorData,
-          },
-        };
+        return { success: false, error: apiErrorOfResponse(response.status, response.statusText, errorData) };
       }
 
       // Success

@@ -1,3 +1,27 @@
+-- ── Amended in place 2026-09-26 (IAM-18-8; plan P1-3's resend cap; security ─
+--    audit 2026-09-24 IAM-09; docs/evidence/D6/2026-09-25-p1/IAM-18-8/).
+-- ADDED: users.email_otp_resends INTEGER DEFAULT 0 — the number of emailed
+-- codes re-issued to the current sign-in challenge (POST /mfa/resend).
+-- emailOtpService.reissueEmailOtp adds one in a single conditional UPDATE and
+-- refuses past MAX_RESENDS (3); createEmailOtp, which follows the password,
+-- sets it back to 0. Until this column existed nothing counted the codes one
+-- challenge minted: a sixth wrong guess cleared the row and the next resend
+-- refilled the five guesses.
+-- WHY THIS FILE AND NOT A NEW ONE: every file in C2C_MIGRATION_FILES re-runs on
+-- every deploy (CLAUDE.md Rule 1), so an additive IF NOT EXISTS column may be
+-- added to an existing set file in place; a new file would need a line in
+-- scripts/db/migration-set.mjs, which another lane held when this landed. This
+-- file is the set's other users MFA column and already carries the ordering
+-- note below — a server whose shared/schema.ts declares emailOtpResends must
+-- not serve before this runs (the same C-20 mode). The amendment registers as
+-- `drift` in c2c_migration_journal, which nothing acts on; this note is its
+-- record. One creator, like its email_otp_* siblings (0009_email_otp_fields.sql),
+-- which server/db/bootstrap/auth-schema.ts does not carry either; deploy runs
+-- this set before the new image serves. Pinned by
+-- server/services/__tests__/account-lockout-atomic.pglite.integration.test.ts
+-- ("the migration the set runs gives the row what the service writes"): the
+-- file applied to the pre-2026-09-26 shape of users, then createEmailOtp.
+--
 -- A TOTP code is accepted once (RFC 6238 §5.2). Launch row D6; VSR-001 §13.3
 -- item 1. Added 2026-09-23.
 --
@@ -39,3 +63,9 @@
 
 ALTER TABLE IF EXISTS users
   ADD COLUMN IF NOT EXISTS mfa_totp_last_step BIGINT;
+
+-- Amended 2026-09-26 (header note above): codes re-issued to the current
+-- emailed-code challenge. Additive and idempotent; no backfill (0 is right for
+-- every existing row: no challenge is mid-flight across a deploy that matters).
+ALTER TABLE IF EXISTS users
+  ADD COLUMN IF NOT EXISTS email_otp_resends INTEGER DEFAULT 0;
