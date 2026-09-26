@@ -53,8 +53,11 @@ const PREREQ = `
     ('${BYSTANDER.id}', '${BYSTANDER.name}', '${BYSTANDER.email}'),
     ('${OUTSIDER.id}', '${OUTSIDER.name}', '${OUTSIDER.email}');
   /* The columns the board's program join reads (name, organization_id). */
+  -- deleted_at: createDocument anchors a document only to a live project of
+  -- its organization (programInOrganization, LX-20), and reads it.
   CREATE TABLE regulatory_programs (
-    id UUID PRIMARY KEY, organization_id INTEGER NOT NULL, name TEXT NOT NULL, code TEXT
+    id UUID PRIMARY KEY, organization_id INTEGER NOT NULL, name TEXT NOT NULL, code TEXT,
+    deleted_at TIMESTAMPTZ
   );
   INSERT INTO regulatory_programs (id, organization_id, name, code) VALUES
     ('${PROGRAM_A}', 1, 'IND 12345 — Program A', 'PA'),
