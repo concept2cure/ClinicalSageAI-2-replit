@@ -2623,6 +2623,18 @@ export const C2C_MIGRATION_FILES = [
   // Evidence docs/evidence/D3/2026-09-26-organizations-writes/.
   'migrations/20260926_organizations_own_writes.sql',
 
+  // ── public.organization_users: own-org-or-platform writes (D3) ────────────
+  // Memberships decide tenancy (authMiddleware admits a token on one row) and
+  // "platform staff" is a role on that row. No RLS, runtime role may write it:
+  // a member's scope placed its user in another tenant and minted super_admin
+  // in its own. Stays on RLS_ALLOWLIST (reads stay unscoped: the pre-auth
+  // membership check, a user's organization list); writes are own-org or
+  // platform, and a staff role is minted by the platform scope only (trigger).
+  // Signup, persona and tenant-users' cross-org admin writes moved into the
+  // membership's own organization in the same change.
+  // Evidence docs/evidence/D3/2026-09-26-memberships/.
+  'migrations/20260926_organization_users_own_writes.sql',
+
   // ── submissions.program_id: a submission carries its project (LX-22) ─────
   // The project → submission link was guessed from product names; two projects
   // for one product shared a filing spine. Additive column, a composite
