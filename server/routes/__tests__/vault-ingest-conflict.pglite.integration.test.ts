@@ -115,6 +115,10 @@ beforeAll(async () => {
       s3_bucket TEXT, s3_key TEXT, file_name TEXT, file_size BIGINT, mime_type TEXT,
       content_hash TEXT NOT NULL,
       classification TEXT, retention_policy TEXT,
+      -- The retention clock (9f43e7e9, P1-22): the extracted ON CONFLICT clause
+      -- keeps a started clock (COALESCE(vault.documents.retention_until, ...)),
+      -- so without the column every statement here fails 42703.
+      retention_until DATE,
       parent_document_id UUID, supersedes_id UUID,
       extracted_text TEXT, page_count INT, word_count INT,
       folder_id TEXT, evidence_kind TEXT, ctd_section TEXT,
