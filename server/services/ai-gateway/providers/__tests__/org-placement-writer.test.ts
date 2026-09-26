@@ -59,6 +59,12 @@ function body(overrides: Record<string, unknown> = {}): Record<string, unknown> 
   return { ...PRIVATE_ONLY, reasonForChange: REASON, ...overrides };
 }
 
+function bodyWithout(key: string): Record<string, unknown> {
+  const b = body();
+  delete b[key];
+  return b;
+}
+
 describe('parsePlacementPolicyInput', () => {
   it('accepts a complete, reasoned, satisfiable policy', () => {
     const r = parsePlacementPolicyInput(body({ allowedProviders: ['bedrock', 'bedrock'] }));
@@ -66,8 +72,7 @@ describe('parsePlacementPolicyInput', () => {
   });
 
   it('refuses a partial policy — an omitted field must never reset a constraint', () => {
-    const { zeroDataRetention: _omit, ...partial } = body();
-    const r = parsePlacementPolicyInput(partial);
+    const r = parsePlacementPolicyInput(bodyWithout('zeroDataRetention'));
     expect(r).toMatchObject({ ok: false, message: expect.stringMatching(/missing: zeroDataRetention/) });
   });
 
@@ -80,8 +85,7 @@ describe('parsePlacementPolicyInput', () => {
 
   it('requires a reason for change', () => {
     expect(parsePlacementPolicyInput(body({ reasonForChange: '  ok  ' }))).toMatchObject({ ok: false });
-    const { reasonForChange: _r, ...unreasoned } = body();
-    expect(parsePlacementPolicyInput(unreasoned)).toMatchObject({ ok: false });
+    expect(parsePlacementPolicyInput(bodyWithout('reasonForChange'))).toMatchObject({ ok: false });
   });
 
   it('refuses an empty allow-list — null says "no constraint", [] would refuse everything', () => {
