@@ -6,8 +6,8 @@
  * organizations and client workspaces.
  */
 import { db } from '../db';
-import { featureToggles } from '../../shared/schema';
-import { eq } from 'drizzle-orm';
+import { clientWorkspaces, featureToggles } from '../../shared/schema';
+import { and, eq } from 'drizzle-orm';
 import { getTenantScope, runWithSystemTenantScope } from '../db/tenantStore';
 import { logger } from '../utils/logger';
 
@@ -57,6 +57,38 @@ export class FeatureToggleService {
     const read = async () =>
       await db.select().from(featureToggles).where(eq(featureToggles.featureKey, featureKey)).limit(1);
     return getTenantScope() ? read() : runWithSystemTenantScope('feature-toggle:read', read);
+  }
+
+  /**
+   * Whether a client workspace belongs to an organisation.
+   *
+   * The workspace id a request carries comes from the client's X-Client-ID
+   * header (middleware/tenantContext.ts), so a toggle enabled for one
+   * organisation's workspace must not open for a caller in another who names
+   * that id (security audit 2026-09-24, IAM-15 / plan P1-7). Fails closed: a
+   * read that cannot be made is "not this organisation's". Same scope rule as
+   * readToggle: the caller's scope when it has one, the system scope otherwise.
+   */
+  static async workspaceInOrganization(clientWorkspaceId: number, organizationId: number): Promise<boolean> {
+    if (!Number.isInteger(clientWorkspaceId) || clientWorkspaceId <= 0) return false;
+    if (!Number.isInteger(organizationId) || organizationId <= 0) return false;
+    const read = async () =>
+      await db
+        .select({ id: clientWorkspaces.id })
+        .from(clientWorkspaces)
+        .where(and(eq(clientWorkspaces.id, clientWorkspaceId), eq(clientWorkspaces.organizationId, organizationId)))
+        .limit(1);
+    try {
+      const rows = await (getTenantScope() ? read() : runWithSystemTenantScope('feature-toggle:workspace', read));
+      return rows.length === 1;
+    } catch (err) {
+      logger.error('[feature-toggle] workspace ownership read failed — treating the workspace as not the organisation\'s', {
+        clientWorkspaceId,
+        organizationId,
+        reason: err instanceof Error ? ((err as any).cause?.message ?? err.message) : String(err),
+      });
+      return false;
+    }
   }
 
   static async isFeatureEnabled(
