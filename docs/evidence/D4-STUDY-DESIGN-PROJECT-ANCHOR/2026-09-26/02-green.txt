@@ -1,0 +1,590 @@
+# the PF-14 tests, with the change
+ ✓ server/routes/__tests__/study-design-persist.route.test.ts > POST /api/study-design/persist > refuses a design that names no project, before a connection is taken
+ ✓ server/routes/__tests__/study-design-persist.route.test.ts > POST /api/study-design/persist > answers the writer’s PROJECT_NOT_FOUND refusal with 404, and rolls back
+ ✓ server/routes/__tests__/study-design-persist.route.test.ts > POST /api/study-design/persist > answers the writer’s PROGRAM_MISMATCH refusal with 409, and rolls back
+ ✓ server/routes/__tests__/study-design-persist.route.test.ts > POST /api/study-design/persist > answers the writer’s STUDY_ID_TAKEN refusal with 409, and rolls back
+ ✓ server/routes/__tests__/study-design-persist.route.test.ts > POST /api/study-design/persist > persists a design that names its project, and the governed record names it too
+ ✓ server/services/study-design/__tests__/persist-program-anchor.pglite.test.ts > persistStudyDesignTx — a design belongs to one project of its organization > refuses another organization’s project, and writes nothing
+ ✓ server/services/study-design/__tests__/persist-program-anchor.pglite.test.ts > persistStudyDesignTx — a design belongs to one project of its organization > anchors a design to its own project
+ ✓ server/services/study-design/__tests__/persist-program-anchor.pglite.test.ts > persistStudyDesignTx — a design belongs to one project of its organization > keeps the project when a later save carries none
+ ✓ server/services/study-design/__tests__/persist-program-anchor.pglite.test.ts > persistStudyDesignTx — a design belongs to one project of its organization > refuses to move a design to another project
+ ✓ server/services/study-design/__tests__/persist-program-anchor.pglite.test.ts > persistStudyDesignTx — a design belongs to one project of its organization > never overwrites another organization’s design that has the same study id
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — refusals > refuses a protocol with no design bound, rather than deriving against a blank one
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — refusals > does not read another organization’s protocol
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — refusals > does not read a design belonging to another tenant
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — refusals > refuses a design row whose metadata carries no design object
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — refusals > requires at least one accepted path
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — reading the live registers > derives eligibility and objectives from the rows as stored
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — reading the live registers > reports a soft-deleted register row as absent
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — applying > writes an accepted path onto the PRM row and it survives a re-read
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — applying > writes the value the LIVE rows evidence, not one the caller could supply
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — applying > cannot clear a design field via a path the protocol does not evidence
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — applying > refuses an incomplete proposal and writes nothing for it
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — applying > updates the bound design in place rather than creating a second one
+ ✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — applying > does not apply to another tenant’s design
+ ✓ server/services/ana-ri/__tests__/biostat-command-input.test.ts > compute_sample_size > refuses when no effect size is given, instead of sizing on an invented 0.5
+ ✓ server/services/ana-ri/__tests__/biostat-command-input.test.ts > compute_sample_size > reads the dropoutRate its catalog entry advertises
+ ✓ server/services/ana-ri/__tests__/biostat-command-input.test.ts > compute_sample_size > passes the variance through, so the effect size is not silently divided by itself
+ ✓ server/services/ana-ri/__tests__/biostat-command-input.test.ts > generate_sap > refuses when no effect size is given, instead of reporting "SAP generated"
+ ✓ server/services/ana-ri/__tests__/biostat-command-input.test.ts > generate_sap > reports that the SAP was not stored when the artifact write fails
+ ✓ server/services/ana-ri/__tests__/biostat-command-input.test.ts > generate_sap > names the stored artifact when the write succeeds
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-migration.pglite.integration.test.ts > 20260922_protocol_document_study_design.sql > is registered in C2C_MIGRATION_FILES above the final pair
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-migration.pglite.integration.test.ts > 20260922_protocol_document_study_design.sql > carries no DROP — RULE 1 forbids appending one to a replayed set
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > the creator and everyone who edited it through the ledger, and no one else
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > whoever built the schedule of assessments or the objectives is an author; a commenting reviewer is not
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > reads on the client it is given
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > comments, budget, version snapshots and other modules' records are not authorship of the protocol
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > a synopsis edit, which records no payload, counts
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > a document-level edit counts
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > a disposition is independent of the reviewed protocol's authors
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > another tenant's protocol has no authors here, so it cannot be shown independent
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > finalization and a disposition bind the same content, re-derivably
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > finalization does not move it: version and workflow status are not content
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing an objective moves it
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing an eligibility criterion moves it
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing a visit moves it
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing the synopsis moves it
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing the sponsor moves it
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > changing the content moves the digest
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > another tenant's protocol binds nothing of its content
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > the assigned reviewer, as review
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > not someone else, and nothing is recorded
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > a reviewer with no account can only have their decision recorded under responsibility
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > a signed disposition is final: a second signing is refused and the decision stands
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > another tenant's assignment is not found
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > someone independent of the authors finalizes it as approval: the version row finalize writes does not make them an a
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > a non-author cannot finalize as its author, and nothing is written
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > the author finalizes it as its author
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > whatever the act itself writes is not read as authorship of what is being signed
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > the author cannot approve their own protocol
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > a member who can sign
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > a named reviewer with no account
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > not a user of another organization: the review could never be signed
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > not a viewer, who cannot sign
+ ✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > the disposition reports the protocol version that was reviewed
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-migration.pglite.integration.test.ts > 20260922_protocol_document_study_design.sql > applies twice against the same database and the second run is a no-op
+ ✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > maps a full real protocol into the PdevDoc contract
+ ✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > carries the assessment state: legacy and unassessed rows read as not assessed; reportability null when undetermined
+ ✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > returns [] for an org with no protocols, and never crosses tenants
+ ✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > excludes soft-deleted protocols
+ ✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > carries the regulatory rule findings, with not-assessed counted separately
+ ✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > the one-document reader returns byte-identical rule findings to the page assembly
+ ✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > the one-document reader returns null for a protocol this organization does not have
+ ✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > leaves the vulnerable-population rules not-assessed, because no register records them
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-migration.pglite.integration.test.ts > 20260922_protocol_document_study_design.sql > skips with a notice when protocol_documents does not exist
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > protocol document ⇄ study design link > binds a design and records who linked it and when
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > protocol document ⇄ study design link > refuses another organization's protocol document (NOT_FOUND, nothing written)
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > protocol document ⇄ study design link > refuses a design that does not exist for this tenant
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > protocol document ⇄ study design link > unbinds, and refuses to unbind another organization's protocol
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > assembleOrgPdevDocs — the design gates on the protocol > returns null for an unbound protocol — nothing is implied to have passed
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > assembleOrgPdevDocs — the design gates on the protocol > returns the design identity and the DESIGN GATES' findings for a bound protocol
+ ✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > assembleOrgPdevDocs — the design gates on the protocol > does not read another tenant's design through the link
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > buildEffectPrior — honesty of the prior > refuses to invent a prior with no evidence and no planned effect
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > buildEffectPrior — honesty of the prior > marks a no-evidence prior as an assumption and widens it
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > buildEffectPrior — honesty of the prior > pools evidence by inverse variance and reports the sources
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > buildEffectPrior — honesty of the prior > flags an optimistic planned effect against the evidence
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > buildEffectPrior — honesty of the prior > widens the prior when sources disagree
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — reproducibility and validity > is reproducible: same inputs and seed give the identical report
+ ✓ server/services/protocol-development/__tests__/protocol-discontinuation-backfill.pglite.integration.test.ts > discontinuation backfill > inserts the section after Treatments and shifts what followed
+ ✓ server/services/protocol-development/__tests__/protocol-discontinuation-backfill.pglite.integration.test.ts > discontinuation backfill > leaves a finalized protocol alone — an approved record is not rewritten to score better
+ ✓ server/services/protocol-development/__tests__/protocol-discontinuation-backfill.pglite.integration.test.ts > discontinuation backfill > touches neither another protocol kind nor a deleted document
+ ✓ server/services/protocol-development/__tests__/protocol-discontinuation-backfill.pglite.integration.test.ts > discontinuation backfill > is a no-op on replay, and does not disturb what an author wrote between deploys
+ ✓ server/services/protocol-development/__tests__/protocol-discontinuation-backfill.pglite.integration.test.ts > discontinuation backfill > stays a no-op across a third deploy
+ ✓ server/services/protocol-development/__tests__/protocol-discontinuation-backfill.pglite.integration.test.ts > discontinuation backfill > appends rather than guessing a position when the anchor section is absent
+ ✓ server/services/protocol-development/__tests__/protocol-discontinuation-backfill.pglite.integration.test.ts > discontinuation backfill > NOTICE-skips on a database that has no protocol tables at all
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > studyDesignToRegionInput — agency derivation > derives no agency, and in particular does not default to FDA, when no region is recorded
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > studyDesignToRegionInput — agency derivation > derives FDA and EMA from US and EU member-state target regions
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > studyDesignToRegionInput — agency derivation > derives every supported agency from its region aliases, deduplicated and in a stable order
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > studyDesignToRegionInput — agency derivation > also derives agencies from framework.mrct.regions
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > studyDesignToRegionInput — local representation > never infers local subject representation from targetRegions
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > studyDesignToRegionInput — local representation > derives local representation from framework.mrct.regions, without a fraction
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > studyDesignToRegionInput — the unmapped contract > accounts for every RegionDesignInput field: derived from the design, or listed in unmapped
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > studyDesignToRegionInput — the unmapped contract > lists a derivable field in unmapped whenever this design does not in fact carry it
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > studyDesignToRegionInput — the unmapped contract > names exactly the unmapped fields for a design without an MRCT block
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > studyDesignToRegionInput — the unmapped contract > drops the MRCT-dependent gaps once framework.mrct is recorded
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > studyDesignToRegionInput — the unmapped contract > gives every unmapped entry a non-empty reason
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > studyDesignToRegionInput — the unmapped contract > maps the phase families onto the engine phase vocabulary
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > evaluateDesignRegionRules > returns no agency, no finding and the explicit note when the design records no region
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > evaluateDesignRegionRules > flags a target region that maps to no supported agency instead of silently dropping it
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > evaluateDesignRegionRules > maps a US + EU design to FDA and EMA and produces findings from both scopes
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > evaluateDesignRegionRules > reports a rule that is unmet under every assumption as unmet, not as not-assessed
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > evaluateDesignRegionRules > reports no rule as met when every field that could produce met is unmapped
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > evaluateDesignRegionRules > reports met only from fields the design actually carries
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > evaluateDesignRegionRules > counts every rule that rests on an unmapped field as not assessed and names the field
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > evaluateDesignRegionRules > does not assert a QT or Orbis verdict the design cannot support
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > evaluateDesignRegionRules > is deterministic — byte-identical output for the same design
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > regulatory strategy — recorded fields close their gaps > the ledger names exactly the strategy fields the adapter reads
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > regulatory strategy — recorded fields close their gaps > drops a field from the unmapped ledger once the design records it
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > regulatory strategy — recorded fields close their gaps > drops it for a recorded FALSE too, because that is a statement
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > regulatory strategy — recorded fields close their gaps > keeps the gap when the strategy node exists but omits the field
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > regulatory strategy — recorded fields close their gaps > carries a recorded value through to the engine input
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > regulatory strategy — recorded fields close their gaps > records a local representative per agency, and only for agencies the design targets
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > regulatory strategy — recorded fields close their gaps > decides rules that were not-assessed, once the fields they read are recorded
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > regulatory strategy — recorded fields close their gaps > decides every rule when the design records the whole strategy and its MRCT block
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > regulatory strategy — recorded fields close their gaps > still reaches unmet, not met, when the strategy records the absent case
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule pack — red-first > an objective with no endpoint is unmet under ICH M11 objectives/endpoints
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule pack — red-first > a null vulnerable-population flag is not-assessed, never met
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule pack — red-first > an IACUC protocol gets no 21 CFR 50.25 findings but an IRB one does
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > the reachability table names every rule exactly once
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-protocol-summary reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-objectives-endpoints reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-trial-design reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-population-eligibility reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-intervention-concomitant reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-discontinuation-withdrawal reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-assessment-schedule reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-statistical-considerations reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-oversight-quality reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e9r1-estimand-treatment-condition reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e9r1-estimand-population reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e9r1-estimand-variable reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e9r1-estimand-intercurrent-events reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e9r1-estimand-population-level-summary reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e9-sample-size-justification reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e9-multiplicity reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e8r1-critical-to-quality-factors reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e8r1-risk-proportionate-approach reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e6r3-safety-reporting reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e6r3-monitoring-approach reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e6r3-data-integrity reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-ind-objectives-purpose reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-ind-investigator-site-information reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-ind-selection-exclusion-criteria reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-ind-study-design-control reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-ind-dosing reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-ind-observations-measurements reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-ind-safety-monitoring-procedures reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-consent-basic-elements reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-consent-additional-elements reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-irb-risks-minimized reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-irb-risks-reasonable reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-irb-equitable-selection reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-irb-consent-sought-and-documented reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-irb-data-monitoring-for-safety reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-irb-privacy-confidentiality reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > hhs-subpart-b-pregnant-women reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > hhs-subpart-c-prisoners reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > hhs-subpart-d-children-risk-category reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > hhs-subpart-d-children-assent-permission reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > hhs-additional-safeguards-vulnerable reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > eu-ctr-protocol-content reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > eu-ctr-eligibility-criteria reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > eu-ctr-endpoints reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fdora-3601-diversity-action-plan reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > iacuc-3rs-replacement reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > iacuc-3rs-reduction reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > iacuc-3rs-refinement reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > iacuc-pain-distress-category reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > iacuc-humane-endpoints reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > iacuc-euthanasia-avma reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ibc-risk-group-classification reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ibc-containment-level reaches exactly its declared statuses
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > every rule reaches at least one non-met state — nothing is green by construction
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > honesty contract > a section marked complete with content is attention, never met, and says why
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > honesty contract > a section marked complete but holding no content is unmet, not attention
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > honesty contract > every null vulnerable-population flag is not-assessed and says absence is not a record
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > honesty contract > a recorded-false flag is reported as not applicable, not as a passed safeguard
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > honesty contract > every keyword scan declares itself, and a scan that finds nothing is never unmet
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > honesty contract > no finding fabricates a percentage and none falls through to the unreached fallback
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > honesty contract > counts add up and not-assessed is never counted as assessed
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > kind scoping > a clinical protocol gets no 3Rs findings but an IACUC one does
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > kind scoping > findings are exactly the rules in scope for the kind, in catalogue order
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > kind scoping > listProtocolRules returns every rule when no kind is given
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule catalogue > ids are unique kebab-case and every rule carries a standard, clause and rationale
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule catalogue > listProtocolRules hands back copies, so a caller cannot mutate the catalogue
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule catalogue > covers each standard the section templates claim as their basis
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > estimand, multiplicity and applicability gates > one primary endpoint is met for multiplicity, two is attention, none is not-assessed
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > estimand, multiplicity and applicability gates > the intercurrent-event strategy is met only when a named strategy is present
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > estimand, multiplicity and applicability gates > the population-level summary is always not-assessed because nothing records it
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > estimand, multiplicity and applicability gates > IND rules gate on isIndTrial: true evaluates, false is not applicable, null is not-assessed
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > estimand, multiplicity and applicability gates > EU CTR gates on a recorded EU/EEA region
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > estimand, multiplicity and applicability gates > FDORA applies to a US pivotal/phase 3 trial only
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > estimand, multiplicity and applicability gates > ICH M11 Section 7 is what put the discontinuation section in the template
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > determinism and totality > the same input twice gives byte-identical output
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > determinism and totality > section order does not change the output
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > determinism and totality > is total: malformed input is reported, never thrown on
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — reproducibility and validity > matches the closed-form assurance integral for the continuous case
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — reproducibility and validity > holds its size: empirical type-I error under the null is near alpha
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — reproducibility and validity > is honestly un-confident: a diffuse prior yields assurance below the point power
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — reproducibility and validity > produces a monotonically increasing sensitivity curve
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — defensibility and refusals > attaches the slice-1 gates and flags an indefensible design
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — defensibility and refusals > refuses to simulate a single-arm / no-control design
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — defensibility and refusals > refuses to simulate without a sample size
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — defensibility and refusals > refuses to simulate a design with no primary endpoint
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — binary and time-to-event endpoints > simulates a binary endpoint event-level and increases with the effect
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — binary and time-to-event endpoints > falls back to a normal approximation for binary with no control rate, and says so
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — binary and time-to-event endpoints > simulates a time-to-event endpoint when an event probability is supplied
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — binary and time-to-event endpoints > keeps its size for a non-inferiority frame at the margin
+ ✓ server/services/study-design/__tests__/sample-size.test.ts > sampleSizeForPower > reproduces the textbook two-sample size for a standardized effect
+ ✓ server/services/study-design/__tests__/sample-size.test.ts > sampleSizeForPower > grows as the effect shrinks
+ ✓ server/services/study-design/__tests__/sample-size.test.ts > sampleSizeForAssurance > needs more subjects than power for the same target when the prior is uncertain
+ ✓ server/services/study-design/__tests__/sample-size.test.ts > sampleSizeForAssurance > reports a ceiling and returns null when the target exceeds it
+ ✓ server/services/study-design/__tests__/sample-size.test.ts > solveSampleSize > returns both sizes and reconciles with the planned N
+ ✓ server/services/study-design/__tests__/sample-size.test.ts > solveSampleSize > flags an unreachable assurance target with a caveat
+ ✓ server/services/study-design/__tests__/sample-size.test.ts > solveSampleSize > inflates enrollment for the dropout rate
+ ✓ server/services/study-design/__tests__/sample-size.test.ts > solveSampleSize > cross-checks: the assurance-based N reproduces the target PoS in the simulator
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — accepted shapes > hyphenated range with a percent unit
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — accepted shapes > "to" range with a compound unit
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — accepted shapes > en-dash range
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — accepted shapes > single symbolic comparison with a compound unit
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — accepted shapes > unicode >= and <= are read as the symbolic comparators
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — accepted shapes > age with an explicit time unit becomes an age criterion, not a plain threshold
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — accepted shapes > an age range is an age criterion with both bounds
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — accepted shapes > ISO-8601 date comparison
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — accepted shapes > caller-supplied codes are carried verbatim onto the concept
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — refusals > refuses "Age >= 18" as no-unit-written
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — refusals > refuses "HbA1c 7.0-10.5" as no-unit-written
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — refusals > refuses "Type 1 diabetes mellitus" as no-comparator-or-range
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — refusals > refuses "Pregnancy or breastfeeding" as no-comparator-or-range
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — refusals > refuses "ECOG performance status 0 or 1" as no-comparator-or-range
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — refusals > refuses "Age at least 18 years" as word-comparator-not-accepted
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — refusals > refuses "Life expectancy of more than 12 weeks" as word-comparator-not-accepted
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — refusals > refuses "Total bilirubin <= 1.5 x ULN" as trailing-text-after-unit
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — refusals > refuses "Serum creatinine > 1.5 mg/dL at screening" as trailing-text-after-unit
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — refusals > refuses "Has been on a stable dose of a statin >= 90 days" as concept-label-too-long
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — refusals > refuses "Treatment with insulin for > 30 days" as concept-label-ends-in-a-connective
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — refusals > refuses ">= 18 years" as concept-label-absent
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — refusals > refuses "Date of diagnosis >= 01/02/2020" as ambiguous-date-format
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — refusals > refuses "   " as empty-text
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — refusals > never infers a unit that was not written
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — refusals > never guesses a clinical concept from wording: two spellings are two concepts
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parseEligibilityCriterion — refusals > never converts between units: mg/dL and mmol/L are reported not comparable
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parse coverage on a realistic diabetes criterion set > structures exactly 8 of 16 criteria
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parse coverage on a realistic diabetes criterion set > names every criterion it could not structure
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parse coverage on a realistic diabetes criterion set > does not report a clean verdict over a half-structured set
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > parse coverage on a realistic diabetes criterion set > counts as checked only the criteria that structured
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > conflict checks > ELIG-001 fires when an exclusion covers the whole inclusion range
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > conflict checks > ELIG-002 fires when an exclusion range excludes nobody the inclusion admits
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > conflict checks > a partially overlapping exclusion is neither unsatisfiable nor dead
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > conflict checks > ELIG-003 fires on an inclusion range whose lower bound is above its upper bound
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > conflict checks > ELIG-004 fires when the same concept is constrained twice with incompatible bounds
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > conflict checks > ELIG-006 counts what could not be structured
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > checks that cannot run return not-assessed, never met > an all-free-text set checks nothing and says so
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > checks that cannot run return not-assessed, never met > an all-free-text set assesses nothing
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > checks that cannot run return not-assessed, never met > an empty set assesses nothing at all
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > checks that cannot run return not-assessed, never met > ELIG-003 is not-assessed when no inclusion carries two bounds
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > checks that cannot run return not-assessed, never met > a fully structured, conflict-free set is the only way to reach a clean verdict
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > projectRegistryEligibility > emits an age bound only when one was written, and carries its inclusivity
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > projectRegistryEligibility > omits minimum age rather than defaulting it to 18
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > projectRegistryEligibility > omits sex and healthy-volunteers rather than defaulting them
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > projectRegistryEligibility > emits sex and healthy-volunteers when the caller records them
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > projectRegistryEligibility > carries every criterion as a row, structured where it parsed
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > projectRegistryEligibility > does not fold an exclusion age bound into the age limits
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > projectRegistryEligibility > emits no age limit at all for a set that records no age criterion
+ ✓ server/services/study-design/__tests__/eligibility-model.test.ts > determinism > the same input twice produces byte-identical output
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — a complete design > maps every statistical field the engine needs, with no blocking gap
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — a complete design > is accepted and sized by the real computation and judgment engines
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — honest gaps > refuses to size a design with no effect size (input null, blocking gap named)
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — honest gaps > refuses a time-to-event design with no event rate
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — honest gaps > refuses a non-inferiority frame with no margin, and carries the margin when set
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — honest gaps > refuses a design with no primary endpoint
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — honest gaps > reports every engine default it applied rather than applying it silently
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — honest gaps > translates a one-sided alpha to the engine's two-sided boundary and says so
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — honest gaps > sizes a binary endpoint from the control rate plus the effect
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > studyDesignToStatisticalInput — honest gaps > maps product type and regions to the engine vocabularies
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > computationToPlanPatch / applyPlanPatch — the write-back > writes the computed N, power and assumptions onto the design with a provenance stamp, preserving prior evidence
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > computationToPlanPatch / applyPlanPatch — the write-back > re-applying from the patched design is idempotent: N and target power stay put (BS-M1)
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > computationToPlanPatch / applyPlanPatch — the write-back > the patched design still projects a SAP whose sample-size section is rendered, not missing
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > statisticalReadiness — the list-row summary > scores a complete design high and reports its headline numbers
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > statisticalReadiness — the list-row summary > scores an empty plan low and names the fix for every failed check
+ ✓ server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > statisticalReadiness — the list-row summary > only counts checks that apply (no margin check on a superiority design, one on non-inferiority)
+ ✓ server/services/study-design/__tests__/registry-filing.test.ts > the vocabulary cannot drift from the projection > maps every module both projectors emit onto a declared registry slot
+ ✓ server/services/study-design/__tests__/registry-filing.test.ts > the vocabulary cannot drift from the projection > files every emitted module onto a row, for both registries
+ ✓ server/services/study-design/__tests__/registry-filing.test.ts > the vocabulary cannot drift from the projection > declares no slot the engine cannot explain
+ ✓ server/services/study-design/__tests__/registry-filing.test.ts > an unrecorded fact is undetermined, not not-required > cannot decide results reporting when the primary completion date is unrecorded
+ ✓ server/services/study-design/__tests__/registry-filing.test.ts > an unrecorded fact is undetermined, not not-required > cannot decide anything when applicability is unrecorded
+ ✓ server/services/study-design/__tests__/registry-filing.test.ts > an unrecorded fact is undetermined, not not-required > takes results out of scope only on a RECORDED false
+ ✓ server/services/study-design/__tests__/registry-filing.test.ts > an unrecorded fact is undetermined, not not-required > makes results conditional-required on a RECORDED completion date
+ ✓ server/services/study-design/__tests__/registry-filing.test.ts > an unrecorded fact is undetermined, not not-required > marks the EU member-state slot not-required only because the record names its registry
+ ✓ server/services/study-design/__tests__/registry-filing.test.ts > readiness > is blocked by an undetermined requirement even when every placed slot is satisfied
+ ✓ server/services/study-design/__tests__/registry-filing.test.ts > readiness > is blocked by an undetermined OBLIGATION even when nothing in the table is undetermined
+ ✓ server/services/study-design/__tests__/registry-filing.test.ts > readiness > does not count a placeholder as a filing
+ ✓ server/services/study-design/__tests__/registry-filing.test.ts > readiness > does not call a slot satisfied while the projection cannot fill its required fields
+ ✓ server/services/study-design/__tests__/registry-filing.test.ts > timeliness > computes no deadline from an absent enrollment date, and reports undetermined
+ ✓ server/services/study-design/__tests__/registry-filing.test.ts > timeliness > has no status that means the obligation was discharged
+ ✓ server/services/study-design/__tests__/registry-filing.test.ts > timeliness > computes the 21-day deadline only from a supplied enrollment date
+ ✓ server/services/study-design/__tests__/registry-filing.test.ts > timeliness > says a deadline has elapsed only against a SUPPLIED as-of date
+ ✓ server/services/study-design/__tests__/registry-filing.test.ts > timeliness > computes the results deadline one year after the primary completion date
+ ✓ server/services/study-design/__tests__/registry-filing.test.ts > timeliness > reports every obligation undetermined when applicability is unrecorded
+ ✓ server/services/study-design/__tests__/registry-filing.test.ts > timeliness > refuses to read an unparseable date as an anchor
+ ✓ server/services/study-design/__tests__/registry-filing.test.ts > timeliness > gives CTIS its own obligation under Regulation (EU) 536/2014
+ ✓ server/services/study-design/__tests__/registry-filing.test.ts > no claim of transmission > never says a record was submitted, posted, accepted or transmitted
+ ✓ server/services/study-design/__tests__/registry-filing.test.ts > no claim of transmission > says the same for the CTIS record
+ ✓ server/services/study-design/__tests__/registry-filing.test.ts > determinism > returns the same filing for the same inputs
+ ✓ server/services/study-design/__tests__/registry-filing.test.ts > determinism > does not depend on the order placements arrive in
+ ✓ server/services/study-design/__tests__/registry-filing.test.ts > determinism > reports a placement at a slot no expectation covers, rather than ignoring it
+ ✓ server/services/study-design/__tests__/study-twin-service.test.ts > composeSimulationResult — disclaimer + upload prompt > ALWAYS attaches the disclaimer
+ ✓ server/services/study-design/__tests__/study-twin-service.test.ts > composeSimulationResult — disclaimer + upload prompt > requests a history upload only when there is no history
+ ✓ server/services/study-design/__tests__/study-twin-service.test.ts > simulateStudyTwin — computed, not guessed > computes a probability of success from the deterministic engine
+ ✓ server/services/study-design/__tests__/study-twin-service.test.ts > simulateStudyTwin — computed, not guessed > reports no probability — honestly — when the design has no effect assumption
+ ✓ server/services/study-design/__tests__/study-twin-service.test.ts > simulateStudyTwin — computed, not guessed > reports no probability for a single-arm design rather than faking one
+ ✓ server/services/study-design/__tests__/study-twin-service.test.ts > simulateStudyTwin — computed, not guessed > treats supplied grounding text as history (no upload request)
+ ✓ server/services/study-design/__tests__/study-twin-service.test.ts > simulateStudyTwin — computed, not guessed > marks grounded when csr_reports exist for the org
+ ✓ server/services/study-design/__tests__/study-twin-service.test.ts > composeTwinPrediction — figures come from the engine > renders the computed probability and the defensibility risk
+ ✓ server/services/protocol-development/__tests__/protocol-lineage-gate.pglite.integration.test.ts > protocol prose lineage gate > updateSectionTx with content writes the content AND records author lineage
+ ✓ server/services/protocol-development/__tests__/protocol-lineage-gate.pglite.integration.test.ts > protocol prose lineage gate > updateSectionTx with sources records the verbatim clause against the source and the rest as the author (ledger L154)
+ ✓ server/services/protocol-development/__tests__/protocol-lineage-gate.pglite.integration.test.ts > protocol prose lineage gate > updateSectionTx status-only edit records NO lineage (gate no-ops on absent content)
+ ✓ server/services/protocol-development/__tests__/protocol-lineage-gate.pglite.integration.test.ts > protocol prose lineage gate > updateSynopsisTx records author lineage for the document synopsis
+ ✓ server/services/biostatistics-bridge/__tests__/filing-placement.test.ts > vocabulary > mirrors APPLICATION_TYPES from the shared submission contract exactly
+ ✓ server/services/biostatistics-bridge/__tests__/filing-placement.test.ts > vocabulary > covers every StatisticalDocumentType the biostatistics engine can generate
+ ✓ server/services/biostatistics-bridge/__tests__/filing-placement.test.ts > totality — every pair resolves > ind: every deliverable has a placement with a heading and the right backbone
+ ✓ server/services/biostatistics-bridge/__tests__/filing-placement.test.ts > totality — every pair resolves > nda: every deliverable has a placement with a heading and the right backbone
+ ✓ server/services/biostatistics-bridge/__tests__/filing-placement.test.ts > totality — every pair resolves > bla: every deliverable has a placement with a heading and the right backbone
+ ✓ server/services/biostatistics-bridge/__tests__/filing-placement.test.ts > totality — every pair resolves > anda: every deliverable has a placement with a heading and the right backbone
+ ✓ server/services/biostatistics-bridge/__tests__/filing-placement.test.ts > totality — every pair resolves > maa: every deliverable has a placement with a heading and the right backbone
+ ✓ server/services/biostatistics-bridge/__tests__/filing-placement.test.ts > totality — every pair resolves > 510k: every deliverable has a placement with a heading and the right backbone
+ ✓ server/services/biostatistics-bridge/__tests__/filing-placement.test.ts > totality — every pair resolves > de_novo: every deliverable has a placement with a heading and the right backbone
+ ✓ server/services/biostatistics-bridge/__tests__/filing-placement.test.ts > totality — every pair resolves > pma: every deliverable has a placement with a heading and the right backbone
+ ✓ server/services/biostatistics-bridge/__tests__/filing-placement.test.ts > totality — every pair resolves > cta: every deliverable has a placement with a heading and the right backbone
+ ✓ server/services/biostatistics-bridge/__tests__/filing-placement.test.ts > the placements a reviewer would check > internal working papers are never filed, for any application
+ ✓ server/services/biostatistics-bridge/__tests__/filing-placement.test.ts > the placements a reviewer would check > the SAP files with the CSR under 5.3.5.1 for an NDA/BLA/MAA, and in the PMA clinical section
+ ✓ server/services/biostatistics-bridge/__tests__/filing-placement.test.ts > the placements a reviewer would check > the cross-study statistical summary is a Module 2.7.3 document, not Module 5 — and does not exist at IND
+ ✓ server/services/biostatistics-bridge/__tests__/filing-placement.test.ts > the placements a reviewer would check > a CTA files on CTIS Part I, never eCTD
+ ✓ server/services/biostatistics-bridge/__tests__/filing-placement.test.ts > the placements a reviewer would check > authoringModuleFor replaces the surface's blanket M5
+ ✓ server/services/biostatistics-bridge/__tests__/filing-placement.test.ts > the placements a reviewer would check > maps regulatory_programs.program_type to an application type, and refuses a CER
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — silence is not a value > reports an empty protocol register as unevidenced, never as an empty value to write
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — silence is not a value > cannot clear a design field even when the caller asks for the unevidenced path
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — silence is not a value > reports an unreadable phase with the value it could not read, and derives nothing
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — conflict is not resolution > reports a disagreement as a conflict carrying BOTH values, not as a proposal
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — conflict is not resolution > treats an unset design field as a proposal, because there is nothing to disagree with
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — conflict is not resolution > applies a conflict only when the human accepts that exact path
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — conflict is not resolution > reports an identical value as unchanged rather than proposing a no-op write
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — provenance per field > names the protocol rows behind every proposal, conflict and incomplete proposal
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — provenance per field > marks the visit timepoint parse as a text scan, not as a structured read
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — incomplete proposals > will not invent an endpoint measurement type the protocol never records
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — incomplete proposals > refuses to apply an incomplete proposal and says why
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — incomplete proposals > refuses objectives that would leave a dangling endpoint reference in the spine
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — incomplete proposals > proposes those same objectives once the design carries the endpoint
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — incomplete proposals > will not assign a trial epoch a visit register does not record
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — incomplete proposals > refuses an eligibility list it would have to drop rows from
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — what the protocol structurally cannot say > enumerates every unevidenced design path by name, each with a reason
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — what the protocol structurally cannot say > never derives a governed statistical number from the protocol
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — what the protocol structurally cannot say > does not read a structural design out of the protocol study type
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > applyDerivation > never mutates the design it was given
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > applyDerivation > rejects a path that is not a derivable design path
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > applyDerivation > applies each accepted path once, even when the caller repeats it
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > normalizers > maps only the phase spellings on the list
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > normalizers > maps only the three objective levels
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > normalizers > reads a timepoint only in the shapes it can read, and returns nothing otherwise
+ ✓ server/services/protocol-development/__tests__/design-derivation.test.ts > determinism > produces byte-identical output for the same input
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > projectCrfShell > is deterministic
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > projectCrfShell > emits demographics and concomitant medications as marked standard scaffolds
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > projectCrfShell > builds the eligibility CRF from the design criteria, scheduled at screening
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > projectCrfShell > makes a form per assessment activity, with endpoint-derived items at the scheduled visits
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > projectCrfShell > does not give safety, eligibility or administrative activities their own forms
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > projectCrfShell > does not duplicate exposure when a drug-administration activity exists
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > projectCrfShell > grounds the adverse-events form in the safety design and schedules it at the safety visits
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > projectCrfShell > counts forms and scores grounding completeness
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > endpoint item typing > maps a binary endpoint to a boolean item
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > endpoint item typing > maps a time-to-event endpoint to an occurred flag and an event date
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > endpoint item typing > maps a composite endpoint to one item per component
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > endpoint item typing > flags a patient-reported endpoint with no validated instrument as a placeholder
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > honest gaps > flags an activity with no endpoint link as a placeholder, with a gap
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > honest gaps > falls back to one form per endpoint and emits exposure when no SoA is attached
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > baseline design > clears every gate
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > baseline design > validates as low risk and may advance
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §2 estimand gate > flags a primary endpoint with no estimand as critical
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §2 estimand gate > flags an incomplete estimand as major
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §2 estimand gate > surfaces a missing-rationale intercurrent event as a minor warning
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §2 estimand gate > requires an estimand for key secondary endpoints, not plain secondary
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §3 endpoint red-flags > flags a surrogate primary without accepted precedent
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §3 endpoint red-flags > flags a time-to-event endpoint with no event definition
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §3 endpoint red-flags > flags a patient-reported endpoint with no validated instrument
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §3 endpoint red-flags > flags more than one primary endpoint
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §3 endpoint red-flags > flags a design with no primary endpoint as critical
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §4 framework rules > flags non-inferiority without a margin as critical
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §4 framework rules > flags non-inferiority without per-protocol as a co-primary set
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §4 framework rules > flags an external control without an ICH E10 justification
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §10/§17 multiplicity gate > flags a testing hierarchy with no multiplicity control as critical
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §10/§17 multiplicity gate > does not flag a single confirmatory endpoint
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §6 power red-flags > flags underpowered designs
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §6 power red-flags > flags missing sensitivity analyses
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §6 power red-flags > flags an assumed effect that exceeds the prior-phase observed (optimism bias)
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > defensibility report > rates a critical finding as blocking
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > defensibility report > rates a major finding as high risk and non-advanceable but not approval-blocking
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > defensibility report > orders findings worst-first and lists the standards checked
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §9 analysis populations > flags a superiority trial whose only primary set is per-protocol
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §9 analysis populations > flags a plan with no primary analysis set and no safety population
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §9 analysis populations > flags a design with no populations at all as major
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §11 method–endpoint matching > flags a t-test planned on a time-to-event primary endpoint
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §11 method–endpoint matching > accepts a Cox model on the same endpoint
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §11 method–endpoint matching > flags a chi-square on an ordinal endpoint and ANOVA without baseline on a continuous one
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §11 method–endpoint matching > flags a primary endpoint with no planned analysis
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §12 missing data > flags an absent strategy as major
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §12 missing data > flags LOCF as primary — major without sensitivity analyses, minor with
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §12 missing data > flags censoring at discontinuation under a treatment-policy estimand
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §13 interim analysis > flags interims with no spending function as critical and no DMC as major
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §13 interim analysis > flags a schedule that does not end at the final analysis
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §13 interim analysis > clears a properly specified group-sequential plan
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §13 interim analysis > is silent when no interim is planned
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > projectScheduleOfActivities > is deterministic
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > projectScheduleOfActivities > renders visits in column order, grouped into epoch spans
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > projectScheduleOfActivities > orders rows by category then row order
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > projectScheduleOfActivities > renders the sparse grid with marks and per-row scheduled counts
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > projectScheduleOfActivities > resolves only the referenced footnotes, in definition order
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > projectScheduleOfActivities > scores a sound, covering SoA as fully complete
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > projectScheduleOfActivities > is empty with an explicit gap when no SoA is attached
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > analyzeScheduleOfActivities — §7 checks > returns no issues for a sound, covering SoA
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > analyzeScheduleOfActivities — §7 checks > does not treat a missing SoA as a gate finding
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > analyzeScheduleOfActivities — §7 checks > flags a visit that references an undefined epoch
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > analyzeScheduleOfActivities — §7 checks > flags cells that reference an undefined activity or visit
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > analyzeScheduleOfActivities — §7 checks > flags duplicate ids
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > analyzeScheduleOfActivities — §7 checks > flags an undefined footnote reference
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > analyzeScheduleOfActivities — §7 checks > flags the absence of a baseline anchor visit as major
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > analyzeScheduleOfActivities — §7 checks > flags a primary endpoint the schedule does not collect as major
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > analyzeScheduleOfActivities — §7 checks > flags an uncollected key-secondary endpoint as minor
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > analyzeScheduleOfActivities — §7 checks > flags an activity that names an endpoint the design does not declare
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > analyzeScheduleOfActivities — §7 checks > flags an activity scheduled at no visit
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > integration with validateDesign and the protocol projection > a defensible design with a covering SoA stays low risk
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > integration with validateDesign and the protocol projection > surfaces an uncovered primary endpoint in validateDesign
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > integration with validateDesign and the protocol projection > renders protocol §7 from the SoA, listing where the primary is collected
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > integration with validateDesign and the protocol projection > marks protocol §7 rendered with an SoA and partial without one
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > is deterministic
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > maps phase, masking, model, allocation and condition
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > renders arms with registry arm types and typed interventions
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > renders the primary outcome with its time frame
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > reports fields the design object cannot carry as gaps, never invented
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > says what would settle each eligibility gap, rather than only that it is absent
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > renders the eligibility criteria and carries the same set as data
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > marks a primary outcome with no time frame as partial
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > marks interventions partial when the product type is unknown
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > reports allocation N/A for a single-group design
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — EU CTIS > maps the EU trial phase and the concerned member states
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — EU CTIS > derives controlled, randomised and blinding
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — EU CTIS > gaps the member states when no EU member state is targeted
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — EU CTIS > reports sponsor and EU-specific enrollment as gaps
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > SoA-derived outcome timing > reads the outcome time frame from the schedule when the endpoint has no timepoint
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > SoA-derived outcome timing > still reports a partial outcome when neither a timepoint nor a schedule supplies the time frame
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectAllRegistrations > projects both registries from one design
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > counts visits and scheduled procedures from the SoA grid
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > reports the study-day span when every scheduled visit carries a study day
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > identifies the heaviest single visit and the median load
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > breaks the load down per visit, preserving column order and cell state
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > counts how many visits each assessment is scheduled at
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > reports the complexity indicators with their basis
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > emits no burden findings for a schedule with no outlier and no empty visit
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > refuses participant time when the activities carry no duration
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > refuses the invasive-procedure count and says it will not guess from names
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > lists every refused measure, with a reason, on the profile
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > publishes no composite index
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > refuses the study-day span when any scheduled visit has no study day
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > reports the absent profile for a design with no Schedule of Activities
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty proof — removing one duration makes the total absent, not smaller > computes the participant total when every scheduled activity carries a duration
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty proof — removing one duration makes the total absent, not smaller > goes absent — not to 30, not to 0 — when one activity loses its duration
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty proof — removing one duration makes the total absent, not smaller > counts invasive procedures only when the activities carry invasiveness
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > findings — what a reviewer should see > flags a visit far heavier than the rest (BRD-010)
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > findings — what a reviewer should see > flags a visit with nothing scheduled (BRD-011)
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > findings — what a reviewer should see > asks about an assessment scheduled at every single visit (BRD-012)
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > findings — what a reviewer should see > emits findings in the repo DesignFinding shape
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > single-visit design > counts one visit and its load
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > single-visit design > reports a zero-day span, which is a real zero and says so
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > single-visit design > runs no outlier check with too few visits to have a distribution
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > reports the net change in visits, procedures and span
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > names the visit the amendment added and the assessment it dropped
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > reports which retained visits changed load
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > raises the amendment finding on an increase (BRD-030)
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > carries a delta as absent when either side could not compute the measure
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > is not comparable when a side has no Schedule of Activities
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > adapters — one engine reached from both SoA models > takes the study-design SoA
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > adapters — one engine reached from both SoA models > takes the protocol read model SoA matrix through the same engine
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > adapters — one engine reached from both SoA models > refuses the study-day and arm measures the protocol read model does not carry
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > adapters — one engine reached from both SoA models > refuses the category count when the activities carry no category
+ ✓ server/services/biostatistics-bridge/__tests__/task-blueprint.test.ts > tasksFromAssessment > an adequate, robust, proceed judgment with no filing raises no tasks
+ ✓ server/services/biostatistics-bridge/__tests__/task-blueprint.test.ts > tasksFromAssessment > an inadequate verdict raises a critical, critical-path revision task
+ ✓ server/services/biostatistics-bridge/__tests__/task-blueprint.test.ts > tasksFromAssessment > escalate raises a review task naming the reasons
+ ✓ server/services/biostatistics-bridge/__tests__/task-blueprint.test.ts > tasksFromAssessment > fragility and a weak method fit each raise their own task
+ ✓ server/services/biostatistics-bridge/__tests__/task-blueprint.test.ts > tasksFromAssessment > a blocking gap becomes a design-completion task even when nothing could be judged
+ ✓ server/services/biostatistics-bridge/__tests__/task-blueprint.test.ts > tasksFromAssessment > a non-inferiority frame and planned interims raise their obligations
+ ✓ server/services/biostatistics-bridge/__tests__/task-blueprint.test.ts > tasksFromAssessment > the filing checklist proposes only required/expected deliverables not already persisted
+ ✓ server/services/biostatistics-bridge/__tests__/task-blueprint.test.ts > tasksFromAssessment > critical and major gate findings become tasks keyed by their code; minors do not
+ ✓ server/services/biostatistics-bridge/__tests__/task-blueprint.test.ts > tasksFromAssessment > is deterministic and de-duplicated across re-runs
+ ✓ server/services/biostatistics-bridge/__tests__/statistical-review.test.ts > buildStatisticalReview > produces one row per element, in the review order, each traceable to codes
+ ✓ server/services/biostatistics-bridge/__tests__/statistical-review.test.ts > buildStatisticalReview > a clean design reads low across the board with a low challenge likelihood
+ ✓ server/services/biostatistics-bridge/__tests__/statistical-review.test.ts > buildStatisticalReview > routes each gate code to its element
+ ✓ server/services/biostatistics-bridge/__tests__/statistical-review.test.ts > buildStatisticalReview > LOCF without sensitivity analyses is a high-risk missing-data row with the fix named
+ ✓ server/services/biostatistics-bridge/__tests__/statistical-review.test.ts > buildStatisticalReview > interims with no spending function make the verdict high and name the element
+ ✓ server/services/biostatistics-bridge/__tests__/statistical-review.test.ts > buildStatisticalReview > a design the engine cannot size is a high-risk sample-size row naming the blocking gap
+ ✓ server/services/biostatistics-bridge/__tests__/statistical-review.test.ts > buildStatisticalReview > the engine judgment can only raise sample-size risk, never lower a gate finding
+ ✓ server/services/study-design/__tests__/registration-eligibility-wiring.test.ts > age limits come from the criteria, in the criteria’s own units > renders minimum and maximum age when an inclusion age criterion states them
+ ✓ server/services/study-design/__tests__/registration-eligibility-wiring.test.ts > age limits come from the criteria, in the criteria’s own units > keeps a strict comparator strict instead of rounding it into an inclusive bound
+ ✓ server/services/study-design/__tests__/registration-eligibility-wiring.test.ts > age limits come from the criteria, in the criteria’s own units > carries the unit the criterion wrote, not a canonical one
+ ✓ server/services/study-design/__tests__/registration-eligibility-wiring.test.ts > age limits come from the criteria, in the criteria’s own units > emits NO age limit when the age criteria mix time units, and says why
+ ✓ server/services/study-design/__tests__/registration-eligibility-wiring.test.ts > age limits come from the criteria, in the criteria’s own units > defaults nothing when no criterion states an age at all
+ ✓ server/services/study-design/__tests__/registration-eligibility-wiring.test.ts > age limits come from the criteria, in the criteria’s own units > does not fold an age EXCLUSION into the registry age limits
+ ✓ server/services/study-design/__tests__/registration-eligibility-wiring.test.ts > sex and healthy-volunteer eligibility stay gaps, and name what would settle them > names the field that would close the sex gap
+ ✓ server/services/study-design/__tests__/registration-eligibility-wiring.test.ts > sex and healthy-volunteer eligibility stay gaps, and name what would settle them > names the field that would close the healthy-volunteers gap
+ ✓ server/services/study-design/__tests__/registration-eligibility-wiring.test.ts > sex and healthy-volunteer eligibility stay gaps, and name what would settle them > never reads sex out of the criterion text, however plainly the text states it
+ ✓ server/services/study-design/__tests__/registration-eligibility-wiring.test.ts > sex and healthy-volunteer eligibility stay gaps, and name what would settle them > never reads healthy-volunteer eligibility out of the criterion text either
+ ✓ server/services/study-design/__tests__/registration-eligibility-wiring.test.ts > no criterion is dropped for being unreadable > keeps every unparsed criterion in the rendered value and in the structure
+ ✓ server/services/study-design/__tests__/registration-eligibility-wiring.test.ts > no criterion is dropped for being unreadable > keeps every criterion when only some of them parse
+ ✓ server/services/study-design/__tests__/registration-eligibility-wiring.test.ts > no criterion is dropped for being unreadable > renders the criteria it can read as data, on the same field as the text
+ ✓ server/services/study-design/__tests__/registration-eligibility-wiring.test.ts > no criterion is dropped for being unreadable > carries the same criteria through the EU CTIS record, split by type
+ ✓ server/services/study-design/__tests__/registration-eligibility-wiring.test.ts > no criterion is dropped for being unreadable > reports no criteria as a gap rather than an empty rendered field
+ ✓ server/services/study-design/__tests__/registration-eligibility-wiring.test.ts > the projection reports everything the engine calls absent > carries every absent field of no criteria into a gap on the record
+ ✓ server/services/study-design/__tests__/registration-eligibility-wiring.test.ts > the projection reports everything the engine calls absent > carries every absent field of nothing parseable into a gap on the record
+ ✓ server/services/study-design/__tests__/registration-eligibility-wiring.test.ts > the projection reports everything the engine calls absent > carries every absent field of a lower bound only into a gap on the record
+ ✓ server/services/study-design/__tests__/registration-eligibility-wiring.test.ts > the projection reports everything the engine calls absent > carries every absent field of mixed age units into a gap on the record
+ ✓ server/services/study-design/__tests__/registration-eligibility-wiring.test.ts > the projection reports everything the engine calls absent > carries every absent field of fully bounded into a gap on the record
+ ✓ server/services/study-design/__tests__/registration-eligibility-wiring.test.ts > the projection reports everything the engine calls absent > carries every absent field of criteria whose wording names a sex into a gap on the record
+ ✓ server/services/study-design/__tests__/registration-eligibility-wiring.test.ts > both engines are reachable through the module barrel > exports the eligibility model
+ ✓ server/services/study-design/__tests__/registration-eligibility-wiring.test.ts > both engines are reachable through the module barrel > exports the registry filing engine
+ ✓ server/services/study-design/__tests__/protocol-projection.test.ts > projectProtocol > projects an ICH M11-ordered protocol with a synopsis
+ ✓ server/services/study-design/__tests__/protocol-projection.test.ts > projectProtocol > renders trial design from the framework
+ ✓ server/services/study-design/__tests__/protocol-projection.test.ts > projectProtocol > reuses the SAP estimand renderer for objectives and estimands
+ ✓ server/services/study-design/__tests__/protocol-projection.test.ts > projectProtocol > scores a complete design as highly complete
+ ✓ server/services/study-design/__tests__/protocol-projection.test.ts > projectProtocol > does not present a high completeness score as ICH M11 conformance
+ ✓ server/services/study-design/__tests__/protocol-projection.test.ts > projectProtocol > records that its section outline has never been reconciled with the published template
+ ✓ server/services/study-design/__tests__/protocol-projection.test.ts > projectProtocol > flags a missing safety section rather than inventing one
+ ✓ server/services/study-design/__tests__/protocol-projection.test.ts > projectProtocol > flags a non-inferiority frame with no margin as a gap
+ ✓ server/services/study-design/__tests__/protocol-projection.test.ts > projectProtocol > lowers completeness when sections are missing
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > is deterministic
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > projects a SAP in ICH E9 section order
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > reuses the protocol estimand renderer verbatim
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > scores a complete design as fully complete
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > defers the sample size honestly when the assumptions are absent, never fabricating them
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > flags a missing missing-data strategy and ties it to the estimand
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > states no adjustment for a single confirmatory endpoint
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > flags an uncontrolled testing hierarchy
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > flags non-inferiority without a per-protocol primary set
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > marks safety missing rather than inventing it
+ ✓ server/services/ana-biostats/__tests__/workflow-integrator-dossier-attach.test.ts > WorkflowIntegrator.attachToDossier > maps through the canonical governed operation — tenant-scoped, with a reason, and never writing the row itself
+ ✓ server/services/ana-biostats/__tests__/workflow-integrator-dossier-attach.test.ts > WorkflowIntegrator.attachToDossier > SAYS a previously assembled bundle was cleared, rather than reporting a bare attachment
+ ✓ server/services/ana-biostats/__tests__/workflow-integrator-dossier-attach.test.ts > WorkflowIntegrator.attachToDossier > SAYS a lost audit row, and reports a refusal as a refusal
+ ✓ server/services/study-design/__tests__/trial-feasibility-service.test.ts > assessTrialFeasibility (service) > maps CT.gov trials, computes empirical rates, and cites the query
+ ✓ server/services/study-design/__tests__/trial-feasibility-service.test.ts > assessTrialFeasibility (service) > clamps maxComparators into the page size and requires a condition
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > templateFor > provides cited templates per kind
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > templateFor > returns empty for an unknown kind
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > evaluateCompleteness > is ready when all required sections complete + objectives + eligibility + visits (clinical)
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > evaluateCompleteness > blocks finalize when a required section is incomplete
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > evaluateCompleteness > requires objectives and (clinical) a schedule of assessments
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > evaluateCompleteness > does not require eligibility/visits for IACUC
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > nextVersion > bumps minor by default and major on release
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > evaluateCompleteness — an unsectioned protocol is not a finished one > publishes no percentage and does not finalize
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > evaluateCompleteness — an unsectioned protocol is not a finished one > a fully complete protocol still finalizes
+ ✓ server/services/study-design/__tests__/trial-feasibility.test.ts > wilsonInterval > brackets the point estimate and stays in [0,1]
+ ✓ server/services/study-design/__tests__/trial-feasibility.test.ts > wilsonInterval > is degenerate for n = 0
+ ✓ server/services/study-design/__tests__/trial-feasibility.test.ts > assessFeasibility — insufficient evidence guard > returns insufficient_evidence and null rates when too few trials resolved
+ ✓ server/services/study-design/__tests__/trial-feasibility.test.ts > assessFeasibility — empirical rates > computes completion rate over resolved trials with a Wilson CI
+ ✓ server/services/study-design/__tests__/trial-feasibility.test.ts > assessFeasibility — empirical rates > summarizes completed-trial enrollment distribution
+ ✓ server/services/study-design/__tests__/trial-feasibility.test.ts > assessFeasibility — empirical rates > counts active competitors, distinct sponsors, and median duration
+ ✓ server/services/study-design/__tests__/trial-feasibility.test.ts > assessFeasibility — empirical rates > grades a low completion rate as challenging and flags high discontinuation
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > projects the design onto PRM columns and stores the canonical object in metadata
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > classifies arm types and splits subjects by the allocation ratio
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > maps endpoint role and measurement type, and pulls the analysis method
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > generates a study id when absent and preserves a supplied one
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > round-trips losslessly through metadata
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > returns null for a row that is not a design spine
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > promotes a UUID programId to the canonical project column
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > leaves program_id null when programId is not a UUID, without dropping protocol_id
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > leaves program_id null when no programId is supplied
+ ✓ server/services/study-design/__tests__/persistence.test.ts > isUuid > accepts a canonical UUID and rejects everything else
+ ✓ server/services/study-design/__tests__/persistence.test.ts > extractEffectObservation > extracts a primaryEffect object with a standard error
+ ✓ server/services/study-design/__tests__/persistence.test.ts > extractEffectObservation > derives the standard error from a confidence interval
+ ✓ server/services/study-design/__tests__/persistence.test.ts > extractEffectObservation > converts a hazard ratio to a benefit-oriented log effect when lower is better
+ ✓ server/services/study-design/__tests__/persistence.test.ts > extractEffectObservation > returns null when no machine-readable effect is present
+ ✓ server/services/study-design/__tests__/persistence.test.ts > extractEffectObservation > down-weights evidence from a different indication
+ ✓ server/services/study-design/__tests__/csr-evidence-source.test.ts > extractEffectObservation — ratio (HR/OR) shape > maps a beneficial hazard ratio (<1) to a POSITIVE benefit-oriented log effect
+ ✓ server/services/study-design/__tests__/csr-evidence-source.test.ts > extractEffectObservation — ratio (HR/OR) shape > maps a harmful hazard ratio (>1) to a NEGATIVE benefit-oriented log effect
+ ✓ server/services/study-design/__tests__/csr-evidence-source.test.ts > extractEffectObservation — ratio (HR/OR) shape > orients ratio benefit independently of the continuous endpoint direction
+ Test Files  36 passed (36)
+      Tests  587 passed (587)

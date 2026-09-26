@@ -1,0 +1,58 @@
+ ✓ client/src/concept2cure/auth/__tests__/SignupVerifyStep.test.tsx > SignupVerifyStep > names the address, holds the resend for the cooldown, then sends again once and restarts the cooldown 46ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > redeems a recovery code through the login verifier (the login screen's "Use a recovery code") 72ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > never completes an authenticator account's sign-in with an emailed code 5ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > still verifies an emailed code for an account without an authenticator 7ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/resend > mints no emailed code for an authenticator account (409, names the authenticator and the recovery codes) 4ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/resend > still resends for an account without an authenticator 4ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects the backslash open-redirect payloads 2ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects protocol-relative and absolute URLs 1ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects non-strings / empty 0ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > accepts a legitimate same-origin path (incl. query) 0ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects a pre-MFA partial token (no 24h access minted) 59ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects an mfa_challenge token 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token still refreshes a VALID access token 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /select-organization rejects a partial token 10ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > GET /session reports unauthenticated for a partial token 4ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > GET /session reports authenticated for a VALID access token 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/setup rejects a partial token 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/enable rejects a partial token 7ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/disable rejects a partial token 6ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /session rejects a partial token (401) 4ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /session rejects an mfa_challenge token (401) 6ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /me rejects a partial token (401) 4ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/setup rejects a partial token (401) 4ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/enable rejects a partial token (401) 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/disable rejects a partial token (401) 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /password/change rejects a partial token (401) 6ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > creates the account pending verification, mails the link, and answers without a token 433ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > refuses sign-up when the deployment cannot send mail, and creates nothing 7ms
+ ✓ client/src/i18n/__tests__/locale-integrity.test.ts > i18n locale & overlay integrity > keeps every locale bundle key/placeholder/markup-faithful to English 27ms
+ ✓ client/src/i18n/__tests__/locale-integrity.test.ts > i18n locale & overlay integrity > resolves every static t()/i18nKey reference in the client to a real key 30ms
+ ✓ client/src/i18n/__tests__/locale-integrity.test.ts > i18n locale & overlay integrity > keeps the client registry, locale dirs and server AnaLanguage overlays in sync 1ms
+ ✓ client/src/i18n/__tests__/locale-integrity.test.ts > i18n locale & overlay integrity > gives every non-English language a non-empty response + cultural overlay 1ms
+ ✓ client/src/i18n/__tests__/locale-integrity.test.ts > i18n locale & overlay integrity > maps every language home-market to a real market brief 1ms
+ ✓ client/src/i18n/__tests__/locale-integrity.test.ts > i18n locale & overlay integrity > declares a usable Intl locale and endonym for every registered language 35ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > on a development server with dev auth allowed, the account is active and the token is returned (as before) 319ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/verify-email > moves the account from pending to active, once, and never from any other status 16ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/verify-email > refuses a token of another class, a forged one, and a missing one alike 11ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/resend-verification > answers 202 for every address; mails only an account that is pending 9ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/login for an unconfirmed account > refuses with AUTH_EMAIL_UNVERIFIED after the password is checked, and records the refusal 11ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/login with an unknown e-mail > pays the bcrypt comparison a wrong password pays, so the answer time does not say the e-mail is unknown 643ms
+ ✓ client/src/concept2cure/auth/__tests__/VerifyEmail.test.tsx > tokenFromLocation > reads the fragment first, then the query, and refuses junk 8ms
+ ✓ client/src/concept2cure/auth/__tests__/VerifyEmail.test.tsx > VerifyEmail > posts the fragment token, drops it from the address bar, and offers sign-in when the server confirms 47ms
+ ✓ client/src/concept2cure/auth/__tests__/VerifyEmail.test.tsx > VerifyEmail > when the server refuses, says so and lets the person request a new link by address 27ms
+ ✓ client/src/concept2cure/auth/__tests__/VerifyEmail.test.tsx > VerifyEmail > with no token in the address, asks for a new link without calling the server 6ms
+ ✓ server/routes/__tests__/session-open-contract.test.ts > sign-in mints register their session > no route mints session claims without registering them 2ms
+ ✓ server/routes/__tests__/session-open-contract.test.ts > sign-in mints register their session > each sign-in door opens its session through openSession 1ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session idle past its window (401 SESSION_IDLE) 38ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session that began more than 12 hours ago (401 SESSION_LIFETIME) 6ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > refreshes an active session and carries its id, start and window into both new tokens 6ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > a refresh token minted before sessions had ids is checked for its lifetime only 16ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session ended by a later sign-in beyond the account's limit (401 SESSION_SUPERSEDED) 6ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-password > a suspended account is refused (403 AUTH_ACCOUNT_INACTIVE) before its password is compared, and the refusal is audited 32ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-password > control: an active account with the wrong password is 401 6ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > a challenge for an account suspended since it was issued does not become a session; no code is spent 8ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > control: an active account with a verified code proceeds past the standing check 31ms
+ Test Files  9 passed (9)
+      Tests  55 passed (55)
+exit=0

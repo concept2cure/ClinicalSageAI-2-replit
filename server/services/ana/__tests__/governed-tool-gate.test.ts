@@ -32,7 +32,7 @@ import { describe, it, expect } from 'vitest';
 
 import { classifyToolCall, PLATFORM_COMMAND_TOOL } from '../governed-tool-gate.js';
 import { PROPOSE_ONLY_COMMANDS, isProposeOnlyCommand } from '../../ana-ri/command-rbac.js';
-import { PART11_ESIGN_COMMANDS } from '../../ana-ri/part11-governance.js';
+import { PART11_ESIGN_COMMANDS, PART11_GOVERNED_COMMANDS } from '../../ana-ri/part11-governance.js';
 
 const cmd = (command: unknown, params?: unknown) => ({
   name: PLATFORM_COMMAND_TOOL,
@@ -41,8 +41,11 @@ const cmd = (command: unknown, params?: unknown) => ({
 
 /** A live member of the partition, so no fixture can drift from it. */
 const AN_ESIGN_COMMAND = [...PART11_ESIGN_COMMANDS].find(c => isProposeOnlyCommand(c))!;
-const A_REASON_ONLY_COMMAND = [...PROPOSE_ONLY_COMMANDS].find(
-  c => !PART11_ESIGN_COMMANDS.has(c),
+// The reason tier is the governed set minus the e-sign set; the partition
+// also holds the confirm tier now (every other write), so it is not the
+// place to draw a reason-only sample from.
+const A_REASON_ONLY_COMMAND = [...PART11_GOVERNED_COMMANDS].find(
+  c => !PART11_ESIGN_COMMANDS.has(c) && isProposeOnlyCommand(c),
 )!;
 
 describe('an unreadable call is refused, not cleared', () => {
@@ -99,11 +102,14 @@ describe('the gate agrees with the partition rather than restating it', () => {
     }
   });
 
-  it('leaves ordinary work alone', () => {
-    // Authoring mutations are deliberately outside the partition: making AnA
-    // unable to draft would trade a real capability for no control.
+  it('leaves reads alone and asks for a confirmation on ordinary writes', () => {
+    // Since 2026-09-26 (audit DP-08, P0-12) every write is a proposal: an
+    // ordinary authoring mutation is the confirm tier — one click, no reason,
+    // no credentials — so AnA still drafts, and a person takes the action.
     expect(classifyToolCall(cmd('list_projects')).kind).toBe('UNGOVERNED');
-    expect(classifyToolCall(cmd('create_artifact')).kind).toBe('UNGOVERNED');
+    const v = classifyToolCall(cmd('create_artifact'));
+    expect(v.kind).toBe('NEEDS_APPROVAL');
+    expect(v.kind === 'NEEDS_APPROVAL' && v.tier).toBe('confirm');
   });
 
   it('carries the command and params forward for the person to read', () => {
@@ -136,9 +142,11 @@ describe('the tier follows part11-governance, not a second opinion', () => {
     expect(v.kind === 'NEEDS_APPROVAL' && v.tier).toBe('esignature');
   });
 
-  it('demands only a reason for the rest', () => {
+  it('demands only a reason for the reason tier, and only a confirmation below it', () => {
     const v = classifyToolCall(cmd(A_REASON_ONLY_COMMAND));
     expect(v.kind === 'NEEDS_APPROVAL' && v.tier).toBe('reason');
+    const c = classifyToolCall(cmd('create_task'));
+    expect(c.kind === 'NEEDS_APPROVAL' && c.tier).toBe('confirm');
   });
 
   it('every e-sign command in the partition is classified as the signature tier', () => {

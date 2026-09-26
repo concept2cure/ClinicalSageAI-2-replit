@@ -1,0 +1,9 @@
+# A fresh repository with this change's .gitleaks.toml, one base commit, then one
+# commit per probe (reset between probes). The vectors are fabricated: the host
+# ep-fake-cloud-12345 does not exist and the passwords were typed for this test.
+$ gitleaks git --no-banner --redact --config .gitleaks.toml --log-opts="--full-history --diff-filter=tuxdb HEAD" .
+new commit with a Neon URI (postgresql://neondb_owner:<16 chars>@ep-fake-cloud-12345...neon.tech/neondb): exit 1
+new commit with a bare npg_ password:                                        exit 1
+placeholder password (postgresql://app:${DB_PASSWORD}@...):                   exit 0
+localhost host (postgresql://app:<16 chars>@localhost:5432/db):               exit 0
+the same Neon URI with `ci-secret-scan-ignore: negative test vector` on the line: exit 0

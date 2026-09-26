@@ -14,12 +14,13 @@ import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 import { ApiRequestError, serverMessage } from '@/lib/queryClient';
+import { SignupVerifyStep } from './SignupVerifyStep';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-type SignupStep = 'info' | 'organization' | 'plan' | 'compliance' | 'submitted';
+type SignupStep = 'info' | 'organization' | 'plan' | 'compliance' | 'verify' | 'submitted';
 
 interface FormData {
   firstName: string;
@@ -305,6 +306,13 @@ export const ZenSignup: React.FC = () => {
       }
 
       const data = await response.json();
+
+      // The account exists and waits on its e-mail link; no session is handed
+      // out until the link is opened (security audit 2026-09-24, IAM-17).
+      if (data.verification?.required) {
+        setStep('verify');
+        return;
+      }
 
       // Store the token for immediate login
       if (data.token) {
@@ -955,6 +963,24 @@ export const ZenSignup: React.FC = () => {
     </motion.div>
   );
 
+  const resendVerification = useCallback(async () => {
+    try {
+      await fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email }),
+      });
+    } catch {
+      // The answer is the same either way: the step says a link is on its way if the address qualifies.
+    }
+  }, [formData.email]);
+
+  const renderVerifyStep = () => (
+    <motion.div key="verify" variants={inputVariants} initial="initial" animate="animate" exit="exit">
+      <SignupVerifyStep email={formData.email} onResend={resendVerification} onSignIn={() => setLocation('/concept2cure/login')} />
+    </motion.div>
+  );
+
   const renderSubmittedStep = () => (
     <motion.div
       key="submitted"
@@ -1012,6 +1038,8 @@ export const ZenSignup: React.FC = () => {
   // Main render
   // ─────────────────────────────────────────────────────────────────────────────
 
+  const finished = step === 'submitted' || step === 'verify';
+
   return (
     <div className="min-h-screen bg-[#faf9f5] flex flex-col">
       <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
@@ -1027,9 +1055,9 @@ export const ZenSignup: React.FC = () => {
               <LogoIcon />
             </div>
             <h1 className="text-base font-semibold text-stone-900">
-              {step === 'submitted' ? '' : t('signup.title')}
+              {finished ? '' : t('signup.title')}
             </h1>
-            {step !== 'submitted' && (
+            {!finished && (
               <p className="mt-2 text-sm text-stone-600">
                 {t('signup.subtitle')}
               </p>
@@ -1037,7 +1065,7 @@ export const ZenSignup: React.FC = () => {
           </div>
 
           {/* Progress indicator */}
-          {step !== 'submitted' && renderProgress()}
+          {!finished && renderProgress()}
 
           {/* Form card */}
           <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-8">
@@ -1046,12 +1074,13 @@ export const ZenSignup: React.FC = () => {
               {step === 'organization' && renderOrganizationStep()}
               {step === 'plan' && renderPlanStep()}
               {step === 'compliance' && renderComplianceStep()}
+              {step === 'verify' && renderVerifyStep()}
               {step === 'submitted' && renderSubmittedStep()}
             </AnimatePresence>
           </div>
 
           {/* Sign in link */}
-          {step !== 'submitted' && (
+          {!finished && (
             <p className="mt-6 text-center text-sm text-stone-600">
               {t('signup.haveAccount')}{' '}
               <button

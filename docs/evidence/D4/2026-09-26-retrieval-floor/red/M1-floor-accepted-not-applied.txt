@@ -1,0 +1,100 @@
+
+ RUN  v4.1.7 /home/user/w2
+
+{"level":30,"time":"2026-09-26T02:20:24.746Z","pid":2528,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-26T02:20:24.748Z","pid":2528,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-26T02:20:24.748Z","pid":2528,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/retrieval-floor.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-26T02:20:24.955Z', poolSize: 1 }
+
+stdout | tests/db/retrieval-floor.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/retrieval-floor.dbtest.ts > searchHybrid applies a floor only when asked for one > the floor is what excludes the weak atom: without one it is returned, with one it is not
+✅ Enhanced Embedding Service initialized
+
+ × tests/db/retrieval-floor.dbtest.ts > searchHybrid applies a floor only when asked for one > the floor is what excludes the weak atom: without one it is returned, with one it is not 25ms
+   → expected [ …(2) ] to deeply equal [ 'wo03_2528_muhringa-floor-strong' ]
+stdout | tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > an atom below the default floor (0.6) is not admissible evidence
+✅ Enhanced Embedding Service initialized
+
+ × tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > an atom below the default floor (0.6) is not admissible evidence 52ms
+   → expected '[{"id":42,"title":"wo03_2528_muhringa…' not to contain 'wo03_2528_muhringa-floor-weak'
+ × tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > a question nothing clears is refused, and the model is never called 32ms
+   → expected '[{"id":42,"title":"wo03_2528_muhringa…' not to contain 'wo03_2528_muhringa-floor-weak'
+ × tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > every chunk recorded under a run clears the threshold that run records 18ms
+   → wo03_2528_muhringa-floor-weak was recorded under threshold 0.6: expected 0.30000001192092896 to be greater than or equal to 0.6
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/retrieval-floor.dbtest.ts > searchHybrid applies a floor only when asked for one > the floor is what excludes the weak atom: without one it is returned, with one it is not
+AssertionError: expected [ …(2) ] to deeply equal [ 'wo03_2528_muhringa-floor-strong' ]
+
+- Expected
++ Received
+
+  [
+    "wo03_2528_muhringa-floor-strong",
++   "wo03_2528_muhringa-floor-weak",
+  ]
+
+ ❯ tests/db/retrieval-floor.dbtest.ts:134:41
+    132|     );
+    133|     expect(unfloored.map((r) => r.title)).toEqual(expect.arrayContaini…
+    134|     expect(floored.map((r) => r.title)).toEqual([STRONG]);
+       |                                         ^
+    135|   });
+    136| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > an atom below the default floor (0.6) is not admissible evidence
+AssertionError: expected '[{"id":42,"title":"wo03_2528_muhringa…' not to contain 'wo03_2528_muhringa-floor-weak'
+
+Expected: "wo03_2528_muhringa-floor-weak"
+Received: "[{"id":42,"title":"wo03_2528_muhringa-floor-strong","content":"wo03_2528_muhringa-floor-strong: renal clearance was measured","score":0.6600000025331978},{"id":43,"title":"wo03_2528_muhringa-floor-weak","content":"wo03_2528_muhringa-floor-weak: renal clearance was measured","score":0.2400000087916851}]"
+
+ ❯ tests/db/retrieval-floor.dbtest.ts:142:36
+    140|     route.mockClear();
+    141|     const res = await request(app()).post('/api/evidence/ask').send({ …
+    142|     expect(titlesOf(res.body)).not.toContain(WEAK);
+       |                                    ^
+    143|     expect(res.status).toBe(200);
+    144|     expect(titlesOf(res.body)).toContain(STRONG);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > a question nothing clears is refused, and the model is never called
+AssertionError: expected '[{"id":42,"title":"wo03_2528_muhringa…' not to contain 'wo03_2528_muhringa-floor-weak'
+
+Expected: "wo03_2528_muhringa-floor-weak"
+Received: "[{"id":42,"title":"wo03_2528_muhringa-floor-strong","content":"wo03_2528_muhringa-floor-strong: renal clearance was measured","score":0.6600000025331978},{"id":43,"title":"wo03_2528_muhringa-floor-weak","content":"wo03_2528_muhringa-floor-weak: renal clearance was measured","score":0.2400000087916851}]"
+
+ ❯ tests/db/retrieval-floor.dbtest.ts:150:36
+    148|     route.mockClear();
+    149|     const res = await request(app()).post('/api/evidence/ask').send({ …
+    150|     expect(titlesOf(res.body)).not.toContain(WEAK);
+       |                                    ^
+    151|     expect(res.status).toBe(422);
+    152|     expect(res.body.code).toBe('NO_ADMISSIBLE_EVIDENCE');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > every chunk recorded under a run clears the threshold that run records
+AssertionError: wo03_2528_muhringa-floor-weak was recorded under threshold 0.6: expected 0.30000001192092896 to be greater than or equal to 0.6
+ ❯ tests/db/retrieval-floor.dbtest.ts:171:86
+    169|     expect(rows.length).toBeGreaterThan(0);
+    170|     for (const r of rows) {
+    171|       expect(r.similarity, `${r.title} was recorded under threshold ${…
+       |                                                                                      ^
+    172|         Number(r.threshold),
+    173|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  02:20:22
+   Duration  3.01s (transform 1.11s, setup 88ms, import 2.13s, tests 435ms, environment 0ms)
+

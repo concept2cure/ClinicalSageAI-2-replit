@@ -45,6 +45,11 @@ export async function hopProject(w: World): Promise<void> {
     expect(rows[0].sha256_chain).toMatch(HEX64);
     expect(json(rows[0].new_values)).toMatchObject({ project_id: k.programId, submission_id: k.submissionId });
   });
+  await hop.check('submission-anchored-to-project', 'the submission spine intake created carries the project as a column (submissions.program_id), not only in the audit JSON', async (observe) => {
+    const [s] = await q<{ program_id: string | null }>('SELECT program_id FROM submissions WHERE id = $1 AND organization_id = $2', [k.submissionId, ORG_A]);
+    observe(s.program_id === k.programId);
+    expect(s.program_id).toBe(k.programId);
+  });
   await hop.check('filing-scaffolded-in-project', 'the project’s governed filing (c2c_documents) is keyed to the project', async (observe) => {
     const rows = await q<{ id: string; doc_type: string }>(
       'SELECT id, doc_type FROM c2c_documents WHERE project_id = $1 AND org_id = $2', [k.programId, ORG_A]);

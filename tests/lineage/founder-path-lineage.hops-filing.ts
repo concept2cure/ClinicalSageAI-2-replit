@@ -188,10 +188,13 @@ export async function hopTransmit(w: World): Promise<void> {
     expect(kept).toBe(true);
     expect(sha256(fs.readFileSync(String(tx.bundle_path)))).toBe(tx.bundle_sha256);
   });
-  await hop.check('transmittal-names-sequence', 'the transmittal row names its sequence and its project', async (observe) => {
-    observe({ sequenceIdColumn: 'sequence_id' in tx, programId: tx.program_id ?? null });
-    expect(tx.sequence_id).toBe(k.sequenceId);
+  await hop.check('transmittal-names-project', 'the transmittal row names its project, taken from its submission', async (observe) => {
+    observe(tx.program_id === k.programId);
     expect(tx.program_id).toBe(k.programId);
+  });
+  await hop.check('transmittal-names-sequence', 'the transmittal row names its sequence', async (observe) => {
+    observe('sequence_id' in tx);
+    expect(tx.sequence_id).toBe(k.sequenceId);
   });
   await hop.check('transmit-record-names-bundle', 'the ECTD_TRANSMITTED ledger row carries the bundle sha256', async (observe) => {
     const carries = JSON.stringify(json((await transmitted()).new_values)).includes(String(tx.bundle_sha256));
@@ -240,11 +243,15 @@ export async function walkBack(w: World): Promise<void> {
     observe([...programIds].map((p) => p === k.programId));
     expect([...programIds]).toEqual([k.programId]);
   });
-  await hop.check('sequence-to-project', 'the sequence’s submission reaches the same project (the project-creation record names it)', async (observe) => {
-    const [s] = await q<{ submission_id: number }>('SELECT submission_id FROM ectd_sequences WHERE id = $1', [trail.sequenceId]);
+  await hop.check('sequence-to-project', 'the sequence’s submission reaches the same project by a column (submissions.program_id), and the project-creation record agrees', async (observe) => {
+    const [s] = await q<{ submission_id: number; program_id: string | null }>(
+      `SELECT e.submission_id, s.program_id FROM ectd_sequences e
+         JOIN submissions s ON s.id = e.submission_id AND s.organization_id = e.organization_id
+        WHERE e.id = $1`, [trail.sequenceId]);
+    observe(s.program_id === k.programId);
+    expect(s.program_id).toBe(k.programId);
     const rows = await q<{ target: string }>(`SELECT target FROM audit_logs WHERE action = 'c2c.project.create' AND (new_values->>'submission_id')::int = $1`, [s.submission_id]);
     const programs = [...new Set(rows.map((r) => r.target.replace(/^regulatory_program:/, '')))];
-    observe(programs.length);
     expect(programs).toEqual([k.programId]);
   });
   await hop.check('filing-copy-leaf-to-seal', 'the filing-copy leaf reaches the seal: the copy names it, the seal verifies, the pin still matches the copy', async (observe) => {
@@ -312,10 +319,32 @@ export async function walkForward(w: World): Promise<void> {
       (await q('SELECT id FROM cre_evidence_sources WHERE client_program_id = $1', [k.programId])).length,
       (await q('SELECT id FROM authoring_documents WHERE client_program_id = $1', [k.programId])).length,
       (await q('SELECT id FROM vault.documents WHERE program_id = $1 AND deleted_at IS NULL', [k.programId])).length,
-      (await q(`SELECT 1 FROM audit_logs WHERE action = 'c2c.project.create' AND target = $1 AND new_values->>'submission_id' IS NOT NULL`, [`regulatory_program:${k.programId}`])).length,
+      (await q('SELECT id FROM submissions WHERE program_id = $1 AND deleted_at IS NULL', [k.programId])).length,
     ];
     observe(counts);
     expect(counts).toEqual([1, 1, 1, 1]);
+  });
+  await hop.check('project-read-lists-its-records', 'one read from the project (GET /api/c2c/projects/:id/records) lists its submission, source, authoring document, Vault copy and filing document, by their project keys', async (observe) => {
+    const res = await asPrincipal(ORG_A, 3)(request(w.app).get(`/api/c2c/projects/${k.programId}/records`));
+    const r = res.body?.records ?? {};
+    const ids = (section: string) => (r[section]?.rows ?? []).map((row: { id: unknown }) => String(row.id));
+    observe({ status: res.status, sections: Object.keys(r).sort() });
+    expect(res.status).toBe(200);
+    expect(ids('submissions')).toEqual([String(k.submissionId)]);
+    expect(ids('sources')).toEqual([String(k.sourceId)]);
+    expect(ids('authoringDocuments')).toContain(String(k.docId));
+    expect(ids('vaultDocuments')).toContain(String(k.vaultDocumentId));
+    expect(ids('filingDocuments')).toContain(String(k.filingDocumentId));
+  });
+  await hop.check('project-activity-shows-its-records', 'the project activity feed shows the governed actions on its own records, not only rows keyed to the project id', async (observe) => {
+    const res = await asPrincipal(ORG_A, 3)(request(w.app).get(`/api/c2c/projects/${k.programId}/activity?limit=50`));
+    const actions: Array<{ action: string; resource_id: string }> = res.body?.activity ?? [];
+    const scaffold = actions.some((a) => a.action === 'c2c.work.transition' && String(a.resource_id) === String(k.filingDocumentId));
+    const placement = actions.some((a) => a.action === 'LEAF_CREATED');
+    observe({ status: res.status, scaffold, placement });
+    expect(res.status).toBe(200);
+    expect(scaffold).toBe(true);
+    expect(placement).toBe(true);
   });
   await hop.check('source-to-documents', 'from the source: the spans citing it reach an authoring document of the project', async (observe) => {
     const { listSpansCitingSource } = await import('../../server/services/clinical-regulatory-evidence/span-lineage.service');

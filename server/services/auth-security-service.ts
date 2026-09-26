@@ -16,6 +16,7 @@ import { db } from '../db';
 import { and, eq, sql } from 'drizzle-orm';
 import { users, electronicSignatures } from '../../shared/schema';
 import { createScopedLogger } from '../utils/logger';
+import { contextWordIn, isCommonPassword, type PasswordContext } from './password-blocklist';
 /* The §11.70 binding evaluator is shared with part11ComplianceService rather
    than reimplemented — see verifySignatureIntegrity. */
 import { evaluateBindingVerification } from './part11/version-binding';
@@ -42,7 +43,16 @@ export interface PasswordPolicyResult {
  * Validate password against enterprise policy
  * NIST 800-63B compliant with pharma-specific enhancements
  */
-export function validatePasswordPolicy(password: string): PasswordPolicyResult {
+/**
+ * The password policy: length and composition, then the two checks NIST SP
+ * 800-63B §5.1.1.2 asks for and the composition rules cannot give: the value
+ * is not a commonly used password (bare or behind its decorations), and it is
+ * not built from the account holder's address, name, organisation or the
+ * product (security audit 2026-09-24, IAM-17; plan P1-2). `context` is what
+ * the caller knows about the account; the checks that need it are skipped
+ * for what is not given, never guessed.
+ */
+export function validatePasswordPolicy(password: string, context: PasswordContext = {}): PasswordPolicyResult {
   const errors: string[] = [];
 
   if (!password || password.length < PASSWORD_MIN_LENGTH) {
@@ -82,6 +92,13 @@ export function validatePasswordPolicy(password: string): PasswordPolicyResult {
       errors.push('Password must not contain common patterns or dictionary words');
       break;
     }
+  }
+
+  if (password && isCommonPassword(password)) {
+    errors.push('Password is too common. Choose one that is not on lists of frequently used passwords.');
+  }
+  if (password && contextWordIn(password, context)) {
+    errors.push('Password must not contain your name, e-mail address or organisation.');
   }
 
   return { valid: errors.length === 0, errors };

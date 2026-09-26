@@ -45,3 +45,31 @@ tenant scope are doubles; the size-limit case sends 26 MB and gets 413 before an
   gate limits. `authoring.router.ts` is inside another lane's window until 01:51 UTC; the rest are cold and are the
   next D6 upload session's, one commit each, shrinking the baseline.
 - **`DocumentDataCenterService.ts`** stores to disk with no filter; it is outside the launch catalog and in the baseline.
+
+## Sweep, part 1 (same day): the four launch-catalog files
+
+`sweep/catalog-four/` — `server/routes/c2c/knowledge-sources.ts` (AnA knowledge sources: gained a `fileFilter` and the
+byte check), `server/routes/c2c/templates.ts` (Authoring templates: byte check in both handlers through one helper),
+`server/routes/onboarding-proposals.ts` (Projects onboarding: `fileFilter` and byte check), `server/routes/ind-forms.routes.ts`
+(Submission Center official-form upload: the scan after its own PDF magic check). Multer's outcomes are answered by one
+shared `receiveUpload` (`server/middleware/uploadAllowlist.ts`: 413 / 415 / 400 with a code) instead of a per-router
+copy; its unit test is `server/middleware/__tests__/uploadAllowlist-receive.test.ts`. `red.txt` is the scanner on the four
+files as committed (each lacked the byte check, two also the filter); `green.txt` is 100 / 100 across the four routes'
+existing suites and the receiver's; the baseline shrank from 12 files to 8.
+
+## Sweep, part 2 (same day, by a helper agent under the control tower): the five files outside the launch catalog
+
+`sweep/{academic-resource-upload,client-intelligence,knowledge-base,preclinical,DocumentDataCenterService}/` — each
+gained what it lacked (a `fileFilter` built from its own type list where it had none; `assertUploadSafe` on the buffer,
+or on the path with the file removed on refusal for the two disk stores; the shared `receiveUpload` for multer's
+outcomes) and a test of its own (35 cases: oversize 413, `.exe` as an accepted type 415, an unread type 415, wrong bytes
+400 `FILE_SIGNATURE_MISMATCH`, no-file pass-through, a control that reaches the handler; the disk stores also assert the
+refused file is gone). Red ran against the committed files; the pre-existing suites of those files (33 cases) still pass.
+`gate-after-sweep-2.txt`: the baseline is down to 3 files / 4 sites: `authoring.router.ts` (inside another lane's
+window until 01:51 UTC) and the two gate limits (`chat.ts`, `vault-ingest.ts`, whose guard runs in another file).
+
+Two observations from the sweep, for the next session: (1) `DocumentDataCenterService.uploadDocument` keeps a private
+`validateFileSignature` that is now redundant with the guard; (2) a Windows browser sends a `.csv` as
+`application/vnd.ms-excel`, which the shared byte check reads as an OLE container and refuses (400) at every
+`assertUploadSafe` site, this sweep's included; that is a platform-wide rule in `server/utils/fileSignature.ts`, not a
+per-route one.

@@ -1,0 +1,21 @@
+$ # server/services/DocumentDataCenterService.ts as edited (restored from the scratch copy); test server/services/__tests__/document-data-center-upload-guards.test.ts
+$ NODE_OPTIONS='--max-old-space-size=2048' npx vitest run --config vitest.config.ts server/services/__tests__/document-data-center-upload-guards.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+✅ DocumentDataCenterService initialized with AI-powered tagging
+
+ ✓ server/services/__tests__/document-data-center-upload-guards.test.ts > DocumentDataCenterService.getUploadMiddleware: the upload guard > refuses a body over the size limit with 413 and leaves nothing on disk 624ms
+ ✓ server/services/__tests__/document-data-center-upload-guards.test.ts > DocumentDataCenterService.getUploadMiddleware: the upload guard > refuses an executable named file whatever type it declares (415) 6ms
+ ✓ server/services/__tests__/document-data-center-upload-guards.test.ts > DocumentDataCenterService.getUploadMiddleware: the upload guard > refuses a declared type the service does not accept (415) 4ms
+ ✓ server/services/__tests__/document-data-center-upload-guards.test.ts > DocumentDataCenterService.getUploadMiddleware: the upload guard > refuses bytes that are not what the declared type says and removes the stored file 8ms
+ ✓ server/services/__tests__/document-data-center-upload-guards.test.ts > DocumentDataCenterService.getUploadMiddleware: the upload guard > leaves a request with no file to the route 5ms
+ ✓ server/services/__tests__/document-data-center-upload-guards.test.ts > DocumentDataCenterService.getUploadMiddleware: the upload guard > control: a real PNG passes the guard, is stored, and reaches the route 7ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  23:55:35
+   Duration  3.25s (transform 1.04s, setup 106ms, import 190ms, tests 2.60s, environment 0ms)
+
+exit=0

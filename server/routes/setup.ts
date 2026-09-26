@@ -78,7 +78,7 @@ router.post('/initialize', setupLimiter, async (req: Request, res: Response) => 
     const email = parsed.data.email.trim().toLowerCase();
     const name = parsed.data.name?.trim() || email.split('@')[0];
 
-    const policy = validatePasswordPolicy(password);
+    const policy = validatePasswordPolicy(password, { email, name, organizationName });
     if (!policy.valid) {
       return res.status(400).json({
         success: false,

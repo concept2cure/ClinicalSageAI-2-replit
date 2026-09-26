@@ -847,6 +847,9 @@ export interface Submission {
   createdAt?: Date | null;
   updatedAt?: Date | null;
   deletedAt?: Date | null;
+  /** The project (regulatory_programs.id) this submission belongs to, held to
+   *  the same organization by submissions_program_same_org_fk (20260925b). */
+  programId?: string | null;
 }
 export type NewSubmission = Omit<Submission, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>;
 

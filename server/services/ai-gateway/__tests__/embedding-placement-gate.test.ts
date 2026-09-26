@@ -223,8 +223,11 @@ describe('AIGateway.authorizeEmbedding', () => {
       process.env.NODE_ENV = 'production';
       const gateway = buildGateway();
 
+      // A production call is always bound to a tenant (request or job scope). The
+      // unbound case refuses earlier, as DENY_TENANT_POLICY, and is pinned in
+      // tenant-placement-boundary.test.ts; this case is about the decider.
       await expect(
-        gateway.authorizeEmbedding({ provider: 'openai', texts: [PHI_TEXT] }),
+        gateway.authorizeEmbedding({ provider: 'openai', texts: [PHI_TEXT], organizationId: 7 }),
       ).rejects.toMatchObject({
         name: GatewayPolicyError.name,
         message: expect.stringContaining('DENY_UNKNOWN_PROVIDER'),
@@ -246,8 +249,11 @@ describe('AIGateway.authorizeEmbedding', () => {
       process.env.AI_PROVIDER_PLACEMENT_APPROVALS = APPROVAL_OPENAI_CHAT_ONLY;
       const gateway = buildGateway();
 
+      // A production call is always bound to a tenant (request or job scope). The
+      // unbound case refuses earlier, as DENY_TENANT_POLICY, and is pinned in
+      // tenant-placement-boundary.test.ts; this case is about the decider.
       await expect(
-        gateway.authorizeEmbedding({ provider: 'openai', texts: [PHI_TEXT] }),
+        gateway.authorizeEmbedding({ provider: 'openai', texts: [PHI_TEXT], organizationId: 7 }),
       ).rejects.toMatchObject({
         name: GatewayPolicyError.name,
         message: expect.stringContaining('DENY_UNAPPROVED_INTENDED_USE'),
@@ -294,8 +300,11 @@ describe('AIGateway.authorizeEmbedding', () => {
       process.env.AI_PROVIDER_PLACEMENT_APPROVALS = APPROVAL_LOCAL_EMBEDDING;
       vi.spyOn(getContentClassifier(), 'classify').mockRejectedValueOnce(new Error('detector down'));
       const gateway = buildGateway();
+      // A production call is always bound to a tenant (request or job scope). The
+      // unbound case refuses earlier, as DENY_TENANT_POLICY, and is pinned in
+      // tenant-placement-boundary.test.ts; this case is about the decider.
       await expect(
-        gateway.authorizeEmbedding({ provider: 'local', texts: [PLAIN_TEXT] }),
+        gateway.authorizeEmbedding({ provider: 'local', texts: [PLAIN_TEXT], organizationId: 7 }),
       ).rejects.toMatchObject({ message: expect.stringContaining('DENY_DETECTOR_FAILURE') });
     });
 

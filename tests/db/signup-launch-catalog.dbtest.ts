@@ -44,6 +44,9 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+// Sign-up mails a verification link (IAM-17, P1-2): observed here, never sent.
+vi.mock('../../server/services/emailService', async importOriginal => ({ ...(await importOriginal<typeof import('../../server/services/emailService')>()),
+  isEmailConfigured: () => true, sendVerificationEmail: vi.fn(async () => undefined), sendWelcomeEmail: vi.fn(async () => undefined) }));
 import type { MockInstance } from 'vitest';
 import express from 'express';
 import request from 'supertest';

@@ -1,0 +1,15 @@
+# The write policy applied, the routes NOT yet changed: c2c_d3b, app_service, RLS_ENFORCE=on
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > a tenant scope cannot write another organization at the database 5ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still updates its own organization's settings 120ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still cannot touch another organization's settings 14ms
+ × tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff edit another organization's settings, and the change is really there 33ms
+   → answered success, wrote nothing: expected undefined to be 'wo03_2321_muhroxvf-staff' // Object.is equality
+ × tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff edit another organization's profile 18ms
+   → expected 500 to be 200 // Object.is equality
+ × tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff update another tenant's configuration through tenant-config 28ms
+   → expected 500 to be 200 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: answered success, wrote nothing: expected undefined to be 'wo03_2321_muhroxvf-staff' // Object.is equality
+AssertionError: expected 500 to be 200 // Object.is equality
+AssertionError: expected 500 to be 200 // Object.is equality
+      Tests  3 failed | 3 passed (6)

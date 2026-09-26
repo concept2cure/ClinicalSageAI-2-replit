@@ -11,6 +11,7 @@ import { authMiddleware } from '../auth';
 import { requireOrganizationContext } from '../middleware/tenantContext';
 import { createScopedLogger } from '../utils/logger';
 import { requestDb } from '../db/requestDb';
+import { staffCrossOrgScope } from '../middleware/staffCrossOrgScope';
 
 const logger = createScopedLogger('tenant-config-api');
 const router = Router();
@@ -26,6 +27,17 @@ const router = Router();
 // handler-level org checks remain the authorization boundary.
 
 // Schema for tenant settings
+/**
+ * super_admin may act on any tenant here (the handlers' own rule). That write must
+ * run in the system scope, not the staff member's own tenant scope: under
+ * public.organizations' own-org write policy it otherwise writes nothing (D3,
+ * docs/evidence/D3/2026-09-26-organizations-writes/).
+ */
+const staffAcrossOrgs = staffCrossOrgScope({
+  param: 'tenantId',
+  isStaff: req => req.userRole === 'super_admin',
+});
+
 const tenantSettingsSchema = z.object({
   branding: z
     .object({
@@ -153,6 +165,7 @@ router.patch(
   '/:tenantId/settings',
   authMiddleware,
   requireOrganizationContext,
+  staffAcrossOrgs,
   async (req, res) => {
     try {
       const tenantId = parseInt(String(req.params.tenantId));
@@ -204,6 +217,9 @@ router.patch(
         .set({ settings: mergedSettings })
         .where(eq(organizations.id, tenantId))
         .returning();
+      if (!updatedTenant[0]) {
+        return res.status(404).json({ error: 'Tenant not found' });
+      }
 
       // Return the updated settings
       return res.json(updatedTenant[0].settings);
@@ -222,6 +238,7 @@ router.post(
   '/:tenantId/settings/reset',
   authMiddleware,
   requireOrganizationContext,
+  staffAcrossOrgs,
   async (req, res) => {
     try {
       const tenantId = parseInt(String(req.params.tenantId));
@@ -304,6 +321,9 @@ router.post(
         .set({ settings: defaultSettings })
         .where(eq(organizations.id, tenantId))
         .returning();
+      if (!updatedTenant[0]) {
+        return res.status(404).json({ error: 'Tenant not found' });
+      }
 
       // Return the default settings
       return res.json(updatedTenant[0].settings);
@@ -322,6 +342,7 @@ router.patch(
   '/:tenantId/settings/:section',
   authMiddleware,
   requireOrganizationContext,
+  staffAcrossOrgs,
   async (req, res) => {
     try {
       const tenantId = parseInt(String(req.params.tenantId));
@@ -405,6 +426,9 @@ router.patch(
         .set({ settings: mergedSettings })
         .where(eq(organizations.id, tenantId))
         .returning();
+      if (!updatedTenant[0]) {
+        return res.status(404).json({ error: 'Tenant not found' });
+      }
 
       // Return just the updated section
       const updatedSettings = (updatedTenant[0].settings || {}) as Record<string, unknown>;

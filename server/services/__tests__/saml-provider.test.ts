@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { getSamlProvider, SAMLValidationError, type SAMLConfig } from '../saml-provider';
+import { ValidateInResponseTo } from '@node-saml/node-saml';
+import { getSamlProvider, inResponseToMode, SAMLValidationError, type SAMLConfig } from '../saml-provider';
 
 /**
  * Regression suite for the SAML SSO authentication-bypass fix.
@@ -127,5 +128,14 @@ describe('saml-provider — Single Logout (SLO)', () => {
     );
     expect(url).toContain('https://idp.example.test/slo');
     expect(url).toContain('SAMLRequest=');
+  });
+});
+
+describe('inResponseToMode — every response answers a request this SP issued (IAM-18 item 6)', () => {
+  it('defaults to always; an operator opts into IdP-initiated SSO or no check explicitly', () => {
+    expect(inResponseToMode({})).toBe(ValidateInResponseTo.always);
+    expect(inResponseToMode({ SAML_VALIDATE_INRESPONSETO: 'always' })).toBe(ValidateInResponseTo.always);
+    expect(inResponseToMode({ SAML_VALIDATE_INRESPONSETO: 'ifPresent' })).toBe(ValidateInResponseTo.ifPresent);
+    expect(inResponseToMode({ SAML_VALIDATE_INRESPONSETO: 'never' })).toBe(ValidateInResponseTo.never);
   });
 });

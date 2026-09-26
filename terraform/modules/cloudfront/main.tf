@@ -108,12 +108,6 @@ resource "aws_cloudfront_function" "spa_routes" {
 
 # ── CloudFront distribution ─────────────────────────────────────────────────
 
-# No WAF yet: a founder decision, not defaulted (docs/evidence/W2/2026-09-24-trivy/).
-# It carries a monthly cost, and AWS's common managed rule set blocks request
-# bodies over 8 KB until it is tuned, which would refuse document uploads and
-# AnA turns. Until then the ALB admits CloudFront alone, and sign-in and API
-# rate limits are applied in the app.
-#trivy:ignore:AWS-0011
 # Security headers for the SPA (security plan P0-15, INF-04). The API paths
 # carry the server's own headers (server/middleware/enterprise-security.ts);
 # the SPA is served straight from S3 and had none.
@@ -152,6 +146,14 @@ resource "aws_cloudfront_response_headers_policy" "spa" {
   }
 }
 
+# No WAF yet: a founder decision, not defaulted (docs/evidence/W2/2026-09-24-trivy/).
+# It carries a monthly cost, and AWS's common managed rule set blocks request
+# bodies over 8 KB until it is tuned, which would refuse document uploads and
+# AnA turns. Until then the ALB admits CloudFront alone, and sign-in and API
+# rate limits are applied in the app.
+# Trivy applies an inline ignore to the line directly below it and nothing
+# else, so this one stays on the resource line (ci:trivy-inline-ignores).
+#trivy:ignore:AWS-0011
 resource "aws_cloudfront_distribution" "this" {
   enabled             = true
   is_ipv6_enabled     = true

@@ -182,7 +182,14 @@ describe('embedding placement gate (before the SDK client exists)', () => {
     });
     const provider = getEmbeddingProvider();
 
-    await expect(provider.embed({ input: [PHI_TEXT, PLAIN_TEXT] })).rejects.toMatchObject({
+    // Vault ingestion embeds inside a tenant scope; an unbound production call
+    // refuses earlier (DENY_TENANT_POLICY, pinned in
+    // tenant-placement-boundary.test.ts). This case is about the decider.
+    await expect(
+      runWithTenantScope({ tenantId: '7', source: 'test' }, () =>
+        provider.embed({ input: [PHI_TEXT, PLAIN_TEXT] }),
+      ),
+    ).rejects.toMatchObject({
       name: GatewayPolicyError.name,
       message: expect.stringContaining('DENY_UNAPPROVED_INTENDED_USE'),
     });
