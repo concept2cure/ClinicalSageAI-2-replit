@@ -1288,7 +1288,8 @@ export const UI_V2_SURFACES: UiSurface[] = [
     icon: 'users',
     uiKit: null,
     // Launch-scope API (2026-09-25, ci:launch-scope-api): AdminAccess invites members.
-    apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup', '/api/tenant-users'],
+    // '/api/mdx/admin' (2026-09-26): AdminAccess.tsx.
+    apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup', '/api/tenant-users', '/api/mdx/admin'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
