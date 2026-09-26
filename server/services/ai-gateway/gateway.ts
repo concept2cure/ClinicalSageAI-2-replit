@@ -72,6 +72,7 @@ import {
   getOrgPlacementResolver,
   mergeOrgPolicyDefaults,
 } from './providers/org-placement';
+import { governServerTools } from './server-tool-policy';
 import {
   decideSensitivePlacement,
   readProviderPlacementApprovals,
@@ -1044,10 +1045,24 @@ const CONTENT_BLOCK_PROVIDERS: ReadonlySet<ProviderName> = new Set(['anthropic',
  * drops the image can answer this request, so none is tried.
  */
 function assertContentBlocksCarried(modelConfig: ModelConfig, request: GatewayRequest): void {
+  if (modelConfig.provider !== 'anthropic' && usesFilesApiDocument(request)) {
+    throw new FileReferenceNotCarriedError(modelConfig);
+  }
   if (CONTENT_BLOCK_PROVIDERS.has(modelConfig.provider)) return;
   const carriesMedia = request.messages.some(m => m.contentBlocks?.some(b => b.type !== 'text'));
   if (!carriesMedia) return;
   throw new MediaNotCarriedError(modelConfig);
+}
+
+/**
+ * A document given by Anthropic Files-API file id rather than by its bytes.
+ * Only first-party Anthropic can resolve one; the beta header that makes it
+ * readable is sent there alone.
+ */
+function usesFilesApiDocument(request: GatewayRequest): boolean {
+  return (request.messages || []).some(m =>
+    m.contentBlocks?.some(b => b.type === 'document' && b.source.type === 'file'),
+  );
 }
 
 export class AIGateway {
@@ -1664,14 +1679,28 @@ export class AIGateway {
   ): Promise<GatewayResponse> {
     assertContentBlocksCarried(modelConfig, request);
     await this.assertTenantPlacement(modelConfig, request, requestId, startTime);
-    await this.assertSensitiveDispatchAllowed(modelConfig, request, requestId, startTime);
+    // Anthropic-hosted tools run only where this lane and this tenant permit
+    // them; the rest are removed here, for the primary and every fallback, so
+    // no door that skipped governedToolsetFor can send one (server-tool-policy.ts).
+    const governed = governServerTools(modelConfig.provider, request);
+    if (governed.withheld.length > 0) {
+      log.info('[ai-gateway] server tools withheld for this lane', {
+        requestId,
+        provider: modelConfig.provider,
+        withheld: governed.withheld,
+      });
+    }
+    await this.assertSensitiveDispatchAllowed(modelConfig, governed.request, requestId, startTime);
     // Bound concurrent in-flight outbound calls. This is the single chokepoint
     // for every provider invocation (primary + fallback paths), so wrapping it
     // here caps outbound concurrency without touching the retry / circuit-
     // breaker / timeout logic, which all run inside the provider executors.
-    return this.outboundLimiter.run(() =>
-      this.dispatchProvider(modelConfig, request, requestId, startTime)
+    const response = await this.outboundLimiter.run(() =>
+      this.dispatchProvider(modelConfig, governed.request, requestId, startTime)
     );
+    return governed.withheld.length > 0
+      ? { ...response, withheldServerTools: governed.withheld }
+      : response;
   }
 
   /** Last-mile gate: it runs for the primary and every fallback before an SDK is invoked. */
@@ -2167,9 +2196,8 @@ export class AIGateway {
       }
     }
 
-    const usesFilesApiDoc = (request.messages || []).some(m =>
-      m.contentBlocks?.some(b => b.type === 'document' && b.source.type === 'file')
-    );
+    // First-party only: assertContentBlocksCarried refuses a file reference anywhere else.
+    const usesFilesApiDoc = modelConfig.provider === 'anthropic' && usesFilesApiDocument(request);
     // Merged, not replaced: the Files-API beta header rides in the same
     // RequestOptions object, so building one and adding to it is what keeps
     // both from clobbering each other.
@@ -2367,9 +2395,7 @@ export class AIGateway {
     }
 
     // Use the Anthropic SDK streaming API
-    const streamUsesFilesApiDoc = (request.messages || []).some(m =>
-      m.contentBlocks?.some(b => b.type === 'document' && b.source.type === 'file')
-    );
+    const streamUsesFilesApiDoc = modelConfig.provider === 'anthropic' && usesFilesApiDocument(request);
     // Same structured-output contract as the non-streaming path — including the
     // citations conflict, which must refuse before a token is streamed.
     const structured = resolveStructuredOutputFormat(request, modelConfig);
@@ -3133,6 +3159,7 @@ export class AIGateway {
           allowedSubstrates: policy.allowedSubstrates,
           allowedProviders: policy.allowedProviders,
           publicSourceFrontier: policy.publicSourceFrontier,
+          publicSourceEgress: policy.publicSourceEgress,
           residencyConflict: 'residencyConflict' in merged && merged.residencyConflict,
         },
       };
@@ -3495,6 +3522,7 @@ export class AIGateway {
           ...(request.metadata ?? {}),
           ...(contentPolicy ? { contentPolicy } : {}),
           tenantPlacement: tenantPlacementAuditMetadata(request),
+          ...serverToolAuditMetadata(response),
         },
       });
     } catch (auditError: any) {
@@ -3959,6 +3987,22 @@ function bindTenant(
   return { unbound: { resolution: 'absent', boundFrom: 'none' } };
 }
 
+/**
+ * Anthropic-hosted tool activity on a served call: which ran (names only) and
+ * which were withheld from the lane and why. Content-free; absent when neither.
+ */
+function serverToolAuditMetadata(response: GatewayResponse): Record<string, unknown> {
+  const used = (response as { serverToolUses?: Array<{ name: string }> }).serverToolUses;
+  const withheld = response.withheldServerTools;
+  if (!used?.length && !withheld?.length) return {};
+  return {
+    serverTools: {
+      ...(used?.length ? { used: used.map(u => u.name) } : {}),
+      ...(withheld?.length ? { withheld } : {}),
+    },
+  };
+}
+
 /** The organization an audit row is attributed to: explicit, else the bound tenant. */
 function auditOrganizationId(request: GatewayRequest): string | number | undefined {
   return request.organizationId ?? request.sensitiveTenantPolicy?.organizationId;
@@ -4005,6 +4049,23 @@ export class MediaNotCarriedError extends GatewayPolicyError {
     super(
       `MEDIA_NOT_CARRIED: ${modelConfig.id} (${modelConfig.provider}) receives message text only, and this ` +
         'request carries images or documents it would not see, so it was not sent.',
+    );
+  }
+}
+
+/**
+ * The request names a document by Anthropic Files-API file id, and the lane it
+ * reached is not first-party Anthropic. Bedrock, Vertex and every other lane
+ * cannot resolve that id, so the model would answer about a file it was never
+ * given. Terminal like every GatewayPolicyError. Until 2026-09-26 the request
+ * went to Bedrock and Vertex anyway, with the Files-API beta header attached.
+ */
+export class FileReferenceNotCarriedError extends GatewayPolicyError {
+  readonly code = 'FILE_REFERENCE_NOT_CARRIED' as const;
+  constructor(readonly modelConfig: Pick<ModelConfig, 'id' | 'provider'>) {
+    super(
+      `FILE_REFERENCE_NOT_CARRIED: ${modelConfig.id} (${modelConfig.provider}) cannot read a document ` +
+        'referenced by an Anthropic file id, so this request was not sent. Attach the document itself instead.',
     );
   }
 }

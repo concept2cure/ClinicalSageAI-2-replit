@@ -23,7 +23,9 @@ import { requireAccessTokenReason } from '../../middleware/tokenType';
 import { checkOrgMembership } from '../../middleware/orgMembership';
 import { shouldProcessTenantInBackground } from '../tenant/tenant-lifecycle.js';
 import type { GatewayRequest } from '../ai-gateway/types.js';
-import { getAllEnabledTools } from './AnaToolDefinitions.js';
+import { governedToolsetFor } from './governed-toolset.js';
+import { getPool } from '../../db.js';
+import { runWithTenantScope } from '../../db/tenantStore.js';
 import { selectToolsForTurn, type ToolSelectionContext } from './tool-selection.js';
 import { executeAgenticLoop } from './AnaToolExecutor.js';
 
@@ -113,8 +115,21 @@ export class AnaRealtimeSession {
  * streaming tokens and tool progress. Output is suppressed once the turn is
  * aborted so a barged-in turn goes quiet immediately.
  */
-export const runAgenticTurn: RunTurn = async (input, signal, emit) => {
-  const tools = selectToolsForTurn(getAllEnabledTools(), input.message, {
+export const runAgenticTurn: RunTurn = (input, signal, emit) =>
+  // The socket was authenticated for this organization, and the turn runs in
+  // its tenant scope. Without one, every query the turn makes — the tool
+  // policy, each tool's own reads — refuses under RLS_ENFORCE=on, and the
+  // fail-soft policy read degrades to "every tool allowed".
+  runWithTenantScope(
+    { tenantId: String(input.organizationId), role: null, source: 'request', caller: 'ana-realtime:turn' },
+    () => runAgenticTurnInScope(input, signal, emit),
+  );
+
+const runAgenticTurnInScope: RunTurn = async (input, signal, emit) => {
+  // Governed first (tenant deny-list, catalog, Anthropic-hosted tools), then
+  // relevance — the order every chat door uses (governed-toolset.ts).
+  const governed = await governedToolsetFor(getPool(), input.organizationId);
+  const tools = selectToolsForTurn(governed, input.message, {
     pinned: input.selectedTools,
     context: input.context,
   });

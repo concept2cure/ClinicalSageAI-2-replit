@@ -99,3 +99,37 @@ export function summariseServerToolResult(step: GatewayServerToolUse): ServerToo
     omitted: Math.max(0, sources.length - MAX_LISTED_SOURCES),
   };
 }
+
+/** How much of one hosted-tool result the grounding corpus keeps. */
+export const MAX_SERVER_TOOL_EVIDENCE_CHARS = 12_000;
+
+/** The text of a fetched document, when the result carries it as text. */
+function fetchedText(raw: unknown): string | undefined {
+  const r = raw as any;
+  const source = r?.content?.source ?? r?.document?.source;
+  return source?.type === 'text' ? asString(source.data) : undefined;
+}
+
+/**
+ * What a hosted web step contributes to the grounding corpus.
+ *
+ * The answer is verified against the evidence the turn gathered
+ * (answer-grounding.ts). A search or fetch Anthropic ran was never part of that
+ * corpus, so a citation AnA took from a web result could not be credited. The
+ * corpus gets each source's title and URL, and a fetched document's text up to
+ * {@link MAX_SERVER_TOOL_EVIDENCE_CHARS}. A failed step contributes nothing: no
+ * result was seen, so nothing can be grounded in it.
+ */
+export function serverToolEvidence(step: GatewayServerToolUse): string | null {
+  if (step.isError) return null;
+  const lines = extractSources(step.result).map(
+    s => `[${step.name}] ${[s.title, s.url].filter(Boolean).join(' — ')}`,
+  );
+  const text = fetchedText(step.result);
+  if (text) lines.push(text);
+  if (lines.length === 0) return null;
+  const evidence = lines.join('\n');
+  return evidence.length > MAX_SERVER_TOOL_EVIDENCE_CHARS
+    ? evidence.slice(0, MAX_SERVER_TOOL_EVIDENCE_CHARS)
+    : evidence;
+}

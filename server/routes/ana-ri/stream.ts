@@ -159,6 +159,7 @@ import { MAX_PAUSE_MS, type HumanControlEvent } from '../../services/ana/run-sta
 import { classifyToolCall } from '../../services/ana/governed-tool-gate.js';
 import {
   describeServerToolStep,
+  serverToolEvidence,
   summariseServerToolResult,
 } from '../../services/ana/server-tool-steps.js';
 import type { GatewayServerToolUse } from '../../services/ai-gateway/types.js';
@@ -1211,6 +1212,16 @@ export function mountStreamRoute(router: Router): void {
       // Raw tool output this turn — the evidence corpus the final answer is
       // verified against in the self-verification round (see answer-grounding.ts).
       const toolEvidenceCorpus: string[] = [];
+      // Hosted web steps (Anthropic ran them inside a model call) are evidence
+      // too: their sources and fetched text join the corpus the answer is
+      // grounded against, so a citation taken from one can be credited.
+      const recordServerToolEvidence = (response: unknown): void => {
+        const steps = (response as AnaGatewayResponse | undefined)?.serverToolUses ?? [];
+        for (const step of steps) {
+          const evidence = serverToolEvidence(step);
+          if (evidence) toolEvidenceCorpus.push(evidence);
+        }
+      };
       // Provenance envelopes emitted by evidence tools this turn — persisted to the
       // durable lineage trail (data_lineage_records) by post-processing. Capped so a
       // pathological multi-round turn can't accumulate unbounded records.
@@ -1412,6 +1423,7 @@ export function mountStreamRoute(router: Router): void {
       recordCacheUsage(gwResponse);
       // The first model call is round 1's call; its server tools ran inside it.
       emitServerToolSteps(gwResponse, 1);
+      recordServerToolEvidence(gwResponse);
       streamGatewayMs = Date.now() - streamGatewayStart;
 
       // Multi-round agentic tool execution via the orchestrator
@@ -2227,6 +2239,7 @@ export function mountStreamRoute(router: Router): void {
           }
           recordCacheUsage(roundResponse);
           emitServerToolSteps(roundResponse, round);
+          recordServerToolEvidence(roundResponse);
           lastServedModel = servedModelOf(roundResponse);
           const nextUses = (roundResponse as AnaGatewayResponse).toolUses;
           return { text: roundText, toolCalls: (nextUses ?? []).map(toToolCall) };

@@ -2745,6 +2745,38 @@ export const ALL_ANA_TOOLS: AnaTool[] = ALL_ANA_TOOLS_RAW.filter(
 // enablement is confirmed.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * The agency and literature domains AnA's hosted web tools may reach. Kept
+ * tight to sources AnA actually cites, so a regulatory lookup cannot drift into
+ * low-quality web content, and shared by web_search and web_fetch.
+ */
+export const REGULATORY_WEB_DOMAINS: readonly string[] = Object.freeze([
+  'fda.gov',
+  'www.fda.gov',
+  'accessdata.fda.gov',
+  'ema.europa.eu',
+  'www.ema.europa.eu',
+  'ich.org',
+  'www.ich.org',
+  'pmda.go.jp',
+  'www.pmda.go.jp',
+  'mhra.gov.uk',
+  'www.mhra.gov.uk',
+  'tga.gov.au',
+  'www.tga.gov.au',
+  'canada.ca',
+  'www.canada.ca',
+  'iso.org',
+  'www.iso.org',
+  'ecfr.gov',
+  'www.ecfr.gov',
+  'federalregister.gov',
+  'www.federalregister.gov',
+  'clinicaltrials.gov',
+  'pubmed.ncbi.nlm.nih.gov',
+  'ncbi.nlm.nih.gov',
+]);
+
 export const WEB_SEARCH_TOOL: AnthropicServerTool = {
   // The current variant, with dynamic filtering. It was pinned to the 2025
   // `web_search_20250305` — the basic one — long after the models in the
@@ -2754,45 +2786,27 @@ export const WEB_SEARCH_TOOL: AnthropicServerTool = {
   type: 'web_search_20260209',
   name: 'web_search',
   max_uses: 5,
-  // Keep the search surface tight to sources AnA actually cites. The allowlist
-  // prevents drift into low-quality web content during regulatory lookups.
-  allowed_domains: [
-    'fda.gov',
-    'www.fda.gov',
-    'accessdata.fda.gov',
-    'ema.europa.eu',
-    'www.ema.europa.eu',
-    'ich.org',
-    'www.ich.org',
-    'pmda.go.jp',
-    'www.pmda.go.jp',
-    'mhra.gov.uk',
-    'www.mhra.gov.uk',
-    'tga.gov.au',
-    'www.tga.gov.au',
-    'canada.ca',
-    'www.canada.ca',
-    'iso.org',
-    'www.iso.org',
-    'ecfr.gov',
-    'www.ecfr.gov',
-    'federalregister.gov',
-    'www.federalregister.gov',
-    'clinicaltrials.gov',
-    'pubmed.ncbi.nlm.nih.gov',
-    'ncbi.nlm.nih.gov',
-  ],
+  allowed_domains: REGULATORY_WEB_DOMAINS,
 };
 
+/**
+ * web_fetch reads the same agency set web_search may search, and no more.
+ * Until 2026-09-26 it had no allowed_domains, so the model could fetch any URL
+ * it wrote or found in a document — the one egress on the tool surface with no
+ * boundary (docs/evidence/D6/2026-09-26-egress-tools/).
+ */
 export const WEB_FETCH_TOOL: AnthropicServerTool = {
   type: 'web_fetch_20260209',
   name: 'web_fetch',
+  max_uses: 5,
+  allowed_domains: REGULATORY_WEB_DOMAINS,
 };
 
 export const CODE_EXECUTION_TOOL: AnthropicServerTool = {
   type: 'code_execution_20260120',
   name: 'code_execution',
 };
+
 
 /**
  * Returns the subset of Anthropic server tools that are enabled for this
