@@ -11,13 +11,17 @@ vi.mock('../ai-actions/redis-manager.js', () => ({ isRedisAvailable: () => false
 
 import {
   ABSOLUTE_SESSION_HOURS,
+  CONNECTOR_TOKEN_USE,
   DEFAULT_IDLE_MINUTES,
   DEFAULT_MAX_CONCURRENT_SESSIONS,
+  MAX_IDLE_MINUTES,
+  MIN_IDLE_MINUTES,
   continuedSessionClaims,
   idleWindowSecondsOf,
   idleWindowSecondsOfClaims,
   maxConcurrentSessionsOf,
   newSessionClaims,
+  openConnectorSession,
   openSession,
   refreshInactivityReason,
   registerSession,
@@ -199,5 +203,51 @@ describe('the concurrent-session limit', () => {
       expect(await sessionInactivityReason('a', tokenClaims(a), { now: at })).toBe('superseded');
     }
     expect(await sessionInactivityReason('a', tokenClaims(a), { now: T0 + 13 * HOUR })).toBe('lifetime');
+  });
+});
+
+describe('openConnectorSession — the connector access token (P1-38)', () => {
+  const settings = (n: unknown) => ({ security: { maxConcurrentSessions: n } });
+  /** The connector token's claims, as a verifier sees them: the session, token_use, the account. */
+  const connectorClaims = (session: { sid: string; sst: number; idl: number }, userId = '42') => ({ ...session, iat: session.sst, userId, token_use: CONNECTOR_TOKEN_USE });
+  const browserClaims = (session: { sid: string; sst: number; idl: number }, userId = '42') => ({ ...session, iat: session.sst, userId });
+
+  it('opens a session whose idle window is the token TTL held inside the platform window, starting now, with a fresh id', async () => {
+    const a = await openConnectorSession(42, 3600, undefined, T0);
+    const b = await openConnectorSession(42, 3600, undefined, T0);
+    expect(a.sid).not.toBe(b.sid);
+    expect(a.sst).toBe(s(T0));
+    expect(a.idl).toBe(3600);
+    expect((await openConnectorSession(42, 10, undefined, T0)).idl).toBe(MIN_IDLE_MINUTES * 60);
+    expect((await openConnectorSession(42, 7 * 24 * 3600, undefined, T0)).idl).toBe(MAX_IDLE_MINUTES * 60);
+  });
+
+  it('the lifetime rule is the platform rule and the token is idle past its TTL', async () => {
+    const a = await openConnectorSession(42, 3600, undefined, T0);
+    expect(sessionLifetimeExceeded(connectorClaims(a), T0 + ABSOLUTE_SESSION_HOURS * HOUR + 1000)).toBe(true);
+    expect(await sessionInactivityReason('c', connectorClaims(a), { now: T0 + 30 * MINUTE })).toBeNull();
+    expect(await sessionInactivityReason('c', connectorClaims(a), { now: T0 + 30 * MINUTE + 61 * MINUTE })).toBe('idle');
+  });
+
+  it('connector sessions and browser sessions hold slots in separate pools of the same account, each at the tenant limit', async () => {
+    const browser = await openSession(42, settings(1), T0);
+    const first = await openConnectorSession(42, 3600, settings(1), T0 + MINUTE);
+    expect(await sessionInactivityReason('b', browserClaims(browser), { now: T0 + 2 * MINUTE }), 'a connector mint signed the browser session out').toBeNull();
+    const second = await openConnectorSession(42, 3600, settings(1), T0 + 3 * MINUTE);
+    expect(await sessionInactivityReason('c1', connectorClaims(first), { now: T0 + 4 * MINUTE }), 'the oldest connector session survived a mint beyond the limit').toBe('superseded');
+    expect(await sessionInactivityReason('c2', connectorClaims(second), { now: T0 + 4 * MINUTE })).toBeNull();
+    await openSession(42, settings(1), T0 + 5 * MINUTE);
+    expect(await sessionInactivityReason('b', browserClaims(browser), { now: T0 + 6 * MINUTE })).toBe('superseded');
+    expect(await sessionInactivityReason('c2', connectorClaims(second), { now: T0 + 6 * MINUTE }), 'a browser sign-in ended the connector session').toBeNull();
+  });
+
+  it('a connector session found over frees its own pool\'s slot', async () => {
+    const a = await openConnectorSession(42, 3600, settings(2), T0);
+    expect(await sessionInactivityReason('ca', connectorClaims(a), { now: T0 + 2 * HOUR })).toBe('idle');
+    const b = await openConnectorSession(42, 3600, settings(2), T0 + 2 * HOUR);
+    await openConnectorSession(42, 3600, settings(2), T0 + 2 * HOUR + MINUTE);
+    // Had the idle session kept its slot, the third mint would have superseded it, and that answer comes first.
+    expect(await sessionInactivityReason('ca', connectorClaims(a), { now: T0 + 2 * HOUR + 2 * MINUTE }), 'the idle connector session still held its slot').toBe('idle');
+    expect(await sessionInactivityReason('cb', connectorClaims(b), { now: T0 + 2 * HOUR + 2 * MINUTE })).toBeNull();
   });
 });
