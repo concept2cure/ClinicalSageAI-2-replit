@@ -10,8 +10,10 @@
  *     itself a grant from another tenant.
  *   - public.organizations (read by core.get_program_org_id to turn a program's
  *     org into the uuid vault RLS compares): no RLS; a tenant gave another
- *     org its own uuid. Closed by making id and uuid immutable, not by RLS —
- *     it is the one REVIEWED exception below, and its guard is checked.
+ *     org its own uuid. Its key became immutable on 2026-09-25 (then a
+ *     reviewed exception here), and it has had an own-org write policy since
+ *     2026-09-26, so it needs no exception
+ *     (docs/evidence/D3/2026-09-26-organizations-writes/).
  *   - core.programs (read by the same resolver): RLS, but keyed on the row's
  *     own org — so a different defect, fixed in the resolver, and pinned in
  *     tests/db/vault-program-ownership.dbtest.ts rather than here.
@@ -73,34 +75,12 @@ SELECT n.nspname || '.' || c.relname AS relation,
  GROUP BY 1
  ORDER BY 1`;
 
-/**
- * Relations allowed to stay unpoliced, each with the reason and the guard that
- * makes the reason true. The guard is queried: if it is gone, the exception
- * lapses and the relation fails the sweep like any other.
- */
-const REVIEWED: Record<string, { reason: string; guard: string }> = {
-  'public.organizations': {
-    reason:
-      'Policies read only its id and uuid (core.get_program_org_id), and those are immutable ' +
-      'once set. Narrowing writes to its other columns needs five platform-staff override ' +
-      'routes on the system scope first (docs/evidence/D3/2026-09-25-organizations-tenant-key/).',
-    guard: `SELECT EXISTS (
-              SELECT 1 FROM pg_trigger
-               WHERE tgrelid = 'public.organizations'::regclass
-                 AND tgname = 'organizations_tenant_key_immutable'
-                 AND tgenabled <> 'D')`,
-  },
-};
-
+/** The unguarded relations, each named with what reads it. */
 async function unguarded(db: { query: Pool['query'] }): Promise<string[]> {
   const { rows } = await db.query(UNGUARDED_POLICY_INPUTS_SQL, [RUNTIME_ROLE]);
-  const out: string[] = [];
-  for (const r of rows as Array<{ relation: string; read_by: string }>) {
-    const reviewed = REVIEWED[r.relation];
-    if (reviewed && (await db.query(reviewed.guard)).rows[0]?.exists === true) continue;
-    out.push(`${r.relation} (read by ${r.read_by})`);
-  }
-  return out;
+  return (rows as Array<{ relation: string; read_by: string }>).map(
+    r => `${r.relation} (read by ${r.read_by})`
+  );
 }
 
 beforeAll(() => {
@@ -138,13 +118,14 @@ describe('RLS inputs are out of a tenant reach (D3)', () => {
     }
   });
 
-  it('self-test: a reviewed exception lapses when its guard is gone', async () => {
+  it('self-test: the sweep catches the organizations table with its RLS removed', async () => {
+    // The 2026-09-25 finding, reconstructed the same way: a relation a policy
+    // FUNCTION reads (core.get_program_org_id), not a policy subquery.
     const c = await owner.connect();
     try {
       await c.query('BEGIN');
-      await c.query(
-        'ALTER TABLE public.organizations DISABLE TRIGGER organizations_tenant_key_immutable'
-      );
+      await c.query('ALTER TABLE public.organizations NO FORCE ROW LEVEL SECURITY');
+      await c.query('ALTER TABLE public.organizations DISABLE ROW LEVEL SECURITY');
       expect((await unguarded(c)).join('\n')).toContain('public.organizations');
     } finally {
       await c.query('ROLLBACK');

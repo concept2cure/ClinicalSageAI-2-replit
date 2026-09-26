@@ -54,6 +54,10 @@ export const submissions = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    /** The project this submission belongs to (regulatory_programs.id), held to
+     *  the same organization by submissions_program_same_org_fk
+     *  (migrations/20260925b). Nullable until every writer sets it. */
+    programId: uuid('program_id'),
   },
   (table) => ({
     orgIdx: index('idx_submissions_organization_id').on(table.organizationId),
