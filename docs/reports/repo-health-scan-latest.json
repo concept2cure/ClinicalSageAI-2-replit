@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-26T17:10:26.299Z",
+  "generatedAt": "2026-09-26T18:35:19.165Z",
   "git": {
-    "sha": "d929824d61c704eff00f1a5ae070505a2c864e21",
+    "sha": "213fbebcb2b6c03d67574586201d3407d75c7831",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1977,7 +1977,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1061714
+        "bytes": 1062088
       },
       {
         "file": "shared/schema.ts",
@@ -2005,7 +2005,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 211305
+        "bytes": 211701
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2017,7 +2017,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 177041
+        "bytes": 179861
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2061,7 +2061,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 135508
+        "bytes": 136331
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -2159,7 +2159,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 20534
+        "lines": 20540
       },
       {
         "file": "shared/schema.ts",
@@ -2183,7 +2183,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 5385
+        "lines": 5392
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2199,7 +2199,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 4199
+        "lines": 4258
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2263,7 +2263,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 2752
+        "lines": 2766
       },
       {
         "file": "server/routes/auth.ts",
