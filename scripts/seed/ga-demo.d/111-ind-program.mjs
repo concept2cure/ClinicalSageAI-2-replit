@@ -30,14 +30,15 @@
  * the submission core. Without the spine the demo's IND programs could be
  * opened but nothing could be filed into them.
  *
- * The submission is linked by the SAME identity convention intake and the
- * checklist assembler use (application type + product_name / title), so it is
- * matched, not duplicated, if one already exists. The sequence is created as
+ * The submission is anchored to its program (submissions.program_id, LX-22),
+ * as intake anchors it, and reused only when already anchored to THAT program.
+ * It is never matched by product name or title: that is how two projects came
+ * to share one filing. The sequence is created as
  * `draft` 0000: which sequence a document is filed into is a regulatory
  * decision, and nothing else in the product creates one as a side effect.
  *
  * Idempotent: a program that already carries a number is left exactly as it
- * is, an existing submission is linked rather than replaced, and a submission
+ * is, a submission already anchored to the program is reused, and a submission
  * that already has any sequence is left alone. Org-scoped. Fail-safe: a schema
  * without the column or the table degrades to a warning.
  */
@@ -52,33 +53,40 @@ async function has(client, table) {
   return !!r.rows[0]?.c;
 }
 
+/** Does `public.submissions` carry the project anchor (migrations/20260925b)? */
+async function hasProgramAnchor(client) {
+  const r = await client.query(
+    `SELECT 1 FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'submissions' AND column_name = 'program_id'`,
+  );
+  return r.rows.length > 0;
+}
+
 /**
- * The canonical submission + original sequence for one program, by the identity
- * convention `resolveSubmissionSpine` matches on. Returns a short note for the
- * run log; never throws past the caller's guard.
+ * The canonical submission + original sequence for one program, anchored to it
+ * (submissions.program_id). Returns a short note for the run log; never throws
+ * past the caller's guard.
  */
 async function ensureSpine(client, org, userId, program) {
-  const identityKeys = [program.product_name, program.name, program.code]
-    .map((v) => String(v ?? '').trim().toLowerCase())
-    .filter(Boolean);
-  if (identityKeys.length === 0) return 'no identity keys — skipped';
+  if (!(await hasProgramAnchor(client))) {
+    return 'submissions.program_id absent — apply migrations/20260925b_submissions_program_anchor.sql; skipped';
+  }
 
   const existing = await client.query(
     `SELECT id FROM submissions
-      WHERE organization_id = $1 AND deleted_at IS NULL
+      WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
         AND lower(application_type) = 'ind'
-        AND (lower(coalesce(product_name, '')) = ANY($2) OR lower(title) = ANY($2))
       ORDER BY updated_at DESC NULLS LAST, id DESC LIMIT 1`,
-    [org.id, identityKeys],
+    [org.id, program.id],
   );
   let submissionId = existing.rows[0]?.id ?? null;
   let created = false;
   if (submissionId == null) {
     const ins = await client.query(
       `INSERT INTO submissions
-         (title, product_name, application_type, client_type, primary_region, status, lifecycle_stage, organization_id, created_by)
-       VALUES ($1, $2, 'ind', 'biotech', 'fda', 'active', 'original', $3, $4) RETURNING id`,
-      [program.name, program.product_name, org.id, userId],
+         (title, product_name, application_type, client_type, primary_region, status, lifecycle_stage, organization_id, created_by, program_id)
+       VALUES ($1, $2, 'ind', 'biotech', 'fda', 'active', 'original', $3, $4, $5) RETURNING id`,
+      [program.name, program.product_name, org.id, userId, program.id],
     );
     submissionId = ins.rows[0].id;
     created = true;

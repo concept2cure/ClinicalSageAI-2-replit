@@ -151,8 +151,8 @@
         "closedBy": [
           "LX-12"
         ],
-        "observed": "{\"sequenceIdColumn\":false,\"programId\":null}",
-        "why": "submission_transmittals has no sequence_id column (migrations/20260509_submission_gateways.sql) and the FDA ESG writer leaves program_id NULL (server/services/submission-gateways/fda-esg.ts:264-281); the transmittal joins its sequence only through the ECTD_TRANSMITTED audit row."
+        "observed": "false",
+        "why": "submission_transmittals has no sequence_id column (migrations/20260509_submission_gateways.sql); the transmittal joins its sequence only through the ECTD_TRANSMITTED audit row. Its project is now recorded (transmit/transmittal-names-project, LX-22)."
       },
       "transmit-record-names-bundle": {
         "findings": [
