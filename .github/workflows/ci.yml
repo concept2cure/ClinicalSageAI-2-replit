@@ -1995,6 +1995,20 @@ jobs:
           # diagnostic. A missing file on a green gate is still impossible.
           if-no-files-found: warn
 
+      - name: Trivy exceptions are attached, owned and dated (with selftests)
+        # A scan cannot tell that an exception it was given is wrong. An inline
+        # #trivy:ignore that a later edit moved off its block applies to nothing
+        # (abc1c99a5 turned the config scan red that way), and a .trivyignore
+        # entry needs an owner, a reason and an expiry. Both checks run before
+        # the scans; each selftest proves its check can still fail.
+        # docs/evidence/W2/2026-09-26-trivy-inline-ignores/
+        if: ${{ !cancelled() }}
+        run: |
+          node scripts/ci/check-trivy-inline-ignores.mjs --selftest
+          node scripts/ci/check-trivy-inline-ignores.mjs
+          node scripts/ci/check-trivyignore-hygiene.mjs --selftest
+          node scripts/ci/check-trivyignore-hygiene.mjs
+
       - name: Trivy filesystem scan (deps + secrets)
         # Runs after an earlier failed step too, so a red job still says whether the
         # tree carries a HIGH/CRITICAL finding (security audit INF-08). Not after a
@@ -2029,6 +2043,11 @@ jobs:
           exit-code: '1'
           format: table
           skip-dirs: node_modules
+          # DS002 (image runs as root) is excepted for this one file alone: a
+          # vendored skill's own CI image, never built, published or deployed
+          # here (Dockerfile.optimized runs as appuser). Every other Dockerfile
+          # is checked. .trivyignore could only drop DS002 for the whole tree.
+          skip-files: .claude/skills/gstack/.github/docker/Dockerfile.ci
 
   nightly-governance:
     name: Nightly Governance Strict
