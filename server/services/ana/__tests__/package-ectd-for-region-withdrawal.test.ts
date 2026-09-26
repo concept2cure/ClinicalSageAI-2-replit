@@ -20,7 +20,7 @@ import JSZip from 'jszip';
 import { PACKAGE_ECTD_FOR_REGION } from '../AnaToolDefinitions';
 import { getToolHandler } from '../AnaToolExecutor';
 
-const CTX = { organizationId: 1, userId: 1 };
+const CTX = { organizationId: 1, userId: 1, humanConfirmed: true };
 const pdf = (l: string) => Buffer.from(`%PDF-1.4\n% ${l}\ntrailer<< /Root 1 0 R >>\n%%EOF\n`, 'utf8');
 
 type LeafSchema = { properties: Record<string, unknown>; required: string[] };

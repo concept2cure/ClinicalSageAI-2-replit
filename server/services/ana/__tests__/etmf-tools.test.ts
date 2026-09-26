@@ -17,11 +17,11 @@ describe('eTMF AnA tools — registration', () => {
 
 describe('eTMF AnA tools — context + input guards', () => {
   it('create_tmf refuses without tenant/user context', async () => {
-    const out = JSON.parse(await getToolHandler('create_tmf')!({ title: 'X' }, {} as any));
+    const out = JSON.parse(await getToolHandler('create_tmf')!({ title: 'X' }, { humanConfirmed: true } as any));
     expect(out.error).toMatch(/tenant \+ user context/);
   });
   it('classify_tmf_artifact validates required inputs', async () => {
-    const out = JSON.parse(await getToolHandler('classify_tmf_artifact')!({ tmf_file_id: 1 }, { organizationId: 1, userId: 1 } as any));
+    const out = JSON.parse(await getToolHandler('classify_tmf_artifact')!({ tmf_file_id: 1 }, { organizationId: 1, userId: 1, humanConfirmed: true } as any));
     expect(out.error).toMatch(/artifact_name are required/);
   });
   it('review_tmf_completeness requires a tmf_file_id', async () => {

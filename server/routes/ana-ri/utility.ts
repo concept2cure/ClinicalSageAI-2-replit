@@ -25,7 +25,7 @@ import {
   MIN_REASON_FOR_CHANGE_LEN,
 } from '../../services/ana-ri/part11-governance.js';
 import { isProposeOnlyCommand } from '../../services/ana-ri/command-rbac.js';
-import { CONFIRM_TIER_TOOLS } from '../../services/ana/governed-tool-gate.js';
+import { TOOL_REGISTER, toolAuthorizationOf } from '../../services/ana/tool-authorization.js';
 import { reverifySigner } from '../../services/part11/reverify-signer.js';
 import { signerReverificationDeps } from '../../services/part11/reverify-signer-deps.js';
 import {
@@ -173,8 +173,44 @@ function refuseToolWithoutHeldRun(res: Response): Response {
   return sendError(res, 400, 'This action can only be confirmed while AnA is waiting on it', null, 'TOOL_NEEDS_HELD_RUN');
 }
 
+/** The refusal for a tool this route may not run, or null when it may (or it is a command). */
+function refuseUnrunnableTool(
+  res: Response,
+  decision: ReturnType<typeof heldToolDecision>,
+  held: unknown,
+): Response | null {
+  if (decision === 'command') return null;
+  if (!held) return refuseToolWithoutHeldRun(res);
+  if (decision === 'not-confirmable') {
+    return sendError(res, 400, 'This is not an action AnA can take on a confirmation', null, 'NOT_AN_ANA_ACTION');
+  }
+  return null;
+}
+
 /**
- * Run a confirmed tool from CONFIRM_TIER_TOOLS with the context the waiting run
+ * Whether this decision is about one of AnA's own tools rather than a platform
+ * command, and if so whether a person's yes can run it.
+ *
+ * A held tool is known by the context its run recorded (heldToolContext, set
+ * for every tool but the command carrier), so a tool and a command that share
+ * a name cannot be confused. Without a held run, a registered tool name is
+ * still a tool — refused below for want of that context.
+ *
+ * The register is asked again, on the held params: only a write a person may
+ * confirm runs here. A person's own act never does, whatever the row says.
+ */
+function heldToolDecision(
+  command: string,
+  params: Record<string, unknown>,
+  held: Awaited<ReturnType<typeof readPendingApproval>> | null,
+): 'command' | 'tool' | 'not-confirmable' {
+  const isTool = held ? Boolean(held.toolContext) : !isProposeOnlyCommand(command) && command in TOOL_REGISTER;
+  if (!isTool) return 'command';
+  return !held || toolAuthorizationOf(command, params).class === 'confirm' ? 'tool' : 'not-confirmable';
+}
+
+/**
+ * Run a confirmed tool (tool-authorization.ts `confirm`) with the context the waiting run
  * recorded when it asked.
  *
  * The handler is reached through the same registry every path uses, so its own
@@ -547,8 +583,10 @@ export function mountUtilityRoutes(router: Router): void {
     // through chat. The tier decides what the person supplies: 'confirm' an
     // explicit yes, 'reason' a reason for change, 'esignature' the reason and
     // re-authentication.
-    const isTool = CONFIRM_TIER_TOOLS.has(command);
-    if (isTool && !pendingForRun) return refuseToolWithoutHeldRun(res);
+    const toolDecision = heldToolDecision(command, params, pendingForRun);
+    const toolRefusal = refuseUnrunnableTool(res, toolDecision, pendingForRun);
+    if (toolRefusal) return toolRefusal;
+    const isTool = toolDecision !== 'command';
     if (!command || !(isProposeOnlyCommand(command) || isTool)) {
       return sendError(res, 400, 'A governed command name is required', null, 'NOT_A_GOVERNED_COMMAND');
     }

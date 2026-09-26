@@ -15,7 +15,7 @@
  */
 
 import { isGovernedContentWriteTool } from './governed-write-tools.js';
-import { CONFIRM_TIER_TOOLS } from './governed-tool-gate.js';
+import { buildToolRefusal, toolAuthorizationOf } from './tool-authorization.js';
 import { buildHumanConfirmationRequiredResult } from '../ana-ri/part11-governance.js';
 import type { AuditRowOutcome } from '../audit/audit-write-outcome.js';
 import { isServedModelApprovedForHighRisk } from '../ai-governance/approved-models.js';
@@ -210,7 +210,8 @@ export interface ToolContext {
   /**
    * True only when a person confirmed THIS call — set by POST
    * /api/ana-ri/governed-action and nowhere else, like the command context's
-   * flag of the same name. The CONFIRM_TIER_TOOLS refuse to run without it.
+   * flag of the same name. A tool the register classes `confirm` refuses to
+   * run without it (tool-authorization.ts).
    * Never read from tool input: that is the model's channel.
    */
   humanConfirmed?: boolean;
@@ -310,11 +311,16 @@ function getRequiredInputKeys(tool: string): string[] {
  * so the turn continues honestly.
  *
  *   1. Governed content is written only by an approved model.
- *   2. A tool that changes records on its own handler (CONFIRM_TIER_TOOLS) runs
- *      only on a person's yes (P0-12). The stream holds the turn and asks
- *      before it gets here; a path that cannot ask gets the same proposal a
- *      gated command returns, and nothing is written. After the model gate, so
- *      nobody is asked to confirm content that would be refused anyway.
+ *   2. A person's own act — an approval, a vote, an attestation — is refused
+ *      whoever asks and whatever they confirmed (tool-authorization.ts
+ *      `refuse`). She is told where the person does it. Where the handler is
+ *      itself the refusal (refusedBy 'handler'), it answers.
+ *   3. A tool that changes records runs only on a person's yes (P0-12, P1-34):
+ *      every tool the register classes `confirm`, and every tool it does not
+ *      know. The stream holds the turn and asks before it gets here; a path
+ *      that cannot ask gets the same proposal a gated command returns, and
+ *      nothing is written. After the model gate, so nobody is asked to confirm
+ *      content that would be refused anyway.
  */
 function preHandlerRefusal(
   name: string,
@@ -327,7 +333,11 @@ function preHandlerRefusal(
       result: JSON.stringify(governedWriteRefusal(name, ctx?.servingModel)),
     };
   }
-  if (CONFIRM_TIER_TOOLS.has(name) && ctx?.humanConfirmed !== true) {
+  const auth = toolAuthorizationOf(name, input);
+  if (auth.class === 'refuse' && auth.refusedBy !== 'handler') {
+    return { code: 'NOT_AN_ANA_ACTION', result: JSON.stringify(buildToolRefusal(name, auth.why)) };
+  }
+  if (auth.class === 'confirm' && ctx?.humanConfirmed !== true) {
     return {
       code: 'HUMAN_CONFIRMATION_REQUIRED',
       result: JSON.stringify(buildHumanConfirmationRequiredResult(name, input ?? {})),

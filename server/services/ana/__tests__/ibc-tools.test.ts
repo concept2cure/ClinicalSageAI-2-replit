@@ -17,15 +17,15 @@ describe('IBC AnA tools — registration', () => {
 
 describe('IBC AnA tools — context + input guards', () => {
   it('create_ibc_registration refuses without tenant/user context', async () => {
-    const out = JSON.parse(await getToolHandler('create_ibc_registration')!({ registration_number: 'R1', title: 'X', biosafety_level: 'BSL-2' }, {} as any));
+    const out = JSON.parse(await getToolHandler('create_ibc_registration')!({ registration_number: 'R1', title: 'X', biosafety_level: 'BSL-2' }, { humanConfirmed: true } as any));
     expect(out.error).toMatch(/tenant \+ user context/);
   });
   it('create_ibc_registration rejects an invalid biosafety_level', async () => {
-    const out = JSON.parse(await getToolHandler('create_ibc_registration')!({ registration_number: 'R1', title: 'X', biosafety_level: 'BSL-9' }, { organizationId: 1, userId: 1 } as any));
+    const out = JSON.parse(await getToolHandler('create_ibc_registration')!({ registration_number: 'R1', title: 'X', biosafety_level: 'BSL-9' }, { organizationId: 1, userId: 1, humanConfirmed: true } as any));
     expect(out.error).toMatch(/valid biosafety_level/);
   });
   it('add_biological_agent rejects an invalid risk_group', async () => {
-    const out = JSON.parse(await getToolHandler('add_biological_agent')!({ registration_id: 1, agent_name: 'X', agent_type: 'virus', risk_group: 'RG9' }, { organizationId: 1, userId: 1 } as any));
+    const out = JSON.parse(await getToolHandler('add_biological_agent')!({ registration_id: 1, agent_name: 'X', agent_type: 'virus', risk_group: 'RG9' }, { organizationId: 1, userId: 1, humanConfirmed: true } as any));
     expect(out.error).toMatch(/valid risk_group/);
   });
   it('review_ibc_registration requires a registration_id', async () => {

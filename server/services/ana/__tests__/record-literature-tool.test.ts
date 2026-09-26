@@ -63,7 +63,7 @@ describe('record_literature tool', () => {
 
   it('refuses without an organization context (org never comes from input)', async () => {
     const handler = getToolHandler('record_literature')!;
-    const out = JSON.parse(await handler({ entries: ENTRIES }, {} as any));
+    const out = JSON.parse(await handler({ entries: ENTRIES }, { humanConfirmed: true } as any));
     expect(out.recorded).toBe(false);
     expect(out.error).toMatch(/organization context/i);
     expect(mockRecord).not.toHaveBeenCalled();
@@ -72,7 +72,7 @@ describe('record_literature tool', () => {
   it('records through the shared service with the ToolContext org', async () => {
     const handler = getToolHandler('record_literature')!;
     const out = JSON.parse(
-      await handler({ entries: ENTRIES }, { organizationId: 42, userId: 9 } as any),
+      await handler({ entries: ENTRIES }, { organizationId: 42, userId: 9, humanConfirmed: true } as any),
     );
     expect(out.recorded).toBe(true);
     expect(out.created).toBe(2);
@@ -88,7 +88,7 @@ describe('record_literature tool', () => {
 
   it('refuses an empty entries payload with guidance instead of a no-op success', async () => {
     const handler = getToolHandler('record_literature')!;
-    const out = JSON.parse(await handler({}, { organizationId: 42 } as any));
+    const out = JSON.parse(await handler({}, { organizationId: 42, humanConfirmed: true } as any));
     expect(out.recorded).toBe(false);
     expect(out.error).toMatch(/no entries/i);
     expect(mockRecord).not.toHaveBeenCalled();
@@ -98,7 +98,7 @@ describe('record_literature tool', () => {
     mockRecord.mockRejectedValueOnce(new Error('relation "literature_entries" does not exist'));
     const handler = getToolHandler('record_literature')!;
     const out = JSON.parse(
-      await handler({ entries: ENTRIES }, { organizationId: 42 } as any),
+      await handler({ entries: ENTRIES }, { organizationId: 42, humanConfirmed: true } as any),
     );
     expect(out.recorded).toBe(false);
     expect(out.error).toMatch(/literature_entries/);

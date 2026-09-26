@@ -61,7 +61,7 @@ describe('an unreadable call is refused, not cleared', () => {
 
   it('UNDECIDABLE is NOT UNGOVERNED — the distinction is the point', () => {
     const blind = classifyToolCall({ name: PLATFORM_COMMAND_TOOL, input: {} });
-    const clear = classifyToolCall({ name: 'search_documents', input: { query: 'x' } });
+    const clear = classifyToolCall({ name: 'search_document', input: { query: 'x' } });
     expect(blind.kind).not.toBe(clear.kind);
     expect(clear.kind).toBe('UNGOVERNED');
   });
@@ -170,7 +170,10 @@ describe('the command tool, and the tools that write on their own handlers', () 
     });
   });
 
-  it('a tool named like a governed command is still just a tool', () => {
-    expect(classifyToolCall({ name: 'freeze_document', input: {} }).kind).toBe('UNGOVERNED');
+  it('a tool named like a governed command is judged as a tool, not as that command', () => {
+    // freeze_document is an e-signature command. A TOOL of that name is not
+    // registered, so the tool register fails it closed — proposed at the confirm
+    // tier (P1-34) — and never borrows the command's tier or its clearance.
+    expect(classifyToolCall({ name: 'freeze_document', input: {} })).toMatchObject({ kind: 'NEEDS_APPROVAL', tier: 'confirm' });
   });
 });
