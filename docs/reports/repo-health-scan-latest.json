@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-26T13:55:17.059Z",
+  "generatedAt": "2026-09-26T14:09:39.709Z",
   "git": {
-    "sha": "2a6a50f67c8080dc5fcf0cb7e36a2494241509f8",
+    "sha": "1d96cfe12c895e1b9ca9c4e35b9d6fe554589cc8",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1981,7 +1981,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 859174
+        "bytes": 859522
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2013,7 +2013,7 @@
       },
       {
         "file": "server/routes/ana-features.ts",
-        "bytes": 182169
+        "bytes": 182431
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
@@ -2163,7 +2163,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "lines": 20198
+        "lines": 20203
       },
       {
         "file": "server/statistics-service.ts",
@@ -2179,7 +2179,7 @@
       },
       {
         "file": "server/routes/ana-features.ts",
-        "lines": 5471
+        "lines": 5473
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2266,12 +2266,12 @@
         "lines": 2752
       },
       {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 2717
+        "file": "server/routes/auth.ts",
+        "lines": 2734
       },
       {
-        "file": "server/routes/auth.ts",
-        "lines": 2715
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "lines": 2717
       },
       {
         "file": "server/routes/knowledge-base.ts",
@@ -2491,7 +2491,7 @@
       },
       {
         "file": "server/routes/ana-cortex-ft.ts",
-        "lines": 1785
+        "lines": 1787
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
@@ -2558,16 +2558,16 @@
         "lines": 1602
       },
       {
+        "file": "server/routes/mdx-qms.ts",
+        "lines": 1576
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
         "lines": 1561
       },
       {
         "file": "server/services/module3-extensions.ts",
         "lines": 1557
-      },
-      {
-        "file": "server/routes/mdx-qms.ts",
-        "lines": 1552
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
