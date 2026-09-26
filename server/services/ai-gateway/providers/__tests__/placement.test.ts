@@ -4,6 +4,9 @@ import {
   resetPlacementRegistry,
   isPlacementCompliant,
   buildPlacementRegistry,
+  residencyOfCloudRegion,
+  assertPlacementRegistryConsistency,
+  placementConfigurationProblems,
 } from '../placement';
 
 afterEach(() => {
@@ -52,20 +55,152 @@ describe('placement compliance', () => {
     expect(isPlacementCompliant(reg.openai, { residency: 'on_prem' })).toBe(false);
   });
 
+  // Until 2026-09-25 this case asserted that default Vertex satisfies 'eu'.
+  // Its client calls us-east5 by default, so that claim was the defect.
   it('enforces regional residency against the provider region list', () => {
-    // Vertex defaults to us+eu; bedrock defaults to us only.
-    expect(isPlacementCompliant(reg.vertex, { residency: 'eu' })).toBe(true);
+    expect(isPlacementCompliant(reg.vertex, { residency: 'us' })).toBe(true);
+    expect(isPlacementCompliant(reg.vertex, { residency: 'eu' })).toBe(false);
     expect(isPlacementCompliant(reg.bedrock, { residency: 'eu' })).toBe(false);
     // Self-hosted trivially satisfies a single-region requirement.
     expect(isPlacementCompliant(reg.local, { residency: 'eu' })).toBe(true);
   });
 
   it('combines residency and ZDR (both must hold)', () => {
-    expect(
-      isPlacementCompliant(reg.vertex, { residency: 'eu', zeroDataRetention: true }),
-    ).toBe(true);
+    withEnv({ AI_VERTEX_REGION: 'europe-west1', AI_VERTEX_ZERO_RETENTION: 'true' }, () => {
+      const eu = buildPlacementRegistry();
+      expect(isPlacementCompliant(eu.vertex, { residency: 'eu', zeroDataRetention: true })).toBe(true);
+    });
     expect(
       isPlacementCompliant(reg.openai, { residency: 'eu', zeroDataRetention: true }),
     ).toBe(false);
+  });
+});
+
+const PLACEMENT_ENV = [
+  'NODE_ENV',
+  'AWS_REGION',
+  'AI_BEDROCK_REGION',
+  'AI_BEDROCK_ENABLED',
+  'AI_BEDROCK_RESIDENCY',
+  'AI_BEDROCK_ZERO_RETENTION',
+  'AI_VERTEX_REGION',
+  'AI_VERTEX_ENABLED',
+  'AI_VERTEX_RESIDENCY',
+  'AI_VERTEX_ZERO_RETENTION',
+  'AI_AZURE_RESIDENCY',
+  'AI_AZURE_ZERO_RETENTION',
+] as const;
+
+/** Run fn with exactly these placement variables set (the rest unset), then restore. */
+function withEnv(vars: Partial<Record<(typeof PLACEMENT_ENV)[number], string>>, fn: () => void): void {
+  const saved = PLACEMENT_ENV.map(k => [k, process.env[k]] as const);
+  for (const k of PLACEMENT_ENV) delete process.env[k];
+  Object.assign(process.env, vars);
+  try {
+    fn();
+  } finally {
+    for (const [k, v] of saved) {
+      if (v === undefined) delete process.env[k];
+      else process.env[k] = v;
+    }
+  }
+}
+
+describe('private-cloud residency follows the region the client calls (D6)', () => {
+  it('default Vertex (us-east5) claims us only — never eu', () => {
+    withEnv({}, () => {
+      expect(buildPlacementRegistry().vertex.regions).toEqual(['us']);
+    });
+  });
+
+  it('Vertex pointed at an EU region claims eu', () => {
+    withEnv({ AI_VERTEX_REGION: 'europe-west4' }, () => {
+      expect(buildPlacementRegistry().vertex.regions).toEqual(['eu']);
+    });
+  });
+
+  it('Bedrock residency comes from the client region, not a declaration', () => {
+    withEnv({ AWS_REGION: 'eu-central-1' }, () => {
+      expect(buildPlacementRegistry().bedrock.regions).toEqual(['eu']);
+    });
+    withEnv({ AWS_REGION: 'us-east-1', AI_BEDROCK_RESIDENCY: 'eu' }, () => {
+      expect(buildPlacementRegistry().bedrock.regions).toEqual(['us']);
+    });
+    withEnv({ AI_BEDROCK_REGION: 'ap-northeast-1', AWS_REGION: 'us-east-1' }, () => {
+      expect(buildPlacementRegistry().bedrock.regions).toEqual(['apac']);
+    });
+  });
+
+  it('a region with no residency code guarantees none', () => {
+    withEnv({ AWS_REGION: 'ca-central-1' }, () => {
+      expect(buildPlacementRegistry().bedrock.regions).toEqual(['global']);
+    });
+    expect(residencyOfCloudRegion('northamerica-northeast1')).toBeNull();
+    expect(residencyOfCloudRegion('us-gov-west-1')).toBe('us');
+  });
+
+  it('Azure claims no residency unless one is declared', () => {
+    withEnv({}, () => {
+      expect(buildPlacementRegistry().azure.regions).toEqual(['global']);
+    });
+    withEnv({ AI_AZURE_RESIDENCY: 'eu' }, () => {
+      expect(buildPlacementRegistry().azure.regions).toEqual(['eu']);
+    });
+  });
+});
+
+describe('private-cloud zero retention (D6)', () => {
+  it('Bedrock is zero-retention unless the operator says otherwise', () => {
+    withEnv({}, () => expect(buildPlacementRegistry().bedrock.zeroDataRetention).toBe(true));
+    withEnv({ AI_BEDROCK_ZERO_RETENTION: 'false' }, () =>
+      expect(buildPlacementRegistry().bedrock.zeroDataRetention).toBe(false),
+    );
+  });
+
+  it('Vertex and Azure claim zero retention only when the operator records it', () => {
+    withEnv({}, () => {
+      const reg = buildPlacementRegistry();
+      expect(reg.vertex.zeroDataRetention).toBe(false);
+      expect(reg.azure.zeroDataRetention).toBe(false);
+    });
+    withEnv({ AI_VERTEX_ZERO_RETENTION: 'true', AI_AZURE_ZERO_RETENTION: 'true' }, () => {
+      const reg = buildPlacementRegistry();
+      expect(reg.vertex.zeroDataRetention).toBe(true);
+      expect(reg.azure.zeroDataRetention).toBe(true);
+    });
+  });
+});
+
+describe('assertPlacementRegistryConsistency — production boot (D6)', () => {
+  it('refuses a declared Bedrock residency the client region does not serve', () => {
+    withEnv(
+      { NODE_ENV: 'production', AI_BEDROCK_ENABLED: 'true', AWS_REGION: 'us-east-1', AI_BEDROCK_RESIDENCY: 'eu' },
+      () => {
+        expect(() => assertPlacementRegistryConsistency()).toThrow(/AI_BEDROCK_RESIDENCY=eu.*us-east-1/);
+      },
+    );
+  });
+
+  it('refuses a declared Vertex residency list wider than the client region', () => {
+    withEnv({ NODE_ENV: 'production', AI_VERTEX_ENABLED: 'true', AI_VERTEX_RESIDENCY: 'us,eu' }, () => {
+      expect(() => assertPlacementRegistryConsistency()).toThrow(/claims eu, but the vertex client calls us-east5/);
+    });
+  });
+
+  it('boots when the declaration matches the client region', () => {
+    withEnv(
+      { NODE_ENV: 'production', AI_BEDROCK_ENABLED: 'true', AWS_REGION: 'eu-west-1', AI_BEDROCK_RESIDENCY: 'eu' },
+      () => expect(() => assertPlacementRegistryConsistency()).not.toThrow(),
+    );
+  });
+
+  it('judges only enabled lanes, and only in production', () => {
+    withEnv({ NODE_ENV: 'production', AWS_REGION: 'us-east-1', AI_BEDROCK_RESIDENCY: 'eu' }, () =>
+      expect(() => assertPlacementRegistryConsistency()).not.toThrow(),
+    );
+    withEnv({ NODE_ENV: 'development', AI_BEDROCK_ENABLED: 'true', AWS_REGION: 'us-east-1', AI_BEDROCK_RESIDENCY: 'eu' }, () => {
+      expect(() => assertPlacementRegistryConsistency()).not.toThrow();
+      expect(placementConfigurationProblems()).toHaveLength(1);
+    });
   });
 });

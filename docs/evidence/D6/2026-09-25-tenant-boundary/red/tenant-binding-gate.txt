@@ -1,0 +1,12 @@
+# ci:ai-tenant-binding against the pre-change stream.ts / AnaToolExecutor.ts
+✗ ai-tenant-binding: 4 AnA gateway call(s) not bound to a tenant
+
+  server/routes/ana-ri/stream.ts:1340
+  server/routes/ana-ri/stream.ts:2158
+  server/services/ana/AnaToolExecutor.ts:15249
+  server/services/ana/AnaToolExecutor.ts:15359
+
+Pass organizationId, or — when the call forwards a request its caller bound —
+add `// tenant-binding: <where the binding comes from>` on the line above.
+Without it the tenant's placement policy is applied only through the ambient scope.
+exit=1
