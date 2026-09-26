@@ -429,6 +429,39 @@ if ! npm run --silent ci:sign-ceremony 2>&1; then
 fi
 echo "   ✅ Every new sign ledger row has its ceremony."
 
+# ── Every upload site is bounded, filtered and byte-checked ──────────────────
+#
+# A multer site without limits.fileSize buffers whatever a client sends; one
+# without a fileFilter accepts any declared type; one whose file never calls
+# assertUploadSafe trusts the declared MIME type and runs no scan (security
+# audit 2026-09-24, IAM-14). The baseline names the remaining sites per file
+# with a written reason; it only shrinks.
+echo "   Checking that every upload site is bounded, filtered and byte-checked..."
+if ! npm run --silent ci:upload-guards 2>&1; then
+  echo ""
+  echo "🚫 ERROR: a multer site without limits.fileSize, a fileFilter, or assertUploadSafe."
+  echo "   Use makeUploadFileFilter and receiveUpload (server/middleware/uploadAllowlist.ts)"
+  echo "   and assertUploadSafe (server/middleware/uploadSafety.ts); see server/src/routes/stability.router.ts."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Every upload site is guarded, or baselined with a reason."
+
+# ── Trivy suppressions expire and are owned ─────────────────────────────────
+#
+# A .trivyignore entry with no expiry hides a finding forever; a tree-wide
+# ignore of a per-resource check (S3 public access, bucket encryption,
+# CloudTrail validation) lets the next resource ship without it (security
+# audit 2026-09-24, INF-11).
+echo "   Checking .trivyignore hygiene (expiry, owner, reason; no tree-wide resource ignores)..."
+if ! npm run --silent ci:trivyignore-hygiene 2>&1; then
+  echo ""
+  echo "🚫 ERROR: .trivyignore has an entry without exp:, owner: or reason:, or a tree-wide resource ignore."
+  echo ""
+  exit 1
+fi
+echo "   ✅ .trivyignore entries are bounded and owned."
+
 # ── The commit has to build for somebody other than you ──────────────────────
 #
 # On 19 Sep 2026 an unanchored `uploads/` in .gitignore -- meant for the runtime

@@ -87,7 +87,7 @@ describe('consoleBridge — redaction (production)', () => {
     const args = sink.mock.calls[0];
     expect(args[0]).toBe('login failed');
     expect((args[1] as any).password).toBe('[REDACTED]');
-    expect((args[1] as any).user).toBe('a@b.com');
+    expect((args[1] as any).user, 'an address is masked, not dropped (DP-26)').toBe('a***@b.com');
   });
 
   it('redacts HIPAA PHI (mrn) nested in objects', () => {

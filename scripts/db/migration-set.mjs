@@ -525,12 +525,6 @@ export const C2C_MIGRATION_FILES = [
      idempotent. */
   'db/migrations/20260224_ai_claims_verifier_flags.sql',
 
-  /* source_type / source_atom_id / source_retrieval_chunk_id on
-     ivdr_binder_evidence — the IVDR pack manifest SELECTs all three and
-     ai-claims-routes INSERTs source_type, so attaching evidence to a claim and
-     building the manifest both raised 42703. Same pair of 2026-02-24/25 files
-     that fell off the applier together; same measurement. */
-  'db/migrations/20260224_binder_evidence_source_types.sql',
   'db/migrations/20260730_cmc_projects_reconstruction.sql',
   'db/migrations/20260730_manufacturing_processes_reconstruction.sql',
   'db/migrations/20260730_fk_delete_policies_port.sql',
@@ -658,6 +652,18 @@ export const C2C_MIGRATION_FILES = [
   'db/migrations/20260206_phase5_evidence_fabric.sql',
   'db/migrations/20260207_phase6_6_predicate_intelligence.sql',
   'db/migrations/20260223_ivdr_binder_packs.sql',
+
+  /* source_type / source_atom_id / source_retrieval_chunk_id on
+     ivdr_binder_evidence — the IVDR pack manifest SELECTs all three and
+     ai-claims-routes INSERTs source_type, so attaching evidence to a claim and
+     building the manifest both raised 42703. Same pair of 2026-02-24/25 files
+     that fell off the applier together; same measurement.
+     Moved here, directly after its creator, 2026-09-26 (W2 / D1): it stood 25
+     entries earlier, so on a database the set was building for the first time
+     its to_regclass guard found no table and skipped, and the columns, CHECK and
+     indexes arrived only on the SECOND deploy. ci:replay-rebuilds-nothing
+     measured it (5 objects created by a replay). */
+  'db/migrations/20260224_binder_evidence_source_types.sql',
 
   /* The artifact hashes, sizes and warnings ivdr-pack-worker writes in its
      final promotion step (`UPDATE ivdr_packs SET … manifest_sha256 … zip_sha256,
@@ -2664,6 +2670,90 @@ export const C2C_MIGRATION_FILES = [
 /** Files that open their own transaction must not be wrapped in a second one. */
 const selfTransacting = sql => /^\s*BEGIN\s*;/im.test(sql);
 
+/* ── Lock waits on a live database (2026-09-25, W2 / D1) ──────────────────────
+   deploy-aws.yml runs this set while the previous API tasks are still serving,
+   and every file re-runs on every deploy (Rule 1). A replay that changes nothing
+   still takes ACCESS EXCLUSIVE on 151 tables in 114 of the 309 files, measured
+   on a provisioned PostgreSQL 16 database — projects, organizations, users,
+   audit_logs, vault.documents among them: `ALTER TABLE … ADD COLUMN IF NOT
+   EXISTS` takes the lock before it checks. Uncontended that is milliseconds.
+   Contended, PostgreSQL queues the ALTER behind any open transaction that has
+   read the table, and queues every later query on the table behind the ALTER.
+   With no lock_timeout the wait was the blocker's to end — up to the runtime
+   pool's 30 s statement timeout, 60 s for an idle transaction — and for that
+   long every request that touched the table hung. tests/db/migration-lock-
+   timeout.dbtest.ts measured 3998 ms against a 4000 ms reader.
+
+   So each lock wait is capped, and a file that hits the cap is rolled back and
+   retried with backoff: the application waits at most one lock_timeout, the
+   migration waits as long as the blocker needs within a bounded budget, and a
+   lock that never frees fails the deploy naming the file. Retrying a file is
+   safe for the reason Rule 1 exists: every file here already re-runs on every
+   deploy. Defaults: 2 s per wait, 12 attempts, backoff from 1 s doubling to a
+   10 s cap — about 110 s in all, past the runtime's 60 s idle-transaction
+   limit and far inside the migrate task's 30-minute deadline. */
+const LOCK_NOT_AVAILABLE = '55P03';
+
+/** The lock-wait policy, from the environment, with the defaults above. */
+export function migrationLockPolicy(env = process.env) {
+  const positive = (value, fallback) => {
+    const n = Number.parseInt(value ?? '', 10);
+    return Number.isFinite(n) && n > 0 ? n : fallback;
+  };
+  return {
+    lockTimeoutMs: positive(env.C2C_MIGRATION_LOCK_TIMEOUT_MS, 2000),
+    lockAttempts: positive(env.C2C_MIGRATION_LOCK_ATTEMPTS, 12),
+    lockBackoffMs: positive(env.C2C_MIGRATION_LOCK_BACKOFF_MS, 1000),
+  };
+}
+
+/** True for a statement that gave up waiting for a lock (also when wrapped as `cause`). */
+export const isLockTimeout = err =>
+  err?.code === LOCK_NOT_AVAILABLE || err?.cause?.code === LOCK_NOT_AVAILABLE;
+
+/**
+ * Run `attempt` (which must roll itself back on failure) until it succeeds, or
+ * fails with anything but a lock timeout, or has timed out `attempts` times.
+ */
+export async function retryOnLockTimeout(attempt, { label, attempts, backoffMs, log = () => {} }) {
+  for (let n = 1; ; n++) {
+    try {
+      return await attempt();
+    } catch (err) {
+      if (!isLockTimeout(err)) throw err;
+      if (n >= attempts) {
+        throw new Error(
+          `${label}: could not take its table locks in ${attempts} attempts (each bounded by ` +
+            `lock_timeout). A transaction on the live database is holding a table it alters; ` +
+            `it was rolled back each time. ${err.message}`,
+          { cause: err },
+        );
+      }
+      const wait = Math.min(backoffMs * 2 ** (n - 1), 10_000);
+      log(`… ${label}: lock not available (attempt ${n}/${attempts}); rolled back, retrying in ${wait} ms`);
+      await new Promise(resolve => setTimeout(resolve, wait));
+    }
+  }
+}
+
+/** Who has held a transaction open longer than the lock wait: the likely blockers. */
+async function describeLongTransactions(pool, olderThanMs) {
+  try {
+    const { rows } = await pool.query(
+      `SELECT pid, usename, state, round(extract(epoch FROM now() - xact_start))::int AS seconds,
+              left(regexp_replace(query, '\\s+', ' ', 'g'), 120) AS query
+         FROM pg_stat_activity
+        WHERE datname = current_database() AND pid <> pg_backend_pid()
+          AND xact_start < now() - make_interval(secs => $1 / 1000.0)
+        ORDER BY xact_start LIMIT 5`,
+      [olderThanMs],
+    );
+    return rows.map(r => `pid ${r.pid} (${r.usename}, ${r.state}, ${r.seconds}s): ${r.query}`);
+  } catch {
+    return [];
+  }
+}
+
 /**
  * Apply `files` (repo-relative) against `pool`, one transaction per file.
  *
@@ -2680,10 +2770,14 @@ export async function applyMigrationFiles(
   pool,
   repoRoot,
   files,
-  { log = () => {}, error = () => {}, stopOnFirstFailure = false } = {}
+  { log = () => {}, error = () => {}, stopOnFirstFailure = false, ...lockOptions } = {}
 ) {
   const applied = [];
   const failures = [];
+  const defaults = migrationLockPolicy();
+  const lockTimeoutMs = lockOptions.lockTimeoutMs ?? defaults.lockTimeoutMs;
+  const lockAttempts = lockOptions.lockAttempts ?? defaults.lockAttempts;
+  const lockBackoffMs = lockOptions.lockBackoffMs ?? defaults.lockBackoffMs;
   /* Every NOTICE and WARNING the migrations raise, SURFACED.
      node-postgres delivers server notices only to a 'notice' listener, and no
      applier registered one — so a migration whose DO block skipped a table
@@ -2723,6 +2817,13 @@ export async function applyMigrationFiles(
     error(`  (migration journal unavailable: ${journalErr.message})`);
   }
 
+  /* Session-level, so it also bounds the files that open their own
+     transaction; restored in `finally`. deploy-migrate passes one client. The
+     manual applier passes a Pool it uses serially, which therefore runs every
+     statement on the one connection it opened. */
+  const priorLockTimeout = (await pool.query('SHOW lock_timeout')).rows[0].lock_timeout;
+  await pool.query(`SELECT set_config('lock_timeout', $1, false)`, [`${Number(lockTimeoutMs)}ms`]);
+
   try {
     for (const file of files) {
       const full = path.join(repoRoot, file);
@@ -2735,9 +2836,19 @@ export async function applyMigrationFiles(
       const sql = fs.readFileSync(full, 'utf8');
       const wrap = !selfTransacting(sql);
       try {
-        if (wrap) await pool.query('BEGIN');
-        await pool.query(sql);
-        if (wrap) await pool.query('COMMIT');
+        await retryOnLockTimeout(
+          async () => {
+            try {
+              if (wrap) await pool.query('BEGIN');
+              await pool.query(sql);
+              if (wrap) await pool.query('COMMIT');
+            } catch (err) {
+              await pool.query('ROLLBACK').catch(() => {});
+              throw err;
+            }
+          },
+          { label: file, attempts: lockAttempts, backoffMs: lockBackoffMs, log: error },
+        );
         applied.push(file);
         // Applied-file ledger + content-hash drift signal. The deploy mechanism
         // records THAT migrations ran; this records WHICH file ran and the sha256 of
@@ -2759,16 +2870,22 @@ export async function applyMigrationFiles(
         }
         log(`✓ applied: ${file}`);
       } catch (err) {
-        await pool.query('ROLLBACK').catch(() => {});
+        // The attempt above has already rolled its transaction back.
         const detail = `${err.message}${err.detail ? ` (${err.detail})` : ''}`;
         failures.push({ file, error: detail });
         error(`✗ failed:  ${file} — ${detail}`);
+        if (isLockTimeout(err)) {
+          for (const line of await describeLongTransactions(pool, lockTimeoutMs)) error(`    open transaction: ${line}`);
+        }
         if (stopOnFirstFailure) return { applied, failures };
       }
     }
 
     return { applied, failures };
   } finally {
+    await pool
+      .query(`SELECT set_config('lock_timeout', $1, false)`, [priorLockTimeout])
+      .catch(() => {});
     /* Removed on every path, including the early returns above: the pool
        outlives this call, and a listener left behind would double-print the
        next caller's notices. */

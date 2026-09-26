@@ -77,6 +77,52 @@ describe('the turn record status over a real stream', () => {
   });
 });
 
+describe('a turn that ended here before the server spoke for it', () => {
+  it('after Stop, asks for the record by run id and shows what the server filed', async () => {
+    let ctl!: ReadableStreamDefaultController<Uint8Array>;
+    const body = new ReadableStream<Uint8Array>({ start(c) { ctl = c; } });
+    const lookups: string[] = [];
+    fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (String(url).includes('/api/ana-ri/turn-records')) {
+        lookups.push(String(url));
+        return { ok: true, status: 200, json: async () => ({ success: true, data: { records: [{ id: 'rec-stopped', recordSha256: SHA }] } }) };
+      }
+      if (String(url).includes('/control')) return { ok: true, status: 200, json: async () => ({ ok: true }) };
+      const signal = init?.signal;
+      signal?.addEventListener('abort', () => {
+        const e = new Error('aborted');
+        e.name = 'AbortError';
+        ctl.error(e);
+      });
+      return { ok: true, status: 200, body };
+    });
+    const { result } = renderHook(() => useAnaChat({}));
+    let sent!: Promise<unknown>;
+    await act(async () => {
+      sent = result.current.send('draft the summary');
+      await drain();
+    });
+    await act(async () => {
+      ctl.enqueue(ev({ type: 'run_started', runId: 'run_42' }));
+      ctl.enqueue(ev({ type: 'text', content: 'Half' }));
+      await drain();
+    });
+    await act(async () => {
+      await result.current.stop();
+      await sent.catch(() => undefined);
+      await drain();
+    });
+    const turn = () => [...result.current.messages].reverse().find((m) => m.role === 'assistant')!;
+    // Nothing is claimed while the server has not said.
+    expect(turn().turnRecord).toEqual({ status: 'unconfirmed' });
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 1_700));
+    });
+    expect(lookups[0]).toContain('run_id=run_42');
+    expect(turn().turnRecord).toEqual({ status: 'recorded', id: 'rec-stopped', sha256: SHA });
+  });
+});
+
 describe('readTurnRecord', () => {
   it('drops anything it cannot read, and never reads it as recorded', () => {
     expect(readTurnRecord(undefined)).toBeUndefined();

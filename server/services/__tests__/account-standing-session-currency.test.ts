@@ -57,7 +57,8 @@ const accessTokenIssuedAt = (iat: number) =>
   // exp is measured from the iat given, so a session issued long ago needs a
   // long life to still be valid on signature: what is under test is the rule,
   // not expiry.
-  jwt.sign({ userId: '42', email: 'holder@example.com', organizationId: '7', role: 'user', type: 'access', iat }, secret, {
+  // The session claims (P1-1) give the token the widest idle window, so the idle rule does not answer before the rule under test.
+  jwt.sign({ userId: '42', email: 'holder@example.com', organizationId: '7', role: 'user', type: 'access', iat, sid: `sid-${iat}-${Math.random()}`, sst: iat, idl: 24 * 3600 }, secret, {
     expiresIn: '30d',
   });
 
@@ -143,7 +144,8 @@ describe('verifyLiveToken refuses a session the password change ended', () => {
     await expect(verifyLiveToken<{ userId: string }>(accessTokenIssuedAt(changed + 60))).resolves.toMatchObject({ userId: '42' });
 
     state.passwordChangedAtSeconds = null;
-    await expect(verifyLiveToken<{ userId: string }>(accessTokenIssuedAt(nowSeconds() - 86_000))).resolves.toMatchObject({ userId: '42' });
+    // Within the 12-hour session lifetime (P1-1); the age is not what this case is about.
+    await expect(verifyLiveToken<{ userId: string }>(accessTokenIssuedAt(nowSeconds() - 3600))).resolves.toMatchObject({ userId: '42' });
   });
 
   it('still refuses an account out of use, whichever way its session was issued (F-29 unchanged)', async () => {

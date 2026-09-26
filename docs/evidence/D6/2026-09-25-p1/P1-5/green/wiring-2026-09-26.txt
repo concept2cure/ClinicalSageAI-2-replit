@@ -1,0 +1,12 @@
+### npm run -s ci:upload-guards
+[ci:upload-guards] OK — 4 unguarded multer site(s) across 3 file(s), none new; 19 file(s) build uploads.
+exit=0
+### npm run -s ci:upload-guards:selftest
+[ci:upload-guards] selftest caught: bare site is one site lacking all three
+[ci:upload-guards] selftest caught: guarded site lacks nothing
+[ci:upload-guards] selftest caught: comment is not a site; the real site lacks only fileFilter
+[ci:upload-guards] selftest caught: empty baseline: the two unguarded files fail
+[ci:upload-guards] selftest caught: a reasonless baseline entry fails even at its count
+[ci:upload-guards] selftest caught: a file above its baseline count fails
+[ci:upload-guards] selftest 6/6 caught
+exit=0

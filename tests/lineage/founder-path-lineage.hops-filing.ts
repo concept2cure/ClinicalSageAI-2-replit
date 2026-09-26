@@ -370,3 +370,47 @@ export async function walkForward(w: World): Promise<void> {
   });
   hop.verdict();
 }
+
+/**
+ * Retention (PF-13; founder decision 2026-09-26): a project that holds sealed,
+ * filed or transmitted records is archived, never deleted, and its chain still
+ * reads; a project that holds only drafts may be deleted, with its audit row.
+ * DELETE was a soft delete guarded only against deleting twice, after which the
+ * project's Vault leaves stopped resolving (the verifiers require a live project).
+ */
+export async function hopRetention(w: World): Promise<void> {
+  const { k, q } = w;
+  const hop = new Hop('retention');
+  const as3 = asPrincipal(ORG_A, 3);
+
+  await hop.check('filed-project-not-deleted', 'deleting a project that holds filed and transmitted records is refused 409, naming them, and the project stays live', async (observe) => {
+    const res = await as3(request(w.app).delete(`/api/c2c/projects/${k.programId}`));
+    const [p] = await q<{ deleted_at: unknown }>('SELECT deleted_at FROM regulatory_programs WHERE id = $1', [k.programId]);
+    observe({ status: res.status, holds: Object.keys(res.body?.holds ?? {}).sort(), deleted: p.deleted_at !== null });
+    expect(res.status).toBe(409);
+    expect(Object.keys(res.body.holds)).toEqual(expect.arrayContaining(['filed', 'transmitted']));
+    expect(p.deleted_at).toBeNull();
+  });
+  await hop.check('filed-project-archived', 'the same project can be archived, and its records still read from it', async (observe) => {
+    const archived = await as3(request(w.app).post(`/api/c2c/projects/${k.programId}/archive`)).send({});
+    const records = await as3(request(w.app).get(`/api/c2c/projects/${k.programId}/records`));
+    observe({ archived: archived.status, records: records.status });
+    expect(archived.status).toBe(200);
+    expect(records.status).toBe(200);
+    expect(records.body.records.submissions.rows).toHaveLength(1);
+    expect(records.body.records.vaultDocuments.rows.length).toBeGreaterThan(0);
+  });
+  await hop.check('draft-project-deleted', 'a project that holds only drafts can be deleted, and the deletion is audited', async (observe) => {
+    const created = await as3(request(w.app).post('/api/c2c/projects')).send({
+      name: 'Draft-only IND', productName: 'D-1', programType: 'ind', productType: 'drug', primaryAgency: 'FDA', indication: 'Exploratory',
+    });
+    const id = String(created.body?.data?.id);
+    const deleted = await as3(request(w.app).delete(`/api/c2c/projects/${id}`));
+    const audit = await q(`SELECT 1 FROM audit_logs WHERE action = 'c2c.project.delete' AND record_id = $1`, [id]);
+    observe({ created: created.status, deleted: deleted.status, audited: audit.length });
+    expect(created.status).toBe(201);
+    expect(deleted.status).toBe(200);
+    expect(audit).toHaveLength(1);
+  });
+  hop.verdict();
+}

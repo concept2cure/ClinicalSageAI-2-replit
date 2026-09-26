@@ -225,7 +225,7 @@ export function verifyStoredTurnRecord(r: StoredTurnRecord): TurnRecordVerdict {
 export async function listTurnRecords(
   q: Queryable,
   orgId: number,
-  filter: { threadId?: string | null; actorUserId?: number | null; limit?: number },
+  filter: { threadId?: string | null; runId?: string | null; actorUserId?: number | null; limit?: number },
 ): Promise<Array<{
   id: string;
   threadId: string | null;
@@ -240,6 +240,10 @@ export async function listTurnRecords(
   if (filter.threadId) {
     params.push(filter.threadId);
     where.push(`thread_id = $${params.length}`);
+  }
+  if (filter.runId) {
+    params.push(filter.runId);
+    where.push(`run_id = $${params.length}`);
   }
   if (filter.actorUserId != null) {
     params.push(filter.actorUserId);
