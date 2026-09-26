@@ -36,10 +36,12 @@
 
 import React from 'react';
 
+import { getAuthHeaders } from '@/utils/authToken';
+import { serverMessage } from '@/lib/queryClient';
 import { SR_ONLY_STYLE } from '../hooks/useChatUpload';
 import { I } from './icons';
 import type { AnaChatMessage, AnaToolCall } from '../components/ana/useAnaChat';
-import type { AnaPlanChange, AnaPlanStep } from '../components/ana/useAnaChat.types';
+import type { AnaPlanChange, AnaPlanStep, AnaTurnRecordStatus } from '../components/ana/useAnaChat.types';
 import { formatElapsed, LENS_PHRASE, PLAN_TOOL } from '../components/ana/anaProgress';
 import { statusGlyph } from './AnaWorkSections';
 import { stepDuration } from './anaWorkModel';
@@ -78,6 +80,12 @@ export interface AnaActivityProps {
    */
   startedAt?: number;
   completedAt?: number;
+  /**
+   * Whether the server filed the turn's retained record. Recorded is one quiet
+   * row in the opened list; NOT recorded is said under the turn, always
+   * visible, whatever else the turn did.
+   */
+  turnRecord?: AnaTurnRecordStatus;
 }
 
 /** The one mapping from a turn to its record. Every host uses it. */
@@ -95,6 +103,7 @@ export function activityPropsFor(m: AnaChatMessage): AnaActivityProps {
     fallback: m.fallback,
     startedAt: m.sentAt,
     completedAt: m.completedAt,
+    turnRecord: m.turnRecord,
   };
 }
 
@@ -156,11 +165,14 @@ function Row({
   trailing,
   note,
   detail,
+  mono,
 }: {
   status: 'running' | 'success' | 'error';
   glyph?: React.ReactElement;
   verb: string;
   object?: string;
+  /** The object is a hash or an id: set in the monospace face. */
+  mono?: boolean;
   rest?: string;
   trailing?: string;
   /** A sentence that must stay visible (a failure), never behind the chevron. */
@@ -176,7 +188,7 @@ function Row({
       {/* The spaces are text nodes between the spans, not inside them, so a
           screen reader's name for the row reads "Planned 2 steps", not
           "Planned2 steps". */}
-      {object ? <>{' '}<span className="ana-activity-obj">{object}</span></> : null}
+      {object ? <>{' '}<span className={mono ? 'ana-activity-obj is-mono' : 'ana-activity-obj'}>{object}</span></> : null}
       {rest ? <>{' '}<span className="ana-activity-verb">{rest}</span></> : null}
     </span>
   );
@@ -322,6 +334,52 @@ function orderedItems(calls: AnaToolCall[], changes: AnaPlanChange[], plan: AnaP
   return items.sort((a, b) => (a.t === b.t ? a.seq - b.seq : a.t - b.t));
 }
 
+/**
+ * The inspection package for a recorded turn — the record, every text it
+ * references, its chain row and the steps to check them offline. Fetched with
+ * the session's token (the API takes no cookie) and saved as a file. The
+ * server records the export on the audit chain before it hands anything over,
+ * and refuses when it cannot; that refusal is shown in its own words.
+ */
+function RecordDownload({ id }: { id: string }) {
+  const [state, setState] = React.useState<{ busy: boolean; error: string | null }>({ busy: false, error: null });
+  const download = async () => {
+    setState({ busy: true, error: null });
+    try {
+      const res = await fetch(`/api/ana-ri/turn-records/${encodeURIComponent(id)}/export`, {
+        headers: { ...getAuthHeaders() },
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setState({ busy: false, error: serverMessage(body) ?? 'The record could not be downloaded.' });
+        return;
+      }
+      const url = URL.createObjectURL(await res.blob());
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ana-turn-${id}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setState({ busy: false, error: null });
+    } catch {
+      setState({ busy: false, error: 'The record could not be downloaded.' });
+    }
+  };
+  return (
+    <>
+      <button type="button" className="ana-work-link" onClick={download} disabled={state.busy}>
+        {state.busy ? 'Preparing the record…' : 'Download the record for inspection'}
+      </button>
+      {state.error && (
+        <span className="ana-activity-note" role="status">
+          {state.error}
+        </span>
+      )}
+    </>
+  );
+}
+
 export function AnaActivity({
   streaming,
   phase,
@@ -335,6 +393,7 @@ export function AnaActivity({
   fallback,
   startedAt,
   completedAt,
+  turnRecord,
 }: AnaActivityProps) {
   const calls = toolCalls ?? [];
   const changes = planChanges ?? [];
@@ -364,7 +423,23 @@ export function AnaActivity({
   const lensPhrase = lens && LENS_PHRASE[lens] ? LENS_PHRASE[lens] : null;
   const hasDecision = Boolean(lensPhrase) || Boolean(documentType);
   const hasBody = hasReportableWork({ toolCalls: calls, planChanges: changes, plan: finalPlan, lens, documentType, thinking, draftTitle });
-  if (!streaming && !hasBody) return null;
+  /* A turn whose record could not be filed says so, even when it did nothing
+     else worth a row: the absence of a record is the one thing here that must
+     never be folded away. */
+  const unrecordedText =
+    turnRecord?.status === 'not_recorded'
+      ? `Not recorded — ${turnRecord.reason}`
+      : turnRecord?.status === 'unconfirmed'
+        ? 'Record not confirmed — the connection closed before the server said whether this turn was recorded.'
+        : null;
+  const unrecorded =
+    !streaming && unrecordedText ? (
+      <p className="ana-activity-unrecorded" role="note">
+        <span className="ana-activity-glyph" aria-hidden="true">{I.alertTriangle}</span>
+        <span>{unrecordedText}</span>
+      </p>
+    ) : null;
+  if (!streaming && !hasBody) return unrecorded ? <div className="ana-activity">{unrecorded}</div> : null;
   if (streaming && !hasBody && !phase) return null;
 
   const expanded = Boolean(streaming) || open;
@@ -407,6 +482,7 @@ export function AnaActivity({
           {open ? I.chevDown : I.chevRight}
         </button>
       )}
+      {unrecorded}
 
       <div className="ana-activity-body" id={bodyId} hidden={!expanded}>
         <ol className="ana-activity-list">
@@ -500,6 +576,26 @@ export function AnaActivity({
 
           {fallback && !streaming && (
             <Row status="error" verb="Answered by" object="a fallback provider" />
+          )}
+
+          {/* The retained record: its hash is what an inspector checks the
+              stored turn against, so the row shows the start of it and opens
+              to the whole. */}
+          {!streaming && turnRecord?.status === 'recorded' && (
+            <Row
+              status="success"
+              glyph={I.shieldCheck}
+              verb="Recorded"
+              object={turnRecord.sha256.slice(0, 12)}
+              mono
+              detail={
+                <>
+                  <span className="ana-activity-kv">Record {turnRecord.id}</span>
+                  <code className="ana-activity-pre">SHA-256 {turnRecord.sha256}</code>
+                  <RecordDownload id={turnRecord.id} />
+                </>
+              }
+            />
           )}
 
           {/* The live phase, last: what she is doing right now, with a running

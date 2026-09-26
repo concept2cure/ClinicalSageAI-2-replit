@@ -33,6 +33,9 @@ import {
 } from '../services/ai-gateway/gateway-error-map';
 import { isBatchDraftFailure } from '../services/ana/batch-draft-result';
 import type { DocumentDraftResponse } from '../services/ana/AnaDocumentDraftingService';
+import { getPool } from '../db.js';
+import { loopToolCollector, recordLoopTurn, type LoopToolCall } from '../services/ana/turn-record-loop.js';
+import { resolveOrgId, resolveUserId } from '../types/auth-request.js';
 
 const router = Router();
 
@@ -519,6 +522,8 @@ router.post('/quick', async (req: Request, res: Response) => {
  * Claude can search evidence, look up regulations, and generate citations autonomously.
  */
 router.post('/agent', async (req: Request, res: Response) => {
+  // The turn is recorded whichever way it ends (services/ana/turn-record-loop.ts).
+  let recordTurn: ((outcome: 'answered' | 'failed', response?: unknown, error?: unknown) => ReturnType<typeof recordLoopTurn>) | null = null;
   try {
     const { prompt, framework, systemPrompt, maxRounds, enableThinking } = req.body;
 
@@ -539,13 +544,37 @@ router.post('/agent', async (req: Request, res: Response) => {
        the dynamic AnaDocumentDraftingService import was unused dead code
        and was removed. */
 
+    const messages = [
+      { role: 'system' as const, content: system },
+      { role: 'user' as const, content: prompt },
+    ];
+    // The canonical resolvers. `req.organizationId` alone is not set on this
+    // mount, so this door ran its tools with no tenant and — the turn record
+    // showed it on first run — could not file the turn under one either.
+    const organizationId = resolveOrgId(req) ?? undefined;
+    const userId = resolveUserId(req) ?? (req as any).userId;
+    const collected = loopToolCollector();
+    recordTurn = (outcome, response, error) =>
+      recordLoopTurn(
+        getPool(),
+        {
+          orgId: organizationId,
+          userId,
+          surface: 'api:claude/agent',
+          typed: String(prompt),
+          messages,
+          calls: collected.calls as LoopToolCall[],
+          response: response as Parameters<typeof recordLoopTurn>[1]['response'],
+          outcome,
+          error,
+        },
+        { ipAddress: req.ip, userAgent: req.get('user-agent') ?? undefined },
+      );
+
     const result = await executeAgenticLoop(
       {
         taskType: 'document_drafting',
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: prompt },
-        ],
+        messages,
         provider: 'anthropic',
         // Registry alias: resolves to the current Opus. A pinned wire version
         // stops matching on the next bump and silently falls through to normal
@@ -556,14 +585,15 @@ router.post('/agent', async (req: Request, res: Response) => {
         toolChoice: 'auto',
         thinking: enableThinking ? { enabled: true, budgetTokens: 15000 } : undefined,
         promptCache: { enabled: true, type: 'ephemeral' },
-        organizationId: (req as any).organizationId,
-        userId: (req as any).userId,
+        organizationId,
+        userId,
         callerModule: 'ana-intelligence/agent',
       },
       {
         maxRounds: maxRounds || 5,
         onToolExecution: (toolName, input, result) => {
           console.log(`[Claude Agent] Tool: ${toolName}`, Object.keys(input));
+          collected.onToolExecution(toolName, input, result);
         },
       }
     );
@@ -575,6 +605,7 @@ router.post('/agent', async (req: Request, res: Response) => {
       content: result.content,
       usage: result.usage,
     });
+    const turnRecord = await recordTurn('answered', result);
 
     res.json({
       success: true,
@@ -585,10 +616,12 @@ router.post('/agent', async (req: Request, res: Response) => {
         model: result.model,
         usage: result.usage,
         latencyMs: result.latencyMs,
+        turnRecord,
       },
     });
   } catch (error: any) {
     console.error('[Claude Intelligence] Agent error:', error.message);
+    if (recordTurn) await recordTurn('failed', undefined, error);
     return failRequest(res, 'running the agent', error);
   }
 });

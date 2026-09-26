@@ -50,6 +50,10 @@ export const EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS: readonly ExpectedImmutability
   { schema: 'public', table: 'audit_events', trigger: 'trg_audit_events_no_truncate', source: 'db/migrations/20260222_audit_events_immutability.sql' },
   { schema: 'audit', table: 'tamper_proof_log', trigger: 'trg_prevent_audit_mutation', source: 'db/migrations/20260813_audit_tamper_proof_log.sql' },
   { schema: 'public', table: 'electronic_signatures', trigger: 'trg_electronic_signatures_immutable', source: 'db/migrations/20260730_esign_audit_db_level_immutability.sql' },
+  { schema: 'public', table: 'ana_turn_records', trigger: 'trg_ana_turn_records_append_only', source: 'migrations/20260926_ana_turn_records.sql' },
+  { schema: 'public', table: 'ana_turn_records', trigger: 'trg_ana_turn_records_no_truncate', source: 'migrations/20260926_ana_turn_records.sql' },
+  { schema: 'public', table: 'ana_record_blobs', trigger: 'trg_ana_record_blobs_append_only', source: 'migrations/20260926_ana_turn_records.sql' },
+  { schema: 'public', table: 'ana_record_blobs', trigger: 'trg_ana_record_blobs_no_truncate', source: 'migrations/20260926_ana_turn_records.sql' },
 ];
 
 /** Anything with a `.query` — a pg Pool, a PoolClient, a PGlite instance. */

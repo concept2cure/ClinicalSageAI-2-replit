@@ -1,0 +1,212 @@
+## 1. Answered turn with an uploaded file
+   upload fileId file_1790397128670_ee9xfg | sha256 of the bytes sent 26bac485e47072b560d3fb4962784fb883d325f5bdfd18d3f52d17b5d4a4cc86
+   stream closed with post_done {'status': 'recorded', 'id': '5de57f48-14f1-43e9-94cd-150fa90b443d', 'sha256': 'c597e663afcb82bcb3532059284a29da680a99d8cc3b617e09883568e507ecd7'}
+   outcome answered | thread ana-ri_1790397128711_pct1kzuhy | user msg 36 | answer msg 37
+   asked    'Draft a one-page summary of the protocol primary endpoint'
+   model input: first call 4 messages ['system', 'system', 'user', 'user'] | later calls [(2, 2), (3, 2), (4, 2), (5, 2), (6, 2), (7, 2)]
+   calls    [(1, 1, 'anthropic', '<model>'), (2, 1, 'anthropic', '<model>'), (3, 2, 'anthropic', '<model>'), (4, 3, 'anthropic', '<model>'), (5, 4, 'anthropic', '<model>'), (6, 5, 'anthropic', '<model>'), (7, 6, 'anthropic', '<model>')]
+   files    [{'fileId': 'file_1790397128670_ee9xfg', 'fileName': 'Protocol-ONC-221-v3.2.txt', 'mimeType': 'text/plain', 'read': 'name_only', 'uploadSha256': '26bac485e47072b560d3fb4962784fb883d325f5bdfd18d3f52d17b5d4a4cc86'}] | memory unavailable
+   step     1 update_plan success 
+   step     2 project_knowledge_search success 
+   step     3 update_plan success 
+   step     4 draft_authoring_document error draft_authoring_document needs an open project — every authoring document is fil
+   step     5 update_plan success 
+   step     6 update_plan success 
+   plan     1 ['in_progress', 'pending', 'pending']
+   plan     3 ['completed', 'in_progress', 'pending']
+   plan     5 ['completed', 'completed', 'in_progress']
+   plan     6 ['completed', 'completed', 'completed']
+   streamed 'I drafted the primary endpoint summary from Protocol ONC-221 v3.2: PFS at 12 months by bli'
+   stored   'I drafted the primary endpoint summary from Protocol ONC-221 v3.2: PFS at 12 months by bli'
+   drafts   []
+   controls []
+   warnings []
+   verdict  {'recordIntact': True, 'chainCarriesHash': True, 'chainPayloadIntact': True, 'textsIntact': True, 'missingTexts': [], 'alteredTexts': [], 'ok': True}
+   the record names the exact bytes: True
+
+## 2. Follow-up in the same conversation: history by reference
+   stream closed with post_done {'status': 'recorded', 'id': '52b74445-49c1-4653-be4b-ab898ff6573b', 'sha256': '8ccf9c38587495441a1ee5fc2fc4f59dcb1fa7e2bb39d16bec9b12ce847c7c58'}
+   outcome answered | thread ana-ri_1790397128711_pct1kzuhy | user msg 38 | answer msg 39
+   asked    'And the key secondary endpoint?'
+   model input: first call 6 messages ['system', 'system', 'user', 'assistant', 'system', 'user'] | later calls [(2, 2), (3, 2), (4, 2), (5, 2), (6, 2)]
+   calls    [(1, 1, 'anthropic', '<model>'), (2, 1, 'anthropic', '<model>'), (3, 2, 'anthropic', '<model>'), (4, 3, 'anthropic', '<model>'), (5, 4, 'anthropic', '<model>'), (6, 5, 'anthropic', '<model>')]
+   files    [] | memory unavailable
+   step     1 update_plan success 
+   step     2 project_knowledge_search success 
+   step     3 update_plan success 
+   step     4 update_plan success 
+   step     5 update_plan success 
+   plan     1 ['in_progress', 'pending', 'pending']
+   plan     3 ['completed', 'in_progress', 'pending']
+   plan     4 ['completed', 'completed', 'in_progress']
+   plan     5 ['completed', 'completed', 'completed']
+   streamed 'I drafted the primary endpoint summary from Protocol ONC-221 v3.2: PFS at 12 months by bli'
+   stored   'I drafted the primary endpoint summary from Protocol ONC-221 v3.2: PFS at 12 months by bli'
+   drafts   []
+   controls []
+   warnings []
+   verdict  {'recordIntact': True, 'chainCarriesHash': True, 'chainPayloadIntact': True, 'textsIntact': True, 'missingTexts': [], 'alteredTexts': [], 'ok': True}
+   turn 1 question is in turn 2 model input by hash: True
+   new texts stored for turn 2: 5
+
+## 3. A turn the person stopped
+   cancel -> 200 True
+   stream closed with error {'status': 'recorded', 'id': '54ea8560-68cf-4e9a-bd3d-6404f179eb58', 'sha256': '6cabbb14f4361cb02c54d7e53f8ef3ce361c999a6d709c445e2b69bde767305d'}
+   outcome stopped | thread ana-ri_1790397131159_koszyveml | user msg 40 | answer msg None
+   asked    'Draft a one-page summary of the protocol primary endpoint'
+   model input: first call 3 messages ['system', 'system', 'user'] | later calls []
+   calls    []
+   files    [] | memory unavailable
+   streamed None
+   stored   None
+   drafts   []
+   controls [{'action': 'cancel', 'at': '2026-09-26T04:32:13.159Z', 'byUserId': 2, 'round': 0}]
+   warnings []
+   verdict  {'recordIntact': True, 'chainCarriesHash': True, 'chainPayloadIntact': True, 'textsIntact': True, 'missingTexts': [], 'alteredTexts': [], 'ok': True}
+
+## 4. A turn that failed (the model endpoint is gone)
+   stream closed with error {'status': 'recorded', 'id': '535e3d7b-c2d4-462d-bea4-08a7a52a4f9e', 'sha256': '8019c6dbfd0db62f77d6a6e2c564a3f6b0dbfe56f6ea3b6969e5f85d62cfa2b4'}
+   outcome failed | thread ana-ri_1790397137261_cicqloe9l | user msg 41 | answer msg None
+   asked    'What does the SAP say about multiplicity?'
+   model input: first call 3 messages ['system', 'system', 'user'] | later calls []
+   calls    []
+   files    [] | memory unavailable
+   streamed None
+   stored   None
+   drafts   []
+   controls []
+   warnings ['The turn ended with an error: All models failed. Tried: <model>, <model>, <model>, <model>, <model> Last error: Connection error..']
+   verdict  {'recordIntact': True, 'chainCarriesHash': True, 'chainPayloadIntact': True, 'textsIntact': True, 'missingTexts': [], 'alteredTexts': [], 'ok': True}
+
+## 5. The intelligence-answer path (no model runs)
+   stream closed with post_done {'status': 'recorded', 'id': '04ae66dd-ab21-4763-95a7-26a1f9352099', 'sha256': '693ec3dd293ef8ae160e05bca17d4ad9ba5ef0fccc349fed0d48f5c0509b78f0'}
+   outcome failed | thread None | user msg None | answer msg None
+   asked    '[INTELLIGENCE_ANSWER]{"flow_id":"not-a-flow","answer":"yes"}'
+   model input: first call 0 messages [] | later calls []
+   calls    []
+   files    [] | memory None
+   step     1 answer_intelligence_question error node_id is required
+   streamed 'Error: node_id is required'
+   stored   None
+   drafts   []
+   controls []
+   warnings []
+   verdict  {'recordIntact': True, 'chainCarriesHash': True, 'chainPayloadIntact': True, 'textsIntact': True, 'missingTexts': [], 'alteredTexts': [], 'ok': True}
+
+## 6. The conversation's records, and an export an inspector can check offline
+   list 200 [('answered', '8ccf9c385874'), ('answered', 'c597e663afcb')]
+   export 200 attachment; filename="ana-turn-5de57f48-14f1-43e9-94cd-150fa90b443d.json" X-Turn-Record-Sha256 = c597e663afcb82bcb3532059284a29da680a99d8cc3b617e09883568e507ecd7
+   package holds ['chain', 'exportedAt', 'exportedBy', 'format', 'howToVerify', 'record', 'tenantChain', 'texts', 'verdict'] | 26 texts
+   export audited: 1
+   independent verifier:
+     PASS  record text hashes to the record hash
+     PASS  every referenced text is present (26)
+     PASS  every text hashes to its reference
+     PASS  the chain row carries the record hash
+     PASS  the chain row still hashes to its payload hash
+     server's walk of the tenant chain at export: {"ok":true,"rowsChecked":47}
+
+## 7. Changing a record, as the database owner
+    update ana_turn_records set outcome='failed' where id='5de57 -> ERROR:  IMMUTABILITY_VIOLATION: ana_turn_records row cannot be update — it is part of a retained AnA turn reco
+    delete from ana_turn_records where id='5de57f48-14f1-43e9-94 -> ERROR:  IMMUTABILITY_VIOLATION: ana_turn_records row cannot be delete — it is part of a retained AnA turn reco
+    truncate ana_turn_records -> ERROR:  IMMUTABILITY_VIOLATION: ana_turn_records cannot be truncated — it holds retained AnA turn records (21 
+    update ana_record_blobs set text='x' where true -> ERROR:  IMMUTABILITY_VIOLATION: ana_record_blobs row cannot be update — it is part of a retained AnA turn reco
+    delete from ana_record_blobs -> ERROR:  IMMUTABILITY_VIOLATION: ana_record_blobs row cannot be delete — it is part of a retained AnA turn reco
+    truncate ana_record_blobs -> ERROR:  IMMUTABILITY_VIOLATION: ana_record_blobs cannot be truncated — it holds retained AnA turn records (21 
+
+## 8. A rewrite past a disabled trigger
+    ALTER TABLE
+   the boot/sweep trigger check while disabled: audit immutability triggers are not in force (11/12 present and enabled); disabled: public.ana_turn_records.trg_ana_turn_records_append_only; without them the audit stores accept UPDATE/DELETE and 21 CFR Part 11 §11.10(e) is not met; a disabled trigger was switched off with ALTER TABLE … DISABLE TRI
+    UPDATE 1
+    ALTER TABLE
+   verdict after the rewrite {'recordIntact': True, 'chainCarriesHash': False, 'chainPayloadIntact': True, 'textsIntact': True, 'missingTexts': [], 'alteredTexts': [], 'ok': False}
+
+## 9. Deleting the conversation
+   delete -> 200 {'success': True, 'message': 'Thread deleted'}
+   audit row: chat.thread.deleted|{"threadId":"ana-ri_1790397128711_pct1kzuhy","title":null,"ownerUserId":2,"messagesDeleted":4,"turnRecordsRetained":2}
+   transcript rows left: 0
+   turn records still listed for the deleted conversation: 2
+   turn 2 still verifies: True
+
+## 10. The other doors into the agentic loop
+   POST /api/claude/agent -> 200 {'status': 'recorded', 'id': '69db2cf5-b71d-4342-9d30-c523badf3b9f', 'sha256': '6272eac56153f6f0e74267b88c2f10a31415b7755b67331f9a5b18fecf789aa6'}
+   outcome answered | thread None | user msg None | answer msg None
+   asked    'What is the primary endpoint of ONC-221?'
+   model input: first call 2 messages ['system', 'user'] | later calls []
+   calls    []
+   files    [] | memory None
+   streamed 'I drafted the primary endpoint summary from Protocol ONC-221 v3.2: PFS at 12 months by bli'
+   stored   None
+   drafts   []
+   controls []
+   warnings ["This turn ran through a door that reports its tool calls and final answer but not its rounds or what each later model call was sent; the record holds the first call's input, every tool call and the answer."]
+   verdict  {'recordIntact': True, 'chainCarriesHash': True, 'chainPayloadIntact': True, 'textsIntact': True, 'missingTexts': [], 'alteredTexts': [], 'ok': True}
+   POST /api/chat/send-message -> 200 {'status': 'recorded', 'id': '63411749-af6b-418b-ac98-99593f058f22', 'sha256': 'ba88e62c88c37b252c8874ab88ecbdc16b318e234f9ca9db0b878c4bd75bb2c9'}
+   outcome answered | thread thread_1790397156808_fwq4zw1za | user msg None | answer msg None
+   asked    'What is the primary endpoint of ONC-221?'
+   model input: first call 2 messages ['system', 'user'] | later calls []
+   calls    []
+   files    [] | memory None
+   step     0 update_plan success 
+   step     0 project_knowledge_search success 
+   step     0 update_plan success 
+   step     0 update_plan success 
+   step     0 update_plan success 
+   streamed 'I drafted the primary endpoint summary from Protocol ONC-221 v3.2: PFS at 12 months by bli'
+   stored   None
+   drafts   []
+   controls []
+   warnings ["This turn ran through a door that reports its tool calls and final answer but not its rounds or what each later model call was sent; the record holds the first call's input, every tool call and the answer."]
+   verdict  {'recordIntact': True, 'chainCarriesHash': True, 'chainPayloadIntact': True, 'textsIntact': True, 'missingTexts': [], 'alteredTexts': [], 'ok': True}
+   socket {"event":"ana:tool","turnId":"live-1","tool":"update_plan"}
+   socket {"event":"ana:tool","turnId":"live-1","tool":"update_plan"}
+   socket {"event":"ana:tool","turnId":"live-1","tool":"update_plan"}
+   socket {"event":"ana:done","turnId":"live-1","text":"I drafted the primary endpoint summary from Protocol ONC-221 v3.2: PFS at 12 mon","turnRecord":{"status":"recorded","id":"2011f366-e456-479a-86a9-485e1f152654","sha256":"aa07
+   outcome answered | thread None | user msg None | answer msg None
+   asked    'What is the primary endpoint of ONC-221?'
+   model input: first call 1 messages ['user'] | later calls []
+   calls    []
+   files    [] | memory None
+   step     0 update_plan success 
+   step     0 project_knowledge_search success 
+   step     0 update_plan success 
+   step     0 update_plan success 
+   step     0 update_plan success 
+   streamed 'I drafted the primary endpoint summary from Protocol ONC-221 v3.2: PFS at 12 months by bli'
+   stored   None
+   drafts   []
+   controls []
+   warnings ["This turn ran through a door that reports its tool calls and final answer but not its rounds or what each later model call was sent; the record holds the first call's input, every tool call and the answer."]
+   verdict  {'recordIntact': True, 'chainCarriesHash': True, 'chainPayloadIntact': True, 'textsIntact': True, 'missingTexts': [], 'alteredTexts': [], 'ok': True}
+
+## 11. A turn that names a colleague's conversation
+   stream closed with error ['That conversation belongs to another user.'] {'status': 'recorded', 'id': '14bb550c-c0dc-48f0-9267-1a1e4a87f9b5', 'sha256': '1a9af1b864b09618c02b79e52418f58ecf04c197a2cb57709ce3ee9c16ef4635'}
+   outcome failed | thread None | user msg None | answer msg None
+   asked    'Continue this conversation'
+   model input: first call 0 messages [] | later calls []
+   calls    []
+   files    [] | memory None
+   streamed None
+   stored   None
+   drafts   []
+   controls []
+   warnings ['Refused: the conversation named in this turn belongs to another user.']
+   verdict  {'recordIntact': True, 'chainCarriesHash': True, 'chainPayloadIntact': True, 'textsIntact': True, 'missingTexts': [], 'alteredTexts': [], 'ok': True}
+
+## 12. The organization's whole audit chain
+   verify-audit-chain @ 2026-09-26T04:32:37.811Z
+   verdict: OK
+   
+   audit.tamper_proof_log: OK
+     rows: 65
+     chainedRows: 65
+     signedRows: 65
+   public.audit_logs: OK
+     rows: 56
+     chainedRows: 56
+     sealedRows: 0
+   public.audit_events: OK
+     rows: 0
+     chainedRows: 0
+     unchainedRows: 0
+     sealedRows: 0
