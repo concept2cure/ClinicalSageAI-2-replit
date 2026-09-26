@@ -83,6 +83,21 @@
 -- Idempotent throughout (IF NOT EXISTS / ADD COLUMN IF NOT EXISTS); safe to
 -- re-run on every deploy, and safe against a deployment where the old runtime
 -- DDL already managed to create the table.
+--
+-- ── 2026-09-26: provenance and governance columns (D6, plan WS3) ─────────────
+-- Amended in place, per CLAUDE.md Rule 1 (this file re-runs on every deploy;
+-- the change is additive, so it registers as journal drift and nothing else).
+-- A served row recorded the model and the placement's substrate and region,
+-- but not what it carried or under which governance: the payload's
+-- provenance, the PHI/PII class, how the tenant's placement policy resolved
+-- and how the tenant was bound, the placement decision (which went only to a
+-- log line on an allowed call), the approved-models entry that served it with
+-- its pinned version and PQ status, the declared risk tier, the AnA run, and
+-- the Anthropic-hosted tools that ran or were withheld. Those were either
+-- nowhere or buried in `metadata`. They are typed columns now, added below
+-- both in CREATE TABLE and by ADD COLUMN IF NOT EXISTS for tables that exist.
+-- Written by server/services/ai-gateway/audit.ts; evidence
+-- docs/evidence/D6/2026-09-26-model-ledger/.
 
 BEGIN;
 
@@ -133,7 +148,22 @@ CREATE TABLE IF NOT EXISTS ai.gateway_audit_log (
   -- Placement evidence: where regulated data was actually processed.
   substrate          VARCHAR(20),
   region             VARCHAR(16),
-  retention_policy   VARCHAR(20)
+  retention_policy   VARCHAR(20),
+
+  -- Provenance and governance (2026-09-26, see the header note).
+  payload_provenance       VARCHAR(20),
+  data_class               VARCHAR(20),
+  tenant_policy_resolution VARCHAR(12),
+  tenant_bound_from        VARCHAR(16),
+  placement_reason_code    VARCHAR(64),
+  approved_model_id        VARCHAR(64),
+  pinned_version           VARCHAR(128),
+  pq_status                VARCHAR(20),
+  risk_tier                VARCHAR(8),
+  run_id                   VARCHAR(64),
+  parent_run_id            VARCHAR(64),
+  server_tools_used        JSONB,
+  server_tools_withheld    JSONB
 );
 
 -- Bring a table created by the old runtime DDL up to the current shape. Every
@@ -149,11 +179,28 @@ ALTER TABLE ai.gateway_audit_log
   ADD COLUMN IF NOT EXISTS region           VARCHAR(16),
   ADD COLUMN IF NOT EXISTS retention_policy VARCHAR(20);
 
+-- 2026-09-26: provenance and governance columns (see the header note).
+ALTER TABLE ai.gateway_audit_log
+  ADD COLUMN IF NOT EXISTS payload_provenance       VARCHAR(20),
+  ADD COLUMN IF NOT EXISTS data_class               VARCHAR(20),
+  ADD COLUMN IF NOT EXISTS tenant_policy_resolution VARCHAR(12),
+  ADD COLUMN IF NOT EXISTS tenant_bound_from        VARCHAR(16),
+  ADD COLUMN IF NOT EXISTS placement_reason_code    VARCHAR(64),
+  ADD COLUMN IF NOT EXISTS approved_model_id        VARCHAR(64),
+  ADD COLUMN IF NOT EXISTS pinned_version           VARCHAR(128),
+  ADD COLUMN IF NOT EXISTS pq_status                VARCHAR(20),
+  ADD COLUMN IF NOT EXISTS risk_tier                VARCHAR(8),
+  ADD COLUMN IF NOT EXISTS run_id                   VARCHAR(64),
+  ADD COLUMN IF NOT EXISTS parent_run_id            VARCHAR(64),
+  ADD COLUMN IF NOT EXISTS server_tools_used        JSONB,
+  ADD COLUMN IF NOT EXISTS server_tools_withheld    JSONB;
+
 CREATE INDEX IF NOT EXISTS idx_gateway_audit_org         ON ai.gateway_audit_log(organization_id);
 CREATE INDEX IF NOT EXISTS idx_gateway_audit_timestamp   ON ai.gateway_audit_log(timestamp);
 CREATE INDEX IF NOT EXISTS idx_gateway_audit_provider    ON ai.gateway_audit_log(provider);
 CREATE INDEX IF NOT EXISTS idx_gateway_audit_request     ON ai.gateway_audit_log(request_id);
 CREATE INDEX IF NOT EXISTS idx_gateway_audit_prompt_hash ON ai.gateway_audit_log(prompt_hash);
+CREATE INDEX IF NOT EXISTS idx_gateway_audit_run         ON ai.gateway_audit_log(run_id);
 
 -- Grant the runtime role now, rather than relying on provision-app-role.mjs
 -- having run after this migration. That script grants ON ALL TABLES IN SCHEMA

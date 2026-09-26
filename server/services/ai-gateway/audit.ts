@@ -52,6 +52,50 @@ export function missingStoreRemedy(detail: string): string {
   );
 }
 
+/**
+ * The ledger INSERT. Kept a static statement, which ci:insert-columns-declared
+ * reads, and the one source of the ledger's column list: the readiness probe
+ * derives LEDGER_COLUMNS from it and refuses a table missing any of them.
+ */
+const LEDGER_INSERT_SQL = `INSERT INTO ai.gateway_audit_log (
+          request_id, timestamp, provider, model, resolved_model, task_type, strategy,
+          organization_id, user_id, project_id, caller_module,
+          input_tokens, output_tokens, total_tokens, estimated_cost_usd,
+          latency_ms, success, error, cached, deterministic, metadata,
+          temperature, seed, prompt_hash, prompt_version, tried_models,
+          substrate, region, retention_policy,
+          payload_provenance, data_class, tenant_policy_resolution, tenant_bound_from,
+          placement_reason_code, approved_model_id, pinned_version, pq_status, risk_tier,
+          run_id, parent_run_id, server_tools_used, server_tools_withheld
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29,
+          $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42)`;
+
+/** Every column the writer inserts, in order. */
+export const LEDGER_COLUMNS: readonly string[] = (/\(([^)]*)\)\s*VALUES/.exec(LEDGER_INSERT_SQL)?.[1] ?? '')
+  .split(',')
+  .map(c => c.trim())
+  .filter(Boolean);
+
+/**
+ * Every column the writer inserts, checked against the live table. A deploy
+ * that ran ahead of the migration would otherwise fail each INSERT inside the
+ * writer's catch, and the ledger would record nothing while the readiness
+ * probe reported it ready. Returns the refusal reason, or null.
+ */
+async function missingLedgerColumns(pool: any): Promise<string | null> {
+  const cols = await pool.query(
+    `SELECT column_name FROM information_schema.columns
+      WHERE table_schema = 'ai' AND table_name = 'gateway_audit_log'`,
+  );
+  const present = new Set((cols?.rows ?? []).map((r: { column_name: string }) => r.column_name));
+  const missing = LEDGER_COLUMNS.filter(c => !present.has(c));
+  if (missing.length === 0) return null;
+  return (
+    `ai.gateway_audit_log lacks column(s) the writer inserts: ${missing.join(', ')} ` +
+    '(apply db/migrations/20260813_ai_gateway_audit_log.sql)'
+  );
+}
+
 export class GatewayAuditLogger {
   private pool: any;
   private buffer: AuditLogEntry[] = [];
@@ -151,7 +195,8 @@ export class GatewayAuditLogger {
       if (!priv?.rows?.[0]?.can_insert) {
         return `role "${priv?.rows?.[0]?.role ?? 'unknown'}" lacks INSERT on ai.gateway_audit_log`;
       }
-      return null;
+
+      return await missingLedgerColumns(pool);
     } catch (error: any) {
       return `probe failed: ${error?.message ?? String(error)}`;
     }
@@ -318,14 +363,7 @@ export class GatewayAuditLogger {
       // is hardest to notice.
       await runWithSystemTenantScope('ai-gateway:audit-write', () =>
         pool.query(
-        `INSERT INTO ai.gateway_audit_log (
-          request_id, timestamp, provider, model, resolved_model, task_type, strategy,
-          organization_id, user_id, project_id, caller_module,
-          input_tokens, output_tokens, total_tokens, estimated_cost_usd,
-          latency_ms, success, error, cached, deterministic, metadata,
-          temperature, seed, prompt_hash, prompt_version, tried_models,
-          substrate, region, retention_policy
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29)`,
+        LEDGER_INSERT_SQL,
         [
           entry.requestId,
           entry.timestamp,
@@ -356,6 +394,19 @@ export class GatewayAuditLogger {
           entry.substrate || null,
           entry.region || null,
           entry.retentionPolicy || null,
+          entry.payloadProvenance ?? null,
+          entry.dataClass ?? null,
+          entry.tenantPolicyResolution ?? null,
+          entry.tenantBoundFrom ?? null,
+          entry.placementReasonCode ?? null,
+          entry.approvedModelId ?? null,
+          entry.pinnedVersion ?? null,
+          entry.pqStatus ?? null,
+          entry.riskTier ?? null,
+          entry.runId ?? null,
+          entry.parentRunId ?? null,
+          entry.serverToolsUsed?.length ? JSON.stringify(entry.serverToolsUsed) : null,
+          entry.serverToolsWithheld?.length ? JSON.stringify(entry.serverToolsWithheld) : null,
         ],
         ),
       );

@@ -426,9 +426,10 @@ describe('tenant placement boundary (D6) — what the ledger records', () => {
 
     const served = entries(gateway).find(e => e.success);
     expect(served?.organizationId).toBe(String(ORG));
-    expect(served?.metadata?.tenantPlacement).toMatchObject({
-      resolution: 'resolved',
-      boundFrom: 'ambient_scope',
+    // Typed ledger columns since 2026-09-26 (ledger-provenance.test.ts).
+    expect(served).toMatchObject({
+      tenantPolicyResolution: 'resolved',
+      tenantBoundFrom: 'ambient_scope',
       payloadProvenance: 'tenant_governed',
     });
   });

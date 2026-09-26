@@ -734,6 +734,7 @@ export class MultiAgentCouncilService {
       tokensInput: llmResponse.tokensUsed.prompt,
       tokensOutput: llmResponse.tokensUsed.completion,
       latencyMs: llmResponse.latencyMs,
+      llmModel: llmResponse.model,
       status: 'COMPLETED',
     });
 
@@ -846,6 +847,8 @@ export class MultiAgentCouncilService {
       tokensInput: llmResponse.tokensUsed.prompt,
       tokensOutput: llmResponse.tokensUsed.completion,
       latencyMs,
+      llmProvider: llmResponse.provider,
+      llmModel: llmResponse.model,
       status: 'COMPLETED',
     });
 
@@ -1029,6 +1032,7 @@ export class MultiAgentCouncilService {
       tokensInput: llmResponse.tokensUsed.prompt,
       tokensOutput: llmResponse.tokensUsed.completion,
       latencyMs,
+      llmModel: llmResponse.model,
       status: 'COMPLETED',
     });
 
@@ -1109,6 +1113,7 @@ export class MultiAgentCouncilService {
       tokensInput: llmResponse.tokensUsed.prompt,
       tokensOutput: llmResponse.tokensUsed.completion,
       latencyMs,
+      llmModel: llmResponse.model,
       status: 'COMPLETED',
     });
 
@@ -1255,7 +1260,9 @@ export class MultiAgentCouncilService {
         data.correctionsApplied || 0,
         data.issuesFound ? JSON.stringify(data.issuesFound) : null,
         data.overallAssessment,
-        'gpt-4-turbo',
+        // The model the gateway served, as it reported it. Until 2026-09-26
+        // every row said 'gpt-4-turbo', whatever ran (D6).
+        data.llmModel ? `${data.llmProvider ?? 'unknown'}/${data.llmModel}` : null,
         data.tokensInput,
         data.tokensOutput,
         data.latencyMs,

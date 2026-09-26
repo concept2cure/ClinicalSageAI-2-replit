@@ -43,6 +43,7 @@ import type {
   GatewayServerToolUse,
   StreamCallback,
   ContentBlock,
+  AuditLogEntry,
 } from './types';
 import { GatewayAuditLogger } from './audit';
 import {
@@ -84,7 +85,7 @@ import { recordApiUsageSafe, usdToCents } from '../usage-recorder.js';
 import { getTenantScope } from '../../db/tenantStore.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { getContentClassifier } from '../ai-governance/classification/index.js';
-import { isApprovedForHighRisk, isHighRiskRequest } from '../ai-governance/approved-models.js';
+import { approvedEntryFor, isApprovedForHighRisk, isHighRiskRequest } from '../ai-governance/approved-models.js';
 import {
   extractRequestText,
   getPiiEnforcement,
@@ -1691,7 +1692,12 @@ export class AIGateway {
         withheld: governed.withheld,
       });
     }
-    await this.assertSensitiveDispatchAllowed(modelConfig, governed.request, requestId, startTime);
+    const placementReasonCode = await this.assertSensitiveDispatchAllowed(
+      modelConfig,
+      governed.request,
+      requestId,
+      startTime,
+    );
     // Bound concurrent in-flight outbound calls. This is the single chokepoint
     // for every provider invocation (primary + fallback paths), so wrapping it
     // here caps outbound concurrency without touching the retry / circuit-
@@ -1699,19 +1705,26 @@ export class AIGateway {
     const response = await this.outboundLimiter.run(() =>
       this.dispatchProvider(modelConfig, governed.request, requestId, startTime)
     );
-    return governed.withheld.length > 0
-      ? { ...response, withheldServerTools: governed.withheld }
-      : response;
+    return {
+      ...response,
+      ...(governed.withheld.length > 0 ? { withheldServerTools: governed.withheld } : {}),
+      ...(placementReasonCode ? { placementReasonCode } : {}),
+    };
   }
 
   /** Last-mile gate: it runs for the primary and every fallback before an SDK is invoked. */
+  /**
+   * Returns the decision's reason code when the screen decided (ALLOW_… here,
+   * since a refusal throws), `audit_only:<code>` when it only recorded one, and
+   * undefined when it did not run. The served ledger row records it.
+   */
   private async assertSensitiveDispatchAllowed(
     modelConfig: ModelConfig,
     request: GatewayRequest,
     requestId: string,
     startTime: number,
-  ): Promise<void> {
-    if (!this.config.policy.piiDetection) return;
+  ): Promise<string | undefined> {
+    if (!this.config.policy.piiDetection) return undefined;
     const detectedDataClass = request.sensitiveDataClass ?? 'unknown';
     // Development retains audit-only usefulness; production always uses the
     // explicit deployment contract and fails closed on unknown classification.
@@ -1726,7 +1739,7 @@ export class AIGateway {
       // 'off' disables screening entirely. 'audit' exists to make otherwise
       // invisible exposure visible, so it still RECORDS the placement signal
       // (content-free, below) even though it never blocks.
-      if (enforcement !== 'audit' || detectedDataClass === 'none') return;
+      if (enforcement !== 'audit' || detectedDataClass === 'none') return undefined;
     }
     const placement = resolvePlacement(modelConfig.provider);
     let approvals: Record<string, ProviderPlacementApproval>;
@@ -1790,7 +1803,7 @@ export class AIGateway {
         reasonCode: decision.reasonCode,
         enforcement,
       });
-      return;
+      return `audit_only:${decision.reasonCode}`;
     }
     log.info('[ai-gateway] sensitive placement decision', {
       reasonCode: decision.reasonCode,
@@ -1831,6 +1844,7 @@ export class AIGateway {
         'Contact your administrator to review the approved data-placement policy.'
       );
     }
+    return decision.reasonCode;
   }
 
   private async dispatchProvider(
@@ -3511,19 +3525,19 @@ export class AIGateway {
         triedModels: triedModels && triedModels.length > 0 ? triedModels : undefined,
         // Placement / residency evidence.
         substrate: placement.substrate,
-        region:
-          request.dataResidency && request.dataResidency !== 'any'
-            ? request.dataResidency
-            : placement.regions[0],
+        region: servingRegion(placement, request),
         retentionPolicy: placement.zeroDataRetention ? 'zero_retention' : 'standard',
+        ...ledgerProvenance(request, response),
         // Content-policy findings carry only detector names, classes and
         // classifier-redacted excerpts — never raw content (the prompt itself
         // is represented by promptHash alone).
         metadata: {
           ...(request.metadata ?? {}),
           ...(contentPolicy ? { contentPolicy } : {}),
-          tenantPlacement: tenantPlacementAuditMetadata(request),
-          ...serverToolAuditMetadata(response),
+          // Audit-only: the classifier's regulatory signal gates nothing yet.
+          ...(request.regulatoryContentDetected !== undefined
+            ? { regulatoryContentDetected: request.regulatoryContentDetected }
+            : {}),
         },
       });
     } catch (auditError: any) {
@@ -3570,6 +3584,7 @@ export class AIGateway {
         cached: false,
         deterministic: false,
         promptHash: this.hashPrompt(request.messages),
+        ...ledgerProvenance(request),
         metadata: {
           ...(request.metadata ?? {}),
           modelGovernance: {
@@ -3618,6 +3633,9 @@ export class AIGateway {
         cached: false,
         deterministic: false,
         promptHash: this.hashPrompt(request.messages),
+        ...ledgerProvenance(request),
+        // A placement refusal's reason code; other content blocks keep theirs in `error`.
+        ...(reason && /^DENY_/.test(reason) ? { placementReasonCode: reason } : {}),
         metadata: {
           ...(request.metadata ?? {}),
           contentPolicy: { action: 'block' as ContentPolicyAction, findings },
@@ -3669,8 +3687,17 @@ export class AIGateway {
   }
 
   /** SHA-256 of the canonicalized prompt messages, for reproducibility audit. */
+  /**
+   * SHA-256 over the prompt: each message's role and text, and — when it has
+   * them — a digest of each image or document block's source. Until 2026-09-26
+   * the blocks were left out, so two requests differing only in the scan or
+   * PDF they carried hashed the same. A text-only prompt hashes exactly as
+   * before, so existing ledger rows stay comparable.
+   */
   private hashPrompt(messages: GatewayMessage[]): string {
-    const canonical = messages.map(m => `${m.role}:${m.content}`).join('\n');
+    const canonical = messages
+      .map(m => `${m.role}:${m.content}${contentBlocksDigest(m.contentBlocks)}`)
+      .join('\n');
     return createHash('sha256').update(canonical, 'utf8').digest('hex');
   }
 
@@ -3988,41 +4015,73 @@ function bindTenant(
   return { unbound: { resolution: 'absent', boundFrom: 'none' } };
 }
 
-/**
- * Anthropic-hosted tool activity on a served call: which ran (names only) and
- * which were withheld from the lane and why. Content-free; absent when neither.
- */
-function serverToolAuditMetadata(response: GatewayResponse): Record<string, unknown> {
-  const used = (response as { serverToolUses?: Array<{ name: string }> }).serverToolUses;
-  const withheld = response.withheldServerTools;
-  if (!used?.length && !withheld?.length) return {};
-  return {
-    serverTools: {
-      ...(used?.length ? { used: used.map(u => u.name) } : {}),
-      ...(withheld?.length ? { withheld } : {}),
-    },
-  };
-}
-
 /** The organization an audit row is attributed to: explicit, else the bound tenant. */
 function auditOrganizationId(request: GatewayRequest): string | number | undefined {
   return request.organizationId ?? request.sensitiveTenantPolicy?.organizationId;
 }
 
 /**
- * Which tenant floor a call was placed under, and how the tenant was bound.
- * Content-free. The PHI/PII class and the classifier's regulatory signal are
- * recorded here audit-only: they do not gate.
+ * The typed provenance columns of a ledger row (see AuditLogEntry and
+ * db/migrations/20260813_ai_gateway_audit_log.sql): what the call carried, how
+ * its tenant was bound and resolved, and — on a served call — the placement
+ * decision, the approved-models entry that served it, and the hosted tools that
+ * ran or were withheld. Content-free.
  */
-function tenantPlacementAuditMetadata(request: GatewayRequest): Record<string, unknown> {
+function ledgerProvenance(
+  request: GatewayRequest,
+  served?: GatewayResponse,
+): Partial<AuditLogEntry> {
+  const tenant = request.sensitiveTenantPolicy;
+  const approved = served ? approvedEntryFor({ provider: served.provider, model: served.model }) : undefined;
+  const used = (served as { serverToolUses?: Array<{ name: string }> } | undefined)?.serverToolUses;
   return {
-    resolution: request.sensitiveTenantPolicy?.resolution,
-    boundFrom: request.sensitiveTenantPolicy?.boundFrom,
     payloadProvenance: request.payloadProvenance ?? 'tenant_governed',
     dataClass: request.sensitiveDataClass,
-    regulatoryContentDetected: request.regulatoryContentDetected,
+    tenantPolicyResolution: tenant?.resolution,
+    tenantBoundFrom: tenant?.boundFrom,
+    riskTier: request.riskTier,
+    runId: request.runId,
+    parentRunId: request.parentRunId,
+    ...(served
+      ? {
+          placementReasonCode: served.placementReasonCode,
+          approvedModelId: approved?.id,
+          pinnedVersion: approved?.pinnedVersion,
+          pqStatus: approved ? approved.pq.status : 'unregistered',
+          serverToolsUsed: used?.map(u => u.name),
+          serverToolsWithheld: served.withheldServerTools,
+        }
+      : {}),
   };
 }
+
+/**
+ * Where the serving lane processed the request. A self-hosted lane is on-prem;
+ * otherwise the requested residency when the lane serves it, else every region
+ * the lane claims ('global' for a shared API). Until 2026-09-26 the requested
+ * residency was recorded whatever served it, so an on-prem call for an EU
+ * tenant read as 'eu'.
+ */
+function servingRegion(placement: ProviderPlacement, request: GatewayRequest): string {
+  if (placement.substrate === 'self_hosted') return 'on_prem';
+  const requested = request.dataResidency && request.dataResidency !== 'any' ? request.dataResidency : null;
+  if (requested && placement.regions.includes(requested)) return requested;
+  return placement.regions.join(',').slice(0, 16);
+}
+
+/** A digest of each non-text block's source, appended to its message in the prompt hash. */
+function contentBlocksDigest(blocks: GatewayMessage['contentBlocks']): string {
+  if (!blocks || blocks.length === 0) return '';
+  return blocks
+    .map(b => {
+      if (b.type === 'text') return `|text:${createHash('sha256').update(b.text, 'utf8').digest('hex')}`;
+      const src = b.source as Record<string, unknown>;
+      const body = String(src.data ?? src.file_id ?? src.url ?? '');
+      return `|${b.type}:${String(src.type)}:${createHash('sha256').update(body, 'utf8').digest('hex')}`;
+    })
+    .join('');
+}
+
 
 export class TenantPlacementError extends GatewayPolicyError {
   constructor(

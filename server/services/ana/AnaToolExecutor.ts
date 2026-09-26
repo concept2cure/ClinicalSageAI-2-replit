@@ -206,7 +206,7 @@ export interface ToolContext {
    * unless this model is approved for high-risk work; absent means refused.
    * See server/services/ana/governed-write-tools.ts.
    */
-  servingModel?: { provider?: string | null; model?: string | null } | null;
+  servingModel?: { provider?: string | null; model?: string | null; requestId?: string | null } | null;
   /**
    * True only when a person confirmed THIS call — set by POST
    * /api/ana-ri/governed-action and nowhere else, like the command context's
@@ -375,11 +375,15 @@ export function registerToolHandler(name: string, handler: ToolHandler): void {
   toolHandlers.set(name, instrumented);
 }
 
-/** The model a gateway response says served it, in the shape ToolContext.servingModel takes. */
+/**
+ * The model a gateway response says served it, and the gateway request that
+ * produced it, in the shape ToolContext.servingModel takes. The request id is
+ * what joins a governed write's Part 11 row to its ledger row (D6).
+ */
 export function servedModelOf(
-  response: { provider?: string | null; model?: string | null } | null | undefined,
-): { provider: string | null; model: string | null } {
-  return { provider: response?.provider ?? null, model: response?.model ?? null };
+  response: { provider?: string | null; model?: string | null; requestId?: string | null } | null | undefined,
+): { provider: string | null; model: string | null; requestId: string | null } {
+  return { provider: response?.provider ?? null, model: response?.model ?? null, requestId: response?.requestId ?? null };
 }
 
 /** What a governed-write tool returns instead of writing, when the model is not approved. */
@@ -5190,6 +5194,8 @@ registerToolHandler('execute_platform_command', async (input: Record<string, unk
       userId: Number(userId),
       organizationId: Number(organizationId),
       activeProjectId: ctx?.projectId != null ? Number(ctx.projectId) : undefined,
+      // The model call that proposed this command, for its audit row.
+      servingModel: ctx?.servingModel ?? null,
     };
      
     const results = await executeCommands([{ command, params } as any], cmdCtx as any);

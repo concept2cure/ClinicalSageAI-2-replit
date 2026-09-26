@@ -376,6 +376,14 @@ export interface GatewayRequest {
    */
   riskTier?: 'low' | 'medium' | 'high';
 
+  /**
+   * The AnA run this call belongs to (ana_runs.id), and the run that spawned
+   * it. Recorded on the ledger row so a run's calls can be listed from the
+   * ledger; the gateway does not act on them.
+   */
+  runId?: string;
+  parentRunId?: string;
+
   /** Conversation messages (system + user + assistant history) */
   messages: GatewayMessage[];
 
@@ -628,6 +636,14 @@ export interface GatewayResponse {
    * says so, rather than looking like one that chose not to search.
    */
   withheldServerTools?: Array<{ name: string; reason: string }>;
+
+  /**
+   * The sensitive-placement decision's reason code for the lane that served
+   * the call (ALLOW_…), when the screen ran. Until 2026-09-26 an allowed call's
+   * decision went only to a log line, so the ledger could not show why a
+   * payload was permitted where it went.
+   */
+  placementReasonCode?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -878,5 +894,34 @@ export interface AuditLogEntry {
   region?: string;
   /** Retention posture honored for this request. */
   retentionPolicy?: RetentionPolicy;
+  // ── Provenance and governance (D6, 2026-09-26) ─────────────────────────────
+  // Typed columns, not metadata keys, so the ledger can be queried for "every
+  // tenant payload served on a shared lane" without parsing JSON. See
+  // db/migrations/20260813_ai_gateway_audit_log.sql.
+  /** Provenance class of the payload: tenant_governed (default), tenant_derived or public. */
+  payloadProvenance?: PayloadProvenance;
+  /** The PHI/PII classifier's class for the request (none, pii, phi, unknown …). */
+  dataClass?: string;
+  /** How the tenant's placement policy resolved: resolved, absent or unknown. */
+  tenantPolicyResolution?: 'resolved' | 'absent' | 'unknown';
+  /** How the request was bound to its tenant. */
+  tenantBoundFrom?: 'explicit' | 'ambient_scope' | 'platform_scope' | 'none';
+  /** The placement decision's reason code (ALLOW_… on a served call, DENY_… on a refusal). */
+  placementReasonCode?: string;
+  /** The approved-models registry entry that served the call; absent when none matches. */
+  approvedModelId?: string;
+  /** That entry's pinned provider version. */
+  pinnedVersion?: string;
+  /** That entry's performance-qualification status, or 'unregistered' when no entry matches. */
+  pqStatus?: string;
+  /** The risk tier the caller declared. */
+  riskTier?: 'low' | 'medium' | 'high';
+  /** The AnA run this call belongs to, and its parent run. */
+  runId?: string;
+  parentRunId?: string;
+  /** Anthropic-hosted tools that ran inside the call (names only). */
+  serverToolsUsed?: string[];
+  /** Anthropic-hosted tools withheld from the lane, and why. */
+  serverToolsWithheld?: Array<{ name: string; reason: string }>;
   metadata?: Record<string, unknown>;
 }

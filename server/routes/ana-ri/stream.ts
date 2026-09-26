@@ -78,6 +78,7 @@ import type { NavigationDirective } from '../../../shared/navigation/index.js';
 import type { SurfaceActionDirective } from '../../../shared/navigation/surface-actions.js';
 import {
   runAgenticToolLoop,
+  type StoppedReason,
   resolveMaxRounds,
   resolveRoundExtension,
   capToolResultForModel,
@@ -218,6 +219,10 @@ export function mountStreamRoute(router: Router): void {
     // Set in the catch so the finally can close the run honestly. A turn that
     // threw is `failed`, not `finished`.
     let streamFailed = false;
+    // Why the agentic loop stopped, when it ran; endRun records it. A turn
+    // whose first answer called no tools never enters the loop, and ends for
+    // want of tools.
+    let loopStoppedReason: StoppedReason = 'no_more_tools';
     // The run is closed exactly once, by whichever of the disconnect handler and
     // the finally block gets there first.
     let runSettled = false;
@@ -1450,6 +1455,8 @@ export function mountStreamRoute(router: Router): void {
         // labelled regulatory_review, and the gateway reads riskTier to decide
         // whether only an approved model may serve it.
         riskTier: routingPlan.riskTier,
+        // The run this call belongs to, on its ledger row (D6).
+        runId: runId || undefined,
         messages,
         maxTokens: routingPlan.maxTokens,
         temperature: routingPlan.temperature,
@@ -2290,6 +2297,7 @@ export function mountStreamRoute(router: Router): void {
             // Every agentic round is bound to the same tenant as the first.
             organizationId: orgId ?? undefined,
             riskTier: routingPlan.riskTier,
+            runId: runId || undefined,
             messages: loopMessages,
             maxTokens: routingPlan.maxTokens,
             temperature: routingPlan.temperature,
@@ -2464,7 +2472,10 @@ export function mountStreamRoute(router: Router): void {
           return 'continue';
         };
 
-        await runAgenticToolLoop(
+        // Kept for endRun: until 2026-09-26 the result was discarded and every
+        // run was recorded as ending for want of tools, including one stopped
+        // at its round ceiling or by the thrash guard (D6, plan WS3).
+        const loopResult = await runAgenticToolLoop(
           { text: fullContent, toolCalls: streamToolUses.map(toToolCall) },
           { executeTools, callModel, checkpoint },
           // Effort-scaled agentic depth: Thorough can chase a multi-tool
@@ -2486,6 +2497,7 @@ export function mountStreamRoute(router: Router): void {
             progressExtension: resolveRoundExtension(effortUsed),
           }
         );
+        loopStoppedReason = loopResult.stoppedReason;
       }
 
       // RIM interception moved to the background post-processing block below,
@@ -2607,6 +2619,8 @@ export function mountStreamRoute(router: Router): void {
         messages,
         model: gwResponse.model,
         provider: gwResponse.provider,
+        // The last round wrote the final answer, and with it any command blocks.
+        servingModel: lastServedModel,
         enrichment,
         turnRecorder,
         // Stop ends the loop at a round boundary, and the turn still closes
@@ -2655,7 +2669,7 @@ export function mountStreamRoute(router: Router): void {
           getPool(),
           runId,
           streamFailed ? 'failed' : 'finished',
-          streamFailed ? 'error' : 'no_more_tools',
+          streamFailed ? 'error' : loopStoppedReason,
         );
       }
     }

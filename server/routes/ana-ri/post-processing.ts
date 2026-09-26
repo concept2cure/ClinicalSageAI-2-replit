@@ -100,6 +100,8 @@ export interface StreamPostProcessingContext {
   messages: GatewayMessage[];
   model: string | undefined;
   provider: string | undefined;
+  /** The model call whose answer carried the turn's command blocks, for their audit rows. */
+  servingModel?: { provider?: string | null; model?: string | null; requestId?: string | null } | null;
   enrichment: { sources: unknown[]; enrichmentMeta?: unknown };
   /**
    * The turn's retained record (services/ana/turn-record.ts), completed here
@@ -295,6 +297,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     messages,
     model,
     provider,
+    servingModel,
     enrichment,
     turnRecorder,
     stopped,
@@ -367,6 +370,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
             : undefined,
           userName,
           userRole: effectiveRole,
+          servingModel: servingModel ?? null,
         };
         const { processCommandsInResponse } =
           await import('../../services/ana-ri/command-executor.js');

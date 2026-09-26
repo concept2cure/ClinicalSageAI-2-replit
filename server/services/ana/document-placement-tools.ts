@@ -160,11 +160,21 @@ function confirmationRefusal(documentId: unknown): string {
  * mdx-tool-policy), the details every agent.ana.* row carries and
  * explain_audit_row reads to say "AnA (agent)" rather than "human user". The
  * helper takes a command context and a governed-tool gate; it reads only the
- * thread and chat-message ids from the one and the reason and artifact flag
- * from the other, so a tool call supplies what it has — its thread, and its
- * rationale as the reason — and the rest of this tool's provenance is added
- * beside it.
+ * thread, chat-message ids and serving model from the one and the reason and
+ * artifact flag from the other, so a tool call supplies what it has — its
+ * thread, its model call, and its rationale as the reason — and the rest of
+ * this tool's provenance is added beside it.
  */
+/** As the gateway reported it, with the bare model name as the fallback. */
+function servingModelOf(ctx: ToolContext | undefined): CommandContext['servingModel'] {
+  const served = ctx?.servingModel;
+  return {
+    provider: served?.provider ?? null,
+    model: served?.model ?? ctx?.model ?? null,
+    requestId: served?.requestId ?? null,
+  };
+}
+
 function placementProvenance(
   ctx: ToolContext | undefined,
   orgId: number,
@@ -174,6 +184,7 @@ function placementProvenance(
     organizationId: orgId,
     userId: ctx?.userId,
     threadId: ctx?.threadId ?? undefined,
+    servingModel: servingModelOf(ctx),
   } as CommandContext;
   const gate = { ok: true, reason: rationale } as PolicyCheck;
   return {
@@ -184,12 +195,6 @@ function placementProvenance(
     // one made. Null is "not assessed".
     reasonReferencedArtifact: null,
     tool: 'place_project_document',
-    // As the gateway reported it. A model this call was not told about is
-    // recorded as unknown, never guessed.
-    servingModel: {
-      provider: ctx?.servingModel?.provider ?? null,
-      model: ctx?.servingModel?.model ?? ctx?.model ?? null,
-    },
     turnId: ctx?.turnId ?? null,
   };
 }

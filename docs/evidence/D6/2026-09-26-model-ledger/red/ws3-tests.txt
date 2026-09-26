@@ -1,0 +1,46 @@
+# against 1500beca (every WS3 source file at HEAD; the WS3 tests as committed)
+ × server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — what the ledger records > a served call records how the tenant was bound and under which floor
+   → expected { requestId: 'fake', …(28) } to match object { …(3) }
+ × server/services/ai-gateway/__tests__/ledger-provenance.test.ts > a served row records its provenance and governance > provenance, tenant binding and resolution, risk tier and run
+   → expected { requestId: 'fake', …(28) } to match object { …(6) }
+ × server/services/ai-gateway/__tests__/ledger-provenance.test.ts > a served row records its provenance and governance > the approved-models entry that served it, with its pinned version and PQ status
+   → expected { requestId: 'fake', …(28) } to match object { …(3) }
+ × server/services/ai-gateway/__tests__/ledger-provenance.test.ts > a served row records its provenance and governance > a model no registry entry covers is recorded as unregistered, not matched to a guess
+   → expected undefined to be 'unregistered' // Object.is equality
+ × server/services/ai-gateway/__tests__/ledger-provenance.test.ts > a served row records its provenance and governance > the placement decision that allowed the call, where the screen enforced one
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/ai-gateway/__tests__/ledger-provenance.test.ts > a served row records its provenance and governance > the hosted tools that ran, and those withheld from the lane
+   → expected undefined to deeply equal [ 'web_search' ]
+ × server/services/ai-gateway/__tests__/ledger-provenance.test.ts > a refusal row records the placement reason and the provenance > DENY_TENANT_POLICY is a typed column, next to how the tenant resolved
+   → expected { …(21) } to match object { success: false, …(3) }
+ × server/services/ai-gateway/__tests__/ledger-provenance.test.ts > the prompt hash and the serving region > two requests that differ only in the image they carry hash differently
+   → expected '60db63c69e8cce5ea2b9794389ceb404a1d09…' not to be '60db63c69e8cce5ea2b9794389ceb404a1d09…' // Object.is equality
+ × server/services/ai-gateway/__tests__/ledger-provenance.test.ts > the prompt hash and the serving region > an on-prem call for an EU tenant is recorded on_prem, not eu
+   → expected 'eu' to be 'on_prem' // Object.is equality
+ × server/services/ai-gateway/__tests__/audit-tenant-scope.test.ts > GatewayAuditLogger — the probe checks the columns the writer inserts (D6) > a table missing a column the writer inserts is refused, and the column named
+   → .toMatch() expects to receive a string, but got object
+ × server/services/ai-gateway/__tests__/audit-tenant-scope.test.ts > GatewayAuditLogger — the probe checks the columns the writer inserts (D6) > the column list is the INSERT's own, including the provenance columns
+   → expected undefined to deeply equal ArrayContaining{…}
+ × server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > hands the service her provenance, so the write cannot pass for a person's decision
+   → expected { actorKind: 'agent:ana', …(7) } to deeply equal { actorKind: 'agent:ana', …(8) }
+ × server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > names the gateway request that proposed the placement, so the row joins its ledger row
+   → expected undefined to be 'req-placement-1' // Object.is equality
+ × server/services/ana/__tests__/model-call-linkage.test.ts > an agent mutation’s audit row names the model call > servedModelOf carries the gateway request id
+   → expected { provider: 'anthropic', …(1) } to deeply equal { provider: 'anthropic', …(2) }
+ × server/services/ana/__tests__/model-call-linkage.test.ts > an agent mutation’s audit row names the model call > agentAuditDetails records the gateway request id and the serving model
+   → expected { actorKind: 'agent:ana', …(4) } to match object { actorKind: 'agent:ana', …(2) }
+ × server/services/ana/__tests__/model-call-linkage.test.ts > an agent mutation’s audit row names the model call > a command a person typed has no model call, and says so
+   → expected { actorKind: 'agent:ana', …(4) } to match object { gatewayRequestId: null, …(1) }
+ × server/services/ana/__tests__/model-call-linkage.test.ts > an agent mutation’s audit row names the model call > execute_platform_command hands the serving model to the command context
+   → expected { userId: 1, organizationId: 42, …(1) } to match object { organizationId: 42, …(1) }
+ × server/services/ana/__tests__/model-call-linkage.test.ts > an agent mutation’s audit row names the model call > the streamed answer’s command blocks carry the last round’s serving model
+   → expected '/**\n * Background post-processing fo…' to match /servingModel: servingModel \?\? null/
+ × server/services/ana/__tests__/model-call-linkage.test.ts > a run is closed with the reason its loop stopped > the stream keeps the loop result and passes its stop reason to endRun
+   → expected '/**\n * POST /api/ana-ri/stream — SSE…' to match /const loopResult = await runAgenticTo…/
+ × server/services/ana/__tests__/model-call-linkage.test.ts > a council execution row names the model that served it > records provider/model as reported, not a constant
+   → expected 'gpt-4-turbo' to be 'anthropic/claude-opus-5-5' // Object.is equality
+ × server/services/ana/__tests__/model-call-linkage.test.ts > a council execution row names the model that served it > every agent passes the served model to its execution row
+   → Target cannot be null or undefined.
+ Test Files  5 failed (5)
+      Tests  21 failed | 41 passed (62)
+exit=1

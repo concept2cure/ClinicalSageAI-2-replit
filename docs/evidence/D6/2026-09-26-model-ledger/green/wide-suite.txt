@@ -1,0 +1,16 @@
+# npx vitest run --config vitest.config.ts server/services server/routes/__tests__ server/config server/startup
+# on the WS3 tree (base 1500beca + WS3 changes)
+ Test Files  2 failed | 1614 passed | 3 skipped (1619)
+      Tests  9 failed | 17665 passed | 13 skipped (17687)
+
+## failing files (both fail identically at 1500beca without WS3; neither is touched by it)
+ FAIL  server/services/__tests__/CrossReferenceMapping.no-fabricated-content.test.ts > CrossReferenceMapper — no fabricated regulatory content > does not certify, on the signer's behalf, that they reviewed the submission
+ FAIL  server/services/__tests__/CrossReferenceMapping.no-fabricated-content.test.ts > CrossReferenceMapper — no fabricated regulatory content > does not declare the device prescription-use from an unset field
+ FAIL  server/services/__tests__/CrossReferenceMapping.no-fabricated-content.test.ts > CrossReferenceMapper — no fabricated regulatory content > does not fabricate the fee posture or the submission pathway
+ FAIL  server/services/__tests__/CrossReferenceMapping.no-fabricated-content.test.ts > CrossReferenceMapper — no fabricated regulatory content > does not stamp an execution date for a signature nobody applied
+ FAIL  server/services/__tests__/CrossReferenceMapping.no-fabricated-content.test.ts > CrossReferenceMapper — no fabricated regulatory content > does not turn unanswered disclosures into affirmative negatives
+ FAIL  server/services/__tests__/CrossReferenceMapping.no-fabricated-content.test.ts > CrossReferenceMapper — no fabricated regulatory content > records a stated disclosure faithfully — the guard must not swallow real answers
+ FAIL  server/services/__tests__/conversation-os.test.ts > conversation-os retrieval > chunks and retrieves scoped evidence
+ FAIL  server/services/__tests__/conversation-os.test.ts > conversation-os tool gate and orchestration > blocks tool execution in off mode and runs hard-task plan/execute loop
+ FAIL  server/services/__tests__/conversation-os.test.ts > conversation-os tool gate and orchestration > returns explicit persisted-no-governance state on invalid acceptance context
+exit=1

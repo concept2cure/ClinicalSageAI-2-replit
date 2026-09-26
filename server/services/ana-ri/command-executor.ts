@@ -122,6 +122,13 @@ export interface CommandContext {
    */
   chatMessageId?: string;
   /**
+   * The model call whose response proposed this command: provider, model and
+   * the gateway request id. Written into every agent mutation's audit row
+   * (agentAuditDetails) so a Part 11 record traces to its ai.gateway_audit_log
+   * row. Absent for a command a person typed.
+   */
+  servingModel?: { provider?: string | null; model?: string | null; requestId?: string | null } | null;
+  /**
    * Per-tenant AnA tool policy. Stamped by `executeCommands` once per
    * dispatch from `organizations.settings.anaToolPolicy`. Read by the
    * shared gate in mdx-tool-policy.ts. Undefined = default = all tools

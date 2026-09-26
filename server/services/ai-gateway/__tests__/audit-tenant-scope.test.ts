@@ -27,7 +27,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { GatewayAuditLogger } from '../audit';
+import { GatewayAuditLogger, LEDGER_COLUMNS } from '../audit';
 import { getTenantScope } from '../../../db/tenantStore';
 import type { AuditLogEntry } from '../types';
 
@@ -46,6 +46,9 @@ function scopeRecordingPool() {
       if (String(sql).includes('to_regclass')) return { rows: [{ present: true }] };
       if (String(sql).includes('has_table_privilege')) {
         return { rows: [{ role: 'app_service', can_insert: true }] };
+      }
+      if (String(sql).includes('information_schema.columns')) {
+        return { rows: LEDGER_COLUMNS.map(column_name => ({ column_name })) };
       }
       return { rows: [] };
     },
@@ -144,5 +147,30 @@ describe('GatewayAuditLogger — which failures latch', () => {
     await logger.log(entry);
     await logger.log(entry);
     expect(probes).toBe(afterFirst);
+  });
+});
+
+describe('GatewayAuditLogger — the probe checks the columns the writer inserts (D6)', () => {
+  // A deploy that ran ahead of the migration used to fail each INSERT inside
+  // the writer's catch, and the ledger recorded nothing while the probe said
+  // it was ready.
+  it('a table missing a column the writer inserts is refused, and the column named', async () => {
+    const pool = {
+      query: async (sql: string) => {
+        if (String(sql).includes('to_regclass')) return { rows: [{ present: true }] };
+        if (String(sql).includes('has_table_privilege')) return { rows: [{ role: 'app_service', can_insert: true }] };
+        if (String(sql).includes('information_schema.columns')) {
+          return { rows: LEDGER_COLUMNS.filter(c => c !== 'run_id').map(column_name => ({ column_name })) };
+        }
+        return { rows: [] };
+      },
+    };
+    const problem = await (new GatewayAuditLogger() as any).checkStore(pool);
+    expect(problem).toMatch(/lacks column\(s\) the writer inserts: run_id/);
+  });
+
+  it('the column list is the INSERT\'s own, including the provenance columns', () => {
+    expect(LEDGER_COLUMNS).toEqual(expect.arrayContaining(['request_id', 'payload_provenance', 'run_id', 'server_tools_withheld']));
+    expect(new Set(LEDGER_COLUMNS).size).toBe(LEDGER_COLUMNS.length);
   });
 });

@@ -401,12 +401,20 @@ export function agentAuditDetails(
   ctx: CommandContext,
   gate: PolicyCheck,
 ): Record<string, unknown> {
+  const served = ctx.servingModel;
   return {
     actorKind: 'agent:ana',
     agentReason: gate.reason,
     reasonReferencedArtifact: gate.reasonReferencedArtifact === true,
     threadId: ctx.threadId ?? null,
     chatMessageId: ctx.chatMessageId ?? null,
+    // The model call that proposed the mutation: joins this row to its
+    // ai.gateway_audit_log row by request id (D6, 2026-09-26). Until then a
+    // governed record an agent produced could not be traced to the model call.
+    // A model this call was not told about is recorded as unknown (null), never
+    // guessed; a command a person typed has none.
+    gatewayRequestId: served?.requestId ?? null,
+    servingModel: { provider: served?.provider ?? null, model: served?.model ?? null },
   };
 }
 
