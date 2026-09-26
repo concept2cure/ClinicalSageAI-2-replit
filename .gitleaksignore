@@ -1,0 +1,90 @@
+# .gitleaksignore — secrets-scan findings already in this repository's history,
+# by fingerprint (commit:file:rule:line). Read by CI's "Secret scan (full
+# history)" job with .gitleaks.toml (security plan P0-17, audit INF-22).
+#
+# History is not rewritten here (CLAUDE.md Rule 0), so a credential that reached
+# a commit stays readable to anyone with the repository. The remedy is to revoke
+# it. Each block says what the finding is, whether it is live, and who acts.
+#
+# A NEW finding fails the job. Remove the secret from the change and revoke it.
+# For a fixture or test vector, put `ci-secret-scan-ignore` and a reason on the
+# line (the marker scripts/ci/check-committed-secrets.mjs also honours). Add a
+# fingerprint here only for a commit that is already on the trunk, with its
+# reason. Evidence: docs/evidence/W2/2026-09-26-p0-17-history-secret-scan/.
+
+# status: live — revoke (founder; P0-17)
+# reason: the Neon OWNER password for endpoint ep-wild-forest-ahbojhu4 (INF-22).
+#   Committed in AUTH_CREDENTIALS_LOCKED.md (8d5bce39c; later moved to docs/),
+#   scripts/cortex-enhance.cjs and tests/e2e/seed-governed-workflow.cjs. Out of
+#   the tree since; the repository's own note calls it compromised. No record
+#   that it was rotated.
+8d5bce39c57b10546710539c7715dc9c204e5989:AUTH_CREDENTIALS_LOCKED.md:c2c-connection-uri-password:25
+8d5bce39c57b10546710539c7715dc9c204e5989:AUTH_CREDENTIALS_LOCKED.md:c2c-neon-password:25
+8d5bce39c57b10546710539c7715dc9c204e5989:AUTH_CREDENTIALS_LOCKED.md:c2c-neon-password:31
+9d1d8d21c54e744114950d146485f78fa72b860b:tests/e2e/seed-governed-workflow.cjs:c2c-connection-uri-password:15
+9d1d8d21c54e744114950d146485f78fa72b860b:tests/e2e/seed-governed-workflow.cjs:c2c-neon-password:15
+e11adb0c94b9c64bb6c654b01dc03e1b8021cd14:tests/e2e/seed-governed-workflow.cjs:c2c-connection-uri-password:15
+e11adb0c94b9c64bb6c654b01dc03e1b8021cd14:tests/e2e/seed-governed-workflow.cjs:c2c-neon-password:15
+eec00130798d55853fd69e6f70ce14e7c0b48dbc:scripts/cortex-enhance.cjs:c2c-connection-uri-password:8
+eec00130798d55853fd69e6f70ce14e7c0b48dbc:scripts/cortex-enhance.cjs:c2c-neon-password:8
+
+# status: live — revoke (founder; P0-17)
+# reason: a second Neon OWNER password, endpoint ep-icy-brook-aha5br78, in
+#   _test_neon.cjs (f457478c8); the same password is also the e2e seed's
+#   fallback above. Not cited by INF-22; found by this scan.
+f457478c87a6bc557da7683c7b591b829fee4896:_test_neon.cjs:c2c-connection-uri-password:2
+f457478c87a6bc557da7683c7b591b829fee4896:_test_neon.cjs:c2c-neon-password:2
+
+# status: live — revoke (founder; P0-17)
+# reason: a Hugging Face access token in test-api-key.js and test-embeddings.js
+#   (3e1dcf8f0; both deleted 2026-01-24). Real token format. Found by this scan.
+3e1dcf8f018fbb18d6555c97d81b0d6090f069e5:test-api-key.js:huggingface-access-token:8
+3e1dcf8f018fbb18d6555c97d81b0d6090f069e5:test-embeddings.js:huggingface-access-token:7
+
+# status: live until confirmed — founder (P0-17)
+# reason: an HS256 session-shaped token (id, role, tenantId; no exp) hard-coded
+#   in VaultMarketingPage.jsx (3e1dcf8f0; deleted). It verifies against none of
+#   the 57 JWT-secret defaults committed then or now, so its signing secret is
+#   unknown. Confirm no environment's JWT_SECRET is that secret, or rotate it.
+3e1dcf8f018fbb18d6555c97d81b0d6090f069e5:client/src/pages/VaultMarketingPage.jsx:jwt:32
+3e1dcf8f018fbb18d6555c97d81b0d6090f069e5:src/pages/VaultMarketingPage.jsx:jwt:32
+
+# status: public by design
+# reason: a Supabase anon key (role anon) in public-env.ts (3e1dcf8f0; deleted).
+#   Anon keys ship to browsers; the legacy Supabase client is quarantined.
+3e1dcf8f018fbb18d6555c97d81b0d6090f069e5:client/src/lib/public-env.ts:jwt:7
+3e1dcf8f018fbb18d6555c97d81b0d6090f069e5:src/lib/public-env.ts:jwt:7
+
+# status: public by design
+# reason: the vendored gstack skill's own Supabase publishable key (sb_publishable_),
+#   shipped to browsers by that project; not this product's.
+3dd066ed5ab3b5cbe72228c4476780036889ff41:.claude/skills/gstack/supabase/config.sh:generic-api-key:8
+9e9a5cc60474fa3ca2ea38473ef629508fe54e62:.claude/skills/gstack/supabase/config.sh:generic-api-key:8
+
+# status: not a secret
+# reason: documentation curl examples (YOUR_TOKEN-style placeholders and a JSX
+#   snippet) read by curl-auth-header.
+34485cf0cda8b41455efdd823984aeebefaef97e:docs/api/product-audit-quick-reference.md:curl-auth-header:20
+34485cf0cda8b41455efdd823984aeebefaef97e:docs/api/product-audit-quick-reference.md:curl-auth-header:47
+3e1dcf8f018fbb18d6555c97d81b0d6090f069e5:client/src/pages/ApiDocumentation.tsx:curl-auth-header:237
+3e1dcf8f018fbb18d6555c97d81b0d6090f069e5:client/src/pages/ApiDocumentation.tsx:curl-auth-header:248
+3e1dcf8f018fbb18d6555c97d81b0d6090f069e5:src/pages/ApiDocumentation.tsx:curl-auth-header:237
+3e1dcf8f018fbb18d6555c97d81b0d6090f069e5:src/pages/ApiDocumentation.tsx:curl-auth-header:248
+
+# status: not a secret
+# reason: the private-key regex source in check-committed-secrets.mjs, and a
+#   July audit's scan evidence quoting a UI placeholder (no key material).
+27a8c3db9aa24118e67135b1e667f24549e06832:docs/audit-2026-07/evidence/08-secret-scan.json:private-key:8
+2bce6570d22dbc5a8d751dadb0ab4ca23e49230e:scripts/ci/check-committed-secrets.mjs:private-key:75
+
+# status: not a secret
+# reason: test fixtures and vectors read by generic-api-key: journey test
+#   passwords, export round-trip tokens, the RFC 6238 TOTP test secret, a
+#   test JWT secret, and a sentence of IND authoring guidance.
+016c5cdefe5c3a75a1b94374c60f15f0a630a8c1:tests/export-contract/csv-export.proof.test.ts:generic-api-key:33
+26712c12f845e72afa24fcf0d0704ec7b47bd545:tests/golden-journeys/submission-release-signature.journey.test.ts:generic-api-key:66
+7627375575821ff5b02a8238573543fdd8806900:tests/schema-contract/esignature-verify-roundtrip.contract.test.ts:generic-api-key:47
+860f7177dd7f869d3397d8a23a70a361c9f997cd:tests/golden-journeys/drug-nda-ectd.journey.test.ts:generic-api-key:96
+8d122653210b4cfddc3793d0537205436abc8e04:server/services/ind/ctd/authoring-guidance.ts:generic-api-key:2822
+9b77ee3d873d9275a6cda77f0c4d82cf1a2ac2d0:tests/validation-totp.test.ts:generic-api-key:14
+cb158a7f1ff227577302cb9a87f554bc2c0603bd:tests/export-contract/xlsx-export.proof.test.ts:generic-api-key:39

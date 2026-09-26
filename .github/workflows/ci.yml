@@ -2060,6 +2060,46 @@ jobs:
           # is checked. .trivyignore could only drop DS002 for the whole tree.
           skip-files: .claude/skills/gstack/.github/docker/Dockerfile.ci
 
+  secret-history-scan:
+    # Security plan P0-17 / audit INF-22. check-committed-secrets.mjs (Lint)
+    # scans the working tree; a credential deleted from the tree is still in its
+    # history, which is how the neondb_owner password survived. This scans every
+    # commit on the branch. Findings already in history are listed with their
+    # reasons in .gitleaksignore; a new one fails the job.
+    # docs/evidence/W2/2026-09-26-p0-17-history-secret-scan/
+    name: Secret scan (full history)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Install gitleaks (pinned module version, checksum-verified)
+        # go install checks the module against the Go checksum database
+        # (sum.golang.org), so the pin is a content pin without a third-party
+        # action or a hand-copied digest. GOTOOLCHAIN=auto fetches the Go
+        # version gitleaks declares if the runner's is older.
+        env:
+          GOTOOLCHAIN: auto
+          GOFLAGS: -mod=mod
+        run: |
+          go install github.com/zricethezav/gitleaks/v8@v8.28.0
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Scan every commit on this branch
+        # HEAD only, not --all: the stale agent branches on origin (INF-28) are
+        # not this branch's history. .gitleaksignore is read from the repo root.
+        run: gitleaks git --no-banner --redact --config .gitleaks.toml --log-opts="--full-history --diff-filter=tuxdb HEAD" .
+
+      - name: Name the history credentials not yet revoked
+        if: ${{ !cancelled() }}
+        run: |
+          n=$(grep -c '^# status: live' .gitleaksignore || true)
+          if [ "$n" -gt 0 ]; then
+            echo "::warning title=Secrets in git history::$n credential(s) in this branch's history are recorded as live in .gitleaksignore (security plan P0-17). They stay readable to anyone with the repository until revoked."
+          fi
+
   nightly-governance:
     name: Nightly Governance Strict
     if: github.event_name == 'schedule'
