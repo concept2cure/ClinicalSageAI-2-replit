@@ -35,6 +35,7 @@ import {
   TableCell as DocxTableCell,
   WidthType,
   ImageRun,
+  type ParagraphChild,
 } from 'docx';
 import { db } from '../db.js';
 import { eq, desc } from 'drizzle-orm';
@@ -327,10 +328,13 @@ function decodeHtmlEntities(html: string): string {
 }
 
 /**
- * Parse inline HTML into formatted TextRun[] preserving bold/italic/underline/etc.
+ * Parse inline HTML into paragraph children preserving bold/italic/underline/etc.
+ * Text runs and, for an inline `<img>`, image runs — so the element type is
+ * docx's own `ParagraphChild`, not `TextRun` (docx 9.7 stopped accepting an
+ * ImageRun where a TextRun is declared).
  */
-function parseInlineHtml(html: string): TextRun[] {
-  const runs: TextRun[] = [];
+function parseInlineHtml(html: string): ParagraphChild[] {
+  const runs: ParagraphChild[] = [];
   const tagStack: string[] = [];
   let i = 0;
   let textBuf = '';
