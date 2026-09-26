@@ -1,7 +1,7 @@
 # P1-1 — sessions did not end: no inactivity logoff, no lifetime (IAM-06, High)
 
 **Row:** D6 (D4 for the OQ step). **Finding:** `docs/security/SECURITY_AUDIT_2026-09-24.md` IAM-06. **Plan item:** P1-1.
-**This folder:** the server half (first commit) and the client half (second commit). The OQ step follows.
+**This folder:** the server half (first commit), the client half (second commit) and the OQ step (third commit).
 
 ## What was wrong
 
@@ -88,3 +88,17 @@ logout suite and the locale-integrity test).
   the four suites that drive `authMiddleware` unmocked 54/54. ESLint ratchet: no file changed its warning count
   (the second authenticator's checks moved into `refusedEndedSession` to keep its complexity where it was).
   `check:security-patterns` 0 violations.
+
+## The OQ step
+
+`URS-001` v0.5 gains URS-PROJ-013 (a session left alone ends, and a session has an end), `RA-001` v0.8 assesses it
+(high, scripted, with the rule pinned by the three unit suites above), and `OQ-001` v0.8 gains OQ-PROJ-19, implemented
+in `tests/validation/oq/projects/run.mjs`: the run session (an organisation administrator) sets the organisation's
+`sessionTimeoutMinutes` to 1, the step opens a session of its own, reads projects, leaves it alone for 65 seconds, and
+expects projects 401 `SESSION_IDLE`, the refresh 401 `SESSION_IDLE` with no tokens, and the session check signed out,
+while the run's own session, in use, keeps reading; the setting is restored in every outcome. A run identity that is
+not an organisation administrator records a deviation rather than a pass. `check-validation-traceability` passes
+(every citation resolves; the protocol and the runner agree on the step and its kind).
+
+**Not yet executed.** The protocol says so in its revision row; the next credentialed execution runs it and updates
+§5 and the VSR. This session has no live server or run identity to execute it against.
