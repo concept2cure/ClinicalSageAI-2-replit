@@ -1,0 +1,66 @@
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+{"level":30,"time":"2026-09-26T14:06:44.648Z","pid":21126,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-26T14:06:44.649Z","pid":21126,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-26T14:06:44.649Z","pid":21126,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > refuses a change without a reason, and changes nothing
+[database] Database connection successful { timestamp: '2026-09-26T14:06:44.716Z', poolSize: 1 }
+stdout | tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > refuses a change without a reason, and changes nothing
+[database] Database connection successful
+stderr | tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > refuses a change without a reason, and changes nothing
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+ ✓ tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > refuses a change without a reason, and changes nothing 1623ms
+ × tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > with a reason, changes the fields and records each before and after, with the reason, once 22ms
+   → expected [] to have a length of 1 but got +0
+ × tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > a change to the values already recorded writes nothing 5ms
+   → expected [] to have a length of 1 but got +0
+ ✓ tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > refuses a type or classification outside the Vault vocabulary 2ms
+ ✓ tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > refuses a viewer before anything is read or written 1ms
+ × tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > reports another organization's document as absent 5ms
+   → expected [] to have a length of 1 but got +0
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > with a reason, changes the fields and records each before and after, with the reason, once
+AssertionError: expected [] to have a length of 1 but got +0
+- Expected
++ Received
+- 1
++ 0
+ ❯ tests/db/vault-metadata-edit.dbtest.ts:140:18
+    138|     expect(await row()).toEqual({ document_title: 'Clinical protocol',…
+    139|     const rows = await auditRows();
+    140|     expect(rows).toHaveLength(1);
+       |                  ^
+    141|     expect(rows[0].new_values.reason).toBe(reason);
+    142|     expect(rows[0].new_values.changes).toEqual([
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+ FAIL  tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > a change to the values already recorded writes nothing
+AssertionError: expected [] to have a length of 1 but got +0
+- Expected
++ Received
+- 1
++ 0
+ ❯ tests/db/vault-metadata-edit.dbtest.ts:152:31
+    150|     const r = await edit({ classification: 'CONFIDENTIAL', reason: 'Co…
+    151|     expect(r).toEqual({ ok: true, unchanged: true, changes: [] });
+    152|     expect(await auditRows()).toHaveLength(1);
+       |                               ^
+    153|   });
+    154|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+ FAIL  tests/db/vault-metadata-edit.dbtest.ts > Edit details on a Vault version (VR-05, D5) > reports another organization's document as absent
+AssertionError: expected [] to have a length of 1 but got +0
+- Expected
++ Received
+- 1
++ 0
+ ❯ tests/db/vault-metadata-edit.dbtest.ts:177:31
+    175|     expect(r).toMatchObject({ ok: false, status: 404, code: 'DOCUMENT_…
+    176|     expect(await row()).toMatchObject({ document_title: 'Clinical prot…
+    177|     expect(await auditRows()).toHaveLength(1);
+       |                               ^
+    178|   });
+    179| });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 3 passed (6)
+   Start at  14:06:42
+   Duration  2.15s (transform 889ms, setup 71ms, import 26ms, tests 1.72s, environment 0ms)

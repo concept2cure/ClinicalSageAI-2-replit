@@ -76,6 +76,14 @@ export const VAULT_INGEST_DOCUMENT_TYPES = [
 export type VaultIngestDocumentType = (typeof VAULT_INGEST_DOCUMENT_TYPES)[number];
 
 /**
+ * The `vault.documents.classification` vocabulary: what POST /api/vault/ingest
+ * accepts and what a governed metadata edit may set. One list, so the two
+ * cannot drift.
+ */
+export const VAULT_CLASSIFICATIONS = ['CONFIDENTIAL', 'INTERNAL', 'CONTROLLED', 'PUBLIC'] as const;
+export type VaultClassification = (typeof VAULT_CLASSIFICATIONS)[number];
+
+/**
  * How each ingest type is NAMED to a reader.
  *
  * The values above are wire tokens — what the Zod enum accepts and what lands

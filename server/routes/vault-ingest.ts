@@ -46,7 +46,7 @@ import { requireEditorAccess } from '../middleware/orgMembership.js';
 import multer from 'multer';
 import path from 'node:path';
 import { z } from 'zod';
-import { VAULT_INGEST_DOCUMENT_TYPES } from '../../shared/constants/domain/vault-taxonomy';
+import { VAULT_CLASSIFICATIONS, VAULT_INGEST_DOCUMENT_TYPES } from '../../shared/constants/domain/vault-taxonomy';
 import { runWithTenantScope } from '../db/tenantStore';
 import { ingestVaultDocument } from '../services/vault/vault-ingest.service';
 
@@ -117,7 +117,7 @@ const IngestBodySchema = z.object({
   documentTitle: z.string().min(1, 'documentTitle is required'),
   documentType: z.enum(VAULT_INGEST_DOCUMENT_TYPES),
   version: z.string().optional(),
-  classification: z.enum(['CONFIDENTIAL', 'INTERNAL', 'CONTROLLED', 'PUBLIC']).optional(),
+  classification: z.enum(VAULT_CLASSIFICATIONS).optional(),
   retentionPolicy: z.string().optional(),
   parentDocumentId: z.string().uuid().optional(),
   supersedesId: z.string().uuid().optional(),
