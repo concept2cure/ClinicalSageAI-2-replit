@@ -1,0 +1,18 @@
+# Gates — HEAD 7fbe51c5 + working tree, 2026-09-26T13:12Z
+# No migration is touched by this change; the three migration gates are run because the lane's brief asks for them on every item.
+
+## npm run --silent ci:column-reachability
+[ci:column-reachability] OK — 2134 column add(s) on no applier, 0 queried by the server.
+exit=0
+
+## npm run --silent ci:migration-set-order
+[ci:migration-set-order] OK — 315 migrations, sweep last, uuid step in the final pair, all present, no duplicates.
+exit=0
+
+## npm run --silent ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 315 migrations, 33 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 17 dynamic DROP(s) in 17 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+exit=0
+
+## npm run --silent check:security-patterns
+check-security-patterns: 0 violations across 2855 file(s).
+exit=0

@@ -25,6 +25,7 @@ import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { randomBytes } from 'crypto';
 import { reportSecurityAlert } from '../services/security-alerts';
+import { requestFullPath } from './request-path';
 
 // ============================================================================
 // CONFIGURATION
@@ -539,19 +540,16 @@ export function sanitizeInput(req: Request, res: Response, next: NextFunction) {
 // ============================================================================
 
 export function validateTenantContext(req: Request, res: Response, next: NextFunction) {
-  // Skip for public endpoints
-  const publicPaths = [
-    '/healthz',
-    '/readyz',
-    '/api/health',
-    '/api/auth/login',
-    '/api/auth/register',
-    '/api/auth/signup',
-    '/api/csp-report',
-  ];
-  if (publicPaths.some(p => req.path.startsWith(p))) {
-    return next();
-  }
+  // No public-path skip list here (removed 2026-09-26, IAM-18 item 4 re-check).
+  // The detector is mounted on '/api' behind the auth boundary (applyAuthBoundary,
+  // server/startup/middleware.ts), and the boundary establishes no session for a
+  // path on PUBLIC_API_ALLOWLIST (./public-api-allowlist.ts): such a request
+  // reaches the no-session branch below and passes untouched, and /healthz and
+  // /readyz never reach a '/api' mount at all. The list this replaced matched
+  // nothing anyway — it held full paths ('/api/auth/login') and tested them
+  // against req.path, which Express 5 makes mount-relative ('/auth/login')
+  // under app.use('/api', …). One allowlist, the boundary's; a session that
+  // presents another organisation's id is an impersonation attempt on any path.
 
   // SECURITY: Organization ID MUST come from the verified JWT token, NOT from
   // user-supplied headers. This prevents tenant impersonation attacks where an
@@ -571,7 +569,9 @@ export function validateTenantContext(req: Request, res: Response, next: NextFun
         jwtOrg: user.organizationId,
         headerOrg: headerOrgId,
         userId: user.id || user.userId || 'unknown',
-        path: req.path,
+        // The path the client sent, /api prefix included: req.path alone is
+        // mount-relative under app.use('/api', …) (Express 5).
+        path: requestFullPath(req),
         method: req.method,
         ipAddress: req.ip,
       };
