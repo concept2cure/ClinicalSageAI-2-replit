@@ -4,6 +4,7 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { I } from '../icons';
 import { VaultPlaceIntoSubmission } from './VaultPlaceIntoSubmission';
+import { VaultEditDetails } from './VaultEditDetails';
 import { useLiveData, EmptyState, type ShapeGuard } from '../dataConnect';
 import { useVaultUpload } from '../useVaultUpload';
 import {
@@ -1570,6 +1571,16 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       </div>
                     </div>
 
+                    {projectId && sel.docId && sel.details ? (
+                      <VaultEditDetails
+                        key={`${sel.docId}-${vaultEpoch}`}
+                        projectId={projectId}
+                        documentId={sel.docId}
+                        details={sel.details}
+                        onSaved={() => setVaultEpoch((n) => n + 1)}
+                      />
+                    ) : null}
+
                     <div className="vd-d-seclbl">File</div>
                     <div className="vd-d-filing">
                       {sel.sizeLabel && (
@@ -1592,7 +1603,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       )}
                     </div>
                     {projectId && sel.docId ? (
-                      <DocumentHistory projectId={projectId} documentUuid={sel.docId} />
+                      <DocumentHistory key={`${sel.docId}-${vaultEpoch}`} projectId={projectId} documentUuid={sel.docId} />
                     ) : null}
                   </>
                 ) : (

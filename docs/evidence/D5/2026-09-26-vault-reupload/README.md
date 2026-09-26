@@ -52,6 +52,10 @@ and pointed at a different stored copy (`red/db-vault-reupload.txt`).
   when the bytes were already recorded, since nothing was created, and returns
   `reupload: { unchanged, changes }`.
 
+**Superseded later the same day** (`docs/evidence/D5/2026-09-26-vault-edit-details/`):
+once Edit details existed, a re-upload stopped changing title, type,
+classification or filing at all, and reports what differs instead.
+
 **Nothing a user could do is removed.** Changing a title or type by
 re-uploading still works; it is now recorded with the old value. Replacing it
 with a governed Edit details is VR-05's remaining half: its route

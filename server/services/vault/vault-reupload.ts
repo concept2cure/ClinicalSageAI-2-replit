@@ -13,19 +13,17 @@
  * 49293661).
  *
  * What a same-bytes retry does now:
- *   - a field the retry does not state keeps its recorded value;
+ *   - title, type, classification and filing are never changed by it. They
+ *     change through Edit details (vault-metadata-edit.service.ts) and
+ *     Confirm / Move (placeVaultDocument), each with a reason or decision and
+ *     its own audit row. A value the retry asked for that differs from the
+ *     record is reported back (`differs`) rather than applied;
  *   - retention policy, lineage and file name are write-once (NULL → value
  *     only), and the storage pointer moves only when the record has none —
- *     the transitions VR-06's planned trigger allows;
- *   - a field it does change (title, type, classification, a proposed
- *     placement) is recorded as one chained `vault.document.reupload` row
- *     with each field's before and after;
+ *     the transitions VR-06's planned trigger allows. Such a change is one
+ *     chained `vault.document.reupload` row with each field's before and after;
  *   - a retry that changes nothing writes no audit row, and the fresh copy it
  *     stored is removed through the ingest's one discard path.
- *
- * Changing a title or type by re-uploading is still possible, and is now
- * audited. Replacing it with a governed Edit details is VR-05's remaining
- * half, with the Vault surface's lane.
  */
 import type { PoolClient } from 'pg';
 
@@ -103,4 +101,26 @@ export function reuploadChanges(before: RecordedVersion, after: Record<string, u
     if (from !== to) changes.push({ field, from, to });
   }
   return changes;
+}
+
+/** A value the retry asked for that differs from the record, which it does not change. */
+export interface ReuploadDiffer {
+  field: 'document_title' | 'document_type' | 'classification';
+  recorded: string | null;
+  requested: string;
+}
+
+/** The descriptive fields the retry stated that differ from the record. */
+export function reuploadDiffers(
+  before: RecordedVersion,
+  requested: { documentTitle?: string; documentType?: string; classification?: string },
+): ReuploadDiffer[] {
+  const asked: Array<[ReuploadDiffer['field'], string | undefined]> = [
+    ['document_title', requested.documentTitle],
+    ['document_type', requested.documentType],
+    ['classification', requested.classification],
+  ];
+  return asked
+    .filter((pair): pair is [ReuploadDiffer['field'], string] => typeof pair[1] === 'string' && pair[1] !== (before[pair[0]] ?? null))
+    .map(([field, value]) => ({ field, recorded: before[field] ?? null, requested: value }));
 }

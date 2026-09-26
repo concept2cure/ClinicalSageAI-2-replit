@@ -177,29 +177,29 @@ describe('a same-bytes re-upload to the Vault (VR-05, D5)', () => {
     expect(got, 'the recorded copy must still be readable').toBeTruthy();
     expect(createHash('sha256').update(got!.bytes).digest('hex')).toBe(PDF_SHA256);
     expect(res.status).toBe(200);
-    expect(res.body.reupload).toEqual({ unchanged: true, changes: [] });
+    expect(res.body.reupload).toEqual({ unchanged: true, changes: [], differs: [] });
   });
 
-  it('a retry that changes the title records it once, with the value before and after', async () => {
+  it('a retry asking for another title or type changes nothing, and says what differs', async () => {
+    // Title, type and classification change through Edit details, with a
+    // reason (vault-metadata-edit.service.ts), never as a side effect of
+    // re-uploading the same bytes.
     const before = await recorded();
-    const res = await upload({ documentTitle: 'Clinical protocol v1', documentType: 'OTHER' });
+    const auditBefore = (await auditRows(String(before.id))).length;
+    const res = await upload({ documentTitle: 'Clinical protocol v1', documentType: 'PROTOCOL' });
 
-    const rows = await auditRows(String(before.id));
-    const reuploads = rows.filter((r) => r.action === 'vault.document.reupload');
-    expect(reuploads).toHaveLength(1);
-    expect(JSON.stringify(reuploads[0].new_values)).toContain('"from":"Protocol"');
-    // Still the recorded copy and classification.
     expect(await recorded()).toMatchObject({
-      document_title: 'Clinical protocol v1',
+      document_title: 'Protocol',
       classification: 'CONFIDENTIAL',
       storage_version_id: before.storage_version_id,
     });
+    expect((await auditRows(String(before.id))).length).toBe(auditBefore);
     expect(res.status).toBe(200);
-    expect(res.body.reupload.unchanged).toBe(false);
-    expect(res.body.reupload.changes).toContainEqual({
-      field: 'document_title',
-      from: 'Protocol',
-      to: 'Clinical protocol v1',
-    });
+    expect(res.body.reupload).toMatchObject({ unchanged: true, changes: [] });
+    expect(res.body.reupload.differs).toEqual([
+      { field: 'document_title', recorded: 'Protocol', requested: 'Clinical protocol v1' },
+      { field: 'document_type', recorded: 'OTHER', requested: 'PROTOCOL' },
+    ]);
+    expect(res.body.document.documentTitle).toBe('Protocol');
   });
 });

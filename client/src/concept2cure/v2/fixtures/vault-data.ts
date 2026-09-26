@@ -45,6 +45,9 @@ export interface VaultDoc {
    *  offered only for a PDF. */
   mimeType?: string | null;
   filing?: VaultDocFiling;
+  /** The version's recorded title, type and classification (uploads only):
+   *  what Edit details starts from. */
+  details?: { documentTitle: string | null; documentType: string | null; classification: string | null };
 }
 
 export interface VaultFolder {
