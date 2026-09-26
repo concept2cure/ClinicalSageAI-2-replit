@@ -44,6 +44,7 @@
  *    `establishRequestSystemScope` directly as mount middleware.
  */
 
+import { requestFullPath } from './request-path';
 import type { Request, Response, NextFunction } from 'express';
 import type { PoolClient } from 'pg';
 import { getPool } from '../db';
@@ -92,9 +93,9 @@ export const SYSTEM_SCOPE_PREFIXES: readonly string[] = [
   '/api/tenants',
 ];
 
-/** Full request path, computed the same way the global `/api` gate computes it. */
+/** Full request path, computed the same way the global `/api` gate computes it (one implementation: request-path.ts). */
 function fullPath(req: Request): string {
-  return (req.baseUrl || '') + (req.path || '');
+  return requestFullPath(req);
 }
 
 /** True when the request targets a cross-tenant/system route. */

@@ -10,10 +10,34 @@
  * `MRN`, `dob_iso`, `bearerToken`) are caught by the existing entries.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { __testing } from '../logger';
+import { logger as jsLogger, createScopedLogger as createJsScopedLogger, __testing as jsTesting } from '../logger.js';
 
 const { redactContext, SENSITIVE_KEYS, maskPersonalData } = __testing;
+
+// logger.ts writes through pino. The DP-39 seam is the `message` argument the
+// wrapper hands to pino (`pinoLogger.<level>({ context }, message)`), so pino is
+// replaced with a sink that records that call; nothing downstream of the seam
+// is under test here. `vi.mock` is hoisted above the imports, and the .ts twin
+// below is the only module in this file that imports pino.
+const pinoSink = vi.hoisted(() => ({ info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() }));
+vi.mock('pino', () => ({
+  default: Object.assign(() => pinoSink, { stdTimeFunctions: { isoTime: () => '' } }),
+}));
+
+// Under vitest the bare specifier `../logger` resolves to logger.js (Vite tries
+// `.js` before `.ts`), which is what the suites above exercise and what the 229
+// explicit `logger.js` importers get. Production bundles resolve the same bare
+// specifier to logger.ts. The two are hand-kept mirrors, so the DP-39 contract
+// is asserted against BOTH. A STATIC `from '../logger.ts'` is TS5097 ("an
+// import path can only end with '.ts' when allowImportingTsExtensions is
+// enabled"), so the specifier is held in a variable: tsc cannot apply TS5097 to
+// a non-literal, and Vite still resolves it at runtime.
+const TS_TWIN_SPECIFIER = '../logger.ts';
+type LoggerModule = typeof import('../logger.js');
+const loadTsTwin = async (): Promise<LoggerModule> =>
+  (await import(/* @vite-ignore */ TS_TWIN_SPECIFIER)) as unknown as LoggerModule;
 
 describe('logger SENSITIVE_KEYS coverage', () => {
   it('includes every credential category', () => {
@@ -170,11 +194,11 @@ describe('redactContext — value handling', () => {
     expect(out.secret).toBe('[REDACTED]');
   });
 
-  it('passes arrays through unchanged (out of scope for the walker)', () => {
-    const arr = [{ password: 'x' }];
+  it('walks arrays: an object element has its sensitive keys redacted (DP-39)', () => {
+    const arr = [{ password: 'x', note: 'ok' }];
     const out = redactContext({ items: arr } as any);
-    // Arrays themselves bypass the walker — documented behavior.
-    expect(out.items).toBe(arr);
+    expect(out.items).toEqual([{ password: '[REDACTED]', note: 'ok' }]);
+    expect(arr[0].password, "the caller's array is not mutated").toBe('x');
   });
 });
 
@@ -232,5 +256,142 @@ describe('redactContext — masks personal data under ordinary keys, redacts sen
   it('a sensitive key is still redacted whole, never merely masked', () => {
     expect(redactContext({ password: 'ada@example.test' })).toEqual({ password: '[REDACTED]' });
     expect(redactContext({ authorization: 'Bearer 203.0.113.42' })).toEqual({ authorization: '[REDACTED]' });
+  });
+});
+
+// ── DP-39 (security review 2026-09-26 §3): the message string and array elements ─────────────
+//
+// P1-27 masked personal data in string values under context keys. The primary
+// `message` argument was handed to the sink as written, and arrays inside the
+// context were passed through unscanned, so `log.warn(`refused for ${email}`)`
+// and `log.info('mailed', { to: [email] })` both reached the log store in clear.
+
+const RAW_MESSAGE = 'Sign-in refused for ada.lovelace@example.test from 203.0.113.42';
+const MASKED_MESSAGE = 'Sign-in refused for a***@example.test from 203.0.113.xxx';
+
+describe('DP-39 — the log message string is masked (logger.js mirror)', () => {
+  const capture = (fn: () => void): { message: unknown; context: unknown } => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      fn();
+      expect(spy).toHaveBeenCalledTimes(1);
+      return JSON.parse(String(spy.mock.calls[0][0])) as { message: unknown; context: unknown };
+    } finally {
+      spy.mockRestore();
+    }
+  };
+
+  it('a message-only warn masks the address and the IPv4 in the message field', () => {
+    const line = capture(() => jsLogger.warn(RAW_MESSAGE));
+    expect(line.message).toBe(MASKED_MESSAGE);
+    expect(line.context).toEqual({});
+  });
+
+  it('a scoped logger masks the message after prefixing the scope', () => {
+    const line = capture(() => createJsScopedLogger('auth').warn(RAW_MESSAGE));
+    expect(line.message).toBe(`[auth] ${MASKED_MESSAGE}`);
+  });
+
+  it('a message over the scan limit is left alone (MASK_SCAN_LIMIT), the context still masked', () => {
+    const long = `${'x'.repeat(3000)} ${RAW_MESSAGE}`;
+    const line = capture(() => jsLogger.warn(long, { to: 'bob@example.test' }));
+    expect(line.message).toBe(long);
+    expect(line.context).toEqual({ to: 'b***@example.test' });
+  });
+});
+
+describe('DP-39 — the log message string is masked (logger.ts, pino)', () => {
+  it('a message-only warn hands pino the masked message', async () => {
+    const { logger: tsLogger } = await loadTsTwin();
+    pinoSink.warn.mockClear();
+    tsLogger.warn(RAW_MESSAGE);
+    expect(pinoSink.warn).toHaveBeenCalledTimes(1);
+    const [bindings, message] = pinoSink.warn.mock.calls[0] as [Record<string, unknown>, unknown];
+    expect(message).toBe(MASKED_MESSAGE);
+    expect(bindings).toEqual({ context: {} });
+  });
+
+  it('every level masks the message, and a scoped logger masks after the scope prefix', async () => {
+    const { logger: tsLogger, createScopedLogger } = await loadTsTwin();
+    for (const level of ['info', 'error', 'debug'] as const) {
+      pinoSink[level].mockClear();
+      tsLogger[level](RAW_MESSAGE);
+      expect(pinoSink[level].mock.calls[0][1], level).toBe(MASKED_MESSAGE);
+    }
+    pinoSink.warn.mockClear();
+    createScopedLogger('auth').warn(RAW_MESSAGE);
+    expect(pinoSink.warn.mock.calls[0][1]).toBe(`[auth] ${MASKED_MESSAGE}`);
+  });
+
+  it('a message over the scan limit is left alone (MASK_SCAN_LIMIT)', async () => {
+    const { logger: tsLogger } = await loadTsTwin();
+    const long = `${'x'.repeat(3000)} ${RAW_MESSAGE}`;
+    pinoSink.info.mockClear();
+    tsLogger.info(long);
+    expect(pinoSink.info.mock.calls[0][1]).toBe(long);
+  });
+});
+
+describe.each([
+  ['logger.js', async () => jsTesting],
+  ['logger.ts', async () => (await loadTsTwin()).__testing],
+])('DP-39 — redactContext walks arrays (%s)', (_mirror, load) => {
+  it('masks strings inside arrays and redacts sensitive keys of objects inside arrays', async () => {
+    const { redactContext: walk } = await load();
+    const out = walk({
+      recipients: ['ada.lovelace@example.test', 'bob@example.test'],
+      hops: ['203.0.113.42', '2001:db8:85a3:0:0:8a2e:370:7334'],
+      attempts: [{ password: 'hunter2', outcome: 'refused', from: '198.51.100.7' }],
+      matrix: [['carol@example.test']],
+      counts: [1, null, true, undefined],
+    });
+    expect(out).toEqual({
+      recipients: ['a***@example.test', 'b***@example.test'],
+      hops: ['203.0.113.xxx', '2001:db8:85a3::xxxx'],
+      attempts: [{ password: '[REDACTED]', outcome: 'refused', from: '198.51.100.xxx' }],
+      matrix: [['c***@example.test']],
+      counts: [1, null, true, undefined],
+    });
+  });
+
+  it('an array under a sensitive key is still redacted whole, never walked', async () => {
+    const { redactContext: walk } = await load();
+    expect(walk({ tokens: ['a', 'b'] })).toEqual({ tokens: '[REDACTED]' });
+  });
+
+  it('keeps the per-string scan limit for array elements and does not mutate the input', async () => {
+    const { redactContext: walk } = await load();
+    const long = `${'x'.repeat(3000)} ada@example.test`;
+    const input = { items: [long, 'ada@example.test'] };
+    const out = walk(input);
+    expect(out).toEqual({ items: [long, 'a***@example.test'] });
+    expect(input.items[1]).toBe('ada@example.test');
+  });
+});
+
+describe('DP-39 — an array passed as the whole context reaches neither sink in clear', () => {
+  // normalizeContext in logger.ts wraps a non-object as { value }; logger.js
+  // hands the array to redactContext directly. Either way the strings inside
+  // must not reach the sink as written.
+  const ADDRESSES = ['ada@example.test', '203.0.113.42'];
+
+  it('logger.js', () => {
+    // baseLogger.info in logger.js writes through console.log, not console.info.
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    try {
+      jsLogger.info('mailed', ADDRESSES);
+      const line = JSON.parse(String(spy.mock.calls[0][0])) as { context: unknown };
+      expect(line.context).toEqual(['a***@example.test', '203.0.113.xxx']);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('logger.ts', async () => {
+    const { logger: tsLogger } = await loadTsTwin();
+    pinoSink.info.mockClear();
+    tsLogger.info('mailed', ADDRESSES);
+    const [bindings] = pinoSink.info.mock.calls[0] as [Record<string, unknown>];
+    expect(bindings).toEqual({ context: { value: ['a***@example.test', '203.0.113.xxx'] } });
   });
 });

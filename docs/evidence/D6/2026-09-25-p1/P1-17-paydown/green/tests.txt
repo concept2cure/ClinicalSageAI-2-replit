@@ -1,0 +1,156 @@
+# vitest — new containment tests + listed existing suites (after migration)
+
+## run 1: new tests, helper test, cmc suites
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "authoring_plans table not migrated yet" 2688ms
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > 503 keeps the code and says nothing of "therapeutic_area column not migrated yet" 7ms
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/authoring-plan — MIGRATION_PENDING > the 400 for INVALID_REQUEST from the generator still carries the domain message (4xx is out of scope) 5ms
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/submission-chat — AI_PROVIDER_UNAVAILABLE > 503 keeps the code and does not echo the thrown text 5ms
+ ✓ tests/routes/ana-features-coded-503-containment.test.ts > POST /api/ana/submission-chat — AI_PROVIDER_UNAVAILABLE > the 404 for ARTIFACT_NOT_FOUND still carries the domain message (4xx is out of scope) 4ms
+ ✓ server/api/cmc/__tests__/module3BuildStateRoutes.test.ts > GET /build-state/:projectId — artifact spine resolution > returns 200 with honest unanchored state for a uuid program with no PM anchor 35ms
+ ✓ server/api/cmc/__tests__/module3BuildStateRoutes.test.ts > GET /build-state/:projectId — artifact spine resolution > queries the registry with the anchored integer id for a linked program 12ms
+ ✓ server/api/cmc/__tests__/module3BuildStateRoutes.test.ts > GET /build-state/:projectId — artifact spine resolution > uploaded-sources takes the same translation and degrades honestly 11ms
+ ✓ server/api/cmc/__tests__/module3BuildStateRoutes.test.ts > build-state derives its source rules from the composer (anti-drift) > counts qc_result sources toward 3.2.S.4 and 3.2.P.5 — the drift the copied map had 13ms
+ ✓ server/api/cmc/__tests__/module3BuildStateRoutes.test.ts > build-state reads completeness from the canonical status, not from a stored or fabricated figure > scores an uncompiled section from its live sources — '' is not present, retired does not count 9ms
+ ✓ server/api/cmc/__tests__/module3BuildStateRoutes.test.ts > a failed read answers 500 without naming what broke (D6 / IAM-18, P1-17 paydown) > build-state: the relation name stays in the log, the client gets the envelope 6ms
+ ✓ server/api/cmc/__tests__/module3BuildStateRoutes.test.ts > a failed read answers 500 without naming what broke (D6 / IAM-18, P1-17 paydown) > uploaded-sources: the relation name stays in the log, the client gets the envelope 5ms
+ ✓ server/api/cmc/__tests__/module3BuildStateRoutes.test.ts > a failed read answers 500 without naming what broke (D6 / IAM-18, P1-17 paydown) > the 401 for a missing tenant is untouched by the migration 4ms
+ ✓ server/api/cmc/__tests__/module3BuildStateReadiness.test.ts > Module 3 readiness agrees with the export gate > counts an approved, fresh section as ready 48ms
+ ✓ server/api/cmc/__tests__/module3BuildStateReadiness.test.ts > Module 3 readiness agrees with the export gate > does NOT count a section whose ARTIFACT is locked but which was never approved 9ms
+ ✓ server/api/cmc/__tests__/module3BuildStateReadiness.test.ts > Module 3 readiness agrees with the export gate > does NOT count a section that went stale AFTER approval 20ms
+ ✓ server/api/cmc/__tests__/module3BuildStateReadiness.test.ts > Module 3 readiness agrees with the export gate > counts an approved section whose artifact is also locked 4ms
+ ✓ server/api/cmc/__tests__/module3BuildStateReadiness.test.ts > Module 3 readiness agrees with the export gate > reports 100% only when the gate would let every section through 9ms
+ ✓ server/api/cmc/__tests__/cmc-route-uniqueness.contract.test.ts > the CMC routers declare each endpoint once > has no method+path declared by two routers mounted on /api/cmc 3ms
+ ✓ server/api/cmc/__tests__/cmc-route-uniqueness.contract.test.ts > the CMC routers declare each endpoint once > declares each endpoint once WITHIN a router too 2ms
+ ✓ server/api/cmc/__tests__/cmc-route-uniqueness.contract.test.ts > the CMC routers declare each endpoint once > reads the routers it claims to read 2ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > answers a missing-relation error without naming the relation 3ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > rejects the other driver-error shapes, not just the one that was reported 1ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > still gives the operator everything needed to find the real error 3ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > sends a code the client will not display and a sentence it will 1ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > omits the reference rather than inventing one when no request id was set 0ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > is falsifiable: the pre-fix behaviour would fail these assertions 0ms
+ ✓ server/api/cmc/__tests__/cmc-js-model-task-types.contract.test.ts > server/api/cmc/global-compliance.js > declares the expected task on every model call, in order 2ms
+ ✓ server/api/cmc/__tests__/cmc-js-model-task-types.contract.test.ts > server/api/cmc/global-compliance.js > pins no model by literal 1ms
+ ✓ server/api/cmc/__tests__/cmc-js-model-task-types.contract.test.ts > server/api/cmc/preclinical-translator.js > declares the expected task on every model call, in order 0ms
+ ✓ server/api/cmc/__tests__/cmc-js-model-task-types.contract.test.ts > server/api/cmc/preclinical-translator.js > pins no model by literal 3ms
+ ✓ server/api/cmc/__tests__/cmc-js-model-task-types.contract.test.ts > server/api/cmc/change-impact-simulator.js > declares the expected task on every model call, in order 0ms
+ ✓ server/api/cmc/__tests__/cmc-js-model-task-types.contract.test.ts > server/api/cmc/change-impact-simulator.js > pins no model by literal 0ms
+ ✓ server/api/cmc/__tests__/cmc-js-model-task-types.contract.test.ts > server/utils/document-generator.js > declares the expected task on every model call, in order 0ms
+ ✓ server/api/cmc/__tests__/cmc-js-model-task-types.contract.test.ts > server/utils/document-generator.js > pins no model by literal 0ms
+ ✓ server/api/cmc/__tests__/cmc-js-model-task-types.contract.test.ts > server/services/indCopilot.js > declares the expected task on every model call, in order 0ms
+ ✓ server/api/cmc/__tests__/cmc-js-model-task-types.contract.test.ts > server/services/indCopilot.js > pins no model by literal 0ms
+ ✓ server/api/cmc/__tests__/cmc-js-model-task-types.contract.test.ts > indCopilot records the model that served > the generation event and the response carry aiResult.model, not a default 0ms
+ ✓ server/api/cmc/__tests__/module3AutoDraftRoutes.test.ts > module3AutoDraftRoutes > drafts Module 3 from extracted documents and returns coverage 53ms
+ ✓ server/api/cmc/__tests__/module3AutoDraftRoutes.test.ts > module3AutoDraftRoutes > REFUSES to persist — a preview may not become a governed artifact 6ms
+ ✓ server/api/cmc/__tests__/module3AutoDraftRoutes.test.ts > module3AutoDraftRoutes > still drafts the preview when persist is not asked for, and says it persisted nothing 5ms
+ ✓ server/api/cmc/__tests__/module3AutoDraftRoutes.test.ts > module3AutoDraftRoutes > rejects an empty document list 5ms
+ ✓ server/api/cmc/__tests__/module3AutoDraftRoutes.test.ts > module3AutoDraftRoutes > requires organization context 4ms
+ ✓ server/api/cmc/__tests__/buildSectionCanonical.test.ts > build-section builds every composable section, through the canonical path > builds a 3.2.R regional section — a required module, previously a false 404 28ms
+ ✓ server/api/cmc/__tests__/buildSectionCanonical.test.ts > build-section builds every composable section, through the canonical path > builds a 3.2.A appendix section 9ms
+ ✓ server/api/cmc/__tests__/buildSectionCanonical.test.ts > build-section builds every composable section, through the canonical path > still builds a core section — the fix is not "accept everything" 3ms
+ ✓ server/api/cmc/__tests__/buildSectionCanonical.test.ts > build-section builds every composable section, through the canonical path > still 404s a section this project genuinely cannot compose 3ms
+ ✓ server/api/cmc/__tests__/buildSectionCanonical.test.ts > build-section builds every composable section, through the canonical path > says "no canonical sources" for an empty project, not "no composition rule" 4ms
+ ✓ server/api/cmc/__tests__/buildSectionCanonical.test.ts > build-section builds every composable section, through the canonical path > writes through the canonical persist, not a private copy of the upsert 4ms
+ Test Files  8 passed (8)
+      Tests  49 passed (49)
+
+## run 2: bootstrap / unifiedTasks / tenant-isolation / ana suites
+ ✓ server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > returns the job to the organization that queued it 1591ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /unified is 403 for an org viewer and writes nothing 34ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /:id/link is 403 for an org viewer and writes nothing 5ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /sync/:module is 403 for an org viewer and writes nothing 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > PATCH /:id/status is 403 for an org viewer and writes nothing 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /unified is 403 with no org role at all 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /:id/link is 403 with no org role at all 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /sync/:module is 403 with no org role at all 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > PATCH /:id/status is 403 with no org role at all 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /unified is 401 and writes nothing when the session names no actor 6ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /:id/link is 401 and writes nothing when the session names no actor 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /sync/:module is 401 and writes nothing when the session names no actor 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > PATCH /:id/status is 401 and writes nothing when the session names no actor 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > reads stay open to a viewer 5ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /unified is 403 for an org viewer and writes nothing 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /:id/link is 403 for an org viewer and writes nothing 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /sync/:module is 403 for an org viewer and writes nothing 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > PATCH /:id/status is 403 for an org viewer and writes nothing 2ms
+ ✓ server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > does not return another organization's job 202ms
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a signature without the password is refused, and nothing is applied 1705ms
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a second factor the caller asserts is not a second factor 9ms
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a wrong password is refused and counted against the account 8ms
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > an account taken out of use cannot sign it (F-28) 5ms
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a verified signer: the service is handed what the ceremony verified, never the credentials 10ms
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a rewrite applied without a signature asks for no credential 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /unified is 403 with no org role at all 8ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /:id/link is 403 with no org role at all 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /sync/:module is 403 with no org role at all 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > PATCH /:id/status is 403 with no org role at all 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /unified is 401 and writes nothing when the session names no actor 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /:id/link is 401 and writes nothing when the session names no actor 5ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /sync/:module is 401 and writes nothing when the session names no actor 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > PATCH /:id/status is 401 and writes nothing when the session names no actor 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > reads stay open to a viewer 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /unified creates on ONE transaction with its task.create row, as the session actor 5ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /:id/link links the resolved business keys on ONE transaction with its task.link row 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /:id/link is 404 and records nothing when an endpoint is gone by the time it writes 8ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /sync/:module creates every synced task, then writes one task.create row each, on ONE transaction 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /sync/Vault is refused as unavailable (501) — not a failure, not an empty sync — and records nothing 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > PATCH /:id/status transitions on ONE transaction with its row, attributed to the session — never the body 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /unified rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /:id/link rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /sync/:module rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > PATCH /:id/status rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > a store failure is an honest 500 that does not carry the store text, with the write rolled back 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > a malformed body is a 400 that writes nothing 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /unified whose COMMIT was lost answers OUTCOME_UNKNOWN — never a failure, never a success 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /:id/link whose COMMIT was lost answers OUTCOME_UNKNOWN — never a failure, never a success 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /sync/:module whose COMMIT was lost answers OUTCOME_UNKNOWN — never a failure, never a success 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > PATCH /:id/status whose COMMIT was lost answers OUTCOME_UNKNOWN — never a failure, never a success 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — a completion, the dependents it unblocks and all their ledger rows are one transaction > runs the cascade on the completion’s transaction and records A, then B, before COMMIT; notifies after 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — a completion, the dependents it unblocks and all their ledger rows are one transaction > a dependent’s ledger row that fails rolls back the completion and the unblocking; nobody is notified 6ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — a completion, the dependents it unblocks and all their ledger rows are one transaction > a cascade failure rolls the completion back and is an honest 500 3ms
+ ✓ server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > reports a foreign job exactly as it reports a missing one 135ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — a completion, the dependents it unblocks and all their ledger rows are one transaction > commits a signed completion with its manifestation in the ledger payload 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — a completion, the dependents it unblocks and all their ledger rows are one transaction > never commits a signed completion whose ledger row did not land 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > GET /all returns 401 when there is no org context 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > GET /all scopes to the JWT org and ignores a client organizationId param 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > PATCH /:id/status 404s on another org's task and writes nothing 6ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > POST /:id/link 404s when either endpoint is outside the caller org, and writes nothing 12ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > PATCH /:id/status addressed by numeric id writes with the resolved business key 6ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > PATCH /:id/status 409s CONFLICT_STALE without a ledger row when the compare-and-set loses 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > PATCH /:id/status to the status the task already has is refused as stale, not re-written 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > PATCH /:id/status runs the state machine — an illegal move 409s without writing 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > PATCH /:id/status demands the e-sign ceremony on approval-gated completion (428) 3ms
+ ✓ server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > fails closed on an unusable organization 142ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > await import('x') 2ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > await import(v) 1ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > await import('pdfkit' as any) 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > /* prose mentioning /*) inside */ await import(v) 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > const s = 'has /* inside'; await import(v) 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > // await import(v)
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > await import(`../routes/${n}`) 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > sees the whole of the largest bootstrap file 8ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > route registration reaches the production bundle > no guarded file imports a module by computed specifier 22ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > route registration reaches the production bundle > the families that were missing are imported statically by name 1ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > route registration reaches the production bundle > every regional blueprint is imported statically by both catalogs 1ms
+ ✓ server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project 359ms
+ ✓ server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns nothing for a project that belongs to another organization 107ms
+ ✓ server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns an empty list, not the whole queue, for an unusable organization 110ms
+ ✓ tests/routes/ana-gap-analysis.test.ts > POST /api/ana/gap-analysis > rejects request with missing submissionType 596ms
+ ✓ tests/routes/ana-gap-analysis.test.ts > POST /api/ana/gap-analysis > rejects request with empty submissionType 5ms
+ ✓ tests/routes/ana-gap-analysis.test.ts > POST /api/ana/gap-analysis > rejects unsupported submission type 4ms
+ ✓ tests/routes/ana-gap-analysis.test.ts > POST /api/ana/gap-analysis > returns valid gap analysis for IND submission 4ms
+ ✓ tests/routes/ana-gap-analysis.test.ts > POST /api/ana/gap-analysis > returns valid gap analysis for NDA submission 4ms
+ ✓ tests/routes/ana-gap-analysis.test.ts > POST /api/ana/gap-analysis > returns valid gap analysis for BLA submission 3ms
+ ✓ tests/routes/ana-gap-analysis.test.ts > POST /api/ana/gap-analysis > returns valid gap analysis for MAA submission 3ms
+ ✓ tests/routes/ana-gap-analysis.test.ts > POST /api/ana/gap-analysis > returns valid gap analysis for 510K submission 3ms
+ ✓ tests/routes/ana-gap-analysis.test.ts > POST /api/ana/gap-analysis > returns valid gap analysis for PMA submission 4ms
+ ✓ tests/routes/ana-gap-analysis.test.ts > POST /api/ana/gap-analysis > handles case-insensitive submission types 3ms
+ ✓ tests/routes/ana-gap-analysis.test.ts > POST /api/ana/gap-analysis > handles hyphenated submission types (510-K) 3ms
+ ✓ tests/routes/ana-gap-analysis.test.ts > POST /api/ana/gap-analysis > marks all gaps as missing when no documents uploaded 2ms
+ ✓ tests/routes/ana-gap-analysis.test.ts > POST /api/ana/gap-analysis > detects exact match when uploaded doc matches requirement 3ms
+ ✓ tests/routes/ana-gap-analysis.test.ts > POST /api/ana/gap-analysis > detects partial match via keyword overlap 2ms
+ ✓ tests/routes/ana-gap-analysis.test.ts > POST /api/ana/gap-analysis > returns properly structured gap items 3ms
+ ✓ tests/routes/ana-gap-analysis.test.ts > POST /api/ana/gap-analysis > generates critical missing recommendations 3ms
+ ✓ tests/routes/ana-gap-analysis.test.ts > POST /api/ana/gap-analysis > includes effort estimate in recommendations 2ms
+ ✓ tests/routes/ana-gap-analysis.test.ts > POST /api/ana/gap-analysis > returns success:true wrapper on all valid responses 15ms
+ Test Files  5 passed (5)
+      Tests  98 passed (98)

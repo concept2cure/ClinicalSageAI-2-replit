@@ -80,9 +80,20 @@ vi.mock('../../db', async () => {
   return { db, pool: {}, getPool: () => ({}), getDb: () => db };
 });
 
+// The session registry's Redis tier is away; the memory tier answers. The
+// bootstrap token must open its session through openSession like every other
+// sign-in (P1-38), so the door is spied on, not replaced.
+vi.mock('../../services/ai-actions/redis-manager.js', () => ({ isRedisAvailable: () => false, getRedisClient: () => null }));
+vi.mock('../../services/session-inactivity', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../services/session-inactivity')>();
+  return { ...actual, openSession: vi.fn(actual.openSession) };
+});
+
 import request from 'supertest';
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import setupRouter from '../setup';
+import { DEFAULT_IDLE_MINUTES, openSession } from '../../services/session-inactivity';
 
 function makeApp() {
   const app = express();
@@ -110,6 +121,7 @@ describe('first-run setup — /api/setup', () => {
     state.userRows = 0;
     state.ops = [];
     state.refuseInsertInto = null;
+    vi.mocked(openSession).mockClear();
   });
 
   it('GET /status reports not-initialized on an empty install', async () => {
@@ -145,6 +157,19 @@ describe('first-run setup — /api/setup', () => {
     expect(res.body.success).toBe(true);
     expect(typeof res.body.token).toBe('string');
     expect(res.body.organization.id).toBe(1);
+  });
+
+  it('POST /initialize mints the bootstrap token as a registered session: openSession, and sid / sst / idl in the token (P1-38)', async () => {
+    const res = await request(makeApp()).post('/api/setup/initialize').send(VALID);
+    expect(res.status).toBe(201);
+    const claims = jwt.verify(res.body.token, process.env.JWT_SECRET as string) as Record<string, unknown>;
+    expect(claims.type).toBe('access');
+    expect(typeof claims.sid, 'the setup token carries no session id: it was minted outside openSession').toBe('string');
+    expect(typeof claims.sst).toBe('number');
+    // The new organisation has no settings yet: the platform's default window.
+    expect(claims.idl).toBe(DEFAULT_IDLE_MINUTES * 60);
+    expect(openSession).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(openSession).mock.calls[0][0]).toBe(7);
   });
 
   it('POST /initialize writes the org, its admin, and the org\'s own workspace under the org\'s tenant, in one transaction', async () => {

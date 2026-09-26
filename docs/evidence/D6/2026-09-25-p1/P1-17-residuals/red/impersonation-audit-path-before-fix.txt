@@ -1,0 +1,129 @@
+# Red run — HEAD 7fbe51c5, 2026-09-26T13:11Z, code unchanged (enterprise-security.ts audit detail path: req.path)
+# NODE_OPTIONS=--max-old-space-size=1536 npx vitest run server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts server/startup/__tests__/tenant-impersonation-detector.test.ts
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts
+  "timestamp": "2026-09-26T13:11:09.553Z",
+  "level": "info",
+  "message": "[startup:auth-boundary] Default-deny auth boundary mounted on /api",
+  "context": {
+    "modeAtBoot": "enforce"
+
+stderr | server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts > the impersonation detector behind the /api boundary (enforce) > Bearer(org 7) + x-organization-id: 9 → 403 TENANT_MISMATCH, and the audit row names the path the client sent
+[SECURITY] Tenant impersonation attempt blocked {
+  jwtOrg: 7,
+  headerOrg: '9',
+  userId: '42',
+  path: '/vault/documents',
+  method: 'GET',
+  ipAddress: '127.0.0.1'
+
+ × server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts > the impersonation detector behind the /api boundary (enforce) > Bearer(org 7) + x-organization-id: 9 → 403 TENANT_MISMATCH, and the audit row names the path the client sent 45ms
+   → the audited path lost its /api prefix: expected '/vault/documents' to be '/api/vault/documents' // Object.is equality
+ ✓ server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts > the impersonation detector behind the /api boundary (enforce) > Bearer(org 7) + x-organization-id: 7 → the handler runs, with the organisation taken from the session 8ms
+ ✓ server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts > the impersonation detector behind the /api boundary (enforce) > no token + x-organization-id: 9 → the boundary answers 401 AUTH_001 first; the detector never runs and nothing is audited 5ms
+ ✓ server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts > the impersonation detector behind the /api boundary (enforce) > on a PUBLIC_API_ALLOWLIST path the boundary establishes no session, so the detector has nothing to compare: the request passes and nothing is audited 5ms
+stdout | server/startup/__tests__/tenant-impersonation-detector.test.ts
+  "timestamp": "2026-09-26T13:11:10.738Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+  "timestamp": "2026-09-26T13:11:10.740Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+
+stderr | server/startup/__tests__/tenant-impersonation-detector.test.ts
+  "timestamp": "2026-09-26T13:11:10.740Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+
+stderr | server/startup/__tests__/tenant-impersonation-detector.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+
+stdout | server/startup/__tests__/tenant-impersonation-detector.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/startup/__tests__/tenant-impersonation-detector.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > refuses a header naming another organisation (403 TENANT_MISMATCH) and audits it
+[SECURITY] Tenant impersonation attempt blocked {
+  jwtOrg: 7,
+  headerOrg: '9',
+  userId: 7,
+  path: '/vault/documents',
+  method: 'GET',
+  ipAddress: '203.0.113.5'
+
+  "timestamp": "2026-09-26T13:11:10.853Z",
+  "level": "info",
+  "message": "[startup:auth-boundary] Default-deny auth boundary mounted on /api",
+  "context": {
+    "modeAtBoot": "warn"
+
+ × server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > refuses a header naming another organisation (403 TENANT_MISMATCH) and audits it 13ms
+   → expected { tenantId: 7, userId: 7, …(6) } to match object { details: ObjectContaining{…} }
+(13 matching properties omitted from actual)
+ ✓ server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > passes a header naming the session's own organisation 1ms
+ ✓ server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > passes a request with no header 1ms
+ ✓ server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > with no session it neither refuses nor adopts the header (the boundary already answered) 1ms
+ ✓ server/startup/__tests__/tenant-impersonation-detector.test.ts > where it is mounted > applyAuthBoundary mounts the boundary and then the detector on /api 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts > the impersonation detector behind the /api boundary (enforce) > Bearer(org 7) + x-organization-id: 9 → 403 TENANT_MISMATCH, and the audit row names the path the client sent
+AssertionError: the audited path lost its /api prefix: expected '/vault/documents' to be '/api/vault/documents' // Object.is equality
+
+Expected: "/api/vault/documents"
+Received: "/vault/documents"
+
+ ❯ server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts:141:72
+    139|     // Express 5 gives a '/api'-mounted handler a mount-relative req.p…
+    140|     // row must carry the /api prefix the client sent, not '/vault/doc…
+    141|     expect(row.details?.path, 'the audited path lost its /api prefix')…
+       |                                                                        ^
+    142|   });
+    143|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/startup/__tests__/tenant-impersonation-detector.test.ts > validateTenantContext, given a session > refuses a header naming another organisation (403 TENANT_MISMATCH) and audits it
+AssertionError: expected { tenantId: 7, userId: 7, …(6) } to match object { details: ObjectContaining{…} }
+(13 matching properties omitted from actual)
+
+- Expected
++ Received
+
+    "details": {
+-     "path": "/api/vault/documents",
++     "headerOrg": "9",
++     "ipAddress": "203.0.113.5",
++     "jwtOrg": 7,
++     "method": "GET",
++     "path": "/vault/documents",
++     "userId": 7,
+
+ ❯ server/startup/__tests__/tenant-impersonation-detector.test.ts:59:46
+     57|     expect(audit.logAction).toHaveBeenCalledWith(expect.objectContaini…
+     58|     // The row names the path the client sent, /api prefix included.
+     59|     expect(audit.logAction.mock.calls[0][0]).toMatchObject({ details: …
+       |                                              ^
+     60|   });
+     61|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 7 passed (9)
+   Start at  13:11:08
+   Duration  2.50s (transform 1.51s, setup 181ms, import 2.78s, tests 96ms, environment 0ms)
+

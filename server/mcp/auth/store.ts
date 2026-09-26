@@ -75,6 +75,8 @@ export interface Membership {
   organizationUuid: string | null;
   /** Not selected here (users is joined only for its status); the verifier takes it from the token claims. */
   email: string | null;
+  /** organizations.settings: the concurrent-session limit a connector session is opened with (P1-38). */
+  organizationSettings?: unknown;
 }
 
 /**
@@ -92,8 +94,9 @@ export async function findMembership(userId: number, organizationId: number): Pr
       role: string;
       uuid: string | null;
       email: string | null;
+      settings: unknown;
     }>(
-      `SELECT ou.id, ou.organization_id, ou.user_id, ou.role, o.uuid, NULL::text AS email
+      `SELECT ou.id, ou.organization_id, ou.user_id, ou.role, o.uuid, o.settings, NULL::text AS email
          FROM organization_users ou
          JOIN organizations o ON o.id = ou.organization_id
          JOIN users u ON u.id = ou.user_id
@@ -115,6 +118,7 @@ export async function findMembership(userId: number, organizationId: number): Pr
       role: r.role,
       organizationUuid: r.uuid,
       email: r.email,
+      organizationSettings: r.settings,
     };
   });
 }

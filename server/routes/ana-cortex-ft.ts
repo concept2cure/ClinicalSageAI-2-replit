@@ -28,6 +28,10 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { createHmac } from 'crypto';
 import { isOssFeatureEnabledViaEnv } from '../config/ossStackFeatureFlags.js';
+import { serverError } from '../lib/api-response.js';
+import { createScopedLogger } from '../utils/logger.js';
+
+const log = createScopedLogger('ana-cortex-ft');
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -1201,8 +1205,7 @@ router.post('/inference', async (req: Request, res: Response) => {
     const result = await performInference(body);
     res.json({ success: true, data: result });
   } catch (err) {
-    console.error('[AnA Cortex] Inference failed:', err);
-    res.status(500).json({ success: false, error: String(err) });
+    return serverError(res, log, 'running inference', err);
   }
 });
 
@@ -1254,8 +1257,7 @@ Requirements:
       },
     });
   } catch (err) {
-    console.error('[AnA Cortex] Section generation failed:', err);
-    res.status(500).json({ success: false, error: String(err) });
+    return serverError(res, log, 'generating the section', err);
   }
 });
 

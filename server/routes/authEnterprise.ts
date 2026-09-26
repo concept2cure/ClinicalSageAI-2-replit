@@ -40,6 +40,7 @@ import * as emailOtpService from '../services/emailOtpService';
 import { sendLoginOtpEmail } from '../services/emailService';
 import * as mfaService from '../services/mfaService';
 import { mfaEnrolmentOf } from '../services/mfa-enrolment';
+import { padUnknownEmailTiming } from '../services/login-timing-pad';
 
 const router = Router();
 // SECURITY FIX: isDev variable and devUser removed — no more dev-mode auth bypasses.
@@ -270,6 +271,10 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
       .limit(1);
 
     if (!userResult.length) {
+      // The same bcrypt cost a wrong password pays, so the response time does
+      // not say whether the e-mail is enrolled (audit IAM-18 item 8; the main
+      // door pays it through the same module).
+      await padUnknownEmailTiming(password);
       await recordAuthEvent({
         action: 'user_login',
         email: normalizedEmail,
@@ -340,11 +345,16 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
       });
     }
 
-    // Verify password using bcrypt
+    // Verify password using bcrypt. An account with no stored password
+    // (provisioned, never set) pays the comparison an unknown e-mail pays, so
+    // it is not told apart by timing either (IAM-18 item 8).
     const bcrypt = await import('bcryptjs');
-    const passwordValid = user.passwordHash
-      ? await bcrypt.compare(password, user.passwordHash)
-      : false;
+    let passwordValid = false;
+    if (user.passwordHash) {
+      passwordValid = await bcrypt.compare(password, user.passwordHash);
+    } else {
+      await padUnknownEmailTiming(password);
+    }
 
     if (!passwordValid) {
       // Record failed attempt
@@ -520,11 +530,23 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
       return res.status(403).json({ error: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE });
     }
 
-    // Try email OTP first, then fall back to TOTP
-    let isValid = await emailOtpService.verifyEmailOtp(userId, code);
+    // The factor this account signs in with (mfa-enrolment.ts), read before any
+    // code is tried. An account with an authenticator never completes sign-in
+    // with an emailed code: the emailed code is the factor of accounts WITHOUT
+    // one, the rule /verify-password applies when it decides whether to mail
+    // one (audit IAM-08; P1-2 on routes/auth.ts, P1-38 here). Until 2026-09-26
+    // this door tried the emailed code first for every account.
+    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    const authenticatorAccount = mfaEnrolmentOf(user ?? {}).signInFactor === 'totp';
+    let isValid = false;
     let verifiedMethod: 'email' | 'totp' | 'backup_code' = 'email';
 
+    if (!authenticatorAccount) {
+      isValid = await emailOtpService.verifyEmailOtp(userId, code);
+    }
+
     if (!isValid) {
+      // The authenticator, or one of the recovery codes the enrolment issued.
       // One call that verifies AND consumes the code, and says which method did.
       // It was a non-consuming detectVerificationMethod followed by verifyToken:
       // a second, independent verification of the same code (removed 2026-09-23).
@@ -556,10 +578,9 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
     // MFA verified — issue full token with actual role
     const mfaOrgId = decoded.organizationId ? parseInt(decoded.organizationId) : null;
 
-    // Parallel: fetch role, user details, and org name concurrently
-    const [mfaActualRole, [mfaUserData], mfaOrgResult] = await Promise.all([
+    // Parallel: fetch role and org name concurrently (the user row was read above).
+    const [mfaActualRole, mfaOrgResult] = await Promise.all([
       mfaOrgId ? lookupOrgRole(userId, mfaOrgId) : Promise.resolve('user'),
-      db.select().from(users).where(eq(users.id, userId)).limit(1),
       mfaOrgId
         ? db
             .select({ name: organizations.name, settings: organizations.settings })
@@ -568,7 +589,6 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
             .limit(1)
         : Promise.resolve([]),
     ]);
-    const user = mfaUserData;
     const mfaVerifyOrgName = mfaOrgResult[0]?.name || 'Organization';
 
     // The session's id, start and idle window, registered against the

@@ -1,0 +1,414 @@
+# red: mcp-runtime-propose-only.test.ts against the UNCHANGED server/mcp/tools/runtime.ts at HEAD 7fbe51c5 (a registered write tool with a mock handler that must not be called)
+# command: NODE_OPTIONS=--max-old-space-size=1536 npx vitest run server/mcp/__tests__/mcp-runtime-propose-only.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/mcp/__tests__/mcp-runtime-propose-only.test.ts
+{
+  "timestamp": "2026-09-26T13:19:59.957Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T13:19:59.959Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/mcp/__tests__/mcp-runtime-propose-only.test.ts
+{
+  "timestamp": "2026-09-26T13:19:59.959Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/mcp/__tests__/mcp-runtime-propose-only.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/mcp/__tests__/mcp-runtime-propose-only.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/mcp/__tests__/mcp-runtime-propose-only.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ × server/mcp/__tests__/mcp-runtime-propose-only.test.ts > callAnaHandler holds the propose-only partition on the MCP door > a propose-only tool is refused HUMAN_CONFIRMATION_REQUIRED and the handler is not called 8ms
+   → expected 'ok' to be 'refused' // Object.is equality
+ × server/mcp/__tests__/mcp-runtime-propose-only.test.ts > callAnaHandler holds the propose-only partition on the MCP door > a refused-in-chat tool is refused REFUSED_IN_CHAT and the handler is not called 1ms
+   → expected 'ok' to be 'refused' // Object.is equality
+ × server/mcp/__tests__/mcp-runtime-propose-only.test.ts > callAnaHandler holds the propose-only partition on the MCP door > qms_change_transition: approved is refused; under_assessment is a proposal; both leave the handler uncalled 2ms
+   → expected false to be 'REFUSED_IN_CHAT' // Object.is equality
+ × server/mcp/__tests__/mcp-runtime-propose-only.test.ts > callAnaHandler holds the propose-only partition on the MCP door > a refusal is audited as a denial the way a scope denial is 1ms
+   → expected "vi.fn()" to be called 2 times, but got 0 times
+ ✓ server/mcp/__tests__/mcp-runtime-propose-only.test.ts > callAnaHandler holds the propose-only partition on the MCP door > a read reaches its handler with the caller’s tenant 2ms
+ ✓ server/mcp/__tests__/mcp-runtime-propose-only.test.ts > callAnaHandler holds the propose-only partition on the MCP door > a confirmed context reaches a propose-only handler — the flag nobody sets on this surface 0ms
+ × server/mcp/__tests__/mcp-runtime-propose-only.test.ts > callAnaHandler holds the propose-only partition on the MCP door > a refused act stays refused even with a confirmed context — a ceremony is not a chat confirmation 1ms
+   → expected false to be 'REFUSED_IN_CHAT' // Object.is equality
+ ✓ server/mcp/__tests__/mcp-runtime-propose-only.test.ts > runtime.ts reaches handlers only through getToolHandler (source pin) > one import of the executor, and only its lookup 1ms
+ × server/mcp/__tests__/mcp-runtime-propose-only.test.ts > runtime.ts reaches handlers only through getToolHandler (source pin) > classifies before it dispatches, through the registry helpers and no second list 1ms
+   → expected '/**\n * Tool runtime — the one wrappe…' to match /refusedInChatTool\(name, input\)/
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/mcp/__tests__/mcp-runtime-propose-only.test.ts > callAnaHandler holds the propose-only partition on the MCP door > a propose-only tool is refused HUMAN_CONFIRMATION_REQUIRED and the handler is not called
+AssertionError: expected 'ok' to be 'refused' // Object.is equality
+
+Expected: "refused"
+Received: "ok"
+
+ ❯ server/mcp/__tests__/mcp-runtime-propose-only.test.ts:46:26
+     44|   it('a propose-only tool is refused HUMAN_CONFIRMATION_REQUIRED and t…
+     45|     const outcome = await callAnaHandler('save_document_to_vault', { t…
+     46|     expect(outcome.kind).toBe('refused');
+       |                          ^
+     47|     expect(outcome.kind === 'refused' && outcome.reason).toBe('HUMAN_C…
+     48|     expect(outcome.kind === 'refused' && outcome.data?.data).toMatchOb…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/mcp/__tests__/mcp-runtime-propose-only.test.ts > callAnaHandler holds the propose-only partition on the MCP door > a refused-in-chat tool is refused REFUSED_IN_CHAT and the handler is not called
+AssertionError: expected 'ok' to be 'refused' // Object.is equality
+
+Expected: "refused"
+Received: "ok"
+
+ ❯ server/mcp/__tests__/mcp-runtime-propose-only.test.ts:58:26
+     56|   it('a refused-in-chat tool is refused REFUSED_IN_CHAT and the handle…
+     57|     const outcome = await callAnaHandler('retire_qms_document', { docu…
+     58|     expect(outcome.kind).toBe('refused');
+       |                          ^
+     59|     expect(outcome.kind === 'refused' && outcome.reason).toBe('REFUSED…
+     60|     expect(outcome.kind === 'refused' && outcome.data?.message).toMatc…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/mcp/__tests__/mcp-runtime-propose-only.test.ts > callAnaHandler holds the propose-only partition on the MCP door > qms_change_transition: approved is refused; under_assessment is a proposal; both leave the handler uncalled
+AssertionError: expected false to be 'REFUSED_IN_CHAT' // Object.is equality
+
+- Expected:
+"REFUSED_IN_CHAT"
+
++ Received:
+false
+
+ ❯ server/mcp/__tests__/mcp-runtime-propose-only.test.ts:66:58
+     64|   it('qms_change_transition: approved is refused; under_assessment is …
+     65|     const approve = await callAnaHandler('qms_change_transition', { ch…
+     66|     expect(approve.kind === 'refused' && approve.reason).toBe('REFUSED…
+       |                                                          ^
+     67|     const assess = await callAnaHandler('qms_change_transition', { cha…
+     68|     expect(assess.kind === 'refused' && assess.reason).toBe('HUMAN_CON…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/mcp/__tests__/mcp-runtime-propose-only.test.ts > callAnaHandler holds the propose-only partition on the MCP door > a refusal is audited as a denial the way a scope denial is
+AssertionError: expected "vi.fn()" to be called 2 times, but got 0 times
+ ❯ server/mcp/__tests__/mcp-runtime-propose-only.test.ts:75:34
+     73|     await callAnaHandler('approve_import', { import_job_id: 1, project…
+     74|     await callAnaHandler('save_document_to_vault', { title: 't' }, ctx…
+     75|     expect(auditState.logAction).toHaveBeenCalledTimes(2);
+       |                                  ^
+     76|     for (const [entry] of auditState.logAction.mock.calls as unknown a…
+     77|       expect(entry.action).toBe('mcp_governed_tool_call');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/mcp/__tests__/mcp-runtime-propose-only.test.ts > callAnaHandler holds the propose-only partition on the MCP door > a refused act stays refused even with a confirmed context — a ceremony is not a chat confirmation
+AssertionError: expected false to be 'REFUSED_IN_CHAT' // Object.is equality
+
+- Expected:
+"REFUSED_IN_CHAT"
+
++ Received:
+false
+
+ ❯ server/mcp/__tests__/mcp-runtime-propose-only.test.ts:104:58
+    102|     c.ana = { ...c.ana, humanConfirmed: true };
+    103|     const outcome = await callAnaHandler('retire_qms_document', { docu…
+    104|     expect(outcome.kind === 'refused' && outcome.reason).toBe('REFUSED…
+       |                                                          ^
+    105|     expect(handlerState.handler).not.toHaveBeenCalled();
+    106|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/mcp/__tests__/mcp-runtime-propose-only.test.ts > runtime.ts reaches handlers only through getToolHandler (source pin) > classifies before it dispatches, through the registry helpers and no second list
+AssertionError: expected '/**\n * Tool runtime — the one wrappe…' to match /refusedInChatTool\(name, input\)/
+
+- Expected:
+/refusedInChatTool\(name, input\)/
+
++ Received:
+"/**
+ * Tool runtime — the one wrapper every connector tool runs through.
+ *
+ * For each call it: checks the token's scope against the tool's declared
+ * scope; opens the tenant scope the platform's pool instrumentation requires
+ * (under RLS_ENFORCE=on a query with no scope fails closed); runs the tool;
+ * writes an audit row through the platform's audit service (tool name, org,
+ * user, client, outcome, duration); and renders the outcome as an MCP
+ * CallToolResult with both a short text summary and structuredContent.
+ *
+ * A refusal — no licence, no credentials, no API key, a service that says no —
+ * is returned VERBATIM as an error result. Nothing here turns a failure into
+ * an empty success.
+ */
+
+import type { z } from 'zod';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { CallToolResult, ToolAnnotations } from '@modelcontextprotocol/sdk/types.js';
+import { runWithTenantScope } from '../../db/tenantStore';
+import type { McpConfig, McpScope } from '../config';
+import { principalOf, type McpPrincipal } from '../auth/platform-token';
+
+export interface ToolRunContext {
+  principal: McpPrincipal;
+  config: McpConfig;
+  /** The shape AnA's registered handlers take (ToolContext in AnaToolExecutor). */
+  ana: { organizationId: number; userId: number; organizationUuid: string | null };
+}
+
+export type ToolOutcome =
+  | { kind: 'ok'; summary: string; data: Record<string, unknown> }
+  | { kind: 'refused'; reason: string; data?: Record<string, unknown> };
+
+export const ok = (summary: string, data: Record<string, unknown>): ToolOutcome => ({ kind: 'ok', summary, data });
+export const refused = (reason: string, data?: Record<string, unknown>): ToolOutcome => ({ kind: 'refused', reason, data });
+
+export interface ToolSpec<Shape extends z.ZodRawShape> {
+  name: string;
+  title: string;
+  description: string;
+  inputSchema: Shape;
+  annotations: Required<Pick<ToolAnnotations, 'readOnlyHint' | 'destructiveHint' | 'idempotentHint' | 'openWorldHint'>>;
+  scope: McpScope;
+  /** Part 11-relevant: the tool creates or changes a governed record. */
+  governed: boolean;
+  /** Which platform implementation the tool calls — documentation, not routing. */
+  implementation: string;
+  run(input: z.infer<z.ZodObject<Shape>>, ctx: ToolRunContext): Promise<ToolOutcome>;
+}
+
+export function defineTool<Shape extends z.ZodRawShape>(spec: ToolSpec<Shape>): ToolSpec<Shape> {
+  return spec;
+}
+
+export type AnyToolSpec = ToolSpec<z.ZodRawShape>;
+
+export function errorMessage(err: unknown): string {
+  if (err instanceof Error) {
+    const code = (err as { code?: unknown }).code;
+    return typeof code === 'string' ? `${err.message} (code ${code})` : err.message;
+  }
+  return String(err);
+}
+
+/**
+ * Parse what an AnA handler returned. Handlers return JSON strings; a plain
+ * string is carried as { text }. An `error` key is a refusal, verbatim.
+ */
+export function parseAnaResult(raw: string): ToolOutcome {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return ok(raw.slice(0, 400), { text: raw });
+  }
+  if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    const obj = parsed as Record<string, unknown>;
+    if (typeof obj.error === 'string') return refused(obj.error, obj);
+    if (obj.status === 'needs_parameters' || obj.status === 'needs_context') {
+      return refused(String(obj.message ?? obj.status), obj);
+    }
+    return ok('', obj);
+  }
+  return ok('', { value: parsed });
+}
+
+/** Call one of AnA's registered deterministic handlers with the caller's tenant. */
+export async function callAnaHandler(
+  name: string,
+  input: Record<string, unknown>,
+  ctx: ToolRunContext,
+): Promise<ToolOutcome> {
+  const { getToolHandler } = await import('../../services/ana/AnaToolExecutor');
+  const handler = getToolHandler(name);
+  if (!handler) return refused(`Platform tool \"${name}\" is not registered on this deployment.`);
+  const raw = await handler(input, ctx.ana);
+  return parseAnaResult(raw);
+}
+
+async function writeAudit(entry: {
+  principal: McpPrincipal;
+  tool: string;
+  governed: boolean;
+  outcome: 'ok' | 'refused' | 'denied' | 'failed';
+  durationMs: number;
+  detail?: string;
+}): Promise<boolean> {
+  try {
+    const { default: auditService } = await import('../../services/auditService');
+    const result = await auditService.logAction({
+      organizationId: entry.principal.organizationId,
+      userId: entry.principal.userId,
+      action: entry.governed ? 'mcp_governed_tool_call' : 'mcp_tool_call',
+      resourceType: 'mcp_tool',
+      resourceId: entry.tool,
+      details: {
+        tool: entry.tool,
+        organizationId: entry.principal.organizationId,
+        clientId: entry.principal.clientId,
+        tokenUse: entry.principal.tokenUse,
+        scopes: entry.principal.scopes,
+        outcome: entry.outcome,
+        durationMs: entry.durationMs,
+        ...(entry.detail ? { detail: entry.detail.slice(0, 500) } : {}),
+      },
+    });
+    // logAction resolves { persisted:false, error } rather than throwing when
+    // the row could not be written (for example when no tenant scope is
+    // active under RLS enforcement — the pool refuses the connection). That
+    // is an audit outage, and a caller must never learn \"ok\" from a governed
+    // tool whose record does not exist. Report it; the caller decides.
+    const persisted = (result as { persisted?: boolean } | undefined)?.persisted;
+    if (persisted === false) {
+      const { logger } = await import('../../utils/logger.js');
+      logger.error('[mcp] audit row not persisted for tool call', {
+        tool: entry.tool,
+        organizationId: entry.principal.organizationId,
+        error: (result as { error?: string }).error,
+      });
+      return false;
+    }
+    return true;
+  } catch (err) {
+    const { logger } = await import('../../utils/logger.js');
+    logger.error('[mcp] audit write threw for tool call', {
+      tool: entry.tool,
+      organizationId: entry.principal.organizationId,
+      error: errorMessage(err),
+    });
+    return false;
+  }
+}
+
+function render(outcome: ToolOutcome, tool: string): CallToolResult {
+  if (outcome.kind === 'refused') {
+    return {
+      isError: true,
+      content: [{ type: 'text', text: outcome.reason }],
+      structuredContent: { tool, refused: true, reason: outcome.reason, ...(outcome.data ?? {}) },
+    };
+  }
+  const summary = outcome.summary || `${tool} completed.`;
+  return {
+    content: [{ type: 'text', text: summary }],
+    structuredContent: { tool, ...outcome.data },
+  };
+}
+
+export function registerTool(server: McpServer, spec: AnyToolSpec, config: McpConfig): void {
+  server.registerTool(
+    spec.name,
+    {
+      title: spec.title,
+      description: spec.description,
+      inputSchema: spec.inputSchema,
+      annotations: { title: spec.title, ...spec.annotations },
+      _meta: { scope: spec.scope, governed: spec.governed, implementation: spec.implementation },
+    },
+    async (input: Record<string, unknown>, extra: { authInfo?: import('@modelcontextprotocol/sdk/server/auth/types.js').AuthInfo }) => {
+      const principal = principalOf(extra.authInfo);
+      if (!principal) {
+        return render(refused('No authenticated principal on this call; the bearer token did not resolve to a user and organisation.'), spec.name);
+      }
+      const started = Date.now();
+      // Everything below — the scope check's audit row, the tool itself and
+      // its audit row — runs inside ONE tenant scope. The audit service reaches
+      // the pool through the same tenant-scoped instrumentation as every other
+      // write, and under RLS_ENFORCE=on that pool refuses a connection with no
+      // scope; an audit write placed outside the scope was silently dropped.
+      return runWithTenantScope(
+        {
+          tenantId: String(principal.organizationId),
+          orgUuid: principal.organizationUuid,
+          role: principal.role,
+          source: 'request',
+          caller: `mcp:${spec.name}`,
+        },
+        async () => {
+          if (!principal.scopes.includes(spec.scope)) {
+            const reason = `Insufficient scope: ${spec.name} requires ${spec.scope}; this token carries [${principal.scopes.join(' ')}].`;
+            await writeAudit({ principal, tool: spec.name, governed: spec.governed, outcome: 'denied', durationMs: 0, detail: reason });
+            return render(refused(reason), spec.name);
+          }
+          const ctx: ToolRunContext = {
+            principal,
+            config,
+            ana: { organizationId: principal.organizationId, userId: principal.userId, organizationUuid: principal.organizationUuid },
+          };
+          let outcome: ToolOutcome;
+          let audited: 'ok' | 'refused' | 'failed' = 'ok';
+          try {
+            outcome = await spec.run(input, ctx);
+            if (outcome.kind === 'refused') audited = 'refused';
+          } catch (err) {
+            audited = 'failed';
+            outcome = refused(`${spec.name} failed: ${errorMessage(err)}`);
+          }
+          const recorded = await writeAudit({
+            principal,
+            tool: spec.name,
+            governed: spec.governed,
+            outcome: audited,
+            durationMs: Date.now() - started,
+            detail: outcome.kind === 'refused' ? outcome.reason : undefined,
+          });
+          if (!recorded && spec.governed && outcome.kind !== 'refused') {
+            // The action ran; its Part 11 record did not. Say exactly that
+            // rather than \"ok\": the data is returned so nothing is hidden, and
+            // the result is flagged so the client does not treat it as clean.
+            return {
+              isError: true,
+              content: [
+                {
+                  type: 'text',
+                  text: `${spec.name} executed, but its audit record could not be written. Treat this result as unrecorded until the audit service is repaired; the platform logged the failure.`,
+                },
+              ],
+              structuredContent: { tool: spec.name, auditRecorded: false, ...outcome.data },
+            };
+          }
+          return render(outcome, spec.name);
+        },
+      );
+    },
+  );
+}
+"
+
+ ❯ server/mcp/__tests__/mcp-runtime-propose-only.test.ts:120:17
+    118|
+    119|   it('classifies before it dispatches, through the registry helpers an…
+    120|     expect(src).toMatch(/refusedInChatTool\(name, input\)/);
+       |                 ^
+    121|     expect(src).toMatch(/isProposeOnlyTool\(name\)/);
+    122|     expect(src).toMatch(/humanConfirmed !== true/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 3 passed (9)
+   Start at  13:19:57
+   Duration  2.29s (transform 1.06s, setup 96ms, import 1.85s, tests 21ms, environment 0ms)
+
+exit=1

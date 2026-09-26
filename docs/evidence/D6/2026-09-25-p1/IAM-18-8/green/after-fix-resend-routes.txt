@@ -1,0 +1,21 @@
+# HEAD 7fbe51c5 + this change (uncommitted), 2026-09-26T13:17Z
+$ NODE_OPTIONS=--max-old-space-size=1536 npx vitest run server/routes/__tests__/auth-mfa-challenge-factors.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > redeems a recovery code through the login verifier (the login screen's "Use a recovery code") 88ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > never completes an authenticator account's sign-in with an emailed code 5ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > still verifies an emailed code for an account without an authenticator 5ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/resend > mints no emailed code for an authenticator account (409, names the authenticator and the recovery codes) 4ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/resend > re-issues a code for an account without an authenticator through the capped re-issue, never a fresh challenge 4ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/resend > refuses a challenge that has had its limit of codes: 429 MFA_RESEND_LIMIT, no mail, one audit row 5ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/login for a known account > control: issues a fresh challenge through createEmailOtp, never the capped re-issue, so the count of codes starts again with the password 19ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/login with an unknown e-mail > pays the bcrypt comparison a wrong password pays, so the answer time does not say the e-mail is unknown 744ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  13:17:56
+   Duration  3.08s (transform 1.00s, setup 85ms, import 1.79s, tests 880ms, environment 0ms)
+
+exit=0

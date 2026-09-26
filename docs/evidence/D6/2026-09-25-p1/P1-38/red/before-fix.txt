@@ -1,0 +1,906 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+stdout | server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > a sign-in beyond the limit ends the oldest session: its next request and its refresh are refused, the others are not
+    "account": "42",
+    "limit": 2,
+    "ended": 1
+  }
+stdout | server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > the newest session is never the one that ends, whatever the limit
+    "account": "42",
+    "limit": 1,
+    "ended": 1
+  }
+stdout | server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > registerSession names the sessions it ended; a signed-out session frees its slot; accounts do not count against one another
+    "account": "42",
+    "limit": 1,
+    "ended": 1
+  }
+stdout | server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > a superseded session stays superseded for the lifetime it could still be presented in, and is not revived by being asked
+    "account": "42",
+    "limit": 1,
+    "ended": 1
+  }
+ ✓ server/services/__tests__/session-inactivity.test.ts > the idle window > is the tenant setting in minutes, clamped to [1 min, 24 h], and the default when unset or malformed 3ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the idle window > read back from a token is the idl claim, else the default 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the session claims > a new session has a fresh id, starts now and carries the tenant window 2ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the session claims > a continued session keeps its id, start and window; a token from before sessions had ids starts at its own issue 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the session claims > keys activity by the session id, else by the token itself 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > sessionInactivityReason — an access token > a session never seen is measured from its token: within the window it is admitted and recorded, past it it is idle 2ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > sessionInactivityReason — an access token > each admitted request extends the window; a gap longer than the window ends the session 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > sessionInactivityReason — an access token > a check that is not the user acting does not extend the window 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > sessionInactivityReason — an access token > an idle session is not touched by being asked 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > sessionInactivityReason — an access token > a session older than the lifetime is over however active 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > sessionInactivityReason — an access token > tokens minted before sessions had ids are independent of one another 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > refreshInactivityReason — a refresh token > reads the session's activity and never records any 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > refreshInactivityReason — a refresh token > a session with no record is measured from its start; a lifetime is a lifetime 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > refreshInactivityReason — a refresh token > a refresh token from before sessions had ids is checked for its lifetime only 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > is the tenant setting, clamped to [1, 20], and 5 when unset or malformed 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > a sign-in beyond the limit ends the oldest session: its next request and its refresh are refused, the others are not 3ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > the newest session is never the one that ends, whatever the limit 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > registerSession names the sessions it ended; a signed-out session frees its slot; accounts do not count against one another 2ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > a session past its lifetime holds no slot 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > a superseded session stays superseded for the lifetime it could still be presented in, and is not revived by being asked 1ms
+ × server/services/__tests__/session-inactivity.test.ts > openConnectorSession — the connector access token (P1-38) > opens a session whose idle window is the token TTL held inside the platform window, starting now, with a fresh id 13ms
+   → openConnectorSession is not a function
+ × server/services/__tests__/session-inactivity.test.ts > openConnectorSession — the connector access token (P1-38) > the lifetime rule is the platform rule and the token is idle past its TTL 1ms
+   → openConnectorSession is not a function
+ × server/services/__tests__/session-inactivity.test.ts > openConnectorSession — the connector access token (P1-38) > connector sessions and browser sessions hold slots in separate pools of the same account, each at the tenant limit 1ms
+   → openConnectorSession is not a function
+ × server/services/__tests__/session-inactivity.test.ts > openConnectorSession — the connector access token (P1-38) > a connector session found over frees its own pool's slot 0ms
+   → openConnectorSession is not a function
+ ✓ server/routes/__tests__/session-open-contract.test.ts > sign-in mints register their session > no route mints session claims without registering them 3ms
+ × server/routes/__tests__/session-open-contract.test.ts > sign-in mints register their session > each sign-in door opens its session through openSession 5ms
+   → expected 0 to be greater than or equal to 1
+ ✓ server/routes/__tests__/session-open-contract.test.ts > every access token the server signs carries a session (P1-38) > finds the mints (the scan is not empty and every payload is a literal it can read) 1ms
+ × server/routes/__tests__/session-open-contract.test.ts > every access token the server signs carries a session (P1-38) > a type:access payload spreads the session openSession, openConnectorSession or continuedSessionClaims gave it 8ms
+   → access tokens minted outside openSession / openConnectorSession: no slot, no idle window, no lifetime: expected [ 'auth.ts:416', …(2) ] to deeply equal []
+ × server/routes/__tests__/session-open-contract.test.ts > every access token the server signs carries a session (P1-38) > a file that mints an access token gets its session from the service, never from newSessionClaims 1ms
+   → auth.ts mints an access token without opening or continuing a session: expected '/**\n * Authentication and Authorizat…' to match /\b(?:openSession|openConnectorSession…/
+stderr | server/routes/__tests__/setup.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | server/routes/__tests__/setup.test.ts
+ × server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > an authenticator account is never verified by an emailed code: the emailed-code verifier is not called, and a wrong authenticator code is 401 59ms
+   → the emailed code was tried before the enrolment was read: expected "vi.fn()" to not be called at all, but actually been called 1 times
+Received:
+  1st vi.fn() call:
+    Array [
+      7,
+      "123456",
+    ]
+Number of calls: 1
+ × server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > an authenticator account signs in with its authenticator code, recorded as totp 11ms
+   → expected { success: true, …(3) } to match object { success: true, mfaMethod: 'totp' }
+(10 matching properties omitted from actual)
+ × server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > an authenticator account signs in with a recovery code, recorded as backup_code 6ms
+   → expected { success: true, …(3) } to match object { success: true, …(1) }
+(10 matching properties omitted from actual)
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > control: an account without an authenticator is verified by its emailed code, recorded as email 5ms
+ × server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > control: an account without an authenticator whose emailed code is wrong is 401, after the authenticator verifier had its turn 7ms
+   → expected 200 to be 401 // Object.is equality
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > GET /status reports not-initialized on an empty install 21ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > GET /status reports initialized once a user exists 6ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize rejects a missing organization name 17ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize rejects a weak password 8ms
+stdout | server/mcp/__tests__/platform-token-session.test.ts
+    "mode": "on"
+  }
+stderr | server/mcp/__tests__/platform-token-session.test.ts
+stderr | server/mcp/__tests__/platform-token-session.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+stdout | server/mcp/__tests__/platform-token-session.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+stderr | server/mcp/__tests__/platform-token-session.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+ × server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the token carries the session claims: a fresh id, its start, and the token TTL as its idle window 12ms
+   → the connector token carries no session id: it was minted outside openConnectorSession: expected 'undefined' to be 'string' // Object.is equality
+ × server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the idle window is the TTL held inside the platform window [1 min, 24 h] 2ms
+   → expected undefined to be 60 // Object.is equality
+ × server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the lifetime rule is the platform rule: the session is over ABSOLUTE_SESSION_HOURS after its start, whatever the TTL 2ms
+   → expected false to be true // Object.is equality
+ × server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > connector sessions hold slots in their own pool: beyond the limit the oldest connector token is superseded, the browser session is not 5ms
+   → the sixth connector token did not end the first: expected null to be 'superseded' // Object.is equality
+ × server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the limit is the membership organisation's maxConcurrentSessions, as at sign-in 1ms
+   → expected null to be 'superseded' // Object.is equality
+stderr | server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize creates the first org + admin on an empty install
+    "organizationId": 1,
+    "attempted": 19,
+    "granted": 0,
+    "failed": 19,
+    "failedModules": [
+      "projects",
+      "program-journey",
+      "filings-catalog",
+      "tasks",
+      "vault",
+      "artifacts-center",
+      "document-authoring",
+      "template-library",
+      "review",
+      "protocol-dev",
+      "submission-center",
+      "dossier-map",
+      "ectd-compile",
+      "ectd-coauthor",
+      "ectd-publishing",
+      "gateway-transmittals",
+      "dispatch-readiness",
+      "quality",
+      "qmp"
+    ],
+    "errors": [
+      "[vitest] No \"query\" export is defined on the \"../../db\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+    ],
+    "scope": null,
+    "remediation": "npm run ops:provision-launch-modules -- --org 1"
+  }
+stdout | server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize creates the first org + admin on an empty install
+  }
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize creates the first org + admin on an empty install 428ms
+stderr | server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize mints the bootstrap token as a registered session: openSession, and sid / sst / idl in the token (P1-38)
+    "organizationId": 1,
+    "attempted": 19,
+    "granted": 0,
+    "failed": 19,
+    "failedModules": [
+      "projects",
+      "program-journey",
+      "filings-catalog",
+      "tasks",
+      "vault",
+      "artifacts-center",
+      "document-authoring",
+      "template-library",
+      "review",
+      "protocol-dev",
+      "submission-center",
+      "dossier-map",
+      "ectd-compile",
+      "ectd-coauthor",
+      "ectd-publishing",
+      "gateway-transmittals",
+      "dispatch-readiness",
+      "quality",
+      "qmp"
+    ],
+    "errors": [
+      "[vitest] No \"query\" export is defined on the \"../../db\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+    ],
+    "scope": null,
+    "remediation": "npm run ops:provision-launch-modules -- --org 1"
+  }
+stdout | server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize mints the bootstrap token as a registered session: openSession, and sid / sst / idl in the token (P1-38)
+  }
+ × server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize mints the bootstrap token as a registered session: openSession, and sid / sst / idl in the token (P1-38) 360ms
+   → the setup token carries no session id: it was minted outside openSession: expected 'undefined' to be 'string' // Object.is equality
+stderr | server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize writes the org, its admin, and the org's own workspace under the org's tenant, in one transaction
+    "organizationId": 1,
+    "attempted": 19,
+    "granted": 0,
+    "failed": 19,
+    "failedModules": [
+      "projects",
+      "program-journey",
+      "filings-catalog",
+      "tasks",
+      "vault",
+      "artifacts-center",
+      "document-authoring",
+      "template-library",
+      "review",
+      "protocol-dev",
+      "submission-center",
+      "dossier-map",
+      "ectd-compile",
+      "ectd-coauthor",
+      "ectd-publishing",
+      "gateway-transmittals",
+      "dispatch-readiness",
+      "quality",
+      "qmp"
+    ],
+    "errors": [
+      "[vitest] No \"query\" export is defined on the \"../../db\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+    ],
+    "scope": null,
+    "remediation": "npm run ops:provision-launch-modules -- --org 1"
+  }
+stdout | server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize writes the org, its admin, and the org's own workspace under the org's tenant, in one transaction
+  }
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize writes the org, its admin, and the org's own workspace under the org's tenant, in one transaction 351ms
+stderr | server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize fails closed when the workspace write is refused — no 201, no token
+  }
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize fails closed when the workspace write is refused — no 201, no token 363ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize is self-closing once a user exists 6ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the token carries the session claims: a fresh id, its start, and the token TTL as its idle window
+AssertionError: the connector token carries no session id: it was minted outside openConnectorSession: expected 'undefined' to be 'string' // Object.is equality
+Expected: "string"
+Received: "undefined"
+ ❯ server/mcp/__tests__/platform-token-session.test.ts:60:122
+     58|     expect(a.claims.type).toBe('access');
+     59|     expect(a.claims.token_use).toBe(MCP_TOKEN_USE);
+     60|     expect(typeof a.claims.sid, 'the connector token carries no sessio…
+       |                                                                                                                          ^
+     61|     expect(a.claims.sid).not.toBe(b.claims.sid);
+     62|     expect(a.claims.sst).toBeGreaterThanOrEqual(before);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/17]⎯
+ FAIL  server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the idle window is the TTL held inside the platform window [1 min, 24 h]
+AssertionError: expected undefined to be 60 // Object.is equality
+- Expected:
+60
++ Received:
+undefined
+ ❯ server/mcp/__tests__/platform-token-session.test.ts:68:41
+     66|
+     67|   it('the idle window is the TTL held inside the platform window [1 mi…
+     68|     expect((await mint(30)).claims.idl).toBe(MIN_IDLE_MINUTES * 60);
+       |                                         ^
+     69|     expect((await mint(3 * 24 * 3600)).claims.idl).toBe(MAX_IDLE_MINUT…
+     70|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/17]⎯
+ FAIL  server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the lifetime rule is the platform rule: the session is over ABSOLUTE_SESSION_HOURS after its start, whatever the TTL
+AssertionError: expected false to be true // Object.is equality
+- Expected
++ Received
+- true
++ false
+ ❯ server/mcp/__tests__/platform-token-session.test.ts:76:98
+     74|     const start = (claims.sst as number) * 1000;
+     75|     expect(sessionLifetimeExceeded(claims, start + ABSOLUTE_SESSION_HO…
+     76|     expect(sessionLifetimeExceeded(claims, start + ABSOLUTE_SESSION_HO…
+       |                                                                                                  ^
+     77|   });
+     78|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/17]⎯
+ FAIL  server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > connector sessions hold slots in their own pool: beyond the limit the oldest connector token is superseded, the browser session is not
+AssertionError: the sixth connector token did not end the first: expected null to be 'superseded' // Object.is equality
+- Expected:
+"superseded"
++ Received:
+null
+ ❯ server/mcp/__tests__/platform-token-session.test.ts:85:121
+     83|     expect(await sessionInactivityReason(first.token, first.claims)).t…
+     84|     const beyond = await mint(3600);
+     85|     expect(await sessionInactivityReason(first.token, first.claims), '…
+       |                                                                                                                         ^
+     86|     expect(await sessionInactivityReason(beyond.token, beyond.claims))…
+     87|     expect(await sessionInactivityReason('browser-token', { ...browser…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/17]⎯
+ FAIL  server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the limit is the membership organisation's maxConcurrentSessions, as at sign-in
+AssertionError: expected null to be 'superseded' // Object.is equality
+- Expected:
+"superseded"
++ Received:
+null
+ ❯ server/mcp/__tests__/platform-token-session.test.ts:94:70
+     92|     const first = await mint(3600, settings);
+     93|     await mint(3600, settings);
+     94|     expect(await sessionInactivityReason(first.token, first.claims)).t…
+       |                                                                      ^
+     95|   });
+     96| });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/17]⎯
+ FAIL  server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > an authenticator account is never verified by an emailed code: the emailed-code verifier is not called, and a wrong authenticator code is 401
+AssertionError: the emailed code was tried before the enrolment was read: expected "vi.fn()" to not be called at all, but actually been called 1 times
+Received:
+  1st vi.fn() call:
+    Array [
+      7,
+      "123456",
+    ]
+Number of calls: 1
+ ❯ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts:132:92
+    130|     // Whatever row might be waiting in email_otps would verify — the …
+    131|     const r = await verify('123456');
+    132|     expect(verifyEmailOtp, 'the emailed code was tried before the enro…
+       |                                                                                            ^
+    133|     expect(r.status, 'an authenticator account completed sign-in with …
+    134|     expect(r.body).toMatchObject({ error: 'INVALID_MFA_CODE' });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/17]⎯
+ FAIL  server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > an authenticator account signs in with its authenticator code, recorded as totp
+AssertionError: expected { success: true, …(3) } to match object { success: true, mfaMethod: 'totp' }
+(10 matching properties omitted from actual)
+- Expected
++ Received
+  {
+-   "mfaMethod": "totp",
++   "mfaMethod": "email",
+    "success": true,
+  }
+ ❯ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts:144:20
+    142|     const r = await verify('654321');
+    143|     expect(r.status).toBe(200);
+    144|     expect(r.body).toMatchObject({ success: true, mfaMethod: 'totp' });
+       |                    ^
+    145|     expect(typeof r.body.token).toBe('string');
+    146|     expect(verifyEmailOtp).not.toHaveBeenCalled();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/17]⎯
+ FAIL  server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > an authenticator account signs in with a recovery code, recorded as backup_code
+AssertionError: expected { success: true, …(3) } to match object { success: true, …(1) }
+(10 matching properties omitted from actual)
+- Expected
++ Received
+  {
+-   "mfaMethod": "backup_code",
++   "mfaMethod": "email",
+    "success": true,
+  }
+ ❯ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts:153:20
+    151|     const r = await verify('ABCD-EF01');
+    152|     expect(r.status).toBe(200);
+    153|     expect(r.body).toMatchObject({ success: true, mfaMethod: 'backup_c…
+       |                    ^
+    154|     expect(verifyEmailOtp).not.toHaveBeenCalled();
+    155|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/17]⎯
+ FAIL  server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > control: an account without an authenticator whose emailed code is wrong is 401, after the authenticator verifier had its turn
+AssertionError: expected 200 to be 401 // Object.is equality
+- Expected
++ Received
+- 401
++ 200
+ ❯ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts:170:22
+    168|     verifyEmailOtp.mockResolvedValueOnce(false);
+    169|     const r = await verify('000000');
+    170|     expect(r.status).toBe(401);
+       |                      ^
+    171|     expect(r.body).toMatchObject({ error: 'INVALID_MFA_CODE' });
+    172|     expect(mfa.verifyLoginSecondFactor).toHaveBeenCalledWith(7, '00000…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/17]⎯
+ FAIL  server/routes/__tests__/session-open-contract.test.ts > sign-in mints register their session > each sign-in door opens its session through openSession
+AssertionError: expected 0 to be greater than or equal to 1
+ ❯ server/routes/__tests__/session-open-contract.test.ts:97:69
+     95|     expect(read('sso.ts').match(/\bopenSession\(/g)?.length ?? 0).toBe…
+     96|     // setup.ts: the first-run bootstrap token.
+     97|     expect(read('setup.ts').match(/\bopenSession\(/g)?.length ?? 0).to…
+       |                                                                     ^
+     98|   });
+     99| });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/17]⎯
+ FAIL  server/routes/__tests__/session-open-contract.test.ts > every access token the server signs carries a session (P1-38) > a type:access payload spreads the session openSession, openConnectorSession or continuedSessionClaims gave it
+AssertionError: access tokens minted outside openSession / openConnectorSession: no slot, no idle window, no lifetime: expected [ 'auth.ts:416', …(2) ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   "auth.ts:416",
++   "mcp/auth/platform-token.ts:157",
++   "routes/setup.ts:147",
++ ]
+ ❯ server/routes/__tests__/session-open-contract.test.ts:121:133
+    119|     expect(access.length).toBeGreaterThanOrEqual(12);
+    120|     const bare = access.filter(m => !SESSION_SPREAD.test(m.payload as …
+    121|     expect(bare.map(name), 'access tokens minted outside openSession /…
+       |                                                                                                                                     ^
+    122|   });
+    123|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/17]⎯
+ FAIL  server/routes/__tests__/session-open-contract.test.ts > every access token the server signs carries a session (P1-38) > a file that mints an access token gets its session from the service, never from newSessionClaims
+AssertionError: auth.ts mints an access token without opening or continuing a session: expected '/**\n * Authentication and Authorizat…' to match /\b(?:openSession|openConnectorSession…/
+- Expected:
+/\b(?:openSession|openConnectorSession|continuedSessionClaims)\(/
++ Received:
+"/**
+ * Authentication and Authorization Middleware
+ *
+ * This file contains middleware functions for authentication and authorization.
+ *
+ */
+import { Request, Response, NextFunction } from 'express';
+import { and, asc, eq } from 'drizzle-orm';
+import { organizationUsers, users } from '../shared/schema';
+import { createScopedLogger } from './utils/logger';
+import { db } from './db';
+import jwt from 'jsonwebtoken';
+import { config } from './config/environment';
+import { verifyJwtWithRotation } from './utils/jwtVerify';
+import { isTokenRevoked, revokeToken } from './services/token-revocation';
+import { sessionEndCodeOf, sessionEndMessageOf, sessionInactivityReason } from './services/session-inactivity';
+import {
+  ACCOUNT_INACTIVE_MESSAGE,
+  issuedAtOfClaims,
+  readAccountStandingBeforeTenant,
+  sessionPredatesPasswordChange,
+  type AccountStanding,
+} from './services/account-standing';
+import { requireAccessTokenReason } from './middleware/tokenType';
+import { runWithPreAuthScope } from './db/tenantStore';
+import { establishRequestTenantScope } from './middleware/establishRequestTenantScope';
+import { enforceOrgMembership } from './middleware/orgMembership';
+import { enforceTenantLifecycle } from './middleware/tenantLifecycleGuard';
+import { enforceStorageQuota } from './middleware/storageQuotaGuard';
+const logger = createScopedLogger('auth');
+const parseFiniteInt = (value: unknown): number | null => {
+  if (typeof value === 'number' && Number.isFinite(value)) return Math.trunc(value);
+  if (typeof value === 'string' && value.trim() !== '') {
+    // Only a string that is ENTIRELY an integer may parse. Number.parseInt is a
+    // prefix parser — parseInt('3f1c2a10-0000-…', 10) === 3 — so a UUID JWT
+    // subject silently became a valid-looking integer user id (here, user 3, a
+    // DIFFERENT real user). enforceOrgMembership then re-checked membership for
+    // the wrong user, and on the authoring surface (UUID subjects) 503'd every
+    // request when the integer-keyed organization_users had no such row. A
+    // non-integer subject must yield null so the caller treats it as \"no numeric
+    // identity\", never as a truncated one. See ledger C-21.
+    if (!/^[+-]?\\d+$/.test(value.trim())) return null;
+    const parsed = Number.parseInt(value.trim(), 10);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
+const extractBearerToken = (authorizationHeader?: string): string | null => {
+  if (!authorizationHeader) return null;
+  const [scheme, token] = authorizationHeader.trim().split(/\\s+/, 2);
+  if (!scheme || scheme.toLowerCase() !== 'bearer') return null;
+  if (!token || token.trim() === '') return null;
+  return token.trim();
+};
+/**
+ * Canonical, fully-resolved identity for an authenticated request.
+ *
+ * The legacy request fields (`req.userId`, `req.user`, `req.tenantContext`)
+ * are typed `number | string` because several middlewares share the same
+ * global augmentation, and they historically mixed parsed numbers with raw
+ * token strings — the ambiguity behind the C-21 UUID-truncation defect.
+ * `req.identity` is the unambiguous shape: every field has exactly one type,
+ * the raw token subject is preserved as provenance, and the resolved legacy
+ * integer id is separate from it. New code should read identity from here.
+ */
+export interface AuthenticatedIdentity {
+  /** The raw, untranslated subject claim from the verified token. */
+  externalSubject: string;
+  /** Which authentication surface issued the token (e.g. 'local-jwt', 'saml'). */
+  provider: string;
+  /** Resolved integer user id in the platform's membership model. */
+  legacyUserId: number;
+  /** Organization the request is scoped to (verified membership). */
+  organizationId: number;
+  /** Role from the organization membership row — never from the token. */
+  role: string;
+  email: string | null;
+// Augment Express Request type to include user information
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id?: number | string;
+        userId?: number | string;
+        email?: string;
+        role?: string;
+        roles?: string[];
+        organizationId?: number | string;
+        /** organizations.uuid — the tenant key for every non-public schema.
+         *  Set from a verified membership row (middleware/orgMembership.ts).
+         *  Declared in all five copies of this block because TypeScript
+         *  requires merged Request declarations to be identical. */
+        organizationUuid?: string | null;
+        permissions?: string[];
+        tenantId?: number | string;
+        industryMode?: string | null;
+      };
+      tenantContext?: {
+        organizationId?: number | string | null;
+        organizationUuid?: string | null;
+        clientWorkspaceId?: number | string | null;
+        module?: string | null;
+        userId?: number | string;
+        role?: string | null;
+      };
+      userId?: number | string;
+      tenantId?: number | string;
+      userRole?: string;
+      userEmail?: string;
+      identity?: AuthenticatedIdentity;
+    }
+  }
+/**
+ * VSR-001 F-29: an account taken out of use (suspended by an administrator,
+ * deprovisioned by the identity provider) opens nothing, whenever its token was
+ * issued. Read on every request, so it takes effect on the account's next one;
+ * nothing read it before, and such an account kept its sessions for their whole
+ * life.
+ *
+ * Security audit 2026-09-24, IAM-04: and so is the account's last password
+ * change, read in the same statement as the standing (no extra round trip). A
+ * reset or change stamps users.password_changed_at; a token issued before the
+ * stamp is a session the holder meant to end, and is answered like a revoked
+ * one. Same rule as authenticateToken (middleware/auth.ts) and verifyLiveToken.
+ *
+ * Answers the request and returns true when it refused: 401 ACCOUNT_INACTIVE
+ * for an account out of use, 401 SESSION_ENDED for a session the password
+ * change ended, 503 when the standing cannot be read (never a pass).
+ */
+async function refusedAccountOrSessionOutOfUse(userId: number, claims: unknown, res: Response): Promise<boolean> {
+  let standing: AccountStanding;
+  try {
+    standing = await readAccountStandingBeforeTenant(userId);
+  } catch (err) {
+    logger.error('Account standing could not be read', err);
+    res.status(503).json({ error: 'The session could not be checked. Try again.', code: 'SESSION_UNCHECKED' });
+    return true;
+  }
+  if (!standing.active) {
+    res.status(401).json({ error: ACCOUNT_INACTIVE_MESSAGE, code: 'ACCOUNT_INACTIVE' });
+    return true;
+  }
+  if (sessionPredatesPasswordChange(issuedAtOfClaims(claims), standing.passwordChangedAtSeconds)) {
+    res.status(401).json({ error: 'This session has ended. Sign in again.', code: 'SESSION_ENDED' });
+    return true;
+  }
+  return false;
+/**
+ * Every way a signed, unexpired token's session can be over, in the order the
+ * main authenticator (middleware/auth.ts) answers them: signed out (AUTH-03),
+ * the account out of use or the password changed since (F-29, IAM-04), then
+ * idle past its window, past its lifetime or superseded (IAM-06, P1-1). The
+ * order is what the holder is told: a session a password change ended reads
+ * as ended, not as idle. When admitted, this request is recorded as the
+ * session's activity (services/session-inactivity.ts). Answers 401 (503 when
+ * the standing cannot be read) and returns true when it refused.
+ */
+async function refusedEndedSession(token: string, userId: number | null, claims: unknown, res: Response): Promise<boolean> {
+  if (await isTokenRevoked(token)) {
+    res.status(401).json({ error: 'This session has ended. Sign in again.', code: 'SESSION_ENDED' });
+    return true;
+  }
+  if (userId !== null && (await refusedAccountOrSessionOutOfUse(userId, claims, res))) return true;
+  const inactivity = await sessionInactivityReason(token, claims);
+  if (!inactivity) return false;
+  void revokeToken(token, inactivity);
+  res.status(401).json({ error: sessionEndMessageOf(inactivity), code: sessionEndCodeOf(inactivity) });
+  return true;
+/**
+ * Authentication middleware
+ * Validates Bearer JWT tokens only.
+ * Sets req.userId, req.userRole, req.userEmail, req.tenantId, req.tenantContext.
+ */
+export function authMiddleware(req: Request, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+  const token = extractBearerToken(authHeader);
+  if (!token) {
+    return res.status(401).json({ error: 'Bearer token required' });
+  }
+  const authenticate = async () => {
+    try {
+      const decoded = verifyJwtWithRotation<{
+        userId?: string;
+        email?: string;
+        organizationId?: string;
+        type?: string;
+        role?: string;
+        provider?: string;
+        mfaPending?: boolean;
+        /** Issued-at, whole seconds; jsonwebtoken stamps it on every token it signs. */
+        iat?: number;
+      }>(token);
+      // SECURITY: the access path requires an explicit `type: 'access'` claim.
+      // Refresh / MFA-challenge / MFA-partial tokens are rejected as before,
+      // but so is every unknown or absent token class — the expected class is
+      // positively asserted, not inferred from the absence of known-bad ones.
+      if (requireAccessTokenReason(decoded)) {
+        return res.status(401).json({ error: 'Token is not valid for this operation' });
+      }
+      if (!decoded.userId || !decoded.organizationId) {
+        return res.status(401).json({ error: 'Invalid token payload' });
+      }
+      const parsedUserId = parseFiniteInt(decoded.userId);
+      const parsedOrganizationId = parseFiniteInt(decoded.organizationId);
+      // AUTH-03, F-29, IAM-04 and IAM-06: a signed-out session, an account out
+      // of use, a session the password change ended, and an idle, out-of-time
+      // or superseded session open nothing, in that order.
+      if (await refusedEndedSession(token, parsedUserId, decoded, res)) return;
+      // This is the query that VERIFIES the token's tenant claim, so it cannot
+      // itself run inside that tenant's scope — the claim is untrusted until it
+      // returns. Pool instrumentation blocks unscoped queries once
+      // RLS_ENFORCE=on, and production accepts no other value, so without an
+      // explicit pre-auth scope this lookup was blocked and EVERY authenticated
+      // request failed with 401 \"Invalid or expired token\" while carrying a
+      // perfectly valid token.
+      //
+      // The scope grants no role and therefore no policy bypass; the query
+      // stays filtered by both userId and organizationId in its own WHERE
+      // clause. See runWithPreAuthScope.
+      const membership =
+        parsedUserId !== null && parsedOrganizationId !== null
+          ? // The callback MUST be async and MUST await inside the scope.
+            // Drizzle query builders are lazy thenables: returning one from a
+            // synchronous callback means the query does not start until the
+            // caller awaits it, which happens after run() has returned and the
+            // AsyncLocalStorage scope has already exited. Awaiting here starts
+            // the work inside the scope, so the continuation inherits it.
+            await runWithPreAuthScope('auth:verify-tenant-membership', async () =>
+              db
+                .select({ role: organizationUsers.role })
+                .from(organizationUsers)
+                .where(
+                  and(
+                    eq(organizationUsers.userId, parsedUserId),
+                    eq(organizationUsers.organizationId, parsedOrganizationId)
+                  )
+                )
+                .limit(1)
+            )
+          : [];
+      if (membership.length === 0 || parsedUserId === null || parsedOrganizationId === null) {
+        return res.status(401).json({ error: 'Invalid tenant membership' });
+      }
+      const resolvedRole = membership[0].role;
+      // Past the membership gate both ids are verified integers, so every
+      // legacy field gets ONE consistent representation (numbers, not a mix of
+      // parsed numbers and raw token strings). The raw subject survives on
+      // req.identity.externalSubject as provenance.
+      req.identity = {
+        externalSubject: String(decoded.userId),
+        provider: typeof decoded.provider === 'string' ? decoded.provider : 'local-jwt',
+        legacyUserId: parsedUserId,
+        organizationId: parsedOrganizationId,
+        role: resolvedRole,
+        email: decoded.email ?? null,
+      };
+      req.userId = parsedUserId;
+      req.userRole = resolvedRole;
+      req.userEmail = decoded.email;
+      req.tenantId = parsedOrganizationId;
+      req.user = {
+        id: parsedUserId,
+        userId: parsedUserId,
+        email: decoded.email,
+        role: resolvedRole,
+        organizationId: parsedOrganizationId,
+      };
+      req.tenantContext = {
+        organizationId: parsedOrganizationId,
+        userId: parsedUserId,
+        role: resolvedRole,
+      };
+      // Open the tenant scope (and attach a request-scoped DB client) for the
+      // rest of the request, rather than a bare next(). This is the global
+      // `/api` gate's authMiddleware, so this single line establishes the RLS
+      // scope for essentially every authenticated `/api` route — the fix for
+      // the fail-closed 500s catalogued in the RLS route-layer audit. Idempotent
+      // and honours the SYSTEM carve-outs; see establishRequestTenantScope.
+      //
+      // The tenant lifecycle guard runs after the scope exists (its posture
+      // lookup is a tenant-scoped query) and refuses suspended, inactive,
+      // past-due and pending-deletion organizations. See tenantLifecycleGuard.
+      //
+      // The storage quota guard runs LAST, and only on content-bearing writes.
+      // Order matters: a suspended tenant must be told it is suspended, not that
+      // it is out of disk. Mounting it here rather than on each upload route is
+      // deliberate — see storageQuotaGuard's note on why an optional parameter
+      // threaded through the upload helpers would have produced a quota enforced
+      // only on the routes someone remembered.
+      //
+      // enforceOrgMembership runs first, as on authenticateToken: the inline check
+      // above verifies the token's tenant claim, but only the canonical membership
+      // lookup resolves the organization's UUID (organizations.uuid) and puts it
+      // on req.user. It is then published on req.tenantContext as well, because
+      // this middleware rebuilt that object above without it — behind the
+      // authenticateToken gate it overwrote a context that had it — and routes
+      // read it from there: vault-ingest and the authoring router rebuild their
+      // scope from it after multer drops the async one, and the AI routes pass it
+      // on. The scope carries it into app.current_org_id, which the vault.*
+      // policies key on through identity.current_org_id(); without it they
+      // refused every write from the non-owner runtime role. Cached per user:org.
+      return enforceOrgMembership(req, res, () => {
+        req.tenantContext = {
+          ...req.tenantContext,
+          organizationUuid: req.user?.organizationUuid ?? null,
+        };
+        return establishRequestTenantScope(req, res, () =>
+          enforceTenantLifecycle(req, res, () => enforceStorageQuota(req, res, next))
+        );
+      });
+    } catch (error) {
+      logger.error('Authentication error', error);
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+  };
+  void authenticate();
+/**
+ * Require admin role middleware
+ * Ensures the user has an admin role
+ */
+export function requireAdminRole(req: Request, res: Response, next: NextFunction) {
+  if (!req.userRole || (req.userRole !== 'admin' && req.userRole !== 'super_admin')) {
+    return res.status(403).json({ error: 'Admin permissions required' });
+  }
+  next();
+/**
+ * Require super admin role middleware
+ * Ensures the user has a super admin role
+ */
+export function requireSuperAdminRole(req: Request, res: Response, next: NextFunction) {
+  if (!req.userRole || req.userRole !== 'super_admin') {
+    return res.status(403).json({ error: 'Super admin permissions required' });
+  }
+  next();
+/**
+ * Login function
+ * Authenticates user and returns JWT bearer token
+ */
+export async function login(email: string, password: string) {
+  try {
+    // CRIT-03 FIX: Removed hardcoded dev@example.com/password bypass.
+    // All logins now go through the database.
+    if (!db) {
+      throw new Error('Database connection not available');
+    }
+    // Find user by email
+    const user = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    if (user.length === 0) {
+      throw new Error('User not found');
+    }
+    // CRIT-04 FIX: Use bcrypt for password verification
+    const passwordIsValid = await verifyPassword(password, user[0].passwordHash || '');
+    if (!passwordIsValid) {
+      throw new Error('Invalid password');
+    }
+    // Load ALL memberships in a deterministic order. Selection is explicit:
+    // the user's defaultOrganizationId wins when a membership for it exists;
+    // otherwise the lowest organizationId. Previously an unordered `.limit(1)`
+    // let the database pick whichever row it returned first, so a
+    // multi-organization user could land in a different tenant per login.
+    const memberships = await db
+      .select({
+        organizationId: organizationUsers.organizationId,
+        role: organizationUsers.role,
+      })
+      .from(organizationUsers)
+      .where(eq(organizationUsers.userId, user[0].id))
+      .orderBy(asc(organizationUsers.organizationId));
+    if (memberships.length === 0) {
+      throw new Error('User has no organization membership');
+    }
+    const membership =
+      (user[0].defaultOrganizationId != null
+        ? memberships.find(m => m.organizationId === user[0].defaultOrganizationId)
+        : undefined) ?? memberships[0];
+    const token = jwt.sign(
+      {
+        userId: String(user[0].id),
+        email: user[0].email,
+        organizationId: String(membership.organizationId),
+        role: membership.role,
+        type: 'access',
+      },
+      config.jwt.secret,
+      { expiresIn: config.jwt.expiresIn }
+    );
+    return {
+      token,
+      user: {
+        id: user[0].id,
+        name: user[0].name || '',
+        email: user[0].email,
+        role: membership.role,
+      },
+      organizationId: membership.organizationId,
+      // Surfaced so callers can offer an explicit organization switch instead
+      // of silently accepting the default selection.
+      availableOrganizations: memberships.map(m => ({
+        organizationId: m.organizationId,
+        role: m.role,
+      })),
+    };
+  } catch (error) {
+    logger.error('Login error', error);
+    throw error;
+  }
+/**
+ * Get user's role in an organization
+ * Queries the organizationUsers junction table for the actual role
+ */
+async function getUserRole(userId: number, organizationId: number): Promise<string> {
+  if (!db) return 'viewer'; // Safest default when DB unavailable
+  try {
+    const { organizationUsers } = await import('../shared/schema');
+    const { and } = await import('drizzle-orm');
+    const result = await db
+      .select({ role: organizationUsers.role })
+      .from(organizationUsers)
+      .where(
+        and(
+          eq(organizationUsers.userId, userId),
+          eq(organizationUsers.organizationId, organizationId)
+        )
+      )
+      .limit(1);
+    return result.length > 0 ? result[0].role : 'viewer';
+  } catch (error) {
+    logger.error('Failed to fetch user role', error);
+    return 'viewer'; // Fail-safe: least privileged role
+  }
+/**
+ * Verify password using bcrypt
+ * CRIT-04 FIX: Replaced plaintext comparison with bcrypt.compare
+ */
+async function verifyPassword(password: string, hash: string): Promise<boolean> {
+  // Reject empty hashes (previously returned true — security hole)
+  if (!hash || hash === '') {
+    logger.warn('Login attempt against empty password hash — rejected');
+    return false;
+  }
+  try {
+    const bcrypt = await import('bcryptjs');
+    // SECURITY FIX: Reject legacy temp_ prefix passwords entirely.
+    // Plaintext comparison was a security hole. Users with temp_ passwords
+    // must reset their password via the forgot-password flow.
+    if (hash.startsWith('temp_')) {
+      logger.warn(
+        'Legacy temp_ password rejected — user must reset password via forgot-password flow'
+      );
+      return false;
+    }
+    // Standard bcrypt comparison
+    return await bcrypt.compare(password, hash);
+  } catch (error) {
+    logger.error('Password verification failed', error);
+    return false;
+  }
+"
+ ❯ server/routes/__tests__/session-open-contract.test.ts:128:94
+    126|       if (!mintsIn(file, source).some(m => m.payload !== null && ACCES…
+    127|       const rel = relative(serverRoot, file);
+    128|       expect(source, `${rel} mints an access token without opening or …
+       |                                                                                              ^
+    129|       expect(source, `${rel} mints a session the concurrent-session li…
+    130|     }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/17]⎯
+ FAIL  server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize mints the bootstrap token as a registered session: openSession, and sid / sst / idl in the token (P1-38)
+AssertionError: the setup token carries no session id: it was minted outside openSession: expected 'undefined' to be 'string' // Object.is equality
+Expected: "string"
+Received: "undefined"
+ ❯ server/routes/__tests__/setup.test.ts:167:107
+    165|     const claims = jwt.verify(res.body.token, process.env.JWT_SECRET a…
+    166|     expect(claims.type).toBe('access');
+    167|     expect(typeof claims.sid, 'the setup token carries no session id: …
+       |                                                                                                           ^
+    168|     expect(typeof claims.sst).toBe('number');
+    169|     // The new organisation has no settings yet: the platform's defaul…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/17]⎯
+ FAIL  server/services/__tests__/session-inactivity.test.ts > openConnectorSession — the connector access token (P1-38) > opens a session whose idle window is the token TTL held inside the platform window, starting now, with a fresh id
+TypeError: openConnectorSession is not a function
+ ❯ server/services/__tests__/session-inactivity.test.ts:216:21
+    214|
+    215|   it('opens a session whose idle window is the token TTL held inside t…
+    216|     const a = await openConnectorSession(42, 3600, undefined, T0);
+       |                     ^
+    217|     const b = await openConnectorSession(42, 3600, undefined, T0);
+    218|     expect(a.sid).not.toBe(b.sid);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/17]⎯
+ FAIL  server/services/__tests__/session-inactivity.test.ts > openConnectorSession — the connector access token (P1-38) > the lifetime rule is the platform rule and the token is idle past its TTL
+TypeError: openConnectorSession is not a function
+ ❯ server/services/__tests__/session-inactivity.test.ts:226:21
+    224|
+    225|   it('the lifetime rule is the platform rule and the token is idle pas…
+    226|     const a = await openConnectorSession(42, 3600, undefined, T0);
+       |                     ^
+    227|     expect(sessionLifetimeExceeded(connectorClaims(a), T0 + ABSOLUTE_S…
+    228|     expect(await sessionInactivityReason('c', connectorClaims(a), { no…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/17]⎯
+ FAIL  server/services/__tests__/session-inactivity.test.ts > openConnectorSession — the connector access token (P1-38) > connector sessions and browser sessions hold slots in separate pools of the same account, each at the tenant limit
+TypeError: openConnectorSession is not a function
+ ❯ server/services/__tests__/session-inactivity.test.ts:234:25
+    232|   it('connector sessions and browser sessions hold slots in separate p…
+    233|     const browser = await openSession(42, settings(1), T0);
+    234|     const first = await openConnectorSession(42, 3600, settings(1), T0…
+       |                         ^
+    235|     expect(await sessionInactivityReason('b', browserClaims(browser), …
+    236|     const second = await openConnectorSession(42, 3600, settings(1), T…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/17]⎯
+ FAIL  server/services/__tests__/session-inactivity.test.ts > openConnectorSession — the connector access token (P1-38) > a connector session found over frees its own pool's slot
+TypeError: openConnectorSession is not a function
+ ❯ server/services/__tests__/session-inactivity.test.ts:245:21
+    243|
+    244|   it('a connector session found over frees its own pool\'s slot', asyn…
+    245|     const a = await openConnectorSession(42, 3600, settings(2), T0);
+       |                     ^
+    246|     expect(await sessionInactivityReason('ca', connectorClaims(a), { n…
+    247|     const b = await openConnectorSession(42, 3600, settings(2), T0 + 2…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/17]⎯
+ Test Files  5 failed (5)
+      Tests  17 failed | 31 passed (48)
+   Start at  13:27:55
+   Duration  3.94s (transform 2.26s, setup 323ms, import 5.36s, tests 1.74s, environment 0ms)

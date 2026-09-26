@@ -2,6 +2,8 @@ import type { Express } from 'express';
 import type { Pool } from 'pg';
 import { authenticateToken } from '../middleware/auth.js';
 import { mountAll } from './mount-routes.js';
+import { serverError } from '../lib/api-response.js';
+import { createScopedLogger } from '../utils/logger.js';
 
 import auditServices from '../routes/audit-services.js';
 import integrationTest from '../routes/integration-test.js';
@@ -35,6 +37,8 @@ import dataLineage from '../routes/data-lineage.js';
 import workspaceSummary from '../routes/workspace-summary.js';
 import chatActions from '../routes/chat-actions.js';
 import conversationOs from '../routes/conversation-os.js';
+
+const log = createScopedLogger('workspace-projects');
 
 // SECURITY: nearly every router mounted here is tenant-scoped — task
 // management, approvals, branding, lineage, workspace projects. The
@@ -320,11 +324,8 @@ export async function registerAdvancedPlatformRoutes({
         row = { id: String(r.rows[0].id), name: r.rows[0].name, type: 'cer' };
       }
       return res.status(201).json({ ok: true, project: { ...row, orgId: String(orgId) } });
-    } catch (err: any) {
-      console.error('[workspace/projects POST]', err?.message);
-      return res
-        .status(500)
-        .json({ ok: false, error: 'Project creation failed', detail: err?.message });
+    } catch (err) {
+      return serverError(res, log, 'creating the project', err);
     }
   });
 
@@ -347,10 +348,8 @@ export async function registerAdvancedPlatformRoutes({
         [orgId]
       );
       return res.json({ ok: true, projects: r.rows });
-    } catch (err: any) {
-      return res
-        .status(500)
-        .json({ ok: false, error: 'Failed to load projects', detail: err?.message });
+    } catch (err) {
+      return serverError(res, log, 'loading projects', err);
     }
   });
   console.log('✅ Workspace projects routes registered (GET|POST /api/workspace/projects)');

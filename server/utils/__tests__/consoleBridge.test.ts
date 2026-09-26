@@ -108,6 +108,17 @@ describe('consoleBridge — redaction (production)', () => {
     expect(sink).toHaveBeenCalledWith('hello', 42, true);
   });
 
+  it('masks an e-mail or IP address inside a string argument (P1-37 follow-up, 2026-09-26)', () => {
+    const sink = vi.fn();
+    const target = { log: sink, error: sink, warn: sink };
+    installConsoleBridge(target as any);
+    target.error(`login failed for alice@example.com from 203.0.113.9`);
+    const [line] = sink.mock.calls[0] as [string];
+    expect(line).toContain('a***@example.com');
+    expect(line).toContain('203.0.113.xxx');
+    expect(line).not.toContain('alice@');
+  });
+
   it('passes Error instances through unchanged (preserves stack)', () => {
     const sink = vi.fn();
     const target = { log: sink, error: sink, warn: sink };

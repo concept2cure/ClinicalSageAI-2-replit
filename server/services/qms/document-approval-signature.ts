@@ -41,6 +41,23 @@
  * signs. The digest is also written to `metadata.approval.contentDigest` so an
  * inspector can recompute it from the stored row.
  *
+ * ── Retirement (P1-29 / DP-32, security review 2026-09-24) ──────────────────
+ * Retiring a controlled document ends its effect for everyone trained on it,
+ * and is the same kind of record as the approval that began it. Until
+ * 2026-09-26 `POST /api/mdx/qms/documents/:id/retire` was an autocommitted
+ * UPDATE with a reason and an audit row written after it. `retireQmsDocumentSigned`
+ * is the sibling of `approveQmsDocumentSigned`: the same three writes on the
+ * caller's transaction (UPDATE status → retired with `metadata.retired`; the
+ * ledger pair, command `retire`; one `electronic_signatures` row, type
+ * `qms-document-retirement`), the same refusals class, and the same admissible
+ * set the old route had (any document not already retired — narrowing that is a
+ * product decision, not this change's). Its digest is `computeQmsDocumentRetirementDigest`:
+ * the approval recipe with the stamp the retirement itself writes
+ * (`metadata.retired`) excluded, so it recomputes from the stored retired row.
+ * The approval recipe is left as it is: a retired document can be revised back
+ * to draft and approved again, and that approval's digest must keep covering
+ * the row as it then is.
+ *
  * The caller (the route) owns the transaction: BEGIN before, COMMIT after,
  * ROLLBACK on throw. Nothing here opens or closes one.
  *
@@ -120,6 +137,20 @@ export function computeQmsDocumentContentDigest(row: QmsDocumentRow): string {
   });
 }
 
+/**
+ * The content digest a QMS retirement signature is bound to (§11.70): the
+ * approval recipe over the same version content, with `metadata.retired`
+ * excluded as well — the retirement writes that block and stores this digest
+ * inside it, so including it would make the digest self-referential (the same
+ * reason the recipe above excludes `metadata.approval`). Pure and exported so
+ * an inspector can recompute it from the stored, retired row.
+ */
+export function computeQmsDocumentRetirementDigest(row: QmsDocumentRow): string {
+  const metadata = { ...(row.metadata ?? {}) } as Record<string, unknown>;
+  delete metadata.retired;
+  return computeQmsDocumentContentDigest({ ...row, metadata });
+}
+
 export type QmsApprovalRefusalCode = 'NOT_FOUND' | 'INVALID_STATE' | 'SELF_APPROVAL';
 
 /** A refusal the route maps to a status. Nothing has been written when thrown. */
@@ -165,15 +196,16 @@ export interface ApproveQmsDocumentSignedResult {
   signature: QmsApprovalSignatureRecord;
 }
 
-/** Read the row under lock and apply the refusals. Nothing is written. */
-async function lockApprovableDocument(
+/**
+ * Read the row under lock, tenant-scoped. Nothing is written. The version
+ * content is read under lock so the digest is over the exact row the UPDATE
+ * changes, and the two-person check sees the same author.
+ */
+async function lockDocumentRow(
   client: SignatureDbClient,
   orgId: number,
-  userId: number,
   documentId: number,
 ): Promise<QmsDocumentRow> {
-  // Read the version content under lock so the digest is over the exact row
-  // the UPDATE changes, and the two-person check sees the same author.
   const current = await client.query(
     `SELECT * FROM qms_documents
       WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
@@ -184,6 +216,17 @@ async function lockApprovableDocument(
   if (!row) {
     throw new QmsApprovalRefusedError('NOT_FOUND', 'Document not found in this organization.');
   }
+  return row;
+}
+
+/** Read the row under lock and apply the approval refusals. Nothing is written. */
+async function lockApprovableDocument(
+  client: SignatureDbClient,
+  orgId: number,
+  userId: number,
+  documentId: number,
+): Promise<QmsDocumentRow> {
+  const row = await lockDocumentRow(client, orgId, documentId);
   if (!APPROVABLE_STATES.has(row.status)) {
     throw new QmsApprovalRefusedError(
       'INVALID_STATE',
@@ -318,6 +361,167 @@ export async function approveQmsDocumentSigned(
     extraManifest: { docNumber: row.doc_number, version: row.version, twoPersonRule },
     complianceStatement:
       'QMS controlled-document approval (21 CFR 820.40 / ISO 13485 §4.2.4) applied as an electronic signature under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain.',
+  });
+
+  return {
+    document,
+    signature: {
+      id: signed.id,
+      signedAt: signed.signedAt.toISOString(),
+      actionId: gov.actionId,
+      auditId: gov.auditId,
+      sha256Chain: gov.sha256Chain,
+      meaning: params.meaning,
+      boundPayloadDigest: contentDigest,
+      bindingBasis: QMS_DOCUMENT_BINDING_BASIS,
+      authenticationMethod: params.authenticationMethod,
+      secondFactorVerified: params.secondFactorVerified,
+    },
+  };
+}
+
+/* ── Retirement ─────────────────────────────────────────────────────────────── */
+
+/** The retirement takes the approval's parameters less the effective date, which it does not set. */
+export type RetireQmsDocumentSignedParams = Omit<ApproveQmsDocumentSignedParams, 'effectiveDate'>;
+
+export interface RetireQmsDocumentSignedResult {
+  document: QmsDocumentRow;
+  signature: QmsApprovalSignatureRecord;
+}
+
+/**
+ * Read the row under lock and apply the retirement refusal. The admissible
+ * set is the one the unsigned route had — any document not already retired —
+ * kept on purpose: narrowing it (effective/superseded only) is a lifecycle
+ * decision for the founder, not a security fix. There is no two-person rule
+ * here: nothing in the plan row asks for one, and a retirement is not an
+ * approval of the author's own work.
+ */
+async function lockRetirableDocument(
+  client: SignatureDbClient,
+  orgId: number,
+  documentId: number,
+): Promise<QmsDocumentRow> {
+  const row = await lockDocumentRow(client, orgId, documentId);
+  if (row.status === 'retired') {
+    throw new QmsApprovalRefusedError('INVALID_STATE', 'Document is already retired; nothing was changed.');
+  }
+  return row;
+}
+
+/** The qms_documents UPDATE: status → retired plus the retirement stamp. */
+async function applyRetirement(
+  client: SignatureDbClient,
+  params: RetireQmsDocumentSignedParams,
+  fromStatus: string,
+  contentDigest: string,
+  occurredAt: Date,
+): Promise<QmsDocumentRow> {
+  const updated = await client.query(
+    `UPDATE qms_documents
+        SET status = 'retired',
+            metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object(
+              'retired',
+              jsonb_build_object(
+                'reason', $4::text,
+                'meaning', $5::text,
+                'contentDigest', $6::text,
+                'bindingBasis', $7::text,
+                'by', $3::int,
+                'at', $8::timestamptz,
+                'fromStatus', $9::text
+              )
+            ),
+            updated_at = NOW()
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL AND status <> 'retired'
+      RETURNING *`,
+    [
+      params.documentId,
+      params.orgId,
+      params.userId,
+      params.reason,
+      params.meaning,
+      contentDigest,
+      QMS_DOCUMENT_BINDING_BASIS,
+      occurredAt.toISOString(),
+      fromStatus,
+    ],
+  );
+  const document = updated.rows[0] as QmsDocumentRow | undefined;
+  if (!document) {
+    // The FOR UPDATE read makes this unreachable in practice; refuse rather
+    // than sign a row that did not change.
+    throw new QmsApprovalRefusedError('INVALID_STATE', 'Document state changed before the retirement could be applied.');
+  }
+  return document;
+}
+
+/**
+ * Retire a controlled document as a signed act, on the caller's transaction
+ * client: the UPDATE (status → retired, `metadata.retired` carrying reason,
+ * meaning, the bound digest, who, when and the state it left), the chained
+ * ledger pair (command `retire`) and exactly one `electronic_signatures` row.
+ * Any throw rolls all three back — the document is never retired without its
+ * signature and audit row, and never signed without being retired.
+ */
+export async function retireQmsDocumentSigned(
+  client: SignatureDbClient,
+  params: RetireQmsDocumentSignedParams,
+): Promise<RetireQmsDocumentSignedResult> {
+  const { orgId, userId, documentId } = params;
+  const row = await lockRetirableDocument(client, orgId, documentId);
+  const contentDigest = computeQmsDocumentRetirementDigest(row);
+  const target = `qms-document:${documentId}`;
+  const occurredAt = new Date();
+
+  const document = await applyRetirement(client, params, row.status, contentDigest, occurredAt);
+
+  // §11.10(e): the chained ledger pair, same transaction.
+  const gov = await recordGovernedAction(client, {
+    orgId,
+    userId,
+    command: 'retire',
+    target,
+    reason: params.reason,
+    payload: {
+      meaning: params.meaning,
+      contentDigest,
+      bindingBasis: QMS_DOCUMENT_BINDING_BASIS,
+      docNumber: row.doc_number,
+      version: row.version,
+      fromStatus: row.status,
+      toStatus: 'retired',
+    },
+    domain: 'qms',
+    surface: 'api',
+  });
+
+  // §11.50/§11.70/§11.200: the one electronic_signatures row, same transaction.
+  const signed = await persistGovernedActionSignature(client, {
+    orgId,
+    userId,
+    target,
+    reason: params.reason,
+    payload: { meaning: params.meaning },
+    actionId: gov.actionId,
+    auditId: gov.auditId,
+    sha256Chain: gov.sha256Chain,
+    authenticationMethod: params.authenticationMethod,
+    secondFactorVerified: params.secondFactorVerified,
+    ipAddress: params.ipAddress,
+    occurredAt,
+    signatureType: 'qms-document-retirement',
+    command: 'retire',
+    binding: {
+      digest: contentDigest,
+      basis: QMS_DOCUMENT_BINDING_BASIS,
+      note:
+        'sha256 over the canonical qms_documents version content (id, organization, doc number, version, title, type, category, artifact pointer, next review date, metadata minus metadata.approval and metadata.retired) read under FOR UPDATE at retirement time — the same digest stored on metadata.retired.contentDigest; recompute from the stored row with computeQmsDocumentRetirementDigest.',
+    },
+    extraManifest: { docNumber: row.doc_number, version: row.version, fromStatus: row.status },
+    complianceStatement:
+      'QMS controlled-document retirement (21 CFR 820.40 / ISO 13485 §4.2.4 obsolete-document control) applied as an electronic signature under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain.',
   });
 
   return {

@@ -219,3 +219,56 @@ describe('build-state reads completeness from the canonical status, not from a s
     expect(sourceReads[0].sql).not.toMatch(/GROUP BY/i);
   });
 });
+
+describe('a failed read answers 500 without naming what broke (D6 / IAM-18, P1-17 paydown)', () => {
+  /* Both handlers used to send `error.message` verbatim on the 500 path — for a
+     missing relation that is the relation's name, the class of disclosure
+     ci:server-error-leaks exists to end. They answer through serverError()
+     now: a static envelope plus a correlation id, the detail in the log. */
+  function undefinedTable(relation: string) {
+    const e = new Error(`relation "${relation}" does not exist`) as Error & { code: string };
+    e.code = '42P01';
+    return e;
+  }
+  function makeAppWithRequestId() {
+    const app = express();
+    app.use(express.json());
+    app.use((req: any, res, next) => {
+      req.tenantId = 101;
+      req.tenantContext = { organizationId: 101 };
+      res.setHeader('X-Request-Id', 'req-p1-17');
+      next();
+    });
+    app.use('/api/cmc/module3-os', router);
+    return app;
+  }
+
+  beforeEach(() => {
+    resolveCmcArtifactProject.mockReset();
+    queries.length = 0;
+    resolveCmcArtifactProject.mockRejectedValue(undefinedTable('cmc_source_objects'));
+  });
+
+  for (const path of ['build-state', 'uploaded-sources'] as const) {
+    it(`${path}: the relation name stays in the log, the client gets the envelope`, async () => {
+      const res = await request(makeAppWithRequestId()).get(
+        `/api/cmc/module3-os/${path}/${PROGRAM_UUID}`,
+      );
+
+      expect(res.status).toBe(500);
+      expect(res.body.error).toBe('INTERNAL_ERROR');
+      expect(res.body.correlationId).toBe('req-p1-17');
+      const body = JSON.stringify(res.body);
+      expect(body).not.toContain('cmc_source_objects');
+      expect(body).not.toMatch(/relation |does not exist|42P01/i);
+    });
+  }
+
+  it('the 401 for a missing tenant is untouched by the migration', async () => {
+    const app = express();
+    app.use('/api/cmc/module3-os', router);
+    const res = await request(app).get(`/api/cmc/module3-os/build-state/${PROGRAM_UUID}`);
+    expect(res.status).toBe(401);
+    expect(res.body).toEqual({ success: false, error: 'Organization context required' });
+  });
+});
