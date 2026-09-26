@@ -62,6 +62,31 @@ export type ToolGateVerdict =
    */
   | { kind: 'UNDECIDABLE'; why: string };
 
+/**
+ * Tools that change records through their own handlers rather than through the
+ * platform-command surface, so the every-write partition (P0-12) does not reach
+ * them. Each is a confirm-tier proposal like any command that writes:
+ *
+ *   save_document_to_vault     a new governed artifact and its first version
+ *   update_vault_document      a new version of an existing artifact
+ *   file_chat_upload_to_vault  a document filed into the project Vault
+ *   seed_tmf                   the trial master file's reference model
+ *   save_report_definition     a saved report the organisation will use
+ *
+ * Enforced twice, and the two are one list: here, so the live chat stream holds
+ * the turn and asks; and in AnaToolExecutor's registerToolHandler wrapper, so a
+ * path that cannot ask refuses to run one no person confirmed. A new tool that
+ * writes on its own handler belongs on this list, and the anti-drift test
+ * (direct-mutator-confirm-gate.test.ts) names it.
+ */
+export const CONFIRM_TIER_TOOLS: ReadonlySet<string> = new Set([
+  'save_document_to_vault',
+  'update_vault_document',
+  'file_chat_upload_to_vault',
+  'seed_tmf',
+  'save_report_definition',
+]);
+
 /** A tool call as the agentic loop holds one. */
 export interface ClassifiableToolCall {
   name: string;
@@ -77,20 +102,19 @@ function asRecord(v: unknown): Record<string, unknown> | null {
 /**
  * Classify one tool call.
  *
- * Only `execute_platform_command` can be governed today, because the propose-
- * only partition is defined over the command surface. Tools with their own
- * handlers — saving a document to the vault, seeding a TMF — are NOT treated as
- * governed here, and that is the existing judgment rather than an omission:
- * `PROPOSE_ONLY_COMMANDS` deliberately excludes ordinary authoring mutations
- * ("work, not attestation"), on the reasoning that making AnA unable to do them
- * trades a real capability for no control. Escalating any of them is a product
- * decision about what AnA may do unaided, to be taken with the tier changed in
- * the same commit — not something this translation layer should decide on its
- * own.
+ * Two kinds of call can be governed: `execute_platform_command`, whose command
+ * is judged by the propose-only partition and its tier; and the tools on
+ * CONFIRM_TIER_TOOLS, which write through their own handlers and are always the
+ * confirm tier. Everything else is ungoverned here.
  */
 export function classifyToolCall(call: ClassifiableToolCall): ToolGateVerdict {
   if (call.inputParseError) {
     return { kind: 'UNDECIDABLE', why: `arguments did not parse: ${call.inputParseError}` };
+  }
+  if (CONFIRM_TIER_TOOLS.has(call.name)) {
+    const toolInput = asRecord(call.input);
+    if (!toolInput) return { kind: 'UNDECIDABLE', why: 'the call carried no arguments object' };
+    return { kind: 'NEEDS_APPROVAL', command: call.name, params: toolInput, tier: 'confirm' };
   }
   if (call.name !== PLATFORM_COMMAND_TOOL) return { kind: 'UNGOVERNED' };
 
