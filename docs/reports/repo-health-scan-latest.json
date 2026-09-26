@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-26T02:34:14.478Z",
+  "generatedAt": "2026-09-26T02:51:56.392Z",
   "git": {
-    "sha": "0bc045c7ef714646c3a2d9abdeb56c5bfb892262",
+    "sha": "0f743698ae6dc76bdd4235ad0985838ec3350dbe",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1994,7 +1994,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 283627
+        "bytes": 283794
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2168,7 +2168,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6477
+        "lines": 6482
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2459,12 +2459,12 @@
         "lines": 1824
       },
       {
-        "file": "server/services/safety-pharmacology/safety-pharmacology-knowledge.ts",
-        "lines": 1815
+        "file": "server/routes/c2c/ai-editing.ts",
+        "lines": 1818
       },
       {
-        "file": "server/routes/c2c/ai-editing.ts",
-        "lines": 1813
+        "file": "server/services/safety-pharmacology/safety-pharmacology-knowledge.ts",
+        "lines": 1815
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/device-pma.ts",

@@ -355,7 +355,11 @@ router.post('/document/generate', requireTier('standard'), async (req: Request, 
       // Retrieve evidence once for the study, indexed by section relevance
       for (const tmpl of templates) {
         const searchQuery = `${tmpl.title} ${studyInfo.title} ${studyInfo.indication || ''}`.trim();
-        const results = await embeddingService.searchHybrid(searchQuery, 3, 0.65, orgUuid);
+        const results = await embeddingService.searchHybrid(searchQuery, {
+          limit: 3,
+          organizationUuid: orgUuid,
+          minSemanticScore: 0.65,
+        });
         if (results.length > 0) {
           const block = results.map((r: any, i: number) => {
             const content = r.content.length > 400 ? r.content.substring(0, 400) + '…' : r.content;

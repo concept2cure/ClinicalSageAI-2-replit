@@ -2904,7 +2904,12 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       // retrieval, reported as one below, never an unscoped search.
       const orgUuid = await currentTenantOrgUuid(pool);
       if (!orgUuid) throw new TenantKeyRequiredError('no tenant key for this session');
-      const searchResults = await embeddingService.searchHybrid(searchQuery, 5, 0.65, orgUuid);
+      // 0.65 is a floor on semantic similarity; it used to go in as the ranking weight.
+      const searchResults = await embeddingService.searchHybrid(searchQuery, {
+        limit: 5,
+        organizationUuid: orgUuid,
+        minSemanticScore: 0.65,
+      });
       if (searchResults.length > 0) {
         sourcesRetrieved = searchResults.length;
         for (const r of searchResults as any[]) {
