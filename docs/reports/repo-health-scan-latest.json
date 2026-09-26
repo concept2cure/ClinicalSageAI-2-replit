@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-26T02:51:56.392Z",
+  "generatedAt": "2026-09-26T02:56:01.652Z",
   "git": {
-    "sha": "0f743698ae6dc76bdd4235ad0985838ec3350dbe",
+    "sha": "feb2df3d4d3334d1fc7f7a96a468c5c6d50baded",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1978,7 +1978,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1058711
+        "bytes": 1058988
       },
       {
         "file": "shared/schema.ts",
@@ -2022,7 +2022,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 160814
+        "bytes": 172558
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2081,12 +2081,12 @@
         "bytes": 130408
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
-        "bytes": 127662
+        "file": "server/routes/ana-ri/stream.ts",
+        "bytes": 127768
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 127270
+        "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+        "bytes": 127662
       },
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
@@ -2156,7 +2156,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 20467
+        "lines": 20469
       },
       {
         "file": "shared/schema.ts",
@@ -2196,7 +2196,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 3838
+        "lines": 4101
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2272,7 +2272,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 2598
+        "lines": 2605
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
