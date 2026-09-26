@@ -1,0 +1,17 @@
+## mutation: the worker calls dispatchAction without the requester scope
+ × the Bull worker runs each job in its requester’s tenant scope (D6 review) > a queued job for organization 42 dispatches in tenant scope 42 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 passed (4)
+## mutation: the served ledger row drops tenantPlacement
+ × tenant placement boundary (D6) — what the ledger records > a served call records how the tenant was bound and under which floor 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 21 passed (22)
+selection catch: 1250:      if (error instanceof TenantPlacementError) {
+## mutation: the last-mile tenant check made conditional on piiDetection
+ × tenant placement boundary (D6) — the floor holds with the PHI/PII screen off > the last mile refuses a disallowed lane when piiDetection is off, even if selection i
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 21 passed (22)
+## mutation: route() stops writing the selection refusal row
+ × tenant placement boundary (D6) — what the ledger records > a refusal writes one content-free row naming the tenant-placement detector, reason and stage 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 21 passed (22)

@@ -68,13 +68,18 @@ export interface OrgPlacementPolicy {
   /**
    * May a request whose payload is provably public-source (see
    * GatewayRequest.payloadProvenance) reach a shared frontier API even when the
-   * floor above would exclude it? Default false.
+   * floor above would exclude it? Also the tenant's opt-in to Anthropic-hosted
+   * web search and fetch (server-tool-policy.ts). Default false.
    */
   publicSourceFrontier?: boolean;
   /**
-   * May the platform's own public-source fetchers make outbound requests for
-   * this org at all? Off means a citation check reports `unverifiable` rather
-   * than `verified`. Read by the fetchers, not by model routing.
+   * May public-source requests be made for this org at all? Off means:
+   *  - citation verification (citation-verification-service.ts) sends nothing
+   *    to NCBI or CrossRef and reports `unverifiable`, never `verified`;
+   *  - Anthropic-hosted web search and fetch are withheld (server-tool-policy.ts).
+   * The integration clients AnA's research tools call (integrations/*) do not
+   * read it yet; that is the public-source lane's work (plan WS14). Not read by
+   * model routing.
    */
   publicSourceEgress?: boolean;
 }

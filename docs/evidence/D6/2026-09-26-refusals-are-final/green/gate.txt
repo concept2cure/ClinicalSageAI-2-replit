@@ -1,0 +1,6 @@
+# ci:ai-tenant-binding (rebuilt on the TypeScript AST)
+  ✓ end to end — the walk finds the unbound call and the public declaration, skips tests
+
+✓ self-test: 35 cases, every violation caught and the controls clean
+✓ ai-tenant-binding: every AnA gateway call binds its tenant; payloadProvenance 'public' only in allowlisted modules
+exit=0

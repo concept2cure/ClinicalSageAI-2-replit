@@ -23,6 +23,7 @@ import {
   createAuditedUnplacedExport,
 } from '../services/export/governedExportConsequence';
 import { createRateLimiter } from '../middleware/rateLimiter';
+import { GATEWAY_ERROR_HTTP_STATUS } from '../services/ai-gateway/gateway-error-map';
 import {
   createSubmission,
   listSubmissions,
@@ -86,11 +87,9 @@ function ctxOf(req: Request): Ctx | null {
 const CODE_STATUS: Record<string, number> = {
   ...SUBMISSION_ERROR_STATUS,
   NO_AUTHORED_CONTENT: 422,
-  RATE_LIMITED: 429,
-  OVERLOADED: 503,
-  TOKEN_LIMIT_EXCEEDED: 413,
-  INVALID_AI_RESPONSE: 502,
-  PROVIDER_UNAVAILABLE: 503,
+  // The gateway's own table, not a copy: a copy missed PLACEMENT_REFUSED (a
+  // tenant placement refusal, 403) and answered it as a 500 (D6).
+  ...GATEWAY_ERROR_HTTP_STATUS,
 };
 
 function fail(res: Response, err: unknown): void {

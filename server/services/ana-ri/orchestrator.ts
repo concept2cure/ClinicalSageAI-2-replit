@@ -1645,7 +1645,8 @@ export async function extractThreadIntelligence(
 
   const extractionPrompt = `${EXTRACTION_PROMPT}\n\nConversation:\n${conversationText}`;
 
-  // Call AI gateway with short max_tokens for cost efficiency
+  // Call AI gateway with short max_tokens for cost efficiency.
+  // tenant-binding: runs in the caller's request tenant scope, which the gateway binds; left unmetered by design
   const response = await gw.route({
     taskType: 'structured_output',
     messages: [{ role: 'user', content: extractionPrompt }],

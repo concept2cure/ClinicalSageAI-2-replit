@@ -38,6 +38,7 @@ import { LangfuseService } from './observability/langfuseService';
 // audit trail and selects a *current* model for the chosen provider (the
 // router's logical MODEL_CONFIGS otherwise pin retired snapshots).
 import { getGateway } from './ai-gateway/gateway.js';
+import { isTerminalGatewayError } from './ai-gateway/gateway-outcome.js';
 import type {
   TaskType as GatewayTaskType,
   ProviderName as GatewayProviderName,
@@ -623,6 +624,12 @@ export class AIProviderRouter {
         result = await this.executeViaGateway(request, modelConfig);
       }
     } catch (error) {
+      // A gateway refusal, cancel or decline is final (gateway-outcome.ts): no
+      // provider failed. Counting it against health marked the refused provider
+      // unhealthy for every tenant, and the fallback below re-sent the refused
+      // payload to another vendor.
+      if (isTerminalGatewayError(error)) throw error;
+
       success = false;
       errorMessage = error instanceof Error ? error.message : 'Unknown error';
 

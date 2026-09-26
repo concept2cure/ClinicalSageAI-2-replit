@@ -14,8 +14,11 @@
  *  - a reason for change is required;
  *  - the row and its chained `audit_logs` entry (before, after, reason) commit
  *    in one transaction, or neither does;
- *  - a policy no AI service could satisfy is refused, so a typo cannot turn off
- *    a tenant's AI without anyone saying so;
+ *  - a policy no AI service could ever satisfy is refused, so a typo cannot
+ *    turn off a tenant's AI without anyone saying so. A lane whose placement
+ *    the deployment decides (Bedrock, Vertex, Azure) counts as possible: the
+ *    policy may be set before the lane is deployed, and until it is, the
+ *    tenant's requests are refused with DENY_TENANT_POLICY and recorded;
  *  - the resolver cache is invalidated on commit, so the change governs this
  *    process's next dispatch; other processes converge within the resolver TTL.
  *
@@ -31,7 +34,7 @@ import {
   PLACEMENT_SUBSTRATES,
   getOrgPlacementResolver,
 } from './org-placement';
-import { resolvePlacement } from './placement';
+import { isPlacementCompliant, resolvePlacement } from './placement';
 
 /** A complete tenant placement policy, as stored. null = no constraint. */
 export interface StoredPlacementPolicy {
@@ -153,7 +156,40 @@ export function placementPolicyContradiction(policy: StoredPlacementPolicy): str
   if (policy.residency === 'on_prem' && !candidates.some(p => resolvePlacement(p).substrate === 'self_hosted')) {
     return 'On-premises residency needs a self-hosted service (provider local, substrate self_hosted) to be allowed.';
   }
+  if (!candidates.some(p => couldEverServe(p, policy))) {
+    const needs = [policy.residency ? `residency ${policy.residency}` : null, policy.zeroDataRetention ? 'zero data retention' : null]
+      .filter(Boolean)
+      .join(' and ');
+    return (
+      `None of the allowed AI services can provide ${needs}: ${candidates.join(', ')}. ` +
+      'This policy would refuse every AI request.'
+    );
+  }
   return null;
+}
+
+/**
+ * Lanes whose residency and retention are set by the deployment (the region a
+ * private-cloud client calls, an operator's recorded ZDR). The writer cannot
+ * know them when the policy is set, which may be before the lane is deployed,
+ * so they are taken as possibly satisfiable.
+ */
+const DEPLOYMENT_DEFINED: ReadonlySet<ProviderName> = new Set<ProviderName>(['bedrock', 'vertex', 'azure']);
+/** Shared lanes whose zero retention is an operator setting (a signed agreement). */
+const ZDR_BY_AGREEMENT: ReadonlySet<ProviderName> = new Set<ProviderName>(['anthropic', 'openai']);
+
+/**
+ * Could `provider` ever serve this policy's residency and retention? The
+ * shared frontier lanes have no residency (placement.ts: 'global'), and Kimi
+ * offers no zero retention, whatever is deployed — so those combinations are
+ * refused at write time rather than turning a tenant's AI off with a 200.
+ */
+function couldEverServe(provider: ProviderName, policy: StoredPlacementPolicy): boolean {
+  if (DEPLOYMENT_DEFINED.has(provider)) return true;
+  const placement = resolvePlacement(provider);
+  const zdrPossible = placement.zeroDataRetention || ZDR_BY_AGREEMENT.has(provider);
+  if (policy.zeroDataRetention && !zdrPossible) return false;
+  return isPlacementCompliant(placement, { residency: policy.residency ?? undefined });
 }
 
 interface PolicyRow {
@@ -218,6 +254,12 @@ export async function writeOrgPlacementPolicy(
   let previousPolicy: StoredPlacementPolicy | null;
   try {
     await client.query('BEGIN');
+    // Serialize changes to this org's policy, including the first one: with no
+    // row yet, FOR UPDATE locks nothing, so two first-time writes each read
+    // "no previous policy" and the second's audit row hid what it replaced.
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext('ai_placement_policy:' || $1::text))`, [
+      organizationId,
+    ]);
     const { rows } = await client.query(`${SELECT_POLICY} FOR UPDATE`, [organizationId]);
     previousPolicy = rows[0] ? fromRow(rows[0] as PolicyRow) : null;
     await client.query(

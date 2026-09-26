@@ -73,6 +73,7 @@ import {
   mergeOrgPolicyDefaults,
 } from './providers/org-placement';
 import { governServerTools } from './server-tool-policy';
+import { isTerminalGatewayError } from './gateway-outcome';
 import {
   decideSensitivePlacement,
   readProviderPlacementApprovals,
@@ -4129,11 +4130,8 @@ export class GatewayModelDeclinedError extends Error {
  * and a classifier decline (the same classifier declines the same request).
  */
 function isNeverRetried(err: unknown): boolean {
-  return (
-    err instanceof GatewayPolicyError ||
-    err instanceof GatewayAbortedError ||
-    err instanceof GatewayModelDeclinedError
-  );
+  // One definition of "final", shared with the callers that wrap the gateway.
+  return isTerminalGatewayError(err);
 }
 
 /** Build the decline for a refusal stop, deciding whether another model may run it. */

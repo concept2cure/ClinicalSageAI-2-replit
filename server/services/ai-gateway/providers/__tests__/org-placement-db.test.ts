@@ -109,4 +109,22 @@ describe('DbOrgPlacementResolver', () => {
     await runWithTenantScope({ tenantId: '7', role: null, source: 'request' }, () => resolver.resolve(42));
     expect(scopeSeen).toBe('42');
   });
+
+  it('a lookup in flight when the policy changes does not put the superseded policy back (D6 review)', async () => {
+    // Until 2026-09-26 the in-flight read cached its pre-commit row after the
+    // writer's invalidate(), for a full TTL, in the process that made the change.
+    let release!: (v: { rows: unknown[] }) => void;
+    poolQuery.mockImplementationOnce(() => new Promise(r => (release = r)));
+    const resolver = new DbOrgPlacementResolver();
+
+    const inFlight = resolver.resolve(42);
+    await Promise.resolve();
+    resolver.invalidate(42); // the writer committed a tightened policy
+    release({ rows: [] }); // the old read comes back: "no policy"
+    expect(await inFlight).toBeNull();
+
+    poolQuery.mockResolvedValueOnce({ rows: [ROW] });
+    expect(await resolver.resolve(42)).toMatchObject({ residency: 'eu', allowedSubstrates: ['frontier_private', 'self_hosted'] });
+    expect(poolQuery).toHaveBeenCalledTimes(2);
+  });
 });

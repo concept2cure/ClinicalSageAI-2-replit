@@ -1,60 +1,62 @@
-# against bfbf0ee8 (the gateway, resolver and floor before this change; tests as committed)
+# the tests as committed in 794c9b6c, run against an export of bfbf0ee8 (git archive; the code before the change)
  ✓ server/services/ai-gateway/providers/__tests__/org-placement.test.ts > mergeOrgPolicyDefaults > returns the request unchanged when there is no policy 2ms
  ✓ server/services/ai-gateway/providers/__tests__/org-placement.test.ts > mergeOrgPolicyDefaults > fills residency/ZDR from policy when the request omits them 0ms
- ✓ server/services/ai-gateway/providers/__tests__/org-placement.test.ts > mergeOrgPolicyDefaults > never overrides an explicit request value (request wins) 0ms
- ✓ server/services/ai-gateway/providers/__tests__/org-placement.test.ts > mergeOrgPolicyDefaults > fills only the unspecified field (partial override) 0ms
- × server/services/ai-gateway/providers/__tests__/org-placement.test.ts > mergeOrgPolicyDefaults — the org policy is a floor (D6) > a request cannot lower the org zero-retention floor 8ms
+ × server/services/ai-gateway/providers/__tests__/org-placement.test.ts > mergeOrgPolicyDefaults > an explicit request value never lowers the org floor 7ms
+   → expected { dataResidency: 'us', …(1) } to deeply equal { dataResidency: 'eu', …(2) }
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement.test.ts > mergeOrgPolicyDefaults > a request that names only a residency still inherits the org zero-retention floor 0ms
+ × server/services/ai-gateway/providers/__tests__/org-placement.test.ts > mergeOrgPolicyDefaults — the org policy is a floor (D6) > a request cannot lower the org zero-retention floor 1ms
    → expected false to be true // Object.is equality
- × server/services/ai-gateway/providers/__tests__/org-placement.test.ts > mergeOrgPolicyDefaults — the org policy is a floor (D6) > a request residency that contradicts the org residency is flagged as a conflict 2ms
+ × server/services/ai-gateway/providers/__tests__/org-placement.test.ts > mergeOrgPolicyDefaults — the org policy is a floor (D6) > a request residency that contradicts the org residency is flagged as a conflict 1ms
    → expected undefined to be true // Object.is equality
  ✓ server/services/ai-gateway/providers/__tests__/org-placement.test.ts > mergeOrgPolicyDefaults — the org policy is a floor (D6) > a request residency that agrees with the org residency is no conflict 0ms
  ✓ server/services/ai-gateway/providers/__tests__/org-placement.test.ts > mergeOrgPolicyDefaults — the org policy is a floor (D6) > a request may add a constraint the org did not set 0ms
- ✓ server/services/ai-gateway/providers/__tests__/org-placement.test.ts > org placement resolver registry > defaults to a null resolver (no policy → explicit-only behavior) 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement.test.ts > org placement resolver registry > defaults to a null resolver (no policy → explicit-only behavior) 0ms
  ✓ server/services/ai-gateway/providers/__tests__/org-placement.test.ts > org placement resolver registry > honors an injected resolver and resets cleanly 0ms
- × server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > a lookup failure throws — it never reads as "this org has no policy" 6ms
+ × server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > a lookup failure throws — it never reads as "this org has no policy" 8ms
    → promise resolved "null" instead of rejecting
  × server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > a failure is not cached: the next call looks the policy up again 1ms
    → promise resolved "null" instead of rejecting
  ✓ server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > a missing row is "no policy" and is cached 1ms
  × server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > reads the vendor allow-list and the public-source switches 4ms
    → expected { residency: 'eu', …(2) } to deeply equal { residency: 'eu', …(5) }
- × server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > an allow-list that names nothing valid allows nothing (fail closed), rather than everything 2ms
+ × server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > an allow-list that names nothing valid allows nothing (fail closed), rather than everything 1ms
    → expected [ 'frontier-shared' ] to deeply equal []
  × server/services/ai-gateway/providers/__tests__/org-placement-db.test.ts > DbOrgPlacementResolver > looks the policy up in the scope of the org it resolves, not the caller's ambient scope 2ms
    → expected '7' to be '42' // Object.is equality
- × server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > selection honours the tenant floor for every data class > a tenant restricted to self_hosted is served only on the self-hosted lan
+ × tenant placement boundary (D6) > selection honours the tenant floor for every data class > a tenant restricted to self_hosted is served only on the self-hosted lane 35ms
    → expected 'frontier_shared' to be 'self_hosted' // Object.is equality
- × server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > selection honours the tenant floor for every data class > with no permitted lane the request is refused as a tenant-policy decisio
+ × tenant placement boundary (D6) > selection honours the tenant floor for every data class > with no permitted lane the request is refused as a tenant-policy decision and no SDK is called 12ms
    → promise resolved "{ content: 'ok', …(6) }" instead of rejecting
- × server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > selection honours the tenant floor for every data class > the vendor allow-list is honoured on every rung: Kimi is never reached w
+ × tenant placement boundary (D6) > selection honours the tenant floor for every data class > the vendor allow-list is honoured on every rung: Kimi is never reached when the tenant lists only Claude and OpenAI 5ms
    → promise resolved "{ content: 'ok', …(6) }" instead of rejecting
- × server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > selection honours the tenant floor for every data class > the fallback ladder never crosses into a substrate the tenant has not al
+ × tenant placement boundary (D6) > selection honours the tenant floor for every data class > the fallback ladder never crosses into a substrate the tenant has not allowed 4ms
    → promise resolved "{ content: 'ok', …(6) }" instead of rejecting
- × server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > the tenant floor cannot be lowered by the request > a request zeroDataRetention:false does not defeat the org zero-retention floor
+ × tenant placement boundary (D6) > the tenant floor cannot be lowered by the request > a request zeroDataRetention:false does not defeat the org zero-retention floor 4ms
    → promise resolved "{ content: 'ok', …(6) }" instead of rejecting
- × server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > the tenant floor cannot be lowered by the request > a request residency that contradicts the tenant residency is refused, not sile
+ × tenant placement boundary (D6) > the tenant floor cannot be lowered by the request > a request residency that contradicts the tenant residency is refused, not silently honoured 3ms
    → promise resolved "{ content: 'ok', …(6) }" instead of rejecting
- × server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > the tenant is bound even when the caller forgets to say which > binds the tenant from the ambient request scope when organizationI
+ × tenant placement boundary (D6) > the tenant is bound even when the caller forgets to say which > binds the tenant from the ambient request scope when organizationId is omitted 3ms
    → promise resolved "{ content: 'ok', …(6) }" instead of rejecting
- × server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > the tenant is bound even when the caller forgets to say which > under enforcement, a call with no tenant binding at all is refused
+ × tenant placement boundary (D6) > the tenant is bound even when the caller forgets to say which > under enforcement, a call with no tenant binding at all is refused for a tenant payload 3ms
    → promise resolved "{ content: 'ok', …(6) }" instead of rejecting
- ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > the tenant is bound even when the caller forgets to say which > platform work in the explicit system scope is not refused (it car
- × server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > an unknown policy fails closed where enforcement is on > under enforcement, a policy lookup failure refuses the tenant payload 2ms
+ ✓ tenant placement boundary (D6) > the tenant is bound even when the caller forgets to say which > platform work in the explicit system scope is not refused (it carries no tenant) 3ms
+ × tenant placement boundary (D6) > an unknown policy fails closed where enforcement is on > under enforcement, a policy lookup failure refuses the tenant payload 3ms
    → promise resolved "{ content: 'ok', …(6) }" instead of rejecting
- ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > an unknown policy fails closed where enforcement is on > outside enforcement, a lookup failure is recorded and the request still 
- × server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > an unknown policy fails closed where enforcement is on > an on-prem tenant with no self-hosted lane gets a placement refusal, not 
+ ✓ tenant placement boundary (D6) > an unknown policy fails closed where enforcement is on > outside enforcement, a lookup failure is recorded and the request still runs 2ms
+ × tenant placement boundary (D6) > an unknown policy fails closed where enforcement is on > an on-prem tenant with no self-hosted lane gets a placement refusal, not "No AI provider is configured" 7ms
    → expected Error: [AI Gateway] No AI provider is con… to match object { name: 'GatewayPolicyError', …(1) }
- × server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > the last mile re-checks the floor before any SDK call > refuses a disallowed substrate even when selection is bypassed 2ms
+ × tenant placement boundary (D6) > the last mile re-checks the floor before any SDK call > refuses a disallowed substrate even when selection is bypassed 1ms
    → promise resolved "{ content: 'ok', …(6) }" instead of rejecting
- × server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > the last mile re-checks the floor before any SDK call > performance qualification resolves the tenant floor before it reaches a mo
+ × tenant placement boundary (D6) > the last mile re-checks the floor before any SDK call > performance qualification resolves the tenant floor before it reaches a model 1ms
    → promise resolved "{ content: 'ok', …(6) }" instead of rejecting
- × server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > embeddings are held to the same floor > refuses to embed a self_hosted-only tenant on a shared embedding service 1ms
+ × tenant placement boundary (D6) > embeddings are held to the same floor > refuses to embed a self_hosted-only tenant on a shared embedding service 1ms
    → promise resolved "undefined" instead of rejecting
- × server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > public-source payloads reach a shared API only on the tenant's opt-in > without the opt-in, a public payload stays on the tenant's
+ × tenant placement boundary (D6) > public-source payloads reach a shared API only on the tenant's opt-in > without the opt-in, a public payload stays on the tenant's allowed lane 2ms
    → expected 'frontier_shared' to be 'self_hosted' // Object.is equality
- ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > public-source payloads reach a shared API only on the tenant's opt-in > with the opt-in, a public payload may reach a shared fron
- × server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) > public-source payloads reach a shared API only on the tenant's opt-in > the opt-in never opens the shared API to a tenant payload 
+ ✓ tenant placement boundary (D6) > public-source payloads reach a shared API only on the tenant's opt-in > with the opt-in, a public payload may reach a shared frontier API 1ms
+ × tenant placement boundary (D6) > public-source payloads reach a shared API only on the tenant's opt-in > the opt-in never opens the shared API to a tenant payload 2ms
    → promise resolved "{ content: 'ok', …(6) }" instead of rejecting
-⎯⎯⎯⎯⎯⎯ Failed Tests 22 ⎯⎯⎯⎯⎯⎯⎯
-      Tests  22 failed | 12 passed (34)
+⎯⎯⎯⎯⎯⎯ Failed Tests 23 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  23 failed | 11 passed (34)
 exit=1

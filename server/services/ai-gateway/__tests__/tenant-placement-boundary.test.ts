@@ -58,10 +58,13 @@ const ORG = 42;
 const CONFIDENTIAL_TEXT =
   'Summarize the unpublished 12-month stability results for lot 7 of the drug substance.';
 
-function buildGateway(providers: ProviderName[]): AIGateway {
+function buildGateway(
+  providers: ProviderName[],
+  opts: { auditEnabled?: boolean; piiDetection?: boolean } = {},
+): AIGateway {
   return new AIGateway({
     deterministicMode: false,
-    auditEnabled: false,
+    auditEnabled: opts.auditEnabled ?? false,
     providers: providers.map(name => ({
       name,
       enabled: true,
@@ -75,7 +78,7 @@ function buildGateway(providers: ProviderName[]): AIGateway {
       maxRequestsPerMinutePerUser: 10_000,
       blockedPatterns: [],
       contentFilters: true,
-      piiDetection: true,
+      piiDetection: opts.piiDetection ?? true,
     },
   });
 }
@@ -379,6 +382,84 @@ describe('tenant placement boundary (D6) — public-source payloads reach a shar
     await expect(gateway.route(chat({ organizationId: ORG }))).rejects.toMatchObject({
       name: GatewayPolicyError.name,
     });
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+});
+
+// Review findings, 2026-09-26: the refusal and ledger rows the evidence
+// claims were never observed (every case above ran with auditEnabled:false),
+// and the "piiDetection off" half of the old last-mile defect was unpinned.
+describe('tenant placement boundary (D6) — what the ledger records', () => {
+  const entries = (gateway: AIGateway): any[] => (gateway as any).auditLogger.getRecentEntries();
+
+  it('a refusal writes one content-free row naming the tenant-placement detector, reason and stage', async () => {
+    useTenantPolicy({ allowedSubstrates: ['self_hosted'] });
+    const gateway = buildGateway(['anthropic', 'openai'], { auditEnabled: true });
+    const dispatch = stubDispatch(gateway);
+
+    await expect(gateway.route(chat({ organizationId: ORG, callerModule: 'test:refusal' }))).rejects.toMatchObject({
+      name: GatewayPolicyError.name,
+    });
+
+    expect(dispatch).not.toHaveBeenCalled();
+    const rows = entries(gateway);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      provider: 'none',
+      success: false,
+      organizationId: ORG,
+      callerModule: 'test:refusal',
+      metadata: {
+        tenantPlacement: { reasonCode: 'DENY_TENANT_POLICY', stage: 'selection', resolution: 'resolved', boundFrom: 'explicit' },
+        contentPolicy: { findings: [expect.objectContaining({ detector: 'tenant_placement_policy', action: 'block' })] },
+      },
+    });
+    expect(JSON.stringify(rows[0])).not.toContain('unpublished 12-month stability');
+  });
+
+  it('a served call records how the tenant was bound and under which floor', async () => {
+    useTenantPolicy({ allowedSubstrates: ['frontier_shared'] });
+    const gateway = buildGateway(['anthropic'], { auditEnabled: true });
+    stubDispatch(gateway);
+
+    await runWithTenantScope({ tenantId: String(ORG), role: null, source: 'test' }, () => gateway.route(chat()));
+
+    const served = entries(gateway).find(e => e.success);
+    expect(served?.organizationId).toBe(String(ORG));
+    expect(served?.metadata?.tenantPlacement).toMatchObject({
+      resolution: 'resolved',
+      boundFrom: 'ambient_scope',
+      payloadProvenance: 'tenant_governed',
+    });
+  });
+});
+
+describe('tenant placement boundary (D6) — the floor holds with the PHI/PII screen off', () => {
+  it('route() refuses a disallowed lane when piiDetection is off', async () => {
+    useTenantPolicy({ allowedSubstrates: ['self_hosted'] });
+    const gateway = buildGateway(['anthropic', 'openai'], { piiDetection: false });
+    const dispatch = stubDispatch(gateway);
+
+    await expect(gateway.route(chat({ organizationId: ORG }))).rejects.toThrow(/DENY_TENANT_POLICY/);
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it('the last mile refuses a disallowed lane when piiDetection is off, even if selection is bypassed', async () => {
+    const gateway = buildGateway(['anthropic'], { piiDetection: false });
+    const dispatch = stubDispatch(gateway);
+    const modelConfig = (gateway as any).models.find((m: { provider: string }) => m.provider === 'anthropic');
+
+    await expect(
+      (gateway as any).executeProvider(
+        modelConfig,
+        chat({
+          organizationId: ORG,
+          sensitiveTenantPolicy: { resolution: 'resolved', organizationId: ORG, allowedSubstrates: ['self_hosted'] },
+        }),
+        'req-pii-off',
+        Date.now(),
+      ),
+    ).rejects.toThrow(/DENY_TENANT_POLICY/);
     expect(dispatch).not.toHaveBeenCalled();
   });
 });

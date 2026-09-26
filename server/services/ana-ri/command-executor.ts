@@ -2616,6 +2616,9 @@ What should be done BEFORE this version is submitted? Be specific.`;
       maxTokens: 4096,
       temperature: 0.2,
       strategy: 'quality_optimized' as any,
+      // The tenant's placement policy governs where this review is sent (D6).
+      organizationId: ctx.organizationId,
+      callerModule: 'ana-ri/review-version-impact',
     });
 
     if (!response.content) {

@@ -36,6 +36,7 @@ import { createHash } from 'crypto';
 // provider selection, failover, and resilience, replacing the legacy
 // multi-provider service and the council's bespoke per-provider circuit breakers.
 import { getGateway } from './ai-gateway/gateway.js';
+import { isTenantPlacementRefusal, isTerminalGatewayError } from './ai-gateway/gateway-outcome.js';
 import type { TaskType } from './ai-gateway/types.js';
 import {
   getPromptInjectionProtection,
@@ -323,6 +324,20 @@ export class MultiAgentCouncilService {
           'No model approved for regulatory drafting and review is available right now, ' +
             'so the council did not run on one that is not approved for it.',
           MODEL_NOT_APPROVED,
+          undefined,
+          correlationId,
+          false
+        );
+      }
+
+      // Every other gateway refusal (tenant placement, content policy, a file
+      // the lane cannot read) is final too, and it is not an outage. Until
+      // 2026-09-26 it was retried three times and recorded as "All LLM providers
+      // unavailable" (D6).
+      if (isTerminalGatewayError(error)) {
+        throw new CouncilError(
+          messageText,
+          isTenantPlacementRefusal(error) ? 'TENANT_PLACEMENT_DENIED' : 'GATEWAY_REFUSED',
           undefined,
           correlationId,
           false

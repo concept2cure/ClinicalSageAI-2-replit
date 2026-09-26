@@ -15,6 +15,8 @@
  */
 
 import { createScopedLogger } from '../utils/logger.js';
+import { getTenantScope } from '../db/tenantStore.js';
+import { getOrgPlacementResolver } from './ai-gateway/providers/org-placement.js';
 
 const log = createScopedLogger('citation-verification');
 
@@ -341,8 +343,40 @@ export async function verifyCitation(input: CitationInput): Promise<CitationVeri
   }
 }
 
+/**
+ * Whether the organization in scope allows the platform's public-source
+ * requests. A citation's DOI, PMID and title come from the tenant's own draft,
+ * and verifying them sends them to NCBI and CrossRef. Until 2026-09-26 the
+ * tenant's `public_source_egress` setting was stored, audited and never read
+ * here (docs/evidence/D6/2026-09-26-refusals-are-final/). Work with no tenant
+ * (the system scope) is not held back; a policy that cannot be read is.
+ */
+async function publicSourceEgressInScope(): Promise<'allowed' | 'off' | 'unreadable'> {
+  const tenant = getTenantScope()?.tenantId;
+  if (!tenant || tenant === '0') return 'allowed';
+  try {
+    const policy = await getOrgPlacementResolver().resolve(tenant);
+    return policy?.publicSourceEgress === false ? 'off' : 'allowed';
+  } catch {
+    return 'unreadable';
+  }
+}
+
 /** Verify a batch of citations with bounded concurrency (NCBI rate limits). */
 export async function verifyCitations(inputs: CitationInput[]): Promise<CitationVerificationResult[]> {
+  const egress = await publicSourceEgressInScope();
+  if (egress === 'off') {
+    return inputs.map(input =>
+      result(input, 'unverifiable', null, null, null,
+        'Public-source requests are turned off for this organization, so this citation was not checked against PubMed or CrossRef.'),
+    );
+  }
+  if (egress === 'unreadable') {
+    return inputs.map(input =>
+      result(input, 'error', null, null, null,
+        "The organization's data-placement policy could not be read, so no outbound check was made."),
+    );
+  }
   const results: CitationVerificationResult[] = new Array(inputs.length);
   let cursor = 0;
 

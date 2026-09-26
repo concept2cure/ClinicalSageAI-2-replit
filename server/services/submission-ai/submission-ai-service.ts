@@ -22,7 +22,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { getGateway } from '../ai-gateway';
-import { classifyGatewayError } from '../ai-gateway/gateway-error-map';
+import { classifyGatewayError, type GatewayErrorCode } from '../ai-gateway/gateway-error-map';
 import { evaluateDispatchGate } from '../ectd/dispatch-gate';
 import type { DispatchReadinessAssessment } from '../ectd/assess-dispatch-readiness';
 import auditService from '../auditService';
@@ -33,7 +33,7 @@ const logger = createScopedLogger('submission-ai-service');
 
 export class SubmissionAiError extends Error {
   constructor(
-    public code: 'INVALID_AI_RESPONSE' | 'PROVIDER_UNAVAILABLE' | 'RATE_LIMITED' | 'OVERLOADED' | 'TOKEN_LIMIT_EXCEEDED',
+    public code: GatewayErrorCode,
     message: string
   ) {
     super(message);

@@ -43,6 +43,8 @@ import pg from 'pg';
 import { createHash, randomUUID } from 'node:crypto';
 import { EnhancedEmbeddingService, getEmbeddingService } from './enhancedEmbeddingService.js';
 import { assertTenantIsCurrent } from '../db/currentTenant.js';
+import { getTenantScope } from '../db/tenantStore.js';
+import { getOrgPlacementResolver } from './ai-gateway/providers/org-placement.js';
 import { AIProviderRouter, getAIRouter, type AIRequest, type AIResponse } from './aiProviderRouter.js';
 import { getOpenAIClient } from './openai-client.js';
 import { getReranker, type Reranker } from './rag-reranker.js';
@@ -1467,9 +1469,25 @@ export class AdvancedRAGPipeline {
    * round-trip. The final answer generation does NOT use this.
    */
   private async routeCached(request: AIRequest): Promise<AIResponse> {
+    // The tenant and its placement policy are part of the key. The pipeline is
+    // a process singleton, and until 2026-09-26 the key was the request shape
+    // alone: a hit served one tenant another tenant's model output, produced
+    // under that tenant's placement, with no placement check and no ledger row
+    // for the tenant that got it — and outlived a policy change by the full TTL
+    // (docs/evidence/D6/2026-09-26-refusals-are-final/). A policy that cannot be
+    // read bypasses the cache, so the gateway decides.
+    const tenant = getTenantScope()?.tenantId ?? null;
+    let placement: string;
+    try {
+      placement = JSON.stringify((await getOrgPlacementResolver().resolve(tenant ?? undefined)) ?? null);
+    } catch {
+      return this.aiRouter.route(request);
+    }
     const key = createHash('sha256')
       .update(
         JSON.stringify({
+          tenant,
+          placement,
           taskType: request.taskType,
           messages: request.messages,
           maxTokens: request.maxTokens,

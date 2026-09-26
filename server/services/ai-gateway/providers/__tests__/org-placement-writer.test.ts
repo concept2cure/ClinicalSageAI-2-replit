@@ -113,6 +113,24 @@ describe('parsePlacementPolicyInput', () => {
     ).toMatch(/self-hosted/);
     expect(placementPolicyContradiction({ ...OPEN, residency: 'on_prem', allowedProviders: ['local'] })).toBeNull();
   });
+
+  it('refuses a residency or retention no allowed lane could ever provide (D6 review)', () => {
+    // Until 2026-09-26 these were accepted with a 200, and every later request
+    // for the tenant was refused: the shared frontier lanes have no residency,
+    // and Kimi offers no zero retention, whatever is deployed.
+    expect(placementPolicyContradiction({ ...OPEN, residency: 'us', allowedProviders: ['anthropic'] })).toMatch(
+      /None of the allowed AI services can provide residency us/,
+    );
+    expect(placementPolicyContradiction({ ...OPEN, residency: 'eu', allowedSubstrates: ['frontier_shared'] })).toMatch(
+      /residency eu/,
+    );
+    expect(placementPolicyContradiction({ ...OPEN, zeroDataRetention: true, allowedProviders: ['moonshot'] })).toMatch(
+      /zero data retention/,
+    );
+    // A lane the deployment defines, or a shared lane whose ZDR is an agreement, stays possible.
+    expect(placementPolicyContradiction({ ...OPEN, residency: 'eu', allowedProviders: ['bedrock'] })).toBeNull();
+    expect(placementPolicyContradiction({ ...OPEN, zeroDataRetention: true, allowedProviders: ['anthropic'] })).toBeNull();
+  });
 });
 
 function fakePool(opts: { failAudit?: boolean; existing?: Record<string, unknown> | null } = {}) {
@@ -120,7 +138,7 @@ function fakePool(opts: { failAudit?: boolean; existing?: Record<string, unknown
   const client = {
     query: vi.fn(async (sql: string) => {
       const head = sql.trim().split(/\s+/).slice(0, 1)[0];
-      statements.push(/FOR UPDATE/.test(sql) ? 'SELECT … FOR UPDATE' : head);
+      statements.push(/FOR UPDATE/.test(sql) ? 'SELECT … FOR UPDATE' : /pg_advisory_xact_lock/.test(sql) ? 'LOCK' : head);
       if (/FOR UPDATE/.test(sql)) return { rows: opts.existing ? [opts.existing] : [] };
       return { rows: [] };
     }),
@@ -152,7 +170,7 @@ describe('writeOrgPlacementPolicy', () => {
 
     const result = await writeOrgPlacementPolicy(pool, 42, PRIVATE_ONLY, REASON, { userId: 5, ipAddress: '10.0.0.1' });
 
-    expect(statements).toEqual(['BEGIN', 'SELECT … FOR UPDATE', 'INSERT', 'audit', 'COMMIT']);
+    expect(statements).toEqual(['BEGIN', 'LOCK', 'SELECT … FOR UPDATE', 'INSERT', 'audit', 'COMMIT']);
     const [auditClient, entry] = writeChainedAuditRow.mock.calls[0];
     expect(auditClient).toBe(client); // same connection, same transaction
     expect(entry).toMatchObject({
@@ -176,7 +194,7 @@ describe('writeOrgPlacementPolicy', () => {
     await expect(writeOrgPlacementPolicy(pool, 42, PRIVATE_ONLY, REASON, { userId: 5 })).rejects.toThrow(
       /audit_logs unavailable/,
     );
-    expect(statements).toEqual(['BEGIN', 'SELECT … FOR UPDATE', 'INSERT', 'audit', 'ROLLBACK']);
+    expect(statements).toEqual(['BEGIN', 'LOCK', 'SELECT … FOR UPDATE', 'INSERT', 'audit', 'ROLLBACK']);
     expect(invalidate).not.toHaveBeenCalled();
     expect(client.release).toHaveBeenCalledTimes(1);
   });
