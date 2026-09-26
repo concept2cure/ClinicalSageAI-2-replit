@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-26T02:30:31.953Z",
+  "generatedAt": "2026-09-26T02:34:14.478Z",
   "git": {
-    "sha": "ecaf225c18a8b1e3ede8ca8e596bb74745cefa07",
+    "sha": "0bc045c7ef714646c3a2d9abdeb56c5bfb892262",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2086,7 +2086,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 126953
+        "bytes": 127270
       },
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
@@ -2263,28 +2263,28 @@
         "lines": 2717
       },
       {
+        "file": "server/routes/knowledge-base.ts",
+        "lines": 2666
+      },
+      {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
         "lines": 2609
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 2594
-      },
-      {
-        "file": "server/routes/knowledge-base.ts",
-        "lines": 2592
+        "lines": 2598
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "lines": 2504
       },
       {
-        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
-        "lines": 2419
+        "file": "server/routes/auth.ts",
+        "lines": 2445
       },
       {
-        "file": "server/routes/auth.ts",
-        "lines": 2403
+        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
+        "lines": 2419
       },
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
