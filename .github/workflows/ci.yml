@@ -1517,8 +1517,15 @@ jobs:
       - name: Deploy migration succeeds on the provisioned database
         run: node scripts/db/deploy-migrate.mjs
 
-      - name: Deploy migration is idempotent (every release re-runs it)
-        run: node scripts/db/deploy-migrate.mjs
+      - name: Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it)
+        # Runs the same second deploy-migrate as before, between two snapshots
+        # of every constraint and index. A replay that drops and re-adds a
+        # constraint is "idempotent" to every other check here and is still a
+        # production defect: each re-add re-validates the table under lock while
+        # the previous tasks serve (a CHECK holds ACCESS EXCLUSIVE for the whole
+        # scan). A replay that CREATES something means the first deploy did not
+        # converge. On 2026-09-25 it measured 14 rebuilt and 5 created.
+        run: npm run ci:replay-rebuilds-nothing
 
       - name: RLS coverage — every org-keyed table carries the tenant policy
         # The live two-tenant policy behaviour is proven by
