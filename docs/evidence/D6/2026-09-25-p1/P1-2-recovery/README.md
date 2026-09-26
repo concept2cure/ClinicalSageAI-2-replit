@@ -46,3 +46,22 @@ drizzle handle).
   `routes/auth.ts`) and the org-level "require an authenticator" policy: the same file and a tenant setting; open on P1-2.
 - **Re-issuing recovery codes** after some are spent: `authService.generateBackupCodes()` exists on the client; the
   server route it calls should require the authenticator (`verifyToken`), which is unchanged here.
+
+## Part 2 (2026-09-26): the main login challenge, once `routes/auth.ts` left its window
+
+- `POST /mfa/verify` verifies through `verifyLoginSecondFactor` (authenticator code or recovery code), so the login
+  screen's "Use a recovery code" works; the emailed-code branch runs only for an account without an authenticator
+  (`mfaEnrolmentOf(row).signInFactor`, the same rule the login itself applies when it issues the challenge).
+- `POST /mfa/resend` mints no emailed code for an authenticator account: 409 `MFA_AUTHENTICATOR_REQUIRED`, naming the
+  authenticator and the recovery codes. That was the fallback that let an authenticator account finish sign-in from its
+  inbox (the second half of IAM-08).
+- `POST /login` with an unknown e-mail pays a bcrypt comparison against a hash nobody can sign in with (cost 12, built
+  once), so the answer time no longer says whether the e-mail is enrolled (IAM-18 item 8).
+
+| | File | Result |
+|---|---|---|
+| red | `red-routes/login-challenge-before-fix.txt` | HEAD `94036a27`, route unchanged: the recovery code is refused as `AUTH_004`; the emailed code is consulted for an authenticator account; the resend mints one; no comparison runs for an unknown e-mail. 4 failed / 2 passed |
+| green | `green-routes/login-challenge-after-fix.txt` | the new suite with the auth surface, refresh-currency, password-reset and recovery-code suites, all passing |
+
+Test: `server/routes/__tests__/auth-mfa-challenge-factors.test.ts`. Still open on P1-2: the org-level "require an
+authenticator" policy, signup e-mail verification, and a per-challenge resend cap (P1-3).

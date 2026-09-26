@@ -36,9 +36,37 @@ are the existing ones and are generic over the partition.
 | red | `red/erase-before-escalation.txt` | three new cases on the unchanged sources: `isProposeOnlyCommand('erase_personal_data')` is false, `requiresEsignature` is false, `classifyToolCall` says `UNGOVERNED`; 3 failed / 37 passed |
 | green | `green/erase-after-escalation.txt` | 135 / 135 across the three files and every suite that imports `part11-governance` or pins the GDPR commands (`command-rbac`, `ana-ri-gdpr-commands`, `ana-governance-fail-closed`, `onboarding-proposals`, `governedActionApprovalTenantPinned`, `mdx-agent-audit-contract`), including the anti-drift guards |
 
+## Part 2 (2026-09-26): every state-changing command is a proposal, in one of three tiers
+
+The DP-08 body. `PROPOSE_ONLY_COMMANDS` (`server/services/ana-ri/command-rbac.ts`) is now every `effect: 'write'`
+entry, 53 commands instead of 16. A third tier, `confirm` (`governedTierOf` in `part11-governance.ts`: e-signature set →
+`'esignature'`, governed set → `'reason'`, every other write → `'confirm'`), is an explicit human yes with no reason and
+no credentials, so AnA keeps drafting the task or the edit and a person clicks once; what goes is the model executing it
+unaided. `buildHumanConfirmationRequiredResult` and the streamed `approval_required` frame (`routes/ana-ri/stream.ts`)
+carry `data.tier` and ask for a reason only when one is required; `classifyToolCall` returns the tier; `POST
+/api/ana-ri/governed-action` (`routes/ana-ri/utility.ts`) accepts any proposed command, requires `confirm: true` for the
+confirm tier (no reason, no re-authentication, no sign-off stamped), and keeps the reason and e-signature tiers exactly as
+they were. The executor's Part 11 gate, its RBAC gate and the `humanConfirmed` single-writer guard are unchanged.
+
+| | File | Result |
+|---|---|---|
+| red | `red/every-write-before-fix.txt` | HEAD `8d74e73f`: 36 writes run from model output unaided; no tier exists; 7 failed |
+| green | `green/every-write-after-fix.txt` | 198 / 198 across the new suite, the partition, tool-gate, RBAC, fail-closed and Part 11 gate suites, the two task PGlite suites (given the confirmed context where they model the execution after a person's yes, with the §11.50 handler gate still firing after it), the chat-path parity, resilience and single-brain suites |
+| green | `green/gates-every-write.txt` | `check:security-patterns`, `ci:sign-ceremony`, `ci:discarded-audit-write` unchanged |
+
+Test: `server/services/ana-ri/__tests__/confirm-tier.test.ts`. One inherited failure, `tests/routes/ana-ri-health.test.ts`
+"allows /stream in deterministic mode", fails identically with the committed versions of the five files (the merge of
+trunk at `8d74e73f`), and is not this change's.
+
+**The client half is not in this commit.** `useGovernedAction.ts`, `GovernedActionSignoff.tsx` and `SignoffList.tsx`
+still render every proposal as the reason tier: until they read `data.tier` and render a confirm-only step that posts
+`{ command, params, confirm: true }`, a person confirming an ordinary write is asked for a reason the server does not
+require (the route accepts the body either way, so nothing is blocked). A helper agent was dispatched for it and did not
+report back; the contract it was given is recorded in the tranche index.
+
 ## Not done here
 
-- **Every state-changing command propose-only (the DP-08 body of P0-12).** `PROPOSE_ONLY_COMMANDS` still admits the
+- **Every state-changing command propose-only (the DP-08 body of P0-12)** — done in part 2 above (server); the client's confirm-only step remains. The original note follows for the record. `PROPOSE_ONLY_COMMANDS` still admits the
   ordinary writes the model runs unaided (`update_artifact`, `update_project`, `export_document`, `create_task`, …; 53
   `effect: 'write'` entries in total). Widening the partition is one line in `command-rbac.ts`, but a widened partition
   is only usable if a proposal can then be executed, and today `POST /governed-action`

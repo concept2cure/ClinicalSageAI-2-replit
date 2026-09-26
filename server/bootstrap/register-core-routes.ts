@@ -125,8 +125,10 @@ export function registerCoreRoutes({
   }
 
   try {
-    app.use('/api/ai-assistance', aiCircuitBreaker, aiAssistanceRoutes);
-    app.use('/api/ai', aiCircuitBreaker, aiAssistanceRoutes);
+    // Mount-level auth as every other AI mount carries (the default-deny
+    // boundary already covers /api; this keeps the mount honest on its own).
+    app.use('/api/ai-assistance', authenticateToken, aiCircuitBreaker, aiAssistanceRoutes);
+    app.use('/api/ai', authenticateToken, aiCircuitBreaker, aiAssistanceRoutes);
     const aiProviderRouter = getAIRouter(pool);
     if (aiProviderRouter) setAIService(aiProviderRouter);
     console.log('✅ AI Assistance API routes mounted');

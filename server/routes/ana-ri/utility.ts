@@ -21,10 +21,10 @@ import { loadAgentActivity } from '../../services/ana/agent-activity.js';
 import { resolveDriveState } from '../../services/ana-ri/live-drive.js';
 import { executeCommands, type CommandContext } from '../../services/ana-ri/command-executor.js';
 import {
-  requiresPart11Signoff,
-  requiresEsignature,
+  governedTierOf,
   MIN_REASON_FOR_CHANGE_LEN,
 } from '../../services/ana-ri/part11-governance.js';
+import { isProposeOnlyCommand } from '../../services/ana-ri/command-rbac.js';
 import { reverifySigner } from '../../services/part11/reverify-signer.js';
 import { signerReverificationDeps } from '../../services/part11/reverify-signer-deps.js';
 import {
@@ -433,11 +433,19 @@ export function mountUtilityRoutes(router: Router): void {
     const password = typeof body.password === 'string' ? body.password : '';
     const mfaToken = typeof body.mfaToken === 'string' ? body.mfaToken : undefined;
 
-    // This route is ONLY for governed commands — reads/drafting go through chat.
-    if (!command || !requiresPart11Signoff(command)) {
+    // This route is ONLY for proposed commands — every write (P0-12); reads go
+    // through chat. The tier decides what the person supplies: 'confirm' an
+    // explicit yes, 'reason' a reason for change, 'esignature' the reason and
+    // re-authentication.
+    if (!command || !isProposeOnlyCommand(command)) {
       return sendError(res, 400, 'A governed command name is required', null, 'NOT_A_GOVERNED_COMMAND');
     }
-    if (reasonForChange.length < MIN_REASON_FOR_CHANGE_LEN) {
+    const tier = governedTierOf(command);
+    if (tier === 'confirm') {
+      if (body.confirm !== true) {
+        return sendError(res, 400, 'Confirm the proposed action to run it', null, 'CONFIRMATION_REQUIRED');
+      }
+    } else if (reasonForChange.length < MIN_REASON_FOR_CHANGE_LEN) {
       return sendError(
         res,
         400,
@@ -450,7 +458,7 @@ export function mountUtilityRoutes(router: Router): void {
     // Tiered policy: high-impact actions additionally require a manifested
     // e-signature; the rest require only the reason-for-change. §11.200:
     // re-verify the signer server-side for the e-sign tier (never a client flag).
-    const eSignRequired = requiresEsignature(command);
+    const eSignRequired = tier === 'esignature';
     let secondFactorVerified = false;
     // The instant the server actually verified the signer, captured here rather
     // than synthesised downstream. Handlers that hand the human gate to an
@@ -482,12 +490,12 @@ export function mountUtilityRoutes(router: Router): void {
     const signoffAudit = await auditService.logAction({
       tenantId: numericOrgId,
       userId,
-      action: eSignRequired ? 'ana.governed_action.esign' : 'ana.governed_action.reason',
+      action: `ana.governed_action.${tier === 'esignature' ? 'esign' : tier}`,
       resourceType: 'ana_command',
       resourceId: command,
       ipAddress: clientIpOf(req) ?? undefined,
       userAgent: req.headers['user-agent'] as string | undefined,
-      details: { command, reasonForChange, eSignRequired, secondFactorVerified },
+      details: { command, tier, reasonForChange, eSignRequired, secondFactorVerified },
     });
     if (!signoffAudit.persisted) {
       log.error('Governed action aborted: sign-off audit row was not persisted', {
@@ -518,14 +526,21 @@ export function mountUtilityRoutes(router: Router): void {
       // conventional rather than structural, and the anti-drift test asserts
       // the identifier appears in exactly one source file.
       humanConfirmed: true,
-      signoff: {
-        reasonForChange,
-        // For the reason-only tier there is no e-signature; the gate does not
-        // require one for these commands (validateSignoff requireSignature=false).
-        signatureVerified: eSignRequired,
-        signaturePurpose: 'approval',
-        verifiedAt: signatureVerifiedAt,
-      },
+      // The confirm tier carries no sign-off: the command is in neither Part 11
+      // set, so the executor's sign-off gate does not apply to it, and an
+      // invented reason would be a false record.
+      ...(tier === 'confirm'
+        ? {}
+        : {
+            signoff: {
+              reasonForChange,
+              // For the reason-only tier there is no e-signature; the gate does not
+              // require one for these commands (validateSignoff requireSignature=false).
+              signatureVerified: eSignRequired,
+              signaturePurpose: 'approval' as const,
+              verifiedAt: signatureVerifiedAt,
+            },
+          }),
     };
     try {
       const [result] = await executeCommands([{ command, params } as any], ctx);

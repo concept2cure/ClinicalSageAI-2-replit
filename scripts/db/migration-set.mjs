@@ -2608,6 +2608,13 @@ export const C2C_MIGRATION_FILES = [
   // Evidence docs/evidence/D3/2026-09-25-organizations-tenant-key/.
   'migrations/20260925_organizations_tenant_key_immutable.sql',
 
+  // ── submissions.program_id: a submission carries its project (LX-22) ─────
+  // The project → submission link was guessed from product names; two projects
+  // for one product shared a filing spine. Additive column, a composite
+  // (program, org) FK added NOT VALID, and a one-to-one backfill from the
+  // creation audit rows. No DROP; replay decides nothing twice.
+  'migrations/20260925b_submissions_program_anchor.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

@@ -362,6 +362,17 @@ router.get('/session', async (req: Request, res: Response) => {
  * POST /api/auth/login
  * Login with email and password
  */
+/**
+ * A bcrypt comparison against a hash nobody can sign in with, run when the
+ * e-mail is unknown, so an unknown e-mail costs what a wrong password costs
+ * (cost 12, the same as the stored hashes). Built once, on first use.
+ */
+let unknownEmailTimingHash: string | null = null;
+async function padUnknownEmailTiming(password: string): Promise<void> {
+  unknownEmailTimingHash ??= await bcrypt.hash('unknown-email-timing-pad', 12);
+  await bcrypt.compare(String(password ?? ''), unknownEmailTimingHash);
+}
+
 router.post('/login', loginLimiter, async (req: Request, res: Response) => {
   try {
     const { email, password, deviceInfo, rememberDevice } = req.body;
@@ -379,6 +390,9 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     const user = await db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
 
     if (!user.length) {
+      // The same bcrypt cost a wrong password pays, so the response time does
+      // not say whether the e-mail is enrolled (audit IAM-18 item 8).
+      await padUnknownEmailTiming(password);
       // Audit: unknown-email login attempt. Log with the attempted email
       // (no userId since none exists) so SOC tooling can correlate
       // credential-stuffing attempts. We deliberately store the email
@@ -1444,17 +1458,27 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
       });
     }
 
-    // Verify the code — try email OTP first (default), then TOTP
+    // The factor this account signs in with (mfa-enrolment.ts). An account with
+    // an authenticator never completes sign-in with an emailed code: the emailed
+    // code is the factor of accounts WITHOUT one, and /mfa/resend mints none for
+    // an authenticator account (audit IAM-08, P1-2).
+    const [enrolmentRow] = await db
+      .select({ mfaEnabled: users.mfaEnabled, mfaMethod: users.mfaMethod })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    const authenticatorAccount = mfaEnrolmentOf(enrolmentRow ?? {}).signInFactor === 'totp';
     const verificationMethod = method || 'email';
     let isValid = false;
 
-    if (verificationMethod === 'email') {
+    if (verificationMethod === 'email' && !authenticatorAccount) {
       isValid = await emailOtpService.verifyEmailOtp(userId, code);
     }
 
-    // Fall back to TOTP verification (for users with authenticator apps)
+    // The authenticator, or one of the recovery codes the enrolment issued
+    // (redeemable here and nowhere else; each once).
     if (!isValid) {
-      isValid = await mfaService.verifyToken(userId, code);
+      isValid = (await mfaService.verifyLoginSecondFactor(userId, code)) !== null;
     }
 
     if (!isValid) {
@@ -1602,6 +1626,24 @@ router.post('/mfa/resend', mfaLimiter, async (req: Request, res: Response) => {
     }
 
     const userId = parseInt(challenge.userId);
+
+    // An authenticator account has no emailed code to resend: minting one here
+    // was the fallback that let such an account finish sign-in without the
+    // authenticator (audit IAM-08, P1-2). Recovery codes are its way back in.
+    const [enrolmentRow] = await db
+      .select({ mfaEnabled: users.mfaEnabled, mfaMethod: users.mfaMethod })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    if (mfaEnrolmentOf(enrolmentRow ?? {}).signInFactor === 'totp') {
+      return res.status(409).json({
+        success: false,
+        error: {
+          code: 'MFA_AUTHENTICATOR_REQUIRED',
+          message: 'This account signs in with an authenticator app. Enter a code from it, or one of your recovery codes.',
+        },
+      });
+    }
 
     // Generate a new OTP and send it
     const otp = await emailOtpService.createEmailOtp(userId);

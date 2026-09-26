@@ -1563,15 +1563,19 @@ export function mountStreamRoute(router: Router): void {
             action: verdict.command,
             openModal: 'esign',
             data: {
-              reasonRequired: true,
+              tier: verdict.tier,
+              reasonRequired: verdict.tier !== 'confirm',
               signatureRequired: verdict.tier === 'esignature',
               proposedByAgent: true,
               retry: { command: verdict.command, params: verdict.params },
             },
             message:
-              'This action changes the official record, so it has to be taken by a person rather ' +
-              'than on your behalf. Review it and confirm to continue — your reason for the change ' +
-              'is recorded with it. AnA is waiting on this before she goes on.',
+              verdict.tier === 'confirm'
+                ? 'This action changes the record, so it is taken by a person rather than on your ' +
+                  'behalf. Review it and confirm to continue. AnA is waiting on this before she goes on.'
+                : 'This action changes the official record, so it has to be taken by a person rather ' +
+                  'than on your behalf. Review it and confirm to continue — your reason for the change ' +
+                  'is recorded with it. AnA is waiting on this before she goes on.',
           });
 
           // The wait. Same machinery as pause: woken by the decision, with the

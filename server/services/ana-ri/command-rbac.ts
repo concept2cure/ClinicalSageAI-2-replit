@@ -416,51 +416,29 @@ export const COMMAND_AUTHORIZATION: Readonly<Record<string, CommandAuthorization
 };
 
 /**
- * Commands AnA may PROPOSE but never EXECUTE on her own.
+ * The commands an agent may only PROPOSE. Since 2026-09-26 (security audit
+ * 2026-09-24 DP-08, P0-12) that is every `effect: 'write'` entry: a model
+ * response or tool call never changes state by itself; a person takes the
+ * action in one of three tiers (part11-governance.ts governedTierOf):
+ *   · requiresSignature       → 'esignature' (reason + re-authentication);
+ *   · requiresReasonForChange → 'reason';
+ *   · every other write       → 'confirm' (an explicit human yes, one click).
  *
- * ── Why this exists as a separate gate from the Part 11 tier ────────────────
- * `part11Enforce` answers "must this dispatch carry a reason and a signature?"
- * and is per-tenant, defaulting OFF. That is a reasonable rollout switch for a
- * signature ceremony. It is NOT a reasonable answer to a different question:
- * "may a language model take this action at all?"
+ * Until then the partition held only the two Part 11 tiers and the approve /
+ * supersede class, on the reasoning that "creating a task or updating a draft
+ * is work, not attestation, and making AnA unable to do it would trade a real
+ * capability for no control". The confirm tier is what keeps the capability:
+ * AnA still proposes the task or the edit, the person clicks once, and the
+ * action runs under the person's name through the one route that stamps
+ * humanConfirmed. What it removes is the model executing unaided — 37 of the
+ * 53 writes (update_artifact, update_project, export_document, create_task,
+ * …) ran from a chat turn nobody had confirmed.
  *
- * §11.200 requires an electronic signature to attest that a PERSON executed the
- * action. An agent that can complete an approval, freeze a record or transmit a
- * submission has produced an attestation about a decision no human made. That
- * is not a configuration choice, so this gate is not configurable: it holds for
- * every tenant, on the first deploy, with no settings row to read.
- *
- * ── DERIVED, not hand-listed ───────────────────────────────────────────────
- * The membership rule is evaluated against COMMAND_AUTHORIZATION rather than
- * typed out, so a new governed handler joins the partition the moment it is
- * registered. A hand-maintained list is exactly the artefact that drifts, and
- * the drift is silent — a new approve-shaped command would simply be executable
- * by the agent and nothing would say so.
- *
- * A command is propose-only when it alters the official record in a way a
- * person must own:
- *   · requiresSignature      — the §11.200 e-signature tier;
- *   · requiresReasonForChange — the reason-for-change tier;
- *   · a manager-tier write carrying requiresConfirmation — the approve /
- *     supersede class. These sit in NEITHER Part 11 set today
- *     (section.approve, post_market.document.approve,
- *     post_market.document.supersede), so no signature can ever be demanded of
- *     them and their only gate is `params.confirm` — a string the MODEL writes,
- *     which cannot distinguish a relayed human yes from the model confirming
- *     itself. This clause is the one that closes that hole.
- *
- * Ordinary authoring mutations are deliberately NOT here. Creating a task or
- * updating a draft is work, not attestation, and making AnA unable to do it
- * would trade a real capability for no control.
+ * Reads are never here: a read has no tier and is never proposed.
  */
 export const PROPOSE_ONLY_COMMANDS: ReadonlySet<string> = new Set(
   Object.entries(COMMAND_AUTHORIZATION)
-    .filter(([, a]) =>
-      a.effect === 'write' &&
-      (a.requiresSignature === true ||
-        a.requiresReasonForChange === true ||
-        (a.requiresConfirmation === true && a.minRole === 'manager'))
-    )
+    .filter(([, a]) => a.effect === 'write')
     .map(([name]) => name)
 );
 

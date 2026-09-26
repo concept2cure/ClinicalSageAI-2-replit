@@ -30,6 +30,7 @@ import { config } from '../config/environment';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { revokeToken, verifyLiveToken } from '../services/token-revocation';
 import { recordAuthEvent } from '../services/audit/auth-event-audit';
+import { ACCOUNT_INACTIVE_MESSAGE, isAccountActive, isActiveAccountStatus } from '../services/account-standing';
 import { runWithTenantScope } from '../db/tenantStore';
 import { requireAccessTokenReason } from '../middleware/tokenType';
 import { authMiddleware } from '../auth';
@@ -283,6 +284,25 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
 
     const user = userResult[0];
 
+    // An account out of use (suspended, deprovisioned) signs in nowhere: the
+    // main login refuses it before comparing the password (AUTH_ACCOUNT_INACTIVE);
+    // this step admitted it and minted the MFA-partial token (security audit
+    // 2026-09-24, IAM-18 item 5). Refused before the lockout and the password,
+    // so a suspended account spends neither.
+    if (!isActiveAccountStatus(user.status)) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId: user.id,
+        tenantId: user.defaultOrganizationId,
+        email: user.email,
+        outcome: 'failure',
+        reason: 'account_inactive',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(403).json({ error: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE });
+    }
+
     // Check account lockout
     const lockStatus = await isAccountLocked(user.id);
     if (lockStatus.locked) {
@@ -464,6 +484,24 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
 
     // Verify the MFA code using the same canonical MFA service as /api/auth/*
     const userId = parseInt(decoded.userId);
+
+    // A challenge issued before the account was suspended or deprovisioned does
+    // not become a session after it (the rule routes/auth.ts's /mfa/verify
+    // applies; audit IAM-18 item 5). Checked before the code, so an account out
+    // of use spends none.
+    if (!(await isAccountActive(userId))) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId,
+        tenantId: decoded.organizationId,
+        email: decoded.email,
+        outcome: 'failure',
+        reason: 'account_inactive',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(403).json({ error: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE });
+    }
 
     // Try email OTP first, then fall back to TOTP
     let isValid = await emailOtpService.verifyEmailOtp(userId, code);

@@ -134,11 +134,18 @@ async function projectTaskStatus(id: number) {
   return r.rows[0]?.status;
 }
 
+/**
+ * update_task as POST /governed-action dispatches it after a person confirmed
+ * the proposal (since 2026-09-26 every write is a proposal, audit DP-08,
+ * P0-12). The §11.50 approval gate these cases pin lives in the handler and
+ * still fires after that confirmation: confirming "move this task" is not
+ * signing its completion.
+ */
 async function updateTask(taskId: number, status: string) {
   const { executeCommands } = await import('../command-executor');
   const res = await executeCommands(
     [{ command: 'update_task', params: { projectId: PROJECT, taskId, updates: { status } } }] as never,
-    { organizationId: ORG, userId: 1 } as never
+    { organizationId: ORG, userId: 1, humanConfirmed: true } as never
   );
   return (res as Array<{ success: boolean; message?: string }>)[0];
 }
@@ -295,9 +302,17 @@ describe('the propose-only partition', () => {
     expect(out.error).not.toBe('HUMAN_CONFIRMATION_REQUIRED');
   });
 
-  it('leaves ordinary agent work alone', async () => {
+  it('treats ordinary agent work as a proposal at the confirm tier, and runs it once a person confirmed', async () => {
+    // Until 2026-09-26 an ungated task update ran from the chat path unaided.
+    // It is a proposal now (audit DP-08, P0-12): one click, no reason, no
+    // credentials — and the same update runs when the person has confirmed.
     await seedTask(201, { approvalRequired: false });
-    const out = await updateTask(201, 'review');
-    expect(out.success).toBe(true);
+    const proposed = await asAgent('update_task', { projectId: PROJECT, taskId: 201, updates: { status: 'review' } });
+    expect(proposed.success).toBe(false);
+    expect(proposed.error).toBe('HUMAN_CONFIRMATION_REQUIRED');
+    expect(proposed.data?.tier).toBe('confirm');
+    expect(proposed.data?.reasonRequired).toBe(false);
+    const done = await asConfirmedHuman('update_task', { projectId: PROJECT, taskId: 201, updates: { status: 'review' } });
+    expect(done.success).toBe(true);
   });
 });
