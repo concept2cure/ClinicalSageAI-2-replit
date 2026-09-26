@@ -782,6 +782,27 @@ export class AuthService {
     await this.refreshSessionPolicy();
   }
 
+  /**
+   * Adopt a session the server minted elsewhere and handed to the sign-in
+   * page in the URL fragment (single sign-on; IAM-18 item 6). The token is
+   * checked against GET /session before anything is stored, so a forged or
+   * expired hand-off signs nobody in. It carries no refresh token: the session
+   * lives as long as its access token and its idle window.
+   */
+  async adoptSession(accessToken: string, persistent: boolean = false): Promise<AuthUser | null> {
+    const probe = await this.api.get<{ authenticated?: boolean; user?: AuthUser; session?: unknown }>(`${this.baseUrl}/session`, {
+      skipAuth: true,
+      retryOnUnauthorized: false,
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!probe.success || !probe.data?.authenticated || !probe.data.user) return null;
+    const policy = this.rememberSessionPolicy(probe.data.session);
+    const expiresAt = policy.expiresAt ? new Date(policy.expiresAt) : new Date(Date.now() + policy.lifetimeHours * 60 * 60 * 1000);
+    this.setAuth({ accessToken, refreshToken: '', expiresAt, tokenType: 'Bearer' }, probe.data.user, persistent);
+    this.events.emit('login', { user: probe.data.user });
+    return probe.data.user;
+  }
+
   private setupTokenRefresh(): void {
     if (this.refreshTimer) {
       clearTimeout(this.refreshTimer);
