@@ -108,3 +108,100 @@ backfilled submission would make that tenant's whole purge abort with 23503.
 
 These wait on `projects.ts`, `submission-service.ts`, `routes/submissions.ts` and
 `SubmissionCenter.tsx` leaving the other lanes' 24-hour windows.
+
+---
+
+# LX-22 (D2), part 2a (PF-05): every writer anchors a submission to its project
+
+**Found by:** the project-anchoring audit (PF-creation-1, PF-creation-2,
+PF-SUB-1, PF-SUB-3, creation MISSED-1) and mapped by the part-2 scout
+(`wf_89248a58-854`). The plan entry is PF-05 in
+`docs/design/PROJECT_FIRST_PLAN_2026-09-26.md`.
+
+## The defects
+
+- **Intake adopted another project's submission by name.**
+  `ensureSubmissionSpine` (`server/routes/c2c/project-intake.ts`) reused any
+  submission of the organization whose `product_name` or `title` matched. A second
+  project for the same product therefore took the first project's filing, and both
+  filed into one spine.
+- **Submission Center dropped the project.** The create form makes the user pick a
+  programme, then posted only its title. `POST /api/submissions` had no project
+  field, and its plain `z.object` stripped one if sent.
+- **Transmittals named no project.** The sequence transmit path passed
+  `programId: null` to every gateway.
+
+## The fix
+
+- **One choke point.** `insertSubmissionRow` writes `program_id`.
+  `createSubmission` and `createSubmissionTx` both refuse, before anything is
+  written, a program that is not a live project of the caller's organization
+  (`programInOrganization`, LX-20). The refusal is `NOT_FOUND` (404). The
+  `SUBMISSION_CREATED` audit row names the project.
+- **Intake.** `ensureSubmissionSpine` takes the program id and reuses only a
+  submission already anchored to that program. It never adopts by name, and it
+  never adopts an unanchored row. `POST /api/c2c/projects` passes the new
+  program's id.
+- **`POST /api/submissions`** requires `programId` (a UUID). The Submission Center
+  form sends the programme it made the user pick.
+- **Transmit.** The transmittal takes `program_id` from its submission.
+- **Callers.**
+  - The OQ fixtures (`createSubmissionWithSequence`), OQ-004,
+    `scripts/verify-submission-center.mjs` and the launch-demo MDX pack send the
+    project. The verify script also checks the 400 (no project) and the 404
+    (unknown project).
+  - The GA demo seed anchors its IND spines, and skips with a warning where the
+    column is absent. It never matches by name.
+
+## Tests, red before the fix (`03-red-part2.txt`), green after (`04-green-part2.txt`)
+
+- `server/routes/c2c/__tests__/projects-create.test.ts`:
+  - the spine input carries `programId`;
+  - the reuse probe is keyed `program_id = $2` and names no `product_name` or
+    `title`.
+- `tests/golden-journeys/drug-nda-ectd.journey.test.ts`, the real routers over the
+  real DDL, now including the real `20260925b` constraint:
+  - step 1: the intake spine's `program_id` is the programme;
+  - step 3: a second project for the same product gets its own anchored spine.
+    This step used to assert the adoption;
+  - step 3b: another organization naming the programme is refused 404
+    `NOT_FOUND` with nothing written, no project is refused 400, and the caller's
+    own project gives 201 with `programId`.
+- `client/.../submissionCenterCreate.test.tsx`: the POST body carries the picked
+  `programId`.
+- `tests/lineage` (LX-00 walk):
+  - new `project/submission-anchored-to-project`;
+  - `transmit/transmittal-names-project` is split from
+    `transmit/transmittal-names-sequence`, whose baseline now records only the
+    missing `sequence_id` column (LX-12);
+  - `walk-back/sequence-to-project` reads `submissions.program_id` through the
+    sequence, and the creation audit row must agree;
+  - `walk-forward/project-to-its-records` counts the project's submissions by
+    column.
+
+## The wider run
+
+- `tsc --noEmit` passes on the whole project.
+- 839 test files were run: submission service, eCTD, gateways, `server/routes/c2c`,
+  `server/routes/__tests__`, golden journeys, lineage, schema contracts, the IND
+  and NDA services, and every client v2 test. 8,747 tests passed.
+- `ind-filing-flow-pglite` failed first and is fixed. It mocks the db module
+  without `pool`, and `createSubmission` touched `pool` even with no project. It
+  now reads it only when there is a project to check.
+- The two client files that still fail, `anaDrivesWave4` and
+  `documentCanvasPolish`, fail identically on trunk without this change (4 of 20),
+  so they are not this change.
+
+## Not in this part
+
+- **Readers still find a program's submission by name (PF-06, part 2b):**
+  `resolveSubmissionSpine`, Dispatch Readiness and IND Lifecycle.
+- **Handed off:** the IND checklist assembler (IND lane) and `ind-forms.routes.ts`
+  (`…0194UQPx`'s window).
+- **Tenant purge and transmittals.** Where `submission_transmittals` was created by
+  the raw `20260509` DDL, its `program_id` has a NO ACTION key to
+  `regulatory_programs`, and the purge deletes programs but not transmittals. A
+  transmittal that names its project would then block that tenant's purge (23503).
+  The package-spine transmit already writes that column today. The
+  Drizzle-declared table (`shared/schema.ts`) has no such key, and `20260509` is not
+  on the applier. This is handed to the offboarding owner on the board.

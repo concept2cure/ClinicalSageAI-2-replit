@@ -43,6 +43,7 @@ import { writeChainedAuditRow } from '../auditService';
 import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { deriveGovernedTargetBinding, BINDING_BASIS, isSignatureWithdrawn } from '../part11/signature-persistence';
 import { createScopedLogger } from '../../utils/logger';
+import { programInOrganization } from '../c2c/program-access';
 import {
   validateSectionCode,
   vocabularyForApplicationType,
@@ -123,6 +124,10 @@ export interface CreateSubmissionInput {
   clientType: string;
   primaryRegion: string;
   lifecycleStage?: string;
+  /** The project this submission belongs to (regulatory_programs.id). Checked
+   *  against the caller's organization before anything is written. Optional
+   *  here; POST /api/submissions requires it, and intake always passes it. */
+  programId?: string | null;
 }
 
 /** Anything that can run the canonical submissions INSERT — the pool-backed
@@ -150,9 +155,29 @@ async function insertSubmissionRow(
       lifecycleStage: input.lifecycleStage ?? 'planning',
       organizationId: ctx.organizationId,
       createdBy: ctx.userId,
+      programId: input.programId ?? null,
     })
     .returning();
   return row as Submission;
+}
+
+/**
+ * A submission is anchored only to a live project of its OWN organization
+ * (LX-22). Refused as NOT_FOUND (404), before anything is written — 404 rather
+ * than 403, so the caller learns nothing about another tenant's ids. The
+ * same-organization foreign key (submissions_program_same_org_fk) is the
+ * database backstop; it does not see a deleted project, and its 23503 would
+ * reach the caller as a 500, so it is never the first line.
+ */
+async function refuseForeignProgram(
+  q: Parameters<typeof programInOrganization>[0],
+  programId: string | null | undefined,
+  organizationId: number,
+): Promise<void> {
+  if (programId === undefined || programId === null) return;
+  if (!(await programInOrganization(q, programId, organizationId))) {
+    throw new SubmissionError('NOT_FOUND', 'Project not found for this organization.');
+  }
 }
 
 /**
@@ -180,6 +205,7 @@ export async function createSubmission(
   input: CreateSubmissionInput,
   ctx: { organizationId: number; userId: number }
 ): Promise<CreatedSubmission> {
+  if (input.programId != null) await refuseForeignProgram(pool, input.programId, ctx.organizationId);
   const row = await insertSubmissionRow(db, input, ctx);
   // Part 11 §11.10(e). `recordAuditRow` neither throws nor rejects, and the
   // INSERT above is already committed when it runs, so the submission stands
@@ -194,7 +220,12 @@ export async function createSubmission(
     action: 'SUBMISSION_CREATED',
     resourceType: 'submission',
     resourceId: row.id,
-    details: { applicationType: input.applicationType, primaryRegion: input.primaryRegion, clientType: input.clientType },
+    details: {
+      applicationType: input.applicationType,
+      primaryRegion: input.primaryRegion,
+      clientType: input.clientType,
+      programId: input.programId ?? null,
+    },
   });
   logger.info('Created submission', { submissionId: row.id, organizationId: ctx.organizationId });
   return { ...row, auditTrail };
@@ -216,11 +247,14 @@ export async function createSubmission(
  * on the same client (the C2C intake route writes a hash-chained audit_logs row
  * covering both creations).
  */
-export function createSubmissionTx(
+export async function createSubmissionTx(
   client: PoolClient,
   input: CreateSubmissionInput,
   ctx: { organizationId: number; userId: number }
 ): Promise<Submission> {
+  // On the caller's client, so a project inserted earlier in the same
+  // uncommitted transaction (intake) is seen.
+  await refuseForeignProgram(client, input.programId, ctx.organizationId);
   return insertSubmissionRow(drizzle(client), input, ctx);
 }
 
@@ -1389,7 +1423,10 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     result = await gw.transmit({
       organizationId: ctx.organizationId,
       userId: ctx.userId,
-      programId: null,
+      // The transmittal names the project its submission belongs to (LX-22):
+      // submission_transmittals.program_id, which every gateway copies from
+      // here, was always NULL on this path.
+      programId: submission.programId ?? null,
       packageId: null,
       bundle: assembled.bundle,
       environment,

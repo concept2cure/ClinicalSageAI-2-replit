@@ -95,15 +95,21 @@ const REGION_BY_APPLICATION: Record<string, string> = {
 
 /**
  * Ensure the canonical submission spine for a drug-program intake, INSIDE the
- * caller's transaction.
+ * caller's transaction, anchored to the program it is for.
  *
- * Idempotent by the SAME identity convention the ind-checklist-view-assembler
- * uses to match program ↔ submission (product_name / title, case-insensitive,
- * per application type): when a matching submission already exists in the org
- * it is linked rather than duplicated, so re-creating a program for the same
- * product never forks a second spine. When none exists, the row is created via
- * the canonical submission-service insert on this client — commit and rollback
- * are atomic with the program.
+ * The spine belongs to ONE program: `submissions.program_id`
+ * (migrations/20260925b, LX-22). A submission already anchored to THIS program
+ * (and of this application type) is reused, so a replayed intake never forks a
+ * second spine. Nothing else is: this used to adopt any submission of the
+ * organization whose product_name or title matched, so a second project for
+ * the same product silently took the first project's filing, and both then
+ * filed into one spine (PF-creation-1). A submission with no recorded project
+ * is never adopted either — the name is not a key.
+ *
+ * When none is anchored, the row is created via the canonical submission-service
+ * insert on this client — commit and rollback are atomic with the program — and
+ * that insert checks the program belongs to `orgId` on the same client, so it
+ * sees the program row inserted earlier in this uncommitted transaction.
  *
  * Fail-closed: any error propagates so the whole transaction rolls back — a
  * drug program without its submission spine is exactly the permanently-empty
@@ -113,24 +119,24 @@ export async function ensureSubmissionSpine(params: {
   client: PoolClient;
   orgId: number;
   userId: number;
-  /** Program name → submissions.title (assembler identity key). */
+  /** The program the spine belongs to (regulatory_programs.id). */
+  programId: string;
+  /** Program name → submissions.title. */
   name: string;
-  /** Program product_name → submissions.product_name (assembler identity key). */
+  /** Program product_name → submissions.product_name (the filed product). */
   productName: string;
   applicationType: string;
   productType: string;
   primaryAgency: string;
 }): Promise<{ id: number; created: boolean }> {
-  const { client, orgId, userId, name, productName, applicationType } = params;
-  const identityKeys = [...new Set([productName, name].map((v) => v.trim().toLowerCase()).filter(Boolean))];
+  const { client, orgId, userId, programId, name, productName, applicationType } = params;
   const existing = await client.query(
     `SELECT id FROM submissions
-      WHERE organization_id = $1 AND deleted_at IS NULL
-        AND lower(application_type) = $2
-        AND (lower(coalesce(product_name, '')) = ANY($3) OR lower(title) = ANY($3))
+      WHERE organization_id = $1 AND program_id = $2 AND lower(application_type) = $3
+        AND deleted_at IS NULL
       ORDER BY updated_at DESC NULLS LAST, id DESC
       LIMIT 1`,
-    [orgId, applicationType, identityKeys],
+    [orgId, programId, applicationType],
   );
   if (existing.rows.length > 0) {
     return { id: Number((existing.rows[0] as { id: number | string }).id), created: false };
@@ -141,6 +147,7 @@ export async function ensureSubmissionSpine(params: {
   const row = await createSubmissionTx(
     client,
     {
+      programId,
       title: name,
       productName,
       applicationType,

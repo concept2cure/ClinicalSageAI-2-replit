@@ -1,0 +1,65 @@
+# the part-2a tests, with the fix
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterCreate.test.tsx > SubmissionCenter — create posts the live schema > an EU MAA can be OPENED: the body carries title/applicationType/clientType/primaryRegion and the programme identity
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterCreate.test.tsx > SubmissionCenter — create posts the live schema > the form offers the global markets, not only the US ones
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterCreate.test.tsx > SubmissionCenter — the next sequence > starts the next sequence in the submission's region, numbered after the last, of the type chosen
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterCreate.test.tsx > SubmissionCenter — the next sequence > numbers after the highest sequence in the submission's own region — numbering restarts per region
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 403 without org context
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 400 when name is missing
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 400 on an invalid programType (never reaches SQL)
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > inserts into regulatory_programs and returns the portfolio display contract
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > derives product_type from program_type when the client omits it
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > retries with a suffixed code on a unique-code collision (23505)
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > runs the insert and the scaffold in ONE transaction, and releases the client
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > rolls the program back when its audit row cannot be written
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > surfaces a scaffold skip in the 201 body instead of failing or hiding it
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > reports the scaffolded document and section count on success
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > 503 PENDING_STORE when the store is not provisioned (42P01)
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > does NOT call it a provisioning failure when the named relation EXISTS
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > still calls it a provisioning failure when the relation really is absent
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects > refuses the create when the org is at its licensed program quota
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates the submissions row transactionally for a drug program (nda)
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > reuses only a spine already anchored to THIS program
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates NO submissions row for a device program (510k)
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > creates NO submissions row for a CER program
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > rolls the WHOLE creation back when the spine insert fails
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > 503 PENDING_STORE when the submissions store is not provisioned (42P01)
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > names the step and a support reference, and discloses no schema object
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — canonical submission spine > degrades to the same safe body when the relation cannot be parsed
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > echoes the reference id in the body and says what failed
+ ✓ server/routes/c2c/__tests__/projects-create.test.ts > POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees > rolls the transaction back and releases the client on that failure
+ ✓ server/services/ind-lifecycle/__tests__/ind-filing-flow-pglite.integration.test.ts > annual-report filing flow against PGlite > creates a submission, files an annual sequence, and persists the m1.13 leaf + checksum
+ ✓ server/services/ind-lifecycle/__tests__/ind-filing-flow-pglite.integration.test.ts > safety-report filing flow against PGlite > files the 312.32 amendment leaves (m1.12.4 + m5.3.5) with the safety-report checksum
+ ✓ server/services/ind-lifecycle/__tests__/ind-filing-flow-pglite.integration.test.ts > IND portfolio against PGlite > lists only IND submissions for the org, with per-submission sequence rollups
+ ✓ tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 1 · project — a project of org A, created the way the Projects surface creates it
+  RED    bytes-durable — baselined DR-ANA-11 → LX-02; observed null
+  RED    tool-accepts-sources — baselined AC-02, DR-ANA-13 → LX-06; observed false
+  RED    model-recorded — baselined AC-01, DR-ANA-13 → LX-06; observed undefined
+  RED    turn-recorded — baselined AC-01, DR-ANA-13 → LX-06; observed [null,null]
+  RED    source-span — baselined AC-02, DR-ANA-13 → LX-06; observed 0
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+  RED    source-span-survives — baselined AC-02, AC-03 → LX-06 then LX-08; observed 0
+  RED    spans-bound-to-revision — baselined AC-04 → LX-08; observed [null]
+  RED    seal-binds-revision-and-lineage — baselined AC-04, AC-10 → LX-08 then LX-09; observed {"heads":2,"bound":0,"lineageDigests":0}
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path
+  RED    filing-names-sealed-version — baselined SUB-7, AC-14 → LX-10; observed false
+  RED    placement-audit-names-document-and-pin — baselined SUB-10 → LX-11; observed [false,false]
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+  RED    reachable-from-the-product — baselined SUB-1 → LX-13; observed 0
+  RED    bytes-retained — baselined SUB-2 → LX-12; observed false
+  RED    transmittal-names-sequence — baselined SUB-2 → LX-12; observed false
+  RED    transmit-record-names-bundle — baselined SUB-2 → LX-12; observed false
+  RED    vault-leaf-to-seal — baselined SUB-7 → LX-10; observed 0
+  RED    document-to-source-checksum — baselined AC-02, DR-ANA-13, AC-03 → LX-06 then LX-08; observed 0
+  RED    source-to-documents — baselined AC-02, DR-ANA-13, AC-03, SUB-14 → LX-06 then LX-08; observed 0
+  RED    data-room-shows-use — baselined DR-ANA-14 → LX-06 then LX-08 then LX-14; observed 0
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows
+ Test Files  5 passed (5)
+      Tests  44 passed (44)

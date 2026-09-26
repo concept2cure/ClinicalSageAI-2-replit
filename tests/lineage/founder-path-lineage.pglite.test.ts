@@ -190,6 +190,7 @@ const MIGRATIONS = [
   'migrations/20260529_phase9_backfill.sql',
   'migrations/20260804_phase9_rule_pack_outlines.sql',
   'migrations/20260814_projects_regulatory_program_anchor.sql',
+  'migrations/20260925b_submissions_program_anchor.sql',
   // The Data Room: the evidence spine and the upload ledger.
   'db/migrations/20260724_clinical_regulatory_evidence_spine.sql',
   'migrations/20260726_cre_source_program_scope.sql',

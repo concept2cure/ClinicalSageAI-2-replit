@@ -837,14 +837,14 @@ router.post('/', async (req: Request, res: Response) => {
       // row, so every canonical-core surface (IndLifecycle checklist,
       // NdaCockpit, SubmissionCenter, DispatchReadiness) stayed permanently
       // empty for self-serve drug programs. Drug application types only;
-      // device/CER/MDR programs run on their own pathway stores. Title and
-      // product_name are set from the program's name/product_name so the
-      // ind-checklist-view-assembler's identity match (program ↔ submission by
-      // product_name/title) holds by construction. A failure here rolls the
-      // whole creation back — no program without its spine.
+      // device/CER/MDR programs run on their own pathway stores. The spine is
+      // anchored to THIS program (submissions.program_id, LX-22) and reused
+      // only if already anchored to it — never adopted from another project by
+      // product name. A failure here rolls the whole creation back — no
+      // program without its spine.
       if (applicationType) {
         submissionSpine = await ensureSubmissionSpine({
-          client, orgId, userId, name, productName, applicationType, productType, primaryAgency,
+          client, orgId, userId, programId: newId, name, productName, applicationType, productType, primaryAgency,
         });
       }
 
@@ -886,7 +886,7 @@ router.post('/', async (req: Request, res: Response) => {
         created_via: 'v2-new-project-wizard',
         // The audit row covers EVERY creation this transaction performed: the
         // linked canonical submission is part of the record, whether newly
-        // created here or matched to an existing spine by identity.
+        // created here or already anchored to this program (a replay).
         ...(submissionSpine
           ? {
               submission_id: submissionSpine.id,
@@ -955,8 +955,8 @@ router.post('/', async (req: Request, res: Response) => {
         scaffoldedSections: scaffold.sectionCount,
         ...(scaffold.skipped ? { scaffoldSkipped: scaffold.skipped, scaffoldDetail: scaffold.detail } : {}),
         // Surfaced so the spine linkage is never silent: present for drug
-        // programs (submissionCreated=false means an existing spine was
-        // matched by identity), absent for device/CER/MDR program types.
+        // programs (submissionCreated=false means a spine already anchored to
+        // this program was reused), absent for device/CER/MDR program types.
         ...(submissionSpine
           ? { submissionId: submissionSpine.id, submissionCreated: submissionSpine.created }
           : {}),
