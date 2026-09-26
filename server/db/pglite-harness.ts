@@ -247,7 +247,9 @@ CREATE TABLE IF NOT EXISTS submissions (
   created_by       INTEGER NOT NULL,
   created_at       TIMESTAMPTZ DEFAULT now(),
   updated_at       TIMESTAMPTZ DEFAULT now(),
-  deleted_at       TIMESTAMPTZ
+  deleted_at       TIMESTAMPTZ,
+  -- migrations/20260925b (LX-22): the project this submission belongs to.
+  program_id       UUID
 );
 
 CREATE TABLE IF NOT EXISTS ectd_sequences (
