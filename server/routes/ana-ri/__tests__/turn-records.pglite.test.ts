@@ -21,19 +21,22 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const holder = vi.hoisted(() => ({
-  pg: null as any,
-  failOn: null as RegExp | null,
-  chainWalkFails: false,
-}));
+const holder = vi.hoisted(() => {
+  const h = {
+    pg: null as any,
+    failOn: null as RegExp | null,
+    chainWalkFails: false,
+    query: async (sql: string, params?: unknown[]) => {
+      if (h.failOn && h.failOn.test(sql)) throw new Error('simulated failure');
+      const r = await h.pg.query(sql, params);
+      return { ...r, rowCount: r.affectedRows ?? r.rows.length };
+    },
+  };
+  return h;
+});
 
 vi.mock('../../../db.js', () => {
-  const query = async (sql: string, params?: unknown[]) => {
-    if (holder.failOn && holder.failOn.test(sql)) throw new Error('simulated failure');
-    const r = await holder.pg.query(sql, params);
-    return { ...r, rowCount: r.affectedRows ?? r.rows.length };
-  };
-  const pool = { query, connect: async () => ({ query, release: () => undefined }) };
+  const pool = { query: holder.query, connect: async () => ({ query: holder.query, release: () => undefined }) };
   return { getPool: () => pool, pool };
 });
 vi.mock('../../../services/audit/tenant-chain-verdict.js', async () => {
@@ -69,6 +72,9 @@ function appAs() {
     (req as any).user = { id: u.id, role: u.role, roles: [u.role] };
     (req as any).userId = u.id;
     (req as any).tenantId = u.org;
+    // The request-scoped client the global auth gate attaches; the routes
+    // read and record on it, never on the shared pool.
+    (req as any).dbClient = { query: holder.query };
     next();
   });
   const router = express.Router();
