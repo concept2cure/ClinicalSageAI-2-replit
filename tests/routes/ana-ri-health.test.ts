@@ -87,6 +87,9 @@ function mockCommonDeps(options: {
   }));
 
   vi.doMock('../../server/services/ana-ri/document-actions.js', () => ({
+    // stream.ts reads DOCUMENT_ACTIONS for suggested-action labels (05709287c);
+    // an empty map leaves each label as its action id.
+    DOCUMENT_ACTIONS: {},
     getAllActions: vi.fn(() => []),
     getActionsForLens: vi.fn(() => []),
     buildDocumentActionContext: vi.fn(() => ''),
