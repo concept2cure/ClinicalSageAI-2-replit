@@ -30,6 +30,7 @@ import express from 'express';
 import { createServer, type Server as HttpServer } from 'http';
 import { startDriftSentinelSchedule } from './jobs/driftSentinelSweep';
 import { startAuditChainIntegritySchedule } from './jobs/auditChainIntegritySweep';
+import { startRetentionSchedule } from './jobs/retentionCron';
 import { startCorpusIngestionSchedule } from './jobs/corpusIngestionSweep';
 import { startRegulatoryHorizonSchedule } from './jobs/regulatoryHorizonScan';
 import { startExternalIntelligenceSchedule } from './jobs/externalIntelligenceSweep';
@@ -261,6 +262,11 @@ async function startServer() {
     // On by default when AUDIT_TRAIL_ENABLED=true; opt out with
     // ENABLE_AUDIT_CHAIN_CHECK=false, force on with =true.
     startAuditChainIntegritySchedule();
+    // Annex 11 §17 / GDPR 5(1)(e): nightly document retention sweep (archive,
+    // then soft- or hard-delete per policy; legal holds outrank it; each
+    // disposition audited in the chained store). Production default ON; opt
+    // out with ENABLE_RETENTION_SWEEP=false, opt in elsewhere with =true.
+    startRetentionSchedule();
     // RIM precedent flywheel: periodic CT.gov ingestion into the corpus.
     // Self-guards to a no-op unless ENABLE_CORPUS_INGESTION=true.
     startCorpusIngestionSchedule();
