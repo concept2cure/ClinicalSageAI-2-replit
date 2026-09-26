@@ -1,6 +1,6 @@
 /**
- * Who may add to the Vault or file in it — decided where the write happens,
- * not only at the route.
+ * Who may add to the Vault, file in it, or record what its documents say —
+ * decided where the write happens, not only at the route.
  *
  * The web routes that write the Vault carry `requireEditorAccess`
  * (fd2ffa6ac: "a viewer could do both"). The services behind them —
@@ -12,6 +12,10 @@
  * row-level security does not stop it: the Vault's write policy scopes by
  * program, not by role. Reproduced on real PostgreSQL as the runtime role
  * (docs/evidence/D3/2026-09-24-vault-write-role/).
+ *
+ * AnA's `catalog_project_document` asks too (2026-09-26), in its handler,
+ * `completeCatalog`'s only caller: the comprehension record's purpose line
+ * reaches every member's session recall, so a viewer rewriting it is a write.
  *
  * So the services ask, from the role the tenant scope carries. On every request
  * path that is the `organization_users` role — the value `requireEditorAccess`
@@ -40,8 +44,8 @@ export function vaultWriteRefusal(): VaultWriteRefusal | null {
     status: 403,
     code: 'VAULT_WRITE_ROLE_REQUIRED',
     message: role
-      ? `Your role in this organization (${role}) can read the Vault but not add to it or file in it. ` +
+      ? `Your role in this organization (${role}) can read the Vault but not change it. ` +
         'Nothing was changed. An administrator can give you member access.'
-      : 'No organization role is attached to this request, so nothing was added to or filed in the Vault.',
+      : 'No organization role is attached to this request, so nothing in the Vault was changed.',
   };
 }
