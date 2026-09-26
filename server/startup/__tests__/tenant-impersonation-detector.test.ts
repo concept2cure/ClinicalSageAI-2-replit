@@ -78,7 +78,11 @@ describe('where it is mounted', () => {
     const before = stack().length;
     applyAuthBoundary(app);
     const added = stack().slice(before).map((l) => l.handle.name);
-    expect(added, 'the detector is not mounted behind the boundary').toHaveLength(2);
+    // The boundary, then the detector; then, since 2026-09-26, the Concept2Cure
+    // body parsers and their scrub, which read a body only for a session that
+    // passed the boundary (security audit IAM-18 item 7).
+    expect(added.slice(0, 2), 'the detector is not mounted behind the boundary').toHaveLength(2);
     expect(added[1]).toBe('validateTenantContext');
+    expect(added.slice(2), 'the Concept2Cure parsers do not follow the boundary').toEqual(['jsonParser', 'urlencodedParser', 'sanitizeInput']);
   });
 });
