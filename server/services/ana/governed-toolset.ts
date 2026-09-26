@@ -29,6 +29,14 @@
  * each path pins different tools for its own reasons, and governance must not
  * be entangled with relevance.
  *
+ * ── Launch scope ────────────────────────────────────────────────────────────
+ * With launch scope enforced (production by default), tools that serve only
+ * apps outside the release are withheld too (ana-launch-scope.ts, 2026-09-26).
+ * The API refuses those apps' routes, but AnA reaches their services
+ * in-process, so this is the only place their tools can be taken away from
+ * every chat door at once. Unlike the tenant policy it does not depend on the
+ * organisation, and it applies to an org-less turn as well.
+ *
  * Fail-soft on an unreadable policy (default-allow), because
  * `loadAnaToolPolicy` is the read/display variant; a governed WRITE resolves
  * the strict one at execution instead.
@@ -39,6 +47,8 @@
 import { getAllEnabledTools } from './AnaToolDefinitions.js';
 import { loadAnaToolPolicy, filterToolsByPolicy } from '../ana-ri/mdx-tool-policy.js';
 import { CATALOG_GATED_TOOLS } from './document-tools-shared.js';
+import { withoutHiddenAppTools } from './ana-launch-scope.js';
+import { launchScopeEnforced } from '../entitlements/launch-scope.js';
 
 type PolicyPool = { query: (sql: string, params: unknown[]) => Promise<{ rows: any[] }> };
 
@@ -53,7 +63,7 @@ export async function governedToolsetFor(
   pool: PolicyPool,
   organizationId: number | null | undefined,
 ): Promise<ReturnType<typeof getAllEnabledTools>> {
-  const all = getAllEnabledTools();
+  const all = launchScopeEnforced() ? withoutHiddenAppTools(getAllEnabledTools()) : getAllEnabledTools();
   if (organizationId == null || !Number.isFinite(Number(organizationId))) {
     // The catalog tools refuse an org-less call outright, so they are not offered.
     return withoutCatalogTools(all);
