@@ -30,7 +30,8 @@ const pool = { query: vi.fn(async () => ({ rows: [] })), connect: vi.fn(async ()
 function app() {
   const a = express();
   a.use((req: Request, _res: Response, next: NextFunction) => {
-    (req as unknown as { user: unknown }).user = { organizationId: 7, id: 3, name: 'Inspector' };
+    // An organisation admin: exports are read by owners, admins and managers (P1-20).
+    (req as unknown as { user: unknown }).user = { organizationId: 7, id: 3, name: 'Inspector', role: 'admin' };
     next();
   });
   a.use('/api', createAuditTrailRoutes(pool as never));
