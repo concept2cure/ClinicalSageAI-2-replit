@@ -17,17 +17,32 @@ smallest change that closes the finding, shown passing (`green/`), committed on 
 | P1-17 | IAM-18 (2)(3) `/api/metrics` readable by any user; public AI-gateway health with provider detail and exception echo | see `git log -- server/startup/operator-endpoints.ts` | yes; leak baseline 146 → 145 | `P1-17/` |
 | P1-5 | IAM-14 unbounded memory upload in the stability router; no count of unguarded upload sites | see `git log -- scripts/ci/check-upload-guards.mjs` | the router and the gate; wiring and the 12-file sweep remain | `P1-5/` |
 | P1-27 (first part) | DP-24 `ci:dead-audit-catch` red on trunk | `3625a205` (another lane) | closed on trunk; recorded in the register | — |
+| IAM-18 residuals (4)(5)(9)(10) | detector mounted before auth; enterprise sign-in admitted inactive accounts; AI prefixes metered as API; AI-assistance mount ungated | see `git log -- server/services/audit/audit-api-authority.ts` (neighbouring commits) | yes; (6)(7)(8) written up in the folder, (8) then closed with P1-2 part 2 | `P1-17-residuals/` |
+| P1-5 sweeps 1 and 2 | IAM-14 the nine remaining upload routes outside `authoring.router.ts` | two commits after the gate | 13 unguarded sites → 4 in 3 files (one hot, two gate limits) | `P1-5/sweep/` |
+| P1-20 | DP-18 audit reads and exports for any member; free-text event types written | commits of 2026-09-26 | yes, the ledger list route included | `P1-20/` |
+| P1-2 part 2 | IAM-08 recovery codes at the main challenge; emailed-code fallback for authenticator accounts; IAM-18 (8) timing oracle | commit of 2026-09-26 | yes (routes half) | `P1-2-recovery/` (red-routes, green-routes) |
+| P0-12 part 2 (P0 item) | DP-08 model output ran 36 writes unaided | commits of 2026-09-26 | yes: server half (every write a proposal, confirm tier) and client half (the confirm-only step in the sign-off dialog) | `../2026-09-24-p0/P0-12/` |
+| P1-27 (second part) | DP-26 browser Sentry events unscrubbed; DP-27 `Math.random` organisation API key | commit of 2026-09-26 | yes for both; DP-28 (`tamper_proof_log` tenant column) and the logger key list open | `P1-27/` |
 
 ## Not reached in this tranche, and why
 
-- **Hot files (board §0).** `routes/auth.ts` (until 01:07 UTC 09-26): the `/mfa/verify` call site for recovery codes,
-  the emailed-code fallback for authenticator accounts, a resend cap. `routes/audit-trail-routes.ts` (01:39): P1-20.
-  `routes/authoring.router.ts` (01:51): its two upload sites. `package.json` and `.husky/pre-push` (07:23): wiring of
-  `ci:upload-guards` and `ci:trivyignore-hygiene`.
+- **Hot files (board §0).** `routes/authoring.router.ts` (until 23:24 UTC 09-26): its two upload sites.
+  `.husky/pre-push` (07:23 UTC 09-26) and `package.json` (another lane's merge touched it at 02:20 UTC 09-26): wiring of
+  `ci:upload-guards` and `ci:trivyignore-hygiene`. `routes/auth.ts` and `routes/audit-trail-routes.ts` left their
+  windows and were done (P1-2 part 2, P1-20).
 - **Larger items** left with their acceptance tests in the plan: P1-1 (inactivity logoff), P1-22 (retention and legal
   hold), P1-19/P1-24/P1-25 (D5), P1-7/P1-8 (D3), the Terraform and workflow items (W2), the founder's (P1-10, P1-11,
   P1-13, P1-15, P1-16, Redis).
-- **Helper agents** were unavailable for most of the tranche (session limit); the items above were done directly.
+- **Helper agents:** one completed the second upload sweep under the control tower; one dispatched for the P0-12 client
+  half did not report back and wrote nothing, so that half is a hand-off with its contract in the P0-12 README.
+
+## Trunk CI
+
+Trunk CI was red before this lane's first push and after every one of them, on the same three jobs and steps, and this
+lane added no failing step: Lint ("server SQL references a table nothing creates", "Proof tier", "requestDb adoption",
+"ESLint warning ratchet" — the tree-wide ratchet, distinct from the per-push one), Security Scan (Trivy config,
+`AWS-0011` CloudFront without a WAF, the founder's INF-05 decision) and Test ("Run tests"). Compared on `5f1e35b0`
+(this lane) against `ba25be2f` (the neighbouring commit): identical failing steps, one fewer in this lane's run.
 
 ## How to read a folder
 

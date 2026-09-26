@@ -1,0 +1,13 @@
+$ # client components unchanged at 0bc045c7; test cases added
+ × client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts > a live approval becomes the sign-off the rail already renders > carries the confirm tier the server name
+ × client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > extractPendingSignoffs > surfaces an agent's proposal (HUMAN_CONFIRMATION_REQUIRED) with its
+ × client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — the confirm tier > asks for neither a reason nor credentials, and 
+ × client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — the confirm tier > confirming posts { confirm: true } with the com
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [] to deeply equal [ …(3) ]
+AssertionError: expected <textarea id="_r_0_" …(5)></textarea> to be null
+AssertionError: expected "vi.fn()" to be called with arguments: [ { success: true, …(1) } ]
+AssertionError: expected undefined to be 'confirm' // Object.is equality
+ Test Files  2 failed (2)
+      Tests  4 failed | 23 passed (27)
+exit=1
