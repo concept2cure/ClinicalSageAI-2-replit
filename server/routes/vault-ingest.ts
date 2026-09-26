@@ -119,8 +119,6 @@ const IngestBodySchema = z.object({
   version: z.string().optional(),
   classification: z.enum(VAULT_CLASSIFICATIONS).optional(),
   retentionPolicy: z.string().optional(),
-  parentDocumentId: z.string().uuid().optional(),
-  supersedesId: z.string().uuid().optional(),
   /* Explicit dossier target, when the uploader already knows where the file
      goes. Validated against the program's vault-view taxonomy — an invalid
      folder is a 400, never a silent unfile. Omitted → the filing classifier
@@ -154,6 +152,20 @@ export default function createVaultIngestRoutes(): Router {
         error: {
           code: 'NO_FILE_RECEIVED',
           message: 'Send the file as multipart/form-data under the field name "file".',
+        },
+      });
+    }
+
+    /* Lineage is not set by an upload (VR-05). The body took any UUID here and
+       wrote it as the new version's parent or predecessor, unchecked against
+       program or organization; no client sends either. Refused, not dropped:
+       a caller that sent lineage is told it was not recorded. */
+    const lineage = ['parentDocumentId', 'supersedesId'].filter((k) => req.body?.[k] !== undefined);
+    if (lineage.length > 0) {
+      return res.status(400).json({
+        error: {
+          code: 'LINEAGE_NOT_ACCEPTED',
+          message: `${lineage.join(' and ')} cannot be set by an upload. Nothing was saved.`,
         },
       });
     }
@@ -228,8 +240,6 @@ export default function createVaultIngestRoutes(): Router {
         version: data.version,
         classification: data.classification,
         retentionPolicy: data.retentionPolicy,
-        parentDocumentId: data.parentDocumentId,
-        supersedesId: data.supersedesId,
         folderId: data.folderId,
         evidenceKind: data.evidenceKind,
         ctdSection: data.ctdSection,
