@@ -87,30 +87,8 @@ export function parsePlacementPolicyInput(body: unknown): PlacementPolicyInput {
     return { ok: false, message: 'The request body must be a placement policy object.' };
   }
   const b = body as Record<string, unknown>;
-  for (const k of Object.keys(b)) {
-    if (k !== 'reasonForChange' && !(POLICY_KEYS as readonly string[]).includes(k)) {
-      return { ok: false, message: `Unknown policy key: ${k}.` };
-    }
-  }
-  const missing = POLICY_KEYS.filter(k => !(k in b));
-  if (missing.length > 0) {
-    return { ok: false, message: `The whole policy is required on every change; missing: ${missing.join(', ')}.` };
-  }
-
-  const reason = typeof b.reasonForChange === 'string' ? b.reasonForChange.trim() : '';
-  if (reason.length < REASON_MIN || reason.length > REASON_MAX) {
-    return {
-      ok: false,
-      message: `reasonForChange must say why the policy is changing (${REASON_MIN}–${REASON_MAX} characters).`,
-    };
-  }
-
-  if (b.residency !== null && !(typeof b.residency === 'string' && WRITABLE_RESIDENCIES.has(b.residency))) {
-    return { ok: false, message: 'residency must be null (no constraint) or one of: us, eu, apac, on_prem.' };
-  }
-  for (const k of ['zeroDataRetention', 'publicSourceFrontier', 'publicSourceEgress'] as const) {
-    if (typeof b[k] !== 'boolean') return { ok: false, message: `${k} must be true or false.` };
-  }
+  const problem = keysProblem(b) ?? reasonProblem(b.reasonForChange) ?? scalarsProblem(b);
+  if (problem) return { ok: false, message: problem };
   const substrates = allowListInput('allowedSubstrates', b.allowedSubstrates, PLACEMENT_SUBSTRATES);
   if (!substrates.ok) return substrates;
   const providers = allowListInput('allowedProviders', b.allowedProviders, PLACEMENT_PROVIDERS);
@@ -126,7 +104,36 @@ export function parsePlacementPolicyInput(body: unknown): PlacementPolicyInput {
   };
   const contradiction = placementPolicyContradiction(policy);
   if (contradiction) return { ok: false, message: contradiction };
-  return { ok: true, policy, reasonForChange: reason };
+  return { ok: true, policy, reasonForChange: (b.reasonForChange as string).trim() };
+}
+
+/** Unknown keys are refused, and every policy key must be present. */
+function keysProblem(b: Record<string, unknown>): string | null {
+  const unknown = Object.keys(b).find(
+    k => k !== 'reasonForChange' && !(POLICY_KEYS as readonly string[]).includes(k),
+  );
+  if (unknown) return `Unknown policy key: ${unknown}.`;
+  const missing = POLICY_KEYS.filter(k => !(k in b));
+  return missing.length > 0
+    ? `The whole policy is required on every change; missing: ${missing.join(', ')}.`
+    : null;
+}
+
+function reasonProblem(value: unknown): string | null {
+  const reason = typeof value === 'string' ? value.trim() : '';
+  return reason.length < REASON_MIN || reason.length > REASON_MAX
+    ? `reasonForChange must say why the policy is changing (${REASON_MIN}–${REASON_MAX} characters).`
+    : null;
+}
+
+function scalarsProblem(b: Record<string, unknown>): string | null {
+  if (b.residency !== null && !(typeof b.residency === 'string' && WRITABLE_RESIDENCIES.has(b.residency))) {
+    return 'residency must be null (no constraint) or one of: us, eu, apac, on_prem.';
+  }
+  const notBoolean = (['zeroDataRetention', 'publicSourceFrontier', 'publicSourceEgress'] as const).find(
+    k => typeof b[k] !== 'boolean',
+  );
+  return notBoolean ? `${notBoolean} must be true or false.` : null;
 }
 
 /**
