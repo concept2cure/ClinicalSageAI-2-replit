@@ -1,0 +1,12 @@
+$ # getCategory unchanged at 2ec744b7
+ × server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > /api/ai-assistance/generate-section → ai 8ms
+ × server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > /api/ai-gateway/complete → ai 1ms
+ × server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > /api/ana/chat → ai 1ms
+ × server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > /api/ana-ri/command → ai 1ms
+ × server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > /api/claude/models → ai 1ms
+ × server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > /api/cortex/query → ai 1ms
+ ✓ server/middleware/__tests__/redisRateLimiter-category.test.ts > getCategory: the AI surfaces are metered as AI > the other buckets are unchanged 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'api' to be 'ai' // Object.is equality
+      Tests  6 failed | 3 passed (9)
+exit=1

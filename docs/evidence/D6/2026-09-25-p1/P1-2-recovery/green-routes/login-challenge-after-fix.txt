@@ -1,0 +1,18 @@
+$ # routes/auth.ts with the login verifier, no emailed code for authenticator accounts, the timing pad
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > redeems a recovery code through the login verifier (the login screen's "Use a recovery code") 47ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > never completes an authenticator account's sign-in with an emailed code 4ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > still verifies an emailed code for an account without an authenticator 4ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/resend > mints no emailed code for an authenticator account (409, names the authenticator and the recovery codes) 3
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/login with an unknown e-mail > pays the bcrypt comparison a wrong password pays, so the answer time does not say the e-
+ ✓ server/services/__tests__/mfa-recovery-code-redemption.pglite.integration.test.ts > verifyLoginSecondFactor: recovery codes > redeems a code the enrolment issued, and removes only that code 2777m
+ ✓ server/services/__tests__/mfa-recovery-code-redemption.pglite.integration.test.ts > verifyLoginSecondFactor: recovery codes > a redeemed code is gone: presenting it again gets nothing 10ms
+ ✓ server/services/__tests__/mfa-recovery-code-redemption.pglite.integration.test.ts > verifyLoginSecondFactor: recovery codes > of two simultaneous presentations of one code, exactly one is accepte
+ ✓ server/services/__tests__/mfa-recovery-code-redemption.pglite.integration.test.ts > verifyLoginSecondFactor: recovery codes > accepts the code as people type it: lower-case, or without the dash 8
+ ✓ server/services/__tests__/mfa-recovery-code-redemption.pglite.integration.test.ts > verifyLoginSecondFactor: recovery codes > another account's code is not this account's 7ms
+ ✓ server/services/__tests__/mfa-recovery-code-redemption.pglite.integration.test.ts > verifyLoginSecondFactor: recovery codes > codes from a disabled enrolment are dead 7ms
+ ✓ server/services/__tests__/mfa-recovery-code-redemption.pglite.integration.test.ts > verifyLoginSecondFactor: recovery codes > a six-digit token takes the authenticator path and touches no recover
+ ✓ server/services/__tests__/mfa-recovery-code-redemption.pglite.integration.test.ts > verifyLoginSecondFactor: recovery codes > text that is neither shape is refused without a query 5ms
+ ✓ server/services/__tests__/mfa-recovery-code-redemption.pglite.integration.test.ts > the authenticator-only entry points (signing, enrolment, disablement) > verifySecondFactor refuses a recovery c
+exit=0
+ Test Files  4 passed (4)
+      Tests  40 passed (40)

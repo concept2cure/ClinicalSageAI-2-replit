@@ -23,7 +23,9 @@
  *   - `launch`       — at least one surface claiming it is a launch or shell
  *                      surface (shared/constants/launch-scope.ts), or it is on
  *                      the platform list below (`LAUNCH_PLATFORM_API`);
- *   - `infrastructure` — a non-screen caller (`LAUNCH_INFRASTRUCTURE_API`);
+ *   - `infrastructure` — a non-screen caller: `LAUNCH_INFRASTRUCTURE_API`, or a
+ *                      path the auth boundary serves unauthenticated
+ *                      (`PUBLIC_API_ALLOWLIST`, middleware/public-api-allowlist.ts);
  *   - `out-of-scope` — every surface claiming it is outside the launch scope;
  *   - `unmapped`     — nothing claims it.
  * `out-of-scope` is refused. `unmapped` is reported by default and refused only
@@ -42,6 +44,7 @@
  */
 
 import { LAUNCH_SURFACE_IDS } from '../../../shared/constants/launch-scope';
+import { isPublicApiPath } from '../../middleware/public-api-allowlist';
 import { modulesForPath } from './api-prefix-map.js';
 
 export type LaunchScopeApiVerdict = 'never-gated' | 'infrastructure' | 'launch' | 'out-of-scope' | 'unmapped';
@@ -57,6 +60,7 @@ export const LAUNCH_PLATFORM_API: Readonly<Record<string, string>> = {
   '/api/tenants': 'tenant context (TenantContext.tsx) on load',
   '/api/clients': 'the client workspace list tenant context reads on load',
   '/api/organizations': "the shell's organisation read (V2App.tsx), Setup's profile and settings, onboarding",
+  '/api/user': 'identity: the users router mounted a second time (register-platform-routes.ts), beside /api/users, which NEVER_GATED already passes',
 };
 
 /**
@@ -84,6 +88,7 @@ export function launchScopeApiVerdict(
   const path = pathname.split('?')[0];
   if (neverGated.some((n) => onPrefix(path, n))) return 'never-gated';
   if (Object.keys(LAUNCH_INFRASTRUCTURE_API).some((p) => onPrefix(path, p))) return 'infrastructure';
+  if (isPublicApiPath(path)) return 'infrastructure';
   if (Object.keys(LAUNCH_PLATFORM_API).some((p) => onPrefix(path, p))) return 'launch';
   const surfaces = modulesForPath(path, prefixMap);
   if (!surfaces || surfaces.size === 0) return 'unmapped';

@@ -12,10 +12,12 @@
  * returns { studyId, extractionConfidence, model }.
  */
 
-import { Router, type Request, type Response } from 'express';
+import { Router, type NextFunction, type Request, type Response } from 'express';
 import multer from 'multer';
 import { randomUUID } from 'node:crypto';
 
+import { makeUploadFileFilter, receiveUpload } from '../middleware/uploadAllowlist';
+import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
 import { PRECLINICAL_INGEST_ENABLED } from '../services/preclinical/feature-flags';
 import {
   ingestStudy,
@@ -25,19 +27,46 @@ import { createScopedLogger } from '../utils/logger';
 
 const log = createScopedLogger('preclinical-routes');
 
+/**
+ * The route reads one PDF. Until 2026-09-25 the filter silently dropped any
+ * other declared type (so a refused file surfaced as "no file", 400) and the
+ * declared type was never checked against the bytes (security audit
+ * 2026-09-24, IAM-14; plan P1-5). A refused type is now 415, the size limit
+ * 413, and the bytes must be a PDF and pass the malware scan before ingestStudy
+ * sees them.
+ */
+const UPLOAD_MAX_BYTES = 50 * 1024 * 1024;
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 50 * 1024 * 1024 },
-  fileFilter: (_req, file, cb) => {
-    cb(null, file.mimetype === 'application/pdf');
-  },
+  limits: { fileSize: UPLOAD_MAX_BYTES, files: 1 },
+  fileFilter: makeUploadFileFilter({
+    extensions: [],
+    mimeTypes: ['application/pdf'],
+    allowMimePrefixes: [],
+  }),
 });
+
+/** Byte check + scan on the received PDF; a missing file is left to the handler. */
+const validateUploadedFile = async (req: Request, res: Response, next: NextFunction) => {
+  const file = req.file;
+  if (!file) return next();
+  try {
+    await assertUploadSafe(file.buffer ?? Buffer.alloc(0), file.mimetype, file.originalname);
+  } catch (err) {
+    if (err instanceof UploadSafetyError) {
+      return res.status(err.status).json({ success: false, ...err.body });
+    }
+    return next(err);
+  }
+  return next();
+};
 
 const router = Router();
 
 router.post(
   '/ingest',
-  upload.single('file'),
+  receiveUpload(upload.single('file'), { maxBytes: UPLOAD_MAX_BYTES }),
+  validateUploadedFile,
   async (req: Request, res: Response) => {
     if (!PRECLINICAL_INGEST_ENABLED) {
       return res.status(503).json({

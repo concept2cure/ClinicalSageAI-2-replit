@@ -27,7 +27,7 @@ import type { Express, NextFunction, Request, Response } from 'express';
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import { betaFlowTelemetryMiddleware } from '../middleware/betaFlowTelemetry';
-import { applySecurityMiddleware, sanitizeInput } from '../middleware/enterprise-security.js';
+import { applySecurityMiddleware, sanitizeInput, validateTenantContext } from '../middleware/enterprise-security.js';
 import { applyPerformanceMiddleware } from '../middleware/enterprise-performance.js';
 import { createRedisRateLimiter } from '../middleware/redisRateLimiter';
 import { httpLogger } from '../src/mw/observability.js';
@@ -149,6 +149,12 @@ export function applyDebugRequestLogging(app: Express, debugLog: DebugLogger): v
 // present and unused, confirming the removal was accidental. Restored. Ledger C-22.
 export function applyAuthBoundary(app: Express): void {
   app.use('/api', createAuthBoundary());
+  // The tenant-impersonation detector needs the session the boundary just
+  // established: a forged x-organization-id is only detectable against
+  // req.user. It used to be mounted by applySecurityMiddleware, which runs
+  // before the boundary, so it never saw a session and never refused or
+  // audited anything (security audit 2026-09-24, IAM-18 item 4).
+  app.use('/api', validateTenantContext);
   createScopedLogger('startup:auth-boundary').info('Default-deny auth boundary mounted on /api', {
     modeAtBoot: resolveAuthBoundaryMode(),
   });

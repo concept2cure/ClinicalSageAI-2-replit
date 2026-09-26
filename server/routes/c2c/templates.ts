@@ -22,6 +22,8 @@
 
 import { Router, type Request, type Response } from 'express';
 import multer from 'multer';
+import { receiveUpload } from '../../middleware/uploadAllowlist';
+import { assertUploadSafe, UploadSafetyError } from '../../middleware/uploadSafety';
 import {
   extractTemplateFromFile,
   renderDocxWithTemplate,
@@ -37,9 +39,10 @@ import type { DocxInput } from '../../services/docx/docxFactory';
 
 const router = Router();
 
+const TEMPLATE_UPLOAD_MAX_BYTES = 15 * 1024 * 1024;
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB
+  limits: { fileSize: TEMPLATE_UPLOAD_MAX_BYTES, files: 1 },
   fileFilter: (_req, file, cb) => {
     if (/\.(docx|pdf)$/i.test(file.originalname)) {
       cb(null, true);
@@ -99,10 +102,32 @@ router.get('/', async (req: Request, res: Response) => {
 
 // ── extract (preview, no save) ───────────────────────────────────────────────
 
-router.post('/extract', upload.single('file'), async (req: Request, res: Response) => {
+const receiveTemplateFile = receiveUpload(upload.single('file'), { maxBytes: TEMPLATE_UPLOAD_MAX_BYTES });
+
+/**
+ * The bytes are what the declared type says, and clean (magic number + malware
+ * scan through the platform guard; fail-closed in production). Answers the
+ * refusal itself and returns false (audit IAM-14, P1-5).
+ */
+async function uploadedTemplateIsSafe(req: Request, res: Response): Promise<boolean> {
+  const file = req.file!;
+  try {
+    await assertUploadSafe(file.buffer, file.mimetype, file.originalname);
+    return true;
+  } catch (err) {
+    if (err instanceof UploadSafetyError) {
+      res.status(err.status).json({ error: err.body.code, detail: err.body.error });
+      return false;
+    }
+    throw err;
+  }
+}
+
+router.post('/extract', receiveTemplateFile, async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
   if (!req.file) return res.status(400).json({ error: 'FILE_REQUIRED' });
+  if (!(await uploadedTemplateIsSafe(req, res))) return;
   try {
     const result = await extractTemplateFromFile(
       req.file.buffer,
@@ -118,11 +143,12 @@ router.post('/extract', upload.single('file'), async (req: Request, res: Respons
 
 // ── extract + save ───────────────────────────────────────────────────────────
 
-router.post('/from-upload', upload.single('file'), async (req: Request, res: Response) => {
+router.post('/from-upload', receiveTemplateFile, async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   const userId = resolveUserId(req);
   if (!orgId || !userId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
   if (!req.file) return res.status(400).json({ error: 'FILE_REQUIRED' });
+  if (!(await uploadedTemplateIsSafe(req, res))) return;
   try {
     const extracted = await extractTemplateFromFile(
       req.file.buffer,

@@ -1,0 +1,105 @@
+$ # server/academic-resource-upload.ts as committed at 50b04d99 (git show HEAD:server/academic-resource-upload.ts > server/academic-resource-upload.ts); test server/__tests__/academic-resource-upload-guards.test.ts
+$ NODE_OPTIONS='--max-old-space-size=2048' npx vitest run --config vitest.config.ts server/__tests__/academic-resource-upload-guards.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/__tests__/academic-resource-upload-guards.test.ts > receiveAcademicResource: the upload guard > refuses a body over the size limit with 413 and leaves nothing on disk 44ms
+   → receiveAcademicResource is not a function
+ × server/__tests__/academic-resource-upload-guards.test.ts > receiveAcademicResource: the upload guard > refuses an executable named file whatever type it declares (415) 2ms
+   → receiveAcademicResource is not a function
+ × server/__tests__/academic-resource-upload-guards.test.ts > receiveAcademicResource: the upload guard > refuses a declared type this uploader does not accept (415) 1ms
+   → receiveAcademicResource is not a function
+ × server/__tests__/academic-resource-upload-guards.test.ts > receiveAcademicResource: the upload guard > refuses bytes that are not what the declared type says and removes the stored file 1ms
+   → receiveAcademicResource is not a function
+ × server/__tests__/academic-resource-upload-guards.test.ts > receiveAcademicResource: the upload guard > leaves a request with no file to the handler 1ms
+   → receiveAcademicResource is not a function
+ × server/__tests__/academic-resource-upload-guards.test.ts > receiveAcademicResource: the upload guard > control: a real PDF passes the guard, is stored, and reaches the handler 1ms
+   → receiveAcademicResource is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/__tests__/academic-resource-upload-guards.test.ts > receiveAcademicResource: the upload guard > refuses a body over the size limit with 413 and leaves nothing on disk
+TypeError: receiveAcademicResource is not a function
+ ❯ app server/__tests__/academic-resource-upload-guards.test.ts:42:24
+     40| function app() {
+     41|   const a = express();
+     42|   a.post('/upload', ...receiveAcademicResource('file'), (req: Request,…
+       |                        ^
+     43|     res.json({ ok: true, path: req.file?.path });
+     44|   });
+ ❯ server/__tests__/academic-resource-upload-guards.test.ts:53:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/__tests__/academic-resource-upload-guards.test.ts > receiveAcademicResource: the upload guard > refuses an executable named file whatever type it declares (415)
+TypeError: receiveAcademicResource is not a function
+ ❯ app server/__tests__/academic-resource-upload-guards.test.ts:42:24
+     40| function app() {
+     41|   const a = express();
+     42|   a.post('/upload', ...receiveAcademicResource('file'), (req: Request,…
+       |                        ^
+     43|     res.json({ ok: true, path: req.file?.path });
+     44|   });
+ ❯ server/__tests__/academic-resource-upload-guards.test.ts:59:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/__tests__/academic-resource-upload-guards.test.ts > receiveAcademicResource: the upload guard > refuses a declared type this uploader does not accept (415)
+TypeError: receiveAcademicResource is not a function
+ ❯ app server/__tests__/academic-resource-upload-guards.test.ts:42:24
+     40| function app() {
+     41|   const a = express();
+     42|   a.post('/upload', ...receiveAcademicResource('file'), (req: Request,…
+       |                        ^
+     43|     res.json({ ok: true, path: req.file?.path });
+     44|   });
+ ❯ server/__tests__/academic-resource-upload-guards.test.ts:67:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/__tests__/academic-resource-upload-guards.test.ts > receiveAcademicResource: the upload guard > refuses bytes that are not what the declared type says and removes the stored file
+TypeError: receiveAcademicResource is not a function
+ ❯ app server/__tests__/academic-resource-upload-guards.test.ts:42:24
+     40| function app() {
+     41|   const a = express();
+     42|   a.post('/upload', ...receiveAcademicResource('file'), (req: Request,…
+       |                        ^
+     43|     res.json({ ok: true, path: req.file?.path });
+     44|   });
+ ❯ server/__tests__/academic-resource-upload-guards.test.ts:74:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/__tests__/academic-resource-upload-guards.test.ts > receiveAcademicResource: the upload guard > leaves a request with no file to the handler
+TypeError: receiveAcademicResource is not a function
+ ❯ app server/__tests__/academic-resource-upload-guards.test.ts:42:24
+     40| function app() {
+     41|   const a = express();
+     42|   a.post('/upload', ...receiveAcademicResource('file'), (req: Request,…
+       |                        ^
+     43|     res.json({ ok: true, path: req.file?.path });
+     44|   });
+ ❯ server/__tests__/academic-resource-upload-guards.test.ts:83:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/__tests__/academic-resource-upload-guards.test.ts > receiveAcademicResource: the upload guard > control: a real PDF passes the guard, is stored, and reaches the handler
+TypeError: receiveAcademicResource is not a function
+ ❯ app server/__tests__/academic-resource-upload-guards.test.ts:42:24
+     40| function app() {
+     41|   const a = express();
+     42|   a.post('/upload', ...receiveAcademicResource('file'), (req: Request,…
+       |                        ^
+     43|     res.json({ ok: true, path: req.file?.path });
+     44|   });
+ ❯ server/__tests__/academic-resource-upload-guards.test.ts:89:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  23:47:54
+   Duration  805ms (transform 125ms, setup 114ms, import 207ms, tests 55ms, environment 0ms)
+
+exit=1

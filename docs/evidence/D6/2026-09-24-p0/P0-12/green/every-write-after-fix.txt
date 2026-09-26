@@ -1,0 +1,10 @@
+$ # partition, tiers, gate, route applied on top of 8d74e73f; executor suites given the confirmed context where they model the post-confirmation path
+ ✓ server/services/ana-ri/__tests__/propose-only-partition.test.ts > membership > covers the ordinary authoring mutations, at the confirm tier (audit 2026-09-24 DP-08, P0-12) 1ms
+ ✓ server/services/ana/__tests__/governed-tool-gate.test.ts > the gate agrees with the partition rather than restating it > leaves reads alone and asks for a confirmation on ordinary writes 0ms
+ ✓ server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts > the propose-only partition > treats ordinary agent work as a proposal at the confirm tier, and runs it once a per
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > the propose-only partition > is every state-changing command (no write runs from model output unaided) 2ms
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > the three tiers > an ordinary write is the confirm tier 0ms
+ ✓ server/services/ana-ri/__tests__/confirm-tier.test.ts > the tool gate > asks for approval on an ordinary write, at the confirm tier 0ms
+ Test Files  14 passed (14)
+      Tests  198 passed (198)
+exit=0

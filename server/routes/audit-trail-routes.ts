@@ -14,6 +14,7 @@ const log = createScopedLogger('audit-trail-routes');
 import type { Pool } from 'pg';
 import type { Request, Response } from 'express';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
+import { requireAuditReader, requireAuditRecorder, clientEventRefusal } from '../services/audit/audit-api-authority.js';
 import { clientIpOf } from '../utils/client-ip';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context.js';
 import { verifyTenantChainOnAdminScope } from '../services/audit/tenant-chain-verdict.js';
@@ -221,6 +222,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
     try {
       const guard = requireAuthedOrgId(req, res);
       if (!guard.ok) return;
+      if (!requireAuditReader(req, res)) return;
       const limit = Math.max(1, parseInt(String(req.query.limit || '10'), 10));
       const offset = Math.max(0, parseInt(String(req.query.offset || '0'), 10));
       const { rows, total } = await queryAuditEvents(pool, guard.orgId, req.query, limit, offset);
@@ -242,6 +244,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
     try {
       const guard = requireAuthedOrgId(req, res);
       if (!guard.ok) return;
+      if (!requireAuditReader(req, res)) return;
       const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
       const pageSize = Math.max(1, parseInt(String(req.query.pageSize || '10'), 10));
       const offset = (page - 1) * pageSize;
@@ -265,6 +268,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
     try {
       const guard = requireAuthedOrgId(req, res);
       if (!guard.ok) return;
+      if (!requireAuditReader(req, res)) return;
       const { rows, total } = await queryAuditEvents(pool, guard.orgId, req.query, 50, 0);
       return res.json({
         success: true,
@@ -296,6 +300,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
     try {
       const guard = requireAuthedOrgId(req, res);
       if (!guard.ok) return;
+      if (!requireAuditRecorder(req, res)) return;
       const body = req.body || {};
       // F3: identity is sourced from the authenticated principal, never the body.
       const principal = getActingPrincipal(req);
@@ -309,13 +314,18 @@ export function createAuditTrailRoutes(pool: Pool): Router {
           error: 'reason is required for regulatory_significant or gxp_relevant audit events',
         });
       }
+      // A client-recorded event names a type from the server's vocabulary and
+      // carries an object for metadata; anything else is refused before the
+      // write (audit DP-18, P1-20).
+      const refusal = clientEventRefusal(body);
+      if (refusal) return res.status(400).json({ error: refusal });
 
       const result = await pool.query(
         `INSERT INTO audit_events (organization_id, event_type, entity_type, entity_id, user_id, user_name, user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant, created_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10, $11, $12, NOW()) RETURNING id`,
         [
           guard.orgId,
-          body.eventType || body.event_type || 'general',
+          body.eventType || body.event_type,
           body.entityType || body.entity_type || 'system',
           body.entityId || body.entity_id || 0,
           principal.userId,
@@ -353,6 +363,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
 
       // Limit batch size to prevent abuse
       const batch = events.slice(0, 50);
+      if (!requireAuditRecorder(req, res)) return;
       // F3: every event in the batch is attributed to the authenticated
       // principal — per-event userId/userName/userRole from the body are ignored.
       const principal = getActingPrincipal(req);
@@ -375,13 +386,18 @@ export function createAuditTrailRoutes(pool: Pool): Router {
           skipped.push({ index: i, reason: 'reason required for regulatory/GxP-significant event' });
           continue;
         }
+        const refusal = clientEventRefusal(evt);
+        if (refusal) {
+          skipped.push({ index: i, reason: refusal });
+          continue;
+        }
         try {
           const result = await pool.query(
             `INSERT INTO audit_events (organization_id, event_type, entity_type, entity_id, user_id, user_name, user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant, created_at)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10, $11, $12, NOW()) RETURNING id`,
             [
               guard.orgId,
-              evt.eventType || evt.action || 'general',
+              evt.eventType || evt.action,
               evt.entityType || 'document',
               evt.entityId || 0,
               principal.userId,
@@ -524,6 +540,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
     try {
       const guard = requireAuthedOrgId(req, res);
       if (!guard.ok) return;
+      if (!requireAuditReader(req, res)) return;
       const sigId = String(req.params.signatureId).replace('SIG_', '');
       const result = await pool.query(
         `SELECT id, entity_type, entity_id, signed_by, signed_date, signature_meaning, reason, signature_status
@@ -563,6 +580,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
     try {
       const guard = requireAuthedOrgId(req, res);
       if (!guard.ok) return;
+      if (!requireAuditReader(req, res)) return;
       const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
       const limit = Math.max(1, parseInt(String(req.query.limit || '10'), 10));
       const offset = (page - 1) * limit;
@@ -588,6 +606,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
     try {
       const orgGuard = requireAuthedOrgId(req, res);
       if (!orgGuard.ok) return;
+      if (!requireAuditReader(req, res)) return;
       // Use signed export service for tamper-evident audit packages
       const filters = exportRecordFilters(req.query);
       if (!filters) return res.status(400).json({ error: 'Invalid resource_type or record_ids filter' });
@@ -641,6 +660,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
     try {
       const orgGuard = requireAuthedOrgId(req, res);
       if (!orgGuard.ok) return;
+      if (!requireAuditReader(req, res)) return;
       const filters = exportRecordFilters(req.query);
       if (!filters) return res.status(400).json({ error: 'Invalid resource_type or record_ids filter' });
       const format = (req.query.format === 'csv' ? 'csv' : 'json') as 'csv' | 'json';
