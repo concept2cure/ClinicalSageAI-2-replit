@@ -4,7 +4,7 @@
 (audit rows), and is closed here as part of the audit's P1 tranche.
 **Finding:** `docs/security/SECURITY_AUDIT_2026-09-24.md` IAM-11 (Medium).
 **Plan item:** `docs/security/REMEDIATION_AND_ENHANCEMENT_PLAN_2026-09-24.md` P1-8.
-**Commit:** see the plan row (filled in at landing).
+**Commit:** `83849bfd` (2026-09-26); the gates wired in the same push: `1a7c8e6c`.
 
 ## What was wrong (verified at HEAD before the change)
 
