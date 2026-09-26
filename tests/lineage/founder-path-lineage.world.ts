@@ -219,6 +219,9 @@ function prerequisites(): string {
   const baseline = extractTableDdl('migrations/0000_sweet_joseph.sql', [
     'organizations', 'users', 'organization_users', 'client_workspaces', 'projects',
     'audit_logs', 'electronic_signatures', 'coauthor_documents', 'lumen_data_atoms',
+    // Study designs (CDISC PRM): the project read lists them (PF-17), and the
+    // Biostatistics → design → protocol chain starts at a project (PF-14).
+    'cdisc_prm_studies',
   ]);
   // The package spine's table, only because submission_transmittals references it.
   const packageSpine = extractTableDdl('migrations/0002_phase15_submission_ops.sql', ['c2c_submission_packages']);

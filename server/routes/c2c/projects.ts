@@ -1283,6 +1283,8 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
   if (!orgId) return send403(res);
 
   const limit = Math.min(parseInt(String((req.query as any).limit ?? '5'), 10) || 5, 50);
+  // Guard the uuid comparisons below — a non-uuid id would raise 22P02 → 500.
+  if (!UUID_RE.test(String(req.params.id))) return send404(res);
 
   try {
     const check = await pool.query(
@@ -1307,7 +1309,15 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
        FROM audit_logs al
        LEFT JOIN users u ON u.id = COALESCE(al.actor_id, al.user_id)
        WHERE al.tenant_id = $2
-         AND (al.record_id = $1 OR al.new_values->>'project_id' = $1)
+         AND (al.record_id = $1
+              OR al.target = 'regulatory_program:' || $1
+              OR al.new_values->>'project_id' = $1
+              OR al.new_values->>'programId' = $1
+              -- A governed action on one of the project's own filing documents
+              -- names its target (document:<id>), not the project (PF-17): the
+              -- scaffold that created the project's dossier was invisible here.
+              OR (al.target_type = 'document' AND al.target_id IN (
+                    SELECT d.id::text FROM c2c_documents d WHERE d.project_id = $1::uuid AND d.org_id = $2)))
        ORDER BY al.occurred_at DESC NULLS LAST
        LIMIT $3`,
       [req.params.id, orgId, limit],
@@ -1323,6 +1333,67 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
       return serverError(res, logger, 'reading the activity feed', err);
     }
     return serverError(res, logger, 'loading the project activity', err, { programId: String(req.params.id) });
+  }
+});
+
+// ── GET /api/c2c/projects/:id/records ────────────────────────────────────────
+//
+// From the project, every record anchored to it (PF-17): one read, each store
+// by its recorded project key — never by name. A store this database cannot
+// read is reported as unavailable with its reason, never as an empty list.
+
+type RecordSection = { available: boolean; rows: unknown[]; reason?: string };
+
+const PROJECT_RECORD_READS: ReadonlyArray<readonly [string, string]> = [
+  ['submissions', `SELECT id, title, application_type, primary_region, status, lifecycle_stage
+                     FROM submissions WHERE program_id = $1 AND organization_id = $2 AND deleted_at IS NULL
+                    ORDER BY updated_at DESC NULLS LAST, id DESC LIMIT 200`],
+  ['sources', `SELECT id, title, source_type, checksum, created_at
+                 FROM cre_evidence_sources WHERE client_program_id = $1 AND organization_id = $2
+                ORDER BY created_at DESC LIMIT 200`],
+  ['authoringDocuments', `SELECT id, title, status, created_at
+                            FROM authoring_documents WHERE client_program_id = $1 AND tenant_id = $2
+                           ORDER BY created_at DESC LIMIT 200`],
+  ['vaultDocuments', `SELECT d.id, d.document_code, d.document_title, d.version, d.created_at
+                        FROM vault.documents d
+                        JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $2
+                       WHERE d.program_id = $1 AND d.deleted_at IS NULL
+                       ORDER BY d.created_at DESC LIMIT 200`],
+  ['studyDesigns', `SELECT study_id AS id, protocol_title AS title, study_phase, protocol_status
+                      FROM cdisc_prm_studies WHERE program_id = $1 AND tenant_id = $2
+                     ORDER BY updated_at DESC NULLS LAST LIMIT 200`],
+  ['filingDocuments', `SELECT id, title, doc_type
+                         FROM c2c_documents WHERE project_id = $1 AND org_id = $2 LIMIT 200`],
+];
+
+async function readRecordSection(sql: string, programId: string, orgId: number): Promise<RecordSection> {
+  try {
+    const { rows } = await pool.query(sql, [programId, orgId]);
+    return { available: true, rows };
+  } catch (err: unknown) {
+    const code = (err as { code?: string })?.code;
+    if (code === '42P01' || code === '42703') return { available: false, rows: [], reason: 'not provisioned in this environment' };
+    logger.warn('project records: a section could not be read', { programId, code, err: (err as Error)?.message });
+    return { available: false, rows: [], reason: 'could not be read' };
+  }
+}
+
+router.get('/:id/records', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return send403(res);
+  const id = String(req.params.id);
+  if (!UUID_RE.test(id)) return send404(res);
+  try {
+    const check = await pool.query(
+      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+      [id, orgId],
+    );
+    if (check.rows.length === 0) return send404(res);
+    const records: Record<string, RecordSection> = {};
+    for (const [section, sql] of PROJECT_RECORD_READS) records[section] = await readRecordSection(sql, id, orgId);
+    return res.json({ projectId: id, records });
+  } catch (err: unknown) {
+    return serverError(res, logger, 'listing the project records', err, { programId: id });
   }
 });
 

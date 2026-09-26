@@ -324,6 +324,28 @@ export async function walkForward(w: World): Promise<void> {
     observe(counts);
     expect(counts).toEqual([1, 1, 1, 1]);
   });
+  await hop.check('project-read-lists-its-records', 'one read from the project (GET /api/c2c/projects/:id/records) lists its submission, source, authoring document, Vault copy and filing document, by their project keys', async (observe) => {
+    const res = await asPrincipal(ORG_A, 3)(request(w.app).get(`/api/c2c/projects/${k.programId}/records`));
+    const r = res.body?.records ?? {};
+    const ids = (section: string) => (r[section]?.rows ?? []).map((row: { id: unknown }) => String(row.id));
+    observe({ status: res.status, sections: Object.keys(r).sort() });
+    expect(res.status).toBe(200);
+    expect(ids('submissions')).toEqual([String(k.submissionId)]);
+    expect(ids('sources')).toEqual([String(k.sourceId)]);
+    expect(ids('authoringDocuments')).toContain(String(k.docId));
+    expect(ids('vaultDocuments')).toContain(String(k.vaultDocumentId));
+    expect(ids('filingDocuments')).toContain(String(k.filingDocumentId));
+  });
+  await hop.check('project-activity-shows-its-records', 'the project activity feed shows the governed actions on its own records, not only rows keyed to the project id', async (observe) => {
+    const res = await asPrincipal(ORG_A, 3)(request(w.app).get(`/api/c2c/projects/${k.programId}/activity?limit=50`));
+    const actions: Array<{ action: string; resource_id: string }> = res.body?.activity ?? [];
+    const scaffold = actions.some((a) => a.action === 'c2c.work.transition' && String(a.resource_id) === String(k.filingDocumentId));
+    const placement = actions.some((a) => a.action === 'LEAF_CREATED');
+    observe({ status: res.status, scaffold, placement });
+    expect(res.status).toBe(200);
+    expect(scaffold).toBe(true);
+    expect(placement).toBe(true);
+  });
   await hop.check('source-to-documents', 'from the source: the spans citing it reach an authoring document of the project', async (observe) => {
     const { listSpansCitingSource } = await import('../../server/services/clinical-regulatory-evidence/span-lineage.service');
     const spans = await listSpansCitingSource(ORG_A, k.sourceId!, w.jdb.pool as unknown as SpanQueryable);
