@@ -88,6 +88,16 @@ vi.mock('../server/middleware/tenantContext', () => ({
 vi.mock('../server/middleware/redisRateLimiter', () => ({
   createRedisRateLimiter: () => (_q: any, _s: any, n: any) => n(),
 }));
+/* The URL's project resolved by the one translation rule (its own suite
+   proves it): these cases address project 3 by its integer id, and their
+   artifact is project 3's. PF-17 resolves the URL before deciding access. */
+vi.mock('../server/services/cmc/resolve-cmc-artifact-project', () => ({
+  resolveCmcArtifactProject: vi.fn(async (_org: number, raw: string) =>
+    /^\d+$/.test(raw)
+      ? { state: 'linked', artifactProjectId: Number(raw), via: 'numeric' }
+      : { state: 'unaddressable', artifactProjectId: null, detail: 'not a project' },
+  ),
+}));
 vi.mock('../server/routes/c2c/project-access', () => ({
   verifyProjectAccess: vi.fn(async () => true),
   getActorRole: () => 'admin',

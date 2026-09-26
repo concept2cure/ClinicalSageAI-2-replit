@@ -9,6 +9,7 @@ import { isLaunchScopeLocked, useNavEntitlements } from '../navEntitlements';
 import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials, fileTone } from '../fixtures/project-home-data';
 import { useChatUpload, readyAttachmentLabel } from '../../hooks/useChatUpload';
 import { updateShellProject } from '../shellProject';
+import { ProjectRecords } from './ProjectRecords';
 import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
 import { DEVICE_FAMILY_PRODUCT_TYPES } from '@shared/constants/domain/product-types';
 import '../styles/project-home-v2.css';
@@ -1034,6 +1035,15 @@ function AuthorWorkspace({
             <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('task-board')}>Open task board {I.right}</button>
           </div>
         </section>
+
+        {/* Records in this project — REAL: GET /:id/records, every store read
+            by its project key (PF-17). A store it cannot read says so. */}
+        {pid && (
+          <section className="pj-sec" aria-label="Records in this project">
+            <div className="pj-sec-h"><h2>Records in this project</h2></div>
+            <ProjectRecords pid={pid} />
+          </section>
+        )}
 
         {/* Team & activity — REAL: project_members + audit_logs */}
         <section className="pj-sec">

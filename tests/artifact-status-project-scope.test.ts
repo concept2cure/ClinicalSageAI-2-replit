@@ -1,22 +1,27 @@
 /**
- * PUT /projects/:projectId/artifacts/:artifactId/status — the status change
- * AnA's conversation thread makes (a launch-shell surface) — and its audit row.
+ * PUT /projects/:projectId/artifacts/:artifactId/status acts on the artifact of
+ * the project the URL names, and a v2 project reaches it (PF-17, project first).
  *
- * `logAuditEntry` resolves `{ written, attributed }`. The route awaited it at
- * statement position and discarded the result, so a status change whose
- * regulatory_audit_logs row was lost answered exactly like one whose row was
- * written. The change stands either way; the response now carries
- * `auditTrail` in the canonical wire shape the client transport reads.
+ * Two defects, one route:
+ *   • Access was decided on the URL's project, and the artifact was then loaded
+ *     by id and organization alone. A member of project 3 could route, approve
+ *     or lock project 5's artifact through project 3's URL.
+ *   • Every v2 surface holds the project as its program UUID, and the access
+ *     check parses an integer, so "Route to review" (ConversationThread's
+ *     ArtifactCard) answered 404 for every v2 project. The URL is now resolved
+ *     through the one translation rule (resolveCmcArtifactProject: an integer
+ *     id of this organization, or the program's anchored project), access is
+ *     decided on THAT project, and the artifact must be one of its own.
  *
- * Harness copied from tests/artifact-status-lock-covers-approval.test.ts, plus
- * a partial mock of routes/c2c/shared so the audit write's result is set per
- * case.
+ * The real router, driven over express; the query builder is a queue.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 
-const { st } = vi.hoisted(() => ({
+const { st, PROGRAM, UNANCHORED } = vi.hoisted(() => ({
+  PROGRAM: '0b9f6c2e-5d4a-4c3b-9a21-7e6f5d4c3b2a',
+  UNANCHORED: '5e1d2c3b-4a59-4687-9a1b-2c3d4e5f6a7b',
   st: {
     /** Queue of results for each awaited drizzle chain, in order. */
     queue: [] as any[][],
@@ -84,19 +89,21 @@ vi.mock('../server/middleware/tenantContext', () => ({
 vi.mock('../server/middleware/redisRateLimiter', () => ({
   createRedisRateLimiter: () => (_q: any, _s: any, n: any) => n(),
 }));
-/* The URL's project resolved by the one translation rule (its own suite
-   proves it): these cases address project 3 by its integer id, and their
-   artifact is project 3's. PF-17 resolves the URL before deciding access. */
+/* Access is decided on the INTEGER project, as the real verifyProjectAccess
+   decides it (it parses the id as an integer; anything else is no access).
+   The caller may act in project 3 and in no other. */
+vi.mock('../server/routes/c2c/project-access', () => ({
+  verifyProjectAccess: vi.fn(async (_req: unknown, id: unknown) => String(id) === '3'),
+  getActorRole: () => 'admin',
+}));
+/* The one translation rule (its own suite proves it): the integer id of a
+   project of this organization, or a program UUID through its anchor. */
 vi.mock('../server/services/cmc/resolve-cmc-artifact-project', () => ({
   resolveCmcArtifactProject: vi.fn(async (_org: number, raw: string) =>
-    /^\d+$/.test(raw)
-      ? { state: 'linked', artifactProjectId: Number(raw), via: 'numeric' }
-      : { state: 'unaddressable', artifactProjectId: null, detail: 'not a project' },
+    raw === '3' || raw === PROGRAM
+      ? { state: 'linked', artifactProjectId: 3, via: raw === '3' ? 'numeric' : 'program-anchor' }
+      : { state: raw === UNANCHORED ? 'unanchored' : 'unaddressable', artifactProjectId: null, detail: 'no' },
   ),
-}));
-vi.mock('../server/routes/c2c/project-access', () => ({
-  verifyProjectAccess: vi.fn(async () => true),
-  getActorRole: () => 'admin',
 }));
 vi.mock('../server/services/concept2cure/governedDocumentContractService', () => ({
   resolveGovernedContext: () => ({
@@ -128,15 +135,10 @@ vi.mock('../server/services/generation-guard.js', () => ({
   createTraceId: () => 't1', emitTraceEvent: vi.fn(),
 }));
 vi.mock('../server/db/drizzle-queryable', () => ({ queryableFromDrizzle: () => ({ query: vi.fn() }) }));
-const { entry } = vi.hoisted(() => ({ entry: { outcome: { written: true, attributed: true } as { written: boolean; attributed: boolean } } }));
-vi.mock('../server/routes/c2c/shared', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../server/routes/c2c/shared')>();
-  return { ...actual, logAuditEntry: vi.fn(async () => entry.outcome) };
-});
-
 
 import artifactRouter from '../server/routes/c2c/artifacts';
 import { pool } from '../server/db';
+import { contradictionEngineService } from '../server/services/contradiction-engine-service';
 
 function makeApp() {
   const app = express();
@@ -154,28 +156,14 @@ function makeApp() {
 }
 
 const ARTIFACT = {
-  id: 4242,
-  artifactId: 'artifact_abc',
-  organizationId: 99,
-  projectId: 3,
-  type: 'document',
-  category: 'document',
-  title: 'T',
-  content: 'content',
-  contentHash: 'h0',
-  version: 2,
-  ctdSection: '3.2.S.1',
-  status: 'approved',
-  approvedVersionId: 2,
-  publishedVersionId: null,
-  metadata: {},
-  conversationId: null,
-  createdAt: new Date(),
-  updatedAt: new Date(),
+  id: 4242, artifactId: 'artifact_abc', organizationId: 99, projectId: 3,
+  type: 'document', category: 'document', title: 'T', content: 'content', contentHash: 'h0',
+  version: 2, ctdSection: '3.2.S.1', status: 'draft', approvedVersionId: null, publishedVersionId: null,
+  metadata: {}, conversationId: null, createdAt: new Date(), updatedAt: new Date(),
 };
-
+const put = (project: string, status: string, extra: Record<string, unknown> = {}) =>
+  request(makeApp()).put(`/api/c2c/projects/${project}/artifacts/artifact_abc/status`).send({ status, ...extra });
 const statusWrite = (status: string) => st.sets.find((v) => v && v.status === status);
-
 
 beforeEach(() => {
   st.queue = [];
@@ -185,31 +173,40 @@ beforeEach(() => {
   (pool.query as any).mockImplementation(async () => ({ rows: [] }));
 });
 
-describe('PUT …/status carries its audit-row outcome', () => {
-  const DRAFT = { ...ARTIFACT, status: 'draft', approvedVersionId: null };
-
-  it('a status change whose row was lost still changes the status, and says the row is missing', async () => {
-    entry.outcome = { written: false, attributed: true };
-    st.queue = [[DRAFT], [{ ...DRAFT, status: 'review' }]];
-    const res = await request(makeApp())
-      .put('/api/c2c/projects/3/artifacts/artifact_abc/status')
-      .send({ status: 'review', reason: 'ready for review' });
-    expect(res.status).toBe(200);
+describe('PUT …/status: the artifact of the project the URL names', () => {
+  it('a v2 project’s program UUID reaches review — "Route to review" works', async () => {
+    st.queue = [[ARTIFACT]];
+    const res = await put(PROGRAM, 'review');
+    expect(res.status, JSON.stringify(res.body)).not.toBe(404);
     expect(statusWrite('review')).toBeDefined();
-    expect(JSON.stringify(res.body)).toContain('AUDIT_ROW_NOT_PERSISTED');
-    const auditTrail = res.body.data?.auditTrail ?? res.body.auditTrail;
-    expect(auditTrail).toMatchObject({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' });
   });
 
-  it('a written row says so, and says it is not the chained audit_logs row', async () => {
-    entry.outcome = { written: true, attributed: true };
-    st.queue = [[DRAFT], [{ ...DRAFT, status: 'review' }]];
-    const res = await request(makeApp())
-      .put('/api/c2c/projects/3/artifacts/artifact_abc/status')
-      .send({ status: 'review', reason: 'ready for review' });
-    expect(res.status).toBe(200);
-    const auditTrail = res.body.data?.auditTrail ?? res.body.auditTrail;
-    // logAuditEntry writes regulatory_audit_logs, not the chained audit_logs.
-    expect(auditTrail).toEqual({ persisted: true, chained: false });
+  it('refuses another project’s artifact through this project’s URL, and writes nothing', async () => {
+    st.queue = [[{ ...ARTIFACT, projectId: 5 }]];
+    const res = await put('3', 'review');
+    expect(res.status).toBe(404);
+    expect(statusWrite('review')).toBeUndefined();
+  });
+
+  it('the same through the program UUID: the anchored project is the one that counts', async () => {
+    st.queue = [[{ ...ARTIFACT, projectId: 5 }]];
+    const res = await put(PROGRAM, 'review');
+    expect(res.status).toBe(404);
+    expect(statusWrite('review')).toBeUndefined();
+  });
+
+  it('a program with no anchored project, or an id of no project, is not found', async () => {
+    for (const project of [UNANCHORED, 'not-a-project', '5']) {
+      st.queue = [[ARTIFACT]];
+      const res = await put(project, 'review');
+      expect(res.status, project).toBe(404);
+    }
+    expect(statusWrite('review')).toBeUndefined();
+  });
+
+  it('the promotion gate reads the resolved project, not the URL text', async () => {
+    st.queue = [[{ ...ARTIFACT, status: 'approved', approvedVersionId: 2 }]];
+    await put(PROGRAM, 'locked', { attestation: { meaning: 'Released', attestationText: 'I release this' } });
+    expect(contradictionEngineService.checkPromotionBlocked).toHaveBeenCalledWith(99, 3, 4242);
   });
 });

@@ -1,0 +1,16 @@
+# PF-17 red runs.
+
+## tests/artifact-status-project-scope.test.ts against the status route before the change (3 of 5 fail; the 2 that pass are guards that hold either way)
+ × tests/artifact-status-project-scope.test.ts > PUT …/status: the artifact of the project the URL names > a v2 project’s program UUID reaches review — "Route to review" works
+ × tests/artifact-status-project-scope.test.ts > PUT …/status: the artifact of the project the URL names > refuses another project’s artifact through this project’s URL, and writes nothing
+ ✓ tests/artifact-status-project-scope.test.ts > PUT …/status: the artifact of the project the URL names > the same through the program UUID: the anchored project is the one that counts
+ ✓ tests/artifact-status-project-scope.test.ts > PUT …/status: the artifact of the project the URL names > a program with no anchored project, or an id of no project, is not found
+ × tests/artifact-status-project-scope.test.ts > PUT …/status: the artifact of the project the URL names > the promotion gate reads the resolved project, not the URL text
+AssertionError: {"success":false,"error":{"message":"Project not found"}}: expected 404 not to be 404 // Object.is equality
+AssertionError: expected 500 to be 404 // Object.is equality
+AssertionError: expected "vi.fn()" to be called with arguments: [ 99, 3, 4242 ]
+      Tests  3 failed | 2 passed (5)
+
+## client/src/concept2cure/v2/__tests__/projectHomeRecords.test.tsx with <ProjectRecords> removed from ProjectHome (the reachability case fails)
+ × client/src/concept2cure/v2/__tests__/projectHomeRecords.test.tsx > ProjectHome — records in this project > lists the open project’s records, read from that project
+      Tests  1 failed | 1 passed (2)
