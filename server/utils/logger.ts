@@ -3,8 +3,10 @@
  *
  * Every log line passes through `redactContext` BEFORE reaching Pino,
  * so deeply-nested sensitive fields are scrubbed regardless of how the
- * context object is shaped. Pino's own `redact.paths` only catches
- * fixed paths; the walker below handles arbitrary nesting.
+ * context object is shaped — objects and arrays alike — and the message
+ * string itself passes through `maskPersonalData`. Pino's own
+ * `redact.paths` only catches fixed paths; the walker below handles
+ * arbitrary nesting.
  *
  * SENSITIVE_KEYS is matched case-insensitively as a substring of the
  * key name, so `userPassword`, `currentPasswordHash`, `password_hash`,
@@ -134,33 +136,43 @@ const redactValue = (value: unknown) => {
 
 /**
  * Walk the context tree replacing values under sensitive keys with
- * '[REDACTED]'. Recurses into objects up to depth 6 (any deeper is
- * almost certainly accidental log spam and not worth scanning).
- * Arrays are passed through — array values usually don't contain
- * named fields, and walking large arrays kills log throughput.
+ * '[REDACTED]' and masking personal data in every other string. Recurses
+ * into objects AND arrays up to depth 6 (any deeper is almost certainly
+ * accidental log spam and not worth scanning). An array element has no key
+ * to match against SENSITIVE_KEYS, so a string element is masked and an
+ * object element is walked; before the security review of 2026-09-26
+ * (DP-39) arrays were passed through unscanned, so a list of addresses
+ * under an ordinary key reached the log store in clear.
  */
 const redactContext = (context: LogContext, depth = 0): LogContext => {
   if (!context || typeof context !== 'object') return context;
   if (depth > 6) return context;
-  if (Array.isArray(context)) return context as unknown as LogContext;
+  if (Array.isArray(context)) return context.map(item => maskValue(item, depth)) as unknown as LogContext;
 
   const output: LogContext = {};
   for (const [key, value] of Object.entries(context)) {
     const lowerKey = key.toLowerCase();
     const shouldRedact = SENSITIVE_KEYS.some(sensitive => lowerKey.includes(sensitive));
-
-    if (shouldRedact) {
-      output[key] = redactValue(value);
-    } else if (value && typeof value === 'object') {
-      output[key] = redactContext(value as LogContext, depth + 1);
-    } else if (typeof value === 'string') {
-      output[key] = maskPersonalData(value);
-    } else {
-      output[key] = value;
-    }
+    output[key] = shouldRedact ? redactValue(value) : maskValue(value, depth);
   }
   return output;
 };
+
+/** A value under an ordinary key, or an array element: walked, masked, or passed through. */
+function maskValue(value: unknown, depth: number): unknown {
+  if (value && typeof value === 'object') return redactContext(value as LogContext, depth + 1);
+  if (typeof value === 'string') return maskPersonalData(value);
+  return value;
+}
+
+/**
+ * The message is a string the caller composed, often by interpolation, and
+ * it is masked like any other string (DP-39). A non-string message — a legacy
+ * caller passing an object or an Error — is handed on as before; the logger
+ * must not throw inside the request that is logging.
+ */
+const maskMessage = (message: string): string =>
+  typeof message === 'string' ? maskPersonalData(message) : message;
 
 // Create a Pino logger. Redaction is performed by `redactContext` ABOVE
 // the pino layer so the walker can handle arbitrary nesting; pino's own
@@ -187,13 +199,13 @@ const pinoLogger = pino({
 
 const logger: Logger = {
   info: (message: string, context?: unknown) =>
-    pinoLogger.info({ context: redactContext(normalizeContext(context)) }, message),
+    pinoLogger.info({ context: redactContext(normalizeContext(context)) }, maskMessage(message)),
   error: (message: string, context?: unknown) =>
-    pinoLogger.error({ context: redactContext(normalizeContext(context)) }, message),
+    pinoLogger.error({ context: redactContext(normalizeContext(context)) }, maskMessage(message)),
   warn: (message: string, context?: unknown) =>
-    pinoLogger.warn({ context: redactContext(normalizeContext(context)) }, message),
+    pinoLogger.warn({ context: redactContext(normalizeContext(context)) }, maskMessage(message)),
   debug: (message: string, context?: unknown) =>
-    pinoLogger.debug({ context: redactContext(normalizeContext(context)) }, message),
+    pinoLogger.debug({ context: redactContext(normalizeContext(context)) }, maskMessage(message)),
 };
 
 /**
