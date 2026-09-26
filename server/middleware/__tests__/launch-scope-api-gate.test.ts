@@ -212,3 +212,41 @@ describe('unattributed paths (stage 2b)', async () => {
     expect(() => moduleEntitlementGate(buildPrefixMap(SURFACES))).toThrow(/LAUNCH_SCOPE_API_UNATTRIBUTED/);
   });
 });
+
+/* Stage 3. Enforcing the unclaimed remainder is safe only if nothing
+   legitimate is unclaimed. The inventory of every route production mounts
+   (docs/evidence/D2-API-SCOPE/2026-09-25/stage3-*) found the callers a screen's
+   code does not show: the public paths the auth boundary lets through
+   unauthenticated (legacy sign-in redirects, browser CSP reports, health, the
+   Prometheus scrape) and the second mount of the identity router at /api/user.
+   Each must pass in enforce mode with the REAL registry, and a mounted namespace
+   nobody calls must not. */
+describe('the real registry, unattributed paths enforced', () => {
+  const gate = () => moduleEntitlementGate(buildPrefixMap(), { launchScope: 'on', unattributed: 'enforce' });
+  const passes = async (p: string) => (await run(gate(), p)).passed;
+
+  it('never refuses a path the auth boundary serves unauthenticated (PUBLIC_API_ALLOWLIST)', async () => {
+    for (const p of ['/api/login', '/api/logout', '/api/register', '/api/csp-report', '/api/metrics', '/api/cortex/health', '/api/claude/health', '/api/claude/models', '/api/time', '/api/diag', '/api/setup/status']) {
+      expect(await passes(p), p).toBe(true);
+    }
+  });
+
+  it('passes the identity router at its second mount, /api/user', async () => {
+    expect(await passes('/api/user/me')).toBe(true);
+    expect(await passes('/api/user/me/preferences')).toBe(true);
+  });
+
+  it('refuses a mounted namespace no launch screen, shell or external caller uses', async () => {
+    for (const p of ['/api/cortex/chat', '/api/grants/opportunities', '/api/concept2cure/maintenance/run', '/api/stability/studies', '/api/demo/reset']) {
+      const { res, passed } = await run(gate(), p);
+      expect(passed, p).toBe(false);
+      expect(res.statusCode, p).toBe(403);
+    }
+  });
+
+  it('a public prefix does not widen: an exact public path is not its parent namespace', async () => {
+    // /api/cortex/health is public; the rest of /api/cortex is not.
+    expect(await passes('/api/cortex/health')).toBe(true);
+    expect(await passes('/api/cortex/threads')).toBe(false);
+  });
+});
