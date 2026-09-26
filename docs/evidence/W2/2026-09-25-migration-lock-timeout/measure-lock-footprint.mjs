@@ -18,9 +18,9 @@ for (const f of C2C_MIGRATION_FILES){
 }
 fs.writeFileSync(process.argv[2],JSON.stringify(rows,null,1));
 const withAX=rows.filter(r=>r.ax>0);
-console.log('files',rows.length,'self-transacting',rows.filter(r=>r.self).length,'errors',rows.filter(r=>r.err).length);
-console.log('files taking ACCESS EXCLUSIVE on a table during a REPLAY:',withAX.length,'table-locks total',totalAX);
-const uniq=new Set(withAX.flatMap(r=>r.tables)); console.log('distinct tables',uniq.size);
-for (const t of ['public.projects','public.documents','public.organizations','public.users','vault.documents','public.audit_logs']) console.log(t, uniq.has(t)?'LOCKED':'-');
-withAX.sort((a,b)=>b.ax-a.ax).slice(0,8).forEach(r=>console.log(r.ax,r.ms+'ms',r.f));
+console.info('files',rows.length,'self-transacting',rows.filter(r=>r.self).length,'errors',rows.filter(r=>r.err).length);
+console.info('files taking ACCESS EXCLUSIVE on a table during a REPLAY:',withAX.length,'table-locks total',totalAX);
+const uniq=new Set(withAX.flatMap(r=>r.tables)); console.info('distinct tables',uniq.size);
+for (const t of ['public.projects','public.documents','public.organizations','public.users','vault.documents','public.audit_logs']) console.info(t, uniq.has(t)?'LOCKED':'-');
+withAX.sort((a,b)=>b.ax-a.ax).slice(0,8).forEach(r=>console.info(r.ax,r.ms+'ms',r.f));
 await c.end();

@@ -19,6 +19,6 @@ while (!exited) {
   worst = Math.max(worst, ms); n++; await new Promise(r => setTimeout(r, 50));
 }
 const code = await done;
-console.log(`deploy-migrate exit=${code} in ${Date.now() - t0} ms; ${n} requests; worst request latency ${worst} ms (reader held ${HOLD_MS} ms)`);
-console.log(out.split('\n').filter(l => /lock not available|✓ \d+\/\d+ migration|Schema migration complete|failed/.test(l)).slice(0, 8).join('\n'));
+console.info(`deploy-migrate exit=${code} in ${Date.now() - t0} ms; ${n} requests; worst request latency ${worst} ms (reader held ${HOLD_MS} ms)`);
+console.info(out.split('\n').filter(l => /lock not available|✓ \d+\/\d+ migration|Schema migration complete|failed/.test(l)).slice(0, 8).join('\n'));
 await holder.end(); await req.end();
