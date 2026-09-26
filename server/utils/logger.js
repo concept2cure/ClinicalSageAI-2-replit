@@ -69,6 +69,28 @@ const SENSITIVE_KEYS = [
   'authorization',
 ];
 
+/**
+ * Personal data that is not secret but is still not for a log line: an e-mail
+ * address or an IP address is masked wherever it appears as a string value
+ * (security audit 2026-09-24, DP-26; GDPR Art. 5(1)(c) and 25). The mask keeps
+ * what an operator needs to correlate — the first character and the domain of
+ * an address, the network part of an IP — and drops the identifying rest.
+ * Mirrors logger.ts; edit both.
+ */
+const MASK_SCAN_LIMIT = 2048;
+const EMAIL_RE = /([A-Za-z0-9._%+-])([A-Za-z0-9._%+-]*)@([A-Za-z0-9.-]+\.[A-Za-z]{2,})/g;
+const IPV4_RE = /\b(\d{1,3}\.\d{1,3}\.\d{1,3})\.\d{1,3}\b/g;
+const IPV6_RE = /\b((?:[0-9a-f]{1,4}:){3})(?:[0-9a-f]{0,4}:?){1,5}\b/gi;
+
+export const maskPersonalData = value => {
+  if (value.length > MASK_SCAN_LIMIT) return value;
+  let out = value;
+  if (out.includes('@')) out = out.replace(EMAIL_RE, (_m, first, _rest, domain) => `${first}***@${domain}`);
+  if (/\d\.\d/.test(out)) out = out.replace(IPV4_RE, '$1.xxx');
+  if (out.includes(':') && /[0-9a-f]{1,4}:[0-9a-f]{1,4}:/i.test(out)) out = out.replace(IPV6_RE, '$1:xxxx');
+  return out;
+};
+
 const redactValue = value => {
   if (value === null || value === undefined) return value;
   if (typeof value === 'string') return '[REDACTED]';
@@ -90,6 +112,8 @@ const redactContext = (context, depth = 0) => {
       output[key] = redactValue(value);
     } else if (value && typeof value === 'object') {
       output[key] = redactContext(value, depth + 1);
+    } else if (typeof value === 'string') {
+      output[key] = maskPersonalData(value);
     } else {
       output[key] = value;
     }
@@ -174,7 +198,7 @@ export const createContextLogger = createScopedLogger;
 const logger = baseLogger;
 
 // Exported for parity with logger.ts; do not call from app code.
-export const __testing = { SENSITIVE_KEYS, redactContext };
+export const __testing = { SENSITIVE_KEYS, redactContext, maskPersonalData };
 
 // Named export so files can use: import { logger } from '../utils/logger.js'
 export { logger };

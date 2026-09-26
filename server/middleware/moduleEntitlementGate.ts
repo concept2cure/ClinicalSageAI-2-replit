@@ -149,10 +149,13 @@ function refusedByLaunchScope(
  * signed-in tenant could call every write route of a surface the product hid.
  *
  * A path NOTHING claims (no surface, no platform or infrastructure entry) is
- * recorded as a would-refuse in the enforcement report and served, unless
- * `LAUNCH_SCOPE_API_UNATTRIBUTED=enforce`: static analysis cannot see a
- * computed path or a server-to-server caller, so the cost of refusing the
- * unclaimed remainder is read from traffic before it is paid.
+ * refused too in production (`LAUNCH_SCOPE_API_UNATTRIBUTED`, unset = enforce
+ * there since 2026-09-26) and recorded in the enforcement report either way.
+ * `report` serves it instead, as an explicit deployment choice. The default
+ * rests on the inventory of every route production mounts
+ * (docs/evidence/D2-API-SCOPE/2026-09-25/, Stage 3), which found nothing
+ * legitimate unclaimed once the auth boundary's public paths counted as
+ * infrastructure.
  *
  * `LAUNCH_SCOPE_ENFORCE` and `LAUNCH_SCOPE_API_UNATTRIBUTED` are read once, here,
  * when the gate is built at boot: a value production cannot parse refuses to
