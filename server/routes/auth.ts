@@ -904,8 +904,13 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
     } = parsed.data;
     const email = parsed.data.email.trim().toLowerCase();
 
-    // Enforce enterprise password policy (NIST 800-63B)
-    const policyResult = validatePasswordPolicy(password);
+    // Enforce enterprise password policy (NIST 800-63B), against what the
+    // account will be: this address, this name, this organisation.
+    const policyResult = validatePasswordPolicy(password, {
+      email,
+      name: [firstName, lastName].filter(Boolean).join(' '),
+      organizationName: companyName,
+    });
     if (!policyResult.valid) {
       return res.status(400).json({
         success: false,
@@ -2299,19 +2304,6 @@ async function handleResetPassword(req: Request, res: Response) {
       });
     }
 
-    // Enforce enterprise password policy (NIST 800-63B)
-    const resetPolicyResult = validatePasswordPolicy(newPassword);
-    if (!resetPolicyResult.valid) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'AUTH_001',
-          message: resetPolicyResult.errors[0],
-          details: { errors: resetPolicyResult.errors },
-        },
-      });
-    }
-
     if (!requireDb(res)) return;
 
     // Hash the incoming token to compare against stored hash
@@ -2320,6 +2312,8 @@ async function handleResetPassword(req: Request, res: Response) {
     const user = await db
       .select({
         id: users.id,
+        email: users.email,
+        name: users.name,
         resetToken: users.resetToken,
         resetTokenExpiresAt: users.resetTokenExpiresAt,
       })
@@ -2371,6 +2365,21 @@ async function handleResetPassword(req: Request, res: Response) {
     }
 
     // Hash new password and clear reset token
+    // Enforce enterprise password policy (NIST 800-63B), against the account
+    // the token names, once the token has proved it: a bad token is refused
+    // before a bad password is discussed.
+    const resetPolicyResult = validatePasswordPolicy(newPassword, { email: userData.email, name: userData.name });
+    if (!resetPolicyResult.valid) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'AUTH_001',
+          message: resetPolicyResult.errors[0],
+          details: { errors: resetPolicyResult.errors },
+        },
+      });
+    }
+
     const passwordHash = await bcrypt.hash(newPassword, 12);
 
     // Set the password only if the token is STILL this account's and unexpired,
@@ -2501,7 +2510,7 @@ router.post('/password/change', async (req: Request, res: Response) => {
     }
 
     // Enforce enterprise password policy
-    const changePolicyResult = validatePasswordPolicy(newPassword);
+    const changePolicyResult = validatePasswordPolicy(newPassword, { email: decoded.email });
     if (!changePolicyResult.valid) {
       return res.status(400).json({
         success: false,
