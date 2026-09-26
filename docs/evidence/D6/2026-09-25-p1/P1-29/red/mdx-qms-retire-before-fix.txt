@@ -1,0 +1,299 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a viewer before touching the database or the signer (403) 29ms
+ × server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > a reason alone does not retire: 400 ESIGNATURE_COMPONENT_MISSING naming password and meaning; nothing verified, nothing written 12ms
+   → {"data":{"id":5,"organization_id":7,"doc_number":"SOP-900","title":"Complaint handling","doc_type":"sop","category":"quality","version":"1.0","status":"retired","effective_date":"2026-06-01","next_review_date":"2027-06-01","author_id":3,"approver_id":9,"approved_at":"2026-06-01T09:00:00.000Z","superseded_by_id":null,"artifact_id":null,"metadata":{"sections":[{"key":"purpose","body":"How complaints are received and trended."}],"approval":{"reason":"Released.","meaning":"APPROVED","contentDigest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}}},"meta":{"auditTrail":{"persisted":true,"chained":true}}}: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > an empty body names every missing component 5ms
+   → expected 422 to be 400 // Object.is equality
+ × server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a reason shorter than the floor (8) before verifying anything 4ms
+   → expected 422 to be 400 // Object.is equality
+ × server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a meaning other than APPROVED 4ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses an editor whose org role carries no signing authority with 403, before the password is looked at 4ms
+   → expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a wrong password with 401, counts it against the account, and writes nothing 3ms
+   → expected 200 to be 401 // Object.is equality
+ × server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a locked account with 423 before its password is compared 3ms
+   → expected 200 to be 423 // Object.is equality
+ × server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses the password alone from a signer with an authenticator enrolled 5ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a document that is already retired with 409 and rolls back 4ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > 404s a document outside the tenant 3ms
+   → expected 200 to be 404 // Object.is equality
+ × server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > signs: the UPDATE, one ledger row (command retire) and one signature bound to the content digest, meaning APPROVED, then COMMIT 5ms
+   → expected [] to deeply equal [ 'BEGIN', 'SELECT', 'UPDATE', …(1) ]
+ × server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > keeps today's admissibility: a draft can be retired too, and the ledger says where it came from 3ms
+   → Cannot read properties of undefined (reading '1')
+ × server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > records password+totp only when the verifier actually verified a second factor 3ms
+   → Cannot read properties of undefined (reading '1')
+ × server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > rolls the retirement back when the signature row cannot be written, and echoes none of the caught text 3ms
+   → expected 200 to be 500 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > a reason alone does not retire: 400 ESIGNATURE_COMPONENT_MISSING naming password and meaning; nothing verified, nothing written
+AssertionError: {"data":{"id":5,"organization_id":7,"doc_number":"SOP-900","title":"Complaint handling","doc_type":"sop","category":"quality","version":"1.0","status":"retired","effective_date":"2026-06-01","next_review_date":"2027-06-01","author_id":3,"approver_id":9,"approved_at":"2026-06-01T09:00:00.000Z","superseded_by_id":null,"artifact_id":null,"metadata":{"sections":[{"key":"purpose","body":"How complaints are received and trended."}],"approval":{"reason":"Released.","meaning":"APPROVED","contentDigest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}}},"meta":{"auditTrail":{"persisted":true,"chained":true}}}: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/mdx-qms-retire.test.ts:173:50
+    171|   it('a reason alone does not retire: 400 ESIGNATURE_COMPONENT_MISSING…
+    172|     const res = await retire('member', { reason: REASON });
+    173|     expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                  ^
+    174|     expect(res.body.details.code).toBe('ESIGNATURE_COMPONENT_MISSING');
+    175|     expect(res.body.error).toMatch(/password/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > an empty body names every missing component
+AssertionError: expected 422 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 422
+
+ ❯ server/routes/__tests__/mdx-qms-retire.test.ts:187:24
+    185|   it('an empty body names every missing component', async () => {
+    186|     const res = await retire('member', {});
+    187|     expect(res.status).toBe(400);
+       |                        ^
+    188|     expect(Object.keys(res.body.details.fieldErrors).sort()).toEqual([…
+    189|     expect(H.query).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a reason shorter than the floor (8) before verifying anything
+AssertionError: expected 422 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 422
+
+ ❯ server/routes/__tests__/mdx-qms-retire.test.ts:195:24
+    193|   it('refuses a reason shorter than the floor (8) before verifying any…
+    194|     const res = await retire('member', { ...VALID_BODY, reason: 'old' …
+    195|     expect(res.status).toBe(400);
+       |                        ^
+    196|     expect(res.body.details.code).toBe('ESIGNATURE_COMPONENT_MISSING');
+    197|     expect(res.body.details.fieldErrors.reason[0]).toMatch(/at least 8…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a meaning other than APPROVED
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/mdx-qms-retire.test.ts:205:24
+    203|   it('refuses a meaning other than APPROVED', async () => {
+    204|     const res = await retire('member', { ...VALID_BODY, meaning: 'REVI…
+    205|     expect(res.status).toBe(400);
+       |                        ^
+    206|     expect(res.body.details.fieldErrors.meaning[0]).toMatch(/APPROVED/…
+    207|     expect(H.txQuery).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses an editor whose org role carries no signing authority with 403, before the password is looked at
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/mdx-qms-retire.test.ts:213:24
+    211|     H.role.mockResolvedValue('member');
+    212|     const res = await retire('member', VALID_BODY);
+    213|     expect(res.status).toBe(403);
+       |                        ^
+    214|     expect(res.body.details.code).toBe('QMS_NO_SIGNING_AUTHORITY');
+    215|     expect(res.body.error).toMatch(/retir/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a wrong password with 401, counts it against the account, and writes nothing
+AssertionError: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ server/routes/__tests__/mdx-qms-retire.test.ts:223:24
+    221|   it('refuses a wrong password with 401, counts it against the account…
+    222|     const res = await retire('member', { ...VALID_BODY, password: 'wro…
+    223|     expect(res.status).toBe(401);
+       |                        ^
+    224|     expect(res.body.details.code).toBe('PASSWORD_VERIFICATION_FAILED');
+    225|     expect(H.compare).toHaveBeenCalledWith('wrong', 'stored-hash');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a locked account with 423 before its password is compared
+AssertionError: expected 200 to be 423 // Object.is equality
+
+- Expected
++ Received
+
+- 423
++ 200
+
+ ❯ server/routes/__tests__/mdx-qms-retire.test.ts:235:24
+    233|     H.account.locked = true;
+    234|     const res = await retire('member', VALID_BODY);
+    235|     expect(res.status).toBe(423);
+       |                        ^
+    236|     expect(res.body.details.code).toBe('ACCOUNT_LOCKED');
+    237|     expect(H.compare).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses the password alone from a signer with an authenticator enrolled
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/mdx-qms-retire.test.ts:244:24
+    242|     H.account.mfa = true;
+    243|     const res = await retire('member', VALID_BODY);
+    244|     expect(res.status).toBe(400);
+       |                        ^
+    245|     expect(res.body.details.code).toBe('MFA_TOKEN_REQUIRED');
+    246|     expect(H.txQuery).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a document that is already retired with 409 and rolls back
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/mdx-qms-retire.test.ts:253:24
+    251|     scriptTransaction({ ...EFFECTIVE, status: 'retired' });
+    252|     const res = await retire('member', VALID_BODY);
+    253|     expect(res.status).toBe(409);
+       |                        ^
+    254|     expect(res.body.details.code).toBe('QMS_INVALID_STATE');
+    255|     expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'ROLLBACK']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/14]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > 404s a document outside the tenant
+AssertionError: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ server/routes/__tests__/mdx-qms-retire.test.ts:264:24
+    262|     scriptTransaction(null);
+    263|     const res = await retire('member', VALID_BODY);
+    264|     expect(res.status).toBe(404);
+       |                        ^
+    265|     expect(H.persistSignature).not.toHaveBeenCalled();
+    266|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/14]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > signs: the UPDATE, one ledger row (command retire) and one signature bound to the content digest, meaning APPROVED, then COMMIT
+AssertionError: expected [] to deeply equal [ 'BEGIN', 'SELECT', 'UPDATE', …(1) ]
+
+- Expected
++ Received
+
+- [
+-   "BEGIN",
+-   "SELECT",
+-   "UPDATE",
+-   "COMMIT",
+- ]
++ []
+
+ ❯ server/routes/__tests__/mdx-qms-retire.test.ts:277:28
+    275|
+    276|     // Read under lock, update, ledger pair, signature, commit — on th…
+    277|     expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'UPDATE', 'COMM…
+       |                            ^
+    278|     expect(H.query).not.toHaveBeenCalled();
+    279|     const update = H.txQuery.mock.calls.find((c) => /^\s*UPDATE/.test(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/14]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > keeps today's admissibility: a draft can be retired too, and the ledger says where it came from
+TypeError: Cannot read properties of undefined (reading '1')
+ ❯ server/routes/__tests__/mdx-qms-retire.test.ts:318:46
+    316|     const res = await retire('member', VALID_BODY);
+    317|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    318|     const gov = H.recordGoverned.mock.calls[0][1] as Record<string, an…
+       |                                              ^
+    319|     expect(gov.payload.fromStatus).toBe('draft');
+    320|     expect(H.persistSignature).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/14]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > records password+totp only when the verifier actually verified a second factor
+TypeError: Cannot read properties of undefined (reading '1')
+ ❯ server/routes/__tests__/mdx-qms-retire.test.ts:327:48
+    325|     const res = await retire('member', { ...VALID_BODY, mfaToken: '123…
+    326|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    327|     const sig = H.persistSignature.mock.calls[0][1] as Record<string, …
+       |                                                ^
+    328|     expect(sig.authenticationMethod).toBe('password+totp');
+    329|     expect(sig.secondFactorVerified).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/14]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > rolls the retirement back when the signature row cannot be written, and echoes none of the caught text
+AssertionError: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ server/routes/__tests__/mdx-qms-retire.test.ts:335:24
+    333|     H.persistSignature.mockRejectedValue(new Error('electronic_signatu…
+    334|     const res = await retire('member', VALID_BODY);
+    335|     expect(res.status).toBe(500);
+       |                        ^
+    336|     expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'UPDATE', 'ROLL…
+    337|     expect(JSON.stringify(res.body)).not.toMatch(/insert failed/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/14]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  14 failed | 1 passed (15)
+   Start at  12:55:55
+   Duration  1.15s (transform 305ms, setup 88ms, import 614ms, tests 94ms, environment 0ms)
+

@@ -11,13 +11,16 @@
  * surface via `onAsk` — the same pattern as the MDX Quality kit and the
  * Intelligence cluster.
  *
- * Approval is the exception, because it is an electronic signature and AnA
- * cannot sign: a chat turn cannot collect a password. The row's Approve button
- * opens the shared EsignModal, which posts to the signed route
- * (POST /api/mdx/qms/documents/:id/approve, VSR-001 F-3). Until 2026-09-24 this
- * button was "Ask AnA to approve", its tooltip said "you still capture the
+ * Approval and retirement are the exceptions, because each is an electronic
+ * signature and AnA cannot sign: a chat turn cannot collect a password. The
+ * row's Approve button opens the shared EsignModal, which posts to the signed
+ * route (POST /api/mdx/qms/documents/:id/approve, VSR-001 F-3). Until 2026-09-24
+ * this button was "Ask AnA to approve", its tooltip said "you still capture the
  * e-signature", and the tool it reached made the SOP effective with no
- * signature at all (new-code audit 2026-09-24, finding 1).
+ * signature at all (new-code audit 2026-09-24, finding 1). The Retire button
+ * opens the same dialog against POST /api/mdx/qms/documents/:id/retire
+ * (P1-29 / DP-32, security review 2026-09-24): until 2026-09-26 it was a
+ * reason-only confirm, and the route retired the document on the reason alone.
  *
  * @module client/src/concept2cure/quality/SopRegister
  */
@@ -39,9 +42,7 @@ import {
 import { useSopRegister, useSopTemplates, useReviewDue, useTrainingCompliance } from './hooks';
 import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
 import { postQmsApproval } from './qmsApproval';
-import { GovernedConfirmDialog } from '../_shared/components/GovernedConfirmDialog';
 import { useAuthUser } from '@/services/portal/authService';
-import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { QmsDoc } from './data';
 /* The canonical sample-mode guard and its marker, shared with the MDX lane —
    one definition of "may a fixture reach the screen", so two lanes cannot
@@ -129,11 +130,11 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
   const user = useAuthUser(); // display only; the server resolves the signer
   /** The document being approved, while the signature dialog is open. */
   const [approving, setApproving] = React.useState<QmsDoc | null>(null);
-  /* Retire is a governed, terminal write: a dialog that captures the reason
-     (the server requires it and refuses without it), not a prompt into chat
-     that asked AnA to ask for one. */
+  /** The document being retired, while its signature dialog is open. Retirement
+      is the terminal transition of a controlled document and is signed like the
+      approval: password, second factor, meaning and reason, re-verified by the
+      server in the transaction that writes the signature. */
   const [retiring, setRetiring] = React.useState<QmsDoc | null>(null);
-  const [retireErr, setRetireErr] = React.useState<string | null>(null);
 
   const effectiveCount = docs.filter((d) => d.status === 'effective').length;
   const underReviewCount = docs.filter((d) => d.status === 'in_review').length;
@@ -402,8 +403,8 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
                       </button>
                       <button
                         className="qms-chip"
-                        title="Retire"
-                        onClick={() => { setRetireErr(null); setRetiring(d); }}
+                        title="Retire with your electronic signature (password and second factor). Retirement is the terminal state; the document leaves use for everyone trained on it."
+                        onClick={() => setRetiring(d)}
                       >
                         {I.archive} Retire
                       </button>
@@ -553,24 +554,19 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
         />
       )}
       {retiring && (
-        <GovernedConfirmDialog
+        <EsignModal
           open
           action="Retire controlled document"
           target={`${retiring.docNumber} ${retiring.title} (v${retiring.version})`}
-          resource={retiring.docNumber}
-          minReason={8}
-          confirmWord="retire"
-          submitError={retireErr}
-          onCancel={() => setRetiring(null)}
-          onConfirm={async ({ reason }) => {
-            const res = await apiRequest('POST', `/api/mdx/qms/documents/${retiring.id}/retire`, { reason });
-            const json = await res.json().catch(() => null);
-            if (!res.ok) {
-              setRetireErr(serverMessage(json) ?? 'The document was not retired. Nothing changed.');
-              return;
-            }
-            setRetiring(null);
+          targetMeta="Retirement is the terminal state: the document leaves use for everyone trained on it when you sign. It is an electronic signature."
+          defaultMeaning="approval"
+          meanings={['approval']}
+          signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
+          onClose={() => setRetiring(null)}
+          onSign={async (input) => {
+            const manifest = await postQmsApproval({ kind: 'document-retire', id: retiring.id }, input);
             reg.refresh?.();
+            return manifest;
           }}
         />
       )}
