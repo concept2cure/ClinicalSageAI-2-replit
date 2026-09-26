@@ -141,6 +141,9 @@ async function draftUnderStreamCtx(w: World): Promise<Record<string, unknown>> {
     lockedScreens: [],
     turnState: {},
     signal: new AbortController().signal,
+    // draft_authoring_document is a write in the tool register (P1-34): on the
+    // founder path it runs when the person confirms the draft AnA proposed.
+    humanConfirmed: true,
   };
   return JSON.parse(await handler!(input, ctx as never));
 }

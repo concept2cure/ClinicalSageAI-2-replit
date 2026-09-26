@@ -122,9 +122,12 @@ export const CONDITIONAL_RULES: Readonly<Record<string, Rule>> = {
     given(i.witnessed_by)
       ? refuse('A named witness to a controlled-substance transaction attests to it themselves. Log the transaction without a witness; the witness records their attestation.')
       : CONFIRM,
+  // Accepting a suggested filing is the person's confirmation. The handler
+  // refuses it itself, saying what AnA can do instead (pinned to write nothing
+  // in tests/db/vault-placement.dbtest.ts), so it answers.
   place_project_document: i =>
     i.confirm_suggested === true
-      ? refuse('Accepting a suggested filing location is the person’s own confirmation; they accept it in the Vault.')
+      ? { ...refuse('Accepting a suggested filing location is the person’s own confirmation; they accept it in the Vault.'), refusedBy: 'handler' }
       : CONFIRM,
   qms_change_transition: i => {
     // Approval: the change-control service refuses it itself, pointing to the
