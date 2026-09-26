@@ -43,6 +43,9 @@ vi.mock('../../../db', () => {
   // transaction holding the sequence row lock; the stub's lock read reports an
   // unlocked sequence, and the write goes through the same stubs as before.
   db.transaction = async (fn: (tx: any) => unknown) => fn({ ...db, execute: async () => ({ rows: [{ status: 'draft' }] }) });
+  // The document's project (PF-11): these documents record none, so the
+  // cross-project check has nothing to compare and the placement stands.
+  db.execute = async () => ({ rows: [] });
   return { db };
 });
 vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true })) } }));

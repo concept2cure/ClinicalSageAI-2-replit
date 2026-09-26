@@ -1,6 +1,6 @@
 {
   "$comment": "LX-00 shrink-only baseline for tests/lineage/founder-path-lineage.pglite.test.ts. Each entry is a check that is broken at HEAD: the verified finding(s) from docs/design/LINEAGE_END_TO_END_PLAN_2026-09-25.md (or LX00-Fn for a defect this test found that the plan does not cover), the LX fix(es) that close it, and the value the check observes today, serialized as the test serializes it. A baselined check that passes fails the run (delete its entry); one that fails on a different value fails the run (re-examine it). Never add an entry to make the run green; the ceiling below is the size this file was written at.",
-  "ceiling": 18,
+  "ceiling": 17,
   "hops": {
     "capture": {
       "bytes-durable": {
@@ -109,18 +109,6 @@
         ],
         "observed": "false",
         "why": "The filing records the vault row, the artifact sha256 and the folder (server/services/authoring/authoring-file-to-vault.ts:222-264); neither the vault row, the chained audit row nor the export history names the frozen version or its content hash. The only link is document_code 'authoring-<docId>' (:344)."
-      }
-    },
-    "place": {
-      "placement-audit-names-document-and-pin": {
-        "findings": [
-          "SUB-10"
-        ],
-        "closedBy": [
-          "LX-11"
-        ],
-        "observed": "[false,false]",
-        "why": "LEAF_CREATED details are {sequenceId, sectionCode, reason} (server/services/submission-service/submission-service.ts:2059-2070): the chained ledger records neither the document pointer nor the pin the leaf took."
       }
     },
     "transmit": {
