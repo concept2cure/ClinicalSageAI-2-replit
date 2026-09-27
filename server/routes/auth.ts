@@ -401,6 +401,46 @@ router.get('/session', async (req: Request, res: Response) => {
   }
 });
 
+/** An account's memberships: the organisations it may act in. */
+function membershipsOf(userId: number) {
+  return db
+    .select({
+      organizationId: organizationUsers.organizationId,
+      role: organizationUsers.role,
+    })
+    .from(organizationUsers)
+    .where(eq(organizationUsers.userId, userId))
+    .limit(25);
+}
+
+/**
+ * The membership an account's sign-in lands in: the one in its default
+ * organisation when it holds one there, otherwise its first. The default is a
+ * preference, not a membership (services/part11/resolve-signer-identity.ts), and
+ * an account added through user administration has none.
+ */
+function signInMembership<M extends { organizationId: number }>(
+  memberships: M[],
+  defaultOrganizationId: number | null | undefined,
+): M | undefined {
+  return memberships.find(m => m.organizationId === defaultOrganizationId) ?? memberships[0];
+}
+
+/**
+ * The organisation an event about an account is recorded against: the one its
+ * sign-in lands in, so the event reaches that organisation's ledger; with no
+ * membership, its default. Until VSR-001 F-41 (2026-09-27) the default alone was
+ * used, and every such event about an account added through user
+ * administration, which has no default, was written outside its organisation.
+ */
+async function auditOrganizationOf(account: {
+  id: number;
+  defaultOrganizationId?: number | null;
+}): Promise<number | null> {
+  const membership = signInMembership(await membershipsOf(account.id), account.defaultOrganizationId);
+  return membership?.organizationId ?? account.defaultOrganizationId ?? null;
+}
+
 /**
  * POST /api/auth/login
  * Login with email and password
@@ -453,7 +493,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       await recordAuthEvent({
         action: 'user_login',
         userId: userData.id,
-        tenantId: userData.defaultOrganizationId,
+        tenantId: await auditOrganizationOf(userData),
         email: userData.email,
         outcome: 'failure',
         reason: 'account_locked',
@@ -488,7 +528,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       await recordAuthEvent({
         action: 'user_login',
         userId: userData.id,
-        tenantId: userData.defaultOrganizationId,
+        tenantId: await auditOrganizationOf(userData),
         email: userData.email,
         outcome: 'failure',
         reason: failResult?.locked ? 'wrong_password_threshold_exceeded' : 'wrong_password',
@@ -510,7 +550,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       await recordAuthEvent({
         action: 'user_login',
         userId: userData.id,
-        tenantId: userData.defaultOrganizationId,
+        tenantId: await auditOrganizationOf(userData),
         email: userData.email,
         outcome: 'failure',
         reason: 'email_unverified',
@@ -531,7 +571,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       await recordAuthEvent({
         action: 'user_login',
         userId: userData.id,
-        tenantId: userData.defaultOrganizationId,
+        tenantId: await auditOrganizationOf(userData),
         email: userData.email,
         outcome: 'failure',
         reason: 'account_inactive',
@@ -552,18 +592,9 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     // challenge-issued here and session-created there.
 
     const defaultOrganizationId = userData.defaultOrganizationId || null;
-    let organizationId = defaultOrganizationId;
-    let jwtRole = 'user';
 
     // Resolve all memberships and pick default org membership if available.
-    const memberships = await db
-      .select({
-        organizationId: organizationUsers.organizationId,
-        role: organizationUsers.role,
-      })
-      .from(organizationUsers)
-      .where(eq(organizationUsers.userId, userData.id))
-      .limit(25);
+    const memberships = await membershipsOf(userData.id);
 
     if (memberships.length === 0) {
       return res.status(403).json({
@@ -572,13 +603,9 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       });
     }
 
-    if (!organizationId) {
-      organizationId = memberships[0]?.organizationId || null;
-    }
-    const selectedMembership =
-      memberships.find(m => m.organizationId === organizationId) || memberships[0];
-    organizationId = selectedMembership?.organizationId || null;
-    jwtRole = selectedMembership?.role || 'user';
+    const selectedMembership = signInMembership(memberships, defaultOrganizationId);
+    const organizationId = selectedMembership?.organizationId || null;
+    const jwtRole = selectedMembership?.role || 'user';
 
     if (!organizationId) {
       return res.status(403).json({
@@ -1234,7 +1261,7 @@ router.post('/verify-email', verificationLimiter, async (req: Request, res: Resp
     await recordAuthEvent({
       action: 'email_verified',
       userId: account.id,
-      tenantId: account.defaultOrganizationId,
+      tenantId: await auditOrganizationOf(account),
       email: subject.email,
       outcome: 'success',
       reason: 'link',
@@ -2247,7 +2274,7 @@ async function handleForgotPassword(req: Request, res: Response) {
     };
 
     const user = await db
-      .select({ id: users.id, email: users.email })
+      .select({ id: users.id, email: users.email, defaultOrganizationId: users.defaultOrganizationId })
       .from(users)
       .where(eq(users.email, email.toLowerCase()))
       .limit(1);
@@ -2296,6 +2323,7 @@ async function handleForgotPassword(req: Request, res: Response) {
     await recordAuthEvent({
       action: 'user_password_reset_requested',
       userId: user[0].id,
+      tenantId: await auditOrganizationOf(user[0]),
       email: user[0].email,
       outcome: 'success',
       ipAddress: req.ip,
@@ -2344,6 +2372,7 @@ async function handleResetPassword(req: Request, res: Response) {
         name: users.name,
         resetToken: users.resetToken,
         resetTokenExpiresAt: users.resetTokenExpiresAt,
+        defaultOrganizationId: users.defaultOrganizationId,
       })
       .from(users)
       .where(eq(users.resetToken, tokenHash))
@@ -2369,6 +2398,8 @@ async function handleResetPassword(req: Request, res: Response) {
     }
 
     const userData = user[0];
+    // Every event below names the account, so its organisation's ledger shows it (F-41).
+    const auditOrganizationId = await auditOrganizationOf(userData);
 
     // Check expiry
     if (!userData.resetTokenExpiresAt || new Date() > userData.resetTokenExpiresAt) {
@@ -2381,6 +2412,7 @@ async function handleResetPassword(req: Request, res: Response) {
       await recordAuthEvent({
         action: 'user_password_reset_failed',
         userId: userData.id,
+        tenantId: auditOrganizationId,
         outcome: 'failure',
         reason: 'reset token had expired',
         ipAddress: req.ip,
@@ -2438,6 +2470,7 @@ async function handleResetPassword(req: Request, res: Response) {
       await recordAuthEvent({
         action: 'user_password_reset_failed',
         userId: userData.id,
+        tenantId: auditOrganizationId,
         outcome: 'failure',
         reason: 'reset token was used or expired before this request completed',
         ipAddress: req.ip,
@@ -2462,6 +2495,7 @@ async function handleResetPassword(req: Request, res: Response) {
     await recordAuthEvent({
       action: 'user_password_changed',
       userId: userData.id,
+      tenantId: auditOrganizationId,
       outcome: 'success',
       reason: 'password reset via emailed token',
       ipAddress: req.ip,
@@ -2627,7 +2661,7 @@ router.post('/password/change', async (req: Request, res: Response) => {
     await recordAuthEvent({
       action: 'user_password_changed',
       userId: userData.id,
-      tenantId: userData.defaultOrganizationId,
+      tenantId: await auditOrganizationOf(userData),
       email: userData.email,
       outcome: 'success',
       reason: 'changed by the account holder',
