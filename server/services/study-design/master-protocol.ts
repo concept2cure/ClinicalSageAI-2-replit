@@ -84,14 +84,10 @@ export interface MasterProtocolCheck {
   basis: string;
 }
 
-/**
- * The plan as persisted designs may carry it: `biomarker: null` states a
- * sub-study is not biomarker-defined, and `nonConcurrentControlsJustification`
- * records why non-concurrent controls are used. Both are read ahead of
- * `study-design-types.ts` declaring them.
- */
-type SubStudy = Omit<MasterProtocolPlan['subStudies'][number], 'biomarker'> & { biomarker?: string | null };
-type Plan = Omit<MasterProtocolPlan, 'subStudies'> & { subStudies: unknown; nonConcurrentControlsJustification?: string };
+/** A sub-study as the plan records it. */
+type SubStudy = MasterProtocolPlan['subStudies'][number];
+/** The plan as a persisted design may carry it: `subStudies` is checked before it is read. */
+type Plan = Omit<MasterProtocolPlan, 'subStudies'> & { subStudies: unknown };
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
 const designArmNames = (design: StudyDesign): Set<unknown> => new Set((Array.isArray(design.arms) ? design.arms : []).filter(isRecord).map((a) => a.name));

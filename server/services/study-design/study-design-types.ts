@@ -594,8 +594,12 @@ export interface MasterProtocolPlan {
     name: string;
     /** The population or disease the sub-study enrols. */
     population: string;
-    /** The biomarker that assigns participants to it (basket / umbrella). */
-    biomarker?: string;
+    /**
+     * The biomarker that assigns participants to it (basket / umbrella). `null`
+     * states the sub-study's population is not biomarker-defined (histology,
+     * disease stage, prior therapy — FDA 2022); absent means the plan does not say.
+     */
+    biomarker?: string | null;
     /** The assay that measures the biomarker, and its validation status. */
     biomarkerAssay?: string;
     /** Arm names (design `arms`) this sub-study randomises between. */
@@ -610,6 +614,8 @@ export interface MasterProtocolPlan {
   sharedControlArm?: string | null;
   /** Whether comparisons use controls enrolled before a treatment arm opened. */
   nonConcurrentControls?: 'not_used' | 'used_with_time_adjustment' | 'used';
+  /** Why non-concurrent control data are used, and how time-trend bias is addressed (FDA 2023 draft). */
+  nonConcurrentControlsJustification?: string;
   /** How a new arm or sub-study is added (amendment, IRB, randomisation update). */
   armAdditionProcedure?: string;
   /** When an arm is dropped for futility or efficacy. */

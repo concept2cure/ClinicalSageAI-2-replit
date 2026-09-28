@@ -220,6 +220,20 @@ describe('applyPlanningInput — one block, nothing else, and its engine reads i
     expect(checkMasterProtocol(cleared).elements).toEqual([]);
   });
 
+  it('a sub-study stated as not biomarker-defined, and a non-concurrent-controls justification, are recorded and read as stated', () => {
+    const plan = { ...MASTER, subStudies: [{ ...MASTER.subStudies[0], biomarker: null }, MASTER.subStudies[1]], nonConcurrentControls: 'used', nonConcurrentControlsJustification: 'Rare population; time trend modelled' };
+    expect(parsePlanningInput({ block: 'masterProtocol', value: plan }).ok).toBe(true);
+    // A biomarker is asked of basket and umbrella sub-studies; this one states it has none.
+    const basket = { ...platform(), framework: { ...platform().framework, structuralDesign: 'basket' } } as StudyDesign;
+    const check = checkMasterProtocol(applyPlanningInput(basket, input('masterProtocol', plan)));
+    expect(check.elements).toEqual(expect.arrayContaining([
+      expect.objectContaining({ scope: 'sub-study KRAS', element: 'Biomarker', stated: true, detail: 'stated: the sub-study population is not biomarker-defined' }),
+    ]));
+    expect(check.gaps.join(' ')).not.toMatch(/Justification for non-concurrent controls not stated/);
+    const unjustified = checkMasterProtocol(applyPlanningInput(basket, input('masterProtocol', { ...plan, nonConcurrentControlsJustification: undefined })));
+    expect(unjustified.gaps.join(' ')).toMatch(/Justification for non-concurrent controls not stated/);
+  });
+
   it('sets and clears one activity\'s location and specimen, and no other activity', () => {
     const next = applyPlanningInput(design(), input('activityAttributes', { activityId: 'pk', location: 'home', specimen: { type: 'blood', volumeMl: 4 } }));
     expect(next.scheduleOfActivities!.activities[0]).toMatchObject({ location: 'home', specimen: { type: 'blood', volumeMl: 4 } });

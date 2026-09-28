@@ -192,7 +192,8 @@ const masterProtocol = z
             id: listText,
             name: listText,
             population: listText,
-            biomarker: listText.optional(),
+            // null states the population is not biomarker-defined; absent, that the plan does not say.
+            biomarker: listText.nullable().optional(),
             biomarkerAssay: listText.optional(),
             arms: z.array(armName).min(1),
             decisionRule: listText.optional(),
@@ -202,6 +203,7 @@ const masterProtocol = z
       .min(1),
     sharedControlArm: text.nullable().optional(),
     nonConcurrentControls: z.enum(['not_used', 'used_with_time_adjustment', 'used']).optional(),
+    nonConcurrentControlsJustification: text.optional(),
     armAdditionProcedure: text.optional(),
     armDroppingRules: text.optional(),
     multiplicityAcrossSubStudies: text.optional(),

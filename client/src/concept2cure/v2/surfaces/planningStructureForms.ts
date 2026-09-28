@@ -100,12 +100,21 @@ function masterFields(cur: Obj | null, design: Obj): C2CFormField[] {
         .map((s) => [s.id, s.name, s.population, Array.isArray(s.arms) ? (s.arms as unknown[]).map(str).join('; ') : '', s.biomarker, s.biomarkerAssay, s.decisionRule].map(str).join(' | '))
         .join('\n'),
     },
-    { key: 'sharedControlArm', label: 'Shared control arm', type: 'select', options: sharedOptions(arms, cur?.sharedControlArm), default: sharedDefault(cur?.sharedControlArm) },
+    {
+      key: 'notBiomarkerDefined', label: 'Sub-studies not defined by a biomarker', type: 'textarea', rows: 2,
+      desc: 'Ids, one per line, of sub-studies whose population is defined another way (histology, disease stage, prior therapy). Leave their biomarker cells blank.',
+      default: subs.filter((s) => s.biomarker === null).map((s) => str(s.id)).join('\n'),
+    },
+        { key: 'sharedControlArm', label: 'Shared control arm', type: 'select', options: sharedOptions(arms, cur?.sharedControlArm), default: sharedDefault(cur?.sharedControlArm) },
     {
       key: 'nonConcurrentControls', label: 'Non-concurrent controls', type: 'select', default: str(cur?.nonConcurrentControls),
       options: [{ value: '', label: 'Not stated' }, { value: 'not_used', label: 'Not used' }, { value: 'used_with_time_adjustment', label: 'Used, with a pre-specified time-trend adjustment' }, { value: 'used', label: 'Used, with no time-trend adjustment' }],
     },
-    { key: 'armAdditionProcedure', label: 'How an arm or sub-study is added', type: 'textarea', rows: 2, default: str(cur?.armAdditionProcedure) },
+    {
+      key: 'nonConcurrentControlsJustification', label: 'Why non-concurrent controls are used', type: 'textarea', rows: 2,
+      desc: 'And how time-trend bias is addressed. Leave blank if they are not used.', default: str(cur?.nonConcurrentControlsJustification),
+    },
+        { key: 'armAdditionProcedure', label: 'How an arm or sub-study is added', type: 'textarea', rows: 2, default: str(cur?.armAdditionProcedure) },
     { key: 'armDroppingRules', label: 'When an arm is dropped', type: 'textarea', rows: 2, default: str(cur?.armDroppingRules) },
     { key: 'multiplicityAcrossSubStudies', label: 'Type I error across sub-studies', type: 'textarea', rows: 2, default: str(cur?.multiplicityAcrossSubStudies) },
   ];
@@ -132,6 +141,22 @@ function sharedOf(s: string | undefined): string | null | undefined {
   throw new ParseError(`Shared control arm "${t}" is not one of the choices.`);
 }
 
+/**
+ * The ids listed as not biomarker-defined get `biomarker: null` — a stated fact,
+ * distinct from a blank cell (not said). An id that is not a sub-study, is
+ * listed twice, or also names a biomarker is refused.
+ */
+function markNotBiomarkerDefined(subStudies: Obj[], listed: string | undefined): void {
+  const ids = String(listed ?? '').split('\n').map((l) => l.trim()).filter(Boolean);
+  ids.forEach((id, i) => {
+    const s = subStudies.find((x) => x.id === id);
+    if (!s) throw new ParseError(`Sub-studies not defined by a biomarker, line ${i + 1}: "${id}" is not one of the sub-studies.`);
+    if (ids.indexOf(id) !== i) throw new ParseError(`Sub-studies not defined by a biomarker, line ${i + 1}: "${id}" is listed twice.`);
+    if (s.biomarker !== undefined) throw new ParseError(`Sub-studies not defined by a biomarker, line ${i + 1}: "${id}" also names a biomarker.`);
+    s.biomarker = null;
+  });
+}
+
 function parseMaster(v: Values, design: Obj): Parsed {
   return run(v, () => {
     const designArms = armNamesOf(design);
@@ -142,10 +167,12 @@ function parseMaster(v: Values, design: Obj): Parsed {
       return compact({ id, name, population, arms: armsOf(at, arms, designArms), biomarker: opt(biomarker), biomarkerAssay: opt(assay), decisionRule: opt(rule) });
     });
     unique(ls, subStudies.map((s) => String(s.id)), 'sub-study id');
+    markNotBiomarkerDefined(subStudies, v.notBiomarkerDefined);
     const ncc = opt(v.nonConcurrentControls);
     if (ncc !== undefined && !(NON_CONCURRENT as readonly string[]).includes(ncc)) throw new ParseError(`Non-concurrent controls "${ncc}" is not one of the choices.`);
     return {
       subStudies, sharedControlArm: sharedOf(v.sharedControlArm), nonConcurrentControls: ncc,
+      nonConcurrentControlsJustification: opt(v.nonConcurrentControlsJustification),
       armAdditionProcedure: opt(v.armAdditionProcedure), armDroppingRules: opt(v.armDroppingRules),
       multiplicityAcrossSubStudies: opt(v.multiplicityAcrossSubStudies),
     };

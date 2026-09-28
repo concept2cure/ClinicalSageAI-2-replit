@@ -196,6 +196,19 @@ describe('master protocol', () => {
     expect(drawer(MASTER_FORM, MP).note).toBeNull();
   });
 
+  it('a sub-study stated as not biomarker-defined round-trips as null, distinct from a blank biomarker; the justification round-trips', () => {
+    const stated = { ...MP, subStudies: [MP.subStudies[0], { ...MP.subStudies[1], biomarker: null }], nonConcurrentControlsJustification: 'Rare population; time trend modelled' };
+    expect(roundTrip(MASTER_FORM, stated)).toEqual({ ok: true, value: stated });
+    const parsed = roundTrip(MASTER_FORM, MP) as { ok: true; value: { subStudies: Obj[] } };
+    expect(parsed.value.subStudies[1]).not.toHaveProperty('biomarker');
+  });
+
+  it('refuses a not-biomarker-defined id that is no sub-study, is listed twice, or also names a biomarker', () => {
+    expect(edited(MASTER_FORM, MP, { notBiomarkerDefined: 'S9' })).toEqual({ ok: false, error: 'Sub-studies not defined by a biomarker, line 1: "S9" is not one of the sub-studies.' });
+    expect(edited(MASTER_FORM, MP, { notBiomarkerDefined: 'S2\nS2' })).toEqual({ ok: false, error: 'Sub-studies not defined by a biomarker, line 2: "S2" is listed twice.' });
+    expect(edited(MASTER_FORM, MP, { notBiomarkerDefined: 'S1' })).toEqual({ ok: false, error: 'Sub-studies not defined by a biomarker, line 1: "S1" also names a biomarker.' });
+  });
+
   it('refuses an arm the design does not carry, a line with no arm, a duplicate id, and an eighth field', () => {
     const line = (s: string) => edited(MASTER_FORM, MP, { subStudies: s });
     expect(line('S3 | X | pop | Drug C')).toEqual({ ok: false, error: 'Sub-studies, line 1: arm "Drug C" is not one of the design\'s arms (Drug A, 10 mg; Drug B; Docetaxel; None).' });
