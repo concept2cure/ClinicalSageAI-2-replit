@@ -79,7 +79,7 @@ import { getToolHandler } from '../AnaToolExecutor';
 import { PROTOCOL_DESIGN_TOOLS } from '../protocol-design-tool-defs';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
 
-const CTX = { organizationId: 7, userId: 42 } as never;
+const CTX = { organizationId: 7, userId: 42, humanConfirmed: true } as never;
 
 const GOVERNED = ['bind_protocol_to_study_design', 'apply_protocol_design_derivation'];
 const READ_ONLY = [
@@ -174,7 +174,7 @@ describe('protocol ⇄ design tool descriptions', () => {
 
 describe('protocol ⇄ design tools — context guards', () => {
   it.each(GOVERNED)('%s refuses without tenant + user context', async (name) => {
-    const out = await call(name, { document_id: 5, study_design_id: 'SD-1', accepted_paths: ['title'] }, {});
+    const out = await call(name, { document_id: 5, study_design_id: 'SD-1', accepted_paths: ['title'] }, { humanConfirmed: true });
     expect(out.error).toMatch(/tenant \+ user context/);
     expect(recordGovernedAction).not.toHaveBeenCalled();
   });

@@ -32,6 +32,9 @@ beforeEach(async () => {
       title TEXT,
       status TEXT,
       ctd_section TEXT,
+      version INTEGER NOT NULL DEFAULT 1,
+      approved_version_id INTEGER,
+      published_version_id INTEGER,
       updated_at TIMESTAMPTZ DEFAULT NOW()
     );
     INSERT INTO concept2cure_artifacts (artifact_id, organization_id, project_id, title, status, ctd_section)
@@ -73,7 +76,13 @@ describe('update_artifact_status — lawful lifecycle steps are allowed', () => 
     expect(await statusOf()).toBe('approved');
   });
   it('approved → locked', async () => {
+    // 2026-09-23 (W5/D7, residual repair; final pass): a lock must cover the
+    // approval, so the approved state carries the version the governed act
+    // approved (v1) — this command records none itself. The refusal of a lock
+    // over an unreviewed edit is pinned in
+    // artifact-status-approval-version.pglite.test.ts.
     await setStatus('approved');
+    await pglite.query('UPDATE concept2cure_artifacts SET approved_version_id = version WHERE artifact_id = 1');
     expect((await change('locked')).success).toBe(true);
     expect(await statusOf()).toBe('locked');
   });

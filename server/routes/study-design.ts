@@ -54,6 +54,9 @@ import {
   buildEffectPrior,
   gatherCsrEffectEvidence,
   persistStudyDesignTx,
+  isUuid,
+  StudyDesignPersistRefusal,
+  STUDY_DESIGN_REFUSAL_STATUS,
   deleteStudyDesignTx,
   loadStudyDesign,
   listStudyDesigns,
@@ -489,6 +492,11 @@ router.post('/persist', async (req: Request, res: Response) => {
   if (reason.length < 8) {
     return res.status(400).json({ error: 'REASON_REQUIRED', detail: 'Provide a reason of at least 8 characters.' });
   }
+  // A design starts at a project (PF-14): it names the project it belongs to.
+  // Whether that project is this organization's is checked by the one writer.
+  if (!isUuid(design.programId)) {
+    return res.status(400).json({ error: 'PROJECT_REQUIRED', detail: 'Name the project this study design belongs to.' });
+  }
 
   const validation = validateDesign(design);
   const client = await pool.connect();
@@ -501,7 +509,7 @@ router.post('/persist', async (req: Request, res: Response) => {
       command: 'persist',
       target: `study-design:${studyId}`,
       reason,
-      payload: { studyId, title: design.title, phase: design.phase, riskLevel: validation.riskLevel },
+      payload: { studyId, programId: design.programId, title: design.title, phase: design.phase, riskLevel: validation.riskLevel },
       domain: 'mdx',
       surface: 'api',
       idempotencyKey: typeof req.body?.idempotencyKey === 'string' ? req.body.idempotencyKey : null,
@@ -510,6 +518,9 @@ router.post('/persist', async (req: Request, res: Response) => {
     return res.json({ studyId, ...gov, validation });
   } catch (err: any) {
     await client.query('ROLLBACK').catch(() => undefined);
+    if (err instanceof StudyDesignPersistRefusal) {
+      return res.status(STUDY_DESIGN_REFUSAL_STATUS[err.code]).json({ error: err.code, detail: err.message });
+    }
     console.error('[study-design/persist]', err?.message);
     return res.status(500).json({ error: 'PERSIST_FAILED', detail: err?.message });
   } finally {

@@ -1,0 +1,43 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T17:31:51.121Z","pid":15900,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T17:31:51.122Z","pid":15900,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T17:31:51.122Z","pid":15900,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/traceability-update-boundary.dbtest.ts > A traceability update cannot move an item across the tenant boundary (D3) > an update naming another org leaves the item in its own tenant, and still applies
+[database] Database connection successful
+
+stdout | tests/db/traceability-update-boundary.dbtest.ts > A traceability update cannot move an item across the tenant boundary (D3) > an update naming another org leaves the item in its own tenant, and still applies
+[database] Database connection successful { timestamp: '2026-09-24T17:31:51.458Z', poolSize: 1 }
+
+ × tests/db/traceability-update-boundary.dbtest.ts > A traceability update cannot move an item across the tenant boundary (D3) > an update naming another org leaves the item in its own tenant, and still applies 125ms
+   → tenant A's item must remain tenant A's: expected 90302 to be 90301 // Object.is equality
+ ✓ tests/db/traceability-update-boundary.dbtest.ts > A traceability update cannot move an item across the tenant boundary (D3) > an update cannot re-point the item at another tenant's QMP 27ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/traceability-update-boundary.dbtest.ts > A traceability update cannot move an item across the tenant boundary (D3) > an update naming another org leaves the item in its own tenant, and still applies
+AssertionError: tenant A's item must remain tenant A's: expected 90302 to be 90301 // Object.is equality
+
+- Expected
++ Received
+
+- 90301
++ 90302
+
+ ❯ tests/db/traceability-update-boundary.dbtest.ts:82:77
+     80|       .send({ organizationId: ORG_B, notes: `${TAG}-noted` });
+     81|     const after = await item();
+     82|     expect(after.organization_id, "tenant A's item must remain tenant …
+       |                                                                             ^
+     83|     expect(res.status, 'the rest of the update must go through, not be…
+     84|       200
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  17:31:49
+   Duration  2.74s (transform 936ms, setup 78ms, import 1.78s, tests 602ms, environment 0ms)
+

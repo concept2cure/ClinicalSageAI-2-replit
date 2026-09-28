@@ -68,6 +68,14 @@ vi.mock('../../services/account-standing', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../services/account-standing')>()),
   isAccountActive: async () => true,
 }));
+// ...and its lockout (auth-security-service), which no signer here is under.
+// Before F-30 an unreadable lockout read as "not locked", so this file never
+// had to say so. Pinned by tests/db/signing-lockout.dbtest.ts.
+vi.mock('../../services/auth-security-service', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/auth-security-service')>()),
+  isAccountLocked: async () => ({ locked: false }),
+  recordFailedLogin: async () => ({ locked: false, remainingAttempts: 5 }),
+}));
 vi.mock('../../db.js', () => ({ pool: hoisted.makePool() }));
 vi.mock('../../db', () => ({ pool: hoisted.makePool() }));
 vi.mock('../../services/mfaService.js', () => ({

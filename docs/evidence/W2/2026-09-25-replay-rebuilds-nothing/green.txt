@@ -1,0 +1,7 @@
+this change, fresh PostgreSQL 16 database: install-fresh (exit 0), deploy-migrate (exit 0), then the gate
+
+[ci:replay-rebuilds-nothing] replayed deploy-migrate over 8874 constraints and indexes: 0 rebuilt, 0 dropped, 0 created
+[ci:replay-rebuilds-nothing] ✅ a deploy with nothing to change rebuilds nothing
+
+rls-coverage-check.sql rows: 0
+deploy-smoke-assert: all post-deploy invariants hold

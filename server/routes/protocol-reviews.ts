@@ -182,7 +182,7 @@ router.patch('/assignments/:id/disposition', requireEditorAccess, signingAttempt
       ipAddress: signerIpAddress(req),
       role: String((req as any).userRole ?? (req as any).user?.role ?? ''),
       write: async (client, meaning) => {
-        const r = await setDispositionTx(client, orgId, id, parsed.data.disposition, userId, meaning);
+        const r = await setDispositionTx(client, orgId, id, { disposition: parsed.data.disposition, signerId: userId, meaning });
         return {
           act: {
             disposition: r.disposition,

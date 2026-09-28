@@ -400,6 +400,7 @@ router.patch('/submissions/:submissionId/state', async (req, res) => {
   });
 
   // Check for unresolved governed decisions
+  let governedDecisionCheckFailed = false;
   let governedDecisionWarning: {
     hasUnresolved: boolean;
     unresolvedCount: number;
@@ -448,10 +449,17 @@ router.patch('/submissions/:submissionId/state', async (req, res) => {
       }
     }
   } catch {
-    // Non-blocking — governed decision check is advisory only
+    // Advisory, so the transition above stands. But a check that could not run
+    // must not read as one that found nothing, which is what an absent warning
+    // says (ledger L186).
+    governedDecisionCheckFailed = true;
   }
 
-  return res.json({ data: upd.rows[0], ...(governedDecisionWarning ? { governedDecisionWarning } : {}) });
+  return res.json({
+    data: upd.rows[0],
+    ...(governedDecisionWarning ? { governedDecisionWarning } : {}),
+    ...(governedDecisionCheckFailed ? { governedDecisionCheck: 'unavailable' } : {}),
+  });
 });
 
 router.post('/correspondence/intake', async (req, res) => {

@@ -15,7 +15,7 @@ import React, { useEffect, useState } from 'react';
 import { C2CForm, type C2CFormConfig, type C2CFormField } from '../C2CForm';
 import { useAuthUser } from '@/services/portal/authService';
 import {
-  addBudgetItem, addScheduleVisit, addSoaAssessment, listReviewerCandidates, optionalNumber,
+  addBudgetItem, addScheduleVisit, addSoaAssessment, assessProtocolDeviation, listReviewerCandidates, optionalNumber,
   removeScheduleVisit, removeSoaAssessment, renameScheduleVisit, requestProtocolReview,
   setBudgetParams, startProtocolDocument, updateProtocolHeader, updateProtocolRisk,
   type ReviewerCandidate,
@@ -25,6 +25,7 @@ export type PdevFormKind =
   | 'visit-add' | 'visit-rename' | 'visit-remove'
   | 'assessment-add' | 'assessment-remove'
   | 'risk-residual'
+  | 'deviation-assess'
   | 'budget-item' | 'budget-params'
   | 'review-request' | 'review-disposition'
   | 'cover-page'
@@ -110,6 +111,18 @@ const FORMS: Record<PdevFormKind, C2CFormConfig> = {
       { key: 'owner', label: 'Owner', type: 'text', half: true, placeholder: 'e.g. Clinical operations lead' },
       { key: 'status', label: 'Status', type: 'select', options: ['open', 'mitigating', 'accepted', 'closed'], half: true },
       { key: 'mitigation', label: 'Mitigation', type: 'textarea', placeholder: 'The control that lowers the rating' },
+      REASON,
+    ],
+  },
+  'deviation-assess': {
+    eyebrow: 'Protocol · deviations', title: 'Assess deviation',
+    sub: 'Your assessment of severity and effect on subject safety, with the rationale. It decides whether a prompt report to the IRB is indicated; until it is recorded the deviation cannot be closed.',
+    governed: true, submitLabel: 'Record assessment',
+    fields: [
+      { key: 'severity', label: 'Severity', type: 'seg', options: ['minor', 'major', 'critical'], required: true, half: true },
+      { key: 'affectsSafety', label: 'Affected subject safety, rights or welfare?', type: 'seg', required: true, half: true,
+        options: [{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }] },
+      { key: 'rationale', label: 'Rationale', type: 'textarea', required: true, placeholder: 'Why this severity — what the deviation did and did not affect' },
       REASON,
     ],
   },
@@ -268,6 +281,11 @@ async function submitRegister(
       await updateProtocolRisk(rowId, {
         residualLikelihood: v.residualLikelihood, residualImpact: v.residualImpact,
         owner: v.owner, mitigation: v.mitigation, status: v.status, reason: v.reason,
+      });
+      return true;
+    case 'deviation-assess':
+      await assessProtocolDeviation(rowId, {
+        severity: v.severity, affectsSafety: v.affectsSafety, rationale: v.rationale, reason: v.reason,
       });
       return true;
     case 'budget-item':

@@ -52,11 +52,14 @@ import { liveGetOrNull, liveMutateOrNull, EmptyState } from '../dataConnect';
 import { redactInternals } from '@/lib/queryClient';
 import { RichSectionEditor, type RichSectionEditorHandle } from '../editor/RichSectionEditor';
 import { useAnaChat } from '../../components/ana/useAnaChat';
-import { AnaWorkPanel } from '../AnaWorkPanel';
+import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
+import { AnaActivity, activityPropsFor } from '../AnaActivity';
+import { AnaMarkdown } from '../AnaMarkdown';
+import { AnaOutputCards } from '../AnaOutputs';
 import { useAgentActivity } from '../useAgentActivity';
-import { useWorkDockVisible } from '../workDock';
+import { useProgressDock } from '../workDock';
 import { shellProgramName } from '../shellProject';
-import { useChatUpload, attachmentReadLabel } from '../../hooks/useChatUpload';
+import { useChatUpload, readyAttachmentLabel, composeTurn } from '../../hooks/useChatUpload';
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import { AnswerLead } from '../AnswerLead';
@@ -317,10 +320,11 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
     onDriveEvent: liveDrive?.onDriveEvent,
     onArtifactSaved: liveDrive?.onWorkSaved,
   });
-  /* The live work dock for this pane (AnaWorkPanel): one shared show/hide
-     memory with the rail, and the background queue read only while shown. */
-  const [workDockOpen, setWorkDockOpen] = useWorkDockVisible();
-  const anaWorkQueue = useAgentActivity(workDockOpen, anaChat.isStreaming);
+  /* AnA's progress panel for this pane: one shared show/hide memory with
+     every other host (workDock.ts), toggled by the chip in the pane header,
+     and the background queue read only while shown. */
+  const dock = useProgressDock();
+  const anaWorkQueue = useAgentActivity(dock.open, anaChat.isStreaming);
   const turns = anaChat.messages;
 
   /* Validation + compliance are per-document — clear stale results when the
@@ -625,13 +629,11 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
     // Answered HERE, in the pane it was typed into. The turn streams from
     // /api/ana-ri/stream with this document as module context; nothing is
     // manufactured locally and no completed tool chip is invented.
-    const names = ecReady.map((a) => a.name);
-    const line = names.length ? `Attached: ${names.join(', ')}` : '';
     const scoped = q ? q + (activeRef ? ' (eCTD §' + activeRef + ')' : '') : '';
-    const body = scoped && line ? `${scoped}\n\n${line}` : scoped || line;
+    const { body, files } = composeTurn(scoped, ecReady);
     setDraft('');
     ecClearAttachments();
-    void anaChat.send(body);
+    void anaChat.send(body, files);
   };
 
   /* Keep the newest turn in view as tokens arrive. */
@@ -649,7 +651,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
     <div className="ec-shell" data-tree-collapsed={treeCollapsed} data-focus={focus}>
       {/* Top bar */}
       <div className="ec-topbar">
-        <button className="ec-topbtn" onClick={() => setTreeCollapsed((v) => !v)} title="Toggle eCTD tree" aria-label="Toggle eCTD tree">{I.sidebar || I.menu || I.layers}</button>
+        <button className="ec-topbtn" onClick={() => setTreeCollapsed((v) => !v)} title="Toggle eCTD tree" aria-label="Toggle eCTD tree">{I.panelLeft}</button>
         <div className="ec-crumbs">
           {activeDoc ? (
             <>
@@ -670,8 +672,8 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
             {activeDoc.status}
           </span>
         )}
-        <button className="ec-topbtn" onClick={() => setFocus((v) => !v)} title="Focus mode">{focus ? (I.minimize || I.x) : (I.maximize || I.expand || I.layers)}</button>
-        <button className="ec-topbtn primary" onClick={runValidate} disabled={!activeDoc}>{I.shieldCheck || I.shield} Validate</button>
+        <button className="ec-topbtn" onClick={() => setFocus((v) => !v)} title="Focus mode">{focus ? I.minimize : I.maximize}</button>
+        <button className="ec-topbtn primary" onClick={runValidate} disabled={!activeDoc}>{I.shieldCheck} Validate</button>
       </div>
 
       {/* eCTD tree */}
@@ -690,7 +692,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
           visibleModules.map((mod) => (
             <div key={mod.m} className="ec-tree-mod">
               <button className="ec-tree-row" onClick={() => toggleModule(mod.m)}>
-                <span className="ec-caret" data-open={treeFilter ? true : !!openModules[mod.m]}>{I.chevronRight || '›'}</span>
+                <span className="ec-caret" data-open={treeFilter ? true : !!openModules[mod.m]}>{I.chevRight}</span>
                 <span className="ec-tnum">M{mod.m}</span>
                 <span className="ec-tlabel">{mod.title}</span>
               </button>
@@ -749,23 +751,22 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
           {/* "live" was asserted from token presence alone, including when every
     read on the surface had failed. */}
           <span className="hint">co-authoring &sect;{activeRef || '—'} — bound to the dossier</span>
-          <button
-            type="button"
-            className="ana-work-toggle"
-            aria-pressed={workDockOpen}
-            aria-label={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
-            title={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
-            onClick={() => setWorkDockOpen(!workDockOpen)}
-          >
-            {I.activity} AnA at work
-          </button>
+          <AnaProgressChip
+            ref={dock.chipRef}
+            messages={anaChat.messages}
+            streaming={anaChat.isStreaming}
+            open={dock.open}
+            onToggle={dock.toggle}
+            controls={dock.panelId}
+          />
         </div>
         <div className="ec-intel-scroll" ref={scrollRef}>
           {/* The live work dock — the same one the shell rail mounts — above
               the thread, so the person sees the work before the words. */}
-          {workDockOpen && (
+          {dock.open && (
             <div className="ana-work-host" style={{ padding: '0 0 14px' }}>
               <AnaWorkPanel
+                id={dock.panelId}
                 messages={anaChat.messages}
                 streaming={anaChat.isStreaming}
                 runStatus={anaChat.runStatus}
@@ -793,9 +794,14 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
               <div key={i} className="ec-msg-ai">
                 <span className="ec-avatar">AnA</span>
                 <div className="ec-body">
-                  {/* While the reply streams the server's status phase stands in
-                      until the first token lands — never a fabricated sentence. */}
-                  <p>{m.text || (m.streaming ? m.statusPhase || 'Thinking…' : '')}</p>
+                  {/* The shared record of her work, then the answer through the
+                      one markdown path, then her output — the order every host
+                      renders. This pane showed plain text and, while she
+                      worked, the single word "Thinking…". The waiting state is
+                      the record's live phase now, never an invented sentence. */}
+                  <AnaActivity {...activityPropsFor(m)} />
+                  {m.text && <AnaMarkdown text={m.text} className="ana-md" />}
+                  <AnaOutputCards message={m} />
                   {Array.isArray(m.executedActions) && m.executedActions.length > 0 && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                       <AnaActionChips
@@ -826,7 +832,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
                   <span key={a.id} className="ec-att-chip" data-status={a.status}>
                     {I.paperclip} {a.name}
                     {a.status === 'uploading' && <em> · reading…</em>}
-                    {a.status === 'ready' && <em> · {attachmentReadLabel(a.extractionMethod, a.extractionWords) ?? 'read'}</em>}
+                    {a.status === 'ready' && <em> · {readyAttachmentLabel(a.extractionMethod, a.extractionWords)}</em>}
                     {a.status === 'error' && <em> · {a.error ?? 'failed'}</em>}
                     <button type="button" className="ec-att-x" aria-label={`Remove ${a.name}`} onClick={() => ecRemoveAttachment(a.id)}>×</button>
                   </span>
@@ -893,7 +899,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
                 />
               ) : !activeDoc ? (
                 <EmptyState
-                  icon={I.fileText || I.file}
+                  icon={I.fileText}
                   title="No eCTD documents yet"
                   hint={
                     <>
@@ -925,7 +931,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
                     style={{
                       minHeight: 420,
                       border: '1px solid var(--border)',
-                      borderRadius: 10,
+                      borderRadius: 'var(--radius-lg)',
                       overflow: 'hidden',
                       display: 'flex',
                       flexDirection: 'column',
@@ -967,7 +973,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
             <div className="ec-doc-inner">
               <div className="ec-panel-head">
                 <div><div className="ec-panel-t">eCTD structural validation</div><div className="ec-panel-s">ICH M4 eCTD structural rules</div></div>
-                <button className="ec-topbtn primary" onClick={runValidate} disabled={!activeDoc}>{validating ? 'Validating...' : <>{I.refresh || I.check} Re-validate</>}</button>
+                <button className="ec-topbtn primary" onClick={runValidate} disabled={!activeDoc}>{validating ? 'Validating...' : <>{I.rotateCw} Re-validate</>}</button>
               </div>
               {!activeDoc ? (
                 <div className="ec-empty">Select an eCTD document to validate its structure against the backbone.</div>
@@ -989,7 +995,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
                       <div className="ec-findings">
                         {validation.findings.map((f, i) => (
                           <div key={i} className="ec-finding" data-sev={f.severity}>
-                            <span className="ec-fsev">{f.severity === 'error' ? (I.alertTriangle || I.x) : (I.info || I.alertCircle)}</span>
+                            <span className="ec-fsev">{f.severity === 'error' ? I.alertTriangle : I.info}</span>
                             <div><div className="ec-ftype mono">{f.type}{f.sectionId ? ' — §' + f.sectionId : ''}{f.module ? ' — M' + f.module : ''}</div><div className="ec-fmsg">{f.message}</div></div>
                           </div>
                         ))}
@@ -1007,7 +1013,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
             <div className="ec-doc-inner">
               <div className="ec-panel-head">
                 <div><div className="ec-panel-t">ICH M4 compliance</div><div className="ec-panel-s">Checked against ICH M4</div></div>
-                <button className="ec-topbtn primary" onClick={runCompliance} disabled={!activeDoc}>{checking ? 'Checking...' : <>{I.refresh || I.check} Re-check</>}</button>
+                <button className="ec-topbtn primary" onClick={runCompliance} disabled={!activeDoc}>{checking ? 'Checking...' : <>{I.rotateCw} Re-check</>}</button>
               </div>
               {!activeDoc ? (
                 <div className="ec-empty">Select an eCTD document to check its ICH M4 compliance.</div>
@@ -1029,7 +1035,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
                       <div className="ec-checks">
                         {compliance.checks.map((c, i) => (
                           <div key={i} className="ec-check" data-ok={c.status === 'compliant'}>
-                            <span className="ec-check-dot">{c.status === 'compliant' ? I.check : (I.x)}</span>
+                            <span className="ec-check-dot">{c.status === 'compliant' ? I.check : I.close}</span>
                             <span className="ec-check-id mono">{c.ruleId}</span>
                             <span className="ec-check-desc">{c.description}</span>
                             {c.module && <span className="ec-check-mod mono">M{c.module}</span>}

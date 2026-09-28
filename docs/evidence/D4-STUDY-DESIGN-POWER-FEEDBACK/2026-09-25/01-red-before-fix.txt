@@ -1,0 +1,6 @@
+ × server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > computationToPlanPatch / applyPlanPatch — the write-back > writes the computed N, power and assumptions onto the design with a provenance stamp, preserving prior evidence 13ms
+   → expected 0.9014141618686665 to be 0.9 // Object.is equality
+ × server/services/biostatistics-bridge/__tests__/design-adapter.test.ts > computationToPlanPatch / applyPlanPatch — the write-back > re-applying from the patched design is idempotent: N and target power stay put (BS-M1) 3ms
+   → expected 3 to be 1 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 14 passed (16)

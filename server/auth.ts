@@ -5,14 +5,20 @@
  *
  */
 import { Request, Response, NextFunction } from 'express';
-import { and, asc, eq } from 'drizzle-orm';
-import { organizationUsers, users } from '../shared/schema';
+import { and, eq } from 'drizzle-orm';
+import { organizationUsers } from '../shared/schema';
 import { createScopedLogger } from './utils/logger';
 import { db } from './db';
-import jwt from 'jsonwebtoken';
-import { config } from './config/environment';
 import { verifyJwtWithRotation } from './utils/jwtVerify';
-import { isTokenRevoked } from './services/token-revocation';
+import { isTokenRevoked, revokeToken } from './services/token-revocation';
+import { sessionEndCodeOf, sessionEndMessageOf, sessionInactivityReason } from './services/session-inactivity';
+import {
+  ACCOUNT_INACTIVE_MESSAGE,
+  issuedAtOfClaims,
+  readAccountStandingBeforeTenant,
+  sessionPredatesPasswordChange,
+  type AccountStanding,
+} from './services/account-standing';
 import { requireAccessTokenReason } from './middleware/tokenType';
 import { runWithPreAuthScope } from './db/tenantStore';
 import { establishRequestTenantScope } from './middleware/establishRequestTenantScope';
@@ -113,6 +119,66 @@ declare global {
 }
 
 /**
+ * VSR-001 F-29: an account taken out of use (suspended by an administrator,
+ * deprovisioned by the identity provider) opens nothing, whenever its token was
+ * issued. Read on every request, so it takes effect on the account's next one;
+ * nothing read it before, and such an account kept its sessions for their whole
+ * life.
+ *
+ * Security audit 2026-09-24, IAM-04: and so is the account's last password
+ * change, read in the same statement as the standing (no extra round trip). A
+ * reset or change stamps users.password_changed_at; a token issued before the
+ * stamp is a session the holder meant to end, and is answered like a revoked
+ * one. Same rule as authenticateToken (middleware/auth.ts) and verifyLiveToken.
+ *
+ * Answers the request and returns true when it refused: 401 ACCOUNT_INACTIVE
+ * for an account out of use, 401 SESSION_ENDED for a session the password
+ * change ended, 503 when the standing cannot be read (never a pass).
+ */
+async function refusedAccountOrSessionOutOfUse(userId: number, claims: unknown, res: Response): Promise<boolean> {
+  let standing: AccountStanding;
+  try {
+    standing = await readAccountStandingBeforeTenant(userId);
+  } catch (err) {
+    logger.error('Account standing could not be read', err);
+    res.status(503).json({ error: 'The session could not be checked. Try again.', code: 'SESSION_UNCHECKED' });
+    return true;
+  }
+  if (!standing.active) {
+    res.status(401).json({ error: ACCOUNT_INACTIVE_MESSAGE, code: 'ACCOUNT_INACTIVE' });
+    return true;
+  }
+  if (sessionPredatesPasswordChange(issuedAtOfClaims(claims), standing.passwordChangedAtSeconds)) {
+    res.status(401).json({ error: 'This session has ended. Sign in again.', code: 'SESSION_ENDED' });
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Every way a signed, unexpired token's session can be over, in the order the
+ * main authenticator (middleware/auth.ts) answers them: signed out (AUTH-03),
+ * the account out of use or the password changed since (F-29, IAM-04), then
+ * idle past its window, past its lifetime or superseded (IAM-06, P1-1). The
+ * order is what the holder is told: a session a password change ended reads
+ * as ended, not as idle. When admitted, this request is recorded as the
+ * session's activity (services/session-inactivity.ts). Answers 401 (503 when
+ * the standing cannot be read) and returns true when it refused.
+ */
+async function refusedEndedSession(token: string, userId: number | null, claims: unknown, res: Response): Promise<boolean> {
+  if (await isTokenRevoked(token)) {
+    res.status(401).json({ error: 'This session has ended. Sign in again.', code: 'SESSION_ENDED' });
+    return true;
+  }
+  if (userId !== null && (await refusedAccountOrSessionOutOfUse(userId, claims, res))) return true;
+  const inactivity = await sessionInactivityReason(token, claims);
+  if (!inactivity) return false;
+  void revokeToken(token, inactivity);
+  res.status(401).json({ error: sessionEndMessageOf(inactivity), code: sessionEndCodeOf(inactivity) });
+  return true;
+}
+
+/**
  * Authentication middleware
  * Validates Bearer JWT tokens only.
  * Sets req.userId, req.userRole, req.userEmail, req.tenantId, req.tenantContext.
@@ -135,6 +201,8 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
         role?: string;
         provider?: string;
         mfaPending?: boolean;
+        /** Issued-at, whole seconds; jsonwebtoken stamps it on every token it signs. */
+        iat?: number;
       }>(token);
 
       // SECURITY: the access path requires an explicit `type: 'access'` claim.
@@ -145,17 +213,17 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
         return res.status(401).json({ error: 'Token is not valid for this operation' });
       }
 
-      // AUTH-03: a signed-out session opens nothing (see authenticateToken).
-      if (await isTokenRevoked(token)) {
-        return res.status(401).json({ error: 'This session has ended. Sign in again.', code: 'SESSION_ENDED' });
-      }
-
       if (!decoded.userId || !decoded.organizationId) {
         return res.status(401).json({ error: 'Invalid token payload' });
       }
 
       const parsedUserId = parseFiniteInt(decoded.userId);
       const parsedOrganizationId = parseFiniteInt(decoded.organizationId);
+
+      // AUTH-03, F-29, IAM-04 and IAM-06: a signed-out session, an account out
+      // of use, a session the password change ended, and an idle, out-of-time
+      // or superseded session open nothing, in that order.
+      if (await refusedEndedSession(token, parsedUserId, decoded, res)) return;
       // This is the query that VERIFIES the token's tenant claim, so it cannot
       // itself run inside that tenant's scope — the claim is untrusted until it
       // returns. Pool instrumentation blocks unscoped queries once
@@ -294,90 +362,6 @@ export function requireSuperAdminRole(req: Request, res: Response, next: NextFun
 }
 
 /**
- * Login function
- * Authenticates user and returns JWT bearer token
- */
-export async function login(email: string, password: string) {
-  try {
-    // CRIT-03 FIX: Removed hardcoded dev@example.com/password bypass.
-    // All logins now go through the database.
-
-    if (!db) {
-      throw new Error('Database connection not available');
-    }
-
-    // Find user by email
-    const user = await db.select().from(users).where(eq(users.email, email)).limit(1);
-
-    if (user.length === 0) {
-      throw new Error('User not found');
-    }
-
-    // CRIT-04 FIX: Use bcrypt for password verification
-    const passwordIsValid = await verifyPassword(password, user[0].passwordHash || '');
-
-    if (!passwordIsValid) {
-      throw new Error('Invalid password');
-    }
-
-    // Load ALL memberships in a deterministic order. Selection is explicit:
-    // the user's defaultOrganizationId wins when a membership for it exists;
-    // otherwise the lowest organizationId. Previously an unordered `.limit(1)`
-    // let the database pick whichever row it returned first, so a
-    // multi-organization user could land in a different tenant per login.
-    const memberships = await db
-      .select({
-        organizationId: organizationUsers.organizationId,
-        role: organizationUsers.role,
-      })
-      .from(organizationUsers)
-      .where(eq(organizationUsers.userId, user[0].id))
-      .orderBy(asc(organizationUsers.organizationId));
-
-    if (memberships.length === 0) {
-      throw new Error('User has no organization membership');
-    }
-
-    const membership =
-      (user[0].defaultOrganizationId != null
-        ? memberships.find(m => m.organizationId === user[0].defaultOrganizationId)
-        : undefined) ?? memberships[0];
-
-    const token = jwt.sign(
-      {
-        userId: String(user[0].id),
-        email: user[0].email,
-        organizationId: String(membership.organizationId),
-        role: membership.role,
-        type: 'access',
-      },
-      config.jwt.secret,
-      { expiresIn: config.jwt.expiresIn }
-    );
-
-    return {
-      token,
-      user: {
-        id: user[0].id,
-        name: user[0].name || '',
-        email: user[0].email,
-        role: membership.role,
-      },
-      organizationId: membership.organizationId,
-      // Surfaced so callers can offer an explicit organization switch instead
-      // of silently accepting the default selection.
-      availableOrganizations: memberships.map(m => ({
-        organizationId: m.organizationId,
-        role: m.role,
-      })),
-    };
-  } catch (error) {
-    logger.error('Login error', error);
-    throw error;
-  }
-}
-
-/**
  * Get user's role in an organization
  * Queries the organizationUsers junction table for the actual role
  */
@@ -405,34 +389,3 @@ async function getUserRole(userId: number, organizationId: number): Promise<stri
   }
 }
 
-/**
- * Verify password using bcrypt
- * CRIT-04 FIX: Replaced plaintext comparison with bcrypt.compare
- */
-async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  // Reject empty hashes (previously returned true — security hole)
-  if (!hash || hash === '') {
-    logger.warn('Login attempt against empty password hash — rejected');
-    return false;
-  }
-
-  try {
-    const bcrypt = await import('bcryptjs');
-
-    // SECURITY FIX: Reject legacy temp_ prefix passwords entirely.
-    // Plaintext comparison was a security hole. Users with temp_ passwords
-    // must reset their password via the forgot-password flow.
-    if (hash.startsWith('temp_')) {
-      logger.warn(
-        'Legacy temp_ password rejected — user must reset password via forgot-password flow'
-      );
-      return false;
-    }
-
-    // Standard bcrypt comparison
-    return await bcrypt.compare(password, hash);
-  } catch (error) {
-    logger.error('Password verification failed', error);
-    return false;
-  }
-}

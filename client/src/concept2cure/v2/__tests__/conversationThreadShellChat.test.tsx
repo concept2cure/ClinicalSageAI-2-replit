@@ -191,7 +191,8 @@ describe('a question sent here while AnA is still answering', () => {
     });
     await mount(chat);
     expect(order).toEqual(['reset', 'send']);
-    expect(chat.send).toHaveBeenCalledWith('What blocks the Module 3 freeze?');
+    // The question as asked; the second argument is its attachments (none).
+    expect(vi.mocked(chat.send).mock.calls.at(-1)?.[0]).toBe('What blocks the Module 3 freeze?');
   });
 });
 

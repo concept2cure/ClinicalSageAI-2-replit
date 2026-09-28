@@ -140,9 +140,18 @@ describe('Tenant mutations — admin only', () => {
     expect(dataQueries()).toHaveLength(0);
   });
 
-  it('a non-admin cannot delete a tenant or rotate an API key', async () => {
+  it('a non-admin cannot delete a tenant', async () => {
     await request(app).delete('/api/tenants/5').expect(403);
-    await request(app).post('/api/tenants/5/api-key').expect(403);
+    expect(dataQueries()).toHaveLength(0);
+  });
+
+  it('the legacy organisation API-key mint is gone (its keys were Math.random and nothing read them)', async () => {
+    // Until 2026-09-26 POST /api/tenants/:id/api-key wrote a Math.random
+    // `organizations.api_key` in plaintext that no verifier read (audit DP-27,
+    // plan P1-27). Organisation API keys are `server/routes/api-keys.ts`:
+    // hashed, scoped, admin-only, and the surface `AdminAccess.tsx` manages.
+    authState.user = { id: 1, organizationId: ORG_A, role: 'super_admin', roles: ['super_admin'] };
+    await request(app).post('/api/tenants/5/api-key').expect(404);
     expect(dataQueries()).toHaveLength(0);
   });
 });

@@ -1,0 +1,193 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ × server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > plain text with no org policy is allowed on both lanes 7ms
+   → gateway.authorizeEmbedding is not a function
+ × server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > a zero-retention tenant cannot embed plain text through OpenAI, even outside production 1ms
+   → gateway.authorizeEmbedding is not a function
+ × server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > the same zero-retention tenant may embed through the self-hosted lane 1ms
+   → gateway.authorizeEmbedding is not a function
+ × server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > an EU-resident tenant cannot embed through OpenAI (global only); the self-hosted lane satisfies it 2ms
+   → gateway.authorizeEmbedding is not a function
+ × server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > a signed zero-retention agreement (OPENAI_ZERO_RETENTION=true) is the operator control that unlocks OpenAI 1ms
+   → gateway.authorizeEmbedding is not a function
+ × server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > an explicit request flag is honoured without an org policy 1ms
+   → gateway.authorizeEmbedding is not a function
+ × server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > PHI under production enforcement with no approvals is refused (DENY_UNKNOWN_PROVIDER), content-free 1ms
+   → gateway.authorizeEmbedding is not a function
+ × server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > an approval for "chat" does not cover embedding: DENY_UNAPPROVED_INTENDED_USE 0ms
+   → gateway.authorizeEmbedding is not a function
+ × server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > the self-hosted lane, approved for embedding, embeds PHI for an on-prem zero-retention tenant 1ms
+   → gateway.authorizeEmbedding is not a function
+ × server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > staging with AI_SENSITIVE_DATA_POLICY_MODE=enforce enforces identically 1ms
+   → gateway.authorizeEmbedding is not a function
+ × server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > a classifier failure under enforcement fails closed (DENY_DETECTOR_FAILURE) 1ms
+   → gateway.authorizeEmbedding is not a function
+ × server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > development audit mode records PHI-bound embedding content-free and does not block 0ms
+   → gateway.authorizeEmbedding is not a function
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > plain text with no org policy is allowed on both lanes
+TypeError: gateway.authorizeEmbedding is not a function
+ ❯ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts:136:17
+    134|       const gateway = buildGateway();
+    135|       await expect(
+    136|         gateway.authorizeEmbedding({ provider: 'openai', texts: [PLAIN…
+       |                 ^
+    137|       ).resolves.toBeUndefined();
+    138|       await expect(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > a zero-retention tenant cannot embed plain text through OpenAI, even outside production
+TypeError: gateway.authorizeEmbedding is not a function
+ ❯ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts:150:17
+    148|
+    149|       await expect(
+    150|         gateway.authorizeEmbedding({ provider: 'openai', texts: [PLAIN…
+       |                 ^
+    151|       ).rejects.toMatchObject({
+    152|         name: GatewayPolicyError.name,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > the same zero-retention tenant may embed through the self-hosted lane
+TypeError: gateway.authorizeEmbedding is not a function
+ ❯ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts:178:17
+    176|       const gateway = buildGateway();
+    177|       await expect(
+    178|         gateway.authorizeEmbedding({ provider: 'local', texts: [PLAIN_…
+       |                 ^
+    179|       ).resolves.toBeUndefined();
+    180|       expect(auditEntries(gateway)).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > an EU-resident tenant cannot embed through OpenAI (global only); the self-hosted lane satisfies it
+TypeError: gateway.authorizeEmbedding is not a function
+ ❯ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts:187:17
+    185|       const gateway = buildGateway();
+    186|       await expect(
+    187|         gateway.authorizeEmbedding({ provider: 'openai', texts: [PLAIN…
+       |                 ^
+    188|       ).rejects.toMatchObject({
+    189|         name: GatewayPolicyError.name,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > a signed zero-retention agreement (OPENAI_ZERO_RETENTION=true) is the operator control that unlocks OpenAI
+TypeError: gateway.authorizeEmbedding is not a function
+ ❯ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts:203:17
+    201|       const gateway = buildGateway();
+    202|       await expect(
+    203|         gateway.authorizeEmbedding({ provider: 'openai', texts: [PLAIN…
+       |                 ^
+    204|       ).resolves.toBeUndefined();
+    205|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > an explicit request flag is honoured without an org policy
+TypeError: gateway.authorizeEmbedding is not a function
+ ❯ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts:213:17
+    211|       setOrgPlacementResolver({ resolve: async () => ({ residency: 'on…
+    212|       await expect(
+    213|         gateway.authorizeEmbedding({ provider: 'openai', texts: [PLAIN…
+       |                 ^
+    214|       ).rejects.toBeInstanceOf(GatewayPolicyError);
+    215|       await expect(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > PHI under production enforcement with no approvals is refused (DENY_UNKNOWN_PROVIDER), content-free
+TypeError: gateway.authorizeEmbedding is not a function
+ ❯ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts:227:17
+    225|
+    226|       await expect(
+    227|         gateway.authorizeEmbedding({ provider: 'openai', texts: [PHI_T…
+       |                 ^
+    228|       ).rejects.toMatchObject({
+    229|         name: GatewayPolicyError.name,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > an approval for "chat" does not cover embedding: DENY_UNAPPROVED_INTENDED_USE
+TypeError: gateway.authorizeEmbedding is not a function
+ ❯ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts:250:17
+    248|
+    249|       await expect(
+    250|         gateway.authorizeEmbedding({ provider: 'openai', texts: [PHI_T…
+       |                 ^
+    251|       ).rejects.toMatchObject({
+    252|         name: GatewayPolicyError.name,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > the self-hosted lane, approved for embedding, embeds PHI for an on-prem zero-retention tenant
+TypeError: gateway.authorizeEmbedding is not a function
+ ❯ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts:268:17
+    266|
+    267|       await expect(
+    268|         gateway.authorizeEmbedding({ provider: 'local', texts: [PHI_TE…
+       |                 ^
+    269|       ).resolves.toBeUndefined();
+    270|       expect(auditEntries(gateway)).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > staging with AI_SENSITIVE_DATA_POLICY_MODE=enforce enforces identically
+TypeError: gateway.authorizeEmbedding is not a function
+ ❯ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts:288:17
+    286|       const gateway = buildGateway();
+    287|       await expect(
+    288|         gateway.authorizeEmbedding({ provider: 'openai', texts: [PHI_T…
+       |                 ^
+    289|       ).rejects.toMatchObject({ message: expect.stringContaining('DENY…
+    290|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > a classifier failure under enforcement fails closed (DENY_DETECTOR_FAILURE)
+TypeError: gateway.authorizeEmbedding is not a function
+ ❯ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts:298:17
+    296|       const gateway = buildGateway();
+    297|       await expect(
+    298|         gateway.authorizeEmbedding({ provider: 'local', texts: [PLAIN_…
+       |                 ^
+    299|       ).rejects.toMatchObject({ message: expect.stringContaining('DENY…
+    300|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > development audit mode records PHI-bound embedding content-free and does not block
+TypeError: gateway.authorizeEmbedding is not a function
+ ❯ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts:305:17
+    303|       const gateway = buildGateway();
+    304|       await expect(
+    305|         gateway.authorizeEmbedding({ provider: 'openai', texts: [PHI_T…
+       |                 ^
+    306|       ).resolves.toBeUndefined();
+    307|       const screen = logSpies.warn.mock.calls.filter(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed (12)
+   Start at  01:18:19
+   Duration  4.91s (transform 2.36s, setup 174ms, import 4.14s, tests 20ms, environment 0ms)
+

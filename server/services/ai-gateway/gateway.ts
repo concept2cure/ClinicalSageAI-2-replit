@@ -40,8 +40,10 @@ import type {
   AnaGatewayResponse,
   AnaToolUse,
   GatewayCitation,
+  GatewayServerToolUse,
   StreamCallback,
   ContentBlock,
+  AuditLogEntry,
 } from './types';
 import { GatewayAuditLogger } from './audit';
 import {
@@ -65,20 +67,25 @@ import {
 import {
   resolvePlacement,
   isPlacementCompliant,
+  type ProviderPlacement,
 } from './providers/placement';
 import {
   getOrgPlacementResolver,
   mergeOrgPolicyDefaults,
 } from './providers/org-placement';
+import { governServerTools } from './server-tool-policy';
+import { isTerminalGatewayError } from './gateway-outcome';
 import {
   decideSensitivePlacement,
   readProviderPlacementApprovals,
+  type PlacementReasonCode,
   type ProviderPlacementApproval,
 } from './sensitive-placement-policy';
 import { recordApiUsageSafe, usdToCents } from '../usage-recorder.js';
+import { getTenantScope } from '../../db/tenantStore.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { getContentClassifier } from '../ai-governance/classification/index.js';
-import { isApprovedForHighRisk, isHighRiskRequest } from '../ai-governance/approved-models.js';
+import { approvedEntryFor, isApprovedForHighRisk, isHighRiskRequest } from '../ai-governance/approved-models.js';
 import {
   extractRequestText,
   getPiiEnforcement,
@@ -141,9 +148,22 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     // `supportsSamplingParams` with it, and updating the approved-models
     // lockfile (server/services/ai-governance/approved-models.ts), whose drift
     // gate fails CI on an unreviewed swap.
+    //
+    // Opus 5.5 (2026-09-25): same 1M window, tokenizer and feature set as
+    // Opus 5, at $4 / $20. What differs on the wire, and why nothing here had
+    // to change for it: thinking cannot be disabled (the gateway never sends
+    // `disabled` or `budget_tokens` to an adaptive entry); forced tool_choice
+    // `any`/`tool` is a 400 (no caller uses either — `auto` and `none` only);
+    // thinking blocks are bound to the model and conversation (AnA's loop
+    // replays none — tool turns travel as prose); and the API's effort default
+    // is `medium`, one level below Opus 5's, which is why it is declared.
+    // Its classifiers add biology to cyber: a decline is raised as
+    // GatewayModelDeclinedError and the next rung — Opus 5 — runs it.
     id: 'claude-opus-4',
     provider: 'anthropic',
-    model: 'claude-opus-5',
+    model: 'claude-opus-5-5',
+    maxApiEffort: 'max',
+    defaultApiEffort: 'medium',
     thinkingMode: 'adaptive',
     supportsSamplingParams: false,
     supportsInlineSystem: true,
@@ -156,9 +176,40 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     // were.
     contextWindow: 1000000,
     qualityScore: 99,
-    // $5 / $25 per MTok. These read 0.015/0.075 — Claude 3 Opus pricing —
-    // through four model generations, so recordApiUsageSafe and every cost
-    // report were roughly 3x over.
+    // $4 / $20 per MTok (Opus 5.5). Opus 5 below is $5 / $25. These once read
+    // 0.015/0.075 — Claude 3 Opus pricing — through four model generations, so
+    // recordApiUsageSafe and every cost report were roughly 3x over.
+    costPer1kInput: 0.004,
+    costPer1kOutput: 0.02,
+    capabilities: [
+      'chat',
+      'document_analysis',
+      'document_drafting',
+      'structured_output',
+      'regulatory_review',
+      'code_generation',
+      'summarization',
+      'general',
+    ],
+    enabled: true,
+  },
+  {
+    // Opus 5 — the flagship until 2026-09-25, and the rung directly below Opus
+    // 5.5. A request the flagship cannot serve (an outage, a model this
+    // account cannot reach yet, a classifier decline) lands here, on the model
+    // that was reviewed as primary, not on Sonnet. It has no biology
+    // classifier, so it is also what answers a biology false positive. No
+    // declared effort: Opus 5's own default (`high`) is what it ran as primary.
+    id: 'claude-opus-5',
+    provider: 'anthropic',
+    model: 'claude-opus-5',
+    maxApiEffort: 'max',
+    thinkingMode: 'adaptive',
+    supportsSamplingParams: false,
+    supportsInlineSystem: true,
+    supportsStructuredOutputs: true,
+    contextWindow: 1000000,
+    qualityScore: 98.5,
     costPer1kInput: 0.005,
     costPer1kOutput: 0.025,
     capabilities: [
@@ -174,7 +225,7 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     enabled: true,
   },
   {
-    // Opus 4.8 — the previous flagship. Kept enabled as the top intra-provider
+    // Opus 4.8 — the flagship before Opus 5. Kept enabled as the top intra-provider
     // fallback rung: if Opus 5 is not yet GA for the tenant's tier or is
     // temporarily unavailable (rate limit, overloaded), the chain drops here
     // before Sonnet. It shares the reasoning-only surface (adaptive thinking,
@@ -184,6 +235,7 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-opus-4-legacy',
     provider: 'anthropic',
     model: 'claude-opus-4-8',
+    maxApiEffort: 'max',
     thinkingMode: 'adaptive',
     supportsSamplingParams: false,
     supportsInlineSystem: true,
@@ -210,6 +262,7 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-sonnet-4',
     provider: 'anthropic',
     model: 'claude-sonnet-5',
+    maxApiEffort: 'max',
     supportsStructuredOutputs: true,
     // Sonnet 5 shares the flagship's reasoning-only surface: adaptive
     // thinking, and temperature/top_p/top_k rejected. Note this differs from
@@ -245,6 +298,7 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-sonnet-4-legacy',
     provider: 'anthropic',
     model: 'claude-sonnet-4-6',
+    maxApiEffort: 'max',
     thinkingMode: 'budget',
     supportsSamplingParams: true,
     contextWindow: 1000000,
@@ -271,6 +325,10 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     // stale-prior artifact. Haiku keeps the 200K window — unlike the Opus and
     // Sonnet entries above, that figure is correct here.
     model: 'claude-haiku-4-5',
+    // null, not omitted: Haiku 4.5 rejects effort with a 400, and every
+    // Fast turn routes here. Declared explicitly so the reason is on the
+    // entry rather than implied by an absence.
+    maxApiEffort: null,
     supportsStructuredOutputs: true,
     thinkingMode: 'budget',
     supportsSamplingParams: true,
@@ -589,6 +647,127 @@ function resolveStructuredOutputFormat(
  * shape this function does not recognise still yields its `cited_text` rather
  * than being dropped, because the span is the part that matters most.
  */
+/**
+ * Fold one content block into the running record of Anthropic-executed tools.
+ *
+ * The gateway's block loops handled `text`, `thinking` and `tool_use`, and let
+ * everything else fall through. So a turn that ran a web search looked exactly
+ * like a turn that did not: the citations came back, because those ride on the
+ * text blocks, but the SEARCH ITSELF was gone — no record that it happened, no
+ * query, and nothing for the work trace to show. For a product whose claim is
+ * that AnA shows her work, a step that happened and is invisible is worse than
+ * one that failed loudly: the trace reads as complete.
+ *
+ * Returns true when the block was a server-tool block, so a caller can tell
+ * "handled here" from "not mine".
+ *
+ * `server_tool_use` and its result arrive as SEPARATE blocks. They are matched
+ * by id where the API gives one; a result whose use we never saw still gets an
+ * entry, because an unmatched result is evidence of work we are otherwise not
+ * recording at all.
+ */
+/**
+ * Did this result block carry an error rather than results?
+ *
+ * A server tool does not raise: a failed web search is an HTTP 200 whose result
+ * body is an error OBJECT where a success would be a LIST. The shape is the
+ * only signal there is, so it is read here rather than inferred at each caller.
+ */
+function isServerToolError(block: any): boolean {
+  if (block?.is_error) return true;
+  const content = block?.content;
+  if (content == null || Array.isArray(content) || typeof content !== 'object') return false;
+  return typeof (content as any).error_code === 'string';
+}
+
+/** Record a `server_tool_use` block: the model asked Anthropic to do something. */
+function recordServerToolUse(block: any, into: GatewayServerToolUse[]): void {
+  into.push({
+    ...(typeof block.id === 'string' ? { id: block.id } : {}),
+    name: typeof block.name === 'string' ? block.name : 'server_tool',
+    ...(block.input && typeof block.input === 'object' ? { input: block.input } : {}),
+  });
+}
+
+/**
+ * Record a `*_tool_result` block against the use it belongs to.
+ *
+ * The use and its result arrive as SEPARATE blocks, matched by id where the API
+ * gives one. A result whose use we never saw still gets an entry: an unmatched
+ * result is evidence of work we would otherwise not be recording at all, and
+ * dropping it would recreate the defect in miniature.
+ */
+function recordServerToolResult(block: any, type: string, into: GatewayServerToolUse[]): void {
+  const isError = isServerToolError(block);
+  const useId = typeof block.tool_use_id === 'string' ? block.tool_use_id : undefined;
+  const existing = useId ? into.find(entry => entry.id === useId) : undefined;
+  if (existing) {
+    existing.result = block.content;
+    if (isError) existing.isError = true;
+    return;
+  }
+  into.push({
+    ...(useId ? { id: useId } : {}),
+    // Recover the tool from the block type: `web_search_tool_result` -> web_search.
+    name: type.replace(/_tool_result$/, '') || 'server_tool',
+    result: block.content,
+    ...(isError ? { isError: true } : {}),
+  });
+}
+
+/**
+ * Fold one content block into the running record of Anthropic-executed tools.
+ *
+ * The gateway's block loops handled `text`, `thinking` and `tool_use`, and let
+ * everything else fall through. So a turn that ran a web search looked exactly
+ * like a turn that did not: the citations came back, because those ride on the
+ * text blocks, but the SEARCH ITSELF was gone — no record that it happened, no
+ * query, and nothing for the work trace to show. For a product whose claim is
+ * that AnA shows her work, a step that happened and is invisible is worse than
+ * one that failed loudly, because the trace reads as complete.
+ *
+ * Returns true when the block was a server-tool block, so a caller can tell
+ * "handled here" from "not mine".
+ */
+function collectServerToolBlock(block: any, into: GatewayServerToolUse[]): boolean {
+  const type: string = block?.type ?? '';
+  if (type === 'server_tool_use') {
+    recordServerToolUse(block, into);
+    return true;
+  }
+  if (!type.endsWith('_tool_result')) return false;
+  recordServerToolResult(block, type, into);
+  return true;
+}
+
+/**
+ * Route one opening content block to whatever is recording it.
+ *
+ * A `tool_use` opens a buffer for its streamed arguments. Anything else may be
+ * Anthropic-executed work — a web search, a web fetch — which the handler used
+ * to let fall through, so the search vanished from the record while its
+ * citations (which ride on the text blocks) still arrived. Same collector as
+ * the non-streaming path, so the two cannot describe the same event
+ * differently.
+ */
+function openContentBlock(
+  event: any,
+  toolUses: AnaToolUse[],
+  toolInputBuffers: ToolInputBuffers,
+  serverToolUses: GatewayServerToolUse[]
+): void {
+  if (event.content_block?.type === 'tool_use') {
+    toolUses.push({
+      id: event.content_block.id,
+      name: event.content_block.name,
+      input: {},
+    });
+    toolInputBuffers.set(event.index, { toolIndex: toolUses.length - 1, json: '' });
+    return;
+  }
+  collectServerToolBlock(event.content_block, serverToolUses);
+}
+
 function normalizeCitation(raw: any): GatewayCitation | null {
   const citedText = typeof raw?.cited_text === 'string' ? raw.cited_text : '';
   if (!citedText) return null;
@@ -948,10 +1127,24 @@ const CONTENT_BLOCK_PROVIDERS: ReadonlySet<ProviderName> = new Set(['anthropic',
  * drops the image can answer this request, so none is tried.
  */
 function assertContentBlocksCarried(modelConfig: ModelConfig, request: GatewayRequest): void {
+  if (modelConfig.provider !== 'anthropic' && usesFilesApiDocument(request)) {
+    throw new FileReferenceNotCarriedError(modelConfig);
+  }
   if (CONTENT_BLOCK_PROVIDERS.has(modelConfig.provider)) return;
   const carriesMedia = request.messages.some(m => m.contentBlocks?.some(b => b.type !== 'text'));
   if (!carriesMedia) return;
   throw new MediaNotCarriedError(modelConfig);
+}
+
+/**
+ * A document given by Anthropic Files-API file id rather than by its bytes.
+ * Only first-party Anthropic can resolve one; the beta header that makes it
+ * readable is sent there alone.
+ */
+function usesFilesApiDocument(request: GatewayRequest): boolean {
+  return (request.messages || []).some(m =>
+    m.contentBlocks?.some(b => b.type === 'document' && b.source.type === 'file'),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1092,12 +1285,7 @@ export class AIGateway {
       try {
         return await fn();
       } catch (err: any) {
-        // Governance decisions are not transient provider failures. Retrying
-        // duplicated denial audits and could never make the placement safe.
-        if (err instanceof GatewayPolicyError) throw err;
-        // Neither is a cancel. Retrying it re-runs the work the caller just
-        // stopped — the opposite of what they asked for.
-        if (err instanceof GatewayAbortedError) throw err;
+        if (isNeverRetried(err)) throw err;
         const status = err?.status || err?.statusCode;
         // Hard client errors (400/401/403/404/422, …) never succeed on retry.
         if (isHardClientError(status)) throw err;
@@ -1151,6 +1339,7 @@ export class AIGateway {
         request = {
           ...request,
           sensitiveDataClass: classification.phi ? 'phi' : classification.pii ? 'pii' : 'none',
+          regulatoryContentDetected: (classification as { regulatory?: boolean }).regulatory === true,
         };
       } catch {
         request = { ...request, sensitiveDataClass: 'unknown' };
@@ -1215,6 +1404,12 @@ export class AIGateway {
       if (error instanceof ModelNotApprovedError) {
         await this.logModelApprovalRefusal(request, strategy, requestId, startTime, error);
       }
+      if (error instanceof TenantPlacementError) {
+        const capable = this.models
+          .filter(m => m.enabled && m.capabilities.includes(request.taskType))
+          .map(m => m.provider);
+        await this.logTenantPlacementRefusal(request, requestId, startTime, error, [...new Set(capable)]);
+      }
       throw error;
     }
     if (!selectedModel) {
@@ -1243,6 +1438,8 @@ export class AIGateway {
     // fallback surface.
     let lastError: Error | null = null;
     const triedModels: string[] = [];
+    // Classifier declines seen on the way down, reported if nothing answers.
+    const declines: GatewayModelDeclinedError[] = [];
 
     // Context-window admission (context-budget.ts). A model that cannot hold
     // the request is skipped BEFORE any SDK call: it goes on the tried list so
@@ -1290,7 +1487,7 @@ export class AIGateway {
         if (error instanceof GatewayAbortedError) throw error;
         lastError = error;
         triedModels.push(selectedModel.id);
-        this.recordFailure(selectedModel.provider, error);
+        this.noteRungFailure(selectedModel, error, declines);
         log.warn(
           `[AI Gateway] ${selectedModel.provider}/${selectedModel.model} failed: ${error.message}`
         );
@@ -1319,7 +1516,7 @@ export class AIGateway {
         if (error instanceof GatewayAbortedError) throw error;
         lastError = error;
         triedModels.push(fallback.id);
-        this.recordFailure(fallback.provider, error);
+        this.noteRungFailure(fallback, error, declines);
         log.warn(
           `[AI Gateway] Fallback ${fallback.provider}/${fallback.model} failed: ${error.message}`
         );
@@ -1358,8 +1555,127 @@ export class AIGateway {
     );
 
     if (sizeRefusal) throw sizeRefusal;
+    const declined =
+      declines.length > 0
+        ? ` Declined by the safety classifier on: ${declines
+            .map((d) => `${d.model} (${d.category ?? 'no category given'})`)
+            .join(', ')}.`
+        : '';
     throw new GatewayAllProvidersFailedError(
-      `All models failed. Tried: ${triedModels.join(', ')}. Last error: ${lastError?.message}.${skippedForSize}`
+      `All models failed. Tried: ${triedModels.join(', ')}. Last error: ${lastError?.message}.${declined}${skippedForSize}`
+    );
+  }
+
+  /**
+   * Placement decision for an embedding call.
+   *
+   * Embeddings are the one governed egress that does not pass through
+   * `route()`: `embeddings/embedding-provider.ts` calls the provider SDK
+   * itself, and until P0-11 (SECURITY_AUDIT_2026-09-24 DP-07) vault text
+   * reached OpenAI with no classification, no placement decision and no audit
+   * row. This runs, over a synthetic `embedding` request, the same three
+   * steps `route()` runs before a chat dispatch — the org's placement
+   * defaults, content classification, the last-mile sensitive-dispatch gate —
+   * plus the residency / zero-retention rule `selectModel()` applies to chat
+   * candidates (`meetsPlacementRequirements`): an embedding provider is fixed
+   * by `EMBEDDING_PROVIDER` rather than chosen by routing, so a request that
+   * cannot be placed on it is refused rather than re-routed.
+   *
+   * Resolves when the call may proceed. Throws {@link GatewayPolicyError}
+   * (terminal: never retried, never re-routed) with a stable reason code when
+   * it may not; the refusal is written to the audit ledger like every other
+   * content-policy block. Neither the error, the audit row nor any log line
+   * carries the text — only reason code, provider, region and data class.
+   */
+  async authorizeEmbedding(input: {
+    organizationId?: string | number;
+    provider: 'openai' | 'local';
+    texts: string[];
+    requestId?: string;
+  }): Promise<void> {
+    const requestId = input.requestId ?? randomUUID();
+    const startTime = Date.now();
+
+    let request: GatewayRequest = {
+      taskType: 'embedding',
+      organizationId: input.organizationId,
+      provider: input.provider,
+      callerModule: 'embedding-provider',
+      messages: [{ role: 'user', content: input.texts.join('\n') }],
+    };
+
+    request = await this.applyOrgPlacementDefaults(request);
+
+    // Same classification block as route(): a detector failure is 'unknown',
+    // which the enforced gate refuses (DENY_DETECTOR_FAILURE).
+    if (this.config.policy.piiDetection) {
+      try {
+        const text = extractRequestText(request);
+        const classification = text.trim()
+          ? await getContentClassifier().classify(text)
+          : { phi: false, pii: false };
+        request = {
+          ...request,
+          sensitiveDataClass: classification.phi ? 'phi' : classification.pii ? 'pii' : 'none',
+        };
+      } catch {
+        request = { ...request, sensitiveDataClass: 'unknown' };
+      }
+    }
+    const dataClass = request.sensitiveDataClass ?? 'unknown';
+
+    // (a) The tenant floor — vendor and substrate allow-lists, residency, zero
+    // retention, an unknown policy — for every data class, through the same
+    // predicate chat selection and the last mile use. The org's policy has
+    // already been merged into the request by applyOrgPlacementDefaults.
+    const verdict = this.tenantPlacementVerdict(input.provider, request);
+    if (!verdict.allowed) {
+      const placement = resolvePlacement(input.provider);
+      const residency =
+        request.dataResidency && request.dataResidency !== 'any' ? request.dataResidency : null;
+      const reasonCode: PlacementReasonCode = verdict.reasonCode;
+      const region = residency ?? placement.regions[0];
+      log.info('[ai-gateway] embedding placement decision', {
+        reasonCode,
+        provider: input.provider,
+        region,
+        dataClass,
+        allowed: false,
+      });
+      await this.logContentPolicyBlock(
+        {
+          ...request,
+          metadata: {
+            ...(request.metadata ?? {}),
+            sensitivePlacement: { reasonCode, provider: input.provider, region, dataClass },
+          },
+        },
+        request.strategy || this.config.defaultStrategy,
+        requestId,
+        startTime,
+        reasonCode,
+        [{
+          scope: 'pii',
+          action: 'block',
+          messageIndex: -1,
+          role: 'request',
+          detector: 'embedding_placement_policy',
+          contentClass: dataClass,
+        }],
+      );
+      throw new GatewayPolicyError(
+        `This content cannot be embedded by the configured embedding service (${reasonCode}). ` +
+          'Contact your administrator to review the approved data-placement policy.'
+      );
+    }
+
+    // (b) The last-mile sensitive-dispatch gate, exactly as executeProvider
+    // applies it before a chat SDK call, with intended use 'embedding'.
+    await this.assertSensitiveDispatchAllowed(
+      { provider: input.provider } as ModelConfig,
+      request,
+      requestId,
+      startTime,
     );
   }
 
@@ -1403,11 +1719,15 @@ export class AIGateway {
     }
     const requestId = randomUUID();
     const startTime = Date.now();
-    const tagged: GatewayRequest = {
+    // Resolve the tenant floor first, so the last-mile re-check in
+    // executeProvider has a policy to enforce: "evaluation cannot move data a
+    // tenant's placement policy forbids" holds for every data class, not only
+    // for PHI/PII.
+    const tagged: GatewayRequest = await this.applyOrgPlacementDefaults({
       ...request,
       model: model.id,
       metadata: { ...(request.metadata ?? {}), purpose: 'performance-qualification' },
-    };
+    });
     const response = await this.executeProvider(model, tagged, requestId, startTime);
     await this.logAudit(tagged, response, 'explicit', true, undefined, [model.id]);
     return response;
@@ -1516,24 +1836,51 @@ export class AIGateway {
     startTime: number
   ): Promise<GatewayResponse> {
     assertContentBlocksCarried(modelConfig, request);
-    await this.assertSensitiveDispatchAllowed(modelConfig, request, requestId, startTime);
+    await this.assertTenantPlacement(modelConfig, request, requestId, startTime);
+    // Anthropic-hosted tools run only where this lane and this tenant permit
+    // them; the rest are removed here, for the primary and every fallback, so
+    // no door that skipped governedToolsetFor can send one (server-tool-policy.ts).
+    const governed = governServerTools(modelConfig.provider, request);
+    if (governed.withheld.length > 0) {
+      log.info('[ai-gateway] server tools withheld for this lane', {
+        requestId,
+        provider: modelConfig.provider,
+        withheld: governed.withheld,
+      });
+    }
+    const placementReasonCode = await this.assertSensitiveDispatchAllowed(
+      modelConfig,
+      governed.request,
+      requestId,
+      startTime,
+    );
     // Bound concurrent in-flight outbound calls. This is the single chokepoint
     // for every provider invocation (primary + fallback paths), so wrapping it
     // here caps outbound concurrency without touching the retry / circuit-
     // breaker / timeout logic, which all run inside the provider executors.
-    return this.outboundLimiter.run(() =>
-      this.dispatchProvider(modelConfig, request, requestId, startTime)
+    const response = await this.outboundLimiter.run(() =>
+      this.dispatchProvider(modelConfig, governed.request, requestId, startTime)
     );
+    return {
+      ...response,
+      ...(governed.withheld.length > 0 ? { withheldServerTools: governed.withheld } : {}),
+      ...(placementReasonCode ? { placementReasonCode } : {}),
+    };
   }
 
   /** Last-mile gate: it runs for the primary and every fallback before an SDK is invoked. */
+  /**
+   * Returns the decision's reason code when the screen decided (ALLOW_… here,
+   * since a refusal throws), `audit_only:<code>` when it only recorded one, and
+   * undefined when it did not run. The served ledger row records it.
+   */
   private async assertSensitiveDispatchAllowed(
     modelConfig: ModelConfig,
     request: GatewayRequest,
     requestId: string,
     startTime: number,
-  ): Promise<void> {
-    if (!this.config.policy.piiDetection) return;
+  ): Promise<string | undefined> {
+    if (!this.config.policy.piiDetection) return undefined;
     const detectedDataClass = request.sensitiveDataClass ?? 'unknown';
     // Development retains audit-only usefulness; production always uses the
     // explicit deployment contract and fails closed on unknown classification.
@@ -1543,15 +1890,12 @@ export class AIGateway {
     // not just a passing boot check. AI_PII_ENFORCEMENT=block keeps its
     // existing meaning as an equivalent opt-in.
     const enforcement = getPiiEnforcement();
-    const enforced =
-      process.env.NODE_ENV === 'production' ||
-      process.env.AI_SENSITIVE_DATA_POLICY_MODE === 'enforce' ||
-      enforcement === 'block';
+    const enforced = this.isPlacementEnforced();
     if (!enforced) {
       // 'off' disables screening entirely. 'audit' exists to make otherwise
       // invisible exposure visible, so it still RECORDS the placement signal
       // (content-free, below) even though it never blocks.
-      if (enforcement !== 'audit' || detectedDataClass === 'none') return;
+      if (enforcement !== 'audit' || detectedDataClass === 'none') return undefined;
     }
     const placement = resolvePlacement(modelConfig.provider);
     let approvals: Record<string, ProviderPlacementApproval>;
@@ -1615,7 +1959,7 @@ export class AIGateway {
         reasonCode: decision.reasonCode,
         enforcement,
       });
-      return;
+      return `audit_only:${decision.reasonCode}`;
     }
     log.info('[ai-gateway] sensitive placement decision', {
       reasonCode: decision.reasonCode,
@@ -1656,6 +2000,7 @@ export class AIGateway {
         'Contact your administrator to review the approved data-placement policy.'
       );
     }
+    return decision.reasonCode;
   }
 
   private async dispatchProvider(
@@ -2006,7 +2351,7 @@ export class AIGateway {
       params.output_config = { ...(params.output_config ?? {}), format: structured.format };
     }
     // Only a level this model accepts (Haiku 4.5 rejects effort outright).
-    const modelEffort = apiEffortForModel(modelConfig.model, request.apiEffort);
+    const modelEffort = apiEffortForModel(modelConfig, request.apiEffort);
     if (modelEffort) {
       params.output_config = { ...(params.output_config ?? {}), effort: modelEffort };
     }
@@ -2022,9 +2367,8 @@ export class AIGateway {
       }
     }
 
-    const usesFilesApiDoc = (request.messages || []).some(m =>
-      m.contentBlocks?.some(b => b.type === 'document' && b.source.type === 'file')
-    );
+    // First-party only: assertContentBlocksCarried refuses a file reference anywhere else.
+    const usesFilesApiDoc = modelConfig.provider === 'anthropic' && usesFilesApiDocument(request);
     // Merged, not replaced: the Files-API beta header rides in the same
     // RequestOptions object, so building one and adding to it is what keeps
     // both from clobbering each other.
@@ -2044,6 +2388,10 @@ export class AIGateway {
       throw error;
     });
 
+    if (response.stop_reason === 'refusal') {
+      throw declineFor(modelConfig.model, (response as any).stop_details, false);
+    }
+
     // Extract text, thinking, and tool use blocks
     let content = '';
     let thinking = '';
@@ -2053,6 +2401,7 @@ export class AIGateway {
     // each carrying the citations for the span it contains — the same facts the
     // streaming path receives as citations_delta.
     const nonStreamCitations: GatewayCitation[] = [];
+    const nonStreamServerTools: GatewayServerToolUse[] = [];
 
     for (const block of response.content || []) {
       if (block.type === 'text') {
@@ -2061,6 +2410,8 @@ export class AIGateway {
           const citation = normalizeCitation(raw);
           if (citation) nonStreamCitations.push(citation);
         }
+      } else if (collectServerToolBlock(block, nonStreamServerTools)) {
+        // Recorded by the collector; nothing further to accumulate here.
       } else if (block.type === 'thinking') {
         thinking += (block as any).thinking || '';
       } else if (block.type === 'tool_use') {
@@ -2110,6 +2461,7 @@ export class AIGateway {
       // constrained answer and a fortunate one look identical.
       structuredOutputEnforced: structured.enforced,
       citations: nonStreamCitations.length > 0 ? nonStreamCitations : undefined,
+      serverToolUses: nonStreamServerTools.length > 0 ? nonStreamServerTools : undefined,
     };
   }
 
@@ -2214,9 +2566,7 @@ export class AIGateway {
     }
 
     // Use the Anthropic SDK streaming API
-    const streamUsesFilesApiDoc = (request.messages || []).some(m =>
-      m.contentBlocks?.some(b => b.type === 'document' && b.source.type === 'file')
-    );
+    const streamUsesFilesApiDoc = modelConfig.provider === 'anthropic' && usesFilesApiDocument(request);
     // Same structured-output contract as the non-streaming path — including the
     // citations conflict, which must refuse before a token is streamed.
     const structured = resolveStructuredOutputFormat(request, modelConfig);
@@ -2224,7 +2574,7 @@ export class AIGateway {
       params.output_config = { ...(params.output_config ?? {}), format: structured.format };
     }
     // Only a level this model accepts (Haiku 4.5 rejects effort outright).
-    const modelEffort = apiEffortForModel(modelConfig.model, request.apiEffort);
+    const modelEffort = apiEffortForModel(modelConfig, request.apiEffort);
     if (modelEffort) {
       params.output_config = { ...(params.output_config ?? {}), effort: modelEffort };
     }
@@ -2259,7 +2609,9 @@ export class AIGateway {
     let outputTokens = 0;
     let cacheCreationInputTokens = 0;
     let cacheReadInputTokens = 0;
+    const serverToolUses: GatewayServerToolUse[] = [];
     let stopReason = 'unknown';
+    let stopDetails: unknown = null;
     let resolvedModel: string | undefined;
 
     // Per-chunk watchdog — detect stalled streams (no data for 30s)
@@ -2321,14 +2673,7 @@ export class AIGateway {
             appendToolInputFragment(toolInputBuffers, event.index, event.delta.partial_json);
           }
         } else if (event.type === 'content_block_start') {
-          if (event.content_block?.type === 'tool_use') {
-            toolUses.push({
-              id: event.content_block.id,
-              name: event.content_block.name,
-              input: {},
-            });
-            toolInputBuffers.set(event.index, { toolIndex: toolUses.length - 1, json: '' });
-          }
+          openContentBlock(event, toolUses, toolInputBuffers, serverToolUses);
         } else if (event.type === 'content_block_stop') {
           // The block is closed, so its fragments are now a complete JSON
           // document — parse it onto the tool use it belongs to.
@@ -2339,6 +2684,7 @@ export class AIGateway {
           }
         } else if (event.type === 'message_delta') {
           stopReason = event.delta?.stop_reason || stopReason;
+          if (event.delta?.stop_details) stopDetails = event.delta.stop_details;
           outputTokens = event.usage?.output_tokens || outputTokens;
         } else if (event.type === 'message_start') {
           // The resolved snapshot arrives once, on message_start, alongside the
@@ -2368,6 +2714,10 @@ export class AIGateway {
       finalizeToolInput(toolUses[buffered.toolIndex], buffered.json, 'the stream ended before the tool input was complete');
     }
     toolInputBuffers.clear();
+
+    if (stopReason === 'refusal') {
+      throw declineFor(modelConfig.model, stopDetails, content.length > 0);
+    }
 
     // A cancel is not a failure and not a stall: the turn ended because the
     // person ended it. Say so, so the caller can tell "she was stopped" from
@@ -2408,6 +2758,7 @@ export class AIGateway {
       cached: false,
       deterministic: false,
       finishReason: stopReason,
+      serverToolUses: serverToolUses.length > 0 ? serverToolUses : undefined,
       cacheHit: streamCacheStats ? cacheReadInputTokens > 0 : undefined,
       cacheStats: streamCacheStats,
       structuredOutputEnforced: structured.enforced,
@@ -2759,6 +3110,22 @@ export class AIGateway {
           throw new ModelNotApprovedError(request.taskType, withheld.map(m => m.id), 'no-approved-model');
         }
       }
+      /* Capable models exist, and the tenant's floor excluded every one of
+         them. That is a placement decision, not a missing configuration: an
+         on-prem tenant with no self-hosted lane used to be told "No AI
+         provider is configured". Refuse with the reason instead. */
+      const capable = this.models.filter(
+        m => m.enabled && m.capabilities.includes(request.taskType),
+      );
+      if (capable.length > 0) {
+        const denials = capable
+          .map(m => this.tenantPlacementVerdict(m.provider, request))
+          .filter((v): v is Extract<typeof v, { allowed: false }> => !v.allowed);
+        if (denials.length === capable.length) {
+          const details = [...new Set(denials.map(d => d.detail))];
+          throw new TenantPlacementError('DENY_TENANT_POLICY', details.join('; '), 'selection');
+        }
+      }
       return null;
     }
 
@@ -2855,60 +3222,201 @@ export class AIGateway {
   }
 
   /**
-   * True when a provider's placement satisfies the request's residency / ZDR
-   * requirements. Returns true when the request declares no constraints, so
-   * existing callers are unaffected.
+   * True when this provider may serve this request under the tenant's floor and
+   * the request's own residency / zero-retention requirements. The single
+   * predicate behind every selection point, the fallback walk, the last-mile
+   * re-check and the embedding gate — so they can never disagree.
    */
   private meetsPlacementRequirements(
     provider: ProviderName,
     request: GatewayRequest,
   ): boolean {
-    const needsZdr = request.zeroDataRetention === true;
-    const residency =
-      request.dataResidency && request.dataResidency !== 'any'
-        ? request.dataResidency
-        : null;
-    if (!needsZdr && !residency) return true;
-    return isPlacementCompliant(resolvePlacement(provider), {
-      zeroDataRetention: needsZdr,
-      residency,
-    });
+    return this.tenantPlacementVerdict(provider, request).allowed;
   }
 
   /**
-   * Fill in residency / zero-retention from the org's placement policy when the
-   * request didn't specify them. The resolved policy is also retained for the
-   * last-mile sensitive-data decision. Production treats lookup failure as an
-   * unknown policy and therefore refuses sensitive dispatch.
+   * The tenant placement decision for one provider, with the reason when it is
+   * refused. Content-free: it reads the resolved policy, the provider's
+   * placement and the payload's provenance, never the payload.
+   *
+   * Order matters and is fail-closed:
+   *  1. An unknown tenant policy (lookup failed, or nothing bound the call to a
+   *     tenant) refuses a non-public payload wherever placement is enforced.
+   *  2. A request residency that contradicts the tenant's refuses.
+   *  3. The tenant's vendor and substrate allow-lists — for EVERY data class.
+   *     Content the PHI/PII screen classes `none` (CMC, unpublished efficacy)
+   *     is exactly what these lists exist to keep off a shared frontier API.
+   *  4. The request's residency / zero retention, with the tenant's floor
+   *     already merged in by applyOrgPlacementDefaults.
+   * A `public` payload skips 1, and skips 2–3 when the tenant opted in to
+   * public-source frontier use.
+   */
+  private tenantPlacementVerdict(
+    provider: ProviderName,
+    request: GatewayRequest,
+  ): { allowed: true } | PlacementDenial {
+    const placement = resolvePlacement(provider);
+    return (
+      unknownTenantPolicyDenial(request, this.isPlacementEnforced()) ??
+      tenantAllowListDenial(provider, placement, request) ??
+      requestPlacementDenial(provider, placement, request) ?? { allowed: true }
+    );
+  }
+
+  /**
+   * One deployment contract for dispatch-time enforcement, shared by the
+   * sensitive-data gate and the tenant placement gate: production always, and
+   * any environment that declares AI_SENSITIVE_DATA_POLICY_MODE=enforce (the
+   * value the production boot assert requires) or AI_PII_ENFORCEMENT=block.
+   */
+  private isPlacementEnforced(): boolean {
+    return (
+      process.env.NODE_ENV === 'production' ||
+      process.env.AI_SENSITIVE_DATA_POLICY_MODE === 'enforce' ||
+      getPiiEnforcement() === 'block'
+    );
+  }
+
+  /**
+   * Bind the request to its tenant and apply the tenant's placement policy as a
+   * floor.
+   *
+   * The tenant is the explicit `organizationId`, else the ambient tenant scope
+   * the request middleware or job runner opened (the pattern the embedding
+   * provider already used). About 40 of 65 gateway call sites never passed an
+   * `organizationId` — AnA's own chat turns among them — so until 2026-09-25
+   * their tenant's policy was never applied. The ambient binding is used for
+   * placement and audit attribution only; it does not rewrite
+   * `organizationId`, which also keys the per-org rate limit.
+   *
+   * A system or pre-auth scope (tenant '0') is platform work and carries no
+   * tenant. A call with no scope at all and no organization is a lost binding:
+   * in production — where RLS_ENFORCE=on already refuses unscoped queries — it
+   * resolves as unknown and a tenant payload is refused.
    */
   private async applyOrgPlacementDefaults(request: GatewayRequest): Promise<GatewayRequest> {
-    if (request.organizationId === undefined || request.organizationId === null) {
-      return { ...request, sensitiveTenantPolicy: { resolution: 'absent' } };
-    }
+    const binding = bindTenant(request);
+    if ('unbound' in binding) return { ...request, sensitiveTenantPolicy: binding.unbound };
+    const { organizationId, boundFrom } = binding;
+
     try {
-      const policy = await getOrgPlacementResolver().resolve(request.organizationId);
-      if (!policy) return { ...request, sensitiveTenantPolicy: { resolution: 'absent' } };
-      const merged = mergeOrgPolicyDefaults(
-        { dataResidency: request.dataResidency, zeroDataRetention: request.zeroDataRetention },
-        policy,
-      );
+      const policy = await getOrgPlacementResolver().resolve(organizationId);
+      if (!policy) {
+        return {
+          ...request,
+          sensitiveTenantPolicy: { resolution: 'absent', organizationId, boundFrom },
+        };
+      }
+      const publicOptIn =
+        request.payloadProvenance === 'public' && policy.publicSourceFrontier === true;
+      // A public payload the tenant opted in keeps only the caller's own
+      // residency / retention; every other payload gets the tenant floor.
+      const merged = publicOptIn
+        ? { dataResidency: request.dataResidency, zeroDataRetention: request.zeroDataRetention }
+        : mergeOrgPolicyDefaults(
+            { dataResidency: request.dataResidency, zeroDataRetention: request.zeroDataRetention },
+            policy,
+          );
       return {
         ...request,
-        ...merged,
+        dataResidency: merged.dataResidency,
+        zeroDataRetention: merged.zeroDataRetention,
         sensitiveTenantPolicy: {
           resolution: 'resolved',
+          organizationId,
+          boundFrom,
           residency: policy.residency,
           zeroDataRetention: policy.zeroDataRetention,
           allowedSubstrates: policy.allowedSubstrates,
+          allowedProviders: policy.allowedProviders,
+          publicSourceFrontier: policy.publicSourceFrontier,
+          publicSourceEgress: policy.publicSourceEgress,
+          residencyConflict: 'residencyConflict' in merged && merged.residencyConflict,
         },
       };
     } catch (err) {
       log.warn(
-        `[AI Gateway] Org placement policy lookup failed for org ${request.organizationId}; ` +
-          `sensitive dispatch will fail closed: ${err instanceof Error ? err.message : String(err)}`
+        `[AI Gateway] Org placement policy lookup failed for org ${organizationId}; ` +
+          `the tenant floor is unknown and tenant payloads fail closed where enforced: ` +
+          `${err instanceof Error ? err.message : String(err)}`
       );
-      return { ...request, sensitiveTenantPolicy: { resolution: 'unknown' } };
+      return {
+        ...request,
+        sensitiveTenantPolicy: {
+          resolution: 'unknown',
+          unknownReason: 'lookup_failed',
+          organizationId,
+          boundFrom,
+        },
+      };
     }
+  }
+
+  /**
+   * Last-mile tenant placement re-check: runs before every primary and
+   * fallback SDK call, independent of the PHI/PII screen. Selection already
+   * excludes every provider this refuses; this exists so a path that reaches
+   * executeProvider some other way cannot move a tenant's data either.
+   */
+  private async assertTenantPlacement(
+    modelConfig: ModelConfig,
+    request: GatewayRequest,
+    requestId: string,
+    startTime: number,
+  ): Promise<void> {
+    const verdict = this.tenantPlacementVerdict(modelConfig.provider, request);
+    if (verdict.allowed) return;
+    const error = new TenantPlacementError(verdict.reasonCode, verdict.detail, 'dispatch');
+    await this.logTenantPlacementRefusal(request, requestId, startTime, error, [modelConfig.provider]);
+    throw error;
+  }
+
+  /** Audit a tenant placement refusal. Content-free: codes, providers, binding. */
+  private async logTenantPlacementRefusal(
+    request: GatewayRequest,
+    requestId: string,
+    startTime: number,
+    error: TenantPlacementError,
+    providers: ProviderName[],
+  ): Promise<void> {
+    const tenant = request.sensitiveTenantPolicy;
+    log.info('[ai-gateway] tenant placement refused', {
+      reasonCode: error.reasonCode,
+      stage: error.stage,
+      providers,
+      resolution: tenant?.resolution,
+      boundFrom: tenant?.boundFrom,
+    });
+    await this.logContentPolicyBlock(
+      {
+        ...request,
+        metadata: {
+          ...(request.metadata ?? {}),
+          tenantPlacement: {
+            reasonCode: error.reasonCode,
+            detail: error.detail,
+            stage: error.stage,
+            providers,
+            resolution: tenant?.resolution,
+            unknownReason: tenant?.unknownReason,
+            boundFrom: tenant?.boundFrom,
+            payloadProvenance: request.payloadProvenance ?? 'tenant_governed',
+          },
+        },
+      },
+      request.strategy || this.config.defaultStrategy,
+      requestId,
+      startTime,
+      error.reasonCode,
+      [{
+        scope: 'pii',
+        action: 'block',
+        messageIndex: -1,
+        role: 'request',
+        detector: 'tenant_placement_policy',
+        contentClass: request.sensitiveDataClass ?? 'unknown',
+      }],
+    );
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -3012,6 +3520,27 @@ export class AIGateway {
     health.errorRate = Math.max(0, health.errorRate * 0.95);
   }
 
+  /**
+   * Account for one rung of the ladder failing, before moving to the next.
+   *
+   * A classifier decline is not a health event — the provider answered — so it
+   * is collected for the final report instead of reaching the breaker, and one
+   * that may not run elsewhere ends the walk. Anything else is a provider
+   * failure as before.
+   */
+  private noteRungFailure(
+    model: ModelConfig,
+    error: Error,
+    declines: GatewayModelDeclinedError[],
+  ): void {
+    if (error instanceof GatewayModelDeclinedError) {
+      if (!error.retryable) throw error;
+      declines.push(error);
+      return;
+    }
+    this.recordFailure(model.provider, error);
+  }
+
   private recordFailure(provider: ProviderName, error: Error): void {
     const health = this.providerHealth.get(provider);
     if (!health) return;
@@ -3105,7 +3634,7 @@ export class AIGateway {
         resolvedModel: response.resolvedModel,
         taskType: request.taskType,
         strategy,
-        organizationId: request.organizationId,
+        organizationId: auditOrganizationId(request),
         userId: request.userId,
         projectId: request.projectId,
         callerModule: request.callerModule,
@@ -3153,17 +3682,20 @@ export class AIGateway {
         triedModels: triedModels && triedModels.length > 0 ? triedModels : undefined,
         // Placement / residency evidence.
         substrate: placement.substrate,
-        region:
-          request.dataResidency && request.dataResidency !== 'any'
-            ? request.dataResidency
-            : placement.regions[0],
+        region: servingRegion(placement, request),
         retentionPolicy: placement.zeroDataRetention ? 'zero_retention' : 'standard',
+        ...ledgerProvenance(request, response),
         // Content-policy findings carry only detector names, classes and
         // classifier-redacted excerpts — never raw content (the prompt itself
         // is represented by promptHash alone).
-        metadata: contentPolicy
-          ? { ...(request.metadata ?? {}), contentPolicy }
-          : request.metadata,
+        metadata: {
+          ...(request.metadata ?? {}),
+          ...(contentPolicy ? { contentPolicy } : {}),
+          // Audit-only: the classifier's regulatory signal gates nothing yet.
+          ...(request.regulatoryContentDetected !== undefined
+            ? { regulatoryContentDetected: request.regulatoryContentDetected }
+            : {}),
+        },
       });
     } catch (auditError: any) {
       log.error(`[AI Gateway] Audit log failed: ${auditError.message}`);
@@ -3195,7 +3727,7 @@ export class AIGateway {
         model: 'none',
         taskType: request.taskType,
         strategy,
-        organizationId: request.organizationId,
+        organizationId: auditOrganizationId(request),
         userId: request.userId,
         projectId: request.projectId,
         callerModule: request.callerModule,
@@ -3209,6 +3741,7 @@ export class AIGateway {
         cached: false,
         deterministic: false,
         promptHash: this.hashPrompt(request.messages),
+        ...ledgerProvenance(request),
         metadata: {
           ...(request.metadata ?? {}),
           modelGovernance: {
@@ -3243,7 +3776,7 @@ export class AIGateway {
         model: 'none',
         taskType: request.taskType,
         strategy,
-        organizationId: request.organizationId,
+        organizationId: auditOrganizationId(request),
         userId: request.userId,
         projectId: request.projectId,
         callerModule: request.callerModule,
@@ -3257,6 +3790,9 @@ export class AIGateway {
         cached: false,
         deterministic: false,
         promptHash: this.hashPrompt(request.messages),
+        ...ledgerProvenance(request),
+        // A placement refusal's reason code; other content blocks keep theirs in `error`.
+        ...(reason && /^DENY_/.test(reason) ? { placementReasonCode: reason } : {}),
         metadata: {
           ...(request.metadata ?? {}),
           contentPolicy: { action: 'block' as ContentPolicyAction, findings },
@@ -3308,8 +3844,17 @@ export class AIGateway {
   }
 
   /** SHA-256 of the canonicalized prompt messages, for reproducibility audit. */
+  /**
+   * SHA-256 over the prompt: each message's role and text, and — when it has
+   * them — a digest of each image or document block's source. Until 2026-09-26
+   * the blocks were left out, so two requests differing only in the scan or
+   * PDF they carried hashed the same. A text-only prompt hashes exactly as
+   * before, so existing ledger rows stay comparable.
+   */
   private hashPrompt(messages: GatewayMessage[]): string {
-    const canonical = messages.map(m => `${m.role}:${m.content}`).join('\n');
+    const canonical = messages
+      .map(m => `${m.role}:${m.content}${contentBlocksDigest(m.contentBlocks)}`)
+      .join('\n');
     return createHash('sha256').update(canonical, 'utf8').digest('hex');
   }
 
@@ -3526,6 +4071,191 @@ export class ModelNotApprovedError extends GatewayPolicyError {
 }
 
 /**
+ * The tenant's placement floor — vendor allow-list, substrate allow-list,
+ * residency, zero retention, or an unknown policy — excludes every AI service
+ * that could have served this request, or the one it reached.
+ *
+ * A {@link GatewayPolicyError}, so it is terminal on every path: never retried,
+ * never walked down the fallback ladder (falling back would turn a placement
+ * refusal into a routing hint), never counted against a provider's health.
+ */
+type PlacementDenial = { allowed: false; reasonCode: PlacementReasonCode; detail: string };
+
+function placementDenial(reasonCode: PlacementReasonCode, detail: string): PlacementDenial {
+  return { allowed: false, reasonCode, detail };
+}
+
+/** An unknown tenant policy refuses a non-public payload wherever placement is enforced. */
+function unknownTenantPolicyDenial(request: GatewayRequest, enforced: boolean): PlacementDenial | null {
+  const tenant = request.sensitiveTenantPolicy;
+  if (tenant?.resolution !== 'unknown' || request.payloadProvenance === 'public' || !enforced) return null;
+  return placementDenial(
+    'DENY_TENANT_POLICY',
+    tenant.unknownReason === 'no_tenant_binding'
+      ? 'the request is not bound to an organization'
+      : "the organization's placement policy could not be read",
+  );
+}
+
+/**
+ * The tenant's own lists: a residency conflict, the vendor allow-list, the
+ * substrate allow-list. Skipped for a public payload the tenant opted in.
+ */
+function tenantAllowListDenial(
+  provider: ProviderName,
+  placement: ProviderPlacement,
+  request: GatewayRequest,
+): PlacementDenial | null {
+  const tenant = request.sensitiveTenantPolicy;
+  if (tenant?.resolution !== 'resolved') return null;
+  if (request.payloadProvenance === 'public' && tenant.publicSourceFrontier === true) return null;
+  if (tenant.residencyConflict) {
+    return placementDenial('DENY_TENANT_POLICY', "the requested residency contradicts the organization's");
+  }
+  if (tenant.allowedProviders && !tenant.allowedProviders.includes(provider)) {
+    return placementDenial('DENY_TENANT_POLICY', `${provider} is not an AI service the organization allows`);
+  }
+  if (tenant.allowedSubstrates && !tenant.allowedSubstrates.includes(placement.substrate)) {
+    return placementDenial(
+      'DENY_TENANT_POLICY',
+      `${provider} runs on ${placement.substrate}, which the organization does not allow`,
+    );
+  }
+  return null;
+}
+
+/** The request's residency and zero retention, with the tenant floor already merged in. */
+function requestPlacementDenial(
+  provider: ProviderName,
+  placement: ProviderPlacement,
+  request: GatewayRequest,
+): PlacementDenial | null {
+  const needsZdr = request.zeroDataRetention === true;
+  const residency =
+    request.dataResidency && request.dataResidency !== 'any' ? request.dataResidency : null;
+  if (!needsZdr && !residency) return null;
+  if (isPlacementCompliant(placement, { zeroDataRetention: needsZdr, residency })) return null;
+  return needsZdr && !placement.zeroDataRetention
+    ? placementDenial('DENY_SHARED_PROVIDER_WITHOUT_ZDR', `${provider} does not provide zero data retention`)
+    : placementDenial('DENY_TENANT_POLICY', `${provider} does not serve residency ${residency}`);
+}
+
+type TenantPolicySnapshot = NonNullable<GatewayRequest['sensitiveTenantPolicy']>;
+
+/**
+ * Which tenant the request belongs to: the explicit organizationId, else the
+ * ambient tenant scope. With neither, the unbound snapshot to record — platform
+ * work in a system or pre-auth scope carries no tenant; no scope at all in
+ * production is a lost binding (unknown).
+ */
+function bindTenant(
+  request: GatewayRequest,
+):
+  | { organizationId: string | number; boundFrom: 'explicit' | 'ambient_scope' }
+  | { unbound: TenantPolicySnapshot } {
+  const explicit = request.organizationId ?? undefined;
+  const scope = getTenantScope();
+  const ambient = scope?.tenantId && scope.tenantId !== '0' ? scope.tenantId : undefined;
+  if (explicit !== undefined && ambient !== undefined && String(explicit) !== String(ambient)) {
+    log.warn('[ai-gateway] placement: explicit organizationId differs from the ambient tenant scope', {
+      explicit: String(explicit),
+      ambient,
+      callerModule: request.callerModule,
+    });
+  }
+  if (explicit !== undefined) return { organizationId: explicit, boundFrom: 'explicit' };
+  if (ambient !== undefined) return { organizationId: ambient, boundFrom: 'ambient_scope' };
+  if (scope) return { unbound: { resolution: 'absent', boundFrom: 'platform_scope' } };
+  if (process.env.NODE_ENV === 'production') {
+    return { unbound: { resolution: 'unknown', unknownReason: 'no_tenant_binding', boundFrom: 'none' } };
+  }
+  return { unbound: { resolution: 'absent', boundFrom: 'none' } };
+}
+
+/** The organization an audit row is attributed to: explicit, else the bound tenant. */
+function auditOrganizationId(request: GatewayRequest): string | number | undefined {
+  return request.organizationId ?? request.sensitiveTenantPolicy?.organizationId;
+}
+
+/**
+ * The typed provenance columns of a ledger row (see AuditLogEntry and
+ * db/migrations/20260813_ai_gateway_audit_log.sql): what the call carried, how
+ * its tenant was bound and resolved, and — on a served call — the placement
+ * decision, the approved-models entry that served it, and the hosted tools that
+ * ran or were withheld. Content-free.
+ */
+function ledgerProvenance(
+  request: GatewayRequest,
+  served?: GatewayResponse,
+): Partial<AuditLogEntry> {
+  const tenant = request.sensitiveTenantPolicy;
+  const approved = served ? approvedEntryFor({ provider: served.provider, model: served.model }) : undefined;
+  const used = (served as { serverToolUses?: Array<{ name: string }> } | undefined)?.serverToolUses;
+  return {
+    payloadProvenance: request.payloadProvenance ?? 'tenant_governed',
+    dataClass: request.sensitiveDataClass,
+    tenantPolicyResolution: tenant?.resolution,
+    tenantBoundFrom: tenant?.boundFrom,
+    riskTier: request.riskTier,
+    runId: request.runId,
+    parentRunId: request.parentRunId,
+    ...(served
+      ? {
+          placementReasonCode: served.placementReasonCode,
+          approvedModelId: approved?.id,
+          pinnedVersion: approved?.pinnedVersion,
+          pqStatus: approved ? approved.pq.status : 'unregistered',
+          serverToolsUsed: used?.map(u => u.name),
+          serverToolsWithheld: served.withheldServerTools,
+        }
+      : {}),
+  };
+}
+
+/**
+ * Where the serving lane processed the request. A self-hosted lane is on-prem;
+ * otherwise the requested residency when the lane serves it, else every region
+ * the lane claims ('global' for a shared API). Until 2026-09-26 the requested
+ * residency was recorded whatever served it, so an on-prem call for an EU
+ * tenant read as 'eu'.
+ */
+function servingRegion(placement: ProviderPlacement, request: GatewayRequest): string {
+  if (placement.substrate === 'self_hosted') return 'on_prem';
+  const requested = request.dataResidency && request.dataResidency !== 'any' ? request.dataResidency : null;
+  if (requested && placement.regions.includes(requested)) return requested;
+  return placement.regions.join(',').slice(0, 16);
+}
+
+/** A digest of each non-text block's source, appended to its message in the prompt hash. */
+function contentBlocksDigest(blocks: GatewayMessage['contentBlocks']): string {
+  if (!blocks || blocks.length === 0) return '';
+  return blocks
+    .map(b => {
+      if (b.type === 'text') return `|text:${createHash('sha256').update(b.text, 'utf8').digest('hex')}`;
+      const src = b.source as Record<string, unknown>;
+      const body = String(src.data ?? src.file_id ?? src.url ?? '');
+      return `|${b.type}:${String(src.type)}:${createHash('sha256').update(body, 'utf8').digest('hex')}`;
+    })
+    .join('');
+}
+
+
+export class TenantPlacementError extends GatewayPolicyError {
+  constructor(
+    readonly reasonCode: PlacementReasonCode,
+    readonly detail: string,
+    /** `selection`: no candidate was permitted. `dispatch`: the last-mile re-check refused. `embedding`. */
+    readonly stage: 'selection' | 'dispatch' | 'embedding',
+  ) {
+    super(
+      `${reasonCode}: this request was not sent to any AI service, because your organization's ` +
+        `data-placement policy does not permit it (${detail}). ` +
+        'Ask an administrator to review the organization placement policy.',
+    );
+  }
+}
+
+/**
  * The request carries an image or document, and the model it reached receives
  * message text only. Terminal like every GatewayPolicyError: answering without
  * the file would be answering about something the model never saw.
@@ -3536,6 +4266,23 @@ export class MediaNotCarriedError extends GatewayPolicyError {
     super(
       `MEDIA_NOT_CARRIED: ${modelConfig.id} (${modelConfig.provider}) receives message text only, and this ` +
         'request carries images or documents it would not see, so it was not sent.',
+    );
+  }
+}
+
+/**
+ * The request names a document by Anthropic Files-API file id, and the lane it
+ * reached is not first-party Anthropic. Bedrock, Vertex and every other lane
+ * cannot resolve that id, so the model would answer about a file it was never
+ * given. Terminal like every GatewayPolicyError. Until 2026-09-26 the request
+ * went to Bedrock and Vertex anyway, with the Files-API beta header attached.
+ */
+export class FileReferenceNotCarriedError extends GatewayPolicyError {
+  readonly code = 'FILE_REFERENCE_NOT_CARRIED' as const;
+  constructor(readonly modelConfig: Pick<ModelConfig, 'id' | 'provider'>) {
+    super(
+      `FILE_REFERENCE_NOT_CARRIED: ${modelConfig.id} (${modelConfig.provider}) cannot read a document ` +
+        'referenced by an Anthropic file id, so this request was not sent. Attach the document itself instead.',
     );
   }
 }
@@ -3561,6 +4308,57 @@ export class GatewayAbortedError extends Error {
     super(`AI request cancelled by the caller (${phase})`);
     this.name = 'GatewayAbortedError';
   }
+}
+
+/**
+ * A model's safety classifier declined the request.
+ *
+ * Claude reports this as HTTP 200 with `stop_reason: "refusal"`, a
+ * `stop_details.category` (`cyber`, `bio`, `reasoning_extraction`, …) and no
+ * text. Returned as a response, it reached callers as an answer with nothing
+ * in it — an error rendered as an empty result. Raised instead, and handled by
+ * `route()` as neither an answer nor an outage:
+ *
+ *   • never counted against provider health — the provider is working;
+ *   • never retried on the same model — its classifier would decline again;
+ *   • otherwise passed down the approved ladder, when `retryable`.
+ *
+ * `retryable` is false for `reasoning_extraction` (Anthropic: not retried on a
+ * fallback model) and for a decline that arrived after text had already been
+ * streamed to the person, where a second model would print a second answer
+ * under the first.
+ */
+export class GatewayModelDeclinedError extends Error {
+  constructor(
+    readonly model: string,
+    readonly category: string | null,
+    readonly retryable: boolean,
+  ) {
+    super(`${model} declined the request (${category ?? 'no category given'})`);
+    this.name = 'GatewayModelDeclinedError';
+  }
+}
+
+/**
+ * Errors the backoff loop must not retry, because a retry cannot help:
+ * governance decisions (retrying duplicated denial audits and could never make
+ * a placement safe), a cancel (it would re-run what the caller just stopped),
+ * and a classifier decline (the same classifier declines the same request).
+ */
+function isNeverRetried(err: unknown): boolean {
+  // One definition of "final", shared with the callers that wrap the gateway.
+  return isTerminalGatewayError(err);
+}
+
+/** Build the decline for a refusal stop, deciding whether another model may run it. */
+function declineFor(model: string, stopDetails: unknown, textAlreadyStreamed: boolean): GatewayModelDeclinedError {
+  const raw = (stopDetails as { category?: unknown } | null | undefined)?.category;
+  const category = typeof raw === 'string' && raw ? raw : null;
+  return new GatewayModelDeclinedError(
+    model,
+    category,
+    category !== 'reasoning_extraction' && !textAlreadyStreamed,
+  );
 }
 
 export class GatewayNoProviderError extends Error {

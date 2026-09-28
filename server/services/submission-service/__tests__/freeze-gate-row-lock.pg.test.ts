@@ -21,7 +21,13 @@
  *
  * Needs TEST_DATABASE_URL (a Postgres the test may create and drop a schema
  * in); skipped otherwise, as the other real-Postgres suites are. Runs the REAL
- * upsertLeaf / freezeSequence / assembleSequence / deriveGovernedTargetBinding.
+ * upsertLeaf / freezeSequence / assembleSequence / deriveGovernedTargetBinding
+ * with the REAL chained audit writer (writeChainedAuditRow) left un-stubbed over
+ * the shared audit_logs DDL — see the note on the auditService mock. Both cases
+ * here end in a REFUSED freeze, which returns before the writer is reached, so
+ * this suite does not exercise the writer: it only guarantees that a freeze
+ * which did get that far would meet the real fail-closed write and not a stub.
+ * The committed-with-its-chain-row assertion lives in freeze-gate-binding.
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 
@@ -33,6 +39,17 @@ const holder = vi.hoisted(() => ({ db: null as any, pool: null as any }));
 vi.mock('../../../db', () => ({
   get db() { return holder.db; },
   get pool() { return holder.pool; },
+}));
+/*
+ * 2026-09-23 (ci:audit-logs-fixture). Only the best-effort secondary log
+ * (logAction, behind recordAuditRow on the leaf write) is stubbed. A governed
+ * freeze commits with the REAL writeChainedAuditRow on its transaction's client,
+ * into the shared AUDIT_LOGS_PGLITE_DDL table — not a five-column stand-in over
+ * a six-column local table, which the real writer could not have written into.
+ */
+vi.mock('../../auditService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../auditService')>()),
+  default: { logAction: vi.fn(async () => ({ persisted: true, chained: true, tamperProof: true })) },
 }));
 vi.mock('../../ectd/assess-dispatch-readiness', () => ({
   assessSequenceDispatchReadiness: async () => ({
@@ -183,5 +200,7 @@ describeIfDb('the sequence row lock serializes leaf writes with a governed freez
     }
     const s = (await q(`SELECT status FROM ectd_sequences WHERE id = 2`)).rows[0] as { status: string };
     expect(s.status).toBe('validated');
+    const chained = (await q(`SELECT count(*)::int AS n FROM audit_logs WHERE table_name = 'ectd_sequence' AND record_id = '2'`)).rows[0] as { n: number };
+    expect(chained.n, 'the refused freeze left a row in the audit chain').toBe(0);
   }, 120_000);
 });

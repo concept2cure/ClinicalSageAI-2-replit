@@ -1,0 +1,1 @@
+✅ ci:unauthenticated-fetch — 64 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).

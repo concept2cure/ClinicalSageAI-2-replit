@@ -43,6 +43,8 @@ import {
 } from '../../services/ana-ri/navigation-actions.js';
 import type { NavigationDirective } from '../../../shared/navigation/index.js';
 import type { SurfaceActionDirective } from '../../../shared/navigation/surface-actions.js';
+import type { TurnPlanStep } from '../../services/ana/turn-plan.js';
+import type { TurnOutcome, TurnRecorder, TurnRecordStatus } from '../../services/ana/turn-record.js';
 
 export interface StreamPostProcessingContext {
   res: Response;
@@ -68,6 +70,8 @@ export interface StreamPostProcessingContext {
   reasoning?: string;
   /** Human control actions (pause/resume/interject/cancel) taken this turn. */
   humanControls?: HumanControlEvent[];
+  /** The plan AnA last declared this turn, validated; persisted with the message. */
+  plan?: TurnPlanStep[];
   /** Raw tool output this turn — evidence corpus for the grounding round. */
   toolEvidenceCorpus: string[];
   /** Provenance envelopes from evidence tools this turn — persisted to the lineage trail. */
@@ -96,7 +100,20 @@ export interface StreamPostProcessingContext {
   messages: GatewayMessage[];
   model: string | undefined;
   provider: string | undefined;
+  /** The model call whose answer carried the turn's command blocks, for their audit rows. */
+  servingModel?: { provider?: string | null; model?: string | null; requestId?: string | null } | null;
   enrichment: { sources: unknown[]; enrichmentMeta?: unknown };
+  /**
+   * The turn's retained record (services/ana/turn-record.ts), completed here
+   * with what only post-processing knows — the answer as stored, its message
+   * id, the controls, the drafts and actions — then written before `post_done`
+   * so the client is told whether the turn was recorded.
+   */
+  turnRecorder?: TurnRecorder | null;
+  /** The person pressed Stop: the record's outcome is `stopped`, not `answered`. */
+  stopped?: boolean;
+  /** Seals and writes the record; never rejects. */
+  fileTurnRecord?: (outcome: TurnOutcome) => Promise<TurnRecordStatus>;
 }
 
 /**
@@ -270,6 +287,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     toolTrace,
     reasoning,
     humanControls,
+    plan,
     toolEvidenceCorpus,
     collectedProvenance,
     collectedNavigation,
@@ -279,9 +297,17 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     messages,
     model,
     provider,
+    servingModel,
     enrichment,
+    turnRecorder,
+    stopped,
+    fileTurnRecord,
   } = ctx;
   let persistenceFailed = ctx.persistenceFailed;
+  const turnOutcome: TurnOutcome = stopped ? 'stopped' : 'answered';
+  // Set once the record is filed, so a failure after that point cannot file
+  // the same turn a second time.
+  let turnRecord: TurnRecordStatus | undefined;
   let cleanedFullContent = '';
 
   try {
@@ -344,6 +370,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
             : undefined,
           userName,
           userRole: effectiveRole,
+          servingModel: servingModel ?? null,
         };
         const { processCommandsInResponse } =
           await import('../../services/ana-ri/command-executor.js');
@@ -381,13 +408,16 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     // collapses the tail to max(db, cpu) instead of db + cpu. The assistant
     // message carries a hidden metadata record (tool-trace + grounding verdict)
     // so the turn's investigation and self-check survive across turns.
+    let assistantMessageId: number | null = null;
     const persistPromise: Promise<void> =
       orgId && threadId && fullContent
         ? saveMessage(
             threadId, 'assistant', finalAssistantContent, undefined, undefined,
-            buildAssistantMetadata(toolTrace, streamGrounding, reasoning, humanControls) as Record<string, unknown> | undefined,
+            buildAssistantMetadata(toolTrace, streamGrounding, reasoning, humanControls, plan) as Record<string, unknown> | undefined,
           )
-            .then(() => undefined)
+            .then((id) => {
+              assistantMessageId = id;
+            })
             .catch((e: any) => {
               console.error('[AnA RI Stream] Assistant persist failed:', e?.message);
               persistenceFailed = true;
@@ -500,6 +530,18 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
       collectedDrafts,
     });
 
+    // The turn's record, completed and written before post_done so the client
+    // can say whether it was recorded. The answer is recorded as the person
+    // was given it (streamed) and as the conversation stored it.
+    if (fileTurnRecord) {
+      turnRecorder?.setAnswer({ stored: finalAssistantContent || null });
+      turnRecorder?.setMessageIds({ assistant: assistantMessageId });
+      turnRecorder?.setControls(humanControls);
+      turnRecorder?.setOutputs({ drafts: collectedDrafts, executedActions, executedCommands });
+      if (persistenceFailed) turnRecorder?.warn('The conversation could not save this turn; the record holds it.');
+      turnRecord = await fileTurnRecord(turnOutcome);
+    }
+
     // Warn client if thread persistence failed
     if (persistenceFailed) {
       res.write(
@@ -573,6 +615,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
             : undefined,
         reliability: streamReliability || undefined,
         queueMeta: streamQueueMeta,
+        turnRecord,
       })}\n\n`
     );
 
@@ -581,6 +624,13 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     // If the background flow itself blows up, fall back to a post_done
     // carrying the raw content so the client turn still closes cleanly.
     console.error('[AnA RI Stream] Post-processing failed:', postErr?.message);
+    // The turn still happened. It is recorded with what is known; the stored
+    // answer stays whatever was set before the failure, and the record says
+    // post-processing did not finish.
+    if (fileTurnRecord && !turnRecord) {
+      turnRecorder?.warn(`Post-processing did not finish: ${String(postErr?.message ?? postErr).slice(0, 500)}`);
+      turnRecord = await fileTurnRecord(turnOutcome);
+    }
     try {
       res.write(
         `data: ${JSON.stringify({
@@ -588,6 +638,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
           cleanedResponse: fullContent || undefined,
           executedActions: undefined,
           executedCommands: undefined,
+          turnRecord,
         })}\n\n`
       );
       res.end();

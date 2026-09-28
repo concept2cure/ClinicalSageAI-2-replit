@@ -81,8 +81,38 @@ export function commitmentGroundedness(sourceQuote: unknown): number {
 }
 
 /** Parse the model's JSON output into structured commitments. Never throws. */
+/**
+ * Raised when an extraction could not be PERFORMED — the gateway refused, every
+ * provider failed, or the model's answer could not be read. Distinct from an
+ * extraction that ran and found nothing, which is a legitimate empty array.
+ * Returning [] for both told the caller "this document contains zero regulatory
+ * commitments" on the strength of a failure, which is the one thing this engine
+ * must never say: a missed PMR/PMC/REMS/Annex II obligation is pure liability.
+ */
+export class ExtractionUnavailableError extends Error {
+  readonly code = 'COMMITMENT_EXTRACTION_UNAVAILABLE';
+  constructor(reason: string) {
+    super(`Commitment extraction could not be performed: ${reason}`);
+    this.name = 'ExtractionUnavailableError';
+  }
+}
+
+/**
+ * The commitments array in `raw`, or null when `raw` could not be read as a JSON
+ * array at all. The null is the distinction the caller needs: a truncated or
+ * refused completion is NOT a document with no commitments in it.
+ */
+export function parseCommitmentsArrayOrNull(raw: string): ExtractedCommitment[] | null {
+  const parsed = parseCommitmentsInternal(raw);
+  return parsed;
+}
+
 export function parseCommitmentsJson(raw: string): ExtractedCommitment[] {
-  if (!raw) return [];
+  return parseCommitmentsInternal(raw) ?? [];
+}
+
+function parseCommitmentsInternal(raw: string): ExtractedCommitment[] | null {
+  if (!raw) return null;
   // Strip code fences and any prose around the JSON.
   let text = raw.trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
   const start = text.indexOf('[');
@@ -92,9 +122,9 @@ export function parseCommitmentsJson(raw: string): ExtractedCommitment[] {
   try {
     arr = JSON.parse(text);
   } catch {
-    return [];
+    return null; // unreadable, not empty
   }
-  if (!Array.isArray(arr)) return [];
+  if (!Array.isArray(arr)) return null; // unreadable, not empty
   return arr
     .filter((r): r is Record<string, unknown> => !!r && typeof r === 'object')
     .map((r) => {
@@ -177,10 +207,20 @@ export async function extractCommitments(
       callerModule: opts.callerModule ?? 'commitments-extract',
       metadata: { promptVersion: 'commitments-extract-v1', documentId: opts.documentId },
     });
-    return parseCommitmentsJson(response.content);
+    const parsed = parseCommitmentsArrayOrNull(response.content);
+    if (parsed === null) {
+      throw new ExtractionUnavailableError('the model response could not be read as a JSON array');
+    }
+    return parsed;
   } catch (error: any) {
+    if (error instanceof ExtractionUnavailableError) throw error;
+    /* Every gateway failure used to land here and become [] — policy refusal,
+       PII/PHI block, all-providers-failed, 429/500, no configured provider —
+       byte-identical to a document that genuinely contains no commitment. Fail
+       closed: the caller decides how to report an extraction that did not run,
+       and cannot accidentally report it as a finding of none. */
     logger.warn(`Commitment extraction unavailable: ${error?.message}`);
-    return [];
+    throw new ExtractionUnavailableError(String(error?.message ?? 'unknown error'));
   }
 }
 

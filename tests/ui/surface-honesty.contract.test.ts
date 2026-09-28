@@ -50,6 +50,29 @@ const raw = (r: string) => fs.readFileSync(path.join(REPO_ROOT, r), 'utf8');
 
 const rel = (abs: string) => path.relative(REPO_ROOT, abs).split(path.sep).join('/');
 
+/**
+ * The source of the first <Tag …/> or <Tag …>…</Tag> element, from `<Tag` to
+ * its end, with the braces of its attributes balanced; '' when absent. It reads
+ * the element itself, so an assertion about a mount does not depend on what
+ * the file happens to render after it.
+ */
+function jsxElement(src: string, tag: string): string {
+  const start = src.search(new RegExp(`<${tag}\\b`));
+  if (start < 0) return '';
+  let depth = 0;
+  for (let i = start + tag.length + 1; i < src.length; i++) {
+    const ch = src[i];
+    if (ch === '{') depth += 1;
+    else if (ch === '}') depth -= 1;
+    else if (depth === 0 && src.startsWith('/>', i)) return src.slice(start, i + 2);
+    else if (depth === 0 && ch === '>') {
+      const close = src.indexOf(`</${tag}>`, i);
+      return close < 0 ? '' : src.slice(start, close + tag.length + 3);
+    }
+  }
+  return '';
+}
+
 function sourceFiles(): string[] {
   const out: string[] = [];
   const walk = (dir: string) => {
@@ -171,7 +194,9 @@ describe('ProtocolDev does not present unpersisted actions as filed', () => {
     // rather than appending locally.
     const src = code(PROTOCOL_DEV_WORKSPACE);
     expect(src).toMatch(/<ProtocolRegisterForm/);
-    const mount = src.slice(src.indexOf('<ProtocolRegisterForm'), src.indexOf('<C2CToast'));
+    // The element itself: a3e66c99 moved the mount into GovernedDrawers, below
+    // the toast, and a slice that ended at <C2CToast then read nothing.
+    const mount = jsxElement(src, 'ProtocolRegisterForm');
     expect(mount).toContain('onDone=');
     expect(mount).toContain('registerDoneMessage(');
     expect(mount).toContain('onChanged?.()');

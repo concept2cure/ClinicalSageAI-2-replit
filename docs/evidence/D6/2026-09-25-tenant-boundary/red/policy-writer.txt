@@ -1,0 +1,18 @@
+## red: writers of ai_placement_policies at HEAD bfbf0ee8 (only the unapplied preferred_ai_provider column)
+bfbf0ee8:server/services/ai-gateway/providers/provider-preference-db.ts:75:      `INSERT INTO ai_placement_policies (organization_id, preferred_ai_provider)
+exit=0
+
+# org-placement-writer.test.ts against two mutations of the writer (then restored)
+## mutation 1: invalidate() removed
+ × server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > writeOrgPlacementPolicy > writes the policy and its audit row (before, after, reason) in one transaction, then invalidates 7ms
+ × server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > writeOrgPlacementPolicy > the next dispatch sees a tightened policy at once, not after the cache expires 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 8 passed (10)
+## mutation 2: audit row written after COMMIT
+ × server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > writeOrgPlacementPolicy > writes the policy and its audit row (before, after, reason) in one transaction, then invalidates 10ms
+ × server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > writeOrgPlacementPolicy > commits nothing and invalidates nothing when the audit row cannot be written 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 8 passed (10)
+## restored
+      Tests  10 passed (10)
+exit=1 (mutations), exit=0 (restored)

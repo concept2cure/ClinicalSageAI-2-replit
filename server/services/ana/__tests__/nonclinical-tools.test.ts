@@ -17,11 +17,11 @@ describe('Nonclinical AnA tools — registration', () => {
 
 describe('Nonclinical AnA tools — context + input guards', () => {
   it('create_nonclinical_study refuses without tenant/user context', async () => {
-    const out = JSON.parse(await getToolHandler('create_nonclinical_study')!({ study_number: 'S1', title: 'X', study_type: 'repeat_dose_tox' }, {} as any));
+    const out = JSON.parse(await getToolHandler('create_nonclinical_study')!({ study_number: 'S1', title: 'X', study_type: 'repeat_dose_tox' }, { humanConfirmed: true } as any));
     expect(out.error).toMatch(/tenant \+ user context/);
   });
   it('create_nonclinical_study rejects an invalid study_type', async () => {
-    const out = JSON.parse(await getToolHandler('create_nonclinical_study')!({ study_number: 'S1', title: 'X', study_type: 'mystery' }, { organizationId: 1, userId: 1 } as any));
+    const out = JSON.parse(await getToolHandler('create_nonclinical_study')!({ study_number: 'S1', title: 'X', study_type: 'mystery' }, { organizationId: 1, userId: 1, humanConfirmed: true } as any));
     expect(out.error).toMatch(/valid study_type/);
   });
   it('review_send_readiness requires a study_id', async () => {

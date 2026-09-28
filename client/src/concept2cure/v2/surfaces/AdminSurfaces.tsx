@@ -773,7 +773,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
                         <span
                           style={{
                             color: txw.targets.includes(l.id)
-                              ? 'rgba(255,255,255,.7)'
+                              ? 'color-mix(in srgb, var(--accent-on-strong) 70%, transparent)'
                               : 'var(--text-400)',
                             fontSize: 10,
                           }}
@@ -1390,7 +1390,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
             <div style={{ color: 'var(--text-400)', fontSize: 11.5 }}>{e.target}</div>
             <div>
               {e.sig ? (
-                <span className="esig">{I.shieldCheck}</span>
+                <span className="esig" role="img" aria-label="E-signed (21 CFR Part 11)">{I.shieldCheck}</span>
               ) : (
                 <span style={{ color: 'var(--text-500)' }}>--</span>
               )}
@@ -1406,7 +1406,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
           style={{
             marginTop: 16,
             padding: 16,
-            borderRadius: 10,
+            borderRadius: 'var(--radius-lg)',
             border: '1px solid var(--border)',
             background: 'var(--bg-100)',
             maxWidth: 720,
@@ -1472,7 +1472,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
                   Signature meaning
                 </span>
                 <span>
-                  <span className="esig" style={{ marginRight: 6 }}>
+                  <span className="esig" style={{ marginRight: 6 }} role="img" aria-label="E-signed (21 CFR Part 11)">
                     {I.shieldCheck}
                   </span>
                   {entry.meaning} (ss11.50)
@@ -2537,7 +2537,7 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
               <div style={{ color: 'var(--text-400)' }}>{a.when}</div>
               <div>
                 {a.sig ? (
-                  <span className="esig" title="E-signed (21 CFR Part 11)">
+                  <span className="esig" role="img" aria-label="E-signed (21 CFR Part 11)" title="E-signed (21 CFR Part 11)">
                     {I.shieldCheck}
                   </span>
                 ) : (
@@ -3442,7 +3442,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                     dismissed, never persisted or logged. */}
                 {mintedKey && (
                   <div
-                    style={{ marginTop: 14, padding: 14, border: '1px solid var(--accent-100, var(--border))', borderRadius: 10, background: 'var(--bg-050)' }}
+                    style={{ marginTop: 14, padding: 14, border: '1px solid var(--accent-100, var(--border))', borderRadius: 'var(--radius-lg)', background: 'var(--bg-050)' }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                       <span className="sp-q-ic">{I.key || I.terminal}</span>

@@ -13,6 +13,11 @@
  * recursively, undefined → null, Date → ISO string, then JSON.stringify.
  * If the product's recipe changes, this file must change with it — the
  * mismatch is exactly what OQ-QMS-05b would then report.
+ *
+ * The RETIREMENT digest (P1-29 / DP-32; `computeQmsDocumentRetirementDigest` in
+ * the same product module) is the same recipe with `metadata.retired` removed
+ * as well — the block the retirement writes and stores the digest in. The
+ * approval recipe is unchanged. OQ-QMS-10 recomputes it from the stored row.
  */
 import { createHash } from 'node:crypto';
 
@@ -55,4 +60,15 @@ export function qmsDocumentDigestInput(row) {
 
 export function computeQmsDocumentContentDigest(row) {
   return sha256CanonicalJson(qmsDocumentDigestInput(row));
+}
+
+/** The retirement's input: the approval input over the row with `metadata.retired` removed. */
+export function qmsDocumentRetirementDigestInput(row) {
+  const metadata = { ...(row.metadata ?? {}) };
+  delete metadata.retired;
+  return qmsDocumentDigestInput({ ...row, metadata });
+}
+
+export function computeQmsDocumentRetirementDigest(row) {
+  return sha256CanonicalJson(qmsDocumentRetirementDigestInput(row));
 }

@@ -1,0 +1,11 @@
+# Where a CloudFront error mapping can be declared: `terraform providers schema -json`, hashicorp/aws 5.70.0
+# (docs.aws.amazon.com is refused by this environment's egress policy, so the provider schema is the source here)
+
+custom_error_response is a block of aws_cloudfront_distribution: True
+custom_error_response is a block of default_cache_behavior:   False
+custom_error_response is a block of ordered_cache_behavior:   False
+custom_error_response is a block of origin:                   False
+custom_error_response attributes: ['error_caching_min_ttl', 'error_code', 'response_code', 'response_page_path']
+
+=> A mapping applies to every origin in the distribution. Nothing selects an origin or a path;
+   the old 403/404 -> 200 /index.html mapping therefore also rewrote the ALB's (the API's) responses.

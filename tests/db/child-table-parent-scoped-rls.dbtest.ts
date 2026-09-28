@@ -176,6 +176,110 @@ const CASES: Case[] = [
     },
     countOwn: `SELECT count(*)::int AS n FROM public.rag_chunks WHERE document_id = $1::uuid`,
   },
+  {
+    // Added 2026-09-24 (ledger L201). A device complaint hangs from its
+    // regulatory program by a TEXT program_id with no foreign key (the program's
+    // id is a uuid), so the migration compares the keys as text. With no
+    // organization column and no RLS, every tenant's complaint narratives were
+    // readable by program id from any other tenant's session.
+    child: 'complaints',
+    parent: 'regulatory_programs',
+    fk: 'program_id',
+    parentTenant: 'organization_id',
+    seed: async (q, org, tag) => {
+      const p = await q(
+        `INSERT INTO public.regulatory_programs
+           (organization_id, name, code, program_type, product_type, primary_agency, product_name)
+         VALUES ($1, $2, $3, 'device', 'samd', 'FDA', $2) RETURNING id::text AS id`,
+        [org, `program ${tag}`, tag.slice(-40)],
+      );
+      await q(
+        `INSERT INTO public.complaints
+           (program_id, complaint_code, source, channel, received_at, event_narrative)
+         VALUES ($1, $2, 'customer', 'email', now(), $3)`,
+        [p.rows[0].id, tag.slice(-40), `complaint narrative for org ${org}`],
+      );
+      return p.rows[0].id; // complaints.program_id
+    },
+    countOwn: `SELECT count(*)::int AS n FROM public.complaints WHERE program_id = $1`,
+  },
+  {
+    // Added 2026-09-24 (ledger L201). The AnA command pdev.activity.set_state
+    // read, updated and inserted activities by params.programId with no check
+    // that the program was the caller's, and a foreign key does not consult RLS.
+    child: 'pdev_program_activities',
+    parent: 'regulatory_programs',
+    fk: 'program_id',
+    parentTenant: 'organization_id',
+    seed: async (q, org, tag) => {
+      const p = await q(
+        `INSERT INTO public.regulatory_programs
+           (organization_id, name, code, program_type, product_type, primary_agency, product_name)
+         VALUES ($1, $2, $3, 'device', 'samd', 'FDA', $2) RETURNING id::text AS id`,
+        [org, `pdev program ${tag}`, `P${tag.slice(-39)}`],
+      );
+      await q(
+        `INSERT INTO public.pdev_program_activities (program_id, activity_key, workstream, stage)
+         VALUES ($1::uuid, $2, 'clinical', 'planning')`,
+        [p.rows[0].id, `activity ${org}`],
+      );
+      return p.rows[0].id;
+    },
+    countOwn: `SELECT count(*)::int AS n FROM public.pdev_program_activities WHERE program_id = $1::uuid`,
+  },
+  {
+    // Added 2026-09-24 (ledger L201). A resolution bundle's items: the actions
+    // and prepared replacement content the bundle will apply.
+    child: 'resolution_bundle_items',
+    parent: 'resolution_bundles',
+    fk: 'bundle_id',
+    parentTenant: 'organization_id',
+    seed: async (q, org, tag) => {
+      const p = await q(
+        `INSERT INTO public.resolution_bundles (organization_id, project_id, title, created_by_id)
+         VALUES ($1, 1, $2, 1) RETURNING id::text AS id`,
+        [org, `bundle ${tag}`],
+      );
+      await q(
+        `INSERT INTO public.resolution_bundle_items
+           (bundle_id, object_type, object_id, action_type, action_description)
+         VALUES ($1::uuid, 'document', $2, 'review', $3)`,
+        [p.rows[0].id, tag, `prepared change for org ${org}`],
+      );
+      return p.rows[0].id;
+    },
+    countOwn: `SELECT count(*)::int AS n FROM public.resolution_bundle_items WHERE bundle_id = $1::uuid`,
+  },
+  {
+    // Added 2026-09-24 (ledger L202): a GRANDCHILD. A section version's parent,
+    // the section, is itself a child of the document that carries the tenant.
+    // So the policy delegates to the section's own policy (the migration's
+    // chained list). The rows are the full prior text of a governed section,
+    // its Part 11 history.
+    child: 'c2c_document_section_versions',
+    parent: 'c2c_document_sections',
+    fk: 'section_id',
+    parentTenant: 'org_id (on c2c_documents, through the section)',
+    seed: async (q, org, tag) => {
+      await q(
+        `INSERT INTO public.c2c_documents (id, org_id, doc_type, agency, rule_pack_version, title)
+         VALUES ($1, $2, 'k510', 'fda', 'fda-510k-2024', $3)`,
+        [tag, org, `document ${tag}`],
+      );
+      const section = await q(
+        `INSERT INTO public.c2c_document_sections (document_id, section_key, label, path_order)
+         VALUES ($1, 's1', 'Section', 1) RETURNING id::text AS id`,
+        [tag],
+      );
+      await q(
+        `INSERT INTO public.c2c_document_section_versions (section_id, version, content, author_id, reason)
+         VALUES ($1::bigint, 99, $2::jsonb, 1, 'dbtest')`,
+        [section.rows[0].id, JSON.stringify({ text: `prior text for org ${org}` })],
+      );
+      return section.rows[0].id;
+    },
+    countOwn: `SELECT count(*)::int AS n FROM public.c2c_document_section_versions WHERE section_id = $1::bigint`,
+  },
 ];
 
 /** Named by the migration; asserted as a set so a dropped entry is caught. */
@@ -194,7 +298,73 @@ const ALL_CHILD_TABLES = [
   'csr_statistical_analyses', 'csr_tables_and_figures', 'csr_treatment_arms',
   'ctd_nonclinical_studies', 'ctd_quality_data', 'ctd_submissions',
   'csr_knowledge_edges', 'ctd_cross_references',
+  // Added 2026-09-24 (ledger L201): post-market data keyed by a text program id.
+  'complaints', 'mdr_events', 'vigilance_events',
+  // Added 2026-09-24 (ledger L201): every child with a foreign key into a
+  // tenant-keyed parent that had row security OFF, bar the four grandchildren
+  // named in scripts/db/rls-coverage-check.sql's carve-out.
+  'activity_reactions', 'agency_validation_results', 'ai_ml_modifications',
+  'c2c_ana_conversation_turns', 'c2c_milestone_sections', 'c2c_secure_attachments',
+  'cer_clinical_evidence', 'cer_compliance_checks', 'cer_essential_requirements',
+  'cer_faers_data', 'cer_literature', 'cer_sections', 'cer_version_history',
+  'cer_workflows', 'charter_sections', 'cognitive_hitl_breakpoints',
+  'cognitive_reasoning_traces', 'cognitive_thread_messages',
+  'cognitive_workflow_checkpoints', 'context_members', 'dlt_events',
+  'document_attachments', 'document_audit_logs', 'document_comments', 'document_locks',
+  'doe_analysis_results', 'doe_experiments', 'doe_factors', 'doe_responses',
+  'dose_cohorts', 'dose_levels', 'ind_narrative_sections', 'ind_package_plan_documents',
+  'ind_package_plan_modalities', 'ind_package_plan_regions',
+  'ind_package_plan_requirements', 'ind_package_plan_timelines', 'leaf_citations',
+  'leaf_patches', 'lumen_collection_atoms', 'obligation_updates',
+  'pdev_program_activities', 'pdev_readiness_snapshots', 'pkpd_compartments',
+  'project_predictions', 'report_details', 'report_program_group_projects',
+  'resolution_bundle_items', 'risk_detections', 'section_patches', 'sharepoint_comments',
+  'sharepoint_file_versions', 'sharepoint_locks', 'sharepoint_shares',
+  'simple_document_versions', 'species_comparisons', 'timeline_phases',
+  'validation_findings', 'validation_harmonization_opportunities', 'validation_issues',
+  'workflow_approvals', 'workflow_history', 'workflow_steps',
+  // Added 2026-09-24 (ledger L202): grandchildren, scoped through the parent's
+  // own policy by the migration's chained list.
+  'ai_claims', 'ai_claim_citations', 'c2c_document_section_evidence',
+  'c2c_document_section_versions', 'section_propagations',
 ];
+
+/**
+ * Children OUTSIDE public, scoped by the chained list's schema-qualified entries
+ * (ledger L203). A bare CI database has none of these schemas, so this list is
+ * asserted only for the tables that exist. A provisioned database has all of
+ * them, and that is where the assertion bites.
+ */
+const NON_PUBLIC_CHILD_TABLES = [
+  'ai.risk_assessments', 'audit.config_bundles', 'audit.dataset_snapshots',
+  'audit.idempotency_keys', 'audit.purge_requests', 'audit.purge_approvals', 'audit.tombstones',
+  'core.entities', 'ectd.project_folders',
+  'global_dossier.content_versions', 'global_dossier.dossier_branches',
+  'global_dossier.dossier_sync_events', 'global_dossier.regulatory_comments',
+  'manufacturing.rtrt_predictions', 'precedent.csr_precedent_links',
+  'regulatory_harmonization.export_job_audit_log',
+];
+
+/** Row security, FORCE and the policy, for each schema-qualified table named. */
+const NON_PUBLIC_PROTECTION_SQL = `
+  SELECT n.nspname || '.' || c.relname AS table_name, c.relrowsecurity, c.relforcerowsecurity,
+         EXISTS (SELECT 1 FROM pg_policies p
+                  WHERE p.schemaname = n.nspname AND p.tablename = c.relname
+                    AND p.policyname = 'tenant_isolation_policy') AS policied
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname || '.' || c.relname = ANY($1::text[])`;
+
+function expectProtected(
+  rows: Array<{ table_name: string; relrowsecurity: boolean; relforcerowsecurity: boolean; policied: boolean }>,
+): void {
+  for (const row of rows) {
+    expect(row.policied, `${row.table_name} has no tenant_isolation_policy`).toBe(true);
+    expect(row.relrowsecurity, `${row.table_name} has RLS disabled`).toBe(true);
+    // Without FORCE the table OWNER skips the policy entirely.
+    expect(row.relforcerowsecurity, `${row.table_name} is not FORCEd`).toBe(true);
+  }
+}
 
 /**
  * Deliberately NOT covered by the migration, so they must still have no policy.
@@ -285,6 +455,81 @@ async function ensureTables(pool: { query: (sql: string) => Promise<unknown> }):
   `);
 }
 
+/**
+ * The parents and children the ledger L201 / L202 cases use, created the same
+ * way and for the same reason as ensureTables above: a bare CI database has
+ * none of them. Kept apart so each function stays readable.
+ */
+async function ensureAddedTables(pool: { query: (sql: string) => Promise<unknown> }): Promise<void> {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS public.regulatory_programs (
+      id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id INTEGER NOT NULL,
+      name            TEXT NOT NULL,
+      code            VARCHAR NOT NULL,
+      program_type    TEXT NOT NULL,
+      product_type    TEXT NOT NULL,
+      primary_agency  TEXT NOT NULL,
+      product_name    TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS public.c2c_documents (
+      id                TEXT PRIMARY KEY,
+      org_id            INTEGER NOT NULL,
+      doc_type          TEXT NOT NULL,
+      agency            TEXT NOT NULL,
+      rule_pack_version TEXT NOT NULL,
+      title             TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS public.c2c_document_sections (
+      id          BIGSERIAL PRIMARY KEY,
+      document_id TEXT NOT NULL REFERENCES public.c2c_documents(id),
+      section_key TEXT NOT NULL,
+      label       TEXT NOT NULL,
+      path_order  INTEGER NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS public.c2c_document_section_versions (
+      id          BIGSERIAL PRIMARY KEY,
+      section_id  BIGINT NOT NULL REFERENCES public.c2c_document_sections(id),
+      version     INTEGER NOT NULL,
+      content     JSONB NOT NULL,
+      author_id   INTEGER NOT NULL,
+      reason      TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS public.pdev_program_activities (
+      id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      program_id   UUID NOT NULL REFERENCES public.regulatory_programs(id),
+      activity_key VARCHAR NOT NULL,
+      workstream   VARCHAR NOT NULL,
+      stage        VARCHAR NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS public.resolution_bundles (
+      id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id INTEGER NOT NULL,
+      project_id      INTEGER NOT NULL,
+      title           TEXT NOT NULL,
+      created_by_id   INTEGER NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS public.resolution_bundle_items (
+      id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      bundle_id          UUID NOT NULL REFERENCES public.resolution_bundles(id) ON DELETE CASCADE,
+      object_type        VARCHAR NOT NULL,
+      object_id          TEXT NOT NULL,
+      action_type        VARCHAR NOT NULL,
+      action_description TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS public.complaints (
+      id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      program_id      TEXT NOT NULL,
+      complaint_code  VARCHAR NOT NULL,
+      source          VARCHAR NOT NULL,
+      channel         VARCHAR NOT NULL,
+      received_at     TIMESTAMPTZ NOT NULL,
+      event_narrative TEXT NOT NULL
+    );
+  `);
+}
+
+
 const ORG_A = 91001;
 const ORG_B = 91002;
 /** Unique per run, so a previous run's rows can never satisfy this one. */
@@ -300,6 +545,7 @@ describe('child tables are scoped to their parent row’s tenant', () => {
     // the isolation cases would fail for a reason that has nothing to do with
     // the policy.
     await ensureTables(scratch.ownerPool);
+    await ensureAddedTables(scratch.ownerPool);
     // Applied here rather than assumed, so the suite is self-provisioning
     // regardless of which migrations the surrounding CI job happened to run.
     await scratch.ownerPool.query(fs.readFileSync(MIGRATION, 'utf8'));
@@ -343,6 +589,11 @@ describe('child tables are scoped to their parent row’s tenant', () => {
       expect(row.relforcerowsecurity, `${row.table_name} is not FORCEd`).toBe(true);
     }
     expect(rows.length).toBeGreaterThan(0);
+  });
+
+  it('every non-public child the chained list names that exists ends up policied, enabled and FORCEd', async () => {
+    const { rows } = await scratch.ownerPool.query(NON_PUBLIC_PROTECTION_SQL, [NON_PUBLIC_CHILD_TABLES]);
+    expectProtected(rows);
   });
 
   for (const c of CASES) {

@@ -1,0 +1,36 @@
+# P1-7b — the gates that react to these files (2026-09-26T13:02Z; working tree also carries other lanes' uncommitted edits to mdx-qms.ts, qms/*, SopRegister.tsx — not this item's)
+
+## npm run check:security-patterns
+check-security-patterns: 0 violations across 2854 file(s).
+exit=0
+
+## npm run ci:server-error-leaks
+[ci:server-error-leaks] OK — 145 baselined site(s) across 89 file(s); no file gained one.
+exit=0
+
+## npm run ci:tenant-isolation:no-regression
+    L63  tables=[]
+      `SELECT
+    L72  tables=[]
+      `SELECT
+    … 1 more
+
+  server/services/submission-service/submission-service.ts  (1)
+    L1845  tables=[documents]
+      ref.documentUuid ? sql`SELECT program_id::text AS program_id FROM vault.documents WHERE id = ${ref.documentUuid}::uuid` : null,
+
+Total: 9 candidate(s). These are RAW SQL queries against known tenant-scoped tables that don't reference an org_id / tenant_id / workspace_id in the same statement. Each one is either a real tenant-isolation bug, needs a `// tenant-isolation-safe: <reason>` marker at the call site, or belongs in the file allowlist with a one-line justification (admin tool / schema migration / pre-tenant-resolution auth).
+[ci:tenant-isolation] 1 previously-flagged finding(s) resolved — consider re-running with --write-baseline to ratchet down.
+[ci:tenant-isolation] FAIL — 1 NEW finding(s) above baseline of 9:
+  server/services/submission-service/submission-service.ts#59f216b0a04a:documents
+exit=1
+
+## node scripts/ci/audit-requestdb-coverage.mjs  (no npm alias in package.json at HEAD; the 'ci:requestdb-coverage' name P1-8's folder used no longer exists)
+[ci:requestdb-coverage] RLS request-scoped DB adoption
+  route files touching the DB : 265
+  using requestDb(req)        : 32
+  still on the shared pool    : 232 (migration backlog)
+    JWT boundary auto-scoped  : 230
+    explicit pre-tenant scope : 2
+    unclassified              : 0
+exit=0

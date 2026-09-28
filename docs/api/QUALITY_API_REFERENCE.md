@@ -6,10 +6,19 @@ This document provides reference information for the Quality Management API, whi
 
 The Quality Management API provides a unified interface for interacting with quality control mechanisms in the CER generation process. It enables:
 
-- Risk-based quality validation through CTQ factors
-- Section gating with configurable validation rules
-- Waiver request and approval workflow management
+- Quality Management Plans: create, change (activate, archive) and delete, each a
+  governed change with a reason and a ledger row
+- Section validation against the plan's gating rules and CTQ factors
+- A governed delete of a CTQ factor
 - Quality dashboard and metrics reporting
+
+**Corrected 2026-09-23 (D5).** Earlier versions of this page described CTQ-factor
+create, change and batch operations, section-gating rule writes and a waiver
+workflow as working. None of them ever saved anything. They now refuse with
+`501 NOT_AVAILABLE`, or were never routed at all. The per-route contract, known
+defects included, is in
+[`quality-gating-api-reference.md`](./quality-gating-api-reference.md). This page
+no longer repeats it.
 
 ## Base URL
 
@@ -29,11 +38,11 @@ Tenant context is derived from the authenticated user. The tenant middleware ens
 
 The Quality Management API is organized into several logical sections:
 
-1. **Quality Management Plans** - Managing QMPs
-2. **CTQ Factors** - Define and manage quality factors
-3. **Section Gating** - Configure section quality requirements
+1. **Quality Management Plans** - Managing QMPs (governed writes)
+2. **CTQ Factors** - Reads, and one governed delete
+3. **Section Gating** - Reads only
 4. **Validation** - Validate content against quality rules
-5. **Waivers** - Request and manage quality requirement waivers
+5. **Waivers** - Not available: a request is refused and nothing is recorded
 
 ## Core Endpoints
 
@@ -61,12 +70,15 @@ Retrieves detailed information about a specific QMP, including associated sectio
 POST /plans
 ```
 
-Creates a new Quality Management Plan.
+Creates a new Quality Management Plan. This is a governed change. A `reason` of
+at least 8 characters is required (`400 REASON_REQUIRED` without one), and the
+plan and its ledger row commit together. A viewer is refused with `403`.
 
 Request body:
 
 ```json
 {
+  "reason": "Plan for the 2026 CER programme, approved by the quality lead",
   "name": "CER Quality Management Plan",
   "version": "1.0",
   "description": "Quality plan for EU MDR compliant CERs",
@@ -86,12 +98,19 @@ Request body:
 PATCH /plans/:id
 ```
 
-Updates a Quality Management Plan.
+Updates a Quality Management Plan. This is a governed change: `reason` is
+required, and the ledger records each changed field's before and after value.
+
+- A request that changes nothing the plan does not already hold is refused with
+  `409 NO_CHANGES`.
+- A COMMIT the server cannot confirm is answered `500 OUTCOME_UNKNOWN`; reload
+  before retrying.
 
 Request body:
 
 ```json
 {
+  "reason": "Activating for the Q4 CER filings",
   "status": "active",
   "allowWaivers": false
 }
@@ -103,144 +122,32 @@ Request body:
 DELETE /plans/:id
 ```
 
-Deletes a Quality Management Plan. Returns an error if the QMP is in use by any gating rules.
+Deletes a Quality Management Plan. This is a governed change: `reason` is
+required in the JSON body, and the ledger keeps a full copy of the deleted row.
+It is refused when:
 
-### CTQ Factors
+- the plan is `active` (`409 PLAN_ACTIVE`: archive it first with a governed
+  `PATCH {status: "archived"}`);
+- section gating rules still use it (`400`);
+- CTQ factors or traceability rows still reference it (`409 PLAN_IN_USE`).
 
-#### Get all CTQ factors
+### CTQ Factors and Section Gating
 
-```
-GET /ctq-factors/:tenantId/ctq-factors
-```
+These routes are described, one by one and with their known defects, in
+[`quality-gating-api-reference.md`](./quality-gating-api-reference.md). In summary:
 
-Retrieves all CTQ factors for the specified tenant. Supports filtering via query parameters:
-
-- `category` - Filter by category
-- `riskLevel` - Filter by risk level
-- `sectionCode` - Filter by section code
-- `active` - Filter by active status
-
-#### Get a single CTQ factor
-
-```
-GET /ctq-factors/:tenantId/ctq-factors/:factorId
-```
-
-Retrieves a specific CTQ factor by ID.
-
-#### Create a CTQ factor
-
-```
-POST /ctq-factors/:tenantId/ctq-factors
-```
-
-Creates a new CTQ factor.
-
-Request body:
-
-```json
-{
-  "name": "Comprehensive Literature Search",
-  "description": "Evidence of a comprehensive literature search strategy",
-  "category": "clinical",
-  "appliesTo": "all",
-  "sectionCode": "literature-analysis",
-  "riskLevel": "high",
-  "validationRule": "search strategy,databases,inclusion criteria,exclusion criteria",
-  "active": true,
-  "required": true
-}
-```
-
-#### Update a CTQ factor
-
-```
-PATCH /ctq-factors/:tenantId/ctq-factors/:factorId
-```
-
-Updates an existing CTQ factor.
-
-#### Delete a CTQ factor
-
-```
-DELETE /ctq-factors/:tenantId/ctq-factors/:factorId
-```
-
-Deletes a CTQ factor. Returns an error if the factor is in use by any gating rules.
-
-#### Batch operations
-
-```
-POST /ctq-factors/:tenantId/ctq-factors/batch
-```
-
-Performs batch operations on CTQ factors. Operations include:
-
-- `update-status` - Update active status for multiple factors
-- `clone-template` - Clone factors from a template
-- `apply-to-sections` - Apply factors to multiple sections
-
-### Section Gating
-
-#### Get section gating rules for a QMP
-
-```
-GET /section-gating/:qmpId/sections
-```
-
-Retrieves all section gating rules for a specific QMP.
-
-#### Get a specific section gating rule
-
-```
-GET /section-gating/rule/:id
-```
-
-Retrieves a specific section gating rule by ID, including associated CTQ factors.
-
-#### Create a section gating rule
-
-```
-POST /section-gating
-```
-
-Creates a new section gating rule.
-
-Request body:
-
-```json
-{
-  "qmpId": 1,
-  "sectionCode": "benefit-risk",
-  "ctqFactors": [1, 2, 3],
-  "requiredLevel": "hard",
-  "customValidations": [
-    {
-      "name": "Risk-benefit analysis completeness",
-      "description": "Checks if the risk-benefit analysis is complete",
-      "rule": "risk analysis,benefit analysis,conclusion",
-      "severity": "high"
-    }
-  ],
-  "active": true
-}
-```
-
-#### Update a section gating rule
-
-```
-PUT /section-gating/:id
-```
-
-Updates an existing section gating rule.
-
-#### Delete a section gating rule
-
-```
-DELETE /section-gating/:id
-```
-
-Deletes a section gating rule.
+- **CTQ factors** (`/ctq-factors/:tenantId/ctq-factors…`):
+  - create, change and every batch operation answer `501 NOT_AVAILABLE`. They
+    never saved anything; nothing is saved.
+  - the one working write is the governed delete,
+    `DELETE /ctq-factors/:tenantId/ctq-factors/:factorId`. It requires an
+    administrator, a `reason` of at least 8 characters, and a factor no
+    traceability row or gating rule references. The ledger keeps a full copy of
+    the deleted row.
+- **Section gating**: the create, update and delete endpoints this page used to
+  list (`POST /section-gating`, `PUT` and `DELETE /section-gating/:id`, and the
+  `…/sections` and `…/rule/:id` reads) were never routed. Rule updates answer
+  `501 NOT_AVAILABLE`.
 
 ### Validation
 
@@ -342,19 +249,9 @@ Retrieves validation statistics for a QMP.
 POST /validation/request-waiver
 ```
 
-Requests a waiver for quality requirements that cannot be met.
-
-Request body:
-
-```json
-{
-  "qmpId": 1,
-  "sectionCode": "clinical-background",
-  "justification": "Clinical data is limited due to novel device classification",
-  "factorIds": [1, 5],
-  "expirationDate": "2025-12-31T23:59:59Z"
-}
-```
+**Not available.** Waiver requests are not recorded: there is no waiver store
+and no approval route. The request answers `501 NOT_AVAILABLE` ("Nothing was
+submitted."). Earlier versions answered `201` with an invented pending waiver.
 
 ### Dashboard and Metrics
 

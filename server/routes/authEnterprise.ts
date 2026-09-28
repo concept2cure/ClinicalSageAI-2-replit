@@ -28,8 +28,11 @@ import {
 
 import { config } from '../config/environment';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
-import { verifyLiveToken } from '../services/token-revocation';
+import { revokeToken, verifyLiveToken } from '../services/token-revocation';
+import { continuedSessionClaims, idleWindowSecondsOf, openSession } from '../services/session-inactivity';
 import { recordAuthEvent } from '../services/audit/auth-event-audit';
+import { ACCOUNT_INACTIVE_MESSAGE, isAccountActive, isActiveAccountStatus, isPendingVerificationStatus } from '../services/account-standing';
+import { EMAIL_UNVERIFIED_MESSAGE } from '../services/email-verification';
 import { runWithTenantScope } from '../db/tenantStore';
 import { requireAccessTokenReason } from '../middleware/tokenType';
 import { authMiddleware } from '../auth';
@@ -37,6 +40,7 @@ import * as emailOtpService from '../services/emailOtpService';
 import { sendLoginOtpEmail } from '../services/emailService';
 import * as mfaService from '../services/mfaService';
 import { mfaEnrolmentOf } from '../services/mfa-enrolment';
+import { padUnknownEmailTiming } from '../services/login-timing-pad';
 
 const router = Router();
 // SECURITY FIX: isDev variable and devUser removed — no more dev-mode auth bypasses.
@@ -267,6 +271,10 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
       .limit(1);
 
     if (!userResult.length) {
+      // The same bcrypt cost a wrong password pays, so the response time does
+      // not say whether the e-mail is enrolled (audit IAM-18 item 8; the main
+      // door pays it through the same module).
+      await padUnknownEmailTiming(password);
       await recordAuthEvent({
         action: 'user_login',
         email: normalizedEmail,
@@ -282,6 +290,40 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
     }
 
     const user = userResult[0];
+
+    // An account out of use (suspended, deprovisioned) signs in nowhere: the
+    // main login refuses it before comparing the password (AUTH_ACCOUNT_INACTIVE);
+    // this step admitted it and minted the MFA-partial token (security audit
+    // 2026-09-24, IAM-18 item 5). Refused before the lockout and the password,
+    // so a suspended account spends neither.
+    // A signed-up account whose address is not yet confirmed (IAM-17) is told
+    // so, with the same code the main login uses.
+    if (isPendingVerificationStatus(user.status)) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId: user.id,
+        tenantId: user.defaultOrganizationId,
+        email: user.email,
+        outcome: 'failure',
+        reason: 'email_unverified',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(403).json({ error: 'AUTH_EMAIL_UNVERIFIED', message: EMAIL_UNVERIFIED_MESSAGE });
+    }
+    if (!isActiveAccountStatus(user.status)) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId: user.id,
+        tenantId: user.defaultOrganizationId,
+        email: user.email,
+        outcome: 'failure',
+        reason: 'account_inactive',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(403).json({ error: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE });
+    }
 
     // Check account lockout
     const lockStatus = await isAccountLocked(user.id);
@@ -303,11 +345,16 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
       });
     }
 
-    // Verify password using bcrypt
+    // Verify password using bcrypt. An account with no stored password
+    // (provisioned, never set) pays the comparison an unknown e-mail pays, so
+    // it is not told apart by timing either (IAM-18 item 8).
     const bcrypt = await import('bcryptjs');
-    const passwordValid = user.passwordHash
-      ? await bcrypt.compare(password, user.passwordHash)
-      : false;
+    let passwordValid = false;
+    if (user.passwordHash) {
+      passwordValid = await bcrypt.compare(password, user.passwordHash);
+    } else {
+      await padUnknownEmailTiming(password);
+    }
 
     if (!passwordValid) {
       // Record failed attempt
@@ -465,17 +512,49 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
     // Verify the MFA code using the same canonical MFA service as /api/auth/*
     const userId = parseInt(decoded.userId);
 
-    // Try email OTP first, then fall back to TOTP
-    let isValid = await emailOtpService.verifyEmailOtp(userId, code);
+    // A challenge issued before the account was suspended or deprovisioned does
+    // not become a session after it (the rule routes/auth.ts's /mfa/verify
+    // applies; audit IAM-18 item 5). Checked before the code, so an account out
+    // of use spends none.
+    if (!(await isAccountActive(userId))) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId,
+        tenantId: decoded.organizationId,
+        email: decoded.email,
+        outcome: 'failure',
+        reason: 'account_inactive',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(403).json({ error: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE });
+    }
+
+    // The factor this account signs in with (mfa-enrolment.ts), read before any
+    // code is tried. An account with an authenticator never completes sign-in
+    // with an emailed code: the emailed code is the factor of accounts WITHOUT
+    // one, the rule /verify-password applies when it decides whether to mail
+    // one (audit IAM-08; P1-2 on routes/auth.ts, P1-38 here). Until 2026-09-26
+    // this door tried the emailed code first for every account.
+    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    const authenticatorAccount = mfaEnrolmentOf(user ?? {}).signInFactor === 'totp';
+    let isValid = false;
     let verifiedMethod: 'email' | 'totp' | 'backup_code' = 'email';
 
+    if (!authenticatorAccount) {
+      isValid = await emailOtpService.verifyEmailOtp(userId, code);
+    }
+
     if (!isValid) {
+      // The authenticator, or one of the recovery codes the enrolment issued.
       // One call that verifies AND consumes the code, and says which method did.
       // It was a non-consuming detectVerificationMethod followed by verifyToken:
       // a second, independent verification of the same code (removed 2026-09-23).
-      const method = await mfaService.verifySecondFactor(userId, code);
+      // The login challenge is the one place a recovery code is redeemable
+      // (P1-2, 2026-09-25); signing keeps asking for the authenticator.
+      const method = await mfaService.verifyLoginSecondFactor(userId, code);
       isValid = method !== null;
-      if (method) verifiedMethod = method;
+      if (method) verifiedMethod = method === 'recovery' ? 'backup_code' : method;
     }
 
     if (!isValid) {
@@ -499,21 +578,22 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
     // MFA verified — issue full token with actual role
     const mfaOrgId = decoded.organizationId ? parseInt(decoded.organizationId) : null;
 
-    // Parallel: fetch role, user details, and org name concurrently
-    const [mfaActualRole, [mfaUserData], mfaOrgResult] = await Promise.all([
+    // Parallel: fetch role and org name concurrently (the user row was read above).
+    const [mfaActualRole, mfaOrgResult] = await Promise.all([
       mfaOrgId ? lookupOrgRole(userId, mfaOrgId) : Promise.resolve('user'),
-      db.select().from(users).where(eq(users.id, userId)).limit(1),
       mfaOrgId
         ? db
-            .select({ name: organizations.name })
+            .select({ name: organizations.name, settings: organizations.settings })
             .from(organizations)
             .where(eq(organizations.id, mfaOrgId))
             .limit(1)
         : Promise.resolve([]),
     ]);
-    const user = mfaUserData;
     const mfaVerifyOrgName = mfaOrgResult[0]?.name || 'Organization';
 
+    // The session's id, start and idle window, registered against the
+    // account's concurrent-session limit (P1-1).
+    const session = await openSession(userId, mfaOrgResult[0]?.settings);
     const token = jwt.sign(
       {
         userId: decoded.userId,
@@ -521,6 +601,7 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
         organizationId: decoded.organizationId,
         role: mfaActualRole,
         type: 'access',
+        ...session,
       },
       config.jwt.secret,
       { expiresIn: '24h' }
@@ -831,7 +912,7 @@ router.post('/select-organization', async (req: Request, res: Response) => {
 
     // Look up org details
     const [org] = await db
-      .select({ id: organizations.id, name: organizations.name })
+      .select({ id: organizations.id, name: organizations.name, settings: organizations.settings })
       .from(organizations)
       .where(eq(organizations.id, parseInt(organizationId)))
       .limit(1);
@@ -841,10 +922,16 @@ router.post('/select-organization', async (req: Request, res: Response) => {
     // Issue new JWT scoped to the selected organization with actual role
     const jwtEmail = Array.isArray(email) ? email[0] : email;
     const token = jwt.sign(
-      { userId, email: jwtEmail, organizationId: String(organizationId), role: selectOrgRole, type: 'access' },
+      // The same session, with the selected organisation's idle window (P1-1).
+      { userId, email: jwtEmail, organizationId: String(organizationId), role: selectOrgRole, type: 'access', ...continuedSessionClaims(decoded), idl: idleWindowSecondsOf(org?.settings) },
       config.jwt.secret,
       { expiresIn: '24h' }
     );
+    // Rotation, as at /refresh-token and POST /api/auth/refresh (IAM-04): the
+    // presented token is spent the moment its successor exists. Until 2026-09-26
+    // the switch revoked nothing, so the old organisation's token and the new
+    // one stayed live together for the rest of the session.
+    await revokeToken(existingToken, 'rotated');
 
     // AUDIT: this is a tenant-boundary crossing and it was previously silent.
     //
@@ -937,7 +1024,8 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
   }
 
   try {
-    const decoded = (await verifyLiveToken(oldToken)) as any;
+    // A rotation is not the user acting (P1-1): it is not the session's activity.
+    const decoded = (await verifyLiveToken(oldToken, undefined, { activity: false })) as any;
 
     // SECURITY: this endpoint re-mints a full 24h access token. A pre-MFA
     // (mfaPending / mfa_challenge) or refresh token presented here would let a
@@ -965,10 +1053,18 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
         organizationId: decoded.organizationId,
         role: refreshRole,
         type: 'access',
+        ...continuedSessionClaims(decoded),
       },
       config.jwt.secret,
       { expiresIn: '24h' }
     );
+
+    // Security audit 2026-09-24, IAM-04: rotation. The presented token is spent
+    // the moment its successor exists. Before this nothing was revoked, so any
+    // live access token renewed itself for ever, a day at a time, and logging
+    // out of the successor left its predecessor live. Revoked after minting, so
+    // a failed mint spends nothing.
+    await revokeToken(oldToken, 'rotated');
 
     res.json({
       success: true,

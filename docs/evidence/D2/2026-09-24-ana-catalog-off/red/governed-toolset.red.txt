@@ -1,0 +1,63 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana/__tests__/catalog-gated-tools.test.ts > CATALOG_GATED_TOOLS > names exactly the tools whose handlers call requireCatalog 16ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > removes a denied tool from the surface the model is offered 2ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > returns everything when the tenant denies nothing 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > does NOT apply the allowlist — that would strip every search tool 0ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > skips the policy lookup entirely when there is no organization 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > ignores a non-numeric organization id rather than passing it to the query 0ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > is default-allow when the policy cannot be read 0ms
+ × server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > does not offer the catalog tools to an organization whose catalog is off 4ms
+   → expected [ 'search_guidance', …(7) ] to not include 'catalog_project_document'
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > offers them when the catalog is on 1ms
+ × server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > fails closed when the toggle cannot be read — a tool that would refuse is not offered 1ms
+   → expected [ 'search_guidance', …(7) ] to not include 'catalog_project_document'
+ × server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > does not offer them to an org-less turn, which they refuse outright 1ms
+   → expected [ 'search_guidance', …(7) ] to not include 'catalog_project_document'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > does not offer the catalog tools to an organization whose catalog is off
+AssertionError: expected [ 'search_guidance', …(7) ] to not include 'catalog_project_document'
+ ❯ server/services/ana/__tests__/governed-toolset.test.ts:115:66
+    113|     isDocumentCatalogEnabled.mockResolvedValue(false);
+    114|     const offered = names(await governedToolsetFor(pool, 42));
+    115|     for (const gated of CATALOG_GATED_TOOLS) expect(offered).not.toCon…
+       |                                                                  ^
+    116|     expect(offered).toContain('search_guidance');
+    117|     expect(isDocumentCatalogEnabled).toHaveBeenCalledWith(42);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > fails closed when the toggle cannot be read — a tool that would refuse is not offered
+AssertionError: expected [ 'search_guidance', …(7) ] to not include 'catalog_project_document'
+ ❯ server/services/ana/__tests__/governed-toolset.test.ts:133:66
+    131|     });
+    132|     const offered = names(await governedToolsetFor(pool, 42));
+    133|     for (const gated of CATALOG_GATED_TOOLS) expect(offered).not.toCon…
+       |                                                                  ^
+    134|   });
+    135|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > does not offer them to an org-less turn, which they refuse outright
+AssertionError: expected [ 'search_guidance', …(7) ] to not include 'catalog_project_document'
+ ❯ server/services/ana/__tests__/governed-toolset.test.ts:139:66
+    137|     withGated();
+    138|     const offered = names(await governedToolsetFor(pool, null));
+    139|     for (const gated of CATALOG_GATED_TOOLS) expect(offered).not.toCon…
+       |                                                                  ^
+    140|     expect(isDocumentCatalogEnabled).not.toHaveBeenCalled();
+    141|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  3 failed | 8 passed (11)
+   Start at  00:53:28
+   Duration  513ms (transform 225ms, setup 150ms, import 175ms, tests 33ms, environment 0ms)
+

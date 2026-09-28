@@ -1,0 +1,94 @@
+# against a80fd373 (every WS2 source file at HEAD; server-tool-policy.ts absent)
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' calls sessionBootstrapBlockFor 2ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' calls sessionBootstrapBlockFor 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' injects the block it gets back 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' injects the block it gets back 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > neither path carries its own copy of the gate 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' assembles its tools through governedToolsetFor 0ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' assembles its tools through governedToolsetFor 0ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/chat/send-message' does not assemble the raw tool surface itself 1ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > 'POST /api/ana-ri/stream' does not assemble the raw tool surface itself 1ms
+ × server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > every composer of the AnA tool surface goes through the helper 20ms
+   → server/services/ana/ana-realtime.ts should compose via governedToolsetFor: expected '/**\n * @fileoverview ANA real-time d…' to contain 'governedToolsetFor'
+ × server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > the realtime turn runs in the tenant scope its socket was authenticated for 3ms
+   → expected '/**\n * @fileoverview ANA real-time d…' to match /runWithTenantScope\(\s*\{\s*tenantId:…/
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > the helper applies the deny-list and says why it does not apply the allowlist 0ms
+ ✓ server/routes/__tests__/chat-path-parity.test.ts > the canonical chat paths stay in parity > the helper still owns the gate, the kill-switch and the failure path 0ms
+ × server/services/ana/__tests__/governed-toolset-hosted-tools.test.ts > governedToolsetFor — Anthropic-hosted tools > a tenant with no placement policy is offered none of them 9ms
+   → expected [ 'search_guidance', …(3) ] to deeply equal [ 'search_guidance' ]
+ × server/services/ana/__tests__/governed-toolset-hosted-tools.test.ts > governedToolsetFor — Anthropic-hosted tools > an opted-in tenant is offered web search and web fetch, never code execution 2ms
+   → expected [ 'search_guidance', …(3) ] to deeply equal [ 'search_guidance', …(2) ]
+ × server/services/ana/__tests__/governed-toolset-hosted-tools.test.ts > governedToolsetFor — Anthropic-hosted tools > a private-lane tenant is offered none, whatever its opt-in says 1ms
+   → expected [ 'search_guidance', …(3) ] to deeply equal [ 'search_guidance' ]
+ × server/services/ana/__tests__/governed-toolset-hosted-tools.test.ts > governedToolsetFor — Anthropic-hosted tools > a zero-retention or residency-bound tenant is offered none 2ms
+   → expected [ 'search_guidance', …(3) ] to deeply equal [ 'search_guidance' ]
+ × server/services/ana/__tests__/governed-toolset-hosted-tools.test.ts > governedToolsetFor — Anthropic-hosted tools > a policy that cannot be read offers none (fail closed) 1ms
+   → expected [ 'search_guidance', …(3) ] to deeply equal [ 'search_guidance' ]
+ × server/services/ana/__tests__/governed-toolset-hosted-tools.test.ts > governedToolsetFor — Anthropic-hosted tools > an org-less turn is offered none 1ms
+   → expected [ 'search_guidance', …(3) ] to deeply equal [ 'search_guidance' ]
+ ✓ server/services/ana/__tests__/server-tool-steps.test.ts > the label says what was actually done > names the query a web search used 1ms
+ ✓ server/services/ana/__tests__/server-tool-steps.test.ts > the label says what was actually done > names the page a web fetch read 0ms
+ ✓ server/services/ana/__tests__/server-tool-steps.test.ts > the label says what was actually done > does NOT invent a query it was never given 0ms
+ ✓ server/services/ana/__tests__/server-tool-steps.test.ts > the label says what was actually done > describes an unfamiliar server tool plainly rather than guessing at it 0ms
+ ✓ server/services/ana/__tests__/server-tool-steps.test.ts > the summary records what was consulted, not its text > lists the sources a search returned 1ms
+ ✓ server/services/ana/__tests__/server-tool-steps.test.ts > the summary records what was consulted, not its text > keeps a fetched document out of the trace, and keeps its source 1ms
+ ✓ server/services/ana/__tests__/server-tool-steps.test.ts > the summary records what was consulted, not its text > SAYS how many it left out, rather than presenting a long list as complete 1ms
+ ✓ server/services/ana/__tests__/server-tool-steps.test.ts > the summary records what was consulted, not its text > lists nothing — rather than a guess — for a shape it does not recognise 0ms
+ ✓ server/services/ana/__tests__/server-tool-steps.test.ts > the summary records what was consulted, not its text > lists nothing for a step whose result never arrived 0ms
+ ✓ server/services/ana/__tests__/server-tool-steps.test.ts > a failed server tool is reported as a failure > carries the error code a failed search returned 0ms
+ ✓ server/services/ana/__tests__/server-tool-steps.test.ts > a failed server tool is reported as a failure > is still a failure when no code came with it 0ms
+ ✓ server/services/ana/__tests__/server-tool-steps.test.ts > a failed server tool is reported as a failure > never lists sources for a failed step 0ms
+ ✓ server/services/ana/__tests__/server-tool-steps.test.ts > the stream route puts the step in the trace, and closes it > emits for the first model call AND every agentic round 0ms
+ ✓ server/services/ana/__tests__/server-tool-steps.test.ts > the stream route puts the step in the trace, and closes it > emits the result right after the use, so the row never spins forever 0ms
+ ✓ server/services/ana/__tests__/server-tool-steps.test.ts > the stream route puts the step in the trace, and closes it > reports a failed search as a failure, not a success 0ms
+ ✓ server/services/ana/__tests__/server-tool-steps.test.ts > the stream route puts the step in the trace, and closes it > forwards the summary, not the raw result 0ms
+ × server/services/ana/__tests__/server-tool-steps.test.ts > what a hosted web step contributes to the grounding corpus (D6, WS2) > a search contributes each source it returned 4ms
+   → serverToolEvidence is not a function
+ × server/services/ana/__tests__/server-tool-steps.test.ts > what a hosted web step contributes to the grounding corpus (D6, WS2) > a fetch contributes the text it read 1ms
+   → serverToolEvidence is not a function
+ × server/services/ana/__tests__/server-tool-steps.test.ts > what a hosted web step contributes to the grounding corpus (D6, WS2) > a failed step contributes nothing — no result was seen 1ms
+   → serverToolEvidence is not a function
+ × server/services/ana/__tests__/server-tool-steps.test.ts > what a hosted web step contributes to the grounding corpus (D6, WS2) > a long document is capped 1ms
+   → serverToolEvidence is not a function
+ × server/services/ai-gateway/__tests__/server-tool-placement.test.ts > hosted tools never reach a lane that is not first-party Anthropic > Bedrock is sent the custom tools and none of the hosted ones 24ms
+   → expected [ 'lookup_ich_guideline', …(2) ] to deeply equal [ 'lookup_ich_guideline' ]
+ × server/services/ai-gateway/__tests__/server-tool-placement.test.ts > hosted tools never reach a lane that is not first-party Anthropic > a tool choice that named a withheld tool is dropped with it 5ms
+   → expected [ { …(3) } ] to be undefined
+ × server/services/ai-gateway/__tests__/server-tool-placement.test.ts > first-party Anthropic runs hosted tools only for a tenant that opted in > a tenant with no placement policy has not opted in 2ms
+   → expected [ 'lookup_ich_guideline', …(2) ] to deeply equal [ 'lookup_ich_guideline' ]
+ ✓ server/services/ai-gateway/__tests__/server-tool-placement.test.ts > first-party Anthropic runs hosted tools only for a tenant that opted in > an opted-in tenant gets web search and web fetch on first-party Anthropic 2ms
+ × server/services/ai-gateway/__tests__/server-tool-placement.test.ts > first-party Anthropic runs hosted tools only for a tenant that opted in > a zero-retention tenant is not offered hosted tools, even with the opt-in 2ms
+   → expected [ 'lookup_ich_guideline', …(2) ] to deeply equal [ 'lookup_ich_guideline' ]
+ × server/services/ai-gateway/__tests__/server-tool-placement.test.ts > first-party Anthropic runs hosted tools only for a tenant that opted in > a tenant that turned public-source egress off is not offered them 1ms
+   → expected [ 'lookup_ich_guideline', …(2) ] to deeply equal [ 'lookup_ich_guideline' ]
+ × server/services/ai-gateway/__tests__/server-tool-placement.test.ts > first-party Anthropic runs hosted tools only for a tenant that opted in > a policy that could not be read withholds them, even where the request itself may r
+   → expected [ 'lookup_ich_guideline', …(2) ] to deeply equal [ 'lookup_ich_guideline' ]
+ × server/services/ai-gateway/__tests__/server-tool-placement.test.ts > first-party Anthropic runs hosted tools only for a tenant that opted in > code execution never runs a tenant payload on Anthropic’s sandbox 1ms
+   → expected [ 'lookup_ich_guideline', …(1) ] to deeply equal [ 'lookup_ich_guideline' ]
+ × server/services/ai-gateway/__tests__/server-tool-placement.test.ts > a document referenced by Anthropic file id is read only by first-party Anthropic > is refused on Bedrock before any call, not sent with the Files-API header 
+   → promise resolved "{ content: 'ok', …(6) }" instead of rejecting
+ ✓ server/services/ai-gateway/__tests__/server-tool-placement.test.ts > a document referenced by Anthropic file id is read only by first-party Anthropic > is sent to first-party Anthropic 1ms
+ ✓ server/services/ana/__tests__/server-tools-gating.test.ts > server tool gating > offers nothing by default 2ms
+ ✓ server/services/ana/__tests__/server-tools-gating.test.ts > server tool gating > offers web search on its own 1ms
+ ✓ server/services/ana/__tests__/server-tools-gating.test.ts > server tool gating > offers the standalone sandbox when no web tool is on 0ms
+ ✓ server/services/ana/__tests__/server-tools-gating.test.ts > server tool gating > refuses the standalone sandbox alongside web search 2ms
+ ✓ server/services/ana/__tests__/server-tools-gating.test.ts > server tool gating > refuses it alongside web fetch too 1ms
+ ✓ server/services/ana/__tests__/server-tools-gating.test.ts > server tool gating > says why, rather than silently dropping a flag someone set 1ms
+ ✓ server/services/ana/__tests__/server-tools-gating.test.ts > the tool variants themselves > uses the current web search variant, not the 2025 one 0ms
+ ✓ server/services/ana/__tests__/server-tools-gating.test.ts > the tool variants themselves > keeps the agency allowlist that makes this the currency path 1ms
+ ✓ server/services/ana/__tests__/server-tools-gating.test.ts > the tool variants themselves > never searches off the allowlist 1ms
+ ✓ server/services/ana/__tests__/server-tools-gating.test.ts > the tool variants themselves > pairs web fetch on the matching variant 0ms
+ ✓ server/services/ana/__tests__/server-tools-gating.test.ts > the tool variants themselves > still declares a standalone sandbox for the case where it is allowed 0ms
+ × server/services/ana/__tests__/server-tools-gating.test.ts > web fetch is bounded like web search (D6, WS2) > reaches only the agency domains web search may search 5ms
+   → expected undefined to deeply equal [ 'fda.gov', 'www.fda.gov', …(22) ]
+ × server/services/ana/__tests__/server-tools-gating.test.ts > web fetch is bounded like web search (D6, WS2) > is capped per turn 1ms
+   → expected undefined to be 5 // Object.is equality
+ FAIL  server/services/ai-gateway/__tests__/server-tool-policy.test.ts [ server/services/ai-gateway/__tests__/server-tool-policy.test.ts ]
+⎯⎯⎯⎯⎯⎯ Failed Tests 22 ⎯⎯⎯⎯⎯⎯⎯
++  * Text-only. Clients send `ana:message`, receive `ana:thinking` → `ana:token` /
++  * `ana:tool` → `ana:done`, and interrupt with `ana:cancel` (barge-in). Each
+ * Text-only. Clients send `ana:message`, receive `ana:thinking` → `ana:token` /
+ * `ana:tool` → `ana:done`, and interrupt with `ana:cancel` (barge-in). Each
+ Test Files  6 failed (6)
+      Tests  22 failed | 40 passed (62)
+exit=1

@@ -43,14 +43,16 @@ describe('loadUploadedFileMetadata — tenancy', () => {
     query.mockReset();
   });
 
-  it('returns a file the caller\'s organization owns', async () => {
-    const out = await lookup([row()], 7);
+  it('returns a file the caller\'s organization owns, with the checksum recorded at upload', async () => {
+    const out = await lookup([row({ checksum_sha256: 'c'.repeat(64) })], 7);
     expect(out).toEqual([
       {
         fileId: 'file_1',
         fileName: 'protocol.pdf',
         mimeType: 'application/pdf',
         storagePath: 'uploads/org-7/file_1',
+        // The turn record names the file by the hash its upload recorded.
+        checksumSha256: 'c'.repeat(64),
       },
     ]);
   });

@@ -1,0 +1,14 @@
+# node scripts/ops/terraform-preflight-proof.mjs — with the change
+[terraform-preflight-proof] ok — preflight step found in job "migrate" (8141 bytes of shell)
+[terraform-preflight-proof] ok — terraform test: 21 passed, 0 failed, 0 errored
+[terraform-preflight-proof] ok — rendered API task definition written to /tmp/tf-td-3iEmtV/api-td.json
+[terraform-preflight-proof] ok — rendered family matches the pipeline's ECS_API_TASK_FAMILY (c2c-production-api)
+Production boot contract satisfied by arn:aws:ecs:us-east-1:123456789012:task-definition/c2c-production-api:1.
+[terraform-preflight-proof] ok — deploy-aws.yml's preflight accepted the task definition
+[terraform-preflight-proof] ok — the preflight published the revision it checked (arn:aws:ecs:us-east-1:123456789012:task-definition/c2c-production-api:1)
+[terraform-preflight-proof] ok — the revision the preflight checked is the one migrate and deploy-api derive from (ARN pinned end to end)
+[terraform-preflight-proof] ok — provision-database.yml accepts the rendered task definition and passes the owner URL from the same secret
+[terraform-preflight-proof] ok — every AWS call the deploy and provision workflows make is granted to the role its job can assume (38 job×action pairs)
+[terraform-preflight-proof] ok — the preflight runs before the migration (job "migrate")
+[terraform-preflight-proof] ok — health check runs and discriminates: live but not ready (/healthz 200, /readyz 503) → exit 0, /healthz 503 → exit 1, nothing listening → exit 1
+[terraform-preflight-proof] every check holds.

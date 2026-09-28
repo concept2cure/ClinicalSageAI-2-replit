@@ -1,0 +1,94 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/qms/__tests__/document-approval-signature.test.ts
+{
+  "timestamp": "2026-09-26T12:56:06.339Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T12:56:06.340Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/qms/__tests__/document-approval-signature.test.ts
+{
+  "timestamp": "2026-09-26T12:56:06.341Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/qms/__tests__/document-approval-signature.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/qms/__tests__/document-approval-signature.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/qms/__tests__/document-approval-signature.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/qms/__tests__/document-approval-signature.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/qms/__tests__/document-approval-signature.test.ts
+{
+  "timestamp": "2026-09-26T12:56:06.671Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/qms/__tests__/document-approval-signature.test.ts > computeQmsDocumentContentDigest > is a sha256 hex over the version content and is stable 3ms
+ ✓ server/services/qms/__tests__/document-approval-signature.test.ts > computeQmsDocumentContentDigest > changes when the controlled content changes 2ms
+ ✓ server/services/qms/__tests__/document-approval-signature.test.ts > computeQmsDocumentContentDigest > ignores the approval stamps the signature applies, and metadata.approval itself 1ms
+ ✓ server/services/qms/__tests__/document-approval-signature.test.ts > computeQmsDocumentContentDigest > treats a Date and its YYYY-MM-DD string as the same review date 1ms
+ × server/services/qms/__tests__/document-approval-signature.test.ts > computeQmsDocumentRetirementDigest > is the version-content digest with the retirement stamp excluded, so it recomputes from the stored retired row 4ms
+   → computeQmsDocumentRetirementDigest is not a function
+ × server/services/qms/__tests__/document-approval-signature.test.ts > computeQmsDocumentRetirementDigest > still changes when the controlled content changes, and still ignores metadata.approval 1ms
+   → computeQmsDocumentRetirementDigest is not a function
+ ✓ server/services/qms/__tests__/document-approval-signature.test.ts > the approval meaning and binding basis > APPROVED is taken from the platform signature-meaning enum, not minted here 2ms
+ ✓ server/services/qms/__tests__/document-approval-signature.test.ts > the approval meaning and binding basis > states what the bound digest is a digest of 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/qms/__tests__/document-approval-signature.test.ts > computeQmsDocumentRetirementDigest > is the version-content digest with the retirement stamp excluded, so it recomputes from the stored retired row
+TypeError: computeQmsDocumentRetirementDigest is not a function
+ ❯ server/services/qms/__tests__/document-approval-signature.test.ts:69:12
+     67|   it('is the version-content digest with the retirement stamp excluded…
+     68|     const d = computeQmsDocumentContentDigest(base);
+     69|     expect(computeQmsDocumentRetirementDigest(base)).toBe(d);
+       |            ^
+     70|     const retired: QmsDocumentRow = {
+     71|       ...base,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/qms/__tests__/document-approval-signature.test.ts > computeQmsDocumentRetirementDigest > still changes when the controlled content changes, and still ignores metadata.approval
+TypeError: computeQmsDocumentRetirementDigest is not a function
+ ❯ server/services/qms/__tests__/document-approval-signature.test.ts:80:15
+     78|
+     79|   it('still changes when the controlled content changes, and still ign…
+     80|     const d = computeQmsDocumentRetirementDigest(base);
+       |               ^
+     81|     expect(computeQmsDocumentRetirementDigest({ ...base, title: 'Desig…
+     82|     expect(computeQmsDocumentRetirementDigest({ ...base, metadata: { .…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+   Start at  12:56:04
+   Duration  2.39s (transform 1.11s, setup 89ms, import 1.98s, tests 20ms, environment 0ms)
+

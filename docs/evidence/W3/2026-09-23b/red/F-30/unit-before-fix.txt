@@ -1,0 +1,97 @@
+# git: 923d1491b + working tree (test added; auth-security-service as committed)
+# npx vitest run server/services/__tests__/account-lockout-read-fails-closed.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+stderr | server/services/__tests__/account-lockout-read-fails-closed.test.ts
+{
+  "timestamp": "2026-09-23T14:59:30.220Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/services/__tests__/account-lockout-read-fails-closed.test.ts > the lockout read > fails, rather than answering not-locked, when the lockout cannot be read
+{
+  "timestamp": "2026-09-23T14:59:30.245Z",
+  "level": "error",
+  "message": "[auth-security] Failed to check account lockout",
+  "context": {
+    "code": "42703"
+  }
+}
+
+stderr | server/services/__tests__/account-lockout-read-fails-closed.test.ts > the signing ceremony, wired to it > refuses a signature whose account lockout cannot be read (ACCOUNT_STATE_UNKNOWN)
+{
+  "timestamp": "2026-09-23T14:59:30.258Z",
+  "level": "error",
+  "message": "[auth-security] Failed to check account lockout",
+  "context": {
+    "code": "42703"
+  }
+}
+
+ ✓ server/services/__tests__/account-lockout-read-fails-closed.test.ts > the lockout read > answers not-locked for an account whose lockout it read 4ms
+ × server/services/__tests__/account-lockout-read-fails-closed.test.ts > the lockout read > fails, rather than answering not-locked, when the lockout cannot be read 12ms
+   → promise resolved "{ locked: false }" instead of rejecting
+ × server/services/__tests__/account-lockout-read-fails-closed.test.ts > the signing ceremony, wired to it > refuses a signature whose account lockout cannot be read (ACCOUNT_STATE_UNKNOWN) 4ms
+   → a signature went through on an unreadable lockout: expected { ok: true, …(2) } to match object { ok: false, status: 401, …(1) }
+(2 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/account-lockout-read-fails-closed.test.ts > the lockout read > fails, rather than answering not-locked, when the lockout cannot be read
+AssertionError: promise resolved "{ locked: false }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "locked": false,
+  }
+
+ ❯ server/services/__tests__/account-lockout-read-fails-closed.test.ts:47:82
+     45|   it('fails, rather than answering not-locked, when the lockout cannot…
+     46|     h.readFails = true;
+     47|     await expect(isAccountLocked(7), 'an unreadable lockout read as "n…
+       |                                                                                  ^
+     48|   });
+     49| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/__tests__/account-lockout-read-fails-closed.test.ts > the signing ceremony, wired to it > refuses a signature whose account lockout cannot be read (ACCOUNT_STATE_UNKNOWN)
+AssertionError: a signature went through on an unreadable lockout: expected { ok: true, …(2) } to match object { ok: false, status: 401, …(1) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "ACCOUNT_STATE_UNKNOWN",
+-   "ok": false,
+-   "status": 401,
++   "ok": true,
+  }
+
+ ❯ server/services/__tests__/account-lockout-read-fails-closed.test.ts:66:68
+     64|     };
+     65|     const r = await reverifySigner(7, { password: 'right' }, deps);
+     66|     expect(r, 'a signature went through on an unreadable lockout').toM…
+       |                                                                    ^
+     67|       ok: false,
+     68|       status: 401,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  14:59:28
+   Duration  2.11s (transform 1.08s, setup 129ms, import 1.76s, tests 26ms, environment 0ms)
+

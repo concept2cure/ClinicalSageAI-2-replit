@@ -60,57 +60,63 @@ function authedRequest(overrides: Record<string, unknown> = {}) {
   } as any;
 }
 
-describe('getSecureOrgUuid — the UUID tenant key, from verified identity only', () => {
-  let getSecureOrgUuid: any;
+describe('currentTenantOrgUuid — the UUID tenant key, from the verified tenant scope only', () => {
+  // It takes no request. A header, a body field or a tenantContext written by
+  // anything but the auth boundary cannot reach it, which is the whole point:
+  // the routes that used `tenantContext?.organizationUuid || req.headers['x-org-uuid']`
+  // now call this instead (docs/evidence/D3/2026-09-24-atom-search-tenant-key/).
+  let currentTenantOrgUuid: any;
+  let runWithTenantScope: any;
+  let runWithSystemTenantScope: any;
+  let runWithPreAuthScope: any;
+  const db = { query: vi.fn() };
 
   beforeEach(async () => {
     vi.resetModules();
-    ({ getSecureOrgUuid } = await import('../../utils/tenantContext'));
+    ({ currentTenantOrgUuid } = await import('../../db/currentTenant'));
+    ({ runWithTenantScope, runWithSystemTenantScope, runWithPreAuthScope } = await import(
+      '../../db/tenantStore'
+    ));
+    db.query.mockReset();
   });
 
-  it('returns the organization UUID the auth layer verified', () => {
-    expect(getSecureOrgUuid(authedRequest())).toBe(ORG_A_UUID);
+  const inScope = <T>(orgUuid: unknown, fn: () => Promise<T>) =>
+    runWithTenantScope(
+      { tenantId: String(ORG_A_ID), orgUuid, role: 'member', source: 'request', caller: 'contract' },
+      fn,
+    );
+
+  it('returns the organization UUID the auth boundary verified, without a query', async () => {
+    expect(await inScope(ORG_A_UUID, () => currentTenantOrgUuid(db))).toBe(ORG_A_UUID);
+    expect(db.query).not.toHaveBeenCalled();
   });
 
-  it('ignores a forged x-org-uuid header', () => {
-    const req = authedRequest({ headers: { 'x-org-uuid': ORG_B_UUID } });
-    expect(getSecureOrgUuid(req)).toBe(ORG_A_UUID);
+  it("reads the session's own organization row when the scope carries no UUID", async () => {
+    // The degraded membership path — exactly when the header fallbacks fired.
+    db.query.mockResolvedValue({ rows: [{ uuid: ORG_A_UUID }] });
+    expect(await inScope(null, () => currentTenantOrgUuid(db))).toBe(ORG_A_UUID);
+    expect(db.query).toHaveBeenCalledTimes(1);
+    expect(db.query.mock.calls[0][1]).toEqual([ORG_A_ID]);
   });
 
-  it('ignores a forged x-org-uuid even when the request carries no verified UUID', () => {
-    // The dangerous case: nothing legitimate to shadow, so a naive fallback would
-    // hand the attacker's value straight to a WHERE clause.
-    const req = authedRequest({
-      user: { id: 1, organizationId: ORG_A_ID, role: 'member' },
-      headers: { 'x-org-uuid': ORG_B_UUID },
-    });
-    expect(getSecureOrgUuid(req)).toBeNull();
-  });
-
-  it('does not accept a tenantContext UUID that a header could have written', () => {
-    const req = authedRequest({
-      user: { id: 1, organizationId: ORG_A_ID, role: 'member' },
-      headers: { 'x-org-uuid': ORG_B_UUID },
-      tenantContext: { organizationId: String(ORG_A_ID), organizationUuid: ORG_B_UUID },
-    });
-    expect(getSecureOrgUuid(req)).toBeNull();
-  });
-
-  it('refuses a value that is not a UUID, rather than passing it to a uuid column', () => {
-    // The integer org id is NOT interchangeable with the UUID. Handing '7' to a
-    // `uuid` column raises invalid-input-syntax, which surfaces as a 500 and reads
-    // as an outage — inviting a tolerance-widening "fix" that reopens the hole.
+  it('does not pass a scope value that is not a UUID to a uuid column; it asks the org row', async () => {
+    db.query.mockResolvedValue({ rows: [{ uuid: ORG_A_UUID }] });
     for (const bad of ['7', '', 'not-a-uuid', '../../etc/passwd']) {
-      const req = authedRequest({
-        user: { id: 1, organizationId: ORG_A_ID, organizationUuid: bad, role: 'member' },
-      });
-      expect(getSecureOrgUuid(req)).toBeNull();
+      expect(await inScope(bad, () => currentTenantOrgUuid(db))).toBe(ORG_A_UUID);
     }
+    for (const call of db.query.mock.calls) expect(call[1]).toEqual([ORG_A_ID]);
   });
 
-  it('fails closed on a request with no identity at all', () => {
-    expect(getSecureOrgUuid({ headers: {} } as any)).toBeNull();
-    expect(getSecureOrgUuid({} as any)).toBeNull();
+  it('answers null when the session names an organization with no row', async () => {
+    db.query.mockResolvedValue({ rows: [] });
+    expect(await inScope(null, () => currentTenantOrgUuid(db))).toBeNull();
+  });
+
+  it('fails closed with no scope, and under the system and pre-auth scopes', async () => {
+    expect(await currentTenantOrgUuid(db)).toBeNull();
+    expect(await runWithSystemTenantScope('contract', () => currentTenantOrgUuid(db))).toBeNull();
+    expect(await runWithPreAuthScope('contract', () => currentTenantOrgUuid(db))).toBeNull();
+    expect(db.query).not.toHaveBeenCalled();
   });
 });
 

@@ -1,0 +1,61 @@
+$ npx vitest run <the four heavy suites>   # HEAD=52254d11, working tree: fix applied, uncommitted
+
+  "level": "error",
+ ✓ tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey 1180ms
+ ✓ tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey 5103ms
+ ✓ tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey 4128ms
+  "level": "error",
+  "level": "error",
+  "level": "error",
+  "level": "error",
+  "level": "error",
+ ✓ server/routes/__tests__/cerv2-section-versions.pglite.integration.test.ts > POST / — section create > writes exactly one version row, in the canonical shape 51ms
+ ✓ server/routes/__tests__/cerv2-section-versions.pglite.integration.test.ts > POST / — section create > records the actor and request metadata the audit trail is read for 12ms
+ ✓ server/routes/__tests__/cerv2-section-versions.pglite.integration.test.ts > POST / — section create > records completion_percentage, which the inline insert never did 12ms
+ ✓ server/routes/__tests__/cerv2-section-versions.pglite.integration.test.ts > POST / — section create > keeps the submitted field values in the dedicated column and in the diff 15ms
+  "level": "error",
+  "level": "error",
+  "level": "error",
+  "level": "error",
+  "level": "error",
+  "level": "error",
+ ✓ server/routes/__tests__/cerv2-section-versions.pglite.integration.test.ts > POST / — section create > leaves field_data NULL when no field values were submitted 16ms
+ ✓ server/routes/__tests__/cerv2-section-versions.pglite.integration.test.ts > PATCH /:sectionId — section edit > appends version 2 rather than restarting, and preserves the text it replaced 46ms
+stderr | server/routes/__tests__/cerv2-section-versions.pglite.integration.test.ts > PATCH /:sectionId — section edit > FAIL-CLOSED: a failed version write rolls the content write back
+  "level": "error",
+stderr | server/routes/__tests__/cerv2-section-versions.pglite.integration.test.ts > PATCH /:sectionId — section edit > FAIL-CLOSED: a failed version write rolls the content write back
+  "level": "error",
+    "error": {
+        "name": "error",
+  "level": "error",
+  "level": "error",
+  "level": "error",
+  "level": "error",
+ ✓ server/routes/__tests__/cerv2-section-versions.pglite.integration.test.ts > PATCH /:sectionId — section edit > writes one row per edit — three edits leave versions 1..4 71ms
+ ✓ server/routes/__tests__/cerv2-section-versions.pglite.integration.test.ts > PATCH /:sectionId — section edit > FAIL-CLOSED: a failed version write rolls the content write back 32ms
+ ✓ server/routes/__tests__/cerv2-section-versions.pglite.integration.test.ts > POST /:sectionId/accept-ana-draft > records the acceptance as the next version, with the pre-acceptance state 35ms
+  "level": "error",
+  "level": "error",
+  "level": "error",
+  "level": "error",
+  "level": "error",
+  "level": "error",
+  "level": "error",
+  "level": "error",
+ ✓ server/routes/__tests__/cerv2-section-versions.pglite.integration.test.ts > POST /:sectionId/accept-ana-draft > keeps the machine origin on the live row and refuses a second acceptance 44ms
+ ✓ server/routes/__tests__/cerv2-section-versions.pglite.integration.test.ts > POST /:sectionId/accept-ana-draft > records the field values both as the state now and as the state before 23ms
+ ✓ server/routes/__tests__/cerv2-section-versions.pglite.integration.test.ts > POST /:sectionId/accept-ana-draft > records refined content as a content change 23ms
+ ✓ server/routes/__tests__/cerv2-section-versions.pglite.integration.test.ts > all three paths share one numbering sequence > create → edit → accept-draft yields versions 1, 2, 3 40ms
+ ✓ server/routes/__tests__/cerv2-section-versions.pglite.integration.test.ts > SOURCE: one writer per table > the route file writes cerv2_section_versions nowhere itself 1ms
+ ✓ server/routes/__tests__/cerv2-section-versions.pglite.integration.test.ts > SOURCE: one writer per table > every version row it does write goes through the shared writer, on a transaction 1ms
+  "level": "error",
+  "level": "error",
+  "level": "error",
+  "level": "error",
+ ✓ server/routes/__tests__/cerv2-section-versions.pglite.integration.test.ts > lineage on the kit section routes (ledger L157) > PATCH refuses to write content without an identified author, and writes nothing 12ms
+ ✓ server/routes/__tests__/cerv2-section-versions.pglite.integration.test.ts > lineage on the kit section routes (ledger L157) > PATCH records every clause as the editor's assertion, and retires a drafted quote the edit moved 40ms
+ ✓ server/routes/__tests__/cerv2-section-versions.pglite.integration.test.ts > lineage on the kit section routes (ledger L157) > accept-ana-draft with refined content covers the refined text, and refuses without a person 28ms
+ Test Files  4 passed (4)
+      Tests  21 passed (21)
+   Duration  22.31s (transform 12.32s, setup 353ms, import 4.77s, tests 55.46s, environment 0ms)
+exit=0

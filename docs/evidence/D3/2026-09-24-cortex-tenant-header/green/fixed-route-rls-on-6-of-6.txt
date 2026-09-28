@@ -1,0 +1,48 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T18:30:05.099Z","pid":2587,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T18:30:05.100Z","pid":2587,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T18:30:05.100Z","pid":2587,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/cortex-query-tenant-header.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-24T18:30:05.471Z', poolSize: 1 }
+
+stdout | tests/db/cortex-query-tenant-header.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/cortex-query-tenant-header.dbtest.ts
+Loaded 0 academic documents
+
+stderr | tests/db/cortex-query-tenant-header.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/cortex-query-tenant-header.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+{"level":30,"time":"2026-09-24T18:30:09.434Z","pid":2587,"hostname":"vm","context":{},"msg":"[cortex-unified] Mounted: /advisory (AI advisory)"}
+{"level":40,"time":"2026-09-24T18:30:09.435Z","pid":2587,"hostname":"vm","context":{},"msg":"[cortex-unified] Cortex management routes require explicit initialization with database pool"}
+{"level":30,"time":"2026-09-24T18:30:09.435Z","pid":2587,"hostname":"vm","context":{},"msg":"[cortex-unified] Mounted: /query (AI queries)"}
+{"level":30,"time":"2026-09-24T18:30:09.595Z","pid":2587,"hostname":"vm","context":{},"msg":"[cortex-unified] Mounted: /ana (AnA 1.0 RI integration)"}
+stdout | tests/db/cortex-query-tenant-header.dbtest.ts
+✅ Unified Cortex Query API initialized
+
+stdout | tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > positive control: tenant A querying as itself finds its own atom and not B's
+[database] Database connection successful { timestamp: '2026-09-24T18:30:09.670Z', poolSize: 2 }
+
+stdout | tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > positive control: tenant A querying as itself finds its own atom and not B's
+✅ Enhanced Embedding Service initialized
+
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > positive control: tenant A querying as itself finds its own atom and not B's 74ms
+{"level":40,"time":"2026-09-24T18:30:09.792Z","pid":2587,"hostname":"vm","context":{"userId":171,"organizationId":0},"msg":"[auth-middleware] Org membership revoked — rejecting authenticated request (fail-closed)"}
+{"level":40,"time":"2026-09-24T18:30:09.793Z","pid":2587,"hostname":"vm","context":{"method":"POST","path":"/api/cortex/query/query","statusCode":403},"msg":"[auth-boundary] Unauthenticated request passed through auth boundary (mode=warn). This route would be rejected in enforce mode."}
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > tenant A naming tenant B in the header is served nothing of B's 31ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > …and is served its OWN atom: the header is ignored, not merely contained by RLS 13ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > with no header, the query is scoped to the session rather than to nothing 12ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > search mode asks for the session's tenant, whatever the header says 14ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > a session with no usable organization is refused, never served 8ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  18:30:03
+   Duration  6.86s (transform 3.97s, setup 72ms, import 5.76s, tests 736ms, environment 0ms)
+

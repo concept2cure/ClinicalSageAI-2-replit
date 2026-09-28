@@ -20,18 +20,21 @@ import { useTenant } from '@/contexts/TenantContext';
 import brandMark from '@/assets/concept2cure-icon.svg';
 import {
   useChatUpload,
-  attachmentReadLabel,
+  readyAttachmentLabel,
+  composeTurn,
   CHAT_UPLOAD_ACCEPT,
   SR_ONLY_STYLE,
+  type SentAttachment,
 } from '../hooks/useChatUpload';
 import { I } from './icons';
 import { AppMentionMenu, useAppMentions } from './appMentions';
 import { TaskTray } from './TaskTray';
 import type { OnboardingWelcome } from './onboardingWelcome';
 import { AnaActivity, type AnaActivityProps } from './AnaActivity';
-import { AnaWorkPanel } from './AnaWorkPanel';
+import { AnaProgressChip, AnaWorkPanel } from './AnaWorkPanel';
+import { AnaOutputCards, type AnaOutput } from './AnaOutputs';
 import { useAgentActivity } from './useAgentActivity';
-import { useWorkDockVisible } from './workDock';
+import { useProgressDock } from './workDock';
 import { segmentForShellProject, shellProgramName, useShellProject } from './shellProject';
 import { availableDemoScripts } from '../components/ana/anaLockedScreens';
 import { AnaActionChips } from './AnaActionChips';
@@ -118,6 +121,8 @@ export interface AnaMessage {
    * sites — a board-ready artifact the product could not show anyone.
    */
   crlPremortem?: CrlPremortemArtifact;
+  /** The draft this turn produced, for its output card (AnaOutputs). */
+  output?: AnaOutput;
 }
 
 /**
@@ -553,6 +558,24 @@ export interface AnaRailLiveDrive {
   onStartDemo?: (demoId: string, title: string) => void;
 }
 
+/**
+ * Open the full-page conversation on the rail's own thread. The rail and that
+ * page run on the shell's one chat instance, so `{ id: 'current' }` — the
+ * hand-off ConversationThread itself writes when it navigates away — shows
+ * the same turns there, each draft as its document canvas.
+ */
+function openThisConversation(onNav: (id: string) => void): void {
+  try {
+    (window as unknown as { C2C_CONVO?: { id: string; seed?: string | null } }).C2C_CONVO = {
+      id: 'current',
+      seed: null,
+    };
+  } catch {
+    /* non-fatal: the page opens on the conversation it already holds */
+  }
+  onNav('conversation-thread');
+}
+
 export function AnaRail({
   open,
   setOpen,
@@ -584,7 +607,8 @@ export function AnaRail({
   mode: string;
   setMode: (m: string) => void;
   messages: AnaMessage[];
-  onSend: (text: string) => void;
+  /** The turn's text, and the files it carries by upload id (composer sends only). */
+  onSend: (text: string, files?: SentAttachment[]) => void;
   onAct: (id: string) => void;
   /** First-run AnA welcome (P1, assist-only). Null once the client has started
    *  a conversation or dismissed it — the rail only renders it when present. */
@@ -660,10 +684,12 @@ export function AnaRail({
   const agent = Boolean(liveDrive?.on && !liveDrive.locked);
   const [plusOpen, setPlusOpen] = React.useState(false);
   const [modeOpen, setModeOpen] = React.useState(false);
-  /* The work dock: shown by default, hidden by one shared per-browser choice
-     (workDock.ts) that every host of the dock honours. */
-  const [workOpen, setWorkDock] = useWorkDockVisible();
-  const workVisible = Boolean(work) && workOpen;
+  /* The progress panel: shown by default, hidden by one shared per-browser
+     choice (workDock.ts) that every host honours. The chip in the header is
+     its one control — the panel sits directly beneath it, and a second close
+     a few pixels away would be two affordances for one action. */
+  const dock = useProgressDock();
+  const workVisible = Boolean(work) && dock.open;
   /* Background investigations: read only while the dock shows them, and
      re-read the moment a turn ends (a turn can start or finish one). */
   const agentActivity = useAgentActivity(workVisible, streaming);
@@ -733,17 +759,13 @@ export function AnaRail({
     // error, and the message says nothing about it.
     if (!t && readyAttachments.length === 0) return;
 
-    const names = readyAttachments.map((a) => a.name);
-    const attachmentLine = names.length
-      ? `Attached: ${names.join(', ')}`
-      : '';
-
     // With text, the attachment reference is appended so AnA has both. Without
     // text, the reference IS the message — and it names the files it actually
-    // received rather than counting chips the user happened to see.
-    const bodyText = t ? (attachmentLine ? `${t}\n\n${attachmentLine}` : t) : attachmentLine;
+    // received rather than counting chips the user happened to see. The files
+    // themselves go by id, so the stream opens them and says it did.
+    const { body: bodyText, files } = composeTurn(t, attachments);
 
-    onSend(bodyText);
+    onSend(bodyText, files);
     setDraft('');
     clearAttachments();
   };
@@ -772,16 +794,14 @@ export function AnaRail({
         </div>
         <div className="ana-actions">
           {work && (
-            <button
-              type="button"
-              className={`tb-btn${workOpen ? ' on' : ''}`}
-              onClick={() => setWorkDock(!workOpen)}
-              aria-pressed={workOpen}
-              title={workOpen ? 'Hide AnA at work' : 'Show AnA at work'}
-              aria-label={workOpen ? 'Hide AnA at work' : 'Show AnA at work'}
-            >
-              {I.activity}
-            </button>
+            <AnaProgressChip
+              ref={dock.chipRef}
+              messages={work.messages}
+              streaming={streaming}
+              open={dock.open}
+              onToggle={dock.toggle}
+              controls={dock.panelId}
+            />
           )}
           <button
             type="button"
@@ -806,11 +826,12 @@ export function AnaRail({
           announced by the narrow, always-mounted regions that own it:
           AnaActivity for what AnA is doing, and the upload region below. */}
       <div className="ana-body">
-        {/* The live dock: progress, queue, tools, outputs and context for the
-            turn in flight. Above the transcript so the person sees the work
-            before the words; AnaActivity below keeps the per-turn record. */}
+        {/* AnA's progress: her plan or the phases, and what the session used.
+            Above the transcript so the person sees the work before the words;
+            AnaActivity below keeps the per-turn record. */}
         {work && workVisible && (
           <AnaWorkPanel
+            id={dock.panelId}
             messages={work.messages}
             streaming={streaming}
             runStatus={runStatus}
@@ -957,7 +978,11 @@ export function AnaRail({
           </div>
         )}
         {messages.map((m, i) => (
-            <div key={i} className={`ana-msg ${m.role}`}>
+            /* `is-ana` / `is-user`, not the bare role: a message classed `ana`
+               matched the rail CONTAINER's own `.c2c-v2 .ana` rule (100vh,
+               overflow hidden, a left border, flex-shrink), so every AnA
+               message was clipped to whatever height the column left it. */
+            <div key={i} className={`ana-msg is-${m.role}`}>
               {m.role === 'ana' && (
                 <div className="who">
                   AnA · {m.model || model}
@@ -970,13 +995,16 @@ export function AnaRail({
                   renderSafeMarkdown (marked → DOMPurify) — so a header is a
                   heading and not a literal "##". The person's own text stays
                   plain: it is never parsed as markup. */}
+              {/* Her work first, then the answer it produced, then the output —
+                  the order every host renders a turn in, and the reference's. */}
+              {m.role === 'ana' && m.activity && <AnaActivity {...m.activity} />}
               {m.role === 'ana' ? (
-                <div className="bd ana-md" dangerouslySetInnerHTML={{ __html: renderSafeMarkdown(m.body ?? '') }} />
+                <div className="ana-msg-bd ana-md" dangerouslySetInnerHTML={{ __html: renderSafeMarkdown(m.body ?? '') }} />
               ) : (
-                <div className="bd">{m.body}</div>
+                <div className="ana-msg-bd">{m.body}</div>
               )}
-              {/* Caveats sit directly under the answer they qualify, above the
-                  work record and never inside it. `useAnaChat` records a
+              {/* Caveats sit directly under the answer they qualify, and never
+                  inside the work record. `useAnaChat` records a
                   server degraded-mode signal, and a timeout, on the message —
                   and on timeout it KEEPS whatever text had already streamed.
                   Nothing rendered these, so a turn cut off mid-answer showed
@@ -991,10 +1019,9 @@ export function AnaRail({
                   <CrlPremortemPanel artifact={m.crlPremortem} />
                 </div>
               )}
-              {/* How well-grounded the answer is. Above the caveats and the
-                  work record on purpose: those say what went wrong and how she
-                  got here, this says how far the answer can be trusted, which
-                  is read first. */}
+              {/* How well-grounded the answer is. Above the caveats on purpose:
+                  they say what went wrong, this says how far the answer can be
+                  trusted, which is read first. */}
               {m.role === 'ana' && <AnaGrounding evidence={m.evidence} />}
               {/* Steers AnA accepted for this turn. Shown because a steer you
                   cannot see afterwards is one you cannot tell was taken — and
@@ -1019,7 +1046,16 @@ export function AnaRail({
                   ))}
                 </div>
               )}
-              {m.role === 'ana' && m.activity && <AnaActivity {...m.activity} />}
+              {/* Her output beneath the answer. It opens the full
+                  conversation on this same thread, where the draft is the
+                  document canvas (docs/design/ANA_DOCUMENT_CANVAS.md). */}
+              {m.role === 'ana' && m.output && (
+                <AnaOutputCards
+                  message={m.output}
+                  onOpen={onNav ? () => openThisConversation(onNav) : undefined}
+                  openLabel="Open in conversation"
+                />
+              )}
               {m.role === 'ana' && Array.isArray(m.actions) && m.actions.length > 0 && (
                 <div className="ana-msg-actions">
                   {m.actions.map((id) => {
@@ -1216,15 +1252,12 @@ export function AnaRail({
                 // The chip states what actually happened. A chip that shows a
                 // filename and nothing else is what let the old composer imply
                 // a file had been received when it had not.
-                const read = attachmentReadLabel(a.extractionMethod, a.extractionWords);
                 const label =
                   a.status === 'uploading'
                     ? `Uploading ${a.name}…`
                     : a.status === 'error'
                       ? `${a.name} — ${a.error || 'upload failed'}`
-                      : read
-                        ? `${a.name} · ${read}`
-                        : a.name;
+                      : `${a.name} · ${readyAttachmentLabel(a.extractionMethod, a.extractionWords)}`;
                 return (
                   <span
                     key={a.id}

@@ -17,8 +17,11 @@ import { getPool } from '../../db';
 import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project';
 import { deriveBuildState, getModule3BuildStatus, getSectionLabels } from '../../services/module3-convergence-service';
 import { MODULE3_SECTION_RULES } from '../../services/module3Composer';
+import { serverError } from '../../lib/api-response';
+import { createScopedLogger } from '../../utils/logger';
 
 const router = express.Router();
+const log = createScopedLogger('module3-build-state');
 
 // ── Canonical section constants — imported, never copied ──────────────────────
 //
@@ -152,10 +155,7 @@ router.get('/build-state/:projectId', async (req, res) => {
     if (String((error as Error)?.message || '').includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    return res.status(500).json({
-      success: false,
-      error: ((error instanceof Error ? error.message : String(error)) || 'Failed to compute build state'),
-    });
+    return serverError(res, log, 'computing the build state', error);
   }
 });
 
@@ -214,10 +214,7 @@ router.get('/uploaded-sources/:projectId', async (req, res) => {
     if (String((error as Error)?.message || '').includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    return res.status(500).json({
-      success: false,
-      error: ((error instanceof Error ? error.message : String(error)) || 'Failed to fetch uploaded sources'),
-    });
+    return serverError(res, log, 'loading uploaded sources', error);
   }
 });
 

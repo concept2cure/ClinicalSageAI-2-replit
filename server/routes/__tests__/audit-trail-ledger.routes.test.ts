@@ -76,10 +76,12 @@ function pgliteClient(): PoolClient {
   return { query: (sql: string, params?: unknown[]) => pglite.query(sql, params) } as unknown as PoolClient;
 }
 
-function appFor(user: { organizationId?: number } | null) {
+function appFor(user: { organizationId?: number; role?: string } | null) {
   const app = express();
   app.use((req, _res, next) => {
-    if (user) (req as express.Request & { user?: unknown }).user = { id: 11, ...user };
+    // An organisation admin unless a case says otherwise: the ledger is read by
+    // owners, admins and managers (P1-20).
+    if (user) (req as express.Request & { user?: unknown }).user = { id: 11, role: 'admin', ...user };
     next();
   });
   app.use(
@@ -207,6 +209,12 @@ describe('GET /api/audit-trail/ledger', () => {
     expect(res.body.sources).toEqual({ audit_logs: 2, audit_events: 0 });
     // The verdict covers the whole chain, not the two-row window.
     expect(res.body.meta.chain).toMatchObject({ ok: true, rowsChecked: 3 });
+  });
+
+  it('refuses a member (403) before reading anything: the ledger names every user in the organisation', async () => {
+    const res = await request(appFor({ organizationId: 1, role: 'member' })).get('/api/audit-trail/ledger');
+    expect(res.status).toBe(403);
+    expect(res.body).toMatchObject({ error: 'AUDIT_READ_RESTRICTED' });
   });
 
   it('refuses without tenant context (403) rather than reading anything', async () => {

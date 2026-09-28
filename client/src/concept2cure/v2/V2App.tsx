@@ -21,6 +21,7 @@ import React from 'react';
 import { useLocation } from 'wouter';
 import { getSurface, type UiSurface } from '@shared/constants/ui-surface-registry';
 import { AnaRail, CmdK, Rail, TopBar, type AnaMessage } from './Shell';
+import { activityPropsFor, hasReportableWork as hasReportableActivity } from './AnaActivity';
 import {
   useAnaChat,
   type AnaChatMessage,
@@ -45,6 +46,7 @@ import { LiveDriveControlsContext } from './LiveDriveSwitch';
 import { resolveSurfaceIdForTarget, stashNavParamsForTarget } from './navParams';
 import { createDriveQueue, type DriveMove } from './driveQueue';
 import { publishShellProject } from './shellProject';
+import type { SentAttachment } from '../hooks/useChatUpload';
 import { getAuthHeaders } from '@/utils/authToken';
 import { useActiveSurfaceContext, toModuleContext } from './surfaceContext';
 import { useAuth } from '@/services/portal/authService';
@@ -116,8 +118,6 @@ import './styles/authoring-v2.css';
 import './styles/research-v2.css';
 import './styles/misc-surfaces-v2.css';
 import './styles/device-v2.css';
-import './styles/pathway-core-v2.css';
-import './styles/pathway-panels-v2.css';
 /* LAST, deliberately. `surface-text-ramp.css` re-bases `--text-400` /
    `--text-300` on every element that establishes a tinted surface, so it has to
    load after the sheets that declare those surfaces — a custom property set
@@ -235,37 +235,19 @@ export function adaptChatMessage(m: AnaChatMessage): AnaMessage {
     evidence: m.evidence,
     /* Built by E14, panelled by E14, carried by nobody until now. */
     crlPremortem: m.crlPremortem,
-    /* Everything the turn reported about how it was answered. This used to be
-       dropped here — useAnaChat captured the tools, rounds, lens and drafts,
-       and the rail rendered a single line of body text — so AnA could run
-       three deterministic engines across two rounds and the person waiting saw
-       the word "Thinking…". */
-    activity: {
-      streaming: m.streaming,
-      phase: m.statusPhase,
-      lens: m.detectedLens,
-      documentType: m.detectedDocumentType,
-      toolCalls: m.toolCalls,
-      thinking: m.thinking,
-      draftTitle: m.generatedDraft?.title,
-      /* The clock. Sent-at has been on every turn since the hook was written
-         and was dropped here like the rest; completed-at is recorded on
-         post_done, stop and failure. */
-      startedAt: m.sentAt,
-      completedAt: m.completedAt,
-    },
+    /* Everything the turn reported about how it was answered — through the
+       one mapping every host uses (AnaActivity.activityPropsFor). This used to
+       be built here field by field, and again in ConversationThread, and each
+       copy dropped something the other carried. */
+    activity: activityPropsFor(m),
+    /* The draft, for its output card beneath the turn. */
+    output: m.generatedDraft?.title ? { generatedDraft: m.generatedDraft, streaming: m.streaming } : undefined,
   };
 }
 
 /** True when the activity record has something real to show for this turn. */
 function hasReportableWork(m: AnaChatMessage): boolean {
-  return Boolean(
-    (m.toolCalls && m.toolCalls.length > 0) ||
-      m.detectedLens ||
-      m.detectedDocumentType ||
-      m.thinking ||
-      m.generatedDraft?.title,
-  );
+  return hasReportableActivity(activityPropsFor(m));
 }
 
 /**
@@ -1023,11 +1005,14 @@ export function V2App() {
      React key, so the seed is always read by a mount that happens now. */
   const [convoEpoch, setConvoEpoch] = React.useState(0);
   const startShellConversation = React.useCallback(
-    (seed: string) => {
+    (seed: string, seedFiles?: SentAttachment[]) => {
       try {
-        (window as unknown as { C2C_CONVO?: { id: string; seed?: string | null } }).C2C_CONVO = {
+        (
+          window as unknown as { C2C_CONVO?: { id: string; seed?: string | null; seedFiles?: SentAttachment[] } }
+        ).C2C_CONVO = {
           id: 'new',
           seed,
+          seedFiles,
         };
       } catch {
         /* non-fatal: the thread opens empty rather than seeded */
@@ -1054,15 +1039,15 @@ export function V2App() {
      nothing visible here, and your question waiting for you, opened, on the
      next surface that does draw one. The question goes to the surface that
      shows it instead. */
-  const ask = (text: string) => {
+  const ask = (text: string, files?: SentAttachment[]) => {
     const clean = text.trim();
     if (!clean) return;
     if (ownsConversation) {
-      startShellConversation(clean);
+      startShellConversation(clean, files);
       return;
     }
     if (!prefs.anaOpen) set('anaOpen', true);
-    void anaChat.send(clean);
+    void anaChat.send(clean, files);
   };
 
   /* Governed + ungoverned actions both execute through ANA, the real agentic

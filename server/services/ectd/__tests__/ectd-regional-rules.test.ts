@@ -4,11 +4,72 @@
 
 import { describe, it, expect } from 'vitest';
 
-import { getRulesForRegion, REGIONAL_RULES, getGatewaySizeLimit, validateRegionalPackage } from '../ectd-regional-rules';
+import {
+  getRulesForRegion,
+  REGIONAL_RULES,
+  getGatewaySizeLimit,
+  validateRegionalPackage,
+} from '../ectd-regional-rules';
+import { REGION_IDENTITY, isCanonicalRegion } from '../../../../shared/regulatory/region-identity';
+
+/**
+ * RegulatoryRegion in this module was its own twelve-member union — the same
+ * twelve as region-identity's CanonicalRegion, in a codebase where that module
+ * exists to end parallel region vocabularies. It is now an alias of it, so the
+ * two cannot diverge. These tests pin the relationship at runtime; the compiler
+ * pins it at build time (verified by dropping SG from REGION_IDENTITY, which now
+ * produces a type error inside this module instead of nothing at all).
+ */
+describe('the gateway rules speak the canonical region vocabulary', () => {
+  it('every region a rule is tagged with is a canonical region', () => {
+    for (const rule of REGIONAL_RULES) {
+      expect(isCanonicalRegion(rule.region), `rule ${rule.id} names ${rule.region}`).toBe(true);
+    }
+  });
+
+  it('partitions the canonical regions into published limits and the conservative default', () => {
+    // NOT "every region returns a positive number" — getGatewaySizeLimit has a
+    // `default:` arm returning the conservative 1 GB, so that assertion passes for
+    // any string on earth and proves nothing. The honest pin is the PARTITION: six
+    // regions have an agency-specific limit, six fall through to the documented
+    // default pending published specs. If a published spec lands for one of the
+    // six, this test must be edited — which is the point.
+    const GB = 1024 * 1024 * 1024;
+    const published: Record<string, number> = {
+      US: 4 * GB,
+      CA: 4 * GB, // shares the FDA gateway limit
+      EU: 600 * 1024 * 1024,
+      JP: GB,
+      CN: GB,
+      KR: GB,
+    };
+    const awaitingSpec = ['UK', 'AU', 'CH', 'BR', 'IN', 'SG'];
+
+    // The two groups together are exactly the canonical twelve — so a region
+    // added to REGION_IDENTITY lands in neither and fails here.
+    expect([...Object.keys(published), ...awaitingSpec].sort()).toEqual(
+      Object.keys(REGION_IDENTITY).sort()
+    );
+
+    for (const [region, bytes] of Object.entries(published)) {
+      expect(getGatewaySizeLimit(region as never), `${region} limit`).toBe(bytes);
+    }
+    for (const region of awaitingSpec) {
+      // Stated as the default it is, not as a limit anyone published.
+      expect(getGatewaySizeLimit(region as never), `${region} falls back`).toBe(GB);
+    }
+  });
+
+  it('carries rules for more than one region, so the catalog is not FDA-only', () => {
+    const regions = new Set(REGIONAL_RULES.map(r => r.region));
+    expect(regions.size).toBeGreaterThan(1);
+    for (const r of regions) expect(Object.keys(REGION_IDENTITY)).toContain(r);
+  });
+});
 
 describe('regional eCTD rule catalog — PMDA (Japan)', () => {
   it('has unique rule ids across the whole catalog', () => {
-    const ids = REGIONAL_RULES.map((r) => r.id);
+    const ids = REGIONAL_RULES.map(r => r.id);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
@@ -26,7 +87,7 @@ describe('regional eCTD rule catalog — PMDA (Japan)', () => {
     // Declarative catalog rule (no programmatic leaf check), mirroring the
     // Health Canada bilingual-labelling rule: a real PMDA requirement surfaced
     // for awareness without a section-number-dependent gate that could misfire.
-    const jrmp = getRulesForRegion('JP').find((r) => r.id === 'PMDA-005');
+    const jrmp = getRulesForRegion('JP').find(r => r.id === 'PMDA-005');
     expect(jrmp).toBeDefined();
     expect(jrmp!.severity).toBe('warning');
     expect(jrmp!.description).toMatch(/Risk Management Plan|J-RMP|医薬品リスク管理計画/);
@@ -45,7 +106,7 @@ describe('regional eCTD rule catalog — NMPA (China)', () => {
   });
 
   it('codifies the Simplified-Chinese language requirement', () => {
-    const lang = getRulesForRegion('CN').find((r) => r.id === 'NMPA-CDE-003');
+    const lang = getRulesForRegion('CN').find(r => r.id === 'NMPA-CDE-003');
     expect(lang).toBeDefined();
     expect(lang!.severity).toBe('error');
     expect(lang!.description).toMatch(/Simplified Chinese/i);
@@ -66,9 +127,14 @@ describe('NMPA (China) package validator', () => {
 
   it('flags a missing cn-regional.xml backbone (NMPA-CDE-001, error)', () => {
     const findings = validateRegionalPackage(ctx, [
-      { sectionCode: 'm1.2', filePath: 'm1/cn/application-form.pdf', mimeType: 'application/pdf', fileSize: 100 },
+      {
+        sectionCode: 'm1.2',
+        filePath: 'm1/cn/application-form.pdf',
+        mimeType: 'application/pdf',
+        fileSize: 100,
+      },
     ]);
-    const f = findings.find((x) => x.ruleId === 'NMPA-CDE-001');
+    const f = findings.find(x => x.ruleId === 'NMPA-CDE-001');
     expect(f).toBeDefined();
     expect(f!.severity).toBe('error');
     expect(f!.region).toBe('CN');
@@ -76,10 +142,20 @@ describe('NMPA (China) package validator', () => {
 
   it('flags a non-ASCII file name (NMPA-CDE-005, warning, leaf-scoped)', () => {
     const findings = validateRegionalPackage(ctx, [
-      { sectionCode: 'm1', filePath: 'm1/cn/cn-regional.xml', mimeType: 'application/xml', fileSize: 10 },
-      { sectionCode: 'm1.2', filePath: 'm1/cn/申请表.pdf', mimeType: 'application/pdf', fileSize: 100 },
+      {
+        sectionCode: 'm1',
+        filePath: 'm1/cn/cn-regional.xml',
+        mimeType: 'application/xml',
+        fileSize: 10,
+      },
+      {
+        sectionCode: 'm1.2',
+        filePath: 'm1/cn/申请表.pdf',
+        mimeType: 'application/pdf',
+        fileSize: 100,
+      },
     ]);
-    const f = findings.find((x) => x.ruleId === 'NMPA-CDE-005');
+    const f = findings.find(x => x.ruleId === 'NMPA-CDE-005');
     expect(f).toBeDefined();
     expect(f!.severity).toBe('warning');
     expect(f!.scope).toBe('leaf');
@@ -87,10 +163,20 @@ describe('NMPA (China) package validator', () => {
 
   it('passes a well-formed CN package with no NMPA findings', () => {
     const findings = validateRegionalPackage(ctx, [
-      { sectionCode: 'm1', filePath: 'm1/cn/cn-regional.xml', mimeType: 'application/xml', fileSize: 10 },
-      { sectionCode: 'm1.2', filePath: 'm1/cn/application-form.pdf', mimeType: 'application/pdf', fileSize: 100 },
+      {
+        sectionCode: 'm1',
+        filePath: 'm1/cn/cn-regional.xml',
+        mimeType: 'application/xml',
+        fileSize: 10,
+      },
+      {
+        sectionCode: 'm1.2',
+        filePath: 'm1/cn/application-form.pdf',
+        mimeType: 'application/pdf',
+        fileSize: 100,
+      },
     ]);
-    expect(findings.filter((x) => x.region === 'CN')).toHaveLength(0);
+    expect(findings.filter(x => x.region === 'CN')).toHaveLength(0);
   });
 });
 
@@ -106,7 +192,7 @@ describe('regional eCTD rule catalog — MFDS (Korea)', () => {
   });
 
   it('codifies the Korean-language (K-CTD) requirement', () => {
-    const lang = getRulesForRegion('KR').find((r) => r.id === 'MFDS-KR-002');
+    const lang = getRulesForRegion('KR').find(r => r.id === 'MFDS-KR-002');
     expect(lang).toBeDefined();
     expect(lang!.severity).toBe('error');
     expect(lang!.description).toMatch(/Korean/i);
@@ -127,9 +213,14 @@ describe('MFDS (Korea) package validator', () => {
 
   it('flags a missing kr-regional.xml backbone (MFDS-KR-001, error)', () => {
     const findings = validateRegionalPackage(ctx, [
-      { sectionCode: 'm1.2', filePath: 'm1/kr/application-form.pdf', mimeType: 'application/pdf', fileSize: 100 },
+      {
+        sectionCode: 'm1.2',
+        filePath: 'm1/kr/application-form.pdf',
+        mimeType: 'application/pdf',
+        fileSize: 100,
+      },
     ]);
-    const f = findings.find((x) => x.ruleId === 'MFDS-KR-001');
+    const f = findings.find(x => x.ruleId === 'MFDS-KR-001');
     expect(f).toBeDefined();
     expect(f!.severity).toBe('error');
     expect(f!.region).toBe('KR');
@@ -137,10 +228,20 @@ describe('MFDS (Korea) package validator', () => {
 
   it('flags a non-ASCII file name (MFDS-KR-004, warning, leaf-scoped)', () => {
     const findings = validateRegionalPackage(ctx, [
-      { sectionCode: 'm1', filePath: 'm1/kr/kr-regional.xml', mimeType: 'application/xml', fileSize: 10 },
-      { sectionCode: 'm1.2', filePath: 'm1/kr/신청서.pdf', mimeType: 'application/pdf', fileSize: 100 },
+      {
+        sectionCode: 'm1',
+        filePath: 'm1/kr/kr-regional.xml',
+        mimeType: 'application/xml',
+        fileSize: 10,
+      },
+      {
+        sectionCode: 'm1.2',
+        filePath: 'm1/kr/신청서.pdf',
+        mimeType: 'application/pdf',
+        fileSize: 100,
+      },
     ]);
-    const f = findings.find((x) => x.ruleId === 'MFDS-KR-004');
+    const f = findings.find(x => x.ruleId === 'MFDS-KR-004');
     expect(f).toBeDefined();
     expect(f!.severity).toBe('warning');
     expect(f!.scope).toBe('leaf');
@@ -148,10 +249,20 @@ describe('MFDS (Korea) package validator', () => {
 
   it('passes a well-formed KR package with no MFDS findings', () => {
     const findings = validateRegionalPackage(ctx, [
-      { sectionCode: 'm1', filePath: 'm1/kr/kr-regional.xml', mimeType: 'application/xml', fileSize: 10 },
-      { sectionCode: 'm1.2', filePath: 'm1/kr/application-form.pdf', mimeType: 'application/pdf', fileSize: 100 },
+      {
+        sectionCode: 'm1',
+        filePath: 'm1/kr/kr-regional.xml',
+        mimeType: 'application/xml',
+        fileSize: 10,
+      },
+      {
+        sectionCode: 'm1.2',
+        filePath: 'm1/kr/application-form.pdf',
+        mimeType: 'application/pdf',
+        fileSize: 100,
+      },
     ]);
-    expect(findings.filter((x) => x.region === 'KR')).toHaveLength(0);
+    expect(findings.filter(x => x.region === 'KR')).toHaveLength(0);
   });
 });
 
@@ -161,7 +272,20 @@ describe('MFDS (Korea) package validator', () => {
 // are covered by validateGenericRegionPackage (minimum-viable stubs enforcing
 // only M1 regional-backbone presence + ASCII file names) until their full
 // MHRA / TGA / Swissmedic / ANVISA / CDSCO / HSA rule packs are encoded.
-const ALL_REGIONS = ['US', 'EU', 'JP', 'CA', 'CN', 'KR', 'UK', 'AU', 'CH', 'BR', 'IN', 'SG'] as const;
+const ALL_REGIONS = [
+  'US',
+  'EU',
+  'JP',
+  'CA',
+  'CN',
+  'KR',
+  'UK',
+  'AU',
+  'CH',
+  'BR',
+  'IN',
+  'SG',
+] as const;
 
 describe('regional eCTD rule catalog — cross-region invariants', () => {
   it('every catalog rule has a valid region, non-empty citation, and valid severity', () => {
@@ -191,7 +315,7 @@ describe('regional eCTD rule catalog — cross-region invariants', () => {
       const findings = validateRegionalPackage(ctx, []);
       // The universal sequence-format rule must always fire for an invalid value,
       // proving the dispatcher ran rather than silently no-op'ing.
-      expect(findings.some((f) => f.ruleId === 'FDA-ESG-001')).toBe(true);
+      expect(findings.some(f => f.ruleId === 'FDA-ESG-001')).toBe(true);
     }
   });
 });
@@ -204,10 +328,17 @@ describe('EMA (EU) package validator — application-number format (EMA-CESP-002
     submissionType: 'initial',
   });
   const leaves = [
-    { sectionCode: 'm1', filePath: 'm1/eu/eu-regional.xml', mimeType: 'application/xml', fileSize: 10 },
+    {
+      sectionCode: 'm1',
+      filePath: 'm1/eu/eu-regional.xml',
+      mimeType: 'application/xml',
+      fileSize: 10,
+    },
   ];
   const hasAppNumberFinding = (applicationNumber: string) =>
-    validateRegionalPackage(euCtx(applicationNumber), leaves).some((f) => f.ruleId === 'EMA-CESP-002');
+    validateRegionalPackage(euCtx(applicationNumber), leaves).some(
+      f => f.ruleId === 'EMA-CESP-002'
+    );
 
   it('accepts the canonical 6-digit centralised number (EMEA/H/C/005012)', () => {
     // Rule EMA-CESP-002 cites the "[6-digit]" centralised format; this is the
@@ -241,11 +372,23 @@ describe('EMA (EU) package validator — application-number format (EMA-CESP-002
 describe('Health Canada (CA) package validator', () => {
   it('uses distinct rule ids for a bad application number vs a missing backbone', () => {
     const findings = validateRegionalPackage(
-      { region: 'CA', applicationNumber: 'NOT-VALID', sequenceNumber: '0000', submissionType: 'initial' },
-      [{ sectionCode: 'm1.2', filePath: 'm1/ca/form.pdf', mimeType: 'application/pdf', fileSize: 100 }]
+      {
+        region: 'CA',
+        applicationNumber: 'NOT-VALID',
+        sequenceNumber: '0000',
+        submissionType: 'initial',
+      },
+      [
+        {
+          sectionCode: 'm1.2',
+          filePath: 'm1/ca/form.pdf',
+          mimeType: 'application/pdf',
+          fileSize: 100,
+        },
+      ]
     );
-    const appNumberFinding = findings.find((f) => /does not match HC format/.test(f.message));
-    const backboneFinding = findings.find((f) => /ca-regional\.xml is missing/.test(f.message));
+    const appNumberFinding = findings.find(f => /does not match HC format/.test(f.message));
+    const backboneFinding = findings.find(f => /ca-regional\.xml is missing/.test(f.message));
     expect(appNumberFinding).toBeDefined();
     expect(backboneFinding).toBeDefined();
     // The two conditions are different rules and must not share a rule id.
@@ -256,38 +399,80 @@ describe('Health Canada (CA) package validator', () => {
 
   it('passes a well-formed CA package with no findings', () => {
     const findings = validateRegionalPackage(
-      { region: 'CA', applicationNumber: 'NDS123456', sequenceNumber: '0000', submissionType: 'initial' },
+      {
+        region: 'CA',
+        applicationNumber: 'NDS123456',
+        sequenceNumber: '0000',
+        submissionType: 'initial',
+      },
       [
-        { sectionCode: 'm1', filePath: 'm1/ca/ca-regional.xml', mimeType: 'application/xml', fileSize: 10 },
-        { sectionCode: 'm1.2', filePath: 'm1/ca/form.pdf', mimeType: 'application/pdf', fileSize: 100 },
+        {
+          sectionCode: 'm1',
+          filePath: 'm1/ca/ca-regional.xml',
+          mimeType: 'application/xml',
+          fileSize: 10,
+        },
+        {
+          sectionCode: 'm1.2',
+          filePath: 'm1/ca/form.pdf',
+          mimeType: 'application/pdf',
+          fileSize: 100,
+        },
       ]
     );
-    expect(findings.filter((f) => f.region === 'CA')).toHaveLength(0);
+    expect(findings.filter(f => f.region === 'CA')).toHaveLength(0);
   });
 
   it('rejects a valid HC prefix followed by trailing garbage (end-anchored)', () => {
     const findings = validateRegionalPackage(
-      { region: 'CA', applicationNumber: 'NDS123456ZZZ', sequenceNumber: '0000', submissionType: 'initial' },
-      [{ sectionCode: 'm1', filePath: 'm1/ca/ca-regional.xml', mimeType: 'application/xml', fileSize: 10 }]
+      {
+        region: 'CA',
+        applicationNumber: 'NDS123456ZZZ',
+        sequenceNumber: '0000',
+        submissionType: 'initial',
+      },
+      [
+        {
+          sectionCode: 'm1',
+          filePath: 'm1/ca/ca-regional.xml',
+          mimeType: 'application/xml',
+          fileSize: 10,
+        },
+      ]
     );
     // Before the fix the un-anchored regex matched "NDS123456" at the start and
     // passed the malformed identifier.
-    expect(findings.some((f) => f.ruleId === 'HC-REP-003')).toBe(true);
+    expect(findings.some(f => f.ruleId === 'HC-REP-003')).toBe(true);
   });
 });
 
 describe('gateway size limit is reported unverified, never silently skipped', () => {
   const usLeaves = [
-    { sectionCode: 'm1', filePath: 'm1/us/us-regional.xml', mimeType: 'application/xml', fileSize: 10 },
-    { sectionCode: 'm1.2', filePath: 'm1/us/cover.pdf', mimeType: 'application/pdf', fileSize: 100 },
+    {
+      sectionCode: 'm1',
+      filePath: 'm1/us/us-regional.xml',
+      mimeType: 'application/xml',
+      fileSize: 10,
+    },
+    {
+      sectionCode: 'm1.2',
+      filePath: 'm1/us/cover.pdf',
+      mimeType: 'application/pdf',
+      fileSize: 100,
+    },
   ];
 
   it('emits a warning when totalSizeBytes is not supplied (FDA)', () => {
     const findings = validateRegionalPackage(
-      { region: 'US', applicationNumber: '123456', sequenceNumber: '0000', submissionType: 'original' },
-      usLeaves,
+      {
+        region: 'US',
+        applicationNumber: '123456',
+        sequenceNumber: '0000',
+        submissionType: 'original',
+      },
+      usLeaves
     );
-    const sizeFinding = findings.find((f) => f.ruleId === 'FDA-ESG-003');
+    const sizeFinding = findings.find(f => f.ruleId === 'FDA-ESG-003');
     expect(sizeFinding).toBeDefined();
     expect(sizeFinding!.severity).toBe('warning');
     expect(sizeFinding!.message).toMatch(/could not be verified/i);
@@ -295,9 +480,15 @@ describe('gateway size limit is reported unverified, never silently skipped', ()
 
   it('does not emit the unverified warning when a size is supplied under the limit', () => {
     const findings = validateRegionalPackage(
-      { region: 'US', applicationNumber: '123456', sequenceNumber: '0000', submissionType: 'original', totalSizeBytes: 1024 },
-      usLeaves,
+      {
+        region: 'US',
+        applicationNumber: '123456',
+        sequenceNumber: '0000',
+        submissionType: 'original',
+        totalSizeBytes: 1024,
+      },
+      usLeaves
     );
-    expect(findings.some((f) => f.ruleId === 'FDA-ESG-003')).toBe(false);
+    expect(findings.some(f => f.ruleId === 'FDA-ESG-003')).toBe(false);
   });
 });

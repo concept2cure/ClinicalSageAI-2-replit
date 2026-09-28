@@ -1,0 +1,11 @@
+ × server/routes/__tests__/submissions-assemble-audit-outcome.test.ts > the assemble route reports its audit row > carries the outcome of a recorded assembly 34ms
+   → expected undefined to deeply equal { persisted: true }
+ × server/routes/__tests__/submissions-assemble-audit-outcome.test.ts > the assemble route reports its audit row > says so when the assembly was not recorded 7ms
+   → expected undefined to deeply equal { persisted: false, …(1) }
+ × server/routes/__tests__/submissions-assemble-audit-outcome.test.ts > the assemble route reports its audit row > answers a refused assembly as a refusal, with the record of it 6ms
+   → expected 500 to be 422 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected undefined to deeply equal { persisted: true }
+AssertionError: expected undefined to deeply equal { persisted: false, …(1) }
+AssertionError: expected 500 to be 422 // Object.is equality
+      Tests  3 failed (3)

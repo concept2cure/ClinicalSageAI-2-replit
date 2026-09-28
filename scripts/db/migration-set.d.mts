@@ -24,6 +24,10 @@
  */
 export declare const C2C_MIGRATION_FILES: string[];
 
+/** The final pair of the set: the uuid-keyed non-public sweep, then the public sweep. */
+export declare const UUID_TENANT_ISOLATION_NONPUBLIC: string;
+export declare const TENANT_ISOLATION_SWEEP: string;
+
 export interface ApplyMigrationOptions {
   log?: (message: string) => void;
   error?: (message: string) => void;
@@ -33,7 +37,31 @@ export interface ApplyMigrationOptions {
    * applying further DDL on top of a schema it has already failed to move.
    */
   stopOnFirstFailure?: boolean;
+  /** Cap on each lock wait, in ms. Default C2C_MIGRATION_LOCK_TIMEOUT_MS or 2000. */
+  lockTimeoutMs?: number;
+  /** Attempts per file before a lock timeout fails it. Default C2C_MIGRATION_LOCK_ATTEMPTS or 12. */
+  lockAttempts?: number;
+  /** First retry delay in ms, doubling to a 10 s cap. Default C2C_MIGRATION_LOCK_BACKOFF_MS or 1000. */
+  lockBackoffMs?: number;
 }
+
+export interface MigrationLockPolicy {
+  lockTimeoutMs: number;
+  lockAttempts: number;
+  lockBackoffMs: number;
+}
+
+/** The lock-wait policy, from the environment. */
+export declare function migrationLockPolicy(env?: Record<string, string | undefined>): MigrationLockPolicy;
+
+/** True for a statement that gave up waiting for a lock (SQLSTATE 55P03), also as `cause`. */
+export declare function isLockTimeout(err: unknown): boolean;
+
+/** Retry `attempt` (which rolls itself back) on lock timeouts, with backoff. */
+export declare function retryOnLockTimeout<T>(
+  attempt: () => Promise<T>,
+  options: { label: string; attempts: number; backoffMs: number; log?: (message: string) => void },
+): Promise<T>;
 
 export interface ApplyMigrationResult {
   applied: string[];
@@ -42,7 +70,7 @@ export interface ApplyMigrationResult {
 
 /** Apply `files` (repo-relative) against `pool`, one transaction per file. */
 export declare function applyMigrationFiles(
-  pool: { query: (sql: string) => Promise<unknown> },
+  pool: { query: (sql: string, params?: unknown[]) => Promise<any> },
   repoRoot: string,
   files: string[],
   options?: ApplyMigrationOptions,

@@ -54,6 +54,12 @@ export interface RenderExportArgs {
    * draft and not a sealed record. Absent on the export route.
    */
   notice?: string | null;
+  /**
+   * Signatures the caller has already read — the export route reads them to
+   * decide whether to refuse, and passing them here keeps the manifest and that
+   * decision on ONE read. Read here when absent.
+   */
+  signatures?: SignatureRow[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -92,8 +98,34 @@ export interface SignatureRow {
  * ONE regulated statement, differing in markup, never in what they say.
  * `signer_name` is NULL precisely when no printed name is on record, and the
  * line says so rather than substituting the email.
+ *
+ * ── Every printed hash carries a verdict ─────────────────────────────────────
+ * This used to print `Content hash at signing: <hash>` and stop. The export
+ * route computed the live hash of the same sections, by the same function, a
+ * few lines earlier — and the two were never compared. A filed DOCX could carry
+ * "Signed by Rita Okafor / Meaning: Approval / Content hash at signing: <hash>"
+ * above prose that hashes to something else, and nothing on the page said so.
+ * That is not an incomplete manifestation but a misleading one: the artifact
+ * asserts a signature over content it does not contain. 21 CFR 11.70 requires
+ * signatures to be linked to their records "to ensure that the signatures
+ * cannot be excised, copied, or otherwise transferred to falsify an electronic
+ * record"; a printed hash nobody checks is exactly that link not being made.
+ *
+ * A mismatch is NOT by itself a fault, which is why this states a verdict
+ * rather than hiding the signature. The ordinary flow produces one: an AUTHOR
+ * signs, editing continues (an AUTHOR signature does not lock the document), an
+ * APPROVER signs the final text. The author's signature then legitimately
+ * covers earlier content, and a reviewer is entitled to see exactly that rather
+ * than a hash they would have to recompute by hand.
+ *
+ * `authoring_signatures` is insert-and-select only by design — no void or
+ * superseded column — so staleness cannot be recorded in the store. It has to
+ * be computed here, at render time, against the content being rendered.
+ *
+ * @param currentHash sectionsDigest() of the sections being rendered. When
+ *   absent the line says no check was made, rather than implying one was.
  */
-export function signatureManifestLines(sigs: SignatureRow[]): string[][] {
+export function signatureManifestLines(sigs: SignatureRow[], currentHash?: string | null): string[][] {
   return sigs.map((s) => {
     const when = s.signed_at ? new Date(s.signed_at).toISOString().replace('T', ' ').slice(0, 19) + ' UTC' : 'Not recorded';
     const lines = [
@@ -115,9 +147,31 @@ export function signatureManifestLines(sigs: SignatureRow[]): string[][] {
         ? `Covers: frozen version ${s.covered_freeze_version}`
         : 'Covers: no frozen snapshot was in force when this was signed',
     );
-    if (s.content_hash) lines.push(`Content hash at signing: ${s.content_hash}`);
+    if (s.content_hash) {
+      lines.push(`Content hash at signing: ${s.content_hash}`);
+      lines.push(signatureVerdictLine(s.content_hash, currentHash));
+    }
     return lines;
   });
+}
+
+/**
+ * The verdict for one signature. Both hashes come from {@link sectionsDigest}
+ * over the same section rows, so string equality is the whole comparison — no
+ * re-derivation and no normalization.
+ */
+export function signatureVerdictLine(signedHash: string, currentHash?: string | null): string {
+  if (!currentHash) return 'Verification: not checked — no hash of the rendered content was computed';
+  if (signedHash === currentHash) return 'Verification: this signature covers the content of this document';
+  return (
+    'Verification: DOES NOT COVER this document — the content has changed since this ' +
+    `signature was applied (the rendered content hashes to ${currentHash})`
+  );
+}
+
+/** True when at least one signature was applied to exactly this content. */
+export function anySignatureCovers(sigs: SignatureRow[], currentHash: string): boolean {
+  return sigs.some((s) => !!s.content_hash && s.content_hash === currentHash);
 }
 
 /** The signatures on a document, tenant-scoped, oldest first for a manifest. */
@@ -152,7 +206,10 @@ type SharedRender = Awaited<ReturnType<typeof prepareShared>>;
  */
 async function prepareShared(args: RenderExportArgs) {
   const { executor, tenantId, doc, sections, format } = args;
-  const manifest = signatureManifestLines(await readSignaturesForExport(executor, String(doc.id), tenantId));
+  /* The manifest verifies against the sections being RENDERED, not a second
+     read of the table — so the verdict describes exactly the bytes it sits in. */
+  const signatures = args.signatures ?? (await readSignaturesForExport(executor, String(doc.id), tenantId));
+  const manifest = signatureManifestLines(signatures, sectionsDigest(sections));
   const binary = format === 'docx' || format === 'pdf';
 
   const { resolveAuthoringImages } = await import('../../export/authoring-images.js');
@@ -447,7 +504,18 @@ export async function computeDocHash(
     'SELECT code, content FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
     [docId, tenantId],
   );
-  const content = sections.rows.map((s: { code: string; content: string }) => `${s.code}:${s.content}`).join('|||');
+  return sectionsDigest(sections.rows);
+}
+
+/**
+ * The digest itself, over rows already in hand and already in `order_index`
+ * order. computeDocHash is this plus a read; the export manifest calls it on
+ * the rows it is rendering so its verdict describes those exact bytes. ONE
+ * implementation — the signing routes store its output as `content_hash`, so a
+ * second copy that drifted would turn every verdict into a false mismatch.
+ */
+export function sectionsDigest(rows: ReadonlyArray<{ code: string; content: string | null }>): string {
+  const content = rows.map((s) => `${s.code}:${s.content}`).join('|||');
   return crypto.createHash('sha256').update(content).digest('hex');
 }
 

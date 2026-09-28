@@ -62,6 +62,7 @@ import { asc, eq, sql } from 'drizzle-orm';
 import { requestDb } from '../db/requestDb';
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
 import { enforceAuthorLineage } from '../services/clinical-regulatory-evidence/lineage-gate';
+import { isTruncated } from '../services/ai-gateway/finish-reason';
 import { coauthorDocuments } from '../../shared/schema';
 import { createScopedLogger } from '../utils/logger.js';
 
@@ -384,6 +385,32 @@ export default function createBatchDraftRoutes(): Router {
     const framework = typeof body.framework === 'string' ? body.framework.trim() : '';
     if (framework && !REGULATORY_FRAMEWORKS.has(framework)) {
       return res.status(400).json({ success: false, error: 'Unrecognised regulatory framework' });
+    }
+
+    /* A draft that hit the model's token ceiling stops mid-sentence, and this
+       route writes into `coauthor_documents` — the table eCTD leaves are
+       materialized from. MAX_CONTENT_CHARS does not catch it: a draft truncated
+       at 8192 tokens is nowhere near 400,000 characters, which is exactly why
+       it was invisible. The gateway has always recorded why generation ended;
+       AnaDocumentDraftingService now carries it out on every draft, so the
+       client that received the draft can report it here.
+
+       Refused rather than flagged: 21 CFR 11.10(a) requires a system able to
+       discern an invalid record, and a narrative cut off mid-sentence is one.
+       Once accepted it is versioned, audited, and filed like any other. */
+    const finishReason =
+      typeof body.finish_reason === 'string' ? body.finish_reason.trim() : undefined;
+    if (body.truncated === true || isTruncated(finishReason)) {
+      return res.status(422).json({
+        success: false,
+        code: 'DRAFT_TRUNCATED',
+        error:
+          'This draft stopped at the model output limit and is incomplete. It cannot be ' +
+          'accepted into the document, because a section cut off mid-sentence would be ' +
+          'assembled into the filing as if it were finished. Re-draft the section — ' +
+          'splitting it if it is genuinely this long — and accept the complete text.',
+        finishReason: finishReason ?? null,
+      });
     }
 
     const model = typeof body.model === 'string' ? body.model.slice(0, 120) : null;

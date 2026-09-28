@@ -171,28 +171,28 @@ describe('buildRlsStartupOptions', () => {
   });
 });
 
-describe('RLS catalog posture', () => {
-  /**
-   * Three catalog queries now, so the stub must route by which one is asked:
-   * the role probe, the public tenant-table probe, and the owner-exemption
-   * probe. Routing by `tenant_tables` rather than by call order, because a
-   * stub that answers every query with the same rows silently fed the
-   * tenant-table fixture to the owner-exemption check and invented findings.
-   */
-  function posturePool(
-    role: Record<string, unknown>,
-    tables: Array<Record<string, unknown>>,
-    ownerExempt: Array<Record<string, unknown>> = [],
-  ) {
-    return {
-      query: async (sql: string) => {
-        if (sql.includes('pg_roles')) return { rows: [role] };
-        if (sql.includes('tenant_tables')) return { rows: tables };
-        return { rows: ownerExempt };
-      },
-    } as any;
-  }
+/**
+ * Three catalog queries now, so the stub must route by which one is asked:
+ * the role probe, the public tenant-table probe, and the owner-exemption
+ * probe. Routing by `tenant_tables` rather than by call order, because a
+ * stub that answers every query with the same rows silently fed the
+ * tenant-table fixture to the owner-exemption check and invented findings.
+ */
+function posturePool(
+  role: Record<string, unknown>,
+  tables: Array<Record<string, unknown>>,
+  ownerExempt: Array<Record<string, unknown>> = [],
+) {
+  return {
+    query: async (sql: string) => {
+      if (sql.includes('pg_roles')) return { rows: [role] };
+      if (sql.includes('tenant_tables')) return { rows: tables };
+      return { rows: ownerExempt };
+    },
+  } as any;
+}
 
+describe('RLS catalog posture', () => {
   it('accepts a non-bypass role when every tenant table is forced and governed', async () => {
     const { assertRlsCatalogPosture } = await import('../rlsEnforcement');
     const report = await assertRlsCatalogPosture(posturePool(
@@ -216,7 +216,9 @@ describe('RLS catalog posture', () => {
       { role: 'app', rolsuper: false, rolbypassrls: false }, [],
     ))).rejects.toThrow(/no tenant-keyed public tables/);
   });
+});
 
+describe('RLS catalog posture', () => {
   /**
    * The owner exemption. Postgres exempts a table's OWNER from its own policies
    * unless FORCE ROW LEVEL SECURITY is set, so an RLS-enabled, policied,

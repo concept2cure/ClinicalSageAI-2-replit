@@ -121,3 +121,72 @@ describe('GET /api/c2c/projects — readiness is measured, not stored', () => {
     expect(res.body.data[0].readiness).toBe(0);
   });
 });
+
+/**
+ * GET /api/c2c/projects/:id — the detail read ProjectHome's "Dossier readiness"
+ * ring draws from.
+ *
+ * The list was fixed (above); the detail was not. It returned the raw
+ * `progress_percent`, so the same program read, say, 62% on its Projects card
+ * and "0% complete" on its own page — and AnA was told the 0. Found by the
+ * 2026-09-24 vault/projects re-baseline.
+ */
+describe('GET /api/c2c/projects/:id — the same readiness the list reports', () => {
+  const detailRow = () => ({
+    rows: [{
+      id: P1, code: 'BX-204', name: 'BX-204', program_type: 'IND', status: 'active', phase: 'planning',
+      priority: 'high', description: null, product_name: null, indication: null, intended_use: null,
+      primary_agency: 'FDA', target_agencies: null, target_submission_date: null, actual_submission_date: null,
+      approval_date: null, lead_user_id: null, team_members: null,
+      created_at: '2026-09-01', updated_at: '2026-09-02', application_number: null, product_type: 'drug',
+      device_class: null, regulatory_path: null, product_code: null, predicate_devices: null, metadata: null,
+      sponsor_name: 'Org',
+    }],
+  });
+
+  it('reports the governed section share, not the frozen progress_percent', async () => {
+    queryMock
+      .mockResolvedValueOnce(detailRow())
+      .mockResolvedValueOnce({ rows: [{ project_id: P1, readiness: 62 }] });
+    const res = await request(app(7)).get(`/api/c2c/projects/${P1}`);
+    expect(res.status).toBe(200);
+    expect(res.body.readiness).toBe(62);
+    // The stored column nothing updates is not offered to a reader at all.
+    expect(String(queryMock.mock.calls[0][0])).not.toMatch(/progress_percent/);
+  });
+
+  it('agrees with the list for the same program', async () => {
+    queryMock
+      .mockResolvedValueOnce(listRows())
+      .mockResolvedValueOnce({ rows: [{ project_id: P1, readiness: 62 }] })
+      .mockResolvedValueOnce(detailRow())
+      .mockResolvedValueOnce({ rows: [{ project_id: P1, readiness: 62 }] });
+    const list = await request(app(7)).get('/api/c2c/projects');
+    const detail = await request(app(7)).get(`/api/c2c/projects/${P1}`);
+    const card = list.body.data.find((p: { id: string }) => p.id === P1);
+    expect(detail.body.readiness).toBe(card.readiness);
+  });
+
+  it('a program with no governed sections has approved nothing: 0, as on its card', async () => {
+    queryMock.mockResolvedValueOnce(detailRow()).mockResolvedValueOnce({ rows: [] });
+    const res = await request(app(7)).get(`/api/c2c/projects/${P1}`);
+    expect(res.body.readiness).toBe(0);
+  });
+
+  it('a failed readiness read is null — not assessed — never the stored 0', async () => {
+    queryMock
+      .mockResolvedValueOnce(detailRow())
+      .mockRejectedValueOnce(Object.assign(new Error('relation "c2c_documents" does not exist'), { code: '42P01' }));
+    const res = await request(app(7)).get(`/api/c2c/projects/${P1}`);
+    expect(res.status).toBe(200);
+    expect(res.body.readiness).toBeNull();
+  });
+
+  it('scopes the aggregate to this program and the caller org', async () => {
+    queryMock.mockResolvedValueOnce(detailRow()).mockResolvedValueOnce({ rows: [] });
+    await request(app(7)).get(`/api/c2c/projects/${P1}`);
+    const [sql, params] = queryMock.mock.calls[1];
+    expect(sql).toMatch(/FROM c2c_documents d/);
+    expect(params).toEqual([[P1], 7]);
+  });
+});

@@ -222,6 +222,57 @@ describe('3. signature state distinguishes unsigned from tampered', () => {
     await waitFor(() => expect(screen.getByText(/Bound digest/i)).toBeTruthy());
     expect(publishedContext.current.facts.signedPackage.signatureId).toBe(7);
   });
+
+  /* §11.50(b): a signature's human-readable form carries the printed name, the
+     date and time, and the meaning. The panel showed an id, a digest and a
+     seal verdict — nobody could be named. Periodic review 2026-09-22, P4; the
+     server half (1de2678e5) returns the manifestation, this renders it. */
+  it('names who signed, when, and with what meaning (§11.50)', async () => {
+    routeReads({
+      signed: {
+        totalSizeBytes: 4096,
+        gatewayReady: true,
+        hardenedScore: 96,
+        signature: {
+          payloadDigest: 'a'.repeat(64), signatureId: 7, sealVerdict: 'ok',
+          signerId: 12, signerName: 'A. Reviewer', signerTitle: 'Head of Regulatory Affairs',
+          signatureMeaning: 'approval', signedAt: '2026-09-20T14:03:05.000Z',
+        },
+        leaves: [{ filePath: 'm3/x.pdf' }],
+      },
+    });
+    renderAndLoadRun();
+
+    await waitFor(() => expect(screen.getByText('A. Reviewer')).toBeTruthy());
+    expect(screen.getByText(/Head of Regulatory Affairs/)).toBeTruthy();
+    expect(screen.getByText('Approval')).toBeTruthy();
+    expect(screen.getByText(/2026-09-20 14:03:05 UTC/)).toBeTruthy();
+    expect(publishedContext.current.facts.signedPackage).toMatchObject({
+      signerName: 'A. Reviewer',
+      signatureMeaning: 'approval',
+      signedAt: '2026-09-20T14:03:05.000Z',
+    });
+  });
+
+  it('says a printed name the record does not hold is not recorded', async () => {
+    routeReads({
+      signed: {
+        totalSizeBytes: 4096,
+        gatewayReady: true,
+        hardenedScore: 96,
+        signature: {
+          payloadDigest: 'a'.repeat(64), signatureId: 7, sealVerdict: 'ok',
+          signerId: null, signerName: null, signerTitle: null, signatureMeaning: null, signedAt: null,
+        },
+        leaves: [{ filePath: 'm3/x.pdf' }],
+      },
+    });
+    renderAndLoadRun();
+
+    await waitFor(() => expect(screen.getByText(/Printed name not recorded/)).toBeTruthy());
+    expect(screen.getAllByText(/Not recorded/).length).toBeGreaterThan(0);
+    expect(publishedContext.current.facts.signedPackage.signerName).toBeNull();
+  });
 });
 
 describe('a failed run read is not a run without steps', () => {

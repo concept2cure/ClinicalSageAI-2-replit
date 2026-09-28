@@ -25,6 +25,14 @@ export interface EctdLeaf {
   /** Optional pre-computed checksum; computed if absent. */
   md5?: string;
   /**
+   * Stable cross-sequence identity of the DOCUMENT this leaf carries, when the
+   * caller has one. Republished in the bundle's leaf manifest so the next
+   * sequence can recognise the same document even though its file name moved.
+   * `fileName` is composed from the section it sits in, and a section can be
+   * renamed in place, so a name is presentation — not identity.
+   */
+  leafKey?: string;
+  /**
    * For a lifecycle operation (replace/delete/append), the package-relative
    * path (+ optional `#leafId` fragment) of the prior leaf this one modifies.
    * Emitted as the `modified-file` attribute. For grouped submissions the path

@@ -666,7 +666,7 @@ class Part11ComplianceService {
   // by createElectronicSignature. The release now re-verifies with the platform's
   // one signing ceremony (services/part11/reverify-signer.ts), which also
   // requires an enrolled second factor and keeps the sign-in's lockout, and this
-  // service records what that ceremony verified (VSR-001 §15).
+  // service records what that ceremony verified (VSR-001 §16).
 
   /**
    * Generate cryptographic signature

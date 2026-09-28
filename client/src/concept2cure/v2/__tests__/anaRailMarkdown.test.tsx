@@ -17,9 +17,9 @@ afterEach(() => cleanup());
 // the Shell smoke suites; this pins the renderer contract the rail relies on).
 function RailBody({ role, body }: { role: 'ana' | 'user'; body: string }) {
   return role === 'ana' ? (
-    <div className="bd ana-md" dangerouslySetInnerHTML={{ __html: renderSafeMarkdown(body) }} />
+    <div className="ana-msg-bd ana-md" dangerouslySetInnerHTML={{ __html: renderSafeMarkdown(body) }} />
   ) : (
-    <div className="bd">{body}</div>
+    <div className="ana-msg-bd">{body}</div>
   );
 }
 

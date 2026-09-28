@@ -1,0 +1,70 @@
+# the WS3 tests on the WS3 tree (base 1500beca + WS3 changes)
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — selection honours the tenant floor for every data class > a tenant restricted to self_hosted is served only on the self-hosted lane
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — selection honours the tenant floor for every data class > with no permitted lane the request is refused as a tenant-policy decision and no SDK is called
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — selection honours the tenant floor for every data class > the vendor allow-list is honoured on every rung: Kimi is never reached when the tenant lists only Claude and OpenAI
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — selection honours the tenant floor for every data class > the fallback ladder never crosses into a substrate the tenant has not allowed
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the tenant floor cannot be lowered by the request > a request zeroDataRetention:false does not defeat the org zero-retention floor
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the tenant floor cannot be lowered by the request > a request residency that contradicts the tenant residency is refused, not silently honoured
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the tenant is bound even when the caller forgets to say which > binds the tenant from the ambient request scope when organizationId is omitted
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the tenant is bound even when the caller forgets to say which > under enforcement, a call with no tenant binding at all is refused for a tenant payload
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the tenant is bound even when the caller forgets to say which > platform work in the explicit system scope is not refused (it carries no tenant)
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — an unknown policy fails closed where enforcement is on > under enforcement, a policy lookup failure refuses the tenant payload
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — an unknown policy fails closed where enforcement is on > outside enforcement, a lookup failure is recorded and the request still runs
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — an unknown policy fails closed where enforcement is on > an on-prem tenant with no self-hosted lane gets a placement refusal, not "No AI provider is configured"
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the last mile re-checks the floor before any SDK call > refuses a disallowed substrate even when selection is bypassed
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the last mile re-checks the floor before any SDK call > performance qualification resolves the tenant floor before it reaches a model
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — embeddings are held to the same floor > refuses to embed a self_hosted-only tenant on a shared embedding service
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — public-source payloads reach a shared API only on the tenant's opt-in > without the opt-in, a public payload stays on the tenant's allowed lane
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — public-source payloads reach a shared API only on the tenant's opt-in > with the opt-in, a public payload may reach a shared frontier API
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — public-source payloads reach a shared API only on the tenant's opt-in > the opt-in never opens the shared API to a tenant payload
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — what the ledger records > a refusal writes one content-free row naming the tenant-placement detector, reason and stage
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — what the ledger records > a served call records how the tenant was bound and under which floor
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the floor holds with the PHI/PII screen off > route() refuses a disallowed lane when piiDetection is off
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the floor holds with the PHI/PII screen off > the last mile refuses a disallowed lane when piiDetection is off, even if selection is bypassed
+ ✓ server/services/ai-gateway/__tests__/ledger-provenance.test.ts > a served row records its provenance and governance > provenance, tenant binding and resolution, risk tier and run
+ ✓ server/services/ai-gateway/__tests__/ledger-provenance.test.ts > a served row records its provenance and governance > the approved-models entry that served it, with its pinned version and PQ status
+ ✓ server/services/ai-gateway/__tests__/ledger-provenance.test.ts > a served row records its provenance and governance > a model no registry entry covers is recorded as unregistered, not matched to a guess
+ ✓ server/services/ai-gateway/__tests__/ledger-provenance.test.ts > a served row records its provenance and governance > the placement decision that allowed the call, where the screen enforced one
+ ✓ server/services/ai-gateway/__tests__/ledger-provenance.test.ts > a served row records its provenance and governance > the hosted tools that ran, and those withheld from the lane
+ ✓ server/services/ai-gateway/__tests__/ledger-provenance.test.ts > a refusal row records the placement reason and the provenance > DENY_TENANT_POLICY is a typed column, next to how the tenant resolved
+ ✓ server/services/ai-gateway/__tests__/ledger-provenance.test.ts > the prompt hash and the serving region > two requests that differ only in the image they carry hash differently
+ ✓ server/services/ai-gateway/__tests__/ledger-provenance.test.ts > the prompt hash and the serving region > a text-only prompt hashes exactly as before, so existing rows stay comparable
+ ✓ server/services/ai-gateway/__tests__/ledger-provenance.test.ts > the prompt hash and the serving region > an on-prem call for an EU tenant is recorded on_prem, not eu
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > files a cataloged document and reports where it now lives
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > refuses to file a document whose comprehension was never recorded
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > refuses a document that has never been cataloged at all
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > says a failed extraction leaves nothing to base a placement on
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > allows unfiling an uncataloged document — it retracts a claim, not makes one
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > hands the service her provenance, so the write cannot pass for a person's decision
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > records a model it was not told about as unknown, never a guessed one
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > names the gateway request that proposed the placement, so the row joins its ledger row
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > refuses confirm_suggested — confirming a filing is a person's act, in the Vault
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > is described to the model as a suggestion a person confirms, not a filing
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > tells the model the placement awaits a person, not that the document is filed
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > answers a chat-upload id with the wrong-store refusal, not absence
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > requires a rationale — the audit trail records why, not just what
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > requires a destination rather than guessing one
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > reports a document this organization does not hold as unknown, with the discovery tool
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > passes the service refusal through instead of claiming a move
+ ✓ server/services/ai-gateway/__tests__/audit-tenant-scope.test.ts > GatewayAuditLogger — tenant scope on every query > runs the store probe inside a tenant scope
+ ✓ server/services/ai-gateway/__tests__/audit-tenant-scope.test.ts > GatewayAuditLogger — tenant scope on every query > runs the INSERT inside a tenant scope, with no ambient request scope
+ ✓ server/services/ai-gateway/__tests__/audit-tenant-scope.test.ts > GatewayAuditLogger — tenant scope on every query > leaves no scope leaked behind after logging
+ ✓ server/services/ai-gateway/__tests__/audit-tenant-scope.test.ts > GatewayAuditLogger — which failures latch > keeps retrying after a transient failure
+ ✓ server/services/ai-gateway/__tests__/audit-tenant-scope.test.ts > GatewayAuditLogger — which failures latch > stops re-probing once the table is known absent
+ ✓ server/services/ai-gateway/__tests__/audit-tenant-scope.test.ts > GatewayAuditLogger — the probe checks the columns the writer inserts (D6) > a table missing a column the writer inserts is refused, and the column named
+ ✓ server/services/ai-gateway/__tests__/audit-tenant-scope.test.ts > GatewayAuditLogger — the probe checks the columns the writer inserts (D6) > the column list is the INSERT's own, including the provenance columns
+ ✓ server/services/ai-gateway/__tests__/ledger-migration.test.ts > ai.gateway_audit_log migration > is applied on every deploy
+ ✓ server/services/ai-gateway/__tests__/ledger-migration.test.ts > ai.gateway_audit_log migration > creates every column the writer inserts, on a fresh database
+ ✓ server/services/ai-gateway/__tests__/ledger-migration.test.ts > ai.gateway_audit_log migration > adds every provenance column to a table that already exists
+ ✓ server/services/ana/__tests__/model-call-linkage.test.ts > an agent mutation’s audit row names the model call > servedModelOf carries the gateway request id
+ ✓ server/services/ana/__tests__/model-call-linkage.test.ts > an agent mutation’s audit row names the model call > agentAuditDetails records the gateway request id and the serving model
+ ✓ server/services/ana/__tests__/model-call-linkage.test.ts > an agent mutation’s audit row names the model call > a command a person typed has no model call, and says so
+ ✓ server/services/ana/__tests__/model-call-linkage.test.ts > an agent mutation’s audit row names the model call > execute_platform_command hands the serving model to the command context
+ ✓ server/services/ana/__tests__/model-call-linkage.test.ts > an agent mutation’s audit row names the model call > the streamed answer’s command blocks carry the last round’s serving model
+ ✓ server/services/ana/__tests__/model-call-linkage.test.ts > a run is closed with the reason its loop stopped > the stream keeps the loop result and passes its stop reason to endRun
+ ✓ server/services/ana/__tests__/model-call-linkage.test.ts > a council execution row names the model that served it > records provider/model as reported, not a constant
+ ✓ server/services/ana/__tests__/model-call-linkage.test.ts > a council execution row names the model that served it > every agent passes the served model to its execution row
+ ✓ server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts > AnA turns: the kernel decides risk, the gateway enforces it > every kernel-routed gateway call hands over the kernel's riskTier (source pin)
+ Test Files  7 passed (7)
+      Tests  90 passed (90)
+exit=0

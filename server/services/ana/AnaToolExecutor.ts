@@ -15,8 +15,12 @@
  */
 
 import { isGovernedContentWriteTool } from './governed-write-tools.js';
+import { buildToolRefusal, toolAuthorizationOf } from './tool-authorization.js';
+import { buildHumanConfirmationRequiredResult } from '../ana-ri/part11-governance.js';
+import type { AuditRowOutcome } from '../audit/audit-write-outcome.js';
 import { isServedModelApprovedForHighRisk } from '../ai-governance/approved-models.js';
 import { getGateway } from '../ai-gateway/gateway';
+import { getTenantScope } from '../../db/tenantStore.js';
 // Region + gateway taxonomy — shared with the tool schemas in
 // AnaToolDefinitions so an accepted value and an advertised one are the same
 // list. This module has no runtime deps, so importing it here does not pull in
@@ -203,7 +207,15 @@ export interface ToolContext {
    * unless this model is approved for high-risk work; absent means refused.
    * See server/services/ana/governed-write-tools.ts.
    */
-  servingModel?: { provider?: string | null; model?: string | null } | null;
+  servingModel?: { provider?: string | null; model?: string | null; requestId?: string | null } | null;
+  /**
+   * True only when a person confirmed THIS call — set by POST
+   * /api/ana-ri/governed-action and nowhere else, like the command context's
+   * flag of the same name. A tool the register classes `confirm` refuses to
+   * run without it (tool-authorization.ts).
+   * Never read from tool input: that is the model's channel.
+   */
+  humanConfirmed?: boolean;
   organizationId?: number | null;
   userId?: number | null;
   projectId?: number | null;
@@ -304,17 +316,56 @@ function getRequiredInputKeys(tool: string): string[] {
  * report-only input-contract check — every dispatch path resolves handlers
  * from this map, so coverage is total with no call-site changes.
  */
+/**
+ * The refusals every handler is wrapped in, checked before it runs. Wrapped at
+ * registration, so every way of reaching a handler is covered: the stream's
+ * dispatch, the agentic loop, and a tool that calls another tool's handler
+ * directly. A refusal is a tool result the model reads and relays, not a throw,
+ * so the turn continues honestly.
+ *
+ *   1. Governed content is written only by an approved model.
+ *   2. A person's own act — an approval, a vote, an attestation — is refused
+ *      whoever asks and whatever they confirmed (tool-authorization.ts
+ *      `refuse`). She is told where the person does it. Where the handler is
+ *      itself the refusal (refusedBy 'handler'), it answers.
+ *   3. A tool that changes records runs only on a person's yes (P0-12, P1-34):
+ *      every tool the register classes `confirm`, and every tool it does not
+ *      know. The stream holds the turn and asks before it gets here; a path
+ *      that cannot ask gets the same proposal a gated command returns, and
+ *      nothing is written. After the model gate, so nobody is asked to confirm
+ *      content that would be refused anyway.
+ */
+function preHandlerRefusal(
+  name: string,
+  input: Record<string, any>,
+  ctx: ToolContext | undefined,
+): { code: string; result: string } | null {
+  if (isGovernedContentWriteTool(name) && !isServedModelApprovedForHighRisk(ctx?.servingModel)) {
+    return {
+      code: 'MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE',
+      result: JSON.stringify(governedWriteRefusal(name, ctx?.servingModel)),
+    };
+  }
+  const auth = toolAuthorizationOf(name, input);
+  if (auth.class === 'refuse' && auth.refusedBy !== 'handler') {
+    return { code: 'NOT_AN_ANA_ACTION', result: JSON.stringify(buildToolRefusal(name, auth.why)) };
+  }
+  if (auth.class === 'confirm' && ctx?.humanConfirmed !== true) {
+    return {
+      code: 'HUMAN_CONFIRMATION_REQUIRED',
+      result: JSON.stringify(buildHumanConfirmationRequiredResult(name, input ?? {})),
+    };
+  }
+  return null;
+}
+
 export function registerToolHandler(name: string, handler: ToolHandler): void {
   const instrumented: ToolHandler = async (input, ctx) => {
     const orgId = ctx?.organizationId ?? undefined;
-    /* Governed content is written only by an approved model. Wrapped HERE, at
-       registration, so every way of reaching the handler is covered: the
-       stream's dispatch, the agentic loop, and a tool that calls another
-       tool's handler directly. The refusal is a tool result the model reads
-       and relays, not a throw, so the turn continues honestly. */
-    if (isGovernedContentWriteTool(name) && !isServedModelApprovedForHighRisk(ctx?.servingModel)) {
-      recordToolOutcome(name, 'failure', 0, 'MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE', orgId);
-      return JSON.stringify(governedWriteRefusal(name, ctx?.servingModel));
+    const refusal = preHandlerRefusal(name, input, ctx);
+    if (refusal) {
+      recordToolOutcome(name, 'failure', 0, refusal.code, orgId);
+      return refusal.result;
     }
     // Report-only contract check: note when the model omitted required fields.
     const missing = getRequiredInputKeys(name).filter(k => input?.[k] === undefined);
@@ -337,11 +388,15 @@ export function registerToolHandler(name: string, handler: ToolHandler): void {
   toolHandlers.set(name, instrumented);
 }
 
-/** The model a gateway response says served it, in the shape ToolContext.servingModel takes. */
+/**
+ * The model a gateway response says served it, and the gateway request that
+ * produced it, in the shape ToolContext.servingModel takes. The request id is
+ * what joins a governed write's Part 11 row to its ledger row (D6).
+ */
 export function servedModelOf(
-  response: { provider?: string | null; model?: string | null } | null | undefined,
-): { provider: string | null; model: string | null } {
-  return { provider: response?.provider ?? null, model: response?.model ?? null };
+  response: { provider?: string | null; model?: string | null; requestId?: string | null } | null | undefined,
+): { provider: string | null; model: string | null; requestId: string | null } {
+  return { provider: response?.provider ?? null, model: response?.model ?? null, requestId: response?.requestId ?? null };
 }
 
 /** What a governed-write tool returns instead of writing, when the model is not approved. */
@@ -1496,7 +1551,7 @@ registerToolHandler('remember_document_in_project', async (input, ctx) => {
       '../client-intelligence-memory.js'
     );
 
-    const profile = await getProjectIntelligence(ctx.projectId);
+    const profile = await getProjectIntelligence(ctx.projectId, ctx.organizationId);
     if (!profile?.id) {
       return JSON.stringify({
         ok: false,
@@ -5152,6 +5207,8 @@ registerToolHandler('execute_platform_command', async (input: Record<string, unk
       userId: Number(userId),
       organizationId: Number(organizationId),
       activeProjectId: ctx?.projectId != null ? Number(ctx.projectId) : undefined,
+      // The model call that proposed this command, for its audit row.
+      servingModel: ctx?.servingModel ?? null,
     };
      
     const results = await executeCommands([{ command, params } as any], cmdCtx as any);
@@ -5762,6 +5819,16 @@ registerToolHandler('reconcile_extracted_figures', async (input: Record<string, 
 // org-scoped from ToolContext; apply_fact_change is a governed mutation that
 // requires an explicit reason and opens a resolution plan.
 
+/**
+ * A tool message, with the lost-record notice when the §11.10(e) row was not
+ * written. Governed tools carry `auditTrail` (recordAuditRow's outcome) out of
+ * the service, and the message says so when the record is missing, so AnA
+ * cannot report a governed change as simply done when its record is not.
+ */
+function withAuditNote(message: string, auditTrail: AuditRowOutcome): string {
+  return auditTrail.persisted ? message : `${message} ${auditTrail.message}`;
+}
+
 function proposedValueFromInput(input: Record<string, unknown>) {
   const proposed: { valueNum?: number; valueText?: string; unit?: string } = {};
   if (typeof input.valueNum === 'number') proposed.valueNum = input.valueNum;
@@ -5838,6 +5905,8 @@ registerToolHandler('establish_governed_fact', async (input: Record<string, unkn
       factId: result.fact.id,
       entity: result.fact.entity,
       field: result.fact.field,
+      auditTrail: result.auditTrail,
+      message: withAuditNote(`Established ${result.fact.entity}.${result.fact.field} as a governed value.`, result.auditTrail),
       instruction:
         'The value is now governed. It can be cited (scan_document_citations), previewed (preview_fact_impact), changed (apply_fact_change), and traced.',
     });
@@ -5956,6 +6025,8 @@ registerToolHandler('apply_fact_change', async (input: Record<string, unknown>, 
       cascadedClaims: result.cascadedClaims,
       resolutionPlanId: result.resolutionPlanId,
       resolutionPlanSkippedReason: result.resolutionPlanSkippedReason,
+      auditTrail: result.auditTrail,
+      message: withAuditNote(`Changed to version ${result.newFact.version} under governance.`, result.auditTrail),
       instruction:
         'The value was changed under governance. Report the impact summary and, if a resolutionPlanId was returned, offer to explain it with explain_resolution_plan.',
     });
@@ -9301,11 +9372,15 @@ registerToolHandler('check_consistency', async (input, ctx) => {
   if (right.length === 0) return JSON.stringify({ error: 'right (non-empty array) is required.' });
   try {
     const { runConsistencyCheck } = await import('../truth-engine/truth-engine-service.js');
-    const findings = await runConsistencyCheck(
+    const { findings, auditTrail } = await runConsistencyCheck(
       { submissionId, dimension, left: { ref: left.ref, text: left.text }, right },
       { organizationId: ctx.organizationId, userId: ctx.userId }
     );
-    return JSON.stringify({ ok: true, findings, conflicts: findings.filter((f) => f.status === 'conflict').length });
+    const conflicts = findings.filter((f) => f.status === 'conflict').length;
+    return JSON.stringify({
+      ok: true, findings, conflicts, auditTrail,
+      message: withAuditNote(`${findings.length} finding(s) recorded, ${conflicts} conflict(s).`, auditTrail),
+    });
   } catch (err) {
     return JSON.stringify({ error: `check_consistency failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as any)?.code });
   }
@@ -10870,7 +10945,7 @@ registerToolHandler('report_protocol_deviation', async (input, ctx) => {
       affectsSafety: typeof input.affects_safety === 'boolean' ? input.affects_safety : undefined,
       rootCause: typeof input.root_cause === 'string' ? input.root_cause : null,
     });
-    return { deviationId: r.id, reportable: r.reportable, timelinessDays: r.timelinessDays };
+    return { deviationId: r.id, assessed: r.assessed, reportabilityStatus: r.status, reportable: r.reportable, basis: r.basis, conditionalClocks: r.conditionalClocks };
   });
 });
 
@@ -13587,56 +13662,22 @@ registerToolHandler('create_qms_document', async (input, ctx) => {
   }
 });
 
-registerToolHandler('approve_qms_document', async (input, ctx) => {
-  if (!ctx?.organizationId) return JSON.stringify({ error: 'approve_qms_document requires tenant context.' });
-  if (!ctx.userId) return JSON.stringify({ error: 'approve_qms_document requires user context — an approval cannot be recorded without an identified approver (21 CFR Part 11).' });
-  const id = typeof input.document_id === 'number' ? input.document_id : NaN;
-  if (!Number.isFinite(id)) return JSON.stringify({ error: 'document_id (number) is required.' });
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const client = await getPool().connect();
-  try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    const { rows } = await client.query(
-      `UPDATE qms_documents
-          SET status = 'effective',
-              approver_id = $3,
-              approved_at = NOW(),
-              effective_date = COALESCE($4::date, effective_date, NOW()::date),
-              updated_at = NOW()
-        WHERE id = $1 AND organization_id = $2
-          AND status IN ('draft','in_review')
-          AND deleted_at IS NULL
-        RETURNING id, status, effective_date`,
-      [id, ctx.organizationId, ctx.userId,
-       typeof input.effective_date === 'string' ? input.effective_date : null],
-    );
-    if (rows.length === 0) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      return JSON.stringify({ error: 'Document not found, or not in draft/in_review state.' });
-    }
-    await recordGovernedAction(client, {
-      orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
-      target: `qms-document:${id}`,
-      reason: qmsReason(input, `Controlled document approved to effective via AnA`),
-      payload: { kind: 'approve', to: 'effective', effectiveDate: rows[0].effective_date ?? null },
-      domain: 'mdx', surface: 'ana',
-    });
-    await client.query('COMMIT');
-    return JSON.stringify({
-      ok: true, ...rows[0],
-      message: `Approved document ${id} — effective ${rows[0].effective_date}.`,
-    });
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    return JSON.stringify({
-      error: `approve_qms_document failed: ${err instanceof Error ? err.message : String(err)}`,
-    });
-  } finally {
-    client.release();
-  }
-});
+/* Making a controlled document effective is an electronic signature (21 CFR
+   11.50): the signed route, POST /api/mdx/qms/documents/:id/approve (VSR-001
+   F-3), checks signing authority, re-verifies the password and second factor,
+   refuses the author, and writes one electronic_signatures row bound to the
+   version's content digest. This tool did none of that. It set the document
+   effective, stamped the chat user as approver, and recorded a stock reason
+   when none was given. Because it wrote command 'transition' rather than
+   'sign', the sweep that took signing away from AnA (35794a160) and the
+   ci:sign-ceremony gate both missed it. New-code audit 2026-09-24, finding 1. */
+registerToolHandler('approve_qms_document', async () =>
+  refuseSignatureInChat(
+    'approve_qms_document',
+    'Approving a controlled document',
+    "the Quality register: the document's Approve button asks for your password and second factor",
+  ),
+);
 
 registerToolHandler('revise_qms_document', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'revise_qms_document requires tenant context.' });
@@ -13696,7 +13737,10 @@ registerToolHandler('retire_qms_document', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'retire_qms_document requires tenant context.' });
   const id = typeof input.document_id === 'number' ? input.document_id : NaN;
   if (!Number.isFinite(id)) return JSON.stringify({ error: 'document_id (number) is required.' });
-  const reason = typeof input.reason === 'string' ? input.reason.trim() : null;
+  const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
+  // §11.10(e): retirement is terminal and its reason is recorded in the
+  // hash-chained ledger — required here, never replaced by a placeholder.
+  if (reason.length < QMS_REASON_MIN) return JSON.stringify({ error: `A reason for change of at least ${QMS_REASON_MIN} characters is required to retire a controlled document — it is recorded in the audit trail.` });
   if (!ctx.userId) return JSON.stringify({ error: 'retire_qms_document requires user context — a retirement cannot be recorded without an identified actor (21 CFR Part 11).' });
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
@@ -13721,7 +13765,7 @@ registerToolHandler('retire_qms_document', async (input, ctx) => {
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
       target: `qms-document:${id}`,
-      reason: qmsReason(input, 'Controlled document retired via AnA'),
+      reason,
       payload: { kind: 'retire', to: 'retired' },
       domain: 'mdx', surface: 'ana',
     });
@@ -13774,7 +13818,12 @@ registerToolHandler('ack_training', async (input, ctx) => {
 
 // ── Change control (ICH Q10 / Annex 15) — call the shared service so the tool
 //    inherits the controlled lifecycle, segregation-of-duties and validation the
-//    REST routes use. Each governed action writes a 21 CFR Part 11 audit entry.
+//    REST routes use. Each governed action writes a 21 CFR Part 11 audit entry
+//    through recordAuditRow and carries its outcome out as `auditTrail`, as the
+//    REST routes do in `meta.auditTrail` (routes/mdx-qms.ts). These wrote it as
+//    `void auditService.logAction(...)`, so AnA reported the change whether or
+//    not the record of it existed (WO-16C hand-on item 2).
+
 registerToolHandler('qms_change_create', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'qms_change_create requires tenant context.' });
   const changeNumber = typeof input.change_number === 'string' ? input.change_number.trim() : '';
@@ -13795,13 +13844,16 @@ registerToolHandler('qms_change_create', async (input, ctx) => {
       qmsDocumentId: typeof input.qms_document_id === 'number' ? input.qms_document_id : null,
       proposedBy: ctx.userId ?? null,
     });
-    const auditService = (await import('../auditService.js')).default;
-    void auditService.logAction({
+    const { recordAuditRow } = await import('../audit/audit-write-outcome.js');
+    const auditTrail = await recordAuditRow({
       tenantId: ctx.organizationId, userId: ctx.userId ?? undefined,
       action: 'mdx.qms.change.create', resourceType: 'qms_change_control', resourceId: row.id,
       details: { changeNumber: row.change_number, classification: row.classification, via: 'ana' },
     });
-    return JSON.stringify({ ok: true, ...row, message: `Raised change ${row.change_number} (${row.status}).` });
+    return JSON.stringify({
+      ok: true, ...row, auditTrail,
+      message: withAuditNote(`Raised change ${row.change_number} (${row.status}).`, auditTrail),
+    });
   } catch (err: unknown) {
     if ((err as { code?: string }).code === '23505') return JSON.stringify({ error: 'A change with that number already exists in this organization.' });
     return JSON.stringify({ error: `qms_change_create failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -13823,18 +13875,37 @@ registerToolHandler('qms_change_transition', async (input, ctx) => {
       effectivenessReview: typeof input.effectiveness_review === 'string' ? input.effectiveness_review : null,
     });
     if (!row) return JSON.stringify({ error: `Change ${id} not found in this organization.` });
-    const auditService = (await import('../auditService.js')).default;
-    void auditService.logAction({
+    const { recordAuditRow } = await import('../audit/audit-write-outcome.js');
+    const auditTrail = await recordAuditRow({
       tenantId: ctx.organizationId, userId: ctx.userId ?? undefined,
       action: 'mdx.qms.change.transition', resourceType: 'qms_change_control', resourceId: id,
       details: { to, reason, via: 'ana' },
     });
-    return JSON.stringify({ ok: true, governed: true, ...row, message: `Change ${id} → ${row.status}.` });
+    return JSON.stringify({
+      ok: true, governed: true, ...row, auditTrail,
+      message: withAuditNote(`Change ${id} → ${row.status}.`, auditTrail),
+    });
   } catch (err: unknown) {
-    // InvalidChangeTransitionError / SegregationOfDutiesError carry human-readable messages.
-    return JSON.stringify({ error: err instanceof Error ? err.message : `qms_change_transition failed: ${String(err)}` });
+    return qmsChangeTransitionRefusal(err);
   }
 });
+
+/**
+ * Approval is a signed act this tool cannot take (DP-31): answer the kind of
+ * refusal and where a person approves, not the service's API path.
+ * InvalidChangeTransitionError carries a human-readable message as it is.
+ */
+function qmsChangeTransitionRefusal(err: unknown): string {
+  if ((err as { code?: string }).code === 'CHANGE_APPROVAL_REQUIRES_SIGNATURE') {
+    return JSON.stringify({
+      error:
+        'Approving a change is an electronic signature, which needs the approver\'s password and second factor. ' +
+        'Approve it with the Approve button on the change in the Quality register. Nothing was changed.',
+      code: 'CHANGE_APPROVAL_REQUIRES_SIGNATURE',
+    });
+  }
+  return JSON.stringify({ error: err instanceof Error ? err.message : `qms_change_transition failed: ${String(err)}` });
+}
 
 registerToolHandler('qms_change_link', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'qms_change_link requires tenant context.' });
@@ -13854,13 +13925,16 @@ registerToolHandler('qms_change_link', async (input, ctx) => {
       note: typeof input.note === 'string' ? input.note : null,
       createdBy: ctx.userId ?? null,
     });
-    const auditService = (await import('../auditService.js')).default;
-    void auditService.logAction({
+    const { recordAuditRow } = await import('../audit/audit-write-outcome.js');
+    const auditTrail = await recordAuditRow({
       tenantId: ctx.organizationId, userId: ctx.userId ?? undefined,
       action: 'mdx.qms.change.link', resourceType: 'qms_change_control', resourceId: id,
       details: { linkType, linkedRef, via: 'ana' },
     });
-    return JSON.stringify({ ok: true, ...row, message: `Linked ${linkType} ${linkedRef} to change ${id}.` });
+    return JSON.stringify({
+      ok: true, ...row, auditTrail,
+      message: withAuditNote(`Linked ${linkType} ${linkedRef} to change ${id}.`, auditTrail),
+    });
   } catch (err: unknown) {
     return JSON.stringify({ error: `qms_change_link failed: ${err instanceof Error ? err.message : String(err)}` });
   }
@@ -15192,6 +15266,26 @@ export interface AgenticOptions {
 }
 
 /**
+ * The tool context, with the tenant uuid filled from the active request scope
+ * when the caller did not pass it and the scope is the same tenant.
+ *
+ * The uuid is the tenant boundary search_document_passages,
+ * project_knowledge_search and the artifact scope enforce, and each refuses
+ * without it. The chat route passes it; a background deep investigation (and
+ * the realtime namespace) built its context from the integer org id alone, so
+ * those tools answered "unavailable" there. A deep investigation is started
+ * fire-and-forget from inside the chat request, whose scope holds the uuid the
+ * auth boundary resolved. Only that scope is trusted, and only for its own
+ * tenant — never another tenant's uuid, and nothing invented outside a scope.
+ */
+function withScopeOrganizationUuid(ctx: ToolContext | undefined): ToolContext | undefined {
+  if (!ctx || ctx.organizationUuid || ctx.organizationId == null) return ctx;
+  const scope = getTenantScope();
+  if (!scope?.orgUuid || scope.tenantId !== String(ctx.organizationId)) return ctx;
+  return { ...ctx, organizationUuid: scope.orgUuid };
+}
+
+/**
  * Execute a multi-turn agentic loop with AnA.
  *
  * AnA can call tools, get results, reason further, call more tools, and
@@ -15218,6 +15312,7 @@ export async function executeAgenticLoop(
   const maxRounds = options?.maxRounds || resolveMaxRounds('balanced');
   const progressExtension = options?.progressExtension ?? resolveRoundExtension('balanced');
   const signal = options?.signal;
+  const toolContext = withScopeOrganizationUuid(options?.toolContext);
   // Failure-adaptation guidance from the latest round (cleared after use).
   let pendingAdaptationNote = '';
 
@@ -15235,6 +15330,7 @@ export async function executeAgenticLoop(
   // model kept generating server-side and the turn was paid for in full. The
   // streaming route has passed it since stop started landing mid-step; this is
   // the same fix for the non-SSE callers.
+  // tenant-binding: forwards the caller's GatewayRequest; every caller binds organizationId (send-message.ts, deep-investigation.ts, ana-realtime.ts, ana-intelligence.ts)
   let finalResponse = (await gateway.route({ ...request, signal })) as AnaGatewayResponse;
 
   // Fast path: the model answered without asking for any tool.
@@ -15282,7 +15378,7 @@ export async function executeAgenticLoop(
         return runOneTool(
           handler,
           call,
-          { ...(options?.toolContext ?? {}), servingModel: servedModelOf(finalResponse) },
+          { ...(toolContext ?? {}), servingModel: servedModelOf(finalResponse) },
           signal,
         );
       },
@@ -15345,6 +15441,7 @@ export async function executeAgenticLoop(
       roundRequest.toolChoice = 'none';
     }
 
+    // tenant-binding: roundRequest is built from the caller's request, which carries its organizationId
     finalResponse = (await gateway.route(roundRequest)) as AnaGatewayResponse;
     const nextUses = finalResponse.toolUses ?? [];
     return { text: finalResponse.content || '', toolCalls: nextUses.map(toToolCall) };
@@ -19474,8 +19571,12 @@ registerToolHandler('list_vault_documents', async (input, ctx) => {
       count: rows.length,
       documents: rows,
       message: rows.length
-        ? `${rows.length} vault documents. Use read_vault_document with an id to open one.`
-        : 'No vault documents match the filters.',
+        ? `${rows.length} Artifacts Center document(s). Use read_vault_document with an id to open one.`
+        : /* An empty Artifacts Center answer said "No vault documents match", about a
+             store that is not the Vault — so a file the user had uploaded to the Vault
+             was reported absent. Say what was searched instead. */
+          'No Artifacts Center documents match the filters. This does not search files uploaded to the Vault — ' +
+          'do not tell the user a Vault file is missing on the strength of this result.',
     });
   } catch (err) {
     return JSON.stringify({ error: `list_vault_documents failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -19526,7 +19627,7 @@ registerToolHandler('read_vault_document', async (input, ctx) => {
         LIMIT 1`,
       [ctx.organizationId, artifactId],
     );
-    if (!rows.length) return JSON.stringify({ error: `No vault document '${artifactId}' in this organization.` });
+    if (!rows.length) return JSON.stringify({ error: `No Artifacts Center document '${artifactId}' in this organization. Files uploaded to the Vault are a different store with UUID ids — this does not mean a Vault file is missing.` });
     const { content, ...meta } = rows[0];
     const excerpt = viewExcerpt(typeof content === 'string' ? content : JSON.stringify(content ?? ''), input);
 
@@ -19566,7 +19667,7 @@ registerToolHandler('get_document_versions', async (input, ctx) => {
         WHERE organization_id = $1 AND (id::text = $2 OR artifact_id = $2) LIMIT 1`,
       [ctx.organizationId, artifactId],
     );
-    if (!idRes.rows.length) return JSON.stringify({ error: `No vault document '${artifactId}' in this organization.` });
+    if (!idRes.rows.length) return JSON.stringify({ error: `No Artifacts Center document '${artifactId}' in this organization. Files uploaded to the Vault are a different store with UUID ids — this does not mean a Vault file is missing.` });
     const versions = await getPool().query(
       `SELECT id, version AS version_number, change_description AS change_summary,
               content_hash, created_at, created_by_id
@@ -19869,7 +19970,7 @@ registerToolHandler('update_vault_document', async (input, ctx) => {
       );
       if (!existing.rows.length) {
         await client.query('ROLLBACK');
-        return JSON.stringify({ error: `No vault document '${artifactId}' in this organization.` });
+        return JSON.stringify({ error: `No Artifacts Center document '${artifactId}' in this organization. Files uploaded to the Vault are a different store with UUID ids — this does not mean a Vault file is missing.` });
       }
       const doc = existing.rows[0];
       if (doc.status === 'locked') {
@@ -19952,7 +20053,7 @@ registerToolHandler('compare_vault_versions', async (input, ctx) => {
         WHERE organization_id = $1 AND (id::text = $2 OR artifact_id = $2) LIMIT 1`,
       [ctx.organizationId, artifactId],
     );
-    if (!idRes.rows.length) return JSON.stringify({ error: `No vault document '${artifactId}' in this organization.` });
+    if (!idRes.rows.length) return JSON.stringify({ error: `No Artifacts Center document '${artifactId}' in this organization. Files uploaded to the Vault are a different store with UUID ids — this does not mean a Vault file is missing.` });
     const { rows } = await getPool().query(
       `SELECT version, content, content_hash, change_description, created_at, created_by_id
          FROM concept2cure_artifact_versions

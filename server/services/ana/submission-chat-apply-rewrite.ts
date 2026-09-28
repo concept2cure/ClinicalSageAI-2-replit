@@ -16,6 +16,7 @@
  *
  * @module server/services/ana/submission-chat-apply-rewrite
  */
+import type { SignerReverified } from '../part11/reverify-signer';
 import crypto from 'node:crypto';
 import { resolveSignerIdentity } from '../part11/resolve-signer-identity.js';
 import { getPool } from '../../db/runtime.js';
@@ -179,22 +180,21 @@ export function computeRewriteDiffStats(
 /**
  * 21 CFR Part 11 electronic signature payload. Captured at the moment the
  * rewrite is applied so the signature is bound to the new artifact_version_id
- * the apply produces. Two of the three "what makes this a Part 11 signature"
- * elements are explicit here — meaning + signer identity. Authentication is
- * delegated to the upstream auth middleware (the user is already token-
- * authenticated when the route runs); the manifest records the method.
+ * the apply produces: the meaning, and what the platform's one signing
+ * ceremony verified of the signer (services/part11/reverify-signer.ts), which
+ * the route runs before calling here. The signer's printed name and email are
+ * resolved from the membership record below.
+ *
+ * Until 2026-09-23 this carried `authenticationMethod` and
+ * `secondFactorVerified` as the caller stated them, and "authentication was
+ * delegated to the upstream auth middleware": the session alone signed, and
+ * the row recorded whatever the request said about how.
  */
 export interface ApplyRewriteSignature {
   /** What the signer is attesting to (e.g. "I have reviewed and approve this rewrite"). */
   meaning: string;
-  /** Optional override; defaults to the authenticated user's name. */
-  signerName?: string | null;
-  /** Optional override; defaults to the authenticated user's email. */
-  signerEmail?: string | null;
-  /** "password" | "sso" | "mfa" | "session" — defaults to "session". */
-  authenticationMethod?: 'password' | 'sso' | 'mfa' | 'session';
-  /** Optional second-factor flag. */
-  secondFactorVerified?: boolean;
+  /** What the ceremony verified; recorded on the signature row. */
+  reverified: SignerReverified;
 }
 
 export interface ApplyRewriteInput {
@@ -758,10 +758,14 @@ export async function applyRewrite(
       // back: no signature, and no applied rewrite claiming to carry one.
       const signerName = actor.name;
       const signerEmail = actor.email;
-      // §11.200 authentication method: what the signer's session actually used.
-      // Defaulting an undeclared method to 'session' asserted a control that may
-      // not have been applied; an unstated method is recorded as unstated.
-      const authMethod = input.signature.authenticationMethod ?? null;
+      // §11.200: what the ceremony verified at this signing, never a claim. The
+      // type admits only a verified result; this guards a caller that casts.
+      if (input.signature.reverified?.ok !== true) {
+        throw Object.assign(new Error('The signer was not re-verified (§11.200); nothing was signed.'), {
+          code: 'SIGNATURE_REQUIRED',
+        });
+      }
+      const authMethod = input.signature.reverified.authenticationMethod;
       const signatureSeed = [
         signerEmail,
         input.signature.meaning,
@@ -796,7 +800,7 @@ export async function applyRewrite(
           input.userRole ?? 'regulatory',
           authMethod,
           now,
-          input.signature.secondFactorVerified ?? false,
+          input.signature.reverified.secondFactorVerified,
           signatureHash,
           JSON.stringify({
             source: 'submission_chat_apply_rewrite',

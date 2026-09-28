@@ -1,0 +1,257 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/routes/chat-upload-to-memory.test.ts
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/chat-upload-to-memory.test.ts
+Loaded 0 academic documents
+
+stderr | tests/routes/chat-upload-to-memory.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/chat-upload-to-memory.test.ts
+{
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > writes a text file’s real content into the artifact and embedded memory atom
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "enrollment.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+(node:3589) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > writes a text file’s real content into the artifact and embedded memory atom
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285248432_f03txp",
+    "method": "utf8",
+    "chars": 69
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > writes a text file’s real content into the artifact and embedded memory atom
+{
+  "level": "error",
+  "message": "[chat-upload] Canonical source identity not created for upload",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'id')",
+    "fileId": "file_1790285248432_f03txp",
+    "orgId": 5
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > does NOT store a filename placeholder when extraction yields real text
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "note.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > does NOT store a filename placeholder when extraction yields real text
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285248607_mhj447",
+    "method": "utf8",
+    "chars": 44
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > does NOT store a filename placeholder when extraction yields real text
+{
+  "level": "error",
+  "message": "[chat-upload] Canonical source identity not created for upload",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'id')",
+    "fileId": "file_1790285248607_mhj447",
+    "orgId": 5
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > embeds NOTHING when extraction yields no text — the placeholder is not the document
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "blank.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > embeds NOTHING when extraction yields no text — the placeholder is not the document
+{
+  "level": "error",
+  "message": "[chat-upload] Canonical source identity not created for upload",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'id')",
+    "fileId": "file_1790285248614_md9iat",
+    "orgId": 5
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > reports extraction status for an org-scoped upload (no project, no artifact)
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "org.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > reports extraction status for an org-scoped upload (no project, no artifact)
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285248624_kg6xf9",
+    "method": "utf8",
+    "chars": 40
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > reports extraction status for an org-scoped upload (no project, no artifact)
+{
+  "level": "error",
+  "message": "[chat-upload] Canonical source identity not created for upload",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'id')",
+    "fileId": "file_1790285248624_kg6xf9",
+    "orgId": 5
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > OCRs an uploaded image and stores the recognised text in memory
+{
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "scan.png",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > writes a text file’s real content into the artifact and embedded memory atom 177ms
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > does NOT store a filename placeholder when extraction yields real text 6ms
+ × tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > embeds NOTHING when extraction yields no text — the placeholder is not the document 10ms
+   → expected [ …(2) ] to be undefined
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > reports extraction status for an org-scoped upload (no project, no artifact) 4ms
+(node:3589) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > OCRs an uploaded image and stores the recognised text in memory
+{
+  "level": "info",
+  "message": "[tesseract-ocr] OCR completed",
+  "context": {
+    "languages": "eng",
+    "chars": 24,
+    "confidence": 95,
+    "durationMs": 106
+  }
+}
+
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > OCRs an uploaded image and stores the recognised text in memory
+{
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790285248824_cwdugm",
+    "method": "image-ocr",
+    "chars": 23
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > OCRs an uploaded image and stores the recognised text in memory
+{
+  "level": "error",
+  "message": "[chat-upload] Canonical source identity not created for upload",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'id')",
+    "fileId": "file_1790285248824_cwdugm",
+    "orgId": 5
+  }
+}
+
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > OCRs an uploaded image and stores the recognised text in memory 963ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > embeds NOTHING when extraction yields no text — the placeholder is not the document
+AssertionError: expected [ …(2) ] to be undefined
+
+- Expected:
+undefined
+
++ Received:
+[
+  "INSERT INTO lumen_data_atoms
+         (organization_id, source_type, source_id, atom_type, title, content,
+          structured_data, tags, confidence, status)
+       SELECT $1, 'chat_upload', $2, 'source_document', $3, $4, $5::json, $6::text[], 0.85, 'active'
+        WHERE NOT EXISTS (
+          SELECT 1 FROM lumen_data_atoms WHERE organization_id = $1 AND source_id = $2
+        )
+       RETURNING id",
+  [
+    5,
+    "artifact_chat_1790285248615_58vm3d",
+    "blank.txt",
+    "[Uploaded via chat: blank.txt] (text/plain, 9 bytes)",
+    "{\"retrieval\":{\"extractedChars\":52,\"embeddedChars\":52,\"truncated\":false,\"note\":\"This atom holds the whole extracted text of the file.\"}}",
+    [
+      "source",
+      "chat_upload",
+    ],
+  ],
+]
+
+ ❯ tests/routes/chat-upload-to-memory.test.ts:228:30
+    226|     });
+    227|     expect(res.status).not.toHaveBeenCalledWith(400);
+    228|     expect(findAtomInsert()).toBeUndefined();
+       |                              ^
+    229|     expect(mockEmbedAtom).not.toHaveBeenCalled();
+    230|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  21:27:16
+   Duration  12.93s (transform 6.82s, setup 81ms, import 11.38s, tests 1.17s, environment 0ms)
+

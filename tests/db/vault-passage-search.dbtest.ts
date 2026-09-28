@@ -44,6 +44,26 @@ import { databaseUrl } from '../setup.db';
 process.env.ANA_DOCUMENT_CATALOG_FORCE_ON = 'true';
 process.env.ANA_VAULT_CHUNKING_FORCE_ON = 'true';
 
+/* ── The planner is forced onto the vector index ─────────────────────────────
+   vault.document_chunks carries an approximate (ivfflat) index on the
+   embedding, and the dense arm of the vault reader asked for
+   `ORDER BY embedding <=> $q LIMIT k` with the tenant and distance predicates
+   in the same WHERE. An approximate index scan picks its candidates from ONE
+   list (ivfflat.probes defaults to 1) and the WHERE then filters them — so when
+   that list holds another tenant's chunks, or none that pass the threshold,
+   the search returns nothing while the tenant's own matching passages sit in
+   lists it never probed. Passage search then answered "No passage matched"
+   beside a coverage line saying every document was indexed: a miss presented
+   as an exhaustive search.
+
+   Whether the planner reaches for the index depends on table statistics. On a
+   near-empty test database it usually prefers a sequential scan, which is why
+   this case passed for weeks and then failed 3 of 3 on 2026-09-24 once enough
+   rows had come and gone. Production, with every tenant's chunks in one table,
+   is the index-scan case. So the suite forces it — for its own connections
+   only — and the search must still find the passage. */
+process.env.PGOPTIONS = [process.env.PGOPTIONS, '-c enable_seqscan=off'].filter(Boolean).join(' ');
+
 const PROBE_PREFIX = 'dbtest-passage ';
 const PROBE_CODE = 'DBTEST-PASSAGE-DOC';
 
@@ -175,12 +195,13 @@ async function cleanupProbeRows(): Promise<void> {
   const client = await owner.connect();
   try {
     await client.query('BEGIN');
-    await client.query(`SET LOCAL app.audit_archive_bypass = 'on'`);
+    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
     await client.query(
       `DELETE FROM audit_logs WHERE action = 'vault.document.ingest'
          AND record_id IN (SELECT id::text FROM vault.documents WHERE document_code LIKE $1)`,
       [`${PROBE_CODE}%`],
     );
+    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
     await client.query('COMMIT');
   } catch {
     await client.query('ROLLBACK').catch(() => {});

@@ -45,7 +45,7 @@ CREATE TABLE protocol_risks (id serial PRIMARY KEY, organization_id int, protoco
 CREATE TABLE protocol_milestones (id serial PRIMARY KEY, organization_id int, protocol_document_id int, name text, milestone_type text, target_date date, actual_date date, deleted_at timestamptz);
 CREATE TABLE protocol_amendments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, amendment_number text, title text, affects_consent boolean, submitted_date date, decided_date date, deleted_at timestamptz);
 CREATE TABLE protocol_amendment_changes (id serial PRIMARY KEY, amendment_id int, section_ref text, change_description text, previous_text text, proposed_text text);
-CREATE TABLE protocol_deviations (id serial PRIMARY KEY, organization_id int, protocol_document_id int, deviation_number text, description text, category text, severity text, is_reportable boolean, status text, deleted_at timestamptz);
+CREATE TABLE protocol_deviations (id serial PRIMARY KEY, organization_id int, protocol_document_id int, deviation_number text, description text, category text, severity text, is_reportable boolean, affects_safety boolean, status text, deleted_at timestamptz);
 CREATE TABLE protocol_capa_actions (id serial PRIMARY KEY, deviation_id int, action text, status text);
 CREATE TABLE protocol_budget_items (id serial PRIMARY KEY, organization_id int, protocol_document_id int, category text, description text, unit_cost numeric, quantity_per_subject numeric, deleted_at timestamptz);
 CREATE TABLE protocol_budget_params (id serial PRIMARY KEY, organization_id int, protocol_document_id int, target_enrollment int, sponsor_payment_per_subject numeric, indirect_rate_pct numeric);

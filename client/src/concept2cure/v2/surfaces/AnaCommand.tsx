@@ -7,6 +7,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import '../styles/ana-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { AnaActivity } from '../AnaActivity';
 
 /* ════════════════════════════════════════════════════════════════════════
    AnA Command Center — re-anchored to the real orchestration backend.
@@ -359,6 +360,9 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
      errored. Executing mutates + audits, so nothing fires until confirm. */
   const [pending, setPending] = useState<PendingRun | null>(null);
   const [running, setRunning] = useState(false);
+  /** What is running and since when, for the live record — `pending` is
+      cleared the moment the run starts. */
+  const [runLive, setRunLive] = useState<{ title: string; since: number } | null>(null);
   const [outcome, setOutcome] = useState<RunOutcome | null>(null);
   const [runErr, setRunErr] = useState('');
   const runOpen = pending != null || running || outcome != null || runErr !== '';
@@ -408,6 +412,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
     setRunErr('');
     setOutcome(null);
     setRunning(true);
+    setRunLive({ title: p.title, since: Date.now() });
     try {
       const res = await apiRequest('POST', p.endpoint, p.body);
       const body = await res.json().catch(() => null);
@@ -816,7 +821,17 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                 hint={runErr}
               />
             ) : running ? (
-              <div className="scaf-note" style={{ padding: '28px 16px' }}>Running… executing every step server-side, then showing the real result.</div>
+              <div style={{ padding: '16px 2px' }}>
+                {/* The wait, in the same live record AnA shows everywhere else: what is
+                running, a pulse, and a clock — never a percentage, which the
+                request cannot know. Its polite live region is what a screen-reader
+                user hears; the button label alone said nothing to them. */}
+                <AnaActivity
+                  streaming
+                  phase={`Running ${runLive?.title ?? 'the command'} — every step runs server-side, then the real result is shown…`}
+                  startedAt={runLive?.since}
+                />
+              </div>
             ) : pending ? (
               <>
                 <p className="ac-lead-p" style={{ padding: '6px 2px 16px' }}>{pending.desc}</p>

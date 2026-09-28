@@ -219,6 +219,8 @@ importing the changed modules were run there.
 | `62f57b83e` | FDA ESG and ICSR: one classifier decides received / refused / delivered-unconfirmed / not delivered; ambiguous sends are held, never freed; a refused client certificate frees the sequence; an unconfirmed ICSR is locked against a resend to FAERS | 48 files, 795 tests |
 | `760888fef` | freeze gate: bound to what is frozen; a sequence waits only for a sequence sharing a lifecycle key, so IND sequences freeze in parallel; classify places through the canonical upsertLeaf | 26 files, 427 tests |
 | `6fe72bae4` | withdrawal: the packager sink never ships a delete's bytes; a withdrawn document is not approval-counted or read; bound by identity | 239 files, 3517 tests |
+| `e020c69d0` | artifact approval: only the governed approval act (status route review → approved, authoring-actions approve) records an approval; a trigger clears the recorded versions whenever status leaves approved/locked, so a revoked or archived approval cannot be resurrected by promote_artifact or AnA; a lock must cover the approval | 123 files, 1766 tests; migration gates pass |
+| `2364f546d` | device technical file: each slot places exactly the leaves it matched; `ready` counts only required slots and unresolved leaves; the ZIP manifest agrees with the ZIP; IVDR stability / software / usability slots; Vault file-name titles match | 21 files, 147 tests |
 
 The before and after runs, and the mutant runs, are in `round3/before/`,
 `round3/after/` and `round3/mutants/`. Each `*-failing-first.txt` is a new
@@ -233,6 +235,15 @@ separate-process server that reads the whole body and answers 502 while the
 client is busy was classed "not delivered", and the sequence was freed for a
 resend. The rule was withdrawn. Every 5xx/3xx, and every failure after an
 authenticated server accepted the client, is held for confirmation at FDA.
+
+**The lead overrode two workers' designs.** Approval writers: a worker made
+promote_artifact and the AnA status command record an approval themselves,
+which let an org 'manager' make an artifact filable although the approval role
+table refuses them. The lead reverted that: only the governed act records an
+approval, and everything else fails closed with a remedy. IVDR stability: the
+worker made the slot required but matchable only by document type or Annex
+key, so a Vault-built IVDR file could never be ready. The lead added the title
+match (`round3/before/ivdr-vault-stability-failing-first.txt`).
 
 ### Founder decision, not made here
 Any organization member can freeze an authoring document without a
@@ -290,6 +301,13 @@ Options:
   key can still be sent out of order.
 - **classifyDocument** can still change a verdict co-author row's
   module_number.
+- **Approval role tables.** authoring-actions approve-artifact and the
+  status route apply two different role tables to the same act, and
+  reviewQuorumVerdict counts a completed assignment with no decision row as
+  met. Both predate this work.
+- **Device title matching (low, fail closed).** A CER or PER title whose next
+  word merely begins with 'plan' ('plantar', 'planned') leaves the slot
+  unfilled. A glued prefix other than eIFU ('iFU') no longer matches.
 - **AnA package tool (low):** a first sequence written `0` is not read as
   `0000`; an upper-case `DELETE` is not validated; a declared modified_file is
   not checked against the filed manifest.

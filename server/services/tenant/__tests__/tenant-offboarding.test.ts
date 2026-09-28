@@ -64,6 +64,9 @@ function makePool(responses: Array<{ match: RegExp; rows: Row[] }>) {
       const hit = responses.find(r => r.match.test(text));
       return { rows: hit ? hit.rows : [] };
     }),
+    // The purge takes one client for its whole transaction; it records into
+    // the same statement log, so the assertions read one sequence.
+    connect: vi.fn(async () => ({ query: pool.query, release: vi.fn() })),
   };
   return pool as any;
 }

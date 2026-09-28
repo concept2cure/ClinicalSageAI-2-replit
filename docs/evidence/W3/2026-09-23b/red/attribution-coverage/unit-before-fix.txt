@@ -1,0 +1,55 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > reports the partition over the length the SERVER read 24ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > IGNORES a caller-supplied length — the denominator is not theirs to set 5ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > scopes the length read to the caller's organization 5ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > 404s for a document that is not this organization's, rather than reporting 0% 4ms
+ × server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > reports the partition for an Authoring section, the table the editor asks about 10ms
+   → {"error":{"code":"UNSUPPORTED_DOCUMENT_TABLE","message":"Attribution coverage is not available for \"authoring_sections\"."}}: expected 400 to be 200 // Object.is equality
+ × server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > scopes an Authoring section's length read by its own tenant column 4ms
+   → the section was refused before its length was read: expected undefined to be defined
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > refuses a table it cannot locate text in, by name 4ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > requires an organization context 2ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > requires both identifiers 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > reports the partition for an Authoring section, the table the editor asks about
+AssertionError: {"error":{"code":"UNSUPPORTED_DOCUMENT_TABLE","message":"Attribution coverage is not available for \"authoring_sections\"."}}: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ server/routes/__tests__/data-origins-document.test.ts:158:50
+    156|     const res = await request(app()).get(url({ documentTable: 'authori…
+    157|
+    158|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    159|     expect(res.body.summary.contentLength).toBe(100);
+    160|     expect(res.body.summary.byKind.fromSources).toBe(40);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > scopes an Authoring section's length read by its own tenant column
+AssertionError: the section was refused before its length was read: expected undefined to be defined
+ ❯ server/routes/__tests__/data-origins-document.test.ts:168:78
+    166|
+    167|     const lengthCall = query.mock.calls.find((c) => /char_length/i.tes…
+    168|     expect(lengthCall, 'the section was refused before its length was …
+       |                                                                              ^
+    169|     expect(lengthCall![0] as string).toMatch(/FROM authoring_sections\…
+    170|     expect(lengthCall![1]).toEqual([SECTION, 7]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 7 passed (9)
+   Start at  16:11:42
+   Duration  1.90s (transform 783ms, setup 95ms, import 1.56s, tests 67ms, environment 0ms)
+

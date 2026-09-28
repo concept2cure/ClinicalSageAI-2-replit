@@ -62,6 +62,8 @@
  * the owner/admin URL the installers already use.
  */
 
+import { createHash, createHmac, pbkdf2Sync, randomBytes } from 'node:crypto';
+
 /** A single, unqualified PostgreSQL identifier: no quoting metacharacters. */
 const ROLE_NAME_RE = /^[a-z_][a-z0-9_]*$/;
 
@@ -70,6 +72,42 @@ const ROLE_NAME_RE = /^[a-z_][a-z0-9_]*$/;
  * secret, long enough to reject an obviously-placeholder value.
  */
 const MIN_PASSWORD_LENGTH = 12;
+
+/**
+ * The password as PostgreSQL stores it: a SCRAM-SHA-256 verifier, computed
+ * HERE so the plaintext never reaches the server.
+ *
+ * `ALTER ROLE … PASSWORD '<plaintext>'` is DDL, and production's RDS parameter
+ * group sets log_statement = 'ddl' and exports the server log to CloudWatch.
+ * So every mint wrote APP_DATABASE_URL's password, in the clear, into a log
+ * group anyone with logs:GetLogEvents can read (review finding SEC-1,
+ * 2026-09-24). A pre-hashed verifier is stored as given, and a log line holding
+ * it discloses nothing a client can log in with. This is what psql's
+ * \password does, per RFC 5802 / RFC 7677:
+ *
+ *   SaltedPassword = PBKDF2-HMAC-SHA-256(SASLprep(password), salt, 4096)
+ *   StoredKey      = SHA-256(HMAC(SaltedPassword, "Client Key"))
+ *   ServerKey      = HMAC(SaltedPassword, "Server Key")
+ *
+ * SASLprep is the identity on printable ASCII, which is the only input
+ * accepted here — so this verifier is exactly the one the server would compute,
+ * and a password outside that set is refused rather than hashed differently
+ * from how the server will hash it at login.
+ */
+export function scramSha256Verifier(password, { salt = randomBytes(16), iterations = 4096 } = {}) {
+  if (!/^[\x20-\x7e]+$/.test(password)) {
+    throw new Error(
+      'APP_SERVICE_DB_PASSWORD must be printable ASCII. The SCRAM verifier is computed before the ' +
+        'password reaches the server, and outside ASCII that computation (SASLprep) is not ' +
+        'guaranteed to match the one the server performs at login.',
+    );
+  }
+  const salted = pbkdf2Sync(password, salt, iterations, 32, 'sha256');
+  const hmac = (key, msg) => createHmac('sha256', key).update(msg).digest();
+  const storedKey = createHash('sha256').update(hmac(salted, 'Client Key')).digest();
+  const serverKey = hmac(salted, 'Server Key');
+  return `SCRAM-SHA-256$${iterations}:${salt.toString('base64')}$${storedKey.toString('base64')}:${serverKey.toString('base64')}`;
+}
 
 /**
  * Table privileges granted to the runtime role, per schema.
@@ -207,6 +245,53 @@ export function resolveRuntimeRole(env = process.env, { ownerRole = null } = {})
 const ROLE_ATTRIBUTES = 'LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS NOREPLICATION';
 
 /**
+ * The same contract, minus the three attributes PostgreSQL lets only a
+ * superuser NAME in ALTER ROLE — even to set them to NO.
+ *
+ * On Amazon RDS the master is LOGIN CREATEROLE CREATEDB but not a superuser,
+ * and `ALTER ROLE … NOSUPERUSER` from it fails with "Only roles with the
+ * SUPERUSER attribute may change the SUPERUSER attribute" (likewise BYPASSRLS
+ * and REPLICATION). 080_gcc has always created the role by then, so the mint
+ * step took this branch and failed on RDS every time. A non-superuser cannot
+ * GRANT those attributes either, so omitting them loses nothing it could have
+ * asserted — the result is then READ BACK and refused if it is not safe
+ * (assertRuntimeRoleAttributes), which is the part that actually protects.
+ * CREATE ROLE is unaffected: naming NOSUPERUSER there is permitted.
+ */
+const ROLE_ATTRIBUTES_NON_SUPERUSER = 'LOGIN NOCREATEDB NOCREATEROLE';
+
+/**
+ * Read the role back and fail closed unless it is exactly what the runtime is
+ * allowed to be. Checked after every mint, because the attributes the mint
+ * could not name (as a non-superuser) are ones a pre-existing role may carry.
+ */
+async function assertRuntimeRoleAttributes(db, role) {
+  const { rows } = await db.query(
+    `SELECT rolcanlogin, rolsuper, rolbypassrls, rolreplication, rolcreatedb, rolcreaterole
+       FROM pg_roles WHERE rolname = $1`,
+    [role],
+  );
+  const a = rows[0];
+  if (!a) throw new Error(`runtime role ${role} does not exist after minting it.`);
+  const wrong = [
+    !a.rolcanlogin && 'cannot LOGIN',
+    a.rolsuper && 'is SUPERUSER',
+    a.rolbypassrls && 'is BYPASSRLS',
+    a.rolreplication && 'has REPLICATION',
+    a.rolcreatedb && 'has CREATEDB',
+    a.rolcreaterole && 'has CREATEROLE',
+  ].filter(Boolean);
+  if (wrong.length) {
+    throw new Error(
+      `runtime role ${role} ${wrong.join(', ')} — it must be LOGIN NOSUPERUSER NOBYPASSRLS ` +
+        'NOREPLICATION NOCREATEDB NOCREATEROLE, and the connecting role cannot make it so ' +
+        '(only a superuser can clear SUPERUSER, BYPASSRLS or REPLICATION). A BYPASSRLS or ' +
+        'superuser runtime role reads every tenant\'s rows; refusing rather than minting it.',
+    );
+  }
+}
+
+/**
  * THE grant recipe. Grants the runtime role, on every application schema
  * present: USAGE; the per-schema table privileges; USAGE, SELECT on sequences;
  * EXECUTE on functions; and the same as DEFAULT PRIVILEGES for objects the
@@ -298,10 +383,11 @@ export async function provisionAppServiceRole(db, { env = process.env, log = () 
 
   // Never string-concat a password (or identifier) into DDL: let Postgres quote
   // both. quote_ident yields a safely-quoted identifier; quote_literal yields a
-  // safely-quoted string literal including its surrounding quotes.
+  // safely-quoted string literal including its surrounding quotes. What is
+  // quoted is the SCRAM verifier, never the plaintext (scramSha256Verifier).
   const quoted = await db.query(
     'SELECT quote_ident($1) AS role_ident, quote_literal($2::text) AS pwd_lit, quote_ident(current_database()) AS db_ident',
-    [role, String(password)],
+    [role, scramSha256Verifier(String(password))],
   );
   const roleIdent = quoted.rows[0].role_ident;
   const pwdLit = quoted.rows[0].pwd_lit;
@@ -314,10 +400,16 @@ export async function provisionAppServiceRole(db, { env = process.env, log = () 
       // ALTER, not DROP+CREATE: the role owns grants and may hold live
       // connections; rotating the password and re-asserting attributes in place
       // is both idempotent and non-disruptive.
-      await db.query(`ALTER ROLE ${roleIdent} WITH ${ROLE_ATTRIBUTES} PASSWORD ${pwdLit}`);
+      const connectingIsSuperuser = (
+        await db.query('SELECT rolsuper FROM pg_roles WHERE rolname = current_user')
+      ).rows[0]?.rolsuper === true;
+      const attrs = connectingIsSuperuser ? ROLE_ATTRIBUTES : ROLE_ATTRIBUTES_NON_SUPERUSER;
+      await db.query(`ALTER ROLE ${roleIdent} WITH ${attrs} PASSWORD ${pwdLit}`);
+      await assertRuntimeRoleAttributes(db, role);
       log(`  ✓ role ${role} aligned (LOGIN · NOSUPERUSER · NOBYPASSRLS · password set)`);
     } else {
       await db.query(`CREATE ROLE ${roleIdent} WITH ${ROLE_ATTRIBUTES} PASSWORD ${pwdLit}`);
+      await assertRuntimeRoleAttributes(db, role);
       log(`  ✓ role ${role} created (LOGIN · NOSUPERUSER · NOBYPASSRLS)`);
     }
 

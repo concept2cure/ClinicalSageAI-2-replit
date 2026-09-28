@@ -66,6 +66,8 @@ interface OrgMembershipCacheEntry {
   // server/middleware/__tests__/tenant-scope-org-guc.test.ts, so the claim is a
   // test rather than a sentence that can rot again.
   orgUuid: string | null;
+  /** `organization_users.role` of the row, for the authenticator to apply (IAM-10 / P1-4). */
+  role: string | null;
   expiresAt: number;
 }
 
@@ -136,6 +138,14 @@ export type OrgMembershipCheckResult = 'member' | 'revoked' | 'indeterminate';
 interface OrgMembershipQueryResult {
   status: OrgMembershipCheckResult;
   orgUuid: string | null;
+  /**
+   * `organization_users.role` of the membership row, when there is one. The
+   * row is the authority for the role a guard reads on this request (security
+   * audit 2026-09-24 IAM-10, P1-4): the token's role was minted at login.
+   * Additive: nothing else in this module reads it; middleware/auth.ts applies
+   * it after the member path.
+   */
+  role: string | null;
   /**
    * True when the membership decision stands but the orgUuid enrichment did not
    * run — the LEFT JOIN threw and the membership-only fallback answered.
@@ -213,7 +223,7 @@ async function queryOrgMembership(
         'Org membership re-check unavailable (db not initialized) — tenant access will be refused',
         { userId, organizationId }
       );
-      return { status: 'indeterminate', orgUuid: null, enrichmentDegraded: false };
+      return { status: 'indeterminate', orgUuid: null, role: null, enrichmentDegraded: false };
     }
     // Set when the orgUuid LEFT JOIN failed and the membership-only fallback
     // answered instead. See OrgMembershipQueryResult.enrichmentDegraded.
@@ -277,20 +287,26 @@ async function queryOrgMembership(
         }
       }
     );
-    if (rows.length === 0) return { status: 'revoked', orgUuid: null, enrichmentDegraded };
+    if (rows.length === 0) return { status: 'revoked', orgUuid: null, role: null, enrichmentDegraded };
     const orgUuid = typeof rows[0]?.orgUuid === 'string' ? rows[0].orgUuid : null;
-    return { status: 'member', orgUuid, enrichmentDegraded };
+    const role = typeof rows[0]?.role === 'string' && rows[0].role ? rows[0].role : null;
+    return { status: 'member', orgUuid, role, enrichmentDegraded };
   } catch (error) {
     logger.warn('Org membership re-check failed — tenant access will be refused', {
       userId,
       organizationId,
       error: error instanceof Error ? error.message : String(error),
     });
-    return { status: 'indeterminate', orgUuid: null, enrichmentDegraded: false };
+    return { status: 'indeterminate', orgUuid: null, role: null, enrichmentDegraded: false };
   }
 }
 
-function cacheMembership(key: string, isMember: boolean, orgUuid: string | null = null): void {
+function cacheMembership(
+  key: string,
+  isMember: boolean,
+  orgUuid: string | null = null,
+  role: string | null = null
+): void {
   if (orgMembershipCache.size >= ORG_MEMBERSHIP_CACHE_MAX_ENTRIES) {
     // Size cap: evict the oldest entry (Map preserves insertion order).
     const oldest = orgMembershipCache.keys().next().value;
@@ -299,6 +315,7 @@ function cacheMembership(key: string, isMember: boolean, orgUuid: string | null 
   orgMembershipCache.set(key, {
     isMember,
     orgUuid,
+    role,
     expiresAt: Date.now() + ORG_MEMBERSHIP_CACHE_TTL_MS,
   });
 }
@@ -313,6 +330,17 @@ function cacheMembership(key: string, isMember: boolean, orgUuid: string | null 
 function attachOrgUuid(req: Request, orgUuid: string | null): void {
   if (req.user && orgUuid) {
     (req.user as { organizationUuid?: string | null }).organizationUuid = orgUuid;
+  }
+}
+
+/**
+ * The membership row's role, attached for the authenticator to apply (IAM-10 /
+ * P1-4). Attached, not applied: which fields of req.user it governs is the
+ * authenticator's decision, and this module stays the membership authority only.
+ */
+function attachOrgRole(req: Request, role: string | null): void {
+  if (req.user && role) {
+    (req.user as { organizationRole?: string | null }).organizationRole = role;
   }
 }
 
@@ -348,6 +376,7 @@ export function enforceOrgMembership(req: Request, res: Response, next: NextFunc
   if (cached && cached.expiresAt > Date.now()) {
     if (cached.isMember) {
       attachOrgUuid(req, cached.orgUuid);
+      attachOrgRole(req, cached.role);
       next();
       return;
     }
@@ -356,7 +385,7 @@ export function enforceOrgMembership(req: Request, res: Response, next: NextFunc
   }
 
   void queryOrgMembership(userId, organizationId)
-    .then(({ status: result, orgUuid, enrichmentDegraded }) => {
+    .then(({ status: result, orgUuid, role, enrichmentDegraded }) => {
       if (result === 'indeterminate') {
         // Warning already logged in queryOrgMembership. Not cached, so the next
         // request retries immediately after recovery. Never authorize a tenant
@@ -371,9 +400,10 @@ export function enforceOrgMembership(req: Request, res: Response, next: NextFunc
       // scoping, turning a transient error into minutes of empty tenant results.
       // Skipping the cache costs one query per request until the JOIN recovers,
       // and self-heals the moment it does.
-      if (!enrichmentDegraded) cacheMembership(key, result === 'member', orgUuid);
+      if (!enrichmentDegraded) cacheMembership(key, result === 'member', orgUuid, role);
       if (result === 'member') {
         attachOrgUuid(req, orgUuid);
+        attachOrgRole(req, role);
         next();
         return;
       }
@@ -432,9 +462,9 @@ export async function checkOrgMembership(
   const cached = peekOrgMembership(userId, organizationId);
   if (cached !== null) return cached ? 'member' : 'revoked';
 
-  const { status: result, orgUuid } = await queryOrgMembership(userId, organizationId);
+  const { status: result, orgUuid, role } = await queryOrgMembership(userId, organizationId);
   if (result !== 'indeterminate') {
-    cacheMembership(membershipCacheKey(userId, organizationId), result === 'member', orgUuid);
+    cacheMembership(membershipCacheKey(userId, organizationId), result === 'member', orgUuid, role);
   }
   return result;
 }

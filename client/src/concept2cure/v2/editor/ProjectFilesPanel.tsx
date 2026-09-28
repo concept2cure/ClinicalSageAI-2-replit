@@ -87,7 +87,7 @@ interface ViewerState { doc: VaultDoc; url: string; hash: string | null }
 function hitToDoc(h: SearchHit): VaultDoc {
   return {
     id: h.id, num: h.ctdSection || '', title: h.title, type: h.documentType || '',
-    status: h.placementStatus || 'unfiled', pct: 0, owner: '', ver: '', updated: '',
+    status: h.placementStatus || 'unfiled', pct: null, owner: '', ver: '', updated: '',
     preview: (h.snippet || '').replace(/<\/?b>/g, ''), src: 'upload', docId: h.id, sizeLabel: h.size || undefined,
   };
 }

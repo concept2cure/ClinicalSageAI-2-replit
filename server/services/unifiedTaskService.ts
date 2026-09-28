@@ -7,9 +7,16 @@
  */
 
 import { db } from '../db';
-import { eq, and, or, ne, sql } from 'drizzle-orm';
+import { eq, and, or, ne, sql, inArray, isNull } from 'drizzle-orm';
 import * as schema from '../../shared/schema';
 import { generateUUID } from '../utils/id-generator';
+
+/**
+ * Where a write runs: the db, or a caller's Drizzle transaction. A route that
+ * passes its transaction gets the write and the ledger row describing it
+ * (auditTaskActionInTx) committed or rolled back together.
+ */
+export type TaskWriteRunner = Pick<typeof db, 'select' | 'insert' | 'update' | 'execute'>;
 
 // Module configuration with colors and icons
 export const MODULE_CONFIG = {
@@ -84,6 +91,28 @@ export interface UnifiedTaskInput {
   organizationId: number;
   clientWorkspaceId?: number;
   projectId?: number;
+  /** The session actor who created it — completion notifies them. */
+  createdById?: number;
+}
+
+/** Whose sync it is: every read is scoped to the organization and every task
+ *  stamped with it, and the actor who ran the sync is each task's creator. */
+export interface SyncScope {
+  organizationId: number;
+  createdById: number;
+}
+
+/**
+ * A module whose tasks cannot be synced. Vault's source, the legacy
+ * `document_approvals` table, has no organization column (and nothing on any
+ * applier creates it), so a sync would import every tenant's pending
+ * approvals into the caller's organization. Refused, never read.
+ */
+export class ModuleSyncUnavailableError extends Error {
+  constructor(public readonly module: string) {
+    super(`Tasks cannot be synced from the ${module} module`);
+    this.name = 'ModuleSyncUnavailableError';
+  }
 }
 
 export interface TaskLinkInput {
@@ -116,12 +145,14 @@ class UnifiedTaskService {
   /**
    * Create a unified task from any module
    */
-  async createUnifiedTask(input: UnifiedTaskInput): Promise<schema.UnifiedTask> {
-    const dbInstance = this.getDb();
+  async createUnifiedTask(
+    input: UnifiedTaskInput,
+    runner: TaskWriteRunner = this.getDb()
+  ): Promise<schema.UnifiedTask> {
     const taskId = generateUUID();
     const moduleConfig = MODULE_CONFIG[input.moduleType];
 
-    const task = await dbInstance
+    const task = await runner
       .insert(schema.unifiedTasks)
       .values({
         taskId,
@@ -145,6 +176,7 @@ class UnifiedTaskService {
         tags: input.tags || [],
         metadata: input.metadata || {},
         status: 'pending',
+        createdById: input.createdById,
       })
       .returning();
 
@@ -250,40 +282,47 @@ class UnifiedTaskService {
   }
 
   /**
-   * Link tasks across modules
+   * Link tasks across modules, by business key (taskId), within one
+   * organization. Null when either endpoint is not a live task of that
+   * organization — nothing is written.
    */
-  async linkTasks(input: TaskLinkInput): Promise<schema.CrossModuleTaskLink> {
-    const dbInstance = this.getDb();
+  async linkTasks(
+    input: TaskLinkInput & { organizationId: number },
+    runner: TaskWriteRunner = this.getDb()
+  ): Promise<schema.CrossModuleTaskLink | null> {
     const linkId = generateUUID();
+    const live = and(
+      eq(schema.unifiedTasks.organizationId, input.organizationId),
+      isNull(schema.unifiedTasks.deletedAt)
+    );
 
-    // Get source and target tasks to determine modules
-    const [sourceTask, targetTask] = await Promise.all([
-      dbInstance
-        .select()
-        .from(schema.unifiedTasks)
-        .where(eq(schema.unifiedTasks.taskId, input.sourceTaskId))
-        .limit(1),
-      dbInstance
-        .select()
-        .from(schema.unifiedTasks)
-        .where(eq(schema.unifiedTasks.taskId, input.targetTaskId))
-        .limit(1),
-    ]);
-
-    if (!sourceTask[0] || !targetTask[0]) {
-      throw new Error('One or both tasks not found');
-    }
+    // Both endpoints in ONE read, locked in task-id order: two links over the
+    // same pair queue on the first row instead of each holding one the other
+    // waits for, and neither task can be archived under the link. A completion
+    // locks its own row before its dependents', so a link racing a completion
+    // over the same two tasks can still deadlock; Postgres aborts one side,
+    // which rolls back whole (a 500, nothing written). Every row lock still
+    // precedes the ledger row's audit-chain lock.
+    const endpoints = await runner
+      .select()
+      .from(schema.unifiedTasks)
+      .where(and(live, inArray(schema.unifiedTasks.taskId, [input.sourceTaskId, input.targetTaskId])))
+      .orderBy(schema.unifiedTasks.taskId)
+      .for('no key update');
+    const sourceTask = endpoints.find(t => t.taskId === input.sourceTaskId);
+    const targetTask = endpoints.find(t => t.taskId === input.targetTaskId);
+    if (!sourceTask || !targetTask) return null;
 
     // Create the link (tenant-stamped from the validated source task, D20)
-    const link = await dbInstance
+    const link = await runner
       .insert(schema.crossModuleTaskLinks)
       .values({
         linkId,
-        organizationId: sourceTask[0].organizationId,
+        organizationId: sourceTask.organizationId,
         sourceTaskId: input.sourceTaskId,
-        sourceModule: sourceTask[0].moduleType,
+        sourceModule: sourceTask.moduleType,
         targetTaskId: input.targetTaskId,
-        targetModule: targetTask[0].moduleType,
+        targetModule: targetTask.moduleType,
         linkType: input.linkType,
         dependencyType: input.dependencyType,
         isBlocking: input.isBlocking || false,
@@ -293,22 +332,21 @@ class UnifiedTaskService {
       })
       .returning();
 
-    // Update tasks with linkage information
+    // Update tasks with linkage information. In turn, not Promise.all: a
+    // transaction is one connection, and its statements run one at a time.
     if (input.linkType === 'dependency' && input.isBlocking) {
-      await Promise.all([
-        dbInstance
-          .update(schema.unifiedTasks)
-          .set({
-            blockedBy: sql`array_append(${schema.unifiedTasks.blockedBy}, ${input.sourceTaskId})`,
-          })
-          .where(eq(schema.unifiedTasks.taskId, input.targetTaskId)),
-        dbInstance
-          .update(schema.unifiedTasks)
-          .set({
-            blocks: sql`array_append(${schema.unifiedTasks.blocks}, ${input.targetTaskId})`,
-          })
-          .where(eq(schema.unifiedTasks.taskId, input.sourceTaskId)),
-      ]);
+      await runner
+        .update(schema.unifiedTasks)
+        .set({
+          blockedBy: sql`array_append(${schema.unifiedTasks.blockedBy}, ${input.sourceTaskId})`,
+        })
+        .where(and(live, eq(schema.unifiedTasks.taskId, input.targetTaskId)));
+      await runner
+        .update(schema.unifiedTasks)
+        .set({
+          blocks: sql`array_append(${schema.unifiedTasks.blocks}, ${input.targetTaskId})`,
+        })
+        .where(and(live, eq(schema.unifiedTasks.taskId, input.sourceTaskId)));
     }
 
     return link[0];
@@ -408,100 +446,118 @@ class UnifiedTaskService {
   }
 
   /**
-   * Sync tasks from specific module
+   * Sync tasks from specific module. Every read and insert runs on `runner`;
+   * `createdTasks` are the rows it inserted, for a caller holding the
+   * transaction to write one ledger row each before COMMIT. Throws
+   * ModuleSyncUnavailableError for Vault.
    */
   async syncTasksFromModule(
     moduleType: keyof typeof MODULE_CONFIG,
-    organizationId: number
+    scope: SyncScope,
+    runner: TaskWriteRunner = this.getDb()
   ): Promise<{
     synced: number;
     created: number;
     updated: number;
+    createdTasks: schema.UnifiedTask[];
   }> {
     let synced = 0;
-    let created = 0;
     let updated = 0;
+    const createdTasks: schema.UnifiedTask[] = [];
 
     // Module-specific sync logic
     switch (moduleType) {
-      case 'CMC':
+      case 'CMC': {
         // Sync CMC tasks (batch records, stability studies, analytical methods)
-        const cmcTasks = await this.syncCMCTasks(organizationId);
+        const cmcTasks = await this.syncCMCTasks(scope, runner);
         synced += cmcTasks.synced;
-        created += cmcTasks.created;
         updated += cmcTasks.updated;
+        createdTasks.push(...cmcTasks.createdTasks);
         break;
+      }
 
-      case 'IND':
+      case 'IND': {
         // Sync IND Wizard tasks (document preparation, section completion)
-        const indTasks = await this.syncINDTasks(organizationId);
+        const indTasks = await this.syncINDTasks(scope, runner);
         synced += indTasks.synced;
-        created += indTasks.created;
         updated += indTasks.updated;
+        createdTasks.push(...indTasks.createdTasks);
         break;
+      }
 
-      case 'MedicalDevice':
+      case 'MedicalDevice': {
         // Sync Medical Device tasks (510(k) prep, PMA documentation)
-        const mdTasks = await this.syncMedicalDeviceTasks(organizationId);
+        const mdTasks = await this.syncMedicalDeviceTasks(scope, runner);
         synced += mdTasks.synced;
-        created += mdTasks.created;
         updated += mdTasks.updated;
+        createdTasks.push(...mdTasks.createdTasks);
         break;
+      }
 
-      case 'eCTD':
+      case 'eCTD': {
         // Sync eCTD Co-Author tasks (document assembly, publishing)
-        const ectdTasks = await this.syncECTDTasks(organizationId);
+        const ectdTasks = await this.syncECTDTasks(scope, runner);
         synced += ectdTasks.synced;
-        created += ectdTasks.created;
         updated += ectdTasks.updated;
+        createdTasks.push(...ectdTasks.createdTasks);
         break;
+      }
 
       case 'Vault':
-        // Sync Vault tasks (document reviews, approvals)
-        const vaultTasks = await this.syncVaultTasks(organizationId);
-        synced += vaultTasks.synced;
-        created += vaultTasks.created;
-        updated += vaultTasks.updated;
-        break;
+        // Refused before any read: see ModuleSyncUnavailableError.
+        throw new ModuleSyncUnavailableError('Vault');
 
-      case 'ProtocolDesign':
+      case 'ProtocolDesign': {
         // Sync Protocol Design tasks (study design, protocol reviews)
-        const protocolTasks = await this.syncProtocolTasks(organizationId);
+        const protocolTasks = await this.syncProtocolTasks(scope, runner);
         synced += protocolTasks.synced;
-        created += protocolTasks.created;
         updated += protocolTasks.updated;
+        createdTasks.push(...protocolTasks.createdTasks);
         break;
+      }
     }
 
-    return { synced, created, updated };
+    return { synced, created: createdTasks.length, updated, createdTasks };
   }
 
-  private async syncCMCTasks(organizationId: number) {
-    const dbInstance = this.getDb();
+  /**
+   * Whether this organization already has a task synced from this source row.
+   * Org-scoped: source ids are per-tenant serials, so another organization's
+   * task for the same id used to stop this one's from ever being created.
+   */
+  private async alreadySynced(
+    runner: TaskWriteRunner,
+    organizationId: number,
+    moduleType: string,
+    sourceEntityId: string
+  ): Promise<boolean> {
+    const existing = await runner
+      .select({ id: schema.unifiedTasks.id })
+      .from(schema.unifiedTasks)
+      .where(
+        and(
+          eq(schema.unifiedTasks.organizationId, organizationId),
+          eq(schema.unifiedTasks.sourceEntityId, sourceEntityId),
+          eq(schema.unifiedTasks.moduleType, moduleType)
+        )
+      )
+      .limit(1);
+    return existing.length > 0;
+  }
 
+  private async syncCMCTasks(scope: SyncScope, runner: TaskWriteRunner) {
+    const { organizationId, createdById } = scope;
     // Query stability studies and convert to unified tasks
-    const tasks = await dbInstance
+    const tasks = await runner
       .select()
       .from(schema.stabilityStudies)
       .where(eq(schema.stabilityStudies.organizationId, organizationId))
       .limit(100);
 
-    let created = 0;
+    const createdTasks: schema.UnifiedTask[] = [];
     for (const task of tasks) {
-      // Check if already synced
-      const existing = await dbInstance
-        .select()
-        .from(schema.unifiedTasks)
-        .where(
-          and(
-            eq(schema.unifiedTasks.sourceEntityId, String(task.id)),
-            eq(schema.unifiedTasks.moduleType, 'CMC')
-          )
-        )
-        .limit(1);
-
-      if (existing.length === 0) {
-        await this.createUnifiedTask({
+      if (!(await this.alreadySynced(runner, organizationId, 'CMC', String(task.id)))) {
+        createdTasks.push(await this.createUnifiedTask({
           moduleType: 'CMC',
           title: task.studyTitle || task.productName,
           description: task.notes ?? undefined,
@@ -513,19 +569,18 @@ class UnifiedTaskService {
           sourceEntityId: String(task.id),
           sourceEntityType: 'stability_study',
           organizationId,
-        });
-        created++;
+          createdById,
+        }, runner));
       }
     }
 
-    return { synced: tasks.length, created, updated: 0 };
+    return { synced: tasks.length, updated: 0, createdTasks };
   }
 
-  private async syncINDTasks(organizationId: number) {
-    const dbInstance = this.getDb();
-
+  private async syncINDTasks(scope: SyncScope, runner: TaskWriteRunner) {
+    const { organizationId, createdById } = scope;
     // Query regulatory tasks for IND
-    const tasks = await dbInstance
+    const tasks = await runner
       .select()
       .from(schema.regulatoryTasks)
       .where(
@@ -536,21 +591,10 @@ class UnifiedTaskService {
       )
       .limit(100);
 
-    let created = 0;
+    const createdTasks: schema.UnifiedTask[] = [];
     for (const task of tasks) {
-      const existing = await dbInstance
-        .select()
-        .from(schema.unifiedTasks)
-        .where(
-          and(
-            eq(schema.unifiedTasks.sourceEntityId, task.taskId),
-            eq(schema.unifiedTasks.moduleType, 'IND')
-          )
-        )
-        .limit(1);
-
-      if (existing.length === 0) {
-        await this.createUnifiedTask({
+      if (!(await this.alreadySynced(runner, organizationId, 'IND', task.taskId))) {
+        createdTasks.push(await this.createUnifiedTask({
           moduleType: 'IND',
           title: task.title,
           description: task.description ?? undefined,
@@ -563,39 +607,27 @@ class UnifiedTaskService {
           sourceEntityId: task.taskId ?? undefined,
           sourceEntityType: 'regulatory_task',
           organizationId,
-        });
-        created++;
+          createdById,
+        }, runner));
       }
     }
 
-    return { synced: tasks.length, created, updated: 0 };
+    return { synced: tasks.length, updated: 0, createdTasks };
   }
 
-  private async syncMedicalDeviceTasks(organizationId: number) {
-    const dbInstance = this.getDb();
-
+  private async syncMedicalDeviceTasks(scope: SyncScope, runner: TaskWriteRunner) {
+    const { organizationId, createdById } = scope;
     // Query medical device specific tasks
-    const tasks = await dbInstance
+    const tasks = await runner
       .select()
       .from(schema.medicalDevices)
       .where(eq(schema.medicalDevices.organizationId, organizationId))
       .limit(100);
 
-    let created = 0;
+    const createdTasks: schema.UnifiedTask[] = [];
     for (const task of tasks) {
-      const existing = await dbInstance
-        .select()
-        .from(schema.unifiedTasks)
-        .where(
-          and(
-            eq(schema.unifiedTasks.sourceEntityId, String(task.id)),
-            eq(schema.unifiedTasks.moduleType, 'MedicalDevice')
-          )
-        )
-        .limit(1);
-
-      if (existing.length === 0) {
-        await this.createUnifiedTask({
+      if (!(await this.alreadySynced(runner, organizationId, 'MedicalDevice', String(task.id)))) {
+        createdTasks.push(await this.createUnifiedTask({
           moduleType: 'MedicalDevice',
           title: task.deviceName,
           description: task.deviceType ?? undefined,
@@ -605,19 +637,18 @@ class UnifiedTaskService {
           sourceEntityId: String(task.id),
           sourceEntityType: 'medical_device',
           organizationId,
-        });
-        created++;
+          createdById,
+        }, runner));
       }
     }
 
-    return { synced: tasks.length, created, updated: 0 };
+    return { synced: tasks.length, updated: 0, createdTasks };
   }
 
-  private async syncECTDTasks(organizationId: number) {
-    const dbInstance = this.getDb();
-
+  private async syncECTDTasks(scope: SyncScope, runner: TaskWriteRunner) {
+    const { organizationId, createdById } = scope;
     // Query document-related tasks
-    const documents = await dbInstance
+    const documents = await runner
       .select()
       .from(schema.documents)
       .where(
@@ -628,21 +659,10 @@ class UnifiedTaskService {
       )
       .limit(50);
 
-    let created = 0;
+    const createdTasks: schema.UnifiedTask[] = [];
     for (const doc of documents) {
-      const existing = await dbInstance
-        .select()
-        .from(schema.unifiedTasks)
-        .where(
-          and(
-            eq(schema.unifiedTasks.sourceEntityId, String(doc.id)),
-            eq(schema.unifiedTasks.moduleType, 'eCTD')
-          )
-        )
-        .limit(1);
-
-      if (existing.length === 0) {
-        await this.createUnifiedTask({
+      if (!(await this.alreadySynced(runner, organizationId, 'eCTD', String(doc.id)))) {
+        createdTasks.push(await this.createUnifiedTask({
           moduleType: 'eCTD',
           title: `Complete document: ${doc.title}`,
           description: `Review and finalize eCTD document ${doc.title}`,
@@ -652,76 +672,18 @@ class UnifiedTaskService {
           sourceEntityId: String(doc.id),
           sourceEntityType: 'document',
           organizationId,
-        });
-        created++;
+          createdById,
+        }, runner));
       }
     }
 
-    return { synced: documents.length, created, updated: 0 };
+    return { synced: documents.length, updated: 0, createdTasks };
   }
 
-  private async syncVaultTasks(organizationId: number) {
-    const dbInstance = this.getDb();
-
-    // Query vault approval tasks (raw query to avoid missing schema bindings)
-    const approvalsResult = await dbInstance.execute(sql`
-      select id, approver_id as approverId, status, approval_date as approvalDate
-      from document_approvals
-      where status = 'PENDING'
-      limit 50
-    `);
-
-    const approvals = approvalsResult.rows as Array<{
-      id: string;
-      approverId: string | number | null;
-      status: string;
-      approvalDate: Date | null;
-    }>;
-
-    let created = 0;
-    for (const approval of approvals) {
-      const existing = await dbInstance
-        .select()
-        .from(schema.unifiedTasks)
-        .where(
-          and(
-            eq(schema.unifiedTasks.sourceEntityId, String(approval.id)),
-            eq(schema.unifiedTasks.moduleType, 'Vault')
-          )
-        )
-        .limit(1);
-
-      if (existing.length === 0) {
-        await this.createUnifiedTask({
-          moduleType: 'Vault',
-          title: `Document Approval Required`,
-          description: `Review and approve document in Trial Vault`,
-          category: 'approval',
-          taskType: 'approval',
-          assigneeId:
-            typeof approval.approverId === 'number'
-              ? approval.approverId
-              : Number.isFinite(Number(approval.approverId))
-                ? Number(approval.approverId)
-                : undefined,
-          priority: 'high',
-          dueDate: approval.approvalDate || undefined,
-          sourceEntityId: String(approval.id),
-          sourceEntityType: 'document_approval',
-          organizationId,
-        });
-        created++;
-      }
-    }
-
-    return { synced: approvals.length, created, updated: 0 };
-  }
-
-  private async syncProtocolTasks(organizationId: number) {
-    const dbInstance = this.getDb();
-
+  private async syncProtocolTasks(scope: SyncScope, runner: TaskWriteRunner) {
+    const { organizationId, createdById } = scope;
     // Query protocol design tasks
-    const protocols = await dbInstance
+    const protocols = await runner
       .select()
       .from(schema.protocols)
       .where(
@@ -732,21 +694,10 @@ class UnifiedTaskService {
       )
       .limit(50);
 
-    let created = 0;
+    const createdTasks: schema.UnifiedTask[] = [];
     for (const protocol of protocols) {
-      const existing = await dbInstance
-        .select()
-        .from(schema.unifiedTasks)
-        .where(
-          and(
-            eq(schema.unifiedTasks.sourceEntityId, String(protocol.id)),
-            eq(schema.unifiedTasks.moduleType, 'ProtocolDesign')
-          )
-        )
-        .limit(1);
-
-      if (existing.length === 0) {
-        await this.createUnifiedTask({
+      if (!(await this.alreadySynced(runner, organizationId, 'ProtocolDesign', String(protocol.id)))) {
+        createdTasks.push(await this.createUnifiedTask({
           moduleType: 'ProtocolDesign',
           title: `Complete Protocol: ${protocol.title}`,
           description: `Finalize protocol design and submit for review`,
@@ -756,19 +707,20 @@ class UnifiedTaskService {
           sourceEntityId: String(protocol.id),
           sourceEntityType: 'protocol',
           organizationId,
-        });
-        created++;
+          createdById,
+        }, runner));
       }
     }
 
-    return { synced: protocols.length, created, updated: 0 };
+    return { synced: protocols.length, updated: 0, createdTasks };
   }
 
   /**
    * Update task status.
    *
    * The unblock cascade is NOT run here — callers run the shared, org-scoped
-   * cascade (services/tasking/task-side-effects.cascadeUnblockOnCompletion),
+   * cascade (services/tasking/task-side-effects: cascadeUnblockOnCompletionInTx
+   * on the transition's own transaction, or cascadeUnblockOnCompletion without one),
    * which covers both linkage systems and notifies. The private version this
    * method used to call matched blockedBy across EVERY organization.
    *
@@ -799,13 +751,17 @@ class UnifiedTaskService {
        * treat as "nothing happened" and NOT audit.
        */
       expectedStatus?: string;
-    }
+    },
+    /** The caller's transaction, so the change commits with its ledger row. */
+    runner: TaskWriteRunner = this.getDb()
   ) {
-    const dbInstance = this.getDb();
     const updates: any = { status, updatedAt: new Date() };
 
     if (status === 'completed') {
-      updates.completedAt = new Date();
+      // Only a real move into `completed` stamps the time. Signing a task
+      // that is already complete attests to that completion; the
+      // manifestation carries its own signedAt.
+      if (opts?.expectedStatus !== 'completed') updates.completedAt = new Date();
       updates.completionPercentage = 100;
       updates.progress = 100;
     }
@@ -838,17 +794,25 @@ class UnifiedTaskService {
       updates.approvalHistory = sql`(COALESCE(${schema.unifiedTasks.approvalHistory}, '[]'::json)::jsonb || ${JSON.stringify([opts.manifestation])}::jsonb)::json`;
     }
 
-    const result = await dbInstance
+    const result = await runner
       .update(schema.unifiedTasks)
       .set(updates)
       .where(
         and(
           eq(schema.unifiedTasks.taskId, taskId),
+          // Archived after the caller read it: out of reach, as on every write.
+          isNull(schema.unifiedTasks.deletedAt),
           ...(opts?.organizationId !== undefined
             ? [eq(schema.unifiedTasks.organizationId, opts.organizationId)]
             : []),
           ...(opts?.expectedStatus !== undefined
             ? [eq(schema.unifiedTasks.status, opts.expectedStatus)]
+            : []),
+          // A same-status signature has no status to race on, so it sets on
+          // the approval it read instead: one signature clears the gate, and
+          // a second concurrent one matches nothing rather than stacking.
+          ...(opts?.manifestation
+            ? [sql`${schema.unifiedTasks.approvalStatus} IS DISTINCT FROM 'approved'`]
             : [])
         )
       )

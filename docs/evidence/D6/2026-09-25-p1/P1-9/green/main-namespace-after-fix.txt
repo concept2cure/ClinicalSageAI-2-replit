@@ -1,0 +1,27 @@
+$ git rev-parse --short HEAD  # plus the socketServer.ts change
+d9cb1d9b
+ ✓ server/__tests__/security/socket-main-namespace-session.test.ts > main namespace handshake > admits an access token of a current member of an active organisation 13ms
+ ✓ server/__tests__/security/socket-main-namespace-session.test.ts > main namespace handshake > refuses a token carried only in the query string 3ms
+ ✓ server/__tests__/security/socket-main-namespace-session.test.ts > main namespace handshake > refuses a revoked membership 6ms
+ ✓ server/__tests__/security/socket-main-namespace-session.test.ts > main namespace handshake > refuses when the membership cannot be determined (fail closed) 2ms
+ ✓ server/__tests__/security/socket-main-namespace-session.test.ts > main namespace handshake > still refuses an inactive organisation 2ms
+ ✓ server/__tests__/security/socket-main-namespace-session.test.ts > main namespace handshake > still refuses a pre-MFA token 2ms
+ ✓ server/__tests__/security/socket-main-namespace-session.test.ts > after connect, the session is re-checked on a timer > a member removed from the organisation is told and disconnected within 60 s 23ms
+ ✓ server/__tests__/security/socket-main-namespace-session.test.ts > after connect, the session is re-checked on a timer > a session that has ended (revoked, account out of use, password changed) is disconnected 4ms
+ ✓ server/__tests__/security/socket-main-namespace-session.test.ts > after connect, the session is re-checked on a timer > an organisation that stops being active is disconnected 5ms
+ ✓ server/__tests__/security/socket-main-namespace-session.test.ts > after connect, the session is re-checked on a timer > a member in good standing is left alone 3ms
+ ✓ server/__tests__/security/socket-main-namespace-session.test.ts > after connect, the session is re-checked on a timer > the timer stops when the socket disconnects 4ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-003: task/notification/compliance/timer events never cross tenants > two organizations connected => ZERO cross-tenant receipt across all 11 events, intra-tenant delivery preserved 740ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects actor spoofing: the collaborator and the edit are attributed to the authenticated user 92ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects lock theft: a non-holder cannot release another user's section lock 351ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects events aimed at a document the socket did not join 399ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects joining a document owned by another organization, and an id that does not exist 503ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects join-room smuggling into a document room the caller was never authorized for 557ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > refuses collaboration events from a socket that never joined a document 387ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > handshake fails closed > rejects a connection with no token 78ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > handshake fails closed > rejects a token with no organization claim 69ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > handshake fails closed > rejects a refresh token (non-access token class) 71ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > handshake fails closed > rejects an MFA-partial token 68ms
+ Test Files  2 passed (2)
+      Tests  22 passed (22)
+exit=0

@@ -1,0 +1,19 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every table named by the migration ends up policied, enabled and FORCEd 12ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > chat_messages: each tenant sees its own row and not the other's 23ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > csr_details: each tenant sees its own row and not the other's 13ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > csr_sections: each tenant sees its own row and not the other's 14ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > rag_chunks: each tenant sees its own row and not the other's 13ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > complaints: each tenant sees its own row and not the other's 13ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > pdev_program_activities: each tenant sees its own row and not the other's 13ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > resolution_bundle_items: each tenant sees its own row and not the other's 11ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > leaves the three chained tables deny-all, deliberately and visibly 2ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > the policy is inert when enforcement is off, exactly like its siblings 2ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  19:56:45
+   Duration  1.32s (transform 104ms, setup 80ms, import 77ms, tests 865ms, environment 0ms)
+

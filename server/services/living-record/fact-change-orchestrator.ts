@@ -30,7 +30,7 @@ import { inArray } from 'drizzle-orm';
 import { db } from '../../db';
 import { evidenceClaims } from '../../../shared/schema';
 import type { CanonicalFact, FactDrift } from '../../../shared/schema/living-record-spine';
-import auditService from '../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { propagateRegulatoryChange } from '../living-file/change-router.service';
 import { createResolutionPlan } from '../resolution/resolution-planner';
 import type { AffectedObject } from '../../../shared/schema/resolution';
@@ -141,6 +141,12 @@ export interface ApplyFactChangeResult {
   cascadedClaims: number;
   resolutionPlanId: string | null;
   resolutionPlanSkippedReason: string | null;
+  /**
+   * Whether the 21 CFR Part 11 §11.10(e) row recording this change exists. The
+   * change stands either way (an audit outage must not undo it); the caller is
+   * told, and says so. Until 2026-09-24 the write's outcome was discarded.
+   */
+  auditTrail: AuditRowOutcome;
 }
 
 /**
@@ -214,7 +220,7 @@ export async function applyFactChange(
     actor: params.actor,
   });
 
-  await auditService.logAction({
+  const auditTrail = await recordAuditRow({
     tenantId: newFact.organizationId,
     userId: params.actor ?? 'system',
     action: 'canonical_fact.governed_change',
@@ -252,6 +258,7 @@ export async function applyFactChange(
     cascadedClaims,
     resolutionPlanId,
     resolutionPlanSkippedReason,
+    auditTrail,
   };
 }
 
@@ -398,6 +405,8 @@ export interface EstablishFactParams {
 export interface EstablishFactResult {
   ok: true;
   fact: CanonicalFact;
+  /** Whether the §11.10(e) row recording the new governed value exists (see ApplyFactChangeResult). */
+  auditTrail: AuditRowOutcome;
 }
 
 /**
@@ -439,7 +448,7 @@ export async function establishGovernedFact(
     createdBy: params.actor,
   });
 
-  await auditService.logAction({
+  const auditTrail = await recordAuditRow({
     tenantId: params.organizationId,
     userId: params.actor ?? 'system',
     action: 'canonical_fact.established',
@@ -455,7 +464,7 @@ export async function establishGovernedFact(
     },
   });
 
-  return { ok: true, fact };
+  return { ok: true, fact, auditTrail };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

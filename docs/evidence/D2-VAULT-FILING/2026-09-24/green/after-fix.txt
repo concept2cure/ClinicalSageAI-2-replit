@@ -1,0 +1,28 @@
+# GREEN
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > the dialog is styled by the design system, not by invented names > uses no class that no stylesheet defines 209ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > the dialog is styled by the design system, not by invented names > renders the shared dialog shell the other dialogs use 28ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > is labelled by its own title 28ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > moves focus into the dialog on open 23ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > returns focus to whatever opened it 26ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > closes on Escape 24ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > closes on a click outside, but not on a click inside 19ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > names the vault document by uuid, on the vault_documents table 313ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > writes NO snapshot — that is the whole point of the uuid column 78ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > reports the leaf the server actually wrote 82ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > refusals are refusals > surfaces the server verdict verbatim and never claims a placement 69ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > refusals are refusals > writes nothing for a section code no document can be filed at 51ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the target picker is the shared one > offers the draft sequence and disables the frozen one, saying why 61ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > files a vault document into an IRB package at an IRB slot 55ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > refuses a CTD code in an IRB package, naming the IRB vocabulary 45ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > files into a 510(k) at an eSTAR section 37ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > stays strict for an eCTD submission: an IRB slot is not a CTD section 37ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > a non-PDF is refused before anything is written > says why, and offers no placement 6ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > a non-PDF is refused before anything is written > a PDF is filed as before 35ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a suggested upload renders inside its taxonomy folder 3ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > an unfiled upload renders in the Unfiled queue — visible, never dropped 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > every preset folder of the view renders even when empty 2ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a confirmed upload counts as placed, and its leaf carries real provenance only 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a row with a folder but unfiled status stays in the queue (placement wins over stale folder) 0ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > uploadLeaf carries the file type the filing action decides on > projects mime_type as mimeType 0ms
+      Tests  25 passed (25)

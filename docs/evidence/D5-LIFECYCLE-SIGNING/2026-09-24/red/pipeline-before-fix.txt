@@ -1,0 +1,23 @@
+# RED — tests/regulatory/document-lifecycle-pipeline.pglite.test.ts (real PGlite) run against
+# server/routes/document-lifecycle.ts as at HEAD 36aea616, the fixed copy restored afterwards.
+
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > governed document pipeline (HTTP → PGlite) > runs the spine authoring → approved with gates, re-verified signatures and a verified audit chain, and refuses to place without a sequence 88ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > governed document pipeline (HTTP → PGlite) > scopes reads to the tenant — another org cannot see the document 8ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > governed document pipeline (HTTP → PGlite) > instantiates the type's blueprint outline at creation (blueprints reach the document) 18ms
+ × tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > refuses a sign-off with no password, and with a wrong one 28ms
+   → expected 200 to be 400 // Object.is equality
+ × tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > records the server role, never the one in the request body 29ms
+   → expected 'qualified-person' to be 'admin' // Object.is equality
+ × tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > approving signs: no password, no approval — and the stage does not move 36ms
+   → expected 200 to be 400 // Object.is equality
+ × tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > a signatureRef in the body is never cited: the approval carries a server-minted reference 25ms
+   → expected 'forged-ref' to match /^csig:/
+ × tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > a role without signing authority cannot sign, even re-verified 21ms
+   → expected 200 to be 403 // Object.is equality
+ × tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > a viewer can create, sign and advance nothing 15ms
+   → expected 201 to be 403 // Object.is equality
+ × tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > no user, no write: the actor is the authenticated user or nothing — never "unknown" 15ms
+   → expected 200 to be 401 // Object.is equality
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > an illegal jump is refused by the gate and costs the signer no credential check 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  7 failed | 4 passed (11)

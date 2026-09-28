@@ -1,0 +1,685 @@
+# Every real-database suite after the non-public amendment (ledger L203), filtered to result lines
+# and failure errors. atom-search's failure is the pre-existing search_atoms_hybrid defect.
+
+ × tests/db/atom-search.dbtest.ts > search_atoms_hybrid on a from-blank database > returns rows 17ms
+ × tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > returns no more rows than the limit, all the tenant’s own 7ms
+ × tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > weights semantic and keyword scores as the caller asked 4ms
+ × tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > returns a project's own atoms even when other projects' atoms score higher 2ms
+ × tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > never returns another tenant’s atom, even on a connection RLS does not filter 2ms
+ ✓ tests/db/document-catalog-recall.dbtest.ts > memory ingestion writes embedded entries > ingestProjectDocument leaves NO entry invisible to semantic recall 647ms
+ ✓ tests/db/document-catalog-recall.dbtest.ts > semantic search over the catalog > a cataloged document is embedded and findable; uncataloged ones are counted, not hidden 3979ms
+ ✓ tests/db/document-catalog-recall.dbtest.ts > semantic search over the catalog > an embedding-provider failure is said as unavailability — never an empty result 1458ms
+ ✓ tests/db/document-catalog-recall.dbtest.ts > chat-upload discovery > lists the current upload with its reopenable file_id and excludes the superseded one 43ms
+ ✓ tests/db/document-catalog-recall.dbtest.ts > vault passage retrieval — the reader finally has a writer > an ingested document is chunked, embedded, ledgered, and retrievable through ragRouter 89ms
+ ✓ tests/db/document-catalog-recall.dbtest.ts > vault passage retrieval — the reader finally has a writer > an embedding failure leaves ZERO chunks and a chunk_failed ledger row — never a partial index 6981ms
+ ✓ tests/db/document-catalog-recall.dbtest.ts > backfilling documents ingested before chunking existed > indexes the legacy document the sweep finds, and says what it could not index 7137ms
+ ✓ tests/db/document-catalog-recall.dbtest.ts > filing a chat upload into the vault > performs the same governed admission the Vault surface does, and the file becomes catalogable 95ms
+ ✓ tests/db/chat-upload.dbtest.ts > POST /api/chat/upload — a client document reaches its tenant > accepts the upload and records it for the organization 71ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > catalog and live session prove RLS is active for the runtime role 15ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal project-context endpoint cannot resolve Tenant B profile as Tenant A 125ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal regulatory-content CRUD endpoints hide and protect Tenant B rows 138ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: list/filter, direct read and existence probe hide tenant B from A 49ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: update and delete of tenant B are indistinguishable not-found 30ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: WITH CHECK rejects planting a row into tenant B without leaking details 11ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: list/filter, direct read and existence probe hide tenant B from A 26ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: update and delete of tenant B are indistinguishable not-found 18ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: WITH CHECK rejects planting a row into tenant B without leaking details 7ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: list/filter, direct read and existence probe hide tenant B from A 31ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: update and delete of tenant B are indistinguishable not-found 23ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: WITH CHECK rejects planting a row into tenant B without leaking details 8ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: list/filter, direct read and existence probe hide tenant B from A 29ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: update and delete of tenant B are indistinguishable not-found 17ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: WITH CHECK rejects planting a row into tenant B without leaking details 6ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: list/filter, direct read and existence probe hide tenant B from A 22ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: update and delete of tenant B are indistinguishable not-found 17ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: WITH CHECK rejects planting a row into tenant B without leaking details 7ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: list/filter, direct read and existence probe hide tenant B from A 25ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: update and delete of tenant B are indistinguishable not-found 16ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: WITH CHECK rejects planting a row into tenant B without leaking details 9ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: list/filter, direct read and existence probe hide tenant B from A 28ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: update and delete of tenant B are indistinguishable not-found 31ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: WITH CHECK rejects planting a row into tenant B without leaking details 5ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > pooled session context is reset and the wrong-context negative control is observable 11ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the recording evaluator persists the caller's own decision through the app role 1507ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > WITH CHECK refuses a decision the recorder files for another tenant 1504ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the simulate route records nothing, for any tenant 1510ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the reads show tenant A its decision and tenant B nothing of it 39ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 4ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the posture is the one production runs in > enrolment used the step it presented 5ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > a code opens one session (POST /api/auth/mfa/verify) > refuses the same code the second time 127ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > a code opens one session (POST /api/auth/mfa/verify) > refuses a code from a step earlier than the last accepted, though that code was never used 39ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > a code opens one session (POST /api/auth/mfa/verify) > accepts the next code: a refusal is per step, not a lockout 43ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > two sign-ins racing one code: exactly one session 89ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > eight verifiers racing one code: exactly one accepts it 36ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > one record of used codes, whichever path verifies > the enterprise sign-in refuses a code it already accepted 130ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > one record of used codes, whichever path verifies > the password sign-in refuses a code the enterprise sign-in used 46ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the modal can check a code, even twice, and it is still unused 58ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the signature then accepts that same code, and uses it 11ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > a used code neither checks nor signs again 23ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the code pre-check is metered per signer, and a wrong code counts against the account 97ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the password pre-check is metered per signer too, on its own budget, and a wrong password counts 137ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > five verifiers racing one emailed code: exactly one accepts it 18ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > after 4 wrong guesses the right code is accepted: true (the limit is exactly five) 16ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > after 5 wrong guesses the right code is accepted: false (the limit is exactly five) 11ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > twelve concurrent wrong guesses exhaust the five attempts, and the right code is then refused 46ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > a password-reset token is used once > two resets racing one token: exactly one succeeds, and its password is the one set 998ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > replay state belongs to one secret > a new authenticator's first code is not refused for the old one's last step 23ms
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a readable upload lands with catalog_status=extracted and real counts 114ms
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a real PDF records its actual page count, not null 2296ms
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > an upload extraction cannot read is recorded as a FAILURE with a reason 24ms
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > read_project_document refuses to pretend the opaque document has content 686ms
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > list_project_documents shows both files with honest catalog states 16ms
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > reports the scope total while the page stays at the limit 7ms
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > counts what needs attention across the scope, not across the page 6ms
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > claims completeness only when the page really is the whole scope 6ms
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > the session-start digest carries the scope it sampled from 16ms
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > catalog_project_document REFUSES a partial read and names what is unread 26ms
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > after reading ALL of it, the catalog write succeeds and is durable 75ms
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > hands the comprehension record BACK on the next read, instead of starting from zero 8ms
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > another tenant cannot list or read the document 10ms
+ ✓ tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe > REFUSES invented values, a verdict and a nested leaf — names each, stores nothing 12ms
+ ✓ tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe > ACCEPTS the document’s own values, in its typography or plain ASCII 31ms
+ ✓ tests/db/document-catalog.dbtest.ts > a chat upload knows it is indexed by its opening only > writes the file length and the embedded length onto the row 14ms
+ ✓ tests/db/document-catalog.dbtest.ts > a chat upload knows it is indexed by its opening only > a second write for the same source is a no-op, not a duplicate 2ms
+ ✓ tests/db/module-access-requests.dbtest.ts > posture > a member request runs as the non-superuser runtime role, RLS on, scoped to their org 74ms
+ ✓ tests/db/module-access-requests.dbtest.ts > posture > the platform owner on this prefix is scoped to the owner's own org, not the system scope 18ms
+ ✓ tests/db/module-access-requests.dbtest.ts > posture > the platform owner on the Master Administration prefix runs under the system scope, still as the runtime role 10ms
+ ✓ tests/db/module-access-requests.dbtest.ts > posture > the table is RLS enabled + FORCED with the tenant policy, and the partial unique index is deployed 6ms
+ ✓ tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > first ask inserts one row; a repeat updates the SAME open row via the partial unique index 74ms
+ ✓ tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > five concurrent asks for one module leave exactly one open row, exactly one reported as new 133ms
+ ✓ tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > a different member of the same org asking for the same module is a separate request 20ms
+ ✓ tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > once answered, a fresh ask creates a NEW open row beside the answered one 81ms
+ ✓ tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > the organization comes from the caller, never from the body 45ms
+ ✓ tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > an unknown module is refused and writes nothing 8ms
+ ✓ tests/db/module-access-requests.dbtest.ts > member creates a request (per-user scope A) > /mine returns the caller's own requests in their workspace only 6ms
+ ✓ tests/db/module-access-requests.dbtest.ts > tenant isolation under the runtime role > org admin A's queue holds org A's requests and none of org B's 7ms
+ ✓ tests/db/module-access-requests.dbtest.ts > tenant isolation under the runtime role > org admin A cannot decide org B's request, and nothing is granted to B 7ms
+ ✓ tests/db/module-access-requests.dbtest.ts > tenant isolation under the runtime role > org admin B sees org B's request and none of A's 9ms
+ ✓ tests/db/module-access-requests.dbtest.ts > tenant isolation under the runtime role > a member cannot read the queue or answer a request 9ms
+ ✓ tests/db/module-access-requests.dbtest.ts > tenant isolation under the runtime role > an unauthenticated call is refused before any read 2ms
+ ✓ tests/db/module-access-requests.dbtest.ts > decisions by the org admin > approve writes an enabled, unbounded module_subscriptions row for org A, records the decision and audits it 20ms
+ ✓ tests/db/module-access-requests.dbtest.ts > decisions by the org admin > approve clears a lapsed trial date instead of re-enabling an already-expired grant 20ms
+ ✓ tests/db/module-access-requests.dbtest.ts > decisions by the org admin > decline records the reason, grants nothing, and audits it 17ms
+ ✓ tests/db/module-access-requests.dbtest.ts > decisions by the org admin > an answered request cannot be answered again, and a reason under the floor is refused 11ms
+ ✓ tests/db/module-access-requests.dbtest.ts > decisions by the org admin > two administrators answering at once produce one decision; the loser is told so 65ms
+ ✓ tests/db/module-access-requests.dbtest.ts > decisions by the org admin > a decline that wins a race against an approval leaves no grant behind 83ms
+ ✓ tests/db/module-access-requests.dbtest.ts > platform owner across workspaces (system-scoped mount) > H1: the owner's queue holds every workspace's open requests, not only the owner's own 11ms
+ ✓ tests/db/module-access-requests.dbtest.ts > platform owner across workspaces (system-scoped mount) > the per-user route refuses the every-workspace read outright instead of narrowing it 13ms
+ ✓ tests/db/module-access-requests.dbtest.ts > platform owner across workspaces (system-scoped mount) > H2: the owner approving org B's request writes org B's grant, records it and audits it under org B 23ms
+ ✓ tests/db/module-access-requests.dbtest.ts > platform owner across workspaces (system-scoped mount) > the owner declining org B's request records the reason and grants nothing 17ms
+ ✓ tests/db/module-access-requests.dbtest.ts > platform owner across workspaces (system-scoped mount) > the per-user route still cannot reach org B's request for the owner — members stay scoped 7ms
+ ✓ tests/db/module-access-requests.dbtest.ts > platform owner across workspaces (system-scoped mount) > platform staff without the owner grant are admitted to the console but refused the queue and the decision 17ms
+ ✓ tests/db/module-access-requests.dbtest.ts > platform owner across workspaces (system-scoped mount) > an org admin who is also platform staff may answer only their own workspace on the console mount 35ms
+ ✓ tests/db/module-access-requests.dbtest.ts > platform owner across workspaces (system-scoped mount) > an org administrator cannot reach the console mount at all 20ms
+ ✓ tests/db/module-access-requests.dbtest.ts > queue filters, a long queue, input limits and the owner in their own workspace > status=approved and status=declined return exactly the workspace's rows in that state 14ms
+ ✓ tests/db/module-access-requests.dbtest.ts > queue filters, a long queue, input limits and the owner in their own workspace > a queue longer than one page keeps every open request on the page, first, and says it was cut short 26ms
+ ✓ tests/db/module-access-requests.dbtest.ts > queue filters, a long queue, input limits and the owner in their own workspace > a note over 2000 characters is refused and records nothing; one at the limit is kept whole 23ms
+ ✓ tests/db/module-access-requests.dbtest.ts > queue filters, a long queue, input limits and the owner in their own workspace > a real token with no workspace is refused with 401 and records nothing 9ms
+ ✓ tests/db/module-access-requests.dbtest.ts > queue filters, a long queue, input limits and the owner in their own workspace > the owner answering their own workspace's request is not audited as a cross-workspace decision 17ms
+ ✓ tests/db/module-access-requests.dbtest.ts > queue filters, a long queue, input limits and the owner in their own workspace > the migration replays onto the deployed table as a no-op (Rule 1), and the status CHECK holds 7ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > the chunk corpus is written by ingest > chunked and embedded both uploads, and the catalog ledger says so 4ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > returns the passage that answers the question, from the right document 640ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > answers a tox question from the tox document 17ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > never returns another organization's document, even for identical text 11ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > states the coverage it searched, read from the chunking ledger 14ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > REFUSES without an organization identity rather than reporting no matches 1ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > a retrieved passage can be cited > carries a real page number, derived from the PDF and not from arithmetic 484ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > posture — the connection these tests run on is the production one > server/db talks to Postgres as the non-superuser runtime role, RLS enforcing, scope applied 6ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > posture — the connection these tests run on is the production one > the db handles the modules under test import (server/db.js `pool` and `query`) are that same runtime pool 4ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > posture — the connection these tests run on is the production one > module_subscriptions is RLS-enabled and FORCED — the scope is load-bearing, not decorative 2ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > posture — the connection these tests run on is the production one > an unscoped server/db query fails closed (the instrumented pool refuses it) 11ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=true expiresAt='null' actorEmail=null (per-user scope) 9ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=true expiresAt='null' actorEmail='dbta-actor@example.invalid' (per-user scope) 5ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=true expiresAt='date' actorEmail=null (per-user scope) 3ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=true expiresAt='date' actorEmail='dbta-actor@example.invalid' (per-user scope) 5ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=true expiresAt='iso' actorEmail=null (per-user scope) 4ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=true expiresAt='iso' actorEmail='dbta-actor@example.invalid' (per-user scope) 4ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=false expiresAt='null' actorEmail=null (per-user scope) 3ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=false expiresAt='null' actorEmail='dbta-actor@example.invalid' (per-user scope) 3ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=false expiresAt='date' actorEmail=null (per-user scope) 3ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=false expiresAt='date' actorEmail='dbta-actor@example.invalid' (per-user scope) 3ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=false expiresAt='iso' actorEmail=null (per-user scope) 3ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > INSERT enabled=false expiresAt='iso' actorEmail='dbta-actor@example.invalid' (per-user scope) 3ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > ON CONFLICT update path, per-user scope (customer toggle / access-request approval) 15ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > ON CONFLICT update path, system scope (master-admin toggle, trials, billing webhook, setup) 14ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > writeModuleGrant — the one grant writer, on real Postgres > a per-user scope cannot write another tenant's grant — RLS refuses it 4ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > getLicenseInfo: the plan, and only the LIVE grants as enabled modules 4ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > getModuleCatalog: each grant shape reads as what it is 8ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule: perpetual grant and live trial are allowed above the plan 5ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule: a lapsed trial ABOVE the plan is refused, naming the calendar date, never the instant 4ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule: a lapsed trial the plan COVERS is allowed — a lapse removes the override, not the entitlement 3ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule: a disabled row with a past expires_at is a revocation, never read as a lapse 5ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule: a REVOKED module the plan covers is refused, agreeing with the rail 7ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule { ignoreRevocation }: the admin toggle still gets the PLAN answer, so a switched-off module can be switched back on 8ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule: no row above the plan is the plain tier refusal 3ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule: a revocation as the grant writer produces it (no date) is refused, as a revocation 3ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule: a module offered to another industry is refused, and a lapsed trial on one says so 5ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > canAccessModule fails closed on a missing organization and on an unknown module 4ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > the rail agrees: live grant subscribed, lapse falls to plan, revocation locked as disabled 24ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > the rail reports NO verdict (resolved:false) when the organization row cannot be read 5ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > license-manager with real rows, under the per-user scope of the org they concern > a per-user scope sees none of another org's grants (the licence cannot leak across tenants) 2ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > checkProgramQuota — the Projects create path, per-user scope, real rows > archived and soft-deleted programs hold no seat 5ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > checkProgramQuota — the Projects create path, per-user scope, real rows > at the limit it refuses 4ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > checkProgramQuota — the Projects create path, per-user scope, real rows > a negative entitlement is unlimited; zero is zero seats; NULL is the default of 10 7ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > checkProgramQuota — the Projects create path, per-user scope, real rows > fails CLOSED: a read the pool refuses, and a missing organization row, both deny 5ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > checkProjectQuota / checkUserQuota — the usage-panel statements, per-user scope, real rows > checkProjectQuota counts this org's legacy projects only, against the recorded limit 3ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > checkProjectQuota / checkUserQuota — the usage-panel statements, per-user scope, real rows > checkUserQuota counts this org's members only, against the recorded limit 2ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > platform_role_grants is not RLS-governed, and the runtime role may read it 1ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > the designation row is visible to the lookup's exact statement under a per-user scope 2ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > none of these identities is the owner by the synchronous signals — the DB decides 0ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > an active super_admin designation → owner 2ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > a revoked super_admin designation → not the owner 1ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > a 'support' designation → not the owner (console access is not a commercial unlock) 1ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > no designation → not the owner 1ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > a FAILED lookup answers "not the owner" and is not cached — the next scoped read recognises the owner 6ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > the designation cache is per user: the owner's cached "yes" is never served to anyone else 3ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > resolveMasterAdmin DB fallback, under the PER-USER scope the nav endpoint runs in > the designated owner sees every catalog module unlocked on the rail, under the per-user scope 5ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > D2 end to end — a fresh org, the real launch provisioning, the rail with LAUNCH_SCOPE_ENFORCE on > every launch module id has a catalog row (the grant FK would refuse one that did not) 1ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > D2 end to end — a fresh org, the real launch provisioning, the rail with LAUNCH_SCOPE_ENFORCE on > the setup path (system scope) grants exactly the launch catalog, perpetual, with no failures 2ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > D2 end to end — a fresh org, the real launch provisioning, the rail with LAUNCH_SCOPE_ENFORCE on > the rail: launch apps resolve available, non-launch modules resolve locked by launch scope 10ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > D2 end to end — a fresh org, the real launch provisioning, the rail with LAUNCH_SCOPE_ENFORCE on > a bought module outside the launch scope stays locked; with enforcement off it is subscribed 11ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > D2 end to end — a fresh org, the real launch provisioning, the rail with LAUNCH_SCOPE_ENFORCE on > no launch module is deprecated in the replayed catalog 0ms
+ ✓ tests/db/entitlement-grants-resolution.dbtest.ts > D2 end to end — a fresh org, the real launch provisioning, the rail with LAUNCH_SCOPE_ENFORCE on > the pre-auth scope cannot write a tenant's launch grants — RLS refuses every one 31ms
+ ✓ tests/db/licensing-history.dbtest.ts > posture > the router runs as the non-superuser runtime role, RLS enforcing, under the SYSTEM scope 25ms
+ ✓ tests/db/licensing-history.dbtest.ts > posture > the route's `query` is the production one (server/db.ts → db/runtime.ts), not the db.js wrapper 1ms
+ ✓ tests/db/licensing-history.dbtest.ts > posture > the seed went through the real writer: each row holds a per-tenant chain position 4ms
+ ✓ tests/db/licensing-history.dbtest.ts > what is listed > lists this run's decisions newest first, with who, where, which module and why 39ms
+ ✓ tests/db/licensing-history.dbtest.ts > what is listed > an action the route has never heard of is listed, with what it recorded 25ms
+ ✓ tests/db/licensing-history.dbtest.ts > what is listed > the estate-wide view lists every decision of this run and omits user.status_change and ungoverned rows 41ms
+ ✓ tests/db/licensing-history.dbtest.ts > pagination > total and hasMore are right on both sides of a page boundary 113ms
+ ✓ tests/db/licensing-history.dbtest.ts > pagination > the workspace total matches an independent owner-side count of the same predicate 22ms
+ ✓ tests/db/licensing-history.dbtest.ts > filters > organizationId narrows to one workspace; moduleId matches details.moduleId and the packaging record 58ms
+ ✓ tests/db/licensing-history.dbtest.ts > filters > the filter cannot widen past the connection's scope: a per-user scope sees only its own workspace 21ms
+ ✓ tests/db/licensing-history.dbtest.ts > filters > a malformed filter is refused, not silently dropped or reported as a failed read 43ms
+ ✓ tests/db/licensing-history.dbtest.ts > integrity > rows the verifier walked are verified, unsealed on this deployment, and the walk covered every tenant 58ms
+ ✓ tests/db/licensing-history.dbtest.ts > integrity > on a tenant-scoped connection the walk refuses rather than verifying a subset 8ms
+ ✓ tests/db/licensing-history.dbtest.ts > integrity > a tampered row does not match; later rows of ITS chain cannot be proven; earlier rows and other tenants stay verified 64ms
+ ✓ tests/db/licensing-history.dbtest.ts > integrity > within one tenant, position is the chain order (chain_seq), not the timestamp 162ms
+{"level":50,"time":"2026-09-24T20:31:32.051Z","pid":26775,"hostname":"vm","context":{"error":"permission denied for table audit_logs","stack":"error: permission denied for table audit_logs\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at runQueryScoped (/home/user/ClinicalSageAI-2-replit/server/db/poolInstrumentation.ts:198:21)\n    at query (/home/user/ClinicalSageAI-2-replit/server/db/runtime.ts:158:20)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/admin/licensing-history.ts:523:21"},"msg":"[admin-licensing-history] licensing history read failed"}
+ ✓ tests/db/licensing-history.dbtest.ts > integrity > a row written after the verification ran is never reported as verified by it 63ms
+ ✓ tests/db/licensing-history.dbtest.ts > a failed read > is a 500 with no entries when the store refuses the read 27ms
+ ✓ tests/db/licensing-history.dbtest.ts > a failed read > is a 500 when mounted with no tenant scope (the pool fails closed under RLS_ENFORCE=on) 5ms
+ ✓ tests/db/authoring-stability-table.dbtest.ts > BP-W1-1 wave gate — a stability table reaches Word as a table > authors the table into a governed section 104ms
+ ✓ tests/db/authoring-stability-table.dbtest.ts > BP-W1-1 wave gate — a stability table reaches Word as a table > survives the hard reload — the grid is re-read from the store, not from memory 9ms
+ ✓ tests/db/authoring-stability-table.dbtest.ts > BP-W1-1 wave gate — a stability table reaches Word as a table > exports to Word as a REAL table — <w:tbl>, 10 rows, 70 cells 285ms
+ ✓ tests/db/signing-lockout.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > count against the account, and the fifth locks it 50ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > lock the sign-in too: the account has one password and one allowance 52ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > while locked, refuse a signature even with the right password, without comparing it 5ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > unlock when the lockout has run out 9ms
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong codes at signing > count against the account once the password is right, and the fifth locks it 59ms
+ ✓ tests/db/signing-lockout.dbtest.ts > below the allowance > a signer who mistypes and then gets it right signs 37ms
+ ✓ tests/db/signing-lockout.dbtest.ts > below the allowance > a successful sign-in clears the count, as it always has 29ms
+ ✓ tests/db/signing-lockout.dbtest.ts > the signing dialog's checks (POST /api/esignature/verify-password, /verify-mfa) > count a wrong password, and the fifth locks the account 124ms
+ ✓ tests/db/signing-lockout.dbtest.ts > the signing dialog's checks (POST /api/esignature/verify-password, /verify-mfa) > say the account is locked, and do not compare the password 10ms
+ ✓ tests/db/signing-lockout.dbtest.ts > the signing dialog's checks (POST /api/esignature/verify-password, /verify-mfa) > count a wrong code, and the fifth locks the account 118ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > posture > the console runs as the non-superuser runtime role, RLS enforcing, under the SYSTEM scope 25ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > posture > the same router on a non-system path gets the caller-org scope instead 7ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > owned migrations: the file on disk is the deployed object > 20260823: public.provision_org_modules and module_tier_level are byte-identical to the file 3ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > owned migrations: the file on disk is the deployed object > 20260824: the file builds exactly the platform_settings shape the deployed table has 12ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > GET /licensing > under the system scope sees every lane tenant and module, with cross-tenant grant counts 26ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > GET /licensing > under a PER-USER scope the same read narrows to the caller org — why the system prefix is required 9ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > GET /licensing/tenants/:id > reports enabled-grant, disabled-grant, tier-only and industry verdicts for a tenant 9ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > GET /licensing/tenants/:id > a subscription row of ANOTHER tenant never leaks into this tenant’s verdict 8ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > GET /licensing/tenants/:id > 404s an unknown tenant 5ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/modules/:moduleId > refuses without a reason and changes nothing 11ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/modules/:moduleId > refuses an invalid tier, and 404s an unknown module 9ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/modules/:moduleId > re-tiers the module, preserves other metadata, keeps existing grants, and audits 45ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/modules/:moduleId > minTier null makes the module unrestricted 20ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/modules/:moduleId > unaffectedGrants counts ENABLED grants only: a revocation is not a grant the change leaves in place 34ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/tenants/:id/tier + POST /licensing/tenants/:id/provision > refuses a bad tier, a missing reason, and an unknown tenant 11ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/tenants/:id/tier + POST /licensing/tenants/:id/provision > upgrades the plan, audits it under the tenant id, and writes no subscription rows by itself 24ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/tenants/:id/tier + POST /licensing/tenants/:id/provision > provisions what the plan includes, revokes nothing, re-enables nothing, and reports counts that match the table 39ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > PATCH /licensing/tenants/:id/tier + POST /licensing/tenants/:id/provision > a downgrade provisions nothing, revokes nothing, and names every grant now above the plan 39ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > provisioning a tenant whose tier the ladder does not name > never reports a grant this very run made as "retained above tier" 27ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > provisioning a tenant whose industry_mode is NULL > is provisioned as biotech: biotech-listed modules granted, medtech-only not 33ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > malformed tenant ids > 1.5 is a 404 on every tenant route, never a 500 6ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > malformed tenant ids > 99999999999 is a 404 on every tenant route, never a 500 4ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > with nothing stored, the deployment decides and the cache starts cold 4ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > PATCH refuses a missing or short reason and an unknown mode, writing nothing 6ms
+{"level":50,"time":"2026-09-24T20:31:40.824Z","pid":26831,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:287:3)\n    at AuditService.logAction (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:420:11)\n    at recordAuditRow (/home/user/ClinicalSageAI-2-replit/server/services/audit/audit-write-outcome.ts:151:14)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/admin/master-licensing.ts:740:22"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > PATCH upserts platform_settings, re-reads it, reports source "stored", and audits 33ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > a cold GET reads the stored value from the database, and it outranks the deployment 4ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > the mode-change audit row records the impact the operator could see when deciding 28ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > GET /licensing/enforcement reports the buffer under the mode in force; DELETE needs a reason, clears it, and audits 18ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > under a PER-USER scope a platform-level audit row cannot land — why the system prefix is required 21ms
+{"level":50,"time":"2026-09-24T20:31:40.890Z","pid":26831,"hostname":"vm","context":{"error":"there is no unique or exclusion constraint matching the ON CONFLICT specification","stack":"error: there is no unique or exclusion constraint matching the ON CONFLICT specification\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at runQueryScoped (/home/user/ClinicalSageAI-2-replit/server/db/poolInstrumentation.ts:198:21)\n    at writeEnforcementMode (/home/user/ClinicalSageAI-2-replit/server/services/entitlements/enforcement-mode.ts:395:3)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/admin/master-licensing.ts:863:22"},"msg":"[admin-master-licensing] enforcement mode change failed"}
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > the audit row records the mode actually REPLACED, not a stale per-process cache 32ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > reset: with the stored row gone and the cache dropped, the deployment decides again 6ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > enforcement report + mode > when the stored mode cannot be read, a cold process never escalates past report 34ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_A (standard, grant + disable): the same answer, module for module, across the whole catalog 53ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_B (professional, grants): the same answer, module for module, across the whole catalog 13ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_C (free after the downgrade, provisioned): the same answer, module for module, across the whole catalog 15ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_E (lapsed trial grant): measured against the rail 20ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_F (unrecognised tier): measured against the rail 14ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > ORG_G (NULL industry_mode): measured against the rail 13ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > an expired grant reads as no override on the console, as on the rail 0ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > an unrecognised tier ranks as standard on the console and the rail, and a tier lock is named "tier" 0ms
+ ✓ tests/db/master-licensing-console.dbtest.ts > the console verdict agrees with the customer rail (real resolver, per-user scope) > a NULL industry_mode reads as biotech on the console, as on the rail 0ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records the MFA challenge a password sign-in issues, against the organisation 71ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records a wrong authenticator code 21ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records the session /mfa/verify issues 32ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records a wrong password on a real account, against its organisation 22ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > does not let a token the server never signed write into the organisation chain 42ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > opens the API with the session /mfa/verify issued 22ms
+[Enterprise Auth] select-organization error: SessionEndedError: This session has ended. Sign in again.
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records the end of a session the server issued, against its organisation 29ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > opens nothing once it is signed out (AUTH-03) 25ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > refuses a session another server signed out, which only the database can know 13ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records a wrong password 19ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records the challenge a correct password receives 21ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records a wrong code 18ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records the session it issues 42ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records entering an organisation, against that organisation 118ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > ends the session it reports ending, and records it 21ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > no sign-in path skips the second factor > /api/users/login asks for the code instead of issuing a session 25ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > no sign-in path skips the second factor > /api/user/login asks for the code instead of issuing a session 25ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > no sign-in path skips the second factor > creates no account outside signup 7ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the organisation audit chain > verifies end to end over every row the organisation holds 10ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > the posture is the one production runs in > the three accounts are what their names say 2ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > an account with an authenticator is told it has one (VSR-001 §13.3 item 4) > the challenge, the verified sign-in, the session and /api/users/me all say so 166ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > email: the verified sign-in, the session and /api/users/me agree 74ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > disabled: the verified sign-in, the session and /api/users/me agree 65ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > a password change the account owes is reported, not overwritten with false 69ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > before any credential, every address gets the same answer > enterprise check-email does not tell an enrolled account from an unknown address 12ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > the enterprise router refuses setup over an enrolled authenticator, and says so (F-26) > 409 MFA_ALREADY_ENABLED, no secret handed out, the enrolled secret untouched 23ms
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 2ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > an active account signs 15ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a suspended account cannot sign, with the right password and code 4ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a guess against a suspended account is neither compared nor counted 3ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a deprovisioned account cannot sign 2ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > an active account signs in 131ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a suspended account is refused at the password, and no challenge is issued 17ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a deprovisioned account is refused at the password, and no challenge is issued 22ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a challenge issued before the suspension does not become a session after it 41ms
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends at the gate once the account is suspended, and says why 104ms
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends once the identity provider deprovisions the account 48ms
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > works again when the account is reactivated 50ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > is refused, hands out no secret, and leaves the stored one as it was 84ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > leaves the owner's own authenticator signing them in 50ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > leaves the owner's own authenticator signing for them 16ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > a signed-in session cannot take over an enrolled second factor (POST /api/auth/mfa/setup) > records the refused attempt against the account 3ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > a member without two-step verification can enrol, and the enrolment is recorded 41ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > once enrolled, that member is refused a new secret too 14ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > an enrolment not yet confirmed can be restarted: nothing is switched on until a code confirms it 44ms
+ ✓ tests/db/second-factor-binding.dbtest.ts > enrolment and rotation, by the owner > the owner rotates by turning it off with a current code, then enrolling again 62ms
+ ✓ tests/db/licensing-trials.dbtest.ts > posture > the router runs as the non-superuser runtime role, RLS enforcing, under the SYSTEM scope 40ms
+ ✓ tests/db/licensing-trials.dbtest.ts > posture > resolution runs under the per-user scope, and that scope really narrows module_subscriptions 8ms
+ ✓ tests/db/licensing-trials.dbtest.ts > POST /licensing/trials > stores the end-of-day UTC instant the client sends, and it round-trips exactly 51ms
+ ✓ tests/db/licensing-trials.dbtest.ts > POST /licensing/trials > moving the end date reports the previous one and stores the new one 17ms
+ ✓ tests/db/licensing-trials.dbtest.ts > POST /licensing/trials > a past end date is refused with 400 and writes nothing — new grant or existing one 11ms
+ ✓ tests/db/licensing-trials.dbtest.ts > GET /licensing/trials > lists live and lapsed grants together; revocations and perpetual grants are not trials 7ms
+ ✓ tests/db/licensing-trials.dbtest.ts > GET /licensing/trials > coveredByPlan follows the catalog's tier metadata and the org's real tier 19ms
+ ✓ tests/db/licensing-trials.dbtest.ts > GET /licensing/trials > coveredByPlan says what the customer's own resolution says — for every lane row 69ms
+ ✓ tests/db/licensing-trials.dbtest.ts > POST /licensing/trials/convert > makes an already-lapsed grant perpetual: expiry cleared, still enabled, access restored 39ms
+ ✓ tests/db/licensing-trials.dbtest.ts > POST /licensing/trials/end > keeps enabled = true and moves the expiry to now; resolution reads it as no override (not revoked) 59ms
+ ✓ tests/db/licensing-trials.dbtest.ts > POST /licensing/trials/end > on a module the plan includes, the customer KEEPS it — which a revocation would have taken 54ms
+ ✓ tests/db/licensing-trials.dbtest.ts > end and convert act only on a grant that carries an end date > refuses to end or convert a REVOCATION, and leaves it revoked 49ms
+ ✓ tests/db/licensing-trials.dbtest.ts > end and convert act only on a grant that carries an end date > refuses to end or convert where no grant exists, and creates none 17ms
+ ✓ tests/db/licensing-trials.dbtest.ts > end and convert act only on a grant that carries an end date > refuses to end or convert a PERPETUAL grant (a converted trial), and leaves it perpetual 21ms
+ ✓ tests/db/licensing-trials.dbtest.ts > audit trail > tenant.trial_set — for the open and for the moved end date 3ms
+ ✓ tests/db/licensing-trials.dbtest.ts > audit trail > tenant.trial_converted — carrying the end date it removed 2ms
+ ✓ tests/db/licensing-trials.dbtest.ts > audit trail > tenant.trial_ended — carrying the instant the grant now ends 3ms
+ ✓ tests/db/licensing-trials.dbtest.ts > audit trail > the tenant reads its own record through the audit service, under its own scope 7ms
+ ✓ tests/db/licensing-trials.dbtest.ts > an unknown tenant or module is a 404 and writes nothing > unknown tenant 14ms
+ ✓ tests/db/licensing-trials.dbtest.ts > an unknown tenant or module is a 404 and writes nothing > unknown module 14ms
+{"level":50,"time":"2026-09-24T20:31:55.757Z","pid":26918,"hostname":"vm","context":{"error":"invalid input syntax for type integer: \"91304.5\"","stack":"error: invalid input syntax for type integer: \"91304.5\"\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at runQueryScoped (/home/user/ClinicalSageAI-2-replit/server/db/poolInstrumentation.ts:198:21)\n    at query (/home/user/ClinicalSageAI-2-replit/server/db/runtime.ts:158:20)\n    at assertTargetExists (/home/user/ClinicalSageAI-2-replit/server/routes/admin/licensing-trials.ts:172:15)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/admin/licensing-trials.ts:317:21"},"msg":"[admin-licensing-trials] trial set failed"}
+{"level":50,"time":"2026-09-24T20:31:55.761Z","pid":26918,"hostname":"vm","context":{"error":"invalid input syntax for type integer: \"91304.5\"","stack":"error: invalid input syntax for type integer: \"91304.5\"\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at runQueryScoped (/home/user/ClinicalSageAI-2-replit/server/db/poolInstrumentation.ts:198:21)\n    at query (/home/user/ClinicalSageAI-2-replit/server/db/runtime.ts:158:20)\n    at assertTargetExists (/home/user/ClinicalSageAI-2-replit/server/routes/admin/licensing-trials.ts:172:15)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/admin/licensing-trials.ts:370:21"},"msg":"[admin-licensing-trials] trial convert failed"}
+{"level":50,"time":"2026-09-24T20:31:55.768Z","pid":26918,"hostname":"vm","context":{"error":"invalid input syntax for type integer: \"91304.5\"","stack":"error: invalid input syntax for type integer: \"91304.5\"\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at runQueryScoped (/home/user/ClinicalSageAI-2-replit/server/db/poolInstrumentation.ts:198:21)\n    at query (/home/user/ClinicalSageAI-2-replit/server/db/runtime.ts:158:20)\n    at assertTargetExists (/home/user/ClinicalSageAI-2-replit/server/routes/admin/licensing-trials.ts:172:15)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/admin/licensing-trials.ts:422:21"},"msg":"[admin-licensing-trials] trial end failed"}
+ ✓ tests/db/licensing-trials.dbtest.ts > a write without a target or a reason is a 400 and writes nothing > no reason, a blank one, or one under 3 characters: 400, nothing written, nothing audited 30ms
+ ✓ tests/db/licensing-trials.dbtest.ts > a write without a target or a reason is a 400 and writes nothing > no tenant, no module, or a tenant id that is not a number: 400, nothing written 41ms
+ ✓ tests/db/licensing-trials.dbtest.ts > a write without a target or a reason is a 400 and writes nothing > a fractional tenant id is refused and writes nothing 21ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > posture — the connection and the policies are production's > server/db talks to Postgres as the non-superuser runtime role with RLS enforcing 5ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > posture — the connection and the policies are production's > client_workspaces, module_subscriptions and organization_industry_profiles are RLS-enabled and FORCED 2ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > posture — the connection and the policies are production's > the signup handler's external calls are known-off: no Stripe key, no SMTP host 0ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > answers 201 and creates a free-tier organisation whose signing-up user is its admin 5ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > grants every launch module to the new organisation — enabled, perpetual, and nothing else 3ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > writes the grants as the platform, not a person (enabled_by NULL; the reason lives in the audit trail) 2ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > seeds the organization_industry_profiles row from the signup signals 2ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > gives the new organisation exactly one client workspace — its own, created by the signing-up user 2ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > logs no launch-provisioning error for the new organisation 1ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > the rail, launch scope enforced: every launch surface is available, every live launch module by its grant 28ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > D2 via /api/setup — the first-run path, under the scope its mount applies > the system scope setup runs in grants every launch module, with no failure logged 50ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > the organisation's own workspace, under each creator's scope > first-run setup: the system scope its mount applies 10ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > the organisation's own workspace, under each creator's scope > the pre-auth scope (tenant 0, no role): the writer stands on the organisation's own tenant, and it does not outlive the transaction 5ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > the organisation's own workspace, under each creator's scope > the boot seed: its PoolClient under enforcement, run twice, writes one workspace per seeded organisation 30ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > a refused workspace write takes the whole organisation with it > answers 500 AUTH_010 and leaves no organisation, user, membership or workspace behind 365ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > a failed provisioning is never silent > a scope RLS refuses yields every failure, and exactly one error-level summary with the remediation 33ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 0. the server pool runs as production does > connects as the non-superuser runtime role with app.rls_enforce=on, and fails closed with no scope 17ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 0. the server pool runs as production does > the statements exercised below are the ones the modules send (no drift from the copy) 2ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 1. module_subscriptions carries the grant-expiry columns and indexes > expires_at is an instant (timestamptz); expiry_set_by / expiry_set_at exist with their declared types 7ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 1. module_subscriptions carries the grant-expiry columns and indexes > both partial expiry indexes exist, non-unique, on exactly their columns and predicate 3ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 2. module_access_requests is a policied tenant table > organization_id is INTEGER NOT NULL — the shape the integer sweep policies 5ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 2. module_access_requests is a policied tenant table > RLS is enabled AND forced 3ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 2. module_access_requests is a policied tenant table > tenant_isolation_policy is attached, keyed on organization_id, and is the only policy 2ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 2. module_access_requests is a policied tenant table > the de-duplication index is UNIQUE on (organization_id, module_id, requested_by) WHERE status = 'open', exactly 1ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 2. module_access_requests is a policied tenant table > every declared column has its declared type, nullability and default 5ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 2. module_access_requests is a policied tenant table > the status vocabulary CHECK is exactly ('open', 'approved', 'declined') 1ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 2. module_access_requests is a policied tenant table > the decide UPDATE cannot record a status outside that vocabulary, even on its own open request 7ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 2. module_access_requests is a policied tenant table > the queue and requester indexes the route reads through exist, exactly as declared 2ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 2. module_access_requests is a policied tenant table > GET /mine's read, asked for org B's requester from org A's scope, returns nothing 7ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 2. module_access_requests is a policied tenant table > the queue read with its org predicate lifted ($1 NULL) spans one workspace per-user, and more only under the /api/admin/master system scope 8ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 2. module_access_requests is a policied tenant table > org A cannot read org B's request — the route's projection and its row lock both see nothing 6ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 2. module_access_requests is a policied tenant table > org A cannot answer org B's request — the decide UPDATE touches no row 2ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 2. module_access_requests is a policied tenant table > org A cannot insert a request into org B — fresh row or onto B's open key — and B's row is untouched 5ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 2. module_access_requests is a policied tenant table > under its own scope the upsert de-duplicates on the partial index, and an answered request may be asked again 8ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 3. module_subscriptions is a policied tenant table > RLS is enabled AND forced, and tenant_isolation_policy is the only policy 2ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 3. module_subscriptions is a policied tenant table > the REAL writeModuleGrant: a member scope writes its own org and is refused on another 8ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 3. module_subscriptions is a policied tenant table > the REAL writeModuleGrant under the /api/admin/master system scope reaches any org (the console path) 3ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 4. platform_settings is deliberately global, and registered as such > has no tenant column, no RLS and no policy 5ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 4. platform_settings is deliberately global, and registered as such > each column has its declared type and nullability, and setting_key is the primary key the upsert conflicts on 4ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 4. platform_settings is deliberately global, and registered as such > is classified `global` (with a reason) in the unkeyed-table registry, not left `unreviewed` 1ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 4. platform_settings is deliberately global, and registered as such > the stored setting reads identically under the pre-auth scope readStoredMode() uses, and under every other scope 8ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 4. platform_settings is deliberately global, and registered as such > the REAL readStoredMode(), called with no ambient scope as the background refresh calls it, reads as the runtime role 2ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 5. app_service can reach the entitlement tables, by the real grant mechanism > app_service exists as production requires it: LOGIN, not superuser, no BYPASSRLS 1ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 5. app_service can reach the entitlement tables, by the real grant mechanism > app_service holds SELECT/INSERT/UPDATE/DELETE on all three, and USAGE on the request id sequence 2ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 5. app_service can reach the entitlement tables, by the real grant mechanism > the deploy's own grant audit (auditRuntimeRoleGrants, deploy-migrate step 5/5) denies none of them 20ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 5. app_service can reach the entitlement tables, by the real grant mechanism > public's default ACL — held by the owner that created these tables — grants app_service DML on new tables 3ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 5. app_service can reach the entitlement tables, by the real grant mechanism > a table the owner creates now, with no GRANT, is born reachable by app_service 7ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 6. the replay-safe DROP gate and its self-test pass > ci:migration-drop-safety exits 0 184ms
+ ✓ tests/db/entitlement-schema-posture.dbtest.ts > 6. the replay-safe DROP gate and its self-test pass > ci:migration-drop-safety:selftest exits 0 552ms
+ ✓ tests/db/cross-object-resolver.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 15ms
+ ✓ tests/db/cross-object-resolver.dbtest.ts > a project the organisation holds > is assembled from reads that all succeed, and names the project 68ms
+ ✓ tests/db/cross-object-resolver.dbtest.ts > a project the organisation holds > is reviewed to completion, and the review says which project it read 38ms
+ ✓ tests/db/cross-object-resolver.dbtest.ts > what the review cannot read > a program uuid fails the payload, naming every read it broke 16ms
+ ✓ tests/db/cross-object-resolver.dbtest.ts > what the review cannot read > a program uuid ends the review run as failed, with no step completed and the reason recorded 16ms
+ ✓ tests/db/cross-object-resolver.dbtest.ts > what the review cannot read > a project another organisation holds is refused, not assessed as empty 17ms
+ ✓ tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > creates a document and a section to contend over 99ms
+ ✓ tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > refuses a save whose token is stale, and overwrites nothing 39ms
+ ✓ tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > accepts a save that carries the current token 24ms
+ ✓ tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > leaves a caller that sends no token exactly as it was 20ms
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label 908ms
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > left an audit row naming the location it came from and the one it went to 21ms
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > honours an explicit unfile — the Unfiled queue is a real answer 24ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses a folder from another modality's taxonomy 9ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses to confirm a suggestion that does not exist 8ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses a call that names no destination at all 7ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > confirms an existing suggestion in place, keeping the CTD section 13ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > will not let another organization move the document 6ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > records AnA's folder as a suggestion a person must confirm, not as a person's filing 685ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > refuses to confirm a suggestion — a person confirms filing in the Vault 7ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > the service itself refuses an agent's confirm, so no other agent caller can record one either 5ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > unfiles with the same attribution — the Unfiled queue is where a person decides 16ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > leaves a person's filing through the Vault a confirmed decision with no agent marker 16ms
+ ✓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses a viewer, and writes nothing 6ms
+ ✓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses a scope that carries no role at all 5ms
+ ✓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses AnA acting for a viewer — the path that had no check 10ms
+ ✓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > lets a member file — the role SSO provisioning assigns 15ms
+ ✓ tests/db/vault-chunking-off.dbtest.ts > the catalog half works on its own > records the extraction tier even with the passage index off 3ms
+ ✓ tests/db/vault-chunking-off.dbtest.ts > the catalog half works on its own > still lists and reads the document through the tools 719ms
+ ✓ tests/db/vault-chunking-off.dbtest.ts > the passage index is absent, and says so > wrote no chunks and left the ledger unclaimed rather than claiming success 2ms
+ ✓ tests/db/vault-chunking-off.dbtest.ts > the passage index is absent, and says so > search_document_passages reports an empty index, not an absent answer 9ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > posture — the connection is production's > server/db talks to Postgres as the non-superuser runtime role, RLS enforcing 6ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > posture — the connection is production's > the runtime role cannot CREATE in public — so no handler can provision a table at runtime 2ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > the schema — created by an applier, not by a request > license_requests exists on the provisioned database 1ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > the schema — created by an applier, not by a request > it is under RLS with exactly the intake and platform policies 2ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > POST /api/auth/license-request — the enterprise onboarding intake > answers 200 and says the request was submitted 1ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > POST /api/auth/license-request — the enterprise onboarding intake > records exactly one row carrying what the prospect typed 2ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > who can read a prospect's request > the pre-auth scope that wrote it cannot read it back 3ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > who can read a prospect's request > a signed-in tenant member cannot read it — another company's contact details 2ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > who can read a prospect's request > the platform scope can — that is who works the request 2ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could not be stored is never reported as recorded > answers 500, not success 1ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could not be stored is never reported as recorded > stores nothing 1ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could not be stored is never reported as recorded > does not put the database error text in the response 0ms
+ ✓ tests/db/enterprise-onboarding-intake.dbtest.ts > a request that could not be stored is never reported as recorded > logs the prospect's contact so the lead can be recovered, with the real cause 0ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > creates a 510(k) device program and returns 201 with the portfolio shape 102ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > persists the device program as a device, never as a biologic 3ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > makes the created program retrievable through the list projection 10ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > writes a hash-chained audit row for the creation 2ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > creates an EU MDR technical file as a device, in the MDX workstream 51ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > creates an EU IVDR technical file as an IVD 32ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > refuses to record a device filing as a medicinal product 5ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > accepts the new device-family classes 54ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > creates an IVD 510(k) as an IVD 30ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > the fail-closed 503 discloses no schema object > returns a human message and a correlation id, and names no relation 14ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > accepts the upload and records the SHA-256 of the bytes that were sent 382ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > persisted a row carrying the canonical columns the route writes 4ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > the bytes are retrievable at the address the row records 2ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the Part 11 record of who put it there > wrote a hash-chained audit row naming the actor and the content hash 2ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the Part 11 record of who put it there > a document and its audit row cannot exist without each other 2ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — another tenant cannot write into your program > refuses the upload and leaves nothing behind 11ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > different bytes at an occupied code and version: 409, and no new object in storage 24ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the same bytes under a second code: 409, no new object, and the original still reads back 23ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > a folder outside the program taxonomy: 400, and no new object in storage 16ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the reference check the discard relies on sees an admitted record, as the runtime role 6ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > an admitted upload still stores exactly one object — the one its record names 27ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > refuses a viewer before anything is stored or recorded 2ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > refuses a scope that carries no role at all 0ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > admits a member — the role SSO provisioning assigns 13ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > provisioned tenant tables under the non-superuser runtime role > the runtime role is the one production requires — LOGIN, not superuser, no BYPASSRLS 4ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > provisioned tenant tables under the non-superuser runtime role > stability_studies is RLS-enabled AND forced (owner-bypass closed) 3ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > provisioned tenant tables under the non-superuser runtime role > the policy keys on organization_id — the column writers stamp, not the nullable tenant_id adapter 2ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > provisioned tenant tables under the non-superuser runtime role > a tenant-scoped read returns that tenant’s rows and no other tenant’s 23ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > provisioned tenant tables under the non-superuser runtime role > a UUID in app.current_org_id does not blow up the integer tenant predicate 5ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > provisioned tenant tables under the non-superuser runtime role > a cross-tenant read of a known row returns nothing 2ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > provisioned tenant tables under the non-superuser runtime role > a tenant-scoped write succeeds and stays inside the tenant 7ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > provisioned tenant tables under the non-superuser runtime role > a cross-tenant INSERT is refused by WITH CHECK, not silently accepted 4ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > provisioned tenant tables under the non-superuser runtime role > a cross-tenant UPDATE and DELETE affect zero rows 8ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > provisioned tenant tables under the non-superuser runtime role > an unscoped connection sees no tenant rows at all 2ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > uuid-native tenant schemas > no policy casts app.current_org_id straight to uuid any more 221ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > uuid-native tenant schemas > identity.current_org_id() returns NULL for the empty string instead of raising 3ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > governed mutation paths stay auditable under the runtime role > audit tables are append-only for the runtime role (INSERT yes, UPDATE/DELETE no) 3ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > governed mutation paths stay auditable under the runtime role > audit_logs refuses UPDATE and DELETE with the IMMUTABILITY_VIOLATION it declares 30ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > production boot posture, evaluated against this database > a superuser/owner connection is refused 66ms
+ ✓ tests/db/provisioned-tenant-tables-rls.dbtest.ts > production boot posture, evaluated against this database > the non-superuser runtime role raises no role-related failure 77ms
+ ✓ tests/db/document-catalog-toggles.dbtest.ts > the toggle rows the deployment never had > creates both, disabled, each described 880ms
+ ✓ tests/db/document-catalog-toggles.dbtest.ts > the toggle rows the deployment never had > is idempotent — a second boot does not duplicate the rows 25ms
+ ✓ tests/db/document-catalog-toggles.dbtest.ts > the toggle rows the deployment never had > does not re-disable a toggle an operator turned on 27ms
+ ✓ tests/db/document-catalog-toggles.dbtest.ts > the toggle read holds outside a request, where the bootstrap runs > reads an enabled row with no ambient tenant scope 13ms
+ ✓ tests/db/document-catalog-toggles.dbtest.ts > the toggle read holds outside a request, where the bootstrap runs > a genuinely disabled row is readable and off — not the same answer as a failed read 9ms
+ ✓ tests/db/document-catalog-toggles.dbtest.ts > the toggle read holds outside a request, where the bootstrap runs > a key with no row is readable and off — absence is an answer, not a failure 4ms
+ ✓ tests/db/document-catalog-toggles.dbtest.ts > the key written is the key read > enabling the row turns the capability on for an organization 23ms
+ ✓ tests/db/document-catalog-toggles.dbtest.ts > the key written is the key read > a per-organization enablement works without turning it on globally 19ms
+ ✓ tests/db/vault-chunk-backfill.dbtest.ts > the chunk backfill runs in the tenant it indexes > the call the script made — no tenant scope — is refused under RLS enforcement 814ms
+ ✓ tests/db/vault-chunk-backfill.dbtest.ts > the chunk backfill runs in the tenant it indexes > a scope with the integer id but no UUID sees nothing — and would report nothing to do 24ms
+ ✓ tests/db/vault-chunk-backfill.dbtest.ts > the chunk backfill runs in the tenant it indexes > backfillVaultChunksForTenant finds the document the tenant owns 7ms
+ ✓ tests/db/vault-chunk-backfill.dbtest.ts > the chunk backfill runs in the tenant it indexes > refuses an organization that does not exist, rather than sweeping nothing 2ms
+ ✓ tests/db/upload-integrity-check.dbtest.ts > uploaded-file integrity > serves a file whose bytes still match, and says so 861ms
+ ✓ tests/db/upload-integrity-check.dbtest.ts > uploaded-file integrity > REFUSES a file whose bytes changed on disk 9ms
+ ✓ tests/db/upload-integrity-check.dbtest.ts > uploaded-file integrity > reports a pre-checksum row as unverifiable rather than verified 5ms
+ ✓ tests/db/upload-integrity-check.dbtest.ts > uploaded-file integrity > still refuses another tenant, integrity aside 4ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every table named by the migration ends up policied, enabled and FORCEd 12ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every non-public child the chained list names that exists ends up policied, enabled and FORCEd 9ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > chat_messages: each tenant sees its own row and not the other's 35ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > csr_details: each tenant sees its own row and not the other's 14ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > csr_sections: each tenant sees its own row and not the other's 14ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > rag_chunks: each tenant sees its own row and not the other's 14ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > complaints: each tenant sees its own row and not the other's 13ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > pdev_program_activities: each tenant sees its own row and not the other's 15ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > resolution_bundle_items: each tenant sees its own row and not the other's 12ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > c2c_document_section_versions: each tenant sees its own row and not the other's 21ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > leaves the three chained tables deny-all, deliberately and visibly 2ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > the policy is inert when enforcement is off, exactly like its siblings 2ms
+ ✓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > an MDR event cannot be sourced from another tenant's complaint 77ms
+ ✓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > an MDR event is still sourced from the caller's own complaint, under the complaint and MDR policies 54ms
+ ✓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > notification preferences are written for the caller, whatever userId the body names 16ms
+ ✓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > an AnA profile edit writes the caller's profile, never a colleague's 18ms
+ ✓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > a task cannot be filed under another tenant's task 38ms
+ ✓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > a CRO study cannot be filed against another tenant's client 31ms
+ ✓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > the GSPR mapping tool cannot write against another tenant's program 319ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a project intelligence profile cannot be filed against another tenant's project 86ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > another tenant's project intelligence profile cannot be read 9ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > the caller's own project profile is still written and read 29ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > another tenant's client memory entry cannot be archived 10ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > another tenant's client memory entry cannot be marked verified 8ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > the caller's own memory entry is still archived 8ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > AnA's project update cannot hang a project from another tenant's project or workspace 32ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > AnA's project update cannot move a project to another tenant 36ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a resolution bundle cannot be linked to another tenant's plan 11ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a resolution bundle is still linked to the caller's own plan 17ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a corpus ingest cannot take over another org's report of the same study 6ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a corpus re-ingest still updates the org's own report in place 10ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > /api/users/me refuses a password-only token awaiting its second factor 7ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > /api/users/me still answers an access token 9ms
+ ✓ tests/db/rls-tenant-isolation.dbtest.ts > RLS filters for the non-superuser runtime role > SELECT returns only the scoped tenant's rows 314ms
+ ✓ tests/db/rls-tenant-isolation.dbtest.ts > RLS filters for the non-superuser runtime role > UPDATE cannot reach another tenant's row 3ms
+ ✓ tests/db/rls-tenant-isolation.dbtest.ts > RLS filters for the non-superuser runtime role > DELETE cannot reach another tenant's row 2ms
+ ✓ tests/db/rls-tenant-isolation.dbtest.ts > RLS filters for the non-superuser runtime role > INSERT of a foreign tenant_id is refused by WITH CHECK 5ms
+ ✓ tests/db/rls-tenant-isolation.dbtest.ts > RLS filters for the non-superuser runtime role > an unscoped connection sees nothing at all, rather than everything 1ms
+ ✓ tests/db/rls-tenant-isolation.dbtest.ts > RLS filters for the non-superuser runtime role > RLS_ENFORCE=off compiles the policy to a no-op — the documented shadow mode 2ms
+ ✓ tests/db/rls-tenant-isolation.dbtest.ts > the same policy does NOT filter a superuser/owner connection > reads both tenants' rows with enforcement fully on 3ms
+ ✓ tests/db/rls-tenant-isolation.dbtest.ts > assessRlsCatalogPosture against a real catalog > flags a superuser runtime role as a failure 64ms
+ ✓ tests/db/rls-tenant-isolation.dbtest.ts > assessRlsCatalogPosture against a real catalog > does not flag the provisioned runtime role as superuser or BYPASSRLS 90ms
+ ✓ tests/db/rls-tenant-isolation.dbtest.ts > the harness policy matches the migration it stands in for > uses the same four clauses 0021_enable_rls_everywhere.sql installs 1ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > GET /runs never lists another tenant's run, whatever org the query names 71ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > GET /runs lists the session tenant's own runs 13ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > POST /runs records for the session tenant and user, whatever the body names 65ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > POST /runs over another tenant's project is not found and computes nothing 12ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a program group is made in the session tenant by the session user, whatever the body names 17ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a program group over another tenant's project is refused 12ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > another tenant's program group cannot be changed 15ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > another tenant's program group cannot be snapshotted 11ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a bundle cannot take another tenant's run 17ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a bundle of the session tenant's own run is stored and records the session user 41ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a delivery cannot take another tenant's run 11ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a delivery of the session tenant's own run records the session user 18ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > correspondence cannot be captured into another tenant's project 10ms
+ ✓ tests/db/report-os-tenant-from-session.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > correspondence is captured into the session tenant's own project and submission 22ms
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > both tables have RLS enabled and a policy for every command 5ms
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > document_catalog: each tenant reads its own row and not the other's 38ms
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > document_read_receipts: each tenant reads its own row and not the other's 9ms
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > A cannot overwrite B's comprehension record 4ms
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > A cannot forge a catalog row for B's document 4ms
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > A cannot plant a read receipt on B's document — the proof the coverage gate trusts 3ms
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > A cannot delete B's read receipt 3ms
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > a tenant still writes its OWN catalog row and receipt — the policy is not a blanket deny 7ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > leaves the tenant exactly as it was when a table fails part-way 59ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > removes every listed table’s rows and marks the tenant purged when nothing fails 59ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > still skips a table this deployment’s schema does not have 13ms
+ ✓ tests/db/tenant-purge.dbtest.ts > a legal hold stops the purge > refuses while any hold on the tenant is active, and destroys nothing 13ms
+ ✓ tests/db/tenant-purge.dbtest.ts > a legal hold stops the purge > proceeds once the hold is lifted, by someone, for a reason 14ms
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records no receipt for a truncated export, so its digest opens nothing 9ms
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records no receipt for an export in which a table failed to read 8ms
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records one for a complete export 7ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > deletes each object from the store it was saved in, after the purge commits 30ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > keeps the bytes, and their record, when the purge fails part-way 43ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > leaves the bytes of records a purge does not remove 20ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a tenant administrator cannot read the kernel's cross-tenant log 90ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a role that merely contains "admin" is not a platform role 12ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a tenant administrator cannot clear the platform's kernel log 10ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > outside production, a member is not let in by default 9ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a member cannot read the organization's governed decisions 9ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > the organization's administrator can 26ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a platform operator reads the kernel log 7ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > monitoring that presents the ops token reads the kernel log 16ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a wrong ops token is refused 8ms
+ ✓ tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > the non-production bypass still opens the control plane when it is asked for 6ms
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a plan edit cannot approve or lock the plan, and the content edit still applies 108ms
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a plan edit cannot move the plan to another org, and the content edit still applies 16ms
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a plan edit cannot hang the plan from another org's program 16ms
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a modification edit cannot move it into another org's plan 17ms
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a post-market document edit cannot approve or lock it, and the content edit still applies 39ms
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a post-market document edit cannot move it to another org, and the content edit still applies 30ms
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a post-market document edit cannot hang it from another org's program 17ms
+ ✓ tests/db/knowledge-graph-tenant-isolation.dbtest.ts > knowledge graph tenant isolation > carries a tenant key with RLS enabled AND forced on every graph table 14ms
+ ✓ tests/db/knowledge-graph-tenant-isolation.dbtest.ts > knowledge graph tenant isolation > does not serve one tenant's entities to another 5ms
+ ✓ tests/db/knowledge-graph-tenant-isolation.dbtest.ts > knowledge graph tenant isolation > refuses a write that claims another tenant (WITH CHECK) 3ms
+ ✓ tests/db/knowledge-graph-tenant-isolation.dbtest.ts > knowledge graph tenant isolation > serves UNATTRIBUTED legacy rows to nobody, rather than to everybody 5ms
+ ✓ tests/db/knowledge-graph-tenant-isolation.dbtest.ts > knowledge graph tenant isolation > accepts an ingest-shaped node+edge write for the writer's own tenant 5ms
+ ✓ tests/db/knowledge-graph-tenant-isolation.dbtest.ts > knowledge graph tenant isolation > refuses an ingest write that omits the tenant, rather than storing it unattributed 2ms
+ ✓ tests/db/knowledge-graph-tenant-isolation.dbtest.ts > knowledge graph tenant isolation > shows nothing at all to a connection carrying no tenant scope 1ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > positive control: tenant A querying as itself finds its own atom and not B's 70ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > tenant A naming tenant B in the header is served nothing of B's 13ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > …and is served its OWN atom: the header is ignored, not merely contained by RLS 18ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > with no header, the query is scoped to the session rather than to nothing 13ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > search mode asks for the session's tenant, whatever the header says 18ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > a session with no usable organization is refused, never served 12ms
+ ✓ tests/db/gdpr-service-runtime-role.dbtest.ts > GDPR service under the production runtime role > the runtime role cannot CREATE in public — the premise of the defect 12ms
+ ✓ tests/db/gdpr-service-runtime-role.dbtest.ts > GDPR service under the production runtime role > CREATE TABLE IF NOT EXISTS is refused even when the table exists 5ms
+ ✓ tests/db/gdpr-service-runtime-role.dbtest.ts > GDPR service under the production runtime role > the service reads its tables through to_regclass as the runtime role 14ms
+ ✓ tests/db/gdpr-service-runtime-role.dbtest.ts > GDPR service under the production runtime role > the service module contains no CREATE TABLE — it verifies, it does not provision 2ms
+ ✓ tests/db/traceability-update-boundary.dbtest.ts > A traceability update cannot move an item across the tenant boundary (D3) > an update naming another org leaves the item in its own tenant, and still applies 145ms
+ ✓ tests/db/traceability-update-boundary.dbtest.ts > A traceability update cannot move an item across the tenant boundary (D3) > an update cannot re-point the item at another tenant's QMP 28ms
+ ✓ tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > positive control: tenant A, handed its own uuid, retrieves its own passage 32ms
+ ✓ tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > tenant A's session, handed tenant B's uuid, never receives B's passage 1ms
+ ✓ tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > a uuid that disagrees with the session scope is refused, not quietly answered 3ms
+ ✓ tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > …including when the session scope carries no uuid — exactly when a header fallback fires 13ms
+ ✓ tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > a missing uuid keeps its existing refusal (unchanged by this fix) 1ms
+ ✓ tests/db/capa-code-uniqueness.dbtest.ts > CAPA/complaint/MDR display codes are scoped to their program > complaints: complaints_code_uq is UNIQUE (program_id, complaint_code), not globally unique on the code alone 6ms
+ ✓ tests/db/capa-code-uniqueness.dbtest.ts > CAPA/complaint/MDR display codes are scoped to their program > mdr_events: mdr_events_code_uq is UNIQUE (program_id, mdr_code), not globally unique on the code alone 3ms
+ ✓ tests/db/capa-code-uniqueness.dbtest.ts > CAPA/complaint/MDR display codes are scoped to their program > capa_records: capa_records_code_uq is UNIQUE (program_id, capa_code), not globally unique on the code alone 2ms
+ ✓ tests/db/capa-code-uniqueness.dbtest.ts > CAPA/complaint/MDR display codes are scoped to their program > two programs can each open their first CAPA of the year — the case that failed 5ms
+ ✓ tests/db/capa-code-uniqueness.dbtest.ts > CAPA/complaint/MDR display codes are scoped to their program > a duplicate code WITHIN one program is still rejected 5ms
+ ✓ tests/db/capa-code-uniqueness.dbtest.ts > CAPA/complaint/MDR display codes are scoped to their program > the agency-issued MDR report numbers stay globally unique 16ms
+ ✓ tests/db/capa-code-uniqueness.dbtest.ts > CAPA/complaint/MDR display codes are scoped to their program > the generator takes max+1, not count+1, so a gap cannot re-issue a live code 18ms
+ ✓ tests/db/app-role-provisioning-rds-shape.dbtest.ts > provisionAppServiceRole as an RDS-shaped (non-superuser) master > the master really is RDS-shaped: CREATEROLE, not superuser, no BYPASSRLS 3ms
+ ✓ tests/db/app-role-provisioning-rds-shape.dbtest.ts > provisionAppServiceRole as an RDS-shaped (non-superuser) master > mints the existing runtime role: LOGIN, and still not superuser / BYPASSRLS / replication 29ms
+ ✓ tests/db/app-role-provisioning-rds-shape.dbtest.ts > provisionAppServiceRole as an RDS-shaped (non-superuser) master > the minted role can connect with the password and read what it was granted 12ms
+ ✓ tests/db/app-role-provisioning-rds-shape.dbtest.ts > provisionAppServiceRole as an RDS-shaped (non-superuser) master > computes the same SCRAM verifier PostgreSQL computes for the same password and salt 15ms
+ ✓ tests/db/app-role-provisioning-rds-shape.dbtest.ts > provisionAppServiceRole as an RDS-shaped (non-superuser) master > REFUSES a pre-existing role it cannot make safe, instead of reporting it minted 19ms
+ ✓ tests/db/part11-audit-store.dbtest.ts > the Part 11 store exists and has the right shape > is present after the migration — not created at runtime 2ms
+ ✓ tests/db/part11-audit-store.dbtest.ts > the Part 11 store exists and has the right shape > types user_id and session_id as TEXT, so attributed writes are not rejected 4ms
+ ✓ tests/db/part11-audit-store.dbtest.ts > the Part 11 store exists and has the right shape > accepts an attributed write keyed by an integer users.id 7ms
+ ✓ tests/db/part11-audit-store.dbtest.ts > the Part 11 store exists and has the right shape > carries no CHECK constraint masquerading as immutability 2ms
+ ✓ tests/db/part11-audit-store.dbtest.ts > immutability holds against the database, not by convention > refuses UPDATE even for the table owner 6ms
+ ✓ tests/db/part11-audit-store.dbtest.ts > immutability holds against the database, not by convention > refuses DELETE even for the table owner 15ms
+ ✓ tests/db/part11-audit-store.dbtest.ts > concurrent appends do not fork the hash chain > serializes writers so no two entries claim the same predecessor 84ms
+ ✓ tests/db/part11-audit-store.dbtest.ts > the runtime role can append and cannot rewrite > is granted exactly SELECT and INSERT when the role exists 4ms
+ ✓ tests/db/phase5-intelligent-docs.dbtest.ts > Phase 5: Intelligent Document System Migration > should have intelligent_docs schema 19ms
+ ✓ tests/db/phase5-intelligent-docs.dbtest.ts > Phase 5: Intelligent Document System Migration > should have source_documents table with required columns 10ms
+ ✓ tests/db/phase5-intelligent-docs.dbtest.ts > Phase 5: Intelligent Document System Migration > should have traceability_links table with required columns 4ms
+ ✓ tests/db/phase5-intelligent-docs.dbtest.ts > Phase 5: Intelligent Document System Migration > should have change_propagation_events table 4ms
+ ✓ tests/db/phase5-intelligent-docs.dbtest.ts > Phase 5: Intelligent Document System Migration > should have impacted_sections table 4ms
+ ✓ tests/db/phase5-intelligent-docs.dbtest.ts > Phase 5: Intelligent Document System Migration > should have compliance_scores table 3ms
+ ✓ tests/db/phase5-intelligent-docs.dbtest.ts > Phase 5: Intelligent Document System Migration > should have compliance_rules table 4ms
+ ✓ tests/db/phase5-intelligent-docs.dbtest.ts > Phase 5: Intelligent Document System Migration > should have auto_generated_tables table 3ms
+ ✓ tests/db/phase5-intelligent-docs.dbtest.ts > Phase 5: Intelligent Document System Migration > should have RLS enabled on all tables 9ms
+ ✓ tests/db/phase5-intelligent-docs.dbtest.ts > Phase 5: Intelligent Document System Migration > should have RLS policies for tenant isolation 7ms
+ ✓ tests/db/phase5-intelligent-docs.dbtest.ts > Phase 5: Intelligent Document System Migration > should have immutability trigger on traceability_links 3ms
+ ✓ tests/db/phase5-intelligent-docs.dbtest.ts > Phase 5: Intelligent Document System Migration > should have immutability trigger on change_propagation_events 5ms
+ ✓ tests/db/phase5-intelligent-docs.dbtest.ts > Phase 5: Intelligent Document System Migration > should have detect_impacted_links function 4ms
+ ✓ tests/db/phase5-intelligent-docs.dbtest.ts > Phase 5: Intelligent Document System Migration > should have calculate_compliance_score function 1ms
+ ✓ tests/db/phase5-intelligent-docs.dbtest.ts > Phase 5: Intelligent Document System Migration > should have seeded compliance rules 2ms
+ ✓ tests/db/phase5-intelligent-docs.dbtest.ts > Phase 5: Intelligent Document System Migration > should have rules for all submission types 7ms
+ ✓ tests/db/phase5-intelligent-docs.dbtest.ts > Phase 5: Intelligent Document System Migration > should have search index on source_documents 2ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > the migration creates the table the writer INSERTs into 2ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > carries every column the writer binds, including resolved_model 7ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > persists a row through the real writer 7ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > stores NULL rather than inventing a resolution the provider never gave 12ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > records the EFFECTIVE temperature: NULL means no sampling parameter was sent 3ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > initialize() throws — naming the role — when the store is not writable 2ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > initialize() throws when the table is absent, and says which migration creates it 1ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > initialize() passes against the provisioned table 2ms
+ ✓ tests/db/nonpublic-uuid-tenant-isolation.dbtest.ts > cortex.knowledge_gaps — an unresolved tenant scope returns NOTHING, not everything > shows a tenant only its own row when correctly scoped 8ms
+ ✓ tests/db/nonpublic-uuid-tenant-isolation.dbtest.ts > cortex.knowledge_gaps — an unresolved tenant scope returns NOTHING, not everything > shows NOTHING when no org scope is set 2ms
+ ✓ tests/db/nonpublic-uuid-tenant-isolation.dbtest.ts > cortex.knowledge_gaps — an unresolved tenant scope returns NOTHING, not everything > shows NOTHING when the org scope is not a uuid 2ms
+ ✓ tests/db/nonpublic-uuid-tenant-isolation.dbtest.ts > cortex.knowledge_gaps — an unresolved tenant scope returns NOTHING, not everything > still does not filter when enforcement is off, so unscoped legacy readers keep working 2ms
+ ✓ tests/db/nonpublic-uuid-tenant-isolation.dbtest.ts > cortex.knowledge_gaps — WITH CHECK refuses a write aimed at another tenant > accepts a write into the caller’s own tenant 3ms
+ ✓ tests/db/nonpublic-uuid-tenant-isolation.dbtest.ts > cortex.knowledge_gaps — WITH CHECK refuses a write aimed at another tenant > refuses a write aimed at another tenant 3ms
+ ✓ tests/db/nonpublic-uuid-tenant-isolation.dbtest.ts > cortex.knowledge_gaps — WITH CHECK refuses a write aimed at another tenant > refuses a write when no scope is set at all 2ms
+ ✓ tests/db/pg-mock-scoping.dbtest.ts > real-database project: the pg driver is not mocked > exposes the genuine pg.Pool, not a vitest mock function 2ms
+ ✓ tests/db/pg-mock-scoping.dbtest.ts > real-database project: the pg driver is not mocked > reaches a real PostgreSQL server — a value the mock could not invent 11ms
+ ✓ tests/db/pg-mock-scoping.dbtest.ts > real-database project: the pg driver is not mocked > runs with RLS_ENFORCE=on — the mode production mandates 0ms
+ ✓ tests/db/pg-mock-scoping.dbtest.ts > real-database project: the pg driver is not mocked > DDL issued by one connection is visible to another — state actually persists 29ms
+ ✓ tests/db/pg-mock-scoping.dbtest.ts > real-database project: configuration fails closed > rejects the unit-test placeholder DATABASE_URL instead of timing out on it 1ms
+ ✓ tests/db/pg-mock-scoping.dbtest.ts > real-database project: configuration fails closed > rejects an absent DATABASE_URL rather than skipping the suite 0ms
+ ✓ tests/db/pg-mock-scoping.dbtest.ts > real-database project: configuration fails closed > prefers TEST_DATABASE_URL when both are set 0ms
+ ✓ tests/db/workflow-approval-tables.dbtest.ts > workflow approval tables exist after the migration > workflow_templates is present 3ms
+ ✓ tests/db/workflow-approval-tables.dbtest.ts > workflow approval tables exist after the migration > workflow_steps is present 1ms
+ ✓ tests/db/workflow-approval-tables.dbtest.ts > workflow approval tables exist after the migration > document_workflows is present 1ms
+ ✓ tests/db/workflow-approval-tables.dbtest.ts > workflow approval tables exist after the migration > workflow_approvals is present 1ms
+ ✓ tests/db/workflow-approval-tables.dbtest.ts > workflow approval tables exist after the migration > workflow_history is present 1ms
+ ✓ tests/db/workflow-approval-tables.dbtest.ts > workflow approval tables exist after the migration > document_workflows carries every column the pending-approvals read projects 8ms
+ ✓ tests/db/workflow-approval-tables.dbtest.ts > workflow approval tables exist after the migration > answers the pending-approvals predicate instead of raising 2ms
+ ✓ tests/db/workflow-approval-tables.dbtest.ts > workflow approval tables exist after the migration > enforces the foreign keys the workflow chain depends on 3ms
+ ✓ tests/db/rls-bypass-does-not-outlive-release.dbtest.ts > app.bypass_rls / app.is_admin do not outlive the borrower > CONTROL: a plain release DOES leak them to the next checkout 18ms
+ ✓ tests/db/rls-bypass-does-not-outlive-release.dbtest.ts > app.bypass_rls / app.is_admin do not outlive the borrower > releaseWithoutBypass clears them 3ms
+ ✓ tests/db/rls-bypass-does-not-outlive-release.dbtest.ts > app.bypass_rls / app.is_admin do not outlive the borrower > clears them even when the work left an ABORTED transaction 8ms
+ ✓ tests/db/rls-bypass-does-not-outlive-release.dbtest.ts > app.bypass_rls / app.is_admin do not outlive the borrower > leaves a usable connection behind, not a broken one 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/atom-search.dbtest.ts > search_atoms_hybrid on a from-blank database > returns rows
+error: structure of query does not match function result type
+ FAIL  tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > returns no more rows than the limit, all the tenant’s own
+error: structure of query does not match function result type
+ FAIL  tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > weights semantic and keyword scores as the caller asked
+error: function search_atoms_hybrid(unknown, vector, unknown, unknown, unknown, unknown, integer[]) does not exist
+ FAIL  tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > returns a project's own atoms even when other projects' atoms score higher
+error: function search_atoms_hybrid(unknown, vector, unknown, unknown, unknown, unknown, integer[]) does not exist
+ FAIL  tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > never returns another tenant’s atom, even on a connection RLS does not filter
+error: function search_atoms_hybrid(unknown, vector, unknown, unknown, unknown, unknown, integer[]) does not exist
+ Test Files  1 failed | 53 passed (54)
+      Tests  5 failed | 657 passed (662)

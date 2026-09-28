@@ -187,3 +187,39 @@ describe('DocumentWorkbench — Assign review', () => {
     expect(tasksForDocument('not an array', DOC)).toEqual([]);
   });
 });
+
+/* A transition whose outcome nobody can confirm: the server's OUTCOME_UNKNOWN,
+   or a gateway's answer. Never reported as "its state is unchanged". */
+describe('DocumentWorkbench — Review tasks, an outcome the server could not confirm', () => {
+  it('a transition whose COMMIT was lost is reported as unknown, never as unchanged, and the list is re-read', async () => {
+    ledger = [{ id: 1, taskId: 'TASK-3', title: 'Review: Module 2.5 Clinical Overview', status: 'in-progress', priority: 'high', assigneeName: 'OQ Signer', assigneeId: 42, dueDate: null, description: null, sourceEntityType: 'authoring_document', sourceEntityId: DOC, approvalRequired: false, approvalStatus: null, createdAt: null }];
+    patch = () => {
+      const body = { success: false, error: 'OUTCOME_UNKNOWN', message: 'Whether this change was saved is unknown. Reload to see the task’s current state before trying again.' };
+      throw new ApiRequestError(body.message, 500, body, 'OUTCOME_UNKNOWN');
+    };
+    render(<DocumentAuthoring {...props()} />);
+    await screen.findAllByText('Rationale');
+    fireEvent.click(screen.getByTestId('tasks-rail-open'));
+    const rail = await screen.findByRole('complementary', { name: 'Review tasks' });
+    await within(rail).findByTestId('rt-row');
+    const reads = () => apiRequest.mock.calls.filter((c) => c[0] === 'GET' && c[1] === '/api/tasks/tasks/by-module/Authoring').length;
+    const before = reads();
+    fireEvent.click(within(rail).getByTestId('rt-complete'));
+    expect(await screen.findByText(/Whether this change was saved is unknown/)).toBeTruthy();
+    expect(screen.queryByText(/Its state is unchanged/)).toBeNull();
+    await waitFor(() => expect(reads()).toBeGreaterThan(before));
+  });
+
+  it('a gateway error on a transition is an unknown outcome too', async () => {
+    ledger = [{ id: 1, taskId: 'TASK-4', title: 'Review: Module 2.5 Clinical Overview', status: 'in-progress', priority: 'high', assigneeName: 'OQ Signer', assigneeId: 42, dueDate: null, description: null, sourceEntityType: 'authoring_document', sourceEntityId: DOC, approvalRequired: false, approvalStatus: null, createdAt: null }];
+    patch = () => { throw new ApiRequestError('Bad gateway', 502); };
+    render(<DocumentAuthoring {...props()} />);
+    await screen.findAllByText('Rationale');
+    fireEvent.click(screen.getByTestId('tasks-rail-open'));
+    const rail = await screen.findByRole('complementary', { name: 'Review tasks' });
+    await within(rail).findByTestId('rt-row');
+    fireEvent.click(within(rail).getByTestId('rt-complete'));
+    expect(await screen.findByText(/unknown/i)).toBeTruthy();
+    expect(screen.queryByText(/Its state is unchanged/)).toBeNull();
+  });
+});

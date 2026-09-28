@@ -1,0 +1,2195 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+ ✓ tests/rls-auth-boundary-invariant.contract.test.ts > RLS auth-boundary invariant > authMiddleware (server/auth.ts) invokes establishRequestTenantScope — else its routes fail closed under RLS_ENFORCE=on 2ms
+ ✓ tests/rls-auth-boundary-invariant.contract.test.ts > RLS auth-boundary invariant > authenticateToken (server/middleware/auth.ts) invokes establishRequestTenantScope — else its routes fail closed under RLS_ENFORCE=on 1ms
+ ✓ tests/rls-auth-boundary-invariant.contract.test.ts > RLS auth-boundary invariant > requireTenantContext (server/middleware/tenantContext.ts) invokes establishRequestTenantScope — else its routes fail closed under RLS_ENFORCE=on 0ms
+ ✓ tests/rls-auth-boundary-invariant.contract.test.ts > RLS auth-boundary invariant > registerPlatformRoutes (the global /api gate) runs before all tenant route groups 1ms
+ ✓ tests/rls-auth-boundary-invariant.contract.test.ts > RLS auth-boundary invariant > the global /api gate delegates to authMiddleware 1ms
+ ✓ tests/rls-auth-boundary-invariant.contract.test.ts > RLS auth-boundary invariant > /api/setup is mounted behind establishRequestSystemScope (cross-tenant carve-out) 1ms
+ ✓ tests/rls-auth-boundary-invariant.contract.test.ts > RLS auth-boundary invariant > /scim/v2 is mounted behind establishRequestSystemScope (cross-tenant carve-out) 0ms
+ ✓ tests/rls-auth-boundary-invariant.contract.test.ts > RLS auth-boundary invariant > /api/admin/scim-tenants is mounted behind establishRequestSystemScope (cross-tenant carve-out) 0ms
+ ✓ tests/rls-auth-boundary-invariant.contract.test.ts > RLS auth-boundary invariant > register-platform-routes.ts imports establishRequestSystemScope 1ms
+ ✓ tests/rls-scoped-route-mounts.contract.test.ts > RLS-scoped route mounts > /api/cerv2-sections is mounted behind requireTenantContext (else fail-closed 500 under RLS_ENFORCE=on) 2ms
+ ✓ tests/rls-scoped-route-mounts.contract.test.ts > RLS-scoped route mounts > /api/batch-draft is mounted behind requireTenantContext (else fail-closed 500 under RLS_ENFORCE=on) 1ms
+ ✓ tests/rls-scoped-route-mounts.contract.test.ts > RLS-scoped route mounts > /api/ivd-completeness is mounted behind requireTenantContext (else fail-closed 500 under RLS_ENFORCE=on) 1ms
+ ✓ tests/rls-scoped-route-mounts.contract.test.ts > RLS-scoped route mounts > /api/task-management is mounted behind requireTenantContext (else fail-closed 500 under RLS_ENFORCE=on) 0ms
+ ✓ tests/rls-scoped-route-mounts.contract.test.ts > RLS-scoped route mounts > /api/review is mounted behind requireTenantContext (else fail-closed 500 under RLS_ENFORCE=on) 1ms
+ ✓ tests/rls-scoped-route-mounts.contract.test.ts > RLS-scoped route mounts > both bootstrap files import requireTenantContext 1ms
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts
+{
+  "timestamp": "2026-09-23T16:04:14.751Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T16:04:14.752Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/bootstrap/__tests__/regulatory-root-gate.test.ts
+{
+  "timestamp": "2026-09-23T16:04:14.752Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts
+{
+  "timestamp": "2026-09-23T16:04:14.754Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T16:04:14.755Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts
+{
+  "timestamp": "2026-09-23T16:04:14.756Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts
+[database] Database connection successful
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts
+[database] Database connection successful
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+✅ Doc Orchestration routes mounted (auth-gated)
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+❌ Failed to mount FDA 510(k) eSTAR routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount FDA 510(k) device profile routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount CERV2 Export routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount CERV2 AI routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stderr | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+{
+  "timestamp": "2026-09-23T16:04:15.743Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+✅ IVDR Evidence Binder + Pack Builder routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+[IVDR-PackWorker] Worker disabled by env (set ENABLE_IVDR_WORKER=true to enable)
+✅ IVDR Pack Build Worker started (2s interval)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+✅ Review board routes mounted (GET /api/review/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+✅ Task management board route mounted (GET /api/task-management/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+✅ Artifacts center route mounted (GET /api/artifacts-center)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+✅ Project home route mounted (GET /api/project-home/:projectId)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ FDA 510(k) eSTAR routes mounted (auth-gated)
+✅ FDA 510(k) device profile routes mounted (auth-gated)
+✅ CERV2 Export routes mounted (auth-gated)
+✅ CERV2 AI routes mounted (auth-gated)
+✅ Doc Orchestration routes mounted (auth-gated)
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+{
+  "timestamp": "2026-09-23T16:04:17.246Z",
+  "level": "error",
+  "message": "[audit-service] AUDIT SERVICE INITIALIZATION FAILED — audit trail may be non-functional",
+  "context": {
+    "error": "[FATAL] AUDIT_HMAC_SECRET is required in production. The tamper-proof audit chain cannot sign records without a cryptographically random secret. Refusing to start."
+  }
+}
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ IVDR Evidence Binder + Pack Builder routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+[IVDR-PackWorker] Worker disabled by env (set ENABLE_IVDR_WORKER=true to enable)
+✅ IVDR Pack Build Worker started (2s interval)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Review board routes mounted (GET /api/review/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+✅ Batch draft route mounted (GET /api/batch-draft/spine)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Task management board route mounted (GET /api/task-management/board)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Artifacts center route mounted (GET /api/artifacts-center)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Project home route mounted (GET /api/project-home/:projectId)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+✅ CER (Clinical Evaluation Report) API routes mounted (MDR/IVDR compliant)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Batch draft route mounted (GET /api/batch-draft/spine)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ CER (Clinical Evaluation Report) API routes mounted (MDR/IVDR compliant)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Knowledge Base API routes mounted (ICH, pathways, standards, deficiencies, eCTD rules)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+✅ Knowledge Base API routes mounted (ICH, pathways, standards, deficiencies, eCTD rules)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Preclinical (Module 4) ingestion routes mounted
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ PDF task + compression routes mounted
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+✅ Preclinical (Module 4) ingestion routes mounted
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+✅ PDF task + compression routes mounted
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+✅ GRDHE routes mounted (21 CFR Part 11, EU MDR 2017/745)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ GRDHE routes mounted (21 CFR Part 11, EU MDR 2017/745)
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+❌ Failed to mount CERV2 document routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ CERV2 unified document routes mounted
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ PDEV → IND workflow routes mounted
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+✅ PDEV → IND workflow routes mounted
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+❌ Failed to mount Submission Pyramid routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module
+✅ Governed document lifecycle routes mounted (/api/regulatory/documents)
+✅ Regulatory route family registered
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+✅ Doc Orchestration routes mounted (auth-gated)
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+❌ Failed to mount FDA 510(k) eSTAR routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount FDA 510(k) device profile routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount CERV2 Export routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount CERV2 AI routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+✅ IVDR Evidence Binder + Pack Builder routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+[IVDR-PackWorker] Worker disabled by env (set ENABLE_IVDR_WORKER=true to enable)
+✅ IVDR Pack Build Worker started (2s interval)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+✅ Review board routes mounted (GET /api/review/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+✅ Task management board route mounted (GET /api/task-management/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+✅ Artifacts center route mounted (GET /api/artifacts-center)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+✅ Project home route mounted (GET /api/project-home/:projectId)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+✅ Batch draft route mounted (GET /api/batch-draft/spine)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+✅ CER (Clinical Evaluation Report) API routes mounted (MDR/IVDR compliant)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+✅ Knowledge Base API routes mounted (ICH, pathways, standards, deficiencies, eCTD rules)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+✅ Preclinical (Module 4) ingestion routes mounted
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+✅ PDF task + compression routes mounted
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+✅ GRDHE routes mounted (21 CFR Part 11, EU MDR 2017/745)
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+❌ Failed to mount CERV2 document routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+✅ PDEV → IND workflow routes mounted
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+❌ Failed to mount Submission Pyramid routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module
+✅ Governed document lifecycle routes mounted (/api/regulatory/documents)
+✅ Regulatory route family registered
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+✅ Doc Orchestration routes mounted (auth-gated)
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+❌ Failed to mount FDA 510(k) eSTAR routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount FDA 510(k) device profile routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount CERV2 Export routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount CERV2 AI routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+✅ IVDR Evidence Binder + Pack Builder routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+[IVDR-PackWorker] Worker disabled by env (set ENABLE_IVDR_WORKER=true to enable)
+✅ IVDR Pack Build Worker started (2s interval)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+✅ Review board routes mounted (GET /api/review/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+✅ Task management board route mounted (GET /api/task-management/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+✅ Artifacts center route mounted (GET /api/artifacts-center)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+✅ Project home route mounted (GET /api/project-home/:projectId)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+✅ Batch draft route mounted (GET /api/batch-draft/spine)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+✅ CER (Clinical Evaluation Report) API routes mounted (MDR/IVDR compliant)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+✅ Knowledge Base API routes mounted (ICH, pathways, standards, deficiencies, eCTD rules)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+✅ Preclinical (Module 4) ingestion routes mounted
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+✅ PDF task + compression routes mounted
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+✅ GRDHE routes mounted (21 CFR Part 11, EU MDR 2017/745)
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+❌ Failed to mount CERV2 document routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+✅ PDEV → IND workflow routes mounted
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+❌ Failed to mount Submission Pyramid routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module
+✅ Governed document lifecycle routes mounted (/api/regulatory/documents)
+✅ Regulatory route family registered
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+✅ Doc Orchestration routes mounted (auth-gated)
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+❌ Failed to mount FDA 510(k) eSTAR routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount FDA 510(k) device profile routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount CERV2 Export routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount CERV2 AI routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+✅ IVDR Evidence Binder + Pack Builder routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+[IVDR-PackWorker] Worker disabled by env (set ENABLE_IVDR_WORKER=true to enable)
+✅ IVDR Pack Build Worker started (2s interval)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+✅ Review board routes mounted (GET /api/review/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+✅ Task management board route mounted (GET /api/task-management/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+✅ Artifacts center route mounted (GET /api/artifacts-center)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+✅ Project home route mounted (GET /api/project-home/:projectId)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+✅ Batch draft route mounted (GET /api/batch-draft/spine)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+✅ CER (Clinical Evaluation Report) API routes mounted (MDR/IVDR compliant)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+✅ Knowledge Base API routes mounted (ICH, pathways, standards, deficiencies, eCTD rules)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+✅ Preclinical (Module 4) ingestion routes mounted
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+✅ PDF task + compression routes mounted
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+✅ GRDHE routes mounted (21 CFR Part 11, EU MDR 2017/745)
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+❌ Failed to mount CERV2 document routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+✅ PDEV → IND workflow routes mounted
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+❌ Failed to mount Submission Pyramid routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE
+✅ Governed document lifecycle routes mounted (/api/regulatory/documents)
+✅ Regulatory route family registered
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+✅ Doc Orchestration routes mounted (auth-gated)
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+❌ Failed to mount FDA 510(k) eSTAR routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount FDA 510(k) device profile routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount CERV2 Export routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount CERV2 AI routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+✅ IVDR Evidence Binder + Pack Builder routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+[IVDR-PackWorker] Worker disabled by env (set ENABLE_IVDR_WORKER=true to enable)
+✅ IVDR Pack Build Worker started (2s interval)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+✅ Review board routes mounted (GET /api/review/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+✅ Task management board route mounted (GET /api/task-management/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+✅ Artifacts center route mounted (GET /api/artifacts-center)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+✅ Project home route mounted (GET /api/project-home/:projectId)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+✅ Batch draft route mounted (GET /api/batch-draft/spine)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+✅ CER (Clinical Evaluation Report) API routes mounted (MDR/IVDR compliant)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+✅ Knowledge Base API routes mounted (ICH, pathways, standards, deficiencies, eCTD rules)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+✅ Preclinical (Module 4) ingestion routes mounted
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+✅ PDF task + compression routes mounted
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+✅ GRDHE routes mounted (21 CFR Part 11, EU MDR 2017/745)
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+❌ Failed to mount CERV2 document routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+✅ PDEV → IND workflow routes mounted
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+❌ Failed to mount Submission Pyramid routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE
+✅ Governed document lifecycle routes mounted (/api/regulatory/documents)
+✅ Regulatory route family registered
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+✅ Doc Orchestration routes mounted (auth-gated)
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+❌ Failed to mount FDA 510(k) eSTAR routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount FDA 510(k) device profile routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount CERV2 Export routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount CERV2 AI routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+✅ IVDR Evidence Binder + Pack Builder routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+[IVDR-PackWorker] Worker disabled by env (set ENABLE_IVDR_WORKER=true to enable)
+✅ IVDR Pack Build Worker started (2s interval)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+✅ Review board routes mounted (GET /api/review/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+✅ Task management board route mounted (GET /api/task-management/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+✅ Artifacts center route mounted (GET /api/artifacts-center)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+✅ Project home route mounted (GET /api/project-home/:projectId)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+✅ Batch draft route mounted (GET /api/batch-draft/spine)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+✅ CER (Clinical Evaluation Report) API routes mounted (MDR/IVDR compliant)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+✅ Knowledge Base API routes mounted (ICH, pathways, standards, deficiencies, eCTD rules)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+✅ Preclinical (Module 4) ingestion routes mounted
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+✅ PDF task + compression routes mounted
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+✅ GRDHE routes mounted (21 CFR Part 11, EU MDR 2017/745)
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+❌ Failed to mount CERV2 document routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+✅ PDEV → IND workflow routes mounted
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+❌ Failed to mount Submission Pyramid routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE
+✅ Governed document lifecycle routes mounted (/api/regulatory/documents)
+✅ Regulatory route family registered
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+✅ Doc Orchestration routes mounted (auth-gated)
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+❌ Failed to mount FDA 510(k) eSTAR routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount FDA 510(k) device profile routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount CERV2 Export routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount CERV2 AI routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+✅ IVDR Evidence Binder + Pack Builder routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+[IVDR-PackWorker] Worker disabled by env (set ENABLE_IVDR_WORKER=true to enable)
+✅ IVDR Pack Build Worker started (2s interval)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+✅ Review board routes mounted (GET /api/review/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+✅ Task management board route mounted (GET /api/task-management/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+✅ Artifacts center route mounted (GET /api/artifacts-center)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+✅ Project home route mounted (GET /api/project-home/:projectId)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+✅ Batch draft route mounted (GET /api/batch-draft/spine)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+✅ CER (Clinical Evaluation Report) API routes mounted (MDR/IVDR compliant)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+✅ Knowledge Base API routes mounted (ICH, pathways, standards, deficiencies, eCTD rules)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+✅ Preclinical (Module 4) ingestion routes mounted
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+✅ PDF task + compression routes mounted
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+✅ GRDHE routes mounted (21 CFR Part 11, EU MDR 2017/745)
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+❌ Failed to mount CERV2 document routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+✅ PDEV → IND workflow routes mounted
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+❌ Failed to mount Submission Pyramid routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only
+✅ Governed document lifecycle routes mounted (/api/regulatory/documents)
+✅ Regulatory route family registered
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+✅ Doc Orchestration routes mounted (auth-gated)
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+❌ Failed to mount FDA 510(k) eSTAR routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount FDA 510(k) device profile routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount CERV2 Export routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount CERV2 AI routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+✅ IVDR Evidence Binder + Pack Builder routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+[IVDR-PackWorker] Worker disabled by env (set ENABLE_IVDR_WORKER=true to enable)
+✅ IVDR Pack Build Worker started (2s interval)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+✅ Review board routes mounted (GET /api/review/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+✅ Task management board route mounted (GET /api/task-management/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+✅ Artifacts center route mounted (GET /api/artifacts-center)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+✅ Project home route mounted (GET /api/project-home/:projectId)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+✅ Batch draft route mounted (GET /api/batch-draft/spine)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+✅ CER (Clinical Evaluation Report) API routes mounted (MDR/IVDR compliant)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+✅ Knowledge Base API routes mounted (ICH, pathways, standards, deficiencies, eCTD rules)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+✅ Preclinical (Module 4) ingestion routes mounted
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+✅ PDF task + compression routes mounted
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+✅ GRDHE routes mounted (21 CFR Part 11, EU MDR 2017/745)
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+❌ Failed to mount CERV2 document routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+✅ PDEV → IND workflow routes mounted
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+❌ Failed to mount Submission Pyramid routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues
+✅ Governed document lifecycle routes mounted (/api/regulatory/documents)
+✅ Regulatory route family registered
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+✅ Doc Orchestration routes mounted (auth-gated)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Submission Pyramid routes mounted (GET /api/v1/pyramids/*, /api/v1/global-pyramids)
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+❌ Failed to mount FDA 510(k) eSTAR routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount FDA 510(k) device profile routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount CERV2 Export routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount CERV2 AI routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+✅ IVDR Evidence Binder + Pack Builder routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+[IVDR-PackWorker] Worker disabled by env (set ENABLE_IVDR_WORKER=true to enable)
+✅ IVDR Pack Build Worker started (2s interval)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+✅ Review board routes mounted (GET /api/review/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+✅ Task management board route mounted (GET /api/task-management/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+✅ Artifacts center route mounted (GET /api/artifacts-center)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+✅ Project home route mounted (GET /api/project-home/:projectId)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+✅ Batch draft route mounted (GET /api/batch-draft/spine)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+✅ CER (Clinical Evaluation Report) API routes mounted (MDR/IVDR compliant)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+✅ Knowledge Base API routes mounted (ICH, pathways, standards, deficiencies, eCTD rules)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+✅ Preclinical (Module 4) ingestion routes mounted
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+✅ PDF task + compression routes mounted
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+✅ GRDHE routes mounted (21 CFR Part 11, EU MDR 2017/745)
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+❌ Failed to mount CERV2 document routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+✅ PDEV → IND workflow routes mounted
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+❌ Failed to mount Submission Pyramid routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member
+✅ Governed document lifecycle routes mounted (/api/regulatory/documents)
+✅ Regulatory route family registered
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+✅ Doc Orchestration routes mounted (auth-gated)
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+❌ Failed to mount FDA 510(k) eSTAR routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount FDA 510(k) device profile routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount CERV2 Export routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount CERV2 AI routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+✅ IVDR Evidence Binder + Pack Builder routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+[IVDR-PackWorker] Worker disabled by env (set ENABLE_IVDR_WORKER=true to enable)
+✅ IVDR Pack Build Worker started (2s interval)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+✅ Review board routes mounted (GET /api/review/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+✅ Task management board route mounted (GET /api/task-management/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+✅ Artifacts center route mounted (GET /api/artifacts-center)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+✅ Project home route mounted (GET /api/project-home/:projectId)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+✅ Batch draft route mounted (GET /api/batch-draft/spine)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+✅ CER (Clinical Evaluation Report) API routes mounted (MDR/IVDR compliant)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+✅ Knowledge Base API routes mounted (ICH, pathways, standards, deficiencies, eCTD rules)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+✅ Preclinical (Module 4) ingestion routes mounted
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+✅ PDF task + compression routes mounted
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+✅ GRDHE routes mounted (21 CFR Part 11, EU MDR 2017/745)
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+❌ Failed to mount CERV2 document routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+✅ PDEV → IND workflow routes mounted
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+❌ Failed to mount Submission Pyramid routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is
+✅ Governed document lifecycle routes mounted (/api/regulatory/documents)
+✅ Regulatory route family registered
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+✅ Doc Orchestration routes mounted (auth-gated)
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+❌ Failed to mount FDA 510(k) eSTAR routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount FDA 510(k) device profile routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount CERV2 Export routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+❌ Failed to mount CERV2 AI routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+✅ IVDR Evidence Binder + Pack Builder routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+[IVDR-PackWorker] Worker disabled by env (set ENABLE_IVDR_WORKER=true to enable)
+✅ IVDR Pack Build Worker started (2s interval)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+✅ Review board routes mounted (GET /api/review/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+✅ Task management board route mounted (GET /api/task-management/board)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+✅ Artifacts center route mounted (GET /api/artifacts-center)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+✅ Project home route mounted (GET /api/project-home/:projectId)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+✅ Batch draft route mounted (GET /api/batch-draft/spine)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+✅ CER (Clinical Evaluation Report) API routes mounted (MDR/IVDR compliant)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+✅ Knowledge Base API routes mounted (ICH, pathways, standards, deficiencies, eCTD rules)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+✅ Preclinical (Module 4) ingestion routes mounted
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+✅ PDF task + compression routes mounted
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+✅ GRDHE routes mounted (21 CFR Part 11, EU MDR 2017/745)
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+❌ Failed to mount CERV2 document routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+✅ PDEV → IND workflow routes mounted
+
+stderr | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+❌ Failed to mount Submission Pyramid routes: Error: [FATAL] Missing or weak MFA_ENCRYPTION_KEY. Production requires a dedicated MFA_ENCRYPTION_KEY of at least 32 characters (MFA secrets must not be encrypted under a JWT_SECRET-derived key in production).
+    at assertMfaKeyPosture (<repo>/server/config/environment.ts:268:11)
+    at <repo>/server/config/environment.ts:279:1
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+    at <repo>/server/config/environment.js:8:1
+    at VitestModuleEvaluator._runInlinedModule (file://<repo>/node_modules/vitest/dist/module-evaluator.js:206:4)
+    at VitestModuleRunner.directRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1284:61)
+    at VitestModuleRunner.cachedRequest (file://<repo>/node_modules/vite/dist/node/module-runner.js:1180:76)
+
+stdout | server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data
+✅ Governed document lifecycle routes mounted (/api/regulatory/documents)
+✅ Regulatory route family registered
+
+ ✓ server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin READ the module 3817ms
+ ✓ server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager READ the module 5ms
+ ✓ server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member READ the module 4ms
+ ✓ server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a admin WRITE 4ms
+ ✓ server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a manager WRITE 3ms
+ ✓ server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > lets a member WRITE 9ms
+ ✓ server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > keeps a viewer read-only 4ms
+ ✓ server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > still refuses a role nobody issues 5ms
+ ✓ server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > reserves ivdr:approve for admin and manager, not the default member 8ms
+ ✓ server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > is case-insensitive about the role, as the canonical gate is 5ms
+ ✓ server/bootstrap/__tests__/ivdr-access-role-map.test.ts > IVDR access gate — the organization role vocabulary > grants write to every role the rest of the product lets write governed data 4ms
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session
+✅ Governed document lifecycle routes mounted (/api/regulatory/documents)
+✅ Regulatory route family registered
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ FDA 510(k) eSTAR routes mounted (auth-gated)
+✅ FDA 510(k) device profile routes mounted (auth-gated)
+✅ CERV2 Export routes mounted (auth-gated)
+✅ CERV2 AI routes mounted (auth-gated)
+✅ Doc Orchestration routes mounted (auth-gated)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ IVDR Evidence Binder + Pack Builder routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+[IVDR-PackWorker] Worker disabled by env (set ENABLE_IVDR_WORKER=true to enable)
+✅ IVDR Pack Build Worker started (2s interval)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Review board routes mounted (GET /api/review/board)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Task management board route mounted (GET /api/task-management/board)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Artifacts center route mounted (GET /api/artifacts-center)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Project home route mounted (GET /api/project-home/:projectId)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Batch draft route mounted (GET /api/batch-draft/spine)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ CER (Clinical Evaluation Report) API routes mounted (MDR/IVDR compliant)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Knowledge Base API routes mounted (ICH, pathways, standards, deficiencies, eCTD rules)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Preclinical (Module 4) ingestion routes mounted
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ PDF task + compression routes mounted
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ GRDHE routes mounted (21 CFR Part 11, EU MDR 2017/745)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ CERV2 unified document routes mounted
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ PDEV → IND workflow routes mounted
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Submission Pyramid routes mounted (GET /api/v1/pyramids/*, /api/v1/global-pyramids)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session
+✅ Governed document lifecycle routes mounted (/api/regulatory/documents)
+✅ Regulatory route family registered
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ FDA 510(k) eSTAR routes mounted (auth-gated)
+✅ FDA 510(k) device profile routes mounted (auth-gated)
+✅ CERV2 Export routes mounted (auth-gated)
+✅ CERV2 AI routes mounted (auth-gated)
+✅ Doc Orchestration routes mounted (auth-gated)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ IVDR Evidence Binder + Pack Builder routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+[IVDR-PackWorker] Worker disabled by env (set ENABLE_IVDR_WORKER=true to enable)
+✅ IVDR Pack Build Worker started (2s interval)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Review board routes mounted (GET /api/review/board)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Task management board route mounted (GET /api/task-management/board)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Artifacts center route mounted (GET /api/artifacts-center)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Project home route mounted (GET /api/project-home/:projectId)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Batch draft route mounted (GET /api/batch-draft/spine)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ CER (Clinical Evaluation Report) API routes mounted (MDR/IVDR compliant)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Knowledge Base API routes mounted (ICH, pathways, standards, deficiencies, eCTD rules)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Preclinical (Module 4) ingestion routes mounted
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ PDF task + compression routes mounted
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ GRDHE routes mounted (21 CFR Part 11, EU MDR 2017/745)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ CERV2 unified document routes mounted
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ PDEV → IND workflow routes mounted
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Submission Pyramid routes mounted (GET /api/v1/pyramids/*, /api/v1/global-pyramids)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session
+✅ Governed document lifecycle routes mounted (/api/regulatory/documents)
+✅ Regulatory route family registered
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ FDA 510(k) eSTAR routes mounted (auth-gated)
+✅ FDA 510(k) device profile routes mounted (auth-gated)
+✅ CERV2 Export routes mounted (auth-gated)
+✅ CERV2 AI routes mounted (auth-gated)
+✅ Doc Orchestration routes mounted (auth-gated)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ IVDR Evidence Binder + Pack Builder routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+[IVDR-PackWorker] Worker disabled by env (set ENABLE_IVDR_WORKER=true to enable)
+✅ IVDR Pack Build Worker started (2s interval)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Review board routes mounted (GET /api/review/board)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Task management board route mounted (GET /api/task-management/board)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Artifacts center route mounted (GET /api/artifacts-center)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Project home route mounted (GET /api/project-home/:projectId)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Batch draft route mounted (GET /api/batch-draft/spine)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ CER (Clinical Evaluation Report) API routes mounted (MDR/IVDR compliant)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Knowledge Base API routes mounted (ICH, pathways, standards, deficiencies, eCTD rules)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Preclinical (Module 4) ingestion routes mounted
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ PDF task + compression routes mounted
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ GRDHE routes mounted (21 CFR Part 11, EU MDR 2017/745)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ CERV2 unified document routes mounted
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ PDEV → IND workflow routes mounted
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Submission Pyramid routes mounted (GET /api/v1/pyramids/*, /api/v1/global-pyramids)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session
+✅ Governed document lifecycle routes mounted (/api/regulatory/documents)
+✅ Regulatory route family registered
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ FDA 510(k) eSTAR routes mounted (auth-gated)
+✅ FDA 510(k) device profile routes mounted (auth-gated)
+✅ CERV2 Export routes mounted (auth-gated)
+✅ CERV2 AI routes mounted (auth-gated)
+✅ Doc Orchestration routes mounted (auth-gated)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ IVDR Evidence Binder + Pack Builder routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+[IVDR-PackWorker] Worker disabled by env (set ENABLE_IVDR_WORKER=true to enable)
+✅ IVDR Pack Build Worker started (2s interval)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Review board routes mounted (GET /api/review/board)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Task management board route mounted (GET /api/task-management/board)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Artifacts center route mounted (GET /api/artifacts-center)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Project home route mounted (GET /api/project-home/:projectId)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Batch draft route mounted (GET /api/batch-draft/spine)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ CER (Clinical Evaluation Report) API routes mounted (MDR/IVDR compliant)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Knowledge Base API routes mounted (ICH, pathways, standards, deficiencies, eCTD rules)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Preclinical (Module 4) ingestion routes mounted
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ PDF task + compression routes mounted
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ GRDHE routes mounted (21 CFR Part 11, EU MDR 2017/745)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ CERV2 unified document routes mounted
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ PDEV → IND workflow routes mounted
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Submission Pyramid routes mounted (GET /api/v1/pyramids/*, /api/v1/global-pyramids)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session
+✅ Governed document lifecycle routes mounted (/api/regulatory/documents)
+✅ Regulatory route family registered
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ FDA 510(k) eSTAR routes mounted (auth-gated)
+✅ FDA 510(k) device profile routes mounted (auth-gated)
+✅ CERV2 Export routes mounted (auth-gated)
+✅ CERV2 AI routes mounted (auth-gated)
+✅ Doc Orchestration routes mounted (auth-gated)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ IVDR Evidence Binder + Pack Builder routes mounted
+✅ IVDR API gateway mounted (EU 2017/746 | auth → flag → entitlement → RBAC)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+[IVDR-PackWorker] Worker disabled by env (set ENABLE_IVDR_WORKER=true to enable)
+✅ IVDR Pack Build Worker started (2s interval)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Review board routes mounted (GET /api/review/board)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Task management board route mounted (GET /api/task-management/board)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Artifacts center route mounted (GET /api/artifacts-center)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Project home route mounted (GET /api/project-home/:projectId)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Batch draft route mounted (GET /api/batch-draft/spine)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ CER (Clinical Evaluation Report) API routes mounted (MDR/IVDR compliant)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Knowledge Base API routes mounted (ICH, pathways, standards, deficiencies, eCTD rules)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Preclinical (Module 4) ingestion routes mounted
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ PDF task + compression routes mounted
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ GRDHE routes mounted (21 CFR Part 11, EU MDR 2017/745)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ CERV2 unified document routes mounted
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ PDEV → IND workflow routes mounted
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Submission Pyramid routes mounted (GET /api/v1/pyramids/*, /api/v1/global-pyramids)
+
+stdout | server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend
+✅ Governed document lifecycle routes mounted (/api/regulatory/documents)
+✅ Regulatory route family registered
+
+ ✓ server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > POST /api/billing/webhooks/stripe, registered later and open by design, is reached without a session 3919ms
+ ✓ server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/billing/dtc-pricing, registered later and open by design, is reached without a session 9ms
+ ✓ server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/v1/health, registered later and open by design, is reached without a session 8ms
+ ✓ server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > GET /api/cortex/health, registered later and open by design, is reached without a session 11ms
+ ✓ server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > still refuses a Doc Orchestration request with no session 8ms
+ ✓ server/bootstrap/__tests__/regulatory-root-gate.test.ts > the Doc Orchestration gate is its own paths' gate > lets a request outside /api through to the frontend 6ms
+ ✓ server/bootstrap/__tests__/regulatory-root-gate.test.ts > the /api/v1 drafting routes require a session of their own > POST /api/v1/drafting/start_task is refused without a session 43ms
+ ✓ server/bootstrap/__tests__/regulatory-root-gate.test.ts > the /api/v1 drafting routes require a session of their own > GET /api/v1/drafting/task_status/task_1 is refused without a session 3ms
+
+ Test Files  4 passed (4)
+      Tests  34 passed (34)
+   Start at  16:04:12
+   Duration  6.05s (transform 9.23s, setup 250ms, import 3.56s, tests 7.90s, environment 0ms)
+

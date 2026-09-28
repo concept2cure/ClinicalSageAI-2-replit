@@ -1,0 +1,4 @@
+ × server/routes/__tests__/public-api-documents.test.ts > the API describes itself truthfully > every listed endpoint REFUSES a key holding every scope but its own
+   → GET /api/v1/csr/search served a key without csr:read: expected 500 to be 403 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 18 passed (19)

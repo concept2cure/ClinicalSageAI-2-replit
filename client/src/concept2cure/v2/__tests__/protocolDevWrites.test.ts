@@ -30,8 +30,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 
 import { ApiRequestError } from '@/lib/queryClient';
 import {
-  ProtocolSectionConflict, addScheduleVisit, finalizeProtocol, recordReviewDisposition, saveProtocolSection,
-  updateProtocolHeader,
+  ProtocolSectionConflict, addScheduleVisit, assessProtocolDeviation, finalizeProtocol, recordReviewDisposition,
+  saveProtocolSection, updateProtocolHeader,
 } from '../surfaces/ProtocolDevWrites';
 
 const REASON = 'Recording the agreed change in the governed register';
@@ -153,6 +153,28 @@ describe('the two signed acts carry the signature, and say plainly when it was r
 
   it('refuses a reason under eight characters with no request at all', async () => {
     await expect(finalizeProtocol(12, { ...SIGN, reason: 'short' })).rejects.toThrow(/at least 8/);
+    expect(apiRequest).not.toHaveBeenCalled();
+  });
+});
+
+describe('a deviation assessment is a person’s, complete, or not sent', () => {
+  const full = { severity: 'major', affectsSafety: 'no', rationale: 'Visit 4 labs drawn outside the window', reason: REASON };
+
+  it('posts severity, a boolean safety impact, the rationale and the reason', async () => {
+    apiRequest.mockResolvedValue(ok({ status: 'prompt_irb_report_indicated', reportable: true }));
+    await assessProtocolDeviation(7, full);
+    const [method, path, body] = apiRequest.mock.calls[0];
+    expect(method).toBe('POST');
+    expect(path).toBe('/api/protocol-deviations/deviations/7/assessment');
+    expect(body).toEqual({ severity: 'major', affectsSafety: false, rationale: full.rationale, reason: REASON });
+  });
+
+  it.each([
+    ['no severity chosen', { severity: '' }, /assessed severity/],
+    ['safety impact left open', { affectsSafety: '' }, /affected subject safety/],
+    ['no rationale', { rationale: 'n/a' }, /rationale/],
+  ])('refuses %s with no request at all', async (_label, patch, message) => {
+    await expect(assessProtocolDeviation(7, { ...full, ...patch })).rejects.toThrow(message);
     expect(apiRequest).not.toHaveBeenCalled();
   });
 });

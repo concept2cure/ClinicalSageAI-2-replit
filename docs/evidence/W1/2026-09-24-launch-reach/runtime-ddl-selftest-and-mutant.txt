@@ -1,0 +1,36 @@
+# ci:runtime-ddl:selftest — 17 cases, then a MUTANT gate whose pattern can never match.
+  ✓ RED — the historical license_requests runtime CREATE TABLE is caught and named  (exit 1, expected 1)
+  ✓ RED — CREATE INDEX on the runtime path  (exit 1, expected 1)
+  ✓ RED — ALTER TABLE … ADD COLUMN IF NOT EXISTS  (exit 1, expected 1)
+  ✓ RED — CREATE SCHEMA with an interpolated name  (exit 1, expected 1)
+  ✓ RED — GRANT … ON  (exit 1, expected 1)
+  ✓ RED — DROP TABLE  (exit 1, expected 1)
+  ✓ RED — lower-case SQL is still SQL  (exit 1, expected 1)
+  ✓ GREEN — prose is not DDL: a prompt naming an ICH E3 table caption  (exit 0, expected 0)
+  ✓ GREEN — prose is not DDL: a log line ending in the keyword  (exit 0, expected 0)
+  ✓ GREEN — ordinary English "grant" is not a GRANT  (exit 0, expected 0)
+  ✓ GREEN — DDL that exists only in a comment  (exit 0, expected 0)
+  ✓ GREEN — out of scope: tests, __tests__, migrations, server/scripts  (exit 0, expected 0)
+  ✓ GREEN — a baselined file at its pinned count  (exit 0, expected 0)
+  ✓ RED — a baselined file that GAINS a statement  (exit 1, expected 1)
+  ✓ RED — a baseline entry with no written reason  (exit 1, expected 1)
+  ✓ GREEN (default) — a baselined file with LESS DDL is reported, not fatal  (exit 0, expected 0)
+  ✓ RED (--strict) — the same overstated baseline is fatal under --strict  (exit 1, expected 1)
+
+[ci:runtime-ddl:selftest] 17/17 cases held
+exit=0
+
+## mutant: DDL = /(?!)/
+      output did not say: "1 → 2", "gained DDL"
+      | [ci:runtime-ddl] 0 DDL statement(s) in 0 runtime server file(s); 1 baselined
+      | [ci:runtime-ddl] ✅ 1 baselined file(s) now issue LESS DDL — lower or remove their entries:
+      |     • server/services/k.ts — 1 → 0
+      | [ci:runtime-ddl] ✅ no new runtime DDL.
+      | 
+      | 
+  ✓ RED — a baseline entry with no written reason  (exit 1, expected 1)
+  ✓ GREEN (default) — a baselined file with LESS DDL is reported, not fatal  (exit 0, expected 0)
+  ✓ RED (--strict) — the same overstated baseline is fatal under --strict  (exit 1, expected 1)
+
+[ci:runtime-ddl:selftest] 9/17 cases held
+exit=1

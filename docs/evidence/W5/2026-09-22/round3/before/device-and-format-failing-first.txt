@@ -1,0 +1,384 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > puts the vault CER in the technical-file ZIP instead of skipping it
+{
+  "timestamp": "2026-09-23T07:10:56.963Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "organizationId": 7,
+    "regulation": "mdr",
+    "materialized": 8,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP
+{
+  "timestamp": "2026-09-23T07:10:57.039Z",
+  "level": "warn",
+  "message": "[assemble-technical-file] Technical-file assemble could not materialize some leaf sources (not dropped silently)",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 2,
+    "organizationId": 7,
+    "regulation": "mdr",
+    "unresolved": [
+      {
+        "documentTable": "vault_documents",
+        "documentId": null,
+        "documentUuid": "44444444-4444-4444-8444-444444444444",
+        "reason": "vault document not found in this organization"
+      }
+    ]
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP
+{
+  "timestamp": "2026-09-23T07:10:57.040Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 2,
+    "organizationId": 7,
+    "regulation": "mdr",
+    "materialized": 7,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > puts the vault CER in the technical-file ZIP instead of skipping it 152ms
+ × server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP 73ms
+   → expected true to be false // Object.is equality
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — unmapped leaves are reported, not folded into ready > a complete MDR program that also holds the mandatory IV.* sections is ready, and names them
+{
+  "timestamp": "2026-09-23T07:11:01.379Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "regulatory_program",
+    "resourceId": "5b0f2f0e-9a7d-4a2e-8c3f-2d1e6f7a8b9c",
+    "organizationId": 8,
+    "regulation": "mdr",
+    "materialized": 11,
+    "skipped": 3,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — the ZIP manifest agrees with the response and the audit row > a ZIP without the CER says ready: false and does not list the CER as present
+{
+  "timestamp": "2026-09-23T07:11:01.470Z",
+  "level": "warn",
+  "message": "[assemble-technical-file] Technical-file assemble could not materialize some leaf sources (not dropped silently)",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "organizationId": 8,
+    "regulation": "mdr",
+    "unresolved": [
+      {
+        "documentTable": "coauthor_documents",
+        "documentId": 9999,
+        "documentUuid": null,
+        "reason": "coauthor_documents row not found in this organization"
+      }
+    ]
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — the ZIP manifest agrees with the response and the audit row > a ZIP without the CER says ready: false and does not list the CER as present
+{
+  "timestamp": "2026-09-23T07:11:01.471Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "organizationId": 8,
+    "regulation": "mdr",
+    "materialized": 7,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+ × server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — unmapped leaves are reported, not folded into ready > a complete MDR program that also holds the mandatory IV.* sections is ready, and names them 199ms
+   → expected false to be true // Object.is equality
+ × server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — the ZIP manifest agrees with the response and the audit row > a ZIP without the CER says ready: false and does not list the CER as present 94ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > declared facts are claims > a declared-clean PDF is NOT assessed for security or size — the verdict says so 4ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > declared facts are claims > a declared violation is still reported, and marked as declared 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > declared facts are claims > a file with no extension or format is not judged for type — it used to pass 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > declared facts are claims > no files is not a conformant package 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > measured facts > reads encryption from the bytes and calls a measured clean set conformant 365ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > measured facts > does not flag an FDA form submitted as FDA issued it 136ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > us-estar leaf declared "PDF attachments" and never read is not_assessed, with PDF_NO_SECURITY listed 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > us-estar leaf declared "PDF (eSTAR form)" and never read is not_assessed, with PDF_NO_SECURITY listed 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > us-estar leaf declared "PDF/A-1b" and never read is not_assessed, with PDF_NO_SECURITY listed 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > us-estar leaf declared "eSTAR" and never read is not_assessed, with PDF_NO_SECURITY listed 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > an unread leaf declared as a non-PDF format is still not assessed for security 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > a declared encrypted:true is still a finding, not a not-assessed entry 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar refuses the fragment token "x.pdf" (declared "estar") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar refuses the fragment token "x.pdf" (declared "form") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar refuses the fragment token "x.docx" (declared "a") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar refuses the fragment token "x.pdf" (declared "attachments") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-ectd refuses the fragment token "x.pdf" (declared "pd") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-ectd refuses the fragment token "x.pdf" (declared "df") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar accepts "x.pdf" declared "PDF (eSTAR form)" as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar accepts "x.pdf" declared "PDF attachments" as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar accepts "x.pdf" declared "PDF" as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar accepts "x.pdf" declared undefined as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-ectd accepts "x.pdf" declared "PDF/A-1b" as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-ectd accepts "x.PDF" declared undefined as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > eu-mdr accepts "td.pdf" declared "pdf/a" as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > every spec is PDF-only, so x.docx is flagged on each and x.pdf on none 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > every spec is PDF-only, so x.xpt is flagged on each and x.pdf on none 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > every spec is PDF-only, so x.xml is flagged on each and x.pdf on none 2ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > every spec is PDF-only, so x.xlsx is flagged on each and x.pdf on none 4ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > every spec is PDF-only, so x.txt is flagged on each and x.pdf on none 2ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > pdfa-detect exports the predicate 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > a .pdf whose header is past 1 KB is judged for security — and refused, as the packager and transmit guard refuse it 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > a .pdf whose bytes are not a PDF is reported under ACCEPTED_FILE_TYPES, not accepted by its extension 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > so does a leaf DECLARED as PDF whose bytes are not a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > secured PDF bytes under a non-.pdf name are still judged 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > a measured non-PDF leaf (neither name nor header) is judged, not left unassessed 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > the packager and the transmit guard use the shared predicate, not an inline copy 2ms
+ × server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a .pdf whose bytes are not a PDF is an error whatever format is declared 5ms
+   → DOCX: expected 'conformant_with_warnings' to be 'nonconformant' // Object.is equality
+ × server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a file whose extension is not accepted is flagged even when declared as an accepted format 1ms
+   → expected 'conformant' not to be 'conformant' // Object.is equality
+ × server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a declared format that disagrees with an accepted extension is flagged 4ms
+   → expected [ Array(1) ] to deeply equal [ StringMatching{…} ]
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a declared format that agrees with the extension is not flagged 0ms
+ × server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > an unread file with no extension, judged only by its declared format, is not assessed for type 2ms
+   → expected undefined to match object { leaves: [ 'payload' ] }
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > an unread file with no extension declared as a format that is not accepted is still reported 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a read file with no extension whose bytes are a PDF is judged 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > materializeTechnicalFile (end-to-end ZIP emission) > plans, writes a real ZIP, and the ZIP round-trips with manifest + files + checksums 64ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > materializeTechnicalFile (end-to-end ZIP emission) > is content-addressed: identical input yields the same sha256 17ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > materializeTechnicalFile (end-to-end ZIP emission) > pins every entry (files AND implicit folders) to a fixed epoch — no wall-clock timestamps 20ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > materializeTechnicalFile (end-to-end ZIP emission) > reports skipped sources for leaves with no resolvable file 15ms
+ × server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — the manifest in the ZIP says what the ZIP holds > an entry whose every source was skipped is not present, and the plan is not ready 16ms
+   → expected { …(7) } to match object { Object (status, sources, ...) }
+(5 matching properties omitted from actual)
+ × server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — the manifest in the ZIP says what the ZIP holds > a leaf no slot claims is reported as unmapped and does not make a complete file not ready 3ms
+   → expected undefined to deeply equal [ { source: 'IV.1', …(1) } ]
+ × server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — the manifest in the ZIP says what the ZIP holds > a leaf whose source did not materialize makes the plan not ready, even when every slot is filled 1ms
+   → expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a .pdf whose bytes are not a PDF is an error whatever format is declared
+AssertionError: DOCX: expected 'conformant_with_warnings' to be 'nonconformant' // Object.is equality
+
+Expected: "nonconformant"
+Received: "conformant_with_warnings"
+
+ ❯ server/services/market-specs/__tests__/market-formatting-verdict.test.ts:227:45
+    225|       );
+    226|       const r = validateLeavesAgainstMarketSpec(usEstar, [m]);
+    227|       expect(r.verdict, String(fileFormat)).toBe('nonconformant');
+       |                                             ^
+    228|       expect(typeFindings(r).some((f) => f.severity === 'error' && /no…
+    229|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a file whose extension is not accepted is flagged even when declared as an accepted format
+AssertionError: expected 'conformant' not to be 'conformant' // Object.is equality
+ ❯ server/services/market-specs/__tests__/market-formatting-verdict.test.ts:235:27
+    233|     const m = await measureLeafFile({ fileName: 'payload.exe', filePat…
+    234|     const r = validateLeavesAgainstMarketSpec(usEstar, [m]);
+    235|     expect(r.verdict).not.toBe('conformant');
+       |                           ^
+    236|     const found = typeFindings(r);
+    237|     expect(found.some((f) => /\(exe\) is not among the accepted format…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a declared format that disagrees with an accepted extension is flagged
+AssertionError: expected [ Array(1) ] to deeply equal [ StringMatching{…} ]
+
+- Expected
++ Received
+
+  [
+-   StringMatching /declared XPT but its extension is \.pdf/,
++   "File \"x.pdf\" (XPT) is not among the accepted formats: PDF.",
+  ]
+
+ ❯ server/services/market-specs/__tests__/market-formatting-verdict.test.ts:243:51
+    241|   it('a declared format that disagrees with an accepted extension is f…
+    242|     const r = validateLeavesAgainstMarketSpec(usEctd, [{ fileName: 'x.…
+    243|     expect(typeFindings(r).map((f) => f.message)).toEqual([expect.stri…
+       |                                                   ^
+    244|   });
+    245|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > an unread file with no extension, judged only by its declared format, is not assessed for type
+AssertionError: expected undefined to match object { leaves: [ 'payload' ] }
+
+- Expected:
+{
+  "leaves": [
+    "payload",
+  ],
+}
+
++ Received:
+undefined
+
+ ❯ server/services/market-specs/__tests__/market-formatting-verdict.test.ts:255:73
+    253|     const r = validateLeavesAgainstMarketSpec(usEstar, [{ fileName: 'p…
+    254|     expect(typeFindings(r)).toEqual([]);
+    255|     expect(r.notAssessed.find((n) => n.rule === 'ACCEPTED_FILE_TYPES')…
+       |                                                                         ^
+    256|     expect(r.verdict).toBe('not_assessed');
+    257|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — unmapped leaves are reported, not folded into ready > a complete MDR program that also holds the mandatory IV.* sections is ready, and names them
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts:111:21
+    109|     const r = await assembleTechnicalFileFromProgram({ programId: MDR_…
+    110|     expect(r.unresolvedLeaves).toEqual([]);
+    111|     expect(r.ready).toBe(true);
+       |                     ^
+    112|     expect(r.unmappedLeaves.map((u) => u.source)).toEqual(['IV.1', 'IV…
+    113|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — the ZIP manifest agrees with the response and the audit row > a ZIP without the CER says ready: false and does not list the CER as present
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts:135:30
+    133|       const cerPdfs = Object.keys(zip.files).filter((f) => f.startsWit…
+    134|       expect(cerPdfs).toEqual([]);
+    135|       expect(manifest.ready).toBe(false);
+       |                              ^
+    136|       expect(cer.status).toBe('missing');
+    137|       expect(cer.sources).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts:131:30
+    129|       const zip = await JSZip.loadAsync(await fs.readFile(r.bundle.pat…
+    130|       const manifest = JSON.parse(await zip.file('manifest.json')!.asy…
+    131|       expect(manifest.ready).toBe(false);
+       |                              ^
+    132|       expect(manifest.entries.find((e: any) => e.id === 'clinical-eval…
+    133|         status: 'missing',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — the manifest in the ZIP says what the ZIP holds > an entry whose every source was skipped is not present, and the plan is not ready
+AssertionError: expected { …(7) } to match object { Object (status, sources, ...) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "sources": [],
+-   "status": "missing",
+-   "unresolvedSources": [
++   "sources": [
+      "3",
+    ],
++   "status": "present",
+  }
+
+ ❯ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts:164:17
+    162|     ]);
+    163|     const cer = plan.manifest.entries.find((e) => e.id === 'clinical-e…
+    164|     expect(cer).toMatchObject({ status: 'missing', sources: [], unreso…
+       |                 ^
+    165|     expect(plan.manifest.ready).toBe(false);
+    166|     expect(plan.manifest.totals).toEqual({ sections: 3, requiredPresen…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — the manifest in the ZIP says what the ZIP holds > a leaf no slot claims is reported as unmapped and does not make a complete file not ready
+AssertionError: expected undefined to deeply equal [ { source: 'IV.1', …(1) } ]
+
+- Expected:
+[
+  {
+    "reason": StringMatching /no technical-file section matched/,
+    "source": "IV.1",
+  },
+]
+
++ Received:
+undefined
+
+ ❯ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts:185:33
+    183|       resolveFile: (l) => (l.sectionCode === '3' || l.sectionCode === …
+    184|     });
+    185|     expect(plan.unmappedLeaves).toEqual([
+       |                                 ^
+    186|       { source: 'IV.1', reason: expect.stringMatching(/no technical-fi…
+    187|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — the manifest in the ZIP says what the ZIP holds > a leaf whose source did not materialize makes the plan not ready, even when every slot is filled
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts:204:33
+    202|     });
+    203|     expect(plan.skipped).toEqual([]);
+    204|     expect(plan.manifest.ready).toBe(false);
+       |                                 ^
+    205|   });
+    206| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  10 failed | 45 passed (55)
+   Start at  07:10:51
+   Duration  11.95s (transform 1.65s, setup 183ms, import 3.89s, tests 6.75s, environment 0ms)
+

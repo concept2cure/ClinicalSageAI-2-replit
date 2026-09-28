@@ -19,6 +19,23 @@ import React from 'react';
 import { liveGetOrNull } from '../dataConnect';
 import { SC_SEQ_STATUS } from '../fixtures/submission';
 import { normalizeCtdCode, ctdFolderSlug } from '@shared/regulatory/section-code';
+import {
+  validateSectionCode,
+  vocabularyForApplicationType,
+  type PlacementVocabulary,
+} from '@shared/regulatory/placement-vocabulary';
+import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
+
+export { vocabularyForApplicationType };
+export type { PlacementVocabulary };
+
+/** How each non-CTD vocabulary is named to the person. */
+const VOCABULARY_LABEL: Record<Exclude<PlacementVocabulary, 'ctd'>, string> = {
+  estar: 'eSTAR',
+  ctis: 'CTIS',
+  irb: 'IRB',
+  registry: 'trial-registry',
+};
 
 /** GET /api/submissions → listSubmissions() rows (only what the picker reads). */
 export interface SubmissionRow {
@@ -245,7 +262,32 @@ export interface SectionCodeJudgement {
   note: { tone: 'ok' | 'err'; text: string } | null;
 }
 
-export function judgeSectionCode(section: string): SectionCodeJudgement {
+export function judgeSectionCode(section: string, vocabulary: PlacementVocabulary = 'ctd'): SectionCodeJudgement {
+  /* A submission's section codes come from its OWN vocabulary — the server has
+     judged placements that way since d0da50de (shared/regulatory/
+     placement-vocabulary.ts): an IRB package files on artifact slots, a 510(k)
+     on eSTAR sections. Applying the CTD rule to every submission refused every
+     valid IRB and eSTAR placement, and ACCEPTED a CTD code for an IRB package
+     that the server then refused. Non-CTD vocabularies are judged by the same
+     shared function the write boundary calls, and its message is shown as
+     written. The CTD branch below is unchanged, so a caller that passes no
+     vocabulary behaves exactly as before. */
+  if (vocabulary !== 'ctd') {
+    const trimmed = section.trim();
+    const verdict = validateSectionCode(section, vocabulary);
+    const label = VOCABULARY_LABEL[vocabulary];
+    return {
+      canonical: verdict.ok ? (verdict.canonical ?? trimmed) : null,
+      folder: null,
+      placeable: verdict.ok,
+      note:
+        trimmed === ''
+          ? null
+          : verdict.ok
+            ? { tone: 'ok', text: `Files at ${verdict.canonical ?? trimmed} in this ${label} submission.` }
+            : { tone: 'err', text: `This is an ${label} submission. ${verdict.message ?? ''}`.trim() },
+    };
+  }
   const canonical = normalizeCtdCode(section);
   const folder = ctdFolderSlug(section);
   const placeable = canonical !== null && canonical.includes('.');
@@ -269,3 +311,67 @@ export function judgeSectionCode(section: string): SectionCodeJudgement {
           };
   return { canonical, folder, placeable, note };
 }
+
+/* ── Why the placement is made ─────────────────────────────────────────────
+   A placement decides what content goes into a regulator-facing sequence. Its
+   audit row recorded what changed and never why: none of the three placement
+   forms asked (PX-1, docs/evidence/reviews/2026-09-24/lenses.md). The server
+   now refuses a placement without a reason (PUT …/leaves → REASON_REQUIRED) at
+   the one floor both sides import; these say so before the click. */
+
+/** True when `reason` meets the floor the placement route enforces. */
+export function placementReasonOk(reason: string): boolean {
+  return reason.trim().length >= GOVERNED_REASON_MIN;
+}
+
+/** The disabled-button title for a placement still missing its reason. */
+export const PLACEMENT_REASON_REQUIRED = `A reason for this placement of at least ${GOVERNED_REASON_MIN} characters is required`;
+
+const REASON_KIT = {
+  dialog: { field: 'de-field', label: 'de-label', input: 'c2c-input', note: 'de-desc' },
+  inline: { field: 'sc-field', label: undefined, input: 'sc-subpick', note: 'scaf-note' },
+} as const;
+
+export function PlacementReasonField({
+  value,
+  onChange,
+  idPrefix,
+  disabled,
+  variant = 'dialog',
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  /** Prefix for the field id, so two forms can coexist in one document. */
+  idPrefix: string;
+  disabled?: boolean;
+  /** `dialog` for the de- dialog kit, `inline` for the Submission Center form. */
+  variant?: keyof typeof REASON_KIT;
+}) {
+  const kit = REASON_KIT[variant];
+  const id = `${idPrefix}-reason`;
+  const short = value.trim().length > 0 && !placementReasonOk(value);
+  return (
+    <div className={kit.field}>
+      <label className={kit.label} htmlFor={id}>
+        Reason for this placement<span className="req">*</span>
+      </label>
+      <textarea
+        id={id}
+        className={kit.input}
+        rows={2}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="e.g. Final clinical overview, approved for this sequence"
+        aria-describedby={`${id}-note`}
+        aria-invalid={short || undefined}
+      />
+      <div id={`${id}-note`} className={kit.note}>
+        {short
+          ? `At least ${GOVERNED_REASON_MIN} characters.`
+          : 'Recorded with the placement in the audit trail.'}
+      </div>
+    </div>
+  );
+}
+

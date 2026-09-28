@@ -20,6 +20,7 @@ import { getPool } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
 import { loadProjectStabilityStudies } from './stability-source';
 import { loadProjectAnalyticalMethods } from './analytical-method-source';
+import { loadProjectDrugSubstances } from './drug-substance-source';
 import {
   extractParameterNames, extractImpurityNames, extractCharacterizationAttrs,
   extractCppEntries, extractCppFromPayload,
@@ -124,7 +125,7 @@ export async function analyzeQbdFromSources(
       // the project filter alone let any organization read another sponsor's
       // register through this analysis. quality_specifications carries
       // `tenant_id`; the other three carry `organization_id`.
-  const [specs, methodResult, stabilityResult, processes, drugSubs, sourceObjects] = await Promise.all([
+  const [specs, methodResult, stabilityResult, processes, drugSubResult, sourceObjects] = await Promise.all([
     safeQuery(pool, unavailable, 'specs', `
       SELECT material_type AS "materialType",
              material_name AS "materialName",
@@ -153,13 +154,10 @@ export async function analyzeQbdFromSources(
       FROM manufacturing_processes
       WHERE project_id = $1::text::uuid AND organization_id = $2
     `, [projectIdParam, orgId]),
-    safeQuery(pool, unavailable, 'drugSubs', `
-      SELECT substance_name AS "substanceName",
-             impurities,
-             characterization_data AS "characterizationData"
-      FROM drug_substances
-      WHERE project_id = $1::text::uuid AND organization_id = $2
-    `, [projectIdParam, orgId]),
+    // Drug substances come from the canonical source-object store: see
+    // drug-substance-source.ts. public.drug_substances is org-scoped with no
+    // project_id and no characterization column, so this read raised 42703.
+    loadProjectDrugSubstances(pool, orgId, projectIdParam),
     safeQuery(pool, unavailable, 'sourceObjects', `
       SELECT source_type AS "sourceType",
              source_payload AS "sourcePayload"
@@ -173,6 +171,11 @@ export async function analyzeQbdFromSources(
     unavailable.methods = methodResult.reason;
   }
   const methods = methodResult.methods;
+
+  if (!drugSubResult.available) {
+    unavailable.drugSubs = drugSubResult.reason;
+  }
+  const drugSubs = drugSubResult.drugSubstances as unknown as Array<Record<string, unknown>>;
 
   if (!stabilityResult.available) {
     unavailable.stability = stabilityResult.reason;

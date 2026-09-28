@@ -1,0 +1,470 @@
+# HEAD b33ec50d — before the fix (tests added, sources untouched)
+# NODE_OPTIONS='--max-old-space-size=4096' npx vitest run --config vitest.config.ts server/routes/__tests__/ssoRoutes.test.ts server/middleware/__tests__/requirePlatformAdmin.test.ts --reporter=verbose
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/middleware/__tests__/requirePlatformAdmin.test.ts > requirePlatformAdmin > 403s an authenticated non-platform user (no role, no grant)
+{
+  "timestamp": "2026-09-25T01:18:24.755Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 7,
+    "role": "admin",
+    "path": "/api/admin/master/overview"
+  }
+}
+
+ ✓ server/middleware/__tests__/requirePlatformAdmin.test.ts > isPlatformAdmin > accepts platform role super_admin 3ms
+ ✓ server/middleware/__tests__/requirePlatformAdmin.test.ts > isPlatformAdmin > accepts platform role platform_admin 1ms
+ ✓ server/middleware/__tests__/requirePlatformAdmin.test.ts > isPlatformAdmin > accepts platform role support 0ms
+ ✓ server/middleware/__tests__/requirePlatformAdmin.test.ts > isPlatformAdmin > accepts a platform role from req.user.role 0ms
+ ✓ server/middleware/__tests__/requirePlatformAdmin.test.ts > isPlatformAdmin > accepts a platform role from req.user.roles[] 0ms
+ ✓ server/middleware/__tests__/requirePlatformAdmin.test.ts > isPlatformAdmin > rejects org role admin (no bypass) 0ms
+ ✓ server/middleware/__tests__/requirePlatformAdmin.test.ts > isPlatformAdmin > rejects org role manager (no bypass) 0ms
+ ✓ server/middleware/__tests__/requirePlatformAdmin.test.ts > isPlatformAdmin > rejects org role member (no bypass) 0ms
+ ✓ server/middleware/__tests__/requirePlatformAdmin.test.ts > isPlatformAdmin > rejects org role viewer (no bypass) 0ms
+ ✓ server/middleware/__tests__/requirePlatformAdmin.test.ts > isPlatformAdmin > rejects org role  (no bypass) 0ms
+ ✓ server/middleware/__tests__/requirePlatformAdmin.test.ts > isPlatformAdmin > honours the PLATFORM_ADMIN_EMAILS allowlist (case-insensitive) 0ms
+ ✓ server/middleware/__tests__/requirePlatformAdmin.test.ts > requirePlatformAdmin > 401s when unauthenticated 1ms
+ ✓ server/middleware/__tests__/requirePlatformAdmin.test.ts > requirePlatformAdmin > 403s an authenticated non-platform user (no role, no grant) 2ms
+ ✓ server/middleware/__tests__/requirePlatformAdmin.test.ts > requirePlatformAdmin > calls next() for a platform admin (sync fast-path, no db) 0ms
+ × server/middleware/__tests__/requirePlatformAdmin.test.ts > PLATFORM_ADMIN_EMAILS does not apply to a federated (SAML) identity > refuses an allowlisted e-mail asserted by an IdP (provider saml) — 403, grants consulted 7ms
+   → expected true to be false // Object.is equality
+ ✓ server/middleware/__tests__/requirePlatformAdmin.test.ts > PLATFORM_ADMIN_EMAILS does not apply to a federated (SAML) identity > still admits the same e-mail on a password session (provider password) 0ms
+ × server/middleware/__tests__/requirePlatformAdmin.test.ts > PLATFORM_ADMIN_EMAILS does not apply to a federated (SAML) identity > reads the provider from req.user when req.identity is absent 1ms
+   → expected true to be false // Object.is equality
+stdout | server/routes/__tests__/ssoRoutes.test.ts
+{
+  "timestamp": "2026-09-25T01:18:26.795Z",
+  "level": "info",
+  "message": "[sso] Loaded 2 SAML tenant config(s) from SAML_TENANTS",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > initiate: an org slug configured nowhere is refused (404), not sent to the default IdP
+{
+  "timestamp": "2026-09-25T01:18:26.853Z",
+  "level": "info",
+  "message": "[sso] SAML SSO initiated for org=\"globex\"",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > initiate: the default and the per-tenant slugs still reach their IdPs (control)
+{
+  "timestamp": "2026-09-25T01:18:26.873Z",
+  "level": "info",
+  "message": "[sso] SAML SSO initiated for org=\"default\"",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > initiate: the default and the per-tenant slugs still reach their IdPs (control)
+{
+  "timestamp": "2026-09-25T01:18:26.877Z",
+  "level": "info",
+  "message": "[sso] SAML SSO initiated for org=\"acme\"",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: RelayState naming a slug configured nowhere is refused (404) before the response is validated
+{
+  "timestamp": "2026-09-25T01:18:26.898Z",
+  "level": "error",
+  "message": "[sso] SAML callback error",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: an existing user with no membership in the config org is refused (403), with a failure event in that tenant
+{
+  "timestamp": "2026-09-25T01:18:26.912Z",
+  "level": "info",
+  "message": "[sso] SAML SSO login successful for user=alice@acme.test, org=99",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/ssoRoutes.test.ts > SSO helper routes > GET /api/auth/sso/:provider/initiate should redirect to callback 22ms
+ ✓ server/routes/__tests__/ssoRoutes.test.ts > SSO helper routes > GET /api/auth/sso/:provider/callback should return token and user in dev 10ms
+ ✓ server/routes/__tests__/ssoRoutes.test.ts > SSO helper routes > mints NO token when ALLOW_DEV_AUTH is not explicitly set, even in development 9ms
+ × server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > initiate: an org slug configured nowhere is refused (404), not sent to the default IdP 21ms
+   → expected 302 to be 404 // Object.is equality
+ ✓ server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > initiate: the default and the per-tenant slugs still reach their IdPs (control) 7ms
+ × server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: RelayState naming a slug configured nowhere is refused (404) before the response is validated 23ms
+   → expected 500 to be 404 // Object.is equality
+stdout | server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: a member signs in to the config org with THAT membership, never the first membership found
+{
+  "timestamp": "2026-09-25T01:18:26.933Z",
+  "level": "info",
+  "message": "[sso] SAML SSO login successful for user=alice@acme.test, org=99",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: the membership lookup is constrained to the config org in the statement itself
+{
+  "timestamp": "2026-09-25T01:18:26.941Z",
+  "level": "info",
+  "message": "[sso] SAML SSO login successful for user=alice@acme.test, org=42",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: a new user is provisioned with a membership in the config org only
+{
+  "timestamp": "2026-09-25T01:18:26.947Z",
+  "level": "info",
+  "message": "[sso] JIT provisioning new SAML user: bob@acme.test",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: a new user is provisioned with a membership in the config org only
+{
+  "timestamp": "2026-09-25T01:18:26.949Z",
+  "level": "info",
+  "message": "[sso] SAML SSO login successful for user=bob@acme.test, org=42",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: an existing user's name is not overwritten from the assertion
+{
+  "timestamp": "2026-09-25T01:18:26.959Z",
+  "level": "info",
+  "message": "[sso] SAML SSO login successful for user=alice@acme.test, org=42",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: an account that is not active is refused (403), with a failure event
+{
+  "timestamp": "2026-09-25T01:18:26.968Z",
+  "level": "info",
+  "message": "[sso] SAML SSO login successful for user=alice@acme.test, org=42",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: a validation failure is refused (401) and written as a failure event in the config org's tenant
+{
+  "timestamp": "2026-09-25T01:18:26.972Z",
+  "level": "warn",
+  "message": "[sso] SAML validation failed: signature did not verify",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: a configured slug with no organisation row is refused (403) and written as a failure event
+{
+  "timestamp": "2026-09-25T01:18:26.977Z",
+  "level": "error",
+  "message": "[sso] SAML org resolution failed: No organization found for SAML org slug \"orphan\"",
+  "context": {}
+}
+
+ × server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: an existing user with no membership in the config org is refused (403), with a failure event in that tenant 28ms
+   → expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: a member signs in to the config org with THAT membership, never the first membership found 7ms
+   → expected '99' to be '42' // Object.is equality
+ × server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: the membership lookup is constrained to the config org in the statement itself 7ms
+   → expected '"organization_users"."user_id" = $1' to match /"organization_users"\."organization_i…/
+ × server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: a new user is provisioned with a membership in the config org only 11ms
+   → expected [] to deep equally contain ObjectContaining{…}
+ × server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: an existing user's name is not overwritten from the assertion 9ms
+   → expected [ { table: 'users', …(1) } ] to deeply equal []
+ × server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: an account that is not active is refused (403), with a failure event 7ms
+   → expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: a validation failure is refused (401) and written as a failure event in the config org's tenant 4ms
+   → expected [] to deep equally contain ObjectContaining{…}
+ × server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: a configured slug with no organisation row is refused (403) and written as a failure event 9ms
+   → expected [] to deep equally contain ObjectContaining{…}
+ × server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > logout: the session token is not accepted from the query string 5ms
+   → expected 302 to be 401 // Object.is equality
+ ✓ server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > logout: a bearer token in the Authorization header still starts SP-initiated SLO 35ms
+ × server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > logout: a token POSTed in the body still starts SP-initiated SLO 8ms
+   → expected 404 to be 302 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/middleware/__tests__/requirePlatformAdmin.test.ts > PLATFORM_ADMIN_EMAILS does not apply to a federated (SAML) identity > refuses an allowlisted e-mail asserted by an IdP (provider saml) — 403, grants consulted
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/middleware/__tests__/requirePlatformAdmin.test.ts:156:34
+    154|     const res = mkRes();
+    155|     const next = vi.fn();
+    156|     expect(isPlatformAdmin(req)).toBe(false);
+       |                                  ^
+    157|     await requirePlatformAdmin(req, res, next);
+    158|     expect(res.statusCode).toBe(403);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  server/middleware/__tests__/requirePlatformAdmin.test.ts > PLATFORM_ADMIN_EMAILS does not apply to a federated (SAML) identity > reads the provider from req.user when req.identity is absent
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/middleware/__tests__/requirePlatformAdmin.test.ts:183:7
+    181|         mkReq({ userRole: 'member', userEmail: OWNER, user: { id: 7, e…
+    182|       )
+    183|     ).toBe(false);
+       |       ^
+    184|     expect(
+    185|       isPlatformAdmin(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > initiate: an org slug configured nowhere is refused (404), not sent to the default IdP
+AssertionError: expected 302 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 302
+
+ ❯ server/routes/__tests__/ssoRoutes.test.ts:307:24
+    305|   it('initiate: an org slug configured nowhere is refused (404), not s…
+    306|     const res = await request(app).get('/api/auth/sso/saml/initiate?or…
+    307|     expect(res.status).toBe(404);
+       |                        ^
+    308|     expect(res.body.error).toBe('SAML_NOT_CONFIGURED');
+    309|     expect(saml.getAuthorizeUrl).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: RelayState naming a slug configured nowhere is refused (404) before the response is validated
+AssertionError: expected 500 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 500
+
+ ❯ server/routes/__tests__/ssoRoutes.test.ts:321:24
+    319|   it('callback: RelayState naming a slug configured nowhere is refused…
+    320|     const res = await callback('globex');
+    321|     expect(res.status).toBe(404);
+       |                        ^
+    322|     expect(res.body.error).toBe('SAML_NOT_CONFIGURED');
+    323|     expect(saml.validateResponse).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: an existing user with no membership in the config org is refused (403), with a failure event in that tenant
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/ssoRoutes.test.ts:336:24
+    334|     const res = await callback('acme');
+    335|
+    336|     expect(res.status).toBe(403);
+       |                        ^
+    337|     expect(res.body.error).toBe('SSO_USER_NOT_IN_ORGANISATION');
+    338|     expect(JSON.stringify(res.body)).not.toMatch(/accessToken|eyJ/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: a member signs in to the config org with THAT membership, never the first membership found
+AssertionError: expected '99' to be '42' // Object.is equality
+
+Expected: "42"
+Received: "99"
+
+ ❯ server/routes/__tests__/ssoRoutes.test.ts:366:42
+    364|
+    365|     expect(res.status).toBe(200);
+    366|     expect(res.body.user.organizationId).toBe(String(ACME_ORG));
+       |                                          ^
+    367|     expect(res.body.user.roles).toEqual(['manager']);
+    368|     const claims = jwt.decode(res.body.accessToken) as Record<string, …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: the membership lookup is constrained to the config org in the statement itself
+AssertionError: expected '"organization_users"."user_id" = $1' to match /"organization_users"\."organization_i…/
+
+- Expected:
+/"organization_users"\."organization_id" = \$\d/
+
++ Received:
+"\"organization_users\".\"user_id\" = $1"
+
+ ❯ server/routes/__tests__/ssoRoutes.test.ts:394:21
+    392|     expect(lookups.length).toBeGreaterThan(0);
+    393|     for (const w of lookups) {
+    394|       expect(w.sql).toMatch(/"organization_users"\."organization_id" =…
+       |                     ^
+    395|       expect(w.params).toContain(ACME_ORG);
+    396|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+ FAIL  server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: a new user is provisioned with a membership in the config org only
+AssertionError: expected [] to deep equally contain ObjectContaining{…}
+
+- Expected:
+ObjectContaining {
+  "outcome": "success",
+  "reason": "saml_sso",
+  "tenantId": 42,
+}
+
++ Received:
+[]
+
+ ❯ server/routes/__tests__/ssoRoutes.test.ts:409:22
+    407|     expect(memberships).toHaveLength(1);
+    408|     expect(memberships[0].values).toMatchObject({ organizationId: ACME…
+    409|     expect(events()).toContainEqual(
+       |                      ^
+    410|       expect.objectContaining({ outcome: 'success', reason: 'saml_sso'…
+    411|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯
+
+ FAIL  server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: an existing user's name is not overwritten from the assertion
+AssertionError: expected [ { table: 'users', …(1) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "table": "users",
++     "values": {
++       "name": "Mallory Attacker",
++     },
++   },
++ ]
+
+ ❯ server/routes/__tests__/ssoRoutes.test.ts:428:29
+    426|
+    427|     expect(res.status).toBe(200);
+    428|     expect(dbState.updates).toEqual([]);
+       |                             ^
+    429|     expect(res.body.user.name).toBe('alice');
+    430|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/14]⎯
+
+ FAIL  server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: an account that is not active is refused (403), with a failure event
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/ssoRoutes.test.ts:439:24
+    437|     const res = await callback('acme');
+    438|
+    439|     expect(res.status).toBe(403);
+       |                        ^
+    440|     expect(res.body.error).toBe('SSO_ACCOUNT_INACTIVE');
+    441|     expect(JSON.stringify(res.body)).not.toMatch(/accessToken|eyJ/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/14]⎯
+
+ FAIL  server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: a validation failure is refused (401) and written as a failure event in the config org's tenant
+AssertionError: expected [] to deep equally contain ObjectContaining{…}
+
+- Expected:
+ObjectContaining {
+  "action": "user_login",
+  "outcome": "failure",
+  "reason": "saml_validation_failed",
+  "tenantId": 42,
+}
+
++ Received:
+[]
+
+ ❯ server/routes/__tests__/ssoRoutes.test.ts:462:22
+    460|     expect(res.status).toBe(401);
+    461|     expect(res.body.error).toBe('SAML_VALIDATION_FAILED');
+    462|     expect(events()).toContainEqual(
+       |                      ^
+    463|       expect.objectContaining({
+    464|         action: 'user_login',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/14]⎯
+
+ FAIL  server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: a configured slug with no organisation row is refused (403) and written as a failure event
+AssertionError: expected [] to deep equally contain ObjectContaining{…}
+
+- Expected:
+ObjectContaining {
+  "action": "user_login",
+  "outcome": "failure",
+  "reason": "saml_org_not_resolved",
+}
+
++ Received:
+[]
+
+ ❯ server/routes/__tests__/ssoRoutes.test.ts:480:22
+    478|     expect(res.body.error).toBe('SAML_ORG_NOT_RESOLVED');
+    479|     expect(dbState.inserts).toEqual([]);
+    480|     expect(events()).toContainEqual(
+       |                      ^
+    481|       expect.objectContaining({
+    482|         action: 'user_login',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/14]⎯
+
+ FAIL  server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > logout: the session token is not accepted from the query string
+AssertionError: expected 302 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 302
+
+ ❯ server/routes/__tests__/ssoRoutes.test.ts:510:24
+    508|       `/api/auth/sso/saml/logout?org=acme&token=${encodeURIComponent(s…
+    509|     );
+    510|     expect(res.status).toBe(401);
+       |                        ^
+    511|     expect(res.body.error).toBe('AUTH_REQUIRED');
+    512|     expect(saml.getLogoutUrl).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/14]⎯
+
+ FAIL  server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > logout: a token POSTed in the body still starts SP-initiated SLO
+AssertionError: expected 404 to be 302 // Object.is equality
+
+- Expected
++ Received
+
+- 302
++ 404
+
+ ❯ server/routes/__tests__/ssoRoutes.test.ts:532:24
+    530|       .type('form')
+    531|       .send({ token: samlSession() });
+    532|     expect(res.status).toBe(302);
+       |                        ^
+    533|     expect(res.headers.location).toMatch(/^https:\/\/acme-idp\.example…
+    534|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/14]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  14 failed | 20 passed (34)
+   Start at  01:18:23
+   Duration  3.42s (transform 1.25s, setup 169ms, import 2.37s, tests 252ms, environment 0ms)
+

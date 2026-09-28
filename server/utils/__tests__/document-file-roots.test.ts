@@ -121,3 +121,71 @@ describe('hostile input', () => {
     expect(resolveDocumentPath(input)).toBeNull();
   });
 });
+
+describe('tenant-owned roots require the caller’s own prefix (IAM-07 / P0-6)', () => {
+  // The cross-tenant read this closes. `generated_documents`, `uploads` and
+  // `exports` hold files that belong to a tenant, laid out as
+  // `<root>/org-<id>/…`. A caller that names another tenant's prefix — or a
+  // legacy flat file with no prefix at all — is refused, and the refusal is the
+  // same null an escape produces, so the endpoint cannot probe which prefixes
+  // exist.
+  const TENANT_ROOTS = ['generated_documents', 'uploads', 'exports'] as const;
+
+  it.each(TENANT_ROOTS)('refuses another organization’s file under %s', root => {
+    const victim = path.join(path.resolve(root), 'org-9', 'x.docx');
+    expect(resolveDocumentPath(victim, { organizationId: 7 })).toBeNull();
+  });
+
+  it.each(TENANT_ROOTS)('refuses a legacy flat file (no org prefix) under %s', root => {
+    // One directory for all tenants is exactly the defect. A file written
+    // before the prefix existed has no owner on disk, so nobody may read it
+    // through this door.
+    const flat = path.join(path.resolve(root), 'x.docx');
+    expect(resolveDocumentPath(flat, { organizationId: 7 })).toBeNull();
+  });
+
+  it.each(TENANT_ROOTS)('resolves the caller’s own file under %s', root => {
+    const own = path.join(path.resolve(root), 'org-7', 'x.docx');
+    expect(resolveDocumentPath(own, { organizationId: 7 })).toBe(own);
+    // The id arrives as a string from some request contexts.
+    expect(resolveDocumentPath(own, { organizationId: '7' })).toBe(own);
+  });
+
+  it('is containment, not a string prefix: org-77 is not inside org-7', () => {
+    const sibling = path.join(path.resolve('generated_documents'), 'org-77', 'x.docx');
+    expect(resolveDocumentPath(sibling, { organizationId: 7 })).toBeNull();
+  });
+
+  it('refuses a traversal out of the caller’s prefix into another tenant’s', () => {
+    const sneaky = 'generated_documents/org-7/../org-9/x.docx';
+    expect(resolveDocumentPath(sneaky, { organizationId: 7 })).toBeNull();
+  });
+
+  it.each([
+    ['zero', 0],
+    ['negative', -1],
+    ['NaN', Number.NaN],
+    ['empty string', ''],
+    ['non-numeric string', 'seven'],
+  ])('fails closed when the organization is unusable: %s', (_label, organizationId) => {
+    // `Number(null)` is 0 and org 0 is a global carve-out elsewhere, so an
+    // unusable id must refuse rather than resolve to a prefix nobody owns.
+    const own = path.join(path.resolve('generated_documents'), 'org-0', 'x.docx');
+    expect(resolveDocumentPath(own, { organizationId: organizationId as never })).toBeNull();
+    const flat = path.join(path.resolve('generated_documents'), 'x.docx');
+    expect(resolveDocumentPath(flat, { organizationId: organizationId as never })).toBeNull();
+  });
+
+  it.each(['csrs', 'ectd'])('leaves the reference corpus %s readable with an organization given', root => {
+    // Not tenant files: `csrs/` is a checked-in set of public CSR synopses and
+    // nothing in the server writes a per-tenant tree under either root.
+    const p = path.join(path.resolve(root), 'report.pdf');
+    expect(resolveDocumentPath(p, { organizationId: 7 })).toBe(p);
+  });
+
+  it('keeps the no-organization form for internal callers', () => {
+    const flat = path.join(path.resolve('generated_documents'), 'x.docx');
+    expect(resolveDocumentPath(flat)).toBe(flat);
+    expect(resolveDocumentPath(flat, {})).toBe(flat);
+  });
+});

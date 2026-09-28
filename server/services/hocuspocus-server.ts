@@ -216,8 +216,13 @@ export async function authenticateCollabConnection({
   try {
     payload = await verifyLiveToken<CollabTokenClaims>(token);
   } catch (err) {
-    // A signed-out session opens no editing session (AUTH-03).
-    throw denied((err as { name?: string })?.name === 'SessionEndedError' ? 'session-ended' : 'invalid-token');
+    // A signed-out session opens no editing session (AUTH-03), nor does the
+    // session of an account taken out of use since it was issued (F-29).
+    const ended = err as { name?: string; reason?: string };
+    if (ended?.name === 'SessionEndedError') {
+      throw denied(ended.reason === 'account-inactive' ? 'account-inactive' : 'session-ended');
+    }
+    throw denied('invalid-token');
   }
 
   // 3. Token class. Refresh / MFA-challenge / MFA-partial tokens are signed

@@ -82,7 +82,11 @@ import { db, pool } from '../../db';
 import { coauthorDocuments } from '../../../shared/schema';
 import { queryableFromDrizzle, type DrizzleQueryable } from '../../db/drizzle-queryable.js';
 import { aliasesFor, recordDocumentAlias } from '../c2c/document-alias-map.js';
-import { defaultAuthoringBridgeDeps, type AuthoringSectionRow } from '../ana/authoring-canonical-bridge.js';
+import {
+  defaultAuthoringBridgeDeps,
+  type AuthoringDocumentSnapshot,
+  type AuthoringSectionRow,
+} from '../ana/authoring-canonical-bridge.js';
 import { recordCoauthorDocumentEvent, type CoauthorAuditActor } from './coauthor-audit.js';
 
 type CoauthorRow = typeof coauthorDocuments.$inferSelect;
@@ -213,6 +217,18 @@ function sameSectionsInOrder(sealed: SectionRow[], live: SectionRow[]): boolean 
 
 type Seal = { version: string; contentHash: string };
 
+type SealBody = { document?: { title?: unknown } | null; sections?: unknown };
+
+/** A seal's frozen_content as the object it should be; null when it is not JSON or not an object. */
+function parseSealBody(frozenContent: string): SealBody | null {
+  try {
+    const parsed: unknown = JSON.parse(frozenContent);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as SealBody) : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Hold a verdict copy to the source's latest seal. The seal is the record the
  * authoring router writes when it freezes or approves a document
@@ -241,14 +257,7 @@ async function checkAgainstSeal(
     );
   const row = r.rows[0];
   if (!row) return notSealed();
-  type SealBody = { document?: { title?: unknown } | null; sections?: unknown };
-  let sealed: SealBody | null = null;
-  try {
-    const parsed: unknown = JSON.parse(String(row.frozen_content));
-    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) sealed = parsed as SealBody;
-  } catch {
-    sealed = null;
-  }
+  const sealed = parseSealBody(String(row.frozen_content));
   /* 2026-09-23 (co-author final pass): the pre-2026 approval stub
      ({approvedBy, documentHash, timestamp}) holds no text, and its
      content_hash is the hash of the live sections — so it is "not sealed",
@@ -278,6 +287,131 @@ async function checkAgainstSeal(
     );
   }
   return { ok: true, seal: { version: String(row.version), contentHash: String(row.content_hash) } };
+}
+
+/**
+ * The source as it will be filed, read on the placement's transaction `q`:
+ * locked, still in `readState`, carrying some saved text, and — for a verdict
+ * copy — held to its seal. Refuses, writing nothing, otherwise.
+ */
+async function readSourceForFiling(
+  q: DrizzleQueryable,
+  args: { sourceId: string; organizationId: number; readState: string; status: ReturnType<typeof snapshotStatusFor> },
+): Promise<{ ok: true; body: AuthoringDocumentSnapshot; seal: Seal | null } | SnapshotRefusal> {
+  const { sourceId, organizationId, readState, status } = args;
+  /* The source is locked for the rest of the placement, and must still be in
+     the state its text was read under: a source frozen or approved between
+     takeAuthoringSnapshot's first read and here could otherwise be filed with text read while
+     it was still a draft. (2026-09-23, co-author final pass: the text is now
+     read after this lock, so the check guards the status derived from the
+     first read — a copy is never filed under a state the source has left.) */
+  const locked = await q.query<{ status: string | null }>(
+    'SELECT status FROM authoring_documents WHERE id = $1 AND tenant_id = $2 FOR UPDATE',
+    [sourceId, organizationId],
+  );
+  if (locked.rows.length === 0 || String(locked.rows[0].status ?? '').toUpperCase() !== readState) {
+    return refuse(
+      409,
+      'SOURCE_CHANGED',
+      'The document changed state while it was being placed. Place it again. Nothing was created.',
+    );
+  }
+
+  /* 2026-09-23 (repair 2): the sections are read here, on the placement's
+     transaction, for two rules. Some section must carry text — the rule
+     AuthoringPlaceIntoFiling applies; this replaced a test of the assembled
+     string, which headings alone always made non-empty. And a verdict copy
+     is held to the source's seal (checkAgainstSeal).
+     2026-09-23 (co-author final pass): ONE read. The canonical assembler
+     runs here, on this transaction, and both rules check the rows it
+     assembled the filed text from — so the text filed is the text checked. */
+  const body = await defaultAuthoringBridgeDeps().loadDocumentSnapshot(sourceId, organizationId, q);
+  if (!body) {
+    return refuse(
+      404,
+      'Source document not found',
+      'The document this snapshot was to be taken from does not exist in this organization. Nothing was created.',
+    );
+  }
+  const live: SectionRow[] = body.sections ?? [];
+  if (!live.some((sec) => String(sec.content ?? '').trim() !== '')) {
+    return refuse(
+      422,
+      'SOURCE_HAS_NO_SAVED_CONTENT',
+      'This document has no saved section text, so there is nothing to file. Nothing was created.',
+    );
+  }
+  if (status === 'draft') return { ok: true, body, seal: null };
+  const held = await checkAgainstSeal(q, { sourceId, organizationId, live, title: body.title, verdict: status });
+  return held.ok ? { ok: true, body, seal: held.seal } : held;
+}
+
+type SnapshotTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/**
+ * Re-take the copy the alias map already names (`id`), on the placement's
+ * transaction: left as it is when it already carries the derived text, title
+ * and status; updated otherwise; re-created under that id when it was deleted.
+ * `retaken` records the audit event for a copy that was updated or re-created.
+ */
+async function retakeAliasedCopy(
+  tx: SnapshotTx,
+  q: DrizzleQueryable,
+  args: {
+    id: number;
+    organizationId: number;
+    derived: { title: string; content: string; status: ReturnType<typeof snapshotStatusFor> };
+    moduleNumber: string | null;
+    templateId: number | null;
+    createdBy: string | null;
+    provenance: Record<string, unknown>;
+    retaken: (id: number, before: CoauthorRow | null) => Promise<void>;
+  },
+): Promise<SnapshotOutcome> {
+  const { id, organizationId, derived, moduleNumber, templateId, createdBy, provenance, retaken } = args;
+  const [existing] = await tx
+    .select()
+    .from(coauthorDocuments)
+    .where(and(eq(coauthorDocuments.id, id), eq(coauthorDocuments.organizationId, organizationId)))
+    .limit(1)
+    .for('update');
+  if (existing) {
+    const unchanged =
+      existing.status === derived.status &&
+      existing.content === derived.content &&
+      existing.title === derived.title;
+    if (unchanged) return { ok: true, created: false, document: existing, aliasRecorded: true };
+    const [document] = await tx
+      .update(coauthorDocuments)
+      .set({
+        ...derived,
+        ...(existing.moduleNumber ? {} : { moduleNumber }),
+        metadata: { ...((existing.metadata as Record<string, unknown> | null) ?? {}), ...provenance },
+        updatedAt: new Date(),
+      })
+      .where(and(eq(coauthorDocuments.id, id), eq(coauthorDocuments.organizationId, organizationId)))
+      .returning();
+    await retaken(id, existing);
+    return { ok: true, created: false, document, aliasRecorded: true };
+  }
+  /* The copy was deleted and its identity is still recorded (DELETE does
+     not remove the alias). It is re-created under that id, so the alias
+     map stays true — this row IS that document's copy — rather than
+     forking the identity or refusing forever. */
+  const taken = await q.query('SELECT 1 FROM coauthor_documents WHERE id = $1', [id]);
+  if (taken.rows.length > 0) {
+    return refuse(
+      409,
+      'DOCUMENT_ALIAS_CONFLICT',
+      'This document is recorded as filed under a copy that is not this organization’s. Nothing was created.',
+    );
+  }
+  const [document] = await tx
+    .insert(coauthorDocuments)
+    .values({ id, organizationId, ...derived, moduleNumber, templateId, createdBy, metadata: provenance })
+    .returning();
+  await retaken(id, null);
+  return { ok: true, created: true, document, aliasRecorded: true };
 }
 
 /**
@@ -314,54 +448,9 @@ export async function takeAuthoringSnapshot(args: {
 
   return db.transaction(async (tx): Promise<SnapshotOutcome> => {
     const q = queryableFromDrizzle(tx);
-    /* The source is locked for the rest of the placement, and must still be in
-       the state its text was read under: a source frozen or approved between
-       the read above and here could otherwise be filed with text read while
-       it was still a draft. (2026-09-23, co-author final pass: the text is now
-       read after this lock, so the check guards the status derived from the
-       first read — a copy is never filed under a state the source has left.) */
-    const locked = await q.query<{ status: string | null }>(
-      'SELECT status FROM authoring_documents WHERE id = $1 AND tenant_id = $2 FOR UPDATE',
-      [sourceId, organizationId],
-    );
-    if (locked.rows.length === 0 || String(locked.rows[0].status ?? '').toUpperCase() !== readState) {
-      return refuse(
-        409,
-        'SOURCE_CHANGED',
-        'The document changed state while it was being placed. Place it again. Nothing was created.',
-      );
-    }
-
-    /* 2026-09-23 (repair 2): the sections are read here, on the placement's
-       transaction, for two rules. Some section must carry text — the rule
-       AuthoringPlaceIntoFiling applies; this replaced a test of the assembled
-       string, which headings alone always made non-empty. And a verdict copy
-       is held to the source's seal (checkAgainstSeal).
-       2026-09-23 (co-author final pass): ONE read. The canonical assembler
-       runs here, on this transaction, and both rules check the rows it
-       assembled the filed text from — so the text filed is the text checked. */
-    const body = await defaultAuthoringBridgeDeps().loadDocumentSnapshot(sourceId, organizationId, q);
-    if (!body) {
-      return refuse(
-        404,
-        'Source document not found',
-        'The document this snapshot was to be taken from does not exist in this organization. Nothing was created.',
-      );
-    }
-    const live: SectionRow[] = body.sections ?? [];
-    if (!live.some((sec) => String(sec.content ?? '').trim() !== '')) {
-      return refuse(
-        422,
-        'SOURCE_HAS_NO_SAVED_CONTENT',
-        'This document has no saved section text, so there is nothing to file. Nothing was created.',
-      );
-    }
-    let seal: Seal | null = null;
-    if (status !== 'draft') {
-      const held = await checkAgainstSeal(q, { sourceId, organizationId, live, title: body.title, verdict: status });
-      if (!held.ok) return held;
-      seal = held.seal;
-    }
+    const source = await readSourceForFiling(q, { sourceId, organizationId, readState, status });
+    if (!source.ok) return source;
+    const { body, seal } = source;
     const provenance = {
       source: 'authoring-document',
       docId: sourceId,
@@ -395,50 +484,16 @@ export async function takeAuthoringSnapshot(args: {
       : undefined;
 
     if (nativeId !== undefined) {
-      const id = Number(nativeId);
-      const [existing] = await tx
-        .select()
-        .from(coauthorDocuments)
-        .where(and(eq(coauthorDocuments.id, id), eq(coauthorDocuments.organizationId, organizationId)))
-        .limit(1)
-        .for('update');
-      if (existing) {
-        const unchanged =
-          existing.status === derived.status &&
-          existing.content === derived.content &&
-          existing.title === derived.title;
-        if (unchanged) return { ok: true, created: false, document: existing, aliasRecorded: true };
-        const [document] = await tx
-          .update(coauthorDocuments)
-          .set({
-            ...derived,
-            ...(existing.moduleNumber ? {} : { moduleNumber }),
-            metadata: { ...((existing.metadata as Record<string, unknown> | null) ?? {}), ...provenance },
-            updatedAt: new Date(),
-          })
-          .where(and(eq(coauthorDocuments.id, id), eq(coauthorDocuments.organizationId, organizationId)))
-          .returning();
-        await retaken(id, existing);
-        return { ok: true, created: false, document, aliasRecorded: true };
-      }
-      /* The copy was deleted and its identity is still recorded (DELETE does
-         not remove the alias). It is re-created under that id, so the alias
-         map stays true — this row IS that document's copy — rather than
-         forking the identity or refusing forever. */
-      const taken = await q.query('SELECT 1 FROM coauthor_documents WHERE id = $1', [id]);
-      if (taken.rows.length > 0) {
-        return refuse(
-          409,
-          'DOCUMENT_ALIAS_CONFLICT',
-          'This document is recorded as filed under a copy that is not this organization’s. Nothing was created.',
-        );
-      }
-      const [document] = await tx
-        .insert(coauthorDocuments)
-        .values({ id, organizationId, ...derived, moduleNumber, templateId, createdBy, metadata: provenance })
-        .returning();
-      await retaken(id, null);
-      return { ok: true, created: true, document, aliasRecorded: true };
+      return retakeAliasedCopy(tx, q, {
+        id: Number(nativeId),
+        organizationId,
+        derived,
+        moduleNumber,
+        templateId,
+        createdBy,
+        provenance,
+        retaken,
+      });
     }
 
     const [document] = await tx

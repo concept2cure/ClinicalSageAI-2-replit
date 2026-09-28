@@ -1,0 +1,13 @@
+one project-wide tsc run; exit=2 from 38 errors, none in changed files:
+      5 server/mcp/__tests__/mcp-connector.dbtest.ts
+      2 server/mcp/auth/platform-token.ts
+     11 server/mcp/auth/provider.ts
+      1 server/mcp/auth/store.ts
+      3 server/mcp/client-transcript.ts
+      4 server/mcp/index.ts
+      1 server/mcp/server.ts
+      4 server/mcp/tools/runtime.ts
+      3 server/services/signature/__tests__/fake-kms.ts
+      1 server/services/signature/__tests__/kms-signer.test.ts
+      3 server/services/signature/kms-signer.ts
+filtered to changed basenames (artifact-approval-act|promote-artifact|command-executor|c2c/artifacts.ts|test files): 0 lines

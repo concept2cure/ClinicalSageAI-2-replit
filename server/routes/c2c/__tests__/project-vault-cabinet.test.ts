@@ -93,7 +93,9 @@ describe('filingCabinet — uploads appear in the tree they were uploaded into',
     expect(doc.status).toBe('confirmed');
     expect(doc.num).toBe('—');                      // no CTD section → em dash, not invented
     expect(doc.preview).toContain('SHA-256');
-    expect(doc.pct).toBe(0);                        // uploads carry no authoring completion
+    // Uploads carry no authoring completion, so no figure: 0 read to AnA as
+    // "0% complete" for every file in the cabinet.
+    expect(doc.pct).toBeNull();
   });
 
   it('a row with a folder but unfiled status stays in the queue (placement wins over stale folder)', () => {
@@ -104,5 +106,28 @@ describe('filingCabinet — uploads appear in the tree they were uploaded into',
     expect((unfiled as { children: unknown[] }).children).toHaveLength(1);
     const m3 = cab.children.find(c => 'children' in c && c.id === 'cab-module-3');
     expect((m3 as { children: unknown[] }).children).toHaveLength(0);
+  });
+});
+
+describe('uploadLeaf carries the file type the filing action decides on', () => {
+  // The surface offers "Place into submission" by this field, and the dialog
+  // refuses anything but a PDF before a request is made: the packager's vault
+  // branch refuses a leaf whose bytes are not a PDF. Dropped here, the client
+  // guard would be blind and a Word file could be offered for assembly again.
+  it('projects mime_type as mimeType', () => {
+    expect(uploadLeaf('pharma', row({})).mimeType).toBe('application/pdf');
+    expect(
+      uploadLeaf('pharma', row({ mime_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })).mimeType,
+    ).toBe('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+  });
+});
+
+describe('an upload has no authoring completion, and says so', () => {
+  // `pct: 0` was set "rather than a fabricated figure" — but 0 is a figure too.
+  // The Vault publishes it to AnA as percentComplete, so AnA read an uploaded
+  // PDF as "0% complete": a document nobody has started, said of a finished
+  // file with no authoring lifecycle. Null means "not assessed".
+  it('projects pct as null, not 0', () => {
+    expect(uploadLeaf('pharma', row({})).pct).toBeNull();
   });
 });

@@ -27,7 +27,7 @@ import {
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import { ok, clientError, orgRequired, notFoundInTenant, serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
-import auditService from '../services/auditService';
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { resolveEffectiveProjectContext } from '../services/industry-context/resolver';
 
 const router = Router();
@@ -114,7 +114,11 @@ router.patch('/industry-profile', async (req: Request, res: Response) => {
         set: { ...fields, updatedBy: userId, updatedAt: now },
       })
       .returning();
-    await auditService.logAction({
+    /* WO-16C. Was `await auditService.logAction(…)` with the outcome thrown
+       away, so a profile saved with no §11.10(e) row answered like one with a
+       row. The upsert stands either way; `meta.auditTrail` says which, and the
+       client transport shows the "not recorded" notice when it was lost. */
+    const auditTrail = await recordAuditRow({
       organizationId: orgId,
       userId: userId ?? undefined,
       action: 'update',
@@ -122,7 +126,7 @@ router.patch('/industry-profile', async (req: Request, res: Response) => {
       resourceId: orgId,
       details: { primaryIndustry: p.primaryIndustry, mdxSpecialization: p.mdxSpecialization ?? null },
     });
-    return ok(res, row);
+    return ok(res, row, { auditTrail });
   } catch (err) {
     return serverError(res, log, 'patch-org-profile', err);
   }
@@ -217,7 +221,8 @@ router.patch('/projects/:programId/industry-profile', async (req: Request, res: 
     if (!row) {
       return clientError(res, 409, 'Project profile is owned by another tenant');
     }
-    await auditService.logAction({
+    // WO-16C: the outcome is carried, as on the organisation profile above.
+    const auditTrail = await recordAuditRow({
       organizationId: orgId,
       userId: userId ?? undefined,
       action: 'update',
@@ -225,7 +230,7 @@ router.patch('/projects/:programId/industry-profile', async (req: Request, res: 
       resourceId: programId,
       details: { vertical: p.vertical ?? null, specialization: p.specialization ?? null },
     });
-    return ok(res, row);
+    return ok(res, row, { auditTrail });
   } catch (err) {
     return serverError(res, log, 'patch-project-profile', err);
   }

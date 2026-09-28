@@ -42,6 +42,9 @@ import type OpenAI from 'openai';
 import pg from 'pg';
 import { createHash, randomUUID } from 'node:crypto';
 import { EnhancedEmbeddingService, getEmbeddingService } from './enhancedEmbeddingService.js';
+import { assertTenantIsCurrent } from '../db/currentTenant.js';
+import { getTenantScope } from '../db/tenantStore.js';
+import { getOrgPlacementResolver } from './ai-gateway/providers/org-placement.js';
 import { AIProviderRouter, getAIRouter, type AIRequest, type AIResponse } from './aiProviderRouter.js';
 import { getOpenAIClient } from './openai-client.js';
 import { getReranker, type Reranker } from './rag-reranker.js';
@@ -322,6 +325,16 @@ function buildLocator(row: VaultChunkRow): string | undefined {
  *  malformed org id is an authorization refusal, not a 22P02 query failure. */
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/*
+ * The tenant a retrieval may read is the REQUEST SCOPE's, not the caller's
+ * argument (D3, docs/evidence/D3/2026-09-24-rag-pipeline-tenant/).
+ * withTenantContext writes its uuid into app.current_org_id, the GUC vault RLS
+ * keys on, and the vault arm's predicate is the same option — so a uuid that is
+ * not the session's would override the scope the auth boundary opened. The
+ * check lives in server/db/currentTenant.ts (assertTenantIsCurrent), shared with
+ * the atom search this pipeline's project arm ends in; it was defined here
+ * first, and moved there so there is one.
+ */
 async function withTenantContext<T>(
   pool: pg.Pool,
   organizationUuid: string | undefined,
@@ -329,6 +342,9 @@ async function withTenantContext<T>(
 ): Promise<T> {
   const client = await pool.connect();
   try {
+    // The GUC below decides what vault RLS admits, so the uuid must be the
+    // session's before it is written.
+    await assertTenantIsCurrent(client, { organizationUuid });
     await client.query('BEGIN');
     if (organizationUuid) {
       await client.query("SELECT set_config('app.current_org_id', $1, true)", [organizationUuid]);
@@ -468,6 +484,12 @@ export class AdvancedRAGPipeline {
     query: string,
     options: RetrievalOptions = { strategy: 'basic' }
   ): Promise<RAGContext> {
+    // Every arm below takes its tenant from these options; refuse any that is
+    // not the session's before one of them runs.
+    await assertTenantIsCurrent(this.pool, {
+      organizationUuid: options.organizationUuid,
+      organizationId: options.organizationId,
+    });
     const startTime = Date.now();
     const limit = options.limit || 10;
     const threshold = options.threshold || 0.5;
@@ -619,13 +641,13 @@ export class AdvancedRAGPipeline {
     threshold: number,
     artifactScope: NonNullable<RetrievalOptions['artifactScope']>
   ): Promise<RetrievedDocument[]> {
-    const hits = await this.embeddingService.searchHybrid(
-      query,
+    // No floor here: the pipeline applies its own threshold to the combined score below.
+    const hits = await this.embeddingService.searchHybrid(query, {
       limit,
-      0.7,
-      artifactScope.organizationUuid,
-      String(artifactScope.projectId)
-    );
+      semanticWeight: 0.7,
+      organizationUuid: artifactScope.organizationUuid,
+      projectId: String(artifactScope.projectId),
+    });
     return hits
       .filter(h => Number.isFinite(h.score) && h.score >= threshold)
       .map(h => ({
@@ -972,38 +994,64 @@ export class AdvancedRAGPipeline {
     });
 
     return withTenantContext(this.pool, organizationUuid, async client => {
+      /* ── Scope to the tenant FIRST, then rank exactly ──────────────────────
+         This arm used to be one query: `ORDER BY c.embedding <=> $1 LIMIT $3`
+         with the tenant and distance predicates in the same WHERE. Once the
+         planner chose the approximate index on vault.document_chunks
+         (ivfflat, probes = 1 by default), the scan took its candidates from
+         ONE list and the WHERE then filtered them — so when that list held
+         another tenant's chunks, or none above the threshold, the arm
+         returned nothing while this tenant's matching passages sat in lists
+         it never probed. search_document_passages then said "No passage
+         matched" beside a coverage line saying every document was indexed: a
+         miss presented as an exhaustive search. It depends on table
+         statistics, which is why it passed on near-empty test databases and
+         is exactly the shape production reaches with every tenant's chunks in
+         one table (tests/db/vault-passage-search.dbtest.ts forces that plan).
+
+         The MATERIALIZED CTE fixes the order of operations: the tenant's
+         chunks are selected through the btree indexes, and only then ordered
+         by distance — exactly, over rows that are all this tenant's. The
+         approximate index cannot short-circuit a sort over a materialized
+         CTE. For a regulatory answer, recall is not a tunable; the cost is a
+         distance computation per chunk the tenant holds. */
       // tenant-isolation-safe: the WHERE carries an explicit organization
       // predicate ($4 -> organizations.uuid -> organizations.id ->
       // vault.documents.organization_id). RLS is defence in depth here, not the
       // boundary — see the refusal above for why it could not be relied on.
       const { rows: denseRows } = await client.query<VaultChunkRow>(
         `
+        WITH scoped AS MATERIALIZED (
+          SELECT
+            c.id, c.document_id, c.chunk_text, c.page_number, c.section_title,
+            c.chunk_index, c.embedding,
+            COALESCE(d.document_title, d.file_name, '') AS title
+          FROM vault.document_chunks c
+          JOIN vault.documents d ON d.id = c.document_id
+          WHERE c.embedding IS NOT NULL${denseFilter}
+            -- Explicit tenant predicate. A document with a NULL organization_id is
+            -- unattributable (migrations/20260905_vault_documents_organization_id.sql)
+            -- and this predicate excludes it, which is the intended refusal: an
+            -- orphan document belongs to no tenant and is returned to none.
+            AND d.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid = $4::uuid)
+        )
         SELECT
-          c.id AS chunk_id,
-          c.document_id AS document_id,
-          COALESCE(d.document_title, d.file_name, '') AS title,
-          c.chunk_text AS content,
-          c.page_number AS page_number,
-          c.section_title AS section_title,
-          c.chunk_index AS chunk_index,
-          ${embeddingCol}
-          1 - (c.embedding <=> $1::vector) AS similarity
-        FROM vault.document_chunks c
-        JOIN vault.documents d ON d.id = c.document_id
-        WHERE c.embedding IS NOT NULL${denseFilter}
-          -- (1 - sim) filter as a distance bound: 1 - dist > t  <=>  dist < 1 - t.
-          -- Uses the same bare <=> operator as ORDER BY so the planner reuses
-          -- the distance and the predicate matches the indexed cosine operator.
-          -- $2 is cast explicitly: in "1 - $2" Postgres infers the parameter
-          -- from the integer literal, and a float threshold like 0.65 then
-          -- fails with 22P02 before the query ever runs.
-          AND (c.embedding <=> $1::vector) < 1 - $2::float8
-          -- Explicit tenant predicate. A document with a NULL organization_id is
-          -- unattributable (migrations/20260905_vault_documents_organization_id.sql)
-          -- and this predicate excludes it, which is the intended refusal: an
-          -- orphan document belongs to no tenant and is returned to none.
-          AND d.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid = $4::uuid)
-        ORDER BY c.embedding <=> $1::vector
+          s.id AS chunk_id,
+          s.document_id AS document_id,
+          s.title AS title,
+          s.chunk_text AS content,
+          s.page_number AS page_number,
+          s.section_title AS section_title,
+          s.chunk_index AS chunk_index,
+          ${embeddingCol.replace('c.embedding', 's.embedding')}
+          1 - (s.embedding <=> $1::vector) AS similarity
+        FROM scoped s
+        -- (1 - sim) filter as a distance bound: 1 - dist > t  <=>  dist < 1 - t.
+        -- $2 is cast explicitly: in "1 - $2" Postgres infers the parameter
+        -- from the integer literal, and a float threshold like 0.65 then
+        -- fails with 22P02 before the query ever runs.
+        WHERE (s.embedding <=> $1::vector) < 1 - $2::float8
+        ORDER BY s.embedding <=> $1::vector
         LIMIT $3
       `,
         denseParams
@@ -1421,9 +1469,25 @@ export class AdvancedRAGPipeline {
    * round-trip. The final answer generation does NOT use this.
    */
   private async routeCached(request: AIRequest): Promise<AIResponse> {
+    // The tenant and its placement policy are part of the key. The pipeline is
+    // a process singleton, and until 2026-09-26 the key was the request shape
+    // alone: a hit served one tenant another tenant's model output, produced
+    // under that tenant's placement, with no placement check and no ledger row
+    // for the tenant that got it — and outlived a policy change by the full TTL
+    // (docs/evidence/D6/2026-09-26-refusals-are-final/). A policy that cannot be
+    // read bypasses the cache, so the gateway decides.
+    const tenant = getTenantScope()?.tenantId ?? null;
+    let placement: string;
+    try {
+      placement = JSON.stringify((await getOrgPlacementResolver().resolve(tenant ?? undefined)) ?? null);
+    } catch {
+      return this.aiRouter.route(request);
+    }
     const key = createHash('sha256')
       .update(
         JSON.stringify({
+          tenant,
+          placement,
           taskType: request.taskType,
           messages: request.messages,
           maxTokens: request.maxTokens,

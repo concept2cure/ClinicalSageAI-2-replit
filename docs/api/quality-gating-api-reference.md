@@ -1,272 +1,228 @@
 # Quality Gating API Reference
 
-This document outlines the API endpoints for the Quality Gating validation system within the TrialSage platform, which implements risk-based quality controls for Clinical Evaluation Reports (CER).
+This document lists the API endpoints of the quality-gating system — Critical-to-Quality
+(CTQ) factors, the section gating rules that require them, and section validation — as
+they exist in the server today, including the ones that refuse.
 
-## Quality Control Overview
+> **Corrected 2026-09-23.** An earlier version of this page documented five endpoints
+> under `/api/tenant-section-gating/:tenantId/section-gating/…` — `validate`,
+> `batch-validate`, `:sectionCode/request-override`, `PATCH overrides/:overrideId` and
+> `project/:projectId/stats` — with example responses such as an override
+> "automatically approved based on your role". **None of those routes exist**, and no
+> override or waiver is recorded anywhere: there is no override or waiver table and no
+> approval route. The sections below describe what is actually routed.
 
-The system uses Critical-to-Quality (CTQ) factors that are categorized by risk level:
+## Where the routes are mounted
 
-1. **Required (High Risk)** - Must be satisfied for validation to pass; failures act as "hard gates"
-2. **Warning (Medium Risk)** - Should be satisfied, but failures result in warnings rather than blocking
-3. **Informational (Low Risk)** - Suggestions for best practices that are tracked but don't affect validation status
+Each router is mounted twice. Both paths reach the same handler.
 
-## Validation Endpoints
+| Router (file) | Mount 1 | Mount 2 |
+|---|---|---|
+| `server/routes/tenant-ctq-factors.ts` | `/api/tenant-ctq-factors` | `/api/quality/ctq-factors` |
+| `server/routes/tenant-quality-validation.ts` | `/api/tenant-quality-validation` | `/api/quality/validation` |
+| `server/routes/tenant-section-gating.ts` | `/api/tenant-section-gating` | `/api/quality/section-gating` |
 
-### 1. Validate a Section
+`/api/quality/batch-validate` is declared on `server/routes/quality-management-api.ts`
+itself.
 
-Validates a specific section against configured quality gating rules.
+## How validation works
 
-**Endpoint:** `POST /api/tenant-section-gating/:tenantId/section-gating/validate`
+A section gating rule (`qmp_section_gating`) belongs to a Quality Management Plan and
+lists the CTQ factors a section requires in `required_ctq_factor_ids` (a JSON array of
+factor ids). Each active CTQ factor carries a `risk_level` and optional
+`validation_criteria`, a comma-separated list of terms the section content must contain.
 
-**Request Body:**
+- A missing term on a **high**-risk factor is a hard failure: the section is not valid.
+- A missing term on a **medium**-risk factor is a soft failure. Under a soft gate the
+  section stays valid and the message is a warning. Under a hard gate only the factor's
+  own entry shows it.
+- **Low**-risk factors are reported but never affect the result.
+
+The gating level is derived from the rule, which stores no explicit level:
+
+- `validate-section` treats a rule with `allow_override = false` as a hard gate and one
+  with `allow_override = true` as a soft gate.
+- `batch-validate` uses `minimum_mandatory_completion`: 100 is hard, 80–99 is soft, and
+  below 80 is informational (nothing blocks).
+
+`allow_override`, `override_requires_approval` and `override_requires_reason` are stored
+on the rule. No endpoint requests, approves or records an override.
+
+## Validation endpoints
+
+### Validate a section
+
+**Endpoint:** `POST /api/tenant-quality-validation/validate-section` (also
+`/api/quality/validation/validate-section`)
+
+**Request body:**
 
 ```json
 {
+  "qmpId": 12,
   "sectionCode": "benefit-risk",
-  "satisfiedFactors": [1, 2, 3],
-  "content": "Optional section content",
-  "projectId": 123,
-  "documentId": 456,
-  "requestOverride": false,
-  "overrideReason": "Only required when requestOverride is true",
-  "overrideEvidence": "Optional supporting evidence for override"
+  "content": "Section text to check",
+  "metadata": {}
 }
 ```
 
-**Response:**
+**Response** when the section has no gating rule:
+
+```json
+{ "valid": true, "message": "No quality gating rules defined for this section", "validations": [] }
+```
+
+**Response** otherwise:
 
 ```json
 {
-  "valid": true,
-  "status": "passed",
-  "message": "Section validates successfully",
-  "sectionCode": "benefit-risk",
-  "compliancePercentage": 85,
-  "complianceDetails": {
-    "required": 100,
-    "warning": 75,
-    "informational": 50
-  },
-  "factorCounts": {
-    "total": 10,
-    "required": 3,
-    "warning": 4,
-    "informational": 3,
-    "satisfied": 8,
-    "missing": 2
-  },
-  "factorResults": [
+  "valid": false,
+  "gatingLevel": "hard",
+  "message": "Section contains critical quality issues",
+  "validations": [
     {
-      "id": 1,
-      "name": "Risk-benefit analysis present",
-      "category": "safety",
-      "criticality": "required",
-      "satisfied": true,
-      "impact": "Ensures patient safety is properly evaluated"
+      "factorId": 4,
+      "factorName": "Endpoint definitions",
+      "category": "clinical",
+      "riskLevel": "high",
+      "passed": false,
+      "message": "Missing required terms: primary endpoint",
+      "details": "Primary and secondary endpoints are defined"
     }
-    // Additional factors...
-  ],
-  "overrideStatus": null
+  ]
 }
 ```
 
-### 2. Batch Validate Multiple Sections
+**Known defect:** when the section's rule lists one or more factor ids, the factor
+lookup sends the ids as a parenthesised list, `id = ANY(($1, …))`, not as an array.
+Postgres rejects it: `22P02` (malformed array literal) for one id, `42809` for two or
+more. The route answers `500 {"error": "Failed to validate section"}`. It does not
+return a result in that case.
 
-Validates multiple sections at once, returning consolidated results.
+### Batch-validate sections
 
-**Endpoint:** `POST /api/tenant-section-gating/:tenantId/section-gating/batch-validate`
+**Endpoint:** `POST /api/quality/batch-validate`
 
-**Request Body:**
+**Request body:**
 
 ```json
 {
-  "projectId": 123,
-  "documentId": 456,
+  "qmpId": 12,
   "sections": [
-    {
-      "sectionCode": "benefit-risk",
-      "satisfiedFactors": [1, 2, 3],
-      "content": "Optional section content"
-    },
-    {
-      "sectionCode": "clinical-background",
-      "satisfiedFactors": [5, 6],
-      "content": "Optional section content"
-    }
-  ]
-}
-```
-
-**Response:**
-
-```json
-{
-  "results": [
-    {
-      "sectionCode": "benefit-risk",
-      "valid": true,
-      "status": "passed",
-      "message": "Section validates successfully",
-      "compliancePercentage": 100,
-      "factorResults": [],
-      "missingRequiredCount": 0,
-      "missingWarningCount": 0,
-      "missingInfoCount": 0
-    },
-    {
-      "sectionCode": "clinical-background",
-      "valid": false,
-      "status": "failed",
-      "message": "Section validation failed: 2 required CTQ factors not satisfied",
-      "compliancePercentage": 40,
-      "factorResults": [],
-      "missingRequiredCount": 2,
-      "missingWarningCount": 1,
-      "missingInfoCount": 0
-    }
+    { "sectionCode": "benefit-risk", "content": "Section text" },
+    { "sectionCode": "clinical-background", "content": "Section text" }
   ],
-  "summary": {
-    "totalSections": 2,
-    "passedSections": 1,
-    "warningSections": 0,
-    "failedSections": 1,
-    "overallCompliancePercentage": 50,
-    "valid": false
-  }
+  "metadata": {}
 }
 ```
 
-### 3. Request Validation Override/Waiver
+**Response:** `{ valid, hasWarnings, message, metadata, timestamp, sectionResults }`,
+where each `sectionResults` entry is
+`{ sectionCode, valid, gatingLevel, message, allowOverride, validations }`.
 
-Requests an override for sections that fail validation but need approval to proceed.
+**Known defect:** the gating-rule lookup sends the section codes as a parenthesised
+list, `section_key = ANY(($1, …))`, not as an array. Postgres rejects it: `22P02`
+(malformed array literal) for one section, `42809` for two or more. So any non-empty
+`sections` list answers `500 {"error": "Failed to validate sections"}`.
 
-**Endpoint:** `POST /api/tenant-section-gating/:tenantId/section-gating/:sectionCode/request-override`
+### Validation statistics for a plan
 
-**Request Body:**
-
-```json
-{
-  "projectId": 123,
-  "documentId": 456,
-  "reason": "Clinical data from post-market surveillance provides alternative evidence.",
-  "evidence": "Link to supporting documentation",
-  "satisfiedFactors": [1, 2],
-  "missingFactors": [3, 4]
-}
-```
+**Endpoint:** `GET /api/tenant-quality-validation/stats/:qmpId` (also
+`/api/quality/validation/stats/:qmpId`)
 
 **Response:**
 
 ```json
 {
-  "status": "approved",
-  "message": "Override request has been automatically approved based on your role",
-  "canSelfApprove": true,
-  "overrideRecord": {
-    "tenantId": 1,
-    "sectionCode": "benefit-risk",
-    "projectId": 123,
-    "documentId": 456,
-    "reason": "Clinical data from post-market surveillance provides alternative evidence.",
-    "evidence": "Link to supporting documentation",
-    "requestedBy": "user123",
-    "requestedAt": "2025-05-09T02:00:00.000Z",
-    "status": "approved",
-    "satisfiedFactors": [1, 2],
-    "missingFactors": [3, 4],
-    "approvedBy": "user123",
-    "approvedAt": "2025-05-09T02:00:00.000Z",
-    "expiresAt": "2025-06-08T02:00:00.000Z"
-  }
+  "qmpId": 12,
+  "stats": { "totalRules": 3, "hardGates": 2, "softGates": 1, "infoGates": 0, "activeRules": 3, "inactiveRules": 0 }
 }
 ```
 
-### 4. Approve/Reject Override Request
+These are rule counts only. No validation results or waivers are stored, so none are
+counted.
 
-Approves or rejects a pending override request (admin/manager only).
+### Quality waivers — not available
 
-**Endpoint:** `PATCH /api/tenant-section-gating/:tenantId/section-gating/overrides/:overrideId`
+**Endpoint:** `POST /api/tenant-quality-validation/request-waiver` (also
+`/api/quality/validation/request-waiver`)
 
-**Request Body:**
+**Response:** `501`
 
 ```json
 {
-  "action": "approve",
-  "comments": "Approved based on alternative evidence provided",
-  "expiresAt": "2025-06-30T00:00:00.000Z"
+  "error": "NOT_AVAILABLE",
+  "message": "Quality waiver requests are not available: a waiver request is not recorded anywhere and nothing can approve one. Nothing was submitted."
 }
 ```
 
-**Response:**
+Before 2026-09-23 this route wrote nothing, invented a waiver
+`{ "id": <timestamp>, "status": "pending" }` and answered `201`.
+
+## CTQ factor endpoints
+
+Paths are relative to `/api/tenant-ctq-factors` (or `/api/quality/ctq-factors`). The
+path's `:tenantId` must be the caller's own organization. The two reads also let a
+`super_admin` name another organization. The delete has no such exception.
+
+| Method and path | What it does |
+|---|---|
+| `GET /:tenantId/ctq-factors/:factorId` | Returns one factor of the organization. |
+| `GET /:tenantId/ctq-factors` | **Known defect:** answers `500`. The query orders by a column the table does not have (`ORDER BY risk_level, <nothing>`). |
+| `POST /:tenantId/ctq-factors` | `501 NOT_AVAILABLE`. It has never saved anything. Nothing is saved. |
+| `PATCH /:tenantId/ctq-factors/:factorId` | `501 NOT_AVAILABLE`. It has never saved anything. Nothing is saved. |
+| `POST /:tenantId/ctq-factors/batch` | `501 NOT_AVAILABLE` for every operation. It has never saved anything. Nothing is saved. |
+| `DELETE /:tenantId/ctq-factors/:factorId` | The governed delete. See below. |
+
+### Delete a CTQ factor (governed)
+
+**Endpoint:** `DELETE /api/tenant-ctq-factors/:tenantId/ctq-factors/:factorId` (also
+`/api/quality/ctq-factors/…`)
+
+**Request body:**
 
 ```json
-{
-  "status": "approved",
-  "message": "Override request has been approved. Valid until 2025-06-30T00:00:00.000Z",
-  "overrideRecord": {
-    "id": "override123",
-    "status": "approved",
-    "approvedBy": "admin456",
-    "approvedAt": "2025-05-09T02:01:00.000Z",
-    "rejectedBy": null,
-    "rejectedAt": null,
-    "expiresAt": "2025-06-30T00:00:00.000Z",
-    "comments": "Approved based on alternative evidence provided"
-  }
-}
+{ "reason": "Duplicate of the endpoint-definition factor; retiring it." }
 ```
 
-### 5. Get Validation Statistics
+- A `viewer` is refused `403`, as on every governed write. Then only `admin` may delete:
+  anyone else gets `403`.
+- `reason` is required: at least 8 characters after trimming. Otherwise `400 REASON_REQUIRED`.
+- A factor the QMP traceability matrix references, or that any section gating rule of
+  the organization lists in `required_ctq_factor_ids`, is refused `409 FACTOR_IN_USE`
+  and nothing is deleted.
+- Another organization's factor is `404`.
+- On success the row is deleted and the ledger records the deletion, with the whole
+  deleted row, in one transaction. The response is
+  `200 { "deleted": true, "id": <factorId>, "message": "CTQ factor deleted." }`.
+- If the audit record cannot be written, the delete is rolled back:
+  `500 AUDIT_WRITE_FAILED`, and the factor is kept.
+- If the commit itself cannot be confirmed, the response is `500 OUTCOME_UNKNOWN`.
+  Reload before trying again.
 
-Retrieves validation statistics for a project.
+## Section gating endpoints
 
-**Endpoint:** `GET /api/tenant-section-gating/:tenantId/section-gating/project/:projectId/stats`
+`server/routes/tenant-section-gating.ts` declares its paths with a leading `/api/…`, so
+they sit under a doubled prefix, e.g.
+`/api/tenant-section-gating/api/tenant-section-gating/:qmpId`.
 
-**Response:**
+| Method and path (relative to the mount) | What it does |
+|---|---|
+| `GET /api/tenant-section-gating/:qmpId` | **Known defect:** answers `500`. It selects columns `qmp_section_gating` does not have (`required_level`, `active`, …). |
+| `POST /api/tenant-section-gating/:qmpId/update` | `501 NOT_AVAILABLE`. It has never saved anything. Nothing is saved. |
+| `GET /api/tenant-ctq-factors/:section` | **Known defect:** answers `500`. It selects `mitigation_strategy`, which `ctq_factors` does not have. |
 
-```json
-{
-  "projectId": 123,
-  "totalSections": 9,
-  "passedSections": 5,
-  "warningSections": 3,
-  "failedSections": 1,
-  "overallCompliancePercentage": 88,
-  "sectionStats": [
-    {
-      "sectionCode": "benefit-risk",
-      "name": "Benefit-Risk Analysis",
-      "status": "passed",
-      "compliancePercentage": 100,
-      "lastValidated": "2025-05-09T02:00:00.000Z"
-    }
-    // Additional sections...
-  ]
-}
-```
+This router used to declare its own `POST` and `DELETE …/api/tenant-ctq-factors[/:id]`.
+They were removed on 2026-09-23. The delete ran for any member, a viewer included, with
+no reason and no ledger row. The create never saved anything. CTQ factors are deleted
+only through the governed delete above.
 
-## Override Policies
+## Tenant isolation
 
-The system supports multiple override policies that control who can override validation failures:
-
-1. **none** - No overrides allowed for this section
-2. **admin-only** - Only administrators can approve overrides
-3. **manager-approval** - Managers and administrators can approve overrides
-4. **document-reason** - Any user can override as long as they document the reason
-
-## Integration with QMP
-
-These validation endpoints integrate with the Quality Management Plan (QMP) to ensure proper:
-
-1. Risk-based quality control
-2. Audit trail tracking
-3. Regulatory compliance documentation
-4. Change control approvals
-
-## Tenant Isolation
-
-All endpoints enforce proper tenant isolation, ensuring:
-
-1. Users can only access data from their own organization
-2. Super admins can access data across tenants
-3. Row-level security is enforced at the database level
+- The CTQ-factor and validation endpoints query through the request-scoped database
+  connection and filter by organization. Row-level security applies on that connection
+  when it is enabled.
+- The section-gating router's reads use the shared connection pool, with an
+  organization filter in each query.
+- The governed CTQ-factor delete has no cross-tenant exception: the path's tenant id
+  must equal the caller's organization, and the ledger row is written against it.

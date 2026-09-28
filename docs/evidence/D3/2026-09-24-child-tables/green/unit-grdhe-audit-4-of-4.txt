@@ -1,0 +1,14 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/grdhe/__tests__/export-job-audit-scope.test.ts > an export job audit row is written only for a job this session updated (L203) > a status change to a job the session cannot see writes no audit row, and says not found 4ms
+ ✓ server/services/grdhe/__tests__/export-job-audit-scope.test.ts > an export job audit row is written only for a job this session updated (L203) > completing a job the session cannot see writes no audit row, and says not found 2ms
+ ✓ server/services/grdhe/__tests__/export-job-audit-scope.test.ts > an export job audit row is written only for a job this session updated (L203) > the session's own job still gets its status change and its audit row 3ms
+ ✓ server/services/grdhe/__tests__/export-job-audit-scope.test.ts > an export job audit row is written only for a job this session updated (L203) > the session's own job is still completed with its audit row 1ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  20:33:00
+   Duration  902ms (transform 159ms, setup 89ms, import 467ms, tests 13ms, environment 0ms)
+

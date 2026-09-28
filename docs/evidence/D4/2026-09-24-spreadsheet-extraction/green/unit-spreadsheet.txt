@@ -1,0 +1,176 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+(node:18849) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > inspectWorkbook inventories sheets with dimensions and formula counts 26ms
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > readWorksheet returns rows with values and preserved formulas 7ms
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > readWorksheet pages with startRow/maxRows and flags truncation 7ms
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > readWorksheet resolves a sheet by 1-based index string 5ms
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > readWorksheet names available sheets when the sheet is unknown 8ms
+stdout | server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > workbookToText renders every sheet as labelled TSV blocks
+{
+  "level": "info",
+  "message": "[spreadsheet-service] workbook rendered to text",
+  "context": {
+    "sheets": 2,
+    "chars": 162
+  }
+}
+
+stdout | server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > applyWorkbookEdits sets values and formulas without touching the source buffer
+{
+  "level": "info",
+  "message": "[spreadsheet-service] workbook edits applied",
+  "context": {
+    "edits": 3,
+    "createdSheets": 0
+  }
+}
+
+stdout | server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > applyWorkbookEdits can create missing sheets when asked
+{
+  "level": "info",
+  "message": "[spreadsheet-service] workbook edits applied",
+  "context": {
+    "edits": 1,
+    "createdSheets": 1
+  }
+}
+
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > workbookToText renders every sheet as labelled TSV blocks 7ms
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > applyWorkbookEdits sets values and formulas without touching the source buffer 21ms
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > applyWorkbookEdits can create missing sheets when asked 30ms
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > applyWorkbookEdits rejects sheets that do not exist by default 5ms
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > applyWorkbookEdits rejects malformed cell addresses 7ms
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > reads CSV input through the same surface 8ms
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > spreadsheetService > cellValueToDisplay handles rich text, formulas, hyperlinks and errors 0ms
+stdout | server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > extracts xlsx by MIME type
+{
+  "level": "info",
+  "message": "[spreadsheet-service] workbook rendered to text",
+  "context": {
+    "sheets": 1,
+    "chars": 65
+  }
+}
+
+stdout | server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > extracts xlsx by extension when the MIME is generic
+{
+  "level": "info",
+  "message": "[spreadsheet-service] workbook rendered to text",
+  "context": {
+    "sheets": 1,
+    "chars": 65
+  }
+}
+
+stderr | server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > returns method none for an unreadable xlsx buffer
+{
+  "level": "warn",
+  "message": "[document-text] xlsx extraction failed",
+  "context": {
+    "error": "Can't find end of central directory : is this a zip file ? If it is, see https://stuk.github.io/jszip/documentation/howto/read_zip.html"
+  }
+}
+
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > extracts xlsx by MIME type 123ms
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > extracts xlsx by extension when the MIME is generic 23ms
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > still treats markdown/CSV as utf8 text 1ms
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > returns method none for an unreadable xlsx buffer 1ms
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > pdfInspector.samplePageNumbers — census planning > returns every page for small documents 1ms
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > pdfInspector.samplePageNumbers — census planning > samples edges plus a uniform spread for huge documents 2ms
+stdout | server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > a spreadsheet is read to its last value > workbookToText renders every row of a long sheet
+{
+  "level": "info",
+  "message": "[spreadsheet-service] workbook rendered to text",
+  "context": {
+    "sheets": 1,
+    "chars": 10850
+  }
+}
+
+stdout | server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > a spreadsheet is read to its last value > workbookToText keeps the row after a blank row and the column after a blank column
+{
+  "level": "info",
+  "message": "[spreadsheet-service] workbook rendered to text",
+  "context": {
+    "sheets": 1,
+    "chars": 83
+  }
+}
+
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > a spreadsheet is read to its last value > workbookToText renders every row of a long sheet 81ms
+(node:18848) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > a spreadsheet is read to its last value > the extraction pipeline stores the whole workbook
+{
+  "level": "info",
+  "message": "[spreadsheet-service] workbook rendered to text",
+  "context": {
+    "sheets": 1,
+    "chars": 10850
+  }
+}
+
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > a spreadsheet is read to its last value > workbookToText keeps the row after a blank row and the column after a blank column 9ms
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > a spreadsheet is read to its last value > the extraction pipeline stores the whole workbook 69ms
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > a spreadsheet is read to its last value > readWorksheet reaches the last row of a sheet with a blank row in it 10ms
+ ✓ server/services/documentIntelligence/__tests__/spreadsheetService.test.ts > a spreadsheet is read to its last value > readWorksheet reports a page that stops before the last row as truncated 6ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > alignPageSpans > maps pages joined by a separator, and the spans point at the real text 3ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > alignPageSpans > survives a leading trim, which is where naive arithmetic goes wrong 0ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > alignPageSpans > keeps the page numbering true across a blank page 1ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > alignPageSpans > honours the page numbers the extractor reports, not the array index 0ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > alignPageSpans > REFUSES the whole map when one page cannot be located 0ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > alignPageSpans > refuses out-of-order pages rather than re-finding an earlier one 0ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > alignPageSpans > returns null for empty input rather than an empty map that reads as success 0ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > pageForOffset > finds the page a chunk starts on 0ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > pageForOffset > attributes a chunk starting between pages to the page it runs into 0ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > pageForOffset > attributes an offset past the end to the last page, not to nothing 0ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > pageForOffset > is null without a map — no map means no page, not page 1 0ms
+stdout | server/services/ana/__tests__/document-intake-tools.test.ts
+{
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/document-intake-tools.test.ts
+{
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/document-intake-tools.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/document-intake-tools.test.ts > document intake tools — registration > registers a handler for inspect_uploaded_document 1ms
+ ✓ server/services/ana/__tests__/document-intake-tools.test.ts > document intake tools — registration > exposes inspect_uploaded_document to AnA in ALL_ANA_TOOLS with a schema requiring file_id 1ms
+ ✓ server/services/ana/__tests__/document-intake-tools.test.ts > document intake tools — registration > registers a handler for read_uploaded_document 0ms
+ ✓ server/services/ana/__tests__/document-intake-tools.test.ts > document intake tools — registration > exposes read_uploaded_document to AnA in ALL_ANA_TOOLS with a schema requiring file_id 0ms
+ ✓ server/services/ana/__tests__/document-intake-tools.test.ts > document intake tools — registration > registers a handler for ocr_document_pages 0ms
+ ✓ server/services/ana/__tests__/document-intake-tools.test.ts > document intake tools — registration > exposes ocr_document_pages to AnA in ALL_ANA_TOOLS with a schema requiring file_id 0ms
+ ✓ server/services/ana/__tests__/document-intake-tools.test.ts > document intake tools — registration > registers a handler for read_spreadsheet 0ms
+ ✓ server/services/ana/__tests__/document-intake-tools.test.ts > document intake tools — registration > exposes read_spreadsheet to AnA in ALL_ANA_TOOLS with a schema requiring file_id 0ms
+ ✓ server/services/ana/__tests__/document-intake-tools.test.ts > document intake tools — registration > registers a handler for edit_spreadsheet 0ms
+ ✓ server/services/ana/__tests__/document-intake-tools.test.ts > document intake tools — registration > exposes edit_spreadsheet to AnA in ALL_ANA_TOOLS with a schema requiring file_id 0ms
+ ✓ server/services/ana/__tests__/document-intake-tools.test.ts > document intake tools — input validation (no DB needed) > inspect_uploaded_document returns a structured error when file_id is missing 9ms
+ ✓ server/services/ana/__tests__/document-intake-tools.test.ts > document intake tools — input validation (no DB needed) > read_uploaded_document returns a structured error when file_id is missing 1ms
+ ✓ server/services/ana/__tests__/document-intake-tools.test.ts > document intake tools — input validation (no DB needed) > ocr_document_pages returns a structured error when file_id is missing 0ms
+ ✓ server/services/ana/__tests__/document-intake-tools.test.ts > document intake tools — input validation (no DB needed) > read_spreadsheet returns a structured error when file_id is missing 0ms
+ ✓ server/services/ana/__tests__/document-intake-tools.test.ts > document intake tools — input validation (no DB needed) > edit_spreadsheet returns a structured error when file_id is missing 0ms
+
+ Test Files  4 passed (4)
+      Tests  49 passed (49)
+   Start at  17:08:40
+   Duration  5.29s (transform 4.56s, setup 245ms, import 6.37s, tests 591ms, environment 0ms)
+

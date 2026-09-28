@@ -1,0 +1,86 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+ ✓ server/middleware/__tests__/redisRateLimiter-counts-once.test.ts > a request is one request to a limiter, whatever router answers it > counts one per request when the third router of three answers it 33ms
+ ✓ server/middleware/__tests__/redisRateLimiter-counts-once.test.ts > a request is one request to a limiter, whatever router answers it > refuses the request after the limit, not after the limit divided by the router's position 22ms
+ ✓ server/middleware/__tests__/redisRateLimiter-counts-once.test.ts > a request is one request to a limiter, whatever router answers it > two limiters are two policies: each still counts the request once 5ms
+ ✓ server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > documents an authenticated ceiling above the per-IP one 3ms
+ ✓ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > platform numbers: api and concept2cure carry an authenticated ceiling above the per-IP one, and a per-IP guard above that 2ms
+ ✓ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > no credential: the per-IP bucket trips at exactly the per-IP ceiling 41ms
+ ✓ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > bearer credential: not tripped at the per-IP ceiling, tripped at the credential ceiling 24ms
+ ✓ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > two credentials behind one address have their own buckets; anonymous traffic from it keeps its own 30ms
+stderr | server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > unauthenticated: the per-IP bucket still trips at exactly the per-IP ceiling
+{
+  "timestamp": "2026-09-23T16:08:13.153Z",
+  "level": "warn",
+  "message": "Rate limit exceeded for api",
+  "context": {
+    "subject": "ip:10.0.0.1",
+    "ip": "10.0.0.1",
+    "path": "/api/things",
+    "count": 60,
+    "limit": 60,
+    "remainingMs": 59881
+  }
+}
+
+ ✓ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > rotating credentials from one address is bounded by the per-IP credentialed guard 33ms
+ ✓ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > a verified identity wins over the credential: two tokens for one user share the user bucket 18ms
+ ✓ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > the headers name the ceiling that applied 3ms
+ ✓ server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > unauthenticated: the per-IP bucket still trips at exactly the per-IP ceiling 140ms
+stderr | server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > authenticated: the per-user ceiling still exists and trips at exactly that number
+{
+  "timestamp": "2026-09-23T16:08:13.889Z",
+  "level": "warn",
+  "message": "Rate limit exceeded for api",
+  "context": {
+    "subject": "user:8",
+    "ip": "10.0.0.3",
+    "path": "/api/things",
+    "count": 600,
+    "limit": 600,
+    "remainingMs": 59344
+  }
+}
+
+ ✓ server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > authenticated: one user is NOT tripped by ordinary shell traffic beyond the per-IP ceiling 75ms
+ ✓ server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > authenticated: the per-user ceiling still exists and trips at exactly that number 661ms
+stderr | server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > two users behind one NAT address do not share a bucket, and anonymous traffic from it keeps its own
+{
+  "timestamp": "2026-09-23T16:08:14.529Z",
+  "level": "warn",
+  "message": "Rate limit exceeded for api",
+  "context": {
+    "subject": "user:21",
+    "ip": "10.0.0.4",
+    "path": "/api/things",
+    "count": 600,
+    "limit": 600,
+    "remainingMs": 59364
+  }
+}
+
+stderr | server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > two users behind one NAT address do not share a bucket, and anonymous traffic from it keeps its own
+{
+  "timestamp": "2026-09-23T16:08:14.588Z",
+  "level": "warn",
+  "message": "Rate limit exceeded for api",
+  "context": {
+    "subject": "ip:10.0.0.4",
+    "ip": "10.0.0.4",
+    "path": "/api/things",
+    "count": 60,
+    "limit": 60,
+    "remainingMs": 59944
+  }
+}
+
+ ✓ server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > two users behind one NAT address do not share a bucket, and anonymous traffic from it keeps its own 698ms
+ ✓ server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > the 429 and the headers name the ceiling that applied 3ms
+
+ Test Files  3 passed (3)
+      Tests  16 passed (16)
+   Start at  16:08:12
+   Duration  2.15s (transform 433ms, setup 244ms, import 876ms, tests 1.80s, environment 0ms)
+

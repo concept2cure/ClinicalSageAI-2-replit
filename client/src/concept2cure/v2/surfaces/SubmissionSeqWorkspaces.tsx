@@ -29,10 +29,12 @@
  */
 import React from 'react';
 import { I } from '../icons';
+import { AnaActivity } from '../AnaActivity';
 import { apiRequest, serverMessage, redactInternals } from '@/lib/queryClient';
 import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveGetOrNull, EmptyState } from '../dataConnect';
 import { assessmentStateFor } from '../assessmentState';
 import { documentSourceLabel } from '@shared/regulatory/canonical-document';
+import { PlacementReasonField, placementReasonOk } from './filingTarget';
 import {
   SC_LENSES,
   SC_LIFECYCLE_OPS,
@@ -313,6 +315,7 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
   const [docId, setDocId] = React.useState<number | null>(null);
   const [section, setSection] = React.useState('');
   const [op, setOp] = React.useState('new');
+  const [reason, setReason] = React.useState('');
   const [saving, setSaving] = React.useState(false);
   const doc = docRows.find((d) => d.id === docId) ?? null;
 
@@ -327,7 +330,7 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
   }
 
   const place = async () => {
-    if (!doc || !section.trim() || saving) return;
+    if (!doc || !section.trim() || !placementReasonOk(reason) || saving) return;
     setSaving(true);
     const r = await mutateVerbatim<LeafRow>('PUT', `/api/submissions/sequences/${seqId}/leaves`, {
       sectionCode: section.trim(),
@@ -335,6 +338,7 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
       lifecycleOp: op,
       documentTable: 'coauthor_documents',
       documentId: doc.id,
+      reason: reason.trim(),
     });
     setSaving(false);
     if (r.data && typeof r.data.id === 'number') {
@@ -344,6 +348,7 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
       });
       setDocId(null);
       setSection('');
+      setReason('');
     } else {
       onDone({ tone: 'err', text: `The leaf was not placed — ${r.error ?? 'the request failed'}.` });
     }
@@ -412,10 +417,11 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
               ))}
             </select>
           </div>
+          <PlacementReasonField value={reason} onChange={setReason} idPrefix="sc-leaf" disabled={saving} variant="inline" />
           <button
             type="button"
             className="sp-primary sc-btn"
-            disabled={!doc || !section.trim() || saving}
+            disabled={!doc || !section.trim() || !placementReasonOk(reason) || saving}
             onClick={place}
           >
             {I.layers} {saving ? 'Placing…' : 'Place leaf in the sequence'}
@@ -573,12 +579,14 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
     phase: 'idle' | 'running' | 'done' | 'error';
     data?: ExplainResponse;
     error?: string;
+    /** When the running request began, for the live record's clock. */
+    since?: number;
   }>({ phase: 'idle' });
   React.useEffect(() => setExplain({ phase: 'idle' }), [seq.id]);
 
   const runExplain = async () => {
     if (findings.length === 0 || explain.phase === 'running') return;
-    setExplain({ phase: 'running' });
+    setExplain({ phase: 'running', since: Date.now() });
     const r = await mutateVerbatim<ExplainResponse>(
       'POST',
       `/api/submissions/${sub.id}/validation/explain`,
@@ -669,6 +677,17 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
                   {explain.phase === 'running' ? 'Explaining…' : 'Explain the findings (AI)'}
                 </button>
               </div>
+            )}
+            {/* The wait, in the same live record AnA shows everywhere else: what is
+            running, a pulse, and a clock — never a percentage, which the
+            request cannot know. Its polite live region is what a screen-reader
+            user hears; the button label alone said nothing to them. */}
+            {explain.phase === 'running' && (
+              <AnaActivity
+                streaming
+                phase={`Explaining ${findings.length} ${findings.length === 1 ? 'finding' : 'findings'} for ${seq.region}…`}
+                startedAt={explain.since}
+              />
             )}
             {explain.phase === 'error' && (
               <div className="sc-verdict tone-err sc-mt" role="status">
@@ -791,10 +810,13 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
   });
   const [notice, setNotice] = React.useState<Notice | null>(null);
   const [running, setRunning] = React.useState(false);
+  /** When the running review began, for the live record's clock. */
+  const [runningSince, setRunningSince] = React.useState<number | null>(null);
 
   const runReview = async () => {
     if (running) return;
     setRunning(true);
+    setRunningSince(Date.now());
     setNotice(null);
     const r = await mutateVerbatim<{ runId: number; findingCount: number; summary: string }>(
       'POST',
@@ -852,6 +874,17 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
             {I.sparkles} {running ? 'Reviewing…' : 'Run shadow review'}
           </button>
         </div>
+        {/* The wait, in the same live record AnA shows everywhere else: what is
+            running, a pulse, and a clock — never a percentage, which the
+            request cannot know. Its polite live region is what a screen-reader
+            user hears; the button label alone said nothing to them. */}
+        {running && (
+          <AnaActivity
+            streaming
+            phase={`Reading sequence ${seq.sequenceNumber} through the ${lensL(lens)} lens…`}
+            startedAt={runningSince ?? undefined}
+          />
+        )}
         <VerdictNote notice={notice} />
         {runs.loading ? (
           <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>

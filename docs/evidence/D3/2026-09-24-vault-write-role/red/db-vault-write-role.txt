@@ -1,0 +1,342 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T17:15:03.467Z","pid":20617,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T17:15:03.468Z","pid":20617,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T17:15:03.468Z","pid":20617,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-ingest.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-24T17:15:03.536Z', poolSize: 1 }
+
+stdout | tests/db/vault-ingest.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/vault-ingest.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-09-24T17:15:03.737Z","pid":20617,"hostname":"vm","context":{"filename":"dhf-extract.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stderr | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > accepts the upload and records the SHA-256 of the bytes that were sent
+Warning: Indexing all PDF objects
+
+(node:20617) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":40,"time":"2026-09-24T17:15:04.007Z","pid":20617,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-09-24T17:15:04.069Z","pid":20617,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > accepts the upload and records the SHA-256 of the bytes that were sent
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "d3cfe0af-9712-4737-9092-702bf6799c4f",
+    "code": "DBTEST-W06-DOC",
+    "type": "OTHER",
+    "size": 69,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > accepts the upload and records the SHA-256 of the bytes that were sent 434ms
+stderr | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — another tenant cannot write into your program > refuses the upload and leaves nothing behind
+{
+  "level": "warn",
+  "message": "[vault-ingest] Vault ingest denied: program not owned by caller organization",
+  "context": {
+    "programId": "8ccaab41-683a-4634-92c8-f9bf71bb9a76",
+    "orgId": 7
+  }
+}
+
+{"level":40,"time":"2026-09-24T17:15:04.169Z","pid":20617,"hostname":"vm","context":{"filename":"dhf-extract.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-09-24T17:15:04.171Z","pid":20617,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-09-24T17:15:04.172Z","pid":20617,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > different bytes at an occupied code and version: 409, and no new object in storage
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest refused — its stored bytes were removed",
+  "context": {
+    "versionId": "6c7b932e-0867-4054-a00c-1852d7aed252",
+    "orgId": 7
+  }
+}
+
+{"level":40,"time":"2026-09-24T17:15:04.186Z","pid":20617,"hostname":"vm","context":{"filename":"dhf-extract-copy.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-09-24T17:15:04.188Z","pid":20617,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-09-24T17:15:04.189Z","pid":20617,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the same bytes under a second code: 409, no new object, and the original still reads back
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest refused: content already recorded in this program",
+  "context": {
+    "constraint": "idx_vault_documents_program_hash_unique"
+  }
+}
+
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the same bytes under a second code: 409, no new object, and the original still reads back
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest refused — its stored bytes were removed",
+  "context": {
+    "versionId": "52134419-eb1d-44da-88b6-0782d031aea6",
+    "orgId": 7
+  }
+}
+
+{"level":40,"time":"2026-09-24T17:15:04.202Z","pid":20617,"hostname":"vm","context":{"filename":"misfiled.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-09-24T17:15:04.203Z","pid":20617,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-09-24T17:15:04.204Z","pid":20617,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > a folder outside the program taxonomy: 400, and no new object in storage
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest refused — its stored bytes were removed",
+  "context": {
+    "versionId": "1cdf8f5e-7a2e-4838-b763-9828c08cf96c",
+    "orgId": 7
+  }
+}
+
+{"level":40,"time":"2026-09-24T17:15:04.216Z","pid":20617,"hostname":"vm","context":{"filename":"second.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-09-24T17:15:04.217Z","pid":20617,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-09-24T17:15:04.218Z","pid":20617,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > an admitted upload still stores exactly one object — the one its record names
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "8c0522e3-42df-4cf1-8c4f-c27e3b665971",
+    "code": "DBTEST-W06-DOC-NEW",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-09-24T17:15:04.233Z","pid":20617,"hostname":"vm","context":{"filename":"viewer.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-09-24T17:15:04.234Z","pid":20617,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-09-24T17:15:04.235Z","pid":20617,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > refuses a viewer before anything is stored or recorded
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "984b5142-5d80-4e0b-b260-cd5bb135bfb9",
+    "code": "DBTEST-W06-DOC-VIEWER",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > persisted a row carrying the canonical columns the route writes 3ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > the bytes are retrievable at the address the row records 2ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the Part 11 record of who put it there > wrote a hash-chained audit row naming the actor and the content hash 1ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the Part 11 record of who put it there > a document and its audit row cannot exist without each other 2ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — another tenant cannot write into your program > refuses the upload and leaves nothing behind 9ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > different bytes at an occupied code and version: 409, and no new object in storage 18ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the same bytes under a second code: 409, no new object, and the original still reads back 15ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > a folder outside the program taxonomy: 400, and no new object in storage 10ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the reference check the discard relies on sees an admitted record, as the runtime role 4ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > an admitted upload still stores exactly one object — the one its record names 19ms
+{"level":40,"time":"2026-09-24T17:15:04.252Z","pid":20617,"hostname":"vm","context":{"filename":"no-role.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-09-24T17:15:04.254Z","pid":20617,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-09-24T17:15:04.254Z","pid":20617,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > refuses a scope that carries no role at all
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "eb535b0b-5c5e-4fd9-b6db-4ba103e6403d",
+    "code": "DBTEST-W06-DOC-NOROLE",
+    "type": "OTHER",
+    "size": 79,
+    "hasText": false
+  }
+}
+
+{"level":40,"time":"2026-09-24T17:15:04.265Z","pid":20617,"hostname":"vm","context":{"filename":"member.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-09-24T17:15:04.266Z","pid":20617,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-09-24T17:15:04.266Z","pid":20617,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > admits a member — the role SSO provisioning assigns
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "a7390881-2b3a-4eea-85dc-15ea56631271",
+    "code": "DBTEST-W06-DOC-MEMBER",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+ × tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > refuses a viewer before anything is stored or recorded 19ms
+   → expected { ok: true, document: { …(15) }, …(1) } to match object { ok: false, status: 403, …(1) }
+(26 matching properties omitted from actual)
+ × tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > refuses a scope that carries no role at all 13ms
+   → expected { ok: true, document: { …(15) }, …(1) } to match object { ok: false, status: 403, …(1) }
+(26 matching properties omitted from actual)
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > admits a member — the role SSO provisioning assigns 14ms
+{"level":30,"time":"2026-09-24T17:15:05.110Z","pid":20642,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T17:15:05.111Z","pid":20642,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T17:15:05.111Z","pid":20642,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label
+[database] Database connection successful { timestamp: '2026-09-24T17:15:05.162Z', poolSize: 1 }
+
+stderr | tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label
+[database] Database connection successful
+
+stdout | tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label
+[database] Database connection successful { timestamp: '2026-09-24T17:15:05.179Z', poolSize: 2 }
+
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label 708ms
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > left an audit row naming the location it came from and the one it went to 20ms
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > honours an explicit unfile — the Unfiled queue is a real answer 19ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses a folder from another modality's taxonomy 8ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses to confirm a suggestion that does not exist 8ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses a call that names no destination at all 9ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > confirms an existing suggestion in place, keeping the CTD section 11ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > will not let another organization move the document 6ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > records AnA's folder as a suggestion a person must confirm, not as a person's filing 3283ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > refuses to confirm a suggestion — a person confirms filing in the Vault 8ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > the service itself refuses an agent's confirm, so no other agent caller can record one either 6ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > unfiles with the same attribution — the Unfiled queue is where a person decides 14ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > leaves a person's filing through the Vault a confirmed decision with no agent marker 12ms
+ × tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses a viewer, and writes nothing 20ms
+   → expected { ok: true, view: 'device', …(3) } to match object { ok: false, status: 403, …(1) }
+(15 matching properties omitted from actual)
+ × tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses a scope that carries no role at all 13ms
+   → expected { ok: true, view: 'device', …(3) } to match object { ok: false, status: 403, …(1) }
+(15 matching properties omitted from actual)
+ × tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses AnA acting for a viewer — the path that had no check 17ms
+   → expected { ok: true, …(5) } to match object { ok: false, …(1) }
+(16 matching properties omitted from actual)
+ ✓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > lets a member file — the role SSO provisioning assigns 10ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > refuses a viewer before anything is stored or recorded
+AssertionError: expected { ok: true, document: { …(15) }, …(1) } to match object { ok: false, status: 403, …(1) }
+(26 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VAULT_WRITE_ROLE_REQUIRED",
+-   "ok": false,
+-   "status": 403,
++   "ok": true,
+  }
+
+ ❯ tests/db/vault-ingest.dbtest.ts:490:17
+    488|     const before = await storedVersionIds();
+    489|     const out = await ingestAs('viewer', `${PROBE_CODE}-VIEWER`, 'view…
+    490|     expect(out).toMatchObject({ ok: false, status: 403, code: 'VAULT_W…
+       |                 ^
+    491|     const { rows } = await owner.query(
+    492|       'SELECT count(*)::int AS n FROM vault.documents WHERE document_c…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > refuses a scope that carries no role at all
+AssertionError: expected { ok: true, document: { …(15) }, …(1) } to match object { ok: false, status: 403, …(1) }
+(26 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VAULT_WRITE_ROLE_REQUIRED",
+-   "ok": false,
+-   "status": 403,
++   "ok": true,
+  }
+
+ ❯ tests/db/vault-ingest.dbtest.ts:501:17
+    499|   it('refuses a scope that carries no role at all', async () => {
+    500|     const out = await ingestAs(null, `${PROBE_CODE}-NOROLE`, 'no-role'…
+    501|     expect(out).toMatchObject({ ok: false, status: 403, code: 'VAULT_W…
+       |                 ^
+    502|   });
+    503|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses a viewer, and writes nothing
+AssertionError: expected { ok: true, view: 'device', …(3) } to match object { ok: false, status: 403, …(1) }
+(15 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VAULT_WRITE_ROLE_REQUIRED",
+-   "ok": false,
+-   "status": 403,
++   "ok": true,
+  }
+
+ ❯ tests/db/vault-placement.dbtest.ts:507:17
+    505|     const before = await row();
+    506|     const out = await place({ folderId: 'eng', note: 'filed by a viewe…
+    507|     expect(out).toMatchObject({ ok: false, status: 403, code: 'VAULT_W…
+       |                 ^
+    508|     expect(await row()).toEqual(before);
+    509|     expect(await lastFilingAudit()).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses a scope that carries no role at all
+AssertionError: expected { ok: true, view: 'device', …(3) } to match object { ok: false, status: 403, …(1) }
+(15 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VAULT_WRITE_ROLE_REQUIRED",
+-   "ok": false,
+-   "status": 403,
++   "ok": true,
+  }
+
+ ❯ tests/db/vault-placement.dbtest.ts:514:17
+    512|   it('refuses a scope that carries no role at all', async () => {
+    513|     const out = await place({ folderId: 'eng', note: 'no role' }, unde…
+    514|     expect(out).toMatchObject({ ok: false, status: 403, code: 'VAULT_W…
+       |                 ^
+    515|     expect((await row()).placement_status).toBe('unfiled');
+    516|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses AnA acting for a viewer — the path that had no check
+AssertionError: expected { ok: true, …(5) } to match object { ok: false, …(1) }
+(16 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VAULT_WRITE_ROLE_REQUIRED",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ tests/db/vault-placement.dbtest.ts:522:17
+    520|     const before = await row();
+    521|     const out = await anaPlaces({ folder_id: 'eng', rationale: 'Design…
+    522|     expect(out).toMatchObject({ ok: false, code: 'VAULT_WRITE_ROLE_REQ…
+       |                 ^
+    523|     expect(await row()).toEqual(before);
+    524|     expect(await lastFilingAudit()).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  5 failed | 26 passed (31)
+   Start at  17:15:01
+   Duration  6.99s (transform 3.62s, setup 99ms, import 171ms, tests 6.28s, environment 0ms)
+

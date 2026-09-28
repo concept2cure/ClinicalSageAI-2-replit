@@ -17,25 +17,25 @@ describe('HA AnA tools — registration', () => {
 
 describe('HA AnA tools — context + input guards', () => {
   it('create_ha_interaction refuses without tenant/user context', async () => {
-    const out = JSON.parse(await getToolHandler('create_ha_interaction')!({ interaction_type: 'pre_ind', agency: 'fda', title: 'X' }, {} as any));
+    const out = JSON.parse(await getToolHandler('create_ha_interaction')!({ interaction_type: 'pre_ind', agency: 'fda', title: 'X' }, { humanConfirmed: true } as any));
     expect(out.error).toMatch(/tenant \+ user context/);
   });
 
   it('create_ha_interaction rejects an invalid agency', async () => {
     const out = JSON.parse(await getToolHandler('create_ha_interaction')!(
       { interaction_type: 'pre_ind', agency: 'martian_authority', title: 'X' },
-      { organizationId: 1, userId: 1 } as any,
+      { organizationId: 1, userId: 1, humanConfirmed: true } as any,
     ));
     expect(out.error).toMatch(/must be valid/);
   });
 
   it('create_regulatory_commitment validates type + description', async () => {
-    const out = JSON.parse(await getToolHandler('create_regulatory_commitment')!({ commitment_type: 'bogus' }, { organizationId: 1, userId: 1 } as any));
+    const out = JSON.parse(await getToolHandler('create_regulatory_commitment')!({ commitment_type: 'bogus' }, { organizationId: 1, userId: 1, humanConfirmed: true } as any));
     expect(out.error).toMatch(/must be valid/);
   });
 
   it('review_commitment_portfolio requires tenant context', async () => {
-    const out = JSON.parse(await getToolHandler('review_commitment_portfolio')!({}, {} as any));
+    const out = JSON.parse(await getToolHandler('review_commitment_portfolio')!({}, { humanConfirmed: true } as any));
     expect(out.error).toMatch(/tenant context/);
   });
 });

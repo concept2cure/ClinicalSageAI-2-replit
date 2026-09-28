@@ -1,0 +1,59 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/authoring/docs/ad3c56cf-9f12-424c-a285-62208e030217/sections",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 14,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "sections": [
+        {
+          "id": "e1c25ac0-ada8-48f2-b4d3-34e9d279197b",
+          "doc_id": "ad3c56cf-9f12-424c-a285-62208e030217",
+          "code": "2.5",
+          "title": "Clinical Overview",
+          "content": "<p>Revised 2.5 text — OQ-003 step 05.</p>",
+          "order_index": 0,
+          "track_changes": false,
+          "created_at": "2026-09-27T23:53:19.805Z",
+          "updated_at": "2026-09-27T23:53:20.353Z",
+          "tenant_id": 1,
+          "comment_count": "0",
+          "revision_count": "2",
+          "citation_count": "0"
+        },
+        {
+          "id": "6741632d-5be7-4e14-bfbf-8157de8ccc3f",
+          "doc_id": "ad3c56cf-9f12-424c-a285-62208e030217",
+          "code": "2.7",
+          "title": "Clinical Summary",
+          "content": "<p>Initial 2.7 text.</p>",
+          "order_index": 1,
+          "track_changes": false,
+          "created_at": "2026-09-27T23:53:19.514Z",
+          "updated_at": "2026-09-27T23:53:19.514Z",
+          "tenant_id": 1,
+          "comment_count": "0",
+          "revision_count": "1",
+          "citation_count": "0"
+        }
+      ],
+      "count": 2,
+      "structure": {
+        "duplicateCodes": [],
+        "outOfOrder": false,
+        "suggestedOrder": [
+          "2.5",
+          "2.7"
+        ]
+      }
+    }
+  }
+}

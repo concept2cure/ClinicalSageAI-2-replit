@@ -1,3 +1,9 @@
+-- 2026-09-25 AMENDED IN PLACE (W2 / D1, docs/evidence/W2/2026-09-25-replay-rebuilds-nothing/):
+-- document_span_lineage_kind_valid, document_span_lineage_kind_shape are now replaced only when the live definition
+-- (pg_get_constraintdef) differs from the one below. Unconditional, every deploy dropped
+-- and re-added them — a full validation scan under lock (ACCESS EXCLUSIVE for a CHECK;
+-- writes blocked on child and parent for a FOREIGN KEY) while the application served.
+-- The definitions are unchanged. Pinned by npm run ci:replay-rebuilds-nothing.
 -- ============================================================================
 -- document_span_lineage — a fourth provenance kind: machine_draft
 -- (a machine drafted it; NOBODY has accepted it)
@@ -69,41 +75,57 @@ BEGIN
   ALTER TABLE public.document_span_lineage
     ADD COLUMN IF NOT EXISTS machine_author_id TEXT;
 
-  ALTER TABLE public.document_span_lineage
-    DROP CONSTRAINT IF EXISTS document_span_lineage_kind_valid;
-  ALTER TABLE public.document_span_lineage
-    ADD CONSTRAINT document_span_lineage_kind_valid
-      CHECK (provenance_kind IN (
-        'cre_evidence_source',
-        'author_assertion',
-        'accepted_machine_draft',
-        'machine_draft'
-      ));
+  -- Replaced only when the live definition differs (2026-09-25, see the header):
+  -- unconditionally, every deploy re-validated it under lock while the app served.
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+     WHERE conrelid = to_regclass('public.document_span_lineage') AND conname = 'document_span_lineage_kind_valid'
+       AND pg_get_constraintdef(oid) = $def$CHECK ((provenance_kind = ANY (ARRAY['cre_evidence_source'::text, 'author_assertion'::text, 'accepted_machine_draft'::text, 'machine_draft'::text])))$def$
+  ) THEN
+    ALTER TABLE public.document_span_lineage
+      DROP CONSTRAINT IF EXISTS document_span_lineage_kind_valid;
+    ALTER TABLE public.document_span_lineage
+      ADD CONSTRAINT document_span_lineage_kind_valid
+        CHECK (provenance_kind IN (
+          'cre_evidence_source',
+          'author_assertion',
+          'accepted_machine_draft',
+          'machine_draft'
+        ));
+  END IF;
 
-  ALTER TABLE public.document_span_lineage
-    DROP CONSTRAINT IF EXISTS document_span_lineage_kind_shape;
-  ALTER TABLE public.document_span_lineage
-    ADD CONSTRAINT document_span_lineage_kind_shape
-      CHECK (
-        (provenance_kind = 'cre_evidence_source'
-          AND reference_id IS NOT NULL
-          AND payload_sha256 IS NOT NULL)
-        OR
-        (provenance_kind = 'author_assertion'
-          AND asserted_by IS NOT NULL
-          AND asserted_at IS NOT NULL)
-        OR
-        (provenance_kind = 'accepted_machine_draft'
-          AND machine_author_id IS NOT NULL
-          AND asserted_by IS NOT NULL
-          AND asserted_at IS NOT NULL)
-        OR
-        -- Nobody has accepted this. The NULLs are the assertion.
-        (provenance_kind = 'machine_draft'
-          AND machine_author_id IS NOT NULL
-          AND asserted_by IS NULL
-          AND asserted_at IS NULL)
-      );
+  -- Replaced only when the live definition differs (2026-09-25, see the header):
+  -- unconditionally, every deploy re-validated it under lock while the app served.
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+     WHERE conrelid = to_regclass('public.document_span_lineage') AND conname = 'document_span_lineage_kind_shape'
+       AND pg_get_constraintdef(oid) = $def$CHECK ((((provenance_kind = 'cre_evidence_source'::text) AND (reference_id IS NOT NULL) AND (payload_sha256 IS NOT NULL)) OR ((provenance_kind = 'author_assertion'::text) AND (asserted_by IS NOT NULL) AND (asserted_at IS NOT NULL)) OR ((provenance_kind = 'accepted_machine_draft'::text) AND (machine_author_id IS NOT NULL) AND (asserted_by IS NOT NULL) AND (asserted_at IS NOT NULL)) OR ((provenance_kind = 'machine_draft'::text) AND (machine_author_id IS NOT NULL) AND (asserted_by IS NULL) AND (asserted_at IS NULL))))$def$
+  ) THEN
+    ALTER TABLE public.document_span_lineage
+      DROP CONSTRAINT IF EXISTS document_span_lineage_kind_shape;
+    ALTER TABLE public.document_span_lineage
+      ADD CONSTRAINT document_span_lineage_kind_shape
+        CHECK (
+          (provenance_kind = 'cre_evidence_source'
+            AND reference_id IS NOT NULL
+            AND payload_sha256 IS NOT NULL)
+          OR
+          (provenance_kind = 'author_assertion'
+            AND asserted_by IS NOT NULL
+            AND asserted_at IS NOT NULL)
+          OR
+          (provenance_kind = 'accepted_machine_draft'
+            AND machine_author_id IS NOT NULL
+            AND asserted_by IS NOT NULL
+            AND asserted_at IS NOT NULL)
+          OR
+          -- Nobody has accepted this. The NULLs are the assertion.
+          (provenance_kind = 'machine_draft'
+            AND machine_author_id IS NOT NULL
+            AND asserted_by IS NULL
+            AND asserted_at IS NULL)
+        );
+  END IF;
 END
 $mig$;
 

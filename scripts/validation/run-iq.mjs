@@ -21,7 +21,7 @@ import { passwordLogin, runCredential } from '../../tests/validation/lib/harness
 
 const require = createRequire(import.meta.url);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const RUN_DATE = process.env.VALIDATION_RUN_DATE || '2026-09-23b';
+const RUN_DATE = process.env.VALIDATION_RUN_DATE || '2026-09-23c';
 const BASE_URL = (process.env.VALIDATION_BASE_URL || 'http://localhost:5200').replace(/\/$/, '');
 const OUT = path.join(ROOT, 'docs', 'evidence', 'W3', RUN_DATE, 'IQ');
 fs.mkdirSync(OUT, { recursive: true });

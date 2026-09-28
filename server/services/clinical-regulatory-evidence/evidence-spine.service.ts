@@ -312,7 +312,13 @@ export async function resolveSourceUploadIds(
 export async function findSourceByChecksum(
   orgId: number,
   checksum: string,
-  opts: { sourceType?: SourceType } = {},
+  opts: {
+    sourceType?: SourceType;
+    /** Scope the identity to one project (PF-07 / VR-10): the same bytes in two
+     *  projects are two sources. Undefined = not scoped (org-wide, as before). */
+    clientProgramId?: string | null;
+    clientWorkspaceId?: number | null;
+  } = {},
 ): Promise<EvidenceSource | null> {
   if (!checksum) return null;
   const c = visibleOrgClause(orgId, 2);
@@ -321,6 +327,14 @@ export async function findSourceByChecksum(
   if (opts.sourceType) {
     args.push(opts.sourceType);
     where += ` AND source_type = $${args.length}`;
+  }
+  if (opts.clientProgramId !== undefined) {
+    args.push(opts.clientProgramId);
+    where += ` AND client_program_id IS NOT DISTINCT FROM $${args.length}::uuid`;
+  }
+  if (opts.clientWorkspaceId !== undefined) {
+    args.push(opts.clientWorkspaceId);
+    where += ` AND client_workspace_id IS NOT DISTINCT FROM $${args.length}::integer`;
   }
   const { rows } = await pool.query(
     `SELECT * FROM cre_evidence_sources WHERE ${where} ORDER BY created_at ASC LIMIT 1`,
@@ -699,7 +713,8 @@ function adaptSource(r: any): EvidenceSource {
     applicationType: r.application_type, applicationNumber: r.application_number,
     trialRegistryIdentifier: r.trial_registry_identifier, documentDate: r.document_date,
     officialUrl: r.official_url, storedArtifactRef: r.stored_artifact_ref, checksum: r.checksum,
-    version: r.version, provenance: j(r.provenance), ingestionStatus: r.ingestion_status,
+    version: r.version, isCurrent: r.is_current !== false,
+    provenance: j(r.provenance), ingestionStatus: r.ingestion_status,
     extractionStatus: r.extraction_status, linkedCsrReportId: r.linked_csr_report_id,
     linkedPrecedentId: r.linked_precedent_id, metadata: j(r.metadata),
     createdAt: r.created_at, updatedAt: r.updated_at,

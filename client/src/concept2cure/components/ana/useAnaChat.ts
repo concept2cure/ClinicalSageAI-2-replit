@@ -54,9 +54,22 @@ export type {
   DriveTurnControls,
   AnaSendOptions,
   AnaProgressPhase,
+  AnaPlanStep,
+  AnaPlanChange,
+  AnaContextUsed,
+  AnaTurnRecordStatus,
 } from './useAnaChat.types';
 
-import { advanceProgress, closeProgress, settleRunningCalls, CLIENT_PHASE_LABELS } from './anaProgress';
+import {
+  advanceProgress,
+  applyPlanEvent,
+  closeProgress,
+  readContextUsed,
+  readPlanSteps,
+  readTurnRecord,
+  settleRunningCalls,
+  CLIENT_PHASE_LABELS,
+} from './anaProgress';
 import { getAnaLockedScreens } from './anaLockedScreens';
 
 import type {
@@ -84,6 +97,9 @@ import type {
  * The timer resets on every chunk, so a long but live generation is fine.
  */
 const STREAM_IDLE_TIMEOUT_MS = 90_000;
+
+/** When to ask the server, by run id, for the record of a turn that ended here first. */
+const RECORD_CONFIRM_WAITS_MS = [1_500, 4_000];
 
 
 
@@ -471,6 +487,40 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     [steerRun],
   );
 
+  /**
+   * A turn that ended here before the server said whether it filed the
+   * record — Stop, a timeout, a dropped connection — is shown "not confirmed".
+   * The server usually did file it (a stopped turn is recorded as stopped), and
+   * the record carries the run id, so ask for it: once shortly after, once
+   * more a little later. Only a turn still unconfirmed is updated; anything
+   * the server cannot confirm stays unconfirmed, never recorded by default.
+   */
+  const confirmTurnRecordByRun = useCallback((runId: string, messageId: string) => {
+    void (async () => {
+      for (const waitMs of RECORD_CONFIRM_WAITS_MS) {
+        await new Promise((r) => setTimeout(r, waitMs));
+        try {
+          const res = await fetch(`/api/ana-ri/turn-records?run_id=${encodeURIComponent(runId)}&limit=1`, {
+            headers: getAuthHeaders(),
+            credentials: 'include',
+          });
+          if (!res.ok) return;
+          const body = await res.json().catch(() => null);
+          const rec = body?.data?.records?.[0];
+          const turnRecord = rec ? readTurnRecord({ status: 'recorded', id: rec.id, sha256: rec.recordSha256 }) : undefined;
+          if (turnRecord) {
+            setMessages((prev) =>
+              prev.map((m) => (m.id === messageId && m.turnRecord?.status === 'unconfirmed' ? { ...m, turnRecord } : m)),
+            );
+            return;
+          }
+        } catch {
+          return;
+        }
+      }
+    })();
+  }, []);
+
   const stop = useCallback(async () => {
     // Cancel server-side too (the fetch abort alone leaves the server
     // generating and running the tool loop to completion — the pre-existing
@@ -558,6 +608,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
             reasoning?: string;
             toolTrace?: Array<{ tool?: string; label?: string; status?: string; resultSummary?: string }>;
             humanControls?: Array<{ action?: string; message?: string }>;
+            plan?: unknown;
           } | null;
         }>;
       };
@@ -590,10 +641,15 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                   .filter(c => c?.action === 'interject' && typeof c.message === 'string' && c.message)
                   .map(c => c.message as string)
               : [];
+          // Her last declared plan, as the server validated it. Only the final
+          // list is persisted, not when each step changed, so no plan changes
+          // are invented for it.
+          const plan = m.role === 'assistant' ? readPlanSteps(m.metadata?.plan) : null;
           return {
             id: `t-${threadId}-${idx}`,
             role: m.role as 'user' | 'assistant',
             text: m.content as string,
+            ...(plan ? { plan } : {}),
             ...(reasoning ? { thinking: reasoning } : {}),
             ...(toolCalls.length > 0 ? { toolCalls } : {}),
             ...(interjections.length > 0 ? { interjections } : {}),
@@ -695,6 +751,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       // user-initiated stop so the message reads correctly.
       let idleTimer: ReturnType<typeof setTimeout> | null = null;
       let didTimeout = false;
+      // Set when the server's closing event said whether the turn was recorded;
+      // only a turn it did not speak for is looked up afterwards.
+      let serverStatedRecord = false;
       const clearIdleTimer = () => {
         if (idleTimer) {
           clearTimeout(idleTimer);
@@ -904,6 +963,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         let buffer = '';
 
         armIdleTimer();
+        // Every server path closes a turn with post_done or error. A stream
+        // that ends without either did not finish, whatever it rendered.
+        let turnClosed = false;
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
@@ -1096,6 +1158,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 )
               );
             } else if (event.type === 'post_done') {
+              turnClosed = true;
               const cleaned: string | undefined = event.cleanedResponse;
               const actions: AnaChatAction[] | undefined = Array.isArray(event.executedActions)
                 ? (event.executedActions as AnaChatAction[])
@@ -1106,6 +1169,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               const groundingSources: string[] | undefined = Array.isArray(event.enrichmentSources)
                 ? event.enrichmentSources.filter((s: unknown): s is string => typeof s === 'string')
                 : undefined;
+              const turnRecord = readTurnRecord(event.turnRecord);
               setMessages(prev =>
                 prev.map(m => {
                   if (m.id !== assistantId) return m;
@@ -1131,6 +1195,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                         ? capturedProvider !== 'anthropic'
                         : undefined,
                     effortUsed: capturedEffortUsed ?? m.effortUsed,
+                    turnRecord: turnRecord ?? m.turnRecord,
                   };
                 })
               );
@@ -1427,6 +1492,18 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                   )
                 );
               }
+            } else if (event.type === 'plan' || event.type === 'context_used') {
+              // Her declared plan, and what the turn read before answering. Both
+              // parsed and applied by pure helpers in anaProgress.ts.
+              const at = Date.now();
+              const used = event.type === 'context_used' ? readContextUsed(event) : null;
+              setMessages(prev =>
+                prev.map(m => {
+                  if (m.id !== assistantId) return m;
+                  if (event.type === 'plan') return applyPlanEvent(m, event, at);
+                  return used ? { ...m, contextUsed: used } : m;
+                })
+              );
             } else if (event.type === 'war_game_report') {
               const report = event.report;
               if (report) {
@@ -1450,11 +1527,23 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 );
               }
             } else if (event.type === 'error') {
+              // A failed turn is still recorded; say so before the error
+              // closes it, so the record line is not lost with the turn.
+              const turnRecord = readTurnRecord(event.turnRecord);
+              if (turnRecord) {
+                serverStatedRecord = true;
+                setMessages(prev => prev.map(m => (m.id === assistantId ? { ...m, turnRecord } : m)));
+              }
               throw new Error(event.error || 'Stream error');
             }
           }
         }
+        if (!turnClosed) throw new Error('The stream ended before the turn finished');
       } catch (err: any) {
+        // The run this turn was served under, while it is still known: the
+        // record of an interrupted turn is looked up by it.
+        const interruptedRunId = runIdRef.current;
+        if (interruptedRunId && !serverStatedRecord) confirmTurnRecordByRun(interruptedRunId, assistantId);
         if (err?.name === 'AbortError' && didTimeout) {
           // Idle timeout — the stream went silent. Seal any partial tokens and
           // tell the user, rather than leaving a half-rendered reply.
@@ -1473,9 +1562,11 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 streaming: false,
                 statusPhase: undefined,
                 completedAt: Date.now(),
+                interrupted: true,
                 progress: closeProgress(m.progress, 'stopped', Date.now()),
                 toolCalls: settleRunningCalls(m.toolCalls, 'Not finished — AnA stopped responding.', Date.now()),
                 warnings: [...(m.warnings || []), 'Response timed out'],
+                turnRecord: m.turnRecord ?? { status: 'unconfirmed' },
               };
             })
           );
@@ -1492,6 +1583,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                     completedAt: Date.now(),
                     progress: closeProgress(m.progress, 'stopped', Date.now()),
                     toolCalls: settleRunningCalls(m.toolCalls, 'Not finished — the run was stopped.', Date.now()),
+                    turnRecord: m.turnRecord ?? { status: 'unconfirmed' },
                   }
                 : m
             )
@@ -1512,8 +1604,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 streaming: false,
                 statusPhase: undefined,
                 completedAt: Date.now(),
+                interrupted: true,
                 progress: closeProgress(m.progress, 'stopped', Date.now()),
                 toolCalls: settleRunningCalls(m.toolCalls, 'Not finished — the connection was lost.', Date.now()),
+                turnRecord: m.turnRecord ?? { status: 'unconfirmed' },
               };
             })
           );
@@ -1572,6 +1666,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       options.onArtifactSaved,
       controlRun,
       steerRun,
+      confirmTurnRecordByRun,
     ]
   );
 

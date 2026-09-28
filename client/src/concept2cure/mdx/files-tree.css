@@ -144,11 +144,11 @@
 .mdx-shell .ftp-action:hover { background: var(--bg-100); }
 .mdx-shell .ftp-action svg { width: 12px; height: 12px; }
 .mdx-shell .ftp-action-primary {
-  border-color: var(--accent-100);
-  background: var(--accent-100);
-  color: var(--text-000);
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
+  color: var(--accent-on-strong);
 }
-.mdx-shell .ftp-action-primary:hover { background: var(--accent-200); border-color: var(--accent-200); }
+.mdx-shell .ftp-action-primary:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
 
 .mdx-shell .ftp-preview-meta {
   display: inline-flex; align-items: center; gap: 6px;

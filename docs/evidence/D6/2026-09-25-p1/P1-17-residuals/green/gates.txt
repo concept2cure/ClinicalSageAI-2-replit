@@ -1,0 +1,7 @@
+$ npm run check:security-patterns
+check-security-patterns: 0 violations across 2844 file(s).
+exit=0
+$ npm run ci:audit-route-mounts:no-regression
+
+Baseline delta: +0 new errors, +0 new warnings (baseline: docs/reports/route-mount-audit-baseline.json)
+exit=0

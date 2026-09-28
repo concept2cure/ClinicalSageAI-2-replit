@@ -1,0 +1,37 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > rolls the retirement back when the signature row cannot be written, and echoes none of the caught text
+{
+  "timestamp": "2026-09-26T12:58:48.796Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-retire failed",
+  "context": {
+    "err": "electronic_signatures insert failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a viewer before touching the database or the signer (403) 28ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > a reason alone does not retire: 400 ESIGNATURE_COMPONENT_MISSING naming password and meaning; nothing verified, nothing written 8ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > an empty body names every missing component 4ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a reason shorter than the floor (8) before verifying anything 16ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a meaning other than APPROVED 4ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses an editor whose org role carries no signing authority with 403, before the password is looked at 3ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a wrong password with 401, counts it against the account, and writes nothing 4ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a locked account with 423 before its password is compared 3ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses the password alone from a signer with an authenticator enrolled 5ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a document that is already retired with 409 and rolls back 5ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > 404s a document outside the tenant 3ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > signs: the UPDATE, one ledger row (command retire) and one signature bound to the content digest, meaning APPROVED, then COMMIT 5ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > keeps today's admissibility: a draft can be retired too, and the ledger says where it came from 3ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > records password+totp only when the verifier actually verified a second factor 3ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > rolls the retirement back when the signature row cannot be written, and echoes none of the caught text 6ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  12:58:47
+   Duration  1.31s (transform 403ms, setup 93ms, import 745ms, tests 105ms, environment 0ms)
+

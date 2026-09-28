@@ -32,7 +32,9 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'explore',
     icon: 'sparkles',
     uiKit: null,
-    apiPrefixes: ['/api/orchestration/continuity', '/api/orchestration/recommendations', '/api/orchestration/templates', '/api/orchestration/execute', '/api/orchestration/pre-submission-gate', '/api/orchestration/projects/:id/readiness'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): AnaCommand.tsx reads the org portfolio.
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): AnaCommand.tsx executes AI actions.
+    apiPrefixes: ['/api/orchestration/continuity', '/api/orchestration/recommendations', '/api/orchestration/templates', '/api/orchestration/execute', '/api/orchestration/pre-submission-gate', '/api/orchestration/projects/:id/readiness', '/api/report-os/portfolio', '/api/ai-actions/execute'],
     anaToolFamilies: ['generate_recommendations', 'execute_workflow', 'assess_readiness'],
     sharedContract: '@shared/types/orchestration',
     discoveryCatalog: null,
@@ -123,7 +125,8 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'workspace',
     icon: 'workflow',
     uiKit: 'biopharma',
-    apiPrefixes: ['/api/biopharma/programs', '/api/rim', '/api/regulatory-correspondence', '/api/ectd'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): BiopharmaJourney reads the journey.
+    apiPrefixes: ['/api/biopharma/programs', '/api/rim', '/api/regulatory-correspondence', '/api/ectd', '/api/program-journey'],
     anaToolFamilies: ['plan_submission', 'assess_filing_readiness'],
     sharedContract: '@shared/types/submission-api',
     discoveryCatalog: null,
@@ -289,7 +292,9 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'workspace',
     icon: 'messageSquare',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/conversation-os', '/api/chat', '/api/authoring-actions'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): useFilingOutline.ts reads the filing outline.
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): ConversationThread.tsx exports and routes artifacts through the legacy project API.
+    apiPrefixes: ['/api/conversation-os', '/api/chat', '/api/authoring-actions', '/api/c2c/documents', '/api/concept2cure/artifacts', '/api/concept2cure/projects'],
     anaToolFamilies: [],
     sharedContract: '@shared/schema',
     discoveryCatalog: null,
@@ -589,7 +594,9 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'authoring',
     icon: 'clipboardList',
     uiKit: 'authoring',
-    apiPrefixes: ['/api/protocol-development', '/api/protocol-soa', '/api/protocol-risks', '/api/protocol-milestones', '/api/protocol-budget', '/api/protocol-amendments', '/api/protocol-deviations', '/api/protocol-reviews', '/api/protocol-consent', '/api/protocol-export', '/api/biostat-bridge'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): ProtocolDevDesign.tsx / ProtocolDevProjections.tsx read the study design.
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): Protocol Dev exports, files IRB packages and reads its hub.
+    apiPrefixes: ['/api/protocol-development', '/api/protocol-soa', '/api/protocol-risks', '/api/protocol-milestones', '/api/protocol-budget', '/api/protocol-amendments', '/api/protocol-deviations', '/api/protocol-reviews', '/api/protocol-consent', '/api/protocol-export', '/api/biostat-bridge', '/api/study-design', '/api/concept2cure/artifacts', '/api/irb', '/api/protocol-dev'],
     anaToolFamilies: ['create_protocol_document', 'update_protocol_section', 'review_protocol_completeness', 'finalize_protocol_document', 'add_soa_assessment', 'review_soa_matrix'],
     sharedContract: null,
     discoveryCatalog: null,
@@ -1280,7 +1287,9 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'admin',
     icon: 'users',
     uiKit: null,
-    apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup'],
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): AdminAccess invites members.
+    // '/api/mdx/admin' (2026-09-26): AdminAccess.tsx.
+    apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup', '/api/tenant-users', '/api/mdx/admin'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

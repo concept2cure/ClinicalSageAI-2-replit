@@ -1,0 +1,158 @@
+ ✓ server/services/audit/__tests__/chain.test.ts > hashPayload > is deterministic for equal payloads 2ms
+ ✓ server/services/audit/__tests__/chain.test.ts > hashPayload > differs for different payloads 1ms
+ ✓ server/services/audit/__tests__/chain.test.ts > hashPayload > returns a 64-char hex digest 0ms
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChain (writer) > uses the genesis hash when the tenant has no prior row 1ms
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChain (writer) > chains onto the tenant head (order-sensitive) 0ms
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChain (writer) > locks the tenant chain, reads the tenant head by chain_seq, and announces the position 1ms
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChain (writer) > resolves the tenant from the connection when the row carries none 0ms
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChain (writer) > resolves the tenant from the request scope when neither row nor connection carries one 1ms
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChain (writer) > refuses a row whose tenant cannot be resolved outside a test runtime (fail closed) 2ms
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChain (writer) > under vitest, a harness without tenant context gets the legacy recipe: no tenant filter, no announcement 3ms
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChain (writer) > refuses to write against a database without chain_seq outside a test runtime 1ms
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChain (writer) > falls back to the pre-fix order, once warned, only for a test fixture without chain_seq 1ms
+ ✓ server/services/audit/__tests__/chain.test.ts > walkAuditChain (pure) > verifies an intact per-tenant sequenced chain 2ms
+ ✓ server/services/audit/__tests__/chain.test.ts > walkAuditChain (pure) > keeps chains of different tenants independent 1ms
+ ✓ server/services/audit/__tests__/chain.test.ts > walkAuditChain (pure) > orders sequenced rows by chain_seq, not occurred_at (the F-1 ordering half) 1ms
+ ✓ server/services/audit/__tests__/chain.test.ts > walkAuditChain (pure) > treats an empty log as ok 0ms
+ ✓ server/services/audit/__tests__/chain.test.ts > walkAuditChain (pure) > detects a tampered middle row and stops at the first break 1ms
+ ✓ server/services/audit/__tests__/chain.test.ts > walkAuditChain (pure) > detects a tampered stored hash on the first row 0ms
+ ✓ server/services/audit/__tests__/chain.test.ts > walkAuditChain (pure) > accepts legacy rows written under the tenant view AND under the global view 1ms
+ ✓ server/services/audit/__tests__/chain.test.ts > walkAuditChain (pure) > names what a broken legacy row actually commits to (fork diagnosis) 1ms
+ ✓ server/services/audit/__tests__/chain.test.ts > walkAuditChain (pure) > anchors a tenant's first sequenced row to its legacy head 1ms
+ ✓ server/services/audit/__tests__/chain.test.ts > verifyAuditChain (reader) > reports ok for an intact chain read from the database 1ms
+ ✓ server/services/audit/__tests__/chain.test.ts > verifyAuditChain (reader) > reads every tenant with no tenant predicate, and one tenant with it 1ms
+ ✓ server/services/audit/__tests__/chain.test.ts > verifyAuditChain (reader) > refuses a cross-tenant verification on a tenant-scoped connection (fail closed) 1ms
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChainSealed + verifyAuditChainSeals (21 CFR Part 11 §11.70) > produces an UNSEALED row (hmacSeal null) when AUDIT_HMAC_KEY is absent 0ms
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChainSealed + verifyAuditChainSeals (21 CFR Part 11 §11.70) > produces a verifiable seal when AUDIT_HMAC_KEY is set 1ms
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChainSealed + verifyAuditChainSeals (21 CFR Part 11 §11.70) > verifies a correctly-sealed chain and tolerates interleaved unsealed rows 1ms
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChainSealed + verifyAuditChainSeals (21 CFR Part 11 §11.70) > detects a tampered seal 6ms
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChainSealed + verifyAuditChainSeals (21 CFR Part 11 §11.70) > fails closed on a sealed row the chain walk cannot link 1ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > requesting a password reset is audited > records the request for a real account 61ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > requesting a password reset is audited > records an attempt against an address with no account 9ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > requesting a password reset is audited > still says exactly the same thing either way 16ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > a reset link is built on the deployment's address, never the request's Host (D6) > in production, a forged Host does not become the link the victim is emailed 11ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > a reset link is built on the deployment's address, never the request's Host (D6) > in production without APP_URL, every address is refused alike and no token is issued 15ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records the change itself, which used to be only a logger line 404ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > refuses, and records, a token another request used first — no second success 331ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records a token that matched no account 4ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records an expired token 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > does not audit a change it refused before looking anything up 3ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > a plain DELETE as the runtime role is refused with the IMMUTABILITY_VIOLATION shape 15ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > SET LOCAL app.audit_archive_bypass = 'on' no longer opens the door for the runtime role (Phase A §9) 5ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the GUC does not open the door for the superuser session either 8ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the service statement deletes an old, archived batch and writes the archive record 20ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses a batch containing a row newer than the cutoff, and writes no record 7ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses a cutoff inside the 24-month hot window even for old rows 7ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses an empty locator, an empty checksum and a checksum that is not a sha256 8ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses a batch naming a row that is not in audit_logs, and an empty batch 5ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > EXECUTE is not public: a role without the grant cannot open the door 5ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the door is owned by audit_archiver, is SECURITY DEFINER, and audit_archiver cannot log in 3ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the archive record is itself append-only 9ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > UPDATE and TRUNCATE on audit_logs stay refused 4ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the migration replays cleanly (Rule 1): a second apply changes nothing and the door still works 27ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the service issues only the door call: no bypass GUC, no raw DELETE, in its code 1ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password while signed in is audited too (IAM-17) > records user_password_changed for the account holder, in the account tenant, without the password 363ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > reports ok after the real trigger migrations have been applied 3241ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > stays ok when the migrations replay (they re-run on every deploy, CLAUDE.md Rule 1) 91ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a dropped trigger 65ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a disabled trigger — the catalog row exists, the protection does not 56ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > reports an absent store (fresh install before deploy-migrate) as missing its triggers 51ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > does not count a same-named trigger on another table 40ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS > names the immutability triggers of every audit store the sweep verifies 2ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS > is created by a migration on the deploy applier, under exactly that name (drift guard) 3ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > reports ok when every expected trigger is present and enabled 1ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > issues one read-only catalog probe over pg_trigger, pg_class and pg_namespace, parameterised 2ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > names a trigger the catalog does not have (trg_audit_logs_no_delete dropped) 1ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > treats a disabled trigger (ALTER TABLE … DISABLE TRIGGER) as not protecting the table 0ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > reports a table that does not exist yet as missing every trigger on it 0ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > fails closed when the probe returns no row for an expected trigger 0ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > propagates a probe failure rather than reporting ok (caller decides the posture) 1ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > describeAuditImmutabilityGap > names every missing and disabled trigger, the absent tables and the migration to run 1ms
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > security-health panel exposure > runs as a critical check that fails when a trigger is missing 105ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names the user organisation > is written in a scope for exactly that organisation, with no role (a number, from the user record) 6ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names the user organisation > is written in a scope for exactly that organisation, with no role (a string, from the signed MFA challenge) 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names the user organisation > leaves the request in the pre-auth scope it arrived in 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (absent) 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (null) 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (empty) 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (zero) 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (negative) 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (not an id) 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > a write that is not persisted > does not fail the request that caused it 4ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > never shows a refused sign-in the way it shows a successful one 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > states the outcome even for an event it has no sentence for 2ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > is written into the row the ledger reads 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_sso 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_validation_failed 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_org_not_resolved 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_no_email 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_user_not_in_organisation 0ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > archives rows past cutoff and removes them from hot through the door 11ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > calls the door once per batch with the ids, the sink locator, the stored checksum and the cutoff, after the sink confirmed 2ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > never opens the trigger with a session setting and never issues a raw DELETE 2ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > a refusal by the door aborts the batch, is counted and reported, and leaves the rows in hot 1ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > a door that reports a count other than the batch size is treated as a refusal 1ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > works on a Pool-shaped client without checking out a dedicated connection 1ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > does NOT call the door when the sink reports a checksum mismatch 1ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > aborts on sink throw and leaves rows in hot 0ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > chunks large datasets into multiple batches, one door call each 2ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > respects maxBatches as a time-box 1ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > returns zero work when nothing past cutoff 0ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > the default cutoff is never inside the 24-month floor the door enforces 0ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > computeBatchHash > produces the same hash for the same rows regardless of key order 0ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > computeBatchHash > produces different hashes for different content 5ms
+ ✓ server/services/audit/__tests__/audit-integrity-pglite.integration.test.ts > verifyAuditIntegrity against PGlite > reports ok for an intact, sealed chain 50ms
+ ✓ server/services/audit/__tests__/audit-integrity-pglite.integration.test.ts > verifyAuditIntegrity against PGlite > detects a tampered row (broken sha256 chain) 31ms
+ ✓ server/services/audit/__tests__/audit-integrity-pglite.integration.test.ts > verifyAuditIntegrity against PGlite > fails closed (unverifiable, ok=false) when AUDIT_HMAC_KEY is absent 10ms
+ ✓ server/services/audit/__tests__/audit-integrity-pglite.integration.test.ts > verifyAuditIntegrity against PGlite > is ok for an empty log 4ms
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > migrations/20260921_audit_logs_chain_seq.sql on the shared fixture > adds chain_seq, the position trigger and the sequence, and replays without error 48ms
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > migrations/20260921_audit_logs_chain_seq.sql on the shared fixture > names the same announcement GUC the writer uses (one recipe) 2ms
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > assigns increasing chain_seq per tenant and the verifier walks it 62ms
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > verifies by commit order even when occurred_at runs backwards 9ms
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > refuses a row whose tenant_id differs from the position the writer took (fail closed) 11ms
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > records a chained row written without a position as legacy and still verifies it 11ms
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > records a row written outside a transaction as legacy (the lock and announcement end with their statement) 4ms
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > anchors a tenant's first sequenced row to its legacy head 12ms
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > detects a tampered sequenced row and names the segment 13ms
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > diagnoses the pre-fix fork: a legacy row committing to genesis instead of its predecessor 10ms
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > seals through the same walk: valid when intact, failing closed after a break 24ms
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 2 — the signature covers the manifest > includes the nested fields that version 1 signed as {} 6ms
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 2 — the signature covers the manifest > distinguishes a broken chain from an intact one 1ms
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 2 — the signature covers the manifest > distinguishes exports covering different date ranges 0ms
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 2 — the signature covers the manifest > is insensitive to key order, which is the point of canonicalizing 0ms
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 2 — the signature covers the manifest > emits valid JSON 3ms
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 1 — exports already issued still verify > reproduces the original expression byte for byte 0ms
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 1 — exports already issued still verify > still carries the defect, deliberately, because the signature did 0ms
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 1 — exports already issued still verify > routes by the manifest's own declaration, not by a global switch 0ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > non-production (no-op) > returns 'active' and never throws when NODE_ENV=development 1ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > non-production (no-op) > returns 'active' and never throws when NODE_ENV=staging 0ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > non-production (no-op) > returns 'active' and never throws when NODE_ENV=test 0ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > non-production (no-op) > returns 'active' and never throws when NODE_ENV=unset 0ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > returns 'active' with a sufficiently long key 0ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > refuses to boot when the key is unset 1ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > refuses to boot when the key is empty or whitespace-only 0ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > refuses to boot when the key is too short 0ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > rejects a too-short key even when unsealed is accepted (weak key is a misconfig) 2ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > returns 'unsealed-accepted' when the operator explicitly accepts an unsealed ledger 2ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > treats a non-"true" accept value as no decision and refuses to boot 3ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > does not echo the key value in the too-short error 0ms
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > is case-insensitive on NODE_ENV and the accept flag 1ms
+ ✓ server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > returns nothing for an intact single-org chain 2ms
+ ✓ server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > flags a row whose previous_hash does not match the prior record_hash 0ms
+ ✓ server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > validates each org chain independently (no cross-tenant break) 0ms
+ ✓ server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > does not let one org's hash satisfy another org's link 0ms
+ ✓ server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > treats a null previous_hash as "no claim" (genesis or unset writer) 0ms
+ ✓ server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > reports every break, not just the first 0ms
+ ✓ server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > returns [] for an empty chain 0ms
+ ✓ server/services/audit/__tests__/audit-row-headers.test.ts > setAuditRowHeaders > a lost row: persisted false and the stable code, never the store text 2ms
+ ✓ server/services/audit/__tests__/audit-row-headers.test.ts > setAuditRowHeaders > a written row: persisted true and no code 0ms
+ ✓ server/services/audit/__tests__/audit-row-headers.test.ts > setAuditRowHeaders > no outcome (no audited write happened): no headers 0ms
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > contains the Vault events, each with its chain hash, sequence and source 31ms
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > never carries another tenant's rows 28ms
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > still carries the audit_events rows it always did 18ms
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > narrows to one document when asked, and the manifest says so 17ms
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > verifies, and refuses after a one-byte change to a row 15ms
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > states the audit_logs chain verdict it was given — and never "intact" without one 22ms
+ Test Files  14 passed (14)
+      Tests  155 passed (155)
+exit=0

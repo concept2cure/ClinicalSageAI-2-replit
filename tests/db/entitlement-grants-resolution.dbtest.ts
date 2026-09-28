@@ -50,7 +50,10 @@
  * never edited. Cleanup is by id range and prefix. No audit rows are written.
  */
 
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+// Sign-up mails a verification link (IAM-17, P1-2): observed here, never sent.
+vi.mock('../../server/services/emailService', async importOriginal => ({ ...(await importOriginal<typeof import('../../server/services/emailService')>()),
+  isEmailConfigured: () => true, sendVerificationEmail: vi.fn(async () => undefined), sendWelcomeEmail: vi.fn(async () => undefined) }));
 import { Pool } from 'pg';
 import type { Request } from 'express';
 import { databaseUrl } from '../setup.db';

@@ -1,0 +1,62 @@
+# psql on c2c_d3b (from empty), SET LOCAL ROLE app_service, RLS enforcing, tenant A's GUCs; both runs rolled back.
+## BEFORE. Script:
+\set ON_ERROR_STOP 1
+BEGIN;
+INSERT INTO organizations (id, name, slug) VALUES (90395,'probe-A','probe-a-90395'),(90396,'probe-B','probe-b-90396');
+SELECT uuid::text AS a FROM organizations WHERE id=90395 \gset
+INSERT INTO regulatory_programs (name, code, organization_id, program_type, product_type, primary_agency, product_name)
+  VALUES ('probe-B-program','PROBE-B2',90396,'IND','drug','FDA','probe') RETURNING id::text AS bprog \gset
+INSERT INTO vault.documents (program_id, organization_id, content_hash, document_title, file_name, status, source_type)
+  VALUES (:'bprog', 90396, repeat('c',64), 'B-CONFIDENTIAL-STABILITY', 'b.txt', 'completed', 'txt');
+\echo '-- the trigger this change adds, disabled inside this transaction (the state before it):'
+ALTER TABLE public.organizations DISABLE TRIGGER organizations_tenant_key_immutable;
+SET LOCAL ROLE app_service;
+SELECT set_config('app.rls_enforce','on',true), set_config('app.current_org_id', :'a', true), set_config('app.current_tenant_id','90395',true) \g /dev/null
+\echo '-- 0. what tenant A can see of the organizations table (no RLS, before and after this change):'
+SELECT count(*) AS orgs_visible_to_a FROM organizations;
+\echo '-- 1. tenant A reads B''s vault before (expect 0):'
+SELECT count(*) AS a_sees_b FROM vault.documents WHERE document_title='B-CONFIDENTIAL-STABILITY';
+\echo '-- 2. tenant A moves its own org to a fresh uuid, then gives B''s org A''s uuid:'
+UPDATE organizations SET uuid = gen_random_uuid() WHERE id = 90395 RETURNING id;
+UPDATE organizations SET uuid = :'a' WHERE id = 90396 RETURNING id;
+\echo '-- 3. tenant A, same session GUC, reads B''s vault:'
+SELECT document_title AS a_now_reads FROM vault.documents WHERE document_title='B-CONFIDENTIAL-STABILITY';
+ROLLBACK;
+## Output:
+-- the trigger this change adds, disabled inside this transaction (the state before it):
+-- 0. what tenant A can see of the organizations table (no RLS, before and after this change):
+orgs_visible_to_a
+24
+(1 row)
+-- 1. tenant A reads B's vault before (expect 0):
+a_sees_b
+0
+(1 row)
+-- 2. tenant A moves its own org to a fresh uuid, then gives B's org A's uuid:
+id
+90395
+(1 row)
+id
+90396
+(1 row)
+-- 3. tenant A, same session GUC, reads B's vault:
+a_now_reads
+B-CONFIDENTIAL-STABILITY
+(1 row)
+
+## AFTER (committed state; the run stops at the first refusal). Output:
+-- 0. what tenant A can see of the organizations table (no RLS, before and after this change):
+orgs_visible_to_a
+24
+(1 row)
+-- 1. tenant A reads B's vault before (expect 0):
+a_sees_b
+0
+(1 row)
+-- 2. tenant A moves its own org to a fresh uuid, then gives B's org A's uuid:
+psql:swap_after.sql:16: ERROR:  organizations.id and organizations.uuid are immutable once set (organization 90395)
+HINT:  They are the tenant key of every tenant-keyed table. See docs/evidence/D3/2026-09-25-organizations-tenant-key/.
+CONTEXT:  PL/pgSQL function organizations_tenant_key_immutable() line 5 at RAISE
+psql:swap_after.sql:17: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+-- 3. tenant A, same session GUC, reads B's vault:
+psql:swap_after.sql:19: ERROR:  current transaction is aborted, commands ignored until end of transaction block

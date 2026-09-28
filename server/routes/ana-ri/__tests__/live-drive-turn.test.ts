@@ -108,7 +108,12 @@ vi.mock('../post-processing.js', () => ({
 }));
 vi.mock('../../../services/ana/AnaToolExecutor.js', () => ({
   getToolHandler: (name: string) => h.handlers[name],
-  servedModelOf: () => undefined,
+  // As the real one: the turn record reads which model served each call.
+  servedModelOf: (r: { provider?: string | null; model?: string | null; requestId?: string | null } | null) => ({
+    provider: r?.provider ?? null,
+    model: r?.model ?? null,
+    requestId: r?.requestId ?? null,
+  }),
 }));
 vi.mock('../../../services/ana/governed-toolset.js', () => ({
   governedToolsetFor: async () =>

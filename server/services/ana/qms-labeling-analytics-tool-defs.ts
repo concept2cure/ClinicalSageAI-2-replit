@@ -17,7 +17,7 @@ import type { AnaTool } from '../ai-gateway/types';
 export const CREATE_QMS_DOCUMENT: AnaTool = {
   name: 'create_qms_document',
   description:
-    "Create a controlled QMS document (SOP, WI, form, spec, policy, manual, protocol). Starts in draft; flip to effective via approve_qms_document. Use when the user agrees to write a new procedure or AnA derives one from regulatory analysis.",
+    "Create a controlled QMS document (SOP, WI, form, spec, policy, manual, protocol). Starts in draft. It becomes effective only when a person other than the author approves it with an electronic signature in the Quality register; AnA cannot do that. Use when the user agrees to write a new procedure or AnA derives one from regulatory analysis.",
   input_schema: {
     type: 'object',
     properties: {
@@ -34,7 +34,7 @@ export const CREATE_QMS_DOCUMENT: AnaTool = {
 export const APPROVE_QMS_DOCUMENT: AnaTool = {
   name: 'approve_qms_document',
   description:
-    "Approve a draft / in-review QMS document and flip status to 'effective'. Stamps approver_id + approved_at; sets effective_date to today (or to the provided override).",
+    "AnA cannot sign. Approving a QMS controlled document makes it effective and is an electronic signature (21 CFR 11.50): it needs the approver's password and second factor, which a chat turn cannot collect. This tool writes nothing; it tells the user to approve on the document in the Quality register. Use it only to explain that.",
   input_schema: {
     type: 'object',
     properties: {
@@ -77,14 +77,14 @@ export const REVISE_QMS_DOCUMENT: AnaTool = {
 export const RETIRE_QMS_DOCUMENT: AnaTool = {
   name: 'retire_qms_document',
   description:
-    "Retire a controlled QMS document — the terminal lifecycle state. Captures an optional reason in the audit trail. Use when the user wants to retire / withdraw a procedure that is no longer in use.",
+    "Retire a controlled QMS document — the terminal lifecycle state. Requires a reason for change of at least 8 characters, recorded in the audit trail; ask the user for it if they did not give one. Use when the user wants to retire / withdraw a procedure that is no longer in use.",
   input_schema: {
     type: 'object',
     properties: {
       document_id: { type: 'number' },
       reason:      { type: 'string' },
     },
-    required: ['document_id'],
+    required: ['document_id', 'reason'],
   },
 };
 
@@ -148,12 +148,12 @@ export const QMS_CHANGE_CREATE: AnaTool = {
 export const QMS_CHANGE_TRANSITION: AnaTool = {
   name: 'qms_change_transition',
   description:
-    "Advance a change through its controlled lifecycle (proposed → under_assessment → approved → in_implementation → verification → closed; or rejected/cancelled). Approval enforces segregation of duties — the approver must differ from the person who proposed the change. A reason-for-change is required (21 CFR Part 11); pass effectiveness_review when closing.",
+    "Advance a change through its controlled lifecycle (proposed → under_assessment → [approval] → in_implementation → verification → closed; or rejected/cancelled). This tool cannot approve a change: approval is an electronic signature (21 CFR 11.50) that needs the approver's password and second factor, which a chat turn cannot collect. When a change under assessment is ready for approval, tell the user to approve it with the Approve button on the change in the Quality register, which takes their signature; someone other than the person who proposed it must approve. A reason-for-change is required (21 CFR Part 11); pass effectiveness_review when closing.",
   input_schema: {
     type: 'object',
     properties: {
       change_id:            { type: 'number' },
-      to:                   { type: 'string', enum: ['proposed', 'under_assessment', 'approved', 'rejected', 'in_implementation', 'verification', 'closed', 'cancelled'] },
+      to:                   { type: 'string', enum: ['proposed', 'under_assessment', 'rejected', 'in_implementation', 'verification', 'closed', 'cancelled'] },
       reason:               { type: 'string', description: 'Reason-for-change for this governed transition.' },
       effectiveness_review: { type: 'string', description: 'Effectiveness-check outcome — provide when moving to closed.' },
     },

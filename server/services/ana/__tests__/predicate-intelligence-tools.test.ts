@@ -30,14 +30,14 @@ describe('predicate tool guards', () => {
     for (const name of ['suggest_predicate_devices', 'generate_se_matrix', 'get_predicate_defense_preview']) {
       const handler = getToolHandler(name);
       expect(handler, `${name} registered`).toBeTypeOf('function');
-      const out = JSON.parse(await handler!({ program_id: 'p' }, {}));
+      const out = JSON.parse(await handler!({ program_id: 'p' }, { humanConfirmed: true }));
       expect(out.error).toMatch(/organization context/);
     }
   });
 
   it('requires program_id even with org context', async () => {
     const handler = getToolHandler('suggest_predicate_devices')!;
-    const out = JSON.parse(await handler({}, { organizationId: 1 }));
+    const out = JSON.parse(await handler({}, { organizationId: 1, humanConfirmed: true }));
     expect(out.status).toBe('needs_parameters');
   });
 });

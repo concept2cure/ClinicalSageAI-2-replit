@@ -1,0 +1,54 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ↓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > renders the filing cabinet with the upload inside its suggested folder
+ ↓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > shows the unfiled queue and the header review count
+ ↓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > a failed vault read is an error, never "no documents"
+ ↓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > reports the derived pipeline stages and lists sources on demand
+ ↓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an unavailable data room renders as a failure, never an empty room
+ ↓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an empty data room says it is empty
+ ↓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an unavailable branch is said, never silently omitted from the tree
+ ↓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a suggestion is attributed to whoever made it > labels the classifier's proposal as the classifier's, with its confidence
+ ↓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a suggestion is attributed to whoever made it > does not label AnA's suggestion as the classifier's
+ ↓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — filing decisions are governed commits, not local patches > confirming a suggested filing POSTs to /file and re-reads the tree
+ ↓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — filing decisions are governed commits, not local patches > a rejected filing (expired session) is reported as refused, never as recorded
+ ↓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > renders a search input the human can actually use
+ ↓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > searches on the server and shows the hits, not a substring filter
+ ↓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > reports a FAILED search as a failure, never as zero matches
+ ↓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > says how many of the total are shown when the page is not all of them
+ ↓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > states the window and the real total when the server truncated the page
+ ↓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > says nothing when the whole cabinet fits — no note on the common case
+ ↓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > leaves the unfiled queue alone — it is programme-wide, not a page count
+ ↓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — placing a document into a submission > offers the action on an uploaded document and files it by BARE uuid
+ ↓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — what AnA is told about the selected document > an upload has no completion figure — null, not 0% complete
+ × client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — "N documents" counts documents, not tree entries > one authored document with three sections is "1 document", to the user and to AnA 102ms
+   → expected 'IND · 21 CFR 312  3 documents' to match /\b1 document\b/
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — "N documents" counts documents, not tree entries > one authored document with three sections is "1 document", to the user and to AnA
+AssertionError: expected 'IND · 21 CFR 312  3 documents' to match /\b1 document\b/
+
+- Expected:
+/\b1 document\b/
+
++ Received:
+"IND · 21 CFR 312  3 documents"
+
+ ❯ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx:669:20
+    667|     await screen.findAllByText('Clinical overview');
+    668|     const header = container.querySelector('.vd-sub-x')?.textContent ?…
+    669|     expect(header).toMatch(/\b1 document\b/);
+       |                    ^
+    670|     expect(header).not.toMatch(/3 documents/);
+    671|     await waitFor(() => expect(latest?.facts?.totalDocuments).toBe(1));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 20 skipped (21)
+   Start at  17:59:40
+   Duration  1.60s (transform 601ms, setup 142ms, import 733ms, tests 106ms, environment 467ms)
+

@@ -282,6 +282,8 @@ describe('AnaRail — Ask / Agent is what AnA will actually do', () => {
     const box = screen.getByPlaceholderText(/Describe a task for AnA to carry out/);
     fireEvent.change(box, { target: { value: '/power two-arm superiority' } });
     fireEvent.keyDown(box, { key: 'Enter' });
-    expect(onSend).toHaveBeenCalledWith('/power two-arm superiority');
+    // The text exactly as typed; the second argument is its attachments (none).
+    expect(onSend).toHaveBeenCalledTimes(1);
+    expect(onSend.mock.calls[0][0]).toBe('/power two-arm superiority');
   });
 });

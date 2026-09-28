@@ -4,10 +4,12 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { I } from '../icons';
 import { VaultPlaceIntoSubmission } from './VaultPlaceIntoSubmission';
-import { useLiveData, EmptyState } from '../dataConnect';
+import { VaultEditDetails } from './VaultEditDetails';
+import { useLiveData, EmptyState, type ShapeGuard } from '../dataConnect';
 import { useVaultUpload } from '../useVaultUpload';
 import {
   VAULT_INGEST_DOCUMENT_TYPES,
+  vaultIngestTypeLabel,
   type VaultIngestDocumentType,
 } from '@shared/constants/domain/vault-taxonomy';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -52,7 +54,8 @@ interface DataRoomRow {
   kind: string;
   sizeLabel: string;
   addedAt: string;
-  stage: 'captured' | 'classified' | 'filed';
+  /** 'needs_review': the classifier ran and refused to propose a folder. */
+  stage: 'captured' | 'needs_review' | 'classified' | 'filed';
   readState: string;
   suggestedFolder: string | null;
   suggestedFolderLabel: string;
@@ -65,14 +68,48 @@ interface DataRoomBlock {
   captured: number;
   classified: number;
   filed: number;
+  /** Absent on a server that predates it. */
+  needsReview?: number;
   sources: DataRoomRow[];
+  /** The newest-N window the counts cover; truncated = the program has more. */
+  window?: { shown: number; truncated: boolean };
+}
+
+/** A count over a truncated window is a floor, and reads as one. */
+function roomCount(n: number, block: DataRoomBlock): string {
+  return block.window?.truncated ? `${n}+` : String(n);
+}
+
+const ROOM_STAGE: Record<DataRoomRow['stage'], { label: string; tone: string }> = {
+  filed: { label: 'Filed', tone: 'ok' },
+  classified: { label: 'Classified', tone: 'ai' },
+  needs_review: { label: 'Needs review', tone: 'warn' },
+  captured: { label: 'Captured', tone: 'idle' },
+};
+
+/** What the lane's counts cover, and what needs a person. */
+function RoomNotes({ block }: { block: DataRoomBlock }) {
+  const review = block.needsReview ?? 0;
+  const truncated = block.window?.truncated === true;
+  if (!review && !truncated) return null;
+  return (
+    <span className="vd-dr-meta">
+      {review > 0 ? `${review} need review — the classifier would not propose a folder. ` : ''}
+      {truncated ? `Counts cover the newest ${block.window?.shown ?? block.captured} sources; this project has more.` : ''}
+    </span>
+  );
 }
 
 interface VaultDisplayShape {
   program: string;
   spine: string;
   standard: string;
+  /** Documents, counted by the server: authored documents (one each, however
+   *  many sections), CMC artifacts, and the programme's uploads — not the
+   *  leaves of the tree, and not the capped uploads page. */
   documentCount: number;
+  /** What documentCount is made of; a branch that could not be read is null. */
+  documentCounts?: { authored: number; cmcArtifacts: number | null; uploads: number | null };
   tree: VaultFolder[];
   pendingStore?: boolean;
   /** Uploads awaiting a person's filing decision (visible queue, not a black hole).
@@ -146,7 +183,7 @@ export function vaultDocFamilyCode(
 
 function fileIcon(doc: VaultDoc): React.ReactNode {
   const key = vaultFileIconKey(doc);
-  return (I as any)[key] || I.fileText || I.file;
+  return (I as any)[key] || I.fileText;
 }
 
 /* ── VaultTree — recursive folder nav ── */
@@ -185,10 +222,10 @@ function VaultTree({ nodes, depth, activeFolder, onPick, expanded, toggle }: Vau
               }}
             >
               <span className="vd-caret" data-open={isOpen || undefined}>
-                {I.chevronRight || '›'}
+                {I.chevRight}
               </span>
               <span className="vd-fico">
-                {isOpen ? I.folderOpen || I.folder : I.folder}
+                {isOpen ? I.folderOpen : I.folder}
               </span>
               <span className="vd-flabel">
                 {folder.code ? <b>{folder.code}</b> : null} {folder.label}
@@ -216,6 +253,89 @@ function VaultTree({ nodes, depth, activeFolder, onPick, expanded, toggle }: Vau
   );
 }
 
+/* ── Document history — this document's own audit trail (VR-01) ──
+   Every chained audit_logs row recorded against the document (ingest, filing
+   decisions, downloads), newest first, with the server's verdict on the
+   tenant's chain. Read from the one ledger; nothing here is derived on the
+   client. A failed read is shown as a failure: "no history" would tell an
+   inspector the document was never touched. */
+interface HistoryEntry {
+  id: string;
+  event: string;
+  actor: string;
+  at: string;
+  when: string;
+  hash: string;
+  seq: number | null;
+}
+interface HistoryShape {
+  entries: HistoryEntry[];
+  chain: { ok: boolean; rowsChecked: number; legacyRows: number; brokenAt?: string };
+}
+
+/** A body without an entries list and a chain verdict is a failed read, not an empty history. */
+const isHistoryShape: ShapeGuard<HistoryShape> = (v): v is HistoryShape =>
+  !!v && typeof v === 'object' && Array.isArray((v as HistoryShape).entries) &&
+  !!(v as HistoryShape).chain && typeof (v as HistoryShape).chain === 'object';
+
+function ChainVerdict({ chain }: { chain: HistoryShape['chain'] }) {
+  if (chain.ok) {
+    return (
+      <div className="vd-d-idx">
+        <span className="vd-idx-dot" /> Audit chain verified — {chain.rowsChecked} rows checked
+        {chain.legacyRows ? `, ${chain.legacyRows} recorded before sequencing` : ''}.
+      </div>
+    );
+  }
+  return (
+    <div className="vd-dr-err" role="alert">
+      {I.alertTriangle} Audit chain check failed{chain.brokenAt ? ` at ${chain.brokenAt}` : ''}. The entries below
+      are what is recorded; the chain that should prove them has a break.
+    </div>
+  );
+}
+
+function DocumentHistory({ projectId, documentUuid }: { projectId: string; documentUuid: string }) {
+  const path =
+    '/api/c2c/project-vault/' + encodeURIComponent(projectId) +
+    '/documents/' + encodeURIComponent(documentUuid) + '/history';
+  const st = useLiveData<HistoryShape>(path, [path], isHistoryShape);
+  let body: React.ReactNode;
+  if (st.loading) body = <div className="vd-d-idx">Loading history…</div>;
+  else if (st.error || !st.data) {
+    body = (
+      <div className="vd-dr-err" role="status">
+        {I.alertTriangle} This document's history could not be read. Nothing is shown rather than an
+        incomplete history.
+      </div>
+    );
+  } else if (st.data.entries.length === 0) {
+    body = <div className="vd-d-idx">No recorded events for this document.</div>;
+  } else {
+    body = (
+      <>
+        <ChainVerdict chain={st.data.chain} />
+        <div className="vd-vers">
+          {st.data.entries.map((e) => (
+            <div key={e.id} className="vd-ver">
+              <span className="vd-ver-v">{e.event}</span>
+              <span className="vd-ver-m">
+                {e.when || e.at} · {e.actor} · <span className="mono" title={e.hash}>{e.hash.slice(0, 12)}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  }
+  return (
+    <div data-testid="vault-document-history">
+      <div className="vd-d-seclbl">History</div>
+      {body}
+    </div>
+  );
+}
+
 /* ── Data Room lane — the capture → classify → file pipeline ──
    Every file captured for this project (AnA paperclip, Project Home drop-zone,
    Vault upload) passes through the Data Room: it lands as a source
@@ -238,7 +358,7 @@ function DataRoomLane({
     return (
       <div className="vd-dr" data-testid="vault-data-room">
         <div className="vd-dr-head">
-          <span className="vd-dr-title">{I.inbox || I.folder} Data room</span>
+          <span className="vd-dr-title">{I.inbox} Data room</span>
         </div>
         <div className="vd-dr-err" role="alert">
           {I.alertTriangle} Unavailable — showing nothing because the room could not be
@@ -251,7 +371,7 @@ function DataRoomLane({
     return (
       <div className="vd-dr" data-testid="vault-data-room">
         <div className="vd-dr-head">
-          <span className="vd-dr-title">{I.inbox || I.folder} Data room</span>
+          <span className="vd-dr-title">{I.inbox} Data room</span>
           <span className="vd-dr-meta">No data room information for this project.</span>
         </div>
       </div>
@@ -262,14 +382,15 @@ function DataRoomLane({
   return (
     <div className="vd-dr" data-testid="vault-data-room">
       <div className="vd-dr-head">
-        <span className="vd-dr-title">{I.inbox || I.folder} Data room</span>
+        <span className="vd-dr-title">{I.inbox} Data room</span>
         <span className="vd-dr-stages">
-          <span className="vd-dr-stage">Captured <b>{block.captured}</b></span>
+          <span className="vd-dr-stage">Captured <b>{roomCount(block.captured, block)}</b></span>
           <span className="vd-dr-arrow">›</span>
-          <span className="vd-dr-stage">Classified <b>{block.classified}</b></span>
+          <span className="vd-dr-stage">Classified <b>{roomCount(block.classified, block)}</b></span>
           <span className="vd-dr-arrow">›</span>
-          <span className="vd-dr-stage">Filed to vault <b>{block.filed}</b></span>
+          <span className="vd-dr-stage">Filed to vault <b>{roomCount(block.filed, block)}</b></span>
         </span>
+        <RoomNotes block={block} />
         {block.sources.length > 0 && (
           <button className="vd-dr-toggle" onClick={() => setOpen((o) => !o)}>
             {open ? 'Hide sources' : `Show ${block.sources.length} source${block.sources.length === 1 ? '' : 's'}`}
@@ -297,13 +418,8 @@ function DataRoomLane({
                   → {s.suggestedFolderLabel}
                 </span>
               ) : null}
-              <span
-                className={
-                  'rd-chip tone-' +
-                  (s.stage === 'filed' ? 'ok' : s.stage === 'classified' ? 'ai' : 'idle')
-                }
-              >
-                {s.stage === 'filed' ? 'Filed' : s.stage === 'classified' ? 'Classified' : 'Captured'}
+              <span className={'rd-chip tone-' + (ROOM_STAGE[s.stage] ?? ROOM_STAGE.captured).tone}>
+                {(ROOM_STAGE[s.stage] ?? ROOM_STAGE.captured).label}
               </span>
             </div>
           ))}
@@ -443,12 +559,20 @@ interface VaultSearchShape {
 /** A search hit rendered in the same row component the tree uses. */
 function searchHitToDoc(h: VaultSearchHit): VaultDoc {
   return {
-    id: h.id,
+    /* Keyed the way the tree keys the same document (`up-<uuid>`, server
+       uploadLeaf), so a hit and its tree leaf are one selection. Keyed by the
+       bare uuid, no hit ever matched, and every click fell back to the first
+       hit. */
+    id: `up-${h.id}`,
     num: h.ctdSection || '',
     title: h.title,
-    type: h.documentType || '',
+    // The same reader-facing name the tree shows (the server maps tree rows
+    // through vaultIngestTypeLabel). A hit mapped here separately rendered the
+    // raw token, so one document read "Module 3 · quality" in the tree and
+    // "MODULE_3" in a search.
+    type: h.documentType ? vaultIngestTypeLabel(h.documentType) : '',
     status: h.placementStatus || 'unfiled',
-    pct: 0,
+    pct: null,
     owner: '',
     ver: '',
     updated: '',
@@ -531,6 +655,11 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
      locally: what the Vault shows is what the Vault stored. */
   const [filing, setFiling] = useState(false);
   const [filingNote, setFilingNote] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
+  /* §11.10(e): the placement write is audited already; this is the reason the
+     person gives for it, sent as the route's `note` and recorded as the
+     placement rationale. Optional — a filing is not a signature — but when
+     given it travels with the decision rather than being lost. */
+  const [filingReason, setFilingReason] = useState('');
   /**
    * Download one uploaded vault document.
    *
@@ -623,6 +752,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           : 'Moved to Unfiled — awaiting a filing decision.',
       });
       setVaultEpoch((n) => n + 1);
+      setFilingReason('');
     } catch (e) {
       /* A refusal is reported as a refusal — the placement on screen stays
          what the server last stored, never what the click hoped for. */
@@ -793,11 +923,22 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   /* The vault document currently being filed into a submission, if any. The
      tree id is `up-<uuid>`; the uuid is what a leaf names. */
   const [filingIntoSubmission, setFilingIntoSubmission] = React.useState<
-    { documentUuid: string; documentTitle: string } | null
+    { documentUuid: string; documentTitle: string; mimeType?: string | null } | null
   >(null);
 
-  const sel =
-    allDocs.find((d) => d.id === selId) || results[0] || allDocs[0] || null;
+  /* The tree's record of a document wins over a search hit for the same one:
+     it carries the filing block (Confirm, Move, Place into submission) that a
+     hit does not, and keeps the hit's matching excerpt. A document only the
+     search found is shown as its hit. */
+  const pick = (id: string | undefined): VaultDoc | undefined => {
+    if (id === undefined) return undefined;
+    const leaf = allDocs.find((d) => d.id === id);
+    const hit = searching ? results.find((d) => d.id === id) : undefined;
+    if (!leaf) return hit;
+    // While searching, the excerpt that matched is what the reader needs to see.
+    return hit?.preview ? { ...leaf, preview: hit.preview } : leaf;
+  };
+  const sel = pick(selId ?? undefined) || pick(results[0]?.id) || allDocs[0] || null;
 
   /* What AnA can see of this screen.
      Until now she knew the user was on "vault" and nothing else — not which
@@ -823,19 +964,25 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
     const shown = results.length;
     return {
       summary:
-        `Document vault: ${allDocs.length} document(s) in the tree` +
+        `Document vault: ${vault?.documentCount ?? 0} document(s)` +
         (vault?.unfiledCount ? `, ${vault.unfiledCount} upload(s) unfiled` : '') +
         (folder ? `, folder "${folder.label}" open` : '') +
         (searching ? `, filtered to ${shown} by the search "${q.trim()}"` : '') +
         (sel ? `, "${sel.title}" selected` : ''),
       facts: {
-        totalDocuments: allDocs.length,
+        // The server's count of documents. allDocs is the tree's leaves: each
+        // section of an authored document, and only the uploads on the page.
+        totalDocuments: vault?.documentCount ?? 0,
+        documentCounts: vault?.documentCounts ?? null,
         unfiledUploads: vault?.unfiledCount ?? 0,
         dataRoom: vault?.dataRoom
           ? {
               captured: vault.dataRoom.captured,
               classified: vault.dataRoom.classified,
               filed: vault.dataRoom.filed,
+              needsReview: vault.dataRoom.needsReview ?? null,
+              // When true, the three counts above cover the newest sources only.
+              truncated: vault.dataRoom.window?.truncated === true,
             }
           : vault?.unavailable?.some((u) => u.branch === 'Data room')
             ? 'unavailable — counts unknown, not zero'
@@ -848,7 +995,10 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           ? {
               id: sel.id, number: sel.num, title: sel.title, type: sel.type,
               status: sel.status, version: sel.ver, owner: sel.owner,
-              updated: sel.updated, percentComplete: sel.pct,
+              updated: sel.updated,
+              // An upload has no authoring completion. The server sends null;
+              // a 0 from one that has not caught up is still not a figure.
+              percentComplete: sel.src === 'upload' ? null : sel.pct,
               blocker: sel.blocker ?? false, flag: sel.flag ?? null,
               filing: sel.filing ?? null,
             }
@@ -862,7 +1012,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         'Confirm or move an upload’s suggested filing (governed, audited)',
       ],
     };
-  }, [vaultState.loading, vaultState.error, allDocs, results.length, folder, searching, q, sel, vault]);
+  }, [vaultState.loading, vaultState.error, results.length, folder, searching, q, sel, vault]);
   usePublishSurfaceContext('vault', anaContext);
 
   const st = (s: string) => vaultStatus(s);
@@ -931,7 +1081,11 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           <div className="vd-sub">
             <span className="vd-sub-x">
               {vault && vault.spine ? <>{vault.spine} {I.dot} </> : null}
-              {allDocs.length} document{allDocs.length === 1 ? '' : 's'}
+              {vault ? (
+                <>
+                  {vault.documentCount} document{vault.documentCount === 1 ? '' : 's'}
+                </>
+              ) : null}
               {vault && (vault.unfiledCount ?? 0) > 0 ? (
                 <> {I.dot} {vault.unfiledCount} unfiled — needs review</>
               ) : null}
@@ -967,7 +1121,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         >
           {VAULT_INGEST_DOCUMENT_TYPES.map((t) => (
             <option key={t} value={t}>
-              {t.replace(/_/g, ' ')}
+              {vaultIngestTypeLabel(t)}
             </option>
           ))}
         </select>
@@ -999,7 +1153,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           }
           data-testid="vault-upload-button"
         >
-          {I.upload || I.plus} {uploading ? 'Uploading…' : 'Upload'}
+          {I.upload} {uploading ? 'Uploading…' : 'Upload'}
         </button>
         {/* The conversational route is kept, but as what it is: a second way
             in, not the thing the upload icon promises. */}
@@ -1034,6 +1188,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         <VaultPlaceIntoSubmission
           documentUuid={filingIntoSubmission.documentUuid}
           documentTitle={filingIntoSubmission.documentTitle}
+          mimeType={filingIntoSubmission.mimeType}
           onClose={() => setFilingIntoSubmission(null)}
         />
       )}
@@ -1323,6 +1478,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                                 // prefix is refused server-side as a malformed uuid.
                                 documentUuid: sel.docId!,
                                 documentTitle: sel.title || sel.num || 'Vault document',
+                                mimeType: sel.mimeType,
                               })
                             }
                             data-testid="vault-place-into-submission"
@@ -1357,19 +1513,34 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       )}
                       {sel.filing.rationale && (
                         <div className="vd-d-filing-why">
-                          {sel.filing.placementStatus === 'suggested'
-                            ? `Classifier${sel.filing.confidence ? ` (${sel.filing.confidence} confidence)` : ''}: `
+                          {/* "Classifier" only for the classifier's own proposal, which
+                              always carries its confidence. A suggestion AnA made has
+                              none, and its rationale already names her — labelling it
+                              "Classifier" would misattribute it all over again. */}
+                          {sel.filing.placementStatus === 'suggested' && sel.filing.confidence
+                            ? `Classifier (${sel.filing.confidence} confidence): `
                             : ''}
                           {sel.filing.rationale}
                         </div>
                       )}
                       <div className="vd-d-filing-acts">
+                        {sel.docId && (sel.filing.placementStatus === 'suggested' || cabinetFolders.length > 0) && (
+                          <input
+                            className="vd-d-filing-reason"
+                            value={filingReason}
+                            onChange={(e) => setFilingReason(e.target.value)}
+                            placeholder="Reason (optional, recorded with the placement)"
+                            aria-label="Reason for this filing decision"
+                            disabled={filing}
+                            data-testid="vault-filing-reason"
+                          />
+                        )}
                         {sel.filing.placementStatus === 'suggested' && sel.docId && (
                           <button
                             className="sp-primary"
                             style={{ padding: '7px 11px' }}
                             disabled={filing}
-                            onClick={() => void fileDocument(sel.docId!, { confirm: true })}
+                            onClick={() => void fileDocument(sel.docId!, { confirm: true, ...(filingReason.trim() ? { note: filingReason.trim() } : {}) })}
                             data-testid="vault-confirm-filing"
                           >
                             {I.check || I.fileText} Confirm filing
@@ -1393,7 +1564,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                               disabled={filing || !moveTarget}
                               onClick={() => {
                                 if (moveTarget) {
-                                  void fileDocument(sel.docId!, { folderId: moveTarget });
+                                  void fileDocument(sel.docId!, { folderId: moveTarget, ...(filingReason.trim() ? { note: filingReason.trim() } : {}) });
                                   setMoveTarget('');
                                 }
                               }}
@@ -1413,6 +1584,16 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                         )}
                       </div>
                     </div>
+
+                    {projectId && sel.docId && sel.details ? (
+                      <VaultEditDetails
+                        key={`${sel.docId}-${vaultEpoch}`}
+                        projectId={projectId}
+                        documentId={sel.docId}
+                        details={sel.details}
+                        onSaved={() => setVaultEpoch((n) => n + 1)}
+                      />
+                    ) : null}
 
                     <div className="vd-d-seclbl">File</div>
                     <div className="vd-d-filing">
@@ -1435,6 +1616,9 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                         </div>
                       )}
                     </div>
+                    {projectId && sel.docId ? (
+                      <DocumentHistory key={`${sel.docId}-${vaultEpoch}`} projectId={projectId} documentUuid={sel.docId} />
+                    ) : null}
                   </>
                 ) : (
                   <>

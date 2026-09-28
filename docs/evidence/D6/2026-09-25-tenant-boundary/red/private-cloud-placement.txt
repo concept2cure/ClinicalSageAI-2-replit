@@ -1,0 +1,33 @@
+# against bfbf0ee8 (pre-change placement.ts / clients.ts)
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > provider placement registry > marks shared frontier providers as multi-tenant without ZDR by default 3ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > provider placement registry > marks private-cloud Claude (bedrock) as frontier_private with ZDR by default 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > provider placement registry > marks local as the only self-hosted, on-prem, air-gappable substrate 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > allows any provider when no requirements are set 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > excludes shared frontier when zero data retention is required 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > requires a self-hosted substrate for on-prem residency 0ms
+ × server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > enforces regional residency against the provider region list 9ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > combines residency and ZDR (both must hold) 1ms
+ × server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > default Vertex (us-east5) claims us only — never eu 3ms
+   → expected [ 'us', 'eu' ] to deeply equal [ 'us' ]
+ × server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > Vertex pointed at an EU region claims eu 2ms
+   → expected [ 'us', 'eu' ] to deeply equal [ 'eu' ]
+ × server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > Bedrock residency comes from the client region, not a declaration 1ms
+   → expected [ 'us' ] to deeply equal [ 'eu' ]
+ × server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > a region with no residency code guarantees none 1ms
+   → expected [ 'us' ] to deeply equal [ 'global' ]
+ × server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > Azure claims no residency unless one is declared 1ms
+   → expected [ 'us', 'eu' ] to deeply equal [ 'global' ]
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud zero retention (D6) > Bedrock is zero-retention unless the operator says otherwise 1ms
+ × server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud zero retention (D6) > Vertex and Azure claim zero retention only when the operator records it 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ai-gateway/providers/__tests__/placement.test.ts > assertPlacementRegistryConsistency — production boot (D6) > refuses a declared Bedrock residency the client region does not serve 2ms
+   → expected [Function] to throw error matching /AI_BEDROCK_RESIDENCY=eu.*us-east-1/ but got '(0 , __vite_ssr_import_1__.assertPlac…'
+ × server/services/ai-gateway/providers/__tests__/placement.test.ts > assertPlacementRegistryConsistency — production boot (D6) > refuses a declared Vertex residency list wider than the client region 1ms
+   → expected [Function] to throw error matching /claims eu, but the vertex client call…/ but got '(0 , __vite_ssr_import_1__.assertPlac…'
+ × server/services/ai-gateway/providers/__tests__/placement.test.ts > assertPlacementRegistryConsistency — production boot (D6) > boots when the declaration matches the client region 1ms
+   → expected [Function] to not throw an error but 'TypeError: (0 , __vite_ssr_import_1__…' was thrown
+ × server/services/ai-gateway/providers/__tests__/placement.test.ts > assertPlacementRegistryConsistency — production boot (D6) > judges only enabled lanes, and only in production 1ms
+   → expected [Function] to not throw an error but 'TypeError: (0 , __vite_ssr_import_1__…' was thrown
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+exit=1

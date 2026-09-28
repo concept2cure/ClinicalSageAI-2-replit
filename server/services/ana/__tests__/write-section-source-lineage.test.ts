@@ -59,7 +59,7 @@ vi.mock('../../auditService', () => ({ auditLog: vi.fn(async () => undefined) })
 
 import { approvedToolHandler } from './support/approved-tool-handler';
 
-const CTX = { organizationId: 5, userId: 41, organizationUuid: 'org-uuid' };
+const CTX = { organizationId: 5, userId: 41, organizationUuid: 'org-uuid', humanConfirmed: true };
 const Q_SUB = '11111111-2222-4333-8444-555555555555';
 const PROSE = 'The primary endpoint was met at week twelve in the intent-to-treat population. The rest is ours.';
 
@@ -130,7 +130,7 @@ describe('write_kit_section', () => {
     const out = JSON.parse(
       await handler(
         { section_key: 'substantial-equivalence', content: PROSE },
-        { organizationId: 5, userId: null } as never,
+        { organizationId: 5, userId: null, humanConfirmed: true } as never,
       ),
     );
     expect(out.error).toMatch(/requires user context/);

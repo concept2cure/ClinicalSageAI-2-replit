@@ -44,7 +44,7 @@ describe('document intake tools — input validation (no DB needed)', () => {
   for (const name of INTAKE_TOOLS) {
     it(`${name} returns a structured error when file_id is missing`, async () => {
       const handler = getToolHandler(name)!;
-      const result = JSON.parse(await handler({}, { organizationId: 1 }));
+      const result = JSON.parse(await handler({}, { organizationId: 1, humanConfirmed: true }));
       expect(result.error).toMatch(/file_id/);
     });
   }

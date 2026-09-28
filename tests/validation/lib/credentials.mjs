@@ -74,3 +74,36 @@ export async function requireSigner({ deviation, expect }, baseUrl, authorEmailO
   }
   return { ...cred, session };
 }
+
+/**
+ * The two further identities OQ-PROJ-18 needs (URS-PROJ-012, VSR-001 F-29):
+ *
+ *   OQ_PLATFORM_ADMIN_EMAIL / _PASSWORD / _TOTP_SECRET
+ *       a platform administrator (an active platform_role_grants row), who
+ *       takes an account out of use through the product's own route,
+ *       PATCH /api/admin/master/users/:id/status;
+ *   OQ_STANDING_EMAIL / _PASSWORD / _TOTP_SECRET
+ *       the account taken out of use: a member of the run identity's
+ *       organisation that no other step uses. The step suspends it and then
+ *       restores it, so it must be neither the run identity nor the signer.
+ *
+ * Taking an account out of use needs a platform administrator or the
+ * organisation's identity provider; the run identity and the signer are
+ * neither. Without both credentials the step is recorded as not executed.
+ */
+export const STANDING_CREDENTIALS_NOT_SUPPLIED =
+  'not executed — credential not supplied: set OQ_PLATFORM_ADMIN_EMAIL and OQ_PLATFORM_ADMIN_PASSWORD (a platform administrator), and OQ_STANDING_EMAIL and OQ_STANDING_PASSWORD (a member of the run identity\'s organisation that no other step uses), to execute this credentialed step.';
+
+function credentialFromEnv(prefix) {
+  const email = (process.env[`${prefix}_EMAIL`] || '').trim().toLowerCase();
+  const password = process.env[`${prefix}_PASSWORD`] || '';
+  if (!email || !password) return null;
+  return { email, password, totpSecret: process.env[`${prefix}_TOTP_SECRET`] || '' };
+}
+
+/** OQ-PROJ-18's platform administrator and subject, or null when either is not supplied. */
+export function standingCredentials() {
+  const admin = credentialFromEnv('OQ_PLATFORM_ADMIN');
+  const subject = credentialFromEnv('OQ_STANDING');
+  return admin && subject ? { admin, subject } : null;
+}

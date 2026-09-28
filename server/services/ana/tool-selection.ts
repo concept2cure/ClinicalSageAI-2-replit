@@ -36,6 +36,10 @@ export const ALWAYS_ON_TOOLS: ReadonlySet<string> = new Set([
   'generate_document',
   'generate_citation',
   'fetch_template_and_fill',
+  // Her declared plan (turn-plan.ts). A request's wording says nothing about
+  // whether it has several steps, so relevance scoring would drop it on
+  // exactly the long turns where a person most needs to see the plan.
+  'update_plan',
 ]);
 
 /**

@@ -154,7 +154,7 @@ describe('commit_document_revision — tool registration + guards', () => {
 
   it('refuses without tenant + user context', async () => {
     const out = JSON.parse(
-      await approvedToolHandler('commit_document_revision')!({ title: 'X', content: 'Y' }, {} as any),
+      await approvedToolHandler('commit_document_revision')!({ title: 'X', content: 'Y' }, { humanConfirmed: true } as any),
     );
     expect(out.error).toMatch(/tenant \+ user context/);
   });
@@ -163,7 +163,7 @@ describe('commit_document_revision — tool registration + guards', () => {
     const out = JSON.parse(
       await approvedToolHandler('commit_document_revision')!(
         { title: '' },
-        { organizationId: 1, userId: 1 } as any,
+        { organizationId: 1, userId: 1, humanConfirmed: true } as any,
       ),
     );
     expect(out.error).toMatch(/title and non-empty content/);

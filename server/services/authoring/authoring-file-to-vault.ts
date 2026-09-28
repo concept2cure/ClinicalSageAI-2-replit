@@ -112,8 +112,11 @@ async function readDocumentForFiling(
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    // provenance carries `moduleDefaulted` when the draft's module was assumed
+    // rather than chosen; read it only where the column exists.
+    const hasProvenance = (await columnState(pool, 'provenance')) === 'present';
     const r = await client.query(
-      `SELECT id, title, module, status, locked_at, client_program_id, version, created_at
+      `SELECT id, title, module, status, locked_at, client_program_id, version, created_at${hasProvenance ? ', provenance' : ''}
          FROM authoring_documents WHERE id = $1 AND tenant_id = $2
          FOR UPDATE NOWAIT`,
       [docId, tenantId],
@@ -271,6 +274,59 @@ async function recordFiling(
   }
 }
 
+/**
+ * Where the filing goes. The caller's folder wins; otherwise the CTD module
+ * derives one — but only when someone chose the module. A module the draft
+ * assumed ('M2' when AnA was given none, recorded as provenance.moduleDefaulted)
+ * is not a filing decision, and yields no target (2026-09-22 review, #13).
+ */
+async function filingTarget(args: FileToVaultArgs, doc: DocRow, programId: string): Promise<string | null> {
+  const explicit = args.folderId?.trim();
+  if (explicit) return explicit;
+  const moduleDefaulted = (doc as { provenance?: { moduleDefaulted?: unknown } | null }).provenance?.moduleDefaulted === true;
+  return moduleDefaulted ? null : derivedFolder(doc.module, programId, args.tenantId);
+}
+
+/**
+ * Place a document the ingest has just admitted. A placement that THROWS (not
+ * refuses) reverts the admitted row before the error propagates; it used to
+ * leave the row behind while the route answered 500 — an orphan the vault then
+ * listed as a document nobody filed (2026-09-22 review, #9). A refusal is the
+ * caller's to handle: it carries a status and a code the caller reports.
+ */
+async function placeAdmittedDocument(p: {
+  args: FileToVaultArgs;
+  doc: DocRow;
+  programId: string;
+  target: string;
+  vaultDocumentId: string;
+  userId: number | null;
+}): Promise<Awaited<ReturnType<typeof placeVaultDocument>>> {
+  const { args, doc, programId, target, vaultDocumentId, userId } = p;
+  const { tenantId, actor } = args;
+  try {
+    return await placeVaultDocument({
+      programId,
+      documentId: vaultDocumentId,
+      organizationId: tenantId,
+      userId,
+      folderId: target,
+      ctdSection: doc.module ? String(doc.module) : null,
+      note: args.folderId?.trim()
+        ? 'Filed from the authoring editor into the folder the author chose.'
+        : `Filed from the authoring editor by its CTD module (${doc.module} → ${folderLabel(await resolveVaultView(programId, tenantId), target)}).`,
+      ipAddress: args.ipAddress,
+      userAgent: args.userAgent,
+    });
+  } catch (err) {
+    await revertIngest({
+      pool: args.pool, tenantId, actorId: actor.id, vaultDocumentId, programId,
+      why: `filing threw: ${err instanceof Error ? err.message : String(err)}`,
+    });
+    throw err;
+  }
+}
+
 /** Steps 2–3: admit the bytes, then file them where a target is known. */
 async function ingestAndFile(
   args: FileToVaultArgs,
@@ -299,23 +355,11 @@ async function ingestAndFile(
   });
   if (!ingested.ok) return refuse(ingested.status, ingested.code, ingested.message);
 
-  const target = args.folderId?.trim() || (await derivedFolder(doc.module, programId, tenantId));
+  const target = await filingTarget(args, doc, programId);
   if (!target) {
     return { id: ingested.document.id, folder: { ...ingested.filing, folderLabel: ingested.filing.folderLabel ?? '' } };
   }
-  const placed = await placeVaultDocument({
-    programId,
-    documentId: ingested.document.id,
-    organizationId: tenantId,
-    userId,
-    folderId: target,
-    ctdSection: doc.module ? String(doc.module) : null,
-    note: args.folderId?.trim()
-      ? 'Filed from the authoring editor into the folder the author chose.'
-      : `Filed from the authoring editor by its CTD module (${doc.module} → ${folderLabel(await resolveVaultView(programId, tenantId), target)}).`,
-    ipAddress: args.ipAddress,
-    userAgent: args.userAgent,
-  });
+  const placed = await placeAdmittedDocument({ args, doc, programId, target, vaultDocumentId: ingested.document.id, userId });
   if (!placed.ok) {
     await revertIngest({
       pool: args.pool, tenantId, actorId: actor.id, vaultDocumentId: ingested.document.id, programId,

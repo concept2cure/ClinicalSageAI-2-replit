@@ -17,15 +17,15 @@ describe('Lifecycle AnA tools — registration', () => {
 
 describe('Lifecycle AnA tools — context + input guards', () => {
   it('create_lifecycle_obligation refuses without tenant/user context', async () => {
-    const out = JSON.parse(await getToolHandler('create_lifecycle_obligation')!({ obligation_type: 'variation', region: 'eu', title: 'X' }, {} as any));
+    const out = JSON.parse(await getToolHandler('create_lifecycle_obligation')!({ obligation_type: 'variation', region: 'eu', title: 'X' }, { humanConfirmed: true } as any));
     expect(out.error).toMatch(/tenant \+ user context/);
   });
   it('create_lifecycle_obligation rejects an invalid type', async () => {
-    const out = JSON.parse(await getToolHandler('create_lifecycle_obligation')!({ obligation_type: 'teleport', region: 'eu', title: 'X' }, { organizationId: 1, userId: 1 } as any));
+    const out = JSON.parse(await getToolHandler('create_lifecycle_obligation')!({ obligation_type: 'teleport', region: 'eu', title: 'X' }, { organizationId: 1, userId: 1, humanConfirmed: true } as any));
     expect(out.error).toMatch(/must be valid/);
   });
   it('review_lifecycle_calendar requires tenant context', async () => {
-    const out = JSON.parse(await getToolHandler('review_lifecycle_calendar')!({}, {} as any));
+    const out = JSON.parse(await getToolHandler('review_lifecycle_calendar')!({}, { humanConfirmed: true } as any));
     expect(out.error).toMatch(/tenant context/);
   });
 });

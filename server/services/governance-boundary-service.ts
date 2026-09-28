@@ -28,6 +28,7 @@ import {
 import {
   ASSUMPTION_SETTLED_SQL_PREDICATE,
   UNRESOLVED_DECISION_ACTION_STATES,
+  GOVERNED_FABRIC_DECISION_KIND,
   rankConfidence,
 } from '../../shared/constants/operating-system-vocab';
 import { normalizeCtdCode } from '../../shared/regulatory/section-code';
@@ -332,12 +333,20 @@ export class GovernanceBoundaryService {
             UNRESOLVED_DECISION_ACTION_STATES.map((s) => sql`${s}`),
             sql`, `
           );
+          // Human decisions only. A governed-fabric row is one machine gate
+          // evaluation, written per evaluation by governed-decision-repository;
+          // it is not something a person owes an answer on, and a single
+          // 'review' verdict on one document action must not make a whole
+          // project unlockable forever with no human able to clear it. See
+          // GOVERNED_FABRIC_DECISION_KIND for why this distinction only
+          // surfaced once those rows could actually be written.
           const res = await database.execute(sql`
             SELECT count(*)::int AS unresolved
             FROM decision_records
             WHERE project_id = ${request.projectId}
               AND organization_id = ${request.organizationId}
               AND action_state IN (${unresolvedStates})
+              AND coalesce(decision_context->>'kind', '') <> ${GOVERNED_FABRIC_DECISION_KIND}
           `);
           const rows = ((res as unknown as { rows?: Array<{ unresolved: number }> }).rows ?? res) as Array<{ unresolved: number }>;
           const unresolved = Number(rows[0]?.unresolved ?? 0);

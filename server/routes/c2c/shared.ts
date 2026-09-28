@@ -9,6 +9,7 @@
  * @module server/routes/c2c/shared
  */
 
+import { unpersistedAuditRow, type AuditRowOutcome } from '../../services/audit/audit-write-outcome';
 import type { Request, Response } from 'express';
 import DOMPurifyImport from 'isomorphic-dompurify';
 import { createScopedLogger } from '../../utils/logger';
@@ -300,6 +301,15 @@ export interface AuditEntryOutcome {
   written: boolean;
   /** False when the row carries the sentinel 0 for an unresolved org or user. */
   attributed: boolean;
+}
+
+/**
+ * A `logAuditEntry` result in the canonical wire shape (`AuditRowOutcome`) the
+ * client transport reads. A written row is `chained: false` because it is: this
+ * writer's store is regulatory_audit_logs, not the chained audit_logs.
+ */
+export function auditTrailFromEntry(outcome: AuditEntryOutcome): AuditRowOutcome {
+  return outcome.written ? { persisted: true, chained: false } : unpersistedAuditRow();
 }
 
 export async function logAuditEntry(

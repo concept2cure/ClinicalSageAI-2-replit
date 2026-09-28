@@ -33,7 +33,10 @@ vi.mock('../C2CForm', () => ({
       config.title === 'Record regulatory identifiers'
         ? { packageId: '77', applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics Inc', reason: 'Recording the IND number assigned by CDER' }
         : config.title === 'Assemble bundle'
-          ? { packageId: '77', region: 'FDA', sequence: '0001', reason: 'Assemble sequence 0001 for FDA' }
+          // A case that needs particular field values sets __c2cFormValues; the
+          // default stands in for "the operator filled the form in".
+          ? ((globalThis as any).__c2cFormValues
+              ?? { packageId: '77', region: 'FDA', sequence: '0001', reason: 'Assemble sequence 0001 for FDA' })
           : { region: 'fda', gateway: 'esg', packageId: '77', submissionType: 'original', reason: 'Dispatch sequence 0003 to FDA', meaning: 'approval', password: 'pw', totp: '123456' };
     return <button data-testid="form-submit" onClick={() => onSubmit(values)}>{config.submitLabel}</button>;
   },
@@ -65,6 +68,7 @@ beforeEach(() => {
   // catch reports a failure, so the toast under test never renders.
   (URL as unknown as { createObjectURL: unknown }).createObjectURL = vi.fn(() => 'blob:stub');
   (URL as unknown as { revokeObjectURL: unknown }).revokeObjectURL = vi.fn();
+  (globalThis as any).__c2cFormValues = undefined;
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
@@ -512,6 +516,44 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
     fireEvent.click(screen.getByTestId('form-submit'));
     await screen.findByText(/must declare what is being filed/);
+  });
+
+  it('SENDS what the form collected: the submission type and the withdrawals reach the server', async () => {
+    // The form asked for a submission type and the handler did not forward it,
+    // so a follow-up sequence was refused for want of a value the operator had
+    // supplied. A field the request drops is a field that does not exist.
+    let sent: any = null;
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'POST' && url.endsWith('/assemble')) {
+        sent = body;
+        return env({ packageId: 'pkg_77', bundle: {
+          sha256: 'f'.repeat(64), leafCount: 1, sequence: '0001',
+          validation: { errorCount: 0, warningCount: 0, infoCount: 0 },
+          lifecycle: { summary: { new: 0, replace: 1, append: 0, delete: 1, unchanged: 2 }, omittedCount: 2 },
+        } });
+      }
+      return env(null);
+    });
+    // Set before the dialog mounts: the stub captures its values at render.
+    (globalThis as any).__c2cFormValues = {
+      packageId: 'pkg_77', sequence: '0001', submissionType: 'Efficacy Supplement',
+      withdraw: '2.5/clinical-overview.pdf\n\n  3.2.P.1/description.pdf  \n',
+      reason: 'Withdraw the superseded overview and file the revision',
+    };
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    await screen.findByText(/Sequence 0001/);
+    expect(sent.submissionType).toBe('Efficacy Supplement');
+    expect(sent.withdraw).toEqual([
+      { ctdSection: '2.5', fileName: 'clinical-overview.pdf' },
+      { ctdSection: '3.2.P.1', fileName: 'description.pdf' },
+    ]);
+    // A withdrawal is irreversible at the agency, so it is counted out loud.
+    await screen.findByText(/1 withdrawn from the application/);
   });
 
   it('a submission type the region cannot file shows the terms that would work', async () => {

@@ -24,6 +24,8 @@ import { enforceAuthorLineage } from '../../services/clinical-regulatory-evidenc
 import { resolveGovernedContext } from '../../services/concept2cure/governedDocumentContractService';
 import { createTraceId, emitTraceEvent } from '../../services/generation-guard.js';
 import { markPackagesContentChangedForArtifact } from '../../services/ectd/package-content-change';
+import { artifactApproval } from '../../services/ectd/package-content-fingerprint';
+import { reviewQuorumVerdict } from '../../services/artifact-approval-act';
 import { interceptArtifactChange, interceptFeedback } from '../../services/intelligence/rim-interceptors.js';
 import { evaluateAndInterceptGovernedDocument } from '../../src/control-plane/governed-document-evaluator';
 import * as crypto from 'crypto';
@@ -39,6 +41,7 @@ import {
   getOrganizationId,
   getUserId,
   logAuditEntry,
+  auditTrailFromEntry,
   logConcept2cureError,
   paramStr,
   sanitizeContent,
@@ -47,6 +50,7 @@ import {
   verifyIntegrityChain,
 } from './shared';
 import { verifyProjectAccess } from './project-access';
+import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project';
 import { clientIpKey } from '../../utils/client-ip';
 
 const logger = createScopedLogger('concept2cure-artifacts');
@@ -2346,6 +2350,16 @@ router.post(
           ctdSection: artifact.ctdSection,
           lockedAt: now,
           lockedById: userId,
+          // 2026-09-23 (W5/D7, residual repair): a lock records the version it
+          // locked, as the status route's approved → locked does
+          // (publishedVersionId / publishedAt). approvedVersionId is left unset
+          // on purpose: this report is generated and frozen as an inspection
+          // record, and nobody approved it. Recording an approval here would
+          // fabricate one, and would make an unreviewed report filable; unset,
+          // the filing rule (artifactApproval) refuses it as
+          // 'no-approved-version' (fail closed).
+          publishedVersionId: 1,
+          publishedAt: now,
           metadata: {
             sourceArtifactId: artifact.artifactId,
             harness: {
@@ -2498,8 +2512,20 @@ router.put(
       const organizationId = getOrganizationId(req);
       const userId = getUserId(req);
       const userRole = (req.userRole || 'user').toLowerCase();
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+      /* The project the change is made in (PF-17). The URL names it as the
+         integer project or — as every v2 surface holds it — the program's
+         UUID; the one translation rule resolves either to the registry's
+         project of this organization. Access is decided on THAT project, and
+         the artifact must be one of its own. The access check parsed only an
+         integer, so "Route to review" answered 404 for every v2 project, and
+         the artifact was then loaded by id and organization alone, so access
+         to one project's URL changed another project's artifact. */
+      const urlProject = paramStr(req.params.projectId).replace(/^proj_/, '');
+      const spine = await resolveCmcArtifactProject(organizationId, urlProject);
+      const projectId = spine.state === 'linked' ? spine.artifactProjectId : null;
+      if (projectId === null || !(await verifyProjectAccess(req, String(projectId)))) {
+        return sendError(res, 404, 'Project not found');
+      }
 
       const { status, reason, attestation } = req.body;
       const validStatuses = ['draft', 'review', 'approved', 'locked'];
@@ -2535,7 +2561,8 @@ router.put(
         )
         .limit(1);
 
-      if (!artifact) return sendError(res, 404, 'Artifact not found');
+      // Another project's artifact is not found through this project's URL.
+      if (!artifact || artifact.projectId !== projectId) return sendError(res, 404, 'Artifact not found');
 
       const previousStatus = artifact.status || 'draft';
 
@@ -2585,6 +2612,35 @@ router.put(
         }
       }
 
+      // ── A lock must cover the approval ───────────────────────────────
+      // 2026-09-23 (W5/D7, residual repair): approved → locked used to check
+      // status alone and stamp published_version_id = the CURRENT version, so
+      // approved v1 → PUT edit to v2 (status stays 'approved') → lock recorded
+      // "locked at v2" over content no one reviewed. The filing rule already
+      // refuses that artifact; the lock is now refused too, so an unreviewed
+      // edit is never recorded as locked. The verdict is artifactApproval's —
+      // the one filing rule, imported, not restated: an approved artifact may
+      // be locked only when it is filable as approved (version =
+      // approved_version_id, and an approval that recorded no version fails
+      // closed). Its remedy names the re-approval (approved → review → approved).
+      if (previousStatus === 'approved' && status === 'locked') {
+        const approval = artifactApproval({
+          status: previousStatus,
+          version: artifact.version,
+          approvedVersionId: artifact.approvedVersionId,
+          publishedVersionId: artifact.publishedVersionId,
+        });
+        if (!approval.filable) {
+          return sendError(
+            res,
+            409,
+            `Cannot lock: ${approval.problem}. Re-approval is required first: ${approval.remedy}.`,
+            { reason: approval.reason },
+            'LOCK_NOT_COVERED_BY_APPROVAL'
+          );
+        }
+      }
+
       // ── Contradiction governance gate ───────────────────────────────
       // Hard block promotion if unresolved contradictions with blocks_promotion authority
       if (status === 'approved' || status === 'locked') {
@@ -2595,7 +2651,7 @@ router.put(
           const { blocked, blockingFindings, warningFindings } =
             await contradictionEngineService.checkPromotionBlocked(
               organizationId,
-              Number(req.params.projectId),
+              projectId,
               artifact.id
             );
           if (blocked) {
@@ -2631,63 +2687,16 @@ router.put(
       // ── P12: Review quorum gate ─────────────────────────────────────
       // Block review → approved if reviewers are assigned but not all approved.
       // Withdrawn assignments are excluded from the quorum check.
+      // 2026-09-23 (W5/D7, residual repair, round 3; amended final pass): the
+      // gate moved, unchanged, to server/services/artifact-approval-act.ts
+      // (reviewQuorumVerdict), the one implementation this route and
+      // authoring-actions approve-artifact — the two governed approval acts —
+      // apply. A quorum that cannot be read throws, and the catch below
+      // answers 500 before anything is written: an unread quorum is not met.
       if (previousStatus === 'review' && status === 'approved') {
-        const roundAssignments = await db
-          .select()
-          .from(concept2cureReviewAssignments)
-          .where(
-            and(
-              eq(concept2cureReviewAssignments.artifactId, artifact.id),
-              eq(concept2cureReviewAssignments.organizationId, organizationId)
-            )
-          )
-          .orderBy(desc(concept2cureReviewAssignments.reviewRound));
-
-        if (roundAssignments.length > 0) {
-          const latestRound = roundAssignments[0].reviewRound;
-          // Exclude withdrawn assignments from quorum
-          const activeAssignments = roundAssignments.filter(
-            a => a.reviewRound === latestRound && a.status !== 'withdrawn'
-          );
-
-          if (activeAssignments.length === 0) {
-            // All were withdrawn — no quorum to enforce, allow approval
-          } else {
-            const pendingReviews = activeAssignments.filter(a => a.status !== 'completed');
-
-            if (pendingReviews.length > 0) {
-              return sendError(
-                res,
-                400,
-                `Cannot approve: ${pendingReviews.length} of ${activeAssignments.length} reviewers have not yet submitted their decision`
-              );
-            }
-
-            // All completed — verify all decisions are "approve"
-            const roundDecisions = await db
-              .select()
-              .from(concept2cureReviewDecisions)
-              .where(
-                and(
-                  eq(concept2cureReviewDecisions.artifactId, artifact.id),
-                  eq(concept2cureReviewDecisions.reviewRound, latestRound),
-                  eq(concept2cureReviewDecisions.organizationId, organizationId)
-                )
-              );
-
-            const nonApprovals = roundDecisions.filter(d => d.decision !== 'approve');
-            if (nonApprovals.length > 0) {
-              return sendError(
-                res,
-                400,
-                `Cannot approve: ${
-                  nonApprovals.length
-                } reviewer(s) did not approve (decisions: ${nonApprovals
-                  .map(d => d.decision)
-                  .join(', ')})`
-              );
-            }
-          }
+        const quorum = await reviewQuorumVerdict(pool, artifact.id, organizationId, artifact.version);
+        if (!quorum.met) {
+          return sendError(res, 400, quorum.message);
         }
       }
 
@@ -2695,6 +2704,11 @@ router.put(
         status,
         updatedAt: new Date(),
       };
+      // Leaving approved/locked (approved → review, locked → draft) clears
+      // approvedVersionId and publishedVersionId in this same write: the
+      // concept2cure_artifacts trigger does it for every writer
+      // (migrations/20260923b_artifact_approval_follows_status.sql, 2026-09-23
+      // W5/D7 final pass), so a revoked approval cannot be resurrected.
       if (status === 'approved') {
         updateData.approvedVersionId = artifact.version;
       }
@@ -2944,7 +2958,8 @@ router.put(
         },
       });
 
-      await logAuditEntry(
+      // WO-16C: the outcome was discarded; it is now answered as `auditTrail`.
+      const statusAudit = await logAuditEntry(
         req,
         requiresAttestation ? 'APPROVE' : 'UPDATE',
         'artifact_status',
@@ -2988,6 +3003,7 @@ router.put(
         publishedVersionId: updated.publishedVersionId,
         publishedAt: updated.publishedAt,
         enforcedRole: userRole,
+        auditTrail: auditTrailFromEntry(statusAudit),
         signature: signatureRecord,
         snapshot: snapshotRecord,
       });

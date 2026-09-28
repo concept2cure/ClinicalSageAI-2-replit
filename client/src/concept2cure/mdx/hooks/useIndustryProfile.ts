@@ -23,6 +23,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { getAuthToken, getOrgId } from '@/utils/authToken';
+import { probeAuditRowOutcome } from '@/lib/queryClient';
 import { useFetchJson } from './useFetchJson';
 import type { DataState } from '../lib/dataState';
 import type { MdxSpecialization, PrimaryIndustry } from '../lib/industryProfileMapping';
@@ -113,6 +114,9 @@ export function useIndustryProfile(): UseIndustryProfileResult {
           headers,
           body: JSON.stringify(patch),
         });
+        // A raw fetch, so the transport's audit-row check runs here explicitly:
+        // a saved profile whose §11.10(e) entry was lost is reported, not hidden.
+        probeAuditRowOutcome('PATCH', URL, res);
 
         if (seq !== seqRef.current) return false; // superseded
 

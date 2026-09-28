@@ -13,8 +13,23 @@
  *
  * The formatter is pure, so the wording is asserted without a database.
  */
-import { describe, expect, it } from 'vitest';
-import { describeCatalogToggles } from '../document-catalog-bootstrap';
+import { describe, expect, it, vi } from 'vitest';
+
+/* The toggle store and the logger, for the bootstrap case at the bottom. The
+   formatter cases above never reach either. */
+const { initializeFeatureToggle, readFeatureState, warn } = vi.hoisted(() => ({
+  initializeFeatureToggle: vi.fn(),
+  readFeatureState: vi.fn(),
+  warn: vi.fn(),
+}));
+vi.mock('../../services/featureToggleService.js', () => ({
+  FeatureToggleService: { initializeFeatureToggle, readFeatureState },
+}));
+vi.mock('../../utils/logger.js', () => ({
+  createScopedLogger: () => ({ warn, info: vi.fn(), error: vi.fn(), debug: vi.fn() }),
+}));
+
+import { bootstrapDocumentCatalogToggles, describeCatalogToggles } from '../document-catalog-bootstrap';
 import { DOCUMENT_CATALOG_FEATURE_KEY } from '../../services/vault/document-catalog.service';
 import { VAULT_CHUNKING_FEATURE_KEY } from '../../services/vault/document-chunking.service';
 
@@ -120,6 +135,26 @@ describe('a store it could not read is not a feature somebody turned off', () =>
       chunking: { enabled: false, source: 'unreadable' },
     });
     expect(line).toContain('could not be read');
+  });
+});
+
+describe('bootstrapDocumentCatalogToggles — a row it could not create is said, not swallowed', () => {
+  /* Creating the rows was `.catch(() => undefined)`. When the insert is refused
+     but the store is still readable, both flags read "off", and the startup line
+     tells the operator to enable "the feature toggle rows above" — rows that do
+     not exist — with nothing anywhere saying why. */
+  it('warns with the key and the reason when a toggle row cannot be created', async () => {
+    initializeFeatureToggle.mockRejectedValue(new Error('permission denied for table feature_toggles'));
+    readFeatureState.mockResolvedValue({ enabled: false, readable: true });
+    warn.mockReset();
+
+    const state = await bootstrapDocumentCatalogToggles();
+
+    expect(state.catalog).toEqual({ enabled: false, source: 'off' });
+    const said = warn.mock.calls.map((c) => String(c[0])).join('\n');
+    expect(said).toContain(DOCUMENT_CATALOG_FEATURE_KEY);
+    expect(said).toContain(VAULT_CHUNKING_FEATURE_KEY);
+    expect(said).toContain('permission denied for table feature_toggles');
   });
 });
 

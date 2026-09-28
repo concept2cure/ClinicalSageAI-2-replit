@@ -1,0 +1,7 @@
+build_from_template | self | - | docx/masterDocumentBuilder.ts:262 | scratch .docx under tmp/docbuilder, not filed
+catalog_project_document | confirm | - | vault/document-catalog.service.ts:354 | UPDATE vault.document_catalog (shared comprehension record)
+certify_other_support | refuse | - | AnaToolExecutor.ts:11141 | none; the handler already refuses (certification is the investigator's own)
+check_consistency | confirm | - | truth-engine/truth-engine-service.ts:174 | INSERT consistency_findings + audit
+check_submission_status | confirm | - | submission-gateways/rest-gateway-helpers.ts:143 | agency-polling gateways UPDATE submission_transmittals.status (target-dependent; fail closed)
+classify_submission_document | confirm | - | ingestion/ingestion-service.ts:337 | UPDATE coauthor_documents classification; can place a leaf into a sequence
+clone_protocol_template | confirm | - | protocol-templates-service.ts:64 | INSERT protocol_documents + sections + governed-action row

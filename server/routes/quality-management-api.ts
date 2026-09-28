@@ -4,17 +4,21 @@
  * This module serves as a unified API layer for all quality management functionality,
  * integrating CTQ factors, section gating, and quality validation.
  */
-import { Router, type Request, type Response } from 'express';
+import { Router, type Request } from 'express';
 import { z } from 'zod';
 import { and, eq, sql } from 'drizzle-orm';
 import { qmpSectionGating, ctqFactors, qualityManagementPlans } from '../../shared/schema';
 import { authMiddleware } from '../auth';
 import { requireOrganizationContext } from '../middleware/tenantContext';
-import { governedActorId, requireEditorAccess } from '../middleware/orgMembership';
+import { requireEditorAccess } from '../middleware/orgMembership';
 import { getDb } from '../db/tenantDbHelper';
-import { requestPgClient, type RequestSqlClient } from '../db/requestDb';
-import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
-import { recordGovernedAction } from './c2c/actions';
+import {
+  GovernedRefusal,
+  governedQmsActor,
+  governedQmsReason,
+  governedQmsWrite,
+  type GovernedQmsSubject,
+} from '../services/qms/governed-qms-write';
 import { createScopedLogger } from '../utils/logger';
 import { storeInCache, getFromCache, invalidateCache } from '../cache/tenantCache';
 
@@ -43,115 +47,16 @@ function orgIdOf(req: Request): number {
  * tenant scoping as before. A ledger failure is a 500 with the plan exactly as
  * it was — never a change with no record of it.
  *
+ * The ceremony itself — reason, actor, transaction, ledger, the refusal and
+ * failure answers — lives in server/services/qms/governed-qms-write.ts, shared
+ * with the governed CTQ-factor delete (tenant-ctq-factors.ts), so there is one
+ * implementation of it. `PLAN` below supplies the plan's words for its answers.
+ *
  * Who may: `requireEditorAccess`, the repo's one governed-write role gate — a
  * `viewer` reads plans and cannot change the regime (§11.10(g)).
  * What is kept: the ledger payload carries every value the write overwrote or
  * destroyed — the whole row on create and delete, each changed field's from/to
  * on update — because the row keeps no history of its own (§11.10(e)). */
-const PLAN_REASON = z.string().trim().min(8);
-
-/** The trimmed reason, or null after answering 400. Runs before any write. */
-function planReason(req: Request, res: Response): string | null {
-  const parsed = PLAN_REASON.safeParse((req.body ?? {}).reason);
-  if (parsed.success) return parsed.data;
-  res.status(400).json({
-    error: 'REASON_REQUIRED',
-    message: 'A reason of at least 8 characters is required to change a quality-management plan. Nothing was changed.',
-  });
-  return null;
-}
-
-/** The acting user (the canonical resolver requireEditorAccess pairs with), or
- *  null after answering 401: the ledger never records an unattributed change. */
-function planActor(req: Request, res: Response): number | null {
-  const userId = governedActorId(req);
-  if (userId !== null) return userId;
-  res.status(401).json({ error: 'AUTH_REQUIRED', message: 'Sign in to change a quality-management plan. Nothing was changed.' });
-  return null;
-}
-
-/** A refusal decided inside the transaction (not found, in use): rolled back, then answered as-is. */
-class PlanRefusal extends Error {
-  constructor(readonly status: number, readonly body: Record<string, unknown>) {
-    super(String(body.error ?? 'refused'));
-  }
-}
-
-const PLAN_VERB = { create: 'created', update: 'changed', delete: 'deleted' } as const;
-
-/**
- * One governed plan write. `write` runs inside the transaction and returns the
- * ledger target/payload plus the response body; the ledger pair is written on
- * the same client before COMMIT. Answers the response itself in every branch;
- * returns true only when the change committed.
- */
-async function governedPlanWrite(
-  req: Request,
-  res: Response,
-  opts: { orgId: number; userId: number; reason: string; command: keyof typeof PLAN_VERB; failure: string },
-  write: () => Promise<{ target: string; payload: Record<string, unknown>; status: number; body: unknown }>,
-): Promise<boolean> {
-  let client: RequestSqlClient;
-  try {
-    client = requestPgClient(req);
-  } catch {
-    res.status(500).json({ error: 'REQUEST_DB_CONTEXT_REQUIRED', message: 'No tenant-scoped database context on this request. Nothing was changed.' });
-    return false;
-  }
-  let stage: 'write' | 'ledger' | 'commit' = 'write';
-  let out: Awaited<ReturnType<typeof write>>;
-  try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, opts.orgId);
-    out = await write();
-    stage = 'ledger';
-    await recordGovernedAction(client, {
-      orgId: opts.orgId,
-      userId: opts.userId,
-      command: opts.command,
-      target: out.target,
-      reason: opts.reason,
-      payload: out.payload,
-      domain: 'qms',
-    });
-    stage = 'commit';
-    await client.query('COMMIT');
-  } catch (error) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    if (error instanceof PlanRefusal) {
-      res.status(error.status).json(error.body);
-      return false;
-    }
-    logger.error(`Quality Management Plan ${opts.command} failed at ${stage}`, { error });
-    const sqlState = (error as { code?: string; cause?: { code?: string } } | null)?.code
-      ?? (error as { cause?: { code?: string } } | null)?.cause?.code;
-    if (stage === 'write' && sqlState === '23503') {
-      // A foreign key still points at the plan (CTQ factors, traceability rows).
-      res.status(409).json({
-        error: 'PLAN_IN_USE',
-        message: `The plan was not ${PLAN_VERB[opts.command]}: other quality records (CTQ factors or traceability rows) still refer to it. Nothing was changed.`,
-      });
-    } else if (stage === 'ledger') {
-      res.status(500).json({
-        error: 'AUDIT_WRITE_FAILED',
-        message: `The plan was not ${PLAN_VERB[opts.command]} because its audit record could not be written. Nothing was changed.`,
-      });
-    } else if (stage === 'commit') {
-      // COMMIT itself failed, so whether it landed is not known: say so.
-      res.status(500).json({
-        error: 'OUTCOME_UNKNOWN',
-        message: `The change could not be confirmed. Reload to check whether the plan was ${PLAN_VERB[opts.command]} before trying again.`,
-      });
-    } else {
-      res.status(500).json({ error: opts.failure });
-    }
-    return false;
-  }
-  // Committed. Answered outside the try, so nothing after COMMIT can be
-  // reported as a rollback.
-  res.status(out.status).json(out.body);
-  return true;
-}
 
 /** The plan row, locked for the rest of the transaction, or a 404 refusal. Same org predicate as every read here. */
 async function lockedPlan(req: Request, organizationId: number, qmpId: number) {
@@ -161,7 +66,7 @@ async function lockedPlan(req: Request, organizationId: number, qmpId: number) {
     .where(and(eq(qualityManagementPlans.organizationId, organizationId), eq(qualityManagementPlans.id, qmpId)))
     .limit(1)
     .for('update');
-  if (rows.length === 0) throw new PlanRefusal(404, { error: 'Quality Management Plan not found' });
+  if (rows.length === 0) throw new GovernedRefusal(404, { error: 'Quality Management Plan not found' });
   return rows[0];
 }
 
@@ -172,6 +77,15 @@ import qualityValidationRouter from './tenant-quality-validation';
 
 const logger = createScopedLogger('quality-management-api');
 const router = Router();
+
+/** The plan's words for the governed-write answers (server/services/qms/governed-qms-write.ts). */
+const PLAN: GovernedQmsSubject = {
+  noun: 'plan',
+  changeWhat: 'a quality-management plan',
+  inUse: { error: 'PLAN_IN_USE', referrers: 'other quality records (CTQ factors or traceability rows)' },
+  logLabel: 'Quality Management Plan',
+  logger,
+};
 
 // Mount specialized routes
 router.use('/ctq-factors', ctqFactorsRouter);
@@ -715,9 +629,9 @@ router.get('/plans/:id', authMiddleware, requireOrganizationContext, async (req,
 router.post('/plans', authMiddleware, requireOrganizationContext, requireEditorAccess, async (req, res) => {
   try {
     const organizationId = orgIdOf(req);
-    const userId = planActor(req, res);
+    const userId = governedQmsActor(req, res, PLAN);
     if (userId === null) return;
-    const reason = planReason(req, res);
+    const reason = governedQmsReason(req, res, PLAN);
     if (reason === null) return;
 
     // Validate request payload
@@ -746,9 +660,10 @@ router.post('/plans', authMiddleware, requireOrganizationContext, requireEditorA
 
     // Create the QMP. allowWaivers/cerTypeId are not first-class columns; they
     // live in the settings/metadata json blobs.
-    const committed = await governedPlanWrite(
+    const committed = await governedQmsWrite(
       req,
       res,
+      PLAN,
       { orgId: organizationId, userId, reason, command: 'create', failure: 'Failed to create Quality Management Plan' },
       async () => {
         const [created] = await getDb(req)
@@ -795,9 +710,9 @@ router.patch('/plans/:id', authMiddleware, requireOrganizationContext, requireEd
     if (isNaN(qmpId)) {
       return res.status(400).json({ error: 'Invalid QMP ID' });
     }
-    const userId = planActor(req, res);
+    const userId = governedQmsActor(req, res, PLAN);
     if (userId === null) return;
-    const reason = planReason(req, res);
+    const reason = governedQmsReason(req, res, PLAN);
     if (reason === null) return;
 
     // Validate request payload
@@ -829,9 +744,10 @@ router.patch('/plans/:id', authMiddleware, requireOrganizationContext, requireEd
       return res.status(400).json({ error: 'NO_CHANGES', message: 'The request changes nothing on the plan. Nothing was recorded.' });
     }
 
-    const committed = await governedPlanWrite(
+    const committed = await governedQmsWrite(
       req,
       res,
+      PLAN,
       { orgId: organizationId, userId, reason, command: 'update', failure: 'Failed to update Quality Management Plan' },
       async () => {
         // Read under lock inside the transaction, so the values the ledger
@@ -856,7 +772,7 @@ router.patch('/plans/:id', authMiddleware, requireOrganizationContext, requireEd
         const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
         const changed = fields.filter((f) => !same(proposed[f], existing[f as keyof typeof existing]));
         if (changed.length === 0) {
-          throw new PlanRefusal(409, {
+          throw new GovernedRefusal(409, {
             error: 'NO_CHANGES',
             message: 'The plan already holds these values, so nothing was changed or recorded. Reload to see its current state.',
           });
@@ -926,15 +842,16 @@ router.delete('/plans/:id', authMiddleware, requireOrganizationContext, requireE
     if (isNaN(qmpId)) {
       return res.status(400).json({ error: 'Invalid QMP ID' });
     }
-    const userId = planActor(req, res);
+    const userId = governedQmsActor(req, res, PLAN);
     if (userId === null) return;
     // The reason travels in the JSON body; apiRequest sends a body on DELETE.
-    const reason = planReason(req, res);
+    const reason = governedQmsReason(req, res, PLAN);
     if (reason === null) return;
 
-    const committed = await governedPlanWrite(
+    const committed = await governedQmsWrite(
       req,
       res,
+      PLAN,
       { orgId: organizationId, userId, reason, command: 'delete', failure: 'Failed to delete Quality Management Plan' },
       async () => {
         const existing = await lockedPlan(req, organizationId, qmpId);
@@ -943,7 +860,7 @@ router.delete('/plans/:id', authMiddleware, requireOrganizationContext, requireE
         // remove them and the record together; archiving (a governed PATCH)
         // retires it and keeps the record.
         if (existing.status === 'active') {
-          throw new PlanRefusal(409, {
+          throw new GovernedRefusal(409, {
             error: 'PLAN_ACTIVE',
             message: 'The active plan cannot be deleted while its gates are in force. Archive it first; the archived plan is kept. Nothing was changed.',
           });
@@ -959,7 +876,7 @@ router.delete('/plans/:id', authMiddleware, requireOrganizationContext, requireE
           .limit(1);
 
         if (usedRules.length > 0) {
-          throw new PlanRefusal(400, {
+          throw new GovernedRefusal(400, {
             error: 'Cannot delete Quality Management Plan that is in use',
             message:
               'This QMP is currently used in section gating rules. Please delete those rules first.',

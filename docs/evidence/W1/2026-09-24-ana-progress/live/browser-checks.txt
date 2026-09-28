@@ -1,0 +1,96 @@
+## conv-1440-dark: 20 of 20 passed
+PASS  upload answered by the server with a file id
+PASS  stream request carries file_ids
+PASS  settled chip reads N of M done
+PASS  chip is a disclosure naming a panel that exists
+PASS  state line says finished
+PASS  every plan step done
+PASS  uploads row names the real file and says how it was attached
+PASS  memory row says it could not be read (embeddings blocked here)
+PASS  panel has no Outputs section
+PASS  folded line does not repeat the plan
+PASS  no horizontal overflow
+PASS  no empty Artifacts block beside a drafted document
+PASS  the title keeps readable room in the header
+PASS  title is the question, not the attachment line
+PASS  done marker is a filled disc
+PASS  record opens on the plan, then the steps in order
+PASS  no round headers under a declared plan
+PASS  the draft is said once in the record
+PASS  row targets are at least 24px
+PASS  no page errors
+
+## conv-1440-light: 25 of 25 passed
+PASS  upload answered by the server with a file id
+PASS  stream request carries file_ids
+PASS  live chip counts her declared plan
+PASS  rail marks the step in progress
+PASS  state line says still working
+PASS  settled chip reads N of M done
+PASS  chip is a disclosure naming a panel that exists
+PASS  state line says finished
+PASS  every plan step done
+PASS  uploads row names the real file and says how it was attached
+PASS  memory row says it could not be read (embeddings blocked here)
+PASS  panel has no Outputs section
+PASS  folded line does not repeat the plan
+PASS  no horizontal overflow
+PASS  no empty Artifacts block beside a drafted document
+PASS  the title keeps readable room in the header
+PASS  title is the question, not the attachment line
+PASS  done marker is a filled disc
+PASS  record opens on the plan, then the steps in order
+PASS  no round headers under a declared plan
+PASS  the draft is said once in the record
+PASS  row targets are at least 24px
+PASS  the rail shows the same turn and chip
+PASS  the rail shows the draft as an output card with its save state
+PASS  no page errors
+
+## conv-390-light: 20 of 20 passed
+PASS  upload answered by the server with a file id
+PASS  stream request carries file_ids
+PASS  settled chip reads N of M done
+PASS  chip is a disclosure naming a panel that exists
+PASS  state line says finished
+PASS  every plan step done
+PASS  uploads row names the real file and says how it was attached
+PASS  memory row says it could not be read (embeddings blocked here)
+PASS  panel has no Outputs section
+PASS  folded line does not repeat the plan
+PASS  no horizontal overflow
+PASS  no empty Artifacts block beside a drafted document
+PASS  the title keeps readable room in the header
+PASS  title is the question, not the attachment line
+PASS  done marker is a filled disc
+PASS  record opens on the plan, then the steps in order
+PASS  no round headers under a declared plan
+PASS  the draft is said once in the record
+PASS  row targets are at least 24px
+PASS  no page errors
+
+## editor-1440-light: 24 of 24 passed
+PASS  upload answered by the server with a file id
+PASS  stream request carries file_ids
+PASS  settled chip reads N of M done
+PASS  chip is a disclosure naming a panel that exists
+PASS  state line says finished
+PASS  every plan step done
+PASS  uploads row names the real file and says how it was attached
+PASS  memory row says it could not be read (embeddings blocked here)
+PASS  panel has no Outputs section
+PASS  folded line does not repeat the plan
+PASS  no horizontal overflow
+PASS  no empty Artifacts block beside a drafted document
+PASS  the title keeps readable room in the header
+PASS  title is the question, not the attachment line
+PASS  done marker is a filled disc
+PASS  record opens on the plan, then the steps in order
+PASS  no round headers under a declared plan
+PASS  the draft is said once in the record
+PASS  row targets are at least 24px
+PASS  the editor pane runs the same chip, panel and record
+PASS  the editor renders the record above the answer
+PASS  the editor conversation is not a live region
+PASS  next actions read as labels, not ids
+PASS  no page errors
