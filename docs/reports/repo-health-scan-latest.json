@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-28T18:50:36.947Z",
+  "generatedAt": "2026-09-28T19:11:20.964Z",
   "git": {
-    "sha": "db36f2678bba61ecb55203ab7dfbf8c5741816a9",
+    "sha": "1f6197defa4cab8471e2161580303ad2955d7985",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2024,12 +2024,12 @@
         "bytes": 175247
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 160814
+        "file": "server/routes/authoring-actions.ts",
+        "bytes": 166186
       },
       {
-        "file": "server/routes/authoring-actions.ts",
-        "bytes": 159625
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "bytes": 160814
       },
       {
         "file": "server/services/module3Composer.ts",
@@ -2203,7 +2203,7 @@
       },
       {
         "file": "server/routes/authoring-actions.ts",
-        "lines": 3685
+        "lines": 3786
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2446,12 +2446,12 @@
         "lines": 1857
       },
       {
-        "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
-        "lines": 1849
+        "file": "server/services/ana/citation-engine.ts",
+        "lines": 1853
       },
       {
-        "file": "server/services/ana/citation-engine.ts",
-        "lines": 1844
+        "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
+        "lines": 1849
       },
       {
         "file": "server/services/vaccine/vaccine-knowledge.ts",
