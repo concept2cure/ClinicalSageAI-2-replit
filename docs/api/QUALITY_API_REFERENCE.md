@@ -209,7 +209,10 @@ Response:
 POST /batch-validate
 ```
 
-Validates multiple sections at once.
+Validates multiple sections at once. A section is not assessed (`valid: null`) when no
+rule covers it or its rule names nothing checkable. The batch is `valid: false` when any
+section failed, and `valid: true` only when every section was assessed and none failed.
+See `quality-gating-api-reference.md`.
 
 Request body:
 
@@ -262,6 +265,12 @@ GET /dashboard/:qmpId
 ```
 
 Retrieves dashboard data for a specific QMP, including statistics on sections, factors, and compliance.
+
+`overallCompleteness` and the three `riskProfile` percentages are shares of the CTQ
+factors the plan's gating rules name (ids as numbers or numeric strings). With none linked
+they are `null` — not assessed — never `0`. The surface shows "Not assessed", and whole
+percents otherwise. `sectionsByGateLevel` derives levels as `batch-validate` does: a rule
+with no threshold is a hard gate.
 
 #### Get quality metrics for a CER project
 

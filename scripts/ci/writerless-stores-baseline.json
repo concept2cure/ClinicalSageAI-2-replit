@@ -22,6 +22,10 @@
       "readerCount": 1,
       "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
     },
+    "ctqFactors": {
+      "readerCount": 4,
+      "reason": "Adjudicated 2026-09-23, revised 2026-09-28 (D5). No API writer has ever saved a row: the create, update and batch routes handed their values to a Drizzle insert/update that never executed, and the section-gating POST failed on the real DDL. They answer 501 NOT_AVAILABLE (RULE 2: refused, not built out; qms-subrouters-governed.test.ts). The only remaining write is the governed DELETE. An empty read is answered correctly: lists return []; the plan dashboard (read by QmpWorkspace) reports completeness and risk shares as null, not assessed, never 0%; and a section is assessed only when an active factor with criteria was checked, so a rule naming no factor, a retired one, one without criteria or one that does not exist is not assessed rather than passed (server/services/qms/quality-gating-verdict.ts; quality-gating-not-assessed.pglite.integration.test.ts)."
+    },
     "dataLineageTracking": {
       "readerCount": 1,
       "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
@@ -89,6 +93,10 @@
     "qSubTimelineEntries": {
       "readerCount": 2,
       "reason": "NOT ADJUDICATED \u2014 recorded so the set cannot grow. Nothing in server/ writes here; confirm whether a migration or seed populates it, then give it a writer, drop the readers, or say why an empty read is correct."
+    },
+    "qmpSectionGating": {
+      "readerCount": 3,
+      "reason": "Adjudicated 2026-09-23, revised 2026-09-28 (D5). No API writer has ever saved a row: the gating-rule update never executed, and the section-gating POST failed on the real DDL. Both answer 501 NOT_AVAILABLE (RULE 2: refused, not built out; qms-subrouters-governed.test.ts). An empty read is answered correctly: a section no rule covers is valid: null, assessed: false, never passed; a batch is valid only when every section was assessed and none failed; the dashboard counts zero gated sections; validate-section answers 404 for a plan the caller's organization does not have (quality-gating-not-assessed.pglite.integration.test.ts)."
     },
     "regulatoryObligations": {
       "readerCount": 1,
