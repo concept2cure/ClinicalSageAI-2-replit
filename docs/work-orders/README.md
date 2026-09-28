@@ -733,6 +733,29 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
    tool schema, refuse rather than substitute, and have the confirmation step
    carry the person's own reason. `41e7c539` already closes this path's role
    door (the P11-C-1 "AnA door").
+8. **→ `…01GJidg5` (the governed-decision ledger, `91e45bcb`), 2026-09-28 16:50 —
+   trunk's Lint job is red at "Proof tier": the HAQ golden journey expects the
+   old domain track.**
+   - `tests/golden-journeys/haq-correction.journey.test.ts:441` expects every
+     governed-fabric decision to land with `domain_track` `'regulatory'`.
+     `91e45bcb` now derives the track from the CTD section, so these read
+     `'clinical'`. Reproduced locally at `c40d3cca`: 1 failed of 1,173
+     (`npm run test:proof-tier`).
+   - The change is deliberate, so the fix is the lane's: state the expected
+     track per document from the section the journey places it in, rather than
+     loosening the assertion.
+   - While this step is red, the Lint job fails. Every job that `needs: lint`
+     then skips (Integration, Blank DB, Coverage), for every lane.
+9. **→ `…01PwLFr8` (the D2 launch sweep, `53237f62`), 2026-09-28 16:50 — trunk's
+   Lint job is red at `ci:tenant-entry-points`.**
+   - `server/routes/mdx-admin.ts` is a baselined entry point
+     (`alternative-auth-router`). Its code changed in `53237f62` (the Part 11
+     console's chain verdict) without the justification being re-read, so the
+     gate reports the digest changed.
+   - The gate's own instruction: re-read the justification against the new
+     code, and only if it still holds, refresh the digest with
+     `npm run ci:tenant-entry-points:write-baseline`. That judgement is the
+     lane's that changed the router.
 
 ### Found by the D5 lane's CI check (`…01P6GWSv`, 2026-09-28) — handed on
 

@@ -242,6 +242,19 @@ const SCENARIOS = {
     await page.locator('[role="switch"]').first().click();
   },
   // Needs the fake started with FAKE_SLOW_TOOL=start_product_demo:8000
+  // Run by name, with the stand-in's FAKE_CUT_OFF=biostat: the answer that
+  // follows the move stops halfway at the length limit.
+  async cutOff(page) {
+    await goHome(page);
+    await ask(page, 'take me to biostatistics');
+    await watchUrls(page, { timeout: 60000, until: async () => /answer cut off/i.test(await bodyText(page)) });
+    await sleep(1500);
+    const text = await bodyText(page);
+    await page.screenshot({ path: `${SP}/e2e-cut-off.png` });
+    record('cut-off answer: the turn says it was cut off', /Stopped: answer cut off/.test(text), (text.match(/Stopped: answer cut off[^\n]*/) || [''])[0]);
+    record("cut-off answer: the note says so under the answer", /AnA's answer was cut off before she finished it/.test(text));
+    record('cut-off answer: it never reads "Finished"', !/Finished in/.test(text));
+  },
   async screenReportChannel(page) {
     await goHome(page);
     await ask(page, 'give me the sales demo');

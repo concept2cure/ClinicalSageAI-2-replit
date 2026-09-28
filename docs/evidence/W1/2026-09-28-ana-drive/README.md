@@ -156,8 +156,26 @@ API does (`silent-thinking-before.png`).
   (`silent-thinking-after.png`). The whole battery passed 19/19 with silent
   thinking on every one of its 43 streamed rounds (`silent-thinking.txt`).
 
+## A cut-off answer says so (fourth pass)
+
+The stream route never read why the model stopped writing. An answer that hit
+the length limit, or a stream that stalled mid-answer, reached the person as a
+finished one. The status line read "Finished", there was no note and no
+Continue, and the next turn was handed it as complete.
+
+It now ends the turn `answer_cut_off`, through the existing stop-reason
+channel, using the gateway's own `isTruncated` check. That reason has words on
+every surface that words a stop: the note under the answer (with Continue),
+the status line, the next turn's note and the turn record.
+
+Shown failing and then passing in the browser, with the stand-in ending an
+answer at `max_tokens` (`answer-cut-off.txt` and the before/after
+screenshots).
+
 ## Evidence
 
+- `answer-cut-off.txt`, `answer-cut-off-before.png`,
+  `answer-cut-off-after.png`: a cut-off answer, before and after.
 - `harness/`: the stand-in model, its self-test and the browser battery that
   produced every run below, with how to repeat them. Run from this folder on
   the current tree, it passed 19/19, with the stand-in refusing nothing.

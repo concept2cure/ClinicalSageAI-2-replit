@@ -75,6 +75,7 @@ import {
 } from './providers/org-placement';
 import { governServerTools } from './server-tool-policy';
 import { isTerminalGatewayError } from './gateway-outcome';
+import { assertDeterministicServingAllowed, isDeterministicModeRequested } from './deterministic-mode';
 import { modelCallRefusal, type ModelCallRefusalScope } from './model-call-scope.js';
 import {
   decideSensitivePlacement,
@@ -405,51 +406,52 @@ const TASK_PROVIDER_PREFERENCES: Record<TaskType, ProviderName[]> = {
 // Deterministic Mode Responses
 // ─────────────────────────────────────────────────────────────────────────────
 
+// A fixed response makes no claim about the caller's input. It says that nothing
+// was read or produced, and it never uses [KNOWN] or [INFERRED], which are this
+// platform's markers for verified and derived facts. Until 2026-09-28 several
+// did: "[KNOWN] Section headers present and correctly numbered" about a document
+// no model had seen (docs/work-orders/WO-16-fabrication-findings.json #101).
+// [MISSING] remains where it is true: the analysis is missing.
 const DETERMINISTIC_RESPONSES: Record<TaskType, string> = {
   chat:
     '## AnA Response (Demo Mode)\n\n' +
-    "I'm AnA — your Audit & Narrative Assistant. I'm currently running in **demo mode** because no AI provider API key is configured.\n\n" +
-    'When connected to Claude, I can:\n' +
-    '- **[KNOWN]** Analyze your regulatory documents against ICH, FDA, and EMA requirements\n' +
-    '- **[KNOWN]** Detect contradictions, assumption drift, and cross-section inconsistencies\n' +
-    '- **[KNOWN]** Guide you through governed promotion (draft → review → approved → locked → submission-ready)\n' +
-    '- **[INFERRED]** Suggest corrections based on body-specific expectations\n\n' +
-    'To enable live AI responses, set `ANTHROPIC_API_KEY` in your `.env` file.\n\n' +
-    '*Evidence discipline: Every claim is tagged [KNOWN], [INFERRED], or [MISSING].*',
+    "I'm AnA — your Audit & Narrative Assistant. I'm running in **demo mode** because no AI provider is configured, so this is a fixed message, not an answer to what you asked.\n\n" +
+    'With a provider connected, I can:\n' +
+    '- Analyze your regulatory documents against ICH, FDA and EMA requirements\n' +
+    '- Detect contradictions, assumption drift and cross-section inconsistencies\n' +
+    '- Guide you through governed promotion (draft → review → approved → locked → submission-ready)\n' +
+    '- Suggest corrections based on body-specific expectations\n\n' +
+    'To enable live AI responses, set `ANTHROPIC_API_KEY` in your `.env` file.',
   document_analysis:
     '## Document Analysis (Demo Mode)\n\n' +
-    '**[KNOWN]** The document structure follows eCTD Module format.\n\n' +
-    '**Findings:**\n' +
-    '- **[KNOWN]** Section headers present and correctly numbered\n' +
-    '- **[INFERRED]** Content completeness appears adequate for initial review\n' +
-    '- **[MISSING]** Cross-references to supporting data not verified (requires live AI)\n\n' +
-    '**Recommendation:** Enable live AI mode for full regulatory analysis with body-specific gap detection.',
+    'No document was analyzed. AnA is running in demo mode without an AI provider, so this is a fixed message.\n\n' +
+    '**[MISSING]** Structure, completeness and cross-reference checks all require a live provider.\n\n' +
+    '**Recommendation:** Configure an AI provider for regulatory analysis with body-specific gap detection.',
   document_drafting:
     '## Document Draft (Demo Mode)\n\n' +
-    '**[KNOWN]** This is a placeholder draft generated in demo mode.\n\n' +
-    'When connected to Claude, AnA generates regulatory-grade document drafts with:\n' +
+    'No draft was written. This is a fixed placeholder served in demo mode, and it must not be accepted into a document.\n\n' +
+    'With a provider connected, AnA generates regulatory drafts with:\n' +
     '- Body-specific language (FDA/EMA/PMDA)\n' +
     '- Evidence-backed claims with citation tracking\n' +
     '- Governed content that flows through the approval pipeline\n\n' +
     'Set `ANTHROPIC_API_KEY` in `.env` to enable real document drafting.',
   structured_output:
-    '{"result": "demo_mode", "status": "success", "message": "Deterministic mode active. Set ANTHROPIC_API_KEY to enable live AI.", "data": {}}',
+    '{"result": "demo_mode", "status": "unavailable", "message": "Deterministic mode active: no provider produced this. Set ANTHROPIC_API_KEY to enable live AI.", "data": {}}',
   regulatory_review:
     '## Regulatory Review (Demo Mode)\n\n' +
-    '**[KNOWN]** AnA is operating in demo mode — no live AI analysis performed.\n\n' +
-    '**When connected, AnA provides:**\n' +
+    'No review was performed. AnA is running in demo mode without an AI provider.\n\n' +
+    '**With a provider connected, AnA provides:**\n' +
     '- **Compliance check** against 21 CFR Part 11, ICH E6(R2), EU MDR, ISO 14155\n' +
     '- **Gap detection** with body-specific expectations (FDA, EMA, PMDA, MHRA)\n' +
     '- **Risk ranking** with severity classification (critical → major → minor)\n' +
     '- **Correction drafts** with governed execution paths\n' +
     '- **Contradiction detection** with overlay-aware authority escalation\n\n' +
-    '**[MISSING]** Live regulatory analysis requires `ANTHROPIC_API_KEY` in `.env`.',
+    '**[MISSING]** Regulatory analysis requires a configured provider (`ANTHROPIC_API_KEY` in `.env`).',
   code_generation:
     '// Demo mode — set ANTHROPIC_API_KEY for live code generation\nfunction demoMode() {\n  return { status: "demo", message: "AI provider not configured" };\n}',
   summarization:
-    '**Summary (Demo Mode):** [KNOWN] This content relates to regulatory submissions. ' +
-    '[INFERRED] The document appears to follow standard eCTD formatting. ' +
-    '[MISSING] Detailed analysis requires live AI — set ANTHROPIC_API_KEY in .env.',
+    '**Summary (Demo Mode):** No content was summarized. AnA is running in demo mode without an AI provider. ' +
+    '[MISSING] A summary requires a configured provider — set ANTHROPIC_API_KEY in .env.',
   embedding: '[]',
   general:
     "**AnA (Demo Mode):** I'm running without an AI provider. " +
@@ -3498,6 +3500,11 @@ export class AIGateway {
     requestId: string,
     startTime: number
   ): GatewayResponse {
+    // Every fixed response passes through here, from the explicit mode and the
+    // development no-provider fallback alike. In production it needs the
+    // written acceptance (deterministic-mode.ts); the boot gate refuses the
+    // same configuration, and this covers setDeterministicMode() at runtime.
+    assertDeterministicServingAllowed();
     const content = DETERMINISTIC_RESPONSES[request.taskType] || DETERMINISTIC_RESPONSES.general;
     if (request.stream && typeof request.onStream === 'function' && content) {
       try {
@@ -3929,10 +3936,7 @@ export class AIGateway {
       // AI_GATEWAY_DETERMINISTIC is the canonical switch; DETERMINISTIC_MODE
       // is honored as a legacy alias only — set the canonical var in new
       // environments.
-      deterministicMode:
-        process.env.AI_GATEWAY_DETERMINISTIC === 'true' ||
-        process.env.DETERMINISTIC_MODE === 'true' ||
-        false,
+      deterministicMode: isDeterministicModeRequested(process.env),
       defaultStrategy: (process.env.AI_GATEWAY_STRATEGY as RoutingStrategy) || 'task_based',
       // NOTE: model *selection* is driven by the DEFAULT_MODELS registry above
       // (task/quality strategies over qualityScore), not by these per-provider
