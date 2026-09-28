@@ -725,10 +725,23 @@ function ArtifactPanel({ artifacts, openId, setOpenId, onNav, setCollapsed, proj
 
 export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurfaceViewProps) {
   // A real thread id is placed on window.C2C_CONVO by whatever opens an existing
-  // conversation; the default is a fresh conversation. `current` means "the
-  // conversation already in progress" — what this screen shows when the person
-  // comes back to it after AnA took them elsewhere mid-answer.
-  const sel = ((window as any).C2C_CONVO || { id: 'new' }) as { id: string; seed?: string | null };
+  // conversation, and `{ id: 'new', seed }` by whatever asks a question here.
+  // `current` means "the conversation already in progress" — what this screen
+  // shows when the person comes back to it after AnA took them elsewhere
+  // mid-answer, and (with the shell's chat) whenever there is nothing to ask.
+  const asked = ((window as any).C2C_CONVO || { id: 'new' }) as { id: string; seed?: string | null };
+  /* With the shell's chat, a "new" that carries nothing to ask is the
+     conversation in progress. It used to be read as "start over": the mount
+     reset the shell's chat, and the shell's chat is the ONE conversation — the
+     rail's, and the one AnA may be driving from. Every way of arriving here
+     with nothing to ask landed on that reset: a first visit (no C2C_CONVO at
+     all), "Open full thread" with an empty box, and AnA's own navigation to
+     this screen, which wiped the very turn that made it. Starting over is a
+     person's decision, taken with the New conversation control below. */
+  const sel =
+    shellChat && asked.id === 'new' && !(typeof asked.seed === 'string' && asked.seed.trim())
+      ? { id: 'current', seed: null }
+      : asked;
   const isCurrent = sel.id === 'current';
   const isNew = sel.id === 'new';
 
@@ -871,20 +884,62 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
       ? firstUser.text.slice(0, 60)
       : anaChat.isLoadingThread
         ? 'Loading…'
-        : 'Conversation';
+        // The conversation in progress, before anyone has said anything in it.
+        : isCurrent
+          ? 'New conversation'
+          : 'Conversation';
 
+  /* The latest shell chat, for the deferred seed below: by the time its
+     timeout fires, the value this mount captured is a render old. */
+  const shellChatRef = useRef(shellChat);
+  shellChatRef.current = shellChat;
+
+  /* The rule every branch below keeps: arriving on this screen never wipes a
+     turn that is still running in the shell's chat. `reset` and `loadThread`
+     both abort the in-flight stream, and the stream may be AnA driving — the
+     move that brought the person here among its steps. The conversation starts
+     over only when that was asked for — a question sent here, or the New
+     conversation control — and never mid-turn. */
   useEffect(() => {
+    const convo = window as unknown as { C2C_CONVO?: { id: string; seed?: string | null } };
     if (isCurrent) {
       // The conversation in progress — already in the shell chat. Nothing to
-      // load, nothing to reset.
+      // load, nothing to reset. Recorded as such when it was an unseeded
+      // "new" (see `sel`), so every later visit reads the same.
+      if (shellChat) convo.C2C_CONVO = { id: 'current', seed: null };
       return;
     }
     if (!isNew) {
       // Returning to the conversation the shell chat already holds must not
       // reload it: a reload aborts the turn that may still be running.
-      if (shellChat && shellChat.threadId === sel.id) return;
+      if (shellChat && shellChat.threadId === sel.id) {
+        convo.C2C_CONVO = { id: 'current', seed: null };
+        return;
+      }
+      // Another conversation, asked for while AnA is still answering in this
+      // one. Loading it would abort her; the person is told instead, and opens
+      // it again once she has finished.
+      if (shellChat?.isStreaming) {
+        convo.C2C_CONVO = { id: 'current', seed: null };
+        fireToast(
+          'AnA is still answering in the current conversation, so it stays open. Open the other conversation again once she has finished.',
+          'error',
+        );
+        return;
+      }
       setLoadErr(false);
-      Promise.resolve(anaChat.loadThread(sel.id)).catch(() => setLoadErr(true));
+      Promise.resolve(anaChat.loadThread(sel.id))
+        .then(() => {
+          // Loaded into the shell's chat, it IS the conversation in progress
+          // now. Left as its id, the next arrival here — AnA's navigation
+          // among them — re-read it, and if the shell's chat had moved on (a
+          // new thread from the rail) loaded it over whatever was running.
+          // Only if nothing has asked for another conversation meanwhile.
+          if (shellChat && convo.C2C_CONVO?.id === sel.id) {
+            convo.C2C_CONVO = { id: 'current', seed: null };
+          }
+        })
+        .catch(() => setLoadErr(true));
     } else if (sel.seed) {
       // Deferred by one task ON PURPOSE. Sending synchronously here opened a
       // fetch during StrictMode's first mount pass; the cleanup at the top of
@@ -898,21 +953,34 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
       let cancelled = false;
       const t = setTimeout(() => {
         if (cancelled) return;
+        /* A question asked from elsewhere while AnA is still answering here.
+           Starting its new conversation now would abort her — and a send
+           without the reset is refused while she streams, which would drop
+           the question without a word. Neither: the running turn stays, the
+           question waits in the composer, and the person sends it when she
+           has finished (into this conversation, which they can see). */
+        const live = shellChatRef.current;
+        if (live?.isStreaming) {
+          prefillComposer(seed);
+          fireToast(
+            'AnA is still answering, so your question has not been sent. It is in the composer — send it once she has finished.',
+            'error',
+          );
+          return;
+        }
         // A new conversation starts clean in the shared chat.
-        if (shellChat) shellChat.reset();
+        if (live) live.reset();
         void anaChat.send(seed);
       }, 0);
       // From here on this screen shows the conversation in progress.
-      (window as any).C2C_CONVO = shellChat ? { id: 'current', seed: null } : { ...sel, seed: null };
+      convo.C2C_CONVO = shellChat ? { id: 'current', seed: null } : { ...sel, seed: null };
       return () => {
         cancelled = true;
         clearTimeout(t);
       };
-    } else if (shellChat) {
-      // An explicitly new, empty conversation.
-      shellChat.reset();
-      (window as any).C2C_CONVO = { id: 'current', seed: null };
     }
+    // With no shell chat, an unseeded "new" is this screen's own fresh chat:
+    // nothing to load and nothing to clear.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => { const el = scrollRef.current; if (el) el.scrollTop = el.scrollHeight; }, [turns.length, busy]);
@@ -958,6 +1026,26 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
     void anaChat.send(body);
   };
 
+  /* The person asking to start over — the one path on this screen that clears
+     the conversation (the rail's "New thread" is the same `reset`, on screens
+     that draw the rail). Nothing is deleted: every turn of the previous
+     conversation is already in the governed conversation store.
+
+     Not while a conversation is loading either. A reset does not stop a load
+     in flight: the load resolves afterwards and puts that conversation back,
+     thread id and all, and the next question went into it under a "New
+     conversation" heading. */
+  const cannotStartOver = busy || anaChat.isLoadingThread;
+  const startNewConversation = () => {
+    if (cannotStartOver) return;
+    anaChat.reset();
+    setLoadErr(false);
+    setOpenId(null);
+    setExpandedDocId(null);
+    (window as any).C2C_CONVO = shellChat ? { id: 'current', seed: null } : { id: 'new', seed: null };
+    draftRef.current?.focus();
+  };
+
   const loadingHistory = !isNew && anaChat.isLoadingThread && turns.length === 0;
 
   return (
@@ -970,6 +1058,24 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
         </div>
         <div className="ct-head-r">
           <span className="ct-head-model">{I.zap} AnA</span>
+          {/* Starting over is asked for, never inferred from how the person
+              arrived (see `sel`). Unavailable while AnA is answering: a reset
+              aborts her mid-turn, and when she is driving, mid-move. */}
+          <button
+            type="button"
+            className="ct-head-open"
+            onClick={startNewConversation}
+            disabled={cannotStartOver}
+            title={
+              busy
+                ? 'AnA is still answering. A new conversation can start once she has finished.'
+                : anaChat.isLoadingThread
+                  ? 'A conversation is loading. A new one can start once it has loaded.'
+                  : undefined
+            }
+          >
+            {I.plus} New conversation
+          </button>
           {/* The one place the side column is shown and hidden from. It used
               to be a chevron in the artifact panel's own header, with a 48px
               stub left behind when collapsed — a control that had to be hunted

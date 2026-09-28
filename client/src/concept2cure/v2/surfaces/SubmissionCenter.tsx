@@ -44,7 +44,7 @@ import { useAuthUser } from '@/services/portal/authService';
 import { SUBMISSION_WORKSPACES } from '@shared/types/submission-ui';
 import { I } from '../icons';
 import { usePublishSurfaceContext } from '../surfaceContext';
-import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
+import { listedChoices, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { AnswerLead } from '../AnswerLead';
 import { assessmentStateFor } from '../assessmentState';
 import { useLiveRows, useLiveData, hasKeys, liveMutateOrNull, EmptyState } from '../dataConnect';
@@ -654,10 +654,11 @@ export function SubmissionCenter({
       const guarded = busyGuard();
       if (guarded) return guarded;
       const wanted = (params.submission ?? '').trim().toLowerCase();
-      if (!wanted) return { ok: false, reason: 'No submission named.' };
       if (subs.loading)
         return { ok: false, reason: 'The submission portfolio is still loading.', retry: true };
       if (subs.error) return { ok: false, reason: 'The submission portfolio could not be read.' };
+      const listed = () => listedChoices(list.map((s) => s.title), 'Submissions listed');
+      if (!wanted) return { ok: false, reason: `No submission named.${listed()}` };
       // Resolved over the same `list` the portfolio picker renders: exact
       // title/product match first (case-insensitive), then unique containment.
       const exact = list.find(
@@ -676,8 +677,11 @@ export function SubmissionCenter({
           ok: false,
           reason:
             contains.length > 1
-              ? `"${params.submission}" matches ${contains.length} submissions — name one exactly.`
-              : `No submission named "${params.submission}" in this portfolio.`,
+              ? `"${params.submission}" matches ${contains.length} submissions — name one exactly.${listedChoices(
+                  contains.map((s) => s.title),
+                  'Matches',
+                )}`
+              : `No submission named "${params.submission}" in this portfolio.${listed()}`,
         };
       }
       const already = match.id === sub?.id;

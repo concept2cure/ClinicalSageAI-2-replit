@@ -9,7 +9,7 @@ import {
 } from '@shared/constants/domain/product-types';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { publishShellProject } from '../shellProject';
-import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
+import { listedChoices, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { usePublishSurfaceContext } from '../surfaceContext';
 // The New-Project wizard drives off the global regulatory registry. Import the
 // picker + the submission-type lookup DIRECTLY from the modules that own them,
@@ -1074,14 +1074,26 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
       const guarded = wizardGuard();
       if (guarded) return guarded;
       const wanted = (params.program ?? '').trim().toLowerCase();
-      if (!wanted) return { ok: false, reason: 'No program named.' };
       // Not-ready, not failed: the bus holds the directive and re-attempts on
       // this surface's ready signal below — the navigate→act gap.
       if (live.loading)
         return { ok: false, reason: 'The portfolio is still loading.', retry: true };
       if (live.error) return { ok: false, reason: 'The portfolio could not be read.' };
+      const programName = (p: (typeof projects)[number]) => `${p.code} — ${p.title}`;
+      const listed = () => listedChoices(projects.map(programName), 'Programs listed');
+      if (!wanted) return { ok: false, reason: `No program named.${listed()}` };
+      /* Exact first, on the keys the server resolves a reference by
+         (drive-context.ts resolveProgramRef): the id, the trimmed code, the
+         title. The id was not one of them here. AnA is handed each program's
+         id beside its name, act_on_screen resolves the reference before the
+         directive is sent, and it sends on a reference the server matched —
+         so a program open-by-id that the server had found was refused here as
+         "No program named …" while it sat on this very page. */
       const exact = projects.find(
-        (p) => p.code.toLowerCase() === wanted || p.title.toLowerCase() === wanted,
+        (p) =>
+          p.id.toLowerCase() === wanted ||
+          p.code.trim().toLowerCase() === wanted ||
+          p.title.toLowerCase() === wanted,
       );
       const contains = exact
         ? []
@@ -1094,8 +1106,11 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
           ok: false,
           reason:
             contains.length > 1
-              ? `"${params.program}" matches ${contains.length} programs — name one exactly.`
-              : `No program named "${params.program}" in this portfolio.`,
+              ? `"${params.program}" matches ${contains.length} programs — name one exactly.${listedChoices(
+                  contains.map(programName),
+                  'Matches',
+                )}`
+              : `No program named "${params.program}" in this portfolio.${listed()}`,
         };
       }
       openProj(match);

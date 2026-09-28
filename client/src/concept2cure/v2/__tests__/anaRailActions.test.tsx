@@ -225,3 +225,63 @@ describe('AnaRail — the "Start demonstration" chip', () => {
     expect(onStartDemo).not.toHaveBeenCalled();
   });
 });
+
+/* Ask / Agent used to be a local flag that prefixed "[Agent] " to the message,
+   which the shell stripped before sending: both modes did exactly the same
+   thing. They are now the Live Drive preference, said as what it means. */
+describe('AnaRail — Ask / Agent is what AnA will actually do', () => {
+  function renderControl(
+    drive: { on: boolean; locked: { reason: string; requiredTier?: string | null } | null } | null,
+  ) {
+    const setOn = vi.fn();
+    const onSend = vi.fn();
+    render(
+      <AnaRail
+        open
+        setOpen={() => {}}
+        surface={surface}
+        segment="biotech"
+        mode="standard"
+        setMode={() => {}}
+        messages={[]}
+        onSend={onSend}
+        onAct={vi.fn()}
+        onNav={vi.fn()}
+        {...(drive ? { liveDrive: { ...drive, setOn } } : {})}
+      />,
+    );
+    fireEvent.click(screen.getByTitle('Control & engine'));
+    return { setOn, onSend };
+  }
+
+  it('reads Agent when AnA drives, and Ask switches her hands off', () => {
+    const { setOn } = renderControl({ on: true, locked: null });
+    expect(screen.getByTitle('Control & engine').textContent).toMatch(/^Agent/);
+    fireEvent.click(screen.getByRole('button', { name: /^Ask/ }));
+    expect(setOn).toHaveBeenCalledWith(false);
+  });
+
+  it('Agent switches Live Drive on from Ask', () => {
+    const { setOn } = renderControl({ on: false, locked: null });
+    expect(screen.getByTitle('Control & engine').textContent).toMatch(/^Ask/);
+    fireEvent.click(screen.getByRole('button', { name: /^Agent/ }));
+    expect(setOn).toHaveBeenCalledWith(true);
+  });
+
+  it('a locked workspace reads Ask even with the preference on, and Agent says why instead of switching', () => {
+    const { setOn } = renderControl({ on: true, locked: { reason: 'not_entitled', requiredTier: 'professional' } });
+    expect(screen.getByTitle('Control & engine').textContent).toMatch(/^Ask/);
+    const agentItem = screen.getByRole('button', { name: /^Agent/ });
+    expect(agentItem.textContent).toContain('Requires the professional plan');
+    fireEvent.click(agentItem);
+    expect(setOn).not.toHaveBeenCalled();
+  });
+
+  it('never rewrites what the person typed', () => {
+    const { onSend } = renderControl({ on: true, locked: null });
+    const box = screen.getByPlaceholderText(/Describe a task for AnA to carry out/);
+    fireEvent.change(box, { target: { value: '/power two-arm superiority' } });
+    fireEvent.keyDown(box, { key: 'Enter' });
+    expect(onSend).toHaveBeenCalledWith('/power two-arm superiority');
+  });
+});

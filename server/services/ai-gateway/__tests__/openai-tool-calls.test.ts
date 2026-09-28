@@ -24,6 +24,9 @@
  *     call with no arguments.
  *   - A route() fallback from Anthropic to OpenAI keeps the tools.
  *
+ * The local provider is the exception: it is offered tools only when
+ * LOCAL_AI_SUPPORTS_TOOLS=1, pinned in local-provider-tools.test.ts.
+ *
  * No live API — the mock clients return canned completions or async
  * generators of wire chunks.
  */

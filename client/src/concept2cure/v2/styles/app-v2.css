@@ -2769,6 +2769,8 @@
    2.96:1 on --bg-000 (same reason as .ph-eyebrow). */
 .c2c-v2 .ct-head-open{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;color:var(--accent-200);background:none;border:1px solid var(--border);border-radius:7px;padding:6px 10px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
 .c2c-v2 .ct-head-open:hover{background:var(--bg-050);}
+.c2c-v2 .ct-head-open:disabled{opacity:.5;cursor:not-allowed;}
+.c2c-v2 .ct-head-open:disabled:hover{background:none;}
 .c2c-v2 .ct-head-open svg{width:13px;height:13px;}
 
 .c2c-v2 .ct-scroll{flex:1;min-height:0;overflow-y:auto;}

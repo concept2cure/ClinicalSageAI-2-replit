@@ -95,6 +95,7 @@ import {
 import { consumeNavParams } from '../navParams';
 import {
   advertisedScreenActions,
+  listedChoices,
   notifySurfaceActionReady,
   useSurfaceActionHandlers,
 } from '../surfaceActions';
@@ -1627,12 +1628,13 @@ export function DocumentWorkbench({
       const guarded = authoringGuard() ?? dirtyGuard();
       if (guarded) return guarded;
       const raw = (params.title ?? '').trim();
-      if (!raw) return { ok: false, reason: 'No document named.' };
       // Not-ready, not failed: the bus holds the directive and re-attempts on
       // this surface's ready signal below — the navigate→act gap.
       if (docsState === 'loading')
         return { ok: false, reason: 'The document list is still loading.', retry: true };
       if (docsState === 'error') return { ok: false, reason: 'The document list could not be read.' };
+      const listed = () => listedChoices(docs.map(d => d.title), 'Documents listed');
+      if (!raw) return { ok: false, reason: `No document named.${listed()}` };
       /* The same resolution idiom as the deep-link hand-off above — normalized
          exact, then containment — except that MULTIPLE containment hits are an
          honest refusal here. The legacy inline path silently took the first;
@@ -1645,11 +1647,17 @@ export function DocumentWorkbench({
       if (pool.length === 0) {
         return {
           ok: false,
-          reason: `No document matching "${raw}" in scope (status filter: ${status.replace('_', ' ')}).`,
+          reason: `No document matching "${raw}" in scope (status filter: ${status.replace('_', ' ')}).${listed()}`,
         };
       }
       if (pool.length > 1) {
-        return { ok: false, reason: `"${raw}" matches ${pool.length} documents — name one exactly.` };
+        return {
+          ok: false,
+          reason: `"${raw}" matches ${pool.length} documents — name one exactly.${listedChoices(
+            pool.map(d => d.title),
+            'Matches',
+          )}`,
+        };
       }
       const match = pool[0];
       if (match.id === activeDocId) return { ok: true, detail: 'Already open' };

@@ -529,9 +529,18 @@ export type DriveSseEvent =
       mode?: 'assist' | 'demo';
       reason?: string;
       requiredTier?: string | null;
+      /**
+       * Set when the server switched an already-driving turn into a
+       * demonstration mid-turn (start_product_demo). It is a MODE change for
+       * the drive that is already running, never a fresh enable: it must not
+       * re-arm a drive the person took over or switched off.
+       */
+      promoted?: boolean;
     }
-  | { type: 'drive_navigation'; round?: number; directive: unknown }
-  | { type: 'drive_action'; round?: number; directive: unknown }
+  /* `moveId` names the move when it is reported back (DriveTurnControls
+     moveLanded / reportScreen); the server waits on it before her next round. */
+  | { type: 'drive_navigation'; round?: number; directive: unknown; moveId?: string }
+  | { type: 'drive_action'; round?: number; directive: unknown; moveId?: string }
   /**
    * Client-side, never on the wire: the chat instance whose turn received an
    * enabled `drive_state` reports that the turn has ended (answered, failed or
@@ -539,7 +548,18 @@ export type DriveSseEvent =
    * streaming, so a drive started from any other chat left "AnA is driving"
    * on screen, with dead controls, for good.
    */
-  | { type: 'drive_turn_end' };
+  | { type: 'drive_turn_end' }
+  /**
+   * Client-side, never on the wire: the person ended a driving turn early —
+   * its chat's Stop, or a new or other conversation replacing it — so the
+   * screen must stop moving NOW. Sent before the server's cancel is awaited,
+   * while the stream is still delivering moves the server had already written;
+   * `drive_turn_end` still follows once the stream closes. Only the drive
+   * strip's Stop used to halt the drive: every other Stop reaches only its own
+   * chat, which the shell cannot see, so the stopped turn's moves went on
+   * playing.
+   */
+  | { type: 'drive_stopped' };
 
 /**
  * The run that is driving, handed to the shell with every drive event so the
@@ -549,7 +569,23 @@ export type DriveSseEvent =
  */
 export interface DriveTurnControls {
   stop: () => void;
+  /** A steer the PERSON typed. Recorded as a human control event. */
   interject: (message: string) => Promise<boolean>;
+  /**
+   * What the app observed on screen (a move that could not be made), told to
+   * AnA mid-turn. Not a human control: it is queued as an app observation, not
+   * shown as "You steered AnA", and not written as a human control event.
+   * Bound to the run of the turn that emitted the drive event — a report about
+   * an earlier turn's move is dropped (resolves false), never delivered to a
+   * newer run. `moveId`, when given, is the move it is about: it settles that
+   * move for the server, which holds her next round until each move is settled.
+   */
+  reportScreen: (message: string, moveId?: string) => Promise<boolean>;
+  /**
+   * The move the server sent as `moveId` landed on the screen. Settles it
+   * without a word for the model. Same run binding as reportScreen.
+   */
+  moveLanded: (moveId: string) => Promise<boolean>;
 }
 
 /**

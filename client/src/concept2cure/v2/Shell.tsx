@@ -648,7 +648,16 @@ export function AnaRail({
      say something rather than look like a send. */
   const [steerBusy, setSteerBusy] = React.useState(false);
   const [steerRefused, setSteerRefused] = React.useState(false);
-  const [agent, setAgent] = React.useState(false);
+  /* Ask / Agent IS the Live Drive preference, said as what it means for the
+     person. It used to be its own local flag that prefixed "[Agent] " to the
+     message — which the shell stripped before sending (V2App ask), so the two
+     modes behaved identically: "Agent — AnA takes governed actions" changed
+     nothing, and "Ask — you act" was untrue whenever Live Drive was on, which
+     is the default. Someone trying AnA's agentic mode saw exactly nothing
+     happen. Now Agent is AnA operating the screens (Live Drive on, not locked)
+     and Ask is AnA answering with the moves offered as buttons. One
+     preference, the same one the composer's "AnA drives" switch sets. */
+  const agent = Boolean(liveDrive?.on && !liveDrive.locked);
   const [plusOpen, setPlusOpen] = React.useState(false);
   const [modeOpen, setModeOpen] = React.useState(false);
   /* The work dock: shown by default, hidden by one shared per-browser choice
@@ -734,7 +743,7 @@ export function AnaRail({
     // received rather than counting chips the user happened to see.
     const bodyText = t ? (attachmentLine ? `${t}\n\n${attachmentLine}` : t) : attachmentLine;
 
-    onSend(agent ? `[Agent] ${bodyText}` : bodyText);
+    onSend(bodyText);
     setDraft('');
     clearAttachments();
   };
@@ -1456,40 +1465,33 @@ export function AnaRail({
                 className="ana-menu-item"
                 data-on={!agent || undefined}
                 onClick={() => {
-                  setAgent(false);
+                  if (liveDrive?.on) liveDrive.setOn(false);
                   setModeOpen(false);
                 }}
               >
-                <span className="ico">{I.sparkles}</span>Ask<span className="mh">AnA answers; you act</span>
-              </button>
-              <button
-                type="button"
-                className="ana-menu-item"
-                data-on={agent || undefined}
-                onClick={() => {
-                  setAgent(true);
-                  setModeOpen(false);
-                }}
-              >
-                <span className="ico">{I.wand}</span>Agent<span className="mh">AnA takes governed actions</span>
+                <span className="ico">{I.sparkles}</span>Ask
+                <span className="mh">AnA answers; screen moves come as buttons you press</span>
               </button>
               {liveDrive && (
                 <button
                   type="button"
                   className="ana-menu-item"
-                  data-on={liveDrive.on || undefined}
+                  data-on={agent || undefined}
+                  aria-disabled={liveDrive.locked ? true : undefined}
                   onClick={() => {
-                    liveDrive.setOn(!liveDrive.on);
+                    // A locked workspace keeps the item visible for its reason;
+                    // it does not pretend to switch anything on.
+                    if (!liveDrive.locked && !liveDrive.on) liveDrive.setOn(true);
                     setModeOpen(false);
                   }}
                 >
-                  <span className="ico">{I.play}</span>Live Drive
+                  <span className="ico">{I.wand}</span>Agent
                   <span className="mh">
                     {liveDrive.locked
                       ? liveDrive.locked.requiredTier
                         ? `Requires the ${liveDrive.locked.requiredTier} plan`
                         : 'Not available for this workspace'
-                      : 'AnA navigates the screens; you watch and can take over'}
+                      : 'AnA operates the screens as she works; you can take over'}
                   </span>
                 </button>
               )}
@@ -1552,12 +1554,6 @@ export function AnaRail({
               ))}
             </div>
           )}
-          {agent && (
-            <div className="ana-agent-note">
-              <span className="ico">{I.shieldCheck}</span>Agent mode — AnA runs tools &amp; drafts
-              governed actions. Changes require your e-signature.
-            </div>
-          )}
           {liveDrive?.on && (
             <div className="ana-agent-note">
               <span className="ico">{I.play}</span>
@@ -1565,7 +1561,7 @@ export function AnaRail({
                 ? liveDrive.locked.requiredTier
                   ? `Live Drive requires the ${liveDrive.locked.requiredTier} plan — AnA will offer destinations as chips instead.`
                   : 'Live Drive is not available for this workspace — AnA will offer destinations as chips instead.'
-                : 'Live Drive — AnA navigates your screens as she works. Take over any time (Esc).'}
+                : 'Agent — AnA operates your screens as she works. Take over any time (Esc). Changes to the official record still wait for you to confirm them.'}
             </div>
           )}
         </div>

@@ -10,8 +10,9 @@
  * platform could not keep.
  *
  * ── The split, and why it is not a cache ─────────────────────────────────────
- * The ROW owns status, the queued steers and the control events. The PROCESS
- * owns an AbortController and a wake latch, and holds no status at all.
+ * The ROW owns status, the queue (steers and screen reports) and the control
+ * events. The PROCESS owns an AbortController and a wake latch, and holds no
+ * status at all.
  *
  * That is deliberate and it is not a write-through cache. A cache would hold
  * status too, and the failure mode is the one the zero-duplication rule exists
@@ -93,6 +94,7 @@ import { createScopedLogger } from '../../utils/logger';
 import {
   canTransitionRunStatus,
   isLiveRunStatus,
+  LIVE_RUN_STATUSES,
   statusAfterControl,
   MAX_INTERJECTION_CHARS,
   STALE_AFTER_MS,
@@ -119,7 +121,17 @@ export interface RunRow {
   status: RunStatus;
   ownerInstance: string;
   currentRound: number;
-  pendingInterjections: Array<{ text: string; at: string; byUserId?: number | null }>;
+  /**
+   * The queue the next checkpoint drains. An entry with no `kind` is a steer:
+   * rows queued before screen reports existed carry none, and must still be
+   * read as what they were.
+   */
+  pendingInterjections: Array<{
+    text: string;
+    at: string;
+    byUserId?: number | null;
+    kind?: RunQueueEntryKind;
+  }>;
   controlEvents: HumanControlEvent[];
   stoppedReason: RunStoppedReason | null;
 }
@@ -131,7 +143,7 @@ export interface ControlResult {
   ok: boolean;
   code?: ControlRefusal;
   status: RunStatus | null;
-  /** Steers queued but not yet consumed, for the caller's snapshot. */
+  /** Queue entries (steers and screen reports) not yet consumed, for the caller's snapshot. */
   pendingInterjections?: number;
 }
 
@@ -342,13 +354,70 @@ export async function readStatus(pool: Pool, runId: string): Promise<RunStatus |
 // Control
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * What can wait in a run's queue for the next round boundary.
+ *
+ *   steer          the PERSON redirected her. A human control: written to
+ *                  control_events at acceptance, announced back to them as
+ *                  "You steered AnA", and it resumes a paused run.
+ *   screen_report  the APP observed something on the person's screen — a move
+ *                  AnA made that did not land. Nobody decided anything, so it
+ *                  is none of the above: not in the control lineage, not shown
+ *                  as the person's words, and a paused run stays paused.
+ *   move_landed    the APP confirms a move landed. No text reaches the model;
+ *                  it only tells the checkpoint that move is settled (see
+ *                  `moveId`). Same rules as a screen report otherwise.
+ *
+ * All three ride one queue so a single atomic drain hands the checkpoint
+ * everything waiting, in the order it arrived.
+ */
+export type RunQueueEntryKind = 'steer' | 'screen_report' | 'move_landed';
+
+/** One drained queue entry, with the kind the checkpoint routes on. */
+export interface RunQueueEntry {
+  kind: RunQueueEntryKind;
+  /** Empty for `move_landed`, which carries nothing for the model to read. */
+  text: string;
+  /**
+   * The move this entry settles — the tool-use id the server sent with the
+   * drive event. Present on `move_landed` always, on a `screen_report` when the
+   * report is about one move. The checkpoint waits on these (stream.ts).
+   */
+  moveId?: string;
+}
+
+/** The shape of a move id: a tool-use id, as the drive events carry it. */
+export const MOVE_ID_PATTERN = /^[A-Za-z0-9_.:-]{1,128}$/;
+
+/** A move id from outside, or undefined when it is not one. */
+export function readMoveId(raw: unknown): string | undefined {
+  return typeof raw === 'string' && MOVE_ID_PATTERN.test(raw) ? raw : undefined;
+}
+
+/**
+ * Screen-report text cap. Smaller than a steer's: a report is one sentence the
+ * app composed about a move that failed, and anything longer is not a report.
+ * It reaches the model as an operator-channel turn, so the bound is also a
+ * bound on what an on-screen string can carry into her prompt.
+ */
+export const MAX_SCREEN_REPORT_CHARS = 1_000;
+
 export interface ApplyControlInput {
   pool: Pool;
   runId: string;
   organizationId: number;
   userId: number | null;
-  action: RunControlAction;
+  /**
+   * A human control, or `screen_report` — which is accepted here, under the
+   * same ownership and live-status rules, but is deliberately NOT a
+   * RunControlAction: HumanControlEvent is typed on that union, and an app
+   * observation must not be recordable as a human decision in the lineage the
+   * dossier reads. `move_landed` likewise (queueAppEntry).
+   */
+  action: RunControlAction | 'screen_report' | 'move_landed';
   message?: string;
+  /** The move a `screen_report` or `move_landed` settles (readMoveId). */
+  moveId?: string;
 }
 
 /**
@@ -365,11 +434,13 @@ export interface ApplyControlInput {
  *
  * The control event is written at the MOMENT of acceptance, not at the end of
  * the turn. The registry accumulated them in a process-local array until the
- * turn finished, so a crash lost every human decision taken during it.
+ * turn finished, so a crash lost every human decision taken during it. A
+ * `screen_report` writes none — it is not a human decision (queueScreenReport).
  *
- * Every write is guarded on the status that was read, so two controls racing
- * cannot both apply — the loser sees zero rows and reports the status that
- * actually won rather than the one it hoped for.
+ * Every control write is guarded on the status that was read, so two controls
+ * racing cannot both apply — the loser sees zero rows and reports the status
+ * that actually won rather than the one it hoped for. A screen report moves no
+ * status, and is guarded on the run still being live instead.
  */
 export async function applyControl(input: ApplyControlInput): Promise<ControlResult> {
   const { pool, runId, organizationId, userId, action } = input;
@@ -395,6 +466,18 @@ export async function applyControl(input: ApplyControlInput): Promise<ControlRes
   }
   if (!isLiveRunStatus(row.status)) {
     return { ok: false, code: 'TERMINAL', status: row.status };
+  }
+
+  // Past the ownership and live checks, and before any control event is built:
+  // a screen report is held to the same "your run, still live" rule as a steer,
+  // and to nothing else a steer implies.
+  if (action === 'screen_report') {
+    return queueScreenReport(pool, row, input.message ?? '', readMoveId(input.moveId));
+  }
+  if (action === 'move_landed') {
+    const moveId = readMoveId(input.moveId);
+    if (!moveId) return { ok: false, code: 'INVALID', status: row.status };
+    return queueAppEntry(pool, row, { text: '', at: new Date().toISOString(), kind: 'move_landed', moveId });
   }
 
   const at = new Date().toISOString();
@@ -435,7 +518,7 @@ async function queueSteer(
      WHERE id = $1 AND status = $5`,
     [
       row.id,
-      JSON.stringify([{ text, at: event.at, byUserId: event.byUserId ?? null }]),
+      JSON.stringify([{ text, at: event.at, byUserId: event.byUserId ?? null, kind: 'steer' }]),
       JSON.stringify([event]),
       next,
       row.status,
@@ -444,6 +527,73 @@ async function queueSteer(
   if (!rowCount) return { ok: false, code: 'TERMINAL', status: await readStatus(pool, row.id) };
   await notifyAndDrive(pool, row.id, next);
   return { ok: true, status: next, pendingInterjections: row.pendingInterjections.length + 1 };
+}
+
+/**
+ * Queue what the app observed on the person's screen, for the next round.
+ *
+ * It used to ride `interject`, and so became three false things at once: a
+ * control event saying the PERSON typed it (the Part 11 lineage misattributing
+ * an app observation to a human), an `interjected` announcement the client
+ * renders as "You steered AnA:", and a resume of a run the person had paused.
+ * So this writes the queue entry and nothing else — no control event, no
+ * status change.
+ *
+ * Guarded on the run still being LIVE, not on the exact status that was read
+ * as the controls are. A control's guard is its transition's precondition; a
+ * report makes no transition, so the status it read is no precondition of it.
+ * Guarded on that status, a Pause pressed between this read and write made the
+ * report lose a race it was never in — refused as TERMINAL on a live run, and
+ * AnA, once resumed, never told that her move had failed. A run that settled in
+ * between still refuses it rather than taking a report no round will ever read.
+ * The status and queue length come back from the write itself, because the
+ * ones read before it may be the very ones that moved.
+ *
+ * The wake is still sent. Nothing that is waiting acts on it — a paused
+ * checkpoint re-reads 'paused' and goes back to waiting — but it keeps one
+ * delivery path for everything in the queue, and it is harmless with the
+ * status unchanged.
+ */
+async function queueScreenReport(
+  pool: Pool,
+  row: RunRow,
+  message: string,
+  moveId: string | undefined,
+): Promise<ControlResult> {
+  const text = message.trim().slice(0, MAX_SCREEN_REPORT_CHARS);
+  if (!text) return { ok: false, code: 'INVALID', status: row.status };
+  return queueAppEntry(pool, row, {
+    text,
+    at: new Date().toISOString(),
+    kind: 'screen_report',
+    ...(moveId ? { moveId } : {}),
+  });
+}
+
+/**
+ * The one writer for what the APP puts on a run's queue — a screen report or a
+ * move's landing. Neither is a human decision, so neither touches
+ * control_events or status; both are guarded on the run still being live, for
+ * the reason queueScreenReport gives.
+ */
+async function queueAppEntry(
+  pool: Pool,
+  row: RunRow,
+  entry: { text: string; at: string; kind: 'screen_report' | 'move_landed'; moveId?: string },
+): Promise<ControlResult> {
+  const { rows } = await pool.query(
+    `UPDATE ana_runs
+     SET pending_interjections = pending_interjections || $2::jsonb,
+         updated_at = now()
+     WHERE id = $1 AND status = ANY($3::text[])
+     RETURNING status, jsonb_array_length(pending_interjections) AS queued`,
+    [row.id, JSON.stringify([entry]), [...LIVE_RUN_STATUSES]],
+  );
+  const written = rows[0];
+  if (!written) return { ok: false, code: 'TERMINAL', status: await readStatus(pool, row.id) };
+  const status = written.status as RunStatus;
+  await notifyAndDrive(pool, row.id, status);
+  return { ok: true, status, pendingInterjections: Number(written.queued) };
 }
 
 /** Move the run to the status this control implies, if the machine allows it. */
@@ -520,15 +670,20 @@ export async function stopRunInternally(
 }
 
 /**
- * Drain the queued steers atomically.
+ * Drain the queue — steers and screen reports together — atomically.
  *
  * One statement. The CTE takes the row lock and reads the pre-image; the UPDATE
  * clears it and `RETURNING` hands back what the CTE saw. Two concurrent drains
- * cannot both see the same steer — the second blocks on the lock, re-reads the
+ * cannot both see the same entry — the second blocks on the lock, re-reads the
  * updated row under READ COMMITTED, finds it empty and returns nothing. A steer
  * applied twice is a redirect the person issued once.
+ *
+ * Both kinds come out of the one drain, each tagged, so the checkpoint can
+ * route them differently without a second read that could race the first. An
+ * entry with no `kind` was queued before screen reports existed, when the
+ * queue held nothing but steers, and is returned as one.
  */
-export async function consumeInterjections(pool: Pool, runId: string): Promise<string[]> {
+export async function consumeInterjections(pool: Pool, runId: string): Promise<RunQueueEntry[]> {
   const { rows } = await pool.query(
     `WITH locked AS (
        SELECT id, pending_interjections AS before
@@ -544,9 +699,24 @@ export async function consumeInterjections(pool: Pool, runId: string): Promise<s
     [runId],
   );
   const drained = rows[0]?.drained;
-  return Array.isArray(drained)
-    ? drained.map((i: any) => String(i?.text ?? '').trim()).filter(Boolean)
-    : [];
+  if (!Array.isArray(drained)) return [];
+  const out: RunQueueEntry[] = [];
+  for (const i of drained) {
+    const moveId = readMoveId(i?.moveId);
+    if (i?.kind === 'move_landed') {
+      // Nothing to read, only a move to settle — so it needs its id.
+      if (moveId) out.push({ kind: 'move_landed', text: '', moveId });
+      continue;
+    }
+    const text = String(i?.text ?? '').trim();
+    if (!text) continue;
+    out.push({
+      kind: i?.kind === 'screen_report' ? 'screen_report' : 'steer',
+      text,
+      ...(moveId && i?.kind === 'screen_report' ? { moveId } : {}),
+    });
+  }
+  return out;
 }
 
 /** Notify other instances, and drive this one immediately. */

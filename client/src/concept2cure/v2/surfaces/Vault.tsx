@@ -468,6 +468,10 @@ function searchHitToDoc(h: VaultSearchHit): VaultDoc {
    build-type-aware), served by GET /api/c2c/project-vault/:id straight from the
    governed document store. Real data → honest empty → honest error; no fixture. */
 
+/** The Vault shows one program's documents; with none open there is no vault
+ *  to operate, and "no documents" or "no such folder" would misstate why. */
+const NO_PROGRAM_OPEN = 'No program is open, so there is no vault here yet — open a program first.';
+
 export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   const projectId = currentProjectId();
   const vaultPath = projectId
@@ -696,15 +700,25 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
     'vault.search': (params) => {
       const query = (params.query ?? '').trim();
       if (!query) return { ok: false, reason: 'No search term given.' };
+      if (!projectId) return { ok: false, reason: NO_PROGRAM_OPEN };
       if (vaultState.error) return { ok: false, reason: 'The vault could not be read.' };
-      // No loading guard: the query is pure view state — it filters whatever
-      // the read delivers, so applying it mid-load is correct, not early.
+      /* Held until the read settles, then refused on an empty vault. The query
+         is view state, and it used to be applied mid-load on the grounds that
+         it filters whatever arrives. But an empty vault renders its empty
+         state and no search box at all, so the query went nowhere visible
+         while AnA was told "Searching the vault" and said so — a search the
+         person could not see, over documents that do not exist. */
+      if (vaultState.loading)
+        return { ok: false, reason: 'The vault is still loading.', retry: true };
+      if (allDocs.length === 0)
+        return { ok: false, reason: 'This vault has no documents yet, so there is nothing to search.' };
       setQ(query);
       return { ok: true, detail: `Searching the vault for "${query}"` };
     },
     'vault.open-folder': (params) => {
       const wanted = (params.folder ?? '').trim().toLowerCase();
       if (!wanted) return { ok: false, reason: 'No folder named.' };
+      if (!projectId) return { ok: false, reason: NO_PROGRAM_OPEN };
       // Not-ready, not failed: the bus holds the directive and re-attempts on
       // this surface's ready signal below — the navigate→act gap.
       if (vaultState.loading)

@@ -127,6 +127,39 @@ export type SurfaceActionHandler = (
   params: Record<string, string>,
 ) => { ok: true; detail?: string } | { ok: false; reason: string; retry?: boolean };
 
+/** How many on-screen names a refusal lists before summarising the rest. */
+export const LISTED_CHOICES_MAX = 8;
+/**
+ * Longest name listed in full. The refusal reaches AnA as a screen report,
+ * which the server caps; eight long titles could run past it and end one
+ * mid-name. A shortened name is listed as its opening words with the ellipsis
+ * OUTSIDE the quotes, because the handlers resolve a unique partial name — the
+ * quoted part is what she can send back.
+ */
+export const LISTED_NAME_MAX = 80;
+
+/**
+ * The names a pick-by-name action could have used, for its refusal reason.
+ *
+ * AnA cannot see the screen she drives. A handler that refused "open the
+ * document X" with only "no document matching X" left her nothing to try next —
+ * a demonstration stop that says "open one of their real documents" failed on
+ * every guess, because the titles live on the screen and nowhere she could
+ * read. The refusal reaches her as a screen report, so naming what IS listed
+ * turns a dead end into a retry with a real name. Only what the person can see
+ * on that screen: this is their list, not a side channel to hidden data.
+ */
+export function listedChoices(names: ReadonlyArray<string>, noun = 'Listed'): string {
+  const unique = [...new Set(names.map(n => n.trim()).filter(Boolean))];
+  if (unique.length === 0) return '';
+  const shown = unique
+    .slice(0, LISTED_CHOICES_MAX)
+    .map(n => (n.length > LISTED_NAME_MAX ? `"${n.slice(0, LISTED_NAME_MAX).trimEnd()}"…` : `"${n}"`))
+    .join(', ');
+  const rest = unique.length - LISTED_CHOICES_MAX;
+  return ` ${noun}: ${shown}${rest > 0 ? ` and ${rest} more` : ''}.`;
+}
+
 interface Registration {
   surfaceId: string;
   handlers: Record<string, SurfaceActionHandler>;

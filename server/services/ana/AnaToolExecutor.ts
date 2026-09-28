@@ -33,6 +33,7 @@ import { ANA_MACHINE_AUTHOR_ID } from '../authoring/revision-ledger.js';
 // annotation the local is inferred from `p: any`, which makes every field
 // REQUIRED and so rejects PriorLeaf's optional ones.
 import type { PriorLeaf } from '../ectd/lifecycle-operator.js';
+import type { ProgramRef, ProgramResolution } from '../ana-ri/drive-context.js';
 import fdaMaudeClient from '../../fda_maude_client.js';
 import { searchTrials } from '../integrations/clinicaltrials-client.js';
 import { recordArtifactProvenance } from '../provenance/artifact-provenance';
@@ -261,9 +262,21 @@ export interface ToolContext {
    * has opened on the person's screen so far. The request's `projectRef` is
    * what was open when the turn began; after she opens a program mid-turn,
    * the next project screen must not ask again which one.
+   *
+   * `pendingProgram` is an open still being resolved. The stream runs one
+   * round's tool calls concurrently, so "open BX-301" and "take me to its
+   * Vault" asked in the same round used to race: the navigation read
+   * `program` before the open's database read came back, and asked which
+   * program — or showed the one open before. See `beginProgramOpen`.
    */
-  turnState?: { program: { id: string; name?: string; code?: string } | null } | null;
+  turnState?: {
+    program: TurnProgram | null;
+    pendingProgram?: Promise<TurnProgram | null> | null;
+  } | null;
 }
+
+/** A program AnA has opened on the person's screen this turn, as a directive carries it. */
+export type TurnProgram = { id: string; name?: string; code?: string };
 
 type ToolHandler = (input: Record<string, unknown>, ctx?: ToolContext) => Promise<string>;
 
@@ -16874,10 +16887,106 @@ registerToolHandler('list_app_screens', async (input: Record<string, unknown>, c
   }
 });
 
+// ── The program AnA has opened this turn ─────────────────────────────────────
+// A move that opens a program (act_on_screen projects.open-program, navigate_to
+// with a `program`) only learns WHICH program once its database read returns.
+// The stream runs a round's calls concurrently (mapWithConcurrency), so a
+// project screen asked for in the same round must wait for that answer instead
+// of reading what was open before it — which asked "which program?" a moment
+// after AnA had opened one, or showed the previous one.
+//
+// Both helpers are synchronous and must run before the handler's first await.
+// The executor starts a round's calls in order, each running synchronously up
+// to its first await, so what a call publishes by then is visible to every
+// call asked AFTER it in the round, and to none asked before it.
+
+/** The program open once every move started before this point has landed. */
+/**
+ * Whether the request came with a program open on the person's screen. The
+ * stream route sends it as `projectRef` (a uuid under the v2 shell); the chat
+ * route sets only `projectId` — so reading one field alone told a chat turn
+ * with a program open that none was.
+ */
+function hasOpenProgram(ctx?: ToolContext): boolean {
+  return Boolean((typeof ctx?.projectRef === 'string' && ctx.projectRef.trim()) || ctx?.projectId);
+}
+
+function programOpenedBefore(ctx?: ToolContext): Promise<TurnProgram | null> {
+  const ts = ctx?.turnState;
+  if (!ts) return Promise.resolve(null);
+  return ts.pendingProgram ?? Promise.resolve(ts.program);
+}
+
+/**
+ * Announce that this move is opening a program. The returned function settles
+ * it with what the move opened (null: nothing it could name) and resolves once
+ * the turn's program reflects that. Callers also call it with null in a
+ * `finally` — a no-op after the first call — so an early return or a throw
+ * never leaves a later move waiting. Opens land in the order they were asked,
+ * so two in one round leave the second open, as the person's screen will.
+ */
+function beginProgramOpen(ctx?: ToolContext): (opened: TurnProgram | null) => Promise<unknown> {
+  const ts = ctx?.turnState;
+  if (!ts) return async () => undefined;
+  const before = programOpenedBefore(ctx);
+  let settle!: (opened: TurnProgram | null) => void;
+  const own = new Promise<TurnProgram | null>(resolve => {
+    settle = resolve;
+  });
+  const pending: Promise<TurnProgram | null> = own.then(async opened => {
+    const prior = await before;
+    if (opened) ts.program = opened;
+    if (ts.pendingProgram === pending) ts.pendingProgram = null;
+    return opened ?? prior;
+  });
+  ts.pendingProgram = pending;
+  return opened => {
+    settle(opened);
+    return pending;
+  };
+}
+
+function turnProgramOf(p: ProgramRef): TurnProgram {
+  return { id: p.id, name: p.name, ...(p.code ? { code: p.code } : {}) };
+}
+
+/**
+ * The tool result for a program reference that did not name exactly one of
+ * the person's programs. Both moves that open a program refuse through here,
+ * so the model is told the same thing whichever one it used.
+ */
+async function unresolvedProgramResult(
+  ref: string,
+  found: Exclude<ProgramResolution, { status: 'found' }>
+): Promise<string> {
+  const { programChoices } = await import('../ana-ri/drive-context.js');
+  if (found.status === 'ambiguous') {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      message: found.truncated
+        ? `"${ref}" matches more than ${found.matches.length} programs — name one exactly. These are the ${found.matches.length} most recently updated.`
+        : `"${ref}" matches more than one program — name one exactly.`,
+      programs: programChoices(found.matches),
+    });
+  }
+  if (found.status === 'not_found') {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      message: `No program matching "${ref}" in this workspace.`,
+      programs: programChoices(found.candidates),
+    });
+  }
+  return JSON.stringify({
+    status: 'error',
+    error: 'The program list could not be read, so the program could not be opened.',
+  });
+}
+
 // AnA self-navigation — validate a target against the governed registry and
 // produce the navigation directive the chat client applies. Refuses unknown
 // targets / invalid params rather than emitting a broken jump.
 registerToolHandler('navigate_to', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  let settleOpen: ((opened: TurnProgram | null) => Promise<unknown>) | null = null;
   try {
     const target = typeof input.target === 'string' ? input.target.trim() : '';
     if (!target) {
@@ -16893,6 +17002,11 @@ registerToolHandler('navigate_to', async (input: Record<string, unknown>, ctx?: 
         : typeof paramProgram === 'string' && paramProgram.trim()
           ? paramProgram.trim()
           : '';
+    // Before the first await (see beginProgramOpen): a move that names a
+    // program is opening it; one that does not shows whatever the moves asked
+    // before it leave open.
+    settleOpen = programRef ? beginProgramOpen(ctx) : null;
+    const openedBefore = programRef ? null : programOpenedBefore(ctx);
     const locked = ctx?.lockedScreens?.get(target);
     if (locked) {
       return JSON.stringify({
@@ -16918,35 +17032,17 @@ registerToolHandler('navigate_to', async (input: Record<string, unknown>, ctx?: 
       const drive = await import('../ana-ri/drive-context.js');
       if (programRef) {
         const found = await drive.resolveProgramRef(ctx?.organizationId ?? null, programRef);
-        if (found.status === 'found') {
-          directive.program = {
-            id: found.program.id,
-            name: found.program.name,
-            ...(found.program.code ? { code: found.program.code } : {}),
-          };
-          if (ctx?.turnState) ctx.turnState.program = directive.program as { id: string; name?: string; code?: string };
-        } else if (found.status === 'ambiguous') {
-          return JSON.stringify({
-            status: 'needs_parameters',
-            message: `"${programRef}" matches more than one program — name one exactly.`,
-            programs: drive.programChoices(found.matches),
-          });
-        } else if (found.status === 'not_found') {
-          return JSON.stringify({
-            status: 'needs_parameters',
-            message: `No program matching "${programRef}" in this workspace.`,
-            programs: drive.programChoices(found.candidates),
-          });
-        } else {
-          return JSON.stringify({
-            status: 'error',
-            error: 'The program list could not be read, so the program could not be opened.',
-          });
-        }
-      } else if (ctx?.turnState?.program) {
-        // AnA opened a program earlier this turn — the screen follows it.
-        directive.program = ctx.turnState.program;
-      } else if (!ctx?.projectRef) {
+        if (found.status !== 'found') return await unresolvedProgramResult(programRef, found);
+        const opened = turnProgramOf(found.program);
+        directive.program = opened;
+        await settleOpen?.(opened);
+      } else {
+        // A program AnA opened earlier this turn — in an earlier round, or
+        // earlier in this one and still resolving — is the one the screen shows.
+        const opened = await openedBefore;
+        if (opened) directive.program = opened;
+      }
+      if (!directive.program && !hasOpenProgram(ctx)) {
         const listed = await drive.listProgramCandidates(ctx?.organizationId ?? null, 25);
         return JSON.stringify({
           status: 'needs_project',
@@ -16982,6 +17078,8 @@ registerToolHandler('navigate_to', async (input: Record<string, unknown>, ctx?: 
     });
   } catch (err: any) {
     return JSON.stringify({ error: `navigate_to failed: ${err?.message || 'unknown error'}` });
+  } finally {
+    void settleOpen?.(null);
   }
 });
 
@@ -17020,6 +17118,7 @@ registerToolHandler('list_screen_actions', async (input: Record<string, unknown>
 // Refuses unknown actions, governed verbs, and invalid params rather than
 // emitting a broken (or forbidden) operation.
 registerToolHandler('act_on_screen', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  let settleOpen: ((opened: TurnProgram | null) => Promise<unknown>) | null = null;
   try {
     const action = typeof input.action === 'string' ? input.action.trim() : '';
     if (!action) {
@@ -17032,6 +17131,12 @@ registerToolHandler('act_on_screen', async (input: Record<string, unknown>, ctx?
       input.params && typeof input.params === 'object'
         ? (input.params as Record<string, unknown>)
         : {};
+    // Before the first await (see beginProgramOpen), so a project screen asked
+    // for in this same round waits for the program this opens.
+    settleOpen = action === 'projects.open-program' ? beginProgramOpen(ctx) : null;
+    // Likewise read before the first await: a program opened earlier in this
+    // turn, or earlier in this round, is the one a project screen will show.
+    const openedBefore = action === 'projects.open-program' ? null : programOpenedBefore(ctx);
     const { resolveSurfaceAction, findSurfaceAction } = await import('../../../shared/navigation/surface-actions.js');
     const known = findSurfaceAction(action);
     const lockedReason = known ? ctx?.lockedScreens?.get(known.surfaceId) : undefined;
@@ -17043,19 +17148,45 @@ registerToolHandler('act_on_screen', async (input: Record<string, unknown>, ctx?
       });
     }
     const res = resolveSurfaceAction(action, params);
-    // Opening a program changes which program the next project screen shows.
-    if (res.ok && res.directive.actionId === 'projects.open-program' && ctx?.turnState) {
+    // Opening a program changes which program the next project screen shows,
+    // so the server resolves the reference too — over every program the
+    // person has, where the Projects screen matches against the one page of
+    // the portfolio it loaded. A reference that names several programs is
+    // refused here: on that page it can look unique, and the screen would
+    // open one of them, a guess, while the turn recorded no program at all.
+    // A miss still goes to the screen, which reports it with its own list (its
+    // page is a subset of what was searched, so it misses too), and so does a
+    // failed read, which leaves the screen's own read to decide.
+    if (res.ok && res.directive.actionId === 'projects.open-program') {
       const ref = String(res.directive.params?.program ?? '').trim();
       if (ref) {
         const { resolveProgramRef } = await import('../ana-ri/drive-context.js');
-        const found = await resolveProgramRef(ctx.organizationId ?? null, ref);
-        if (found.status === 'found') {
-          ctx.turnState.program = {
-            id: found.program.id,
-            name: found.program.name,
-            ...(found.program.code ? { code: found.program.code } : {}),
-          };
-        }
+        const found = await resolveProgramRef(ctx?.organizationId ?? null, ref);
+        if (found.status === 'found') await settleOpen?.(turnProgramOf(found.program));
+        else if (found.status === 'ambiguous') return await unresolvedProgramResult(ref, found);
+      }
+    }
+    /* An operation on a screen that shows ONE program needs a program open —
+       navigate_to already refuses to move onto that screen without one. This
+       did not: "search the vault for stability" with no program open was sent,
+       the Vault drew "Open a project to see its vault", the search went
+       nowhere, and AnA — told the operation was being performed — said she
+       had searched. Ask first, with their programs, as navigate_to does. */
+    if (res.ok && openedBefore && !hasOpenProgram(ctx)) {
+      const { findNavigationTarget } = await import('../../../shared/navigation/index.js');
+      const screen = findNavigationTarget(res.directive.surfaceId);
+      if (screen?.scope === 'project' && !(await openedBefore)) {
+        const drive = await import('../ana-ri/drive-context.js');
+        const listed = await drive.listProgramCandidates(ctx?.organizationId ?? null, 25);
+        return JSON.stringify({
+          status: 'needs_project',
+          message: listed.ok
+            ? listed.programs.length > 0
+              ? `"${res.directive.label}" works on the ${screen.label} screen, which shows one program, and none is open. Open one first with navigate_to {"target":"${screen.id}","program":"<one of these>"} (ask the person which if it is not clear from the conversation), then repeat this action.`
+              : `"${res.directive.label}" works on the ${screen.label} screen, which shows one program, and this workspace has none yet. Offer to create one with them from Projects.`
+            : 'The program list could not be read, so no program could be opened for this action.',
+          ...(listed.ok ? { programs: drive.programChoices(listed.programs) } : {}),
+        });
       }
     }
     if (!res.ok) {
@@ -17076,11 +17207,17 @@ registerToolHandler('act_on_screen', async (input: Record<string, unknown>, ctx?
       // The instruction must match what actually happens on screen, exactly as
       // navigate_to's does.
       instruction: ctx?.liveDrive
-        ? `Live Drive is on: this operation is being performed on the person's screen now (on the "${res.directive.surfaceId}" screen — AnA's move queue takes them there first if needed). Say what you did in a few words and continue. If a screen report says it did not happen, tell them and take another route.`
+        ? `Live Drive is on: this operation is being performed on the person's screen now (on the "${res.directive.surfaceId}" screen — AnA's move queue takes them there first if needed). Say what you did in a few words and continue. If a screen report says it did not happen, tell them and take another route. When the report lists what the screen shows ("Documents listed: …"), you may retry once with one of those exact names — never a name you made up.${
+            res.directive.actionId === 'projects.open-program'
+              ? ` The Projects screen lists only the most recent programs; if it cannot find this one, open it with navigate_to {"target":"project-home","program":"<the program>"}, which opens any of their programs directly.`
+              : ''
+          }`
         : `An action directive was produced and is OFFERED to the user as a chip they activate — the screen does not change on its own. Say what the action will do when they tap it, not that you have done it.`,
     });
   } catch (err: any) {
     return JSON.stringify({ error: `act_on_screen failed: ${err?.message || 'unknown error'}` });
+  } finally {
+    void settleOpen?.(null);
   }
 });
 
@@ -17190,7 +17327,7 @@ registerToolHandler('start_product_demo', async (input: Record<string, unknown>,
       script,
       ...(listed.ok ? { programs: programChoices(listed.programs) } : {}),
       instruction: driven
-        ? `Run the demonstration now, all the way through, one stop per step: for each step, say its talking point in one or two sentences of your own (adapted to their real data — never verbatim), then make its move (navigate_to for "navigate", act_on_screen for "act"). Make ONE move per round so each screen lands before the next. Pick ONE program from \`programs\` at the start (the first is fine) and use it throughout: pass its name as \`program\` to projects.open-program, and as navigate_to's \`program\` for project screens. If \`programs\` is empty, narrate from the portfolio and offer to set one up together. If a screen report says a move did not happen, say so briefly and continue with the next stop. Answer any question they ask mid-demo, then resume. If the turn ends before the script does, say which stop you reached.`
+        ? `Run the demonstration now, all the way through, one stop per step: for each step, say its talking point in one or two sentences of your own (adapted to their real data — never verbatim), then make its move (navigate_to for "navigate", act_on_screen for "act"). Make ONE move per round so each screen lands before the next. Pick ONE program from \`programs\` at the start (the first is fine) and use it throughout: pass its name as \`program\` to projects.open-program, and as navigate_to's \`program\` for project screens. If \`programs\` is empty, narrate from the portfolio and offer to set one up together. Stops that say "pick … on screen" need a real name you cannot see yet: make the act with the likeliest name from the conversation or their data, but do not name a document or submission to the person until the screen confirms it — when the screen report comes back listing what is on screen ("Documents listed: …", "Submissions listed: …"), retry that stop once with one of those exact names. If a screen report says a move did not happen for any other reason, say so briefly and continue with the next stop. Answer any question they ask mid-demo, then resume. If the turn ends before the script does, say which stop you reached.`
         : `Live Drive is NOT on for this turn, so the moves below can only be OFFERED as chips, not performed — do not narrate the stops as if you had made them. This answer carries a "Start demonstration: ${script.title}" chip: tell the user that pressing it starts the demonstration with you driving (Live Drive switches on visibly and they can take over at any time), and offer to proceed chip-by-chip instead if they prefer. Give a one-paragraph preview of what the demonstration covers (${script.steps.length} stops, about ${script.minutes} minutes) and stop there.`,
     });
   } catch (err: any) {

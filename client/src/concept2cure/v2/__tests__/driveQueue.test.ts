@@ -83,6 +83,9 @@ function harness(opts: {
     onFailed: vi.fn((m: DriveMove, reason: string) => {
       log.push(`failed:${idOf(m)}:${reason}`);
     }),
+    onDropped: vi.fn((m: DriveMove, reason: string) => {
+      log.push(`dropped:${idOf(m)}:${reason}`);
+    }),
     sleep: (ms) => new Promise<void>((r) => setTimeout(r, ms)),
   };
   return { deps, log, queue: createDriveQueue(deps) };
@@ -247,7 +250,14 @@ describe('createDriveQueue — refusal and take-over', () => {
     queue.clear();
     await vi.advanceTimersByTimeAsync(5_000);
     await queue.whenIdle();
-    expect(log).toEqual(['navigate:cmc', 'applied:cmc']);
+    // The cleared moves never ran — and each is still settled, as dropped: the
+    // server holds AnA's next round until every move she made is settled.
+    expect(log).toEqual([
+      'navigate:cmc',
+      'applied:cmc',
+      'dropped:vault:It was cancelled before it could be made.',
+      'dropped:vault.search:It was cancelled before it could be made.',
+    ]);
     expect(deps.perform).not.toHaveBeenCalled();
 
     // A move pushed after the clear belongs to a new drive and runs.
@@ -255,6 +265,17 @@ describe('createDriveQueue — refusal and take-over', () => {
     await vi.advanceTimersByTimeAsync(NAV_SETTLE_MS + 100);
     await queue.whenIdle();
     expect(log.slice(-2)).toEqual(['navigate:projects', 'applied:projects']);
+  });
+
+  it('a clear with a reason settles each dropped move with that reason', async () => {
+    const { log, queue } = harness({ showsAfter: { cmc: 200 } });
+    queue.push(nav('cmc'));
+    queue.push(act('vault.search'));
+    await vi.advanceTimersByTimeAsync(50);
+    queue.clear('The person stopped or took over the drive, so it was not made.');
+    await vi.advanceTimersByTimeAsync(5_000);
+    await queue.whenIdle();
+    expect(log.at(-1)).toBe('dropped:vault.search:The person stopped or took over the drive, so it was not made.');
   });
 
   it('once the person has taken over (canApply=false) no move is made at all', async () => {
@@ -269,8 +290,25 @@ describe('createDriveQueue — refusal and take-over', () => {
     await queue.whenIdle();
     expect((deps.navigate as ReturnType<typeof vi.fn>).mock.calls.map((c) => c[0].targetId)).toEqual(['cmc']);
     expect(deps.perform).not.toHaveBeenCalled();
-    // Skipped is not failed: nothing was attempted, so nothing is reported.
+    // Skipped is not failed: nothing was attempted, so no failure is shown —
+    // but each is settled as dropped, with the reason.
     expect(deps.onFailed).not.toHaveBeenCalled();
+    expect((deps.onDropped as ReturnType<typeof vi.fn>).mock.calls.map((c) => [idOf(c[0]), c[1]])).toEqual([
+      ['vault', 'The person took over the screen, so it was not made.'],
+      ['vault.search', 'The person took over the screen, so it was not made.'],
+    ]);
+  });
+
+  it('a move the queue itself fails on is settled as dropped, and the next still runs', async () => {
+    const { deps, log, queue } = harness({ showsAfter: { vault: 0 } });
+    (deps.navigate as ReturnType<typeof vi.fn>).mockImplementationOnce(() => {
+      throw new Error('boom');
+    });
+    queue.push(nav('cmc'));
+    queue.push(nav('vault'));
+    await vi.advanceTimersByTimeAsync(NAV_SETTLE_MS + 100);
+    await queue.whenIdle();
+    expect(log).toEqual(['dropped:cmc:The move could not be made.', 'navigate:vault', 'applied:vault']);
   });
 });
 

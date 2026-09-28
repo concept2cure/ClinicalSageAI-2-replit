@@ -449,7 +449,9 @@ export const resolveSeedForTest = resolveSeed;
  * position when the model accepts one. When it does not, it is folded into the
  * preceding user turn as `[User interjection]: …` — byte-for-byte what the
  * platform sent before this existed, which is what makes the capability safe to
- * land on its own.
+ * land on its own. A message the application authored names itself instead
+ * (GatewayMessage.foldLabel), so an app observation is never passed off as the
+ * person's words.
  *
  * Placement is the API's, not ours: an inline system turn must follow a user
  * turn and cannot be first. A message that would violate that is downgraded
@@ -503,7 +505,7 @@ function partitionSystemMessages(
       if (previous && previous.role === 'user') {
         bodyMessages[bodyMessages.length - 1] = {
           ...previous,
-          content: `${previous.content}\n\n[User interjection]: ${m.content}`,
+          content: `${previous.content}\n\n[${m.foldLabel?.trim() || 'User interjection'}]: ${m.content}`,
         };
       } else {
         systemMessages.push(m);
@@ -719,6 +721,36 @@ function toOpenAIToolChoice(
 }
 
 /**
+ * Whether a self-hosted OpenAI-compatible server (provider 'local': vLLM,
+ * llama.cpp, Ollama, a LiteLLM proxy in front of one) is offered tools.
+ *
+ * Many are not built or launched to take them. Sent `tools`, one answers 400
+ * and the rung fails; another accepts the request and its model prints the
+ * call as JSON in its answer, which reads as a garbled reply and runs nothing.
+ * Either way AnA's turn is lost to a capability the server never claimed. So
+ * tools are withheld unless the operator whose server does take them (vLLM
+ * with --enable-auto-tool-choice, llama.cpp with --jinja) says so with
+ * LOCAL_AI_SUPPORTS_TOOLS=1. Without it the turn still goes, as plain text:
+ * she answers, but cannot navigate or act on a screen.
+ */
+function localServerTakesTools(): boolean {
+  return process.env.LOCAL_AI_SUPPORTS_TOOLS === '1';
+}
+
+/**
+ * Set once the withholding has been reported. Every round of every turn that
+ * lands on the local server would otherwise repeat the same warning; once per
+ * process tells the operator what they need to know.
+ */
+let localToolsWithheldReported = false;
+
+/** Told to the model when this turn's tools were withheld (see above). */
+export const LOCAL_NO_TOOLS_NOTE =
+  'No tools are available on this turn: you cannot navigate, act on a screen, run a ' +
+  'demonstration or call any tool. Do not say or imply that you did any of these. ' +
+  'Answer in text, and where a move would help, tell the person where to go themselves.';
+
+/**
  * Offer the request's tools on an OpenAI-compatible Chat Completions request.
  *
  * These paths used to build their params with no tools and return no tool
@@ -737,6 +769,8 @@ function toOpenAIToolChoice(
  *     this side to execute one, so it is not offered.
  *   - A name this API would reject is not offered, because one bad name
  *     refuses the whole request and every other tool with it.
+ *   - The local provider is offered none unless its operator says it takes
+ *     them — see localServerTakesTools.
  *
  * `tool_choice` goes only alongside tools — the API rejects it without them.
  * Moonshot documents only 'auto' and 'none'; a forced choice ('any', or a
@@ -751,6 +785,52 @@ function applyOpenAIToolParams(
 ): void {
   if (!request.tools || request.tools.length === 0) return;
   const target = `${modelConfig.provider}/${modelConfig.model}`;
+
+  if (modelConfig.provider === 'local' && !localServerTakesTools()) {
+    // A turn that was REQUIRED to call a tool cannot be served as text — that
+    // would be the quiet non-answer the Moonshot note above refuses. A 400 is
+    // what it is: a request this server cannot take. It is not retried, it
+    // does not count against the server's health, and the fallback walk moves
+    // on to a model that can honour it.
+    const forced = toOpenAIToolChoice(request.toolChoice);
+    if (forced !== undefined && forced !== 'none') {
+      throw Object.assign(
+        new Error(
+          `${target} was required to call a tool, and tools are not offered to the local provider ` +
+            '(set LOCAL_AI_SUPPORTS_TOOLS=1 if this server supports OpenAI function calling)'
+        ),
+        { status: 400 }
+      );
+    }
+    // Her prompt still describes her tools, and on a driving turn it tells her
+    // to use them. Without a word here she would say "I've opened the Vault"
+    // on a turn that can open nothing. One line, after the prompt that
+    // promised otherwise — at the end of the leading system prompt, never as a
+    // system message of its own after the conversation. Many self-hosted chat
+    // templates (Mistral's, Gemma's) take a system message only first and
+    // refuse the whole request over one anywhere else: sent last, the note
+    // turned every turn on such a server into the 400 this path exists to
+    // spare it.
+    const wire = params.messages as Array<{ role: string; content: unknown }> | undefined;
+    if (Array.isArray(wire)) {
+      const lead = wire[0];
+      if (lead && lead.role === 'system' && typeof lead.content === 'string') {
+        wire[0] = { ...lead, content: `${lead.content}\n\n${LOCAL_NO_TOOLS_NOTE}` };
+      } else {
+        wire.unshift({ role: 'system', content: LOCAL_NO_TOOLS_NOTE });
+      }
+    }
+    if (!localToolsWithheldReported) {
+      localToolsWithheldReported = true;
+      log.warn(
+        `[AI Gateway] ${target}: tools not offered — the local provider gets none unless ` +
+          'LOCAL_AI_SUPPORTS_TOOLS=1, so AnA answers there as text and cannot navigate or act on a ' +
+          'screen. Set it if this server supports OpenAI function calling (vLLM ' +
+          '--enable-auto-tool-choice, llama.cpp --jinja). Reported once per process.'
+      );
+    }
+    return;
+  }
 
   const functions: OpenAIFunctionTool[] = [];
   const serverTools: string[] = [];
@@ -872,6 +952,82 @@ function assertContentBlocksCarried(modelConfig: ModelConfig, request: GatewayRe
   const carriesMedia = request.messages.some(m => m.contentBlocks?.some(b => b.type !== 'text'));
   if (!carriesMedia) return;
   throw new MediaNotCarriedError(modelConfig);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Provider health — what counts against a provider
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * The statuses a provider uses to say the REQUEST was wrong: malformed (400),
+ * too large (413), well-formed but unprocessable (422). It is the request that
+ * has to change, not the provider, so they say nothing about the provider's
+ * health.
+ *
+ * 404 is not one of them. It says the model or endpoint was not found — a
+ * retired model id, a wrong base URL, an Azure deployment that does not exist
+ * — which is the provider's configuration failing, and every request sent
+ * there fails the same way until someone fixes it. Exempted, it never tripped
+ * the breaker, so every turn walked into the same 404 before falling over.
+ */
+const REQUEST_SHAPE_STATUSES: ReadonlySet<number> = new Set([400, 413, 422]);
+
+/**
+ * A refusal that says the ACCOUNT cannot be served, whatever status carries
+ * it. Anthropic answers an exhausted credit balance with a 400 ("Your credit
+ * balance is too low to access the Anthropic API…"); quota and billing
+ * refusals from OpenAI-compatible servers and proxies name insufficient_quota,
+ * quota, billing or payment. Every request to that provider fails until
+ * someone pays, which is exactly what the breaker is for — exempted as a 400,
+ * the dead provider stayed first in line on every turn.
+ *
+ * Anthropic sends two more account refusals as the same 400
+ * invalid_request_error, and neither says billing, quota or payment: a spend
+ * cap ("You have reached your specified API usage limits. You will regain
+ * access on …") and a disabled organization ("This organization has been
+ * disabled."). Both fail every request until the date or an administrator, so
+ * both are matched by their own words. Without them the breaker exempted a
+ * spent-out or disabled account, and every turn walked the whole Anthropic
+ * ladder into it before falling over.
+ *
+ * Word-bounded, because a request-shape 400 can quote the request back and AnA
+ * has a tool named get_billing_credits: a refusal that names it is still a
+ * malformed request. `\b` counts `_` as part of a word, so `billing` inside a
+ * snake_case name does not match; insufficient_quota is named outright for
+ * the same reason.
+ */
+const PROVIDER_ACCOUNT_REFUSAL =
+  /credit balance|insufficient_quota|\bbilling\b|\bquota\b|\bpayments?\b|\bapi usage limits?\b|\borganization has been disabled\b/i;
+
+/**
+ * Everything a provider said about a failure, as one string. Both SDKs put the
+ * body's message into `message` (Anthropic's as the whole JSON body, OpenAI's
+ * as its `error.message`), OpenAI's adds `code` and `type`, and both keep the
+ * parsed body on `error` — read too, so a body the message did not quote in
+ * full is not missed.
+ */
+function providerErrorText(error: unknown): string {
+  const e = error as { message?: unknown; code?: unknown; type?: unknown; error?: unknown } | null;
+  const parts: unknown[] = [e?.message, e?.code, e?.type];
+  if (e?.error !== undefined) {
+    try {
+      parts.push(JSON.stringify(e.error));
+    } catch {
+      // A body that will not serialise adds nothing the message did not say.
+    }
+  }
+  return parts.filter((p): p is string => typeof p === 'string').join(' ');
+}
+
+/**
+ * True when a failure says the request was wrong rather than the provider — a
+ * request-shape status whose text does not say the account cannot be served.
+ * Only these are kept off the circuit breaker (recordFailure).
+ */
+function isRequestShapeRefusal(error: unknown): boolean {
+  const status = Number((error as { status?: unknown } | null)?.status);
+  if (!REQUEST_SHAPE_STATUSES.has(status)) return false;
+  return !PROVIDER_ACCOUNT_REFUSAL.test(providerErrorText(error));
 }
 
 export class AIGateway {
@@ -2860,12 +3016,13 @@ export class AIGateway {
     const health = this.providerHealth.get(provider);
     if (!health) return;
 
-    // A request the provider refused as malformed (400/404/413/422) says the
-    // REQUEST was wrong, not that the provider is down. Counting it marked a
-    // healthy provider unhealthy for a minute or more after three such turns,
-    // so one bad transcript shape took AnA offline for every tenant.
-    const status = Number((error as { status?: unknown })?.status);
-    if (status === 400 || status === 404 || status === 413 || status === 422) {
+    // A request the provider refused as malformed says the REQUEST was wrong,
+    // not that the provider is down. Counting it marked a healthy provider
+    // unhealthy for a minute or more after three such turns, so one bad
+    // transcript shape took AnA offline for every tenant. What is and is not
+    // such a refusal — a 404 and an account the provider will not serve are
+    // not — is isRequestShapeRefusal's to say.
+    if (isRequestShapeRefusal(error)) {
       health.requestCount++;
       return;
     }
