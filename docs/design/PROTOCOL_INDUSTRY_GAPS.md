@@ -160,8 +160,8 @@ tool and a surface to land honestly:
 | BOIN dose-finding: boundaries, decision table, isotonic MTD selection | `stats/dose-finding-boin.ts` (exposed only at `/api/biostat-design-stats`) | **Wired in this change.** `SafetyDesign.doseEscalation` records the BOIN design on the spine; `study-design/dose-escalation.ts` projects it with every number from the engine (boundaries, per-cohort decision table incl. the elimination column), labels each engine default as one, and reports an escalation-phase design with no rules as `missing`. Reachable at `/api/study-design/:id/dose-escalation`, in the projections pane, and as AnA's `review_dose_escalation_design` |
 | Enrollment forecasting: Poisson–Gamma accrual per site with staggered activation, dropout, seeded predictive intervals | `stats/enrollment-forecast.ts` | **Wired in this change.** `StudyDesign.accrualPlan` carries the sponsor's site plan (rates are sponsor inputs, never assumed); `study-design/enrollment-projection.ts` reports the engine's median, 80% interval, probability of reaching N and closed-form expectation, and "not reached" as null. Reachable at `/api/study-design/:id/enrollment`, in the projections pane, and as AnA's `review_enrollment_forecast` |
 | Group-sequential operating characteristics and spending boundaries | `stats/group-sequential-oc.ts` | **Wired in this change.** `study-design/interim-oc.ts` computes type I error, power at the fixed design's alternative, expected information and sample size and per-look stopping probabilities for the boundaries the protocol RECORDS, solves the named spending function's, and reports every look where they differ as a discrepancy; `lan_demets` (a family) and unrecorded sidedness are gaps. Reachable at `/api/study-design/:id/interim-oc`, in the projections pane, and as AnA's `review_interim_operating_characteristics` |
-| MMRM sample size and power | `stats/mmrm-design.ts` | Size the longitudinal continuous endpoint the SAP projection already names MMRM for |
-| External-control borrowing: power prior, commensurate prior, tipping point | `stats/external-control.ts` | Single-arm and external-control designs the framework enum already admits |
+| MMRM sample size and power | `stats/mmrm-design.ts` | **Wired in this change.** `StatisticalPlan.mmrmAssumptions` records the sponsor's covariance, ρ, SD, δ and per-visit retention; `study-design/mmrm-sizing.ts` sizes with the engine, never lets its defaults (power 0.90, complete data) stand in for a missing assumption, compares the planned N both ways and cross-checks the visit count against the SoA. Reachable at `/api/study-design/:id/mmrm`, in the projections pane, and as AnA's `review_mmrm_sizing` |
+| External-control borrowing: power prior, commensurate prior, tipping point | `stats/external-control.ts` | **Wired in this change** at design stage. `StudyDesign.externalControlPlan` records source, method, discount, planned concurrent size; `study-design/external-control-plan.ts` lists each element FDA's 2023 draft guidance expects pre-specified (stated or not — a fixed a0 is not a conflict plan) and the engine's borrowing strength at the planned concurrent-control size. No posterior or effect is computed: those are analysis-stage. Reachable at `/api/study-design/:id/external-control`, in the projections pane, and as AnA's `review_external_control_plan` |
 | Multiplicity procedures: Bonferroni, Holm, Hochberg, fixed-sequence, graphical | `stats/multiplicity.ts` | Evaluate the multiplicity strategy the spine records instead of only naming it |
 | Win ratio, RMST | `stats/win-ratio.ts`, `stats/rmst.ts` | Composite and time-to-event endpoint methods |
 
@@ -233,8 +233,9 @@ the reachability gate — and is a separate change so it can be reviewed as one.
    reads the design rather than an overlay *(this change)*.
 4. Tier 2 wiring, one engine per session, in the table's order — dose-finding
    first because Project Optimus is the live regulatory pressure *(dose-finding
-   enrollment forecasting and group-sequential operating characteristics done
-   in this change; MMRM sizing is next)*.
+   enrollment forecasting, group-sequential operating characteristics, MMRM
+   sizing and the external-control plan done in this change; multiplicity is
+   next)*.
 5. Tier 3 in the order listed. Item 16 waits for reference data.
 6. Retire `/api/protocol`.
 

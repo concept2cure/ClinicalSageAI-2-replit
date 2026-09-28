@@ -20,6 +20,8 @@
  *   • `projectDoseEscalation`       — BOIN escalation rules from the design (Tier 2)
  *   • `projectEnrollment`           — Poisson–Gamma time to planned N (Tier 2)
  *   • `projectInterimOperatingCharacteristics` — exact group-sequential OC (Tier 2)
+ *   • `projectMmrmSizing`           — MMRM sample size from sponsor assumptions (Tier 2)
+ *   • `projectExternalControlPlan`  — external-control borrowing plan (Tier 2)
  *
  * Word export is not here: the Protocol Development surface already renders
  * MD, DOCX and PDF from the one assembled Markdown, signature block included
@@ -36,7 +38,7 @@
  *  4. No prose, no filing: nothing here writes into `protocol_sections`,
  *     generates protocol text, or claims a registration or transmission.
  *
- * All eleven are READ-ONLY, so none carries a reason-for-change: nothing is
+ * All thirteen are READ-ONLY, so none carries a reason-for-change: nothing is
  * mutated and no governed-action row is written.
  *
  * @module server/services/ana/protocol-industry-tool-defs
@@ -219,6 +221,33 @@ export const REVIEW_INTERIM_OPERATING_CHARACTERISTICS: AnaTool = {
   input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
 };
 
+export const REVIEW_MMRM_SIZING: AnaTool = {
+  name: 'review_mmrm_sizing',
+  description:
+    'READ-ONLY. Size the MMRM-analysed continuous endpoint of the study design bound to a protocol document from the sponsor\'s recorded assumptions ' +
+    '(projectMmrmSizing; ICH E9(R1); exact GLS information under monotone dropout): per-arm and total N, the variance factor, MMRM\'s efficiency over a ' +
+    'completers-only analysis, the achieved power, and whether the planned sample size covers the requirement — every figure from the platform\'s ' +
+    'engine (stats/mmrm-design.ts). ' +
+    DESIGN_REQUIRED + ' ' +
+    'Report every figure and gap VERBATIM. The assumptions (covariance, correlation, SD, effect, per-visit retention, power) are the SPONSOR\'S: when ' +
+    'one is not recorded nothing is sized — say which assumption is missing, and never supply one or fall back to complete data.',
+  input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
+};
+
+export const REVIEW_EXTERNAL_CONTROL_PLAN: AnaTool = {
+  name: 'review_external_control_plan',
+  description:
+    'READ-ONLY. Review the external-control borrowing plan of the study design bound to a protocol document (projectExternalControlPlan; FDA draft ' +
+    'guidance on externally controlled trials, 2023; ICH E10 §2.5): each element the protocol is expected to pre-specify — source, borrowing method ' +
+    'and strength, prior-data conflict handling, covariate comparability, tipping-point sensitivity — stated or not, and the borrowing strength at the ' +
+    'planned concurrent-control size (effective historical N, share of control precision borrowed) from the platform\'s engine ' +
+    '(stats/external-control.ts). ' +
+    DESIGN_REQUIRED + ' ' +
+    'Report every element and figure VERBATIM. No posterior or treatment effect is computed at protocol stage — never quote one. A fixed power-prior ' +
+    'discount does not handle prior-data conflict; say so rather than calling the plan conflict-robust.',
+  input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
+};
+
 /** In the order a human would reach for them: draw it, check it, derive from it, export it, compare it. */
 export const PROTOCOL_INDUSTRY_TOOLS: AnaTool[] = [
   REVIEW_TRIAL_SCHEMA,
@@ -232,4 +261,6 @@ export const PROTOCOL_INDUSTRY_TOOLS: AnaTool[] = [
   REVIEW_DOSE_ESCALATION_DESIGN,
   REVIEW_ENROLLMENT_FORECAST,
   REVIEW_INTERIM_OPERATING_CHARACTERISTICS,
+  REVIEW_MMRM_SIZING,
+  REVIEW_EXTERNAL_CONTROL_PLAN,
 ];

@@ -4,19 +4,19 @@
  *
  * What this suite holds, beyond registration:
  *
- *  - **Every one of the eleven is registered and has a handler.** A definition
+ *  - **Every one of the thirteen is registered and has a handler.** A definition
  *    the model can see with no handler behind it is offered and then fails;
  *    a handler with no definition is unreachable. Both halves, or neither.
  *  - **Every description names its engine as the source of its output**, and
  *    says the output is reported verbatim — asserted over the whole array, so
- *    a twelfth tool cannot be added without it (CLAUDE.md Rule 2: a tool that
+ *    a fourteenth tool cannot be added without it (CLAUDE.md Rule 2: a tool that
  *    asks a model for a figure is a defect).
  *  - **The honesty phrases the design doc requires are in the prose**, because
  *    the description is the only thing that steers the model: `unverified`
  *    stays unverified on the USDM export; `unstated` is not `site` on the DCT
  *    profile; `not_assessable` is not `missing` on SPIRIT; a null share is not
  *    0% on deviation trends; the CtQ ratings are default seeds.
- *  - **None of the eleven carries a reason-for-change property.** They are all
+ *  - **None of the thirteen carries a reason-for-change property.** They are all
  *    read-only; a reason field would imply a governed write that never happens.
  *
  * RED-FIRST EVIDENCE: written before the engines' handlers were registered,
@@ -42,6 +42,8 @@ const NAMES = [
   'review_dose_escalation_design',
   'review_enrollment_forecast',
   'review_interim_operating_characteristics',
+  'review_mmrm_sizing',
+  'review_external_control_plan',
 ];
 
 const ENGINE_NAMES: Record<string, RegExp> = {
@@ -56,10 +58,12 @@ const ENGINE_NAMES: Record<string, RegExp> = {
   review_dose_escalation_design: /projectDoseEscalation/,
   review_enrollment_forecast: /projectEnrollment/,
   review_interim_operating_characteristics: /projectInterimOperatingCharacteristics/,
+  review_mmrm_sizing: /projectMmrmSizing/,
+  review_external_control_plan: /projectExternalControlPlan/,
 };
 
 describe('PROTOCOL_INDUSTRY_TOOLS — registration', () => {
-  it('exposes exactly the eleven, once each, with unique names', () => {
+  it('exposes exactly the thirteen, once each, with unique names', () => {
     expect(PROTOCOL_INDUSTRY_TOOLS.map((t) => t.name)).toEqual(NAMES);
     expect(new Set(PROTOCOL_INDUSTRY_TOOLS.map((t) => t.name)).size).toBe(NAMES.length);
   });
@@ -110,9 +114,11 @@ describe('PROTOCOL_INDUSTRY_TOOLS — the description steers the model', () => {
     expect(by.review_dose_escalation_design).toMatch(/"engine default" was NOT chosen by the sponsor/);
     expect(by.review_enrollment_forecast).toMatch(/never supply or assume a rate/);
     expect(by.review_interim_operating_characteristics).toMatch(/never quietly substitute the solved value/);
+    expect(by.review_mmrm_sizing).toMatch(/never supply one or fall back to complete data/);
+    expect(by.review_external_control_plan).toMatch(/No posterior or treatment effect is computed at protocol stage/);
   });
 
-  it('none carries a reason-for-change: all eleven are read-only', () => {
+  it('none carries a reason-for-change: all thirteen are read-only', () => {
     for (const t of PROTOCOL_INDUSTRY_TOOLS) {
       const props = Object.keys((t.input_schema as { properties: Record<string, unknown> }).properties);
       expect(props, `${t.name} properties`).not.toContain('reason');

@@ -17,7 +17,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  ctqView, dctView, doseEscalationView, enrollmentView, INDUSTRY_PROJECTIONS, interimOcView, spiritView, trialSchemaView, usdmView, whoIctrpView,
+  ctqView, dctView, doseEscalationView, enrollmentView, externalControlView, INDUSTRY_PROJECTIONS, interimOcView, mmrmView, spiritView,
+  trialSchemaView, usdmView, whoIctrpView,
 } from '../surfaces/ProtocolDevIndustryProjections';
 
 describe('trial schema', () => {
@@ -238,6 +239,30 @@ describe('interim-analysis characteristics', () => {
     expect(v.note).toContain('Characteristics of the recorded boundaries: type I error 0.031; power not computed (alpha or power not recorded).');
     expect(v.entries[0]).toMatchObject({ status: 'discrepancy', text: 'Recorded 2.5 · solved 2.963 · difference -0.463' });
     expect(v.entries[1].text).toContain('P(stop for efficacy) 0.006 under H0');
+  });
+});
+
+describe('MMRM sizing', () => {
+  it('states a shortfall against the planned N, and prints nothing sized when nothing was', () => {
+    const v = mmrmView({ mmrm: { status: 'partial', endpointName: 'HbA1c change', gaps: ['g'], sizing: { nPerArm: 180, nTotal: 360, alphaTwoSided: 0.05, achievedPower: 0.901, varianceFactor: 1.08, efficiencyVsCompleters: 1.09 }, plannedVsRequired: { planned: 300, required: 360, covered: false, shortfall: 60 }, soaVisitCount: 3 } });
+    expect(v.note).toContain('Required: 180 per arm, 360 in total (two-sided alpha 0.05)');
+    expect(v.note).toContain('The planned 300 is 60 below the requirement.');
+    const none = mmrmView({ mmrm: { status: 'partial', endpointName: 'HbA1c change', gaps: ['the target power is not recorded'], sizing: null, plannedVsRequired: null, soaVisitCount: null } });
+    expect(none.note).toBe('Endpoint: HbA1c change.');
+    expect(none.gaps).toEqual(['the target power is not recorded']);
+  });
+});
+
+describe('external-control plan', () => {
+  it('lists each pre-specification element stated or not, and never shows a posterior', () => {
+    const v = externalControlView({ externalControl: {
+      status: 'partial', kind: 'hybrid', gaps: ['Tipping-point sensitivity analysis: not recorded'],
+      borrowing: { method: 'power_prior', parameter: { name: 'a0', value: 0.5 }, effectiveHistoricalN: 60, borrowedPrecisionFraction: 0.35, plannedConcurrentSe: 7.3 },
+      elements: [{ element: 'Tipping-point sensitivity analysis', stated: false, detail: 'not recorded' }],
+    } });
+    expect(v.note).toContain('power_prior (a0 = 0.5): effective historical N 60');
+    expect(v.note).toContain('No posterior or treatment effect is computed at protocol stage.');
+    expect(v.entries[0]).toMatchObject({ label: 'Tipping-point sensitivity analysis', status: 'not stated' });
   });
 });
 

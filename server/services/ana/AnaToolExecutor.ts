@@ -20836,7 +20836,7 @@ registerToolHandler('review_protocol_design_gates', async (input, ctx) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // Protocol industry-gap engines (docs/design/PROTOCOL_INDUSTRY_GAPS.md Tier 1).
 //
-// Eleven READ-ONLY tools, each a thin call into protocol-industry-service.ts —
+// Thirteen READ-ONLY tools, each a thin call into protocol-industry-service.ts —
 // the same function the /api/study-design and /api/protocol-development routes
 // call, so AnA and the screen report one engine's output from one read. Every
 // engine is pure; the service reads the rows and throws a ProtocolDevError with
@@ -20873,9 +20873,11 @@ function industryDocId(input: Record<string, unknown>): number {
   return typeof input.document_id === 'number' && Number.isInteger(input.document_id) ? input.document_id : NaN;
 }
 
-type IndustryDesignEngine = 'trial-schema' | 'ctq' | 'usdm' | 'dct-profile' | 'who-ictrp' | 'dose-escalation' | 'enrollment' | 'interim-oc';
+type IndustryDesignEngine =
+  | 'trial-schema' | 'ctq' | 'usdm' | 'dct-profile' | 'who-ictrp'
+  | 'dose-escalation' | 'enrollment' | 'interim-oc' | 'mmrm' | 'external-control';
 
-/** The eight design-only tools share one shape: bound design → engine → verbatim note. */
+/** The ten design-only tools share one shape: bound design → engine → verbatim note. */
 function registerIndustryDesignTool(tool: string, engine: IndustryDesignEngine, note: string): void {
   registerToolHandler(tool, async (input, ctx) => {
     if (!ctx?.organizationId) return JSON.stringify({ error: `${tool} requires tenant context.` });
@@ -20934,6 +20936,18 @@ registerIndustryDesignTool(
   'review_interim_operating_characteristics',
   'interim-oc',
   'Computed by projectInterimOperatingCharacteristics over the exact group-sequential engine. The characteristics are of the RECORDED boundaries when recorded; report every discrepancy with the spending function verbatim and never substitute the solved value. Report gaps verbatim; a null power means alpha or power is not recorded.',
+);
+
+registerIndustryDesignTool(
+  'review_mmrm_sizing',
+  'mmrm',
+  'Sized by projectMmrmSizing over the MMRM planning engine. Report every figure and gap verbatim. The assumptions are the sponsor\'s: where one is missing nothing is sized — name the missing assumption, never supply one or assume complete data.',
+);
+
+registerIndustryDesignTool(
+  'review_external_control_plan',
+  'external-control',
+  'Reviewed by projectExternalControlPlan over the external-control engine. Report each pre-specification element and the borrowing strength verbatim. No posterior or treatment effect exists at protocol stage — never quote one. A fixed power-prior discount is not a prior-data conflict plan.',
 );
 
 registerToolHandler('review_spirit_conformance', async (input, ctx) => {

@@ -245,6 +245,33 @@ export interface InterimDesign {
   dmcRole?: string;
 }
 
+/**
+ * The sponsor's planning assumptions for an MMRM-analysed continuous
+ * endpoint — the inputs an MMRM sample size needs and the design cannot infer.
+ * See mmrm-sizing.ts; every value is a sponsor assumption, none is defaulted.
+ */
+export interface MmrmAssumptions {
+  /** The design endpoint the MMRM analyses (by name). */
+  endpointName: string;
+  /** Post-baseline visits in the model. */
+  visits: number;
+  covariance: 'compound_symmetry' | 'ar1';
+  /** Within-subject correlation, 0 ≤ ρ < 1 (CS: common; AR(1): lag-1). */
+  rho: number;
+  /** SD of the response at each visit, same units as `delta`. */
+  sigma: number;
+  /** Between-arm difference in mean at the target visit. */
+  delta: number;
+  /** Fraction still observed at each visit, monotone non-increasing, length = visits. */
+  retention: number[];
+  /** 1-based visit the contrast is tested at; the final visit when absent. */
+  targetVisit?: number;
+  /** n₂/n₁; 1 when absent. */
+  allocationRatio?: number;
+  /** Where the assumptions came from (prior study, literature). */
+  source?: string;
+}
+
 export interface StatisticalPlan {
   /** One/two-sided alpha for the primary test. */
   alpha?: number;
@@ -260,6 +287,8 @@ export interface StatisticalPlan {
   /** Missing-data strategy; must align with the estimand (no LOCF-as-primary). */
   missingDataStrategy?: string;
   interim?: InterimDesign;
+  /** Planning assumptions for an MMRM-analysed endpoint. See mmrm-sizing.ts. */
+  mmrmAssumptions?: MmrmAssumptions;
   /** Whether sensitivity analyses across assumption ranges were specified. */
   sensitivityAnalysesSpecified?: boolean;
   /** Power assumptions, with provenance, feeding the §6 red-flags. */
@@ -503,6 +532,33 @@ export interface AccrualPlan {
   seed?: number;
 }
 
+/**
+ * A pre-specified plan to borrow from an external (historical / real-world)
+ * control. Every value is the sponsor's; see external-control-plan.ts.
+ */
+export interface ExternalControlPlan {
+  /** Where the external control comes from (named study, registry, RWD source). */
+  source: string;
+  /** The design endpoint the borrowing is for. */
+  endpointName: string;
+  /** Summary of the external control on that endpoint. */
+  historical: { n: number; mean: number; se: number };
+  /** How strength is borrowed. */
+  method: 'power_prior' | 'commensurate';
+  /** Power-prior discount, 0 ≤ a0 ≤ 1 (power_prior only). */
+  a0?: number;
+  /** Commensurability variance τ² ≥ 0 (commensurate only). */
+  tau2?: number;
+  /** Planned concurrent (randomised) control size; 0 for a fully external control. */
+  plannedConcurrentControlN: number;
+  /** Assumed SD of the endpoint, to express the planned concurrent control's precision. */
+  assumedSd?: number;
+  /** A tipping-point sensitivity analysis is pre-specified. */
+  tippingPointAnalysisPlanned?: boolean;
+  /** Covariate balance between the populations is pre-specified (e.g. SMDs, weighting). */
+  covariateBalancePlanned?: boolean;
+}
+
 export interface StudyDesign {
   /** Stable id (set once persisted; optional for an in-memory/proposed design). */
   id?: string;
@@ -531,6 +587,8 @@ export interface StudyDesign {
   safety?: SafetyDesign;
   /** The planned site accrual an enrollment forecast runs on. See enrollment-projection.ts. */
   accrualPlan?: AccrualPlan;
+  /** A pre-specified external-control borrowing plan. See external-control-plan.ts. */
+  externalControlPlan?: ExternalControlPlan;
 
   /**
    * Regulatory-strategy attributes the regional rules read. Absent fields are

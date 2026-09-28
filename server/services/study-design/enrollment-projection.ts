@@ -33,7 +33,7 @@
  */
 
 import { expectedTimeToEnroll, forecastCompletion, type SiteConfig } from '../stats/enrollment-forecast';
-import type { StatsProvenance } from '../stats/computation-provenance';
+import { reproducibleProvenance, type ReproducibleProvenance } from '../stats/computation-provenance';
 import type { AccrualPlan, StudyDesign } from './study-design-types';
 
 export const ENROLLMENT_PROJECTION_BASIS =
@@ -57,7 +57,7 @@ export interface EnrollmentForecastView {
   closedFormExpectedTime: number | null;
   nSim: number;
   seed: number;
-  provenance: Omit<StatsProvenance, 'generatedAt'>;
+  provenance: ReproducibleProvenance;
 }
 
 export interface EnrollmentProjection {
@@ -105,17 +105,10 @@ function byCountry(plan: AccrualPlan): Array<{ country: string; sites: number; m
   return [...acc.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([country, v]) => ({ country, ...v }));
 }
 
-/** The engine's provenance minus its clock reading: the seed and input hash reproduce the forecast. */
-function withoutClock(p: StatsProvenance): Omit<StatsProvenance, 'generatedAt'> {
-  const out: Partial<StatsProvenance> = { ...p };
-  delete out.generatedAt;
-  return out as Omit<StatsProvenance, 'generatedAt'>;
-}
-
 function forecastOf(plan: AccrualPlan, targetN: number): EnrollmentForecastView {
   const sites: SiteConfig[] = plan.sites.map((s) => ({ id: s.id, meanRate: s.meanRate, rateCv: s.rateCv, activationTime: s.activationTime }));
   const f = forecastCompletion({ sites, targetN, nSim: ENROLLMENT_SIMULATIONS, seed: plan.seed });
-  const provenance = withoutClock(f.provenance);
+  const provenance = reproducibleProvenance(f.provenance);
   const reachedAny = f.probReached > 0;
   return {
     timeUnit: plan.timeUnit,
