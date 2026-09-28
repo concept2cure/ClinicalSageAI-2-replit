@@ -21004,7 +21004,7 @@ registerToolHandler('review_deviation_trends', async (input, ctx) => {
     return JSON.stringify({
       ok: true,
       ...result,
-      note: 'Trended by trendDeviations. Report every count, share and signal verbatim. A null share means nothing to measure — "no deviations recorded", never "0%". A per-site view is not available (protocol_deviations carries no site linkage). notAssessed lists signals that could not be evaluated; that is not the absence of a problem.',
+      note: 'Trended by trendDeviations. Report every count, share and signal verbatim. A null share means nothing to measure — "no deviations recorded", never "0%". A per-site view is not available (protocol_deviations carries no site linkage). notAssessed lists signals that could not be evaluated; that is not the absence of a problem. byMonth[].legacyDefaults counts values set aside as possible defaults of the replaced writer — report them with the shares they were kept out of. The reportable share means a prompt IRB report is indicated (rates.reportableShareMeaning), never that the others need no report.',
     });
   } catch (err) {
     return pdevToolError('review_deviation_trends', err);

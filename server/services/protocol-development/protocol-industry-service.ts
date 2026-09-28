@@ -180,7 +180,7 @@ async function readDeviationRows(q: Queryable, orgId: number, documentId: number
     throw new ProtocolDevError('NOT_FOUND', `Protocol document ${documentId} was not found for this organization.`);
   }
   const res = await q.query(
-    `SELECT d.id, d.category, d.severity, d.status, d.is_reportable, d.created_at,
+    `SELECT d.id, d.category, d.severity, d.status, d.is_reportable, d.created_at, d.assessed_at,
             COUNT(c.id) FILTER (WHERE c.status IN ('open','in_progress'))::int AS capa_open,
             COUNT(c.id)::int AS capa_total
        FROM protocol_deviations d
@@ -198,6 +198,9 @@ async function readDeviationRows(q: Queryable, orgId: number, documentId: number
     status: r.status as DeviationRow['status'],
     isReportable: typeof r.is_reportable === 'boolean' ? r.is_reportable : null,
     createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at),
+    // Supplied, so a stored minor / false is read as an assessment only when one
+    // is on record (20260922f); null = none recorded.
+    assessedAt: r.assessed_at == null ? null : r.assessed_at instanceof Date ? r.assessed_at.toISOString() : String(r.assessed_at),
     // protocol_deviations records no closure timestamp; the engine reports the
     // lag as not known rather than reading updated_at as a closure date.
     closedAt: null,

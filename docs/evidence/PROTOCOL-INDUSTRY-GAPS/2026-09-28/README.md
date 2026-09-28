@@ -109,7 +109,8 @@ only), the CAPA join anchored on the scoped row, input bounds, route order
 | `study-design/__tests__/usdm-projection.test.ts` | 25 |
 | `study-design/__tests__/dct-profile.test.ts` | 44 |
 | `study-design/__tests__/who-ictrp-registration.test.ts` | 24 |
-| `protocol-deviations/__tests__/deviation-trends.test.ts` | 42 |
+| `protocol-deviations/__tests__/deviation-trends.test.ts` | 51 |
+| `protocol-deviations/__tests__/deviation-trends-rows.test.ts` | 12 |
 | `protocol-development/__tests__/protocol-redline.test.ts` | 45 |
 | `study-design/__tests__/dose-escalation.test.ts` | 15 |
 | `study-design/__tests__/enrollment-projection.test.ts` | 8 |
@@ -174,6 +175,8 @@ red, the file was restored byte for byte, and the suite re-ran green.
 | Biospecimens | conditional draws counted as scheduled | `sums recorded volumes per visit… conditional draws only in the upper bound` |
 | Master protocol | an absent shared control read as "none" | `absence of a shared control is not stated; null states there is none` |
 | Master protocol | the arm-existence check disabled | `an arm the design does not carry, a duplicate id and a one-user shared control are defects` |
+| Service | `assessed_at` not passed to the engine | `reads assessed_at: a pre-fix minor / false is an assessment only when one is on record` (`expected +0 to be 1`) |
+| Deviation vocabulary | a severity admitted that the union does not have | `category "Consent" and severity "high" count as uncategorised / unassessed` and `an unassessed deviation is counted … never as minor` |
 | Service | CAPA join without its org anchor | `excludes other organisations' … CAPA` (`expected 1 to be 0`) — after strengthening the test so the only open action is another org's |
 | Service | version lookup without its org filter | `a label not recorded for this org is NOT_FOUND — including one another org recorded` (`promise resolved … instead of rejecting`) |
 | AnA tools | one handler unregistered | `review_protocol_redline handler registered: expected undefined to be type of 'function'` |
@@ -208,8 +211,15 @@ re-ran verify-by-failing. Landed so far:
 
 | WHO TRDS | 7 major (+ minors) | a name-only intervention rendered item 13 complete; every SoA visit — even an unresolved visit id — was presented as an outcome timepoint; the item list was frozen only shallowly; item 11 ignored the accrual plan's site countries; the phase and assignment fallbacks were untested | 47 (was 24) | 16 |
 
-The remaining engines (USDM, deviation trends, redline) are being fixed the
-same way; their rows are added here as they land.
+| Deviation trends | 8 (1 blocking) | **the replaced writer's defaults were read as assessments**: before 2026-09-24 it stored `minor` / `other` / `is_reportable false` when nobody had assessed, so ten such rows read as "0% reportable over 10 determined" and could manufacture a DEV-SEVERITY-RISE. They are now set aside, counted in `legacyDefaults`, kept out of the shares and named — and the service now passes `assessed_at` so an assessment on record is recognised; unrecognised categories and severities were passed through; rows dated after today were aged; a `Math.max` spread overflowed on large inputs | 63 (was 42) | 19 |
+
+The deviation vocabularies (category, severity, status, CAPA status) had four
+copies — the service's validators, the route's zod enums, the trend engine and
+the logic module's types. The logic module now exports the one list of each,
+Record-keyed against its union, and the others import it.
+
+The remaining engines (USDM, redline) are being fixed the same way; their rows
+are added here as they land.
 
 ## What is not done, and why
 

@@ -153,6 +153,8 @@ export const REVIEW_DEVIATION_TRENDS: AnaTool = {
     'TransCelerate KRI methodology): counts by month, category and severity; the reportable and major-or-critical shares; open-deviation ageing; CAPA ' +
     'closure lag; and any signals the engine\'s documented rules raise (DEV-CATEGORY-SPIKE, DEV-SEVERITY-RISE, DEV-AGING) with their evidence. ' +
     'Report every number and signal verbatim. A null share means there were no deviations to measure — say "no deviations recorded", never "0%". ' +
+    'Values the replaced writer may have defaulted (byMonth[].legacyDefaults) are kept out of the shares and named; report them. The reportable share means a prompt IRB ' +
+    'report is indicated (rates.reportableShareMeaning); every deviation is still reported to the sponsor. ' +
     'A spike the engine declined to declare for lack of prior months is not the absence of a problem; report the reason in the evidence. ' +
     'siteBreakdown.available is false because protocol_deviations carries no site linkage — say a per-site view is not available, and never attribute a ' +
     'deviation to a site.',

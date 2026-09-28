@@ -67,6 +67,7 @@ CREATE TABLE protocol_deviations (id serial PRIMARY KEY, organization_id int NOT
   category text CHECK (category IN ('enrollment','consent','procedure','safety','data','other')),
   severity text CHECK (severity IN ('minor','major','critical')), is_reportable boolean,
   status text NOT NULL DEFAULT 'open' CHECK (status IN ('open','under_review','capa_pending','closed')),
+  assessed_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(), deleted_at timestamptz);
 CREATE TABLE cdisc_prm_studies (study_id text NOT NULL, tenant_id int NOT NULL, metadata jsonb);
 CREATE TABLE protocol_capa_actions (id serial PRIMARY KEY, organization_id int NOT NULL, deviation_id int NOT NULL, action text,
@@ -199,6 +200,20 @@ describe('deviationTrendsForProtocol — the rows the trend reads', () => {
     await pglite.query(`INSERT INTO protocol_deviations (organization_id, protocol_document_id, description, status, created_at) VALUES ($1,$2,'Recorded, not yet assessed','open','2026-09-02T00:00:00Z')`, [ORG, id]);
     const out = await deviationTrendsForProtocol(q, ORG, id, { today: '2026-09-28' });
     expect(out.trends.byMonth.reduce((n, m) => n + m.total, 0)).toBe(1);
+  });
+
+  it('reads assessed_at: a pre-fix minor / false is an assessment only when one is on record', async () => {
+    // Before 2026-09-24 the replaced writer stored minor / false when nobody had
+    // assessed; assessed_at is what tells an assessment from that default.
+    const id = await insertDoc(ORG, null);
+    await pglite.query(`INSERT INTO protocol_deviations (organization_id, protocol_document_id, description, category, severity, is_reportable, status, created_at, assessed_at) VALUES ($1,$2,'Assessed','procedure','minor',false,'open','2026-09-02T00:00:00Z','2026-09-03T00:00:00Z')`, [ORG, id]);
+    await pglite.query(`INSERT INTO protocol_deviations (organization_id, protocol_document_id, description, category, severity, is_reportable, status, created_at) VALUES ($1,$2,'Defaulted','procedure','minor',false,'open','2026-09-02T00:00:00Z')`, [ORG, id]);
+    const out = await deviationTrendsForProtocol(q, ORG, id, { today: '2026-09-28' });
+    const sep = out.trends.byMonth.find((m) => m.month === '2026-09')!;
+    expect(sep.total).toBe(2);
+    expect(sep.bySeverity.minor).toBe(1);
+    expect(sep.legacyDefaults.minorSeverity).toBe(1);
+    expect(sep.legacyDefaults.notReportable).toBe(1);
   });
 
   it('a protocol with no deviations reports null shares, never 0', async () => {
