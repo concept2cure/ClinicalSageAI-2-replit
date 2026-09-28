@@ -20936,7 +20936,7 @@ registerIndustryDesignTool(
 registerIndustryDesignTool(
   'review_interim_operating_characteristics',
   'interim-oc',
-  'Computed by projectInterimOperatingCharacteristics over the exact group-sequential engine. The characteristics are of the RECORDED boundaries when recorded; report every discrepancy with the spending function verbatim and never substitute the solved value. Report gaps verbatim; a null power means alpha or power is not recorded.',
+  'Computed by projectInterimOperatingCharacteristics over the exact group-sequential engine. The characteristics are of the RECORDED boundaries when recorded; report every discrepancy with the spending function verbatim and never substitute the solved value. Report gaps verbatim. typeIError is ONE-SIDED and non-binding (futility ignored); typeIErrorIfFutilityBinding is reported separately and is never the type I error. A type I error above the design\'s alpha is a gap — report it. A null power or expected sample size is explained by a gap (alpha, power or planned N not recorded or invalid); power assumes no group-sequential inflation, as its note says.',
 );
 
 registerIndustryDesignTool(

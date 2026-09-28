@@ -231,8 +231,10 @@ export const REVIEW_INTERIM_OPERATING_CHARACTERISTICS: AnaTool = {
     'figure from the platform\'s exact engine (stats/group-sequential-oc.ts). ' +
     DESIGN_REQUIRED + ' ' +
     'The characteristics are OF the boundaries the protocol records when it records them; a recorded boundary that departs from the named spending ' +
-    'function is a DISCREPANCY — report it verbatim, never quietly substitute the solved value. Report every gap verbatim, including an assumed ' +
-    'sidedness; a null power means alpha or power is not recorded — never supply one.',
+    'function is a DISCREPANCY — report it verbatim, never quietly substitute the solved value. The type I error is ONE-SIDED and computed with ' +
+    'futility NON-BINDING; the binding figure (typeIErrorIfFutilityBinding) is reported separately and is never the type I error. A type I error ' +
+    'above the design\'s alpha is a gap. Report every gap verbatim, including an assumed sidedness; a null power or expected sample size is ' +
+    'explained by a gap — never supply alpha, power or N.',
   input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
 };
 
