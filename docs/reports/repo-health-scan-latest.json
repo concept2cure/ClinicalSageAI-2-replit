@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-28T01:21:44.852Z",
+  "generatedAt": "2026-09-28T01:47:21.426Z",
   "git": {
-    "sha": "7cfba3ab667e01766367135572b6a4fcecaeba00",
+    "sha": "97465528bc4faa0a8ae0eaf2d9250fd924940c98",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2056,12 +2056,12 @@
         "bytes": 138123
       },
       {
-        "file": "server/services/biosimilar/biosimilar-knowledge.ts",
-        "bytes": 136488
+        "file": "server/routes/ana-ri/stream.ts",
+        "bytes": 137240
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 136331
+        "file": "server/services/biosimilar/biosimilar-knowledge.ts",
+        "bytes": 136488
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -2263,7 +2263,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 2766
+        "lines": 2780
       },
       {
         "file": "server/routes/auth.ts",
@@ -2558,6 +2558,10 @@
         "lines": 1602
       },
       {
+        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
+        "lines": 1582
+      },
+      {
         "file": "server/routes/mdx-qms.ts",
         "lines": 1576
       },
@@ -2580,10 +2584,6 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
         "lines": 1550
-      },
-      {
-        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
-        "lines": 1541
       },
       {
         "file": "server/services/grdhe/grdheService.ts",
