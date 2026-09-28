@@ -359,20 +359,12 @@ function preHandlerRefusal(
   return null;
 }
 
-/** The refusal for a caller without an editor role in the organization, or null when they have one. */
+/** The refusal for a caller without an editor role in the organization, or null when they have one.
+ *  The decision itself is server/services/part11/editor-role.ts, shared with the MCP connector. */
 async function editorRoleRefusal(tool: string, act: string, ctx: ToolContext): Promise<string | null> {
-  let orgRole: string | null;
-  try {
-    const { resolveSignerOrgRole } = await import('../part11/resolve-signer-role');
-    orgRole = await resolveSignerOrgRole(Number(ctx.userId), Number(ctx.organizationId));
-  } catch (err) {
-    return JSON.stringify({ error: `${tool} could not confirm your role in this organization, so nothing was changed: ${err instanceof Error ? err.message : String(err)}` });
-  }
-  const { GOVERNED_WRITE_ROLES } = await import('../../middleware/orgMembership');
-  if (!orgRole || !GOVERNED_WRITE_ROLES.has(orgRole)) {
-    return JSON.stringify({ error: `Insufficient permissions: ${act} needs an editor role in this organization. Nothing was changed.` });
-  }
-  return null;
+  const { editorRoleDecision, editorRoleRefusalText } = await import('../part11/editor-role');
+  const decision = await editorRoleDecision(Number(ctx.userId), Number(ctx.organizationId));
+  return decision.allowed ? null : JSON.stringify({ error: editorRoleRefusalText(tool, act, decision) });
 }
 
 /**

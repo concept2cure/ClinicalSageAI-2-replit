@@ -31,6 +31,9 @@ import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 
 const router = Router();
 // A viewer reads a protocol and changes nothing on it (11.10(d), (g)).
+// 2026-09-28: gated by P11-C-1; the coverage-gap sweep's GP-P-1 is the same
+// finding and is closed here. The mount (register-inline-routes.ts) carries
+// authMiddleware only, so this line is the router's whole write authority.
 router.use(requireEditorAccessForWrites);
 
 function resolveUserId(req: Request): number | null {

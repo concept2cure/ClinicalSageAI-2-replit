@@ -172,4 +172,17 @@ describe('a viewer can read a protocol and cannot change it (P11-C-1)', () => {
     expect(r.status).toBe(403);
     expect(h.statements).toEqual([]);
   });
+
+  // 2026-09-28 (coverage-gap sweep, GP-P-1): the finding asked for a caller who
+  // holds no organisation membership to be refused on every write, not on one.
+  // A session with no organisation role carries no role at all; the case above
+  // pinned one route, this pins each of them.
+  it.each(WRITES.map((r) => [r.label, r] as const))('refuses a caller with no organisation role: %s', async (_label, r) => {
+    h.role = '';
+    const res = await send(r);
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual(GATE_REFUSAL);
+    expect(h.statements).toEqual([]);
+    expect(recordGovernedAction).not.toHaveBeenCalled();
+  });
 });
