@@ -1880,6 +1880,13 @@ jobs:
           # This job proves the build boots against a real database with RLS on
           # as a non-superuser. It is not an AI test and must not need a key.
           AI_GATEWAY_DETERMINISTIC: 'true'
+          # Since 2026-09-28 production refuses to boot in deterministic mode
+          # without this written acceptance (startup/ai-governance-posture.ts),
+          # because fixed responses can enter a governed draft. This runner
+          # serves no user and is discarded, so it records the acceptance, as it
+          # does for the HMAC signer and local storage above. deploy-aws.yml
+          # refuses both variables in a real task definition.
+          AI_GATEWAY_ACCEPT_DETERMINISTIC: 'true'
           # Production refuses to boot without an explicit sensitive-data
           # placement contract (assertSensitivePlacementConfiguration). This is
           # the most fail-closed contract expressible: enforcement on, and the

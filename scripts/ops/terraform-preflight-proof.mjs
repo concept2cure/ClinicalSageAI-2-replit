@@ -368,6 +368,10 @@ async function main() {
   // none yet. Give it the shape ECS would, so the step's ARN handling runs.
   if (!td.taskDefinitionArn) {
     td.taskDefinitionArn = `arn:aws:ecs:us-east-1:123456789012:task-definition/${td.family}:1`;
+    // Never into the caller's file. --td-json is pointed at filed evidence, and
+    // until 2026-09-28 this wrote the synthetic ARN back into it, so running the
+    // before/after proof altered the evidence it read.
+    if (tdJsonArg) tdFile = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'tf-td-')), 'api-td.json');
     fs.writeFileSync(tdFile, JSON.stringify(td, null, 2));
   }
   if (td.family !== pre.env.ECS_API_TASK_FAMILY) {
