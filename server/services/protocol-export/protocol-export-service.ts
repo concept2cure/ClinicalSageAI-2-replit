@@ -18,8 +18,6 @@ import {
   type CtGovDraft,
 } from './protocol-export-logic';
 import { finalizationTarget, readSignatureFacets } from '../protocol-development/protocol-signature-manifestation';
-import { generateRegulatory, type DocxOutput } from '../docx/docxFactory';
-import { protocolToDocxInput } from './protocol-docx';
 
 export class ProtocolExportError extends Error {
   constructor(public code: 'NOT_FOUND' | 'SIGNATURE_UNREADABLE', message: string) {
@@ -67,14 +65,4 @@ export async function getProtocolExport(orgId: number, documentId: number): Prom
 
 export async function getCtGovDraft(orgId: number, documentId: number): Promise<CtGovDraft> {
   return buildCtGovRegistrationDraft(await loadAssembled(orgId, documentId));
-}
-
-/**
- * The assembled protocol as a Word document, through the ONE DOCX factory.
- * `date` is injected by the route (never read from a clock here) so the
- * mapping stays pure and a test can pin the cover.
- */
-export async function getProtocolDocx(orgId: number, documentId: number, date: string): Promise<DocxOutput> {
-  const { document } = await getProtocolExport(orgId, documentId);
-  return generateRegulatory(protocolToDocxInput(document, { date }));
 }

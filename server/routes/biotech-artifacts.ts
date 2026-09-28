@@ -25,8 +25,7 @@ import {
   generateDeviationReport,
   generateEnrollmentReport,
 } from '../services/biotech-artifact-generator';
-// sendDocx: the shared attachment helper, aliased so the ten call sites read as before.
-import { serverError, sendDocxAttachment as sendDocx } from '../lib/api-response';
+import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
@@ -34,6 +33,13 @@ const router = Router();
 const logger = createScopedLogger('biotech-artifacts');
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
+
+function sendDocx(res: Response, buffer: Buffer, filename: string) {
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.setHeader('Content-Length', buffer.length);
+  res.send(buffer);
+}
 
 function sendXml(res: Response, xml: string, filename: string) {
   res.setHeader('Content-Type', 'application/xml');
