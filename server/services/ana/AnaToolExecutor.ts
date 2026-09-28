@@ -20912,7 +20912,7 @@ registerIndustryDesignTool(
 registerIndustryDesignTool(
   'derive_ctq_factors',
   'ctq',
-  'Derived by deriveCtqFactors (ICH E6(R3) critical-to-quality factors). Every likelihood and impact is a DEFAULT SEED (ratingSource "default_seed"), not an assessment. Report factors with their derivedFrom provenance and notAssessed verbatim; nothing was written to the RBM risk assessment.',
+  'Derived by deriveCtqFactors (ICH E6(R3) critical-to-quality factors). Every likelihood and impact is a DEFAULT SEED (ratingSource "default_seed"; ratingFrom names the RBM catalogue row or category table), not an assessment. Report factors with their derivedFrom provenance and notAssessed verbatim; nothing was written to the RBM risk assessment.',
 );
 registerIndustryDesignTool(
   'export_usdm_projection',
@@ -20989,7 +20989,7 @@ registerToolHandler('review_spirit_conformance', async (input, ctx) => {
     return JSON.stringify({
       ok: true,
       ...result,
-      note: 'Assessed by assessSpiritConformance over the bound design and this protocol\'s sections. Report each row\'s status, evidence and gap and the summary counts verbatim. not_assessable is neither missing nor met. Compute no percentage and never say the protocol "meets SPIRIT".',
+      note: 'Assessed by assessSpiritConformance over the bound design and this protocol\'s sections. Report each row\'s status, evidence and gap and the summary counts verbatim. not_assessable is neither missing nor met. Compute no percentage and never say the protocol "meets SPIRIT". SPIRIT 2013 is superseded by SPIRIT 2025: report supersededBy and never present 2013 conformance as the current standard.',
     });
   } catch (err) {
     return pdevToolError('review_spirit_conformance', err);
@@ -21013,7 +21013,7 @@ registerToolHandler('review_deviation_trends', async (input, ctx) => {
     return JSON.stringify({
       ok: true,
       ...result,
-      note: 'Trended by trendDeviations. Report every count, share and signal verbatim. A null share means nothing to measure — "no deviations recorded", never "0%". A per-site view is not available (protocol_deviations carries no site linkage). notAssessed lists signals that could not be evaluated; that is not the absence of a problem.',
+      note: 'Trended by trendDeviations. Report every count, share and signal verbatim. A null share means nothing to measure — "no deviations recorded", never "0%". A per-site view is not available (protocol_deviations carries no site linkage). notAssessed lists signals that could not be evaluated; that is not the absence of a problem. byMonth[].legacyDefaults counts values set aside as possible defaults of the replaced writer — report them with the shares they were kept out of. The reportable share means a prompt IRB report is indicated (rates.reportableShareMeaning), never that the others need no report.',
     });
   } catch (err) {
     return pdevToolError('review_deviation_trends', err);
@@ -21035,7 +21035,7 @@ registerToolHandler('review_protocol_redline', async (input, ctx) => {
     return JSON.stringify({
       ok: true,
       ...result,
-      note: 'Compared by redlineVersions. Report the summary and each section\'s change verbatim; quote the diff ops rather than paraphrasing. A section carrying a note has no diff (line cap or edit budget) — report the note. A null line total is unknown, never 0. This compares the protocol DOCUMENT; the study design\'s changes come from the amendment substantiality engine.',
+      note: 'Compared by redlineVersions. Report the summary and each section\'s change verbatim; quote the diff ops rather than paraphrasing. Report every section note: it explains an absent diff or absent counts (line cap or edit budget), or that the section\'s position rests on row order. A non-empty summary.positionsFromRowOrder means a moved or reordered verdict may reflect row order rather than an edit — say so beside those verdicts. A null line total is unknown, never 0. This compares the protocol DOCUMENT; the study design\'s changes come from the amendment substantiality engine.',
     });
   } catch (err) {
     return pdevToolError('review_protocol_redline', err);

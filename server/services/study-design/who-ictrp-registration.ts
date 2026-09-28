@@ -29,13 +29,26 @@
  *     and names the field that would settle it.
  *   - An item is `rendered` only when the design carries everything the TRDS item
  *     asks for. `partial` names what is absent (sex under item 14, purpose under
- *     item 15, a timepoint under 19/20). `missing` carries a reason. Nothing is
- *     defaulted, mapped by guess, or converted.
+ *     item 15, a stated timepoint under 19/20, intervention detail under 13).
+ *     `missing` carries a reason. Nothing is defaulted, mapped by guess, or converted.
+ *   - Item 11 renders the countries of the planned recruiting sites
+ *     (`accrualPlan.sites[].country`). `targetRegions` entries alone are only
+ *     `partial`: the design does not say each one is a country of recruitment.
+ *   - Items 13, 19 and 20 are rendered by `who-ictrp-arms-outcomes.ts`, whose header
+ *     states their contract (intervention detail; a Schedule of Activities visit is
+ *     never presented as a stated timepoint; an unresolved visit id is never shown).
  *   - Eligibility is read by `eligibility-model.ts` (`projectRegistryEligibility`):
- *     every criterion is rendered verbatim, age limits only when an inclusion
- *     criterion states them, in the criterion's own unit.
- *   - The summary is counted from the items, so a dropped item cannot hide behind
- *     a constant.
+ *     every inclusion or exclusion criterion with text is rendered verbatim; a blank
+ *     criterion, or one whose type is neither, is named in the gap, never dropped
+ *     silently. Age limits only when an inclusion criterion states them, in the
+ *     criterion's own unit.
+ *   - Vocabulary lookups (phase, allocation, blinding, structural design) read own
+ *     properties only, so a persisted value outside the union — "constructor", "2/3"
+ *     — is echoed in a gap, never rendered as an Object.prototype member. A
+ *     single-arm structural design that records several arms or a randomization is
+ *     a contradiction: neither allocation nor assignment is stated.
+ *   - The item list is frozen to the element; the summary is counted from the
+ *     items, so a dropped item cannot hide behind a constant.
  *
  * This is a projection, not a registration: nothing is submitted to any registry.
  * Pure: no DB, RNG, clock or model call.
@@ -46,18 +59,20 @@
  * @module server/services/study-design/who-ictrp-registration
  */
 
-import type {
-  BlindingLevel,
-  Endpoint,
-  Intervention,
-  StructuralDesign,
-  StudyDesign,
-  StudyPhase,
-} from './study-design-types';
+import type { AllocationMethod, BlindingLevel, StudyDesign, StudyPhase } from './study-design-types';
 import type { RegistrationFieldStatus } from './registration-projection';
-import { endpointTimeFrameFromSoa } from './schedule-of-activities';
-import { projectRegistryEligibility, type RegistryAgeLimit, type RegistryEligibilityBlock } from './eligibility-model';
-import { describeIntervention, NO_INTERVENTION_LABEL } from './trial-schema';
+import { projectRegistryEligibility, type RegistryAgeLimit, type RegistryEligibilityRow } from './eligibility-model';
+import { present } from './usdm-types';
+import {
+  fromParts,
+  interventions,
+  missing,
+  partial,
+  primaryOutcomes,
+  rendered,
+  secondaryOutcomes,
+  type Rendering,
+} from './who-ictrp-arms-outcomes';
 
 export const WHO_TRDS_VERSION = '1.3.1' as const;
 
@@ -68,37 +83,39 @@ export const WHO_ICTRP_BASIS =
 export const NOT_CARRIED_BY_DESIGN = 'not carried by the study design; supplied at registration';
 
 export interface WhoTrdsItemDefinition {
-  number: number;
-  name: string;
+  readonly number: number;
+  readonly name: string;
 }
 
-/** The 24 TRDS items in official order, with their official names. */
-export const WHO_TRDS_ITEMS: readonly WhoTrdsItemDefinition[] = Object.freeze([
-  { number: 1, name: 'Primary Registry and Trial Identifying Number' },
-  { number: 2, name: 'Date of Registration in Primary Registry' },
-  { number: 3, name: 'Secondary Identifying Numbers' },
-  { number: 4, name: 'Source(s) of Monetary or Material Support' },
-  { number: 5, name: 'Primary Sponsor' },
-  { number: 6, name: 'Secondary Sponsor(s)' },
-  { number: 7, name: 'Contact for Public Queries' },
-  { number: 8, name: 'Contact for Scientific Queries' },
-  { number: 9, name: 'Public Title' },
-  { number: 10, name: 'Scientific Title' },
-  { number: 11, name: 'Countries of Recruitment' },
-  { number: 12, name: 'Health Condition(s) or Problem(s) Studied' },
-  { number: 13, name: 'Intervention(s)' },
-  { number: 14, name: 'Key Inclusion and Exclusion Criteria' },
-  { number: 15, name: 'Study Type' },
-  { number: 16, name: 'Date of First Enrollment' },
-  { number: 17, name: 'Sample Size' },
-  { number: 18, name: 'Recruitment Status' },
-  { number: 19, name: 'Primary Outcome(s)' },
-  { number: 20, name: 'Key Secondary Outcomes' },
-  { number: 21, name: 'Ethics Review' },
-  { number: 22, name: 'Completion Date' },
-  { number: 23, name: 'Summary Results' },
-  { number: 24, name: 'IPD Sharing Statement' },
-]);
+/** The 24 TRDS items in official order, with their official names. Frozen to the element. */
+export const WHO_TRDS_ITEMS: readonly Readonly<WhoTrdsItemDefinition>[] = Object.freeze(
+  ([
+    { number: 1, name: 'Primary Registry and Trial Identifying Number' },
+    { number: 2, name: 'Date of Registration in Primary Registry' },
+    { number: 3, name: 'Secondary Identifying Numbers' },
+    { number: 4, name: 'Source(s) of Monetary or Material Support' },
+    { number: 5, name: 'Primary Sponsor' },
+    { number: 6, name: 'Secondary Sponsor(s)' },
+    { number: 7, name: 'Contact for Public Queries' },
+    { number: 8, name: 'Contact for Scientific Queries' },
+    { number: 9, name: 'Public Title' },
+    { number: 10, name: 'Scientific Title' },
+    { number: 11, name: 'Countries of Recruitment' },
+    { number: 12, name: 'Health Condition(s) or Problem(s) Studied' },
+    { number: 13, name: 'Intervention(s)' },
+    { number: 14, name: 'Key Inclusion and Exclusion Criteria' },
+    { number: 15, name: 'Study Type' },
+    { number: 16, name: 'Date of First Enrollment' },
+    { number: 17, name: 'Sample Size' },
+    { number: 18, name: 'Recruitment Status' },
+    { number: 19, name: 'Primary Outcome(s)' },
+    { number: 20, name: 'Key Secondary Outcomes' },
+    { number: 21, name: 'Ethics Review' },
+    { number: 22, name: 'Completion Date' },
+    { number: 23, name: 'Summary Results' },
+    { number: 24, name: 'IPD Sharing Statement' },
+  ] as WhoTrdsItemDefinition[]).map(def => Object.freeze(def)),
+);
 
 /** Same vocabulary as the ClinicalTrials.gov / CTIS projection. */
 export type WhoTrdsItemStatus = RegistrationFieldStatus;
@@ -131,30 +148,13 @@ export interface WhoIctrpRecord {
   basis: string;
 }
 
-type Rendering = Pick<WhoTrdsItem, 'status' | 'value' | 'gap' | 'source'>;
-
-// ─── Constructors ────────────────────────────────────────────────────────────
-
-function present(s: unknown): s is string {
-  return typeof s === 'string' && s.trim().length > 0;
+/** An own-property lookup: a persisted value outside the vocabulary finds nothing, never an Object.prototype member. */
+function lookup(table: Readonly<Record<string, string>>, key: unknown): string | undefined {
+  return typeof key === 'string' && Object.hasOwn(table, key) ? table[key] : undefined;
 }
 
-function rendered(value: string | string[], source: string): Rendering {
-  return { status: 'rendered', value, source };
-}
-
-function partial(value: string[], gap: string, source: string): Rendering {
-  return { status: 'partial', value, gap, source };
-}
-
-function missing(gap: string): Rendering {
-  return { status: 'missing', value: null, gap };
-}
-
-/** Rendered when nothing is absent, partial when something is, missing when nothing is present. */
-function fromParts(values: string[], gaps: string[], source: string, emptyGap: string): Rendering {
-  if (values.length === 0) return missing(gaps.length ? gaps.join(' ') : emptyGap);
-  return gaps.length ? partial(values, gaps.join(' '), source) : rendered(values, source);
+function distinctTrimmed(list: readonly unknown[] | undefined): string[] {
+  return [...new Set((list ?? []).filter(present).map(s => s.trim()))];
 }
 
 // ─── Items 9–12: titles, countries, condition ────────────────────────────────
@@ -175,10 +175,27 @@ function scientificTitle(d: StudyDesign): Rendering {
     : missing('StudyDesign.title is empty; the design records no scientific title.');
 }
 
+/** The planned recruiting sites' countries; target regions only when no site records a country. */
 function countries(d: StudyDesign): Rendering {
-  const entries = [...new Set((d.targetRegions ?? []).filter(present).map(r => r.trim()))];
-  if (entries.length === 0) return missing('StudyDesign.targetRegions records no country or region.');
-  return partial(entries, COUNTRIES_GAP, 'StudyDesign.targetRegions');
+  const sites = d.accrualPlan?.sites ?? [];
+  const siteCountries = distinctTrimmed(sites.map(s => s?.country));
+  const regions = distinctTrimmed(d.targetRegions);
+  if (siteCountries.length === 0) {
+    if (regions.length === 0) {
+      return missing('Neither StudyDesign.accrualPlan.sites[].country nor StudyDesign.targetRegions records a country or region.');
+    }
+    return partial(regions, COUNTRIES_GAP, 'StudyDesign.targetRegions');
+  }
+  const gaps: string[] = [];
+  const unplaced = sites.filter(s => !present(s?.country)).length;
+  if (unplaced) {
+    gaps.push(`${unplaced} of ${sites.length} planned site(s) in StudyDesign.accrualPlan.sites record no country, so the countries of recruitment may be incomplete.`);
+  }
+  const unmatched = regions.filter(r => !siteCountries.includes(r));
+  if (unmatched.length) {
+    gaps.push(`StudyDesign.targetRegions also records ${unmatched.map(r => `"${r}"`).join(', ')}, which no planned site's country matches; not rendered as a country of recruitment.`);
+  }
+  return fromParts(siteCountries, gaps, 'StudyDesign.accrualPlan.sites[].country', '');
 }
 
 function condition(d: StudyDesign): Rendering {
@@ -187,89 +204,104 @@ function condition(d: StudyDesign): Rendering {
     : missing('StudyDesign.indication is empty; the design records no health condition or problem studied.');
 }
 
-// ─── Item 13: interventions ──────────────────────────────────────────────────
-
-/** trial-schema's "name dose route regimen", plus the duration and the role the arm gives it. */
-function interventionText(i: Intervention): string {
-  const duration = present(i.duration) ? `; duration ${i.duration}` : '';
-  return `${describeIntervention(i)}${duration} (${i.role.replace(/_/g, ' ')})`;
-}
-
-function interventions(d: StudyDesign): Rendering {
-  const arms = d.arms ?? [];
-  if (arms.length === 0) return missing('StudyDesign.arms records no arm, so no intervention is recorded.');
-  const empty = arms.filter(a => (a.interventions ?? []).length === 0).map(a => a.name);
-  if (empty.length === arms.length) return missing('No arm in StudyDesign.arms records an intervention.');
-  const values = arms.map(a => {
-    const list = a.interventions ?? [];
-    return `${a.name}: ${list.length ? list.map(interventionText).join(' + ') : NO_INTERVENTION_LABEL}`;
-  });
-  const gaps = empty.length ? [`No intervention is recorded for arm(s): ${empty.join(', ')}.`] : [];
-  return fromParts(values, gaps, 'StudyDesign.arms[].interventions', '');
-}
-
 // ─── Item 14: eligibility, via eligibility-model.ts ──────────────────────────
 
 const SEX_SETTLED_BY =
   'TRDS item 14 asks for eligibility sex, and StudyDesign.population declares no field that records it.';
-
-function absentReason(block: RegistryEligibilityBlock, fieldName: string, fallback: string): string {
-  return block.absent.find(a => a.field === fieldName)?.reason ?? fallback;
-}
 
 /** The bound in the criterion's own unit and sense. Nothing is converted or rounded. */
 function ageText(limit: RegistryAgeLimit): string {
   return `${limit.value} ${limit.unit} (${limit.inclusive ? 'inclusive' : 'exclusive'})`;
 }
 
-function ageParts(block: RegistryEligibilityBlock, values: string[], gaps: string[]): void {
-  if (block.minimumAge) values.push(`Minimum age: ${ageText(block.minimumAge)}`);
-  else gaps.push(`Minimum age: ${absentReason(block, 'Minimum age', 'no lower age bound is stated.')}`);
-  if (block.maximumAge) values.push(`Maximum age: ${ageText(block.maximumAge)}`);
-  else gaps.push(`Maximum age: ${absentReason(block, 'Maximum age', 'no upper age bound is stated.')}`);
+interface CriteriaSplit {
+  inclusion: string[];
+  exclusion: string[];
+  blank: number;
+  unrecognised: string[];
+}
+
+function splitCriteria(rows: RegistryEligibilityRow[]): CriteriaSplit {
+  const split: CriteriaSplit = { inclusion: [], exclusion: [], blank: 0, unrecognised: [] };
+  for (const r of rows) {
+    const type: unknown = r.type;
+    if (!present(r.text)) split.blank += 1;
+    else if (type === 'inclusion') split.inclusion.push(`Inclusion: ${r.text}`);
+    else if (type === 'exclusion') split.exclusion.push(`Exclusion: ${r.text}`);
+    else split.unrecognised.push(`criterion "${r.text}" has unrecognised type "${String(type)}"`);
+  }
+  return split;
+}
+
+function droppedCriteriaGaps(s: CriteriaSplit): string[] {
+  const gaps: string[] = [];
+  if (s.unrecognised.length) {
+    gaps.push(`Not rendered: ${s.unrecognised.join('; ')} (the recognised types are "inclusion" and "exclusion").`);
+  }
+  if (s.blank) {
+    gaps.push(s.blank === 1
+      ? '1 recorded eligibility criterion with empty text is not rendered.'
+      : `${s.blank} recorded eligibility criteria with empty text are not rendered.`);
+  }
+  return gaps;
 }
 
 function eligibility(d: StudyDesign): Rendering {
   const block = projectRegistryEligibility(d.population?.eligibility ?? []);
-  if (block.criteria.length === 0) {
-    return missing(absentReason(block, 'Eligibility criteria', 'The design records no eligibility criteria.'));
+  const reasons = new Map(block.absent.map(a => [a.field, a.reason] as const));
+  if (block.criteria.length === 0) return missing(reasons.get('Eligibility criteria') ?? 'The design records no eligibility criteria.');
+  const split = splitCriteria(block.criteria);
+  const values = [...split.inclusion, ...split.exclusion];
+  if (values.length === 0) {
+    return missing(split.unrecognised.length ? droppedCriteriaGaps(split).join(' ') : 'Every recorded eligibility criterion is empty.');
   }
-  const inclusion = block.criteria.filter(r => r.type === 'inclusion' && present(r.text)).map(r => `Inclusion: ${r.text}`);
-  const exclusion = block.criteria.filter(r => r.type === 'exclusion' && present(r.text)).map(r => `Exclusion: ${r.text}`);
-  if (inclusion.length + exclusion.length === 0) return missing('Every recorded eligibility criterion is empty.');
-  const values = [...inclusion, ...exclusion];
-  const gaps: string[] = [];
-  if (inclusion.length === 0) gaps.push('No inclusion criterion is recorded.');
-  if (exclusion.length === 0) gaps.push('No exclusion criterion is recorded.');
-  ageParts(block, values, gaps);
-  gaps.push(`Sex: ${absentReason(block, 'Sex', 'eligibility sex is not recorded.')} ${SEX_SETTLED_BY}`);
+  const gaps: string[] = droppedCriteriaGaps(split);
+  if (split.inclusion.length === 0) gaps.push('No inclusion criterion is recorded.');
+  if (split.exclusion.length === 0) gaps.push('No exclusion criterion is recorded.');
+  if (block.minimumAge) values.push(`Minimum age: ${ageText(block.minimumAge)}`);
+  else gaps.push(`Minimum age: ${reasons.get('Minimum age') ?? 'no lower age bound is stated.'}`);
+  if (block.maximumAge) values.push(`Maximum age: ${ageText(block.maximumAge)}`);
+  else gaps.push(`Maximum age: ${reasons.get('Maximum age') ?? 'no upper age bound is stated.'}`);
+  gaps.push(`Sex: ${reasons.get('Sex') ?? 'eligibility sex is not recorded.'} ${SEX_SETTLED_BY}`);
   return fromParts(values, gaps, 'StudyDesign.population.eligibility (read by eligibility-model.ts)', '');
 }
 
 // ─── Item 15: study type and design ──────────────────────────────────────────
 
 /** TRDS phase options are whole phases; a sub-phase keeps its recorded label beside the mapping. */
-const TRDS_PHASE: Record<StudyPhase, string> = {
+const TRDS_PHASE: Readonly<Record<StudyPhase, string>> = Object.freeze({
   FIH: '1', '1': '1', '1b': '1', '2': '2', '2b': '2', '3': '3', '3b': '3', '4': '4',
-};
+});
 
 /** Only the structural designs that ARE a TRDS assignment category. Nothing else is mapped. */
-const TRDS_ASSIGNMENT: Partial<Record<StructuralDesign, string>> = {
+const TRDS_ASSIGNMENT: Readonly<Record<string, string>> = Object.freeze({
   single_arm: 'Single arm',
   parallel_group: 'Parallel',
   crossover: 'Crossover',
   factorial: 'Factorial',
-};
+});
 
-const TRDS_MASKING: Record<BlindingLevel, string> = {
+/** Minimization is not called randomized: the design does not record whether it has a random element. */
+const TRDS_ALLOCATION: Readonly<Record<AllocationMethod, string>> = Object.freeze({
+  simple: 'Randomized (simple)',
+  block: 'Randomized (block)',
+  stratified: 'Randomized (stratified)',
+  minimization: 'Minimization',
+  none: 'Non-randomized',
+});
+
+const TRDS_MASKING: Readonly<Record<BlindingLevel, string>> = Object.freeze({
   open: 'None (open label)',
   single: 'Single blind',
   double: 'Double blind',
   triple: 'Triple blind',
-};
+});
 
 const PURPOSE_GAP =
   'Purpose (treatment, prevention, diagnostic, …) is not recorded on the study design.';
+
+const MINIMIZATION_GAP =
+  'Whether the minimization includes a random element is not recorded, so randomized versus non-randomized allocation is not stated.';
 
 interface Parts {
   values: string[];
@@ -286,6 +318,18 @@ function studyTypePart(d: StudyDesign, p: Parts): void {
   p.gaps.push('Study type is not stated: no arm assigns an intervention, so interventional versus observational cannot be read from the design.');
 }
 
+/** A single-arm structural design that records several arms or a randomization contradicts itself. */
+function singleArmConflict(d: StudyDesign): string | null {
+  if (d.framework?.structuralDesign !== 'single_arm') return null;
+  const conflicts: string[] = [];
+  const armCount = (d.arms ?? []).length;
+  if (armCount > 1) conflicts.push(`${armCount} arms are recorded`);
+  const method = d.randomization?.allocationMethod;
+  if (present(method) && method !== 'none') conflicts.push(`randomization.allocationMethod is "${method}"`);
+  if (conflicts.length === 0) return null;
+  return `Allocation and assignment are not stated: the structural design is "single_arm" but ${conflicts.join(' and ')}; the design contradicts itself, and this projection does not choose a side.`;
+}
+
 function allocationPart(d: StudyDesign, p: Parts): void {
   if (d.framework?.structuralDesign === 'single_arm') {
     p.values.push('Allocation: N/A (single arm)');
@@ -293,19 +337,25 @@ function allocationPart(d: StudyDesign, p: Parts): void {
     return;
   }
   const method = d.randomization?.allocationMethod;
-  if (!method) {
-    p.gaps.push('Allocation is not stated: the design records no randomization.');
+  const label = lookup(TRDS_ALLOCATION, method);
+  if (!label) {
+    p.gaps.push(present(method)
+      ? `Allocation is not stated: "${method}" is not a recognised allocation method.`
+      : 'Allocation is not stated: the design records no randomization.');
     return;
   }
-  p.values.push(method === 'none' ? 'Allocation: Non-randomized' : `Allocation: Randomized (${method})`);
+  p.values.push(`Allocation: ${label}`);
   p.sources.push('StudyDesign.randomization.allocationMethod');
+  if (method === 'minimization') p.gaps.push(MINIMIZATION_GAP);
 }
 
 function maskingPart(d: StudyDesign, p: Parts): void {
   const level = d.randomization?.blinding;
-  const label = level ? TRDS_MASKING[level] : undefined;
-  if (!level || !label) {
-    p.gaps.push('Masking is not stated: the design records no recognised blinding level.');
+  const label = lookup(TRDS_MASKING, level);
+  if (!label) {
+    p.gaps.push(present(level)
+      ? `Masking is not stated: "${level}" is not a recognised blinding level.`
+      : 'Masking is not stated: the design records no blinding level.');
     return;
   }
   p.values.push(`Masking: ${label}`);
@@ -317,38 +367,43 @@ function maskingPart(d: StudyDesign, p: Parts): void {
 
 function assignmentPart(d: StudyDesign, p: Parts): void {
   const structural = d.framework?.structuralDesign;
-  const label = structural ? TRDS_ASSIGNMENT[structural] : undefined;
+  const label = lookup(TRDS_ASSIGNMENT, structural);
   if (label) {
     p.values.push(`Assignment: ${label}`);
     p.sources.push('StudyDesign.framework.structuralDesign');
     return;
   }
   p.gaps.push(
-    structural
+    present(structural)
       ? `Assignment is not mapped: the structural design "${structural}" is not one of the TRDS assignment categories (single arm, parallel, crossover, factorial), and this projection does not choose one for it.`
       : 'Assignment is not stated: the design records no structural design.',
   );
 }
 
 function phasePart(d: StudyDesign, p: Parts): void {
-  const mapped = d.phase ? TRDS_PHASE[d.phase] : undefined;
+  const phase: unknown = d.phase;
+  const mapped = lookup(TRDS_PHASE, phase);
   if (!mapped) {
-    p.gaps.push('Phase is not stated: the design records no recognised phase.');
+    p.gaps.push(present(phase)
+      ? `Phase is not stated: "${phase}" is not a recognised StudyPhase.`
+      : 'Phase is not stated: the design records no phase.');
     return;
   }
-  p.values.push(mapped === d.phase ? `Phase: ${mapped}` : `Phase: ${mapped} (recorded as ${d.phase})`);
+  p.values.push(mapped === phase ? `Phase: ${mapped}` : `Phase: ${mapped} (recorded as ${String(phase)})`);
   p.sources.push('StudyDesign.phase');
 }
 
 function studyType(d: StudyDesign): Rendering {
   const p: Parts = { values: [], gaps: [], sources: [] };
+  const conflict = singleArmConflict(d);
   studyTypePart(d, p);
-  allocationPart(d, p);
+  if (conflict) p.gaps.push(conflict);
+  else allocationPart(d, p);
   maskingPart(d, p);
-  assignmentPart(d, p);
+  if (!conflict) assignmentPart(d, p);
   phasePart(d, p);
   p.gaps.push(PURPOSE_GAP);
-  return fromParts(p.values, p.gaps, p.sources.join('; '), '');
+  return fromParts(p.values, p.gaps, [...new Set(p.sources)].join('; '), '');
 }
 
 // ─── Item 17: sample size ────────────────────────────────────────────────────
@@ -362,53 +417,12 @@ function sampleSize(d: StudyDesign): Rendering {
   return rendered(String(n), 'StudyDesign.statisticalPlan.plannedSampleSize');
 }
 
-// ─── Items 19–20: outcomes by endpoint role ──────────────────────────────────
-
-type OutcomeRole = Extract<Endpoint['role'], 'primary' | 'key_secondary'>;
-
-interface OutcomeLine {
-  line: string;
-  timed: boolean;
-  measured: boolean;
-}
-
-/** Name, metric/method and timepoint — each only as the endpoint records it. */
-function outcomeLine(d: StudyDesign, e: Endpoint): OutcomeLine {
-  const timepoint = present(e.timepoint) ? e.timepoint : endpointTimeFrameFromSoa(d, e.name);
-  const parts = [present(e.definition) ? `${e.name}: ${e.definition}` : e.name];
-  if (present(e.measurementMethod)) parts.push(`method: ${e.measurementMethod}`);
-  if (timepoint) parts.push(`timepoint: ${timepoint}`);
-  return { line: parts.join('; '), timed: Boolean(timepoint), measured: present(e.definition) || present(e.measurementMethod) };
-}
-
-function noOutcomeGap(d: StudyDesign, role: OutcomeRole): string {
-  const base = `No endpoint has role "${role}".`;
-  if (role === 'primary') return base;
-  const secondary = (d.endpoints ?? []).filter(e => e.role === 'secondary').length;
-  return secondary
-    ? `${base} ${secondary} endpoint(s) with role "secondary" are not promoted to key secondary outcomes.`
-    : base;
-}
-
-function outcomes(d: StudyDesign, role: OutcomeRole): Rendering {
-  const endpoints = (d.endpoints ?? []).filter(e => e.role === role);
-  if (endpoints.length === 0) return missing(noOutcomeGap(d, role));
-  const lines = endpoints.map(e => ({ name: e.name, ...outcomeLine(d, e) }));
-  const gaps: string[] = [];
-  const untimed = lines.filter(l => !l.timed).map(l => l.name);
-  const unmeasured = lines.filter(l => !l.measured).map(l => l.name);
-  if (untimed.length) gaps.push(`Timepoint is not recorded for: ${untimed.join(', ')}.`);
-  if (unmeasured.length) gaps.push(`Metric or method of measurement is not recorded for: ${unmeasured.join(', ')}.`);
-  const source = `StudyDesign.endpoints (role "${role}"); timepoint from the endpoint or its Schedule of Activities`;
-  return fromParts(lines.map(l => l.line), gaps, source, '');
-}
-
 // ─── Assembly ────────────────────────────────────────────────────────────────
 
 type Renderer = (d: StudyDesign) => Rendering;
 
 /** The items a study design can contribute to. Every other item is registration-only. */
-const DESIGN_RENDERERS: Readonly<Record<number, Renderer>> = {
+const DESIGN_RENDERERS: Readonly<Record<number, Renderer>> = Object.freeze({
   9: () => missing(PUBLIC_TITLE_GAP),
   10: scientificTitle,
   11: countries,
@@ -417,17 +431,17 @@ const DESIGN_RENDERERS: Readonly<Record<number, Renderer>> = {
   14: eligibility,
   15: studyType,
   17: sampleSize,
-  19: d => outcomes(d, 'primary'),
-  20: d => outcomes(d, 'key_secondary'),
-};
+  19: primaryOutcomes,
+  20: secondaryOutcomes,
+});
 
 /** The item numbers that are always missing with {@link NOT_CARRIED_BY_DESIGN}. */
 export const WHO_TRDS_REGISTRATION_ONLY_ITEMS: readonly number[] = Object.freeze(
-  WHO_TRDS_ITEMS.map(i => i.number).filter(n => !(n in DESIGN_RENDERERS)),
+  WHO_TRDS_ITEMS.map(i => i.number).filter(n => !Object.hasOwn(DESIGN_RENDERERS, n)),
 );
 
-function renderItem(def: WhoTrdsItemDefinition, d: StudyDesign): WhoTrdsItem {
-  const render = DESIGN_RENDERERS[def.number];
+function renderItem(def: Readonly<WhoTrdsItemDefinition>, d: StudyDesign): WhoTrdsItem {
+  const render = Object.hasOwn(DESIGN_RENDERERS, def.number) ? DESIGN_RENDERERS[def.number] : undefined;
   const r = render ? render(d) : missing(NOT_CARRIED_BY_DESIGN);
   const item: WhoTrdsItem = { number: def.number, name: def.name, status: r.status, value: r.value };
   if (r.gap !== undefined) item.gap = r.gap;

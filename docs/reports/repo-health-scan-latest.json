@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-28T16:59:44.308Z",
+  "generatedAt": "2026-09-28T17:31:54.486Z",
   "git": {
-    "sha": "60b0563ffdf7354aaec62b0c448aecede2569007",
+    "sha": "f0b522b4c5a02686184dba5e37f14b3f01b79ec6",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1977,7 +1977,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1090783
+        "bytes": 1091459
       },
       {
         "file": "shared/schema.ts",
@@ -1993,7 +1993,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 300656
+        "bytes": 300879
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2025,7 +2025,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 160206
+        "bytes": 160814
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2171,7 +2171,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6848
+        "lines": 6851
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2207,7 +2207,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 3597
+        "lines": 3610
       },
       {
         "file": "server/services/intelligent-report-engine.ts",

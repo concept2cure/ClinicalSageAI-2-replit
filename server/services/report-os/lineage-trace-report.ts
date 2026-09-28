@@ -52,6 +52,14 @@ function truncate(text: string, max: number): string {
  * pipeline's [30, 95] band so it never fabricates certainty.
  */
 export function computeLineageConfidence(dossier: DocumentLineageDossier): number {
+  /* A dossier whose decision read FAILED is not a thin dossier — it is an
+     unmeasured one, and it must not clear the sealing threshold. Withholding
+     the +15 (which is all that happened before) still left 80 against
+     DEFAULT_FINAL_CONFIDENCE_THRESHOLD of 70, so a report reading
+     "Decisions (total) 0" sealed as a Part 11 record. Floor it below the gate
+     instead. */
+  if (dossier.decisionSummary.unavailable) return 30;
+
   let score = 30;
   if (dossier.versionHistory.length >= 1) score += 25;
   if (dossier.decisions.length >= 1) score += 15;
@@ -168,12 +176,20 @@ export function dossierToRenderedReport(
           (dossier.ledger.project.name ? ` · project ${dossier.ledger.project.name}` : ''),
       },
       metric('Iterations', dossier.versionHistory.length),
-      metric('Decisions (total)', s.total, decisionAtoms.length ? decisionAtoms : undefined),
-      metric('AnA-authored decisions', s.anaAuthored),
-      metric('Human-decided', s.humanDecided),
-      metric('Approved', s.approved),
-      metric('Rejected', s.rejected),
-      metric('Pending', s.pending),
+      /* Zeros here are printed as report metrics under a disclosure line
+         reading "Every figure links to its source record". When the decision
+         read failed there is no source record to link, so the figure is not
+         printed at all. */
+      ...(s.unavailable
+        ? [metric('Decisions', 'not measured — the decision record could not be read')]
+        : [
+            metric('Decisions (total)', s.total, decisionAtoms.length ? decisionAtoms : undefined),
+            metric('AnA-authored decisions', s.anaAuthored),
+            metric('Human-decided', s.humanDecided),
+            metric('Approved', s.approved),
+            metric('Rejected', s.rejected),
+            metric('Pending', s.pending),
+          ]),
       metric('Signatures', dossier.ledger.signatures.length),
     ],
   });

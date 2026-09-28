@@ -1,0 +1,19 @@
+c2c_d3u after deploy-migrate (twice)
+ rls | force 
+-----+-------
+ t   | t
+(1 row)
+
+              policyname              |  cmd   |                                                                                         qual                                                                                         |                                                                                      with_check                                                                                      
+--------------------------------------+--------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ platform_role_grants_platform_delete | DELETE | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text)) | 
+ platform_role_grants_platform_insert | INSERT |                                                                                                                                                                                      | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))
+ platform_role_grants_platform_update | UPDATE | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text)) | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))
+ platform_role_grants_read            | SELECT | true                                                                                                                                                                                 | 
+(4 rows)
+
+   rolname   | rolsuper | rolbypassrls 
+-------------+----------+--------------
+ app_service | f        | f
+(1 row)
+

@@ -82,7 +82,8 @@ export function spiritView(payload: Obj): ProjectionView {
     note:
       `Engine summary — met ${num(s.met)}, partial ${num(s.partial)}, missing ${num(s.missing)}, ` +
       `not assessable ${num(s.notAssessable)}, of ${num(s.total)} checklist rows.` +
-      (sp.documentProvided ? '' : ' Read from the design alone: rows only a protocol section can evidence are not assessable here, not missing.'),
+      (sp.documentProvided ? '' : ' Read from the design alone: rows only a protocol section can evidence are not assessable here, not missing.') +
+      (sp.supersededBy ? ` Superseded: ${str(sp.supersededBy)}` : ''),
     entries: rows(sp.items).map((i) => ({
       key: 'spirit:' + str(i.item),
       label: `${str(i.item)}. ${str(i.title)}`,
@@ -155,7 +156,8 @@ export function usdmView(payload: Obj): ProjectionView {
       usdmEntityEntry('Activity', sd.activities),
       usdmEntityEntry('Objective', sd.objectives),
       usdmEntityEntry('Estimand', sd.estimands),
-      usdmEntityEntry('StudyIntervention', sd.studyInterventions),
+      // USDM v4.0.0 holds interventions on the StudyVersion; the design lists their ids.
+      usdmEntityEntry('StudyIntervention', version.studyInterventions),
       { key: 'usdm:unmapped', label: 'Design fields with no USDM home in this mapping', status: '', text: unmapped.length ? '' : 'None.', gaps: unmapped },
     ],
   };
@@ -217,8 +219,10 @@ export function dctView(payload: Obj): ProjectionView {
         text: str(f.message) + (Array.isArray(f.activityIds) && f.activityIds.length ? `\nActivities: ${strings(f.activityIds).join(', ')}` : ''),
         gaps: [],
       })),
-      ...rows(p.activities).map((a) => ({
-        key: 'dct-activity:' + str(a.activityId),
+      ...rows(p.activities).map((a, i) => ({
+        // An index as well as the id: a duplicated activity id is reported by the
+        // engine as two unstated rows, and both must render.
+        key: `dct-activity:${i}:${str(a.activityId)}`,
         label: str(a.name),
         status: str(a.location),
         text: `Category: ${str(a.category)}`,
@@ -237,7 +241,7 @@ export const INDUSTRY_PROJECTIONS: ProjectionSpec[] = [
   },
   {
     id: 'spirit', label: 'SPIRIT 2013 checklist', path: 'spirit',
-    of: 'The study design object judged against the SPIRIT 2013 checklist, row by row. Rows only a protocol section can evidence are not assessable from the design alone.',
+    of: 'The study design object judged against the SPIRIT 2013 checklist, row by row — a checklist since superseded by SPIRIT 2025. Rows only a protocol section can evidence are not assessable from the design alone.',
     normalize: spiritView,
   },
   {

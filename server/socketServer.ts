@@ -154,8 +154,6 @@ interface AuthenticatedSocket extends Socket {
   authEmail?: string;
   /** The handshake token, kept so the session can be re-verified while connected. */
   sessionToken?: string;
-  /** The re-verification timer, cleared on disconnect. */
-  sessionRecheck?: NodeJS.Timeout;
 }
 
 // ── Session re-verification while connected (IAM-12 / P1-9) ─────────────────

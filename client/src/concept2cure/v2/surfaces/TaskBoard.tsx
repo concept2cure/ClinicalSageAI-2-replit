@@ -18,7 +18,7 @@ import {
   // module colours, status column definitions, type labels and source labels.
   // TB_TEAM / TB_OPTIMAL / TB_WORKFLOWS are gone: names come from the org
   // roster, and workflow templates from GET /api/task-management/templates.
-  TB_MOD, TB_COLS, TB_TYPE, TB_SRC,
+  TB_MOD, MODULE_COLOR_UNKNOWN, TB_COLS, TB_TYPE, TB_SRC,
   type TaskSource,
 } from '../fixtures/task-board-data';
 import '../styles/project-home-v2.css';
@@ -872,7 +872,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
                       }}
                     >
                       <div className="tb-card-top">
-                        <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span>
+                        <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span>
                         {t.criticalPath && <span className="tb-flag crit" title="On critical path">{I.zap}</span>}
                         {t.regulatoryImpact && <span className="tb-flag reg" title="Regulatory impact">{I.shieldCheck}</span>}
                       </div>
@@ -928,7 +928,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
             >
               <div className="tb-path-rail"><span className="tb-path-dot" data-status={t.status} aria-hidden="true" />{i < critChain.length - 1 && <span className="tb-path-line" />}</div>
               <div className="tb-path-card">
-                <div className="tb-path-t">{t.title}<span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span></div>
+                <div className="tb-path-t">{t.title}<span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span></div>
                 <div className="tb-path-m">
                   <span>{t.phase || '—'}</span><span className="tb-dot">--</span><span>{nameOf(t.assignee)}</span><span className="tb-dot">--</span>
                   <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span><span className="tb-dot">--</span><span>impact {t.impactScore ?? '—'}/10</span>
@@ -955,7 +955,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
               {Object.keys(stats.byMod).map(k => {
                 const max = Math.max(...Object.values(stats.byMod));
                 return (
-                  <div key={k} className="tb-an-row"><span className="tb-an-k"><span className="tb-an-dot" style={{ background: TB_MOD[k] || '#888' }} />{k}</span><div className="tb-an-bar"><span style={{ width: (stats.byMod[k] / max * 100) + '%', background: TB_MOD[k] || '#888' }} /></div><span className="tb-an-n">{stats.byMod[k]}</span></div>
+                  <div key={k} className="tb-an-row"><span className="tb-an-k"><span className="tb-an-dot" style={{ background: TB_MOD[k] || MODULE_COLOR_UNKNOWN }} />{k}</span><div className="tb-an-bar"><span style={{ width: (stats.byMod[k] / max * 100) + '%', background: TB_MOD[k] || MODULE_COLOR_UNKNOWN }} /></div><span className="tb-an-n">{stats.byMod[k]}</span></div>
                 );
               })}
             </div>
@@ -978,7 +978,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
             <button key={t.taskId} className="ct-row" style={{ gridTemplateColumns: '130px 1.7fr 120px 96px 90px 90px 84px' }} onClick={() => setSel(t)}>
               <div className="ct-strong mono" style={{ fontSize: 10.5 }}>{t.taskId}</div>
               <div style={{ fontSize: 11.5 }}>{t.title}{t.criticalPath && <span className="tb-flag crit inline">{I.zap}</span>}{t.blocked && <span className="tb-flag blk inline">{I.alertTriangle}</span>}</div>
-              <div><span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span></div>
+              <div><span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span></div>
               <div style={{ fontSize: 11 }}>{(TB_COLS.find(c => c.id === t.status) || { label: t.status }).label}</div>
               <div><span className={`tb-pri pri-${t.priority}`}>{t.priority}</span></div>
               <div style={{ fontSize: 11 }}>{nameOf(t.assignee)}</div>
@@ -1153,7 +1153,7 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onArch
           <button className="tb-detail-x" onClick={onClose} aria-label="Close">{I.close}</button>
         </div>
         <div className="tb-detail-chips">
-          <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span>
+          <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span>
           <span className="tb-type" data-t={t.taskType}>{TB_TYPE[t.taskType]}</span>
           <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span>
           {t.criticalPath && <span className="tb-flag crit lg">{I.zap} critical path</span>}
@@ -1741,7 +1741,7 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
                   {tpl.tasks.map((t, i) => (
                     <div key={t.id || i} className="wf-task">
                       <span className="wf-task-n">{i + 1}</span>
-                      <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span>
+                      <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span>
                       <span className="wf-task-t">{t.title}</span>
                       <span className="wf-task-d">day +{t.dayOffset} — {t.duration}d</span>
                       <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span>

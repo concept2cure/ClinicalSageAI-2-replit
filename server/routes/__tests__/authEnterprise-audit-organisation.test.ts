@@ -163,14 +163,17 @@ describe('POST /verify-password: an account with a default organisation', () => 
     expect(tenantOf('mfa_challenge_email')).toBe(1);
   });
 
-  it('the challenge names the organisation the partial token names, even when the default is not a membership', async () => {
-    // One sign-in, one ledger: verify-mfa records against the token's organisation.
+  it('the partial token and the challenge name a MEMBERSHIP, never a default the account does not belong to', async () => {
+    // 2026-09-28: this case pinned the partial token to the default (1) although
+    // the account belongs only to 3 — a sign-in into an organisation it is not
+    // a member of. The token and the challenge now name the membership, and
+    // agree (one sign-in, one ledger: verify-mfa records against the token's).
     state.userRow = colleague('active', 1);
     state.membershipRows = [{ organizationId: 3, role: 'member' }];
     const r = await verifyPassword();
     expect(r.status, JSON.stringify(r.body)).toBe(200);
     const tokenOrg = Number((jwt.decode(r.body.partialToken) as { organizationId: string }).organizationId);
-    expect(tokenOrg).toBe(1);
+    expect(tokenOrg).toBe(3);
     expect(tenantOf('mfa_challenge_email')).toBe(tokenOrg);
   });
 
@@ -179,5 +182,29 @@ describe('POST /verify-password: an account with a default organisation', () => 
     state.membershipRows = [];
     expect((await verifyPassword()).status).toBe(403);
     expect(tenantOf('account_inactive')).toBe(5);
+  });
+});
+
+/* 2026-09-28: verify-password chose the session's organisation from
+   users.default_organization_id alone, so an account added through user
+   administration (a membership, no default) could not sign in here at all —
+   NO_ORGANIZATION, and nothing recorded — while the main login admitted it. */
+describe('POST /verify-password: which organisation the sign-in lands in', () => {
+  it('an account with a membership and no default signs in, into its membership', async () => {
+    const r = await verifyPassword();
+    expect(r.status, JSON.stringify(r.body)).toBe(200);
+    expect((jwt.decode(r.body.partialToken) as { organizationId: string }).organizationId).toBe('3');
+    expect(r.body.user.organizationId).toBe('3');
+    expect(tenantOf('mfa_challenge_email')).toBe(3);
+  });
+
+  it('an account with no membership at all is refused, and the refusal is recorded', async () => {
+    state.userRow = colleague('active', 5);
+    state.membershipRows = [];
+    const r = await verifyPassword();
+    expect(r.status).toBe(403);
+    expect(r.body).toMatchObject({ error: 'NO_ORGANIZATION' });
+    expect(r.body.partialToken).toBeUndefined();
+    expect(tenantOf('no_organization')).toBe(5);
   });
 });
