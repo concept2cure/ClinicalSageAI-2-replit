@@ -55,3 +55,13 @@ The main namespace has re-checked on a timer since P1-9 (IAM-12), using a privat
 The Hocuspocus collaboration socket (`server/services/hocuspocus-server.ts`) authenticates once, and it
 has no re-check either. It is off by default (`ENABLE_COLLAB_CRDT`), and no deployment file turns it on,
 so it is not live. It needs the same re-check before that flag is enabled for anyone.
+
+**Closed 2026-09-28.** The collaboration socket now runs the same re-check. `sessionRecheck.ts` exposes
+`sessionEndReasonFor` (token, membership, tenant, with the transport's own tenant rule) and
+`startRecheckTimer`; `hocuspocus-server.ts` starts it in the `connected` hook and closes the
+connection (4401) with the reason. Its tenant rule keeps a view-only connection for a read-only tenant and
+ends a writable one, so it reconnects downgraded. Admission now also refuses a subject that is not a
+platform user id, where it used to skip the membership check. Evidence:
+`server/services/collab/__tests__/collab-session-recheck.test.ts` — 9 failed before the change, 9/9 after;
+admission against a real token store stays in `collab-governance.pglite.integration.test.ts` (unchanged, green),
+and the socket.io re-check suites are unchanged.
