@@ -1165,6 +1165,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                               name,
                               label,
                               status: 'running' as const,
+                              ...(typeof event.toolUseId === 'string' && event.toolUseId
+                                ? { toolUseId: event.toolUseId }
+                                : {}),
                               startedAt: Date.now(),
                               ...(round ? { round } : {}),
                               ...(event.input !== undefined ? { input: event.input } : {}),
@@ -1176,9 +1179,11 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 );
               }
             } else if (event.type === 'tool_result') {
-              // Resolve the most recent running call for this tool name. Prefer
-              // the server's authoritative status; fall back to parsing the
-              // result for an error envelope when status wasn't sent.
+              // Resolve the running call this result belongs to — by toolUseId,
+              // else the first running call of that name in the result's own
+              // step (see the pairing block below; last-in matching was a
+              // defect). Prefer the server's authoritative status; fall back to
+              // parsing the result for an error envelope when status wasn't sent.
               const name: string = event.name || '';
               let failed = false;
               let parsedResult: Record<string, unknown> | null = null;
@@ -1222,9 +1227,45 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                   if (m.id !== assistantId) return m;
                   let next = m;
                   if (m.toolCalls) {
-                    const idx = [...m.toolCalls].reverse().findIndex(t => t.name === name && t.status === 'running');
-                    if (idx !== -1) {
-                      const realIdx = m.toolCalls.length - 1 - idx;
+                    /* Pair the result with the call that produced it.
+
+                       This used to take the MOST RECENT running call of the same
+                       name. The server runs a step's calls concurrently and emits
+                       their results in the ORIGINAL call order, so first-reported
+                       results were matched last-in — two same-named calls in one
+                       step were swapped every time, not by a race. Each query was
+                       shown against the other's results, on the very rows kept so
+                       a reviewer can see what each step returned.
+
+                       By id when the server sends one. Without it (an older server
+                       mid-deploy) the FIRST running call of the name is the right
+                       one, precisely because emission follows call order. */
+                    const resultId = typeof event.toolUseId === 'string' && event.toolUseId ? event.toolUseId : null;
+                    const byId = resultId
+                      ? m.toolCalls.findIndex(t => t.toolUseId === resultId && t.status === 'running')
+                      : -1;
+                    /* The fallback is confined to the result's own step. Running
+                       calls are settled only when a turn ends badly, never between
+                       steps, so a call a step left running is still "running" in
+                       the next one — and first-in matching by name alone would hand
+                       it the next step's result. */
+                    const resultRound = typeof event.round === 'number' && event.round > 0 ? event.round : undefined;
+                    const realIdx =
+                      byId !== -1
+                        ? byId
+                        : m.toolCalls.findIndex(
+                            t =>
+                              t.name === name &&
+                              t.status === 'running' &&
+                              /* A row that carries its own id is paired by that id
+                                 and nothing else. Once the server has said which
+                                 call a result belongs to, guessing by name could
+                                 pin it on a sibling — so the name fallback only
+                                 ever considers rows announced WITHOUT an id. */
+                              !t.toolUseId &&
+                              (resultRound === undefined || t.round === undefined || t.round === resultRound)
+                          );
+                    if (realIdx !== -1) {
                       const calls = m.toolCalls.slice();
                       // Keep a capped copy of the result for the audit disclosure
                       // so a reviewer can see exactly what this step returned,

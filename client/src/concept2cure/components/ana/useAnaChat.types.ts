@@ -73,6 +73,13 @@ export interface AnaToolCall {
   label: string;
   status: 'running' | 'success' | 'error';
   /**
+   * The server's id for this call (the model's tool_use id). A step runs its
+   * calls concurrently, and several can be the SAME tool, so the name alone
+   * cannot say which call a result belongs to. Absent only from an older server
+   * or a persisted record written before the field existed.
+   */
+  toolUseId?: string;
+  /**
    * Agentic-loop round this call ran in (1-based). Lets the transcript group
    * tool steps by investigation round instead of one flat list, so a deep
    * multi-round investigation reads as the progression it actually was.
