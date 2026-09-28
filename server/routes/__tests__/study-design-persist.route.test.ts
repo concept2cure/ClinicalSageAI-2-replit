@@ -112,8 +112,9 @@ describe('the governed writes never put the caught error in a 5xx body', () => {
     expect(p.status).toBe(500);
     expect(JSON.stringify(p.body)).not.toMatch(/duplicate key|cdisc_prm_studies/);
     expect(p.body.error).toBe('INTERNAL_ERROR');
-    h.query.mockImplementation(async (sql: string) => {
-      if (/DELETE|UPDATE/i.test(sql)) throw new Error('relation "cdisc_prm_studies" does not exist');
+    // The mock is declared parameterless; read the SQL off the call itself.
+    h.query.mockImplementation(async (...call: unknown[]) => {
+      if (/DELETE|UPDATE/i.test(String(call[0]))) throw new Error('relation "cdisc_prm_studies" does not exist');
       return { rows: [] };
     });
     try {
