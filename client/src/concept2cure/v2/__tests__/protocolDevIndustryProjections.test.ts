@@ -17,7 +17,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  biospecimenView, ctqView, dctView, doseEscalationView, enrollmentView, externalControlView, INDUSTRY_PROJECTIONS, interimOcView, mmrmView, multiplicityView, spiritView,
+  biospecimenView, masterProtocolView, ctqView, dctView, doseEscalationView, enrollmentView, externalControlView, INDUSTRY_PROJECTIONS, interimOcView, mmrmView, multiplicityView, spiritView,
   trialSchemaView, usdmView, whoIctrpView,
 } from '../surfaces/ProtocolDevIndustryProjections';
 
@@ -293,6 +293,17 @@ describe('specimens and blood volume', () => {
     expect(v.note).toContain('Worst 8-week window: not computable');
     expect(v.note).toContain('Reference 550 mL / 8 weeks (healthy adults): not known.');
     expect(v.entries[0]).toMatchObject({ status: 'unspecified', gaps: ['specimen type, volume, processing and storage not specified'] });
+  });
+});
+
+describe('master protocol structure', () => {
+  it('lists each element stated or not, and claims no adequacy', () => {
+    const v = masterProtocolView({ masterProtocol: {
+      status: 'partial', structuralDesign: 'umbrella', gaps: ['across sub-studies: Dropping an arm not stated'], integrity: [],
+      elements: [{ scope: 'across sub-studies', element: 'Dropping an arm', stated: false, detail: 'not stated' }],
+    } });
+    expect(v.entries[0]).toMatchObject({ label: 'across sub-studies — Dropping an arm', status: 'not stated' });
+    expect(v.note).toContain('no stated rule is judged adequate');
   });
 });
 

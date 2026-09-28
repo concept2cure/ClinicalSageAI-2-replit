@@ -24,6 +24,7 @@
  *   • `projectExternalControlPlan`  — external-control borrowing plan (Tier 2)
  *   • `checkMultiplicity`           — family-wise error control over the confirmatory family (Tier 2)
  *   • `profileBiospecimens`         — specimens and blood volume from the SoA (Tier 3)
+ *   • `checkMasterProtocol`         — platform / basket / umbrella / MAMS structure (Tier 3)
  *
  * Word export is not here: the Protocol Development surface already renders
  * MD, DOCX and PDF from the one assembled Markdown, signature block included
@@ -40,7 +41,7 @@
  *  4. No prose, no filing: nothing here writes into `protocol_sections`,
  *     generates protocol text, or claims a registration or transmission.
  *
- * All fifteen are READ-ONLY, so none carries a reason-for-change: nothing is
+ * All sixteen are READ-ONLY, so none carries a reason-for-change: nothing is
  * mutated and no governed-action row is written.
  *
  * @module server/services/ana/protocol-industry-tool-defs
@@ -276,6 +277,19 @@ export const REVIEW_BIOSPECIMEN_PROFILE: AnaTool = {
   input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
 };
 
+export const REVIEW_MASTER_PROTOCOL: AnaTool = {
+  name: 'review_master_protocol',
+  description:
+    'READ-ONLY. Check the master-protocol plan of a platform, basket, umbrella or MAMS study design bound to a protocol document (checkMasterProtocol; FDA ' +
+    'master-protocol guidances, 2022 and 2023 draft): per sub-study the population, arms, decision rule and — for basket and umbrella — the biomarker ' +
+    'and its assay; across sub-studies the shared control, use of non-concurrent controls, arm addition and dropping, type I error handling and the DMC; ' +
+    'and whether every arm a sub-study names exists. ' +
+    DESIGN_REQUIRED + ' ' +
+    'Report each element as stated or not stated and each integrity defect VERBATIM. This is a structural check; it computes no statistic and does not ' +
+    'judge whether a stated rule is adequate — never describe the design as sound or compliant on the strength of it.',
+  input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
+};
+
 /** In the order a human would reach for them: draw it, check it, derive from it, export it, compare it. */
 export const PROTOCOL_INDUSTRY_TOOLS: AnaTool[] = [
   REVIEW_TRIAL_SCHEMA,
@@ -293,4 +307,5 @@ export const PROTOCOL_INDUSTRY_TOOLS: AnaTool[] = [
   REVIEW_EXTERNAL_CONTROL_PLAN,
   REVIEW_MULTIPLICITY_CONTROL,
   REVIEW_BIOSPECIMEN_PROFILE,
+  REVIEW_MASTER_PROTOCOL,
 ];

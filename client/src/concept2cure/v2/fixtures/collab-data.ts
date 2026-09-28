@@ -66,15 +66,15 @@ export const SURFACE_CTX: Record<string, SurfaceContextDef> = {
   'haq-manager':            { mod: 'Regulatory',      noun: 'health-authority question', et: 'haq' },
   'ectd-coauthor':          { mod: 'eCTD',            noun: 'eCTD leaf',                 et: 'section' },
   'nda-cockpit':            { mod: 'Regulatory',      noun: 'NDA/BLA filing',            et: 'filing' },
-  'device-workstream':      { mod: 'Medical Device',  noun: 'device submission',         et: 'submission' },
-  'device-510k':            { mod: 'Medical Device',  noun: '510(k) section',            et: 'section' },
-  'device-cer':             { mod: 'Medical Device',  noun: 'CER section',               et: 'section' },
-  'device-diagnostics':     { mod: 'Medical Device',  noun: 'diagnostics item',          et: 'device' },
-  'device-submission':      { mod: 'Medical Device',  noun: 'device submission',         et: 'submission' },
+  'device-workstream':      { mod: 'MedicalDevice',   noun: 'device submission',         et: 'submission' },
+  'device-510k':            { mod: 'MedicalDevice',   noun: '510(k) section',            et: 'section' },
+  'device-cer':             { mod: 'MedicalDevice',   noun: 'CER section',               et: 'section' },
+  'device-diagnostics':     { mod: 'MedicalDevice',   noun: 'diagnostics item',          et: 'device' },
+  'device-submission':      { mod: 'MedicalDevice',   noun: 'device submission',         et: 'submission' },
   cmc:                      { mod: 'CMC',             noun: 'CMC section',               et: 'section' },
   'ind-checklist':          { mod: 'IND',             noun: 'IND item',                  et: 'ind' },
   pdev:                     { mod: 'IND',             noun: 'development activity',      et: 'activity' },
-  'protocol-dev':           { mod: 'Protocol Design', noun: 'protocol section',          et: 'section' },
+  'protocol-dev':           { mod: 'ProtocolDesign', noun: 'protocol section',          et: 'section' },
   'research-admin':         { mod: 'Regulatory',      noun: 'committee item',            et: 'committee' },
   biopharma:                { mod: 'Regulatory',      noun: 'BLA/CTD section',           et: 'section' },
   'template-library':       { mod: 'Regulatory',      noun: 'template',                  et: 'template' },
@@ -96,7 +96,7 @@ export const SURFACE_CTX: Record<string, SurfaceContextDef> = {
   'report-engine':          { mod: 'Evidence',        noun: 'report',                    et: 'report' },
   'safety-narrative':       { mod: 'Safety',          noun: 'safety case',               et: 'case' },
   labeling:                 { mod: 'Labeling',        noun: 'label',                     et: 'label' },
-  risk:                     { mod: 'Medical Device',  noun: 'risk item',                 et: 'risk' },
+  risk:                     { mod: 'MedicalDevice',   noun: 'risk item',                 et: 'risk' },
   'deep-research':          { mod: 'Intelligence',    noun: 'research',                  et: 'research' },
   setup:                    { mod: 'Regulatory',      noun: 'setting',                   et: 'admin' },
   'audit-trail':            { mod: 'Quality',         noun: 'audit item',                et: 'audit' },
@@ -116,6 +116,25 @@ export const CL_MOD: Record<string, string> = {
   Meetings:        '#9c6f5a',
   Intelligence:    '#5a7a6b',
 };
+
+/* ── Module choices a NEW task offers ──
+   CL_MOD is a palette: it carries both spellings of two modules ('Medical
+   Device' / 'MedicalDevice', 'Protocol Design' / 'ProtocolDesign') so a stored
+   row of either spelling still gets its colour. The Task form listed the
+   palette's keys, so it offered both of each, plus a lowercase 'general'
+   (launch sweep finding 139). A picker offers one entry per module: the
+   server's spelling as the value — what unifiedTaskService switches on — and a
+   human label. */
+const CL_MOD_SPACED_ALIASES = new Set(['Medical Device', 'Protocol Design']);
+const CL_MOD_LABEL: Record<string, string> = {
+  MedicalDevice: 'Medical Device',
+  ProtocolDesign: 'Protocol Design',
+  general: 'General',
+};
+export const clModLabel = (m: string): string => CL_MOD_LABEL[m] ?? m;
+export const CL_MOD_OPTIONS: ReadonlyArray<{ value: string; label: string }> = Object.keys(CL_MOD)
+  .filter((m) => !CL_MOD_SPACED_ALIASES.has(m))
+  .map((value) => ({ value, label: clModLabel(value) }));
 
 /* ── Default assignee per module. A constant lookup, not a computation. ── */
 
@@ -138,6 +157,8 @@ export const CL_TYPE: Record<string, string> = {
    used to carry was a guaranteed HTTP 400 — the task simply failed to create
    for anyone who chose it. Keep this in step with that enum. */
 export const CL_PRI: string[] = ['low', 'medium', 'high', 'critical'];
+/** What each priority reads as. The values above stay the server's enum. */
+export const CL_PRI_LABEL: Record<string, string> = { low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical' };
 
 /* ── Re-exports for consumer convenience ── */
 

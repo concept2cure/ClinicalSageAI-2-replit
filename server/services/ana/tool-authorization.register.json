@@ -1480,7 +1480,7 @@
   "derive_ctq_factors": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20902"
+   "site": "AnaToolExecutor.ts:20903"
   },
   "describe_capabilities": {
    "class": "read",
@@ -1885,7 +1885,7 @@
   "export_usdm_projection": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20907"
+   "site": "AnaToolExecutor.ts:20908"
   },
   "extract_document_structure": {
    "class": "read",
@@ -3044,7 +3044,7 @@
   "review_biospecimen_profile": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20959"
+   "site": "AnaToolExecutor.ts:20960"
   },
   "review_commitment_portfolio": {
    "class": "read",
@@ -3074,7 +3074,7 @@
   "review_dct_profile": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20912"
+   "site": "AnaToolExecutor.ts:20913"
   },
   "review_deviation": {
    "class": "read",
@@ -3084,7 +3084,7 @@
   "review_deviation_trends": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20983"
+   "site": "AnaToolExecutor.ts:20990"
   },
   "review_dms_plan_completeness": {
    "class": "read",
@@ -3094,12 +3094,12 @@
   "review_dose_escalation_design": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20923"
+   "site": "AnaToolExecutor.ts:20924"
   },
   "review_enrollment_forecast": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20929"
+   "site": "AnaToolExecutor.ts:20930"
   },
   "review_expiring_training": {
    "class": "read",
@@ -3114,7 +3114,7 @@
   "review_external_control_plan": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20947"
+   "site": "AnaToolExecutor.ts:20948"
   },
   "review_financial_disclosure": {
    "class": "read",
@@ -3159,7 +3159,7 @@
   "review_interim_operating_characteristics": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20935"
+   "site": "AnaToolExecutor.ts:20936"
   },
   "review_invention_disclosure": {
    "class": "read",
@@ -3181,15 +3181,20 @@
    "writes": "none",
    "site": "AnaToolExecutor.ts:13010"
   },
+  "review_master_protocol": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:20966"
+  },
   "review_mmrm_sizing": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20941"
+   "site": "AnaToolExecutor.ts:20942"
   },
   "review_multiplicity_control": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20953"
+   "site": "AnaToolExecutor.ts:20954"
   },
   "review_other_support": {
    "class": "read",
@@ -3229,7 +3234,7 @@
   "review_protocol_redline": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:21007"
+   "site": "AnaToolExecutor.ts:21014"
   },
   "review_protocol_regulatory_rules": {
    "class": "read",
@@ -3275,7 +3280,7 @@
   "review_spirit_conformance": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20965"
+   "site": "AnaToolExecutor.ts:20972"
   },
   "review_tmf_completeness": {
    "class": "read",
@@ -3295,12 +3300,12 @@
   "review_trial_schema": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20897"
+   "site": "AnaToolExecutor.ts:20898"
   },
   "review_who_ictrp_record": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:20917"
+   "site": "AnaToolExecutor.ts:20918"
   },
   "revise_qms_document": {
    "class": "confirm",
