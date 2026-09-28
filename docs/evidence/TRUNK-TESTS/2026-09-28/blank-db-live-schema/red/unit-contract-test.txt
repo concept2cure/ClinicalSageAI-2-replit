@@ -1,0 +1,96 @@
+
+ RUN  v4.1.7 <repo>
+
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-35: table identity is schema-aware > normalizes public and unqualified names to the same identity 2ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-35: table identity is schema-aware > keeps a non-public schema, so same-named tables never collide 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-35: CREATE parsing captures the table, not the schema > reads schema-qualified CREATE TABLE correctly 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-35: CREATE parsing captures the table, not the schema > handles unqualified, public-qualified, quoted and IF NOT EXISTS forms 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-35: CREATE parsing captures the table, not the schema > does NOT treat DDL inside comments as a creator 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-39: the reference scan reads SQL, not English > ignores prose that merely contains the word FROM 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-39: the reference scan reads SQL, not English > still captures genuine queries in every quoting style 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a qualified name whose object half is composed at runtime > is skipped, not reported as a table named after its schema 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a qualified name whose object half is composed at runtime > does not settle for a shorter name to satisfy the rejection 1ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a qualified name whose object half is composed at runtime > still reads the same schema when the object half is written out 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > C-35: the reference scan ignores non-relations > excludes SQL keywords and prose words that follow FROM/UPDATE 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > binds MATERIALIZED and NOT MATERIALIZED CTEs 0ms
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > does not bind a table merely named after a CTE keyword 0ms
+ × tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > binds a CTE that names its columns 6ms
+   → expected [] to deeply equal [ 'expected' ]
+ × tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > binds RECURSIVE and later column-list CTEs, however they are spaced 1ms
+   → expected [] to deeply equal [ 'leaves', 'tree' ]
+ × tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > still reports the storage a column-list CTE reads 1ms
+   → expected [ 'no_such_store', 'counted' ] to deeply equal [ 'no_such_store' ]
+ ✓ tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > does not bind a function call or a column alias 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > binds a CTE that names its columns
+AssertionError: expected [] to deeply equal [ 'expected' ]
+
+- Expected
++ Received
+
+- [
+-   "expected",
+- ]
++ []
+
+ ❯ tests/schema-contract/migration-reachability-guard.contract.test.ts:197:32
+    195|                  SELECT e.schema_name FROM expected e
+    196|                  LEFT JOIN pg_namespace n ON n.nspname::text = e.schem…
+    197|     expect([...cteNames(sql)]).toEqual(['expected']);
+       |                                ^
+    198|     expect([...relationsIn(sql)]).toEqual(['pg_namespace']);
+    199|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > binds RECURSIVE and later column-list CTEs, however they are spaced
+AssertionError: expected [] to deeply equal [ 'leaves', 'tree' ]
+
+- Expected
++ Received
+
+- [
+-   "leaves",
+-   "tree",
+- ]
++ []
+
+ ❯ tests/schema-contract/migration-reachability-guard.contract.test.ts:205:39
+    203|                  leaves(id)AS MATERIALIZED (SELECT id FROM tree)
+    204|                  SELECT * FROM leaves`;
+    205|     expect([...cteNames(sql)].sort()).toEqual(['leaves', 'tree']);
+       |                                       ^
+    206|     expect([...relationsIn(sql)]).toEqual(['nodes']);
+    207|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > still reports the storage a column-list CTE reads
+AssertionError: expected [ 'no_such_store', 'counted' ] to deeply equal [ 'no_such_store' ]
+
+- Expected
++ Received
+
+  [
+    "no_such_store",
++   "counted",
+  ]
+
+ ❯ tests/schema-contract/migration-reachability-guard.contract.test.ts:212:35
+    210|     // Binding the CTE's name must not hide what its body queries.
+    211|     const sql = 'WITH counted(n) AS (SELECT count(*) FROM no_such_stor…
+    212|     expect([...relationsIn(sql)]).toEqual(['no_such_store']);
+       |                                   ^
+    213|   });
+    214|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 14 passed (17)
+   Start at  02:13:14
+   Duration  443ms (transform 180ms, setup 82ms, import 158ms, tests 24ms, environment 0ms)
+

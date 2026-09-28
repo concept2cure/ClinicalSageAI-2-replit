@@ -1482,6 +1482,13 @@ Also changed:
 - CI's Lint job, run locally before each push as §16.7 says, caught one
   more thing: F-41's helpers took `auth.ts` over the repo-health scan's
   100,000-byte threshold, and they moved to their own module (`81eb7491`).
+- CI's Blank DB Provisioning job was red on every run of this lane's pushes,
+  on its live-schema ratchet, from before this lane's first code change. The
+  guard read a CTE that names its columns
+  (`WITH expected(schema_name, …) AS (…)`, `audit-immutability-triggers.ts`)
+  as a table no database has. Its parser now binds that form. The failing test
+  came first, and four mutants are each caught
+  (`docs/evidence/TRUNK-TESTS/2026-09-28/blank-db-live-schema/`).
 
 ### 18.4 Observations for other rows (not dispositioned by this package)
 
