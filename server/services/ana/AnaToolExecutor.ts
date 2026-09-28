@@ -13679,13 +13679,40 @@ registerToolHandler('approve_qms_document', async () =>
   ),
 );
 
+/* 2026-09-28 (Q-0928-2, weekly launch-catalog review). POST
+   /api/mdx/qms/documents/:id/revise runs requireEditorAccess; this handler ran
+   no role check at all, and /api/ana-ri is mounted behind authenticateToken
+   only, so any authenticated member — a viewer included — could withdraw an
+   effective SOP back to draft from chat. Its reason floor was also 3 characters
+   where every other QMS tool asks QMS_REASON_MIN. The role is now read from
+   organization_users for the verified principal (ctx.userId, ctx.organizationId)
+   through resolveSignerOrgRole, and checked against GOVERNED_WRITE_ROLES — the
+   set requireEditorAccess uses — before anything is opened. Never from input. */
+/** The refusal for a caller without an editor role in the organization, or null when they have one. */
+async function editorRoleRefusal(tool: string, act: string, ctx: ToolContext): Promise<string | null> {
+  let orgRole: string | null;
+  try {
+    const { resolveSignerOrgRole } = await import('../part11/resolve-signer-role');
+    orgRole = await resolveSignerOrgRole(Number(ctx.userId), Number(ctx.organizationId));
+  } catch (err) {
+    return JSON.stringify({ error: `${tool} could not confirm your role in this organization, so nothing was changed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+  const { GOVERNED_WRITE_ROLES } = await import('../../middleware/orgMembership');
+  if (!orgRole || !GOVERNED_WRITE_ROLES.has(orgRole)) {
+    return JSON.stringify({ error: `Insufficient permissions: ${act} needs an editor role in this organization. Nothing was changed.` });
+  }
+  return null;
+}
+
 registerToolHandler('revise_qms_document', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'revise_qms_document requires tenant context.' });
+  if (!ctx.userId) return JSON.stringify({ error: 'revise_qms_document requires user context — a controlled revision cannot be opened without an identified actor (21 CFR Part 11).' });
+  const refusal = await editorRoleRefusal('revise_qms_document', 'opening a controlled revision', ctx);
+  if (refusal) return refusal;
   const id = typeof input.document_id === 'number' ? input.document_id : NaN;
   const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
   if (!Number.isFinite(id)) return JSON.stringify({ error: 'document_id (number) is required.' });
-  if (reason.length < 3) return JSON.stringify({ error: 'A reason for change is required to open a controlled revision (21 CFR Part 11) — ask the user for it.' });
-  if (!ctx.userId) return JSON.stringify({ error: 'revise_qms_document requires user context — a controlled revision cannot be opened without an identified actor (21 CFR Part 11).' });
+  if (reason.length < QMS_REASON_MIN) return JSON.stringify({ error: `A reason for change is required to open a controlled revision (21 CFR Part 11), at least ${QMS_REASON_MIN} characters — ask the user for it.` });
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const client = await getPool().connect();
@@ -13733,51 +13760,21 @@ registerToolHandler('revise_qms_document', async (input, ctx) => {
   }
 });
 
-registerToolHandler('retire_qms_document', async (input, ctx) => {
-  if (!ctx?.organizationId) return JSON.stringify({ error: 'retire_qms_document requires tenant context.' });
-  const id = typeof input.document_id === 'number' ? input.document_id : NaN;
-  if (!Number.isFinite(id)) return JSON.stringify({ error: 'document_id (number) is required.' });
-  const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
-  // §11.10(e): retirement is terminal and its reason is recorded in the
-  // hash-chained ledger — required here, never replaced by a placeholder.
-  if (reason.length < QMS_REASON_MIN) return JSON.stringify({ error: `A reason for change of at least ${QMS_REASON_MIN} characters is required to retire a controlled document — it is recorded in the audit trail.` });
-  if (!ctx.userId) return JSON.stringify({ error: 'retire_qms_document requires user context — a retirement cannot be recorded without an identified actor (21 CFR Part 11).' });
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const client = await getPool().connect();
-  try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    const { rows } = await client.query(
-      `UPDATE qms_documents
-          SET status = 'retired',
-              metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object(
-                'retired', jsonb_build_object('reason', $3::text, 'at', NOW(), 'by', $4::int)),
-              updated_at = NOW()
-        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL AND status <> 'retired'
-        RETURNING id, doc_number, status`,
-      [id, ctx.organizationId, reason, ctx.userId],
-    );
-    if (rows.length === 0) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      return JSON.stringify({ error: 'Document not found, or already retired.' });
-    }
-    await recordGovernedAction(client, {
-      orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
-      target: `qms-document:${id}`,
-      reason,
-      payload: { kind: 'retire', to: 'retired' },
-      domain: 'mdx', surface: 'ana',
-    });
-    await client.query('COMMIT');
-    return JSON.stringify({ ok: true, ...rows[0], message: `Retired document ${rows[0].doc_number}.` });
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    return JSON.stringify({ error: `retire_qms_document failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
-  }
-});
+/* 2026-09-28 (Q-0928-1 / SEC-0928-1, DP-32 Part B). Retiring a controlled
+   document is an electronic signature: POST /api/mdx/qms/documents/:id/retire
+   runs verifyApprovalSigner (password + second factor, signing authority) and
+   retireQmsDocumentSigned, which writes one electronic_signatures row with the
+   status change and its ledger pair. This handler checked only a tenant, a
+   reason of 8+ characters and a user id, then set the document retired and
+   recorded a 'transition' — a session alone could end an effective SOP's use
+   for everyone trained on it. Refused exactly like approve_qms_document. */
+registerToolHandler('retire_qms_document', async () =>
+  refuseSignatureInChat(
+    'retire_qms_document',
+    'Retiring a controlled document',
+    "the Quality register: the document's Retire action asks for your password and second factor",
+  ),
+);
 
 registerToolHandler('ack_training', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'ack_training requires tenant context.' });

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-28T02:05:58.393Z",
+  "generatedAt": "2026-09-28T02:21:25.934Z",
   "git": {
-    "sha": "0a6ad5f4f8204ee8956842767a96e9bb51be0f2d",
+    "sha": "e2d36a2b1c444e8253998e74c8db4bf96c8eaed0",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1977,7 +1977,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1070323
+        "bytes": 1070419
       },
       {
         "file": "shared/schema.ts",
@@ -2009,7 +2009,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 188206
+        "bytes": 189655
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2159,7 +2159,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 20677
+        "lines": 20674
       },
       {
         "file": "shared/schema.ts",
@@ -2194,12 +2194,12 @@
         "lines": 4491
       },
       {
-        "file": "server/storage.ts",
-        "lines": 4431
+        "file": "server/services/ai-gateway/gateway.ts",
+        "lines": 4438
       },
       {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 4415
+        "file": "server/storage.ts",
+        "lines": 4431
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2519,7 +2519,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 1729
+        "lines": 1731
       },
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
