@@ -4,12 +4,11 @@ import { pool } from '../db';
 import { inVerifiedOrgScope } from '../services/tenant/verified-org-scope';
 import { createScopedLogger } from '../utils/logger.js';
 import { invalidateOrgMembershipCache } from '../middleware/auth';
-import auditService from '../services/auditService';
-import { isEmailConfigured, sendInvitationEmail } from '../services/emailService';
 import {
-  INVITATION_TTL_MS,
-  mintPasswordSetupToken,
-  passwordSetupUrl,
+  issueInvitation,
+  type InvitationDelivery,
+} from '../services/tenant/invitation-delivery';
+import {
   resolveAppBaseUrl,
   PublicOriginNotConfiguredError,
 } from '../services/password-setup-token';
@@ -95,98 +94,6 @@ function sessionOrganizationId(req: any): number | null {
   const raw = req.tenantId ?? req.tenantContext?.organizationId ?? req.user?.organizationId;
   const n = Number(raw);
   return Number.isInteger(n) && n > 0 ? n : null;
-}
-
-/** What the admin is told about how the invitee will receive their link. */
-interface InvitationDelivery {
-  expiresAt: string | null;
-  emailSent: boolean;
-  /**
-   * 'email' — the invitee has the link; 'link' — the admin must hand it over;
-   * 'failed' — the account exists but no activation link could be issued.
-   */
-  delivery: 'email' | 'link' | 'failed';
-  /** Present only when no email went out: the one copy of the setup link. */
-  setupUrl?: string;
-  /** Present when SMTP is configured but refused the message. */
-  emailError?: string;
-}
-
-/**
- * Activate a NEWLY created account: mint a password-setup token (the same
- * token "forgot password" uses — server/services/password-setup-token.ts),
- * store its hash on the user row, and send the invitation. The account was
- * inserted with an unusable password hash, so this link is the only way in.
- *
- * Delivery is reported honestly. When SMTP is not configured (or refuses the
- * message) nothing was sent, and the response carries the setup link so the
- * org admin — who just created the account and is the only reader of this
- * response — can hand it over. Either way the audit trail records which.
- */
-async function issueInvitation(
-  req: any,
-  args: { userId: number; email: string; role: string; organizationId: number; appBaseUrl: string }
-): Promise<InvitationDelivery> {
-  const { appBaseUrl } = args;
-  const setup = mintPasswordSetupToken(INVITATION_TTL_MS);
-  // tenant-isolation-safe: users is a global identity table; this id is the row atomicCreateUser just created for the organization the caller was verified to administer (authorizeOrgAccess), inside this same request.
-  await pool.query(
-    `UPDATE users SET reset_token = $1, reset_token_expires_at = $2, updated_at = NOW() WHERE id = $3`,
-    [setup.tokenHash, setup.expiresAt, args.userId]
-  );
-  const setupUrl = passwordSetupUrl(appBaseUrl, setup.token);
-
-  const orgRow = await pool.query('SELECT name FROM organizations WHERE id = $1', [
-    args.organizationId,
-  ]);
-  const orgName: string = orgRow.rows[0]?.name ?? 'your organization';
-  const inviterName: string = req.user?.name || req.user?.email || 'An administrator';
-
-  let emailSent = false;
-  let emailError: string | undefined;
-  if (isEmailConfigured()) {
-    try {
-      emailSent = await sendInvitationEmail(
-        args.email,
-        inviterName,
-        orgName,
-        setupUrl,
-        setup.expiresAt
-      );
-    } catch (err) {
-      log.error('Invitation email failed', err);
-      emailError = 'The invitation email could not be sent';
-    }
-  }
-  const delivery: InvitationDelivery['delivery'] = emailSent ? 'email' : 'link';
-
-  const audit = await auditService.logAction({
-    tenantId: args.organizationId,
-    userId: getCallerId(req) ?? undefined,
-    action: 'user_invited',
-    resourceType: 'user',
-    resourceId: String(args.userId),
-    ipAddress: req.ip,
-    userAgent: req.get?.('user-agent'),
-    details: {
-      email: args.email,
-      role: args.role,
-      delivery,
-      emailSent,
-      invitationExpiresAt: setup.expiresAt.toISOString(),
-    },
-  });
-  if (!audit.persisted) {
-    log.warn('Audit log write failed (non-fatal)', { action: 'user_invited', err: audit.error });
-  }
-
-  return {
-    expiresAt: setup.expiresAt.toISOString(),
-    emailSent,
-    delivery,
-    ...(emailSent ? {} : { setupUrl }),
-    ...(emailError ? { emailError } : {}),
-  };
 }
 
 /**
@@ -371,7 +278,8 @@ router.get('/:tenantId', async (req, res) => {
       return res.status(400).json({ error: 'Invalid tenant ID' });
     }
 
-    if (!(await authorizeOrgAccess(req, res, tenantId, { requireAdmin: false }))) return;
+    const verifiedRole = await authorizeOrgAccess(req, res, tenantId, { requireAdmin: false });
+    if (!verifiedRole) return;
 
     // Get users for this organization with their roles
     const query = `
@@ -393,7 +301,13 @@ router.get('/:tenantId', async (req, res) => {
       ORDER BY u.name ASC
     `;
 
-    const result = await pool.query(query, [tenantId]);
+    // In the organization being listed: a tenant scope reads only its own
+    // members' users rows (migrations/20260928_users_membership_rls.sql), so a
+    // member of two organizations listing the other from their session's scope
+    // would be shown an empty organization.
+    const result = await inVerifiedOrgScope(req, tenantId, verifiedRole, () =>
+      pool.query(query, [tenantId])
+    );
     log.debug(`Retrieved ${result.rows.length} users for organization ${tenantId}`);
     res.json(result.rows);
   } catch (error) {
@@ -550,6 +464,8 @@ router.post('/', async (req, res) => {
           email: validatedData.email,
           role: validatedData.role,
           organizationId,
+          verifiedRole,
+          callerId: getCallerId(req),
           appBaseUrl,
         });
       } catch (err) {
