@@ -69,6 +69,11 @@ export interface DispatchGateView {
   rule: RuleView | null;
   cleared: boolean;
   blockers: string[];
+  /** Set when the gate adds no blocker only because its check did not run and
+   *  is not required on this installation — the external validator with
+   *  ECTD_REQUIRE_EVALIDATOR off. Cleared is still true (it does not block);
+   *  this says the check was not made, so no surface reads it as passed. */
+  notAssessed?: string;
 }
 
 /** composeDispatchGates' merge order — the gate views follow it, so the list
@@ -81,13 +86,28 @@ const GATE_ORDER: DispatchGateKey[] = ['structural', 'external', 'shadowPresence
  * as the rule it enforces — not as prose under a pass/fail icon — and the
  * gates' blockers, in order, are exactly the verdict's.
  */
-export function dispatchGateViews(gates: Record<DispatchGateKey, DispatchGateResult>): DispatchGateView[] {
+export function dispatchGateViews(
+  gates: Record<DispatchGateKey, DispatchGateResult>,
+  notAssessed: Partial<Record<DispatchGateKey, string>> = {},
+): DispatchGateView[] {
   return GATE_ORDER.map((key) => ({
     key,
     rule: ruleView(DISPATCH_GATE_RULE_IDS[key]),
     cleared: gates[key].cleared,
     blockers: [...gates[key].blockers],
+    ...(gates[key].cleared && notAssessed[key] ? { notAssessed: notAssessed[key] } : {}),
   }));
+}
+
+/** Why the external gate cleared without a report, when it did. The dispatch
+ *  screen printed "The agency-grade validator's report for this package
+ *  carries no errors — Satisfied." over a sequence no validator had run on
+ *  (populated-org sweep, 2026-09-28): advisory is not passed. */
+export function externalNotAssessed(ext: { ran: boolean; configured: boolean }): string | undefined {
+  if (ext.ran) return undefined;
+  return ext.configured
+    ? 'The agency-grade validator is configured but did not run for this package, so no report exists. It is not required on this installation, so it does not block dispatch — but the package has not been checked against it.'
+    : 'No agency-grade validator is configured on this installation, so no report exists for this package. It is not required here, so it does not block dispatch — but the package has not been checked against it.';
 }
 
 /** Each finding with the corpus rule it is an instance of (null when the corpus names none). */
@@ -554,12 +574,15 @@ export async function assessSequenceDispatchReadiness(
   const { gate, freezeGate, dispatchGateOnSigning } = composeStepVerdicts(gateParts, releaseSignature);
   // The same four results `gate` merged: the dispatch-step release-signature
   // evaluation is releaseSignatureGate (required as the type requires).
-  const gates = dispatchGateViews({
-    structural: structuralGate,
-    external: gateParts.external,
-    shadowPresence: shadowPresenceGate,
-    releaseSignature: releaseSignatureGate,
-  });
+  const gates = dispatchGateViews(
+    {
+      structural: structuralGate,
+      external: gateParts.external,
+      shadowPresence: shadowPresenceGate,
+      releaseSignature: releaseSignatureGate,
+    },
+    { external: externalNotAssessed({ ran: externalGate.ran, configured: externalConfigured }) },
+  );
   readiness.findings = withRules(readiness.findings);
 
   return {

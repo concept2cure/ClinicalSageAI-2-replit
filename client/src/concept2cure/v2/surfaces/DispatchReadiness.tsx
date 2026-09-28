@@ -43,6 +43,9 @@ interface GateView {
   rule: RuleView | null;
   cleared: boolean;
   blockers: string[];
+  /** The server's sentence when the gate cleared only because its check did
+   *  not run and is not required here. Not blocking, and not passed. */
+  notAssessed?: string;
 }
 
 interface ReadinessSummary {
@@ -306,14 +309,18 @@ function RuleLine({ rule, code }: { rule: RuleView | null; code: string }) {
 
 /** One composed gate: the rule it enforces, its outcome in words, its own blockers. */
 function GateCard({ gate }: { gate: GateView }) {
+  /* A gate that does not block because its check never ran is not "Satisfied".
+     The external validator's card read "…report for this package carries no
+     errors — Satisfied." over a package no validator had seen. */
+  const unassessed = gate.cleared && Boolean(gate.notAssessed);
   return (
-    <div data-gate={gate.key} className={'dr2-gate ' + (gate.cleared ? 'ok' : 'block')}>
+    <div data-gate={gate.key} className={'dr2-gate ' + (unassessed ? 'warn' : gate.cleared ? 'ok' : 'block')}>
       <div className="dr2-gate-top">
-        <span className="dr2-gate-dot">{gate.cleared ? I.check : I.lock}</span>
+        <span className="dr2-gate-dot">{unassessed ? I.alertTriangle : gate.cleared ? I.check : I.lock}</span>
         <span className="dr2-gate-label">{gate.rule?.title ?? `The ${gate.key} gate — not in the rule corpus`}</span>
       </div>
       <div className="dr2-gate-detail">
-        {gate.cleared ? 'Satisfied.' : 'Blocks dispatch:'}
+        {unassessed ? <>Not assessed. {gate.notAssessed}</> : gate.cleared ? 'Satisfied.' : 'Blocks dispatch:'}
         {!gate.cleared && (
           <ul style={{ margin: '2px 0 0', paddingLeft: 16 }}>
             {gate.blockers.map((b, i) => <li key={i}>{b}</li>)}
@@ -527,7 +534,7 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
     ? {
           tone: 'good',
           h: <>Your sequence is <b>cleared to dispatch</b>. Every hard gate is proven clear.</>,
-          b: <>0 open validation errors, 0 unacknowledged Shadow Review criticals{ev.configured ? ', external validator clean' : ''}. This verdict is computed from server state — not a model opinion. The wire transmit stays behind your Part-11 e-signature.</>,
+          b: <>0 open validation errors, 0 unacknowledged Shadow Review criticals{ev.ran ? ', external validator clean' : ', external validator not run'}. This verdict is computed from server state — not a model opinion. The wire transmit stays behind your Part-11 e-signature.</>,
       }
     : {
         tone: 'urgent',
