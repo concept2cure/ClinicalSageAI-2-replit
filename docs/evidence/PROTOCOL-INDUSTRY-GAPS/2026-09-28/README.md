@@ -16,7 +16,7 @@ narrates.
 | Trial schema figure | ICH M11 §1.2 | `study-design/trial-schema.ts` (+ `trial-schema-svg.ts`) | `GET /api/study-design/:id/trial-schema` | `review_trial_schema` |
 | SPIRIT 2013 checklist, row by row | SPIRIT 2013 (33 items, 51 rows) | `study-design/spirit-conformance.ts` (+ `spirit-items.ts`) | `GET /api/study-design/:id/spirit` (design only); `GET /api/protocol-development/documents/:id/spirit` (design + sections) | `review_spirit_conformance` |
 | Critical-to-quality factors from the design | ICH E6(R3); TransCelerate RACT | `study-design/ctq-derivation.ts` | `…/:id/ctq` | `derive_ctq_factors` |
-| USDM-shaped export, conformance **unverified** | CDISC USDM / TransCelerate DDF | `study-design/usdm-projection.ts` (+ `usdm-schedule.ts`, `usdm-types.ts`) | `…/:id/usdm` | `export_usdm_projection` |
+| USDM v4.0.0-shaped export, conformance **unverified** | CDISC USDM v4.0.0 (DDF-RA v4.0.0) / TransCelerate DDF | `study-design/usdm-projection.ts` (+ `usdm-schedule.ts`, `usdm-types.ts`) | `…/:id/usdm` | `export_usdm_projection` |
 | Decentralised-element profile | FDA DCT guidance (2024); EMA/HMA/EC (2022) | `study-design/dct-profile.ts` + `SoaActivity.location?` | `…/:id/dct-profile` | `review_dct_profile` |
 | WHO Trial Registration Data Set | WHO ICTRP TRDS v1.3.1; ICMJE | `study-design/who-ictrp-registration.ts` | `…/:id/who-ictrp` | `review_who_ictrp_record` |
 | Deviation trends and signals | ICH E6(R3) RBQM; TransCelerate KRIs | `protocol-deviations/deviation-trends.ts` | `GET /api/protocol-deviations/deviations/trends` | `review_deviation_trends` |
@@ -39,6 +39,44 @@ as JSON byte for byte.
 **One map drives the routes, the tools and the service:** `DESIGN_ENGINES` in
 `protocol-development/protocol-industry-service.ts`. A path, a response key
 and an engine cannot drift apart.
+
+### Recording the planning inputs the engines read
+
+Six engines read inputs only a sponsor can supply: the BOIN rules, the site
+accrual plan, the MMRM assumptions, the external-control plan, the
+master-protocol structure, and each SoA activity's location and specimen.
+Until this change nothing on screen could record them, so those engines
+could only ever report "not recorded".
+
+| Piece | Where |
+|---|---|
+| Strict block schemas, one per block (unknown keys refused at every depth; cross-field checks such as a start dose that is a recorded level, retention never rising, a power prior with its a0) and the pure `applyPlanningInput` (null clears a block) | `server/services/study-design/planning-inputs.ts` |
+| `POST /api/study-design/:studyId/planning` — `requireEditorAccess`; reason ≥ 8 and the block validated **before** a connection is taken; tenant context set; the design read `FOR UPDATE` by `study_id` **and** `tenant_id`; written back through the one writer (`persistStudyDesignTx`); a governed-action row carrying the reason, the block and whether it was cleared; 404 and 409 roll back | `server/routes/study-design-planning.ts`, mounted in `server/routes/study-design.ts` |
+| One governed `C2CForm` per block and per SoA activity, prefilled from what the design records; list fields are one entry per line with line-numbered errors; a value that does not parse is refused, never coerced; a blank optional field is left out, never defaulted; "none" states there is no shared control | `client/…/surfaces/planningInputForms.ts`, `planningStructureForms.ts`, `ProtocolDevPlanningInputs.tsx` (mounted in `ProtocolDevDesign.tsx` above the projections pane) |
+
+The panel re-reads the design after every write, so a block shows as recorded
+only once the server has confirmed it.
+
+### Registration titles: the official title is no longer used as the lay one
+
+The ClinicalTrials.gov projection filled the required **Brief title** — which
+the PRS data element definitions describe as "a short title … written in
+language intended for the lay public" (at most 300 characters) — with the
+protocol's official title, and called it rendered. WHO TRDS item 9 (Public
+Title, "intended for the lay public in easily understood language") could only
+ever be missing. The design now carries `publicTitle?` and `acronym?`
+(`study-design-types.ts`), recorded by a person and never derived from `title`:
+
+| Consumer | Now |
+|---|---|
+| ClinicalTrials.gov | Brief title from `publicTitle`, else missing with the reason (the official title is not reused); Official title from `title`; Acronym (optional); each checked against the PRS limits (300 / 600 / 14) — longer is `partial` with its length, never truncated |
+| EU CTIS | Public title (optional, so `registrable` keeps its meaning — see `ctisPopulationFields`) |
+| WHO TRDS | item 9 renders `publicTitle`; item 10 appends a recorded acronym ("include trial acronym if available") and stays rendered without one |
+| USDM | one StudyTitle per recorded title, typed official / public / acronym with C2C-INTERNAL codes (not CDISC terms); the `StudyTitle.type` always-unfilled line is retired |
+| SPIRIT 1 | a recorded acronym must appear in the title; without one the gap says the design does not record whether the trial has one |
+
+A design with no public title is now **not registrable** on ClinicalTrials.gov
+where it used to look complete: the brief title was never there.
 
 ### Withdrawn, not shipped: a second protocol DOCX renderer
 
@@ -89,11 +127,12 @@ only), the CAPA join anchored on the scoped row, input bounds, route order
 | `study-design/__tests__/trial-schema.test.ts` | 21 |
 | `study-design/__tests__/spirit-conformance.test.ts` | 25 |
 | `study-design/__tests__/ctq-derivation.test.ts` | 25 |
-| `study-design/__tests__/usdm-projection.test.ts` | 25 |
+| `study-design/__tests__/usdm-projection.test.ts` | 34 |
 | `study-design/__tests__/dct-profile.test.ts` | 44 |
 | `study-design/__tests__/who-ictrp-registration.test.ts` | 24 |
-| `protocol-deviations/__tests__/deviation-trends.test.ts` | 42 |
-| `protocol-development/__tests__/protocol-redline.test.ts` | 45 |
+| `protocol-deviations/__tests__/deviation-trends.test.ts` | 51 |
+| `protocol-deviations/__tests__/deviation-trends-rows.test.ts` | 12 |
+| `protocol-development/__tests__/protocol-redline.test.ts` | 57 |
 | `study-design/__tests__/dose-escalation.test.ts` | 15 |
 | `study-design/__tests__/enrollment-projection.test.ts` | 8 |
 | `study-design/__tests__/interim-oc.test.ts` | 14 |
@@ -102,9 +141,12 @@ only), the CAPA join anchored on the scoped row, input bounds, route order
 | `study-design/__tests__/multiplicity-check.test.ts` | 10 |
 | `study-design/__tests__/biospecimen-profile.test.ts` | 9 |
 | `study-design/__tests__/master-protocol.test.ts` | 8 |
-| `protocol-development/__tests__/protocol-industry-service.pglite.integration.test.ts` | 17 |
+| `protocol-development/__tests__/protocol-industry-service.pglite.integration.test.ts` | 19 |
 | `ana/__tests__/protocol-industry-tools.test.ts` | 8 |
 | `client/…/__tests__/protocolDevIndustryProjections.test.ts` | 20 |
+| `study-design/__tests__/planning-inputs.test.ts` | 13 |
+| `routes/__tests__/study-design-planning.route.test.ts` | 5 |
+| `client/…/__tests__/planningInputForms.test.ts` | 9 |
 
 Regression: `server/services/study-design/__tests__` + `protocol-development/__tests__`
 + the study-design and protocol-development route suites — 44 files, 833 tests,
@@ -124,7 +166,7 @@ red, the file was restored byte for byte, and the suite re-ran green.
 | SPIRIT | a document section allowed to override a design-evidenced row | `has a judge for every design-evidenced row…` — **not** by the dedicated "never lets a document override a design-evidenced row" test, which stayed green. Flagged for the review stage as a weak test. |
 | CtQ | blinding factors emitted for an open-label design (factor with no trigger) | `fires blind-maintenance and emergency-unblinding rows for a blinded design only` |
 | CtQ | a rating marked `assessed` instead of `default_seed` | `marks every rating default_seed…` |
-| USDM | a ScheduledActivityInstance pointing at a non-existent encounter | `every ScheduledActivityInstance points at an existing activity, encounter and epoch` |
+| USDM | a ScheduledActivityInstance pointing at a non-existent encounter | `every ScheduledActivityInstance points at an existing activity, encounter and epoch` (since replaced by `every id is unique and every reference in the graph resolves, for every design shape`) |
 | USDM | conformance flipped to `verified` | `reports status unverified… for every design shape` |
 | USDM | ids counted across calls (module-level counter) | `ids are positional and identical across two calls` |
 | DCT | `unstated` treated as `site` | 6 tests incl. `never counts an unstated activity as site` |
@@ -154,27 +196,102 @@ red, the file was restored byte for byte, and the suite re-ran green.
 | Biospecimens | conditional draws counted as scheduled | `sums recorded volumes per visit… conditional draws only in the upper bound` |
 | Master protocol | an absent shared control read as "none" | `absence of a shared control is not stated; null states there is none` |
 | Master protocol | the arm-existence check disabled | `an arm the design does not carry, a duplicate id and a one-user shared control are defects` |
+| Service | `assessed_at` not passed to the engine | `reads assessed_at: a pre-fix minor / false is an assessment only when one is on record` (`expected +0 to be 1`) |
+| Deviation vocabulary | a severity admitted that the union does not have | `category "Consent" and severity "high" count as uncategorised / unassessed` and `an unassessed deviation is counted … never as minor` |
+| Snapshot | `snapshotVersionTx` without the `section_key` tie-break | `sections tied on order_index are ordered the same way…` (`expected [ 'b_rationale', 'a_background' ] to deeply equal [ 'a_background', 'b_rationale' ]`) |
+| Service | the working-copy read back on an `id` tie-break | same test (`reordered`/`moved` non-zero) — **survived at first**, when the fixture's id order matched key order; caught after writing the sections in the opposite order |
+| Titles | CT.gov brief title from the official title again | `never shows the official title as the lay brief title…` and the length test |
+| Titles | PRS length limits not applied | `a title longer than ClinicalTrials.gov accepts is partial with its length, never truncated` |
+| Titles | WHO item 9 back to always missing; item 10 drops the acronym | `item 9 renders a recorded public title; item 10 carries a recorded acronym…` |
+| Titles | USDM public title typed as official; an official title invented from the public one | `emits a recorded public title and acronym as their own typed titles…`, `no official title: no official StudyTitle is invented from the public one` |
+| Titles | SPIRIT 1 ignores a recorded acronym | `checks a recorded acronym appears in the title…` |
 | Service | CAPA join without its org anchor | `excludes other organisations' … CAPA` (`expected 1 to be 0`) — after strengthening the test so the only open action is another org's |
 | Service | version lookup without its org filter | `a label not recorded for this org is NOT_FOUND — including one another org recorded` (`promise resolved … instead of rejecting`) |
 | AnA tools | one handler unregistered | `review_protocol_redline handler registered: expected undefined to be type of 'function'` |
 | Client pane | a null off-site share rendered as `0%` | `a null off-site share reads "not assessed", never 0%` |
+| Planning write | the editor gate removed from the route | `refuses a viewer` (`expected 200 to be 403`) |
+| Planning write | `FOR UPDATE` removed from the read | `reads the design FOR UPDATE, tenant-scoped…` |
+| Planning write | the `tenant_id` predicate removed | same test — **survived at first** (the params were still asserted); caught after asserting the predicate itself |
+| Planning write | the reason check skipped | `refuses a short reason and an invalid block… before a connection is taken` (`expected 200 to be 400`) |
+| Planning schema | `.strict()` dropped from a nested dose level | **survived at first**; caught by the added `refuses an unknown key inside a nested entry` |
+| Planning forms | a non-number coerced to 0 | four parser tests, incl. `refuses a non-number with its label` |
+| Planning forms | a blank optional field defaulted to 0 | five tests, incl. `leaves a blank optional field out rather than defaulting it` |
+| Planning forms | "none" kept as an arm name | `"none" states no shared control` (`expected 'none' to be null`) |
 
 ---
 
+## Adversarial review of the Tier 1 engines
+
+Every Tier 1 engine was reviewed by two independent agents with distinct
+lenses — honesty/determinism/duplication, and regulatory-domain
+correctness/test strength — each told to refute, to verify with probes, and to
+report only what it reproduced. Every blocking and major finding went to a fix
+agent, which reproduced it, fixed it, pinned it with a test seen failing, and
+re-ran verify-by-failing. Landed so far:
+
+| Engine | Blocking/major found | Notable | Tests after | Mutants caught |
+|---|---|---|---|---|
+| Trial schema | 13 | a shared epoch id drew visits in both epochs; crossover drawn as combination therapy through the washout; XML-illegal characters broke the SVG | 36 (was 21) | 19, incl. every mutant the reviewers showed survived |
+| SPIRIT | 13 (+10 minor) | **SPIRIT 2013 superseded by SPIRIT 2025** — now stated on every output; title terms matched as raw substrings scored unrelated sections `met`; a DMC charter with no `present` read as "no DMC"; rows the engine admitted it could not see scored `met` | 68 (was 25) | 20 |
+| CtQ | 5 blocking/major ×2 lenses | an unrecorded blinding produced two CRITICAL blinding factors; exclusion-criterion risk text pointed the wrong way; a second rating vocabulary contradicted the RBM catalogue (three rows now take the catalogue's rating; `ratingFrom` names the source) | 43 (was 25) | 10 |
+
+| DCT profile | 10 (1 blocking) | duplicated activity ids took whichever location came last in the array — order-dependent and fabricated; a cell naming an undefined visit was dropped silently; an epoch "undefined" was invented; IMP, PK and consent rules covered only some off-site locations (`DCT-IMP-HOME` is now `DCT-IMP-OFFSITE`) | 61 (was 44) | 10 |
+
+| WHO TRDS | 7 major (+ minors) | a name-only intervention rendered item 13 complete; every SoA visit — even an unresolved visit id — was presented as an outcome timepoint; the item list was frozen only shallowly; item 11 ignored the accrual plan's site countries; the phase and assignment fallbacks were untested | 47 (was 24) | 16 |
+
+| Deviation trends | 8 (1 blocking) | **the replaced writer's defaults were read as assessments**: before 2026-09-24 it stored `minor` / `other` / `is_reportable false` when nobody had assessed, so ten such rows read as "0% reportable over 10 determined" and could manufacture a DEV-SEVERITY-RISE. They are now set aside, counted in `legacyDefaults`, kept out of the shares and named — and the service now passes `assessed_at` so an assessment on record is recognised; unrecognised categories and severities were passed through; rows dated after today were aged; a `Math.max` spread overflowed on large inputs | 63 (was 42) | 19 |
+
+The deviation vocabularies (category, severity, status, CAPA status) had four
+copies — the service's validators, the route's zod enums, the trend engine and
+the logic module's types. The logic module now exports the one list of each,
+Record-keyed against its union, and the others import it.
+
+| USDM | 10 (blocking: crossover) | **a crossover was exported as both arms receiving both drugs throughout**: every arm got one StudyElement spanning every treatment epoch. Placement is now made only for a concurrent model (parallel, single-arm, factorial) with exactly one treatment epoch; otherwise no element is built and both ledgers say why. **The graph mixed USDM versions** — v3-era `studyPhase` on StudyVersion beside v4 classes; it is now aligned to v4.0.0 throughout, every emitted class pinned to the attribute names transcribed from DDF-RA v4.0.0 `USDM_API.json` (28 classes, checked by script, 0 mismatches). An absent estimand population matched an absent analysis population as `''`; two baseline visits anchored timing on the first; absent coded values became a Code for `"undefined"`; a missing blinding level became open-label | 34 (was 25) | 20 |
+
+The USDM output shape changed with the move to v4.0.0 (interventions now live
+on the StudyVersion, `interventionModel` is `model`, `studyPhase` is on the
+design as an AliasCode). The one client consumer, `usdmView` in
+`ProtocolDevIndustryProjections.ts`, reads interventions from the version; its
+test pins that (`expected 'None exported.' to be 'StudyIntervention_1 — Drug X
+10 mg'` when pointed back at the design).
+
+| Redline | 9 major (2 fabrication) | **a cap note claimed a method that did not produce the counts**: counts found by the linear no-shared-line pass were described as "a minimal line diff found within 200 edits"; the note now names the method actually used. The tie warning ("this move may reflect row order") sat only on moved sections, and on ties with a section only one version has, which cannot move anything; it is now on every tied shared section and listed in `summary.positionsFromRowOrder`. The header said 21 CFR 312.30 requires a marked-up protocol; it says EU CTR 536/2014 Annex II asks for track changes and a 312.30 amendment must describe the change. Seven weak tests (titleless / statusless rows, NaN order, a missing version label, statusChanged, retitled > reordered, the capped budget boundary) now each fail under their mutant | 57 (was 45) | 15 |
+
+**The redline's root cause, fixed at the source.** `snapshotVersionTx` and
+`finalizeProtocolTx` read sections `ORDER BY order_index` with no tie-break, and
+the working-copy read broke ties by `id`. An UPDATE writes the new row version
+at the end of the heap, so two sections sharing an `order_index` could be listed
+in opposite orders by a snapshot and the working copy, and the redline reported
+a move nobody made. All three reads now order by `order_index, section_key, id`.
+Pinned end to end through the real `snapshotVersionTx` (`sections tied on
+order_index are ordered the same way in the snapshot and the working copy`),
+which fails if either side loses the tie-break.
+
+AnA's `review_protocol_redline` note said "a section carrying a note has no
+diff"; a tie note sits beside a diff, so that was false. It now says what a note
+can mean and to report `positionsFromRowOrder` beside any moved verdict.
+
 ## What is not done, and why
 
-- **Adversarial review is running** (two independent lenses per engine,
-  workflow `protocol-industry-engines-v2`); confirmed findings land as
-  follow-up commits and are recorded in this file.
+- **Adversarial review is complete** for all eight Tier 1 engines (workflow
+  `protocol-industry-engines-v2`: 29 agents, two lenses per engine, every
+  blocking and major finding reproduced, fixed and pinned). The Tier 2 and
+  Tier 3 wirings have not yet had the same two-lens review.
+- **A second line-diff engine exists**: `versionDiffService.ts` `diffText` uses
+  the same line rule with an N×M LCS. Moving `splitContentLines` and the run
+  counting into one pure line-diff module and making `diffText` delegate is its
+  own change (it touches `document-analysis.ts` callers).
 - **USDM conformance stays `unverified`.** Vendoring the CDISC USDM JSON schema
   and validating against it needs network access this environment does not
   have.
-- **Nothing on screen edits a design's SoA activities**, so the new
-  `location` attribute travels the channel SoA categories already travel (the
-  design API and AnA drafting); the DCT profile reports every activity without
-  one as `unstated`.
-- **WHO item 9 (public title)** stays `missing` until the design carries a
-  distinct public title (`publicTitle?` on the spine).
+- **An activity's location and specimen are recorded one activity at a time**
+  (the planning-inputs panel); the SoA grid itself is still edited through the
+  design API and AnA drafting. The DCT profile reports every activity without
+  a location as `unstated`.
+- **A public title and acronym can be carried by the design but not yet
+  entered on screen**: they travel the design API and AnA drafting until the
+  planning-inputs panel gains a titles block (after that path's adversarial
+  review lands).
 - **Win ratio / RMST are deliberately not wired**: analysis-on-data engines have
   nothing to compute before data exist; see the design document's Tier 2 table. **Tier 3** as listed in the design document.
 - **The legacy `/api/protocol` optimizer** (model-generated figures outside the

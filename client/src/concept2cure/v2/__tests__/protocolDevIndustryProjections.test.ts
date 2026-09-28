@@ -66,11 +66,13 @@ describe('SPIRIT 2013', () => {
         basis: 'SPIRIT 2013',
         documentProvided: false,
         summary: { met: 10, partial: 3, missing: 7, notAssessable: 31, total: 51 },
+        supersededBy: 'SPIRIT 2025 statement (34 items). Conformance to SPIRIT 2013 is not conformance to SPIRIT 2025.',
         items: [{ item: '4', title: 'Funding', status: 'not_assessable', evidence: [], gap: 'only a protocol section can evidence this' }],
       },
     });
     expect(v.note).toContain('met 10, partial 3, missing 7, not assessable 31, of 51 checklist rows.');
     expect(v.note).toContain('not assessable here, not missing');
+    expect(v.note).toContain('Superseded: SPIRIT 2025 statement (34 items).');
     expect(v.entries[0]).toMatchObject({ label: '4. Funding', status: 'not_assessable' });
     expect(v.percent).toBeNull();
   });
@@ -119,13 +121,13 @@ describe('decentralised elements', () => {
     const v = dctView({
       dctProfile: {
         measures: { activitiesTotal: 8, activitiesWithStatedLocation: 4, offSiteShare: { value: 0.75, numerator: 3, denominator: 4 }, visitsFullyOffSiteCapable: ['V3'] },
-        findings: [{ severity: 'warning', code: 'DCT-IMP-HOME', message: 'IMP administered at home', activityIds: ['a_imp'] }],
+        findings: [{ severity: 'warning', code: 'DCT-IMP-OFFSITE', message: 'IMP administered off-site', activityIds: ['a_imp'] }],
         activities: [],
       },
     });
     expect(v.note).toContain('3 of 4 activities with a stated location (75%)');
     expect(v.note).toContain('V3');
-    expect(v.entries[0]).toMatchObject({ label: 'DCT-IMP-HOME', status: 'warning' });
+    expect(v.entries[0]).toMatchObject({ label: 'DCT-IMP-OFFSITE', status: 'warning' });
     expect(v.entries[0].text).toContain('Activities: a_imp');
   });
 });
@@ -187,10 +189,16 @@ describe('USDM export', () => {
   it('prints the conformance status and reason verbatim — unverified stays unverified', () => {
     const v = usdmView({
       usdm: {
-        conformance: { status: 'unverified', reason: 'The CDISC USDM JSON schema is not vendored.', standard: 'CDISC USDM v3' },
+        conformance: { status: 'unverified', reason: 'The CDISC USDM JSON schema is not vendored.', standard: 'CDISC USDM v4.0.0' },
         unfilledUsdmEntities: ['Organization: no sponsor on the design'],
         unmappedDesignFields: ['safety.doseEscalation: no USDM home in this mapping'],
-        study: { versions: [{ studyDesigns: [{ arms: [{ id: 'StudyArm_1', name: 'Drug X' }], epochs: [], encounters: [], activities: [], objectives: [{ id: 'Objective_1', text: 'Show superiority' }], estimands: [], studyInterventions: [] }] }] },
+        study: {
+          versions: [{
+            // v4.0.0: interventions live on the version; the design carries only their ids.
+            studyInterventions: [{ id: 'StudyIntervention_1', name: 'Drug X 10 mg' }],
+            studyDesigns: [{ arms: [{ id: 'StudyArm_1', name: 'Drug X' }], epochs: [], encounters: [], activities: [], objectives: [{ id: 'Objective_1', text: 'Show superiority' }], estimands: [], studyInterventionIds: ['StudyIntervention_1'] }],
+          }],
+        },
       },
     });
     expect(v.status).toBe('unverified');
@@ -200,6 +208,7 @@ describe('USDM export', () => {
     expect(v.entries[0].text).toBe('StudyArm_1 — Drug X');
     expect(v.entries[1].text).toBe('None exported.');
     expect(v.entries[4].text).toBe('Objective_1 — Show superiority');
+    expect(v.entries[6].text).toBe('StudyIntervention_1 — Drug X 10 mg');
     expect(v.entries[7].gaps).toEqual(['safety.doseEscalation: no USDM home in this mapping']);
   });
 });

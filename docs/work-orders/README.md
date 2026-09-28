@@ -30,7 +30,9 @@ to one line; edit only your own row to limit merge conflicts.
 | **D3 — `organizations` writes: own org or platform only.** The item handed on 2026-09-25 ("→ D3, unclaimed — `organizations` writes"). First the five platform-staff override paths (`organizations-routes.ts` PATCH `/:id/profile`, `/:id/settings`; `tenant-config.ts` :203/:303/:404) open the system scope when, and only when, staff target another org — a route-level middleware over the existing `establishRequestSystemScope`; `:500`'s unchecked update fixed. Then the own-org-or-platform write policy on `public.organizations` (new migration). Files: those two routes, one new middleware file, the migration, a dbtest through the production routers. Evidence: `docs/evidence/D3/2026-09-26-organizations-writes/` | `…session_01J935DZwfFEardJCv85SJds` | **released** 2026-09-26 — row **D3**, done: the five staff paths open the system scope only when staff act on another org (`server/middleware/staffCrossOrgScope.ts`); zero-row writes are 404s, never success; own-org-or-platform UPDATE/DELETE policy on `organizations`. Before 1 fail, policy alone 3 fail (settings answered success and wrote nothing), each half's mutation fails its own cases, green 19/19; `tests/db` 711/718 (the same 7 fail without it). **Found, not fixed:** `organization_users` has no RLS at all — see the item below |
 | **D3 — `organization_users` (memberships) has no RLS.** The open item found 2026-09-26. As `app_service` in a member's tenant scope: its user written an `admin` membership in another tenant (the row `authMiddleware` accepts a token for that tenant on) and promoted to `super_admin` in its own. The table is on `RLS_ALLOWLIST` "temporarily retained from the staged rollout" (`server/db/rlsAllowlist.ts`, and the three synced copies). Plan: writes own-org-or-platform (reads stay open: the pre-auth membership check and the org switcher read across orgs), after mapping every writer's scope; staff roles never written from a tenant scope. Files: a new migration, the allowlist entry's reason, whichever writers run in the wrong scope, a dbtest through the real auth. Evidence: `docs/evidence/D3/2026-09-26-memberships/` | `…session_01J935DZwfFEardJCv85SJds` | **released** 2026-09-26 — row **D3**, done: writes own-org-or-platform, staff roles minted by the platform scope only (trigger); reads stay open (allowlist reason rewritten). Signup, persona and tenant-users' cross-org admin writes moved into the membership's own org — the last also repairs the member-create regression `85b67b50` caused. Before 3 fail (A's token admitted into B, 200), each piece's mutation fails its own cases, 10/10; four D3 contracts 29/29; `tests/db` 715/732, all 17 failures pre-existing. Handed on below: cross-org invitation acceptance, two fixture passwords |
 | **D3 — `public.users` is readable from any tenant scope.** The item handed on 2026-09-26 (`…013CtPf8`). Plan: RLS on `public.users` — a tenant scope sees members of its organization (via `organization_users`) and its own row; the platform/pre-auth scope keeps sign-in, reset, OTP, SCIM, user admin. Writes likewise. Files: a new migration above the final pair, `rls-coverage-check.sql`'s note, a dbtest. Evidence: `docs/evidence/D3/2026-09-28-users-rls/` | `…session_01YZFCXRXJpXWhWV4Dj4HB79` | **released** 2026-09-28 — row **D3**, done: RLS + FORCE on `public.users` by membership, pre-auth/system scopes keep the table (`20260928_users_membership_rls.sql`, in the set after the memberships file). Before: 3 of 7 fail (A read and rewrote B's password hash, MFA secret, reset token); after 11/11, each of three writer moves (existing-account check, setup-token scope, member-list scope) failing its own case when undone; affected suites 178/178; `tests/db` 753/766, the 13 failing identically with `users` RLS off. Handed on below the item: null actor names outside the org, `users`' children, pre-auth breadth; and the D3 row of `docs/LAUNCH_DEFINITION_OF_DONE.md` should cite `docs/evidence/D3/2026-09-28-users-rls/` (not edited: inside another lane's 24 h window, 14:45 UTC 09-28) |
-| **D3 — `platform_role_grants` is writable from any tenant scope.** Handed on by the `public.users` item (2026-09-28). As `app_service` in a plain member's tenant scope, a `super_admin` grant was written (`INSERT 0 1`); `requirePlatformAdmin` reads that table. Plan: RLS + FORCE; SELECT stays open (the platform-admin check reads it in the caller's tenant scope), INSERT/UPDATE/DELETE from the platform scope only; writers moved if any runs elsewhere. Files: a new migration after `20260928_users_membership_rls.sql`, a dbtest, any mis-scoped writer. Evidence: `docs/evidence/D3/2026-09-28-platform-role-grants/` | `…session_01YZFCXRXJpXWhWV4Dj4HB79` | **claimed** 2026-09-28 |
+| **D3 — `platform_role_grants` is writable from any tenant scope.** Handed on by the `public.users` item (2026-09-28). As `app_service` in a plain member's tenant scope, a `super_admin` grant was written (`INSERT 0 1`); `requirePlatformAdmin` reads that table. Plan: RLS + FORCE; SELECT stays open (the platform-admin check reads it in the caller's tenant scope), INSERT/UPDATE/DELETE from the platform scope only; writers moved if any runs elsewhere. Files: a new migration after `20260928_users_membership_rls.sql`, a dbtest, any mis-scoped writer. Evidence: `docs/evidence/D3/2026-09-28-platform-role-grants/` | `…session_01YZFCXRXJpXWhWV4Dj4HB79` | **released** 2026-09-28 — row **D3**, done: RLS + FORCE, SELECT open, INSERT/UPDATE/DELETE platform scope only (`20260928_platform_role_grants_platform_writes.sql`); no writer moved (the console already runs in the system scope). Before 2 of 6 fail (planted `super_admin`, console 200); after 6/6; mutation (console outside the system scope) fails case 6; affected suites 212/212; `entitlement-grants-resolution`'s posture assertion rewritten to the new truth |
+| **D3 — `drafting_tasks` (draft content) is readable from any tenant scope.** Found working the `public.users` children hand-on (2026-09-28). The table holds `draft_content`, `document_title`, `ectd_section` and a text `project_id` naming a `regulatory_programs` row, with no organisation column and no RLS; its two routes filter by program ownership in SQL, the table does not. Plan: one line on `20260813_child_table_parent_scoped_rls.sql`'s spec list (the canonical child scope; parent `regulatory_programs`, text comparison), amended in place with a dated note; a dbtest through the real drafting routes. Not the file's position in the set (the child-scope lane's). Evidence: `docs/evidence/D3/2026-09-28-drafting-tasks/` | `…session_01YZFCXRXJpXWhWV4Dj4HB79` | **released** 2026-09-28 — row **D3**, done: one spec line on `20260813_child_table_parent_scoped_rls.sql` (`drafting_tasks` → `regulatory_programs`, text key), amended in place with a dated note; no application change (the routes already work inside the program's org). Before 3 of 7 fail (A read, rewrote and deleted B's draft, and filed tasks under B's program and under none); after 7/7; the child-scope contract gains the table (scratch table, isolation case, list entry) and a shared `seedProgram` helper, 13/13; with the spec line and the live policy removed, 5 cases fail across both files; from blank 37/37; `tests/db` 768/781, the same 13 pre-existing |
+| **D3 — accepting an invitation to another organization fails under enforcement.** The open item (D2/D3) under the `organization_users` hand-ons: `organization_invitations` carries the FORCEd tenant policy, so an invitee signed into X can neither list nor accept nor decline an invitation to Y. Plan: a definer lookup of pending invitations for a member of the calling scope's organization (never an arbitrary user), then accept/decline inside the inviting organization's scope after the invitation is verified as the caller's. Files: a migration after `20260928_platform_role_grants_platform_writes.sql`, `server/routes/tenant-users.ts` (the three invitation routes), `atomicAcceptInvitation`, a dbtest through the real routes. Evidence: `docs/evidence/D3/2026-09-28-invitation-acceptance/` | `…session_01YZFCXRXJpXWhWV4Dj4HB79` | **released** 2026-09-28 — row **D3**, done: `invitations_for_member(user)` (definer, id-to-invitations for a member of the calling scope's organization only, `20260928_invitations_for_member.sql`); `/invitations/mine` lists through it; accept and decline find the caller's own invitation through it and write in the inviting organization's scope (`inVerifiedOrgScope`); another person's invitation is 404, a decline that reaches nothing is 409 (was a silent 200). Before 3 of 5 fail (empty list, accept 404, decline 404); after 6/6; each of the three parts fails its own case when undone; 33/33 with memberships, users-rls, organizations-writes; mocked 31/31; `tests/db` 774/787, the same 13 pre-existing |
 | WO-15 finding 5 — `c2c_template_specs.doc_types` | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed |
 | WO-15 finding 8 — the two blind gates | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed `b9152a016` |
 | WO-15 finding 4 — `/api/design-risk` | `…session_01J935DZwfFEardJCv85SJds` | **released** — done `153481465` |
@@ -84,10 +86,20 @@ to one line; edit only your own row to limit merge conflicts.
 - SEC-C-4 (`e8f448d1`); HS-C-3 (`146a6382`); A-C-2 (`88ef5f87`); A-C-5 (`8691cfe8`); A-C-8 (`a0bdfbf0`);
 - P11-C-4 (`8e72b9bf`, `d848acf3`); SEC-C-7 (`6b442012`); P11-C-2 (`fb69b716`).
 
-`…01KiDof7`'s same-day coverage-gap sweep fixed SEC-A-9 (`59b0d8f9`), part of HS-B-1 (`59b0d8f9`), and the protocol tab strip half of A-C-2 (`780a0639`). Its lane has no row here, and it works in this lane's files, so any further work in the editor family should be claimed first. Handed on: items 5–7 of this lane's list below. |
+`…01KiDof7`'s same-day coverage-gap sweep fixed SEC-A-9 (`59b0d8f9`), part of HS-B-1 (`59b0d8f9`), and the protocol tab strip half of A-C-2 (`780a0639`). Its lane has no row here, and it works in this lane's files, so any further work in the editor family should be claimed first. Handed on: items 5–7 of this lane's list below. **Second round, claimed 2026-09-28 18:00 (cold files only, none changed by another lane in 24 h):**
+  - SEC-A-10/B-5 server half: `server/services/collab/collab-authorization.ts`, `server/services/hocuspocus-server.ts`;
+  - SEC-C-4 (a) server half: `server/services/ana-ri/surface-context-block.ts`; the SEC-C-4 class in `client/src/concept2cure/v2/editor/askAnaToDraft.ts`;
+  - the SEC-C-7 follow-on: `C2CForm.tsx`, `ProtocolDevForms.tsx`;
+  - the P11-B-4 undo floor: `client/src/concept2cure/v2/editor/suggestions.ts`;
+  - the SEC-B-1/2 figure rule on the remaining writers: `server/export/authoring-images.ts`, `server/services/authoring/authoring-documents.ts`, `server/services/authoring/section-generation-service.ts`, `server/routes/batch-draft-routes.ts` (with the AI-authorship door there);
+  - NEW-P11-B-1a: `server/services/ingestion/ingestion-service.ts`;
+  - P11-C-3-SNAP server half: `server/services/part11/signature-persistence.ts`, `server/services/protocol-development/{protocol-development-service,pdev-view-assembler}.ts`.
+
+  Work in held files is handed on, or waits for the hold to lapse. |
 | **D7 / D5 — P11-28b: the Dispatch button is gated on a signature its own click creates.** From `docs/evidence/reviews/2026-09-28/ectd-lane-second-pass/part11-ux.md`. For IND / NDA / BLA / MAA the Submission Center's Dispatch button reads `gate`, which requires a release signature to already exist, and the signature it would accept is the one the click records — so no such sequence can be dispatched through the product's own screen, which D7's test sequence needs. Fix: the server states whether signing now clears the dispatch gate (the resolver's spine precedence lives there, and re-deriving it in the client is how P11-28a happened); the client reads that. `server/services/ectd/{assess-dispatch-readiness,release-signature-status}.ts` (the resolver's return and the assessment's verdicts only), `SubmissionSeqWorkspaces.tsx` (`DispatchWorkspace` only), their tests | `…session_01VB8JEGfy93uohAfBxSwmYx` | **released** 2026-09-28 — row **D7**. Done: server reports `dispatchGateOnSigning` (`composeStepVerdicts`, `signingNowResolvesRelease`), Dispatch reads it; 12 probes red-then-green (`docs/evidence/D7/2026-09-28-dispatch-reachable/`). Owed: a pglite sign→dispatch case for an IND |
 | **D5 — a quality-gating verdict is never chosen by an empty collection.** `server/services/qms/quality-gating-verdict.ts` (new: `assessSection`, `batchVerdict`, the one assessment both routes run), `server/routes/{tenant-quality-validation,quality-management-api}.ts` (validate-section, batch-validate, the plan dashboard, `GET /plans/:id` only), `client/src/concept2cure/v2/surfaces/QmpWorkspace.tsx`, the two QMS entries in `scripts/ci/writerless-stores-baseline.json`, both quality API references. Closes the fail-open `7983d7299` handed to the QMS lane ("report 'not assessed'") and the three `= ANY(($1, …))` routes that always answered 500 | `…session_01P6GWSvLLKKNQMXXpyki7Yq` | **released** 2026-09-28 — row **D5**. Done `da00b021a`: red 28/28 against HEAD and 20/28 against the first version (adversarially reviewed), green 28/28; client red 3/5, green 18/18. Evidence: `docs/evidence/D5-GOVERNED-PATH/2026-09-22/` (README "CI, 2026-09-23") |
 | **D5 — AnA's completion cascade commits its ledger rows with the completion.** `server/services/ana-ri/command-executor.ts` `updateTask`'s board block and `boardWriteWithLineage` only; `server/services/tasking/task-side-effects.ts` if a pool-client entry point is needed. The cascade AnA runs after `boardWriteWithLineage` COMMITs is on the pool with no ledger row for the dependents it unblocks; the HTTP routes already run it in the completion's transaction (`cascadeUnblockOnCompletionInTx`) | `…session_01P6GWSvLLKKNQMXXpyki7Yq` | **released** 2026-09-28 — row **D5**. Done: the cascade runs on the completion's transaction (`cascadeUnblockOnCompletionOnClient`), its rows after the completion's; red 2/2 on HEAD, green; the two older AnA task suites moved onto one pool fixture (`__tests__/pglite-pool.fixture.ts`). Evidence: `docs/evidence/D5/2026-09-28-ana-cascade-ledger/` |
+| **D5 — every task put on the board at project creation, or raised from a statistical assessment, has its task.create row.** `server/services/tasking/blueprint-milestones.ts` (new: the one blueprint-milestone seeder), the milestone block of `POST /projects` in `server/routes/concept2cure.ts`, `createTasksForDesign` in `server/services/biostatistics-bridge/bridge-service.ts`, its entry in `scripts/ci/discarded-audit-write-baseline.json`. Both wrote board tasks outside any transaction: the seeder with no ledger row at all, the bridge best-effort with the outcome discarded | `…session_01P6GWSvLLKKNQMXXpyki7Yq` | **released** 2026-09-28 — row **D5**. Done: one transaction each, every task with its row, all or none, nothing when the creator cannot be named; red 5/5 (seeder, HEAD's code), 1/1 (route), 4/4 (bridge), green 20/20. Evidence: `docs/evidence/D5/2026-09-28-task-create-ledger/` |
 
 If you are one of the sessions above, correct your own row. If a lane you want
 is claimed, take the next unclaimed finding in §3 rather than duplicating it.
@@ -157,11 +169,12 @@ Items in this lane's own code are fixed in this lane, not listed here.
 
 **→ D3 — `organizations` writes (from `…01J935DZ`, 2026-09-25)** — ~~handed on~~ **done 2026-09-26** by the same session; evidence `docs/evidence/D3/2026-09-26-organizations-writes/`.
 - ~~`public.organization_users` has no RLS at all.~~ **Done 2026-09-26** (`…01J935DZ`, evidence `docs/evidence/D3/2026-09-26-memberships/`).
-- **Open (D2/D3): accepting an invitation to another organization is broken under enforcement, before and after that change.** `organization_invitations` carries the FORCEd `tenant_isolation_policy`, so an invitee whose session is in X cannot read an invitation to Y (404). Needs a decision on how an invitee reads an invitation across tenants (a narrow definer lookup by token, or the platform scope for that one read).
+- ~~**Open (D2/D3): accepting an invitation to another organization is broken under enforcement, before and after that change.**~~ **Done 2026-09-28** (`…01YZFCXR`, evidence `docs/evidence/D3/2026-09-28-invitation-acceptance/`): a definer lookup narrowed to members of the calling scope's organization, then accept/decline in the inviting organization's scope. Originally: `organization_invitations` carries the FORCEd `tenant_isolation_policy`, so an invitee whose session is in X cannot read an invitation to Y (404). Needs a decision on how an invitee reads an invitation across tenants (a narrow definer lookup by token, or the platform scope for that one read).
 - **For the D6 password lane (`dd6632dd`): two fixture passwords are now refused** as built from the account's own words — `tests/db/signup-launch-catalog.dbtest.ts` (7 cases, a D2 contract, red since) and `tests/db/one-time-credentials.dbtest.ts` (1). Not edited here.
 - ~~**→ D3, unclaimed — `public.users` is readable from any tenant scope** (from `…013CtPf8`, 2026-09-26).~~ **Done 2026-09-28** (`…01YZFCXR`, evidence `docs/evidence/D3/2026-09-28-users-rls/`): RLS + FORCE on `public.users` (`migrations/20260928_users_membership_rls.sql`) — a tenant scope reaches only users with a membership in its organization; the pre-auth and system scopes keep the table; INSERT from any scope; `user_id_for_email()` (id only) for tenant-users' existing-account check. The `rls-coverage-check.sql` carve-out is removed, not reworded.
   - **→ D3 / product, unclaimed — actor names outside the organization render null.** Display joins (`LEFT JOIN users` for an actor's name: audit-trail ledger, project owners, review assignees, `regulatory-programs.service.ts`, `ApprovalOrchestrator.ts`) now show no name for a former member or platform staff; `actor_id` is intact. Decide: snapshot the actor's name on the audit row, or an id→name resolver limited to actors of the tenant's own records. Not a cross-tenant `users` read.
-  - **→ D3, unclaimed — `public.users`' own children carry no RLS:** `platform_role_grants`, `user_presence`, `notification_preferences`, `drafting_tasks` (exempt in `rls-coverage-check.sql` as user-keyed, as `identity.users`' children are). Check first whether a tenant scope can write `platform_role_grants` — `requirePlatformAdmin` reads it.
+  - ~~**→ D3 — `platform_role_grants` writable from any tenant scope.**~~ **Done 2026-09-28** (`…01YZFCXR`, evidence `docs/evidence/D3/2026-09-28-platform-role-grants/`): a member's scope wrote itself `super_admin` and the Access Management console admitted it (200); now RLS + FORCE, reads open, writes platform scope only.
+  - ~~**→ D3 — `public.users`' other children carry no RLS.**~~ **Measured 2026-09-28** (`…01YZFCXR`): `drafting_tasks` was tenant content keyed by program, not user — **done**, scoped to its program (`docs/evidence/D3/2026-09-28-drafting-tasks/`). `user_presence` has no reader or writer anywhere in `server/`, `client/src/` or `scripts/` and 0 rows: nothing exposed today; **→ its first writer brings a policy.** `notification_preferences` is read and written only by `/api/users` (pre-auth mount, keyed by the verified token's user) and holds booleans, quiet hours and a time zone: recorded, not policied.
   - **→ D3, unclaimed — the pre-auth scope still reads every account.** Narrowing it means each pre-auth lookup (sign-in, reset, OTP, refresh) behind a function answering only what that step needs.
 
 **→ Projects, unclaimed (D2)**
@@ -318,6 +331,12 @@ tables as unbacked. Evidence: `docs/evidence/W1/2026-09-24-launch-reach/`.
    A coverage check between CI's first and second `deploy-migrate` would catch
    this case and the whole class. Measured: after install, 0 rows; after one
    deploy, this 1; after two, 0.
+   Re-measured 2026-09-28 on a blank database with the `users` and
+   `platform_role_grants` policies in the set (`…01YZFCXR`,
+   `docs/evidence/D3/2026-09-28-drafting-tasks/green/from-blank.txt`): unchanged,
+   the same 1 row after one deploy and 0 after two. `tests/db` does not see it:
+   `child-table-parent-scoped-rls.dbtest.ts` re-applies the child-scope file to
+   the live schema, which heals the table before any later check reads it.
 2. **To the W2 schema-guards lane: the same shape in
    `20260828_drop_orphaned_org_guc_policies.sql`.** It drops an orphaned
    `*_org_policy` only where `tenant_isolation_policy` already exists, and on
@@ -757,6 +776,43 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
      code, and only if it still holds, refresh the digest with
      `npm run ci:tenant-entry-points:write-baseline`. That judgement is the
      lane's that changed the router.
+   - Second Lint red, same lane (`7b00c78d`, 15:51):
+     `ci:check-css-selector-shadowing` reports `.c2c-v2 .crumbs .sep`, defined
+     at lines 1480 and 1484 of `client/src/concept2cure/v2/styles/app-v2.css`.
+     The later rule silently wins. The fix is to merge the two declarations into
+     one rule.
+10. **→ `…01GJidg5`, 2026-09-28 17:45 — two Test reds from the same lane's
+    commits of today, reproduced locally at `f0b522b4`.**
+    - `tests/governed-decision-db-integration.test.ts`, 2 tests, fails with
+      *"decisionRecordService.getByDecisionCode is not a function"*.
+      - `resolveGovernedDecisionRow` (`governed-decision-ledger.ts:94`) now
+        looks a decision up by its code first.
+      - The suite's `decision-record-service` mock defines only `search` and
+        `getById`.
+      - Fix: add the method to the mock, with a not-found case and an outage
+        case, so the L186 fail-closed assertion keeps covering the new lookup.
+    - `client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx`, 2 tests in
+      "CmQcTesting — recording and second-person review": the recorded rows
+      (`S-1`, `S-2`) are no longer rendered.
+      - Since `288411a4` (16:21), a CMC register lists the open program's rows
+        only.
+      - The fixture's rows need the program the test opens.
+11. **→ `…01M8bGFS` (protocol build), 2026-09-28 17:45 — Test red:
+    `server/services/ana/__tests__/ana-launch-scope.test.ts` › "classifies every
+    enabled tool".**
+    - 16 AnA tools added today are in no launch-scope class, hiddenApp or
+      inScope:
+      - `review_trial_schema`, `review_spirit_conformance`,
+        `derive_ctq_factors`, `export_usdm_projection`, `review_dct_profile`;
+      - `review_who_ictrp_record`, `review_deviation_trends`,
+        `review_protocol_redline`, `review_dose_escalation_design`;
+      - `review_enrollment_forecast`, `review_interim_operating_characteristics`,
+        `review_mmrm_sizing`, `review_external_control_plan`;
+      - `review_multiplicity_control`, `review_biospecimen_profile`,
+        `review_master_protocol`.
+    - Until each is classified, `governedToolsetFor` cannot say whether AnA may
+      offer it in the release (D2). The classification against the launch
+      catalog is the adding lane's to make.
 
 ### Found by the D5 lane's CI check (`…01P6GWSv`, 2026-09-28) — handed on
 
@@ -782,6 +838,30 @@ in all of them. Reproduced locally at `6bd237ca9`.
 3. **Coverage (ratchet)** fails only because the coverage run fails on (1).
    Blank DB's `ci:purge-coverage` is item 4 of the hand-ons above
    (`ana_turn_records`).
+4. **→ The lane that added `server/routes/study-design-planning.ts`
+   (`dd52716ed`, 2026-09-28 17:00, inside its window).**
+   `node scripts/ci/audit-requestdb-coverage.mjs --strict-no-regression` fails:
+   *"1 NEW route(s) on the shared pool above baseline of 229 … New
+   tenant-facing routes must use requestDb(req): server/routes/study-design-planning.ts"*.
+5. **→ Whoever owns project rules (Projects), found by the D5 lane, not fixed:
+   the rules engine cannot create a task, and could not record one if it did.**
+   - `POST /api/project-rules` (`server/routes/project-rules.ts:159`) binds
+     `JSON.stringify(data.tags)` to `project_rules.tags`, a `text[]`. Postgres
+     refuses both `'[]'` and `'["a"]'` (*malformed array literal*), so no rule
+     can be created and none exists on a deployed database. It is the table's
+     only writer. It also never sets `created_by_id`, and rule create, update
+     and delete write no audit row.
+   - The rules engine's `create_task` (`server/services/rules-engine/actions/index.ts:82`)
+     inserts `status 'todo'`, outside `TASK_STATUSES`. It inserts
+     `module_type = params.moduleType || null` against a `NOT NULL` column,
+     and both shipped templates (`project-rules.ts:527,571`) omit `moduleType`.
+     It writes no `task.create` row. No emitter passes a `userId`
+     (`projects-management.ts:315,480,487`, `sentinel/scheduler.ts:171`), so
+     there is no actor to record.
+   - Before this path is revived, a rule needs a recorded author to attribute
+     its actions to, and `create_task` needs the pattern
+     `tasking/blueprint-milestones.ts` uses: the insert and its row on one
+     transaction, and nothing written when no one can be named.
 
 ## 1. The rules come first
 

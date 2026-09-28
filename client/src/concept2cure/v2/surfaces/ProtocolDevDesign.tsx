@@ -28,6 +28,7 @@ import { PaneHead, KV } from './ProtocolDevShared';
 import { apiRequest } from '@/lib/queryClient';
 import { C2CForm, type C2CFormFieldOption } from '../C2CForm';
 import { ProjectionsPanel } from './ProtocolDevProjections';
+import { PlanningInputsPanel } from './ProtocolDevPlanningInputs';
 
 type Obj = Record<string, unknown>;
 const MIN_REASON = 8;
@@ -309,6 +310,7 @@ export function StudyDesignTab({ doc, canWrite, onChanged, onError, onToast }: S
         <>
           <DesignIdentity sd={sd} />
           <DesignGates sd={sd} />
+          <PlanningInputsPanel studyId={sd.studyId} canWrite={canWrite} onError={onError} onToast={onToast} />
           <ProjectionsPanel studyId={sd.studyId} designTitle={sd.title} />
         </>
       )}

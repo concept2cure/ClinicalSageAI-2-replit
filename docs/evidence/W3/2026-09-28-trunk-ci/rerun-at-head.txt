@@ -1,0 +1,10 @@
+# Re-run at the merged head (local, DATABASE_URL unset, RLS_ENFORCE=off)
+      Tests  6 failed | 53 passed (59)
+ FAIL  client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmQcTesting — recording and second-person review > a review PUTs the disposition and the reviewer, never the analyst
+ FAIL  client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmQcTesting — recording and second-person review > refuses to let the analyst review their own result, and says why
+ FAIL  server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > classifies every enabled tool: a new one must be added as hiddenApp or inScope
+ FAIL  tests/governed-decision-db-integration.test.ts > Governed decision reads: a database that answers is reported as it is > a decision that does not exist is null
+ FAIL  tests/governed-decision-db-integration.test.ts > Governed decision reads: a database that cannot answer is an error, never an empty result (L186) > getGovernedDecision rejects rather than answering "not found"
+ FAIL  tests/routes/ana-models-endpoint.test.ts > GET /api/claude/models > returns only enabled models with derived label + recommendedEffort
+ Test Files  4 failed | 3 passed (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯

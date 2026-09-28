@@ -2,11 +2,13 @@
  * Protocol redline — a section-level tracked-changes comparison between two
  * recorded versions of one protocol DOCUMENT.
  *
- * Industry need. An amendment package needs the current and the proposed
- * protocol side by side with every change marked: an EU CTR 536/2014
- * substantial modification, a 21 CFR 312.30 protocol amendment, an IRB or
- * ethics-committee amendment, and the ICH E6(R3) record of what the protocol
- * said before and after. Every protocol authoring tool produces one. This
+ * Industry need. An EU CTR 536/2014 substantial-modification dossier (Annex
+ * II) carries an extract of the modified documents showing the previous and
+ * new wording in track changes. A 21 CFR 312.30 protocol amendment must
+ * describe the change, and a redline is the usual way to support and check
+ * that description; IRB and ethics-committee amendments, and the ICH E6(R3)
+ * record of what the protocol said before and after, rely on one too. Every
+ * protocol authoring tool produces one. This
  * repository snapshots versions (`protocol_versions.snapshot`, written by
  * `snapshotVersionTx` as `{ version, sections: [{ section_key, title, content,
  * status, order_index }] }`) and compares study DESIGNS
@@ -32,20 +34,34 @@
  *     final empty line and '\r' stays part of its line. Each diff op is a run
  *     of consecutive lines joined by '\n': equal + delete ops joined by '\n'
  *     rebuild the earlier text exactly, equal + insert the later.
+ *   - The changed region is what remains once the lines both texts share at
+ *     their start and end are set aside. When it has no line in common between
+ *     the versions (always so for an added or removed section), deleting all of
+ *     it and inserting all of its replacement IS the minimal diff: found
+ *     exactly, in linear time, at any size. Otherwise a Myers pass finds it,
+ *     bounded by an edit count.
  *   - Above {@link REDLINE_LINE_CAP} lines on either side no diff is produced
  *     and the section says so in `note`; nothing is ever truncated. Line counts
- *     are given there only when a cheap exact method finds them, else omitted.
- *   - A section at or under the cap whose minimal diff needs more than
- *     {@link REDLINE_EDIT_BUDGET} line edits gets no diff and no counts, and a
- *     note saying so — never an approximate diff presented as the real one.
+ *     are given there only when one of the two exact methods above finds them
+ *     (Myers within {@link REDLINE_CAPPED_EDIT_BUDGET} edits), and the note
+ *     names the method actually used; else they are omitted.
+ *   - A section at or under the cap whose changed region shares a line and
+ *     whose minimal diff needs more than {@link REDLINE_EDIT_BUDGET} line edits
+ *     gets no diff and no counts, and a note saying so — never an approximate
+ *     diff presented as the real one.
  *   - When any section's counts are unknown, `summary.linesInserted` and
  *     `summary.linesDeleted` are null (never a partial sum presented as a
  *     total) and `summary.sectionsWithoutCounts` names the sections.
  *   - Relative order is read from `order_index`, ties broken by the snapshot's
- *     row order. A moved section whose `order_index` is shared with another
- *     section says so, because row order is all that ordered them.
- *   - A snapshot that cannot be compared (a row without a key, content that is
- *     not text, a key that appears twice) throws {@link ProtocolRedlineError}
+ *     row order (which `snapshotVersionTx` does not fix). Every section in both
+ *     versions that shares its `order_index` with another such section, in
+ *     either version, says so in `note` whether or not it moved, and
+ *     `summary.positionsFromRowOrder` names them: while that list is non-empty
+ *     any `moved` verdict may reflect row order rather than an edit.
+ *   - A snapshot that cannot be compared (not an object, no version label, no
+ *     sections list; a row that is not an object or lacks a key, title, status
+ *     or finite numeric order_index; content that is neither text nor null; a
+ *     key that appears twice) throws {@link ProtocolRedlineError}
  *     (`code: 'INVALID_STATE'`) listing every defect; the engine does not pick
  *     one of two same-keyed sections.
  *
@@ -63,22 +79,23 @@
 import { diffArrays } from 'diff';
 
 export const PROTOCOL_REDLINE_BASIS =
-  'EU CTR 536/2014 — substantial modification; 21 CFR 312.30 — protocol amendments; ICH E6(R3) — protocol amendment documentation';
+  'EU CTR 536/2014 (Annex II) — substantial modification; 21 CFR 312.30 — protocol amendments; ICH E6(R3) — protocol amendment documentation';
 
 /** Above this many lines on either side, a section's line diff is not produced (see `note`). */
 export const REDLINE_LINE_CAP = 5000;
 
 /**
- * The most line edits (inserted + deleted) the minimal diff of one section at
- * or under the cap may need. Myers' cost grows with the square of the edit
- * count and the diff runs on the request thread; at this bound the worst case
- * measured about 0.8 s for one section (Node 22, a rewrite sharing only blank
- * lines). The bound is an edit count, not a timer, so the result is
- * deterministic.
+ * The most line edits (inserted + deleted) the Myers pass may spend on one
+ * section at or under the cap. It bounds only that pass: a changed region
+ * with no line in common is diffed exactly in linear time whatever its size.
+ * Myers' cost grows with the square of the edit count and the diff runs on
+ * the request thread; at this bound the worst case measured about 0.8 s for
+ * one section (Node 22, a rewrite sharing only blank lines). The bound is an
+ * edit count, not a timer, so the result is deterministic.
  */
 export const REDLINE_EDIT_BUDGET = 2000;
 
-/** The edit bound for the exact-count attempt on a section above the cap. */
+/** The Myers edit bound for the exact-count attempt on a section above the cap. */
 export const REDLINE_CAPPED_EDIT_BUDGET = 200;
 
 // ─── Contract ────────────────────────────────────────────────────────────────
@@ -126,7 +143,7 @@ export interface RedlineSection {
   diff?: RedlineOp[];
   /** Lines inserted and deleted; absent when they could not be computed exactly. */
   counts?: RedlineCounts;
-  /** Why a diff or counts are absent, or why a move rests on row order. */
+  /** Why a diff or counts are absent, how capped counts were found, and whether the section's position rests on row order. */
   note?: string;
 }
 
@@ -147,6 +164,13 @@ export interface RedlineSummary {
   linesDeleted: number | null;
   /** Keys of the sections whose line counts could not be computed exactly. */
   sectionsWithoutCounts: string[];
+  /**
+   * Keys of the sections in both versions that share an `order_index` with
+   * another such section in either version, in output order. Row order alone
+   * placed them relative to each other, so while this is non-empty any section's
+   * `moved` (and so `reordered`) may reflect row order rather than an edit.
+   */
+  positionsFromRowOrder: string[];
 }
 
 export interface ProtocolRedline {
@@ -228,24 +252,34 @@ function sharesALine(a: string[], b: string[]): boolean {
   return b.some((line) => seen.has(line));
 }
 
+/**
+ * A minimal line diff and the exact method that found it: `block` when the
+ * changed region has no line in common (delete all of it, insert all of its
+ * replacement), `myers` when a Myers pass found it within the edit budget.
+ */
+interface LineDiff {
+  runs: Run[];
+  method: 'block' | 'myers';
+}
+
 /** The changed middle as runs: a block when that is provably minimal, else Myers within `budget`. */
-function middleRuns(a: string[], b: string[], budget: number): Run[] | null {
+function middleRuns(a: string[], b: string[], budget: number): LineDiff | null {
   const runs: Run[] = [];
   // With no line in common the longest common subsequence is empty, so
   // delete-all then insert-all IS the minimal diff — exact, and linear.
   if (a.length === 0 || b.length === 0 || !sharesALine(a, b)) {
     pushRun(runs, 'delete', a);
     pushRun(runs, 'insert', b);
-    return runs;
+    return { runs, method: 'block' };
   }
   const changes = diffArrays(a, b, { maxEditLength: budget });
   if (!changes) return null;
   for (const c of changes) pushRun(runs, c.added ? 'insert' : c.removed ? 'delete' : 'equal', c.value);
-  return runs;
+  return { runs, method: 'myers' };
 }
 
-/** A minimal line diff of `a` → `b` as runs, or null when it needs more than `budget` edits. */
-function lineRuns(a: string[], b: string[], budget: number): Run[] | null {
+/** A minimal line diff of `a` → `b`, or null when the Myers pass would need more than `budget` edits. */
+function lineRuns(a: string[], b: string[], budget: number): LineDiff | null {
   let head = 0;
   while (head < a.length && head < b.length && a[head] === b[head]) head++;
   let tail = 0;
@@ -254,9 +288,9 @@ function lineRuns(a: string[], b: string[], budget: number): Run[] | null {
   if (!middle) return null;
   const runs: Run[] = [];
   pushRun(runs, 'equal', a.slice(0, head));
-  for (const r of middle) pushRun(runs, r.op, r.lines);
+  for (const r of middle.runs) pushRun(runs, r.op, r.lines);
   pushRun(runs, 'equal', a.slice(a.length - tail));
-  return runs;
+  return { runs, method: middle.method };
 }
 
 function countRuns(runs: Run[]): RedlineCounts {
@@ -269,13 +303,38 @@ function countRuns(runs: Run[]): RedlineCounts {
   return { inserted, deleted };
 }
 
-function capNote(before: number, after: number, counted: boolean): string {
-  const counts = counted
-    ? `The inserted and deleted line counts are exact (a minimal line diff found within ${REDLINE_CAPPED_EDIT_BUDGET} edits).`
-    : 'Exact line counts could not be computed cheaply and are omitted rather than estimated.';
+type DiffKind = 'modified' | 'added' | 'removed';
+
+/** Each capped-section sentence by change kind: [extent, how the exact counts were found, what to read]. */
+const CAP_WORDING: Record<DiffKind, (before: number, after: number) => [string, string, string]> = {
+  added: (_b, after) => [
+    `This section is absent from the earlier version and has ${after} line(s) in the later`,
+    'Its inserted line count is exact: every line of a section absent from the earlier version is inserted.',
+    'Read its text in the later version.',
+  ],
+  removed: (before) => [
+    `This section has ${before} line(s) in the earlier version and is absent from the later`,
+    'Its deleted line count is exact: every line of a section absent from the later version is deleted.',
+    'Read its text in the earlier version.',
+  ],
+  modified: (before, after) => [
+    `This section has ${before} line(s) in the earlier version and ${after} in the later`,
+    'The inserted and deleted line counts are exact: once the lines the two texts share at their start and end are set aside, ' +
+      'the rest have no line in common, so every one of those lines was deleted or inserted.',
+    'Compare the two texts in full.',
+  ],
+};
+
+function capNote(kind: DiffKind, before: number, after: number, found: LineDiff | null): string {
+  const [extent, blockCounts, read] = CAP_WORDING[kind](before, after);
+  const counts = !found
+    ? 'Exact line counts could not be computed cheaply and are omitted rather than estimated.'
+    : found.method === 'block'
+      ? blockCounts
+      : `The inserted and deleted line counts are exact: a minimal line diff was found within ${REDLINE_CAPPED_EDIT_BUDGET} edits.`;
   return (
-    `This section has ${before} line(s) in the earlier version and ${after} in the later; above the ${REDLINE_LINE_CAP}-line cap ` +
-    `no line diff is produced, so no tracked changes are shown for it and nothing was truncated. ${counts} Compare the two texts in full.`
+    `${extent}; above the ${REDLINE_LINE_CAP}-line cap no line diff is produced, so no tracked changes are shown for it ` +
+    `and nothing was truncated. ${counts} ${read}`
   );
 }
 
@@ -286,12 +345,12 @@ const BUDGET_NOTE =
 type DiffPart = Pick<RedlineSection, 'diff' | 'counts' | 'note'>;
 
 /** The diff, counts and note for one section's earlier → later lines. */
-function diffPart(before: string[], after: string[]): DiffPart {
+function diffPart(kind: DiffKind, before: string[], after: string[]): DiffPart {
   const capped = before.length > REDLINE_LINE_CAP || after.length > REDLINE_LINE_CAP;
-  const runs = lineRuns(before, after, capped ? REDLINE_CAPPED_EDIT_BUDGET : REDLINE_EDIT_BUDGET);
-  if (capped) return { ...(runs ? { counts: countRuns(runs) } : {}), note: capNote(before.length, after.length, runs !== null) };
-  if (!runs) return { note: BUDGET_NOTE };
-  return { diff: runs.map((r) => ({ op: r.op, text: r.lines.join('\n') })), counts: countRuns(runs) };
+  const found = lineRuns(before, after, capped ? REDLINE_CAPPED_EDIT_BUDGET : REDLINE_EDIT_BUDGET);
+  if (capped) return { ...(found ? { counts: countRuns(found.runs) } : {}), note: capNote(kind, before.length, after.length, found) };
+  if (!found) return { note: BUDGET_NOTE };
+  return { diff: found.runs.map((r) => ({ op: r.op, text: r.lines.join('\n') })), counts: countRuns(found.runs) };
 }
 
 // ─── Document order and moves ────────────────────────────────────────────────
@@ -317,20 +376,29 @@ function movedKeys(beforeOrder: string[], afterOrder: string[]): Set<string> {
   return new Set(changes.filter((c) => c.added).flatMap((c) => c.value));
 }
 
-function tiedWith(rows: ProtocolSnapshotSection[], key: string): string[] {
+/**
+ * The other sections in both versions that share `key`'s order_index in `rows`.
+ * Only these matter: `moved` compares the two versions' orders of the shared
+ * sections, and a tie with a section one version lacks never enters it.
+ */
+function tiedWith(rows: ProtocolSnapshotSection[], key: string, shared: Set<string>): string[] {
   const own = rows.find((r) => r.section_key === key);
   if (!own) return [];
-  return rows.filter((r) => r.section_key !== key && r.order_index === own.order_index).map((r) => r.section_key);
+  return rows.filter((r) => r.section_key !== key && shared.has(r.section_key) && r.order_index === own.order_index).map((r) => r.section_key);
 }
 
-function tieNote(key: string, before: ProtocolSnapshot, after: ProtocolSnapshot): string | undefined {
+/** For a section in both versions: why its `moved` verdict may rest on row order, or undefined when it does not. */
+function tieNote(key: string, before: ProtocolSnapshot, after: ProtocolSnapshot, shared: Set<string>, moved: boolean): string | undefined {
   const parts: string[] = [];
   for (const snap of [before, after]) {
-    const ties = tiedWith(snap.sections, key);
+    const ties = tiedWith(snap.sections, key, shared);
     if (ties.length > 0) parts.push(`in version ${snap.version} it shares its order_index with ${ties.map((k) => `"${k}"`).join(', ')}`);
   }
   if (parts.length === 0) return undefined;
-  return `Moved, but ${parts.join(' and ')}; the relative order of sections with the same order_index is only the recorded row order, so this move may reflect row order rather than an edit.`;
+  return (
+    `${moved ? 'Moved' : 'Not moved'}, but ${parts.join(' and ')}; the relative order of sections with the same order_index ` +
+    'is only the recorded row order, so whether this section moved may reflect row order rather than an edit.'
+  );
 }
 
 // ─── Per-section comparison ──────────────────────────────────────────────────
@@ -355,19 +423,18 @@ function compareShared(b: ProtocolSnapshotSection, a: ProtocolSnapshotSection, m
     statusBefore: b.status,
     statusAfter: a.status,
   };
-  const movedNote = moved ? tie : undefined;
   if ((b.content ?? '') !== (a.content ?? '')) {
-    const part = diffPart(splitContentLines(b.content), splitContentLines(a.content));
+    const part = diffPart('modified', splitContentLines(b.content), splitContentLines(a.content));
     const { note, ...rest } = part;
-    return withNote({ ...base, change: 'modified', ...rest }, joinNotes(note, movedNote));
+    return withNote({ ...base, change: 'modified', ...rest }, joinNotes(note, tie));
   }
   const change: RedlineChange = retitled ? 'retitled' : moved ? 'reordered' : 'unchanged';
-  return withNote({ ...base, change, counts: { inserted: 0, deleted: 0 } }, movedNote);
+  return withNote({ ...base, change, counts: { inserted: 0, deleted: 0 } }, tie);
 }
 
 function compareOneSided(row: ProtocolSnapshotSection, change: 'added' | 'removed'): RedlineSection {
   const lines = splitContentLines(row.content);
-  const part = change === 'added' ? diffPart([], lines) : diffPart(lines, []);
+  const part = change === 'added' ? diffPart('added', [], lines) : diffPart('removed', lines, []);
   const status = change === 'added' ? { statusAfter: row.status } : { statusBefore: row.status };
   const { note, ...rest } = part;
   return withNote({ sectionKey: row.section_key, title: row.title, change, ...status, ...rest }, note);
@@ -395,7 +462,7 @@ function outputOrder(beforeOrdered: ProtocolSnapshotSection[], afterOrdered: Pro
   return out;
 }
 
-function summarise(sections: RedlineSection[]): RedlineSummary {
+function summarise(sections: RedlineSection[], positionsFromRowOrder: string[]): RedlineSummary {
   const count = (c: RedlineChange) => sections.filter((s) => s.change === c).length;
   const withoutCounts = sections.filter((s) => !s.counts).map((s) => s.sectionKey);
   const total = (field: keyof RedlineCounts) =>
@@ -412,6 +479,7 @@ function summarise(sections: RedlineSection[]): RedlineSummary {
     linesInserted: total('inserted'),
     linesDeleted: total('deleted'),
     sectionsWithoutCounts: withoutCounts,
+    positionsFromRowOrder,
   };
 }
 
@@ -428,7 +496,9 @@ export function redlineVersions(before: ProtocolSnapshot, after: ProtocolSnapsho
   const afterOrdered = documentOrder(after.sections);
   const beforeByKey = new Map(beforeOrdered.map((r) => [r.section_key, r]));
   const afterByKey = new Map(afterOrdered.map((r) => [r.section_key, r]));
+  const shared = new Set([...beforeByKey.keys()].filter((k) => afterByKey.has(k)));
   const moved = movedKeys(beforeOrdered.map((r) => r.section_key), afterOrdered.map((r) => r.section_key));
+  const fromRowOrder: string[] = [];
 
   const sections = outputOrder(beforeOrdered, afterOrdered).map(({ key, removed }): RedlineSection => {
     const b = beforeByKey.get(key);
@@ -436,8 +506,10 @@ export function redlineVersions(before: ProtocolSnapshot, after: ProtocolSnapsho
     if (removed || !a) return compareOneSided(b as ProtocolSnapshotSection, 'removed');
     if (!b) return compareOneSided(a, 'added');
     const isMoved = moved.has(key);
-    return compareShared(b, a, isMoved, isMoved ? tieNote(key, before, after) : undefined);
+    const tie = tieNote(key, before, after, shared, isMoved);
+    if (tie) fromRowOrder.push(key);
+    return compareShared(b, a, isMoved, tie);
   });
 
-  return { from: before.version, to: after.version, sections, summary: summarise(sections), basis: PROTOCOL_REDLINE_BASIS };
+  return { from: before.version, to: after.version, sections, summary: summarise(sections, fromRowOrder), basis: PROTOCOL_REDLINE_BASIS };
 }

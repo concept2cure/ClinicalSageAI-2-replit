@@ -49,6 +49,29 @@ export type DeviationSeverity = 'minor' | 'major' | 'critical';
 export type DeviationStatus = 'open' | 'under_review' | 'capa_pending' | 'closed';
 export type CapaActionStatus = 'open' | 'in_progress' | 'completed' | 'verified';
 
+// The one list of each vocabulary. Record-keyed, so changing a union above
+// fails to compile until its list follows; every validator, schema and engine
+// imports these rather than restating them.
+const CATEGORY_KEYS: Record<DeviationCategory, true> = {
+  enrollment: true, consent: true, procedure: true, safety: true, data: true, other: true,
+};
+const SEVERITY_KEYS: Record<DeviationSeverity, true> = { minor: true, major: true, critical: true };
+const STATUS_KEYS: Record<DeviationStatus, true> = { open: true, under_review: true, capa_pending: true, closed: true };
+const CAPA_STATUS_KEYS: Record<CapaActionStatus, true> = { open: true, in_progress: true, completed: true, verified: true };
+
+type Vocab<T extends string> = readonly [T, ...T[]];
+const vocab = <T extends string>(keys: Record<T, true>): Vocab<T> => Object.freeze(Object.keys(keys)) as unknown as Vocab<T>;
+
+export const DEVIATION_CATEGORIES = vocab(CATEGORY_KEYS);
+export const DEVIATION_SEVERITIES = vocab(SEVERITY_KEYS);
+export const DEVIATION_STATUSES = vocab(STATUS_KEYS);
+export const CAPA_ACTION_STATUSES = vocab(CAPA_STATUS_KEYS);
+
+/** Own-key membership: an Object.prototype member is never a vocabulary value. */
+export function inVocabulary<T extends string>(list: readonly T[], v: unknown): v is T {
+  return typeof v === 'string' && (list as readonly string[]).includes(v);
+}
+
 // ─── Bases ───────────────────────────────────────────────────────────────────
 
 const DOCUMENT_BASIS =

@@ -13,6 +13,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   PROTOCOL_REDLINE_BASIS,
+  REDLINE_CAPPED_EDIT_BUDGET,
   REDLINE_EDIT_BUDGET,
   REDLINE_LINE_CAP,
   ProtocolRedlineError,
@@ -131,7 +132,14 @@ describe('redlineVersions — each change kind, matched by section_key', () => {
     const moved = [only(red, 'stats'), only(red, 'objectives')].filter((s) => s.change === 'reordered');
     expect(moved).toHaveLength(1);
     expect(moved[0].moved).toBe(true);
-    expect(red.summary).toMatchObject({ modified: 1, added: 1, removed: 1, reordered: 1, retitled: 1, unchanged: 2, moved: 1 });
+    expect(red.summary).toMatchObject({ modified: 1, added: 1, removed: 1, reordered: 1, retitled: 1, unchanged: 2, moved: 1, statusChanged: 0, positionsFromRowOrder: [] });
+  });
+
+  it('titleBefore appears only on the retitled section; moved never on an added or removed one', () => {
+    const withTitleBefore = red.sections.filter((s) => 'titleBefore' in s).map((s) => s.sectionKey);
+    expect(withTitleBefore).toEqual(['safety']);
+    for (const key of ['dct', 'appendix']) expect('moved' in only(red, key), key).toBe(false);
+    for (const key of ['synopsis', 'eligibility', 'stats', 'objectives', 'safety']) expect(typeof only(red, key).moved, key).toBe('boolean');
   });
 
   it('carries the version labels and the regulatory basis', () => {
@@ -149,6 +157,20 @@ describe('redlineVersions — secondary facts are never hidden by the precedence
     const red = redlineVersions(snap('1.0', [sec('a', 'A', 'Text.', 0, 'draft')]), snap('1.1', [sec('a', 'A', 'Text.', 0, 'complete')]));
     expect(only(red, 'a')).toMatchObject({ change: 'unchanged', statusBefore: 'draft', statusAfter: 'complete' });
     expect(red.summary).toMatchObject({ modified: 0, unchanged: 1, statusChanged: 1 });
+  });
+
+  it('statusChanged counts only sections in both versions whose status differs', () => {
+    const before = snap('1.0', [sec('a', 'A', 'a', 0), sec('b', 'B', 'b', 1), sec('r', 'R', 'r', 2)]);
+    const after = snap('1.1', [sec('a', 'A', 'a', 0, 'complete'), sec('b', 'B', 'b', 1), sec('n', 'N', 'n', 2, 'complete')]);
+    expect(redlineVersions(before, after).summary).toMatchObject({ statusChanged: 1, added: 1, removed: 1 });
+  });
+
+  it('retitled AND moved is retitled (retitled > reordered) with moved: true and titleBefore', () => {
+    const before = snap('1.0', [sec('a', 'A', 'a', 0), sec('b', 'B', 'b', 1), sec('c', 'C', 'c', 2)]);
+    const after = snap('1.1', [sec('c', 'C2', 'c', 0), sec('a', 'A', 'a', 1), sec('b', 'B', 'b', 2)]);
+    const red = redlineVersions(before, after);
+    expect(only(red, 'c')).toMatchObject({ change: 'retitled', moved: true, title: 'C2', titleBefore: 'C' });
+    expect(red.summary).toMatchObject({ retitled: 1, reordered: 0, moved: 1, unchanged: 2 });
   });
 
   it('edited AND retitled is modified with titleBefore', () => {
@@ -175,14 +197,56 @@ describe('redlineVersions — secondary facts are never hidden by the precedence
     const after = snap('1.1', [sec('a', 'A', 'a', 0), sec('n', 'N', 'n', 1), sec('b', 'B', 'b', 2)]);
     expect(redlineVersions(before, after).summary).toMatchObject({ reordered: 0, moved: 0, unchanged: 2, added: 1, removed: 1 });
   });
+});
 
+describe('redlineVersions — a position that rests on row order says so, moved or not', () => {
   it('a move that rests only on order_index ties says so', () => {
     const before = snap('1.0', [sec('a', 'A', 'a', 0), sec('b', 'B', 'b', 0)]);
     const after = snap('1.1', [sec('b', 'B', 'b', 0), sec('a', 'A', 'a', 0)]);
-    const movedSections = redlineVersions(before, after).sections.filter((s) => s.moved);
+    const red = redlineVersions(before, after);
+    const movedSections = red.sections.filter((s) => s.moved);
     expect(movedSections).toHaveLength(1);
-    expect(movedSections[0].note).toMatch(/shares its order_index/);
+    expect(movedSections[0].note).toMatch(/^Moved, but .*shares its order_index/);
     expect(movedSections[0].note).toMatch(/row order/);
+    expect(red.summary.positionsFromRowOrder, 'both, in output order').toEqual(['b', 'a']);
+  });
+
+  it('a tie in the later version only is still disclosed', () => {
+    const before = snap('1.0', [sec('a', 'A', 'a', 0), sec('b', 'B', 'b', 1)]);
+    const after = snap('1.1', [sec('b', 'B', 'b', 1), sec('a', 'A', 'a', 1)]);
+    const a = only(redlineVersions(before, after), 'a');
+    expect(a).toMatchObject({ change: 'reordered', moved: true });
+    expect(a.note).toMatch(/in version 1\.1 it shares its order_index with "b"/);
+    expect(a.note).not.toMatch(/version 1\.0/);
+  });
+
+  it('a "not moved" verdict that rests on row order carries the same warning', () => {
+    const before = snap('1.0', [sec('a', 'A', 'a', 0), sec('b', 'B', 'b', 1)]);
+    const after = snap('1.1', [sec('a', 'A', 'a', 1), sec('b', 'B', 'b', 1)]);
+    const red = redlineVersions(before, after);
+    expect(only(red, 'a')).toMatchObject({ change: 'unchanged', moved: false });
+    expect(only(red, 'a').note).toMatch(/^Not moved, but in version 1\.1 it shares its order_index with "b"/);
+    expect(only(red, 'b').note).toMatch(/^Not moved, but in version 1\.1 it shares its order_index with "a"/);
+    expect(red.summary.positionsFromRowOrder).toEqual(['a', 'b']);
+  });
+
+  it('an edited, tied section carries the warning beside its diff', () => {
+    const before = snap('1.0', [sec('a', 'A', 'a', 0), sec('b', 'B', 'b', 0)]);
+    const after = snap('1.1', [sec('b', 'B', 'b2', 0), sec('a', 'A', 'a2', 0)]);
+    const red = redlineVersions(before, after);
+    for (const s of red.sections) {
+      expect(s.change).toBe('modified');
+      expect(s.diff).toBeDefined();
+      expect(s.note, s.sectionKey).toMatch(new RegExp(`^${s.moved ? 'Moved' : 'Not moved'}, but .*shares its order_index`));
+    }
+  });
+
+  it('a tie with a section only one version has cannot move anything, so it is not flagged', () => {
+    const before = snap('1.0', [sec('a', 'A', 'a', 0), sec('b', 'B', 'b', 1)]);
+    const after = snap('1.1', [sec('n', 'N', 'n', 0), sec('a', 'A', 'a', 0), sec('b', 'B', 'b', 1)]);
+    const red = redlineVersions(before, after);
+    expect(red.sections.map((s) => s.note)).toEqual([undefined, undefined, undefined]);
+    expect(red.summary.positionsFromRowOrder).toEqual([]);
   });
 });
 
@@ -314,12 +378,43 @@ describe('redlineVersions — line cap and edit budget: disclosed, never truncat
 
   it('an added or removed section above the cap keeps exact counts, drops the diff, says why', () => {
     const red = redlineVersions(snap('1.0', [sec('old', 'Old', big, 0)]), snap('1.1', [sec('new', 'New', big, 0)]));
-    expect(only(red, 'new')).toMatchObject({ change: 'added', counts: { inserted: REDLINE_LINE_CAP + 1, deleted: 0 } });
-    expect(only(red, 'old')).toMatchObject({ change: 'removed', counts: { inserted: 0, deleted: REDLINE_LINE_CAP + 1 } });
+    const n = REDLINE_LINE_CAP + 1;
+    expect(only(red, 'new')).toMatchObject({ change: 'added', counts: { inserted: n, deleted: 0 } });
+    expect(only(red, 'old')).toMatchObject({ change: 'removed', counts: { inserted: 0, deleted: n } });
+    expect(only(red, 'new').note).toMatch(`absent from the earlier version and has ${n} line(s) in the later`);
+    expect(only(red, 'old').note).toMatch(`has ${n} line(s) in the earlier version and is absent from the later`);
     for (const s of red.sections) {
       expect(s.diff).toBeUndefined();
       expect(s.note).toMatch(/cap/);
+      expect(s.note, 'no budgeted diff produced these counts').not.toMatch(/within \d+ edits/);
+      expect(s.note, 'one version has no such section, so there are not two texts').not.toMatch(/ 0 line\(s\)|the two texts/);
     }
+  });
+
+  it('above the cap, a rewrite sharing no line has exact counts and says that is why', () => {
+    const s = pair(big, lines('other ', REDLINE_LINE_CAP + 1));
+    expect(s.counts).toEqual({ inserted: REDLINE_LINE_CAP + 1, deleted: REDLINE_LINE_CAP + 1 });
+    expect(s.note).toMatch(/no line in common/);
+    expect(s.note).not.toMatch(/within \d+ edits/);
+  });
+
+  // n rewritten paragraphs separated by shared blank lines need 2n edits; a shared tail puts the section above the cap.
+  const cappedRewrite = (prefix: string, n: number) => `${lines(prefix, n, true)}\n${lines('tail ', REDLINE_LINE_CAP)}`;
+
+  it(`above the cap, exactly ${REDLINE_CAPPED_EDIT_BUDGET} edits: exact counts from a budgeted minimal diff`, () => {
+    const n = REDLINE_CAPPED_EDIT_BUDGET / 2;
+    const s = pair(cappedRewrite('p', n), cappedRewrite('q', n));
+    expect(s.diff).toBeUndefined();
+    expect(s.counts).toEqual({ inserted: n, deleted: n });
+    expect(s.note).toMatch(`a minimal line diff was found within ${REDLINE_CAPPED_EDIT_BUDGET} edits`);
+    expect(s.note).not.toMatch(/no line in common/);
+  });
+
+  it(`above the cap, ${REDLINE_CAPPED_EDIT_BUDGET + 2} edits: counts omitted, not estimated`, () => {
+    const n = REDLINE_CAPPED_EDIT_BUDGET / 2 + 1;
+    const s = pair(cappedRewrite('p', n), cappedRewrite('q', n));
+    expect(s.counts).toBeUndefined();
+    expect(s.note).toMatch(/omitted rather than estimated/);
   });
 
   it('above the cap with no cheap exact count: counts omitted, summary totals null (never a partial sum)', () => {
@@ -335,10 +430,10 @@ describe('redlineVersions — line cap and edit budget: disclosed, never truncat
   });
 
   // n rewritten paragraphs separated by shared blank lines: a minimal diff of 2n edits.
-  const past = REDLINE_EDIT_BUDGET / 2 + 50;
-  const within = REDLINE_EDIT_BUDGET / 2 - 50;
+  const past = REDLINE_EDIT_BUDGET / 2 + 1;
+  const within = REDLINE_EDIT_BUDGET / 2;
 
-  it(`under the cap but past ${REDLINE_EDIT_BUDGET} edits: no diff, no counts, a note`, () => {
+  it(`under the cap, ${REDLINE_EDIT_BUDGET + 2} edits: no diff, no counts, a note`, () => {
     const a = lines('p', past, true);
     expect(splitContentLines(a).length).toBeLessThanOrEqual(REDLINE_LINE_CAP);
     const s = pair(a, lines('q', past, true));
@@ -349,13 +444,21 @@ describe('redlineVersions — line cap and edit budget: disclosed, never truncat
     expect(s.note).not.toMatch(/cap/);
   });
 
-  it('a large rewrite within the budget is still diffed exactly', () => {
+  it(`exactly ${REDLINE_EDIT_BUDGET} edits is still diffed exactly`, () => {
     const a = lines('p', within, true);
     const b = lines('q', within, true);
     const s = pair(a, b);
     expect(rebuild(s.diff as RedlineOp[], 'before')).toBe(a);
     expect(rebuild(s.diff as RedlineOp[], 'after')).toBe(b);
     expect(s.counts).toEqual({ inserted: within, deleted: within });
+  });
+
+  it('under the cap, a rewrite sharing no line is diffed exactly whatever its edit count', () => {
+    const n = REDLINE_EDIT_BUDGET * 2;
+    const s = pair(lines('p', n), lines('q', n));
+    expect(s.note).toBeUndefined();
+    expect(s.counts).toEqual({ inserted: n, deleted: n });
+    expect(s.diff).toEqual([{ op: 'delete', text: lines('p', n) }, { op: 'insert', text: lines('q', n) }]);
   });
 });
 
@@ -395,20 +498,41 @@ describe('redlineVersions — a snapshot that cannot be compared fails closed', 
     }
   });
 
-  it('malformed rows in either version are all listed', () => {
-    const before = { version: '1.0', sections: [{ title: 'No key', content: 'x', status: 'draft', order_index: 0 }] } as unknown as ProtocolSnapshot;
-    const after = { version: '1.1', sections: [{ section_key: 'a', title: 'A', content: 42, status: 'draft', order_index: 'first' }] } as unknown as ProtocolSnapshot;
+  function problemsOf(before: unknown, after: unknown): string[] {
     try {
-      redlineVersions(before, after);
-      expect.unreachable('a malformed snapshot must throw');
+      redlineVersions(before as ProtocolSnapshot, after as ProtocolSnapshot);
     } catch (err) {
-      const problems = (err as ProtocolRedlineError).problems;
-      expect(problems).toEqual([
-        'version 1.0 section row 1 has no section_key',
-        'version 1.1 section "a" has content that is neither text nor null',
-        'version 1.1 section "a" has no numeric order_index',
-      ]);
+      expect(err).toBeInstanceOf(ProtocolRedlineError);
+      return (err as ProtocolRedlineError).problems;
     }
+    return expect.unreachable('a malformed snapshot must throw');
+  }
+
+  it('malformed rows in either version are all listed', () => {
+    const before = {
+      version: '1.0',
+      sections: [
+        { title: 'No key', content: 'x', status: 'draft', order_index: 0 },
+        { section_key: 'b', title: null, content: 'x', order_index: 1 },
+        null,
+        { section_key: 'c', title: 'C', content: '', status: 'draft', order_index: Number.NaN },
+      ],
+    };
+    const after = { version: '1.1', sections: [{ section_key: 'a', title: 'A', content: 42, status: 'draft', order_index: 'first' }] };
+    expect(problemsOf(before, after)).toEqual([
+      'version 1.0 section row 1 has no section_key',
+      'version 1.0 section "b" has no title',
+      'version 1.0 section "b" has no status',
+      'version 1.0 section row 3 is not an object',
+      'version 1.0 section "c" has no numeric order_index',
+      'version 1.1 section "a" has content that is neither text nor null',
+      'version 1.1 section "a" has no numeric order_index',
+    ]);
+  });
+
+  it('a snapshot with no version label, or that is not a snapshot, is refused', () => {
+    expect(problemsOf({ sections: [] }, snap('1.1', []))).toEqual(['the earlier version has no version label']);
+    expect(problemsOf(snap('1.0', []), null)).toEqual(['the later version is not a snapshot']);
   });
 
   it('a snapshot with no sections list is refused rather than read as empty', () => {

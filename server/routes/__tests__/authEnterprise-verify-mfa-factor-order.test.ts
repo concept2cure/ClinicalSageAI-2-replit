@@ -25,6 +25,8 @@ vi.hoisted(() => {
  */
 const state = vi.hoisted(() => ({
   userRow: null as Record<string, unknown> | null,
+  /** organization_users rows for the account; [] = no membership. */
+  membershipRows: [{ role: 'member' }] as Array<{ role: string }>,
 }));
 const authEvents = vi.hoisted(() => vi.fn(async (_e: unknown) => undefined));
 const verifyEmailOtp = vi.hoisted(() => vi.fn(async (_userId: number, _code: string) => true));
@@ -49,14 +51,19 @@ const dbDouble = vi.hoisted(() => {
     },
   };
   // Every drizzle read answers the user row: the enrolment read, the role, the user, the organisation.
-  const chain: Record<string, unknown> = {};
-  chain.select = () => chain;
-  chain.from = () => chain;
-  chain.where = () => chain;
-  chain.limit = async () => (state.userRow ? [state.userRow] : []);
-  chain.update = () => chain;
-  chain.set = () => chain;
-  return { db: chain, pool, getPool: () => pool, getDb: () => chain };
+  const tableName = (table: unknown) => (table as Record<symbol, unknown> | null)?.[Symbol.for('drizzle:Name')];
+  const chain = (rows: () => unknown[]): Record<string, unknown> => {
+    const c: Record<string, unknown> = {};
+    c.select = () => chain(rows);
+    c.from = (table: unknown) => chain(tableName(table) === 'organization_users' ? () => state.membershipRows : rows);
+    c.where = () => c;
+    c.limit = async () => rows();
+    c.update = () => c;
+    c.set = () => c;
+    return c;
+  };
+  const db = chain(() => (state.userRow ? [state.userRow] : []));
+  return { db, pool, getPool: () => pool, getDb: () => db };
 });
 vi.mock('../../db', () => dbDouble);
 vi.mock('../../db.js', () => dbDouble);
@@ -118,6 +125,7 @@ const verify = (code: string) => request(app()).post('/api/auth/enterprise/verif
 
 beforeEach(() => {
   state.userRow = account('totp');
+  state.membershipRows = [{ role: 'member' }];
   authEvents.mockClear();
   verifyEmailOtp.mockClear();
   verifyEmailOtp.mockResolvedValue(true);
@@ -170,5 +178,30 @@ describe('POST /verify-mfa asks the account its own factor', () => {
     expect(r.status).toBe(401);
     expect(r.body).toMatchObject({ error: 'INVALID_MFA_CODE' });
     expect(mfa.verifyLoginSecondFactor).toHaveBeenCalledWith(7, '000000');
+  });
+});
+
+/* 2026-09-28: the session's role was looked up with a fallback to 'user' for
+   no membership and for a failed read, so a partial token naming an
+   organisation the account had left still became a session there. */
+describe('POST /verify-mfa issues a session only where the account is a member', () => {
+  beforeEach(() => {
+    state.userRow = account('email');
+  });
+
+  it('carries the membership role into the session', async () => {
+    state.membershipRows = [{ role: 'reviewer' }];
+    const r = await verify('123456');
+    expect(r.status, JSON.stringify(r.body)).toBe(200);
+    expect((jwt.decode(r.body.token) as { role: string }).role).toBe('reviewer');
+  });
+
+  it('refuses, and records it, when the account no longer belongs to the organisation — no invented role', async () => {
+    state.membershipRows = [];
+    const r = await verify('123456');
+    expect(r.status).toBe(403);
+    expect(r.body).toMatchObject({ error: 'NO_ORGANIZATION' });
+    expect(JSON.stringify(r.body)).not.toContain('"token"');
+    expect(authEvents).toHaveBeenCalledWith(expect.objectContaining({ action: 'user_login', outcome: 'failure', reason: 'no_membership', userId: 7 }));
   });
 });

@@ -75,7 +75,13 @@ must keep. Every engine is deterministic: no model, no clock, no RNG, no DB.
    Engine: `study-design/spirit-conformance.ts` — the 33 items as data, each
    judged from the design or the protocol document. Items evidenced only by
    the document are `not_assessable` when no document is passed — never
-   `missing`.
+   `missing`. **SPIRIT 2013 was superseded by the SPIRIT 2025 statement
+   (34 items) in April 2025**; adversarial review caught that this document and
+   the engine presented 2013 as current. Every output now carries
+   `supersededBy`, and the AnA tool may never present 2013 conformance as
+   conformance to the current guideline. A SPIRIT 2025 item catalogue is the
+   next step for this engine and needs the published checklist text, which
+   this environment cannot fetch.
 
 3. **Critical-to-quality factors derived from the design (ICH E6(R3)).** The
    revised GCP expects CtQ factors identified at design, before monitoring is
@@ -164,6 +170,16 @@ tool and a surface to land honestly:
 | External-control borrowing: power prior, commensurate prior, tipping point | `stats/external-control.ts` | **Wired in this change** at design stage. `StudyDesign.externalControlPlan` records source, method, discount, planned concurrent size; `study-design/external-control-plan.ts` lists each element FDA's 2023 draft guidance expects pre-specified (stated or not — a fixed a0 is not a conflict plan) and the engine's borrowing strength at the planned concurrent-control size. No posterior or effect is computed: those are analysis-stage. Reachable at `/api/study-design/:id/external-control`, in the projections pane, and as AnA's `review_external_control_plan` |
 | Multiplicity procedures: Bonferroni, Holm, Hochberg, fixed-sequence, graphical | `stats/multiplicity.ts` | **Wired in this change.** `study-design/multiplicity-check.ts` simulates the named procedure's family-wise error over the confirmatory family (with the unadjusted rate for contrast and the Monte Carlo SE), decides "controlled" against a stated tolerance, checks the alpha allocation covers the family, states the independence assumption, and refuses to approximate a graphical or gatekeeping procedure the spine does not parameterise. MUL-001 still gates presence; this checks substance. Reachable at `/api/study-design/:id/multiplicity`, in the projections pane, and as AnA's `review_multiplicity_control` |
 | Win ratio, RMST | `stats/win-ratio.ts`, `stats/rmst.ts` | **Deliberately not wired at protocol stage.** Both are analysis-on-data engines (subject-level pairs; Kaplan–Meier curves): before data exist there is nothing for them to compute, and a projection that ran them on assumed data would be the fabrication the guardrails forbid. What a protocol owes here is pre-specification — the RMST horizon τ, the win-ratio hierarchy — which belongs in the design gates once the spine records them |
+
+**Recording the inputs.** Five of these blocks (and the Tier 3 biospecimen and
+master-protocol inputs) are sponsor inputs no engine may assume. They are
+recorded, one governed block at a time, through
+`POST /api/study-design/:id/planning` (`routes/study-design-planning.ts`,
+editor role, reason, `FOR UPDATE`, the one writer, a governed-action row) and
+the **Planning inputs** panel on the Design tab
+(`ProtocolDevPlanningInputs.tsx`). The server validates each block strictly
+(`study-design/planning-inputs.ts`); the forms refuse what does not parse and
+default nothing.
 
 `sample-size.ts` solves continuous endpoints exactly and binary /
 time-to-event on the normal approximation, with margins for non-inferiority

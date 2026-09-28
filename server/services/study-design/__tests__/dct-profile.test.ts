@@ -4,7 +4,9 @@
  * unstated activity is never counted as site and is excluded from the off-site
  * share's denominator, a share with nothing stated is null (not 0), a visit is
  * fully off-site capable only when every scheduled activity is stated off-site,
- * and each of the four findings fires on its trigger and on nothing else.
+ * each of the four findings fires on its trigger and on nothing else, and a
+ * structural defect (a duplicated id, a cell naming an undefined visit, a visit
+ * with no defined epoch) is reported and never guessed through.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -19,11 +21,10 @@ import {
 } from '../dct-profile';
 import { type ScheduleOfActivities, type SoaActivity, type SoaActivityCategory } from '../study-design-types';
 
-/** An activity with an optional `location` attribute (the type gains the field at integration). */
-function act(id: string, category: SoaActivityCategory, order: number, location?: unknown): SoaActivity {
-  const activity: SoaActivity = { id, name: `Activity ${id}`, category, order };
-  if (location !== undefined) Object.assign(activity, { location });
-  return activity;
+const OFF_SITE: SoaActivityLocation[] = ['home', 'local_provider', 'local_lab', 'telehealth', 'mobile_unit'];
+
+function act(id: string, category: SoaActivityCategory, order: number, location?: SoaActivityLocation): SoaActivity {
+  return { id, name: `Activity ${id}`, category, order, ...(location ? { location } : {}) };
 }
 
 /**
@@ -78,16 +79,34 @@ function dctSoa(): ScheduleOfActivities {
   };
 }
 
+/** One treatment epoch with one visit V1 — the base for the structural-defect cases. */
+function oneVisitSoa(activities: SoaActivity[], cells: ScheduleOfActivities['cells']): ScheduleOfActivities {
+  return {
+    epochs: [{ id: 'e_trt', name: 'Treatment', kind: 'treatment', order: 0 }],
+    visits: [{ id: 'V1', name: 'Day 1', epochId: 'e_trt', order: 0 }],
+    activities,
+    cells,
+  };
+}
+
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value));
 }
 
-/** Set (or, with undefined, remove) an activity's location attribute. */
+function reversed(soa: ScheduleOfActivities): ScheduleOfActivities {
+  const r = clone(soa);
+  r.activities.reverse();
+  r.visits.reverse();
+  r.epochs.reverse();
+  r.cells.reverse();
+  return r;
+}
+
+/** Set (or, with undefined, remove) an activity's location attribute; `unknown` so invalid values can be tested. */
 function setLoc(soa: ScheduleOfActivities, id: string, location: unknown): ScheduleOfActivities {
   const activity = soa.activities.find(a => a.id === id);
   if (!activity) throw new Error(`no activity ${id}`);
-  // Through Object.assign/Reflect so this compiles both before and after SoaActivity gains `location`.
-  if (location === undefined) Reflect.deleteProperty(activity, 'location');
+  if (location === undefined) delete activity.location;
   else Object.assign(activity, { location });
   return soa;
 }
@@ -130,6 +149,12 @@ describe('locationsFromSoa', () => {
     const map = locationsFromSoa(soa);
     expect(Object.prototype.hasOwnProperty.call(map, '__proto__')).toBe(true);
     expect(Object.getPrototypeOf(map)).toBe(Object.prototype);
+  });
+
+  it('omits an id defined more than once rather than keeping whichever row came last', () => {
+    const rows = [act('a1', 'safety', 0, 'site'), act('a1', 'safety', 1, 'telehealth'), act('a2', 'pk', 2, 'home')];
+    expect(locationsFromSoa(oneVisitSoa(rows, []))).toEqual({ a2: 'home' });
+    expect(locationsFromSoa(oneVisitSoa([...rows].reverse(), []))).toEqual({ a2: 'home' });
   });
 });
 
@@ -199,29 +224,42 @@ describe('absent or empty Schedule of Activities', () => {
   });
 });
 
-describe('DCT-IMP-HOME', () => {
-  it('warns when a drug-administration activity is at home, with the visits it is scheduled at', () => {
-    const p = profileDecentralization(setLoc(dctSoa(), 'a_dose', 'home'));
-    const [f, ...rest] = findingsFor(p, 'DCT-IMP-HOME');
+describe('DCT-IMP-OFFSITE', () => {
+  it.each(OFF_SITE)('warns for drug administration at %s, with the visits it is scheduled at', loc => {
+    const p = profileDecentralization(setLoc(dctSoa(), 'a_dose', loc));
+    const [f, ...rest] = findingsFor(p, 'DCT-IMP-OFFSITE');
     expect(rest).toEqual([]);
     expect(f).toMatchObject({ severity: 'warning', activityIds: ['a_dose'], visitIds: ['V2'] });
-    expect(f.message).toContain('shipment');
+    expect(f.message).toContain('reaches that location');
+    expect(f.message).toContain('accountability');
   });
 
-  it.each(['site', 'local_provider', 'telehealth', 'mobile_unit'])('does not fire for drug administration at %s', loc => {
-    expect(codes(profileDecentralization(setLoc(dctSoa(), 'a_dose', loc)))).not.toContain('DCT-IMP-HOME');
+  it('words the message for where the product goes', () => {
+    const at = (loc: SoaActivityLocation) =>
+      findingsFor(profileDecentralization(setLoc(dctSoa(), 'a_dose', loc)), 'DCT-IMP-OFFSITE')[0].message;
+    expect(at('home')).toContain("at the participant's home");
+    expect(at('home')).toContain('direct-to-participant shipment');
+    expect(at('telehealth')).toContain('direct-to-participant shipment');
+    expect(at('local_provider')).toContain('shipment to the local health-care provider');
+    expect(at('mobile_unit')).toContain('transport by the mobile unit');
+  });
+
+  it('does not fire for drug administration at the site', () => {
+    expect(codes(profileDecentralization(dctSoa()))).not.toContain('DCT-IMP-OFFSITE');
   });
 
   it('does not fire for a non-drug activity at home', () => {
     const p = profileDecentralization(dctSoa());
     expect(p.activities.find(a => a.activityId === 'a_pro')?.location).toBe('home');
-    expect(codes(p)).not.toContain('DCT-IMP-HOME');
+    expect(codes(p)).not.toContain('DCT-IMP-OFFSITE');
   });
 
   it('an unstated drug administration is not assessed rather than clean', () => {
     const p = profileDecentralization(setLoc(dctSoa(), 'a_dose', undefined));
-    expect(codes(p)).not.toContain('DCT-IMP-HOME');
-    expect(p.notAssessed).toContain('DCT-IMP-HOME not assessed for drug-administration activities without a stated location: a_dose.');
+    expect(codes(p)).not.toContain('DCT-IMP-OFFSITE');
+    expect(p.notAssessed).toContain(
+      'DCT-IMP-OFFSITE not assessed for drug-administration activities without a stated location: a_dose.',
+    );
   });
 });
 
@@ -246,7 +284,24 @@ describe('DCT-SAFETY-REMOTE', () => {
     soa.cells.push({ activityId: 'a_ecg', visitId: 'V5', state: 'performed' });
     const [f] = findingsFor(profileDecentralization(soa), 'DCT-SAFETY-REMOTE');
     expect(f.activityIds).toEqual(['a_labs', 'a_aeq']);
-    expect(f.message).toContain('1 further scheduled safety activity has no stated location');
+    expect(f.message).toContain('1 further scheduled safety activity has no stated location (a_ecg) and was not counted');
+  });
+
+  it('attributes the finding only to visits that schedule a stated safety activity', () => {
+    const soa: ScheduleOfActivities = {
+      epochs: [{ id: 'e_trt', name: 'Treatment', kind: 'treatment', order: 0 }],
+      visits: [
+        { id: 'V1', name: 'Day 1', epochId: 'e_trt', order: 0 },
+        { id: 'V2', name: 'Day 8', epochId: 'e_trt', order: 1 },
+      ],
+      activities: [act('s1', 'safety', 0, 'local_lab'), act('s2', 'safety', 1)],
+      cells: [
+        { activityId: 's1', visitId: 'V1', state: 'performed' },
+        { activityId: 's2', visitId: 'V2', state: 'performed' },
+      ],
+    };
+    const [f] = findingsFor(profileDecentralization(soa), 'DCT-SAFETY-REMOTE');
+    expect(f).toMatchObject({ activityIds: ['s1'], visitIds: ['V1'] });
   });
 
   it('an epoch whose scheduled safety activities are all unstated is not assessed', () => {
@@ -273,11 +328,17 @@ describe('DCT-PK-OFFSITE', () => {
     expect(found[0].message).toContain('chain of custody');
   });
 
-  it.each(['site', 'local_provider', 'telehealth', 'mobile_unit'])('does not fire for PK at %s', loc => {
-    expect(codes(profileDecentralization(setLoc(dctSoa(), 'a_pk', loc)))).not.toContain('DCT-PK-OFFSITE');
+  it.each(OFF_SITE)('warns for PK at every off-site location: %s', loc => {
+    const found = findingsFor(profileDecentralization(setLoc(dctSoa(), 'a_pk', loc)), 'DCT-PK-OFFSITE');
+    expect(found.map(f => f.activityIds)).toEqual([['a_pk']]);
   });
 
-  it('does not fire for a PD activity at home', () => {
+  it('says who collects the sample when the contact is by telehealth', () => {
+    const [f] = findingsFor(profileDecentralization(setLoc(dctSoa(), 'a_pk', 'telehealth')), 'DCT-PK-OFFSITE');
+    expect(f.message).toContain('does not itself collect a sample');
+  });
+
+  it('does not fire for PK at the site, or for a PD activity at home', () => {
     const soa = dctSoa();
     soa.activities.push(act('a_pd', 'pd', 9, 'home'));
     expect(codes(profileDecentralization(soa))).not.toContain('DCT-PK-OFFSITE');
@@ -297,11 +358,12 @@ describe('DCT-CONSENT-REMOTE', () => {
     expect(found.map(f => f.activityIds)).toEqual([['a_consent'], ['a_elig']]);
   });
 
-  it.each(['site', 'home', 'local_provider'])('does not fire for an administrative activity at %s', loc => {
-    expect(codes(profileDecentralization(setLoc(dctSoa(), 'a_consent', loc)))).not.toContain('DCT-CONSENT-REMOTE');
+  it.each(OFF_SITE)('fires for an administrative activity at every off-site location: %s', loc => {
+    const found = findingsFor(profileDecentralization(setLoc(dctSoa(), 'a_consent', loc)), 'DCT-CONSENT-REMOTE');
+    expect(found.map(f => f.activityIds)).toEqual([['a_consent']]);
   });
 
-  it('does not fire for a non-administrative activity by telehealth', () => {
+  it('does not fire for an administrative activity at the site, or a non-administrative one by telehealth', () => {
     const p = profileDecentralization(setLoc(dctSoa(), 'a_consent', 'site'));
     expect(p.activities.find(a => a.activityId === 'a_aeq')?.location).toBe('telehealth');
     expect(codes(p)).not.toContain('DCT-CONSENT-REMOTE');
@@ -342,12 +404,96 @@ describe('visits fully off-site capable', () => {
   });
 });
 
+describe('structural defects are reported, never guessed through', () => {
+  const dupSafety = () =>
+    oneVisitSoa(
+      [{ ...act('a1', 'safety', 0, 'site'), name: 'Vitals at site' }, { ...act('a1', 'safety', 1, 'telehealth'), name: 'AE call' }],
+      [{ activityId: 'a1', visitId: 'V1', state: 'performed' }],
+    );
+
+  it('a duplicated activity id resolves unstated on every row, whatever the input order', () => {
+    const forward = profileDecentralization(dupSafety());
+    expect(profileDecentralization(reversed(dupSafety()))).toEqual(forward);
+    expect(forward.activities.map(a => [a.name, a.location])).toEqual([['Vitals at site', 'unstated'], ['AE call', 'unstated']]);
+    expect(forward.measures.offSiteShare).toMatchObject({ value: null, numerator: 0, denominator: 0 });
+    expect(forward.measures.visitsFullyOffSiteCapable).toEqual([]);
+    expect(forward.findings).toEqual([]);
+    expect(forward.notAssessed.some(n => n.startsWith('Activity id(s) a1 are defined more than once'))).toBe(true);
+    expect(forward.notAssessed.some(n => n.includes('DCT-SAFETY-REMOTE not assessed for epoch "Treatment"'))).toBe(true);
+  });
+
+  it('a duplicated activity id is named as not counted when a stated safety activity shares its epoch', () => {
+    const soa = dupSafety();
+    soa.activities.push(act('a2', 'safety', 2, 'local_lab'));
+    soa.cells.push({ activityId: 'a2', visitId: 'V1', state: 'performed' });
+    const [f] = findingsFor(profileDecentralization(soa), 'DCT-SAFETY-REMOTE');
+    expect(f.activityIds).toEqual(['a2']);
+    expect(f.message).toContain('1 further scheduled safety activity has an id defined more than once (a1) and was not counted');
+  });
+
+  it('an explicit location is not applied to a duplicated activity id, and that is reported', () => {
+    const p = profileDecentralization(dupSafety(), { a1: 'home' });
+    expect(p.activities.map(a => a.location)).toEqual(['unstated', 'unstated']);
+    expect(p.notAssessed.some(n => n.includes('a1') && n.includes('defined more than once') && n.includes('not applied'))).toBe(true);
+  });
+
+  it('a duplicated visit id is not listed (twice or at all) and its cells are reported as not counted', () => {
+    const soa = oneVisitSoa([act('a', 'efficacy', 0, 'home')], [{ activityId: 'a', visitId: 'V1', state: 'performed' }]);
+    soa.visits.push({ id: 'V1', name: 'Day 1 again', epochId: 'e_trt', order: 1 });
+    const p = profileDecentralization(soa);
+    expect(p.measures.visitsFullyOffSiteCapable).toEqual([]);
+    // Exactly one line: a duplicated visit is not also reported as an (empty) visit of its own, once per copy.
+    expect(p.notAssessed).toEqual([
+      'Visit id(s) V1 are defined more than once; the 1 cell(s) naming them cannot be attributed to one visit and ' +
+        'are not counted, and those visits are not assessed for off-site capability or safety oversight.',
+    ]);
+  });
+
+  it('a cell naming an undefined visit is reported, not dropped', () => {
+    const soa = oneVisitSoa(
+      [act('a_labs', 'safety', 0, 'local_lab'), act('a_vitals', 'safety', 1, 'site')],
+      [
+        { activityId: 'a_labs', visitId: 'V1', state: 'performed' },
+        { activityId: 'a_vitals', visitId: 'V_GHOST', state: 'performed' },
+      ],
+    );
+    const p = profileDecentralization(soa);
+    expect(p.notAssessed).toContain(
+      'Cells name visit(s) not defined in the Schedule of Activities (V_GHOST: a_vitals); they are not counted toward ' +
+        'visit capability or safety oversight.',
+    );
+  });
+
+  it.each([
+    ['no epoch id', undefined, 'V1 (no epoch id)'],
+    ['an undefined epoch', 'e_nope', 'V1 (epoch "e_nope" is not defined)'],
+  ])('a visit with %s is reported and never shown as an epoch', (_label, epochId, described) => {
+    const soa = oneVisitSoa([act('a_labs', 'safety', 0, 'local_lab')], [{ activityId: 'a_labs', visitId: 'V1', state: 'performed' }]);
+    soa.epochs = [];
+    Object.assign(soa.visits[0], { epochId });
+    const p = profileDecentralization(soa);
+    expect(codes(p)).not.toContain('DCT-SAFETY-REMOTE');
+    expect(JSON.stringify(p)).not.toContain('epoch "undefined"');
+    expect(p.notAssessed.some(n => n.startsWith(`Visit(s) ${described} belong to no uniquely defined epoch`))).toBe(true);
+    expect(p.measures.visitsFullyOffSiteCapable).toEqual(['V1']);
+  });
+
+  it('a duplicated epoch id groups no visit and is reported', () => {
+    const soa = oneVisitSoa([act('a_labs', 'safety', 0, 'local_lab')], [{ activityId: 'a_labs', visitId: 'V1', state: 'performed' }]);
+    soa.epochs.push({ id: 'e_trt', name: 'Treatment B', kind: 'treatment', order: 1 });
+    const p = profileDecentralization(soa);
+    expect(codes(p)).not.toContain('DCT-SAFETY-REMOTE');
+    expect(p.notAssessed.some(n => n.startsWith('Epoch id(s) e_trt are defined more than once'))).toBe(true);
+    expect(p.notAssessed.some(n => n.startsWith('Visit(s) V1 (epoch "e_trt" is defined more than once)'))).toBe(true);
+  });
+});
+
 describe('explicit locations', () => {
   it('take precedence over the activity attribute', () => {
     const p = profileDecentralization(dctSoa(), { a_dose: 'home', a_consent: 'site' });
     expect(p.activities.find(a => a.activityId === 'a_dose')?.location).toBe('home');
     expect(p.activities.find(a => a.activityId === 'a_consent')?.location).toBe('site');
-    expect(codes(p)).toContain('DCT-IMP-HOME');
+    expect(codes(p)).toContain('DCT-IMP-OFFSITE');
     expect(codes(p)).not.toContain('DCT-CONSENT-REMOTE');
   });
 
@@ -367,19 +513,42 @@ describe('explicit locations', () => {
 });
 
 describe('determinism', () => {
-  it('returns the same profile for the same input, and does not mutate it', () => {
-    const soa = dctSoa();
-    const before = clone(soa);
-    expect(profileDecentralization(soa)).toEqual(profileDecentralization(soa));
-    expect(soa).toEqual(before);
+  it('returns the same profile for the same input, and does not mutate it — also when the input is out of order', () => {
+    for (const soa of [dctSoa(), reversed(dctSoa())]) {
+      const before = clone(soa);
+      expect(profileDecentralization(soa)).toEqual(profileDecentralization(soa));
+      expect(soa).toEqual(before);
+    }
   });
 
   it('is independent of the order activities, visits, epochs and cells are listed in', () => {
-    const shuffled = dctSoa();
-    shuffled.activities.reverse();
-    shuffled.visits.reverse();
-    shuffled.epochs.reverse();
-    shuffled.cells.reverse();
-    expect(profileDecentralization(shuffled)).toEqual(profileDecentralization(dctSoa()));
+    expect(profileDecentralization(reversed(dctSoa()))).toEqual(profileDecentralization(dctSoa()));
+  });
+
+  it('breaks ties in `order` by id, for activities, visits and epochs alike', () => {
+    const soa: ScheduleOfActivities = {
+      epochs: [
+        { id: 'e_b', name: 'B', kind: 'treatment', order: 0 },
+        { id: 'e_a', name: 'A', kind: 'treatment', order: 0 },
+      ],
+      visits: [
+        { id: 'VB', name: 'VB', epochId: 'e_b', order: 0 },
+        { id: 'VA', name: 'VA', epochId: 'e_a', order: 0 },
+      ],
+      activities: [act('b', 'safety', 0, 'home'), act('a', 'safety', 0, 'local_lab')],
+      cells: [
+        { activityId: 'b', visitId: 'VB', state: 'performed' },
+        { activityId: 'a', visitId: 'VB', state: 'performed' },
+        { activityId: 'a', visitId: 'VA', state: 'performed' },
+      ],
+    };
+    const p = profileDecentralization(soa);
+    expect(p.activities.map(a => a.activityId)).toEqual(['a', 'b']);
+    expect(p.measures.visitsFullyOffSiteCapable).toEqual(['VA', 'VB']);
+    expect(findingsFor(p, 'DCT-SAFETY-REMOTE').map(f => [/^In epoch "([^"]*)"/.exec(f.message)?.[1], f.activityIds])).toEqual([
+      ['A', ['a']],
+      ['B', ['a', 'b']],
+    ]);
+    expect(profileDecentralization(reversed(soa))).toEqual(p);
   });
 });
