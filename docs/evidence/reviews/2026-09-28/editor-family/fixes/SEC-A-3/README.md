@@ -25,7 +25,9 @@ Three things together:
     `application/pdf` only when the bytes begin `%PDF`.
   - Anything else is downloaded, and the message says why. A file named or
     typed as PDF that is not one is told so.
-- **The frame stays unsandboxed, on measured evidence (`browser/`).**
+- **The frame stays unsandboxed, on measured evidence (`browser/`).** The
+  harness scripts are stored there as `.mjs.txt`: they are the record of what
+  was run, not code the repository runs.
   - Headless Chromium 141 shows its error page instead of the PDF viewer in a
     frame with any `sandbox` value: empty, `allow-same-origin`,
     `allow-scripts allow-same-origin`, and every token at once.
