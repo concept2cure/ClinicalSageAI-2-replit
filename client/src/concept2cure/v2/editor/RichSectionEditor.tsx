@@ -419,7 +419,42 @@ function structuralDriftLabel(drift: (keyof StructuralSignature)[]): string {
  *
  * `aria-pressed` is `false` rather than absent when off: omitting it tells a
  * screen reader "not a toggle" instead of "not pressed".
+ *
+ * 2026-09-28, coverage-gap sweep GA-3: and it is ABSENT on a one-shot command.
+ * The attribute was emitted as `active ?? false` on every button, so Undo,
+ * Redo, Insert table, the row/column commands and Delete table were each
+ * announced as a toggle that was "not pressed". A caller that passes `active`
+ * is a toggle and must pass a boolean (`!!editor?.isActive(...)`, so it reads
+ * "false" before the editor exists); a caller that omits it is a command.
  */
+/**
+ * Whether the table the selection is in has a header row / header column —
+ * the state "Toggle header row" and "Toggle header column" flip. Read from the
+ * document, not remembered: the first row is a header row when every cell in
+ * it is a `tableHeader`, and the first column likewise across every row.
+ * `{ row: false, col: false }` outside a table. 2026-09-28, coverage-gap sweep
+ * GA-3: these two toggles were never given a state and read "not pressed"
+ * with a header row in place.
+ */
+function tableHeaderState(state: { selection: { $from: { depth: number; node: (d: number) => PMNode } } } | null | undefined): { row: boolean; col: boolean } {
+  const none = { row: false, col: false };
+  if (!state) return none;
+  const { $from } = state.selection;
+  let table: PMNode | null = null;
+  for (let d = $from.depth; d >= 0; d--) {
+    const n = $from.node(d);
+    if (n.type.name === 'table') { table = n; break; }
+  }
+  if (!table || table.childCount === 0) return none;
+  const isHeader = (n: PMNode | null | undefined) => n?.type.name === 'tableHeader';
+  const first = table.child(0);
+  let row = first.childCount > 0;
+  first.forEach(cell => { if (!isHeader(cell)) row = false; });
+  let col = true;
+  table.forEach(r => { if (!isHeader(r.firstChild)) col = false; });
+  return { row, col };
+}
+
 const RB = React.memo(function RB({
   onClick,
   active,
@@ -442,7 +477,7 @@ const RB = React.memo(function RB({
       type="button"
       title={label}
       aria-label={label}
-      aria-pressed={active ?? false}
+      aria-pressed={active === undefined ? undefined : active}
       disabled={disabled}
       /* Keeps the editor selection alive when focus moves to the button; the
          activation itself is `click`, so keyboard and pointer agree. */
@@ -1740,6 +1775,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
 
     /** What the caret is on: a table, a selected figure, or neither. */
     const captionSubject = editor ? captionAt(editor.state) : null;
+    const tableHeaders = tableHeaderState(editor?.state);
 
     const openCaption = useCallback(() => {
       setCaptionError(null);
@@ -1987,48 +2023,48 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
               <option value="h5">Heading 5</option>
             </select>
             <span className="rse-sep" />
-            <RB title="Bold" shortcut="⌘B" active={editor?.isActive('bold')} onClick={() => editor?.chain().focus().toggleBold().run()}>
+            <RB title="Bold" shortcut="⌘B" active={!!editor?.isActive('bold')} onClick={() => editor?.chain().focus().toggleBold().run()}>
               <b>B</b>
             </RB>
-            <RB title="Italic" shortcut="⌘I" active={editor?.isActive('italic')} onClick={() => editor?.chain().focus().toggleItalic().run()}>
+            <RB title="Italic" shortcut="⌘I" active={!!editor?.isActive('italic')} onClick={() => editor?.chain().focus().toggleItalic().run()}>
               <i>I</i>
             </RB>
-            <RB title="Underline" shortcut="⌘U" active={editor?.isActive('underline')} onClick={() => editor?.chain().focus().toggleUnderline().run()}>
+            <RB title="Underline" shortcut="⌘U" active={!!editor?.isActive('underline')} onClick={() => editor?.chain().focus().toggleUnderline().run()}>
               <span style={{ textDecoration: 'underline' }}>U</span>
             </RB>
-            <RB title="Superscript" shortcut="⌘." active={editor?.isActive('superscript')} onClick={() => editor?.chain().focus().toggleSuperscript().run()}>
+            <RB title="Superscript" shortcut="⌘." active={!!editor?.isActive('superscript')} onClick={() => editor?.chain().focus().toggleSuperscript().run()}>
               <span>
                 x<sup>2</sup>
               </span>
             </RB>
-            <RB title="Subscript" shortcut="⌘," active={editor?.isActive('subscript')} onClick={() => editor?.chain().focus().toggleSubscript().run()}>
+            <RB title="Subscript" shortcut="⌘," active={!!editor?.isActive('subscript')} onClick={() => editor?.chain().focus().toggleSubscript().run()}>
               <span>
                 x<sub>2</sub>
               </span>
             </RB>
-            <RB title="Highlight" active={editor?.isActive('highlight')} onClick={() => editor?.chain().focus().toggleHighlight().run()}>
+            <RB title="Highlight" active={!!editor?.isActive('highlight')} onClick={() => editor?.chain().focus().toggleHighlight().run()}>
               <span className="rse-hl-glyph">ab</span>
             </RB>
             <span className="rse-sep" />
-            <RB title="Bullet list" shortcut="⌘⇧8" active={editor?.isActive('bulletList')} onClick={() => editor?.chain().focus().toggleBulletList().run()}>
+            <RB title="Bullet list" shortcut="⌘⇧8" active={!!editor?.isActive('bulletList')} onClick={() => editor?.chain().focus().toggleBulletList().run()}>
               {I.listBullet}
             </RB>
-            <RB title="Numbered list" shortcut="⌘⇧7" active={editor?.isActive('orderedList')} onClick={() => editor?.chain().focus().toggleOrderedList().run()}>
+            <RB title="Numbered list" shortcut="⌘⇧7" active={!!editor?.isActive('orderedList')} onClick={() => editor?.chain().focus().toggleOrderedList().run()}>
               {I.listOrdered}
             </RB>
             <span className="rse-sep" />
-            <RB title="Align left" active={editor?.isActive({ textAlign: 'left' })} onClick={() => editor?.chain().focus().setTextAlign('left').run()}>
+            <RB title="Align left" active={!!editor?.isActive({ textAlign: 'left' })} onClick={() => editor?.chain().focus().setTextAlign('left').run()}>
               {I.alignLeft}
             </RB>
-            <RB title="Align center" active={editor?.isActive({ textAlign: 'center' })} onClick={() => editor?.chain().focus().setTextAlign('center').run()}>
+            <RB title="Align center" active={!!editor?.isActive({ textAlign: 'center' })} onClick={() => editor?.chain().focus().setTextAlign('center').run()}>
               {I.alignCenter}
             </RB>
-            <RB title="Align right" active={editor?.isActive({ textAlign: 'right' })} onClick={() => editor?.chain().focus().setTextAlign('right').run()}>
+            <RB title="Align right" active={!!editor?.isActive({ textAlign: 'right' })} onClick={() => editor?.chain().focus().setTextAlign('right').run()}>
               {I.alignRight}
             </RB>
             <RB
               title={editor?.isActive('link') ? 'Edit or remove the link' : 'Insert a link'}
-              active={editor?.isActive('link') || linkOpen}
+              active={!!editor?.isActive('link') || linkOpen}
               disabled={
                 !linkOpen &&
                 !editor?.isActive('link') &&
@@ -2099,10 +2135,14 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                 >
                   Split
                 </RB>
-                <RB title="Toggle header row" onClick={() => editor?.chain().focus().toggleHeaderRow().run()}>
+                {/* 2026-09-28 (GA-3): these two ARE toggles, and were never
+                    told their state — so they read "not pressed" with a
+                    header row in place. The state is read from the table the
+                    cursor is in (tableHeaderState). */}
+                <RB title="Toggle header row" active={tableHeaders.row} onClick={() => editor?.chain().focus().toggleHeaderRow().run()}>
                   Hdr
                 </RB>
-                <RB title="Toggle header column" onClick={() => editor?.chain().focus().toggleHeaderColumn().run()}>
+                <RB title="Toggle header column" active={tableHeaders.col} onClick={() => editor?.chain().focus().toggleHeaderColumn().run()}>
                   HdrCol
                 </RB>
                 <RB title="Delete table" onClick={() => editor?.chain().focus().deleteTable().run()}>
