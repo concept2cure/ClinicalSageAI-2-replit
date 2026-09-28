@@ -35,7 +35,7 @@ import { ok, orgRequired, serverError } from '../lib/api-response';
 import { pool } from '../db';
 import { isDevAuthAllowed } from '../auth/dev-auth-policy';
 import { mfaEnrolmentOf } from '../services/mfa-enrolment';
-import { humanizeEventType } from './audit-trail-ledger.routes';
+import { humanizeEventType, linkedSignatures, type LinkedSignature } from './audit-trail-ledger.routes';
 
 const router = Router();
 const log = createScopedLogger('mdx-admin');
@@ -94,6 +94,19 @@ async function facet<T>(name: Facet, sql: string, params: unknown[], unavailable
 /** A display name for an account, never its id. */
 const accountName = (name: string | null, email: string | null): string | null =>
   (name && name.trim()) || (email && email.trim()) || null;
+
+/** What an audit row acted on, named for a reader: an account by its name, this
+ *  organization by its name, anything else by its humanized table. */
+function auditTargetName(
+  a: { table_name: string | null; record_id: string | null; target_name: string | null; target_email: string | null },
+  orgId: number,
+  orgName: string | null,
+): string {
+  const table = (a.table_name ?? '').toLowerCase();
+  if (table === 'user' || table === 'users') return accountName(a.target_name, a.target_email) ?? 'A user account';
+  if ((table === 'organization' || table === 'organizations') && a.record_id === String(orgId) && orgName) return orgName;
+  return a.table_name ? humanizeEventType(a.table_name) : '—';
+}
 
 interface MemberRow {
   user_id: number; name: string | null; email: string | null;
@@ -206,12 +219,13 @@ router.get('/admin', async (req: Request, res: Response) => {
     const auditRows = await facet<{
       id: string; user_id: number | null; action: string; table_name: string | null;
       record_id: string | null; created_at: Date | string; sha256_chain: string | null;
+      new_values: unknown;
       description: string | null; actor_name: string | null; actor_email: string | null;
       target_name: string | null; target_email: string | null;
     }>(
       'audit',
       `SELECT a.id, a.user_id, a.action, a.table_name, a.record_id, a.created_at, a.sha256_chain,
-              a.new_values->>'description' AS description,
+              a.new_values, a.new_values->>'description' AS description,
               ua.name AS actor_name, ua.email AS actor_email,
               ut.name AS target_name, ut.email AS target_email
          FROM audit_logs a
@@ -247,22 +261,26 @@ router.get('/admin', async (req: Request, res: Response) => {
     );
     const scimActive = scimRows.some((s) => s.enabled);
 
+    /* A signed act is named from its signature row, as the audit-trail ledger
+       names it: "Controlled document approved (e-signature)" on C2C-SOP-001
+       v1.0, not "C2c Work Approve" on "Qms Document" (#24). A failed lookup
+       leaves each row's own label — a lower-fidelity name, never a claim. */
+    let signedActs = new Map<string, LinkedSignature>();
+    try {
+      signedActs = await linkedSignatures(pool, orgId, auditRows as unknown as Record<string, unknown>[]);
+    } catch (err: unknown) {
+      log.warn('admin audit band: signature names unavailable', { err: err instanceof Error ? err.message : String(err) });
+    }
+
     const audit = auditRows.map((a) => {
-      const table = (a.table_name ?? '').toLowerCase();
-      const target =
-        table === 'user' || table === 'users'
-          ? accountName(a.target_name, a.target_email) ?? 'A user account'
-          : (table === 'organization' || table === 'organizations') && a.record_id === String(orgId) && org.name
-            ? org.name
-            : a.table_name
-              ? humanizeEventType(a.table_name)
-              : '—';
+      const signed = signedActs.get(String(a.id));
+      const target = auditTargetName(a, orgId, org.name);
       return {
         id: String(a.id),
         when: new Date(a.created_at).toISOString(),
         actor: a.user_id ? accountName(a.actor_name, a.actor_email) ?? 'Unknown account' : 'system',
-        action: (a.description && a.description.trim()) || humanizeEventType(a.action),
-        target,
+        action: signed?.event ?? ((a.description && a.description.trim()) || humanizeEventType(a.action)),
+        target: signed?.subject ?? target,
         sha: a.sha256_chain ? `${a.sha256_chain.slice(0, 4)}…${a.sha256_chain.slice(-4)}` : '',
       };
     });
