@@ -18,4 +18,4 @@ Failing first: protocolDevTabState.test.tsx.
 - Mutants: the outline aria-current removed, or put on every row; each
   caught.
 
-Files: red.txt (before the fix), green.txt (after), mutants.txt.
+Files: red.txt (the committed test against the outline before the fix), green.txt (after, at the merged head), mutants.txt (the two outline mutants, each caught).

@@ -83,8 +83,8 @@ is one defect:
 | SEC-B-1 | An image reference with `..` segments got an authenticated GET to any API route from every viewer | confirmed | **fixed** `ce56754d` (`fixes/SEC-B-1-2/`) |
 | SEC-B-2 / SEC-A-11 | External images fetched from third parties by every viewer; a figure could change after approval | confirmed | **fixed** `ce56754d` (`fixes/SEC-B-1-2/`); export, section create, co-author PUT and batch accept should use the same rule |
 | SEC-C-3 | The budget-parameter upsert let one tenant claim, block or overwrite another's | confirmed | **fixed** `29d80fe9` |
-| SEC-C-4 | Stored text spliced into the chat turn as the user's own words | confirmed; raised from medium | _in progress_ |
-| SEC-C-7 | A signed disposition is shown under a free-text label, not the signer | confirmed; raised from medium | _in progress_ |
+| SEC-C-4 | Stored text spliced into the chat turn as the user's own words | confirmed; raised from medium | **fixed** for the three ProtocolDev buttons, `e8f448d1` (`fixes/SEC-C-4/`). The editor's `askForSource` needs a fenced channel for the selection: open |
+| SEC-C-7 | A signed disposition is shown under a free-text label, not the signer | confirmed; raised from medium | **fixed** `6b442012` (`fixes/SEC-C-7/`) |
 | HS-B-1 | A failed Data Room read is shown as "no sources" | partly confirmed | partly fixed by `59b0d8f9` (GE-H-1: the Sources rail's "Record a source" picker). The rest is handed on, board item 6: the Cite picker, the Vault rail, and citations painted "unresolved" |
 | V-2 | Source mode: text typed during a save was reported saved, and neither saved nor cached | confirmed (found by HS-B-2's verifier) | **fixed** `b43ec3af` (`fixes/SEC-B-3_V-2_P11-B-4_SEC-A-6/`) |
 
@@ -96,13 +96,13 @@ is one defect:
 | P11-B-2 | The editing ribbon is shown, and only refused at the server | confirmed | open |
 | P11-B-3 | The co-author canvas never reflects the document's lock state | confirmed | open, with board item 5 |
 | P11-B-4 | Undo outlives a recorded tracked-change decision | confirmed | **fixed** `b43ec3af` (`fixes/SEC-B-3_V-2_P11-B-4_SEC-A-6/`); a reviewer's own tracked typing can still be undone after accept |
-| P11-C-2 | The §11.50 manifestation is shown once, then nowhere | confirmed | _in progress_ |
+| P11-C-2 | The §11.50 manifestation is shown once, then nowhere | confirmed | **fixed** `fb69b716` (`fixes/P11-C-2/`): header, review rows and the export |
 | P11-C-3 | No audit trail or version history is reachable from the protocol | confirmed | open |
-| P11-C-4 | Finalize and Record disposition offer a signature the server will refuse | confirmed | _in progress_ |
+| P11-C-4 | Finalize and Record disposition offer a signature the server will refuse | confirmed | **fixed**: Finalize `8e72b9bf` (`fixes/P11-C-4-finalize/`), disposition `d848acf3` (`fixes/P11-C-4-disposition/`) |
 | HS-A-1, HS-A-2 | History, Sources and Comments counts go stale after a write | confirmed | handed on, board item 6 |
 | HS-B-2 | The save footer's caching claim is not tied to a cache | confirmed | partly fixed with V-2 (`b43ec3af`): the cache is now kept whenever the buffer is dirty. The footer wording is open |
 | HS-C-1 | An unreadable protocol was shown as "no protocol" or "ready to finalize" | confirmed | **fixed** `670865e9` (`fixes/HS-C-1/`) |
-| HS-C-3 | A malformed derivation read is shown as "everything reconciled" | confirmed | _in progress_ |
+| HS-C-3 | A malformed derivation read is shown as "everything reconciled" | confirmed | **fixed** `146a6382` (`fixes/HS-C-3/`) |
 | SEC-A-4 | Stored text could write itself into AnA's system prompt | confirmed | **fixed** `44a48357` (`fixes/SEC-A-4/`) |
 | SEC-A-5 / SEC-B-6 / SEC-C-6 | The device draft cache outlives sign-out and is keyed by section, not user | confirmed | **fixed** `de430222` (`fixes/SEC-A-5/`): keyed by account, purged at sign-out, no offer on a read-only canvas |
 | SEC-A-9 | Revert commits before its audit row | confirmed | **fixed** by another lane's sweep of the same day, `59b0d8f9` (GE-P-1) |
@@ -111,14 +111,15 @@ is one defect:
 | SEC-C-8 | Six protocol create paths never proved the document was the caller's | reported with SEC-C-3 | **fixed** `29d80fe9` |
 | A-A-1, A-A-2, A-A-4, A-A-5 | Reason field state; Escape closes AnA; 12 px targets; invisible draft dot | confirmed | handed on, board item 6 |
 | A-B-1 | The MDX dossier drawer's save contract loses text on reload | partly confirmed | recorded. The drawer is outside the launch catalog (Rule 2) |
-| A-C-2, A-C-5, A-C-8 | Tab state; SoA cell names; visit-header target size | confirmed | _in progress_ |
+| A-C-2, A-C-5, A-C-8 | Tab state; SoA cell names; visit-header target size | confirmed | **fixed**:<br>• A-C-2: the outline, `88ef5f87`. The tab strip was fixed the same day by another lane's tablist, `780a0639` (GA-2)<br>• A-C-5: `8691cfe8`<br>• A-C-8: `a0bdfbf0` |
 
 ### Lows
 
 Lows were not independently verified; each is in its lens report:
 - A-A-3, A-A-6;
-- A-B-2 through A-B-6 (A-B-2's verifier also found the anchor click path
-  dead for pointer users);
+- A-B-2 through A-B-6. A-B-2's verifier found the anchor click path dead for
+  pointer users as well; A-B-2 and A-B-3 are fixed in `26e0b3a8`
+  (`fixes/A-B-2-3/`);
 - A-C-3, A-C-4, A-C-6, A-C-7, A-C-9 through A-C-12;
 - DS-1, DS-2;
 - HS-A-3, HS-C-2;

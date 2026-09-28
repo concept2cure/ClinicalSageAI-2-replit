@@ -1,29 +1,9 @@
-## M1: tab strip: aria-current removed
-   file: client/src/concept2cure/v2/surfaces/ProtocolDevWorkspace.tsx
-   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx
-   verdict: CAUGHT
-   × client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx > the tab strip exposes the open tab (A-C-2) > marks the open tab, and only that one, as current 567ms
-   × client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx > the tab strip exposes the open tab (A-C-2) > moves the mark when another tab is opened 314ms
-   × client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx > the section outline exposes the open section (A-C-2) > never has more than one current tab and one current section 188ms
-   Test Files  1 failed (1)
-   Tests  3 failed | 1 passed (4)
-
-## M2: tab strip: aria-current set on every tab, not only the open one
-   file: client/src/concept2cure/v2/surfaces/ProtocolDevWorkspace.tsx
-   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx
-   verdict: CAUGHT
-   × client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx > the tab strip exposes the open tab (A-C-2) > marks the open tab, and only that one, as current 571ms
-   × client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx > the tab strip exposes the open tab (A-C-2) > moves the mark when another tab is opened 326ms
-   × client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx > the section outline exposes the open section (A-C-2) > never has more than one current tab and one current section 161ms
-   Test Files  1 failed (1)
-   Tests  3 failed | 1 passed (4)
-
-## M3: outline: aria-current removed
-   file: client/src/concept2cure/v2/surfaces/ProtocolDevPanes.tsx
-   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx
-   verdict: CAUGHT
-   × client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx > the section outline exposes the open section (A-C-2) > marks the open section as current, and moves the mark with the selection 183ms
-   × client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx > the section outline exposes the open section (A-C-2) > never has more than one current tab and one current section 189ms
-   Test Files  1 failed (1)
-   Tests  2 failed | 2 passed (4)
-
+# Mutants of ProtocolDevPanes.tsx against client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx; the file restored after each (git diff --quiet)
+## mutant: outline aria-current removed
+ × the section outline exposes the open section (A-C-2) > marks the open section as current, and moves the mark with the selection 449ms
+ × the section outline exposes the open section (A-C-2) > never has more than one current section, across a tab change 186ms
+      Tests  2 failed (2)
+## mutant: outline aria-current on every row
+ × the section outline exposes the open section (A-C-2) > marks the open section as current, and moves the mark with the selection 657ms
+ × the section outline exposes the open section (A-C-2) > never has more than one current section, across a tab change 131ms
+      Tests  2 failed (2)
