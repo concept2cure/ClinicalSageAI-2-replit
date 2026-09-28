@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-28T11:29:00.904Z",
+  "generatedAt": "2026-09-28T12:06:11.268Z",
   "git": {
-    "sha": "8a74ed559d6e19d45ec86ff05e77ca12f934555c",
+    "sha": "dad9ffa8aebae5f21e8d723f1faa1f2c0a707bc6",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1997,7 +1997,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 252138
+        "bytes": 252512
       },
       {
         "file": "server/statistics-service.ts",
@@ -2187,7 +2187,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 5379
+        "lines": 5384
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2391,7 +2391,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1931
+        "lines": 1932
       },
       {
         "file": "server/routes/c2c/projects.ts",
@@ -2494,6 +2494,10 @@
         "lines": 1787
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "lines": 1775
+      },
+      {
         "file": "server/routes/c2c/project-vault.ts",
         "lines": 1774
       },
@@ -2516,10 +2520,6 @@
       {
         "file": "server/routes/submissions.ts",
         "lines": 1749
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 1731
       },
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
@@ -2558,6 +2558,10 @@
         "lines": 1606
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+        "lines": 1602
+      },
+      {
         "file": "server/services/toxicology/toxicology-knowledge.ts",
         "lines": 1602
       },
@@ -2566,8 +2570,8 @@
         "lines": 1576
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "lines": 1565
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 1572
       },
       {
         "file": "server/services/module3-extensions.ts",
@@ -2575,10 +2579,6 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
-        "lines": 1551
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
         "lines": 1551
       },
       {
