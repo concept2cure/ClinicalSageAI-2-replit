@@ -23,6 +23,7 @@ import type {
 } from '../../shared/types/governed-document-fabric';
 import type { RecommendationType, ActionState, DecisionRecord } from './decision-record-service.js';
 import { domainTrackForCtdSection } from './domain-track.js';
+import { enqueueLedgerWrite, resolveGovernedDecisionRow, projectFilterFor, GOVERNED_FABRIC_CODE_PREFIX } from './governed-decision-ledger.js';
 
 const log = createScopedLogger('governed-decision-repository');
 
@@ -42,15 +43,6 @@ export const GOVERNED_DECISION_REPOSITORY_VERSION = '2.0.0';
 export { GOVERNED_FABRIC_DECISION_KIND as GOVERNED_FABRIC_KIND } from '../../shared/constants/operating-system-vocab';
 import { GOVERNED_FABRIC_DECISION_KIND as GOVERNED_FABRIC_KIND } from '../../shared/constants/operating-system-vocab';
 
-/**
- * The prefix this writer puts on `decision_code`.
- *
- * Not the discriminator — that is the JSONB `kind` above. This exists because
- * `create` lets the database mint the primary key while the caller is handed an
- * id minted here, so `decision_code` is the only column that holds the id every
- * caller actually has. See resolveGovernedDecisionRow.
- */
-const GOVERNED_FABRIC_CODE_PREFIX = 'governed-fabric:';
 
 // ═══════════════════════════════════════════════════════════════════════
 // Types
@@ -173,58 +165,6 @@ export function isValidTransition(from: string, to: GovernedLifecycleState): boo
 
 // ═══════════════════════════════════════════════════════════════════════
 // Recording — DB-first
-// ═══════════════════════════════════════════════════════════════════════
-
-/**
- * Ledger writes run one at a time, and never inside the caller's critical
- * section.
- *
- * ## Why this queue exists
- *
- * These writes used to be free, because they all failed: the row violated two
- * CHECK constraints and PostgreSQL rejected it before touching a page. Making
- * them succeed made them real work, and real work fired unawaited — the
- * evaluator's hot path calls `recordGovernedDecisionSync`, which deliberately
- * does not await — competes for the same 20-connection pool as the request
- * that triggered it.
- *
- * That competition is not theoretical. A Module 3 compile holds a transaction
- * open while it calls `resolveSubmissionSpine`, which reads through the shared
- * pool. With a compile's worth of ledger writes in flight there was no
- * connection left to serve that read, so the compile's transaction sat idle
- * holding its locks, every other writer queued behind it on
- * `Lock/transactionid`, and the 30s `statement_timeout` cancelled them.
- * Measured: the CMC staff simulation went from 118 passed / 0 failed to 114/4,
- * all four cascading from one compile that waited 30.0s on an INSERT into
- * `cmc_module3_sections`.
- *
- * So the ledger gets exactly one connection's worth of concurrency, taken
- * after the current turn of the event loop. A governance record is not worth a
- * millisecond of the transaction it describes, and an audit writer that can
- * starve the thing it audits is a worse failure than a slow one.
- *
- * Failures stay data: they are counted and logged here, exactly as the inline
- * catch did, so `governanceMetrics` remains the honest signal.
- */
-let ledgerQueue: Promise<void> = Promise.resolve();
-
-function enqueueLedgerWrite(write: () => Promise<void>, decisionId: string): Promise<void> {
-  ledgerQueue = ledgerQueue.then(async () => {
-    // Yield first, so the write can never run synchronously inside the
-    // caller's transaction on the same tick.
-    await new Promise<void>(resolve => setTimeout(resolve, 0));
-    try {
-      await write();
-    } catch (err) {
-      governanceMetrics.recordPersistenceFailure('recordGovernedDecision', err);
-      log.warn('Governed decision durable write failed', {
-        decisionId,
-        error: err instanceof Error ? err.message : String(err),
-      });
-    }
-  });
-  return ledgerQueue;
-}
 
 /**
  * Record a governed decision durably. Async, DB-first.
@@ -440,8 +380,6 @@ export async function getRecentGovernedDecisions(options: {
        matched on decision_context.projectRef instead. Filtering the integer
        column with NaN (or with the 0 placeholder) would return nothing, or
        every project's decisions — both of which read as an answer. */
-    const numericProjectId = options.projectId ? Number(options.projectId) : undefined;
-    const projectIsNumeric = numericProjectId !== undefined && Number.isFinite(numericProjectId);
     const records = await decisionRecordService.search({
       // An absent organizationId is NOT "no filter". search() always binds
       // `organization_id = $1`, so undefined becomes `= NULL` and matches no
@@ -454,8 +392,7 @@ export async function getRecentGovernedDecisions(options: {
       // column: Number(uuid) is NaN, which search() reads as "no project
       // filter" and so answers with every project's decisions. It is matched on
       // decision_context->>'projectRef' instead, which the writer stamps.
-      projectId: projectIsNumeric ? numericProjectId : undefined,
-      projectRef: !projectIsNumeric && options.projectId ? String(options.projectId) : undefined,
+      ...projectFilterFor(options.projectId),
       // Discriminate on the JSONB key the writer stamps, not on
       // recommendation_type — that column is CHECK-constrained and cannot carry
       // a fabric-specific literal. See the note at the write site.
@@ -544,27 +481,6 @@ export async function getGovernedDecision(
   }
 }
 
-/**
- * Find the decision_records row a governed-fabric decisionId names.
- *
- * `recordGovernedDecision` mints the decisionId itself and hands it to the
- * caller, but `create` lets the database mint the primary key — so the id
- * every caller holds is stored only in `decision_code`, and a `WHERE id = $1`
- * lookup on it could never match. Resolve by the code first; fall back to the
- * primary key so a row addressed by its real id still resolves.
- */
-async function resolveGovernedDecisionRow(
-  decisionId: string,
-  organizationId: number,
-): Promise<DecisionRecord | null> {
-  const { decisionRecordService } = await import('./decision-record-service.js');
-  const byCode = await decisionRecordService.getByDecisionCode(
-    `${GOVERNED_FABRIC_CODE_PREFIX}${decisionId}`,
-    organizationId,
-  );
-  if (byCode) return byCode;
-  return decisionRecordService.getById(decisionId, organizationId);
-}
 
 // ═══════════════════════════════════════════════════════════════════════
 // Lifecycle Transitions
