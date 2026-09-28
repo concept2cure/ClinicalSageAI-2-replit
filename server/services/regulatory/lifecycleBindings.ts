@@ -65,7 +65,9 @@ export function buildLifecycleBindings(deps: LifecycleBindingDeps): LifecycleBin
         await auditService.logAction({
           organizationId,
           userId: actor,
-          action: `regulated_document.${event.to}`,
+          // A sign-off is recorded at the current stage (from === to; no legal
+          // transition is a self-loop), so it is named as what it is.
+          action: event.from === event.to ? 'regulated_document.signed' : `regulated_document.${event.to}`,
           resourceType: 'canonical_document',
           resourceId: event.documentId,
           details: {

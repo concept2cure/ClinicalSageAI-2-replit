@@ -40,6 +40,11 @@ describe('requiresEsignature (high-impact tier)', () => {
       expect(requiresEsignature(c)).toBe(false); // but reason-only
     }
   });
+  it('requires an e-signature for the GDPR erasure (audit 2026-09-24 DP-08/DP-09, P0-12)', () => {
+    expect(requiresPart11Signoff('erase_personal_data')).toBe(true);
+    expect(requiresEsignature('erase_personal_data')).toBe(true);
+  });
+
   it('the e-sign set is a subset of the governed set', () => {
     for (const c of PART11_ESIGN_COMMANDS) expect(PART11_GOVERNED_COMMANDS.has(c)).toBe(true);
   });

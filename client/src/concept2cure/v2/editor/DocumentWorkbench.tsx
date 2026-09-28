@@ -47,10 +47,13 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { I } from '../icons';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
-import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
-import { AnaWorkPanel } from '../AnaWorkPanel';
+import { useAnaChat } from '../../components/ana/useAnaChat';
+import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
+import { AnaActivity, activityPropsFor } from '../AnaActivity';
+import { AnaGrounding } from '../AnaGrounding';
+import { AnaOutputCards } from '../AnaOutputs';
 import { useAgentActivity } from '../useAgentActivity';
-import { useWorkDockVisible } from '../workDock';
+import { useProgressDock } from '../workDock';
 import { shellProgramName } from '../shellProject';
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
@@ -95,6 +98,7 @@ import {
 import { consumeNavParams } from '../navParams';
 import {
   advertisedScreenActions,
+  listedChoices,
   notifySurfaceActionReady,
   useSurfaceActionHandlers,
 } from '../surfaceActions';
@@ -576,195 +580,6 @@ function AuthoringSignoffs({ signoffs }: { signoffs: PendingSignoff[] }) {
   );
 }
 
-function AnaActivity({
-  message,
-  onSuggestedAction,
-}: {
-  message: AnaChatMessage;
-  onSuggestedAction: (action: string) => void;
-}) {
-  const toolCalls = message.toolCalls ?? [];
-  const evidence = message.evidence;
-  const groundingSources = message.groundingSources ?? [];
-  const warnings = message.warnings ?? [];
-  const suggestedActions = message.suggestedActions ?? [];
-  const hasMeta =
-    message.detectedLens ||
-    message.effortUsed ||
-    message.fallback ||
-    (!message.streaming && message.latencyMs != null) ||
-    message.stopped;
-
-  if (
-    !hasMeta &&
-    toolCalls.length === 0 &&
-    !evidence &&
-    groundingSources.length === 0 &&
-    warnings.length === 0 &&
-    suggestedActions.length === 0
-  ) {
-    return null;
-  }
-
-  return (
-    <div className="ana-activity" aria-label="AnA activity and evidence">
-      {hasMeta && (
-        <div className="ana-meta" aria-label="AnA response details">
-          {message.detectedLens && (
-            <span className="ana-meta-chip">Lens: {message.detectedLens}</span>
-          )}
-          {message.effortUsed && (
-            <span className="ana-meta-chip">Effort: {message.effortUsed}</span>
-          )}
-          {message.fallback && (
-            <span className="ana-meta-chip ana-meta-chip-warn">Fallback provider</span>
-          )}
-          {!message.streaming && message.latencyMs != null && (
-            <span className="ana-meta-chip">
-              Response: {(message.latencyMs / 1000).toFixed(1)}s
-            </span>
-          )}
-          {message.stopped && (
-            <span className="ana-meta-chip ana-meta-chip-warn">Stopped before completion</span>
-          )}
-        </div>
-      )}
-
-      {toolCalls.length > 0 && (
-        <details className="ana-activity-group" open={message.streaming || undefined}>
-          <summary className="ana-activity-summary">
-            <span>{I.workflow} Work log</span>
-            <span className="ana-activity-count">
-              {toolCalls.length} step{toolCalls.length === 1 ? '' : 's'}
-            </span>
-          </summary>
-          <div className="ana-tool-list" role="list">
-            {toolCalls.map((tool, toolIndex) => {
-              const stateLabel =
-                tool.status === 'running'
-                  ? 'Running'
-                  : tool.status === 'error'
-                  ? 'Failed'
-                  : 'Complete';
-              return (
-                <div
-                  key={`${tool.name}-${toolIndex}`}
-                  className="ana-tool"
-                  data-status={tool.status}
-                  role="listitem"
-                >
-                  <span className="ana-tool-state" aria-hidden="true">
-                    {tool.status === 'error'
-                      ? I.alertTriangle
-                      : tool.status === 'running'
-                      ? I.clock
-                      : I.check}
-                  </span>
-                  <span className="ana-tool-label">{tool.label}</span>
-                  <span className="ana-tool-status">{stateLabel}</span>
-                  {tool.round != null && <span className="ana-tool-round">Round {tool.round}</span>}
-                  {tool.result && (
-                    <details className="ana-tool-result">
-                      <summary>View result</summary>
-                      <pre>{tool.result}</pre>
-                    </details>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </details>
-      )}
-
-      {evidence && (
-        <div
-          className="ana-evidence"
-          data-validated={evidence.validated}
-          role="status"
-          aria-live="polite"
-        >
-          <div className="ana-evidence-head">
-            <span>{evidence.validated ? I.shieldCheck : I.alertTriangle}</span>
-            <strong>{evidence.validated ? 'Evidence grounded' : 'Evidence needs review'}</strong>
-          </div>
-          <div className="ana-evidence-summary">
-            {evidence.sourceCount} source{evidence.sourceCount === 1 ? '' : 's'} ·{' '}
-            {evidence.groundedClaims} grounded claim{evidence.groundedClaims === 1 ? '' : 's'} ·{' '}
-            {evidence.weakClaims} weak
-          </div>
-          {evidence.riskSummary && <div className="ana-evidence-risk">{evidence.riskSummary}</div>}
-          {evidence.flaggedClaims && evidence.flaggedClaims.length > 0 && (
-            <details className="ana-flagged-claims">
-              <summary>
-                {evidence.flaggedClaims.length} flagged claim
-                {evidence.flaggedClaims.length === 1 ? '' : 's'}
-              </summary>
-              <ul>
-                {evidence.flaggedClaims.map((claim, claimIndex) => (
-                  <li key={`${claim.kind}-${claimIndex}`}>
-                    <strong>{claim.kind}</strong>: {claim.text}
-                  </li>
-                ))}
-              </ul>
-            </details>
-          )}
-        </div>
-      )}
-
-      {groundingSources.length > 0 && (
-        <details className="ana-activity-group">
-          <summary className="ana-activity-summary">
-            <span>{I.link} Context used</span>
-            <span className="ana-activity-count">{groundingSources.length}</span>
-          </summary>
-          <ul className="ana-context-list">
-            {groundingSources.map(source => (
-              <li key={source}>{source}</li>
-            ))}
-          </ul>
-        </details>
-      )}
-
-      {warnings.map((warning, warningIndex) => (
-        <div
-          key={`${warning}-${warningIndex}`}
-          className="ana-warning"
-          role="status"
-          aria-live="polite"
-        >
-          {I.alertTriangle}
-          <span>{warning}</span>
-        </div>
-      ))}
-
-      {suggestedActions.length > 0 && (
-        <div className="ana-next-actions">
-          <div className="ana-next-label">Next actions</div>
-          <div className="ana-next-list">
-            {suggestedActions.map(action => (
-              <button
-                key={action}
-                type="button"
-                className="ana-next-action"
-                disabled={message.streaming}
-                title={
-                  message.streaming
-                    ? 'Available after AnA finishes this response'
-                    : `Ask AnA: ${action}`
-                }
-                onClick={() => onSuggestedAction(action)}
-              >
-                {I.arrowRight}
-                <span>{action}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function DocumentWorkbench({
   onNav,
   liveDrive,
@@ -979,6 +794,10 @@ export function DocumentWorkbench({
   const [sources, setSources] = useState<SectionSource[]>([]);
   const [sourcesState, setSourcesState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [projectSources, setProjectSources] = useState<ProjectSource[]>([]);
+  /* 2026-09-28 (GE-H-1, coverage-gap sweep): the data room's read state. A
+     failed read set the same [] as an empty data room, and the picker then told
+     the author to add documents to a data room that may already hold them. */
+  const [projectSourcesState, setProjectSourcesState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   /** Citations the last document-wide re-read could NOT refresh, with the
    *  server's reason. Held rather than toasted away: "3 could not be re-read"
    *  is the finding, and a message that fades in four seconds is not where a
@@ -1199,10 +1018,11 @@ export function DocumentWorkbench({
     onDriveEvent: liveDrive?.onDriveEvent,
     onArtifactSaved: liveDrive?.onWorkSaved,
   });
-  /* The live work dock for this pane (AnaWorkPanel): one shared show/hide
-     memory with the rail, and the background queue read only while shown. */
-  const [workDockOpen, setWorkDockOpen] = useWorkDockVisible();
-  const anaWorkQueue = useAgentActivity(workDockOpen, ana.isStreaming);
+  /* AnA's progress panel for this pane: one shared show/hide memory with
+     every other host (workDock.ts), toggled by the chip in the pane header,
+     and the background queue read only while shown. */
+  const dock = useProgressDock();
+  const anaWorkQueue = useAgentActivity(dock.open, ana.isStreaming);
   const anaComposerRef = useRef<HTMLTextAreaElement>(null);
   const anaReturnFocusRef = useRef<HTMLElement | null>(null);
   const anaWasOpenRef = useRef(false);
@@ -1627,12 +1447,13 @@ export function DocumentWorkbench({
       const guarded = authoringGuard() ?? dirtyGuard();
       if (guarded) return guarded;
       const raw = (params.title ?? '').trim();
-      if (!raw) return { ok: false, reason: 'No document named.' };
       // Not-ready, not failed: the bus holds the directive and re-attempts on
       // this surface's ready signal below — the navigate→act gap.
       if (docsState === 'loading')
         return { ok: false, reason: 'The document list is still loading.', retry: true };
       if (docsState === 'error') return { ok: false, reason: 'The document list could not be read.' };
+      const listed = () => listedChoices(docs.map(d => d.title), 'Documents listed');
+      if (!raw) return { ok: false, reason: `No document named.${listed()}` };
       /* The same resolution idiom as the deep-link hand-off above — normalized
          exact, then containment — except that MULTIPLE containment hits are an
          honest refusal here. The legacy inline path silently took the first;
@@ -1645,11 +1466,17 @@ export function DocumentWorkbench({
       if (pool.length === 0) {
         return {
           ok: false,
-          reason: `No document matching "${raw}" in scope (status filter: ${status.replace('_', ' ')}).`,
+          reason: `No document matching "${raw}" in scope (status filter: ${status.replace('_', ' ')}).${listed()}`,
         };
       }
       if (pool.length > 1) {
-        return { ok: false, reason: `"${raw}" matches ${pool.length} documents — name one exactly.` };
+        return {
+          ok: false,
+          reason: `"${raw}" matches ${pool.length} documents — name one exactly.${listedChoices(
+            pool.map(d => d.title),
+            'Matches',
+          )}`,
+        };
       }
       const match = pool[0];
       if (match.id === activeDocId) return { ok: true, detail: 'Already open' };
@@ -1839,12 +1666,16 @@ export function DocumentWorkbench({
     const pid = programId;
     if (!pid) {
       setProjectSources([]);
+      setProjectSourcesState('idle');
       return;
     }
+    setProjectSourcesState('loading');
     const { ok, body } = await readJson<{ sources?: ProjectSource[] }>(
       `/api/c2c/projects/${encodeURIComponent(pid)}/sources`
     );
-    setProjectSources(ok && Array.isArray(body?.sources) ? body!.sources! : []);
+    const read = ok && Array.isArray(body?.sources);
+    setProjectSources(read ? body!.sources! : []);
+    setProjectSourcesState(read ? 'ready' : 'error');
   }, [programId]);
 
   /* ── Recompute the revision ledger server-side ──
@@ -2161,10 +1992,10 @@ export function DocumentWorkbench({
          button's requirement was decorative.
          Refused visibly, never silently: an author who pressed ⌘S and saw
          nothing happen would reasonably conclude their work was saved. */
-      if (!systemReason && !changeReasonRef.current.trim()) {
+      if (!systemReason && changeReasonRef.current.trim().length < 8) {
         fireToast(
-          'Not saved — say why this section changed. It is recorded with the ' +
-            'revision, and the filing keeps it.',
+          'Not saved — say why this section changed, in at least 8 characters. It is ' +
+            'recorded with the revision, and the filing keeps it.',
           'error',
         );
         throw new Error('reason-for-change required');
@@ -3481,7 +3312,7 @@ export function DocumentWorkbench({
                 style={{ height: 30, width: 260 }}
                 value={changeReason}
                 onChange={e => setChangeReason(e.target.value)}
-                placeholder="Why this changed (required to save)"
+                placeholder="Why this changed (at least 8 characters)"
                 aria-label="Reason for change"
                 data-testid="change-reason"
               />
@@ -3490,12 +3321,12 @@ export function DocumentWorkbench({
               className="btn primary"
               style={{ height: 30 }}
               onClick={() => void editorRef.current?.save()}
-              disabled={!dirty || saving || docSealed || !changeReason.trim()}
+              disabled={!dirty || saving || docSealed || changeReason.trim().length < 8}
               title={
                 docSealed
                   ? 'This document is frozen — its content cannot be edited.'
-                  : dirty && !changeReason.trim()
-                    ? 'Say why this section changed — it is recorded with the revision.'
+                  : dirty && changeReason.trim().length < 8
+                    ? 'Say why this section changed, in at least 8 characters — it is recorded with the revision.'
                     : undefined
               }
               data-testid="save-section"
@@ -3927,7 +3758,10 @@ export function DocumentWorkbench({
                     {String(activeDoc?.status).toUpperCase() === 'APPROVED'
                       ? 'This document has been approved and frozen. Its content is part of the signed record and cannot be edited.'
                       : 'This document is frozen. Its content is sealed under a content hash and cannot be edited.'}{' '}
-                    Create a new version to make further changes.
+                    {/* 2026-09-28 (GE-P-2, coverage-gap sweep): this said "Create a new
+                        version to make further changes" — a capability nothing provides.
+                        The remedy that exists is a new document; this one stays the record. */}
+                    To make further changes, start a new document in Authoring; this one remains the record.
                   </div>
                 )}
                 {/* Above the canvas, at reading width: the accept decision is
@@ -3953,7 +3787,7 @@ export function DocumentWorkbench({
                   style={{
                     minHeight: 460,
                     border: '1px solid var(--border)',
-                    borderRadius: 10,
+                    borderRadius: 'var(--radius-lg)',
                     overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column',
@@ -4127,16 +3961,14 @@ export function DocumentWorkbench({
                 : ''}
             </span>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <button
-                type="button"
-                className="ana-work-toggle"
-                aria-pressed={workDockOpen}
-                aria-label={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
-                title={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
-                onClick={() => setWorkDockOpen(!workDockOpen)}
-              >
-                {I.activity} AnA at work
-              </button>
+              <AnaProgressChip
+                ref={dock.chipRef}
+                messages={ana.messages}
+                streaming={ana.isStreaming}
+                open={dock.open}
+                onToggle={dock.toggle}
+                controls={dock.panelId}
+              />
               <button
                 type="button"
                 className="ed-comments-close"
@@ -4148,13 +3980,12 @@ export function DocumentWorkbench({
               </button>
             </span>
           </div>
-          {/* The live work dock — the same one the shell rail mounts. ABOVE
-              the log below, deliberately: that region is aria-live, and a
-              clock ticking inside a live region would be read out every
-              second. */}
-          {workDockOpen && (
+          {/* AnA's progress — the same panel the shell rail mounts — above the
+              conversation, so the work is seen before the words. */}
+          {dock.open && (
             <div className="ana-work-host">
               <AnaWorkPanel
+                id={dock.panelId}
                 messages={ana.messages}
                 streaming={ana.isStreaming}
                 runStatus={ana.runStatus}
@@ -4172,13 +4003,17 @@ export function DocumentWorkbench({
               />
             </div>
           )}
+          {/* A labelled region, NOT a live one. As a polite `log` marked busy
+              while streaming, it made the whole transcript a live region and
+              held every announcement inside it until the turn ended — the
+              per-turn record's own polite region (AnaActivity) included, so
+              "Searching the literature…" was never heard while it happened.
+              Status is announced by that narrow region alone, the same
+              arrangement as the rail (Shell.tsx). */}
           <div
             ref={anaScrollRef}
-            role="log"
+            role="region"
             aria-label="AnA conversation"
-            aria-live="polite"
-            aria-relevant="additions text"
-            aria-busy={ana.isStreaming}
             style={{
               flex: 1,
               minHeight: 0,
@@ -4213,18 +4048,50 @@ export function DocumentWorkbench({
                     <div className="cmt-meta">
                       <b>AnA</b>
                     </div>
-                    {/* Until the first token lands the server's status phase
-                        stands in — never an invented sentence. The phase is a
-                        server-authored label, not a document, so it is not put
-                        through the markdown path. */}
-                    {m.text ? (
-                      <AnaMarkdown text={m.text} />
-                    ) : (
-                      <div className="cmt-body">
-                        {m.streaming ? m.statusPhase || 'Thinking…' : ''}
+                    {/* Her work first — while she works, its live phase is the
+                        waiting state, so this pane no longer prints the same
+                        phase a second time under it — then the answer. */}
+                    <AnaActivity {...activityPropsFor(m)} />
+                    {m.text && <AnaMarkdown text={m.text} />}
+                    {/* The grounding verdict and her output — with the record
+                        above, the same three every host renders. This pane had
+                        its own copy of the record, which showed the raw tool
+                        payload and a raw lens code, and listed prompt-module
+                        ids as "Context used". */}
+                    <AnaGrounding evidence={m.evidence} />
+                    {Array.isArray(m.warnings) && m.warnings.length > 0 && (
+                      <div className="ana-msg-warnings" role="note">
+                        {m.warnings.map((w, wi) => (
+                          <div key={wi} className="ana-msg-warning">
+                            <span className="ana-msg-warning-ic" aria-hidden="true">{I.alertTriangle}</span>
+                            <span>{w}</span>
+                          </div>
+                        ))}
                       </div>
                     )}
-                    <AnaActivity message={m} onSuggestedAction={askAna} />
+                    <AnaOutputCards message={m} />
+                    {(m.suggestedActions ?? []).length > 0 && (
+                      <div className="ana-next-actions">
+                        <div className="ana-next-label">Next actions</div>
+                        <div className="ana-next-list">
+                          {(m.suggestedActions ?? []).map((action) => (
+                            <button
+                              key={action}
+                              type="button"
+                              className="ana-next-action"
+                              disabled={m.streaming}
+                              title={
+                                m.streaming ? 'Available after AnA finishes this response' : `Ask AnA: ${action}`
+                              }
+                              onClick={() => askAna(action)}
+                            >
+                              {I.arrowRight}
+                              <span>{action}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     {/* AI output enters the record ONLY as an attributed
                         in-text suggestion — struck-in green, pending until a
                         human accepts or rejects each edit in the canvas.
@@ -4423,6 +4290,8 @@ export function DocumentWorkbench({
                     className="nda-open"
                     style={{ marginLeft: 'auto' }}
                     onClick={() => revert(r.id)}
+                    disabled={docSealed}
+                    title={docSealed ? 'This document is frozen — its content cannot be reverted.' : undefined}
                   >
                     {I.rotateCcw} Revert
                   </button>
@@ -4674,6 +4543,21 @@ export function DocumentWorkbench({
                   >
                     {I.plus} Record a source
                   </button>
+                ) : projectSourcesState === 'error' ? (
+                  <div role="alert" style={{ fontSize: 12 }}>
+                    The project’s data room could not be read, so no sources are listed. This is
+                    not the same as the data room being empty.
+                    <button className="nda-open" style={{ marginLeft: 8 }} onClick={() => void loadProjectSources()}>
+                      Retry
+                    </button>
+                    <button className="nda-open" style={{ marginLeft: 8 }} onClick={() => setPicking(false)}>
+                      Close
+                    </button>
+                  </div>
+                ) : projectSourcesState === 'loading' ? (
+                  <div role="status" style={{ fontSize: 12, opacity: 0.8 }}>
+                    Reading the project’s data room…
+                  </div>
                 ) : projectSources.length === 0 ? (
                   <div style={{ fontSize: 12, opacity: 0.8 }}>
                     No project sources available. Add documents to the project’s data room first, or

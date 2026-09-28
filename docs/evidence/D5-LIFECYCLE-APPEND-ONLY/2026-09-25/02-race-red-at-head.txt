@@ -1,0 +1,12 @@
+== HEAD application code, guard ENABLED
+ × tests/db/canonical-documents-append-only.dbtest.ts > two transitions on one document (real PostgreSQL) > are serialized: one is recorded, the other is refused by the gate before any effect runs 62ms
+   → expected [ 200, 500 ] to deeply equal [ 200, 409 ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 200, 500 ] to deeply equal [ 200, 409 ]
+      Tests  1 failed | 1 skipped (2)
+== HEAD application code, guard DISABLED (the state before VR-03)
+ × tests/db/canonical-documents-append-only.dbtest.ts > two transitions on one document (real PostgreSQL) > are serialized: one is recorded, the other is refused by the gate before any effect runs 59ms
+   → expected [ 200, 200 ] to deeply equal [ 200, 409 ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 200, 200 ] to deeply equal [ 200, 409 ]
+      Tests  1 failed | 1 skipped (2)

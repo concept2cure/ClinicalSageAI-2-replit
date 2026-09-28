@@ -1,0 +1,39 @@
+{
+  "method": "tests/validation/lib/qms-digest.mjs — re-implementation of server/services/qms/document-approval-signature.ts computeQmsDocumentContentDigest (canonical JSON: sorted keys, undefined→null, Date→ISO; sha256 hex)",
+  "digestInput": {
+    "kind": "qms-document-version-content",
+    "id": 1,
+    "organizationId": 1,
+    "docNumber": "SOP-OQ-20260923163039",
+    "version": "1.0",
+    "title": "OQ-006 Document control SOP 20260923163039",
+    "docType": "sop",
+    "category": "validation",
+    "artifactId": null,
+    "nextReviewDate": "2026-10-03",
+    "metadata": {}
+  },
+  "recomputed": "9017ac7ee18ff9c3bd50cfa514e008ed4518becd632f17fbfdad7c98ff8a1036",
+  "reportedBySignature": "9017ac7ee18ff9c3bd50cfa514e008ed4518becd632f17fbfdad7c98ff8a1036",
+  "storedOnDocument": "9017ac7ee18ff9c3bd50cfa514e008ed4518becd632f17fbfdad7c98ff8a1036",
+  "match": true,
+  "signatureRow": {
+    "id": 2,
+    "document_id": null,
+    "version_id": null,
+    "signed_target": "qms-document:1",
+    "signature_type": "qms-document-approval",
+    "signature_purpose": "OQ-006 step 05: SOP approved for validation (signed)",
+    "signer_id": 2,
+    "signer_name": "OQ Second Signer",
+    "signer_title": "Chief Science Officer",
+    "signer_email": "oq-signer@validation.local",
+    "signature_meaning": "APPROVED",
+    "signature_hash": "dcb66b47eaaec25557dc2b591c943e1541754b19c71bb05b9b9fff3174ce8f10",
+    "binding_basis": "qms-document-version-content-sha256",
+    "second_factor_verified": true,
+    "is_valid": true,
+    "signed_at": "2026-09-23T16:30:42.993Z",
+    "ip_address": "127.0.0.1"
+  }
+}

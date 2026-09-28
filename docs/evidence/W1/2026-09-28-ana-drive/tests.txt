@@ -1,0 +1,8 @@
+Regression sweep — before the merge (a75e3845), 2026-09-28
+ Test Files  539 passed | 1 skipped (540)
+      Tests  6873 passed | 3 skipped (6876)
+
+Regression sweep — the merged tree, 2026-09-28
+npx vitest run --config vitest.config.ts server/services/ana/__tests__ server/services/ana-ri/__tests__ server/routes/ana-ri/__tests__ server/services/ai-gateway server/routes/chat server/routes/__tests__/chat-path-parity.test.ts client/src/concept2cure/v2/__tests__ client/src/concept2cure/components/ana/__tests__
+ Test Files  593 passed | 1 skipped (594)
+      Tests  7454 passed | 3 skipped (7457)

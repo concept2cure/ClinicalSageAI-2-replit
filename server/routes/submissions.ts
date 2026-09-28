@@ -23,6 +23,7 @@ import {
   createAuditedUnplacedExport,
 } from '../services/export/governedExportConsequence';
 import { createRateLimiter } from '../middleware/rateLimiter';
+import { GATEWAY_ERROR_HTTP_STATUS } from '../services/ai-gateway/gateway-error-map';
 import {
   createSubmission,
   listSubmissions,
@@ -33,6 +34,7 @@ import {
   listLeaves,
   upsertLeaf,
   removeLeaf,
+  SUBMISSION_ERROR_STATUS,
 } from '../services/submission-service/submission-service';
 import {
   isPlaceableDocumentTable,
@@ -50,6 +52,7 @@ import {
   runConsistencyCheck,
   listConsistencyFindings,
 } from '../services/truth-engine/truth-engine-service';
+import { setAuditRowHeaders } from '../services/audit/audit-write-outcome';
 import {
   runShadowReview,
   listShadowReviewRuns,
@@ -57,6 +60,7 @@ import {
 } from '../services/shadow-review/shadow-review-service';
 import { generateSection } from '../services/authoring/section-generation-service';
 import { createScopedLogger } from '../utils/logger.js';
+import { requireGovernedReason } from './governed-reason';
 
 const logger = createScopedLogger('submissions-routes');
 const router = Router();
@@ -81,18 +85,11 @@ function ctxOf(req: Request): Ctx | null {
 }
 
 const CODE_STATUS: Record<string, number> = {
-  NOT_FOUND: 404,
-  INVALID_STATE: 409,
-  GOVERNED_REQUIRED: 403,
-  DISPATCH_BLOCKED: 422,
+  ...SUBMISSION_ERROR_STATUS,
   NO_AUTHORED_CONTENT: 422,
-  FORBIDDEN: 403,
-  VALIDATION: 400,
-  RATE_LIMITED: 429,
-  OVERLOADED: 503,
-  TOKEN_LIMIT_EXCEEDED: 413,
-  INVALID_AI_RESPONSE: 502,
-  PROVIDER_UNAVAILABLE: 503,
+  // The gateway's own table, not a copy: a copy missed PLACEMENT_REFUSED (a
+  // tenant placement refusal, 403) and answered it as a 500 (D6).
+  ...GATEWAY_ERROR_HTTP_STATUS,
 };
 
 function fail(res: Response, err: unknown): void {
@@ -167,6 +164,13 @@ const idParam = (v: string | string[] | undefined) => {
 
 // ── Schemas ───────────────────────────────────────────────────────────────
 const createSubmissionSchema = z.object({
+  /* The project this submission belongs to (regulatory_programs.id). Required:
+     every chain of governed records starts at a project, and a submission with
+     none reaches its project only by a name match (LX-22). Without the field
+     here the plain z.object stripped the id the Submission Center form had made
+     the user pick. Tenancy is checked by createSubmission (404 for another
+     organization's project), not here. */
+  programId: z.string().uuid(),
   title: z.string().min(1).max(500),
   productName: z.string().max(500).optional(),
   applicationType: z.string().min(1).max(64),
@@ -934,8 +938,16 @@ router.put('/sequences/:seqId/leaves', limiter, requireRole(AUTHOR), async (req,
   if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
   const parsed = upsertLeafSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  /* A placement decides what content goes into a regulator-facing sequence.
+     Its audit row recorded what changed and never why: no dialog asked and the
+     schema had no field (PX-1, docs/evidence/reviews/2026-09-24/lenses.md). The
+     person placing it now gives the reason, and it is recorded, never replaced. */
+  const reason = requireGovernedReason(req.body?.reason);
+  if (!reason.ok) {
+    return res.status(400).json({ error: { code: 'REASON_REQUIRED', message: reason.error }, field: 'reason' });
+  }
   try {
-    res.json(await upsertLeaf({ sequenceId: seqId, ...parsed.data }, ctx));
+    res.json(await upsertLeaf({ sequenceId: seqId, ...parsed.data, reason: reason.reason }, ctx));
   } catch (err) {
     fail(res, err);
   }
@@ -966,10 +978,7 @@ router.delete('/sequences/:seqId/leaves/:leafId', limiter, requireRole(AUTHOR), 
        proxy, which forwards an upstream body verbatim and therefore also reports
        through headers. */
     const removal = await removeLeaf(leafId, seqId, ctx);
-    res.set('X-Audit-Row-Persisted', String(removal.auditTrail.persisted));
-    if (!removal.auditTrail.persisted) {
-      res.set('X-Audit-Row-Code', removal.auditTrail.code);
-    }
+    setAuditRowHeaders(res, removal.auditTrail);
     res.status(204).end();
   } catch (err) {
     fail(res, err);
@@ -1108,7 +1117,11 @@ router.post('/:id/consistency', limiter, requireRole(AUTHOR), async (req, res) =
   const parsed = consistencySchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   try {
-    res.json(await runConsistencyCheck({ submissionId: id, ...parsed.data }, ctx));
+    // The body stays the findings array the Submission Center reads; the check's
+    // §11.10(e) row is reported in the header pair, as the leaf removal above does.
+    const { findings, auditTrail } = await runConsistencyCheck({ submissionId: id, ...parsed.data }, ctx);
+    setAuditRowHeaders(res, auditTrail);
+    res.json(findings);
   } catch (err) {
     fail(res, err);
   }
@@ -1589,8 +1602,9 @@ router.post('/sequences/:seqId/assemble', limiter, requireRole(AUTHOR), async (r
   if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
   const parsed = assembleSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  const assembly = await import('../services/ectd/assemble-from-core');
   try {
-    const { assembleSequence, assembledTransmitBlockers } = await import('../services/ectd/assemble-from-core');
+    const { assembleSequence, assembledTransmitBlockers } = assembly;
     const result = await assembleSequence({
       sequenceId: seqId,
       organizationId: ctx.organizationId,
@@ -1618,8 +1632,20 @@ router.post('/sequences/:seqId/assemble', limiter, requireRole(AUTHOR), async (r
       unfinalized: result.unfinalized,
       unfinalizedSections: result.unfinalizedSections,
       transmitBlockers: assembledTransmitBlockers(result),
+      // What happened to the ECTD_ASSEMBLE row (§11.10(e)): an assembly that
+      // went unrecorded says so here, not only in a server log.
+      auditTrail: result.auditTrail,
     });
   } catch (err) {
+    // A refused assembly is a refusal, not an outage. It carries no `code`, so
+    // fail() answered it 500 "Request failed." and dropped the ECTD_ASSEMBLE_BLOCKED
+    // row's outcome, which IS the record that the refusal happened.
+    if (err instanceof assembly.EctdAssemblyBlockedError) {
+      return res.status(422).json({
+        error: { code: 'ECTD_ASSEMBLE_BLOCKED', message: err.message },
+        auditTrail: err.auditTrail,
+      });
+    }
     fail(res, err);
   }
 });

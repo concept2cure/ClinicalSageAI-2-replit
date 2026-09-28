@@ -1,3 +1,9 @@
+-- 2026-09-25 AMENDED IN PLACE (W2 / D1, docs/evidence/W2/2026-09-25-replay-rebuilds-nothing/):
+-- submission_orchestrator_runs_region_check is now replaced only when the live definition
+-- (pg_get_constraintdef) differs from the one below. Unconditional, every deploy dropped
+-- and re-added it — a full validation scan under lock (ACCESS EXCLUSIVE for a CHECK;
+-- writes blocked on child and parent for a FOREIGN KEY) while the application served.
+-- The definitions are unchanged. Pinned by npm run ci:replay-rebuilds-nothing.
 -- ============================================================================
 -- Reconciliation Move 7 — align orchestrator region CHECK with route Zod
 -- ============================================================================
@@ -75,15 +81,27 @@
 
 BEGIN;
 
-ALTER TABLE IF EXISTS submission_orchestrator_runs
-  DROP CONSTRAINT IF EXISTS submission_orchestrator_runs_region_check;
+-- Replaced only when the live definition differs (2026-09-25, see the header):
+-- unconditionally, every deploy re-validated it under lock while the app served.
+DO $keep_check$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+     WHERE conrelid = to_regclass('public.submission_orchestrator_runs') AND conname = 'submission_orchestrator_runs_region_check'
+       AND pg_get_constraintdef(oid) = $def$CHECK ((region = ANY (ARRAY['US'::text, 'EU'::text, 'JP'::text, 'CA'::text, 'UK'::text, 'CN'::text, 'AU'::text, 'CH'::text, 'BR'::text, 'IN'::text, 'KR'::text, 'SG'::text, 'GLOBAL'::text])))$def$
+  ) THEN
+    ALTER TABLE IF EXISTS submission_orchestrator_runs
+      DROP CONSTRAINT IF EXISTS submission_orchestrator_runs_region_check;
 
-ALTER TABLE IF EXISTS submission_orchestrator_runs
-  ADD CONSTRAINT submission_orchestrator_runs_region_check
-  CHECK (region IN (
-    'US', 'EU', 'JP', 'CA', 'UK', 'CN',
-    'AU', 'CH', 'BR', 'IN', 'KR', 'SG', 'GLOBAL'
-  )) NOT VALID;
+    ALTER TABLE IF EXISTS submission_orchestrator_runs
+      ADD CONSTRAINT submission_orchestrator_runs_region_check
+      CHECK (region IN (
+        'US', 'EU', 'JP', 'CA', 'UK', 'CN',
+        'AU', 'CH', 'BR', 'IN', 'KR', 'SG', 'GLOBAL'
+      )) NOT VALID;
+  END IF;
+END
+$keep_check$;
 
 DO $region_validate$
 BEGIN

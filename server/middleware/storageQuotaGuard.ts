@@ -58,6 +58,7 @@ import {
 } from '../services/tenant/tenant-storage';
 import { isLifecycleCarveOut } from './tenantLifecycleGuard';
 import { tenantQuotaDecisions } from './tenantLifecycleMetrics';
+import { requestFullPath } from './request-path';
 
 const logger = createScopedLogger('storage-quota-guard');
 
@@ -111,10 +112,6 @@ function resolveOrganizationId(req: Request): number | null {
   if (typeof str !== 'string' || !/^[1-9]\d*$/.test(str)) return null;
   const n = Number(str);
   return Number.isSafeInteger(n) ? n : null;
-}
-
-function fullPath(req: Request): string {
-  return `${req.baseUrl || ''}${req.path || ''}`;
 }
 
 /**
@@ -182,7 +179,7 @@ export function enforceStorageQuota(req: Request, res: Response, next: NextFunct
   // The paths that must stay reachable when a tenant is suspended must stay
   // reachable when it is out of space, for the same reason: billing and data
   // export are how a customer gets OUT of the state.
-  if (isLifecycleCarveOut(fullPath(req))) {
+  if (isLifecycleCarveOut(requestFullPath(req))) {
     next();
     return;
   }
@@ -214,7 +211,7 @@ export function enforceStorageQuota(req: Request, res: Response, next: NextFunct
       tenantQuotaDecisions.inc({ resource: 'storage', outcome: 'unverified' });
       logger.warn('Storage quota could not be evaluated; allowing the request', {
         organizationId,
-        path: fullPath(req),
+        path: requestFullPath(req),
         error: error instanceof Error ? error.message : String(error),
       });
       next();
@@ -239,7 +236,7 @@ export function enforceStorageQuota(req: Request, res: Response, next: NextFunct
       tenantQuotaDecisions.inc({ resource: 'storage', outcome: 'allowed' });
       logger.warn('Storage quota exceeded (report mode — not blocking)', {
         organizationId,
-        path: fullPath(req),
+        path: requestFullPath(req),
         usedBytes: decision.usedBytes,
         limitBytes: decision.limitBytes,
         incomingBytes,
@@ -252,7 +249,7 @@ export function enforceStorageQuota(req: Request, res: Response, next: NextFunct
     tenantQuotaDecisions.inc({ resource: 'storage', outcome: 'denied' });
     logger.warn('Storage quota exceeded — refusing upload', {
       organizationId,
-      path: fullPath(req),
+      path: requestFullPath(req),
       usedBytes: decision.usedBytes,
       limitBytes: decision.limitBytes,
       incomingBytes,

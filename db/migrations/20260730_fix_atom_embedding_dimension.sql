@@ -1,6 +1,17 @@
 -- ═══════════════════════════════════════════════════════════════════════════
 -- MIGRATION: Reconcile lumen_data_atoms embeddings onto 1536 dimensions
 -- Date: 2026-07-30
+--
+-- AMENDED IN PLACE 2026-09-24 (row D4, docs/evidence/D4/2026-09-24-atom-search/;
+-- CLAUDE.md Rule 1: this file re-runs on every deploy, so the fix is here, not
+-- in an appended migration). Both search functions failed on every call on a
+-- database built from empty: they declare `structured_data JSONB` and selected
+-- the column, which is `json` (0000_sweet_joseph.sql), and the hybrid function
+-- returned ts_rank_cd's `real` as `keyword_score FLOAT`. Casts added. The
+-- hybrid function also takes `filter_atom_ids`, so a caller's org or project
+-- filter restricts the candidates BEFORE they are ranked and limited; filtering
+-- its top `match_count` afterwards crowded a project's own atoms out. Its DROP
+-- now names both signatures, so the re-run replaces the 7-argument version.
 -- Audit: docs/architecture/CLINICAL_REGULATORY_EVIDENCE_INTEGRATION_AUDIT.md (P0c)
 -- ═══════════════════════════════════════════════════════════════════════════
 --
@@ -107,7 +118,7 @@ BEGIN
         a.atom_type,
         a.title,
         a.content,
-        a.structured_data,
+        a.structured_data::jsonb,
         a.tags,
         1 - (a.embedding <=> query_embedding) AS similarity
     FROM lumen_data_atoms a
@@ -123,13 +134,17 @@ END;
 $$;
 
 DROP FUNCTION IF EXISTS search_atoms_hybrid(text, vector, float, float, integer, text);
+DROP FUNCTION IF EXISTS search_atoms_hybrid(text, vector, float, float, integer, text, integer[]);
 CREATE FUNCTION search_atoms_hybrid(
     query_text TEXT,
     query_embedding vector(1536),
     semantic_weight FLOAT DEFAULT 0.7,
     keyword_weight FLOAT DEFAULT 0.3,
     match_count INTEGER DEFAULT 10,
-    filter_atom_type TEXT DEFAULT NULL
+    filter_atom_type TEXT DEFAULT NULL,
+    -- NULL: no restriction. An EMPTY array restricts to nothing, which is what
+    -- a caller filtering to an org or project with no atoms must get.
+    filter_atom_ids INTEGER[] DEFAULT NULL
 )
 RETURNS TABLE (
     id INTEGER,
@@ -151,6 +166,7 @@ BEGIN
         WHERE a.embedding IS NOT NULL
           AND a.status = 'active'
           AND (filter_atom_type IS NULL OR a.atom_type = filter_atom_type)
+          AND (filter_atom_ids IS NULL OR a.id = ANY(filter_atom_ids))
         ORDER BY a.embedding <=> query_embedding
         LIMIT match_count * 3
     ),
@@ -163,6 +179,7 @@ BEGIN
         FROM lumen_data_atoms a
         WHERE a.status = 'active'
           AND (filter_atom_type IS NULL OR a.atom_type = filter_atom_type)
+          AND (filter_atom_ids IS NULL OR a.id = ANY(filter_atom_ids))
           AND to_tsvector('english', COALESCE(a.title, '') || ' ' || COALESCE(a.content, ''))
               @@ plainto_tsquery('english', query_text)
         LIMIT match_count * 3
@@ -170,7 +187,7 @@ BEGIN
     combined AS (
         SELECT COALESCE(s.id, k.id) AS id,
                COALESCE(s.score, 0) AS sem_score,
-               COALESCE(k.score, 0) AS kw_score,
+               COALESCE(k.score, 0)::float8 AS kw_score,
                (COALESCE(s.score, 0) * semantic_weight) +
                (COALESCE(k.score, 0) * keyword_weight) AS combined
         FROM semantic_results s
@@ -181,7 +198,7 @@ BEGIN
         a.atom_type,
         a.title,
         a.content,
-        a.structured_data,
+        a.structured_data::jsonb,
         a.tags,
         c.sem_score AS semantic_score,
         c.kw_score AS keyword_score,

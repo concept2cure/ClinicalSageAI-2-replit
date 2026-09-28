@@ -120,7 +120,7 @@ describe('capture the AnA work record', () => {
     const { container } = render(
       <div className="c2c-v2">
         <div className="ana-body">
-          <div className="ana-msg ana">{node}</div>
+          <div className="ana-msg is-ana">{node}</div>
         </div>
       </div>,
     );

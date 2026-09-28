@@ -406,8 +406,8 @@ export async function buildAnAContext(params: {
       ? buildClientIntelligenceContext(organizationId).catch(() => null)
       : Promise.resolve(null),
     // Project Intelligence Memory — deep knowledge specific to the active project
-    projectId
-      ? buildProjectIntelligenceContext(projectId).catch(() => null)
+    projectId && organizationId
+      ? buildProjectIntelligenceContext(projectId, organizationId).catch(() => null)
       : Promise.resolve(null),
     // AnA Intelligence Context (CLAUDE.md Memory Compression Model)
     // User.md (personal overrides) + Capabilities + Wisdom + Scoped Rules

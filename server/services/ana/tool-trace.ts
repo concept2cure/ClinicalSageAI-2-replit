@@ -16,6 +16,7 @@
  */
 
 import type { HumanControlEvent } from './run-status.js';
+import type { TurnPlanStep } from './turn-plan.js';
 
 export interface ToolTraceEntry {
   tool: string;
@@ -30,6 +31,25 @@ export interface ToolTraceEntry {
 function truncate(s: string, max: number): string {
   const t = s.replace(/\s+/g, ' ').trim();
   return t.length > max ? t.slice(0, max - 1) + '…' : t;
+}
+
+/**
+ * The refusal a handler returned instead of throwing: a JSON object whose own
+ * top-level `error` is a non-empty string. Handlers across the tool set say "I
+ * could not do this" that way (`{ error: 'needs an open project …' }`), and a
+ * step that did not happen must not be reported — or drawn with a check mark —
+ * as one that did. Anything else, including a non-JSON result, is null.
+ */
+export function refusalOf(resultContent: string): string | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(resultContent);
+  } catch {
+    return null;
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+  const error = (parsed as { error?: unknown }).error;
+  return typeof error === 'string' && error.trim() ? error.trim() : null;
 }
 
 /**
@@ -174,6 +194,12 @@ export interface AssistantMessageMetadata {
    * the auditable decision lineage and shows in the document dossier.
    */
   humanControls?: HumanControlEvent[];
+  /**
+   * The plan AnA last declared this turn (`update_plan`, turn-plan.ts), as the
+   * server validated it. Persisted so a reopened thread still shows the plan
+   * and its count; only the final list is kept, not when each step changed.
+   */
+  plan?: TurnPlanStep[];
 }
 
 /** Cap on persisted reasoning so a pathological turn can't bloat a message row. */
@@ -191,6 +217,7 @@ export function buildAssistantMetadata(
   grounding: GroundingSummary | null,
   reasoning?: string | null,
   humanControls?: HumanControlEvent[] | null,
+  plan?: TurnPlanStep[] | null,
 ): AssistantMessageMetadata | undefined {
   const meta: AssistantMessageMetadata = {};
   if (toolTrace.length > 0) meta.toolTrace = toolTrace;
@@ -209,5 +236,6 @@ export function buildAssistantMetadata(
         : trimmedReasoning;
   }
   if (humanControls && humanControls.length > 0) meta.humanControls = humanControls;
+  if (plan && plan.length > 0) meta.plan = plan;
   return Object.keys(meta).length > 0 ? meta : undefined;
 }

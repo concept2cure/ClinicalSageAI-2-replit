@@ -1,0 +1,40 @@
+# with .gitleaks.toml (default rules + the two repository rules + allowlists), no .gitleaksignore
+$ gitleaks git --config .gitleaks.toml .   # exit 1
+findings: 34
+by rule: generic-api-key 9, c2c-neon-password 6, curl-auth-header 6, c2c-connection-uri-password 5, jwt 4, private-key 2, huggingface-access-token 2
+findings on the neondb_owner credential (INF-22): 11
+(secrets not reproduced; fingerprints only)
+  016c5cdefe5c3a75a1b94374c60f15f0a630a8c1:tests/export-contract/csv-export.proof.test.ts:generic-api-key:33
+  26712c12f845e72afa24fcf0d0704ec7b47bd545:tests/golden-journeys/submission-release-signature.journey.test.ts:generic-api-key:66
+  27a8c3db9aa24118e67135b1e667f24549e06832:docs/audit-2026-07/evidence/08-secret-scan.json:private-key:8
+  2bce6570d22dbc5a8d751dadb0ab4ca23e49230e:scripts/ci/check-committed-secrets.mjs:private-key:75
+  34485cf0cda8b41455efdd823984aeebefaef97e:docs/api/product-audit-quick-reference.md:curl-auth-header:20
+  34485cf0cda8b41455efdd823984aeebefaef97e:docs/api/product-audit-quick-reference.md:curl-auth-header:47
+  3dd066ed5ab3b5cbe72228c4476780036889ff41:.claude/skills/gstack/supabase/config.sh:generic-api-key:8
+  3e1dcf8f018fbb18d6555c97d81b0d6090f069e5:client/src/lib/public-env.ts:jwt:7
+  3e1dcf8f018fbb18d6555c97d81b0d6090f069e5:client/src/pages/ApiDocumentation.tsx:curl-auth-header:237
+  3e1dcf8f018fbb18d6555c97d81b0d6090f069e5:client/src/pages/ApiDocumentation.tsx:curl-auth-header:248
+  3e1dcf8f018fbb18d6555c97d81b0d6090f069e5:client/src/pages/VaultMarketingPage.jsx:jwt:32
+  3e1dcf8f018fbb18d6555c97d81b0d6090f069e5:src/lib/public-env.ts:jwt:7
+  3e1dcf8f018fbb18d6555c97d81b0d6090f069e5:src/pages/ApiDocumentation.tsx:curl-auth-header:237
+  3e1dcf8f018fbb18d6555c97d81b0d6090f069e5:src/pages/ApiDocumentation.tsx:curl-auth-header:248
+  3e1dcf8f018fbb18d6555c97d81b0d6090f069e5:src/pages/VaultMarketingPage.jsx:jwt:32
+  3e1dcf8f018fbb18d6555c97d81b0d6090f069e5:test-api-key.js:huggingface-access-token:8
+  3e1dcf8f018fbb18d6555c97d81b0d6090f069e5:test-embeddings.js:huggingface-access-token:7
+  7627375575821ff5b02a8238573543fdd8806900:tests/schema-contract/esignature-verify-roundtrip.contract.test.ts:generic-api-key:47
+  860f7177dd7f869d3397d8a23a70a361c9f997cd:tests/golden-journeys/drug-nda-ectd.journey.test.ts:generic-api-key:96
+  8d122653210b4cfddc3793d0537205436abc8e04:server/services/ind/ctd/authoring-guidance.ts:generic-api-key:2822
+  8d5bce39c57b10546710539c7715dc9c204e5989:AUTH_CREDENTIALS_LOCKED.md:c2c-connection-uri-password:25
+  8d5bce39c57b10546710539c7715dc9c204e5989:AUTH_CREDENTIALS_LOCKED.md:c2c-neon-password:25
+  8d5bce39c57b10546710539c7715dc9c204e5989:AUTH_CREDENTIALS_LOCKED.md:c2c-neon-password:31
+  9b77ee3d873d9275a6cda77f0c4d82cf1a2ac2d0:tests/validation-totp.test.ts:generic-api-key:14
+  9d1d8d21c54e744114950d146485f78fa72b860b:tests/e2e/seed-governed-workflow.cjs:c2c-connection-uri-password:15
+  9d1d8d21c54e744114950d146485f78fa72b860b:tests/e2e/seed-governed-workflow.cjs:c2c-neon-password:15
+  9e9a5cc60474fa3ca2ea38473ef629508fe54e62:.claude/skills/gstack/supabase/config.sh:generic-api-key:8
+  cb158a7f1ff227577302cb9a87f554bc2c0603bd:tests/export-contract/xlsx-export.proof.test.ts:generic-api-key:39
+  e11adb0c94b9c64bb6c654b01dc03e1b8021cd14:tests/e2e/seed-governed-workflow.cjs:c2c-connection-uri-password:15
+  e11adb0c94b9c64bb6c654b01dc03e1b8021cd14:tests/e2e/seed-governed-workflow.cjs:c2c-neon-password:15
+  eec00130798d55853fd69e6f70ce14e7c0b48dbc:scripts/cortex-enhance.cjs:c2c-connection-uri-password:8
+  eec00130798d55853fd69e6f70ce14e7c0b48dbc:scripts/cortex-enhance.cjs:c2c-neon-password:8
+  f457478c87a6bc557da7683c7b591b829fee4896:_test_neon.cjs:c2c-connection-uri-password:2
+  f457478c87a6bc557da7683c7b591b829fee4896:_test_neon.cjs:c2c-neon-password:2

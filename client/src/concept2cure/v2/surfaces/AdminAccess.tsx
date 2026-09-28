@@ -565,7 +565,7 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
                             title={`Revoke ${k.name} — any service using this key stops authenticating immediately`}
                             data-testid="apikey-revoke"
                           >
-                            {I.x || I.trash} Revoke
+                            {I.close} Revoke
                           </button>
                         </div>
                       </div>

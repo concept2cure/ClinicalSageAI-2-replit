@@ -74,6 +74,30 @@
 -- spanning two tenants' atoms is a separate integrity question and is not
 -- something a visibility policy can express.
 --
+-- ── AMENDED IN PLACE 2026-09-24 (ledger L201) ───────────────────────────────
+-- The spec list below grows; nothing is removed. Two classes are added, each
+-- by the same predicate, because the tenant sweeps cannot reach them (no
+-- tenant column) and this file is the canonical way a child is scoped:
+--
+--   * post-market records keyed by a TEXT program id with no foreign key:
+--     complaints, mdr_events, vigilance_events. Each hangs from
+--     regulatory_programs (uuid id), so the keys are compared as text, which
+--     the 2026-09-08 amendment already handles. Their only readers are the
+--     CAPA-MDR routes and AnA tools, inside a tenant scope; no job reads them.
+--   * children with a foreign key into a tenant-keyed parent, found by
+--     scripts/db/rls-coverage-check.sql's child rule, whose readers all run in
+--     a tenant scope. Those with a context-less reader, and the grandchildren
+--     this single-level spec cannot express, are named in that gate's
+--     carve-out with their reasons.
+--
+-- ── AMENDED IN PLACE 2026-09-24, again (ledger L202) ────────────────────────
+-- A second, CHAINED list follows the first loop: grandchildren whose parent is
+-- itself a child. Each delegates to the parent's own tenant_isolation_policy,
+-- which the single-level predicate cannot. See the note above that block.
+-- ── AMENDED IN PLACE 2026-09-24, a third time (ledger L203) ─────────────────
+-- The chained list takes schema-qualified names and gains fourteen children
+-- outside public. See the note above that block.
+--
 -- Idempotent: guarded on pg_policies and pg_class, safe to re-run every deploy.
 
 BEGIN;
@@ -151,7 +175,88 @@ DECLARE
     -- discovered later. Both tables are empty on a provisioned database and
     -- unreferenced by server code, so nothing is being hidden today.
     ['csr_knowledge_edges',        'source_study_id',  'csr_studies',          'id',       'organization_id'],
-    ['ctd_cross_references',       'target_study_id',  'csr_studies',          'id',       'organization_id']
+    ['ctd_cross_references',       'target_study_id',  'csr_studies',          'id',       'organization_id'],
+
+    -- ── 2026-09-24 (ledger L201): see the amendment note in the header ──────
+    -- Post-market records: a text program_id against a uuid program key.
+    ['complaints',                 'program_id',       'regulatory_programs',  'id',       'organization_id'],
+    ['mdr_events',                 'program_id',       'regulatory_programs',  'id',       'organization_id'],
+    ['vigilance_events',           'program_id',       'regulatory_programs',  'id',       'organization_id'],
+
+    -- Children with a foreign key into a tenant-keyed parent that had row
+    -- security OFF: the output of scripts/db/rls-coverage-check.sql's child rule
+    -- on a provisioned database, with the owning key chosen where there are two
+    -- (a milestone link by its milestone, a comment by its document, a plan
+    -- document by its plan, a collection link by its collection, a group
+    -- membership by its group). Every live reader runs inside a tenant scope,
+    -- and the workflow, lineage and PDEV writers were reaching other tenants'
+    -- parents by id, which WITH CHECK now refuses. Four nullable owner keys
+    -- (context_members, project_predictions, risk_detections,
+    -- validation_findings) make an unparented row visible to nobody, as above;
+    -- none of those tables has a runtime reader.
+    ['activity_reactions',            'activity_id',       'activity_feed',               'activity_id', 'organization_id'],
+    ['agency_validation_results',     'session_id',        'multi_agency_validation_sessions', 'session_id', 'organization_id'],
+    ['ai_ml_modifications',           'plan_id',           'ai_ml_pccp_plans',            'id',       'organization_id'],
+    ['c2c_ana_conversation_turns',    'conversation_id',   'c2c_ana_conversations',       'id',       'org_id'],
+    ['c2c_milestone_sections',        'milestone_db_id',   'c2c_milestones',              'id',       'org_id'],
+    ['c2c_secure_attachments',        'correspondence_id', 'c2c_correspondence',          'id',       'organization_id'],
+    ['cer_clinical_evidence',         'cer_report_id',     'cer_reports',                 'id',       'organization_id'],
+    ['cer_compliance_checks',         'report_id',         'cer_reports',                 'report_id', 'organization_id'],
+    ['cer_essential_requirements',    'cer_report_id',     'cer_reports',                 'id',       'organization_id'],
+    ['cer_faers_data',                'report_id',         'cer_reports',                 'report_id', 'organization_id'],
+    ['cer_literature',                'report_id',         'cer_reports',                 'report_id', 'organization_id'],
+    ['cer_sections',                  'report_id',         'cer_reports',                 'report_id', 'organization_id'],
+    ['cer_version_history',           'cer_report_id',     'cer_reports',                 'id',       'organization_id'],
+    ['cer_workflows',                 'report_id',         'cer_reports',                 'report_id', 'organization_id'],
+    ['charter_sections',              'charter_id',        'project_charters',            'id',       'organization_id'],
+    ['cognitive_hitl_breakpoints',    'thread_id',         'cognitive_agent_threads',     'id',       'tenant_id'],
+    ['cognitive_reasoning_traces',    'thread_id',         'cognitive_agent_threads',     'id',       'tenant_id'],
+    ['cognitive_thread_messages',     'thread_id',         'cognitive_agent_threads',     'id',       'tenant_id'],
+    ['cognitive_workflow_checkpoints', 'thread_id',         'cognitive_agent_threads',     'id',       'tenant_id'],
+    ['context_members',               'context_group_id',  'context_groups',              'id',       'organization_id'],
+    ['dlt_events',                    'study_id',          'dose_escalation_studies',     'id',       'organization_id'],
+    ['document_attachments',          'document_id',       'unified_documents',           'id',       'organization_id'],
+    ['document_audit_logs',           'document_id',       'unified_documents',           'id',       'organization_id'],
+    ['document_comments',             'document_id',       'documents',                   'id',       'organization_id'],
+    ['document_locks',                'document_id',       'documents',                   'id',       'organization_id'],
+    ['doe_analysis_results',          'study_id',          'doe_studies',                 'id',       'organization_id'],
+    ['doe_experiments',               'study_id',          'doe_studies',                 'id',       'organization_id'],
+    ['doe_factors',                   'study_id',          'doe_studies',                 'id',       'organization_id'],
+    ['doe_responses',                 'study_id',          'doe_studies',                 'id',       'organization_id'],
+    ['dose_cohorts',                  'study_id',          'dose_escalation_studies',     'id',       'organization_id'],
+    ['dose_levels',                   'study_id',          'dose_escalation_studies',     'id',       'organization_id'],
+    ['ind_narrative_sections',        'narrative_id',      'ind_narratives',              'id',       'organization_id'],
+    ['ind_package_plan_documents',    'plan_id',           'ind_package_plans',           'id',       'organization_id'],
+    ['ind_package_plan_modalities',   'plan_id',           'ind_package_plans',           'id',       'organization_id'],
+    ['ind_package_plan_regions',      'plan_id',           'ind_package_plans',           'id',       'organization_id'],
+    ['ind_package_plan_requirements', 'plan_id',           'ind_package_plans',           'id',       'organization_id'],
+    ['ind_package_plan_timelines',    'plan_id',           'ind_package_plans',           'id',       'organization_id'],
+    ['leaf_citations',                'leaf_id',           'leaves',                      'leaf_id',  'organization_id'],
+    ['leaf_patches',                  'leaf_id',           'leaves',                      'leaf_id',  'organization_id'],
+    ['lumen_collection_atoms',        'collection_id',     'lumen_atom_collections',      'id',       'organization_id'],
+    ['obligation_updates',            'obligation_id',     'regulatory_obligations',      'id',       'organization_id'],
+    ['pdev_program_activities',       'program_id',        'regulatory_programs',         'id',       'organization_id'],
+    ['pdev_readiness_snapshots',      'program_id',        'regulatory_programs',         'id',       'organization_id'],
+    ['pkpd_compartments',             'analysis_id',       'cross_species_pkpd',          'id',       'organization_id'],
+    ['project_predictions',           'project_id',        'projects',                    'id',       'organization_id'],
+    ['report_details',                'report_id',         'reports',                     'id',       'organization_id'],
+    ['report_program_group_projects', 'program_group_id',  'report_program_groups',       'id',       'organization_id'],
+    ['resolution_bundle_items',       'bundle_id',         'resolution_bundles',          'id',       'organization_id'],
+    ['risk_detections',               'project_id',        'projects',                    'id',       'organization_id'],
+    ['section_patches',               'section_id',        'sections',                    'section_id', 'organization_id'],
+    ['sharepoint_comments',           'file_id',           'sharepoint_files',            'id',       'organization_id'],
+    ['sharepoint_file_versions',      'file_id',           'sharepoint_files',            'id',       'organization_id'],
+    ['sharepoint_locks',              'file_id',           'sharepoint_files',            'id',       'organization_id'],
+    ['sharepoint_shares',             'file_id',           'sharepoint_files',            'id',       'organization_id'],
+    ['simple_document_versions',      'document_id',       'simple_documents',            'id',       'organization_id'],
+    ['species_comparisons',           'analysis_id',       'cross_species_pkpd',          'id',       'organization_id'],
+    ['timeline_phases',               'charter_id',        'project_charters',            'id',       'organization_id'],
+    ['validation_findings',           'leaf_id',           'leaves',                      'leaf_id',  'organization_id'],
+    ['validation_harmonization_opportunities', 'session_id',        'multi_agency_validation_sessions', 'session_id', 'organization_id'],
+    ['validation_issues',             'session_id',        'multi_agency_validation_sessions', 'session_id', 'organization_id'],
+    ['workflow_approvals',            'workflow_id',       'document_workflows',          'id',       'organization_id'],
+    ['workflow_history',              'workflow_id',       'document_workflows',          'id',       'organization_id'],
+    ['workflow_steps',                'template_id',       'workflow_templates',          'id',       'organization_id']
   ];
   i INT;
   child TEXT; fk_col TEXT; parent TEXT; parent_col TEXT; parent_tenant TEXT;
@@ -278,6 +383,137 @@ BEGIN
   END LOOP;
 
   RAISE NOTICE '[child-rls] % policied, % skipped', applied, skipped;
+END
+$$;
+
+-- ── Chained children (AMENDED IN PLACE 2026-09-24, ledger L202) ──────────────
+-- A grandchild's parent is itself a child with no tenant column, so the
+-- single-level predicate above has no tenant column to compare. Here the child
+-- delegates to its PARENT'S OWN tenant_isolation_policy instead: a policy's
+-- subquery runs under the invoker's row security, so "the parent row is
+-- visible" means "the parent row is this tenant's". That was shown on a real
+-- database as the runtime role before being written here. Counted from the
+-- child alone, a tenant saw one of two tenants' section versions. The
+-- SECURITY INVOKER section trigger's own snapshot insert still passed
+-- WITH CHECK.
+--
+-- A parent that carries no tenant_isolation_policy of its own is skipped BEFORE
+-- row security is enabled on the child. The child then stays visibly
+-- unprotected, and scripts/db/rls-coverage-check.sql's child rule fails CI on
+-- it, rather than being "scoped" to a parent that scopes nothing.
+--
+-- The three deny-all csr_/ctd_ chains recorded in the header could now be
+-- expressed the same way. They are left deny-all deliberately: no server code
+-- reads them, and the test pins that choice.
+--
+-- NON-PUBLIC CHILDREN (AMENDED IN PLACE 2026-09-24, ledger L203). The same
+-- delegation works for a child outside public whose parent carries its own
+-- tenant_isolation_policy. So this list takes schema-qualified names; a bare
+-- name means public. Order matters where a child's parent is itself on this
+-- list: the parent's line comes first. A survey of every reader of the fourteen found none that
+-- runs without a tenant context. Thirteen are unused at runtime, or reached
+-- only by dead code. One, regulatory_harmonization.export_job_audit_log, is
+-- written on the request path, and it was filing audit rows against other
+-- tenants' export jobs (see grdheService). Where a child names two parents,
+-- the owning key is chosen as above. Three owners are nullable
+-- (ai.risk_assessments, audit.idempotency_keys, audit.purge_requests), so an
+-- unparented row is visible to nobody.
+DO $$
+DECLARE
+  -- child, fk column, parent, parent key column. Key types agree for every
+  -- pair (checked against the catalog), so no cast is needed.
+  chained TEXT[][] := ARRAY[
+    ['ai_claims',                     'generation_run_id',  'ai_generation_runs',     'id'],
+    ['ai_claim_citations',            'retrieval_chunk_id', 'ai_retrieval_chunks',    'id'],
+    ['c2c_document_section_evidence', 'section_id',         'c2c_document_sections',  'id'],
+    ['c2c_document_section_versions', 'section_id',         'c2c_document_sections',  'id'],
+    ['section_propagations',          'patch_id',           'section_patches',        'id'],
+    -- 2026-09-24 (ledger L203): children outside public.
+    ['ai.risk_assessments',                          'dossier_id',   'global_dossier.dossier_instances',        'id'],
+    ['audit.config_bundles',                         'program_id',   'core.programs',                           'id'],
+    ['audit.dataset_snapshots',                      'program_id',   'core.programs',                           'id'],
+    ['audit.idempotency_keys',                       'program_id',   'core.programs',                           'id'],
+    ['audit.purge_requests',                         'program_id',   'core.programs',                           'id'],
+    -- Children of audit.purge_requests, which the line above scopes, so they
+    -- follow it; listed after it so its policy exists when they are reached.
+    -- No server code reads or writes either.
+    ['audit.purge_approvals',                        'purge_request_id', 'audit.purge_requests',                'id'],
+    ['audit.tombstones',                             'purge_request_id', 'audit.purge_requests',                'id'],
+    ['core.entities',                                'program_id',   'core.programs',                           'id'],
+    ['ectd.project_folders',                         'project_id',   'core.programs',                           'id'],
+    ['global_dossier.content_versions',              'dossier_id',   'global_dossier.dossier_instances',        'id'],
+    ['global_dossier.dossier_branches',              'dossier_id',   'global_dossier.dossier_instances',        'id'],
+    ['global_dossier.dossier_sync_events',           'dossier_id',   'global_dossier.dossier_instances',        'id'],
+    ['global_dossier.regulatory_comments',           'dossier_id',   'global_dossier.dossier_instances',        'id'],
+    ['manufacturing.rtrt_predictions',               'twin_id',      'manufacturing.digital_twins',             'id'],
+    ['precedent.csr_precedent_links',                'precedent_id', 'precedent.regulatory_precedents',         'id'],
+    ['regulatory_harmonization.export_job_audit_log','job_id',       'regulatory_harmonization.export_jobs',    'id']
+  ];
+  i INT;
+  child TEXT; fk_col TEXT; parent TEXT; parent_col TEXT;
+  child_schema TEXT; parent_schema TEXT;
+  predicate TEXT;
+  applied INT := 0;
+  skipped INT := 0;
+BEGIN
+  FOR i IN 1 .. array_length(chained, 1) LOOP
+    -- A bare name is public; 'schema.table' names another schema.
+    child_schema  := CASE WHEN position('.' IN chained[i][1]) > 0 THEN split_part(chained[i][1], '.', 1) ELSE 'public' END;
+    child         := CASE WHEN position('.' IN chained[i][1]) > 0 THEN split_part(chained[i][1], '.', 2) ELSE chained[i][1] END;
+    fk_col        := chained[i][2];
+    parent_schema := CASE WHEN position('.' IN chained[i][3]) > 0 THEN split_part(chained[i][3], '.', 1) ELSE 'public' END;
+    parent        := CASE WHEN position('.' IN chained[i][3]) > 0 THEN split_part(chained[i][3], '.', 2) ELSE chained[i][3] END;
+    parent_col    := chained[i][4];
+
+    IF to_regclass(format('%I.%I', child_schema, child)) IS NULL
+       OR to_regclass(format('%I.%I', parent_schema, parent)) IS NULL THEN
+      RAISE NOTICE '[child-rls] %.% or %.% absent — skipping', child_schema, child, parent_schema, parent;
+      skipped := skipped + 1;
+      CONTINUE;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_policies
+                    WHERE schemaname=parent_schema AND tablename=parent
+                      AND policyname='tenant_isolation_policy') THEN
+      RAISE WARNING '[child-rls] %.% → %.%: the parent is not scoped, so delegating to it would scope nothing — skipping', child_schema, child, parent_schema, parent;
+      skipped := skipped + 1;
+      CONTINUE;
+    END IF;
+
+    EXECUTE format('ALTER TABLE %I.%I ENABLE ROW LEVEL SECURITY', child_schema, child);
+    EXECUTE format('ALTER TABLE %I.%I FORCE ROW LEVEL SECURITY', child_schema, child);
+
+    IF EXISTS (SELECT 1 FROM pg_policies
+                WHERE schemaname=child_schema AND tablename=child
+                  AND policyname='tenant_isolation_policy') THEN
+      RAISE NOTICE '[child-rls] %.% already policied — leaving it alone', child_schema, child;
+      skipped := skipped + 1;
+      CONTINUE;
+    END IF;
+
+    predicate := format('EXISTS (SELECT 1 FROM %I.%I p WHERE p.%I = %I.%I.%I)',
+                        parent_schema, parent, parent_col, child_schema, child, fk_col);
+
+    EXECUTE format($pol$
+      CREATE POLICY tenant_isolation_policy ON %I.%I
+        FOR ALL
+        USING (
+          NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
+          OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
+          OR %s
+        )
+        WITH CHECK (
+          NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
+          OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
+          OR %s
+        )
+    $pol$, child_schema, child, predicate, predicate);
+
+    applied := applied + 1;
+    RAISE NOTICE '[child-rls] %.% scoped through %.% (chained)', child_schema, child, parent_schema, parent;
+  END LOOP;
+
+  RAISE NOTICE '[child-rls] chained: % policied, % skipped', applied, skipped;
 END
 $$;
 

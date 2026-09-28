@@ -35,6 +35,12 @@ export type DataResidency = 'any' | 'us' | 'eu' | 'apac' | 'on_prem';
 /** Retention posture honored for a request's payload at the provider. */
 export type RetentionPolicy = 'standard' | 'zero_retention';
 
+/**
+ * Where a request's content came from — see GatewayRequest.payloadProvenance.
+ * Absent on a request means `tenant_governed`.
+ */
+export type PayloadProvenance = 'tenant_governed' | 'tenant_derived' | 'public';
+
 export type TaskType =
   | 'chat'
   | 'document_analysis'
@@ -76,6 +82,29 @@ export const EFFORT_TO_STRATEGY = {
   balanced: 'task_based',
   thorough: 'quality_optimized',
 } as const satisfies Record<EffortLevel, RoutingStrategy>;
+
+/**
+ * One Anthropic-executed tool call, as far as we can observe it.
+ *
+ * `result` is the raw result body. It is kept verbatim rather than parsed into
+ * a shape of our own because the two tools return different things — web search
+ * a list of results, web fetch a document — and an ERROR arrives as an object
+ * where a success arrives as a list. Normalising that here would mean guessing
+ * at shapes the API is free to extend; the caller that renders it can branch,
+ * and `isError` tells it which case it has without having to guess.
+ */
+export interface GatewayServerToolUse {
+  /** The block's own id, e.g. `srvtoolu_…`. Never paired with a tool_result. */
+  id?: string;
+  /** `web_search`, `web_fetch`, … */
+  name: string;
+  /** What the model asked for, when the API reports it. */
+  input?: Record<string, unknown>;
+  /** The result block's `content`, verbatim. Absent when only the use was seen. */
+  result?: unknown;
+  /** True when the result body is an error object rather than a result list. */
+  isError?: boolean;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Request & Response Types
@@ -248,6 +277,20 @@ export interface AnaGatewayResponse extends GatewayResponse {
   thinking?: string;
   /** Tool use requests from Claude */
   toolUses?: AnaToolUse[];
+  /**
+   * Work Anthropic's infrastructure did on our behalf — a web search, a web
+   * fetch — which we neither dispatch nor see the result of except through
+   * these blocks.
+   *
+   * The gateway used to drop them. Its block loop handled `text`, `thinking`
+   * and `tool_use`, and everything else fell through silently, so a turn that
+   * searched the web looked exactly like a turn that did not. The CITATIONS
+   * survived, because those ride on the text blocks — but the SEARCH did not,
+   * and this product's whole claim about AnA is that she shows her work. A step
+   * that happened and is invisible is the worst kind of missing record: the
+   * trace looks complete on its face.
+   */
+  serverToolUses?: GatewayServerToolUse[];
   /** Whether prompt cache was hit */
   cacheHit?: boolean;
   /** Cache creation/read token counts */
@@ -302,6 +345,17 @@ export interface GatewayMessage {
   inlineSystem?: boolean;
 
   /**
+   * What an `inlineSystem` message is called when a model without inline
+   * system support gets it folded into the preceding user turn — the bracketed
+   * label in `[<label>]: …`. Unset means "User interjection", which is true
+   * only of words a person typed (a steer). Anything the application authored
+   * or observed must say so: a screen report or a mode switch folded as a
+   * "User interjection" tells the model the person wrote it, and she answers
+   * the person for something they never said.
+   */
+  foldLabel?: string;
+
+  /**
    * Mark this message with a prompt-cache breakpoint (Claude only).
    * When `promptCache.enabled` is set on the request, system messages
    * with `cacheControl: true` will carry `cache_control` markers in the
@@ -333,18 +387,65 @@ export interface GatewayRequest {
    */
   riskTier?: 'low' | 'medium' | 'high';
 
+  /**
+   * The AnA run this call belongs to (ana_runs.id), and the run that spawned
+   * it. Recorded on the ledger row so a run's calls can be listed from the
+   * ledger; the gateway does not act on them.
+   */
+  runId?: string;
+  parentRunId?: string;
+
   /** Conversation messages (system + user + assistant history) */
   messages: GatewayMessage[];
 
   /** @internal Classification captured before any policy redaction. */
   sensitiveDataClass?: 'none' | 'pii' | 'phi' | 'unknown';
 
-  /** @internal Tenant placement resolution retained for the last-mile gate. */
+  /**
+   * @internal The content classifier's regulatory signal. Recorded in the audit
+   * trail only; it does not gate dispatch until its false-positive rate on
+   * ordinary chat has been measured.
+   */
+  regulatoryContentDetected?: boolean;
+
+  /**
+   * Where this request's content came from, which decides whether the tenant's
+   * placement floor applies to it. Absent means `tenant_governed`: fail closed.
+   *
+   *  - `tenant_governed` — vault, uploads, sequences, drafts, and any tool
+   *    result computed over them.
+   *  - `tenant_derived` — engine output computed from governed content. Held to
+   *    the same floor; distinguished only in the audit trail.
+   *  - `public` — inputs are provably only public-source fetch results and
+   *    public identifiers. Only a caller module on the allowlist in
+   *    `scripts/ci/check-public-source-callers.mjs` may declare it; a model
+   *    never does. A `public` payload reaches a substrate outside the tenant's
+   *    floor only when the tenant opted in (`publicSourceFrontier`).
+   */
+  payloadProvenance?: PayloadProvenance;
+
+  /** @internal Tenant placement resolution retained for selection and the last-mile gate. */
   sensitiveTenantPolicy?: {
     resolution: 'resolved' | 'absent' | 'unknown';
+    /** Why the policy is unknown: the lookup failed, or nothing bound the call to a tenant. */
+    unknownReason?: 'lookup_failed' | 'no_tenant_binding';
+    /** The organization whose floor applies, and how it was bound. */
+    organizationId?: string | number;
+    boundFrom?: 'explicit' | 'ambient_scope' | 'platform_scope' | 'none';
     residency?: DataResidency;
     zeroDataRetention?: boolean;
     allowedSubstrates?: SubstrateClass[];
+    /** Per-tenant vendor allow-list; absent = no vendor constraint, empty = none allowed. */
+    allowedProviders?: ProviderName[];
+    /**
+     * Tenant opted in to `public` payloads reaching a shared frontier API, and to
+     * Anthropic-hosted research tools (server-tool-policy.ts).
+     */
+    publicSourceFrontier?: boolean;
+    /** Tenant allows outbound public-source requests at all (default on). */
+    publicSourceEgress?: boolean;
+    /** The request asked for a residency that contradicts the tenant's. */
+    residencyConflict?: boolean;
   };
 
   /** Maximum tokens to generate */
@@ -538,6 +639,22 @@ export interface GatewayResponse {
 
   /** Finish reason from provider */
   finishReason?: string;
+
+  /**
+   * Anthropic-hosted tools the request offered that were not sent to the
+   * serving lane, and why (server-tool-policy.ts). Absent when none were
+   * withheld. Recorded in the ledger row so a turn that ran without web search
+   * says so, rather than looking like one that chose not to search.
+   */
+  withheldServerTools?: Array<{ name: string; reason: string }>;
+
+  /**
+   * The sensitive-placement decision's reason code for the lane that served
+   * the call (ALLOW_…), when the screen ran. Until 2026-09-26 an allowed call's
+   * decision went only to a log line, so the ledger could not show why a
+   * payload was permitted where it went.
+   */
+  placementReasonCode?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -617,6 +734,41 @@ export interface ModelConfig {
    * entry is one we do not use for it.
    */
   supportsInlineSystem?: boolean;
+
+  /**
+   * The highest `output_config.effort` this entry accepts, or `null` for none.
+   *
+   *   null    Haiku 4.5, Sonnet 4.5 and older — effort is a 400
+   *   'high'  Opus 4.5 — low | medium | high
+   *   'max'   Opus 4.6 and later, Sonnet 4.6 and later — every level
+   *
+   * A requested level above this is LOWERED to it, never raised: the person
+   * asked for at most that much work. Omitted means none — the same rule as
+   * the flags above, because the failure it prevents is the 400 itself.
+   *
+   * Declared per entry, not inferred from the model name. It was briefly
+   * inferred, by regexes over the wire string that began
+   * `if (!m.startsWith('claude-')) return effort;` — so every Bedrock id
+   * (`anthropic.claude-*`) skipped every check and was sent whatever it was
+   * asked for. Same weights, different substrate naming, and the one model
+   * the function existed to protect (Haiku) would have taken the 400 on
+   * Bedrock. That is the reason this whole block is data: the substrate, not
+   * the family, decides what an entry can do.
+   */
+  maxApiEffort?: 'high' | 'max' | null;
+
+  /**
+   * The effort sent when the caller chose none. Omitted: send nothing and let
+   * the API's own default apply.
+   *
+   * Declared where that default is not the level the entry was reviewed at.
+   * Claude Opus 5.5's API default is `medium`, one level below Opus 5's `high`,
+   * so omitting effort would silently change what runs on a model bump; the
+   * entry states it instead, and the record says what ran. A person's own
+   * choice (Fast / Balanced / Thorough) always wins, and `maxApiEffort` still
+   * caps it.
+   */
+  defaultApiEffort?: 'low' | 'medium' | 'high';
 }
 
 export interface PolicyConfig {
@@ -753,5 +905,34 @@ export interface AuditLogEntry {
   region?: string;
   /** Retention posture honored for this request. */
   retentionPolicy?: RetentionPolicy;
+  // ── Provenance and governance (D6, 2026-09-26) ─────────────────────────────
+  // Typed columns, not metadata keys, so the ledger can be queried for "every
+  // tenant payload served on a shared lane" without parsing JSON. See
+  // db/migrations/20260813_ai_gateway_audit_log.sql.
+  /** Provenance class of the payload: tenant_governed (default), tenant_derived or public. */
+  payloadProvenance?: PayloadProvenance;
+  /** The PHI/PII classifier's class for the request (none, pii, phi, unknown …). */
+  dataClass?: string;
+  /** How the tenant's placement policy resolved: resolved, absent or unknown. */
+  tenantPolicyResolution?: 'resolved' | 'absent' | 'unknown';
+  /** How the request was bound to its tenant. */
+  tenantBoundFrom?: 'explicit' | 'ambient_scope' | 'platform_scope' | 'none';
+  /** The placement decision's reason code (ALLOW_… on a served call, DENY_… on a refusal). */
+  placementReasonCode?: string;
+  /** The approved-models registry entry that served the call; absent when none matches. */
+  approvedModelId?: string;
+  /** That entry's pinned provider version. */
+  pinnedVersion?: string;
+  /** That entry's performance-qualification status, or 'unregistered' when no entry matches. */
+  pqStatus?: string;
+  /** The risk tier the caller declared. */
+  riskTier?: 'low' | 'medium' | 'high';
+  /** The AnA run this call belongs to, and its parent run. */
+  runId?: string;
+  parentRunId?: string;
+  /** Anthropic-hosted tools that ran inside the call (names only). */
+  serverToolsUsed?: string[];
+  /** Anthropic-hosted tools withheld from the lane, and why. */
+  serverToolsWithheld?: Array<{ name: string; reason: string }>;
   metadata?: Record<string, unknown>;
 }

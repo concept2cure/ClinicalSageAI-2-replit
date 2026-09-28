@@ -1,0 +1,12 @@
+# P1-7b red run — check-security-patterns with the new workspace-trust-header rule against HEAD's consumers (HEAD 7fbe51c5, 2026-09-26T12:56Z)
+# npx tsx scripts/check-security-patterns.ts
+
+[workspace-trust-header] 4 violation(s)
+  Do not read the client workspace from request headers in route code — X-Client-ID is a claim, not context: the workspace must be one of the session organisation's own before it scopes a read, opens a feature or lands in a write. Consume req.tenantContext.clientWorkspaceId (set by server/middleware/tenantContext.ts) and verify it with FeatureToggleService.workspaceInOrganization or c2c/project-access resolveClientWorkspaceId. A direct read that IS verified on the lines that follow carries `// security-allow: workspace-claim …` (IAM-15, P1-7b).
+    server/routes/cerv2-document-routes.ts:27:5  req.header('x-client-id') ||
+    server/routes/cerv2-document-routes.ts:28:5  req.header('x-client-workspace-id') ||
+    server/routes/cerv2-document-routes.ts:29:5  req.header('x-client-workspace');
+    server/routes/regulatorySubmissions.ts:94:5  req.headers['x-client-workspace-id'] ||
+
+check-security-patterns: 4 violation(s) across 2854 file(s).
+exit=1

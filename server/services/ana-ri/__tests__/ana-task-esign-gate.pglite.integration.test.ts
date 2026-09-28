@@ -21,6 +21,8 @@
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
+import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
+import { GOVERNED_ACTION_LEDGER_PGLITE_DDL } from './governed-action-ledger.fixture';
 
 let pg: PGlite;
 
@@ -50,9 +52,13 @@ const pool = {
     };
   },
 };
+// connect(): the board write and its task lineage row share one transaction
+// (command-executor boardWriteWithLineage). PGlite is one connection, so the
+// client is that connection.
+const client = { query: (sql: string, p?: unknown[]) => pool.query(sql, p), release: () => undefined };
 vi.mock('../../../db', () => ({
-  pool: { query: (sql: string, p?: unknown[]) => pool.query(sql, p) },
-  getPool: () => ({ query: (sql: string, p?: unknown[]) => pool.query(sql, p) }),
+  pool: { query: (sql: string, p?: unknown[]) => pool.query(sql, p), connect: async () => client },
+  getPool: () => ({ query: (sql: string, p?: unknown[]) => pool.query(sql, p), connect: async () => client }),
   db: {},
 }));
 
@@ -128,11 +134,18 @@ async function projectTaskStatus(id: number) {
   return r.rows[0]?.status;
 }
 
+/**
+ * update_task as POST /governed-action dispatches it after a person confirmed
+ * the proposal (since 2026-09-26 every write is a proposal, audit DP-08,
+ * P0-12). The §11.50 approval gate these cases pin lives in the handler and
+ * still fires after that confirmation: confirming "move this task" is not
+ * signing its completion.
+ */
 async function updateTask(taskId: number, status: string) {
   const { executeCommands } = await import('../command-executor');
   const res = await executeCommands(
     [{ command: 'update_task', params: { projectId: PROJECT, taskId, updates: { status } } }] as never,
-    { organizationId: ORG, userId: 1 } as never
+    { organizationId: ORG, userId: 1, humanConfirmed: true } as never
   );
   return (res as Array<{ success: boolean; message?: string }>)[0];
 }
@@ -156,9 +169,17 @@ async function asConfirmedHuman(command: string, params: Record<string, unknown>
 beforeAll(async () => {
   pg = new PGlite();
   await pg.exec(DDL);
+  // A completion or transition lands only with its task.transition ledger row.
+  await pg.exec(AUDIT_LOGS_PGLITE_DDL);
+  await pg.exec(GOVERNED_ACTION_LEDGER_PGLITE_DDL);
   await pg.exec(`INSERT INTO organizations (id, name, settings) VALUES (${ORG}, 'Concept2Cure', '{}'::jsonb)`);
   await pg.exec(`INSERT INTO projects (id, organization_id, name) VALUES (${PROJECT}, ${ORG}, 'BX-099')`);
-});
+  // Load the executor here, not inside the first test. Its module graph
+  // (command-executor.ts is ~5,300 lines) takes seconds to transform on a cold
+  // run, and in the first `it` that counted against the 10s test timeout: 6.2s
+  // alone, and over 10s — a failure — beside a full lint and typecheck.
+  await import('../command-executor');
+}, 60_000);
 afterAll(async () => { await pg?.close(); });
 
 beforeEach(async () => {
@@ -281,9 +302,17 @@ describe('the propose-only partition', () => {
     expect(out.error).not.toBe('HUMAN_CONFIRMATION_REQUIRED');
   });
 
-  it('leaves ordinary agent work alone', async () => {
+  it('treats ordinary agent work as a proposal at the confirm tier, and runs it once a person confirmed', async () => {
+    // Until 2026-09-26 an ungated task update ran from the chat path unaided.
+    // It is a proposal now (audit DP-08, P0-12): one click, no reason, no
+    // credentials — and the same update runs when the person has confirmed.
     await seedTask(201, { approvalRequired: false });
-    const out = await updateTask(201, 'review');
-    expect(out.success).toBe(true);
+    const proposed = await asAgent('update_task', { projectId: PROJECT, taskId: 201, updates: { status: 'review' } });
+    expect(proposed.success).toBe(false);
+    expect(proposed.error).toBe('HUMAN_CONFIRMATION_REQUIRED');
+    expect(proposed.data?.tier).toBe('confirm');
+    expect(proposed.data?.reasonRequired).toBe(false);
+    const done = await asConfirmedHuman('update_task', { projectId: PROJECT, taskId: 201, updates: { status: 'review' } });
+    expect(done.success).toBe(true);
   });
 });

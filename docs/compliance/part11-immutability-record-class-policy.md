@@ -27,7 +27,7 @@ must derive from "which records can ever change", not the other way round.
 
 | Record family                                   | Class                     | Policy |
 | ----------------------------------------------- | ------------------------- | ------ |
-| Final electronic signature (`electronic_signatures`) | Immutable            | No UPDATE, no DELETE. Correction = insert a superseding row; the old row's `superseded_by` is a **write-once** pointer (NULL → id, never re-pointed, never cleared). Enforced at the database (see below). |
+| Final electronic signature (`electronic_signatures`) | Immutable            | No UPDATE, no DELETE. Correction = insert a superseding row; the old row's `superseded_by` is a **write-once** pointer (NULL → id, never re-pointed, never cleared). In that same statement, and only there, the verification column group (`is_valid`, `verification_status`, `verification_date`) may move to the invalid, revoked state the governed revocation records; the attested columns never change. Enforced at the database (see below; amended 2026-09-25, audit finding DP-03). |
 | Signed object/version binding (`bound_payload_digest`, `version_id`, `document_id` on the signature row) | Immutable | Written at INSERT, never after. The post-insert UPDATE the sign-release route used to perform was removed 2026-07-30. |
 | Signature verification evidence (`signature_hash`, `signature_manifest`, `authentication_*`) | Immutable | Same row, same rule. |
 | Audit event (`device_audit_trail`, `audit_logs`) | Append-only               | No UPDATE, no DELETE, ever. Corrections are new events. `device_audit_trail` is enforced at the database (see below). |
@@ -43,7 +43,11 @@ must derive from "which records can ever change", not the other way round.
 1. **Database (authoritative):**
    `db/migrations/20260730_esign_audit_db_level_immutability.sql`
    - `electronic_signatures`: trigger refuses DELETE and any UPDATE except
-     the write-once `superseded_by` transition (+ `updated_at` bookkeeping).
+     the write-once `superseded_by` transition (+ `updated_at` bookkeeping),
+     which may also set `is_valid = false`, `verification_status = 'revoked'`
+     and `verification_date` — never the reverse, never an attested column,
+     never on a row already superseded (`db/migrations/20260730_esign_audit_db_level_immutability.sql`,
+     pinned by `server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts`).
    - `device_audit_trail`: trigger refuses UPDATE and DELETE outright.
    - Proven by `tests/schema-contract/esig-audit-immutability.contract.test.ts`.
    The database layer is the floor: HTTP-layer gaps can no longer reach the

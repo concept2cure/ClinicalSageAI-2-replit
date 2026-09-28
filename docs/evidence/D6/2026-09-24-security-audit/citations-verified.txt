@@ -1,0 +1,303 @@
+# Citation check of the audit appendices at commit adbf2d186cf8136c786cd76377c1b2c15eb8bc69
+# Method: every path[:line] token in the three auditor reports resolved against git ls-files; the cited first line is printed so a reader can judge whether it still says what the finding says.
+# Legend: OK = file exists and line in range (text shown); AMBIGUOUS = bare filename matched several files, best-suffix match chosen; OUT-OF-RANGE / MISSING-FILE = citation corrected in the report.
+
+OK            CLAUDE.md:3-19  | ## RULE 0 — `concept2cure-v2` IS THE ONLY BRANCH. NON-NEGOTIABLE.
+OK            package.json:297  | "prepare": "[ -n \"$CI\" ] || husky || true",
+OK            .github/workflows/pr-checks.yml:4,16-24,69,142,236-238,267  | pull_request:
+OK            .github/workflows/terraform-compliance.yml:3-6  | on:
+OK            client/index.html
+OK            terraform/stack/main.tf:259-263  | 
+OK            terraform/modules/ecs-fargate/main.tf:79-90  | resource "aws_iam_role_policy" "ecs_task_s3" {
+OK            terraform/modules/cloudfront/main.tf:151-173  | default_cache_behavior {
+OK            client/index.html:6-8  | <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+OK            server/middleware/enterprise-security.ts:166  | ? helmet({
+OK            terraform/modules/alb/variables.tf:40-43  | variable "access_logs_bucket" {
+OK            terraform/stack/main.tf:212-223  | allocated_storage     = var.rds_allocated_storage
+OK            terraform/modules/cloudfront/main.tf:111-117  | # No WAF yet: a founder decision, not defaulted (docs/evidence/W2/2026-09-24-trivy/).
+OK            server/startup/env.ts:83-89  | const missingRecommended = recommended.filter(k => !process.env[k]);
+OK            docs/commercial/DATA_PROCESSING_ADDENDUM.md:172  | 7.1 Provider will notify Customer without undue delay and within [48] hours of
+OK            .github/workflows/ci.yml:1806-1856  | - name: Run lockfile audit and dependency-risk ledger gate
+OK            .github/workflows/deploy-aws.yml
+OK            .github/workflows/deploy-aws.yml:111-161,164-230  | security-gate:
+OK            terraform/modules/ecr/main.tf:9-11  | image_scanning_configuration {
+OK            .github/workflows/semgrep.yml:36,38-39,50-58  | continue-on-error: true
+OK            .github/workflows/prune-agent-branches.yml:47-48,58,95  | permissions:
+OK            .github/dependabot.yml
+OK            .github/workflows/cerv2-staging-deploy.yml:313  | - run: npm ci && npm install -g @lhci/cli
+OK            terraform/modules/rds/main.tf:97-101  | parameter {
+OK            terraform/modules/rds/variables.tf:67-71  | variable "kms_key_id" {
+OK            terraform/stack/main.tf:193-208  | { name = "JWT_SECRET", value_from = module.secrets.secret_arns["jwt_secret"] },
+OK            .github/workflows/database-dr-restore-proof.yml:28-72  | runs-on: ubuntu-latest
+OK            docs/operations/database-disaster-recovery.md:3-6  | ## Scope and verified inventory
+OK            terraform/modules/vpc-secure/main.tf:57-67  | resource "aws_eip" "nat" {
+OK            server/config/environment.ts:126,268  | if (candidate.length < JWT_SECRET_MIN_LENGTH) {
+OK            server/services/audit/auditSealPosture.ts:67-69  | /** True when AUDIT_SEAL_ACCEPT_UNSEALED carries the explicit accept value. */
+OK            server/db/ensureCoreTables.ts:293-295  | export function allowUnverifiedDbTls(): boolean {
+OK            .github/workflows/deploy-aws.yml:341-423  | for VAR in RLS_ENFORCE DATABASE_URL APP_DATABASE_URL JWT_SECRET \
+OK            terraform/modules/secrets/main.tf:13-26  | for_each = local.secret_names
+OK            terraform/stack/main.tf:67-81  | resource "random_password" "db_master" {
+OK            .github/workflows/ci.yml:1993-1997,1798-1804  | uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+OK            .github/workflows/release-evidence.yml:29-33  | - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+OK            .github/workflows/cerv2-staging-deploy.yml
+OK            .github/workflows/cerv2-staging-deploy.yml:128-130,341,362-368  | - name: Security audit (production deps)
+OK            docs/security/TRUST_STATEMENT.md:55-59  | Amazon Web Services (hosting, storage, keys); Anthropic (Claude models);
+OK            docs/getting-started/AUTH_CREDENTIALS_LOCKED.md:24-34  | > **The connection string is a secret and is no longer recorded here.** A live
+OK            scripts/ci/check-committed-secrets.mjs:14-26  | * What prompted it: a live `neondb_owner` Postgres password sat in two tracked
+OK            terraform/modules/ecs-fargate/variables.tf:93-97  | variable "secret_arns" {
+OK            terraform/stack/main.tf:258  | trust_proxy_hops = 2
+OK            .github/workflows/ci.yml:55,1747,1785,1872  | npm install && exit 0
+OK            .github/workflows/db-schema-validation.yml:63  | run: npm install
+OK            .github/workflows/neon-preview-db.yml:174  | npm install
+OK            docker-compose.yml:53-57,87  | redis:
+OK            docker-compose.beta.yml:144  | VITE_SHOW_DEMO_LOGIN: ${VITE_SHOW_DEMO_LOGIN:-true}
+OK            docker-compose.staging.yml:6-17,108  | image: localstack/localstack-pro:latest  # Pro needed for Object Lock
+OK            start.sh:66-67  | echo "  Login:    jonmichaelpsmith@gmail.com"
+OK            start-platform.sh:77  | echo "   Password: demo123"
+OK            docs/getting-started/AUTH_CREDENTIALS_LOCKED.md:13-16  | | ---------------- | ---------------------------- |
+OK            AGENTS.md:84  | - **Dev login endpoint**: `POST /api/auth/dev-login` with `{"email":"jonmichaelpsmith@gmail.com"}` bypasses MF
+OK            server/services/entitlements/master-admin.ts:96  | export const DEFAULT_MASTER_ADMIN_EMAILS: readonly string[] = ['jonmichaelpsmith@gmail.com'];
+OK            app.yaml
+OK            .replit-ci.yml
+OK            helm/values-local.yaml
+OK            docs/guides/REPLIT_README.md:167  | Continuous Integration is configured with `.replit-ci.yml`:
+OK            .github/workflows/neon-preview-db.yml:175  | npm run test:unit --if-present
+OK            terraform/modules/vpc-secure/main.tf:85-110  | resource "aws_vpc_endpoint" "s3" {
+OK            terraform/modules/ecs-fargate/main.tf:18-28  | resource "aws_cloudwatch_log_group" "api" {
+OK            terraform/environments/production/main.tf:54  | # evidence under COMPLIANCE object lock for seven years.
+OK            .github/workflows/c2c-agent.yml:50  | if [ -z "${{ secrets.NEON_API_KEY }}" ] || [ -z "${{ secrets.NEON_PROJECT_ID }}" ]; then
+OK            .github/workflows/neon-preview-db.yml:28,71-84  | if [ -z "${{ secrets.NEON_API_KEY }}" ]; then
+OK            .github/workflows/terraform-compliance.yml:8-11  | permissions:
+OK            .github/workflows/repo-health-baseline-refresh.yml:26-27,54-65  | permissions:
+OK            docs/security/DEPENDENCIES.md:16  | | Advisory scan | `npm run ci:dependency-risk:reseal` re-ran `npm audit --audit-level=high` after the install:
+OK            docs/security/dependency-risk-ledger.json
+OK            SECURITY.md
+OK            server/routes/well-known.ts:14-31  | const SECURITY_CONTACT = process.env.SECURITY_CONTACT_EMAIL || 'security@concept2cure.pro';
+OK            docs/security/TRUST_STATEMENT.md:61-63  | Security questions and vulnerability reports: security@ (to be published with
+OK            terraform/README.md:36,46  | cp ../../terraform.tfvars.example terraform.tfvars  # Edit values
+OK            .github/workflows/ci.yml
+OK            server/db/ensureCoreTables.ts:350-364  | // TLS certificate verification is ON. This was `{ rejectUnauthorized:
+OK            terraform/modules/ecs-fargate/main.tf:182-188  | healthCheck = {
+OK            terraform/modules/github-deploy-roles/main.tf:61-129  | locals {
+OK            .github/workflows/deploy-aws.yml:290-439,520-616,704-733  | - name: Preflight — task definition must carry the production boot contract
+OK            terraform/modules/alb/main.tf:23-85,117-142  | resource "aws_lb" "this" {
+OK            .github/workflows/ci.yml:1575-1584  | - name: The runtime role must be non-superuser and NOBYPASSRLS
+OK            terraform/modules/compliance-evidence/main.tf
+OK            terraform/stack/vault_storage.tf
+OK            terraform/stack/release_signing.tf:41-86  | resource "aws_kms_key" "release_signing" {
+OK            terraform/bootstrap/main.tf
+OK            server/config/environment.ts:35-315,393  | const getCurrentEnvironment = (): Environment => {
+OK            server/startup/env.ts:47-78  | const missing = required.filter(k => !process.env[k]);
+OK            server/config/trust-proxy.ts:34-40  | export function resolveTrustProxy(env: Record<string, string | undefined> = process.env): TrustProxySetting {
+OK            server/db/rlsEnforcement.ts:311  | throw new Error(`[rls-enforcement] FAIL-CLOSED: ${report.failures.length} catalog/role failure(s): ${report.fa
+OK            .github/workflows/c2c-agent.yml
+OK            .github/workflows/prune-agent-branches.yml
+OK            docs/beta/security/PEN_TEST_SCOPE_2026-05-01.md
+OK            server/routes/part11-compliance.ts:1060-1110  | // SOC 2 EVIDENCE COLLECTION
+OK            server/routes/c2c/commitments.ts:156  | return res.status(503).json({
+OK            server/services/ana/ana-realtime.ts:170-184  | ns.use((socket: AuthedSocket, next) => {
+OK            server/services/mfaService.ts:583-604  | export function createMfaChallengeToken(
+OK            server/routes/authEnterprise.ts:347-357  | const partialToken = jwt.sign(
+OK            server/socketServer.ts:241  | const nonAccess = nonAccessTokenReason(decoded);
+OK            server/socketServer.ts:1061  | void import('./services/ana/ana-realtime.js')
+OK            server/services/token-revocation.ts:218-226  | export async function verifyLiveToken<T = unknown>(token: string, options?: JwtVerifyOptions): Promise<T> {
+OK            server/mcp/auth/platform-token.ts:155-173  | export function mintAccessToken(input: MintAccessTokenInput): { token: string; expiresIn: number } {
+OK            server/utils/jwtVerify.ts:79-99  | options: JwtVerifyOptions = {},
+OK            server/middleware/auth.ts:133-145  | const decoded = verifyJwtWithRotation(token) as JWTPayload;
+OK            server/mcp/config.ts:66-67  | accessTokenTtlSeconds: Number(env.MCP_ACCESS_TOKEN_TTL_SECONDS || 3600),
+OK            server/mcp/auth/consent.ts:128-160  | return;
+OK            server/mcp/auth/store.ts:86-102  | export async function findMembership(userId: number, organizationId: number): Promise<Membership | null> {
+OK            server/mcp/index.ts:81-90  | mcpAuthRouter({
+OK            server/routes/sso.ts:684-699  | const existingUsers = await db.select().from(users).where(eq(users.email, email)).limit(1);
+OK            server/middleware/requirePlatformAdmin.ts:44-53  | export function isPlatformAdmin(req: Request): boolean {
+OK            server/services/token-revocation.ts:32,115,170  | const TOKEN_TTL_SECONDS = 24 * 60 * 60; // 24 hours
+OK            server/routes/auth.ts:80  | const REFRESH_TOKEN_EXPIRES_IN = '7d';
+OK            client/src/services/portal/authService.tsx:611-619  | async logout(terminateAllSessions: boolean = false): Promise<void> {
+OK            server/routes/auth.ts:1083-1086  | // Also revoke any refresh token sent in body
+OK            server/routes/authEnterprise.ts:928-983  | router.post('/refresh-token', async (req: Request, res: Response) => {
+OK            server/routes/auth.ts:2080-2096  | const reset = await db
+OK            server/routes/scim.ts:719-733  | router.delete('/Users/:id', scimAuth, async (req: Request, res: Response) => {
+OK            server/services/part11/signature-persistence.ts:673-679  | // Signer snapshot (printed name — §11.50), on the caller's client so the
+OK            server/routes/auth.ts:79  | const JWT_EXPIRES_IN = '24h';
+OK            server/middleware/enterprise-security.ts:108  | sessionTimeout: 30 * 60 * 1000, // 30 minutes
+OK            server/routes/tenant-config.ts:52,272  | sessionTimeoutMinutes: z.number().int().positive().optional(),
+OK            client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx:3310-3330  | MFA, IP allowlist or session policy yet. Module entitlements and API keys below
+OK            server/routes/c2c/exports.ts:423-450  | router.get('/documents/download/:filename', async (req: Request, res: Response) => {
+OK            server/routes/document-understanding.ts:509-523  | } else if (body.filePath) {
+OK            server/utils/document-file-roots.ts:50-56  | */
+OK            server/services/docx/docxFactory.ts:653-656  | // Sanitize filename
+OK            server/services/tools/index.ts:1006-1012  | // Save to generated_documents/
+OK            server/routes/auth.ts:1427-1438  | // Verify the code — try email OTP first (default), then TOTP
+OK            server/routes/authEnterprise.ts:468-479  | // Try email OTP first, then fall back to TOTP
+OK            server/routes/auth.ts:1565-1606  | router.post('/mfa/resend', mfaLimiter, async (req: Request, res: Response) => {
+OK            server/services/mfaService.ts:512-535  | export async function enableMfa(userId: number, token: string): Promise<{ success: boolean; backupCodes?: stri
+OK            server/services/mfaService.ts:11  | * @compliance FDA 21 CFR Part 11.10(d), NIST 800-63B AAL2
+OK            server/services/auth-security-service.ts:186-222  | export async function recordFailedLogin(userId: number): Promise<{
+OK            server/services/emailOtpService.ts:67-80  | export async function createEmailOtp(userId: number): Promise<string> {
+OK            server/bootstrap/register-platform-routes.ts:91  | app.use('/api/v1/auth', preAuthScope, authRouter);
+OK            server/middleware/enterprise-security.ts:1070  | app.use('/api/auth', rateLimiters.auth);
+OK            server/middleware/auth.ts:203-211  | req.user = {
+OK            server/routes/billing-dashboard.ts:764,800,894  | router.put('/seats', authenticateToken, requireRole('admin', 'owner'), async (req: Request, res: Response) => 
+OK            server/routes/misc-inline-routes.ts:417-476  | router.post('/v1/drafting/start_task', authMiddleware as any, async (req: Request, res: Response) => {
+OK            server/src/routes/stability.router.ts:2054-2078  | router.patch('/results/:resultId', async (req, res) => {
+OK            server/socketServer.ts:225-280  | ioInstance.use((socket: AuthenticatedSocket, next) => {
+OK            server/services/automation/webhook-notifications.ts:16  | import { isSafePublicUrl } from '../../utils/ssrfGuard.js';
+OK            server/utils/safeFetch.ts
+OK            server/src/routes/stability.router.ts:85  | const upload = multer({ storage: multer.memoryStorage() });
+OK            server/routes/authoring.router.ts:6238-6249  | const imageUpload = multer({
+OK            server/middleware/uploadSafety.ts:178-196  | if (!scan.scanned) {
+OK            server/routes/ana-features.ts:2360,2597,4879,4952,5037  | (req.headers['x-org-uuid'] as string | undefined);
+OK            server/routes/chat/send-message.ts:190,292  | (req.headers['x-org-uuid'] as string | undefined);
+OK            server/routes/c2c/ai-editing.ts:149,1073  | (req.headers['x-org-uuid'] as string | undefined);
+OK            server/middleware/authBoundary.ts:126-130  | export function resolveAuthBoundaryMode(env: NodeJS.ProcessEnv = process.env): AuthBoundaryMode {
+OK            server/bootstrap/register-platform-routes.ts:242-275  | app.use('/api', (req: Request, res: Response, next: NextFunction) => {
+OK            server/routes/auth.ts:991-1029  | const token = jwt.sign(
+OK            server/services/auth-security-service.ts:45-88  | export function validatePasswordPolicy(password: string): PasswordPolicyResult {
+OK            server/routes/auth.ts:2285  | logger.info('Password changed', { userId: userData.id });
+OK            server/startup/inline-endpoints.ts:693-717  | app.get('/api/ai-gateway/health', async (_req: Request, res: Response) => {
+OK            server/middleware/enterprise-security.ts:541-563  | export function validateTenantContext(req: Request, res: Response, next: NextFunction) {
+OK            server/index.ts:121  | applyCoreMiddleware(app, debugLog);
+OK            server/routes/authEnterprise.ts:245-563  | router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res: Response) => {
+OK            server/routes/sso.ts:396-399  | if (safeReturnTo) {
+OK            server/services/saml-provider.ts:100-109  | function inResponseToMode(): ValidateInResponseTo {
+OK            server/startup/middleware.ts:95  | app.use('/api/concept2cure', express.json({ limit: '50mb' }));
+OK            server/routes/auth.ts:376-396  | const user = await db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
+OK            server/middleware/redisRateLimiter.ts:349-367  | export function getCategory(path: string): string {
+OK            server/bootstrap/register-core-routes.ts:128  | app.use('/api/ai-assistance', aiCircuitBreaker, aiAssistanceRoutes);
+OK            server/bootstrap/register-clinical-intel-routes.ts:79  | app.use('/api', authenticateToken, rtmExportRoutes.default);
+OK            server/storage.ts:768-880  | async getDocumentByName(
+OK            server/config/environment.ts:203-241  | *     dev / CI (which set only JWT_SECRET) keep booting. A short or reused
+OK            server/middleware/enterprise-security.ts:816-841  | export function requireScope(...scopes: string[]) {
+OK            server/middleware/auth.js
+OK            server/config/environment.ts:263-278  | */
+OK            server/routes/authEnterprise.ts:708-717  | router.post('/electronic-signature', authMiddleware, async (_req: Request, res: Response) => {
+OK            server/services/grdhe/grdheService.ts:1432-1458  | const scope = auditableTableScope(tableName);
+OK            server/services/citation-verification-service.ts:141-208  | const url = `${NCBI_BASE}/esummary.fcgi?db=pubmed&id=${encodeURIComponent(pmid)}&retmode=json${ncbiApiKeyParam
+OK            server/bootstrap/register-platform-routes.ts:29-65  | // /healthz and /readyz are NOT registered here.
+OK            server/middleware/tokenType.ts:63-69  | export function requireAccessTokenReason(decoded: TokenClassClaims): string | null {
+OK            server/middleware/auth.ts:140  | const nonAccess = requireAccessTokenReason(decoded);
+OK            server/auth.ts:167  | if (requireAccessTokenReason(decoded)) {
+OK            server/mcp/auth/platform-token.ts:74  | return claims;
+OK            server/middleware/auth.ts:168-187  | const accountId = parseFiniteInt(subject);
+OK            server/services/mfaService.ts:305-317  | async function consumeTotpStep(userId: number, step: number): Promise<boolean> {
+OK            server/services/emailOtpService.ts:98-139  | *      correct submissions exactly one gets the row.
+OK            server/routes/auth.ts:2080-2111  | const reset = await db
+OK            server/services/mfaService.ts:374-404  | export async function generateSecret(userId: number, userEmail: string): Promise<MfaSetupResult> {
+OK            server/routes/auth.ts:1889-1906  | // The origin the reset link is built on, resolved BEFORE the account
+OK            server/middleware/authBoundary.ts:60-119  | export const PUBLIC_API_ALLOWLIST: readonly AllowlistEntry[] = [
+OK            server/middleware/auth.ts:333-454  | export const requireRole = (...allowedRoles: string[]) => {
+OK            server/middleware/orgMembership.ts:336-394  | export function enforceOrgMembership(req: Request, res: Response, next: NextFunction): void {
+OK            server/services/hocuspocus-server.ts:211-300  | if (!token) throw denied('authentication-required');
+OK            server/middleware/enterprise-security.ts:213-398  | : helmet({
+OK            server/startup/middleware.ts:104  | app.use('/api', sanitizeInput);
+OK            server/routes/api-keys.ts:55-57  | // All routes require authentication + admin role
+OK            server/utils/document-file-roots.ts:66-107  | * `/app/storage`. Exported because the same mistake is easy to re-make anywhere
+OK            server/services/saml-provider.ts:115-139  | function toNodeSamlConfig(c: SAMLConfig): NodeSamlConfig {
+OK            server/routes/sso.ts:607,625  | if (isDevAuthAllowed()) {
+OK            server/middleware/csrf.ts
+OK            server/middleware/enterprise-security.ts:944-1007  | export function csrfProtection(req: Request, res: Response, next: NextFunction) {
+OK            server/middleware/tenantContext.ts
+OK            server/routes/mdx-qms.ts:127  | const DOC_STATUS = ['draft', 'in_review', 'effective', 'superseded', 'retired'] as const;
+OK            server/routes/qms.ts:91-103  | router.post('/documents/:id/transition', async (req, res) => {
+OK            server/services/qms/qms.service.ts:21-27,61-81  | const DOC_TRANSITIONS: Record<string, string[]> = {
+OK            server/bootstrap/register-document-routes.ts:270  | { path: '/api/qms', router: qms, name: 'Quality Management System (document control, training, suppliers, audi
+OK            server/services/qms/document-approval-signature.ts:215  | `UPDATE qms_documents
+OK            scripts/ci/sign-ceremony-baseline.json
+OK            server/bootstrap/register-inline-routes.ts:418-419,620-640  | const irbModule = await import('../routes/irb');
+OK            server/middleware/moduleEntitlementGate.ts:37-47  | *
+OK            server/routes/c2c/artifacts.ts:2505-2523  | });
+OK            server/services/ai-actions/handlers/promote-artifact.ts:246,446  | // TODO(compliance): require electronic_signatures record (server/routes/esignature.ts)
+OK            server/services/part11/signature-persistence.ts:867-875  | `UPDATE electronic_signatures
+OK            db/migrations/20260730_esign_audit_db_level_immutability.sql:47-58  | IF OLD.superseded_by IS NOT NULL THEN
+OK            server/routes/c2c/actions.ts:545  | await persistGovernedSignatureRevocation(client, signatureParams);
+OK            db/migrations/20260617_audit_logs_immutability.sql:156  | IF coalesce(current_setting('app.audit_archive_bypass', true), '') = 'on' THEN
+OK            scripts/db/provision-app-role.mjs:138-152  | export const SCHEMA_PRIVILEGE_OVERRIDES = Object.freeze({
+OK            server/services/audit/chain.ts:450-600  | /**
+OK            server/services/audit/audit-archive.service.ts:88-160  | 
+OK            terraform/stack/main.tf:43-50,180-181  | #   DATABASE_URL      the owner role (c2c_admin). Migrations run as it, and so
+OK            server/db/bootstrap/index.ts:28-40  | // connection (DATABASE_URL) — the same role migrations use, and exactly what
+OK            server/services/part11/signature-persistence.ts:209,714  | const sha256Hex = (s: string): string => createHash('sha256').update(s).digest('hex');
+OK            db/migrations/20260813_audit_tamper_proof_log.sql:136-139  | CREATE INDEX IF NOT EXISTS idx_audit_resource    ON audit.tamper_proof_log(resource_type, resource_id);
+OK            terraform/stack/main.tf:150-169  | condition     = var.audit_hmac_key != var.audit_hmac_secret
+OK            .github/workflows/deploy-aws.yml:312-362  | #   REFRESH_TOKEN_SECRET     server/config/environment.ts — required in
+OK            server/startup/audit-trail.ts:77-96  | return process.env.AUDIT_TRAIL_ENABLED === 'true';
+OK            server/startup/services.ts:440-449  | if (process.env.AUDIT_TRAIL_ENABLED === 'true') {
+OK            server/startup/audit-enforcement.ts:44-66  | export function assertAuditTrailForProduction(
+OK            server/jobs/auditChainIntegritySweep.ts:39  | const result = await verifyAuditChain(client);
+OK            scripts/ops/verify-audit-chain.mjs
+OK            server/services/ai-gateway/embeddings/embedding-provider.ts:25,101,130-151  | import OpenAI from 'openai';
+OK            server/services/enhancedEmbeddingService.ts:146,191  | const response = await getEmbeddingProvider().embed({
+OK            server/services/vault/document-chunking.service.ts:166-171  | const { getEmbeddingService } = await import('../enhancedEmbeddingService.js');
+OK            terraform/stack/main.tf:93-95,187  | openai_api_key = {
+OK            docs/AI_SENSITIVE_DATA_PLACEMENT.md:40  | The repository also contains legacy/direct SDK paths (including `openai-service.ts`, `services/openai-service.
+OK            server/routes/ana-ri/post-processing.ts:339-356  | if (contentForCommandProcessing && orgId && isPositiveIntegerId(userId)) {
+OK            server/services/ana-ri/command-executor.ts:5280-5298  | }
+OK            server/services/ana-ri/command-rbac.ts:439-448  | export const PROPOSE_ONLY_COMMANDS: ReadonlySet<string> = new Set(
+OK            server/services/ana/AnaToolExecutor.ts:5130-5145  | if (!organizationId || !userId) {
+OK            server/services/ana-ri/command-executor.ts:131-136  | /**
+OK            server/services/ai-gateway/promptInjection.ts:1-45  | /**
+OK            server/services/ana-ri/command-executor.ts:1649-1771  | export async function erasePersonalData(
+OK            server/routes/global-compliance.ts:571-596  | redaction that had already succeeded, skipped the artifacts and comments,
+OK            server/services/tenant/tenant-offboarding.ts:439-465  | */
+OK            server/routes/tenants-simple.ts:478-525  | */
+OK            terraform/stack/vault_storage.tf:14-16  | #   - Versioned: an overwrite or delete keeps the prior version, so a removed
+OK            docs/reports/purge-coverage-baseline.json
+OK            server/services/auditService.ts
+OK            server/services/audit/signedAuditExport.ts:269-297  | }
+OK            server/routes/audit-trail-routes.ts:619-624  | hashAlgorithm: 'SHA-256',
+OK            db/migrations/20260617_audit_events_hmac_seal.sql
+OK            db/migrations/20260222_audit_events_hash_chain.sql:69-84  | WHERE organization_id = NEW.organization_id
+OK            migrations/20260921_audit_logs_chain_seq.sql:98-102  | -- Unchained row, or a writer that took no chain position (pre-fix code):
+OK            server/services/auditService.ts:288-310  | `INSERT INTO audit_logs
+OK            server/services/auditService.ts:340-450  | async logAction(
+OK            server/services/audit/domain-history-link.ts:67-72  | * STATE, STATED PLAINLY: `linked` is false for every entry, because
+OK            db/migrations/20260725_authoring_signatures_and_workflow.sql:40-70  | -- Deliberately NO foreign key on doc_id. A signature is evidence about a record
+OK            server/services/part11/signature-persistence.ts:683-688  | 
+OK            server/routes/c2c/actions.ts
+OK            server/routes/audit-trail-routes.ts:213-240,537,588  | // GET /api/audit/events — event listing
+OK            server/routes/audit-trail-ledger.routes.ts:398  | router.get('/ledger', async (req: Request, res: Response) => {
+OK            server/routes/global-compliance.ts:440-446  | try {
+OK            server/jobs/retentionCron.ts:19-21  | * Standalone job module (mirrors server/jobs/driftSentinelSweep.ts): it is not
+OK            server/bin/run-retention.ts
+OK            shared/schema/vault.ts:256  | policyName: text('policy_name').notNull().unique(),
+OK            server/utils/audit-logger.js:13-50  | // Ensure log directory exists
+OK            client/src/concept2cure/v2/surfaces/Part11Console.tsx:1-20  | /**
+OK            server/services/audit/audit-hmac-seal.ts:30,71  | *      audit_logs). Store the key id / rotation epoch if you rotate keys.
+OK            server/services/security/field-encryption.ts
+OK            SECURITY.md:86-87  | - **HIPAA** — the platform is built to support HIPAA-regulated workflows
+OK            server/services/templates/templateStore.ts:80  | // WO-16C. This was `try { await auditService.logAction(…) } catch { warn }`
+OK            .github/workflows/ci.yml:556-560  | - name: Guardrails — no unreachable catch around an audit write (Part 11)
+OK            client/src/utils/sentry.ts:6-15  | Sentry.init({
+OK            server/routes/tenants-simple.ts:545-551  | Math.random().toString(36).substring(2, 15) +
+OK            server/lib/tamper-proof-audit.ts:420-430  | // row exists, and it needs no table privilege. `pg_advisory_xact_lock`
+OK            server/services/ai-governance/approved-models.ts:291-298  | export function isHighRiskRequest(
+OK            server/routes/c2c/projects.ts:1663-1697  | router.post('/:id/archive', async (req: Request, res: Response) => {
+OK            server/config/environment.ts
+OK            server/routes/audit-trail-routes.ts:29-55,403-420  | // ---------------------------------------------------------------------------
+OK            server/startup/ai-governance-posture.ts:18  | *   AI_PII_ENFORCEMENT      unset → 'block'. Explicit 'audit' / 'off' is a
+OK            server/services/audit/chain.ts:11-50  | * ── The chain is ONE CHAIN PER TENANT (tenant_id) ────────────────────────────
+OK            migrations/20260921_audit_logs_chain_seq.sql:91-120  | CREATE OR REPLACE FUNCTION public.audit_logs_chain_position()
+OK            server/routes/c2c/actions.ts:362-363  | const { sha256Chain, hmacSeal } = await computeAuditChainSealed(client as any, {
+OK            server/routes/c2c/projects.ts:357-362  | const { sha256Chain, hmacSeal } = await computeAuditChainSealed(q as never, {
+OK            server/routes/c2c/commitments.ts:282-283  | const { sha256Chain, hmacSeal } = await computeAuditChainSealed(client as any, {
+OK            server/services/compliance/pharmacovigilanceService.ts:1280-1281  | const { sha256Chain, hmacSeal } = await computeAuditChainSealed(client as any, {
+OK            server/services/audit/auditSealPosture.ts
+OK            server/lib/tamper-proof-audit.ts:302-312  | const secret = process.env.AUDIT_HMAC_SECRET || '';
+OK            server/services/auditService.ts:175-180  | then this line caught it, logged one warning, and returned null, so the
+OK            server/services/part11/reverify-signer.ts:100-290  | * The first factor, under the account's allowance: the password check every
+OK            server/services/part11/signature-persistence.ts:286-362  | ): Promise<{ id: number; signedAt: Date }> {
+OK            server/services/qms/document-approval-signature.ts:22-33  | *
+OK            server/routes/submission-sign-release.ts:262-380  | const reverified = await reverifySigner(signerId, { password, mfaToken }, signerReverificationDeps());
+OK            server/services/vault/vault-ingest.service.ts:440-649  | The transaction is what makes the pair atomic: `writeChainedAuditRow`
+OK            server/routes/c2c/projects.ts:1600-1650  | opts: {
+OK            server/routes/authoring.router.ts:657-690  | const createAuditTrail = async (
+OK            server/services/ai-gateway/sensitive-placement-policy.ts:117-127  | if (approval.approvedDataClasses.length > 0 && !approval.zeroRetentionApproved) {
+OK            server/services/ai-gateway/gateway.ts:1112-1115,2852-2880  | // Apply the org's default placement policy (residency / zero-retention) when
+OK            client/src/concept2cure/components/ana/renderSafeMarkdown.ts:135-146  | export function renderSafeMarkdown(content: string): string {
+OK            server/utils/sentry.ts:13-38  | sendDefaultPii: false,
+OK            server/services/api-key-service.ts:77-81  | const randomPart = randomBytes(32).toString('base64url');
+OK            server/jobs/retentionCron.ts:95-167  | * on a failure to enumerate work (e.g. the initial queries), not on per-document
+OK            server/services/audit/auth-event-audit.ts
+OK            server/mcp/tools/runtime.ts:185-201  | // Everything below — the scope check's audit row, the tool itself and
+
+SUMMARY: {'ok': 297}; 297 citations checked

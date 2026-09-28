@@ -312,12 +312,12 @@ async function seedSubmission(ctx, program, vaultDocs) {
   await run.step('Submission Center: 510(k) submission for the program', async () => {
     const list = await api('GET', '/api/submissions');
     must(list, 200, 'list submissions');
-    let sub = rowsOf(list).find((s) => s.title === program.title) || null;
+    // The program's submission is the one anchored to it (submissions.program_id,
+    // LX-22) — never one found by a matching title.
+    let sub = rowsOf(list).find((s) => s.programId === program.id && s.applicationType === '510k') || null;
     const created = !sub;
     if (!sub) {
-      // Identity convention: title/product_name equal the program name — how the
-      // platform (and the Dispatch Readiness surface) links program ↔ submission.
-      sub = must(await api('POST', '/api/submissions', { title: program.title, productName: program.title, applicationType: '510k', clientType: 'ivd', primaryRegion: 'fda' }), 201, 'create submission');
+      sub = must(await api('POST', '/api/submissions', { programId: program.id, title: program.title, productName: program.title, applicationType: '510k', clientType: 'ivd', primaryRegion: 'fda' }), 201, 'create submission');
     }
     out.submission = sub;
     run.record('submission', { id: sub.id, title: sub.title, applicationType: sub.applicationType, clientType: sub.clientType, primaryRegion: sub.primaryRegion, status: sub.status, created });
@@ -336,7 +336,7 @@ async function seedSubmission(ctx, program, vaultDocs) {
   await run.step('Submission Center: eSTAR section codes on the leaf route (probe)', async () => {
     const d = DOSSIER[0];
     const r = probe(run, 'estarLeafProbe', await api('PUT', `/api/submissions/sequences/${out.sequence.id}/leaves`, {
-      sectionCode: d.leaf.estar, title: vaultDocs[d.key].title, documentTable: 'vault_documents', documentUuid: vaultDocs[d.key].id, documentType: d.leaf.documentType, lifecycleOp: 'new',
+      sectionCode: d.leaf.estar, title: vaultDocs[d.key].title, documentTable: 'vault_documents', documentUuid: vaultDocs[d.key].id, documentType: d.leaf.documentType, lifecycleOp: 'new', reason: 'Placed by the launch demo pack',
     }), `PUT leaves with sectionCode "${d.leaf.estar}" (an eSTAR slot id) on the 510(k) sequence`);
     if (r.status === 200) throw new Error('the leaf route accepted an eSTAR section code; the CTD fallback below is no longer needed — revisit the pack');
     finding(run, `Submission Center: the sequence/leaf model is the eCTD one. PUT /api/submissions/sequences/:id/leaves refuses a non-CTD-shaped sectionCode — "${d.leaf.estar}" answered HTTP ${r.status} ${String(r.json?.error?.message ?? '').slice(0, 220)} — and the builder presents eCTD modules. There is no eSTAR section vocabulary on the leaf route, so this pack files the device documents at the closest CTD codes (3.2.P.1, 3.2.R, 5.3.1.4, 5.3.5.2, 1.16, 1.14) with eSTAR documentType tokens; an authoring document cannot be placed as a leaf at all (authoring_documents is not a placeable table).`);
@@ -353,7 +353,7 @@ async function seedSubmission(ctx, program, vaultDocs) {
       const existing = have.find((l) => (l.sectionCode ?? l.section_code) === doc.leaf.ctd);
       if (!existing) {
         must(await api('PUT', `/api/submissions/sequences/${out.sequence.id}/leaves`, {
-          sectionCode: doc.leaf.ctd, title: v.title, documentTable: 'vault_documents', documentUuid: v.id, documentType: doc.leaf.documentType, lifecycleOp: 'new',
+          sectionCode: doc.leaf.ctd, title: v.title, documentTable: 'vault_documents', documentUuid: v.id, documentType: doc.leaf.documentType, lifecycleOp: 'new', reason: 'Placed by the launch demo pack',
         }), 200, `place leaf ${doc.leaf.ctd}`);
         placed += 1;
       }

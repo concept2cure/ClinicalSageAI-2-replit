@@ -99,6 +99,32 @@ describe('computeLifecycleOperations', () => {
     expect(res.leaves[0].fileName).toBe('summary-v2.pdf');
   });
 
+  it('a keyed leaf still matches an UNKEYED prior leaf by path — a history filed before keys existed is not re-filed whole', () => {
+    const p = [prior({ ctdSection: '2.5', fileName: 'overview.pdf', md5: 'o1' })]; // no leafKey
+    const d = [desired({ leafKey: 'artifact:a@2.5', ctdSection: '2.5', fileName: 'overview.pdf', md5: 'o2' })];
+    const res = computeLifecycleOperations(p, d);
+    expect(res.summary).toMatchObject({ replace: 1, new: 0, unchanged: 0 });
+  });
+
+  it('two DIFFERENTLY keyed leaves at one path are two documents — never a replace of one by the other', () => {
+    // The path is only a stand-in for identity when one side has none. When
+    // both carry keys and they differ, a shared file name is a coincidence,
+    // and a replace would supersede the wrong document at the agency.
+    const p = [prior({ leafKey: 'artifact:a@2.5', ctdSection: '2.5', fileName: 'overview.pdf', md5: 'o1' })];
+    const d = [desired({ leafKey: 'artifact:b@2.5', ctdSection: '2.5', fileName: 'overview.pdf', md5: 'o2' })];
+    const res = computeLifecycleOperations(p, d);
+    expect(res.summary).toMatchObject({ new: 1, replace: 0, unchanged: 1 });
+    expect(res.leaves[0]).not.toHaveProperty('modifiedFile');
+  });
+
+  it('counts unchanged by what was MATCHED: a replaced leaf is not also reported as still on file', () => {
+    // A keyed desired leaf and an unkeyed prior leaf never compare equal by
+    // key shape, so counting leftovers by key shape reported one leaf twice.
+    const p = [prior({ ctdSection: '1.2', fileName: 'cover.pdf', md5: 'c1' })];
+    const d = [desired({ leafKey: 'artifact:c@1.2', ctdSection: '1.2', fileName: 'cover.pdf', md5: 'c2' })];
+    expect(computeLifecycleOperations(p, d).summary).toMatchObject({ replace: 1, unchanged: 0 });
+  });
+
   it('handles a mixed sequence: new + replace + delete + unchanged together', () => {
     const p = [
       prior({ ctdSection: '2.5', fileName: 'overview.pdf', md5: 'o1' }), // -> replace

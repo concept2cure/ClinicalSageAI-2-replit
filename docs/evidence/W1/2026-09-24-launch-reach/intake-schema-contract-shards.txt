@@ -1,0 +1,12 @@
+# schema-contract, all three shards, on the tree carrying migrations/20260924_license_requests.sql (after cbe9844c1).
+# Shard 1 includes C-33 (tenant-isolation-sweep.contract.test.ts), which applies the WHOLE of C2C_MIGRATION_FILES in order to a bare database.
+═══ shard 1/3 ═══
+ Test Files  29 passed (29)
+      Tests  275 passed (275)
+═══ shard 2/3 ═══
+ Test Files  29 passed (29)
+      Tests  220 passed (220)
+═══ shard 3/3 ═══
+ Test Files  28 passed (28)
+      Tests  606 passed (606)
+[exited with code 0]

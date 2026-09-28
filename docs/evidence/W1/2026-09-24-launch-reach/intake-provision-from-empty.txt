@@ -1,0 +1,12 @@
+# npm run db:provision (scripts/db/provision.mjs) on an EMPTY database at cbe9844c1, with migrations/20260924_license_requests.sql on the applier.
+# Owner provisions; readiness verified as app_service.
+619:  ✓ applied: migrations/20260924_license_requests.sql
+688:▶ 5/5 Verify readiness contract (incl. grant audit for app_service)
+695:  SELECT reach: 8/8 contract tables readable by app_service
+696:  grant audit: 1282/1282 application relations hold the recipe privileges for app_service; beyond the audit ceiling: 0
+712:  SELECT reach: 27/27 contract tables readable by app_service
+713:  grant audit: 1282/1282 application relations hold the recipe privileges for app_service; beyond the audit ceiling: 0
+715:✅ Database provisioned and the /readyz schema contract holds.
+723:EXIT=0
+## as app_service on the fresh database: table present | INSERT granted | policy count | FORCE RLS
+t|t|2|t

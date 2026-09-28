@@ -73,6 +73,13 @@ export interface AnaToolCall {
   label: string;
   status: 'running' | 'success' | 'error';
   /**
+   * The server's id for this call (the model's tool_use id). A step runs its
+   * calls concurrently, and several can be the SAME tool, so the name alone
+   * cannot say which call a result belongs to. Absent only from an older server
+   * or a persisted record written before the field existed.
+   */
+  toolUseId?: string;
+  /**
    * Agentic-loop round this call ran in (1-based). Lets the transcript group
    * tool steps by investigation round instead of one flat list, so a deep
    * multi-round investigation reads as the progression it actually was.
@@ -116,6 +123,59 @@ export interface AnaProgressPhase {
   status: 'active' | 'done' | 'stopped';
   startedAt: number;
   endedAt?: number;
+}
+/**
+ * One step of the plan AnA declared for a turn through `update_plan`
+ * (server/services/ana/turn-plan.ts). The ONLY source of a "Step 2 of 5"
+ * count: a turn that declared no plan has none, and a step is `completed`
+ * only because she marked it so — nothing on the client infers it.
+ */
+export interface AnaPlanStep {
+  title: string;
+  status: 'pending' | 'in_progress' | 'completed';
+}
+/**
+ * One change to the declared plan, in the order it arrived. The panel reads
+ * the plan itself; the transcript reads these to say "Planned 5 steps" or
+ * "Added step …" at the point in the work where it happened.
+ */
+export interface AnaPlanChange {
+  kind: 'added' | 'started' | 'completed' | 'removed';
+  title: string;
+  at: number;
+  /** The agentic-loop round of the update_plan call that made the change. */
+  round?: number;
+  /** True for the steps of the first plan the turn declared. */
+  initial?: boolean;
+}
+/**
+ * What the turn actually read before answering — the server's
+ * `context_used` event (server/services/ana/turn-context-used.ts). Only
+ * uploads that resolved are listed, each saying whether its content or only
+ * its name reached the model; a memory read that failed is `unavailable`,
+ * never an empty list that reads as "nothing matched".
+ */
+/**
+ * Whether the server filed this turn's retained record (21 CFR Part 11): the
+ * record's id and SHA-256 when it did, the reason when it did not. Absent when
+ * the server said nothing — an older server, or a turn that never closed —
+ * which is shown as nothing, never as recorded.
+ */
+export type AnaTurnRecordStatus =
+  | { status: 'recorded'; id: string; sha256: string }
+  | { status: 'not_recorded'; reason: string }
+  /**
+   * Client-side only: the turn ended here — timed out, stopped, or the
+   * connection closed — before the server said whether it filed the record.
+   * The server may well have; this view cannot say so.
+   */
+  | { status: 'unconfirmed' };
+
+export interface AnaContextUsed {
+  uploads: Array<{ fileId: string; fileName: string; mimeType: string; read: 'content' | 'name_only' }>;
+  unresolvedUploads: number;
+  memory: Array<{ layer: string; title: string; documentName?: string }>;
+  memoryStatus: 'read' | 'none' | 'unavailable';
 }
 /**
  * Result of `verify_docx_against_source` — the audited "verify it against your
@@ -233,6 +293,13 @@ export interface AnaChatMessage {
   /** True if the user explicitly stopped the stream. */
   stopped?: boolean;
   /**
+   * True when the turn ended before the server finished it — the stream went
+   * silent or the connection failed. Distinct from `stopped` (the person's own
+   * stop), and recorded even when no phase had arrived yet, so a turn that
+   * never got going cannot read as finished.
+   */
+  interrupted?: boolean;
+  /**
    * Intent lens AnA detected for this turn (audit / risk / strategy /
    * improve / compare / auto). Rendered as a small meta chip.
    */
@@ -305,6 +372,14 @@ export interface AnaChatMessage {
    * in the work panel. See {@link AnaProgressPhase} for the honesty contract.
    */
   progress?: AnaProgressPhase[];
+  /** The plan AnA declared this turn, as last updated. Absent when she declared none. */
+  plan?: AnaPlanStep[];
+  /** Every change to `plan`, in arrival order. */
+  planChanges?: AnaPlanChange[];
+  /** What the turn read before answering (uploads, memory). Absent until the event arrives. */
+  contextUsed?: AnaContextUsed;
+  /** Whether this turn's retained record was filed. See {@link AnaTurnRecordStatus}. */
+  turnRecord?: AnaTurnRecordStatus;
   /**
    * Draft produced by a document-generating tool this turn. The rail reads
    * `title` only; nothing routes `content` anywhere, so this is NOT
@@ -529,9 +604,18 @@ export type DriveSseEvent =
       mode?: 'assist' | 'demo';
       reason?: string;
       requiredTier?: string | null;
+      /**
+       * Set when the server switched an already-driving turn into a
+       * demonstration mid-turn (start_product_demo). It is a MODE change for
+       * the drive that is already running, never a fresh enable: it must not
+       * re-arm a drive the person took over or switched off.
+       */
+      promoted?: boolean;
     }
-  | { type: 'drive_navigation'; round?: number; directive: unknown }
-  | { type: 'drive_action'; round?: number; directive: unknown }
+  /* `moveId` names the move when it is reported back (DriveTurnControls
+     moveLanded / reportScreen); the server waits on it before her next round. */
+  | { type: 'drive_navigation'; round?: number; directive: unknown; moveId?: string }
+  | { type: 'drive_action'; round?: number; directive: unknown; moveId?: string }
   /**
    * Client-side, never on the wire: the chat instance whose turn received an
    * enabled `drive_state` reports that the turn has ended (answered, failed or
@@ -539,7 +623,18 @@ export type DriveSseEvent =
    * streaming, so a drive started from any other chat left "AnA is driving"
    * on screen, with dead controls, for good.
    */
-  | { type: 'drive_turn_end' };
+  | { type: 'drive_turn_end' }
+  /**
+   * Client-side, never on the wire: the person ended a driving turn early —
+   * its chat's Stop, or a new or other conversation replacing it — so the
+   * screen must stop moving NOW. Sent before the server's cancel is awaited,
+   * while the stream is still delivering moves the server had already written;
+   * `drive_turn_end` still follows once the stream closes. Only the drive
+   * strip's Stop used to halt the drive: every other Stop reaches only its own
+   * chat, which the shell cannot see, so the stopped turn's moves went on
+   * playing.
+   */
+  | { type: 'drive_stopped' };
 
 /**
  * The run that is driving, handed to the shell with every drive event so the
@@ -549,7 +644,23 @@ export type DriveSseEvent =
  */
 export interface DriveTurnControls {
   stop: () => void;
+  /** A steer the PERSON typed. Recorded as a human control event. */
   interject: (message: string) => Promise<boolean>;
+  /**
+   * What the app observed on screen (a move that could not be made), told to
+   * AnA mid-turn. Not a human control: it is queued as an app observation, not
+   * shown as "You steered AnA", and not written as a human control event.
+   * Bound to the run of the turn that emitted the drive event — a report about
+   * an earlier turn's move is dropped (resolves false), never delivered to a
+   * newer run. `moveId`, when given, is the move it is about: it settles that
+   * move for the server, which holds her next round until each move is settled.
+   */
+  reportScreen: (message: string, moveId?: string) => Promise<boolean>;
+  /**
+   * The move the server sent as `moveId` landed on the screen. Settles it
+   * without a word for the model. Same run binding as reportScreen.
+   */
+  moveLanded: (moveId: string) => Promise<boolean>;
 }
 
 /**

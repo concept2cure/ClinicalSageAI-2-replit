@@ -62,6 +62,18 @@ describe('isPublicApiPath', () => {
 });
 
 describe('resolveAuthBoundaryMode', () => {
+  it('resolves an explicit warn to enforce in production (a single variable cannot turn default-deny off)', () => {
+    // Security audit 2026-09-24, IAM-16. Boot also refuses the variable
+    // (server/startup/env.ts); this is the defence in depth for any entry point
+    // that mounts the boundary without going through validateEnvironment.
+    expect(
+      resolveAuthBoundaryMode({ NODE_ENV: 'production', AUTH_BOUNDARY_MODE: 'warn' } as NodeJS.ProcessEnv),
+    ).toBe('enforce');
+    expect(
+      resolveAuthBoundaryMode({ NODE_ENV: 'production', AUTH_BOUNDARY_MODE: ' WARN ' } as NodeJS.ProcessEnv),
+    ).toBe('enforce');
+  });
+
   it('enforces in production by default', () => {
     expect(resolveAuthBoundaryMode({ NODE_ENV: 'production' } as NodeJS.ProcessEnv)).toBe(
       'enforce'
@@ -74,16 +86,24 @@ describe('resolveAuthBoundaryMode', () => {
     expect(resolveAuthBoundaryMode({ NODE_ENV: 'test' } as NodeJS.ProcessEnv)).toBe('warn');
   });
 
-  it('honours an explicit AUTH_BOUNDARY_MODE override both ways', () => {
+  it('honours an explicit AUTH_BOUNDARY_MODE override outside production, and enforce anywhere', () => {
+    // Before 2026-09-24 this case asserted production + warn → warn. That is the
+    // one direction the override must NOT work (IAM-16): see the case above.
     expect(
       resolveAuthBoundaryMode({
-        NODE_ENV: 'production',
+        NODE_ENV: 'staging',
         AUTH_BOUNDARY_MODE: 'warn',
       } as NodeJS.ProcessEnv)
     ).toBe('warn');
     expect(
       resolveAuthBoundaryMode({
         NODE_ENV: 'development',
+        AUTH_BOUNDARY_MODE: 'enforce',
+      } as NodeJS.ProcessEnv)
+    ).toBe('enforce');
+    expect(
+      resolveAuthBoundaryMode({
+        NODE_ENV: 'production',
         AUTH_BOUNDARY_MODE: 'enforce',
       } as NodeJS.ProcessEnv)
     ).toBe('enforce');

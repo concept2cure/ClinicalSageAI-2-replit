@@ -1,0 +1,29 @@
+✅ selftest: gate passes on an intact tree (six links and the founder walk)
+✅ selftest: gate exits 1 and names [thread-mounts-canvas] when ConversationThread.tsx cuts the link
+✅ selftest: gate exits 1 and names [canvas-mounts-workbench] when DocumentCanvas.tsx cuts the link
+✅ selftest: gate exits 1 and names [surface-mounts-workbench] when DocumentAuthoring.tsx cuts the link
+✅ selftest: gate exits 1 and names [tool-registered] when document-surface-tool-defs.ts cuts the link
+✅ selftest: gate exits 1 and names [workbench-reads-vault] when ProjectFilesPanel.tsx cuts the link
+✅ selftest: gate exits 1 and names [file-to-vault-route] when authoring.router.ts cuts the link
+selftest FAILED: cutting founder-walk did not produce exactly that finding (exit 0, rules: none)
+{
+  "ok": true,
+  "root": "/tmp/canvas-path-selftest-wJcOjl/founder-walk",
+  "findings": []
+}
+
+selftest FAILED: cutting founder-walk did not produce exactly that finding (exit 0, rules: none)
+{
+  "ok": true,
+  "root": "/tmp/canvas-path-selftest-wJcOjl/founder-walk",
+  "findings": []
+}
+
+selftest FAILED: cutting founder-walk did not produce exactly that finding (exit 0, rules: none)
+{
+  "ok": true,
+  "root": "/tmp/canvas-path-selftest-wJcOjl/founder-walk",
+  "findings": []
+}
+
+exit 1

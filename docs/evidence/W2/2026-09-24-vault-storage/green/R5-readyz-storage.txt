@@ -1,0 +1,6 @@
+ ✓ server/startup/__tests__/readyz-vault-storage.test.ts > /readyz and the vault store > is ready, and says the store is ok, when the store answers 19ms
+ ✓ server/startup/__tests__/readyz-vault-storage.test.ts > /readyz and the vault store > is not ready when the store does not answer 5ms
+ ✓ server/startup/__tests__/readyz-vault-storage.test.ts > /readyz and the vault store > is not ready when the probe throws 4ms
+ ✓ server/startup/__tests__/readyz-vault-storage.test.ts > /readyz and the vault store > is not ready when no store can be selected 3ms
+ ✓ server/startup/__tests__/readyz-vault-storage.test.ts > /readyz and the vault store > is not ready, and does not hang, when the store never answers 3008ms
+      Tests  5 passed (5)

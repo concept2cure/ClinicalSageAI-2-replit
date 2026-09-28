@@ -1,0 +1,12 @@
+ × tests/db/atom-search.dbtest.ts > search_atoms_hybrid on a from-blank database > returns rows 12ms
+   → structure of query does not match function result type
+ × tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > returns no more rows than the limit, all the tenant’s own 6ms
+   → structure of query does not match function result type
+ × tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > weights semantic and keyword scores as the caller asked 5ms
+   → structure of query does not match function result type
+ × tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > returns a project's own atoms even when other projects' atoms score higher 5ms
+   → structure of query does not match function result type
+ × tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > never returns another tenant’s atom, even on a connection RLS does not filter 4ms
+   → structure of query does not match function result type
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed (5)

@@ -69,6 +69,28 @@ const SENSITIVE_KEYS = [
   'authorization',
 ];
 
+/**
+ * Personal data that is not secret but is still not for a log line: an e-mail
+ * address or an IP address is masked wherever it appears as a string value
+ * (security audit 2026-09-24, DP-26; GDPR Art. 5(1)(c) and 25). The mask keeps
+ * what an operator needs to correlate — the first character and the domain of
+ * an address, the network part of an IP — and drops the identifying rest.
+ * Mirrors logger.ts; edit both.
+ */
+const MASK_SCAN_LIMIT = 2048;
+const EMAIL_RE = /([A-Za-z0-9._%+-])([A-Za-z0-9._%+-]*)@([A-Za-z0-9.-]+\.[A-Za-z]{2,})/g;
+const IPV4_RE = /\b(\d{1,3}\.\d{1,3}\.\d{1,3})\.\d{1,3}\b/g;
+const IPV6_RE = /\b((?:[0-9a-f]{1,4}:){3})(?:[0-9a-f]{0,4}:?){1,5}\b/gi;
+
+export const maskPersonalData = value => {
+  if (value.length > MASK_SCAN_LIMIT) return value;
+  let out = value;
+  if (out.includes('@')) out = out.replace(EMAIL_RE, (_m, first, _rest, domain) => `${first}***@${domain}`);
+  if (/\d\.\d/.test(out)) out = out.replace(IPV4_RE, '$1.xxx');
+  if (out.includes(':') && /[0-9a-f]{1,4}:[0-9a-f]{1,4}:/i.test(out)) out = out.replace(IPV6_RE, '$1:xxxx');
+  return out;
+};
+
 const redactValue = value => {
   if (value === null || value === undefined) return value;
   if (typeof value === 'string') return '[REDACTED]';
@@ -76,26 +98,42 @@ const redactValue = value => {
   return '[REDACTED]';
 };
 
+/**
+ * Walk the context tree replacing values under sensitive keys with
+ * '[REDACTED]' and masking personal data in every other string. Recurses
+ * into objects AND arrays up to depth 6. An array element has no key to
+ * match against SENSITIVE_KEYS, so a string element is masked and an object
+ * element is walked; before the security review of 2026-09-26 (DP-39)
+ * arrays were passed through unscanned. Mirrors logger.ts; edit both.
+ */
 const redactContext = (context, depth = 0) => {
   if (!context || typeof context !== 'object') return context;
   if (depth > 6) return context;
-  if (Array.isArray(context)) return context;
+  if (Array.isArray(context)) return context.map(item => maskValue(item, depth));
 
   const output = {};
   for (const [key, value] of Object.entries(context)) {
     const lowerKey = key.toLowerCase();
     const shouldRedact = SENSITIVE_KEYS.some(sensitive => lowerKey.includes(sensitive));
-
-    if (shouldRedact) {
-      output[key] = redactValue(value);
-    } else if (value && typeof value === 'object') {
-      output[key] = redactContext(value, depth + 1);
-    } else {
-      output[key] = value;
-    }
+    output[key] = shouldRedact ? redactValue(value) : maskValue(value, depth);
   }
   return output;
 };
+
+/** A value under an ordinary key, or an array element: walked, masked, or passed through. */
+function maskValue(value, depth) {
+  if (value && typeof value === 'object') return redactContext(value, depth + 1);
+  if (typeof value === 'string') return maskPersonalData(value);
+  return value;
+}
+
+/**
+ * The message is a string the caller composed, often by interpolation, and
+ * it is masked like any other string (DP-39). A non-string message — a legacy
+ * caller passing an object or an Error — is handed on as before; the logger
+ * must not throw inside the request that is logging. Mirrors logger.ts.
+ */
+const maskMessage = message => (typeof message === 'string' ? maskPersonalData(message) : message);
 
 // Create a simple logger that outputs to console
 const baseLogger = {
@@ -105,7 +143,7 @@ const baseLogger = {
         {
           timestamp: new Date().toISOString(),
           level: 'info',
-          message,
+          message: maskMessage(message),
           context: redactContext(context),
         },
         null,
@@ -120,7 +158,7 @@ const baseLogger = {
         {
           timestamp: new Date().toISOString(),
           level: 'error',
-          message,
+          message: maskMessage(message),
           context: redactContext(context),
         },
         null,
@@ -135,7 +173,7 @@ const baseLogger = {
         {
           timestamp: new Date().toISOString(),
           level: 'warn',
-          message,
+          message: maskMessage(message),
           context: redactContext(context),
         },
         null,
@@ -151,7 +189,7 @@ const baseLogger = {
           {
             timestamp: new Date().toISOString(),
             level: 'debug',
-            message,
+            message: maskMessage(message),
             context: redactContext(context),
           },
           null,
@@ -174,7 +212,7 @@ export const createContextLogger = createScopedLogger;
 const logger = baseLogger;
 
 // Exported for parity with logger.ts; do not call from app code.
-export const __testing = { SENSITIVE_KEYS, redactContext };
+export const __testing = { SENSITIVE_KEYS, redactContext, maskPersonalData };
 
 // Named export so files can use: import { logger } from '../utils/logger.js'
 export { logger };

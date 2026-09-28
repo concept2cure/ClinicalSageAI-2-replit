@@ -1,0 +1,180 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts
+{
+  "timestamp": "2026-09-25T01:18:29.814Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-25T01:18:29.815Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts
+{
+  "timestamp": "2026-09-25T01:18:29.816Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding provider selection > local with no base URL is a configuration error naming EMBEDDING_LOCAL_BASE_URL, never a fallback to OpenAI
+{
+  "timestamp": "2026-09-25T01:18:29.968Z",
+  "level": "warn",
+  "message": "[ai-gateway:embeddings] [AI Gateway] EMBEDDING_PROVIDER=local but EMBEDDING_LOCAL_BASE_URL is unset — falling back to OpenAI embeddings.",
+  "context": {}
+}
+
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding provider selection > defaults to the OpenAI embedding provider (shared frontier) 4ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding provider selection > selects the self-hosted provider when EMBEDDING_PROVIDER=local and a base URL is set 1ms
+ × server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding provider selection > local with no base URL is a configuration error naming EMBEDDING_LOCAL_BASE_URL, never a fallback to OpenAI 8ms
+   → expected [Function] to throw an error
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > plain text with no policy embeds through OpenAI; the client is constructed once, lazily 5ms
+ × server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > a zero-retention tenant's plain text never reaches OpenAI: GatewayPolicyError before any client is constructed 7ms
+   → promise resolved "{ …(4) }" instead of rejecting
+ × server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > PHI to a provider not approved for embedding is refused with a content-free audit entry 3ms
+   → promise resolved "{ embeddings: [ …(2) ], …(3) }" instead of rejecting
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the self-hosted lane, approved for embedding, embeds PHI for an on-prem zero-retention tenant 3ms
+ × server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the running request's tenant scope supplies the organisation when the caller passes none 2ms
+   → promise resolved "{ …(4) }" instead of rejecting
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the estate-wide system scope ('0') is not an organisation and is not offered as one 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding provider selection > local with no base URL is a configuration error naming EMBEDDING_LOCAL_BASE_URL, never a fallback to OpenAI
+AssertionError: expected [Function] to throw an error
+ ❯ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts:125:46
+    123|   it('local with no base URL is a configuration error naming EMBEDDING…
+    124|     process.env.EMBEDDING_PROVIDER = 'local';
+    125|     expect(() => resolveEmbeddingProvider()).toThrow(EmbeddingConfigur…
+       |                                              ^
+    126|     expect(() => resolveEmbeddingProvider()).toThrow(/EMBEDDING_LOCAL_…
+    127|     // The memoised accessor fails the same way on every call — nothin…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > a zero-retention tenant's plain text never reaches OpenAI: GatewayPolicyError before any client is constructed
+AssertionError: promise resolved "{ …(4) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "embeddings": [
++     [
++       0.1,
++       0.2,
++       0.3,
++     ],
++   ],
++   "inputTokens": 3,
++   "model": "text-embedding-3-small",
++   "provider": "openai",
+  }
+
+ ❯ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts:154:25
+    152|
+    153|     const attempt = provider.embed({ input: PLAIN_TEXT, organizationId…
+    154|     await expect(attempt).rejects.toBeInstanceOf(GatewayPolicyError);
+       |                         ^
+    155|     await expect(attempt).rejects.toMatchObject({
+    156|       message: expect.stringContaining('DENY_SHARED_PROVIDER_WITHOUT_Z…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > PHI to a provider not approved for embedding is refused with a content-free audit entry
+AssertionError: promise resolved "{ embeddings: [ …(2) ], …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "embeddings": [
++     [
++       0.1,
++       0.2,
++       0.3,
++     ],
++     [
++       0.1,
++       0.2,
++       0.3,
++     ],
++   ],
++   "inputTokens": 6,
++   "model": "text-embedding-3-small",
++   "provider": "openai",
+  }
+
+ ❯ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts:185:67
+    183|     const provider = getEmbeddingProvider();
+    184|
+    185|     await expect(provider.embed({ input: [PHI_TEXT, PLAIN_TEXT] })).re…
+       |                                                                   ^
+    186|       name: GatewayPolicyError.name,
+    187|       message: expect.stringContaining('DENY_UNAPPROVED_INTENDED_USE'),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the running request's tenant scope supplies the organisation when the caller passes none
+AssertionError: promise resolved "{ …(4) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "embeddings": [
++     [
++       0.1,
++       0.2,
++       0.3,
++     ],
++   ],
++   "inputTokens": 3,
++   "model": "text-embedding-3-small",
++   "provider": "openai",
+  }
+
+ ❯ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts:240:5
+    238|     await expect(
+    239|       runWithTenantScope({ tenantId: '7', source: 'test' }, () => prov…
+    240|     ).rejects.toBeInstanceOf(GatewayPolicyError);
+       |     ^
+    241|     expect(resolve).toHaveBeenCalledWith('7');
+    242|     expect(sdk.construct).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 5 passed (9)
+   Start at  01:18:27
+   Duration  3.02s (transform 1.37s, setup 186ms, import 2.29s, tests 40ms, environment 0ms)
+

@@ -1,0 +1,63 @@
+# HEAD 7fbe51c5, sources unchanged (tests only), 2026-09-26T13:13Z
+$ NODE_OPTIONS=--max-old-space-size=1536 npx vitest run server/services/audit/__tests__/auth-event-audit.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/audit/__tests__/auth-event-audit.test.ts > a write that is not persisted > does not fail the request that caused it
+{
+  "timestamp": "2026-09-26T13:13:18.706Z",
+  "level": "warn",
+  "message": "[auth] Audit log write failed (non-fatal)",
+  "context": {
+    "err": "refused",
+    "action": "user_login_mfa_challenge"
+  }
+}
+
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names the user organisation > is written in a scope for exactly that organisation, with no role (a number, from the user record) 4ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names the user organisation > is written in a scope for exactly that organisation, with no role (a string, from the signed MFA challenge) 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names the user organisation > leaves the request in the pre-auth scope it arrived in 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (absent) 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (null) 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (empty) 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (zero) 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (negative) 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (not an id) 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > a write that is not persisted > does not fail the request that caused it 2ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > never shows a refused sign-in the way it shows a successful one 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > states the outcome even for an event it has no sentence for 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > is written into the row the ledger reads 1ms
+ × server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > names a resend refused at the per-challenge limit 10ms
+   → expected 'user login mfa challenge: failure (re…' to be 'Emailed code not re-sent: this sign-i…' // Object.is equality
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_sso 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_validation_failed 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_org_not_resolved 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_no_email 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_user_not_in_organisation 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > names a resend refused at the per-challenge limit
+AssertionError: expected 'user login mfa challenge: failure (re…' to be 'Emailed code not re-sent: this sign-i…' // Object.is equality
+
+Expected: "Emailed code not re-sent: this sign-in has already received its limit of emailed codes"
+Received: "user login mfa challenge: failure (resend_limit)"
+
+ ❯ server/services/audit/__tests__/auth-event-audit.test.ts:117:115
+    115|   // rather than showing the fallback form.
+    116|   it('names a resend refused at the per-challenge limit', () => {
+    117|     expect(describeAuthEvent({ action: 'user_login_mfa_challenge', out…
+       |                                                                                                                   ^
+    118|       'Emailed code not re-sent: this sign-in has already received its…
+    119|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 18 passed (19)
+   Start at  13:13:18
+   Duration  518ms (transform 121ms, setup 93ms, import 59ms, tests 29ms, environment 0ms)
+
+exit=1

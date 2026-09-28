@@ -50,7 +50,7 @@ import { coauthorDocuments } from '../../../shared/schema';
 import { unifiedDocuments, workflowDocumentVersions } from '../../../shared/schema/unified_workflow';
 import { ctdOnboardingDocuments } from '../../../shared/schema/ctd-projects';
 import { renderedLeafFiles } from '../../../shared/schema/submissions';
-import { getStorageProvider } from '../storage';
+import { getStorageProvider, getStorageProviderFor } from '../storage';
 import { readLocalUploadBuffer } from '../anthropic-files';
 import { sectionPlainText, C2C_SECTION_COMPLETE_STATUSES } from '../c2c/section-content';
 import { renderLeafPdf } from './leaf-pdf-renderer';
@@ -582,7 +582,7 @@ export async function materializeLeafSources(
       }
 
       const vaultRes = await queryableFromDrizzle(db).query(
-        `SELECT d.storage_version_id, d.content_hash, d.file_name
+        `SELECT d.storage_version_id, d.storage_provider, d.content_hash, d.file_name
            FROM vault.documents d
           WHERE d.id = $1::uuid
             AND d.deleted_at IS NULL
@@ -596,7 +596,12 @@ export async function materializeLeafSources(
         [documentUuid, organizationId],
       );
       const vaultRow = vaultRes.rows[0] as
-        | { storage_version_id: string | null; content_hash: string | null; file_name: string | null }
+        | {
+            storage_version_id: string | null;
+            storage_provider: string | null;
+            content_hash: string | null;
+            file_name: string | null;
+          }
         | undefined;
       if (!vaultRow) {
         miss('vault document not found in this organization');
@@ -608,11 +613,20 @@ export async function materializeLeafSources(
         // provider — and reading the path here would be a second byte-reading
         // implementation of exactly the kind that was just consolidated away.
         // Say what makes it filable instead of guessing.
-        miss('vault document bytes are not on the storage provider yet (storage_version_id is null) — run scripts/backfill-vault-storage.mjs for this organization, then re-assemble');
+        miss('vault document bytes are not on the storage provider yet (storage_version_id is null) — run `npm run db:backfill-vault-storage -- --org <id>` for this organization (dry run first; --apply to move the bytes), then re-assemble');
         continue;
       }
 
-      const got = await getStorageProvider().get(vaultRow.storage_version_id, organizationId);
+      // Read from the store the bytes were written to, not whichever one this
+      // server is configured with now (vault.documents.storage_provider).
+      let vaultStore: ReturnType<typeof getStorageProvider>;
+      try {
+        vaultStore = getStorageProviderFor(vaultRow.storage_provider);
+      } catch {
+        miss('vault document bytes are in a store this server cannot open — refusing to stage a leaf from another source');
+        continue;
+      }
+      const got = await vaultStore.get(vaultRow.storage_version_id, organizationId);
       if (!got) {
         miss('vault document bytes not retrievable from the storage provider for this organization');
         continue;

@@ -351,8 +351,10 @@ describe('POST /api/c2c/projects', () => {
 // checklist, NdaCockpit, SubmissionCenter, DispatchReadiness) permanently empty
 // for self-serve drug programs. These lock: the spine is created on the SAME
 // transaction client as the program (commit/rollback atomically), only for drug
-// application types, idempotently against the assembler's identity match, and
-// reflected in both the sealed audit row and the 201 meta.
+// application types, anchored to the program it was created for
+// (submissions.program_id, LX-22), reused only when already anchored to THAT
+// program — never adopted from another project by product name — and reflected
+// in both the sealed audit row and the 201 meta.
 describe('POST /api/c2c/projects — canonical submission spine', () => {
   /** Queue the happy-path statement sequence for a drug program. */
   const queueDrugCreate = () => {
@@ -388,9 +390,10 @@ describe('POST /api/c2c/projects — canonical submission spine', () => {
     expect(spineOrder).toBeGreaterThan(beginOrder);
     expect(spineOrder).toBeLessThan(commitOrder);
 
-    // Identity carried so the ind-checklist-view-assembler's program↔submission
-    // match (product_name/title) holds by construction; org + canonical fields.
+    // The spine is anchored to the program it was created for (LX-22), with
+    // the org and the canonical fields.
     expect(input).toMatchObject({
+      programId: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05',
       title: 'BX-204 — NDA',
       productName: 'BX-204',
       applicationType: 'nda',
@@ -412,11 +415,11 @@ describe('POST /api/c2c/projects — canonical submission spine', () => {
     expect(res.body.meta.submissionCreated).toBe(true);
   });
 
-  it('links an existing spine by identity instead of duplicating it', async () => {
+  it('reuses only a spine already anchored to THIS program', async () => {
     query
       .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
       .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // program INSERT
-      .mockResolvedValueOnce({ rows: [{ id: 55 }] })                                  // identity SELECT → existing spine
+      .mockResolvedValueOnce({ rows: [{ id: 55 }] })                                  // anchored-spine SELECT → this program's spine
       .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT
       .mockResolvedValueOnce({ rows: [] })                                            // COMMIT
       .mockResolvedValueOnce({ rows: [shapedRow()] });                                // re-select
@@ -426,13 +429,14 @@ describe('POST /api/c2c/projects — canonical submission spine', () => {
     expect(res.body.meta.submissionId).toBe(55);
     expect(res.body.meta.submissionCreated).toBe(false);
 
-    // The probe is org-scoped and keyed by the same identity convention the
-    // checklist assembler matches on (application type + product_name/title).
+    // The probe is org-scoped and keyed by the PROGRAM, never by name: two
+    // projects for one product used to share one filing spine because it
+    // matched on product_name/title (PF-creation-1).
     const probe = callWith('FROM submissions');
     expect(probe).toBeDefined();
-    expect(probe![1][0]).toBe(7);
-    expect(probe![1][1]).toBe('nda');
-    expect(probe![1][2]).toEqual(['bx-204', 'bx-204 — nda']);
+    expect(probe![0]).toMatch(/program_id = \$2/);
+    expect(probe![0]).not.toMatch(/product_name|title/);
+    expect(probe![1]).toEqual([7, 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05', 'nda']);
   });
 
   it('creates NO submissions row for a device program (510k)', async () => {

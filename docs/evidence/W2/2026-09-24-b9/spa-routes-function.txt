@@ -1,0 +1,14 @@
+# modules/cloudfront spa_routes function, run in Node exactly as written in main.tf (scratch script: extracts the heredoc, calls handler)
+ok   /                                          -> /index.html
+ok   /login                                     -> /index.html
+ok   /concept2cure                              -> /index.html
+ok   /concept2cure/vault                        -> /index.html
+ok   /concept2cure/submission-center/           -> /index.html
+ok   /index.html                                -> /index.html
+ok   /assets/index-3f9a2c1b.js                  -> /assets/index-3f9a2c1b.js
+ok   /assets/index-8d1e7f00.css                 -> /assets/index-8d1e7f00.css
+ok   /locales/en/common.json                    -> /locales/en/common.json
+ok   /manifest.webmanifest                      -> /manifest.webmanifest
+ok   /robots.txt                                -> /robots.txt
+ok   /sitemap.xml                               -> /sitemap.xml
+all 12 as expected

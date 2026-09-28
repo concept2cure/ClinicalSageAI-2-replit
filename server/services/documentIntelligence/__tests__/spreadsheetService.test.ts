@@ -30,6 +30,39 @@ async function buildFixtureXlsx(): Promise<Buffer> {
   return Buffer.from(out as ArrayBuffer);
 }
 
+/** A batch listing longer than any display page: 1,000 lots, one per row. */
+async function buildLongXlsx(): Promise<Buffer> {
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('Lots');
+  ws.getCell('A1').value = 'Lot';
+  ws.getCell('B1').value = 'Assay %';
+  for (let i = 1; i <= 1000; i++) {
+    ws.getCell(`A${i + 1}`).value = `L${String(i).padStart(4, '0')}`;
+    ws.getCell(`B${i + 1}`).value = 99 + (i % 10) / 10;
+  }
+  const out = await wb.xlsx.writeBuffer();
+  return Buffer.from(out as ArrayBuffer);
+}
+
+/**
+ * A sheet with a blank row and a blank column — the layout of almost every
+ * real batch record or stability table (a spacer row under the header, an
+ * empty column between groups). 3 rows and 2 columns hold values; the last
+ * value sits at row 4, column C.
+ */
+async function buildGappedXlsx(): Promise<Buffer> {
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('Stability');
+  ws.getCell('A1').value = 'Timepoint';
+  ws.getCell('C1').value = 'Impurity B %';
+  ws.getCell('A2').value = 'T0';
+  ws.getCell('C2').value = 0.05;
+  ws.getCell('A4').value = 'T12';
+  ws.getCell('C4').value = 0.31;
+  const out = await wb.xlsx.writeBuffer();
+  return Buffer.from(out as ArrayBuffer);
+}
+
 describe('spreadsheetService', () => {
   let xlsx: Buffer;
 
@@ -153,3 +186,64 @@ describe('spreadsheetService', () => {
     expect(cellValueToDisplay({ error: '#DIV/0!' } as never)).toBe('#DIV/0!');
   });
 });
+
+/* ── The whole sheet, or say it is not the whole sheet ─────────────────────────
+   workbookToText is the text the extraction pipeline stores for an .xlsx: the
+   Vault's extracted_text, the passage index built from it, and the text whose
+   every character AnA must be served before the catalog records the document
+   as 'cataloged' — read in full. It rendered at most 300 rows per sheet, so a
+   1,000-lot listing was cataloged, indexed and searched as its first 299 lots.
+   And it bounded its loops by exceljs's actualRowCount / actualColumnCount,
+   which COUNT the rows and columns holding values — they are not positions —
+   so one blank spacer row cost the sheet its last row, and one blank column
+   its last column, with nothing to say so. readWorksheet (read_spreadsheet)
+   shared the bound, and reported truncated: false with the tail unreachable. */
+describe('a spreadsheet is read to its last value', () => {
+  let long: Buffer;
+  let gapped: Buffer;
+
+  beforeAll(async () => {
+    long = await buildLongXlsx();
+    gapped = await buildGappedXlsx();
+  });
+
+  it('workbookToText renders every row of a long sheet', async () => {
+    const text = await workbookToText(long, 'lots.xlsx');
+    expect(text).toContain('L0300');
+    expect(text).toContain('L1000');
+    expect(text).not.toMatch(/more rows not shown/);
+  });
+
+  it('workbookToText keeps the row after a blank row and the column after a blank column', async () => {
+    const text = await workbookToText(gapped, 'stability.xlsx');
+    expect(text).toContain('Impurity B %');
+    expect(text).toContain('T12');
+    expect(text).toContain('0.31');
+  });
+
+  it('the extraction pipeline stores the whole workbook', async () => {
+    const { extractDocumentText } = await import('../../ocr/extractDocumentText');
+    const extracted = await extractDocumentText(
+      long,
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'lots.xlsx',
+    );
+    expect(extracted.method).toBe('xlsx');
+    expect(extracted.text).toContain('L1000');
+  });
+
+  it('readWorksheet reaches the last row of a sheet with a blank row in it', async () => {
+    const r = await readWorksheet(gapped, 'stability.xlsx', { maxRows: 100 });
+    expect(r.rows.map((row) => row.row)).toEqual([1, 2, 4]);
+    expect(r.rows[2].values).toEqual(['T12', null, 0.31]);
+    expect(r.truncated).toBe(false);
+  });
+
+  it('readWorksheet reports a page that stops before the last row as truncated', async () => {
+    const r = await readWorksheet(gapped, 'stability.xlsx', { startRow: 1, maxRows: 3 });
+    expect(r.endRow).toBe(3);
+    expect(r.truncated).toBe(true);
+    expect(r.lastRow).toBe(4);
+  });
+});
+

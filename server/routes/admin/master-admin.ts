@@ -78,6 +78,7 @@ import masterLicensingRoutes from './master-licensing';
 import licensingTrialsRoutes from './licensing-trials';
 import licensingHistoryRoutes from './licensing-history';
 import masterAccessRequestRoutes from './master-access-requests';
+import masterEnterpriseRequestRoutes from './master-enterprise-requests';
 
 const logger = createScopedLogger('admin-master');
 const router = Router();
@@ -104,6 +105,10 @@ router.use(licensingHistoryRoutes);
 // /api/module-access-requests connection is RLS-confined to the caller's own
 // workspace. Same handlers as that route; the guard is this one.
 router.use(masterAccessRequestRoutes);
+// Enterprise onboarding requests from the public intake (license_requests).
+// Read-only. That table's policy admits only the system scope this prefix
+// carries, so it is served here and nowhere a tenant session can reach.
+router.use(masterEnterpriseRequestRoutes);
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 

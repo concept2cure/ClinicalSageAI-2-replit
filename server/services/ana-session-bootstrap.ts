@@ -157,7 +157,7 @@ export async function buildSessionBootstrapContext(input: SessionBootstrapInput)
   const projectAtoms = projectId
     ? await safe(
         (async () => {
-          const profile = await getProjectIntelligence(projectId);
+          const profile = await getProjectIntelligence(projectId, organizationId);
           if (!profile?.id) return [] as BootstrapAtom[];
           const { entries } = await getProjectMemoryEntries(profile.id, { limit: 40 });
           return entries as unknown as BootstrapAtom[];

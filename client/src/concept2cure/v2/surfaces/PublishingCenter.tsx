@@ -325,7 +325,9 @@ export function PublishingCenter(_props: SurfaceViewProps) {
           ) : loadState === 'error' ? (
             <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load spec versions" hint="The specification-version register didn’t respond, or answered in a shape this panel can’t read — this panel cannot tell which. Retry; if it persists, check the service." retry={() => setReloadKey((n) => n + 1)} /></div>
           ) : specRows.length === 0 ? (
-            <div style={{ padding: 16 }}><EmptyState icon={I.book} title="No spec versions" /></div>
+            /* 2026-09-28 (A-0928-2): was a bare title, which reads the same as
+               a failure that lost its copy. Say this is the register's answer. */
+            <div style={{ padding: 16 }}><EmptyState icon={I.book} title="No spec versions" hint={`The specification-version register answered and lists no versions qualified for ${version}. This is what the service returned, not a failed read.`} /></div>
           ) : (
             <table className="reg-tbl"><thead><tr><th>Specification</th><th>Version qualified against</th></tr></thead>
               <tbody>{specRows.map(([k, v]) => (
@@ -363,7 +365,8 @@ export function PublishingCenter(_props: SurfaceViewProps) {
                   ))}</tbody></table>
               </>
             ) : (
-              <EmptyState icon={I.book} title="No v3.2.2 coded-attribute lists were returned" />
+              /* 2026-09-28 (A-0928-2): bare title; now says whose answer this is. */
+              <EmptyState icon={I.book} title="No v3.2.2 coded-attribute lists were returned" hint="The controlled-vocabulary service answered with no v3.2.2 lists. This is what the service returned, not a failed read." />
             )
           ) : (
             <>

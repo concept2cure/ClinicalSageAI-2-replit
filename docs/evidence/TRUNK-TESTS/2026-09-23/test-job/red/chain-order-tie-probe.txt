@@ -1,0 +1,25 @@
+ ✓ server/services/audit/__tests__/zz-tie-probe.pglite.test.ts > migrations/20260921_audit_logs_chain_seq.sql on the shared fixture > adds chain_seq, the position trigger and the sequence, and replays without error 20ms
+ ✓ server/services/audit/__tests__/zz-tie-probe.pglite.test.ts > migrations/20260921_audit_logs_chain_seq.sql on the shared fixture > names the same announcement GUC the writer uses (one recipe) 2ms
+ ✓ server/services/audit/__tests__/zz-tie-probe.pglite.test.ts > writer + trigger + verifier > assigns increasing chain_seq per tenant and the verifier walks it 43ms
+ ✓ server/services/audit/__tests__/zz-tie-probe.pglite.test.ts > writer + trigger + verifier > verifies by commit order even when occurred_at runs backwards 15ms
+ ✓ server/services/audit/__tests__/zz-tie-probe.pglite.test.ts > writer + trigger + verifier > refuses a row whose tenant_id differs from the position the writer took (fail closed) 10ms
+ × server/services/audit/__tests__/zz-tie-probe.pglite.test.ts > writer + trigger + verifier > records a chained row written without a position as legacy and still verifies it 21ms
+   → expected { ok: false, rowsChecked: 1, …(4) } to match object { ok: true, rowsChecked: 2, …(2) }
+ ✓ server/services/audit/__tests__/zz-tie-probe.pglite.test.ts > writer + trigger + verifier > records a row written outside a transaction as legacy (the lock and announcement end with their statement) 4ms
+ × server/services/audit/__tests__/zz-tie-probe.pglite.test.ts > writer + trigger + verifier > anchors a tenant's first sequenced row to its legacy head 16ms
+   → expected { ok: false, rowsChecked: 1, …(4) } to match object { ok: true, rowsChecked: 3, …(2) }
+ ✓ server/services/audit/__tests__/zz-tie-probe.pglite.test.ts > writer + trigger + verifier > detects a tampered sequenced row and names the segment 28ms
+ × server/services/audit/__tests__/zz-tie-probe.pglite.test.ts > writer + trigger + verifier > diagnoses the pre-fix fork: a legacy row committing to genesis instead of its predecessor 7ms
+   → expected { ok: false, rowsChecked: 2, …(4) } to match object { ok: false, brokenAt: { …(3) } }
+ × server/services/audit/__tests__/zz-tie-probe.pglite.test.ts > writer + trigger + verifier > seals through the same walk: valid when intact, failing closed after a break 32ms
+   → expected { valid: false, brokenAt: +0 } to deeply equal { valid: false, brokenAt: 1 }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { ok: false, rowsChecked: 1, …(4) } to match object { ok: true, rowsChecked: 2, …(2) }
+AssertionError: expected { ok: false, rowsChecked: 1, …(4) } to match object { ok: true, rowsChecked: 3, …(2) }
+AssertionError: expected { ok: false, rowsChecked: 2, …(4) } to match object { ok: false, brokenAt: { …(3) } }
+    "brokenAt": {
+    189|     expect(verdict).toMatchObject({ ok: false, brokenAt: { id: forked,…
+AssertionError: expected { valid: false, brokenAt: +0 } to deeply equal { valid: false, brokenAt: 1 }
+-   "brokenAt": 1,
++   "brokenAt": 0,
+      Tests  4 failed | 7 passed (11)

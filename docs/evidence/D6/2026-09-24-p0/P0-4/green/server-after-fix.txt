@@ -1,0 +1,43 @@
+$ NODE_OPTIONS='--max-old-space-size=4096' npx vitest run --config vitest.config.ts server/services/__tests__/token-revocation-expiry.test.ts server/services/__tests__/account-standing-session-currency.test.ts server/middleware/__tests__/auth-session-currency.test.ts server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts server/routes/__tests__/auth-refresh-session-currency.test.ts --reporter=verbose
+HEAD=79a7191b (working tree: P0-4 fix applied, uncommitted)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > sessionPredatesPasswordChange — the rule > a session issued before the change predates it; at or after does not 2ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > sessionPredatesPasswordChange — the rule > an account that never changed its password ends no session 0ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > sessionPredatesPasswordChange — the rule > a token with no iat is refused in production only (no first-party issuer omits it; test fixtures do) 1ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > issuedAtOfClaims > reads a numeric iat as whole seconds and nothing else 0ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > readAccountStanding — one statement, both answers > returns the status and the password-change second, parsing the bigint pg hands back as text 2ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > readAccountStanding — one statement, both answers > keeps the statement the request-path doubles recognise, and isAccountActive stays a boolean 0ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > isSessionCurrent > is false for a session issued before the password change and true after 0ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > verifyLiveToken refuses a session the password change ended > throws SessionEndedError for an access token whose iat precedes password_changed_at 302ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > verifyLiveToken refuses a session the password change ended > admits an access token issued after the change, and one for an account that never changed its password 13ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > verifyLiveToken refuses a session the password change ended > still refuses an account out of use, whichever way its session was issued (F-29 unchanged) 3ms
+ ✓ server/middleware/__tests__/auth-session-currency.test.ts > authenticateToken — a session the password change ended > answers 401 SESSION_ENDED for a bearer issued before password_changed_at, and the handler never runs 1100ms
+ ✓ server/middleware/__tests__/auth-session-currency.test.ts > authenticateToken — a session the password change ended > admits a bearer issued after the change 2ms
+ ✓ server/middleware/__tests__/auth-session-currency.test.ts > authenticateToken — a session the password change ended > admits a bearer for an account that never changed its password 6ms
+ ✓ server/middleware/__tests__/auth-session-currency.test.ts > authenticateToken — a session the password change ended > outside production, admits a bearer that carries no iat (fixtures build claims by hand); production refuses it — pinned on the rule in account-standing 6ms
+ ✓ server/middleware/__tests__/auth-session-currency.test.ts > authenticateToken — a session the password change ended > still answers 401 ACCOUNT_INACTIVE for an account out of use (F-29 unchanged) 3ms
+ ✓ server/services/__tests__/token-revocation-expiry.test.ts > revokeToken keeps a revocation for the life of the token (IAM-04) > keeps a 7-day refresh token on the DB list until its own exp, not for 24 hours 27ms
+ ✓ server/services/__tests__/token-revocation-expiry.test.ts > revokeToken keeps a revocation for the life of the token (IAM-04) > asks Redis to keep the same refresh token for its remaining life, not for 24 hours 3ms
+ ✓ server/services/__tests__/token-revocation-expiry.test.ts > revokeToken keeps a revocation for the life of the token (IAM-04) > still keeps a short-lived token for the 24-hour floor (an exp sooner than that does not shorten the entry) 3ms
+ ✓ server/services/__tests__/token-revocation-expiry.test.ts > revokeToken keeps a revocation for the life of the token (IAM-04) > keeps an opaque (non-JWT) string for the 24-hour floor 1ms
+ ✓ server/services/__tests__/token-revocation-expiry.test.ts > revocationExpiryFor (the rule, in one place) > is the later of 24 hours and the token exp 22ms
+ ✓ server/services/__tests__/token-revocation-expiry.test.ts > revocationExpiryFor (the rule, in one place) > is 24 hours for a token with no readable exp 1ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a password change > refuses a refresh token issued before password_changed_at: no new session, nothing rotated 182ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a password change > mints from a refresh token issued after the change, and rotates it (existing behaviour) 38ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a password change > mints for an account that never changed its password 12ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/logout > revokes the refresh token the client sends in the body, as well as the bearer 24ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > mints a successor and revokes the presented access token 88ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > refuses a refresh token: nothing minted, nothing revoked 7ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > refuses a mfa_challenge token: nothing minted, nothing revoked 5ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > refuses a mfa-partial token: nothing minted, nothing revoked 5ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > cannot renew a session the password change ended (iat before password_changed_at) 5ms
+
+ Test Files  5 passed (5)
+      Tests  30 passed (30)
+   Start at  01:24:23
+   Duration  7.77s (transform 5.33s, setup 849ms, import 11.40s, tests 1.92s, environment 1ms)
+
+exit=0

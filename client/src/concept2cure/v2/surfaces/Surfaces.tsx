@@ -30,7 +30,7 @@ import { consumeNavParams } from '../navParams';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/surfaces-v2.css';
-import { useChatUpload } from '../../hooks/useChatUpload';
+import { useChatUpload, composeTurn } from '../../hooks/useChatUpload';
 import { AppMentionMenu, useAppMentions } from '../appMentions';
 import { CapabilityBrowser } from './CapabilityBrowser';
 
@@ -167,10 +167,8 @@ export function Home({
        a failed upload keeps its chip and its error and is never described as
        attached. */
     if (upload.uploading) return;
-    const ready = upload.attachments.filter((a) => a.status === 'ready').map((a) => a.name);
-    if (!t && ready.length === 0) return;
-    const line = ready.length ? `Attached: ${ready.join(', ')}` : '';
-    const seedText = t && line ? `${t}\n\n${line}` : t || line;
+    const { body: seedText, files } = composeTurn(t, upload.attachments);
+    if (!seedText) return;
     /*
      * Seed the thread, do not `onAsk`.
      *
@@ -189,7 +187,7 @@ export function Home({
      * already uses (ProjectHome.tsx:570). The seed is sent on mount, into the
      * thread the user is actually looking at.
      */
-    (window as any).C2C_CONVO = { id: 'new', seed: seedText };
+    (window as any).C2C_CONVO = { id: 'new', seed: seedText, seedFiles: files };
     setDraft('');
     upload.clear();
     onNav('conversation-thread');

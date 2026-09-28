@@ -1,0 +1,28 @@
+$ git diff --stat  # fix applied on top of 414f203e
+ server/routes/510k-estar-routes.ts                 | 12 ++++++-
+ ...rned-sign-esignature.pglite.integration.test.ts | 36 +++++++++++++++++++
+ server/routes/c2c/actions.ts                       | 27 ++++++++++++++
+ server/services/part11/signature-meanings.ts       | 25 +++++++++++++
+ server/services/part11/signature-persistence.ts    | 42 ++++++++++++++++++++++
+ 5 files changed, 141 insertions(+), 1 deletion(-)
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > the governed sign vocabulary > is the union of the two spellings the product uses, and nothing else 7ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > refuses a sign that declares no meaning before any query runs 6ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > refuses an empty-string meaning the same way 1ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > refuses a meaning outside the vocabulary before any query runs 1ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > refuses a meaning that is not a string (an object, a number) rather than coercing it 1ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > lets the vocabulary meaning approval through to the signer lookup 1ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > lets the vocabulary meaning release through to the signer lookup 5ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > lets the vocabulary meaning APPROVED through to the signer lookup 0ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > lets the vocabulary meaning AUTHORSHIP through to the signer lookup 1ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: command sign > the refusal names the vocabulary so the caller can say what is accepted 1ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: other commands are not gated by the sign vocabulary > command approve with no payload meaning reaches the signer lookup unchanged 0ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: other commands are not gated by the sign vocabulary > command revoke-signature with no payload meaning reaches the signer lookup unchanged 0ms
+ ✓ server/services/part11/__tests__/governed-sign-meaning.test.ts > persistGovernedActionSignature: other commands are not gated by the sign vocabulary > command transmit with no payload meaning reaches the signer lookup unchanged 0ms
+ ✓ server/services/qms/__tests__/document-approval-signature.test.ts > the approval meaning and binding basis > APPROVED is taken from the platform signature-meaning enum, not minted here 2ms
+ ✓ server/services/qms/__tests__/document-approval-signature.test.ts > the approval meaning and binding basis > states what the bound digest is a digest of 0ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > FAIL CLOSED: a sign that declares no meaning is refused before anything is written 2707ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > FAIL CLOSED: a free-text meaning is refused; only the closed vocabulary is a §11.50 meaning 2634ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > the task board's spelling of the vocabulary ('APPROVED') is accepted and stored as declared 2734ms
+ Test Files  8 passed (8)
+      Tests  83 passed (83)
+exit=0

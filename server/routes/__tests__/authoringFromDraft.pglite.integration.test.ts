@@ -168,6 +168,14 @@ describe('POST /docs/from-draft', () => {
     expect(String(res.body.error)).toMatch(/programId/);
   });
 
+  it('refuses 404 a project of another organization — nothing written (PF-02: the draft route checked the id\'s shape only)', async () => {
+    const before = await jdb.pool.query(`SELECT count(*)::int AS n FROM authoring_documents`);
+    const res = await author(request(app).post('/api/authoring/docs/from-draft')).send(draftBody({ programId: OTHER_PROGRAM }));
+    expect(res.status).toBe(404);
+    const after = await jdb.pool.query(`SELECT count(*)::int AS n FROM authoring_documents`);
+    expect((after.rows[0] as { n: number }).n).toBe((before.rows[0] as { n: number }).n);
+  });
+
   it('refuses 400 on a provenance source it does not know', async () => {
     const res = await author(request(app).post('/api/authoring/docs/from-draft')).send(
       draftBody({ provenance: { source: 'magic' } }),

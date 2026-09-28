@@ -65,6 +65,31 @@ const MEMO_FORCING_PHRASES = [
   "I don't see a specific document status",
 ];
 
+/**
+ * Instructions that contradicted the chat register from inside the same
+ * prompt, found by the 2026-09-25 audit against current-model prompting
+ * guidance. Each one scripted a phrase, a marker or an ordering the register
+ * forbids, and a model follows the more specific of two instructions — so the
+ * register lost on exactly the turns these sections fired. None may return.
+ */
+const REGISTER_CONTRADICTING_INSTRUCTIONS = [
+  // A bold label on every proactive flag; the register says one plain sentence.
+  'Prefix proactive insights with a subtle marker',
+  // A model-computed percentage and a stock sentence to say about it. The
+  // evidence labels already carry uncertainty, and a figure the model invents
+  // is the defect Rule 2 names.
+  'This recommendation has moderate confidence',
+  'Only surface if confidence > 70%',
+  // Lead with what is missing — the opposite of "answer first".
+  "lead with what's missing before addressing the user's question",
+  // A scripted closing offer, which the register's no-closing-ritual rule forbids.
+  'Would you like me to run an FDA War Game simulation',
+  'mention you can "walk through a guided questionnaire"',
+  // A four-line bold receipt after every action. Nothing parses it; the work
+  // panel already shows the step.
+  '**Action:** [what was done]',
+];
+
 /** The stream-path prompt for a plain question, as stream.ts receives it. */
 const streamPrompt = orchestrate({ message: 'What is the identification threshold under ICH Q3A?' })
   .systemPrompt;
@@ -109,7 +134,7 @@ describe('response register — one definition', () => {
   it('renders a tool result as a sentence plus the figures, never a section', () => {
     expect(ANA_REGISTER_SWITCH).toMatch(/A tool result is not an artifact/);
     expect(ANA_REGISTER_SWITCH).toMatch(/nothing re-narrated into a section/);
-    expect(ANA_REGISTER_SWITCH).toMatch(/ana-action, ana-grounding, the action receipt/);
+    expect(ANA_REGISTER_SWITCH).toMatch(/ana-action, ana-grounding\) belong to neither register/);
   });
 
   it('holds the voice floor itself (no exclamation, no emoji)', () => {
@@ -139,6 +164,21 @@ describe('stream path — orchestrate() prompt, what stream.ts sends', () => {
 
   it.each(MEMO_FORCING_PHRASES)('does not contain the memo-forcing phrase %j', phrase => {
     expect(streamPrompt).not.toContain(phrase);
+  });
+
+  it.each(REGISTER_CONTRADICTING_INSTRUCTIONS)(
+    'does not contain the register-contradicting instruction %j',
+    phrase => {
+      expect(streamPrompt).not.toContain(phrase);
+    },
+  );
+
+  it('says how to talk while working through several steps', () => {
+    // Current models write fewer between-step notes than their predecessors;
+    // without a stated cadence a long tool-calling turn reads as silence, then
+    // a summary of only the last step.
+    expect(ANA_CHAT_REGISTER).toMatch(/Working through several steps/);
+    expect(ANA_CHAT_REGISTER).toMatch(/what you found, what you did/);
   });
 
   it('has one formatting section: no second one survives in the core', () => {

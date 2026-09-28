@@ -1,0 +1,148 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/authoring/docs/b46d9b7b-708d-4b03-92a0-718cb2a91225/audit",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 19,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "events": [
+        {
+          "id": "1249959d-415d-429c-8b35-537f9499a0b6",
+          "doc_id": "b46d9b7b-708d-4b03-92a0-718cb2a91225",
+          "section_id": null,
+          "event_type": "comment_resolved",
+          "actor": "oq-runner@validation.local",
+          "actor_role": "unknown",
+          "change_reason": "Legacy audit event",
+          "content_hash_before": null,
+          "content_hash_after": null,
+          "metadata": {
+            "status": "resolved",
+            "comment_id": "0438e332-7da1-49e9-982b-51ac45100df1",
+            "section_id": "24a85f86-f1be-41cf-9257-ae271dbce382",
+            "previous_status": "open",
+            "resolution_note": "OQ-003 step 11b: reviewer query answered; resolved before freeze",
+            "previous_resolution_note": null
+          },
+          "created_at": "2026-09-23T16:29:25.270Z",
+          "tenant_id": 1
+        },
+        {
+          "id": "f225f216-bae7-4cfd-a36c-1dcb1f351c58",
+          "doc_id": "b46d9b7b-708d-4b03-92a0-718cb2a91225",
+          "section_id": null,
+          "event_type": "SUBMIT",
+          "actor": "oq-runner@validation.local",
+          "actor_role": "unknown",
+          "change_reason": "Legacy audit event",
+          "content_hash_before": null,
+          "content_hash_after": null,
+          "metadata": {
+            "steps": [
+              {
+                "role": "QA",
+                "approver_email": "oq-runner@validation.local"
+              }
+            ],
+            "workflowId": "44a3e7ac-84f2-4b93-adb7-22bc50c02b6b"
+          },
+          "created_at": "2026-09-23T16:29:23.183Z",
+          "tenant_id": 1
+        },
+        {
+          "id": "3bde3edb-354c-48eb-aa68-d53bca526d54",
+          "doc_id": "b46d9b7b-708d-4b03-92a0-718cb2a91225",
+          "section_id": null,
+          "event_type": "comment_added",
+          "actor": "oq-runner@validation.local",
+          "actor_role": "unknown",
+          "change_reason": "Legacy audit event",
+          "content_hash_before": null,
+          "content_hash_after": null,
+          "metadata": {
+            "comment_id": "0438e332-7da1-49e9-982b-51ac45100df1",
+            "section_id": "24a85f86-f1be-41cf-9257-ae271dbce382"
+          },
+          "created_at": "2026-09-23T16:29:21.839Z",
+          "tenant_id": 1
+        },
+        {
+          "id": "b7f59c21-26bf-4bf1-b909-f6d5f8964e28",
+          "doc_id": "b46d9b7b-708d-4b03-92a0-718cb2a91225",
+          "section_id": "24a85f86-f1be-41cf-9257-ae271dbce382",
+          "event_type": "REVERT",
+          "actor": "oq-runner@validation.local",
+          "actor_role": "unknown",
+          "change_reason": "Reverted to revision e65738d2-ca64-4b2c-9b3c-31414fc38afe",
+          "content_hash_before": "5f2aa1c0c7f6ce423a26acc9c5219b729b5f6601b73128f399231ff7fd36b1c4",
+          "content_hash_after": "14e0d22ffeef37b81a1ecbc4069cd1e46e5b62fcaadeb0466687dfddf275d7b4",
+          "metadata": {
+            "revisionId": "e65738d2-ca64-4b2c-9b3c-31414fc38afe",
+            "revisionCreatedAt": "2026-09-23T16:29:18.870Z"
+          },
+          "created_at": "2026-09-23T16:29:21.032Z",
+          "tenant_id": 1
+        },
+        {
+          "id": "4b5c8af3-7a35-41d1-a2fa-35ff0e6ee7e0",
+          "doc_id": "b46d9b7b-708d-4b03-92a0-718cb2a91225",
+          "section_id": "24a85f86-f1be-41cf-9257-ae271dbce382",
+          "event_type": "UPDATE",
+          "actor": "oq-runner@validation.local",
+          "actor_role": "unknown",
+          "change_reason": "OQ-003 step 05: controlled edit",
+          "content_hash_before": "14e0d22ffeef37b81a1ecbc4069cd1e46e5b62fcaadeb0466687dfddf275d7b4",
+          "content_hash_after": "5f2aa1c0c7f6ce423a26acc9c5219b729b5f6601b73128f399231ff7fd36b1c4",
+          "metadata": {
+            "titleChanged": false
+          },
+          "created_at": "2026-09-23T16:29:19.418Z",
+          "tenant_id": 1
+        },
+        {
+          "id": "cbea5796-8476-4ced-abe7-5f443863a0fd",
+          "doc_id": "b46d9b7b-708d-4b03-92a0-718cb2a91225",
+          "section_id": "24a85f86-f1be-41cf-9257-ae271dbce382",
+          "event_type": "CREATE",
+          "actor": "oq-runner@validation.local",
+          "actor_role": "unknown",
+          "change_reason": null,
+          "content_hash_before": null,
+          "content_hash_after": "14e0d22ffeef37b81a1ecbc4069cd1e46e5b62fcaadeb0466687dfddf275d7b4",
+          "metadata": {
+            "code": "2.5",
+            "title": "Clinical Overview"
+          },
+          "created_at": "2026-09-23T16:29:18.871Z",
+          "tenant_id": 1
+        },
+        {
+          "id": "f7ce87ce-98ec-4b3f-b4bf-adfc816a5bfa",
+          "doc_id": "b46d9b7b-708d-4b03-92a0-718cb2a91225",
+          "section_id": "72906368-2197-4238-b8b0-13a95fab5e0e",
+          "event_type": "CREATE",
+          "actor": "oq-runner@validation.local",
+          "actor_role": "unknown",
+          "change_reason": null,
+          "content_hash_before": null,
+          "content_hash_after": "795ce1726eb546f0745c8eb2e6318d0dd1f3ad5b534dcc55eadd63b518add96d",
+          "metadata": {
+            "code": "2.7",
+            "title": "Clinical Summary"
+          },
+          "created_at": "2026-09-23T16:29:18.589Z",
+          "tenant_id": 1
+        }
+      ],
+      "count": 7
+    }
+  }
+}

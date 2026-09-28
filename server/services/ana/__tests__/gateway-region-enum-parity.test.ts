@@ -13,7 +13,17 @@
  * These tests fail if any of the three diverges again.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+// 2026-09-28: a confirm-class call now also needs an editor role, read from
+// organization_users (AnaToolExecutor writeRoleRefusal). The database is mocked
+// here, so the confirming person is modelled as a 'member'. The role gate itself
+// is tested in confirmed-write-role-gate.test.ts.
+const { resolveSignerOrgRole } = vi.hoisted(() => ({
+  resolveSignerOrgRole: vi.fn(async (): Promise<string | null> => 'member'),
+}));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
 
 import { PACKAGE_ECTD_FOR_REGION, TRANSMIT_SUBMISSION } from '../AnaToolDefinitions';
 import { getToolHandler } from '../AnaToolExecutor';
@@ -24,7 +34,7 @@ import {
 } from '../../submission-gateways/region-constants';
 import { listGateways } from '../../submission-gateways/index';
 
-const CTX = { organizationId: 1, userId: 1 };
+const CTX = { organizationId: 1, userId: 1, humanConfirmed: true };
 
 function enumOf(tool: typeof PACKAGE_ECTD_FOR_REGION, property: string): string[] {
   const props = (tool.input_schema as { properties?: Record<string, { enum?: string[] }> })

@@ -68,7 +68,7 @@ describe('assertCatalogWriteAllowed — the sampling gate', () => {
   it('REFUSES a first-page-only read and names the exact unread ranges', () => {
     // The observed failure mode this feature exists to stop: grab one window,
     // declare the document reviewed.
-    const verdict = assertCatalogWriteAllowed(computeCoverage(spans([0, 30000]), 120000));
+    const verdict = assertCatalogWriteAllowed(computeCoverage(spans([0, 30000]), 120000), null, null);
     expect(verdict.allowed).toBe(false);
     expect(verdict.reason).toContain('30000 of 120000');
     expect(verdict.reason).toContain('30000–120000');
@@ -77,21 +77,25 @@ describe('assertCatalogWriteAllowed — the sampling gate', () => {
 
   it('REFUSES a middle gap even when both ends were read', () => {
     const verdict = assertCatalogWriteAllowed(
-      computeCoverage(spans([0, 50000], [70000, 120000]), 120000)
+      computeCoverage(spans([0, 50000], [70000, 120000]), 120000),
+      null,
+      null,
     );
     expect(verdict.allowed).toBe(false);
     expect(verdict.reason).toContain('50000–70000');
   });
 
   it('REFUSES a document whose extraction produced nothing', () => {
-    const verdict = assertCatalogWriteAllowed(computeCoverage([], 0));
+    const verdict = assertCatalogWriteAllowed(computeCoverage([], 0), null, null);
     expect(verdict.allowed).toBe(false);
     expect(verdict.reason).toMatch(/no extracted text/i);
   });
 
   it('allows the write only once every character has been served', () => {
     const verdict = assertCatalogWriteAllowed(
-      computeCoverage(spans([0, 30000], [30000, 90000], [90000, 120000]), 120000)
+      computeCoverage(spans([0, 30000], [30000, 90000], [90000, 120000]), 120000),
+      null,
+      null,
     );
     expect(verdict.allowed).toBe(true);
     expect(verdict.reason).toBeNull();

@@ -83,6 +83,28 @@ export const UNRESOLVED_DECISION_ACTION_STATES = [
   'escalated',
 ] as const;
 
+/**
+ * `decision_context->>'kind'` marking a decision_records row as a MACHINE
+ * record — one governed-fabric gate evaluation, written by
+ * server/services/governed-decision-repository.ts.
+ *
+ * It shares a table with human domain decisions but is not one, and the
+ * distinction is load-bearing: `requiresAllDecisionsResolved` asks "has a human
+ * finished deciding the things this project is waiting on", and a machine's log
+ * of its own gate evaluation is not something a human owes an answer on. The
+ * fabric records one row per evaluation, so counting them there would let a
+ * single `review` verdict on one document action block a whole project from
+ * ever reaching `locked`, with no human able to clear it.
+ *
+ * The distinction could not surface until 2026-09: both discriminator columns
+ * the writer used (`domain_track='governance'`, `recommendation_type=
+ * 'governed_fabric_decision'`) are CHECK-constrained and rejected every insert,
+ * so `decision_records` had never held a machine row and the rule had only ever
+ * counted human ones. Persisting them is the fix; keeping the rule's meaning
+ * unchanged is the other half of it.
+ */
+export const GOVERNED_FABRIC_DECISION_KIND = 'governed-fabric-decision';
+
 // ── Confidence ────────────────────────────────────────────────────────────────
 
 /** confidence_level CHECK constraint, db/migrations/20260323:44-46 and :99-101. */

@@ -15,8 +15,12 @@
  */
 
 import { isGovernedContentWriteTool } from './governed-write-tools.js';
+import { buildToolRefusal, toolAuthorizationOf } from './tool-authorization.js';
+import { buildHumanConfirmationRequiredResult } from '../ana-ri/part11-governance.js';
+import type { AuditRowOutcome } from '../audit/audit-write-outcome.js';
 import { isServedModelApprovedForHighRisk } from '../ai-governance/approved-models.js';
 import { getGateway } from '../ai-gateway/gateway';
+import { getTenantScope } from '../../db/tenantStore.js';
 // Region + gateway taxonomy — shared with the tool schemas in
 // AnaToolDefinitions so an accepted value and an advertised one are the same
 // list. This module has no runtime deps, so importing it here does not pull in
@@ -33,6 +37,7 @@ import { ANA_MACHINE_AUTHOR_ID } from '../authoring/revision-ledger.js';
 // annotation the local is inferred from `p: any`, which makes every field
 // REQUIRED and so rejects PriorLeaf's optional ones.
 import type { PriorLeaf } from '../ectd/lifecycle-operator.js';
+import type { ProgramRef, ProgramResolution } from '../ana-ri/drive-context.js';
 import fdaMaudeClient from '../../fda_maude_client.js';
 import { searchTrials } from '../integrations/clinicaltrials-client.js';
 import { recordArtifactProvenance } from '../provenance/artifact-provenance';
@@ -202,7 +207,15 @@ export interface ToolContext {
    * unless this model is approved for high-risk work; absent means refused.
    * See server/services/ana/governed-write-tools.ts.
    */
-  servingModel?: { provider?: string | null; model?: string | null } | null;
+  servingModel?: { provider?: string | null; model?: string | null; requestId?: string | null } | null;
+  /**
+   * True only when a person confirmed THIS call — set by POST
+   * /api/ana-ri/governed-action and nowhere else, like the command context's
+   * flag of the same name. A tool the register classes `confirm` refuses to
+   * run without it (tool-authorization.ts).
+   * Never read from tool input: that is the model's channel.
+   */
+  humanConfirmed?: boolean;
   organizationId?: number | null;
   userId?: number | null;
   projectId?: number | null;
@@ -261,9 +274,21 @@ export interface ToolContext {
    * has opened on the person's screen so far. The request's `projectRef` is
    * what was open when the turn began; after she opens a program mid-turn,
    * the next project screen must not ask again which one.
+   *
+   * `pendingProgram` is an open still being resolved. The stream runs one
+   * round's tool calls concurrently, so "open BX-301" and "take me to its
+   * Vault" asked in the same round used to race: the navigation read
+   * `program` before the open's database read came back, and asked which
+   * program — or showed the one open before. See `beginProgramOpen`.
    */
-  turnState?: { program: { id: string; name?: string; code?: string } | null } | null;
+  turnState?: {
+    program: TurnProgram | null;
+    pendingProgram?: Promise<TurnProgram | null> | null;
+  } | null;
 }
+
+/** A program AnA has opened on the person's screen this turn, as a directive carries it. */
+export type TurnProgram = { id: string; name?: string; code?: string };
 
 type ToolHandler = (input: Record<string, unknown>, ctx?: ToolContext) => Promise<string>;
 
@@ -291,17 +316,100 @@ function getRequiredInputKeys(tool: string): string[] {
  * report-only input-contract check — every dispatch path resolves handlers
  * from this map, so coverage is total with no call-site changes.
  */
+/**
+ * The refusals every handler is wrapped in, checked before it runs. Wrapped at
+ * registration, so every way of reaching a handler is covered: the stream's
+ * dispatch, the agentic loop, and a tool that calls another tool's handler
+ * directly. A refusal is a tool result the model reads and relays, not a throw,
+ * so the turn continues honestly.
+ *
+ *   1. Governed content is written only by an approved model.
+ *   2. A person's own act — an approval, a vote, an attestation — is refused
+ *      whoever asks and whatever they confirmed (tool-authorization.ts
+ *      `refuse`). She is told where the person does it. Where the handler is
+ *      itself the refusal (refusedBy 'handler'), it answers.
+ *   3. A tool that changes records runs only on a person's yes (P0-12, P1-34):
+ *      every tool the register classes `confirm`, and every tool it does not
+ *      know. The stream holds the turn and asks before it gets here; a path
+ *      that cannot ask gets the same proposal a gated command returns, and
+ *      nothing is written. After the model gate, so nobody is asked to confirm
+ *      content that would be refused anyway.
+ */
+function preHandlerRefusal(
+  name: string,
+  input: Record<string, any>,
+  ctx: ToolContext | undefined,
+): { code: string; result: string } | null {
+  if (isGovernedContentWriteTool(name) && !isServedModelApprovedForHighRisk(ctx?.servingModel)) {
+    return {
+      code: 'MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE',
+      result: JSON.stringify(governedWriteRefusal(name, ctx?.servingModel)),
+    };
+  }
+  const auth = toolAuthorizationOf(name, input);
+  if (auth.class === 'refuse' && auth.refusedBy !== 'handler') {
+    return { code: 'NOT_AN_ANA_ACTION', result: JSON.stringify(buildToolRefusal(name, auth.why)) };
+  }
+  if (auth.class === 'confirm' && ctx?.humanConfirmed !== true) {
+    return {
+      code: 'HUMAN_CONFIRMATION_REQUIRED',
+      result: JSON.stringify(buildHumanConfirmationRequiredResult(name, input ?? {})),
+    };
+  }
+  return null;
+}
+
+/** The refusal for a caller without an editor role in the organization, or null when they have one. */
+async function editorRoleRefusal(tool: string, act: string, ctx: ToolContext): Promise<string | null> {
+  let orgRole: string | null;
+  try {
+    const { resolveSignerOrgRole } = await import('../part11/resolve-signer-role');
+    orgRole = await resolveSignerOrgRole(Number(ctx.userId), Number(ctx.organizationId));
+  } catch (err) {
+    return JSON.stringify({ error: `${tool} could not confirm your role in this organization, so nothing was changed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+  const { GOVERNED_WRITE_ROLES } = await import('../../middleware/orgMembership');
+  if (!orgRole || !GOVERNED_WRITE_ROLES.has(orgRole)) {
+    return JSON.stringify({ error: `Insufficient permissions: ${act} needs an editor role in this organization. Nothing was changed.` });
+  }
+  return null;
+}
+
+/**
+ * 4. A confirmed write runs only for someone who may edit in the organization
+ *    (weekly launch-catalog review 2026-09-28). Rule 3 asks for a person's yes;
+ *    nothing asked whose. /api/ana-ri is mounted behind authenticateToken only,
+ *    and most confirm-class handlers wrote with no role check, so a `viewer`
+ *    could confirm a controlled-document create, a vault write or a protocol
+ *    change from chat that the HTTP routes refuse them (requireEditorAccess).
+ *    The role is read from organization_users for the verified principal —
+ *    never from the input — against the same GOVERNED_WRITE_ROLES. Platform
+ *    commands keep their own RBAC (class `command`); reads and a person's own
+ *    settings (`self`) are not asked.
+ */
+async function writeRoleRefusal(
+  name: string,
+  input: Record<string, any>,
+  ctx: ToolContext | undefined,
+): Promise<{ code: string; result: string } | null> {
+  if (toolAuthorizationOf(name, input).class !== 'confirm') return null;
+  if (!ctx?.userId || !ctx?.organizationId) {
+    return {
+      code: 'WRITE_ROLE_UNVERIFIED',
+      result: JSON.stringify({ error: `${name} changes a record and needs an identified member of the organization. Nothing was changed.` }),
+    };
+  }
+  const refusal = await editorRoleRefusal(name, 'this change', ctx);
+  return refusal ? { code: 'WRITE_ROLE_REQUIRED', result: refusal } : null;
+}
+
 export function registerToolHandler(name: string, handler: ToolHandler): void {
   const instrumented: ToolHandler = async (input, ctx) => {
     const orgId = ctx?.organizationId ?? undefined;
-    /* Governed content is written only by an approved model. Wrapped HERE, at
-       registration, so every way of reaching the handler is covered: the
-       stream's dispatch, the agentic loop, and a tool that calls another
-       tool's handler directly. The refusal is a tool result the model reads
-       and relays, not a throw, so the turn continues honestly. */
-    if (isGovernedContentWriteTool(name) && !isServedModelApprovedForHighRisk(ctx?.servingModel)) {
-      recordToolOutcome(name, 'failure', 0, 'MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE', orgId);
-      return JSON.stringify(governedWriteRefusal(name, ctx?.servingModel));
+    const refusal = preHandlerRefusal(name, input, ctx) ?? (await writeRoleRefusal(name, input, ctx));
+    if (refusal) {
+      recordToolOutcome(name, 'failure', 0, refusal.code, orgId);
+      return refusal.result;
     }
     // Report-only contract check: note when the model omitted required fields.
     const missing = getRequiredInputKeys(name).filter(k => input?.[k] === undefined);
@@ -324,11 +432,15 @@ export function registerToolHandler(name: string, handler: ToolHandler): void {
   toolHandlers.set(name, instrumented);
 }
 
-/** The model a gateway response says served it, in the shape ToolContext.servingModel takes. */
+/**
+ * The model a gateway response says served it, and the gateway request that
+ * produced it, in the shape ToolContext.servingModel takes. The request id is
+ * what joins a governed write's Part 11 row to its ledger row (D6).
+ */
 export function servedModelOf(
-  response: { provider?: string | null; model?: string | null } | null | undefined,
-): { provider: string | null; model: string | null } {
-  return { provider: response?.provider ?? null, model: response?.model ?? null };
+  response: { provider?: string | null; model?: string | null; requestId?: string | null } | null | undefined,
+): { provider: string | null; model: string | null; requestId: string | null } {
+  return { provider: response?.provider ?? null, model: response?.model ?? null, requestId: response?.requestId ?? null };
 }
 
 /** What a governed-write tool returns instead of writing, when the model is not approved. */
@@ -1483,7 +1595,7 @@ registerToolHandler('remember_document_in_project', async (input, ctx) => {
       '../client-intelligence-memory.js'
     );
 
-    const profile = await getProjectIntelligence(ctx.projectId);
+    const profile = await getProjectIntelligence(ctx.projectId, ctx.organizationId);
     if (!profile?.id) {
       return JSON.stringify({
         ok: false,
@@ -5139,6 +5251,8 @@ registerToolHandler('execute_platform_command', async (input: Record<string, unk
       userId: Number(userId),
       organizationId: Number(organizationId),
       activeProjectId: ctx?.projectId != null ? Number(ctx.projectId) : undefined,
+      // The model call that proposed this command, for its audit row.
+      servingModel: ctx?.servingModel ?? null,
     };
      
     const results = await executeCommands([{ command, params } as any], cmdCtx as any);
@@ -5749,6 +5863,16 @@ registerToolHandler('reconcile_extracted_figures', async (input: Record<string, 
 // org-scoped from ToolContext; apply_fact_change is a governed mutation that
 // requires an explicit reason and opens a resolution plan.
 
+/**
+ * A tool message, with the lost-record notice when the §11.10(e) row was not
+ * written. Governed tools carry `auditTrail` (recordAuditRow's outcome) out of
+ * the service, and the message says so when the record is missing, so AnA
+ * cannot report a governed change as simply done when its record is not.
+ */
+function withAuditNote(message: string, auditTrail: AuditRowOutcome): string {
+  return auditTrail.persisted ? message : `${message} ${auditTrail.message}`;
+}
+
 function proposedValueFromInput(input: Record<string, unknown>) {
   const proposed: { valueNum?: number; valueText?: string; unit?: string } = {};
   if (typeof input.valueNum === 'number') proposed.valueNum = input.valueNum;
@@ -5825,6 +5949,8 @@ registerToolHandler('establish_governed_fact', async (input: Record<string, unkn
       factId: result.fact.id,
       entity: result.fact.entity,
       field: result.fact.field,
+      auditTrail: result.auditTrail,
+      message: withAuditNote(`Established ${result.fact.entity}.${result.fact.field} as a governed value.`, result.auditTrail),
       instruction:
         'The value is now governed. It can be cited (scan_document_citations), previewed (preview_fact_impact), changed (apply_fact_change), and traced.',
     });
@@ -5943,6 +6069,8 @@ registerToolHandler('apply_fact_change', async (input: Record<string, unknown>, 
       cascadedClaims: result.cascadedClaims,
       resolutionPlanId: result.resolutionPlanId,
       resolutionPlanSkippedReason: result.resolutionPlanSkippedReason,
+      auditTrail: result.auditTrail,
+      message: withAuditNote(`Changed to version ${result.newFact.version} under governance.`, result.auditTrail),
       instruction:
         'The value was changed under governance. Report the impact summary and, if a resolutionPlanId was returned, offer to explain it with explain_resolution_plan.',
     });
@@ -9288,11 +9416,15 @@ registerToolHandler('check_consistency', async (input, ctx) => {
   if (right.length === 0) return JSON.stringify({ error: 'right (non-empty array) is required.' });
   try {
     const { runConsistencyCheck } = await import('../truth-engine/truth-engine-service.js');
-    const findings = await runConsistencyCheck(
+    const { findings, auditTrail } = await runConsistencyCheck(
       { submissionId, dimension, left: { ref: left.ref, text: left.text }, right },
       { organizationId: ctx.organizationId, userId: ctx.userId }
     );
-    return JSON.stringify({ ok: true, findings, conflicts: findings.filter((f) => f.status === 'conflict').length });
+    const conflicts = findings.filter((f) => f.status === 'conflict').length;
+    return JSON.stringify({
+      ok: true, findings, conflicts, auditTrail,
+      message: withAuditNote(`${findings.length} finding(s) recorded, ${conflicts} conflict(s).`, auditTrail),
+    });
   } catch (err) {
     return JSON.stringify({ error: `check_consistency failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as any)?.code });
   }
@@ -13574,64 +13706,41 @@ registerToolHandler('create_qms_document', async (input, ctx) => {
   }
 });
 
-registerToolHandler('approve_qms_document', async (input, ctx) => {
-  if (!ctx?.organizationId) return JSON.stringify({ error: 'approve_qms_document requires tenant context.' });
-  if (!ctx.userId) return JSON.stringify({ error: 'approve_qms_document requires user context — an approval cannot be recorded without an identified approver (21 CFR Part 11).' });
-  const id = typeof input.document_id === 'number' ? input.document_id : NaN;
-  if (!Number.isFinite(id)) return JSON.stringify({ error: 'document_id (number) is required.' });
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const client = await getPool().connect();
-  try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    const { rows } = await client.query(
-      `UPDATE qms_documents
-          SET status = 'effective',
-              approver_id = $3,
-              approved_at = NOW(),
-              effective_date = COALESCE($4::date, effective_date, NOW()::date),
-              updated_at = NOW()
-        WHERE id = $1 AND organization_id = $2
-          AND status IN ('draft','in_review')
-          AND deleted_at IS NULL
-        RETURNING id, status, effective_date`,
-      [id, ctx.organizationId, ctx.userId,
-       typeof input.effective_date === 'string' ? input.effective_date : null],
-    );
-    if (rows.length === 0) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      return JSON.stringify({ error: 'Document not found, or not in draft/in_review state.' });
-    }
-    await recordGovernedAction(client, {
-      orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
-      target: `qms-document:${id}`,
-      reason: qmsReason(input, `Controlled document approved to effective via AnA`),
-      payload: { kind: 'approve', to: 'effective', effectiveDate: rows[0].effective_date ?? null },
-      domain: 'mdx', surface: 'ana',
-    });
-    await client.query('COMMIT');
-    return JSON.stringify({
-      ok: true, ...rows[0],
-      message: `Approved document ${id} — effective ${rows[0].effective_date}.`,
-    });
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    return JSON.stringify({
-      error: `approve_qms_document failed: ${err instanceof Error ? err.message : String(err)}`,
-    });
-  } finally {
-    client.release();
-  }
-});
+/* Making a controlled document effective is an electronic signature (21 CFR
+   11.50): the signed route, POST /api/mdx/qms/documents/:id/approve (VSR-001
+   F-3), checks signing authority, re-verifies the password and second factor,
+   refuses the author, and writes one electronic_signatures row bound to the
+   version's content digest. This tool did none of that. It set the document
+   effective, stamped the chat user as approver, and recorded a stock reason
+   when none was given. Because it wrote command 'transition' rather than
+   'sign', the sweep that took signing away from AnA (35794a160) and the
+   ci:sign-ceremony gate both missed it. New-code audit 2026-09-24, finding 1. */
+registerToolHandler('approve_qms_document', async () =>
+  refuseSignatureInChat(
+    'approve_qms_document',
+    'Approving a controlled document',
+    "the Quality register: the document's Approve button asks for your password and second factor",
+  ),
+);
 
+/* 2026-09-28 (Q-0928-2, weekly launch-catalog review). POST
+   /api/mdx/qms/documents/:id/revise runs requireEditorAccess; this handler ran
+   no role check at all, and /api/ana-ri is mounted behind authenticateToken
+   only, so any authenticated member — a viewer included — could withdraw an
+   effective SOP back to draft from chat. Its reason floor was also 3 characters
+   where every other QMS tool asks QMS_REASON_MIN. The role is now read from
+   organization_users for the verified principal (ctx.userId, ctx.organizationId)
+   through resolveSignerOrgRole, and checked against GOVERNED_WRITE_ROLES — the
+   set requireEditorAccess uses — before anything is opened. Never from input. */
 registerToolHandler('revise_qms_document', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'revise_qms_document requires tenant context.' });
+  if (!ctx.userId) return JSON.stringify({ error: 'revise_qms_document requires user context — a controlled revision cannot be opened without an identified actor (21 CFR Part 11).' });
+  const refusal = await editorRoleRefusal('revise_qms_document', 'opening a controlled revision', ctx);
+  if (refusal) return refusal;
   const id = typeof input.document_id === 'number' ? input.document_id : NaN;
   const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
   if (!Number.isFinite(id)) return JSON.stringify({ error: 'document_id (number) is required.' });
-  if (reason.length < 3) return JSON.stringify({ error: 'A reason for change is required to open a controlled revision (21 CFR Part 11) — ask the user for it.' });
-  if (!ctx.userId) return JSON.stringify({ error: 'revise_qms_document requires user context — a controlled revision cannot be opened without an identified actor (21 CFR Part 11).' });
+  if (reason.length < QMS_REASON_MIN) return JSON.stringify({ error: `A reason for change is required to open a controlled revision (21 CFR Part 11), at least ${QMS_REASON_MIN} characters — ask the user for it.` });
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const client = await getPool().connect();
@@ -13679,48 +13788,21 @@ registerToolHandler('revise_qms_document', async (input, ctx) => {
   }
 });
 
-registerToolHandler('retire_qms_document', async (input, ctx) => {
-  if (!ctx?.organizationId) return JSON.stringify({ error: 'retire_qms_document requires tenant context.' });
-  const id = typeof input.document_id === 'number' ? input.document_id : NaN;
-  if (!Number.isFinite(id)) return JSON.stringify({ error: 'document_id (number) is required.' });
-  const reason = typeof input.reason === 'string' ? input.reason.trim() : null;
-  if (!ctx.userId) return JSON.stringify({ error: 'retire_qms_document requires user context — a retirement cannot be recorded without an identified actor (21 CFR Part 11).' });
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const client = await getPool().connect();
-  try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    const { rows } = await client.query(
-      `UPDATE qms_documents
-          SET status = 'retired',
-              metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object(
-                'retired', jsonb_build_object('reason', $3::text, 'at', NOW(), 'by', $4::int)),
-              updated_at = NOW()
-        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL AND status <> 'retired'
-        RETURNING id, doc_number, status`,
-      [id, ctx.organizationId, reason, ctx.userId],
-    );
-    if (rows.length === 0) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      return JSON.stringify({ error: 'Document not found, or already retired.' });
-    }
-    await recordGovernedAction(client, {
-      orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
-      target: `qms-document:${id}`,
-      reason: qmsReason(input, 'Controlled document retired via AnA'),
-      payload: { kind: 'retire', to: 'retired' },
-      domain: 'mdx', surface: 'ana',
-    });
-    await client.query('COMMIT');
-    return JSON.stringify({ ok: true, ...rows[0], message: `Retired document ${rows[0].doc_number}.` });
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    return JSON.stringify({ error: `retire_qms_document failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
-  }
-});
+/* 2026-09-28 (Q-0928-1 / SEC-0928-1, DP-32 Part B). Retiring a controlled
+   document is an electronic signature: POST /api/mdx/qms/documents/:id/retire
+   runs verifyApprovalSigner (password + second factor, signing authority) and
+   retireQmsDocumentSigned, which writes one electronic_signatures row with the
+   status change and its ledger pair. This handler checked only a tenant, a
+   reason of 8+ characters and a user id, then set the document retired and
+   recorded a 'transition' — a session alone could end an effective SOP's use
+   for everyone trained on it. Refused exactly like approve_qms_document. */
+registerToolHandler('retire_qms_document', async () =>
+  refuseSignatureInChat(
+    'retire_qms_document',
+    'Retiring a controlled document',
+    "the Quality register: the document's Retire action asks for your password and second factor",
+  ),
+);
 
 registerToolHandler('ack_training', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'ack_training requires tenant context.' });
@@ -13761,7 +13843,12 @@ registerToolHandler('ack_training', async (input, ctx) => {
 
 // ── Change control (ICH Q10 / Annex 15) — call the shared service so the tool
 //    inherits the controlled lifecycle, segregation-of-duties and validation the
-//    REST routes use. Each governed action writes a 21 CFR Part 11 audit entry.
+//    REST routes use. Each governed action writes a 21 CFR Part 11 audit entry
+//    through recordAuditRow and carries its outcome out as `auditTrail`, as the
+//    REST routes do in `meta.auditTrail` (routes/mdx-qms.ts). These wrote it as
+//    `void auditService.logAction(...)`, so AnA reported the change whether or
+//    not the record of it existed (WO-16C hand-on item 2).
+
 registerToolHandler('qms_change_create', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'qms_change_create requires tenant context.' });
   const changeNumber = typeof input.change_number === 'string' ? input.change_number.trim() : '';
@@ -13782,13 +13869,16 @@ registerToolHandler('qms_change_create', async (input, ctx) => {
       qmsDocumentId: typeof input.qms_document_id === 'number' ? input.qms_document_id : null,
       proposedBy: ctx.userId ?? null,
     });
-    const auditService = (await import('../auditService.js')).default;
-    void auditService.logAction({
+    const { recordAuditRow } = await import('../audit/audit-write-outcome.js');
+    const auditTrail = await recordAuditRow({
       tenantId: ctx.organizationId, userId: ctx.userId ?? undefined,
       action: 'mdx.qms.change.create', resourceType: 'qms_change_control', resourceId: row.id,
       details: { changeNumber: row.change_number, classification: row.classification, via: 'ana' },
     });
-    return JSON.stringify({ ok: true, ...row, message: `Raised change ${row.change_number} (${row.status}).` });
+    return JSON.stringify({
+      ok: true, ...row, auditTrail,
+      message: withAuditNote(`Raised change ${row.change_number} (${row.status}).`, auditTrail),
+    });
   } catch (err: unknown) {
     if ((err as { code?: string }).code === '23505') return JSON.stringify({ error: 'A change with that number already exists in this organization.' });
     return JSON.stringify({ error: `qms_change_create failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -13810,18 +13900,37 @@ registerToolHandler('qms_change_transition', async (input, ctx) => {
       effectivenessReview: typeof input.effectiveness_review === 'string' ? input.effectiveness_review : null,
     });
     if (!row) return JSON.stringify({ error: `Change ${id} not found in this organization.` });
-    const auditService = (await import('../auditService.js')).default;
-    void auditService.logAction({
+    const { recordAuditRow } = await import('../audit/audit-write-outcome.js');
+    const auditTrail = await recordAuditRow({
       tenantId: ctx.organizationId, userId: ctx.userId ?? undefined,
       action: 'mdx.qms.change.transition', resourceType: 'qms_change_control', resourceId: id,
       details: { to, reason, via: 'ana' },
     });
-    return JSON.stringify({ ok: true, governed: true, ...row, message: `Change ${id} → ${row.status}.` });
+    return JSON.stringify({
+      ok: true, governed: true, ...row, auditTrail,
+      message: withAuditNote(`Change ${id} → ${row.status}.`, auditTrail),
+    });
   } catch (err: unknown) {
-    // InvalidChangeTransitionError / SegregationOfDutiesError carry human-readable messages.
-    return JSON.stringify({ error: err instanceof Error ? err.message : `qms_change_transition failed: ${String(err)}` });
+    return qmsChangeTransitionRefusal(err);
   }
 });
+
+/**
+ * Approval is a signed act this tool cannot take (DP-31): answer the kind of
+ * refusal and where a person approves, not the service's API path.
+ * InvalidChangeTransitionError carries a human-readable message as it is.
+ */
+function qmsChangeTransitionRefusal(err: unknown): string {
+  if ((err as { code?: string }).code === 'CHANGE_APPROVAL_REQUIRES_SIGNATURE') {
+    return JSON.stringify({
+      error:
+        'Approving a change is an electronic signature, which needs the approver\'s password and second factor. ' +
+        'Approve it with the Approve button on the change in the Quality register. Nothing was changed.',
+      code: 'CHANGE_APPROVAL_REQUIRES_SIGNATURE',
+    });
+  }
+  return JSON.stringify({ error: err instanceof Error ? err.message : `qms_change_transition failed: ${String(err)}` });
+}
 
 registerToolHandler('qms_change_link', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'qms_change_link requires tenant context.' });
@@ -13841,13 +13950,16 @@ registerToolHandler('qms_change_link', async (input, ctx) => {
       note: typeof input.note === 'string' ? input.note : null,
       createdBy: ctx.userId ?? null,
     });
-    const auditService = (await import('../auditService.js')).default;
-    void auditService.logAction({
+    const { recordAuditRow } = await import('../audit/audit-write-outcome.js');
+    const auditTrail = await recordAuditRow({
       tenantId: ctx.organizationId, userId: ctx.userId ?? undefined,
       action: 'mdx.qms.change.link', resourceType: 'qms_change_control', resourceId: id,
       details: { linkType, linkedRef, via: 'ana' },
     });
-    return JSON.stringify({ ok: true, ...row, message: `Linked ${linkType} ${linkedRef} to change ${id}.` });
+    return JSON.stringify({
+      ok: true, ...row, auditTrail,
+      message: withAuditNote(`Linked ${linkType} ${linkedRef} to change ${id}.`, auditTrail),
+    });
   } catch (err: unknown) {
     return JSON.stringify({ error: `qms_change_link failed: ${err instanceof Error ? err.message : String(err)}` });
   }
@@ -15179,6 +15291,26 @@ export interface AgenticOptions {
 }
 
 /**
+ * The tool context, with the tenant uuid filled from the active request scope
+ * when the caller did not pass it and the scope is the same tenant.
+ *
+ * The uuid is the tenant boundary search_document_passages,
+ * project_knowledge_search and the artifact scope enforce, and each refuses
+ * without it. The chat route passes it; a background deep investigation (and
+ * the realtime namespace) built its context from the integer org id alone, so
+ * those tools answered "unavailable" there. A deep investigation is started
+ * fire-and-forget from inside the chat request, whose scope holds the uuid the
+ * auth boundary resolved. Only that scope is trusted, and only for its own
+ * tenant — never another tenant's uuid, and nothing invented outside a scope.
+ */
+function withScopeOrganizationUuid(ctx: ToolContext | undefined): ToolContext | undefined {
+  if (!ctx || ctx.organizationUuid || ctx.organizationId == null) return ctx;
+  const scope = getTenantScope();
+  if (!scope?.orgUuid || scope.tenantId !== String(ctx.organizationId)) return ctx;
+  return { ...ctx, organizationUuid: scope.orgUuid };
+}
+
+/**
  * Execute a multi-turn agentic loop with AnA.
  *
  * AnA can call tools, get results, reason further, call more tools, and
@@ -15205,6 +15337,7 @@ export async function executeAgenticLoop(
   const maxRounds = options?.maxRounds || resolveMaxRounds('balanced');
   const progressExtension = options?.progressExtension ?? resolveRoundExtension('balanced');
   const signal = options?.signal;
+  const toolContext = withScopeOrganizationUuid(options?.toolContext);
   // Failure-adaptation guidance from the latest round (cleared after use).
   let pendingAdaptationNote = '';
 
@@ -15222,6 +15355,7 @@ export async function executeAgenticLoop(
   // model kept generating server-side and the turn was paid for in full. The
   // streaming route has passed it since stop started landing mid-step; this is
   // the same fix for the non-SSE callers.
+  // tenant-binding: forwards the caller's GatewayRequest; every caller binds organizationId (send-message.ts, deep-investigation.ts, ana-realtime.ts, ana-intelligence.ts)
   let finalResponse = (await gateway.route({ ...request, signal })) as AnaGatewayResponse;
 
   // Fast path: the model answered without asking for any tool.
@@ -15269,7 +15403,7 @@ export async function executeAgenticLoop(
         return runOneTool(
           handler,
           call,
-          { ...(options?.toolContext ?? {}), servingModel: servedModelOf(finalResponse) },
+          { ...(toolContext ?? {}), servingModel: servedModelOf(finalResponse) },
           signal,
         );
       },
@@ -15332,6 +15466,7 @@ export async function executeAgenticLoop(
       roundRequest.toolChoice = 'none';
     }
 
+    // tenant-binding: roundRequest is built from the caller's request, which carries its organizationId
     finalResponse = (await gateway.route(roundRequest)) as AnaGatewayResponse;
     const nextUses = finalResponse.toolUses ?? [];
     return { text: finalResponse.content || '', toolCalls: nextUses.map(toToolCall) };
@@ -16874,10 +17009,106 @@ registerToolHandler('list_app_screens', async (input: Record<string, unknown>, c
   }
 });
 
+// ── The program AnA has opened this turn ─────────────────────────────────────
+// A move that opens a program (act_on_screen projects.open-program, navigate_to
+// with a `program`) only learns WHICH program once its database read returns.
+// The stream runs a round's calls concurrently (mapWithConcurrency), so a
+// project screen asked for in the same round must wait for that answer instead
+// of reading what was open before it — which asked "which program?" a moment
+// after AnA had opened one, or showed the previous one.
+//
+// Both helpers are synchronous and must run before the handler's first await.
+// The executor starts a round's calls in order, each running synchronously up
+// to its first await, so what a call publishes by then is visible to every
+// call asked AFTER it in the round, and to none asked before it.
+
+/** The program open once every move started before this point has landed. */
+/**
+ * Whether the request came with a program open on the person's screen. The
+ * stream route sends it as `projectRef` (a uuid under the v2 shell); the chat
+ * route sets only `projectId` — so reading one field alone told a chat turn
+ * with a program open that none was.
+ */
+function hasOpenProgram(ctx?: ToolContext): boolean {
+  return Boolean((typeof ctx?.projectRef === 'string' && ctx.projectRef.trim()) || ctx?.projectId);
+}
+
+function programOpenedBefore(ctx?: ToolContext): Promise<TurnProgram | null> {
+  const ts = ctx?.turnState;
+  if (!ts) return Promise.resolve(null);
+  return ts.pendingProgram ?? Promise.resolve(ts.program);
+}
+
+/**
+ * Announce that this move is opening a program. The returned function settles
+ * it with what the move opened (null: nothing it could name) and resolves once
+ * the turn's program reflects that. Callers also call it with null in a
+ * `finally` — a no-op after the first call — so an early return or a throw
+ * never leaves a later move waiting. Opens land in the order they were asked,
+ * so two in one round leave the second open, as the person's screen will.
+ */
+function beginProgramOpen(ctx?: ToolContext): (opened: TurnProgram | null) => Promise<unknown> {
+  const ts = ctx?.turnState;
+  if (!ts) return async () => undefined;
+  const before = programOpenedBefore(ctx);
+  let settle!: (opened: TurnProgram | null) => void;
+  const own = new Promise<TurnProgram | null>(resolve => {
+    settle = resolve;
+  });
+  const pending: Promise<TurnProgram | null> = own.then(async opened => {
+    const prior = await before;
+    if (opened) ts.program = opened;
+    if (ts.pendingProgram === pending) ts.pendingProgram = null;
+    return opened ?? prior;
+  });
+  ts.pendingProgram = pending;
+  return opened => {
+    settle(opened);
+    return pending;
+  };
+}
+
+function turnProgramOf(p: ProgramRef): TurnProgram {
+  return { id: p.id, name: p.name, ...(p.code ? { code: p.code } : {}) };
+}
+
+/**
+ * The tool result for a program reference that did not name exactly one of
+ * the person's programs. Both moves that open a program refuse through here,
+ * so the model is told the same thing whichever one it used.
+ */
+async function unresolvedProgramResult(
+  ref: string,
+  found: Exclude<ProgramResolution, { status: 'found' }>
+): Promise<string> {
+  const { programChoices } = await import('../ana-ri/drive-context.js');
+  if (found.status === 'ambiguous') {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      message: found.truncated
+        ? `"${ref}" matches more than ${found.matches.length} programs — name one exactly. These are the ${found.matches.length} most recently updated.`
+        : `"${ref}" matches more than one program — name one exactly.`,
+      programs: programChoices(found.matches),
+    });
+  }
+  if (found.status === 'not_found') {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      message: `No program matching "${ref}" in this workspace.`,
+      programs: programChoices(found.candidates),
+    });
+  }
+  return JSON.stringify({
+    status: 'error',
+    error: 'The program list could not be read, so the program could not be opened.',
+  });
+}
+
 // AnA self-navigation — validate a target against the governed registry and
 // produce the navigation directive the chat client applies. Refuses unknown
 // targets / invalid params rather than emitting a broken jump.
 registerToolHandler('navigate_to', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  let settleOpen: ((opened: TurnProgram | null) => Promise<unknown>) | null = null;
   try {
     const target = typeof input.target === 'string' ? input.target.trim() : '';
     if (!target) {
@@ -16893,6 +17124,11 @@ registerToolHandler('navigate_to', async (input: Record<string, unknown>, ctx?: 
         : typeof paramProgram === 'string' && paramProgram.trim()
           ? paramProgram.trim()
           : '';
+    // Before the first await (see beginProgramOpen): a move that names a
+    // program is opening it; one that does not shows whatever the moves asked
+    // before it leave open.
+    settleOpen = programRef ? beginProgramOpen(ctx) : null;
+    const openedBefore = programRef ? null : programOpenedBefore(ctx);
     const locked = ctx?.lockedScreens?.get(target);
     if (locked) {
       return JSON.stringify({
@@ -16918,35 +17154,17 @@ registerToolHandler('navigate_to', async (input: Record<string, unknown>, ctx?: 
       const drive = await import('../ana-ri/drive-context.js');
       if (programRef) {
         const found = await drive.resolveProgramRef(ctx?.organizationId ?? null, programRef);
-        if (found.status === 'found') {
-          directive.program = {
-            id: found.program.id,
-            name: found.program.name,
-            ...(found.program.code ? { code: found.program.code } : {}),
-          };
-          if (ctx?.turnState) ctx.turnState.program = directive.program as { id: string; name?: string; code?: string };
-        } else if (found.status === 'ambiguous') {
-          return JSON.stringify({
-            status: 'needs_parameters',
-            message: `"${programRef}" matches more than one program — name one exactly.`,
-            programs: drive.programChoices(found.matches),
-          });
-        } else if (found.status === 'not_found') {
-          return JSON.stringify({
-            status: 'needs_parameters',
-            message: `No program matching "${programRef}" in this workspace.`,
-            programs: drive.programChoices(found.candidates),
-          });
-        } else {
-          return JSON.stringify({
-            status: 'error',
-            error: 'The program list could not be read, so the program could not be opened.',
-          });
-        }
-      } else if (ctx?.turnState?.program) {
-        // AnA opened a program earlier this turn — the screen follows it.
-        directive.program = ctx.turnState.program;
-      } else if (!ctx?.projectRef) {
+        if (found.status !== 'found') return await unresolvedProgramResult(programRef, found);
+        const opened = turnProgramOf(found.program);
+        directive.program = opened;
+        await settleOpen?.(opened);
+      } else {
+        // A program AnA opened earlier this turn — in an earlier round, or
+        // earlier in this one and still resolving — is the one the screen shows.
+        const opened = await openedBefore;
+        if (opened) directive.program = opened;
+      }
+      if (!directive.program && !hasOpenProgram(ctx)) {
         const listed = await drive.listProgramCandidates(ctx?.organizationId ?? null, 25);
         return JSON.stringify({
           status: 'needs_project',
@@ -16982,6 +17200,8 @@ registerToolHandler('navigate_to', async (input: Record<string, unknown>, ctx?: 
     });
   } catch (err: any) {
     return JSON.stringify({ error: `navigate_to failed: ${err?.message || 'unknown error'}` });
+  } finally {
+    void settleOpen?.(null);
   }
 });
 
@@ -17020,6 +17240,7 @@ registerToolHandler('list_screen_actions', async (input: Record<string, unknown>
 // Refuses unknown actions, governed verbs, and invalid params rather than
 // emitting a broken (or forbidden) operation.
 registerToolHandler('act_on_screen', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  let settleOpen: ((opened: TurnProgram | null) => Promise<unknown>) | null = null;
   try {
     const action = typeof input.action === 'string' ? input.action.trim() : '';
     if (!action) {
@@ -17032,6 +17253,12 @@ registerToolHandler('act_on_screen', async (input: Record<string, unknown>, ctx?
       input.params && typeof input.params === 'object'
         ? (input.params as Record<string, unknown>)
         : {};
+    // Before the first await (see beginProgramOpen), so a project screen asked
+    // for in this same round waits for the program this opens.
+    settleOpen = action === 'projects.open-program' ? beginProgramOpen(ctx) : null;
+    // Likewise read before the first await: a program opened earlier in this
+    // turn, or earlier in this round, is the one a project screen will show.
+    const openedBefore = action === 'projects.open-program' ? null : programOpenedBefore(ctx);
     const { resolveSurfaceAction, findSurfaceAction } = await import('../../../shared/navigation/surface-actions.js');
     const known = findSurfaceAction(action);
     const lockedReason = known ? ctx?.lockedScreens?.get(known.surfaceId) : undefined;
@@ -17043,19 +17270,45 @@ registerToolHandler('act_on_screen', async (input: Record<string, unknown>, ctx?
       });
     }
     const res = resolveSurfaceAction(action, params);
-    // Opening a program changes which program the next project screen shows.
-    if (res.ok && res.directive.actionId === 'projects.open-program' && ctx?.turnState) {
+    // Opening a program changes which program the next project screen shows,
+    // so the server resolves the reference too — over every program the
+    // person has, where the Projects screen matches against the one page of
+    // the portfolio it loaded. A reference that names several programs is
+    // refused here: on that page it can look unique, and the screen would
+    // open one of them, a guess, while the turn recorded no program at all.
+    // A miss still goes to the screen, which reports it with its own list (its
+    // page is a subset of what was searched, so it misses too), and so does a
+    // failed read, which leaves the screen's own read to decide.
+    if (res.ok && res.directive.actionId === 'projects.open-program') {
       const ref = String(res.directive.params?.program ?? '').trim();
       if (ref) {
         const { resolveProgramRef } = await import('../ana-ri/drive-context.js');
-        const found = await resolveProgramRef(ctx.organizationId ?? null, ref);
-        if (found.status === 'found') {
-          ctx.turnState.program = {
-            id: found.program.id,
-            name: found.program.name,
-            ...(found.program.code ? { code: found.program.code } : {}),
-          };
-        }
+        const found = await resolveProgramRef(ctx?.organizationId ?? null, ref);
+        if (found.status === 'found') await settleOpen?.(turnProgramOf(found.program));
+        else if (found.status === 'ambiguous') return await unresolvedProgramResult(ref, found);
+      }
+    }
+    /* An operation on a screen that shows ONE program needs a program open —
+       navigate_to already refuses to move onto that screen without one. This
+       did not: "search the vault for stability" with no program open was sent,
+       the Vault drew "Open a project to see its vault", the search went
+       nowhere, and AnA — told the operation was being performed — said she
+       had searched. Ask first, with their programs, as navigate_to does. */
+    if (res.ok && openedBefore && !hasOpenProgram(ctx)) {
+      const { findNavigationTarget } = await import('../../../shared/navigation/index.js');
+      const screen = findNavigationTarget(res.directive.surfaceId);
+      if (screen?.scope === 'project' && !(await openedBefore)) {
+        const drive = await import('../ana-ri/drive-context.js');
+        const listed = await drive.listProgramCandidates(ctx?.organizationId ?? null, 25);
+        return JSON.stringify({
+          status: 'needs_project',
+          message: listed.ok
+            ? listed.programs.length > 0
+              ? `"${res.directive.label}" works on the ${screen.label} screen, which shows one program, and none is open. Open one first with navigate_to {"target":"${screen.id}","program":"<one of these>"} (ask the person which if it is not clear from the conversation), then repeat this action.`
+              : `"${res.directive.label}" works on the ${screen.label} screen, which shows one program, and this workspace has none yet. Offer to create one with them from Projects.`
+            : 'The program list could not be read, so no program could be opened for this action.',
+          ...(listed.ok ? { programs: drive.programChoices(listed.programs) } : {}),
+        });
       }
     }
     if (!res.ok) {
@@ -17076,11 +17329,17 @@ registerToolHandler('act_on_screen', async (input: Record<string, unknown>, ctx?
       // The instruction must match what actually happens on screen, exactly as
       // navigate_to's does.
       instruction: ctx?.liveDrive
-        ? `Live Drive is on: this operation is being performed on the person's screen now (on the "${res.directive.surfaceId}" screen — AnA's move queue takes them there first if needed). Say what you did in a few words and continue. If a screen report says it did not happen, tell them and take another route.`
+        ? `Live Drive is on: this operation is being performed on the person's screen now (on the "${res.directive.surfaceId}" screen — AnA's move queue takes them there first if needed). Say what you did in a few words and continue. If a screen report says it did not happen, tell them and take another route. When the report lists what the screen shows ("Documents listed: …"), you may retry once with one of those exact names — never a name you made up.${
+            res.directive.actionId === 'projects.open-program'
+              ? ` The Projects screen lists only the most recent programs; if it cannot find this one, open it with navigate_to {"target":"project-home","program":"<the program>"}, which opens any of their programs directly.`
+              : ''
+          }`
         : `An action directive was produced and is OFFERED to the user as a chip they activate — the screen does not change on its own. Say what the action will do when they tap it, not that you have done it.`,
     });
   } catch (err: any) {
     return JSON.stringify({ error: `act_on_screen failed: ${err?.message || 'unknown error'}` });
+  } finally {
+    void settleOpen?.(null);
   }
 });
 
@@ -17190,7 +17449,7 @@ registerToolHandler('start_product_demo', async (input: Record<string, unknown>,
       script,
       ...(listed.ok ? { programs: programChoices(listed.programs) } : {}),
       instruction: driven
-        ? `Run the demonstration now, all the way through, one stop per step: for each step, say its talking point in one or two sentences of your own (adapted to their real data — never verbatim), then make its move (navigate_to for "navigate", act_on_screen for "act"). Make ONE move per round so each screen lands before the next. Pick ONE program from \`programs\` at the start (the first is fine) and use it throughout: pass its name as \`program\` to projects.open-program, and as navigate_to's \`program\` for project screens. If \`programs\` is empty, narrate from the portfolio and offer to set one up together. If a screen report says a move did not happen, say so briefly and continue with the next stop. Answer any question they ask mid-demo, then resume. If the turn ends before the script does, say which stop you reached.`
+        ? `Run the demonstration now, all the way through, one stop per step: for each step, say its talking point in one or two sentences of your own (adapted to their real data — never verbatim), then make its move (navigate_to for "navigate", act_on_screen for "act"). Make ONE move per round so each screen lands before the next. Pick ONE program from \`programs\` at the start (the first is fine) and use it throughout: pass its name as \`program\` to projects.open-program, and as navigate_to's \`program\` for project screens. If \`programs\` is empty, narrate from the portfolio and offer to set one up together. Stops that say "pick … on screen" need a real name you cannot see yet: make the act with the likeliest name from the conversation or their data, but do not name a document or submission to the person until the screen confirms it — when the screen report comes back listing what is on screen ("Documents listed: …", "Submissions listed: …"), retry that stop once with one of those exact names. If a screen report says a move did not happen for any other reason, say so briefly and continue with the next stop. Answer any question they ask mid-demo, then resume. If the turn ends before the script does, say which stop you reached.`
         : `Live Drive is NOT on for this turn, so the moves below can only be OFFERED as chips, not performed — do not narrate the stops as if you had made them. This answer carries a "Start demonstration: ${script.title}" chip: tell the user that pressing it starts the demonstration with you driving (Live Drive switches on visibly and they can take over at any time), and offer to proceed chip-by-chip instead if they prefer. Give a one-paragraph preview of what the demonstration covers (${script.steps.length} stops, about ${script.minutes} minutes) and stop there.`,
     });
   } catch (err: any) {
@@ -19337,8 +19596,12 @@ registerToolHandler('list_vault_documents', async (input, ctx) => {
       count: rows.length,
       documents: rows,
       message: rows.length
-        ? `${rows.length} vault documents. Use read_vault_document with an id to open one.`
-        : 'No vault documents match the filters.',
+        ? `${rows.length} Artifacts Center document(s). Use read_vault_document with an id to open one.`
+        : /* An empty Artifacts Center answer said "No vault documents match", about a
+             store that is not the Vault — so a file the user had uploaded to the Vault
+             was reported absent. Say what was searched instead. */
+          'No Artifacts Center documents match the filters. This does not search files uploaded to the Vault — ' +
+          'do not tell the user a Vault file is missing on the strength of this result.',
     });
   } catch (err) {
     return JSON.stringify({ error: `list_vault_documents failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -19389,7 +19652,7 @@ registerToolHandler('read_vault_document', async (input, ctx) => {
         LIMIT 1`,
       [ctx.organizationId, artifactId],
     );
-    if (!rows.length) return JSON.stringify({ error: `No vault document '${artifactId}' in this organization.` });
+    if (!rows.length) return JSON.stringify({ error: `No Artifacts Center document '${artifactId}' in this organization. Files uploaded to the Vault are a different store with UUID ids — this does not mean a Vault file is missing.` });
     const { content, ...meta } = rows[0];
     const excerpt = viewExcerpt(typeof content === 'string' ? content : JSON.stringify(content ?? ''), input);
 
@@ -19429,7 +19692,7 @@ registerToolHandler('get_document_versions', async (input, ctx) => {
         WHERE organization_id = $1 AND (id::text = $2 OR artifact_id = $2) LIMIT 1`,
       [ctx.organizationId, artifactId],
     );
-    if (!idRes.rows.length) return JSON.stringify({ error: `No vault document '${artifactId}' in this organization.` });
+    if (!idRes.rows.length) return JSON.stringify({ error: `No Artifacts Center document '${artifactId}' in this organization. Files uploaded to the Vault are a different store with UUID ids — this does not mean a Vault file is missing.` });
     const versions = await getPool().query(
       `SELECT id, version AS version_number, change_description AS change_summary,
               content_hash, created_at, created_by_id
@@ -19732,7 +19995,7 @@ registerToolHandler('update_vault_document', async (input, ctx) => {
       );
       if (!existing.rows.length) {
         await client.query('ROLLBACK');
-        return JSON.stringify({ error: `No vault document '${artifactId}' in this organization.` });
+        return JSON.stringify({ error: `No Artifacts Center document '${artifactId}' in this organization. Files uploaded to the Vault are a different store with UUID ids — this does not mean a Vault file is missing.` });
       }
       const doc = existing.rows[0];
       if (doc.status === 'locked') {
@@ -19815,7 +20078,7 @@ registerToolHandler('compare_vault_versions', async (input, ctx) => {
         WHERE organization_id = $1 AND (id::text = $2 OR artifact_id = $2) LIMIT 1`,
       [ctx.organizationId, artifactId],
     );
-    if (!idRes.rows.length) return JSON.stringify({ error: `No vault document '${artifactId}' in this organization.` });
+    if (!idRes.rows.length) return JSON.stringify({ error: `No Artifacts Center document '${artifactId}' in this organization. Files uploaded to the Vault are a different store with UUID ids — this does not mean a Vault file is missing.` });
     const { rows } = await getPool().query(
       `SELECT version, content, content_hash, change_description, created_at, created_by_id
          FROM concept2cure_artifact_versions

@@ -19,11 +19,20 @@
  *     (the two faults above, on three turns) took a healthy provider out of
  *     rotation for every tenant. A 400 says the request was wrong, not that
  *     the provider is down.
+ *
+ * And the fix for that last one went a step too far: it exempted 404, and
+ * every 400 whatever it said. A 404 is a model or endpoint that does not exist,
+ * and a 400 saying the credit balance is too low is an account that cannot be
+ * billed — provider failures both, which the breaker must see so the next
+ * turn stops walking into them first.
  */
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 
-import { AIGateway, resetGateway, fillEmptyBodyMessages } from '../gateway';
+import { AIGateway, resetGateway, fillEmptyBodyMessages, DEFAULT_MODELS } from '../gateway';
+import { CLOUD_MODELS } from '../providers/cloud-models';
 import { apiEffortForModel } from '../effort';
 import type { GatewayConfig, GatewayMessage, GatewayRequest, ModelConfig } from '../types';
 
@@ -87,38 +96,68 @@ describe('fillEmptyBodyMessages — no request is refused over a blank turn', ()
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('apiEffortForModel — only a level the model accepts', () => {
-  it.each(['claude-haiku-4-5', 'claude-haiku-4-5-20251001', 'claude-sonnet-4-5', 'claude-opus-4-1'])(
-    'sends no effort to %s, which rejects it',
-    model => {
-      for (const level of ['low', 'medium', 'high', 'max'] as const) {
-        expect(apiEffortForModel(model, level), `${model} would 400 on effort=${level}`).toBeUndefined();
-      }
-    },
-  );
+  // The model table below used to live in the function, as regexes over the
+  // wire name. It now lives on each registry entry as `maxApiEffort`, and the
+  // function only applies it. So the table is asserted in two halves: the
+  // clamp, given a declared ceiling; and the registry, declaring the right
+  // ceiling for every entry it serves.
 
-  it('lowers max to high on Opus 4.5 and passes the rest through — never raises', () => {
-    expect(apiEffortForModel('claude-opus-4-5', 'max')).toBe('high');
-    expect(apiEffortForModel('claude-opus-4-5', 'high')).toBe('high');
-    expect(apiEffortForModel('claude-opus-4-5', 'medium')).toBe('medium');
-    expect(apiEffortForModel('claude-opus-4-5', 'low')).toBe('low');
+  it('sends nothing to an entry whose ceiling is null — Haiku 4.5, Sonnet 4.5, Opus 4.1', () => {
+    for (const level of ['low', 'medium', 'high', 'max'] as const) {
+      expect(apiEffortForModel({ maxApiEffort: null }, level), `would 400 on effort=${level}`).toBeUndefined();
+    }
   });
 
-  it.each(['claude-opus-4-6', 'claude-opus-4-7', 'claude-sonnet-5', 'claude-opus-5', 'claude-opus-5-5', 'claude-fable-5-1'])(
-    'passes every level through on %s',
-    model => {
-      for (const level of ['low', 'medium', 'high', 'max'] as const) {
-        expect(apiEffortForModel(model, level)).toBe(level);
-      }
-    },
-  );
+  it('lowers max to high on a high ceiling (Opus 4.5) and passes the rest through — never raises', () => {
+    expect(apiEffortForModel({ maxApiEffort: 'high' }, 'max')).toBe('high');
+    expect(apiEffortForModel({ maxApiEffort: 'high' }, 'high')).toBe('high');
+    expect(apiEffortForModel({ maxApiEffort: 'high' }, 'medium')).toBe('medium');
+    expect(apiEffortForModel({ maxApiEffort: 'high' }, 'low')).toBe('low');
+  });
 
-  it('leaves non-Claude model ids alone', () => {
-    expect(apiEffortForModel('gpt-4o', 'high')).toBe('high');
-    expect(apiEffortForModel('kimi-k2', 'max')).toBe('max');
+  it('passes every level through on a max ceiling (Opus 4.6+, Sonnet 4.6+, Claude 5)', () => {
+    for (const level of ['low', 'medium', 'high', 'max'] as const) {
+      expect(apiEffortForModel({ maxApiEffort: 'max' }, level)).toBe(level);
+    }
+  });
+
+  it('sends nothing to an entry that declares no ceiling', () => {
+    // Undeclared is none, the same rule as every other capability flag. A
+    // missing declaration costs a turn its effort hint; sending a level the
+    // model rejects costs the turn its first call.
+    expect(apiEffortForModel({}, 'high')).toBeUndefined();
   });
 
   it('sends nothing when nothing was asked for', () => {
-    expect(apiEffortForModel('claude-opus-5', undefined)).toBeUndefined();
+    expect(apiEffortForModel({ maxApiEffort: 'max' }, undefined)).toBeUndefined();
+  });
+
+  it('A BEDROCK HAIKU GETS NO EFFORT — the case the name rule got wrong', () => {
+    // The name rule began `if (!m.startsWith('claude-')) return effort;`, and a
+    // Bedrock id is `anthropic.claude-haiku-4-5`. So it skipped every check and
+    // sent Haiku the very parameter this function exists to withhold. Same
+    // weights, different substrate naming. Declared per entry, it cannot miss.
+    const bedrockHaiku = { model: 'anthropic.claude-haiku-4-5', maxApiEffort: null } as const;
+    expect(apiEffortForModel(bedrockHaiku, 'high')).toBeUndefined();
+  });
+
+  it('every Claude registry entry declares the ceiling its model takes', () => {
+    // This is where the model table now lives. Each entry is checked against
+    // the documented support for the model it serves, so an entry added with
+    // the wrong declaration — or none — fails here rather than in production.
+    const expected = (wire: string): 'high' | 'max' | null => {
+      const m = wire.replace(/^(?:[a-z]+\.)?anthropic\./, '');
+      if (/^claude-haiku-4-5|^claude-sonnet-4-5|^claude-opus-4-1/.test(m)) return null;
+      if (/^claude-opus-4-5/.test(m)) return 'high';
+      return 'max';
+    };
+    const claude = [...DEFAULT_MODELS, ...CLOUD_MODELS].filter(e =>
+      ['anthropic', 'bedrock', 'vertex'].includes(e.provider),
+    );
+    expect(claude.length).toBeGreaterThan(4);
+    for (const entry of claude) {
+      expect(entry.maxApiEffort, `${entry.id} (${entry.model})`).toBe(expected(entry.model));
+    }
   });
 });
 
@@ -126,7 +165,17 @@ describe('apiEffortForModel — only a level the model accepts', () => {
 // The params that actually reach Anthropic
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * The REAL registry entry for a wire model when there is one.
+ *
+ * Effort support is declared per entry (`maxApiEffort`), so a hand-built
+ * fixture would test the fixture. Resolving the actual entry makes these cases
+ * prove that the registry's own declarations produce the right wire params —
+ * which is the thing that has to be true in production.
+ */
 function modelConfig(model: string): ModelConfig {
+  const real = [...DEFAULT_MODELS, ...CLOUD_MODELS].find(e => e.model === model);
+  if (real) return real;
   return {
     id: model,
     provider: 'anthropic',
@@ -256,5 +305,128 @@ describe('recordFailure — the circuit breaker counts outages, not bad requests
     fail(gw, 'anthropic', 503);
     expect(healthOf(gw, 'anthropic').consecutiveFailures).toBe(2);
     expect(healthOf(gw, 'anthropic').healthy).toBe(true);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// recordFailure — a missing model and an unbillable account are provider failures
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SDK_HEADERS = new Headers();
+
+/** What the Anthropic SDK throws for this status and body — the error route() hands recordFailure. */
+const anthropicRefusal = (status: number, message: string, type = 'invalid_request_error') =>
+  Anthropic.APIError.generate(status, { type: 'error', error: { type, message } }, undefined, SDK_HEADERS);
+
+/** What the OpenAI SDK throws — for OpenAI itself and every server or proxy spoken to through it. */
+const openAIRefusal = (status: number, body: Record<string, unknown>) =>
+  OpenAI.APIError.generate(status, { error: body }, undefined, SDK_HEADERS);
+
+const CREDIT_BALANCE_TOO_LOW =
+  'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.';
+
+const failWith = (gw: AIGateway, p: string, error: Error) =>
+  (gw as unknown as { recordFailure: (p: string, e: Error) => void }).recordFailure(p, error);
+
+describe('recordFailure — a missing model and an unbillable account trip the breaker', () => {
+  it('three 404s mark the provider unhealthy — the model or endpoint is not there', () => {
+    vi.useFakeTimers();
+    const gw = liveGateway();
+    for (let i = 0; i < 3; i++) {
+      failWith(gw, 'anthropic', anthropicRefusal(404, 'model: claude-opus-4-0', 'not_found_error'));
+    }
+    expect(healthOf(gw, 'anthropic').healthy, 'a model that does not exist was treated as a bad request').toBe(false);
+    expect(healthOf(gw, 'anthropic').consecutiveFailures).toBe(3);
+  });
+
+  it.each<[string, () => Error]>([
+    ['Anthropic: credit balance too low', () => anthropicRefusal(400, CREDIT_BALANCE_TOO_LOW)],
+    [
+      'OpenAI: insufficient_quota',
+      () =>
+        openAIRefusal(400, {
+          message: 'You exceeded your current quota, please check your plan and billing details.',
+          type: 'insufficient_quota',
+          code: 'insufficient_quota',
+        }),
+    ],
+    ['only the code says so', () => openAIRefusal(400, { message: 'Request refused.', code: 'insufficient_quota' })],
+    ['in capitals', () => openAIRefusal(400, { message: 'Monthly QUOTA exceeded for this key' })],
+    ['payment', () => openAIRefusal(400, { message: 'Payment method declined for this organization' })],
+    [
+      'only the body says so',
+      () => openAIRefusal(400, { message: 'Provider returned error', metadata: { raw: 'billing hard limit reached' } }),
+    ],
+    // Anthropic's other two account refusals arrive as the same 400
+    // invalid_request_error, and say neither billing, quota nor payment.
+    [
+      'Anthropic: spend cap reached',
+      () =>
+        anthropicRefusal(
+          400,
+          'You have reached your specified API usage limits. You will regain access on 2026-10-01 at 00:00 UTC.',
+        ),
+    ],
+    ['Anthropic: organization disabled', () => anthropicRefusal(400, 'This organization has been disabled.')],
+  ])('three account 400s mark the provider unhealthy — %s', (_label, refusal) => {
+    vi.useFakeTimers();
+    const gw = liveGateway();
+    for (let i = 0; i < 3; i++) failWith(gw, 'anthropic', refusal());
+    expect(healthOf(gw, 'anthropic').healthy, 'an account the provider will not serve was treated as a bad request').toBe(false);
+    expect(healthOf(gw, 'anthropic').consecutiveFailures).toBe(3);
+  });
+
+  it.each([400, 413, 422])('a request-shape %i from the SDK still leaves the provider healthy', status => {
+    vi.useFakeTimers();
+    const gw = liveGateway();
+    for (let i = 0; i < 4; i++) {
+      failWith(gw, 'anthropic', anthropicRefusal(status, 'messages.1.content.0.text: text content blocks must be non-empty'));
+    }
+    expect(healthOf(gw, 'anthropic').healthy).toBe(true);
+    expect(healthOf(gw, 'anthropic').consecutiveFailures).toBe(0);
+  });
+
+  it('a malformed request that names a tool with "billing" in it is still a malformed request', () => {
+    // AnA has a tool named get_billing_credits, and a refusal can quote the
+    // request back. A word inside a snake_case name is not the account talking.
+    vi.useFakeTimers();
+    const gw = liveGateway();
+    for (let i = 0; i < 4; i++) {
+      failWith(gw, 'anthropic', anthropicRefusal(400, "tool_choice.name: 'get_billing_credits' is not one of the tools provided"));
+    }
+    expect(healthOf(gw, 'anthropic').healthy).toBe(true);
+    expect(healthOf(gw, 'anthropic').consecutiveFailures).toBe(0);
+  });
+});
+
+describe('route() — a provider out of credit stops being tried first', () => {
+  it('after a turn on which every Anthropic rung answers "credit balance is too low", the next goes straight to OpenAI', async () => {
+    vi.useFakeTimers();
+    const gw = liveGateway();
+    const anthropicCreate = vi.fn(async () => {
+      throw anthropicRefusal(400, CREDIT_BALANCE_TOO_LOW);
+    });
+    (gw as any).anthropicClient = { messages: { create: anthropicCreate } };
+    const openaiCreate = vi.fn(async () => ({
+      model: 'gpt-4o-2024-08-06',
+      choices: [{ message: { role: 'assistant', content: 'Opening CMC.' }, finish_reason: 'stop' }],
+      usage: { prompt_tokens: 5, completion_tokens: 3, total_tokens: 8 },
+    }));
+    (gw as any).openaiClient = { chat: { completions: { create: openaiCreate } } };
+    const ask = {
+      taskType: 'chat',
+      messages: [{ role: 'user', content: 'take me to CMC' }],
+      maxTokens: 500,
+    } as GatewayRequest;
+
+    const first = await gw.route(ask);
+    expect(first.provider).toBe('openai');
+    expect(anthropicCreate).toHaveBeenCalled();
+    expect(healthOf(gw, 'anthropic').healthy).toBe(false);
+
+    anthropicCreate.mockClear();
+    const second = await gw.route(ask);
+    expect(second.provider).toBe('openai');
+    expect(anthropicCreate, 'the out-of-credit provider was tried first again, on every turn').not.toHaveBeenCalled();
   });
 });

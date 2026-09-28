@@ -25,7 +25,7 @@ import React, { useState } from 'react';
 import * as PG from './ProtocolGov';
 import { PaneHead } from './ProtocolDevShared';
 import type { PdevFormKind, PdevFormTarget } from './ProtocolDevForms';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 
 const MIN_REASON = 8;
 
@@ -53,8 +53,11 @@ async function writeCell(wasOn: boolean, assessmentId: number, visitId: number, 
       wasOn ? { assessmentId, visitId, reason } : { assessmentId, visitId, required: true, reason },
     );
     if (res.ok) return null;
-    const j = (await res.json().catch(() => null)) as { error?: { message?: string; code?: string } } | null;
-    return j?.error?.message ?? j?.error?.code ?? `HTTP ${res.status}`;
+    /* `apiRequest` throws for every refusal except 401, so this is the 401
+       path. It used to fall back to the envelope's code and then `HTTP 401`,
+       putting an enum token on screen (ci:error-envelope). */
+    const j: unknown = await res.json().catch(() => null);
+    return serverMessage(j) ?? 'Your session has ended. Sign in again; the cell was not changed.';
   } catch (e) {
     return e instanceof Error ? e.message : String(e);
   }

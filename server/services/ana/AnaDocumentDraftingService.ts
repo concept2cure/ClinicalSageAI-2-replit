@@ -14,6 +14,7 @@
  */
 
 import { getGateway } from '../ai-gateway/gateway';
+import { isTruncated } from '../ai-gateway/finish-reason';
 import { classifyGatewayError, isGatewayError } from '../ai-gateway/gateway-error-map';
 import type { BatchDraftFailure, BatchDraftResult } from './batch-draft-result';
 import { createScopedLogger } from '../../utils/logger';
@@ -304,6 +305,23 @@ export interface DocumentDraftResponse {
   cacheHit?: boolean;
   /** Latency in ms */
   latencyMs: number;
+  /**
+   * Why generation ended, verbatim from the provider — 'end_turn',
+   * 'max_tokens', 'length', 'chunk_timeout', 'unknown'. The gateway has always
+   * recorded this and this service used to drop it, so a narrative that hit the
+   * 8192-token ceiling mid-sentence came back indistinguishable from a finished
+   * one and could be accepted into `coauthor_documents`, which is the table
+   * eCTD leaves are materialized from.
+   */
+  finishReason?: string;
+  /**
+   * True when {@link finishReason} says the output was cut off with more to
+   * say. Required, not optional, so the compiler catches a return site that
+   * drops the signal. Not the negation of "complete": an absent or unknown
+   * reason is neither, and a governed write should treat not-knowing as
+   * not-confirmed.
+   */
+  truncated: boolean;
 }
 
 export interface VisionAnalysisRequest {
@@ -443,6 +461,8 @@ export class AnaDocumentDraftingService {
       },
       cacheHit: response.cacheHit,
       latencyMs: response.latencyMs,
+      finishReason: response.finishReason,
+      truncated: isTruncated(response.finishReason),
     };
   }
 
@@ -509,6 +529,8 @@ export class AnaDocumentDraftingService {
         estimatedCostUsd: response.usage.estimatedCostUsd,
       },
       latencyMs: response.latencyMs,
+      finishReason: response.finishReason,
+      truncated: isTruncated(response.finishReason),
     };
   }
 
@@ -574,6 +596,8 @@ export class AnaDocumentDraftingService {
       },
       cacheHit: response.cacheHit,
       latencyMs: response.latencyMs,
+      finishReason: response.finishReason,
+      truncated: isTruncated(response.finishReason),
     };
   }
 
@@ -653,6 +677,8 @@ ${documentContent}`,
       },
       cacheHit: response.cacheHit,
       latencyMs: response.latencyMs,
+      finishReason: response.finishReason,
+      truncated: isTruncated(response.finishReason),
     };
   }
 

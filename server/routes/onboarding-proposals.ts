@@ -32,12 +32,14 @@
 
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
+import { makeUploadFileFilter, receiveUpload } from '../middleware/uploadAllowlist';
+import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
 import rateLimit from 'express-rate-limit';
 import { eq } from 'drizzle-orm';
 import { authMiddleware } from '../auth';
 import { requestDb } from '../db/requestDb';
 import { organizations } from '@shared/schema';
-import auditService from '../services/auditService';
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { createScopedLogger } from '../utils/logger';
 import { extractUploadedText } from '../services/projects/extract-text';
 import { extractOnboardingProposals } from '../services/onboarding/proposal-extraction';
@@ -64,6 +66,13 @@ const MAX_BYTES = 25 * 1024 * 1024; // platform upload limit
 const upload = multer({
   storage: multer.memoryStorage(), // never written to disk
   limits: { fileSize: MAX_BYTES, files: 1 },
+  // Refused at the receiver, before the body is buffered (audit IAM-14, P1-5);
+  // the handler's own check below stays as the second look.
+  fileFilter: makeUploadFileFilter({
+    extensions: ['pdf', 'doc', 'docx', 'txt', 'md'],
+    mimeTypes: [...ACCEPTED],
+    allowMimePrefixes: [],
+  }),
 });
 
 // Rate limit ahead of auth; extraction calls a model, so this is also a cost
@@ -93,7 +102,7 @@ function callerId(req: Request): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-router.post('/ingest', upload.single('file'), async (req: Request, res: Response) => {
+router.post('/ingest', receiveUpload(upload.single('file'), { maxBytes: MAX_BYTES }), async (req: Request, res: Response) => {
   // Tenant context is required so an upload is always attributable, even though
   // this route stores nothing.
   if (callerOrgId(req) === null) {
@@ -111,6 +120,16 @@ router.post('/ingest', upload.single('file'), async (req: Request, res: Response
     });
   }
 
+  // The declared type is the client's claim; the bytes are checked and scanned
+  // before anything reads them (fail-closed in production).
+  try {
+    await assertUploadSafe(file.buffer, file.mimetype, file.originalname || 'document');
+  } catch (err) {
+    if (err instanceof UploadSafetyError) {
+      return res.status(err.status).json({ success: false, error: err.body.error, code: err.body.code });
+    }
+    throw err;
+  }
   try {
     const text = await extractUploadedText(file.buffer, file.mimetype, file.originalname || 'document');
     const result = await extractOnboardingProposals({ text, fileName: file.originalname || 'document' });
@@ -268,7 +287,11 @@ router.post('/commit', async (req: Request, res: Response) => {
       .where(eq(organizations.id, orgId))
       .returning({ name: organizations.name, clientType: organizations.clientType, industryMode: organizations.industryMode });
 
-    await auditService.logAction({
+    /* WO-16C. Was `await auditService.logAction(…)` with the outcome thrown
+       away, so an applied profile change with no §11.10(e) row answered exactly
+       like one with a row. The change stands either way; `auditTrail` in the
+       response says which. */
+    const auditTrail = await recordAuditRow({
       tenantId: String(orgId),
       userId: String(userId),
       action: 'data_modify',
@@ -299,6 +322,7 @@ router.post('/commit', async (req: Request, res: Response) => {
         failures: applied.filter((a) => !a.ok).length,
         unknownIds: outcome.unknownIds,
       },
+      auditTrail,
     });
   } catch (err) {
     log.error('onboarding commit failed', { err: err instanceof Error ? err.message : String(err) });

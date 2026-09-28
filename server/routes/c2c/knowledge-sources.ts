@@ -21,6 +21,8 @@ import { refreshProjectRetrievalMode } from '../../services/projects/retrieval-m
 import * as crypto from 'crypto';
 import { and, eq, isNull } from 'drizzle-orm';
 import multer from 'multer';
+import { makeUploadFileFilter, receiveUpload } from '../../middleware/uploadAllowlist';
+import { assertUploadSafe, UploadSafetyError } from '../../middleware/uploadSafety';
 import path from 'path';
 import { z } from 'zod';
 import { createScopedLogger } from '../../utils/logger';
@@ -53,11 +55,6 @@ router.use(authMiddleware);
 router.use(tenantContextMiddleware);
 router.use(requireOrganizationContext);
 
-const knowledgeUpload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 50 * 1024 * 1024 },
-});
-
 const allowedKnowledgeMimeTypes = new Set([
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -68,6 +65,19 @@ const allowedKnowledgeMimeTypes = new Set([
   'application/vnd.ms-excel',
   'text/csv',
 ]);
+
+const KNOWLEDGE_UPLOAD_MAX_BYTES = 50 * 1024 * 1024;
+// Bounded and filtered at the receiver; the bytes are checked and scanned in
+// the handler (assertUploadSafe) before they are read (audit IAM-14, P1-5).
+const knowledgeUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: KNOWLEDGE_UPLOAD_MAX_BYTES, files: 1 },
+  fileFilter: makeUploadFileFilter({
+    extensions: ['pdf', 'doc', 'docx', 'txt', 'md', 'xlsx', 'xls', 'csv'],
+    mimeTypes: [...allowedKnowledgeMimeTypes],
+    allowMimePrefixes: [],
+  }),
+});
 
 function sanitizeFilename(name: string): string {
   const base = path.basename(name || 'document');
@@ -367,7 +377,7 @@ router.delete('/projects/:projectId/apps/:appId', async (req: Request, res: Resp
  */
 router.post(
   '/documents/upload',
-  knowledgeUpload.single('file'),
+  receiveUpload(knowledgeUpload.single('file'), { maxBytes: KNOWLEDGE_UPLOAD_MAX_BYTES }),
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
@@ -389,6 +399,16 @@ router.post(
 
       if (!allowedKnowledgeMimeTypes.has(file.mimetype)) {
         return sendError(res, 400, `Unsupported file type: ${file.mimetype}`);
+      }
+      // The declared type is the client's claim; the bytes are the fact, and
+      // they are scanned before anything reads them (fail-closed in production).
+      try {
+        await assertUploadSafe(file.buffer, file.mimetype, file.originalname);
+      } catch (err) {
+        if (err instanceof UploadSafetyError) {
+          return sendError(res, err.status, err.body.error, undefined, err.body.code);
+        }
+        throw err;
       }
 
       const [project] = await db

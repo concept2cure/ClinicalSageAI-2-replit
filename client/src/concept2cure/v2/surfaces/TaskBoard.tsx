@@ -384,7 +384,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
         const wanted = params.project.trim();
         if (wanted.toLowerCase() === 'all') {
           setProj('all');
-          applied.push('all programmes');
+          applied.push('all projects');
         } else {
           const lower = wanted.toLowerCase();
           const exact = projectOpts.rows.find(
@@ -399,12 +399,12 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
               ok: false,
               reason:
                 contains.length > 1
-                  ? `"${params.project}" matches ${contains.length} programmes — name one exactly.`
-                  : `No programme named "${params.project}" on this board.`,
+                  ? `"${params.project}" matches ${contains.length} projects — name one exactly.`
+                  : `No project named "${params.project}" on this board.`,
             };
           }
           setProj(String(match.id));
-          applied.push(`programme ${match.name}`);
+          applied.push(`project ${match.name}`);
         }
       }
       if (params.module) {
@@ -685,7 +685,11 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   }, [list, stats, sel, view, liveTasks.loading, liveTasks.error]);
   usePublishSurfaceContext('tasks', anaContext);
 
-  /* Critical path: topological-ish chain over dependsOn, criticalPath:true */
+  /* The tasks a person marked critical-path (unified_tasks.critical_path), in
+     dependency order over dependsOn. Not a computed critical path: nothing here
+     weighs durations or finds a longest chain, and the header must not say it
+     does (it read "computed from the taskDependencies DAG (getCriticalPath)",
+     an endpoint this surface never calls). */
   const critChain = useMemo(() => {
     const crit = list.filter(t => t.criticalPath);
     const seen: Record<string, boolean> = {};
@@ -903,7 +907,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
 
       {view === 'path' && (
         <div className="tb-path">
-          <div className="tb-path-h">Critical path — {critChain.length} tasks — computed from the <code>taskDependencies</code> DAG (getCriticalPath)</div>
+          <div className="tb-path-h">Critical path — {critChain.length} {critChain.length === 1 ? 'task' : 'tasks'} marked critical-path, in dependency order</div>
           {critChain.map((t, i) => (
             <div
               key={t.taskId}
@@ -1635,7 +1639,7 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
    */
   const instantiate = async () => {
     if (!tpl || busy) return;
-    if (!project) { setErr('Choose a programme — the tasks are created against it.'); return; }
+    if (!project) { setErr('Choose a project — the tasks are created against it.'); return; }
     setBusy(true);
     setErr('');
     try {
@@ -1721,7 +1725,7 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
         <div className="tb-form">
           <div className="tb-frow">
             <div className="tb-field"><label htmlFor="tb-workflow-template">Workflow template</label><select id="tb-workflow-template" value={tid} onChange={e => setTid(e.target.value)}>{templates.rows.map(t => <option key={t.templateId} value={t.templateId}>{t.name}</option>)}</select></div>
-            <div className="tb-field"><label htmlFor="tb-project-2">Project</label><select id="tb-project-2" value={project} onChange={e => setProject(e.target.value)}><option value="">Select a programme…</option>{projects.rows.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>)}</select></div>
+            <div className="tb-field"><label htmlFor="tb-project-2">Project</label><select id="tb-project-2" value={project} onChange={e => setProject(e.target.value)}><option value="">Select a project…</option>{projects.rows.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>)}</select></div>
           </div>
           {tpl && (
             <>
@@ -1751,7 +1755,7 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
             </>
           )}
           <button type="button" className={`tb-tog${autoAssign ? ' on' : ''}`} onClick={() => setAutoAssign(a => !a)}><span className="ico">{I.sparkles}</span>Workload-balanced auto-assign (a separate step, after the tasks are created)</button>
-          {err && <div className="scaf-note" role="alert" style={{ color: 'var(--danger, #b42318)' }}>{err}</div>}
+          {err && <div className="scaf-note" role="alert" style={{ color: 'var(--error)' }}>{err}</div>}
         </div>
         )}
 

@@ -1,0 +1,86 @@
+ ✓ server/middleware/__tests__/auth-inactivity-logoff.test.ts > authenticateToken — inactivity logoff > answers 401 SESSION_IDLE for a session with no activity for longer than its idle window, and the handler never runs 297ms
+ ✓ server/middleware/__tests__/auth-inactivity-logoff.test.ts > authenticateToken — inactivity logoff > a request is activity: a session used every 14 minutes stays open, and one left alone for 16 is over 14ms
+ ✓ server/middleware/__tests__/auth-inactivity-logoff.test.ts > authenticateToken — inactivity logoff > honours the window the tenant set at sign-in (idl), not the default 1ms
+ ✓ server/middleware/__tests__/auth-inactivity-logoff.test.ts > authenticateToken — inactivity logoff > answers 401 SESSION_LIFETIME for a session that began more than 12 hours ago, however active 2ms
+ ✓ server/middleware/__tests__/auth-inactivity-logoff.test.ts > authenticateToken — inactivity logoff > a token minted before sessions had ids is measured from its own issue 5ms
+ ✓ server/middleware/__tests__/auth-inactivity-logoff.test.ts > authenticateToken — inactivity logoff > answers 401 SESSION_SUPERSEDED for a session ended by a later sign-in beyond the account's limit 10ms
+ ✓ server/middleware/__tests__/auth-inactivity-logoff.test.ts > authenticateToken — inactivity logoff > optionalAuth attaches no user from a session that is over, and the request continues anonymous 7ms
+ ✓ server/services/__tests__/session-registry-redis.test.ts > the registry when Redis answers > decides in one atomic script: no read on one round trip and an eviction on the next 3ms
+ ✓ server/services/__tests__/session-registry-redis.test.ts > the registry when Redis answers > Redis's decision is the only one: a session signed out on another task does not make this task end a live one 3ms
+ ✓ server/services/__tests__/session-registry-redis.test.ts > the registry when Redis answers > a session superseded on one task is refused on another: the marker lives in Redis 2ms
+ ✓ server/services/__tests__/session-registry-redis.test.ts > the registry when Redis answers > when Redis fails, the memory tier decides for this task 3ms
+ ✓ server/routes/__tests__/ssoRoutes.test.ts > SSO helper routes > GET /api/auth/sso/:provider/initiate should redirect to callback 15ms
+ ✓ server/routes/__tests__/ssoRoutes.test.ts > SSO helper routes > GET /api/auth/sso/:provider/callback hands the session to the sign-in page in the URL fragment, never the query string 75ms
+ ✓ server/routes/__tests__/ssoRoutes.test.ts > SSO helper routes > mints NO token when ALLOW_DEV_AUTH is not explicitly set, even in development 8ms
+ ✓ server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > initiate: an org slug configured nowhere is refused (404), not sent to the default IdP 6ms
+ ✓ server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > initiate: the default and the per-tenant slugs still reach their IdPs (control) 6ms
+ ✓ server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: RelayState naming a slug configured nowhere is refused (404) before the response is validated 14ms
+ ✓ server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: an existing user with no membership in the config org is refused (403), with a failure event in that tenant 19ms
+ ✓ server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: a member signs in to the config org with THAT membership, never the first membership found 10ms
+ ✓ server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: the session carries the config organisation's idle window and session limit, not the platform defaults 7ms
+ ✓ server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: a return path rides in the fragment with the session, never in a query string (IAM-18 item 6) 6ms
+ ✓ server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: the membership lookup is constrained to the config org in the statement itself 7ms
+ ✓ server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: a new user is provisioned with a membership in the config org only 9ms
+ ✓ server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: an existing user's name is not overwritten from the assertion 5ms
+ ✓ server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: an account that is not active is refused (403), with a failure event 5ms
+ ✓ server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: a validation failure is refused (401) and written as a failure event in the config org's tenant 4ms
+ ✓ server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts > POST /select-organization rotates > mints a token for the selected organisation, keeps the session, and revokes the presented token 49ms
+ ✓ server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > callback: a configured slug with no organisation row is refused (403) and written as a failure event 8ms
+ ✓ server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > logout: the session token is not accepted from the query string 3ms
+ ✓ server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > logout: a bearer token in the Authorization header still starts SP-initiated SLO 6ms
+ ✓ server/routes/__tests__/ssoRoutes.test.ts > SAML SSO — the organisation is the one that owns the matched IdP config (IAM-03 / P0-3) > logout: a token POSTed in the body still starts SP-initiated SLO 4ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects the backslash open-redirect payloads 2ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects protocol-relative and absolute URLs 0ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects non-strings / empty 0ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > accepts a legitimate same-origin path (incl. query) 0ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects a pre-MFA partial token (no 24h access minted) 63ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects an mfa_challenge token 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token still refreshes a VALID access token 6ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /select-organization rejects a partial token 11ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > GET /session reports unauthenticated for a partial token 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > GET /session reports authenticated for a VALID access token 4ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/setup rejects a partial token 4ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/enable rejects a partial token 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/disable rejects a partial token 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /session rejects a partial token (401) 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /session rejects an mfa_challenge token (401) 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /me rejects a partial token (401) 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/setup rejects a partial token (401) 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/enable rejects a partial token (401) 3ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/disable rejects a partial token (401) 6ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /password/change rejects a partial token (401) 4ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the idle window > is the tenant setting in minutes, clamped to [1 min, 24 h], and the default when unset or malformed 2ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the idle window > read back from a token is the idl claim, else the default 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the session claims > a new session has a fresh id, starts now and carries the tenant window 2ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the session claims > a continued session keeps its id, start and window; a token from before sessions had ids starts at its own issue 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the session claims > keys activity by the session id, else by the token itself 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > sessionInactivityReason — an access token > a session never seen is measured from its token: within the window it is admitted and recorded, past it it is idle 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > sessionInactivityReason — an access token > each admitted request extends the window; a gap longer than the window ends the session 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > sessionInactivityReason — an access token > a check that is not the user acting does not extend the window 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > sessionInactivityReason — an access token > an idle session is not touched by being asked 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > sessionInactivityReason — an access token > a session older than the lifetime is over however active 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > sessionInactivityReason — an access token > tokens minted before sessions had ids are independent of one another 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > refreshInactivityReason — a refresh token > reads the session's activity and never records any 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > refreshInactivityReason — a refresh token > a session with no record is measured from its start; a lifetime is a lifetime 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > refreshInactivityReason — a refresh token > a refresh token from before sessions had ids is checked for its lifetime only 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > is the tenant setting, clamped to [1, 20], and 5 when unset or malformed 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > a sign-in beyond the limit ends the oldest session: its next request and its refresh are refused, the others are not 3ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > the newest session is never the one that ends, whatever the limit 1ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > registerSession names the sessions it ended; a signed-out session frees its slot; accounts do not count against one another 2ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > a session past its lifetime holds no slot 0ms
+ ✓ server/services/__tests__/session-inactivity.test.ts > the concurrent-session limit > a superseded session stays superseded for the lifetime it could still be presented in, and is not revived by being asked 1ms
+ ✓ server/routes/__tests__/session-open-contract.test.ts > sign-in mints register their session > no route mints session claims without registering them 2ms
+ ✓ server/routes/__tests__/session-open-contract.test.ts > sign-in mints register their session > each sign-in door opens its session through openSession 1ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > mints a successor and revokes the presented access token 95ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > refuses a refresh token: nothing minted, nothing revoked 8ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > refuses a mfa_challenge token: nothing minted, nothing revoked 6ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > refuses a mfa-partial token: nothing minted, nothing revoked 5ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > cannot renew a session the password change ended (iat before password_changed_at) 7ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session idle past its window (401 SESSION_IDLE) 27ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session that began more than 12 hours ago (401 SESSION_LIFETIME) 5ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > refreshes an active session and carries its id, start and window into both new tokens 5ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > a refresh token minted before sessions had ids is checked for its lifetime only 8ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session ended by a later sign-in beyond the account's limit (401 SESSION_SUPERSEDED) 5ms
+ Test Files  9 passed (9)
+      Tests  83 passed (83)
+exit=0

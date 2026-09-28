@@ -13,8 +13,10 @@ import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { selectRows, updateCalls, updateReturning } = vi.hoisted(() => ({
+const { selectRows, selectQueue, updateCalls, updateReturning } = vi.hoisted(() => ({
   selectRows: { value: [] as Array<Record<string, unknown>> },
+  /** Per-select results, in call order, for handlers that read two tables. */
+  selectQueue: { value: [] as Array<Array<Record<string, unknown>>> },
   updateCalls: { value: [] as Array<Record<string, unknown>> },
   updateReturning: { value: [] as Array<Record<string, unknown>> },
 }));
@@ -24,7 +26,7 @@ vi.mock('../../server/db', () => {
     select: vi.fn(() => ({
       from: vi.fn(() => ({
         where: vi.fn(() => ({
-          limit: vi.fn(async () => selectRows.value),
+          limit: vi.fn(async () => selectQueue.value.shift() ?? selectRows.value),
         })),
       })),
     })),
@@ -240,5 +242,71 @@ describe('GET /api/users/me/preferences', () => {
       .set('Authorization', `Bearer ${tokenFor(7)}`);
     expect(res.status).toBe(200);
     expect(res.body.preferences).toEqual({});
+  });
+});
+
+/**
+ * GET /api/users/me, and the legacy root GET /api/user(s): who the session is.
+ * The root answered every account organizationId '2' and role 'user'; /me
+ * answered roles ['user'] whatever the session's role, an organization it could
+ * not find as "Concept2Cure Demo" / "pharma", and a never-recorded login as now.
+ */
+describe('GET /api/users/me and the legacy root report the session, not a placeholder', () => {
+  const account = {
+    id: 7,
+    name: 'Ada Lovelace',
+    email: 'ada@example.com',
+    createdAt: new Date('2026-01-05T00:00:00.000Z'),
+    lastLogin: null,
+    preferences: {},
+    mustChangePassword: false,
+  };
+  const sessionAs = (role: string) =>
+    jwt.sign({ userId: '7', email: 'ada@example.com', organizationId: '3', role, type: 'access' }, SECRET, {
+      algorithm: 'HS256',
+      expiresIn: '1h',
+    });
+
+  beforeEach(() => {
+    selectRows.value = [];
+    selectQueue.value = [];
+  });
+
+  it("the legacy root answers the session's organization and role", async () => {
+    selectQueue.value = [[account], [{ name: 'Acme Bio', clientType: 'biotech' }]];
+    const app = await makeApp();
+    const res = await request(app).get('/api/users').set('Authorization', `Bearer ${sessionAs('admin')}`);
+    expect(res.status).toBe(200);
+    expect(res.body.organizationId).toBe('3');
+    expect(res.body.roles).toEqual(['admin']);
+    expect(res.body.role).toBeUndefined();
+  });
+
+  it("/me reports the session's role", async () => {
+    selectQueue.value = [[account], [{ name: 'Acme Bio', clientType: 'biotech' }]];
+    const app = await makeApp();
+    const res = await request(app).get('/api/users/me').set('Authorization', `Bearer ${sessionAs('admin')}`);
+    expect(res.status).toBe(200);
+    expect(res.body.roles).toEqual(['admin']);
+    expect(res.body.organizationName).toBe('Acme Bio');
+    expect(res.body.organizationClientType).toBe('biotech');
+  });
+
+  it('/me does not invent an organization it cannot find', async () => {
+    selectQueue.value = [[account], []];
+    const app = await makeApp();
+    const res = await request(app).get('/api/users/me').set('Authorization', `Bearer ${sessionAs('member')}`);
+    expect(res.status).toBe(200);
+    expect(res.body.organizationName).toBeNull();
+    expect(res.body.organizationClientType).toBeNull();
+  });
+
+  it('/me does not invent a login that was never recorded', async () => {
+    selectQueue.value = [[account], [{ name: 'Acme Bio', clientType: 'biotech' }]];
+    const app = await makeApp();
+    const res = await request(app).get('/api/users/me').set('Authorization', `Bearer ${sessionAs('member')}`);
+    expect(res.status).toBe(200);
+    expect(res.body.lastLoginAt).toBeNull();
+    expect(res.body.createdAt).toBe('2026-01-05T00:00:00.000Z');
   });
 });

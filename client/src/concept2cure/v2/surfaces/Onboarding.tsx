@@ -11,7 +11,7 @@ import {
   licBundle as licBundleOf,
 } from '../fixtures/onboarding-data';
 import { getAuthHeaders, getOrgId } from '@/utils/authToken';
-import { serverMessage } from '@/lib/queryClient';
+import { probeAuditRowOutcome, serverMessage } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
 
 /* ── Helpers ── */
@@ -394,6 +394,9 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
             reason: 'Organization name set during workspace activation.',
           }),
         });
+        // A raw fetch, so the transport's audit-row check runs here explicitly:
+        // a saved name whose audit entry was lost is reported, not hidden.
+        probeAuditRowOutcome('PATCH', '/api/organizations/:id/profile', res);
         nameSaved = res.ok;
       } catch {
         nameSaved = false;
@@ -411,6 +414,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
           primaryIndustry: archetypeToPrimaryIndustry(org.archetype),
         }),
       });
+      probeAuditRowOutcome('PATCH', '/api/mdx/industry-profile', res);
       profileSaved = res.ok;
     } catch {
       profileSaved = false;
@@ -845,7 +849,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                     }}
                   >
                     <div className="ob-model-t">
-                      {I.building || I.users} Enterprise (per-user)
+                      {I.building} Enterprise (per-user)
                     </div>
                     <div className="ob-model-d">
                       Per-user pricing tuned to your archetype, seat bundle
@@ -1173,7 +1177,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                     disabled={step === 0}
                     onClick={() => setStep((s) => Math.max(0, s - 1))}
                   >
-                    {I.arrowLeft || '‹'} Back
+                    {I.left} Back
                   </button>
                   <span className="ob-nav-c">
                     Step {step + 1} of {STEPS.length}

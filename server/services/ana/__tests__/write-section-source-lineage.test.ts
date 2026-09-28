@@ -41,6 +41,15 @@ const { calls, client, pool, enforceAuthorLineage, enforceSourceAndAuthorLineage
 });
 vi.mock('../../../db', () => ({ getPool: () => pool, pool, db: {} }));
 
+// 2026-09-28: confirmed writes now need an editor role (registry wrapper,
+// writeRoleRefusal); CTX models a confirmed author who may edit, so the
+// membership lookup answers 'member'.
+const { resolveSignerOrgRole } = vi.hoisted(() => ({
+  resolveSignerOrgRole: vi.fn(async (): Promise<string | null> => 'member'),
+}));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
+
 vi.mock('../../clinical-regulatory-evidence/lineage-gate', () => ({ enforceAuthorLineage, enforceSourceAndAuthorLineage }));
 
 // The resolver verifies existence + tenant ownership; here 7 and 'art-1' exist, nothing else does.
@@ -59,7 +68,7 @@ vi.mock('../../auditService', () => ({ auditLog: vi.fn(async () => undefined) })
 
 import { approvedToolHandler } from './support/approved-tool-handler';
 
-const CTX = { organizationId: 5, userId: 41, organizationUuid: 'org-uuid' };
+const CTX = { organizationId: 5, userId: 41, organizationUuid: 'org-uuid', humanConfirmed: true };
 const Q_SUB = '11111111-2222-4333-8444-555555555555';
 const PROSE = 'The primary endpoint was met at week twelve in the intent-to-treat population. The rest is ours.';
 
@@ -68,6 +77,7 @@ beforeEach(() => {
   enforceAuthorLineage.mockClear();
   enforceSourceAndAuthorLineage.mockClear();
   pool.connect.mockClear();
+  resolveSignerOrgRole.mockClear();
 });
 
 describe('write_q_sub_section', () => {
@@ -130,10 +140,13 @@ describe('write_kit_section', () => {
     const out = JSON.parse(
       await handler(
         { section_key: 'substantial-equivalence', content: PROSE },
-        { organizationId: 5, userId: null } as never,
+        { organizationId: 5, userId: null, humanConfirmed: true } as never,
       ),
     );
-    expect(out.error).toMatch(/requires user context/);
+    // 2026-09-28: the registry wrapper (writeRoleRefusal) now refuses a confirmed
+    // write with no identified member before the handler's own user-context check.
+    expect(out.error).toMatch(/needs an identified member of the organization\. Nothing was changed\./);
+    expect(resolveSignerOrgRole).not.toHaveBeenCalled();
     expect(pool.connect).not.toHaveBeenCalled();
   });
 

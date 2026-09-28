@@ -82,11 +82,13 @@ describe('SubmissionCenter — create posts the live schema', () => {
     fireEvent.click(screen.getByRole('button', { name: /Create submission/ }));
 
     await waitFor(() => expect(posts).toHaveLength(1));
-    // The EXACT keys the mounted router's createSubmissionSchema requires —
-    // and productName is the programme's identity, which is what the eCTD
-    // compile spine links program ↔ submission on.
+    // The EXACT keys the mounted router's createSubmissionSchema requires,
+    // including the project the user picked: the submission is anchored to it
+    // (submissions.program_id, LX-22). The form used to make the user pick a
+    // programme and then drop the id.
     expect(posts[0].body).toEqual({
       title: 'BX-701 — EU MAA (Centralised)',
+      programId: 'prog-uuid-1',
       productName: 'BX-701',
       applicationType: 'maa',
       clientType: 'biotech',

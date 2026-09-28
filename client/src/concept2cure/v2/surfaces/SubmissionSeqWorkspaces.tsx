@@ -29,10 +29,12 @@
  */
 import React from 'react';
 import { I } from '../icons';
+import { AnaActivity } from '../AnaActivity';
 import { apiRequest, serverMessage, redactInternals } from '@/lib/queryClient';
 import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveGetOrNull, EmptyState } from '../dataConnect';
 import { assessmentStateFor } from '../assessmentState';
 import { documentSourceLabel } from '@shared/regulatory/canonical-document';
+import { PlacementReasonField, placementReasonOk } from './filingTarget';
 import {
   SC_LENSES,
   SC_LIFECYCLE_OPS,
@@ -313,6 +315,7 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
   const [docId, setDocId] = React.useState<number | null>(null);
   const [section, setSection] = React.useState('');
   const [op, setOp] = React.useState('new');
+  const [reason, setReason] = React.useState('');
   const [saving, setSaving] = React.useState(false);
   const doc = docRows.find((d) => d.id === docId) ?? null;
 
@@ -327,7 +330,7 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
   }
 
   const place = async () => {
-    if (!doc || !section.trim() || saving) return;
+    if (!doc || !section.trim() || !placementReasonOk(reason) || saving) return;
     setSaving(true);
     const r = await mutateVerbatim<LeafRow>('PUT', `/api/submissions/sequences/${seqId}/leaves`, {
       sectionCode: section.trim(),
@@ -335,6 +338,7 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
       lifecycleOp: op,
       documentTable: 'coauthor_documents',
       documentId: doc.id,
+      reason: reason.trim(),
     });
     setSaving(false);
     if (r.data && typeof r.data.id === 'number') {
@@ -344,6 +348,7 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
       });
       setDocId(null);
       setSection('');
+      setReason('');
     } else {
       onDone({ tone: 'err', text: `The leaf was not placed — ${r.error ?? 'the request failed'}.` });
     }
@@ -412,10 +417,11 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
               ))}
             </select>
           </div>
+          <PlacementReasonField value={reason} onChange={setReason} idPrefix="sc-leaf" disabled={saving} variant="inline" />
           <button
             type="button"
             className="sp-primary sc-btn"
-            disabled={!doc || !section.trim() || saving}
+            disabled={!doc || !section.trim() || !placementReasonOk(reason) || saving}
             onClick={place}
           >
             {I.layers} {saving ? 'Placing…' : 'Place leaf in the sequence'}
@@ -535,7 +541,38 @@ interface ReadinessAssessment {
   unacknowledgedShadowCriticals: number;
   shadowReviewRunCount: number;
   shadowReviewMissing: boolean;
+  /** The DISPATCH-step verdict: every gate, including the §11.70 requirement
+   *  that a release signature already exists. Governs dispatch, never freeze. */
   gate: { cleared: boolean; blockers: string[] };
+  /** The FREEZE-step verdict. Same gates, minus the REQUIREMENT for a release
+   *  signature — which `assess-dispatch-readiness.ts` computes separately
+   *  precisely because requiring one to freeze inverts the order the product
+   *  works in. An `invalid` signature still blocks it, so this is not the
+   *  weaker gate, only the correctly-scoped one.
+   *
+   *  Declared here, and not merely read, because it was the absence of a
+   *  declaration that hid the defect: the server returned `freezeGate` and the
+   *  client typed only `gate`, so reading the wrong field was not a type error.
+   *  Both fields are now on the interface; picking the wrong one is a choice a
+   *  reviewer can see, not a gap the compiler stays silent about. */
+  freezeGate: { cleared: boolean; blockers: string[] };
+  /** The DISPATCH verdict as it will stand once the operator's dispatch
+   *  signature is recorded — what the Dispatch button asks. On the submissions
+   *  spine the release signature IS that dispatch signature, so gating the
+   *  button on `gate` (which requires it to exist already) hid the only control
+   *  that creates it. The server decides when signing resolves the requirement
+   *  (signingNowResolvesRelease: the resolver's spine precedence lives there),
+   *  and this client never re-derives it. */
+  dispatchGateOnSigning: { cleared: boolean; blockers: string[] };
+  /** §11.70 state. Informational — the blocking happens in the gates. */
+  releaseSignature?: {
+    required: boolean;
+    verdict: string;
+    runId?: string | null;
+    signatureId?: number | null;
+    detail?: string | null;
+    cleared: boolean;
+  };
   readiness: { errors: number; warnings: number; infos: number; findings: ReadinessFinding[] };
   leafCount: number;
 }
@@ -573,12 +610,14 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
     phase: 'idle' | 'running' | 'done' | 'error';
     data?: ExplainResponse;
     error?: string;
+    /** When the running request began, for the live record's clock. */
+    since?: number;
   }>({ phase: 'idle' });
   React.useEffect(() => setExplain({ phase: 'idle' }), [seq.id]);
 
   const runExplain = async () => {
     if (findings.length === 0 || explain.phase === 'running') return;
-    setExplain({ phase: 'running' });
+    setExplain({ phase: 'running', since: Date.now() });
     const r = await mutateVerbatim<ExplainResponse>(
       'POST',
       `/api/submissions/${sub.id}/validation/explain`,
@@ -669,6 +708,17 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
                   {explain.phase === 'running' ? 'Explaining…' : 'Explain the findings (AI)'}
                 </button>
               </div>
+            )}
+            {/* The wait, in the same live record AnA shows everywhere else: what is
+            running, a pulse, and a clock — never a percentage, which the
+            request cannot know. Its polite live region is what a screen-reader
+            user hears; the button label alone said nothing to them. */}
+            {explain.phase === 'running' && (
+              <AnaActivity
+                streaming
+                phase={`Explaining ${findings.length} ${findings.length === 1 ? 'finding' : 'findings'} for ${seq.region}…`}
+                startedAt={explain.since}
+              />
             )}
             {explain.phase === 'error' && (
               <div className="sc-verdict tone-err sc-mt" role="status">
@@ -791,10 +841,13 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
   });
   const [notice, setNotice] = React.useState<Notice | null>(null);
   const [running, setRunning] = React.useState(false);
+  /** When the running review began, for the live record's clock. */
+  const [runningSince, setRunningSince] = React.useState<number | null>(null);
 
   const runReview = async () => {
     if (running) return;
     setRunning(true);
+    setRunningSince(Date.now());
     setNotice(null);
     const r = await mutateVerbatim<{ runId: number; findingCount: number; summary: string }>(
       'POST',
@@ -852,6 +905,17 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
             {I.sparkles} {running ? 'Reviewing…' : 'Run shadow review'}
           </button>
         </div>
+        {/* The wait, in the same live record AnA shows everywhere else: what is
+            running, a pulse, and a clock — never a percentage, which the
+            request cannot know. Its polite live region is what a screen-reader
+            user hears; the button label alone said nothing to them. */}
+        {running && (
+          <AnaActivity
+            streaming
+            phase={`Reading sequence ${seq.sequenceNumber} through the ${lensL(lens)} lens…`}
+            startedAt={runningSince ?? undefined}
+          />
+        )}
         <VerdictNote notice={notice} />
         {runs.loading ? (
           <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
@@ -1144,6 +1208,14 @@ export function DispatchWorkspace({
     hasKeys<ReadinessAssessment>('gate', 'readiness'),
   );
   const a = live.data;
+  // Which governed step is open, each read from the verdict for THAT step. A
+  // missing field is not cleared: this is network data, so absence fails closed
+  // rather than throwing or falling back to another step's verdict.
+  const freezeOpen = a?.freezeGate?.cleared === true;
+  const dispatchOpen = a?.dispatchGateOnSigning?.cleared === true;
+  // The gate blocks, and its only blocker is the release signature that the
+  // dispatch e-signature itself records. See the header state that reads this.
+  const awaitingOwnSignature = !!a && !a.gate.cleared && dispatchOpen;
   const [qc, setQc] = React.useState<{
     phase: 'idle' | 'running' | 'done' | 'error';
     data?: DispatchQcResult;
@@ -1208,15 +1280,34 @@ export function DispatchWorkspace({
           />
         ) : (
           <>
-            <div className={`sc-gate ${a.gate.cleared ? 'ok' : 'blocked'}`} role="status">
-              {a.gate.cleared ? I.shieldCheck : I.lock}{' '}
+            {/* Three states, not two. `awaitingOwnSignature` is a gate whose
+                only blocker is the release signature the dispatch e-signature
+                itself records (dispatchGateOnSigning clears, `gate` does not).
+                Reporting that as "Dispatch blocked" sent the user looking for a
+                defect that does not exist; reporting it as clear would be false.
+                `?.` / `=== true`: network data, and missing fails closed. */}
+            <div
+              className={`sc-gate ${a.gate.cleared || awaitingOwnSignature ? 'ok' : 'blocked'}`}
+              role="status"
+            >
+              {a.gate.cleared || awaitingOwnSignature ? I.shieldCheck : I.lock}{' '}
               {a.gate.cleared
                 ? 'Dispatch gate clear'
-                : `Dispatch blocked — ${a.gate.blockers.length} ${
-                    a.gate.blockers.length === 1 ? 'blocker' : 'blockers'
-                  }`}
+                : awaitingOwnSignature
+                  ? 'Dispatch gate clear except for the release signature — the dispatch e-signature applies it'
+                  : `Dispatch blocked — ${a.gate.blockers.length} ${
+                      a.gate.blockers.length === 1 ? 'blocker' : 'blockers'
+                    }`}
             </div>
-            {!a.gate.cleared && (
+            {awaitingOwnSignature && (
+              <div className="scaf-note sc-mb">
+                This submission type requires a 21 CFR Part 11 release signature, and none is on record
+                for this sequence yet. When the sequence is dispatched, the dispatch e-signature is
+                recorded as that release signature, and the server checks the full gate again with it
+                on record before anything moves.
+              </div>
+            )}
+            {!a.gate.cleared && !awaitingOwnSignature && (
               <ol className="sc-blockers">
                 {a.gate.blockers.map((b, i) => (
                   <li key={i}>{b}</li>
@@ -1242,7 +1333,21 @@ export function DispatchWorkspace({
               </div>
             )}
             <div className="sc-disp-actions">
-              {a.gate.cleared && seq.status === 'validated' && (
+              {/* FREEZE reads `freezeGate`, not `gate`. `gate` is the dispatch
+                  verdict and for IND / NDA / BLA / MAA it requires a §11.70
+                  release signature to already exist. Freezing is how a sequence
+                  becomes signable in the first place, so gating this button on
+                  `gate` hid it until a release had been signed — for exactly
+                  the four types that need one, the sequence could never leave
+                  `validated` through this screen. The server has computed the
+                  two verdicts separately since composeDispatchGatesForStep
+                  landed; only the client was still reading the single one. */}
+              {/* `?.` because this is network data, not a local value: a
+                  payload without `freezeGate` must hide the button, not throw
+                  and white-screen the workspace (hostilePayloadProbe). Missing
+                  is treated as NOT cleared — fail closed. It never falls back
+                  to `gate`, which is the defect this line is fixing. */}
+              {freezeOpen && seq.status === 'validated' && (
                 <button
                   type="button"
                   className="sp-primary sc-btn"
@@ -1251,13 +1356,28 @@ export function DispatchWorkspace({
                   {I.lock} Freeze sequence (Part 11 e-signature)
                 </button>
               )}
-              {a.gate.cleared && seq.status === 'frozen' && (
+              {/* DISPATCH reads `dispatchGateOnSigning`, not `gate` — the same
+                  defect as Freeze, one step later (P11-28b). For IND / NDA / BLA
+                  / MAA `gate` requires a release signature to exist already, and
+                  on the submissions spine the signature it accepts is the one
+                  this click records (runGoverned signs, then dispatches). Gated
+                  on `gate`, the only control that creates the signature never
+                  rendered. The server says when signing resolves the
+                  requirement, and re-checks `gate` at transition with the new
+                  signature on record, so nothing the server enforces is relaxed
+                  here. When the signature is what this click supplies, the label
+                  says so: the signer is applying the release, not only moving a
+                  status (§11.50 — the meaning of the act must be clear). */}
+              {dispatchOpen && seq.status === 'frozen' && (
                 <button
                   type="button"
                   className="sp-primary sc-btn"
                   onClick={() => onGoverned(seq, 'dispatch')}
                 >
-                  {I.rocket} Dispatch sequence (Part 11 e-signature)
+                  {I.rocket}{' '}
+                  {awaitingOwnSignature
+                    ? 'Sign the release and dispatch (Part 11 e-signature)'
+                    : 'Dispatch sequence (Part 11 e-signature)'}
                 </button>
               )}
             </div>
@@ -1268,7 +1388,10 @@ export function DispatchWorkspace({
                 is configured for this organization.
               </div>
             )}
-            {a.gate.cleared &&
+            {/* A freeze instruction reads the FREEZE verdict. Gated on `gate`,
+                it was hidden for every IND / NDA / BLA / MAA sequence — a third
+                instance of the step-verdict defect, beside the two buttons. */}
+            {freezeOpen &&
               seq.status !== 'validated' &&
               seq.status !== 'frozen' &&
               seq.status !== 'dispatched' && (
@@ -1278,10 +1401,25 @@ export function DispatchWorkspace({
                   workspace first.
                 </div>
               )}
-            {!a.gate.cleared && (
+            {/* Say what is locked, for the step this sequence is at. This read
+                "Freeze and dispatch stay locked while the gate blocks" whenever
+                `gate` blocked — including beside a rendered Freeze button, once
+                Freeze read its own verdict: a sentence on screen contradicting
+                the control under it. */}
+            {((seq.status === 'validated' && !freezeOpen) ||
+              (seq.status === 'frozen' && !dispatchOpen) ||
+              (seq.status !== 'validated' &&
+                seq.status !== 'frozen' &&
+                seq.status !== 'dispatched' &&
+                !freezeOpen)) && (
               <div className="scaf-note sc-mt">
-                Freeze and dispatch stay locked while the gate blocks. The server enforces this
-                same gate atomically with the e-signature, so it cannot be bypassed from here.
+                {seq.status === 'validated'
+                  ? 'Freeze stays locked while the gate blocks.'
+                  : seq.status === 'frozen'
+                    ? 'Dispatch stays locked while the gate blocks.'
+                    : 'Freeze and dispatch stay locked while the gate blocks.'}{' '}
+                The server enforces this same gate atomically with the e-signature, so it cannot be
+                bypassed from here.
               </div>
             )}
             <div className="cm-pushbar sc-mt">

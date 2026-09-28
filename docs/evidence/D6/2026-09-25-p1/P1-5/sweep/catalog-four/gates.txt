@@ -1,0 +1,10 @@
+$ npm run check:security-patterns
+check-security-patterns: 0 violations across 2844 file(s).
+exit=0
+$ node scripts/ci/check-upload-guards.mjs  # before the baseline is regenerated: the four files report as fixed
+[ci:upload-guards] server/routes/c2c/knowledge-sources.ts: no unguarded site remains (drop the entry)
+[ci:upload-guards] server/routes/c2c/templates.ts: no unguarded site remains (drop the entry)
+[ci:upload-guards] server/routes/ind-forms.routes.ts: no unguarded site remains (drop the entry)
+[ci:upload-guards] server/routes/onboarding-proposals.ts: no unguarded site remains (drop the entry)
+[ci:upload-guards] OK — 9 unguarded multer site(s) across 8 file(s), none new; 19 file(s) build uploads.
+exit=0

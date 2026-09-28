@@ -1,0 +1,23 @@
+$ npm run -s ci:server-error-leaks
+[ci:server-error-leaks] OK — 120 baselined site(s) across 77 file(s); no file gained one.
+
+$ npm run -s check:security-patterns
+check-security-patterns: 0 violations across 2857 file(s).
+
+$ npx eslint server/utils/logger.ts server/utils/logger.js server/utils/__tests__/logger.test.ts   (working tree)
+
+/home/user/ClinicalSageAI-2-replit/server/utils/logger.js
+  141:5  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  187:7  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+✖ 2 problems (0 errors, 2 warnings)
+
+
+$ git show HEAD:server/utils/logger.js | npx eslint --stdin --stdin-filename server/utils/logger.js   (HEAD, for comparison)
+
+/home/user/ClinicalSageAI-2-replit/server/utils/logger.js
+  127:5  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  173:7  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+✖ 2 problems (0 errors, 2 warnings)
+

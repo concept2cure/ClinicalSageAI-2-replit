@@ -27,7 +27,7 @@ import { db } from '../db.js';
 import { setRequestQuery } from '../utils/expressQuery.js';
 import { regulatoryPrograms } from '../../shared/schema/programs.js';
 import { authenticateToken } from '../middleware/auth.js';
-import { recordAuditRow, type AuditRowOutcome } from '../services/audit/audit-write-outcome.js';
+import { recordAuditRow, type AuditRowOutcome, setAuditRowHeaders } from '../services/audit/audit-write-outcome.js';
 
 /**
  * Record the §11.10(e) row for a successful upstream mutation, and report what
@@ -74,15 +74,14 @@ async function logProxyMutation(
   });
 }
 
-/**
+/*
  * Put a proxied mutation's audit outcome where a transparent proxy can carry it.
  * Set before `sendProxyResponse`, which forwards the upstream body untouched.
+ *
+ * The pair is written by the canonical `setAuditRowHeaders`
+ * (server/services/audit/audit-write-outcome.ts), which replaced this file's
+ * own copy.
  */
-function setAuditHeaders(res: Response, outcome: AuditRowOutcome | undefined): void {
-  if (!outcome) return;
-  res.set('X-Audit-Row-Persisted', String(outcome.persisted));
-  if (!outcome.persisted) res.set('X-Audit-Row-Code', outcome.code);
-}
 
 const router = Router();
 
@@ -329,7 +328,7 @@ router.patch(
         method: 'PATCH',
         body: req.body,
       });
-      setAuditHeaders(res, await logProxyMutation(req, result, {
+      setAuditRowHeaders(res, await logProxyMutation(req, result, {
         action: 'predicate.candidate.status',
         resourceType: 'predicate_candidate',
         resourceId: String(req.params.id),
@@ -418,7 +417,7 @@ router.patch('/se-matrix/:id', requireConfigured, requireProgramAccess, async (r
       method: 'PATCH',
       body: req.body,
     });
-    setAuditHeaders(res, await logProxyMutation(req, result, {
+    setAuditRowHeaders(res, await logProxyMutation(req, result, {
       action: 'se_matrix.patch',
       resourceType: 'se_matrix_row',
       resourceId: String(req.params.id),

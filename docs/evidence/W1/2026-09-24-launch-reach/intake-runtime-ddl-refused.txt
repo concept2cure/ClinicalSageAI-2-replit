@@ -1,0 +1,9 @@
+# The mechanism: the handler's runtime DDL as the production role vs as the owner.
+# the handler's runtime DDL, as the production runtime role (app_service) on c2c_ref_0924
+ERROR:  permission denied for schema public
+LINE 1: CREATE TABLE IF NOT EXISTS license_requests (id SERIAL PRIMA...
+                                   ^
+# same statement as the owner (what a superuser dev server sees) — rolled back
+BEGIN
+CREATE TABLE
+ROLLBACK

@@ -1,0 +1,72 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/mdx/qms/documents/8/approve",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "password": "[REDACTED]",
+      "mfaToken": "[REDACTED]",
+      "meaning": "APPROVED",
+      "reason": "OQ-006 step 05: SOP approved for validation (signed)",
+      "effectiveDate": "2026-09-28"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 405,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": {
+        "id": 8,
+        "organization_id": 1,
+        "doc_number": "SOP-OQ-20260928013450",
+        "title": "OQ-006 Document control SOP 20260928013450",
+        "doc_type": "sop",
+        "category": "validation",
+        "version": "1.0",
+        "status": "effective",
+        "effective_date": "2026-09-28T00:00:00.000Z",
+        "next_review_date": "2026-10-08T00:00:00.000Z",
+        "author_id": 1,
+        "approver_id": 3,
+        "approved_at": "2026-09-28T01:35:00.691Z",
+        "superseded_by_id": null,
+        "artifact_id": null,
+        "metadata": {
+          "approval": {
+            "at": "2026-09-28T01:35:00.691+00:00",
+            "by": 3,
+            "reason": "OQ-006 step 05: SOP approved for validation (signed)",
+            "meaning": "APPROVED",
+            "bindingBasis": "qms-document-version-content-sha256",
+            "contentDigest": "df799ac5cbdc40ed015ba5714f1e051822bc5ef1c299016925562a4e22d4a862",
+            "twoPersonRule": "enforced"
+          }
+        },
+        "created_at": "2026-09-28T01:34:51.658Z",
+        "updated_at": "2026-09-28T01:35:00.689Z",
+        "deleted_at": null
+      },
+      "meta": {
+        "auditTrail": {
+          "persisted": true,
+          "chained": true
+        },
+        "signature": {
+          "id": 5,
+          "signedAt": "2026-09-28T01:35:00.691Z",
+          "actionId": "act_7804d825e38848fdae6f503252b3f398",
+          "auditId": "96241933-f166-4d19-97d9-283699fe2775",
+          "sha256Chain": "f458d36be4eae08bcf5f36e2aeb8bdf1f9ef16362bea134f1d1233ad462220dd",
+          "meaning": "APPROVED",
+          "boundPayloadDigest": "df799ac5cbdc40ed015ba5714f1e051822bc5ef1c299016925562a4e22d4a862",
+          "bindingBasis": "qms-document-version-content-sha256",
+          "authenticationMethod": "password+totp",
+          "secondFactorVerified": true
+        }
+      }
+    }
+  }
+}

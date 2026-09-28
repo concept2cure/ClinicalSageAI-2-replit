@@ -1,0 +1,41 @@
+# trivy config --severity CRITICAL,HIGH --exit-code 1 --skip-dirs node_modules .   (the deploy security-gate's scan)
+# Trivy v0.70.0 (CI's version), built from source; checks bundle sha256:1583562f8b90ed2a071b99f0e5ffff6b57e4ceb6ca3e4796577b4e6a339eb74c, downloaded 2026-09-24
+# Tree: this change
+
+
+Report Summary
+
+┌────────────────────────────────────────────────────┬────────────┬───────────────────┐
+│                       Target                       │    Type    │ Misconfigurations │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ .claude/skills/gstack/.github/docker/Dockerfile.ci │ dockerfile │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ Dockerfile.optimized                               │ dockerfile │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ infra/k8s/bff-with-predicate-shadow.yaml           │ kubernetes │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/bootstrap                                │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/bootstrap/main.tf                        │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/environments/production                  │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/environments/staging                     │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/modules/alb/main.tf                      │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/modules/cloudfront/main.tf               │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/modules/compliance-evidence/main.tf      │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/modules/ecr/main.tf                      │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/modules/ecs-fargate/main.tf              │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/modules/rds/main.tf                      │ terraform  │         0         │
+└────────────────────────────────────────────────────┴────────────┴───────────────────┘
+Legend:
+- '-': Not scanned
+- '0': Clean (no security findings detected)
+
+exit=0

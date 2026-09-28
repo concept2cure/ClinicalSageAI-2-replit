@@ -17,7 +17,7 @@ record retention; predicate-rule retention (e.g. 21 CFR 312.57, 21 CFR 820.180).
 | Control | Status | Evidence |
 |---|---|---|
 | Primary storage in one AWS region chosen per tenant contract (launch: us-east-1; EU region on request) | **Planned** — no production environment | `terraform/environments/production` |
-| AI provider placement honours the tenant's residency; failover never crosses the boundary | **Implemented** | `server/services/ai-gateway/gateway.ts:2298-2344`; `AI_PROVIDER_PLACEMENT_APPROVALS` |
+| AI provider placement honours the tenant's residency; failover never crosses the boundary | **Implemented** (per call, fail-closed, since 2026-09-25) | `server/services/ai-gateway/gateway.ts` — `applyOrgPlacementDefaults`, `tenantPlacementVerdict` (selection and every fallback rung), `assertTenantPlacement` (last mile); the tenant policy in `ai_placement_policies`, written only through `PUT /api/ai-placement-policy`; `AI_PROVIDER_PLACEMENT_APPROVALS`; evidence `docs/evidence/D6/2026-09-25-tenant-boundary/` |
 | Per-tenant residency and retention statement published | **Partial** — this policy + `TRUST_STATEMENT.md`; the per-tenant instance is the order form (row D9) | — |
 
 ## 3. Anthropic: BAA scope and the retention choice per tenant

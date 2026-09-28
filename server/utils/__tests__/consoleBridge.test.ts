@@ -87,7 +87,7 @@ describe('consoleBridge — redaction (production)', () => {
     const args = sink.mock.calls[0];
     expect(args[0]).toBe('login failed');
     expect((args[1] as any).password).toBe('[REDACTED]');
-    expect((args[1] as any).user).toBe('a@b.com');
+    expect((args[1] as any).user, 'an address is masked, not dropped (DP-26)').toBe('a***@b.com');
   });
 
   it('redacts HIPAA PHI (mrn) nested in objects', () => {
@@ -106,6 +106,17 @@ describe('consoleBridge — redaction (production)', () => {
     installConsoleBridge(target as any);
     target.log('hello', 42, true);
     expect(sink).toHaveBeenCalledWith('hello', 42, true);
+  });
+
+  it('masks an e-mail or IP address inside a string argument (P1-37 follow-up, 2026-09-26)', () => {
+    const sink = vi.fn();
+    const target = { log: sink, error: sink, warn: sink };
+    installConsoleBridge(target as any);
+    target.error(`login failed for alice@example.com from 203.0.113.9`);
+    const [line] = sink.mock.calls[0] as [string];
+    expect(line).toContain('a***@example.com');
+    expect(line).toContain('203.0.113.xxx');
+    expect(line).not.toContain('alice@');
   });
 
   it('passes Error instances through unchanged (preserves stack)', () => {

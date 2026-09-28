@@ -15,7 +15,7 @@ import { eq, and, isNull, desc, sql } from 'drizzle-orm';
 import { db } from '../../db';
 import { ectdSequences, submissionLeaves, shadowReviewRuns, shadowReviewFindings } from '../../../shared/schema';
 import { getGateway } from '../ai-gateway';
-import auditService from '../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { createScopedLogger } from '../../utils/logger';
 import { PROMPTS_DIR } from '../ai-gateway/prompts-dir';
 
@@ -143,6 +143,9 @@ export interface RunShadowReviewResult {
   crlRiskScore: number;
   summary: string;
   findingCount: number;
+  /** Whether the run's §11.10(e) AI_GENERATE row was written. The run stands
+   *  either way; the route answers this result verbatim, so the caller sees it. */
+  auditTrail: AuditRowOutcome;
 }
 
 export async function runShadowReview(params: RunShadowReviewParams): Promise<RunShadowReviewResult> {
@@ -244,7 +247,8 @@ export async function runShadowReview(params: RunShadowReviewParams): Promise<Ru
     .set({ status: 'complete', model, rtfRiskScore, crlRiskScore, summary: output.summary ?? null, updatedAt: new Date() })
     .where(eq(shadowReviewRuns.id, run.id));
 
-  await auditService.logAction({
+  // WO-16C: was `await auditService.logAction(…)` with its outcome discarded.
+  const auditTrail = await recordAuditRow({
     organizationId,
     userId,
     action: 'AI_GENERATE',
@@ -254,7 +258,7 @@ export async function runShadowReview(params: RunShadowReviewParams): Promise<Ru
   });
 
   logger.info('Shadow review complete', { runId: run.id, sequenceId, organizationId, findings: findings.length });
-  return { runId: run.id, rtfRiskScore, crlRiskScore, summary: output.summary ?? '', findingCount: findings.length };
+  return { runId: run.id, rtfRiskScore, crlRiskScore, summary: output.summary ?? '', findingCount: findings.length, auditTrail };
 }
 
 export default { runShadowReview, aggregateRisk, parseShadowReviewOutput, ShadowReviewError };

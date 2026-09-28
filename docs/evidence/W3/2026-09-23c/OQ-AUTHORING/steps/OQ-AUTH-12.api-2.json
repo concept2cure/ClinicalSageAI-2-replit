@@ -1,0 +1,23 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/authoring/docs/b46d9b7b-708d-4b03-92a0-718cb2a91225/e-sign",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "pin": "[REDACTED]",
+      "meaning": "REVIEWER",
+      "intent": "OQ PIN only"
+    }
+  },
+  "response": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 17,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "password is required to sign (21 CFR Part 11 §11.200).",
+      "code": "PASSWORD_REQUIRED"
+    }
+  }
+}

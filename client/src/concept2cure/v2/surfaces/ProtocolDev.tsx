@@ -15,7 +15,7 @@ import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import * as PG from './ProtocolGov';
 import type { PdevDoc } from '../fixtures/protocol-data';
-import { useLiveRows, EmptyState } from '../dataConnect';
+import { useLiveRows, isPendingStore, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { shellProgramName } from '../shellProject';
@@ -178,6 +178,22 @@ function ProtocolEmptyState({ onAsk, onStarted }: { onAsk: (msg: string) => void
   );
 }
 
+/**
+ * The read model, or not. A 200 whose rows lack an id, or whose sections or
+ * completeness findings are not arrays, is reported as a failed read. Without
+ * this, a body that was not the read model landed on the empty state ("No
+ * protocol in development"), or on a readiness gate that computed "Ready to
+ * finalize" from findings it never received. An empty array still passes: that
+ * is the honest empty state (periodic review 2026-09-28, HS-C-1).
+ */
+function isProtocolReadModel(value: unknown): value is PdevDoc[] {
+  return Array.isArray(value) && value.every((row) => {
+    if (!row || typeof row !== 'object') return false;
+    const r = row as Record<string, unknown>;
+    return 'id' in r && Array.isArray(r.sections) && Array.isArray(r.completenessFindings);
+  });
+}
+
 export function ProtocolWorkspace({ onAsk, onNav }: SurfaceViewProps) {
   // GET /api/protocol-dev → the org's in-development protocol(s), already shaped
   // to the PdevDoc render contract (server/routes/protocol-dev.routes.ts reads
@@ -186,7 +202,11 @@ export function ProtocolWorkspace({ onAsk, onNav }: SurfaceViewProps) {
   // confirmed register write so the read model refetches and the register
   // renders the server's row; nothing on this surface is appended locally.
   const [reloadKey, setReloadKey] = useState(0);
-  const { rows, loading, error, empty } = useLiveRows<PdevDoc>('/api/protocol-dev', ['/api/protocol-dev', reloadKey]);
+  const { rows, loading, error, empty, meta } = useLiveRows<PdevDoc>(
+    '/api/protocol-dev',
+    ['/api/protocol-dev', reloadKey],
+    isProtocolReadModel,
+  );
   const doc = rows[0];
   const anaContext = useMemo(() => anaContextFor({ loading, error, empty }, doc), [loading, error, empty, doc]);
   usePublishSurfaceContext('protocol-dev', anaContext);
@@ -206,7 +226,15 @@ export function ProtocolWorkspace({ onAsk, onNav }: SurfaceViewProps) {
       <div className="pd-wrap" style={{ padding: 16 }}>
         <EmptyState tone="error" icon={I.alertTriangle}
           title="Couldn't load the protocol"
-          hint="The protocol authoring store didn't respond. This is the organization's in-development clinical protocol — sign in and retry, or check that the service is reachable." />
+          hint="The protocol could not be read, so nothing is shown — this is not the same as the organization having no protocol. Sign in and retry, or check that the service is reachable." />
+      </div>);
+  }
+  if (!doc && isPendingStore({ meta })) {
+    return (
+      <div className="pd-wrap" style={{ padding: 16 }}>
+        <EmptyState icon={I.alertTriangle}
+          title="Protocol authoring isn't set up on this installation"
+          hint="The protocol store has not been provisioned here, so there is nothing to show and nothing can be started yet. This is not the same as the organization having no protocol." />
       </div>);
   }
   if (!doc) return <ProtocolEmptyState onAsk={onAsk} onStarted={() => setReloadKey((k) => k + 1)} />;

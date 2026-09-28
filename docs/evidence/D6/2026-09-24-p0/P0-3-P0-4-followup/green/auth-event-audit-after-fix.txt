@@ -1,0 +1,41 @@
+$ npx vitest run server/services/audit/__tests__/auth-event-audit.test.ts   # HEAD=5c978992, working tree: fix applied, uncommitted
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/audit/__tests__/auth-event-audit.test.ts > a write that is not persisted > does not fail the request that caused it
+{
+  "timestamp": "2026-09-25T01:49:01.708Z",
+  "level": "warn",
+  "message": "[auth] Audit log write failed (non-fatal)",
+  "context": {
+    "err": "refused",
+    "action": "user_login_mfa_challenge"
+  }
+}
+
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names the user organisation > is written in a scope for exactly that organisation, with no role (a number, from the user record) 4ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names the user organisation > is written in a scope for exactly that organisation, with no role (a string, from the signed MFA challenge) 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names the user organisation > leaves the request in the pre-auth scope it arrived in 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (absent) 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (null) 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (empty) 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (zero) 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (negative) 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (not an id) 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > a write that is not persisted > does not fail the request that caused it 3ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > never shows a refused sign-in the way it shows a successful one 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > states the outcome even for an event it has no sentence for 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > is written into the row the ledger reads 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_sso 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_validation_failed 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_org_not_resolved 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_no_email 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_user_not_in_organisation 0ms
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  01:49:01
+   Duration  463ms (transform 102ms, setup 87ms, import 49ms, tests 19ms, environment 0ms)
+
+exit=0
