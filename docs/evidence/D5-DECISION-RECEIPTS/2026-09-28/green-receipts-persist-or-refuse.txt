@@ -46,3 +46,21 @@
 -- the shape server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts
 -- already holds for controlled documents ("FAILS CLOSED -- a broken audit write
 -- rolls the document back").
+
+-- ── Proven end to end against the real database ─────────────────────────────
+-- The CMC staff simulation does not exercise the authoring-actions routes that
+-- create receipts (it stayed 118 passed / 0 failed, confirming no regression),
+-- so the path is driven directly:
+
+decision recorded:            dec_1790621647321_1_...
+receipt row in the table:     {"id":"rcpt_1790621647344_tdel7a",
+                               "organization_id":1,
+                               "confirmation_accepted":true,
+                               "execution_executed":true}
+transition persisted:         true
+durable action_state:         under_review
+
+-- decision_receipts held 0 rows before this change and could not have held
+-- more. The organization_id above is the acting tenant, bound as a parameter,
+-- not the column DEFAULT. The action_state is in decision_records, resolved by
+-- decision_code — the transition wrote nothing at all before.
