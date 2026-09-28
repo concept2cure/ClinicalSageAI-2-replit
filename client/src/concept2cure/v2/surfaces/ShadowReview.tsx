@@ -374,7 +374,7 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
                 POST /sequences/:seqId/shadow-review directly — the real endpoint
                 exists; wire in the actions pass, do not half-wire here. */}
             <button className="sr-run" onClick={() => ask('Re-run the ' + lens.label + ' shadow review on the connected sequence and update the RTF/CRL risk.')}>
-              {I.refresh || I.play} Re-run this reviewer
+              {I.rotateCw} Re-run this reviewer
             </button>
             <button className="sr-run alt" onClick={() => onNav('ectd-coauthor')}>
               Open the sequence in eCTD co-author

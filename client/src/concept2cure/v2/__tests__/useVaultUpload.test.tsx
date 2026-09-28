@@ -69,6 +69,34 @@ describe('useVaultUpload — filing-aware outcome copy', () => {
     expect(latest!.note!.text).toMatch(/could not place/i);
   });
 
+  it('a file the Vault already holds is reported as unchanged, never as auto-filed (VR-05)', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        success: true,
+        document: { documentTitle: 'Protocol' },
+        filing: { folderId: 'module-5', folderLabel: 'Module 5 · Clinical', placementStatus: 'suggested', needsReview: false },
+        reupload: {
+          unchanged: true,
+          changes: [],
+          differs: [{ field: 'document_type', recorded: 'OTHER', requested: 'PROTOCOL' }],
+        },
+      }),
+    }) as Response));
+    let latest: VaultUploadState | null = null;
+    render(<HookHost onState={(s) => { latest = s; }} />);
+
+    const outcome = await latest!.upload([new File(['x'], 'protocol.pdf')], { documentType: 'PROTOCOL' });
+
+    expect(outcome.filings).toEqual([]);
+    expect(outcome.alreadyRecorded).toEqual([{ name: 'protocol.pdf', title: 'Protocol', differs: true }]);
+    await waitFor(() => expect(latest!.note).toBeTruthy());
+    expect(latest!.note!.text).toMatch(/Already in the Vault, nothing changed: protocol\.pdf \(as "Protocol"\)/);
+    expect(latest!.note!.text).toMatch(/Edit details/);
+    expect(latest!.note!.text).not.toMatch(/Auto-filed|suggested until confirmed/i);
+  });
+
   it('a refusal is still a refusal — filing copy never masks a failed file', async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(ingestResponse({

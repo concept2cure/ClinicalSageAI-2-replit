@@ -1,0 +1,43 @@
+## M1: finalized is no longer treated as terminal
+   file: client/src/concept2cure/v2/surfaces/ProtocolDevPanes.tsx
+   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx
+   verdict: CAUGHT
+   × client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a finalized protocol offers no Finalize and does not read "Ready to finalize" 658ms
+   Test Files  1 failed (1)
+   Tests  1 failed | 3 passed (4)
+
+## M2: superseded is no longer treated as terminal
+   file: client/src/concept2cure/v2/surfaces/ProtocolDevPanes.tsx
+   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx
+   verdict: CAUGHT
+   × client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a superseded protocol offers no Finalize either, and says why 281ms
+   Test Files  1 failed (1)
+   Tests  1 failed | 3 passed (4)
+
+## M3: terminal state drops only the button: the gate (and its "Ready to finalize") stays
+   file: client/src/concept2cure/v2/surfaces/ProtocolDevPanes.tsx
+   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx
+   verdict: CAUGHT
+   × client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a finalized protocol offers no Finalize and does not read "Ready to finalize" 528ms
+   × client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a superseded protocol offers no Finalize either, and says why 281ms
+   Test Files  1 failed (1)
+   Tests  2 failed | 2 passed (4)
+
+## M4: the verifier's rejected shape: gate always shown, ready={ready && !terminal} (disabled button, "0 blockers")
+   file: client/src/concept2cure/v2/surfaces/ProtocolDevPanes.tsx
+   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx
+   verdict: CAUGHT
+   × client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a finalized protocol offers no Finalize and does not read "Ready to finalize" 635ms
+   × client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a superseded protocol offers no Finalize either, and says why 236ms
+   Test Files  1 failed (1)
+   Tests  2 failed | 2 passed (4)
+
+## M5: every status treated as terminal
+   file: client/src/concept2cure/v2/surfaces/ProtocolDevPanes.tsx
+   $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx
+   verdict: CAUGHT
+   × client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a protocol still in development keeps the gate and its action 480ms
+   × client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a protocol in development with a blocker keeps the gate, with the action disabled 459ms
+   Test Files  1 failed (1)
+   Tests  2 failed | 2 passed (4)
+

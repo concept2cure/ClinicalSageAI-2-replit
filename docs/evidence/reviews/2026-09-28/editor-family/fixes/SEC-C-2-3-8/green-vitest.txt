@@ -1,0 +1,568 @@
+$ npx vitest run <the 17 protocol suites below, and the new route test>   (after the fix)
+✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > counts visits and scheduled procedures from the SoA grid 14ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > reports the study-day span when every scheduled visit carries a study day 0ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > identifies the heaviest single visit and the median load 1ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > breaks the load down per visit, preserving column order and cell state 1ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > counts how many visits each assessment is scheduled at 0ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > reports the complexity indicators with their basis 4ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > emits no burden findings for a schedule with no outlier and no empty visit 0ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > refuses participant time when the activities carry no duration 1ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > refuses the invasive-procedure count and says it will not guess from names 1ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > lists every refused measure, with a reason, on the profile 1ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > publishes no composite index 0ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > refuses the study-day span when any scheduled visit has no study day 0ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > reports the absent profile for a design with no Schedule of Activities 0ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > honesty proof — removing one duration makes the total absent, not smaller > computes the participant total when every scheduled activity carries a duration 9ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > honesty proof — removing one duration makes the total absent, not smaller > goes absent — not to 30, not to 0 — when one activity loses its duration 1ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > honesty proof — removing one duration makes the total absent, not smaller > counts invasive procedures only when the activities carry invasiveness 0ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > findings — what a reviewer should see > flags a visit far heavier than the rest (BRD-010) 1ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > findings — what a reviewer should see > flags a visit with nothing scheduled (BRD-011) 2ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > findings — what a reviewer should see > asks about an assessment scheduled at every single visit (BRD-012) 1ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > findings — what a reviewer should see > emits findings in the repo DesignFinding shape 0ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > single-visit design > counts one visit and its load 0ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > single-visit design > reports a zero-day span, which is a real zero and says so 0ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > single-visit design > runs no outlier check with too few visits to have a distribution 0ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > reports the net change in visits, procedures and span 0ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > names the visit the amendment added and the assessment it dropped 0ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > reports which retained visits changed load 0ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > raises the amendment finding on an increase (BRD-030) 0ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > carries a delta as absent when either side could not compute the measure 0ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > is not comparable when a side has no Schedule of Activities 0ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > adapters — one engine reached from both SoA models > takes the study-design SoA 0ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > adapters — one engine reached from both SoA models > takes the protocol read model SoA matrix through the same engine 5ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > adapters — one engine reached from both SoA models > refuses the study-day and arm measures the protocol read model does not carry 0ms
+✓ server/services/study-design/__tests__/burden-model.test.ts > adapters — one engine reached from both SoA models > refuses the category count when the activities carry no category 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule pack — red-first > an objective with no endpoint is unmet under ICH M11 objectives/endpoints 2ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule pack — red-first > a null vulnerable-population flag is not-assessed, never met 1ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule pack — red-first > an IACUC protocol gets no 21 CFR 50.25 findings but an IRB one does 1ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > the reachability table names every rule exactly once 1ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-protocol-summary reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-objectives-endpoints reaches exactly its declared statuses 16ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-trial-design reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-population-eligibility reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-intervention-concomitant reaches exactly its declared statuses 1ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-discontinuation-withdrawal reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-assessment-schedule reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-statistical-considerations reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-m11-oversight-quality reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e9r1-estimand-treatment-condition reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e9r1-estimand-population reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e9r1-estimand-variable reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e9r1-estimand-intercurrent-events reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e9r1-estimand-population-level-summary reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e9-sample-size-justification reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e9-multiplicity reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e8r1-critical-to-quality-factors reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e8r1-risk-proportionate-approach reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e6r3-safety-reporting reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e6r3-monitoring-approach reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ich-e6r3-data-integrity reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-ind-objectives-purpose reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-ind-investigator-site-information reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-ind-selection-exclusion-criteria reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-ind-study-design-control reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-ind-dosing reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-ind-observations-measurements reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-ind-safety-monitoring-procedures reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-consent-basic-elements reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-consent-additional-elements reaches exactly its declared statuses 8ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-irb-risks-minimized reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-irb-risks-reasonable reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-irb-equitable-selection reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-irb-consent-sought-and-documented reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-irb-data-monitoring-for-safety reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fda-irb-privacy-confidentiality reaches exactly its declared statuses 9ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > hhs-subpart-b-pregnant-women reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > hhs-subpart-c-prisoners reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > hhs-subpart-d-children-risk-category reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > hhs-subpart-d-children-assent-permission reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > hhs-additional-safeguards-vulnerable reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > eu-ctr-protocol-content reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > eu-ctr-eligibility-criteria reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > eu-ctr-endpoints reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > fdora-3601-diversity-action-plan reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > iacuc-3rs-replacement reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > iacuc-3rs-reduction reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > iacuc-3rs-refinement reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > iacuc-pain-distress-category reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > iacuc-humane-endpoints reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > iacuc-euthanasia-avma reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ibc-risk-group-classification reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > ibc-containment-level reaches exactly its declared statuses 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule coverage — every rule exercised in every state it can reach > every rule reaches at least one non-met state — nothing is green by construction 1ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > honesty contract > a section marked complete with content is attention, never met, and says why 1ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > honesty contract > a section marked complete but holding no content is unmet, not attention 1ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > honesty contract > every null vulnerable-population flag is not-assessed and says absence is not a record 4ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > honesty contract > a recorded-false flag is reported as not applicable, not as a passed safeguard 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > honesty contract > every keyword scan declares itself, and a scan that finds nothing is never unmet 2ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > honesty contract > no finding fabricates a percentage and none falls through to the unreached fallback 117ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > honesty contract > counts add up and not-assessed is never counted as assessed 2ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > kind scoping > a clinical protocol gets no 3Rs findings but an IACUC one does 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > kind scoping > findings are exactly the rules in scope for the kind, in catalogue order 4ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > kind scoping > listProtocolRules returns every rule when no kind is given 1ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule catalogue > ids are unique kebab-case and every rule carries a standard, clause and rationale 4ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule catalogue > listProtocolRules hands back copies, so a caller cannot mutate the catalogue 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule catalogue > covers each standard the section templates claim as their basis 1ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > estimand, multiplicity and applicability gates > one primary endpoint is met for multiplicity, two is attention, none is not-assessed 1ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > estimand, multiplicity and applicability gates > the intercurrent-event strategy is met only when a named strategy is present 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > estimand, multiplicity and applicability gates > the population-level summary is always not-assessed because nothing records it 1ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > estimand, multiplicity and applicability gates > IND rules gate on isIndTrial: true evaluates, false is not applicable, null is not-assessed 1ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > estimand, multiplicity and applicability gates > EU CTR gates on a recorded EU/EEA region 1ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > estimand, multiplicity and applicability gates > FDORA applies to a US pivotal/phase 3 trial only 1ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > estimand, multiplicity and applicability gates > ICH M11 Section 7 is what put the discontinuation section in the template 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > determinism and totality > the same input twice gives byte-identical output 14ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > determinism and totality > section order does not change the output 0ms
+✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > determinism and totality > is total: malformed input is reported, never thrown on 8ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > substantiality — never says non-substantial > has no verdict value that asserts non-substantiality, even when nothing fired 22ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > substantiality — never says non-substantial > says in words that a clean comparison is not a determination 5ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > substantiality — never says non-substantial > reports undetermined, not clean, when something material could not be compared 1ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > substantiality — never says non-substantial > reports every indicator as not-assessed when there is no second version at all 1ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > design delta — absent on both sides is unknown, not unchanged > does not report two designs with no safety section as having the same safety design 5ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > design delta — absent on both sides is unknown, not unchanged > reports a genuinely identical recorded field as unchanged 1ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > design delta — absent on both sides is unknown, not unchanged > carries the not-assessed reason through to the indicator 1ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > substantiality — indicators > fires on a changed primary endpoint 1ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > substantiality — indicators > fires on changed eligibility 9ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > substantiality — indicators > refuses to read a dose increase out of free text, and says so 1ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > substantiality — indicators > fires on increased participant burden and names the scale 1ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > substantiality — indicators > treats an incomparable burden delta as not assessed, not as unchanged burden 0ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > substantiality — indicators > does not treat a burden decrease as a reason to skip the determination 0ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > substantiality — 21 CFR 312.30(b)(1)(i) sample size > reports the magnitude and explicitly declines to decide significance 3ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > substantiality — 21 CFR 312.30(b)(1)(i) sample size > does not report a decrease as the 312.30(b)(1)(i) example 1ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > substantiality — 21 CFR 312.30(b)(1)(i) sample size > is not assessed when either version omits the planned sample size 0ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > substantiality — reconciling the sponsor’s declaration > contradicts an administrative declaration when the design changed 1ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > substantiality — reconciling the sponsor’s declaration > contradicts a minor declaration by naming the expedited-review basis 1ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > substantiality — reconciling the sponsor’s declaration > contradicts "affects neither consent nor risk" when eligibility changed 5ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > substantiality — reconciling the sponsor’s declaration > raises no conflict when the declaration matches the evidence 0ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > substantiality — reconciling the sponsor’s declaration > raises no conflict when nothing fired, whatever was declared 0ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > substantiality — region scope > evaluates the EU indicators anyway when no region is recorded, and says why 0ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > substantiality — region scope > adds no scope note when regions are recorded 0ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > determinism > gives byte-identical output for the same input 1ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > determinism > diffs designs identically regardless of arm or endpoint ordering in the set comparison 0ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > determinism > names changed fields in a stable order 0ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > substantiality — the EU verdict counts only Article 2(2)(13) indicators > a Member-State change is an Article 14 / 37 procedure, not a substantial-modification ind
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > substantiality — the EU verdict counts only Article 2(2)(13) indicators > a US-only indication never makes the EU verdict "substantial" 1ms
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > substantiality — the EU verdict counts only Article 2(2)(13) indicators > a sample-size increase is not counted twice (EU statistical plan + US subject number are 
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > substantiality — the EU verdict counts only Article 2(2)(13) indicators > a dose change surfaces the unconditional 312.30(b)(1)(i) rule without guessing the direct
+✓ server/services/protocol-amendments/__tests__/substantiality.test.ts > substantiality — the EU verdict counts only Article 2(2)(13) indicators > no clean US result is presented as "no FDA amendment needed" 4ms
+✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — silence is not a value > reports an empty protocol register as unevidenced, never as an empty value to write 10ms
+✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — silence is not a value > cannot clear a design field even when the caller asks for the unevidenced path 1ms
+✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — silence is not a value > reports an unreadable phase with the value it could not read, and derives nothing 1ms
+✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — conflict is not resolution > reports a disagreement as a conflict carrying BOTH values, not as a proposal 1ms
+✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — conflict is not resolution > treats an unset design field as a proposal, because there is nothing to disagree with 0ms
+✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — conflict is not resolution > applies a conflict only when the human accepts that exact path 0ms
+✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — conflict is not resolution > reports an identical value as unchanged rather than proposing a no-op write 0ms
+✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — provenance per field > names the protocol rows behind every proposal, conflict and incomplete proposal 1ms
+✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — provenance per field > marks the visit timepoint parse as a text scan, not as a structured read 1ms
+✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — incomplete proposals > will not invent an endpoint measurement type the protocol never records 1ms
+✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — incomplete proposals > refuses to apply an incomplete proposal and says why 0ms
+✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — incomplete proposals > refuses objectives that would leave a dangling endpoint reference in the spine 0ms
+✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — incomplete proposals > proposes those same objectives once the design carries the endpoint 0ms
+✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — incomplete proposals > will not assign a trial epoch a visit register does not record 0ms
+✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — incomplete proposals > refuses an eligibility list it would have to drop rows from 0ms
+✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — what the protocol structurally cannot say > enumerates every unevidenced design path by name, each with a reason 1ms
+✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — what the protocol structurally cannot say > never derives a governed statistical number from the protocol 0ms
+✓ server/services/protocol-development/__tests__/design-derivation.test.ts > derivation — what the protocol structurally cannot say > does not read a structural design out of the protocol study type 0ms
+✓ server/services/protocol-development/__tests__/design-derivation.test.ts > applyDerivation > never mutates the design it was given 0ms
+✓ server/services/protocol-development/__tests__/design-derivation.test.ts > applyDerivation > rejects a path that is not a derivable design path 0ms
+✓ server/services/protocol-development/__tests__/design-derivation.test.ts > applyDerivation > applies each accepted path once, even when the caller repeats it 0ms
+✓ server/services/protocol-development/__tests__/design-derivation.test.ts > normalizers > maps only the phase spellings on the list 0ms
+✓ server/services/protocol-development/__tests__/design-derivation.test.ts > normalizers > maps only the three objective levels 0ms
+✓ server/services/protocol-development/__tests__/design-derivation.test.ts > normalizers > reads a timepoint only in the shapes it can read, and returns nothing otherwise 0ms
+✓ server/services/protocol-development/__tests__/design-derivation.test.ts > determinism > produces byte-identical output for the same input 0ms
+✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > maps a full real protocol into the PdevDoc contract 131ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > the creator and everyone who edited it through the ledger, and no one else 88ms
+✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > carries the assessment state: legacy and unassessed rows read as not assessed; reportability null when undetermined 10
+✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > returns [] for an org with no protocols, and never crosses tenants 27ms
+✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > excludes soft-deleted protocols 20ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > whoever built the schedule of assessments or the objectives is an author; a commenting reviewer is not 29ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > reads on the client it is given 6ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > comments, budget, version snapshots and other modules' records are not authorship of the protocol 14ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > a synopsis edit, which records no payload, counts 9ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > a document-level edit counts 16ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > a disposition is independent of the reviewed protocol's authors 25ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who authored a protocol > another tenant's protocol has no authors here, so it cannot be shown independent 17ms
+✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > carries the regulatory rule findings, with not-assessed counted separately 60ms
+✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > the one-document reader returns byte-identical rule findings to the page assembly 39ms
+✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > the one-document reader returns null for a protocol this organization does not have 35ms
+✓ server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts > assembleOrgPdevDocs > leaves the vulnerable-population rules not-assessed, because no register records them 48ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > finalization and a disposition bind the same content, re-derivably 39ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > finalization does not move it: version and workflow status are not content 27ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing an objective moves it 32ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing an eligibility criterion moves it 28ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing a visit moves it 45ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing the synopsis moves it 41ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > adding or changing the sponsor moves it 16ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > changing the content moves the digest 21ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > what a protocol signature binds > another tenant's protocol binds nothing of its content 3ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > the assigned reviewer, as review 12ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > not someone else, and nothing is recorded 22ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > a reviewer with no account can only have their decision recorded under responsibility 9ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > a signed disposition is final: a second signing is refused and the decision stands 10ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who may sign a disposition, and as what > another tenant's assignment is not found 4ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > someone independent of the authors finalizes it as approval: the version row 
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > a non-author cannot finalize as its author, and nothing is written 16ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > the author finalizes it as its author 28ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > whatever the act itself writes is not read as authorship of what is being sig
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > the ceremony checks authorship before the act writes anything > the author cannot approve their own protocol 35ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > a member who can sign 25ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > a named reviewer with no account 21ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > not a user of another organization: the review could never be signed 12ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > not a viewer, who cannot sign 22ms
+✓ server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts > who a review can be assigned to > the disposition reports the protocol version that was reviewed 7ms
+✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — refusals > refuses a protocol with no design bound, rather than deriving against a blank one 62ms
+✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — refusals > does not read another organization’s protocol 34ms
+✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — refusals > does not read a design belonging to another tenant 20ms
+✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — refusals > refuses a design row whose metadata carries no design object 14ms
+✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — refusals > requires at least one accepted path 11ms
+✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — reading the live registers > derives eligibility and objectives from the rows as stored 55ms
+✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — reading the live registers > reports a soft-deleted register row as absent 71ms
+✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — applying > writes an accepted path onto the PRM row and it survives a re-read 72ms
+✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — applying > writes the value the LIVE rows evidence, not one the caller could supply 39ms
+✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — applying > cannot clear a design field via a path the protocol does not evidence 36ms
+✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — applying > refuses an incomplete proposal and writes nothing for it 18ms
+✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — applying > updates the bound design in place rather than creating a second one 35ms
+✓ server/services/protocol-development/__tests__/design-derivation-service.pglite.integration.test.ts > derivation service — applying > does not apply to another tenant’s design 23ms
+✓ server/middleware/__tests__/signing-attempt-limiter.test.ts > signingAttemptLimiter > allows ten attempts, then refuses the eleventh with 429 160ms
+✓ server/middleware/__tests__/signing-attempt-limiter.test.ts > signingAttemptLimiter > counts per signer: another signer is not refused 45ms
+✓ server/middleware/__tests__/signing-attempt-limiter.test.ts > signingAttemptLimiter > one scope is one budget, even when two routers each build the limiter 25ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > reads the write routes from the routers themselves 10ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > a viewer adding a risk is refused, and nothing is filed or ledgered 54ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > the same request from a member is filed and ledgered 40ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-amendments/amendments 6ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-amendments/amendments/1/changes 7ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-amendments/amendments/1/status 6ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-budget/documents/1/items 7ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PUT /api/protocol-budget/documents/1/params 11ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-consent/forms 3ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-consent/elements/1 12ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-consent/forms/1/approve 3ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents 6ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-development/documents/1/synopsis 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-development/documents/1 7ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/study-design 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/study-design/remove 6ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/design-derivation/apply 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-development/sections/1 6ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/objectives 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/eligibility 6ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/visits 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-development/documents/1/visits/1 6ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/visits/1/remove 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/assessments/1/remove 6ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/team 4ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/versions 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/finalize 6ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-deviations/deviations 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-deviations/deviations/1/assessment 6ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-deviations/deviations/1/capa 7ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-deviations/capa/1/status 7ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-deviations/deviations/1/close 9ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-milestones/documents/1/milestones 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-milestones/milestones/1/status 6ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-reviews/documents/1/reviewers 10ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-reviews/documents/1/comments 5ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-reviews/comments/1/resolve 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-reviews/assignments/1/disposition 9ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-risks/documents/1/risks 9ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-risks/risks/1 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-soa/documents/1/assessments 13ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-soa/cells 3ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-soa/cells/clear 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-templates/templates 20ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-templates/templates/1/sections 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-templates/templates/1/clone 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-templates/documents/1/save-as-template 10ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-amendments/amendments 3ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-amendments/amendments/1/changes 3ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-amendments/amendments/1/status 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-budget/documents/1/items 3ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PUT /api/protocol-budget/documents/1/params 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-consent/forms 7ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-consent/elements/1 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-consent/forms/1/approve 3ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents 5ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-development/documents/1/synopsis 5ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-development/documents/1 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/study-design 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/study-design/remove 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/design-derivation/apply 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-development/sections/1 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/objectives 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/eligibility 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/visits 3ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-development/documents/1/visits/1 5ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/visits/1/remove 3ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/assessments/1/remove 3ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/team 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/versions 3ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/finalize 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-deviations/deviations 3ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-deviations/deviations/1/assessment 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-deviations/deviations/1/capa 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-deviations/capa/1/status 5ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-deviations/deviations/1/close 3ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-milestones/documents/1/milestones 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-milestones/milestones/1/status 3ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-reviews/documents/1/reviewers 4ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-reviews/documents/1/comments 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-reviews/comments/1/resolve 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-reviews/assignments/1/disposition 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-risks/documents/1/risks 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-risks/risks/1 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-soa/documents/1/assessments 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-soa/cells 8ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-soa/cells/clear 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-templates/templates 3ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-templates/templates/1/sections 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-templates/templates/1/clone 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-templates/documents/1/save-as-template 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-amendments/amendments 4ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-amendments/amendments/1 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-amendments/amendments/1/readiness 8ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-amendments/amendments/1/substantiality 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-budget/documents/1/summary 4ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-consent/forms 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-consent/forms/1 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-consent/forms/1/completeness 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-development/documents 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-development/documents/1 4ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-development/documents/1/completeness 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-development/documents/1/design-derivation 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-deviations/deviations 5ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-deviations/deviations/1 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-milestones/documents/1/milestones 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-milestones/documents/1/timeline 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-reviews/documents/1/summary 7ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-risks/documents/1/register 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-soa/documents/1/matrix 3ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-templates/templates 2ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-templates/templates/1 3ms
+✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller whose session carries no role 2ms
+✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses without re-authentication, and writes nothing 222ms
+✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses a wrong password the same way 15ms
+✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses an undeclared meaning before asking for credentials (21 CFR 11.50) 27ms
+✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses a meaning finalization cannot carry 4ms
+✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > a viewer cannot sign, and nothing is asked or written 24ms
+✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > an enrolled second factor that was not given is named as such 16ms
+✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > finalizes, checks independence, and writes the ledger AND the signature row in one trans
+✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > records the second factor only when one was verified 19ms
+✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > a non-author cannot sign as the author 24ms
+✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an approval is checked for independence on the signing client 18ms
+✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an author approving their own protocol is refused before the finalization runs 3ms
+✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an authorship lookup that fails is a 503 with an authored sentence; its internal cause i
+✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > if the signature row cannot be written, nothing is committed 32ms
+✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > refuses without re-authentication, and records no disposition 35ms
+✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > a viewer cannot sign a disposition 15ms
+✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > passes the signer and the declared meaning to the domain write, then signs 25ms
+✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > a review assigned to someone else is refused and rolled back 71ms
+✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > refuses authorship as a review meaning 3ms
+✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design > binds the design and records the governed action 98ms
+✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design > 404s for another organization's protocol and writes nothing 50ms
+✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design > 404s for a design that is not this tenant's 23ms
+✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design > refuses a reason shorter than the governed minimum 26ms
+✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design > refuses a request with no organisation context, and writes nothing 45ms
+✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design/remove > unbinds and records the governed action 26ms
+✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design/remove > 404s for another organization's protocol 18ms
+✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > protocol document ⇄ study design link > binds a design and records who linked it and when 127ms
+✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > protocol document ⇄ study design link > refuses another organization's protocol document (NOT_FOUND, nothing written) 88ms
+✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > protocol document ⇄ study design link > refuses a design that does not exist for this tenant 353ms
+✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > protocol document ⇄ study design link > unbinds, and refuses to unbind another organization's protocol 148ms
+✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > assembleOrgPdevDocs — the design gates on the protocol > returns null for an unbound protocol — nothing is implied to have passed
+✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > assembleOrgPdevDocs — the design gates on the protocol > returns the design identity and the DESIGN GATES' findings for a bound pro
+✓ server/services/protocol-development/__tests__/protocol-study-design-link.pglite.integration.test.ts > assembleOrgPdevDocs — the design gates on the protocol > does not read another tenant's design through the link 278ms
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > IRB review — always required; only the procedure varies > requires IRB review for a major amendment (46.108(a)(3)(iii); 56.108(a)(4); 312.66) 2ms
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > IRB review — always required; only the procedure varies > requires IRB review for a minor amendment (46.108(a)(3)(iii); 56.108(a)(4); 312.66) 1ms
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > IRB review — always required; only the procedure varies > requires IRB review for a administrative amendment (46.108(a)(3)(iii); 56.108(a)(4); 312.66) 0
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > IRB review — always required; only the procedure varies > requires IRB review for a null amendment (46.108(a)(3)(iii); 56.108(a)(4); 312.66) 0ms
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > IRB review — always required; only the procedure varies > never returns a path meaning "no IRB review" — administrative is expedited-eligible, not exe
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > IRB review — always required; only the procedure varies > a minor change is expedited-eligible, and the IRB decides whether it is minor (46.110(b)(1)(ii
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > IRB review — always required; only the procedure varies > a consent change alone does not force convened review (a consent change can be minor) 0ms
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > IRB review — always required; only the procedure varies > an increase in risk is not minor → convened (46.108(b); 56.108(c)), whatever the label 0ms
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > IRB review — always required; only the procedure varies > a major change goes to the convened IRB, noting the minimal-risk expedited exception it cannot
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > IRB review — always required; only the procedure varies > undeclared risk leaves the procedure undetermined — but review is still required 0ms
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > IRB review — always required; only the procedure varies > never cites 46.109(c) (documentation of consent) for amendment review 0ms
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > re-consent — the IRB decides; the engine never says "required" or "not required" > a declared consent or risk impact → IRB determination required, cit
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > re-consent — the IRB decides; the engine never says "required" or "not required" > both declared "no" is not a determination that subjects need not be t
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > re-consent — the IRB decides; the engine never says "required" or "not required" > the sponsor label does not change the re-consent status 0ms
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > re-consent — the IRB decides; the engine never says "required" or "not required" > an undeclared impact is undetermined, never "no" 0ms
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > re-consent — the IRB decides; the engine never says "required" or "not required" > has no required / not_required value at all 1ms
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > FDA protocol amendment — 21 CFR 312.30, IND studies only > IND status not recorded → undetermined, never "not required" 0ms
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > FDA protocol amendment — 21 CFR 312.30, IND studies only > a non-IND study → not applicable, while IRB review is still required 0ms
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > FDA protocol amendment — 21 CFR 312.30, IND studies only > a declared risk increase under an IND → required, labelled per 312.30(d) 0ms
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > FDA protocol amendment — 21 CFR 312.30, IND studies only > a major Phase 2/3 change → required; a major Phase 1 change → sponsor must record whether
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > FDA protocol amendment — 21 CFR 312.30, IND studies only > a minor (IRB-expedited) change still needs a sponsor determination — the listed 312.30(b)(1
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > FDA protocol amendment — 21 CFR 312.30, IND studies only > administrative → not required by 312.30(b)(1), with the label challenged if it touches a li
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > FDA protocol amendment — 21 CFR 312.30, IND studies only > a combined Phase 1/2 study is flagged, and the Phase 2/3 test applied as the conservative def
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > FDA protocol amendment — 21 CFR 312.30, IND studies only > never says an FDA amendment is approved or cleared — FDA can still impose a clinical hold 0
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > FDA protocol amendment — 21 CFR 312.30, IND studies only > labels conservative defaults as platform policy, not regulation 0ms
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > FDA protocol amendment — 21 CFR 312.30, IND studies only > phase not recorded → the Phase 2/3 test is applied as the conservative default, and says so
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > evaluateAmendmentReadiness > is ready when draft with at least one change 1ms
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > evaluateAmendmentReadiness > blocks a draft with no changes 0ms
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > evaluateAmendmentReadiness > blocks a non-draft amendment 0ms
+✓ server/services/protocol-amendments/__tests__/protocol-amendments-logic.test.ts > evaluateAmendmentReadiness > reports both blockers for a non-draft with no changes 0ms
+✓ server/services/protocol-amendments/__tests__/amendment-substantiality.pglite.integration.test.ts > the before-design is captured at open and does not move > snapshots the bound design when the amendment is created 222ms
+✓ server/services/protocol-amendments/__tests__/amendment-substantiality.pglite.integration.test.ts > the before-design is captured at open and does not move > detects a change made to the live design AFTER the amendment was opened 209ms
+✓ server/services/protocol-amendments/__tests__/amendment-substantiality.pglite.integration.test.ts > the before-design is captured at open and does not move > contradicts a sponsor who opened the same change as administrative 60ms
+✓ server/services/protocol-amendments/__tests__/amendment-substantiality.pglite.integration.test.ts > the before-design is captured at open and does not move > does not accuse a sponsor who declared nothing about consent or risk 158ms
+✓ server/services/protocol-amendments/__tests__/amendment-substantiality.pglite.integration.test.ts > the before-design is captured at open and does not move > still contradicts a sponsor who DID declare "affects neither" 88ms
+✓ server/services/protocol-amendments/__tests__/amendment-substantiality.pglite.integration.test.ts > the before-design is captured at open and does not move > fires no indicator when the design has not moved since the amendment opened 14
+✓ server/services/protocol-amendments/__tests__/amendment-substantiality.pglite.integration.test.ts > the before-design is captured at open and does not move > reaches a fully-compared clean result when the design carries a schedule too 4
+✓ server/services/protocol-amendments/__tests__/amendment-substantiality.pglite.integration.test.ts > no baseline is ever invented > reports not-assessed for an amendment opened against a protocol with no design bound 37ms
+✓ server/services/protocol-amendments/__tests__/amendment-substantiality.pglite.integration.test.ts > no baseline is ever invented > reports not-assessed for an amendment that predates the snapshot column 40ms
+✓ server/services/protocol-amendments/__tests__/amendment-substantiality.pglite.integration.test.ts > no baseline is ever invented > does not snapshot a design belonging to another tenant 51ms
+✓ server/services/protocol-amendments/__tests__/amendment-substantiality.pglite.integration.test.ts > no baseline is ever invented > does not read another organization’s amendment 46ms
+✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a finalized protocol’s schedule of assessments does not change (SEC-C-2) > a finalized protocol takes no new assessment, and no cell is s
+✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a finalized protocol’s schedule of assessments does not change (SEC-C-2) > a superseded protocol takes no new assessment, and no cell is 
+✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a finalized protocol’s schedule of assessments does not change (SEC-C-2) > a protocol still in development takes all three 49ms
+✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > another tenant cannot claim, block or overwrite a protocol
+✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a schedule assessment against another tenant’s protocol 
+✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a budget line against another tenant’s protocol is refus
+✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a risk against another tenant’s protocol is refused, and
+✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a milestone against another tenant’s protocol is refused
+✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review assignment against another tenant’s protocol is
+✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review comment against another tenant’s protocol is re
+✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a schedule assessment against a protocol that does not exi
+✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a budget line against a protocol that does not exist is re
+✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a risk against a protocol that does not exist is refused 2
+✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a milestone against a protocol that does not exist is refu
+✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review assignment against a protocol that does not exist
+✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review comment against a protocol that does not exist is
+✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a schedule assessment against the caller’s own protocol 
+✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a budget line against the caller’s own protocol is writt
+✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a risk against the caller’s own protocol is written 17ms
+✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a milestone against the caller’s own protocol is written
+✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review assignment against the caller’s own protocol is
+✓ server/services/protocol-development/__tests__/protocol-write-scope.pglite.integration.test.ts > a write names a protocol of the caller’s own organisation (SEC-C-3, SEC-C-8) > a review comment against the caller’s own protocol is wr
+✓ server/services/protocol-templates/__tests__/template-clone-lineage.pglite.integration.test.ts > cloning a template attributes the prose it seeds > records author lineage for every seeded section that carries text 92ms
+✓ server/services/protocol-templates/__tests__/template-clone-lineage.pglite.integration.test.ts > cloning a template attributes the prose it seeds > attributes nothing for a section the merge leaves empty 30ms
+✓ server/services/protocol-templates/__tests__/template-clone-lineage.pglite.integration.test.ts > cloning a template attributes the prose it seeds > carries attribution across the snapshot-and-reclone round trip 114ms
+✓ server/services/protocol-development/__tests__/protocol-lineage-gate.pglite.integration.test.ts > protocol prose lineage gate > updateSectionTx with content writes the content AND records author lineage 93ms
+✓ server/services/protocol-development/__tests__/protocol-lineage-gate.pglite.integration.test.ts > protocol prose lineage gate > updateSectionTx with sources records the verbatim clause against the source and the rest as the author (ledg
+✓ server/services/protocol-development/__tests__/protocol-lineage-gate.pglite.integration.test.ts > protocol prose lineage gate > updateSectionTx status-only edit records NO lineage (gate no-ops on absent content) 17ms
+✓ server/services/protocol-development/__tests__/protocol-lineage-gate.pglite.integration.test.ts > protocol prose lineage gate > updateSynopsisTx records author lineage for the document synopsis 43ms
+✓ server/services/protocol-consent/__tests__/protocol-consent-logic.test.ts > REQUIRED_CONSENT_ELEMENTS > includes the nine basic 45 CFR 46.116(b) elements as required 3ms
+✓ server/services/protocol-consent/__tests__/protocol-consent-logic.test.ts > REQUIRED_CONSENT_ELEMENTS > cites 45 CFR 46.116 on every element and includes additional (c) elements as optional 0ms
+✓ server/services/protocol-consent/__tests__/protocol-consent-logic.test.ts > REQUIRED_CONSENT_ELEMENTS > consentElementTemplates returns the canonical set 20ms
+✓ server/services/protocol-consent/__tests__/protocol-consent-logic.test.ts > evaluateConsentCompleteness > flags every required element on a freshly seeded form and is not ready 1ms
+✓ server/services/protocol-consent/__tests__/protocol-consent-logic.test.ts > evaluateConsentCompleteness > is ready to approve when all required elements are present with content 1ms
+✓ server/services/protocol-consent/__tests__/protocol-consent-logic.test.ts > evaluateConsentCompleteness > treats present-but-empty content as not satisfied 0ms
+✓ server/services/protocol-consent/__tests__/protocol-consent-logic.test.ts > evaluateConsentCompleteness > warns on optional elements marked present without content but stays ready 0ms
+✓ server/services/protocol-consent/__tests__/protocol-consent-logic.test.ts > evaluateConsentCompleteness > an empty element list is not a complete form and does not pass the gate 0ms
+✓ server/services/protocol-consent/__tests__/protocol-consent-logic.test.ts > evaluateConsentCompleteness > the empty case states why, so the refusal carries a sentence 3ms
+✓ server/services/protocol-consent/__tests__/protocol-consent-logic.test.ts > evaluateConsentCompleteness > a form whose required elements are all satisfied still passes the gate 0ms
+✓ server/services/protocol-consent/__tests__/protocol-consent-logic.test.ts > evaluateConsentCompleteness > rounds partial completion percent across required elements 0ms
+✓ server/services/protocol-development/__tests__/protocol-discontinuation-backfill.pglite.integration.test.ts > discontinuation backfill > inserts the section after Treatments and shifts what followed 10230ms
+✓ server/services/protocol-development/__tests__/protocol-discontinuation-backfill.pglite.integration.test.ts > discontinuation backfill > leaves a finalized protocol alone — an approved record is not rewritten to score better 20ms
+✓ server/services/protocol-development/__tests__/protocol-discontinuation-backfill.pglite.integration.test.ts > discontinuation backfill > touches neither another protocol kind nor a deleted document 19ms
+✓ server/services/protocol-development/__tests__/protocol-discontinuation-backfill.pglite.integration.test.ts > discontinuation backfill > is a no-op on replay, and does not disturb what an author wrote between deploys 49ms
+✓ server/services/protocol-development/__tests__/protocol-discontinuation-backfill.pglite.integration.test.ts > discontinuation backfill > stays a no-op across a third deploy 274ms
+✓ server/services/protocol-development/__tests__/protocol-discontinuation-backfill.pglite.integration.test.ts > discontinuation backfill > appends rather than guessing a position when the anchor section is absent 136ms
+✓ server/services/protocol-development/__tests__/protocol-discontinuation-backfill.pglite.integration.test.ts > discontinuation backfill > NOTICE-skips on a database that has no protocol tables at all 485ms
+✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > templateFor > provides cited templates per kind 29ms
+✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > templateFor > returns empty for an unknown kind 1ms
+✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > evaluateCompleteness > is ready when all required sections complete + objectives + eligibility + visits (clinical) 1ms
+✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > evaluateCompleteness > blocks finalize when a required section is incomplete 4ms
+✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > evaluateCompleteness > requires objectives and (clinical) a schedule of assessments 4ms
+✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > evaluateCompleteness > does not require eligibility/visits for IACUC 2ms
+✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > nextVersion > bumps minor by default and major on release 4ms
+✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > evaluateCompleteness — an unsectioned protocol is not a finished one > publishes no percentage and does not finalize 3ms
+✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > evaluateCompleteness — an unsectioned protocol is not a finished one > a fully complete protocol still finalizes 3ms
+✓ server/services/protocol-development/__tests__/protocol-study-design-migration.pglite.integration.test.ts > 20260922_protocol_document_study_design.sql > is registered in C2C_MIGRATION_FILES above the final pair 1ms
+✓ server/services/protocol-development/__tests__/protocol-study-design-migration.pglite.integration.test.ts > 20260922_protocol_document_study_design.sql > carries no DROP — RULE 1 forbids appending one to a replayed set 3ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > every registered tool has a class 2ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > every entry names a registered tool 1ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > is the whole surface, not a sample of it 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > every conditional entry has its rule, and every rule an entry 5ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > every refusal says where the person does it 1ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > only the command carrier defers to the command partition 1ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > cast_committee_vote is refuse 5ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > ack_training is refuse 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > approve_qms_document is refuse 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > retire_qms_document is refuse 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > revise_qms_document is confirm 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > transmit_submission is refuse 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > raise_monitoring_signal is confirm 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > predict_change_impact is confirm 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > catalog_project_document is confirm 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > check_consistency is confirm 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > assess_site_risk is confirm 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > set_protocol_budget_params is confirm 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > save_document_to_vault is confirm 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > seed_tmf is confirm 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > list_vault_documents is read 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > global_ri_exclusivity is read 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > set_specifications is read 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > answer_intelligence_question is self 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > a tool the register does not know is proposed, not run 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > qms_change_transition {"to":"under_assessment"} is confirm 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > qms_change_transition {"to":"approved"} is refuse 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > qms_change_transition {"to":" Closed "} is refuse 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > create_clinical_study {"title":"P1"} is confirm 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > create_clinical_study {"title":"P1","irb_approved":true} is refuse 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > update_tmf_artifact_status {"status":"received"} is confirm 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > update_tmf_artifact_status {"status":"final"} is refuse 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > set_registration_status {"market_status":"submitted"} is confirm 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > set_registration_status {"market_status":"approved"} is refuse 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > log_cs_transaction {"quantity":2} is confirm 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > log_cs_transaction {"quantity":2,"witnessed_by":"R. Ortiz"} is refuse 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > report_protocol_deviation {"severity":"major"} is confirm 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > report_protocol_deviation {"severity":"major","affects_safety":false} is refuse 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > review_schedule_of_events_health {"apply":false} is read 4ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > review_schedule_of_events_health {} is confirm 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > run_rbm_assessment {} is read 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > run_rbm_assessment {"seed":true} is confirm 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > commit_intelligence_flow {"dry_run":true} is read 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > commit_intelligence_flow {} is confirm 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > convert_docx_to_pdf {"input_docx_path":"tmp/docbuilder/a/x.docx"} is self 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > convert_docx_to_pdf {"input_docx_path":"tmp/docbuilder/a/x.docx","output_pdf_path":"uploads/7/x.pdf"} is confirm 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > convert_docx_to_pdf {"input_docx_path":"uploads/7/x.docx"} is confirm 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > generate_document {"output_format":"docx"} is self 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > generate_document {"output_format":"xml"} is confirm 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > place_project_document {"document_id":3} is confirm 0ms
+✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > place_project_document {"document_id":3,"confirm_suggested":true} is refuse 0ms
+✓ server/services/protocol-reviews/__tests__/protocol-reviews-logic.test.ts > summarizeReviewConsensus > is pending with no assignments 5ms
+✓ server/services/protocol-reviews/__tests__/protocol-reviews-logic.test.ts > summarizeReviewConsensus > is pending while any assignment is incomplete 0ms
+✓ server/services/protocol-reviews/__tests__/protocol-reviews-logic.test.ts > summarizeReviewConsensus > approves when all complete and all approve 0ms
+✓ server/services/protocol-reviews/__tests__/protocol-reviews-logic.test.ts > summarizeReviewConsensus > a single reject is dispositive 0ms
+✓ server/services/protocol-reviews/__tests__/protocol-reviews-logic.test.ts > summarizeReviewConsensus > approve_with_changes gates a clean approval when no reject 0ms
+✓ server/services/protocol-reviews/__tests__/protocol-reviews-logic.test.ts > summarizeReviewConsensus > all abstentions never decide 0ms
+✓ server/services/protocol-reviews/__tests__/protocol-reviews-logic.test.ts > summarizeReviewConsensus > cites the basis 0ms
+✓ server/services/protocol-reviews/__tests__/protocol-reviews-logic.test.ts > evaluateReviewReadiness > ready when all completed and no open blocking comments 1ms
+✓ server/services/protocol-reviews/__tests__/protocol-reviews-logic.test.ts > evaluateReviewReadiness > not ready with no reviewers 5ms
+✓ server/services/protocol-reviews/__tests__/protocol-reviews-logic.test.ts > evaluateReviewReadiness > not ready while assignments incomplete 0ms
+✓ server/services/protocol-reviews/__tests__/protocol-reviews-logic.test.ts > evaluateReviewReadiness > not ready with open blocking comments 0ms
+✓ server/services/protocol-soa/__tests__/protocol-soa-logic.test.ts > buildSoaMatrix > builds rows × ordered columns and counts marked cells 5ms
+✓ server/services/protocol-soa/__tests__/protocol-soa-logic.test.ts > validateSoa > passes a well-formed grid with eligibility coverage 3ms
+✓ server/services/protocol-soa/__tests__/protocol-soa-logic.test.ts > validateSoa > warns on empty visits and unscheduled assessments 1ms
+✓ server/services/protocol-soa/__tests__/protocol-soa-logic.test.ts > validateSoa > flags critical when there are no visits or assessments 0ms
+✓ server/services/protocol-soa/__tests__/protocol-soa-logic.test.ts > validateSoa > emits an info finding when no eligibility assessment is categorized 4ms
+✓ server/services/protocol-consent/__tests__/protocol-consent-lineage-gate.pglite.integration.test.ts > protocol-consent-service updateElementTx > records author lineage for the content it writes 47ms
+✓ server/services/protocol-consent/__tests__/protocol-consent-lineage-gate.pglite.integration.test.ts > protocol-consent-service updateElementTx > with sources, the verbatim clause lands on the source and the rest on the author (ledger L1
+✓ server/services/protocol-consent/__tests__/protocol-consent-lineage-gate.pglite.integration.test.ts > protocol-consent-service updateElementTx > a flag-only edit records no lineage (nothing authored) 9ms
+✓ server/routes/__tests__/protocol-dev.routes.test.ts > GET /api/protocol-dev > 403 without organization context 83ms
+✓ server/routes/__tests__/protocol-dev.routes.test.ts > GET /api/protocol-dev > returns the real-store protocols for the acting org, source = protocol_documents 24ms
+✓ server/routes/__tests__/protocol-dev.routes.test.ts > GET /api/protocol-dev > honest empty list when the org has no protocols — no fallback data 8ms
+✓ server/routes/__tests__/protocol-dev.routes.test.ts > GET /api/protocol-dev > fails closed to an empty list when the store is not provisioned (42P01) 17ms
+✓ server/routes/__tests__/protocol-dev.routes.test.ts > GET /api/protocol-dev > 500s on a non-42P01 assembler failure 3ms
+✓ server/services/protocol-budget/__tests__/protocol-budget-logic.test.ts > computeProtocolBudget > rolls per-subject direct cost by category and applies F&A 58ms
+✓ server/services/protocol-budget/__tests__/protocol-budget-logic.test.ts > computeProtocolBudget > flags under_funded when sponsor revenue < total cost 1ms
+✓ server/services/protocol-budget/__tests__/protocol-budget-logic.test.ts > computeProtocolBudget > is unknown when enrollment or sponsor payment is unset 3ms
+✓ server/services/protocol-budget/__tests__/protocol-budget-logic.test.ts > computeProtocolBudget > treats a missing F&A rate as 0% indirect 1ms
+✓ server/services/protocol-risks/__tests__/protocol-risks-logic.test.ts > riskScore + riskLevel > multiplies likelihood × impact ranks (1–25) 2ms
+✓ server/services/protocol-risks/__tests__/protocol-risks-logic.test.ts > riskScore + riskLevel > bands scores into low/medium/high/extreme 1ms
+✓ server/services/protocol-risks/__tests__/protocol-risks-logic.test.ts > scoreRisk > computes inherent and residual scores when residual targets set 1ms
+✓ server/services/protocol-risks/__tests__/protocol-risks-logic.test.ts > scoreRisk > leaves residual null when not set 1ms
+✓ server/services/protocol-risks/__tests__/protocol-risks-logic.test.ts > summarizeRiskRegister > counts by effective level and flags open high/extreme 1ms
+✓ server/routes/__tests__/protocol-soa-finalized.routes.test.ts > a signed protocol’s schedule of assessments refuses a change, and says why (SEC-C-2) > adding an assessment is a 409 naming the state, rolled back, with no ledger entry 4
+✓ server/routes/__tests__/protocol-soa-finalized.routes.test.ts > a signed protocol’s schedule of assessments refuses a change, and says why (SEC-C-2) > setting a cell is a 409 naming the state, rolled back, with no ledger entry 7ms
+✓ server/routes/__tests__/protocol-soa-finalized.routes.test.ts > a signed protocol’s schedule of assessments refuses a change, and says why (SEC-C-2) > clearing a cell is a 409 naming the state, rolled back, with no ledger entry 5ms
+✓ server/services/protocol-templates/__tests__/protocol-templates-logic.test.ts > mergeTemplateSections > keeps template sections and injects missing required catalog sections 2ms
+✓ server/services/protocol-templates/__tests__/protocol-templates-logic.test.ts > mergeTemplateSections > dedupes repeated section keys 1ms
+✓ server/services/protocol-templates/__tests__/protocol-templates-logic.test.ts > validateTemplate > flags missing required sections but stays valid with >=1 section 1ms
+✓ server/services/protocol-templates/__tests__/protocol-templates-logic.test.ts > validateTemplate > is invalid with no sections 0ms
+✓ server/services/protocol-milestones/__tests__/protocol-milestones-logic.test.ts > milestoneBucket > buckets by target date and terminal status 2ms
+✓ server/services/protocol-milestones/__tests__/protocol-milestones-logic.test.ts > summarizeTimeline > counts buckets, orders by date, and finds the next upcoming milestone 1ms
+✓ server/services/protocol-development/__tests__/protocol-study-design-migration.pglite.integration.test.ts > 20260922_protocol_document_study_design.sql > applies twice against the same database and the second run is a no-op 8301ms
+✓ server/services/protocol-development/__tests__/protocol-study-design-migration.pglite.integration.test.ts > 20260922_protocol_document_study_design.sql > skips with a notice when protocol_documents does not exist 3726ms
+Test Files  31 passed (31)
+Tests  565 passed (565)

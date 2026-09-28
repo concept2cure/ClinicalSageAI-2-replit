@@ -8,10 +8,13 @@ import crypto from 'crypto';
 // Lazy load docx to prevent startup failures
 import { verifyJwtWithRotation } from '../utils/jwtVerify';
 import { nonAccessTokenReason } from '../middleware/tokenType';
-import { enforceOrgMembership } from '../middleware/orgMembership';
+import { enforceOrgMembership, GOVERNED_WRITE_ROLES } from '../middleware/orgMembership';
+import { getTenantScope } from '../db/tenantStore';
+import { vaultWriteRefusal } from '../services/vault/vault-write-authority';
 import { getPool } from '../db';
+import { currentTenantOrgUuid, TenantKeyRequiredError } from '../db/currentTenant';
 import auditService, { writeChainedAuditRow } from '../services/auditService';
-import { isSigningAuthorized } from '../services/part11/signing-authority.js';
+import { isSigningAuthorized, signingAuthorityRoles } from '../services/part11/signing-authority.js';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role.js';
 import { reverifySigner, type SignerReverified } from '../services/part11/reverify-signer.js';
 import { signerReverificationDeps } from '../services/part11/reverify-signer-deps.js';
@@ -30,10 +33,17 @@ import {
 // (interactive save AND section create) applies the identical rule.
 // See server/services/clinical-regulatory-evidence/lineage-gate.ts.
 import { enforceAuthorLineage } from '../services/clinical-regulatory-evidence/lineage-gate';
+// Types only: the service itself is imported where it is called.
+import type {
+  CitationChange,
+  CitationImage,
+} from '../services/clinical-regulatory-evidence/source-usage.service';
 import {
   authoringPrincipalFromRequest,
   decideAuthoringPermission,
+  resolveAuthoringDocumentScope,
   resolveAuthoringSectionScope,
+  type AuthoringPermissionDecision,
 } from '../services/authoring/authoring-permissions';
 import { sectionStructureIssues } from '../../shared/regulatory/section-code';
 import { serverError } from '../lib/api-response';
@@ -58,6 +68,7 @@ import {
 // rows through the SAME code. The handlers here are the HTTP mapping they
 // always were.
 import { createDocument, createSection } from '../services/authoring/authoring-documents';
+import { requireGovernedReason, optionalGovernedReason } from './governed-reason';
 import {
   createDocumentFromDraft,
   parseDraftInput,
@@ -74,6 +85,9 @@ import {
   renderAuthoringExport,
   logExport,
   computeDocHash as computeDocHashOn,
+  sectionsDigest,
+  readSignaturesForExport,
+  anySignatureCovers,
   EXPORT_FORMATS,
 } from '../services/authoring/authoring-export';
 import {
@@ -745,6 +759,27 @@ const createAuditEvent = async (
     auditOpts
   );
 };
+
+/**
+ * Run `work` on one pooled client between BEGIN and COMMIT; ROLLBACK on any
+ * throw. A write and the audit row recording it are both issued on that
+ * client, so an audit write that fails takes the write with it. The caller
+ * answers the request only after this returns, i.e. after COMMIT.
+ */
+async function inTransaction<T>(work: (client: Queryable) => Promise<T>): Promise<T> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const out = await work(client);
+    await client.query('COMMIT');
+    return out;
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
+}
 
 // Helper function to ensure token table exists
 // authoring_tokens is now provisioned by db/migrations/20260730_authoring_runtime_ddl.sql.
@@ -1489,6 +1524,149 @@ router.post('/docs/from-draft', async (req: Request, res: Response) => {
   }
 });
 
+/* ── What the caller may do to this document, as the server will decide it ──
+   2026-09-28, coverage-gap sweep GE-P-3. Freeze, E-sign, Assign review and
+   File to vault were offered to every member who could open a document; a
+   member without the grant filled in the governed dialog (a freeze reason, a
+   password) and only then met the refusal. This reports, per act, the SAME
+   decision the write will meet, computed by the same code — never a second
+   permission model:
+
+     freeze        authoringObjectAuthorization classifies /freeze as
+                   'approve' → decideAuthoringPermission (OWNER or APPROVER
+                   grant, or a global admin role).
+     esign         the same 'approve' decision, then assertSigningAuthority's
+                   §11.10(g) check: resolveSignerOrgRole + isSigningAuthorized.
+     fileToVault   authoringObjectAuthorization classifies /file-to-vault as
+                   'export' (any status; OWNER, AUTHOR or APPROVER), then the
+                   vault ingest's vaultWriteRefusal() on the request's
+                   tenant-scope role.
+     assignReview  POST /api/tasks/tasks runs requireEditorAccess, whose role
+                   rule is membership of GOVERNED_WRITE_ROLES on the request's
+                   role — the same set, read the same way, here.
+
+   Each entry is `{ allowed, reason }`, or null when this read could not
+   determine it (a lookup failed, no tenant scope): the client treats null as
+   unknown and leaves the control to the server. The write routes still
+   enforce; this only tells the user before they start. */
+type DocumentActGate = { allowed: boolean; reason: string | null } | null;
+
+function titleCaseRoles(roles: readonly string[] | undefined): string {
+  const names = (roles ?? []).map(r => r.charAt(0) + r.slice(1).toLowerCase());
+  return names.length ? names.join(', ') : 'none';
+}
+
+function objectGate(
+  decision: AuthoringPermissionDecision,
+  act: string,
+  needs: string,
+): DocumentActGate {
+  if (decision.allowed) return { allowed: true, reason: null };
+  if (decision.reason === 'document-immutable') {
+    return {
+      allowed: false,
+      reason: `${act} is refused while the document's status is ${decision.scope?.documentStatus ?? 'unknown'}.`,
+    };
+  }
+  if (decision.reason === 'permission-denied') {
+    return {
+      allowed: false,
+      reason: `${act} needs ${needs} on this document. Your grants on it: ${titleCaseRoles(decision.matchedRoles)}.`,
+    };
+  }
+  return null; // principal-missing / object-not-found: not a decision about this user
+}
+
+/** A refusal is certain when either step refuses; otherwise unknown if either is unknown. */
+function bothGates(first: DocumentActGate, second: DocumentActGate): DocumentActGate {
+  if (first && !first.allowed) return first;
+  if (second && !second.allowed) return second;
+  if (!first || !second) return null;
+  return { allowed: true, reason: null };
+}
+
+async function settle<T>(what: string, docId: string, fn: () => Promise<T> | T): Promise<T | null> {
+  try {
+    return await fn();
+  } catch (error) {
+    logger.warn('Document access could not be determined; reported as unknown', {
+      what,
+      docId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
+}
+
+async function callerDocumentAccess(req: Request, tenantId: number, docId: string) {
+  const unknown = { freeze: null, esign: null, fileToVault: null, assignReview: null } as Record<
+    'freeze' | 'esign' | 'fileToVault' | 'assignReview',
+    DocumentActGate
+  >;
+  const principal = authoringPrincipalFromRequest(req);
+  if (!principal) return unknown;
+  const scope = await settle('scope', docId, () => resolveAuthoringDocumentScope(pool, tenantId, docId));
+  if (!scope) return unknown;
+
+  const approve = await settle('approve', docId, () =>
+    decideAuthoringPermission({ pool, principal, scope, action: 'approve' }),
+  );
+  const produce = await settle('export', docId, () =>
+    decideAuthoringPermission({ pool, principal, scope, action: 'export' }),
+  );
+  const approveGate = (act: string) =>
+    approve ? objectGate(approve, act, 'an Owner or Approver grant') : null;
+
+  /* resolveSignerOrgRole answers null for "no membership row" (the e-sign
+     route refuses that) and throws when the lookup fails (unknown here). */
+  const signing = await settle('signing-role', docId, async () => ({
+    role: await resolveSignerOrgRole(Number(getActorId(req)), tenantId),
+  }));
+  const signingGate: DocumentActGate = !signing
+    ? null
+    : isSigningAuthorized(signing.role)
+      ? { allowed: true, reason: null }
+      : {
+          allowed: false,
+          reason:
+            'Applying an electronic signature needs a signing role in this organization ' +
+            `(${signingAuthorityRoles().join(', ')}). Your role: ${signing.role ?? 'none recorded'}.`,
+        };
+
+  /* An org role ABSENT from this request is not evidence the write request
+     will lack one (it is attached upstream, by the global /api gate), so both
+     role checks below report unknown rather than a refusal in that case. */
+  const vaultGate = await settle('vault-role', docId, (): DocumentActGate => {
+    const role = String(getTenantScope()?.role ?? '').toLowerCase();
+    if (!role) return null;
+    if (!vaultWriteRefusal()) return { allowed: true, reason: null };
+    return {
+      allowed: false,
+      reason: `Filing into the vault needs an editing role in this organization. Your role: ${role}.`,
+    };
+  });
+
+  const assignGate = await settle('editor-access', docId, (): DocumentActGate => {
+    const role = String((req as Request & { userRole?: string }).userRole || req.user?.role || '').toLowerCase();
+    if (!role) return null;
+    if (GOVERNED_WRITE_ROLES.has(role)) return { allowed: true, reason: null };
+    return {
+      allowed: false,
+      reason: `Assigning a review needs an editing role in this organization. Your role: ${role}.`,
+    };
+  });
+
+  return {
+    freeze: approveGate('Freezing'),
+    esign: bothGates(approveGate('Signing'), signingGate),
+    fileToVault: bothGates(
+      produce ? objectGate(produce, 'Filing to the vault', 'an Owner, Author or Approver grant') : null,
+      vaultGate ?? null,
+    ),
+    assignReview: assignGate ?? null,
+  };
+}
+
 // GET /api/authoring/docs/:docId - Get document details
 router.get('/docs/:docId', async (req: Request, res: Response) => {
   try {
@@ -1525,9 +1703,12 @@ router.get('/docs/:docId', async (req: Request, res: Response) => {
        through the service so a deployment without the 20260921 column reports
        `provenanceStore` honestly instead of a null that reads as "a person". */
     const prov = await readDocumentProvenance(pool, String(docId), tenantId);
+    /* GE-P-3 (2026-09-28): what this caller may do here — see callerDocumentAccess. */
+    const access = await callerDocumentAccess(req, tenantId, String(docId));
     res.json({
       success: true,
       document: { ...docResult.rows[0], provenance: prov.provenance },
+      access,
       ...(prov.provenanceStore !== 'present' ? { provenanceStore: prov.provenanceStore } : {}),
     });
   } catch (error) {
@@ -1789,10 +1970,45 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
     let recordRevision = false;
 
     if (content !== undefined) {
+      /* AN IMAGE IN A SECTION IS AN UPLOADED FIGURE OR NOTHING (periodic review
+         2026-09-28, editor family, SEC-B-1, SEC-B-2). This save stored any
+         `<img src>` it was sent, so one editor could plant a request that every
+         later reader's browser made in the reader's own name (dot segments walk
+         `/api/authoring/images/` out to any API route), or an image on another
+         site that every reader's browser fetched. Refused with the images named,
+         before anything is written, and never rewritten: a governed record's
+         content changes only when its author changes it. */
+      const { refusedFigures, describeRefusedFigures } = await import(
+        '../services/authoring/authoring-html-sanitizer'
+      );
+      const refused = await refusedFigures(typeof content === 'string' ? content : String(content ?? ''));
+      if (refused.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'FIGURE_NOT_UPLOADED', message: describeRefusedFigures(refused) },
+          field: 'content',
+          refusedImages: refused.map(({ position, src }) => ({
+            position,
+            src: src.length > 200 ? `${src.slice(0, 200)}…` : src,
+          })),
+        });
+      }
       paramCount++;
+      // `$$` is the placeholder's `$` followed by the interpolation. fde9d704 lost
+      // it, so the SQL read `content = 1` with the bound value unused, Postgres
+      // refused the UPDATE, and every section content save answered 500.
       updates.push(`content = $${paramCount}`);
       values.push(content);
       recordRevision = true;
+    }
+
+    // §11.10(e): a content change carries its reason, checked here rather
+    // than trusted from the client, and refused before anything is written.
+    let changeReason: string | null = null;
+    if (recordRevision) {
+      const verdict = requireGovernedReason(req.body?.changeReason);
+      if (!verdict.ok) return res.status(400).json({ error: verdict.error, field: 'changeReason' });
+      changeReason = verdict.reason;
     }
 
     if (title !== undefined) {
@@ -1914,7 +2130,7 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
           'UPDATE',
           currentSection.rows[0].content ?? null,
           content ?? null,
-          typeof req.body?.changeReason === 'string' ? req.body.changeReason : null,
+          changeReason,
           { titleChanged: title !== undefined },
           client,
         );
@@ -2187,6 +2403,25 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
         reason: `Reverted to revision ${rev_id}`,
       });
 
+      /* 2026-09-28 (GE-P-1, coverage-gap sweep): the audit record for this
+         revert is written HERE, on the transaction client, so it commits with
+         the revert or not at all — as the save and freeze paths do. It ran
+         after COMMIT on the pool: a failed audit write left a committed,
+         unaudited revert, reported as a failure in production and as a
+         success, with no audit row, elsewhere. On the caller's client the
+         writer also records the hash-chained entry. */
+      await createAuditTrail(
+        req,
+        result.rows[0]?.doc_id,
+        sectionId,
+        'REVERT',
+        currentSection.rows[0]?.content ?? null,
+        revision.content ?? null,
+        `Reverted to revision ${rev_id}`,
+        { revisionId: rev_id, revisionCreatedAt: revision.created_at },
+        client,
+      );
+
       await client.query('COMMIT');
     } catch (txErr) {
       await client.query('ROLLBACK').catch(() => {});
@@ -2194,17 +2429,6 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
     } finally {
       client.release();
     }
-
-    await createAuditTrail(
-      req,
-      result.rows[0]?.doc_id,
-      sectionId,
-      'REVERT',
-      currentSection.rows[0]?.content ?? null,
-      revision.content ?? null,
-      `Reverted to revision ${rev_id}`,
-      { revisionId: rev_id, revisionCreatedAt: revision.created_at },
-    );
 
     res.json({
       success: true,
@@ -2255,50 +2479,75 @@ router.post('/sections/:sectionId/comment', async (req: Request, res: Response) 
       });
     }
 
-    // The section must belong to this tenant before anything is attached to
-    // it. The comment row itself always carried the caller's tenant_id (reads
-    // stayed scoped), but without this check a comment could be pinned to a
-    // foreign section UUID — and 201-vs-500 confirmed foreign ids.
-    const sectionOwned = await pool.query(
-      'SELECT id FROM authoring_sections WHERE id = $1 AND tenant_id = $2',
-      [sectionId, tenantId]
-    );
-    if (((sectionOwned.rowCount ?? 0) === 0)) {
-      return res.status(404).json({ success: false, error: 'Section not found' });
-    }
+    /* The comment belongs to the document its SECTION belongs to — the section
+       the guard authorised. doc_id and parent_comment_id came from the body
+       and were inserted as sent, so a grant on one document let a caller file
+       comments and audit rows under another, frozen ones included, and hold
+       up its freeze with a thread its own reviewers could not resolve
+       (periodic review 2026-09-28, editor family, SEC-A-2). A body doc_id
+       that disagrees is refused rather than overridden, so a client bug
+       surfaces; a parent must be a comment on this same section. The comment
+       and its audit row commit together. */
+    const outcome = await inTransaction(async (client) => {
+      // The section must belong to this tenant before anything is attached to
+      // it; without the check 201-vs-500 confirmed foreign section ids.
+      const section = await client.query(
+        'SELECT id, doc_id FROM authoring_sections WHERE id = $1 AND tenant_id = $2',
+        [sectionId, tenantId]
+      );
+      if ((section.rowCount ?? 0) === 0) return { status: 404, error: 'Section not found' };
+      const docId = String(section.rows[0].doc_id);
+      if (doc_id != null && String(doc_id).toLowerCase() !== docId.toLowerCase()) {
+        return { status: 400, error: 'doc_id is not the document this section belongs to. Nothing was saved.' };
+      }
+      if (parent_comment_id) {
+        const parent = await client.query(
+          'SELECT 1 FROM authoring_comments WHERE id::text = $1 AND section_id = $2 AND tenant_id = $3',
+          [String(parent_comment_id), sectionId, tenantId]
+        );
+        if ((parent.rowCount ?? 0) === 0) {
+          return { status: 400, error: 'The comment being replied to is not on this section. Nothing was saved.' };
+        }
+      }
 
-    const result = await pool.query(
-      `INSERT INTO authoring_comments
-       (id, section_id, doc_id, body, anchor, status, created_by, user_name, user_email,
-        parent_comment_id, position_data, created_at, tenant_id)
-       VALUES ($1, $2, $3, $4, $5, 'open', $6, $7, $8, $9, $10, NOW(), $11)
-       RETURNING *`,
-      [
-        commentId,
-        sectionId,
-        doc_id,
-        body,
-        anchor,
-        createdBy,
+      const inserted = await client.query(
+        `INSERT INTO authoring_comments
+         (id, section_id, doc_id, body, anchor, status, created_by, user_name, user_email,
+          parent_comment_id, position_data, created_at, tenant_id)
+         VALUES ($1, $2, $3, $4, $5, 'open', $6, $7, $8, $9, $10, NOW(), $11)
+         RETURNING *`,
+        [
+          commentId,
+          sectionId,
+          docId,
+          body,
+          anchor,
+          createdBy,
+          userName,
+          userEmail,
+          parent_comment_id || null,
+          position_data ?? null,
+          tenantId,
+        ]
+      );
+
+      await createAuditEvent(
+        docId,
+        parent_comment_id ? 'reply_added' : 'comment_added',
         userName,
-        userEmail,
-        parent_comment_id ?? null,
-        position_data ?? null,
+        { comment_id: commentId, section_id: sectionId, anchor },
         tenantId,
-      ]
-    );
+        client
+      );
+      return { status: 201, comment: inserted.rows[0] };
+    });
 
-    await createAuditEvent(
-      doc_id,
-      parent_comment_id ? 'reply_added' : 'comment_added',
-      userName,
-      { comment_id: commentId, section_id: sectionId, anchor },
-      tenantId
-    );
-
+    if (!('comment' in outcome)) {
+      return res.status(outcome.status).json({ success: false, error: outcome.error });
+    }
     res.status(201).json({
       success: true,
-      comment: result.rows[0],
+      comment: outcome.comment,
       message: 'Comment added successfully',
     });
   } catch (error) {
@@ -2432,10 +2681,60 @@ router.patch('/comments/:commentId', async (req: Request, res: Response) => {
 
 // ============= Citations & Data Tokens =============
 
+/* ── Every citation write is on the document's trail, in its transaction ────
+   A citation records what a section was drafted from, and its payload_sha256
+   the source's checksum at the moment it was cited: the value the Sources rail
+   compares against today. No citation write (cite, cite-source, the uncite
+   DELETE, refresh-token, refresh-all) wrote an audit row, and the DELETE and
+   the overwrites destroyed the cite-time value with no before-image anywhere
+   (periodic review 2026-09-28, editor family, P11-A-1 / SEC-A-8). Each now
+   writes its row on the same client as the change, carrying the citation as it
+   stood before and after, so the prior value survives and an audit write that
+   fails takes the change with it. The document is read from the section row,
+   never from the URL or the body: the section the guard authorised is the one
+   the trail names. */
+type CitationAuditOperation = 'CITATION_ADDED' | 'CITATION_UPDATED' | 'CITATION_REMOVED' | 'CITATION_REFRESHED';
+
+const citationJson = (image: CitationImage | null): string | null => (image ? JSON.stringify(image) : null);
+
+async function auditCitationWrite(
+  req: Request,
+  client: Queryable,
+  entry: { sectionId: string; operation: CitationAuditOperation; change: CitationChange; reason: string },
+): Promise<void> {
+  const section = await client.query(
+    'SELECT doc_id FROM authoring_sections WHERE id = $1 AND tenant_id = $2',
+    [entry.sectionId, getTenantId(req)]
+  );
+  const docId = section.rows[0]?.doc_id;
+  // Unreachable behind the section guard. Refused rather than written with no
+  // document, where no document's trail would ever show it.
+  if (docId == null) throw new Error('Citation audit: the section is not in this organization');
+  const { before, after } = entry.change;
+  const cited = (after ?? before) as CitationImage;
+  await createAuditTrail(
+    req,
+    String(docId),
+    entry.sectionId,
+    entry.operation,
+    citationJson(before),
+    citationJson(after),
+    entry.reason,
+    {
+      citation_id: cited.id,
+      source: cited.source,
+      reference_id: cited.reference_id,
+      previous_sha256: before ? before.payload_sha256 : null,
+      sha256: after ? after.payload_sha256 : null,
+    },
+    client
+  );
+}
+
 // POST /api/authoring/sections/:sectionId/cite - Add citation
 router.post('/sections/:sectionId/cite', async (req: Request, res: Response) => {
   try {
-    const { sectionId } = req.params;
+    const sectionId = String(req.params.sectionId);
     const { source, anchor, citation_text, reference_id } = req.body;
     const tenantId = getTenantId(req);
     const citationId = crypto.randomUUID();
@@ -2451,17 +2750,26 @@ router.post('/sections/:sectionId/cite', async (req: Request, res: Response) => 
       });
     }
 
-    const result = await pool.query(
-      `INSERT INTO authoring_citations
-       (id, section_id, source, anchor, citation_text, reference_id, created_by, created_at, tenant_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), $8)
-       RETURNING *`,
-      [citationId, sectionId, source, anchor, citation_text, reference_id, createdBy, tenantId]
-    );
+    const citation = await inTransaction(async (client) => {
+      const result = await client.query(
+        `INSERT INTO authoring_citations
+         (id, section_id, source, anchor, citation_text, reference_id, created_by, created_at, tenant_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), $8)
+         RETURNING *`,
+        [citationId, sectionId, source, anchor, citation_text, reference_id, createdBy, tenantId]
+      );
+      await auditCitationWrite(req, client, {
+        sectionId,
+        operation: 'CITATION_ADDED',
+        change: { before: null, after: result.rows[0] },
+        reason: 'Citation recorded',
+      });
+      return result.rows[0];
+    });
 
     res.status(201).json({
       success: true,
-      citation: result.rows[0],
+      citation,
       message: 'Citation added successfully',
     });
   } catch (error) {
@@ -2505,17 +2813,40 @@ router.post('/sections/:sectionId/cite-source', async (req: Request, res: Respon
     const { citeSource, SourceUsageError } = await import(
       '../services/clinical-regulatory-evidence/source-usage.service.js'
     );
+    const sectionId = String(req.params.sectionId);
     try {
-      const result = await citeSource(tenantId, {
-        sectionId: String(req.params.sectionId),
-        sourceId: req.body?.source_id,
-        citationText: req.body?.citation_text ?? null,
-        anchor: req.body?.anchor ?? null,
-        createdBy,
+      const result = await inTransaction(async (client) => {
+        const cited = await citeSource(
+          tenantId,
+          {
+            sectionId,
+            sourceId: req.body?.source_id,
+            citationText: req.body?.citation_text ?? null,
+            anchor: req.body?.anchor ?? null,
+            createdBy,
+          },
+          client
+        );
+        // A second cite of the same source writes nothing unless it brings new
+        // citation text; it never re-reads the checksum (see citeSource).
+        if (cited.change) {
+          await auditCitationWrite(req, client, {
+            sectionId,
+            operation: cited.created ? 'CITATION_ADDED' : 'CITATION_UPDATED',
+            change: cited.change,
+            reason: cited.created ? 'Source cited' : 'Citation text changed',
+          });
+        }
+        return cited;
       });
-      // 201 on a new citation, 200 on re-resolve — the caller can tell whether it
-      // added a source or refreshed one the section already had.
-      return res.status(result.created ? 201 : 200).json({ success: true, ...result });
+      // 201 on a new citation, 200 when the section already cited it — the
+      // caller can tell whether it added a source or found one already there.
+      return res.status(result.created ? 201 : 200).json({
+        success: true,
+        citationId: result.citationId,
+        citedChecksum: result.citedChecksum,
+        created: result.created,
+      });
     } catch (e) {
       if (e instanceof SourceUsageError) {
         return res.status(400).json({ success: false, error: e.message });
@@ -2535,12 +2866,22 @@ router.delete('/sections/:sectionId/cite-source/:sourceId', async (req: Request,
     const { removeSourceCitation } = await import(
       '../services/clinical-regulatory-evidence/source-usage.service.js'
     );
-    const removed = await removeSourceCitation(
-      tenantId,
-      String(req.params.sectionId),
-      String(req.params.sourceId),
-    );
-    if (!removed) {
+    const sectionId = String(req.params.sectionId);
+    const removed = await inTransaction(async (client) => {
+      const rows = await removeSourceCitation(tenantId, sectionId, String(req.params.sourceId), client);
+      // The deleted row is the before-image: the only record left of what the
+      // section cited, and against which checksum.
+      for (const row of rows) {
+        await auditCitationWrite(req, client, {
+          sectionId,
+          operation: 'CITATION_REMOVED',
+          change: { before: row, after: null },
+          reason: 'Citation removed',
+        });
+      }
+      return rows.length;
+    });
+    if (removed === 0) {
       return res.status(404).json({
         success: false,
         error: 'No removable citation of that source on this section (a frozen citation is immutable)',
@@ -2708,6 +3049,16 @@ router.post('/documents/:id/review', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { review_status, review_comments } = req.body;
+    if (!['approved', 'rejected', 'changes_requested'].includes(review_status)) {
+      return res.status(400).json({ success: false, error: 'review_status must be approved, rejected or changes_requested' });
+    }
+    // §11.10(e): a change request or a rejection carries the reason the author
+    // acts on; an approval may carry one. Checked here, not only in Review.tsx.
+    const commentsVerdict = review_status === 'approved'
+      ? optionalGovernedReason(review_comments)
+      : requireGovernedReason(review_comments);
+    if (!commentsVerdict.ok) return res.status(400).json({ success: false, error: commentsVerdict.error, field: 'review_comments' });
+    const reviewComments = commentsVerdict.reason;
     const tenantId = getTenantId(req);
     // SECURITY (21 CFR Part 11): reviewer identity must come from the verified
     // JWT, never from headers / req.body — a review sign-off cannot be
@@ -2734,7 +3085,7 @@ router.post('/documents/:id/review', async (req: Request, res: Response) => {
          SET review_status = $1, review_comments = $2, reviewed_at = NOW(), updated_at = NOW()
          WHERE id = $3 AND tenant_id = $4
          RETURNING *`,
-        [review_status, review_comments, existingReview.rows[0].id, tenantId]
+        [review_status, reviewComments, existingReview.rows[0].id, tenantId]
       );
     } else {
       // Create new review
@@ -2751,7 +3102,7 @@ router.post('/documents/:id/review', async (req: Request, res: Response) => {
           reviewerName,
           reviewerEmail,
           review_status,
-          review_comments,
+          reviewComments,
           tenantId,
         ]
       );
@@ -2871,7 +3222,18 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       const searchQuery = `${section.module} ${section.code} ${section.title} ${
         section.product_code || ''
       }`.trim();
-      const searchResults = await embeddingService.searchHybrid(searchQuery, 5, 0.65);
+      // The session's tenant key. This search used to pass none, so it ranked
+      // every tenant's Data Room atoms wherever RLS was not filtering — a CTD
+      // section draft could cite another sponsor's evidence. No key is a failed
+      // retrieval, reported as one below, never an unscoped search.
+      const orgUuid = await currentTenantOrgUuid(pool);
+      if (!orgUuid) throw new TenantKeyRequiredError('no tenant key for this session');
+      // 0.65 is a floor on semantic similarity; it used to go in as the ranking weight.
+      const searchResults = await embeddingService.searchHybrid(searchQuery, {
+        limit: 5,
+        organizationUuid: orgUuid,
+        minSemanticScore: 0.65,
+      });
       if (searchResults.length > 0) {
         sourcesRetrieved = searchResults.length;
         for (const r of searchResults as any[]) {
@@ -3671,6 +4033,11 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
   try {
     const { docId } = req.params;
     const { reason, version } = req.body;
+    // §11.10(e): the reason is validated here and recorded as given — never
+    // replaced by a placeholder in the ledger.
+    const reasonVerdict = requireGovernedReason(reason);
+    if (!reasonVerdict.ok) return res.status(400).json({ error: reasonVerdict.error, field: 'reason' });
+    const freezeReason = reasonVerdict.reason;
     // Freeze attribution from the verified JWT; the old x-user-email ||
     // 'system' fallback let an unauthenticated caller freeze as "system".
     const email = getActorEmail(req) || null;
@@ -3809,7 +4176,7 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
          (document_id, version, frozen_content, content_hash, frozen_by, frozen_reason, tenant_id)
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [docId, versionNumber, frozenContent, contentHash, email,
-         `${reason ?? ''}${acknowledgedNote}`.trim() || null, tenantId]
+         `${freezeReason}${acknowledgedNote}`, tenantId]
       );
 
       // Update document status
@@ -3826,7 +4193,7 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
         'FREEZE',
         null,
         frozenContent,
-        `${reason || 'Document frozen for compliance'}${acknowledgedNote}`,
+        `${freezeReason}${acknowledgedNote}`,
         { contentHash, version: versionNumber, openCommentCount, pendingEdits, acknowledged },
         client,
         // This handler writes its own richer chained row below.
@@ -4056,7 +4423,10 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
         resourceId: String(docId ?? ''),
         ipAddress: (req.ip ?? undefined) as string | undefined,
         userAgent: req.headers['user-agent'] as string | undefined,
-        details: { meaning, intent, documentHash: docHash, signer: email },
+        // signatureId: §11.70's link from this audit row to the signature it
+        // records — what the audit-trail ledger joins on to show the row as
+        // signed, with the signer's meaning (#24).
+        details: { meaning, intent, documentHash: docHash, signer: email, signatureId },
       });
 
       await client.query('COMMIT');
@@ -4261,12 +4631,16 @@ router.get('/sections/:sectionId/tokens', async (req: Request, res: Response) =>
 // POST /api/authoring/sections/:sectionId/refresh-token - Refresh a specific token
 router.post('/sections/:sectionId/refresh-token', async (req: Request, res: Response) => {
   try {
-    /* :sectionId is addressing only. A citation is identified by cite_id within
-       the caller's tenant, and refreshSourceCitation scopes on the tenant — the
-       section in the path is not a second scope and was never read as one, so
-       it is not bound here rather than bound and ignored. */
+    /* The citation re-read is the one the PATH section owns. The section guard
+       and the gateway both authorise :sectionId, so :sectionId is what binds
+       the write. This route used to treat it as addressing only and look
+       cite_id up by tenant, which let an editor of one section re-baseline a
+       citation on any document, frozen or signed ones included, with no audit
+       row (periodic review 2026-09-28, editor family, SEC-A-1). A cite_id from
+       another section is "not found", and nothing is written. */
     const { cite_id } = req.body;
     const tenantId = getTenantId(req);
+    const sectionId = String(req.params.sectionId);
 
     if (!cite_id) {
       return res.status(400).json({
@@ -4287,13 +4661,24 @@ router.post('/sections/:sectionId/refresh-token', async (req: Request, res: Resp
     const { refreshSourceCitation } = await import(
       '../services/clinical-regulatory-evidence/source-usage.service.js'
     );
-    const outcome = await refreshSourceCitation(tenantId, String(cite_id));
+    const outcome = await inTransaction(async (client) => {
+      const refreshed = await refreshSourceCitation(tenantId, { sectionId, citationId: String(cite_id) }, client);
+      if (refreshed.ok && refreshed.change) {
+        await auditCitationWrite(req, client, {
+          sectionId,
+          operation: 'CITATION_REFRESHED',
+          change: refreshed.change,
+          reason: 'Source re-read: its checksum changed since the citation was recorded',
+        });
+      }
+      return refreshed;
+    });
 
     if (!outcome.ok) {
       const status = outcome.reason === 'not_found' ? 404 : 409;
       const message =
         outcome.reason === 'not_found'
-          ? 'Citation not found'
+          ? 'Citation not found on this section. Nothing was changed.'
           : outcome.reason === 'frozen'
             ? 'This citation is frozen and cannot be re-resolved'
             : outcome.reason === 'not_a_source_citation'
@@ -4585,38 +4970,65 @@ router.get('/docs/:docId/diff-since-export', async (req: Request, res: Response)
 //   3. It re-entered the API over HTTP against its own host with no Authorization
 //      header, so each inner call would have failed the JWT gate anyway.
 // Now: one tenant-scoped read, and a direct service call per citation.
+//
+// The whole batch is one transaction with an audit row per citation whose
+// checksum moved (P11-A-1), so a failure part-way re-reads nothing — which is
+// what the workbench tells the author ("Nothing was changed"). A sealed
+// document is refused here as well as at the gateway, as the section routes
+// refuse it in the router's own guard.
 router.post('/docs/:docId/refresh-all', async (req: Request, res: Response) => {
   try {
     const tenantId = getTenantId(req);
+    const docId = String(req.params.docId);
     const { refreshSourceCitation } = await import(
       '../services/clinical-regulatory-evidence/source-usage.service.js'
     );
 
-    const cites = await pool.query<{ cite_id: string }>(
-      `SELECT c.id AS cite_id
-         FROM authoring_citations c
-         JOIN authoring_sections s ON s.id = c.section_id AND s.tenant_id = c.tenant_id
-        WHERE s.doc_id = $1 AND c.tenant_id = $2 AND c.frozen_at IS NULL
-        ORDER BY c.created_at ASC`,
-      [req.params.docId, tenantId]
-    );
+    const result = await inTransaction(async (client) => {
+      const lock = await checkDocumentWritable(client, docId, tenantId);
+      if (!lock.writable) return { done: false as const, lock };
 
-    let refreshed = 0;
-    let changed = 0;
-    const skipped: Array<{ cite_id: string; reason: string }> = [];
-    for (const cite of cites.rows) {
-      const outcome = await refreshSourceCitation(tenantId, cite.cite_id);
-      if (outcome.ok) {
+      const cites = await client.query(
+        `SELECT c.id AS cite_id, c.section_id
+           FROM authoring_citations c
+           JOIN authoring_sections s ON s.id = c.section_id AND s.tenant_id = c.tenant_id
+          WHERE s.doc_id = $1 AND c.tenant_id = $2 AND c.frozen_at IS NULL
+          ORDER BY c.created_at ASC`,
+        [docId, tenantId]
+      );
+
+      let refreshed = 0;
+      let changed = 0;
+      const skipped: Array<{ cite_id: string; reason: string }> = [];
+      for (const cite of cites.rows as Array<{ cite_id: string; section_id: string }>) {
+        const sectionId = String(cite.section_id);
+        const outcome = await refreshSourceCitation(tenantId, { sectionId, citationId: String(cite.cite_id) }, client);
+        if (!outcome.ok) {
+          // Reported, not silently counted as refreshed. A citation with no source
+          // behind it is exactly what the caller needs to see.
+          skipped.push({ cite_id: cite.cite_id, reason: outcome.reason });
+          continue;
+        }
         refreshed++;
-        if (outcome.changed) changed++;
-      } else {
-        // Reported, not silently counted as refreshed. A citation with no source
-        // behind it is exactly what the caller needs to see.
-        skipped.push({ cite_id: cite.cite_id, reason: outcome.reason });
+        if (outcome.change) {
+          changed++;
+          await auditCitationWrite(req, client, {
+            sectionId,
+            operation: 'CITATION_REFRESHED',
+            change: outcome.change,
+            reason: 'Source re-read: its checksum changed since the citation was recorded',
+          });
+        }
       }
-    }
+      return { done: true as const, refreshed, changed, skipped };
+    });
 
-    res.json({ ok: true, refreshed, changed, skipped });
+    if (!result.done) {
+      return res
+        .status(result.lock.code === 'DOCUMENT_FROZEN' ? 403 : 404)
+        .json({ error: result.lock.code, message: result.lock.reason });
+    }
+    res.json({ ok: true, refreshed: result.refreshed, changed: result.changed, skipped: result.skipped });
   } catch (error) {
     console.error('POST /docs/:id/refresh-all', error);
     res.status(500).json({ error: 'Refresh-all failed' });
@@ -5008,10 +5420,43 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
     );
 
     const exportId = crypto.randomUUID();
-    const fileHash = await computeDocHash(docId, tenantId);
+    /* The digest of the rows about to be rendered — one read, so the hash on
+       the export record, the manifest's verdicts and the refusal below all
+       describe the same content. Same function the signing routes store as
+       content_hash (sectionsDigest via computeDocHash). */
+    const fileHash = sectionsDigest(sectionsResult.rows);
 
     // The export record is written by logExport() AFTER the file is generated,
     // so file_name and file_size are the real ones (ledger C-14).
+
+    /* §11.70 — a sealed record's signatures have to cover it.
+
+       Narrow on purpose. A signature that does not match is usually NOT a
+       fault: an AUTHOR signature does not lock the document, so the ordinary
+       flow (author signs, editing continues, approver signs the final text)
+       leaves the author's signature legitimately covering earlier content, and
+       the manifest says so per signature. What cannot be right is a document
+       this route has already required to be sealed (above) carrying signatures
+       of which NOT ONE covers the content being filed: the content moved after
+       it was sealed, and the manifest would attest to a record nobody signed.
+
+       Checked BEFORE the EXPORT audit event, so a refusal leaves no record of
+       an export that never happened. */
+    const exportSignatures = await readSignaturesForExport(pool, String(docId), tenantId);
+    if (exportSignatures.length > 0 && !anySignatureCovers(exportSignatures, fileHash)) {
+      return res.status(409).json({
+        error: 'Signatures do not cover this document',
+        code: 'SIGNATURE_CONTENT_MISMATCH',
+        message:
+          'Every signature on this document was applied to different content than the ' +
+          'sections it now contains, so none of them covers what would be exported. ' +
+          'Exporting would produce a filing whose signature manifestation attests to a ' +
+          'record it does not contain (21 CFR 11.70). Re-sign the document as it now ' +
+          'stands, or restore the content that was signed.',
+        exportedContentHash: fileHash,
+        signatureCount: exportSignatures.length,
+      });
+    }
 
     // Create audit event
     await createAuditEvent(
@@ -5032,6 +5477,7 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
       doc,
       sections: sectionsResult.rows,
       format,
+      signatures: exportSignatures,
     });
 
     /* §11.10(b): the record carries a hash of the SOURCE section rows

@@ -1,0 +1,6 @@
+run 1: 560:      [NOTICE] [users-membership-rls] tenant scopes reach their own members; pre-auth and system scopes the whole table
+run 1: 561:  ✓ applied: migrations/20260928_users_membership_rls.sql
+run 1: 596:✅ Schema migration complete — safe to roll services.
+run 2: 564:      [NOTICE] [users-membership-rls] tenant scopes reach their own members; pre-auth and system scopes the whole table
+run 2: 565:  ✓ applied: migrations/20260928_users_membership_rls.sql
+run 2: 600:✅ Schema migration complete — safe to roll services.

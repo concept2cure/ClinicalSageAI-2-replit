@@ -16,7 +16,7 @@ integrity as a design property, not a feature.
 | A named security owner accountable for this policy set | **Partial** — the founder holds every role; no independent security officer | This file; `WO-07-dependency-risk-decision.md` §Ownership names the same gap |
 | Repository rules that every contributor and AI session must follow | **Implemented** | `CLAUDE.md` (Rules 0–2), `AGENTS.md` |
 | Risk assessment maintained and reviewed | **Partial** — point-in-time audits exist (`SECURITY_SWARM_AUDIT_2026-06-17.md`, `VAULT_DATA_ROOM_ASSESSMENT_2026-09-05.md`); no recurring risk register | `docs/audit-2026-07/12-findings-register.md` |
-| Security awareness training | **Planned** — single-operator company; formal training record starts with the first hire | — |
+| Security awareness training | **Partial** — the record and curriculum are opened at `docs/security/TRAINING_RECORD.md`; no completion is recorded yet; a completion is a condition of production or platform-operator access (POLICY-AC-002 §4a) | `docs/security/TRAINING_RECORD.md` |
 
 ## 3. Principles enforced in code
 | Principle | Status | Evidence |
@@ -50,3 +50,4 @@ reason and an expiry. An exception without an expiry is not an exception.
 | Version | Date | Author | Change |
 |---|---|---|---|
 | 0.1 DRAFT | 2026-09-20 | W3b session | First draft, grounded in the code paths cited |
+| 0.2 DRAFT | 2026-09-26 | D6 session | Training record and curriculum opened (`docs/security/TRAINING_RECORD.md`); completion made a condition of operator access (security audit 2026-09-24, INF-07 / plan P1-13). |

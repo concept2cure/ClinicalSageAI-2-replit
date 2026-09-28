@@ -1,0 +1,21 @@
+# QMS approval without a signature (new-code audit 2026-09-24 #1) — RED at 1de2678e5, tests added, source unchanged
+# 2026-09-24T01:16:39Z
+ × server/routes/__tests__/qms-effective-only-by-signature.test.ts > POST /api/qms/documents/:id/transition cannot approve > refuses to=effective and changes nothing 34ms
+   → expected 200 to be 422 // Object.is equality
+ × server/routes/__tests__/qms-effective-only-by-signature.test.ts > POST /api/mdx/qms/documents cannot create an effective document > refuses status=effective before any write 6ms
+   → expected 201 to be 422 // Object.is equality
+ × server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a signed document > refuses status=effective before any write 5ms
+   → expected 200 to be 422 // Object.is equality
+ × server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a signed document > refuses to edit an effective document: that is a revision 4ms
+   → expected 200 to be 409 // Object.is equality
+ × server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > approve_qms_document writes nothing and hands the act to the person 5ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+ × server/services/ana/__tests__/ana-cannot-sign.test.ts > AnA refuses every act that is an electronic signature > approve_qms_document is described as a hand-off, not an act 2ms
+   → expected 'Approve a draft / in-review QMS docum…' to match /AnA cannot sign/
+ × server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > approve_qms_document — AnA cannot make a document effective > writes nothing and hands the approval to the person 21ms
+   → expected true to be false // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  7 failed | 35 passed (42)
+
+# Client: SopRegisterApproval.test.tsx with SopRegister.tsx at HEAD (git stash) — 5 failed (5); with the change — 5 passed (5)

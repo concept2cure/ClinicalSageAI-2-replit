@@ -25,7 +25,7 @@ import { loadLatestPriorManifestBySubmission, loadRehearsalPriorManifestBySubmis
 import { computeLifecycleOperations, type DesiredLeaf, type PriorLeaf } from './lifecycle-operator';
 import { computeSequencePrefix } from './sequence-manifest';
 import { leafFileCarriesKey, leafSourceKey } from './leaf-source-resolver';
-import auditService from '../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 
 export interface PackageFromCoreParams {
   sequenceId: number;
@@ -64,6 +64,9 @@ export interface PackageFromCoreResult {
   /** Under a rehearsal, the earlier sequences bound against that were never
    *  filed; always empty for 'filed'. */
   unfiledPriorSequences: string[];
+  /** Whether this package's §11.10(e) ECTD_PACKAGED_FROM_CORE row was written.
+   *  The package stands either way; the caller is told which. */
+  auditTrail: AuditRowOutcome;
 }
 
 /** The author-declared lifecycle acts: each one acts ON a leaf already filed. */
@@ -390,7 +393,8 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
 
   const bundle = await packageEctdSubmission(input);
 
-  await auditService.logAction({
+  // WO-16C: was `await auditService.logAction(…)` with its outcome discarded.
+  const auditTrail = await recordAuditRow({
     organizationId,
     userId,
     action: 'ECTD_PACKAGED_FROM_CORE',
@@ -406,7 +410,7 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
     },
   });
 
-  return { bundle, skipped, priorSequence, priorState, unfiledPriorSequences };
+  return { bundle, skipped, priorSequence, priorState, unfiledPriorSequences, auditTrail };
 }
 
 export default { packageSequenceFromCore };

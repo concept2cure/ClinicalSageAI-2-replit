@@ -1202,7 +1202,7 @@ where it lives in routing. Evidence is under
 
 | Id | What | Shown failing first | State |
 |---|---|---|---|
-| **F-24** (§11.10(e), §11.300) | **Behind the load balancer every user shared one sign-in allowance, and the audit trail recorded the proxy.** Express trusted no proxy, so `req.ip` was the load balancer's: the per-address sign-in and code limits (10 in 15 minutes) were one allowance for a whole deployment, and every audit row recorded the load balancer. | Unit 1 fail / 13 pass; live, the eleventh different client refused 429 | **Fixed** `eefac757b`: one trusted hop in production (`server/config/trust-proxy.ts`, `TRUST_PROXY_HOPS`, validated). 14/14; live, twelve clients each their own allowance, a rotating client stopped at the eleventh, each audit row the client's own address. Two hops through CloudFront wait on D1's ingress change. |
+| **F-24** (§11.10(e), §11.300) | **Behind the load balancer every user shared one sign-in allowance, and the audit trail recorded the proxy.** Express trusted no proxy, so `req.ip` was the load balancer's: the per-address sign-in and code limits (10 in 15 minutes) were one allowance for a whole deployment, and every audit row recorded the load balancer. | Unit 1 fail / 13 pass; live, the eleventh different client refused 429 | **Fixed** `eefac757b`: one trusted hop in production (`server/config/trust-proxy.ts`, `TRUST_PROXY_HOPS`, validated). 14/14; live, twelve clients each their own allowance, a rotating client stopped at the eleventh, each audit row the client's own address. Two hops through CloudFront wait on D1's ingress change. 2026-09-24: Terraform makes that change and sets two hops together (W2 B9, `docs/evidence/W2/2026-09-24-b9/`; the rendered task definition carries `TRUST_PROXY_HOPS=2` under a mocked provider); live once D1 is applied. |
 | **F-25** (honest state) | **A contradiction scan reported a project it could not read as clean.** `scanProject` never checked that the organisation holds the project, and a program's uuid became "no filter", so the scan read every assumption and decision in the organisation and reported them as this project's. OQ-SRDY-06 passed on it. | Unit 2 fail / 1 pass; OQ-005 v0.5 on the pre-fix server: OQ-SRDY-06 and OQ-SRDY-08 fail (`OQ-005-v0.5/before-F-25-and-rescope/`) | **Fixed** `1b6dc0fab`: a non-integer id is refused 400 and an unheld project 404, before anything is read. 3/3; OQ-005 v0.5 passes (`after-…`). With the §14.3 item 1 decision (§16.5). |
 | **F-26** (§11.300, §11.200(a)(1)) | **A signed-in session could replace an enrolled authenticator.** `POST /api/auth/mfa/setup` wrote a new secret over the stored one and handed it back, with two-step verification left on. Session plus password then signed as the owner, and the owner's own codes were refused. Nothing was recorded. | `second-factor-binding.dbtest.ts`: 7 fail / 2 pass | **Fixed** `0c912e67e`: a secret is written only while MFA is off, in one conditional statement; setup answers 409 otherwise; each change is recorded. 9/9. |
 | **F-27** (§11.300(d)) | **A wrong password or code at signing never counted, and a locked account could sign.** The ceremony and the signing dialog's own checks neither consulted nor fed the sign-in's lockout: an unmetered oracle for the password, then the code, to whoever held a session. | `signing-lockout.dbtest.ts`: signing 4 fail / 4 pass; the dialog's checks 3 fail | **Fixed** `c3e891bba`: the lockout is checked before anything is compared (423 `ACCOUNT_LOCKED`), and a wrong factor counts against the sign-in's own allowance. 11/11. |
@@ -1320,6 +1320,12 @@ mount in source; runtime effect not measured.
   only.
 - `6f79a000f` left the `regulatory-honesty` contract test red on CI; the D6
   session fixed it (`811be46c0`).
+- The comments F-31 and F-32 added (`916027a98`, `2dd78265d`) set off
+  `ci:tenant-entry-points`, which read comments as code. That gate was red
+  on CI from the push that carried them until the D6 session made it read
+  code only (`7983d729`). It is not in the pre-push hook. CI's whole Lint job is now
+  run locally before a push from this lane
+  (`docs/evidence/TRUNK-TESTS/2026-09-23/test-job/`).
 
 ### 16.8 What this changes in the records above
 
@@ -1358,3 +1364,189 @@ mount in source; runtime effect not measured.
 Prepared by the W3 Claude session (drafting and execution only; cannot sign).
 No result was edited after execution. The runners wrote every record, and the
 matrix builder regenerated TM-001.
+
+## 17. Addendum 2026-09-24 — document fidelity: seven defects in what reaches a filed document (document-fidelity session)
+
+The earlier sections test that governed actions are authorised, attributed and
+recorded. This section concerns the documents those actions produce. Each
+defect below changed what a filed document says, or what it claims about
+itself, without raising an error. Evidence is in
+`docs/evidence/DOCUMENT-FIDELITY/2026-09-24/`. Each `red/` file is the finding's
+tests run with only that fix reverted in the current tree, with the reverted
+lines listed. `gen_evidence.py` in the same directory reproduces all of them.
+
+### 17.1 Findings
+
+| Id | What | Shown failing first | State |
+|---|---|---|---|
+| **F-34** (21 CFR 54, 801) | **FDA forms asserted facts nobody entered.** Form 3881 filed a device with no recorded use as "Prescription Use (21 CFR 801 Subpart D)". Form 3654 checked "No financial interests to disclose" when the answer was absent, which put a Part 54 certification under the certifier's name. | 2 of 6 fail. Both boxes render `checked`. | **Fixed** `380bd650a`. Both are opt-in, and an unanswered Part 54 block says so. 6/6. The Part 54 half was found in parallel by another session. |
+| **F-35** (content fidelity) | **A specification limit was deleted from the built .docx.** Entities were decoded before tags were stripped, so "Total impurities were &lt; 0.05% and assay was &gt; 98.0%" was built as "Total impurities were  98.0%". The same chain decoded `&amp;` first, which collapsed a literal `&amp;lt;` into `<`. | 3 of 6 fail, with the deleted text as the output. | **Fixed** `cd716f6d6`. A single-pass decoder runs after every strip and is shared with the eCTD leaf fallback. 6/6. |
+| **F-36** (§11.10(b), honest state) | **A plain-text stand-in passed as the formatted PDF.** With no Puppeteer driver installed, the PDFKit fallback renders every HTML export. The 510(k), PMA, CER and authoring exports discard the `usedFallback` flag, and nothing in the file said it lacked its typesetting. | 2 of 7 fail. The extracted PDF has no notice. | **Fixed** `b34301f6b`. Page one states the rendering is plain text and must not be filed as the formatted document. A driver is resolved without being required, and `puppeteer-core` against an existing Chromium rendered with `usedFallback=false`. 7/7. |
+| **F-37** (content fidelity) | **The PDF branch dropped what the DOCX branch kept.** Editor marks were never read on the HTML path. The same section read "10⁶ CFU/mL" in the .docx and "106 CFU/mL" in the PDF. Figures vanished and table cells ran together. An unresolved tracked change lost both marks, so the PDF stated one value as settled. | 4 of 6 fail. | **Fixed** `d52b24909`. 6/6. |
+| **F-38** (D7, filing identity) | **The FDA backbone declared a filing identity nobody supplied.** A missing application type defaulted to `fdaat1` (NDA), so every package built without an `fda` block, and every 510(k), De Novo or PMA, declared itself an NDA. The orchestrator's IND sequences were coded `fdast9` ("IND Safety Reports") by a lookup in the wrong vocabulary. | 4 of 5 fail. A 510(k) builds, and an original IND carries `fdast9`. | **Fixed** `6d1b9a5df`. Both attributes fail closed, and callers pass the identity they hold. 5/5. **Behaviour change:** device pathways are refused on this backbone, which has no code for them. §17.3 records this for the owner. |
+| **F-39** (§11.10(a)) | **A draft cut off at the token limit was filed as finished.** The drafting service dropped the gateway's `finishReason`, so a narrative truncated at 8,192 tokens was accepted into `coauthor_documents`, the source of eCTD leaves. | 2 of 11 fail. The truncated draft is accepted with 200. | **Fixed** `e854953f8`. 422 `DRAFT_TRUNCATED`, and nothing is written. 11/11. |
+| **F-40** (§11.70, §11.50(b)) | **The signature manifest printed a hash nobody compared.** The export computed the content hash with the same function the signing routes store, and never compared the two. A filed document could carry an approval signature over prose that hashed to something else. | 3 of 12 fail. There is no verdict, and a sealed record no signature covers exports with 200. | **Fixed** `7087ae5c4`. Every signature line carries a verdict. A sealed document whose signatures all fail to cover its content is refused with 409 `SIGNATURE_CONTENT_MISMATCH` before the audit event. An earlier AUTHOR signature still exports, marked as not covering. 12/12. |
+
+### 17.2 What this changes in the records above
+
+- **OQ-003 (Authoring):** the export's §11.50(b) manifestation now includes a
+  §11.70 verdict for each signature. The next OQ execution should add a step
+  that edits a signed, then re-approved, document and checks that the earlier
+  signature reads "DOES NOT COVER" while the approval reads "covers".
+- **OQ-004 (Submission Center):** an FDA package built without an application
+  type is now refused rather than coded as an NDA. Any OQ step that built one
+  implicitly needs an `fda.applicationType`.
+- **RA-001:** F-35, F-37 and F-39 are content-fidelity hazards with no
+  detection before filing. Their controls are the tests named above, which run
+  in CI.
+
+### 17.3 Decisions for the owner (not taken by this session)
+
+1. **Device pathways on the eCTD backbone (F-38).** Refusal is correct:
+   labelling a device dossier as an NDA is not. Whether a 510(k) should reach
+   the eCTD packager at all, rather than being routed to eSTAR, is a product
+   routing decision.
+2. **Styled PDF output (F-36).** Adding `puppeteer`, or `puppeteer-core` with a
+   Chromium, to the production image is a D1 image decision. Until then every
+   HTML export is the plain-text rendering, and it now says so.
+
+### 17.4 Limits recorded
+
+- F-39 is enforced where the client reports the finish reason. A caller that
+  omits it is not caught until drafts are recorded server-side.
+- All runs are local, on PGlite or mocked HTTP where the test says so. The
+  staging execution with the production image is owed under D1.
+
+Prepared by the document-fidelity Claude session (drafting and execution only;
+cannot sign). No result was edited after execution.
+
+## 18. Addendum 2026-09-27/28 — the package at head, its identities created through user administration (W3 session)
+
+### 18.1 What was executed
+
+IQ-001 and all six OQ protocols ran on a fresh installation
+(`c2c_oq_w3_20260927`, provisioned from empty; the migration set 316 of 316;
+readiness contract 8 of 8), in the posture of §16. This was the first
+execution since `bfdb0a08` (2026-09-23c), across the 1,550 commits of the
+P0/P1 security tranches.
+
+It also does the local half of D4's owed "real second account" (§16.10):
+- **Created through user administration.** Every identity except the run
+  identity was added by the run identity with `POST /api/tenant-users`. Each
+  set its own password through the activation link the product handed the
+  admin, and enrolled its own authenticator through the production sign-in.
+- **The one exception.** Only the platform role of OQ-PROJ-18's
+  administrator was granted as the database owner, because no product path
+  grants the first platform role.
+- **A reused link is refused.** A second use of an activation link was
+  refused 400 `AUTH_006`.
+
+Evidence: `docs/evidence/W3/2026-09-27/`.
+
+| Execution | Commit | IQ | OQ |
+|---|---|---|---|
+| First attempt | `d224ecff` (head plus this lane's claim) | 12 / 0 / 3 | 97 pass, 4 fail, 2 deviation of 103 |
+| Second attempt | `af305e8a` (after F-41, F-42 and the protocol changes) | 12 / 0 / 3 | 91 pass, 3 fail, 2 deviation, 7 not executed of 103 |
+| Final | `89ee3a81` | 12 / 0 / 3 | **101 pass, 0 fail, 2 deviation of 103** |
+
+### 18.2 Findings
+
+| Id | What | Shown failing first | State |
+|---|---|---|---|
+| **F-41** (§11.10(e), §11.300) | **A colleague added through user administration had its sign-in and credential events written outside its organisation.** `POST /api/tenant-users` creates an account with no default organisation; its organisation is its membership. `auth.ts` took the audit tenant from the default alone. So the following went to the platform's chain (tenant 0) and never reached the organisation's ledger: the reset request, the password set through the activation link, the refused or expired link, every sign-in refusal (locked, wrong password, address unconfirmed, account out of use), and the signed-in password change. The seeded identities of every earlier execution had a default organisation, so no step saw it. | OQ-PROJ-18 at `d224ecff`: the newest ledger entry for the suspended colleague was its last successful sign-in, not the refusal. Unit: 10 fail, 11 pass before the fix; 21 pass after. Seven mutants, each caught by its own case | **Fixed** `f339a445`, `81eb7491`. An event names the organisation the account's sign-in lands in, by the login's own rule, extracted once (`server/services/sign-in-organisation.ts`) |
+| **F-42** (§11.10(e), ALCOA "attributable") | **The organisation's ledger named the account that acted by display name alone.** A display name is not an identity. In this execution, user 1 (the run identity, named by `npm run up`) and user 2 (the demo account) were both "JM Smith", and 22 of the first attempt's 36 ledger entries read "JM Smith". The entry for the program the run created could not say which of them created it. The activity feed carried `actor_id`; the ledger did not. | OQ-PROJ-06b's new check, applied to the first attempt's recorded ledger response, fails ("names its actor "JM Smith" by display name alone"). Unit: the ledger route test, 2 fail and 8 pass before, 10 pass after, five mutants caught; the ledger surface test fails on HEAD's surface ("Unable to find … user:11"), 14 of 14 after | **Fixed** `af305e8a`. Every entry carries `actorRef` (`user:<id>`, the form targets use; null for the system), and the admin ledger shows and searches it |
+
+### 18.3 The package kept up with the product
+
+The other three first-attempt failures were the package lagging behind
+correct changes:
+
+| Step | Cause | Change |
+|---|---|---|
+| OQ-PROJ-19 (added 2026-09-26) | It opens a session of its own, which took OQ-001 to eleven password sign-ins from one client IP. The limit is ten in fifteen minutes (`loginLimiter`). | The harness waits for the window the server names (`Retry-After`), once, and says so in the transcript. It never goes around the limiter (OQ-001 v0.9 §1) |
+| OQ-SUBC-04 | Since LX-22, OQ-SUBC-03 gives the submission its own program. The step placed OQ-SUBC-00's document, and PF-11 (`39dfd9b7`) refuses another project's document with 409 `CROSS_PROJECT`. | The step ingests its document into the submission's program; the refusal is now an expected result (OQ-004 v0.4; URS-SUBC-004, URS-004 v0.2) |
+| OQ-SUBC-08 | Since P1-21 (`3d09bf2a`) a sign must state its meaning, so the request stopped at 400 before the second-factor check it exists to show. | The sign states `approval`, as the Submission Center's modal proposes for a freeze (OQ-004 v0.4) |
+
+The second attempt's three failures were the run itself, not the product as
+production runs it (`second-attempt/README.md`):
+
+| Step | Cause | Change |
+|---|---|---|
+| OQ-SUBC-08, OQ-QMS-05 (+7 not executed) | The second signer's session was signed in when the run started. Its first use came after OQ-PROJ-19's wait, and since P1-1 a session left idle for fifteen minutes has ended. The harness raised instead of signing in again. | An ended shared session is treated as none. The signer signs in when first needed, which also keeps OQ-001 within its ten sign-ins (`89ee3a81`) |
+| OQ-PROJ-19 | Answered `SESSION_ENDED`, not `SESSION_IDLE`. In its non-production warn mode, the auth boundary authenticates the idle request first, which revokes the token, and passes it on. Reproduced both ways on a fresh server. | The local server enforces its boundary (`AUTH_BOUNDARY_MODE=enforce`), as production does (OQ-001 v0.9 §1) |
+
+Also changed:
+- OQ-PROJ-06b requires the creation entry to name the run identity's
+  account (F-42; URS-PROJ-004, URS-001 v0.6).
+- A runner error's stack is recorded with repository-relative paths.
+- CI's Lint job, run locally before each push as §16.7 says, caught one
+  more thing: F-41's helpers took `auth.ts` over the repo-health scan's
+  100,000-byte threshold, and they moved to their own module (`81eb7491`).
+- CI's Blank DB Provisioning job was red on every run of this lane's pushes,
+  on its live-schema ratchet, from before this lane's first code change. The
+  guard read a CTE that names its columns
+  (`WITH expected(schema_name, …) AS (…)`, `audit-immutability-triggers.ts`)
+  as a table no database has. Its parser now binds that form. The failing test
+  came first, and four mutants are each caught
+  (`docs/evidence/TRUNK-TESTS/2026-09-28/blank-db-live-schema/`).
+
+### 18.4 Observations for other rows (not dispositioned by this package)
+
+1. **D6 — the sign-in limiter counts per client IP.** `loginLimiter` allows
+   ten password sign-ins per client IP in fifteen minutes, whoever signs in.
+   An office whose users reach the product through one outbound address
+   shares those ten: an eleventh colleague arriving within fifteen minutes is
+   refused 429. The validation run is that case, and meets it. A limit per
+   account, with a higher ceiling per IP, would protect the same accounts
+   without it.
+2. **D6 / D3 — an account added through user administration has no default
+   organisation.** `atomicCreateUser` leaves `users.default_organization_id`
+   NULL. F-41 fixes the auth events. Some 30 other references in 10 server
+   files read the default; each either falls back to the membership or
+   treats such an account as belonging nowhere. This package did not review
+   them.
+3. **The development posture seeds an administrator into organisation 1**
+   (`seed-default-org.ts`). A local execution therefore has an admin account
+   nobody provisioned for the run. Production seeds it only when
+   `SEED_DEMO_USER` is explicitly on, and the staging execution should confirm
+   it is absent.
+4. **D6 — the auth boundary's warn mode has a side effect.** Outside
+   production the boundary authenticates each `/api` request, captures a
+   refusal, logs it and passes the request on. For an idle session,
+   `authenticateToken` revokes the token as it refuses, so the next
+   authenticator answers `SESSION_ENDED`. Every non-production server
+   therefore tells an idle session it has ended, not that it was left idle.
+   In production, the first request after the idle window is told
+   `SESSION_IDLE`. Every later request of that session is told
+   `SESSION_ENDED`, because the first answer revoked the token. A revocation
+   records its reason (`revoked_tokens.reason`, `idle`), so the check could
+   answer by it.
+5. **The password-reset limiter answers before the token is read.** The
+   third reuse of an activation link was refused 429, not `AUTH_006`. This is
+   correct as a limiter; it is noted so the next reader does not take the 429
+   for the reuse refusal.
+
+### 18.5 What this changes in the records above
+
+- D4's latest local run is 2026-09-27 at `89ee3a81`.
+- §16.10's "a real second account created through user administration" is
+  done locally. It stays owed on staging, with a real mail server.
+- OQ-001 is v0.9, OQ-004 v0.4, URS-001 v0.6 and URS-004 v0.2. TM-001 is
+  built from `2026-09-27`.
+
+### 18.6 What the package still owes before signature
+
+- the production image (`NODE_ENV=production`: the dev-login refusal on that
+  branch, the HMAC-sealed chain, enforcing CSP and HSTS), on staging;
+- there, a second account created through user administration with a real
+  mail server;
+- a witness;
+- a PQ-passed provider (OQ-AUTH-16, URS-AUTH-012);
+- a live release signature;
+- the contractor's review;
+- signatures.
+
+Prepared by the W3 Claude session (drafting and execution only; cannot sign).
+No result was edited after execution, except the one absolute path removed
+from the first attempt's OQ-001 record (`first-attempt/README.md`). The runners
+wrote every record, and the matrix builder regenerated TM-001.

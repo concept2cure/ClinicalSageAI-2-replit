@@ -561,7 +561,7 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
         const { decisionLifecycleService } = await import(
           '../services/decision-lifecycle-service.js'
         );
-        blockedDecision = decisionLifecycleService.recordGovernedActionDecision({
+        blockedDecision = await decisionLifecycleService.recordGovernedActionDecision({
           projectId: String(projectId),
           organizationId: Number(orgId),
           kind: 'promotion-decision',
@@ -577,7 +577,8 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
         });
         // Receipt for the blocked promotion
         if (blockedDecision) {
-          decisionLifecycleService.createReceipt({
+          await decisionLifecycleService.createReceipt({
+            organizationId: Number(orgId),
             decisionId: blockedDecision.id,
             projectId: String(projectId),
             recommendation: {
@@ -590,7 +591,19 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
             affectedObjects: [{ objectType: 'artifact', objectId: String(artifactId), previousState: 'draft', newState: 'draft', changeDescription: 'Promotion blocked' }],
           });
         }
-      } catch { /* non-blocking */ }
+      } catch (err) {
+        /* The governed decision and its Part 11 receipt are the record that this
+           act happened. This was a bare catch with a comment reading non-blocking, the same shape
+           this file already documents as a defect for the AUTHORITY check
+           ("a gate whose failure mode is 'proceed' is not a gate"). Recording is
+           the other half: a failure here left no record and said nothing, and the
+           service returned an id regardless, so the route answered 200 naming a
+           decision that existed only in this process's heap. It is loud now. */
+        console.error('[authoring-actions] GOVERNED RECORD FAILED — the act is not recorded', {
+          route: req.path,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
 
       return res.json({
         promoted: false,
@@ -701,7 +714,7 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
         const { decisionLifecycleService } = await import(
           '../services/decision-lifecycle-service.js'
         );
-        promotionDecision = decisionLifecycleService.recordGovernedActionDecision({
+        promotionDecision = await decisionLifecycleService.recordGovernedActionDecision({
           projectId: String(projectId),
           organizationId: Number(orgId),
           kind: 'promotion-decision',
@@ -715,13 +728,14 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
         });
         // Transition to confirmed → executed
         if (promotionDecision) {
-          decisionLifecycleService.transitionDecision(promotionDecision.id, 'confirmed', {
+          await decisionLifecycleService.transitionDecision(promotionDecision.id, 'confirmed', {
             actorId: (req as any).userId,
           });
-          decisionLifecycleService.transitionDecision(promotionDecision.id, 'executed', {
+          await decisionLifecycleService.transitionDecision(promotionDecision.id, 'executed', {
             actorId: (req as any).userId,
           });
-          promotionReceipt = decisionLifecycleService.createReceipt({
+          promotionReceipt = await decisionLifecycleService.createReceipt({
+            organizationId: Number(orgId),
             decisionId: promotionDecision.id,
             projectId: String(projectId),
             recommendation: {
@@ -750,7 +764,19 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
               : [],
           });
         }
-      } catch { /* non-blocking */ }
+      } catch (err) {
+        /* The governed decision and its Part 11 receipt are the record that this
+           act happened. This was a bare catch with a comment reading non-blocking, the same shape
+           this file already documents as a defect for the AUTHORITY check
+           ("a gate whose failure mode is 'proceed' is not a gate"). Recording is
+           the other half: a failure here left no record and said nothing, and the
+           service returned an id regardless, so the route answered 200 naming a
+           decision that existed only in this process's heap. It is loud now. */
+        console.error('[authoring-actions] GOVERNED RECORD FAILED — the act is not recorded', {
+          route: req.path,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
 
       return res.json({
         promoted: true,
@@ -838,7 +864,7 @@ router.post('/approve-artifact', async (req: Request, res: Response) => {
       let blockedDecision: any = null;
       try {
         const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
-        blockedDecision = decisionLifecycleService.recordGovernedActionDecision({
+        blockedDecision = await decisionLifecycleService.recordGovernedActionDecision({
           projectId: String(projectId), organizationId: Number(orgId),
           kind: 'promotion-decision',
           governedAction: 'approve-artifact', artifactId: String(artifactId),
@@ -847,7 +873,19 @@ router.post('/approve-artifact', async (req: Request, res: Response) => {
           sourceSignals: blockReasons.map(r => ({ kind: 'system-rule' as const, summary: r })),
           createdByType: 'ana', createdById: userId || undefined,
         });
-      } catch { /* non-blocking */ }
+      } catch (err) {
+        /* The governed decision and its Part 11 receipt are the record that this
+           act happened. This was a bare catch with a comment reading non-blocking, the same shape
+           this file already documents as a defect for the AUTHORITY check
+           ("a gate whose failure mode is 'proceed' is not a gate"). Recording is
+           the other half: a failure here left no record and said nothing, and the
+           service returned an id regardless, so the route answered 200 naming a
+           decision that existed only in this process's heap. It is loud now. */
+        console.error('[authoring-actions] GOVERNED RECORD FAILED — the act is not recorded', {
+          route: req.path,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
 
       return res.json({
         approved: false, reason: 'blocked', blockers: blockReasons,
@@ -902,7 +940,7 @@ router.post('/approve-artifact', async (req: Request, res: Response) => {
       const { queryableFromDrizzle } = await import('../db/drizzle-queryable.js');
       let quorum: Awaited<ReturnType<typeof reviewQuorumVerdict>>;
       try {
-        quorum = await reviewQuorumVerdict(queryableFromDrizzle(db), artifact.id, Number(orgId));
+        quorum = await reviewQuorumVerdict(queryableFromDrizzle(db), artifact.id, Number(orgId), artifact.version);
       } catch (quorumErr: any) {
         console.error('[authoring-actions] approve-artifact review quorum read failed:', quorumErr?.message);
         return res.status(500).json({
@@ -985,7 +1023,7 @@ router.post('/approve-artifact', async (req: Request, res: Response) => {
       let approveReceipt: any = null;
       try {
         const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
-        approveDecision = decisionLifecycleService.recordGovernedActionDecision({
+        approveDecision = await decisionLifecycleService.recordGovernedActionDecision({
           projectId: String(projectId), organizationId: Number(orgId),
           kind: 'promotion-decision',
           governedAction: 'approve-artifact', artifactId: String(artifactId),
@@ -994,9 +1032,10 @@ router.post('/approve-artifact', async (req: Request, res: Response) => {
           createdByType: 'human', createdById: userId || undefined,
         });
         if (approveDecision) {
-          decisionLifecycleService.transitionDecision(approveDecision.id, 'confirmed', { actorId: userId });
-          decisionLifecycleService.transitionDecision(approveDecision.id, 'executed', { actorId: userId });
-          approveReceipt = decisionLifecycleService.createReceipt({
+          await decisionLifecycleService.transitionDecision(approveDecision.id, 'confirmed', { actorId: userId });
+          await decisionLifecycleService.transitionDecision(approveDecision.id, 'executed', { actorId: userId });
+          approveReceipt = await decisionLifecycleService.createReceipt({
+            organizationId: Number(orgId),
             decisionId: approveDecision.id, projectId: String(projectId),
             recommendation: { summary: 'Approve artifact', actionIds: ['approve-artifact'], rationale: 'All gates passed' },
             confirmation: { accepted: true, confirmedById: userId || undefined },
@@ -1004,7 +1043,19 @@ router.post('/approve-artifact', async (req: Request, res: Response) => {
             affectedObjects: [{ objectType: 'artifact', objectId: String(artifactId), previousState: 'review', newState: 'approved', changeDescription: 'Artifact approved by reviewer' }],
           });
         }
-      } catch { /* non-blocking */ }
+      } catch (err) {
+        /* The governed decision and its Part 11 receipt are the record that this
+           act happened. This was a bare catch with a comment reading non-blocking, the same shape
+           this file already documents as a defect for the AUTHORITY check
+           ("a gate whose failure mode is 'proceed' is not a gate"). Recording is
+           the other half: a failure here left no record and said nothing, and the
+           service returned an id regardless, so the route answered 200 naming a
+           decision that existed only in this process's heap. It is loud now. */
+        console.error('[authoring-actions] GOVERNED RECORD FAILED — the act is not recorded', {
+          route: req.path,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
 
       return res.json({
         approved: true, message: 'Artifact approved.', newStatus: 'approved',
@@ -1193,7 +1244,7 @@ router.post('/lock-artifact', async (req: Request, res: Response) => {
       let lockReceipt: any = null;
       try {
         const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
-        lockDecision = decisionLifecycleService.recordGovernedActionDecision({
+        lockDecision = await decisionLifecycleService.recordGovernedActionDecision({
           projectId: String(projectId), organizationId: Number(orgId),
           kind: 'promotion-decision',
           governedAction: 'lock-artifact', artifactId: String(artifactId),
@@ -1202,9 +1253,10 @@ router.post('/lock-artifact', async (req: Request, res: Response) => {
           createdByType: 'human', createdById: userId || undefined,
         });
         if (lockDecision) {
-          decisionLifecycleService.transitionDecision(lockDecision.id, 'confirmed', { actorId: userId });
-          decisionLifecycleService.transitionDecision(lockDecision.id, 'executed', { actorId: userId });
-          lockReceipt = decisionLifecycleService.createReceipt({
+          await decisionLifecycleService.transitionDecision(lockDecision.id, 'confirmed', { actorId: userId });
+          await decisionLifecycleService.transitionDecision(lockDecision.id, 'executed', { actorId: userId });
+          lockReceipt = await decisionLifecycleService.createReceipt({
+            organizationId: Number(orgId),
             decisionId: lockDecision.id, projectId: String(projectId),
             recommendation: { summary: 'Lock artifact', actionIds: ['lock-artifact'], rationale: 'All gates passed' },
             confirmation: { accepted: true, confirmedById: userId || undefined },
@@ -1212,7 +1264,19 @@ router.post('/lock-artifact', async (req: Request, res: Response) => {
             affectedObjects: [{ objectType: 'artifact', objectId: String(artifactId), previousState: 'approved', newState: 'locked', changeDescription: 'Artifact locked for submission' }],
           });
         }
-      } catch { /* non-blocking */ }
+      } catch (err) {
+        /* The governed decision and its Part 11 receipt are the record that this
+           act happened. This was a bare catch with a comment reading non-blocking, the same shape
+           this file already documents as a defect for the AUTHORITY check
+           ("a gate whose failure mode is 'proceed' is not a gate"). Recording is
+           the other half: a failure here left no record and said nothing, and the
+           service returned an id regardless, so the route answered 200 naming a
+           decision that existed only in this process's heap. It is loud now. */
+        console.error('[authoring-actions] GOVERNED RECORD FAILED — the act is not recorded', {
+          route: req.path,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
 
       return res.json({
         locked: true, message: 'Artifact locked for submission.', newStatus: 'locked',
@@ -1291,7 +1355,7 @@ router.post('/mark-submission-ready', async (req: Request, res: Response) => {
     let receipt: any = null;
     try {
       const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
-      decision = decisionLifecycleService.recordGovernedActionDecision({
+      decision = await decisionLifecycleService.recordGovernedActionDecision({
         projectId: String(projectId), organizationId: Number(orgId),
         kind: 'promotion-decision',
         governedAction: 'judge-dossier-ready', artifactId: String(artifactId),
@@ -1301,9 +1365,10 @@ router.post('/mark-submission-ready', async (req: Request, res: Response) => {
         createdByType: 'human', createdById: userId || undefined,
       });
       if (decision) {
-        decisionLifecycleService.transitionDecision(decision.id, 'confirmed', { actorId: userId });
-        decisionLifecycleService.transitionDecision(decision.id, 'executed', { actorId: userId });
-        receipt = decisionLifecycleService.createReceipt({
+        await decisionLifecycleService.transitionDecision(decision.id, 'confirmed', { actorId: userId });
+        await decisionLifecycleService.transitionDecision(decision.id, 'executed', { actorId: userId });
+        receipt = await decisionLifecycleService.createReceipt({
+          organizationId: Number(orgId),
           decisionId: decision.id, projectId: String(projectId),
           recommendation: { summary: 'Mark submission-ready', actionIds: ['judge-dossier-ready'], rationale: 'All gates passed' },
           confirmation: { accepted: true, confirmedById: userId || undefined },
@@ -1311,7 +1376,19 @@ router.post('/mark-submission-ready', async (req: Request, res: Response) => {
           affectedObjects: [{ objectType: 'artifact', objectId: String(artifactId), previousState: 'locked', newState: 'submission_ready', changeDescription: 'Artifact marked submission-ready' }],
         });
       }
-    } catch { /* non-blocking */ }
+    } catch (err) {
+      /* The governed decision and its Part 11 receipt are the record that this
+         act happened. This was a bare catch with a comment reading non-blocking, the same shape
+         this file already documents as a defect for the AUTHORITY check
+         ("a gate whose failure mode is 'proceed' is not a gate"). Recording is
+         the other half: a failure here left no record and said nothing, and the
+         service returned an id regardless, so the route answered 200 naming a
+         decision that existed only in this process's heap. It is loud now. */
+      console.error('[authoring-actions] GOVERNED RECORD FAILED — the act is not recorded', {
+        route: req.path,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
 
     // Update artifact metadata to record submission readiness
     try {
@@ -1469,7 +1546,7 @@ router.post('/correction-draft', async (req: Request, res: Response) => {
         const { decisionLifecycleService } = await import(
           '../services/decision-lifecycle-service.js'
         );
-        correctionDecision = decisionLifecycleService.recordGovernedActionDecision({
+        correctionDecision = await decisionLifecycleService.recordGovernedActionDecision({
           projectId: String(projectId),
           organizationId: Number(orgId),
           kind: 'correction-decision',
@@ -1485,7 +1562,19 @@ router.post('/correction-draft', async (req: Request, res: Response) => {
           createdByType: 'ana',
           createdById: (req as any).userId || undefined,
         });
-      } catch { /* non-blocking */ }
+      } catch (err) {
+        /* The governed decision and its Part 11 receipt are the record that this
+           act happened. This was a bare catch with a comment reading non-blocking, the same shape
+           this file already documents as a defect for the AUTHORITY check
+           ("a gate whose failure mode is 'proceed' is not a gate"). Recording is
+           the other half: a failure here left no record and said nothing, and the
+           service returned an id regardless, so the route answered 200 naming a
+           decision that existed only in this process's heap. It is loud now. */
+        console.error('[authoring-actions] GOVERNED RECORD FAILED — the act is not recorded', {
+          route: req.path,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
 
       return res.json({
         status: 'data',
@@ -1578,7 +1667,7 @@ router.post('/harmonize-sections', async (req: Request, res: Response) => {
         const { decisionLifecycleService } = await import(
           '../services/decision-lifecycle-service.js'
         );
-        harmonizeDecision = decisionLifecycleService.recordGovernedActionDecision({
+        harmonizeDecision = await decisionLifecycleService.recordGovernedActionDecision({
           projectId: String(projectId),
           organizationId: orgId,
           kind: 'harmonization-decision',
@@ -1593,7 +1682,19 @@ router.post('/harmonize-sections', async (req: Request, res: Response) => {
           createdByType: 'ana',
           createdById: (req as any).userId || undefined,
         });
-      } catch { /* non-blocking */ }
+      } catch (err) {
+        /* The governed decision and its Part 11 receipt are the record that this
+           act happened. This was a bare catch with a comment reading non-blocking, the same shape
+           this file already documents as a defect for the AUTHORITY check
+           ("a gate whose failure mode is 'proceed' is not a gate"). Recording is
+           the other half: a failure here left no record and said nothing, and the
+           service returned an id regardless, so the route answered 200 naming a
+           decision that existed only in this process's heap. It is loud now. */
+        console.error('[authoring-actions] GOVERNED RECORD FAILED — the act is not recorded', {
+          route: req.path,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
 
       return res.json({
         status: 'data',
@@ -3135,7 +3236,7 @@ router.post('/decision/:decisionId/confirm', async (req: Request, res: Response)
     );
 
     const newStatus = accepted ? 'confirmed' : 'rejected';
-    const result = decisionLifecycleService.transitionDecision(
+    const result = await decisionLifecycleService.transitionDecision(
       String(decisionId ?? ''),
       newStatus as any,
       { actorId: userId, actorRole: userRole, reason }

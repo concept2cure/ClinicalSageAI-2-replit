@@ -71,7 +71,10 @@ function actDefaults(signing: ProtocolSigning, documentId: number, documentTitle
   const onBehalf = signing.reviewerUserId === null;
   return {
     action: `Sign disposition: ${decision}`,
-    target: `${signing.reviewer || 'Reviewer'} · ${protocol}`,
+    // Only the assigned account can sign its review, so the signer shown below
+    // is the reviewer. A stored label beside them could name someone else
+    // (periodic review 2026-09-28, editor family, SEC-C-7).
+    target: onBehalf ? `${signing.reviewer || 'Reviewer'} · ${protocol}` : protocol,
     targetMeta: onBehalf
       ? `${signing.reviewer || 'This reviewer'} has no account here. You are recording their decision and take responsibility for the record.`
       : 'Your review of this protocol, signed as its assigned reviewer.',

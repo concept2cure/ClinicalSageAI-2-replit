@@ -66,21 +66,15 @@ describe('Global compliance GDPR rights endpoints', () => {
     expect(res.body.summary.comments).toBe(1);
   });
 
-  it('DELETE /gdpr/:orgId/data-subject/:dataSubjectId performs redaction workflow', async () => {
-    const clientQuery = vi.fn()
-      .mockResolvedValueOnce(undefined) // BEGIN
-      .mockResolvedValueOnce({ rows: [{ id: 10 }] }) // users
-      .mockResolvedValueOnce({ rows: [{ id: 1 }, { id: 2 }] }) // conversations
-      .mockResolvedValueOnce({ rows: [{ artifact_id: 99 }] }) // artifacts
-      .mockResolvedValueOnce({ rows: [{ id: 333 }] }) // comments
-      .mockResolvedValueOnce({ rows: [] }) // dsr insert
-      .mockResolvedValueOnce(undefined); // COMMIT
-
-    mockConnect.mockResolvedValue({
-      query: clientQuery,
-      release: vi.fn(),
-    });
-
+  /* 2026-09-28. This was a second erasure path beside AnA's erase_personal_data.
+     It took no re-authentication and wrote no electronic signature, overwrote
+     regulated artifact content (GxP retention, 21 CFR 11.10(c)), and could not
+     succeed on the real schema: `COALESCE(metadata, '{}'::jsonb)` on the json
+     column fails, so every call was a 500. The mocked statements this case used
+     to feed it hid all three. One erasure now: the e-signature-tier governed
+     action, which re-verifies the signer, signs first, retains regulated
+     records and records the request — so this route touches nothing and names it. */
+  it('DELETE /gdpr/:orgId/data-subject/:dataSubjectId erases nothing and names the signed path', async () => {
     const mod = await import('../../routes/global-compliance');
     const app = express();
     app.use(express.json());
@@ -90,12 +84,12 @@ describe('Global compliance GDPR rights endpoints', () => {
       .delete('/api/compliance/gdpr/2/data-subject/10')
       .send({ reason: 'user request' });
 
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.data.redactedUser).toBe(true);
-    expect(res.body.data.redactedConversations).toBe(2);
-    expect(res.body.data.redactedArtifacts).toBe(1);
-    expect(res.body.data.redactedComments).toBe(1);
+    expect(res.status).toBe(410);
+    expect(res.body.error).toBe('ERASURE_IS_A_GOVERNED_ACTION');
+    expect(res.body.message).toMatch(/Nothing was erased/);
+    expect(res.body.message).toMatch(/erase_personal_data/);
+    expect(mockConnect).not.toHaveBeenCalled();
+    expect(mockQuery).not.toHaveBeenCalled();
   });
 
   it('GET export denies cross-subject access for non-admin users', async () => {

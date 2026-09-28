@@ -346,11 +346,41 @@ function hasSegment(path: string, ...segments: string[]): boolean {
   return segments.some(seg => padded.includes(`/${seg}/`));
 }
 
-export function getCategory(path: string): string {
+/**
+ * AnA requests that reach no model: every read under /api/ana-ri (none of its
+ * GET routes generates — the rail's activity poll, the Live Drive state, turn
+ * records, plans, health) and a run's control endpoint (pause, resume, a steer
+ * queued into a run already metered when it started, a stop, and the screen
+ * settling each move AnA made — one per move).
+ *
+ * Metered in the 30-a-minute AI bucket they spent the person's AI allowance on
+ * bookkeeping: the rail's polls and a demonstration's move confirmations used
+ * it up, the screen's confirmations were refused so each round of hers waited
+ * out its ceiling, and the person's next question was refused as "too many AI
+ * requests" (seen 2026-09-28 in the Live Drive browser run). Scoped to
+ * /api/ana-ri, where every route was checked; the other AI prefixes are
+ * unchanged.
+ */
+function isAnaRiNonModelRequest(path: string, method?: string): boolean {
+  if (!hasSegment(path, 'ana-ri')) return false;
+  const m = (method ?? '').toUpperCase();
+  if (m === 'GET' || m === 'HEAD') return true;
+  return m === 'POST' && /(^|\/)ana-ri\/stream\/[^/]+\/control\/?$/.test(path);
+}
+
+export function getCategory(path: string, method?: string): string {
   if (hasSegment(path, 'login', 'register', 'auth')) {
     return 'auth';
   }
-  if (hasSegment(path, 'ai', 'generate', 'openai', 'anthropic')) {
+  // The AI surfaces this platform mounts (bootstrap/register-ai-routes.ts,
+  // register-core-routes.ts): /api/ai, /api/ai-assistance, /api/ai-gateway,
+  // /api/ana, /api/ana-ri, /api/claude, /api/cortex. Until 2026-09-25 only a
+  // bare `ai` segment counted, so the model calls that cost the most were
+  // metered as ordinary API traffic (security audit 2026-09-24, IAM-18).
+  if (
+    !isAnaRiNonModelRequest(path, method) &&
+    hasSegment(path, 'ai', 'ai-assistance', 'ai-gateway', 'ana', 'ana-ri', 'claude', 'cortex', 'generate', 'openai', 'anthropic')
+  ) {
     return 'ai';
   }
   if (hasSegment(path, 'concept2cure')) {
@@ -505,7 +535,7 @@ export function createRedisRateLimiter(config: Partial<RateLimitConfig> = {}) {
       return next();
     }
 
-    const category = getCategory(req.path);
+    const category = getCategory(req.path, req.method);
     const rule = rules[category] || rules.api;
 
     // Skip for privileged roles if configured

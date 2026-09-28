@@ -1,0 +1,8 @@
+# New-code audit #3 (batch leaf resolution shares a pin verdict) — RED, test added, source unchanged; 2026-09-24T19:04:09Z
+ × server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > pointer shape > does not lend one leaf’s pin verdict to another leaf on the same document — unpinned first 8ms
+   → expected 'resolved' to be 'content_changed' // Object.is equality
+ × server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > pointer shape > does not lend one leaf’s pin verdict to another leaf on the same document — fresh first 3ms
+   → expected 'resolved' to be 'content_changed' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 15 passed (17)

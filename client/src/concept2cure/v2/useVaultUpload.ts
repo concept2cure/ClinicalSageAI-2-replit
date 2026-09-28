@@ -42,6 +42,10 @@ export interface VaultUploadOutcome {
   /** Per-file filing outcome, as the server stored it: the classifier's
    *  suggested dossier folder, or unfiled (visible review queue). */
   filings: Array<{ name: string; folderLabel: string | null; needsReview: boolean }>;
+  /** Files whose exact bytes the Vault already recorded at that code and
+   *  version: nothing was changed, and `differs` says the upload asked for a
+   *  title, type or classification other than the recorded one (VR-05). */
+  alreadyRecorded: Array<{ name: string; title: string; differs: boolean }>;
 }
 
 export interface VaultUploadOptions {
@@ -66,12 +70,23 @@ export interface VaultUploadState {
 /** The default document type. See the note in `uploadOne`. */
 const DEFAULT_DOCUMENT_TYPE: VaultIngestDocumentType = 'OTHER';
 
+/** What the user is told about files the Vault already held: nothing changed,
+ *  and where a title, type or classification differs, how to change it. */
+function alreadyRecordedText(list: VaultUploadOutcome['alreadyRecorded']): string {
+  if (list.length === 0) return '';
+  const named = list.map((a) => `${a.name} (as "${a.title}")`).join('; ');
+  const hint = list.some((a) => a.differs)
+    ? ' Its title, type or classification is changed with Edit details, not by uploading it again.'
+    : '';
+  return `Already in the Vault, nothing changed: ${named}.${hint}`;
+}
+
 async function uploadOne(
   programId: string,
   file: File,
   documentType: VaultIngestDocumentType,
 ): Promise<
-  | { ok: true; folderLabel: string | null; needsReview: boolean }
+  | { ok: true; folderLabel: string | null; needsReview: boolean; already: { title: string; differs: boolean } | null }
   | { ok: false; reason: string }
 > {
   const form = new FormData();
@@ -121,13 +136,20 @@ async function uploadOne(
        suggested dossier folder (auto-filed, awaiting confirmation) or unfiled.
        Read, never assumed: a missing block reads as no placement reported. */
     const body = (await res.json().catch(() => null)) as
-      | { filing?: { folderLabel?: string; folderId?: string | null; needsReview?: boolean } }
+      | {
+          filing?: { folderLabel?: string; folderId?: string | null; needsReview?: boolean };
+          document?: { documentTitle?: string };
+          reupload?: { differs?: unknown[] };
+        }
       | null;
     const filing = body?.filing;
     return {
       ok: true,
       folderLabel: filing?.folderId ? filing.folderLabel || filing.folderId : null,
       needsReview: Boolean(filing?.needsReview ?? !filing?.folderId),
+      already: body?.reupload
+        ? { title: body.document?.documentTitle || file.name, differs: (body.reupload.differs?.length ?? 0) > 0 }
+        : null,
     };
   }
 
@@ -161,7 +183,7 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
   const upload = React.useCallback(
     async (files: FileList | File[] | null, opts?: VaultUploadOptions): Promise<VaultUploadOutcome> => {
       const list = files ? Array.from(files as ArrayLike<File>) : [];
-      const empty: VaultUploadOutcome = { succeeded: [], failed: [], filings: [] };
+      const empty: VaultUploadOutcome = { succeeded: [], failed: [], filings: [], alreadyRecorded: [] };
       if (list.length === 0) return empty;
       if (!programId) {
         setNote({
@@ -173,14 +195,17 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
 
       setUploading(true);
       setNote(null);
-      const outcome: VaultUploadOutcome = { succeeded: [], failed: [], filings: [] };
+      const outcome: VaultUploadOutcome = { succeeded: [], failed: [], filings: [], alreadyRecorded: [] };
       try {
         /* Sequential, deliberately. These are 50 MB-capped uploads that each
            run a virus scan and a text extraction server-side; firing a whole
            drop-zone's worth in parallel is how one user stalls the pool. */
         for (const file of list) {
           const r = await uploadOne(programId, file, opts?.documentType ?? DEFAULT_DOCUMENT_TYPE);
-          if (r.ok) {
+          if (r.ok && r.already) {
+            outcome.succeeded.push(file.name);
+            outcome.alreadyRecorded.push({ name: file.name, ...r.already });
+          } else if (r.ok) {
             outcome.succeeded.push(file.name);
             outcome.filings.push({
               name: file.name,
@@ -206,14 +231,12 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
             unplaced > 0
               ? ` ${unplaced} landed in Unfiled — the classifier could not place ${unplaced === 1 ? 'it' : 'them'}; review where ${unplaced === 1 ? 'it belongs' : 'they belong'}.`
               : '';
-          const n = outcome.succeeded.length;
-          setNote({
-            tone: 'ok',
-            text:
-              placedText || unplacedText
-                ? `${placedText}${unplacedText}`.trim()
-                : `Filed ${n} document${n === 1 ? '' : 's'} to the vault.`,
-          });
+          const n = outcome.filings.length;
+          const filedText =
+            placedText || unplacedText
+              ? `${placedText}${unplacedText}`.trim()
+              : n > 0 ? `Filed ${n} document${n === 1 ? '' : 's'} to the vault.` : '';
+          setNote({ tone: 'ok', text: `${filedText} ${alreadyRecordedText(outcome.alreadyRecorded)}`.trim() });
         } else {
           setNote({
             tone: 'error',

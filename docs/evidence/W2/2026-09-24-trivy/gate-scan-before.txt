@@ -1,0 +1,423 @@
+# trivy config --severity CRITICAL,HIGH --exit-code 1 --skip-dirs node_modules .   (the deploy security-gate's scan)
+# Trivy v0.70.0 (CI's version), built from source; checks bundle sha256:1583562f8b90ed2a071b99f0e5ffff6b57e4ceb6ca3e4796577b4e6a339eb74c, downloaded 2026-09-24
+# Tree: 144966e0c, before this change
+
+
+Report Summary
+
+┌────────────────────────────────────────────────────┬────────────┬───────────────────┐
+│                       Target                       │    Type    │ Misconfigurations │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ .claude/skills/gstack/.github/docker/Dockerfile.ci │ dockerfile │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ Dockerfile.optimized                               │ dockerfile │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ infra/k8s/bff-with-predicate-shadow.yaml           │ kubernetes │         5         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/bootstrap                                │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/bootstrap/main.tf                        │ terraform  │         1         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/environments/production                  │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/environments/staging                     │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/modules/alb/main.tf                      │ terraform  │         4         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/modules/cloudfront/main.tf               │ terraform  │         4         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/modules/compliance-evidence/main.tf      │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/modules/ecr/main.tf                      │ terraform  │         0         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/modules/ecs-fargate/main.tf              │ terraform  │         2         │
+├────────────────────────────────────────────────────┼────────────┼───────────────────┤
+│ terraform/modules/rds/main.tf                      │ terraform  │         0         │
+└────────────────────────────────────────────────────┴────────────┴───────────────────┘
+Legend:
+- '-': Not scanned
+- '0': Clean (no security findings detected)
+
+
+infra/k8s/bff-with-predicate-shadow.yaml (kubernetes)
+=====================================================
+Tests: 28 (SUCCESSES: 23, FAILURES: 5)
+Failures: 5 (HIGH: 5, CRITICAL: 0)
+
+KSV-0014 (HIGH): Container 'bff' of Deployment 'concept2cure-bff' should set 'securityContext.readOnlyRootFilesystem' to true
+════════════════════════════════════════
+An immutable root file system prevents applications from writing to their local disk. This can limit intrusions, as attackers will not be able to tamper with the file system or write foreign executables to disk.
+
+See https://avd.aquasec.com/misconfig/ksv-0014
+────────────────────────────────────────
+ infra/k8s/bff-with-predicate-shadow.yaml:30-71
+────────────────────────────────────────
+  30 ┌         - name: bff
+  31 │           image: ghcr.io/concept2cure/clinicalsageai:REPLACE_WITH_DIGEST
+  32 │           ports:
+  33 │             - containerPort: 3000
+  34 │               name: http
+  35 │           env:
+  36 │             - name: PORT
+  37 │               value: "3000"
+  38 └             - name: SHADOW_SERVICE_URL
+  ..   
+────────────────────────────────────────
+
+
+KSV-0014 (HIGH): Container 'predicate-shadow' of Deployment 'concept2cure-bff' should set 'securityContext.readOnlyRootFilesystem' to true
+════════════════════════════════════════
+An immutable root file system prevents applications from writing to their local disk. This can limit intrusions, as attackers will not be able to tamper with the file system or write foreign executables to disk.
+
+See https://avd.aquasec.com/misconfig/ksv-0014
+────────────────────────────────────────
+ infra/k8s/bff-with-predicate-shadow.yaml:74-115
+────────────────────────────────────────
+  74 ┌         - name: predicate-shadow
+  75 │           image: ghcr.io/concept2cure/predicate-shadow-service:REPLACE_WITH_DIGEST
+  76 │           ports:
+  77 │             - containerPort: 8001
+  78 │               name: shadow
+  79 │           env:
+  80 │             - name: ADMIN_TOKEN
+  81 │               valueFrom:
+  82 └                 secretKeyRef:
+  ..   
+────────────────────────────────────────
+
+
+KSV-0118 (HIGH): container concept2cure-bff in default namespace is using the default security context
+════════════════════════════════════════
+Security context controls the allocation of security parameters for the pod/container/volume, ensuring the appropriate level of protection. Relying on default security context may expose vulnerabilities to potential attacks that rely on privileged access.
+
+See https://avd.aquasec.com/misconfig/ksv-0118
+────────────────────────────────────────
+ infra/k8s/bff-with-predicate-shadow.yaml:74-115
+────────────────────────────────────────
+  74 ┌         - name: predicate-shadow
+  75 │           image: ghcr.io/concept2cure/predicate-shadow-service:REPLACE_WITH_DIGEST
+  76 │           ports:
+  77 │             - containerPort: 8001
+  78 │               name: shadow
+  79 │           env:
+  80 │             - name: ADMIN_TOKEN
+  81 │               valueFrom:
+  82 └                 secretKeyRef:
+  ..   
+────────────────────────────────────────
+
+
+KSV-0118 (HIGH): container concept2cure-bff in default namespace is using the default security context
+════════════════════════════════════════
+Security context controls the allocation of security parameters for the pod/container/volume, ensuring the appropriate level of protection. Relying on default security context may expose vulnerabilities to potential attacks that rely on privileged access.
+
+See https://avd.aquasec.com/misconfig/ksv-0118
+────────────────────────────────────────
+ infra/k8s/bff-with-predicate-shadow.yaml:30-71
+────────────────────────────────────────
+  30 ┌         - name: bff
+  31 │           image: ghcr.io/concept2cure/clinicalsageai:REPLACE_WITH_DIGEST
+  32 │           ports:
+  33 │             - containerPort: 3000
+  34 │               name: http
+  35 │           env:
+  36 │             - name: PORT
+  37 │               value: "3000"
+  38 └             - name: SHADOW_SERVICE_URL
+  ..   
+────────────────────────────────────────
+
+
+KSV-0118 (HIGH): deployment concept2cure-bff in default namespace is using the default security context, which allows root privileges
+════════════════════════════════════════
+Security context controls the allocation of security parameters for the pod/container/volume, ensuring the appropriate level of protection. Relying on default security context may expose vulnerabilities to potential attacks that rely on privileged access.
+
+See https://avd.aquasec.com/misconfig/ksv-0118
+────────────────────────────────────────
+ infra/k8s/bff-with-predicate-shadow.yaml:26-115
+────────────────────────────────────────
+  26 ┌     spec:
+  27 │       restartPolicy: Always
+  28 │       containers:
+  29 │         # ─── BFF (Node + Express) ─────────────────────────────────────────
+  30 │         - name: bff
+  31 │           image: ghcr.io/concept2cure/clinicalsageai:REPLACE_WITH_DIGEST
+  32 │           ports:
+  33 │             - containerPort: 3000
+  34 └               name: http
+  ..   
+────────────────────────────────────────
+
+
+
+terraform/bootstrap/main.tf (terraform)
+=======================================
+Tests: 1 (SUCCESSES: 0, FAILURES: 1)
+Failures: 1 (HIGH: 1, CRITICAL: 0)
+
+AWS-0132 (HIGH): Bucket does not encrypt data with a customer managed key.
+════════════════════════════════════════
+Encryption using AWS keys provides protection for your S3 buckets. To gain greater control over encryption, such as key rotation, access policies, and auditability, use customer managed keys (CMKs) with SSE-KMS.
+Note that SSE-KMS is not supported for S3 server access logging destination buckets; in such cases, use SSE-S3 instead.
+
+
+See https://avd.aquasec.com/misconfig/aws-0132
+────────────────────────────────────────
+ terraform/bootstrap/main.tf:38-45
+────────────────────────────────────────
+  38 ┌ resource "aws_s3_bucket_server_side_encryption_configuration" "tfstate" {
+  39 │   bucket = aws_s3_bucket.tfstate.id
+  40 │   rule {
+  41 │     apply_server_side_encryption_by_default {
+  42 │       sse_algorithm = "aws:kms"
+  43 │     }
+  44 │   }
+  45 └ }
+────────────────────────────────────────
+
+
+
+terraform/modules/alb/main.tf (terraform)
+=========================================
+Tests: 4 (SUCCESSES: 0, FAILURES: 4)
+Failures: 4 (HIGH: 4, CRITICAL: 0)
+
+AWS-0052 (HIGH): Application load balancer is not set to drop invalid headers.
+════════════════════════════════════════
+Passing unknown or invalid headers through to the target poses a potential risk of compromise.
+By setting drop_invalid_header_fields to true, anything that does not conform to well known, defined headers will be removed by the load balancer.
+
+
+See https://avd.aquasec.com/misconfig/aws-0052
+────────────────────────────────────────
+ terraform/modules/alb/main.tf:18-35
+   via terraform/stack/main.tf:205-216 (module.alb)
+    via terraform/environments/production/main.tf:40-83 (module.stack)
+────────────────────────────────────────
+  18 ┌ resource "aws_lb" "this" {
+  19 │   name               = var.name
+  20 │   internal           = false
+  21 │   load_balancer_type = "application"
+  22 │   # The module's own group always applies: the CloudFront-only rule lives there.
+  23 │   security_groups = distinct(concat([aws_security_group.alb.id], var.security_group_ids))
+  24 │   subnets         = var.public_subnet_ids
+  25 │ 
+  26 └   enable_deletion_protection = var.deletion_protection
+  ..   
+────────────────────────────────────────
+
+
+AWS-0052 (HIGH): Application load balancer is not set to drop invalid headers.
+════════════════════════════════════════
+Passing unknown or invalid headers through to the target poses a potential risk of compromise.
+By setting drop_invalid_header_fields to true, anything that does not conform to well known, defined headers will be removed by the load balancer.
+
+
+See https://avd.aquasec.com/misconfig/aws-0052
+────────────────────────────────────────
+ terraform/modules/alb/main.tf:18-35
+   via terraform/stack/main.tf:205-216 (module.alb)
+    via terraform/environments/staging/main.tf:40-85 (module.stack)
+────────────────────────────────────────
+  18 ┌ resource "aws_lb" "this" {
+  19 │   name               = var.name
+  20 │   internal           = false
+  21 │   load_balancer_type = "application"
+  22 │   # The module's own group always applies: the CloudFront-only rule lives there.
+  23 │   security_groups = distinct(concat([aws_security_group.alb.id], var.security_group_ids))
+  24 │   subnets         = var.public_subnet_ids
+  25 │ 
+  26 └   enable_deletion_protection = var.deletion_protection
+  ..   
+────────────────────────────────────────
+
+
+AWS-0053 (HIGH): Load balancer is exposed publicly.
+════════════════════════════════════════
+There are many scenarios in which you would want to expose a load balancer to the wider internet, but this check exists as a warning to prevent accidental exposure of internal assets. You should ensure that this resource should be exposed publicly.
+
+
+See https://avd.aquasec.com/misconfig/aws-0053
+────────────────────────────────────────
+ terraform/modules/alb/main.tf:20
+   via terraform/modules/alb/main.tf:18-35 (aws_lb.this)
+    via terraform/stack/main.tf:205-216 (module.alb)
+     via terraform/environments/production/main.tf:40-83 (module.stack)
+────────────────────────────────────────
+  18   resource "aws_lb" "this" {
+  ..   
+  20 [   internal           = false
+  ..   
+  35   }
+────────────────────────────────────────
+
+
+AWS-0053 (HIGH): Load balancer is exposed publicly.
+════════════════════════════════════════
+There are many scenarios in which you would want to expose a load balancer to the wider internet, but this check exists as a warning to prevent accidental exposure of internal assets. You should ensure that this resource should be exposed publicly.
+
+
+See https://avd.aquasec.com/misconfig/aws-0053
+────────────────────────────────────────
+ terraform/modules/alb/main.tf:20
+   via terraform/modules/alb/main.tf:18-35 (aws_lb.this)
+    via terraform/stack/main.tf:205-216 (module.alb)
+     via terraform/environments/staging/main.tf:40-85 (module.stack)
+────────────────────────────────────────
+  18   resource "aws_lb" "this" {
+  ..   
+  20 [   internal           = false
+  ..   
+  35   }
+────────────────────────────────────────
+
+
+
+terraform/modules/cloudfront/main.tf (terraform)
+================================================
+Tests: 4 (SUCCESSES: 0, FAILURES: 4)
+Failures: 4 (HIGH: 4, CRITICAL: 0)
+
+AWS-0011 (HIGH): Distribution does not utilize a WAF.
+════════════════════════════════════════
+You should configure a Web Application Firewall in front of your CloudFront distribution. This will mitigate many types of attacks on your web application.
+
+
+See https://avd.aquasec.com/misconfig/aws-0011
+────────────────────────────────────────
+ terraform/modules/cloudfront/main.tf:107-225
+   via terraform/stack/main.tf:294-304 (module.cdn)
+    via terraform/environments/production/main.tf:40-83 (module.stack)
+────────────────────────────────────────
+ 107 ┌ resource "aws_cloudfront_distribution" "this" {
+ 108 │   enabled             = true
+ 109 │   is_ipv6_enabled     = true
+ 110 │   default_root_object = "index.html"
+ 111 │   aliases             = var.domain_aliases
+ 112 │   price_class         = var.price_class
+ 113 │   comment             = "C2C frontend - ${var.bucket_name}"
+ 114 │ 
+ 115 └   origin {
+ ...   
+────────────────────────────────────────
+
+
+AWS-0011 (HIGH): Distribution does not utilize a WAF.
+════════════════════════════════════════
+You should configure a Web Application Firewall in front of your CloudFront distribution. This will mitigate many types of attacks on your web application.
+
+
+See https://avd.aquasec.com/misconfig/aws-0011
+────────────────────────────────────────
+ terraform/modules/cloudfront/main.tf:107-225
+   via terraform/stack/main.tf:294-304 (module.cdn)
+    via terraform/environments/staging/main.tf:40-85 (module.stack)
+────────────────────────────────────────
+ 107 ┌ resource "aws_cloudfront_distribution" "this" {
+ 108 │   enabled             = true
+ 109 │   is_ipv6_enabled     = true
+ 110 │   default_root_object = "index.html"
+ 111 │   aliases             = var.domain_aliases
+ 112 │   price_class         = var.price_class
+ 113 │   comment             = "C2C frontend - ${var.bucket_name}"
+ 114 │ 
+ 115 └   origin {
+ ...   
+────────────────────────────────────────
+
+
+AWS-0132 (HIGH): Bucket does not encrypt data with a customer managed key.
+════════════════════════════════════════
+Encryption using AWS keys provides protection for your S3 buckets. To gain greater control over encryption, such as key rotation, access policies, and auditability, use customer managed keys (CMKs) with SSE-KMS.
+Note that SSE-KMS is not supported for S3 server access logging destination buckets; in such cases, use SSE-S3 instead.
+
+
+See https://avd.aquasec.com/misconfig/aws-0132
+────────────────────────────────────────
+ terraform/modules/cloudfront/main.tf:39-46
+   via terraform/stack/main.tf:294-304 (module.cdn)
+    via terraform/environments/production/main.tf:40-83 (module.stack)
+────────────────────────────────────────
+  39 ┌ resource "aws_s3_bucket_server_side_encryption_configuration" "frontend" {
+  40 │   bucket = aws_s3_bucket.frontend.id
+  41 │   rule {
+  42 │     apply_server_side_encryption_by_default {
+  43 │       sse_algorithm = "AES256"
+  44 │     }
+  45 │   }
+  46 └ }
+────────────────────────────────────────
+
+
+AWS-0132 (HIGH): Bucket does not encrypt data with a customer managed key.
+════════════════════════════════════════
+Encryption using AWS keys provides protection for your S3 buckets. To gain greater control over encryption, such as key rotation, access policies, and auditability, use customer managed keys (CMKs) with SSE-KMS.
+Note that SSE-KMS is not supported for S3 server access logging destination buckets; in such cases, use SSE-S3 instead.
+
+
+See https://avd.aquasec.com/misconfig/aws-0132
+────────────────────────────────────────
+ terraform/modules/cloudfront/main.tf:39-46
+   via terraform/stack/main.tf:294-304 (module.cdn)
+    via terraform/environments/staging/main.tf:40-85 (module.stack)
+────────────────────────────────────────
+  39 ┌ resource "aws_s3_bucket_server_side_encryption_configuration" "frontend" {
+  40 │   bucket = aws_s3_bucket.frontend.id
+  41 │   rule {
+  42 │     apply_server_side_encryption_by_default {
+  43 │       sse_algorithm = "AES256"
+  44 │     }
+  45 │   }
+  46 └ }
+────────────────────────────────────────
+
+
+
+terraform/modules/ecs-fargate/main.tf (terraform)
+=================================================
+Tests: 2 (SUCCESSES: 0, FAILURES: 2)
+Failures: 2 (HIGH: 0, CRITICAL: 2)
+
+AWS-0104 (CRITICAL): Security group rule allows unrestricted egress to any IP address.
+════════════════════════════════════════
+Opening up ports to connect out to the public internet is generally to be avoided. You should restrict access to IP addresses or ranges that are explicitly required where possible.
+
+
+See https://avd.aquasec.com/misconfig/aws-0104
+────────────────────────────────────────
+ terraform/modules/ecs-fargate/main.tf:111
+   via terraform/modules/ecs-fargate/main.tf:107-112 (egress)
+    via terraform/modules/ecs-fargate/main.tf:94-115 (aws_security_group.ecs_tasks)
+     via terraform/stack/main.tf:220-278 (module.ecs)
+      via terraform/environments/production/main.tf:40-83 (module.stack)
+────────────────────────────────────────
+  94   resource "aws_security_group" "ecs_tasks" {
+  ..   
+ 111 [     cidr_blocks = ["0.0.0.0/0"]
+ ...   
+ 115   }
+────────────────────────────────────────
+
+
+AWS-0104 (CRITICAL): Security group rule allows unrestricted egress to any IP address.
+════════════════════════════════════════
+Opening up ports to connect out to the public internet is generally to be avoided. You should restrict access to IP addresses or ranges that are explicitly required where possible.
+
+
+See https://avd.aquasec.com/misconfig/aws-0104
+────────────────────────────────────────
+ terraform/modules/ecs-fargate/main.tf:111
+   via terraform/modules/ecs-fargate/main.tf:107-112 (egress)
+    via terraform/modules/ecs-fargate/main.tf:94-115 (aws_security_group.ecs_tasks)
+     via terraform/stack/main.tf:220-278 (module.ecs)
+      via terraform/environments/staging/main.tf:40-85 (module.stack)
+────────────────────────────────────────
+  94   resource "aws_security_group" "ecs_tasks" {
+  ..   
+ 111 [     cidr_blocks = ["0.0.0.0/0"]
+ ...   
+ 115   }
+────────────────────────────────────────
+
+
+exit=1

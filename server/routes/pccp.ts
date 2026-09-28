@@ -133,10 +133,7 @@ router.patch('/plans/:planId', requirePlanAccess, async (req: Request, res: Resp
   const updatedBy =
     typeof userIdRaw === 'string' ? userIdRaw : userIdRaw != null ? String(userIdRaw) : 'system';
   try {
-    const updated = await updatePlan(orgId, String(req.params.planId), {
-      ...req.body,
-      updatedBy,
-    });
+    const updated = await updatePlan(orgId, String(req.params.planId), req.body, updatedBy);
     if (!updated) return res.status(404).json({ error: 'Plan not found' });
     res.json(updated);
   } catch (err: any) {

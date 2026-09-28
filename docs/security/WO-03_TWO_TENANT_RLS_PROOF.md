@@ -1,6 +1,9 @@
 # WO-03 — two-tenant RLS proof
 
-The executable proof is `tests/db/two-tenant-application-rls.dbtest.ts`. It runs
+The executable proof is `tests/db/two-tenant-application-rls.dbtest.ts`, with the
+Report OS contract (L184) in `tests/db/report-os-tenant-from-session.dbtest.ts`
+since 2026-09-24. Both run on one shared fixture, `tests/db/two-tenant-fixture.ts`;
+a new tenant contract gets its own file on it. The proof runs
 after the normal blank-database installer and deploy migration, connects the
 application pool through `APP_DATABASE_URL`, authenticates real JWTs, re-checks
 real `organization_users` membership, and lets the production request-scope

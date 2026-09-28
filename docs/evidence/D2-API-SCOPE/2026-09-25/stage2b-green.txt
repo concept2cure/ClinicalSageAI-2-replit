@@ -1,0 +1,39 @@
+# GREEN — stage2b: same tests, fix applied
+ ✓ server/middleware/__tests__/moduleEntitlementGate.test.ts > buildPrefixMap > maps a shared prefix to EVERY module that declares it 2ms
+ ✓ server/middleware/__tests__/moduleEntitlementGate.test.ts > buildPrefixMap > never maps a protected prefix, even when a surface declares it 1ms
+ ✓ server/middleware/__tests__/moduleEntitlementGate.test.ts > buildPrefixMap > protects every NEVER_GATED entry and its subpaths 1ms
+ ✓ server/middleware/__tests__/moduleEntitlementGate.test.ts > modulesForPath > matches only at a segment boundary 1ms
+ ✓ server/middleware/__tests__/moduleEntitlementGate.test.ts > modulesForPath > returns null for a path no surface claims 0ms
+ ✓ server/middleware/__tests__/moduleEntitlementGate.test.ts > modulesForPath > prefers the longest matching prefix 0ms
+ ✓ server/middleware/__tests__/moduleEntitlementGate.test.ts > the gate > does nothing at all when the mode is off 2ms
+ ✓ server/middleware/__tests__/moduleEntitlementGate.test.ts > the gate > allows when the org is entitled through ANY module claiming the prefix 1ms
+ ✓ server/middleware/__tests__/moduleEntitlementGate.test.ts > the gate > denies with MODULE_NOT_LICENSED when entitled to none of them 2ms
+ ✓ server/middleware/__tests__/moduleEntitlementGate.test.ts > the gate > report mode resolves the verdict and serves the request anyway 1ms
+ ✓ server/middleware/__tests__/moduleEntitlementGate.test.ts > the gate > FAILS OPEN when entitlement resolution throws 1ms
+ ✓ server/middleware/__tests__/moduleEntitlementGate.test.ts > the gate > leaves an unauthenticated request to whoever owns the 401 1ms
+ ✓ server/middleware/__tests__/moduleEntitlementGate.test.ts > the gate > never denies a protected path 1ms
+ ✓ server/middleware/__tests__/moduleEntitlementGate.test.ts > the gate takes its mode from the governed setting > refuses because the STORED mode says so, over a deployment that says off 1ms
+ ✓ server/middleware/__tests__/moduleEntitlementGate.test.ts > the gate takes its mode from the governed setting > serves because the STORED mode says off, over a deployment that says enforce 1ms
+ ✓ server/middleware/__tests__/moduleEntitlementGate.test.ts > the gate takes its mode from the governed setting > picks up a change without a restart, once the staleness window passes 6ms
+ ✓ server/middleware/__tests__/moduleEntitlementGate.test.ts > the gate takes its mode from the governed setting > does not read the settings store on every request 6ms
+ ✓ server/middleware/__tests__/moduleEntitlementGate.test.ts > the gate takes its mode from the governed setting > does not start refusing when the setting cannot be read at all 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > refuses a write to a surface outside the launch catalog, 403 LAUNCH_SCOPE, and does not call the route 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > refuses it for a request with no organisation too: scope is about the product, not the tenant 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes a prefix any launch surface claims, even when an out-of-scope surface claims it too 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes the narrow launch sub-path, and refuses the rest of the out-of-scope prefix 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > matches at a segment boundary: a longer, unclaimed name is not the out-of-scope prefix 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes a path no surface claims (unmapped) and a never-gated path 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope off (a development server) > passes the out-of-scope path through to the module modes, which are off 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the default reads LAUNCH_SCOPE_ENFORCE once, when the gate is built > production with LAUNCH_SCOPE_ENFORCE unset enforces 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the default reads LAUNCH_SCOPE_ENFORCE once, when the gate is built > production with a value that is not on/off refuses to build (boot), rather than guess 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the locked boards' APIs: the contradiction scan and the execution history (VSR-001 §16.5) 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > passes what the launch catalog and AnA use: execute, templates, the package model, tasks, dispatch readiness 5ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses a surface outside the catalog, and leaves the public API and webhooks alone 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > report (the default): passes the request and records the would-refuse 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > enforce: refuses it 403 LAUNCH_SCOPE and records it as enforced 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > enforce: never refuses infrastructure (the public API, webhooks) or a non-API path (the app itself) 4ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > records one row per route, not per record: numeric and uuid segments collapse to :id 12ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > a request with no organisation is recorded against organisation 0, not dropped 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > production with LAUNCH_SCOPE_API_UNATTRIBUTED unset reports; an unknown value refuses to boot 1ms
+ Test Files  2 passed (2)
+      Tests  36 passed (36)

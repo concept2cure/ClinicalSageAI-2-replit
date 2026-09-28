@@ -1,0 +1,34 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T17:52:27.315Z","pid":19838,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T17:52:27.317Z","pid":19838,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T17:52:27.317Z","pid":19838,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/governed-edit-boundary.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-24T17:52:27.693Z', poolSize: 1 }
+
+stdout | tests/db/governed-edit-boundary.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/governed-edit-boundary.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a plan edit cannot move the plan to another org, and the content edit still applies
+[database] Database connection successful { timestamp: '2026-09-24T17:52:28.240Z', poolSize: 2 }
+
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a plan edit cannot approve or lock the plan, and the content edit still applies 98ms
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a plan edit cannot move the plan to another org, and the content edit still applies 24ms
+{"level":30,"time":"2026-09-24T17:52:28.299Z","pid":19838,"hostname":"vm","context":{"userId":"73","tenantId":90301,"resourceId":"22edaf88-0d6c-41eb-b346-106b99ee1cb2"},"msg":"[audit-service] [AUDIT] post_market.document.update post_market_document"}
+{"level":30,"time":"2026-09-24T17:52:28.335Z","pid":19838,"hostname":"vm","context":{"userId":"73","tenantId":90301,"resourceId":"9fd60668-4546-444f-9eb6-1bf68b3d5cbe"},"msg":"[audit-service] [AUDIT] post_market.document.update post_market_document"}
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a plan edit cannot hang the plan from another org's program 15ms
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a modification edit cannot move it into another org's plan 16ms
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a post-market document edit cannot approve or lock it, and the content edit still applies 40ms
+{"level":30,"time":"2026-09-24T17:52:28.366Z","pid":19838,"hostname":"vm","context":{"userId":"73","tenantId":90301,"resourceId":"bbe0d120-365f-4966-badb-71b47a121a4b"},"msg":"[audit-service] [AUDIT] post_market.document.update post_market_document"}
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a post-market document edit cannot move it to another org, and the content edit still applies 33ms
+ ✓ tests/db/governed-edit-boundary.dbtest.ts > A PCCP or post-market edit writes content, never tenant, parent or approval (D3, L192) > a post-market document edit cannot hang it from another org's program 17ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  17:52:25
+   Duration  3.44s (transform 1.38s, setup 81ms, import 2.33s, tests 747ms, environment 0ms)
+

@@ -20,6 +20,8 @@ import {
   START_DEEP_INVESTIGATION,
   CHECK_DEEP_INVESTIGATION,
 } from './agentic-workflow-tools.js';
+// AnA's declared plan for a turn — the only source of a "Step 2 of 5" count.
+import { UPDATE_PLAN } from './turn-plan.js';
 // Biotech program orchestrator — the biologics/advanced-therapy development
 // spine (discovery → IND → Phase 1/2/3 → BLA → post-approval). Handler is
 // registered from biotech-program.ts via the inject-and-sibling pattern.
@@ -471,6 +473,10 @@ import {
 // deterministic verdict engines. Handlers live in AnaToolExecutor.ts beside the
 // other protocol-development handlers.
 import { PROTOCOL_DESIGN_TOOLS } from './protocol-design-tool-defs.js';
+// Tier 1 of docs/design/PROTOCOL_INDUSTRY_GAPS.md: trial schema, SPIRIT, CtQ, USDM,
+// DCT profile, WHO ICTRP, deviation trends, redline; Tier 2 dose escalation, enrollment, interim OC, MMRM,
+// external control, multiplicity; Tier 3 biospecimens, master protocol. All read-only.
+import { PROTOCOL_INDUSTRY_TOOLS } from './protocol-industry-tool-defs.js';
 import { ANA_ADVISORY_TOOL_SPECS, SUBMISSION_PLAN_TOOL_SPEC, PMA_ADVISORY_TOOL_SPEC, EU_TECHDOC_TOOL_SPEC, IVD_KNOWLEDGE_TOOL_SPEC } from '../ana-advisory';
 import { GLOBAL_RI_TOOL_SPECS } from '../global-ri/ana-tools';
 import { STATISTICAL_DESIGN_TOOLS } from './statisticalDesignTools';
@@ -2214,6 +2220,7 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   DRAFT_CLINICAL_OVERVIEW_M2_5,
   BATCH_DRAFT_SECTIONS,
   CONVENE_DRAFTING_COUNCIL,
+  UPDATE_PLAN,
   GET_CLIENT_JOURNEY,
   GET_BIOTECH_PROGRAM_STATUS,
   COMMIT_DOCUMENT_REVISION,
@@ -2710,6 +2717,8 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   // Protocol ⇄ study-design loop: bind, review the derivation, apply accepted
   // paths, read the rule pack and the design gates. See protocol-design-tool-defs.ts.
   ...PROTOCOL_DESIGN_TOOLS,
+  // The sixteen industry-gap engines, reached read-only. See protocol-industry-tool-defs.ts.
+  ...PROTOCOL_INDUSTRY_TOOLS,
 ];
 
 // Defensive registry guard: v2's cdiscTools.ts currently re-registers
@@ -2742,6 +2751,38 @@ export const ALL_ANA_TOOLS: AnaTool[] = ALL_ANA_TOOLS_RAW.filter(
 // enablement is confirmed.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * The agency and literature domains AnA's hosted web tools may reach. Kept
+ * tight to sources AnA actually cites, so a regulatory lookup cannot drift into
+ * low-quality web content, and shared by web_search and web_fetch.
+ */
+export const REGULATORY_WEB_DOMAINS: readonly string[] = Object.freeze([
+  'fda.gov',
+  'www.fda.gov',
+  'accessdata.fda.gov',
+  'ema.europa.eu',
+  'www.ema.europa.eu',
+  'ich.org',
+  'www.ich.org',
+  'pmda.go.jp',
+  'www.pmda.go.jp',
+  'mhra.gov.uk',
+  'www.mhra.gov.uk',
+  'tga.gov.au',
+  'www.tga.gov.au',
+  'canada.ca',
+  'www.canada.ca',
+  'iso.org',
+  'www.iso.org',
+  'ecfr.gov',
+  'www.ecfr.gov',
+  'federalregister.gov',
+  'www.federalregister.gov',
+  'clinicaltrials.gov',
+  'pubmed.ncbi.nlm.nih.gov',
+  'ncbi.nlm.nih.gov',
+]);
+
 export const WEB_SEARCH_TOOL: AnthropicServerTool = {
   // The current variant, with dynamic filtering. It was pinned to the 2025
   // `web_search_20250305` — the basic one — long after the models in the
@@ -2751,45 +2792,27 @@ export const WEB_SEARCH_TOOL: AnthropicServerTool = {
   type: 'web_search_20260209',
   name: 'web_search',
   max_uses: 5,
-  // Keep the search surface tight to sources AnA actually cites. The allowlist
-  // prevents drift into low-quality web content during regulatory lookups.
-  allowed_domains: [
-    'fda.gov',
-    'www.fda.gov',
-    'accessdata.fda.gov',
-    'ema.europa.eu',
-    'www.ema.europa.eu',
-    'ich.org',
-    'www.ich.org',
-    'pmda.go.jp',
-    'www.pmda.go.jp',
-    'mhra.gov.uk',
-    'www.mhra.gov.uk',
-    'tga.gov.au',
-    'www.tga.gov.au',
-    'canada.ca',
-    'www.canada.ca',
-    'iso.org',
-    'www.iso.org',
-    'ecfr.gov',
-    'www.ecfr.gov',
-    'federalregister.gov',
-    'www.federalregister.gov',
-    'clinicaltrials.gov',
-    'pubmed.ncbi.nlm.nih.gov',
-    'ncbi.nlm.nih.gov',
-  ],
+  allowed_domains: REGULATORY_WEB_DOMAINS,
 };
 
+/**
+ * web_fetch reads the same agency set web_search may search, and no more.
+ * Until 2026-09-26 it had no allowed_domains, so the model could fetch any URL
+ * it wrote or found in a document — the one egress on the tool surface with no
+ * boundary (docs/evidence/D6/2026-09-26-egress-tools/).
+ */
 export const WEB_FETCH_TOOL: AnthropicServerTool = {
   type: 'web_fetch_20260209',
   name: 'web_fetch',
+  max_uses: 5,
+  allowed_domains: REGULATORY_WEB_DOMAINS,
 };
 
 export const CODE_EXECUTION_TOOL: AnthropicServerTool = {
   type: 'code_execution_20260120',
   name: 'code_execution',
 };
+
 
 /**
  * Returns the subset of Anthropic server tools that are enabled for this

@@ -1,0 +1,38 @@
+# Verify-by-failing for the 2026-09-24 additions.
+# Mutation: ALLOWED_ORIGINS line removed; the audit-key precondition removed; the approvals
+# shape validation removed; app_url reverted to the old regex (^https://[^/\s]+/?$).
+# terraform test skips every run after the first failure in a file, so each run is split
+# into its own file (same mocks and variables) and judged alone.
+
+## Unmutated
+  accepts_the_fail_closed_interim_approvals                  pass
+  refuses_a_missing_region                                   pass
+  refuses_a_non_boolean_zero_retention_flag                  pass
+  refuses_a_non_string_intended_use                          pass
+  refuses_a_refresh_secret_equal_to_the_jwt_secret           pass
+  refuses_a_short_audit_chain_secret                         pass
+  refuses_an_app_url_that_is_not_an_https_origin             pass
+  refuses_an_app_url_with_a_trailing_slash                   pass
+  refuses_an_app_url_with_uppercase                          pass
+  refuses_an_unknown_data_class                              pass
+  refuses_equal_audit_seal_and_chain_keys                    pass
+  refuses_phi_approval_without_zero_retention                pass
+  refuses_placement_approvals_that_are_not_a_json_object     pass
+  renders_the_boot_contract                                  pass
+
+## Mutated — the eight new must-fail runs and renders_the_boot_contract (its ALLOWED_ORIGINS assertion) must fail;
+## the runs for rules that were not removed must still pass.
+  accepts_the_fail_closed_interim_approvals                  pass
+  refuses_a_missing_region                                   fail
+  refuses_a_non_boolean_zero_retention_flag                  fail
+  refuses_a_non_string_intended_use                          fail
+  refuses_a_refresh_secret_equal_to_the_jwt_secret           pass
+  refuses_a_short_audit_chain_secret                         pass
+  refuses_an_app_url_that_is_not_an_https_origin             pass
+  refuses_an_app_url_with_a_trailing_slash                   fail
+  refuses_an_app_url_with_uppercase                          fail
+  refuses_an_unknown_data_class                              fail
+  refuses_equal_audit_seal_and_chain_keys                    fail
+  refuses_phi_approval_without_zero_retention                fail
+  refuses_placement_approvals_that_are_not_a_json_object     pass
+  renders_the_boot_contract                                  fail

@@ -51,6 +51,28 @@ describe('PublishingCenter — honest reads', () => {
     await waitFor(() => expect(text()).toMatch(/Couldn’t load spec versions/));
   });
 
+  it('an empty answer says it is what the service returned, not a failed read', async () => {
+    // A-0928-2: both bare empty states read the same as a failure that lost its
+    // copy. The spec register answers v4.0 as null ("nothing qualified yet") and
+    // the vocabulary listing answers with no v3.2.2 lists.
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url === '/api/ectd/qualification/spec-versions') {
+        return { ok: true, status: 200, json: async () => ({ 'v3.2.2': null, 'v4.0': null }) } as Response;
+      }
+      if (url === '/api/ectd/controlled-vocab') {
+        return { ok: true, status: 200, json: async () => ({ regionalIgOid: '', v4: [], v3: [] }) } as Response;
+      }
+      return { ok: false, status: 404, json: async () => ({}) } as Response;
+    });
+    render(<PublishingCenter {...props()} />);
+    await waitFor(() => expect(text()).toMatch(/No spec versions/));
+    expect(text()).toMatch(/specification-version register answered and lists no versions qualified for v4\.0.*not a failed read/);
+    fireEvent.change(screen.getByDisplayValue(/eCTD v4\.0/), { target: { value: 'v3.2.2' } });
+    await waitFor(() => expect(text()).toMatch(/No v3\.2\.2 coded-attribute lists were returned/));
+    expect(text()).toMatch(/controlled-vocabulary service answered with no v3\.2\.2 lists.*not a failed read/);
+    expect(text()).not.toMatch(/!/);
+  });
+
   it('says on screen that nothing here publishes or transmits', async () => {
     apiRequest.mockResolvedValue({ ok: false, status: 500, json: async () => ({}) } as Response);
     render(<PublishingCenter {...props()} />);

@@ -244,6 +244,49 @@ describe('mandatory authoring object authorization middleware', () => {
     expect(deniedRes.statusCode).toBe(403);
   });
 
+  /* 2026-09-28. Export, file-to-vault and send-to-packager read the document
+     and produce the record elsewhere (the export ledger, the project vault, the
+     eCTD packager); none writes the document. They fell through to `edit`, and
+     an edit of an immutable document is refused — so a FROZEN or APPROVED
+     document, the one a submission actually needs, could not be exported as its
+     filing artifact, filed to the vault as a sealed record, or sent to the
+     packager. They are now the `export` action: any status, and a grant that
+     produces the record (OWNER, AUTHOR, APPROVER). */
+  it.each(['export', 'file-to-vault', 'send-to-packager'])(
+    'lets the record be produced from a FROZEN document: POST /docs/:id/%s',
+    async route => {
+      for (const role of ['OWNER', 'AUTHOR', 'APPROVER']) {
+        installQueryBehavior({ status: 'FROZEN', roles: [role] });
+        const next = vi.fn();
+        const res = response();
+        await authoringObjectAuthorization(
+          request({ method: 'POST', path: `/authoring/docs/${DOC_ID}/${route}`, user: author }),
+          res,
+          next,
+        );
+        expect(next, `${role} refused ${route} on a FROZEN document (${res.statusCode})`).toHaveBeenCalledOnce();
+      }
+    },
+  );
+
+  it.each(['export', 'file-to-vault', 'send-to-packager'])(
+    'still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/%s',
+    async route => {
+      for (const role of ['REVIEWER', 'VIEWER']) {
+        installQueryBehavior({ status: 'FROZEN', roles: [role] });
+        const next = vi.fn();
+        const res = response();
+        await authoringObjectAuthorization(
+          request({ method: 'POST', path: `/authoring/docs/${DOC_ID}/${route}`, user: author }),
+          res,
+          next,
+        );
+        expect(next).not.toHaveBeenCalled();
+        expect(res.statusCode).toBe(403);
+      }
+    },
+  );
+
   it('blocks content mutation after the document becomes immutable', async () => {
     installQueryBehavior({ status: 'APPROVED', roles: ['OWNER', 'AUTHOR'] });
     const req = request({

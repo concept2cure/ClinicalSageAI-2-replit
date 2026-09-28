@@ -91,12 +91,17 @@ function decision(partial: Partial<DossierDecision>): DossierDecision {
 
 describe('summarizeDecisions', () => {
   it('rolls up authored/decided/approved/rejected/pending counts', () => {
+    /* Counted from actionState, which is what public.decision_records records.
+       This fixture used approvedById / rejectedById — columns of the retired
+       drizzle shape that the deployed table does not have, so every real row
+       fell through to `pending`, rejected ones included. */
     const summary = summarizeDecisions([
-      decision({ id: 'a', authoredBy: 'ana', decidedBy: 'human', approvedById: 1 }),
-      decision({ id: 'b', authoredBy: 'ana', decidedBy: 'human', rejectedById: 2 }),
+      decision({ id: 'a', authoredBy: 'ana', decidedBy: 'human', actionState: 'approved' }),
+      decision({ id: 'b', authoredBy: 'ana', decidedBy: 'human', actionState: 'rejected' }),
       decision({ id: 'c', authoredBy: 'human', decidedBy: null }),
     ]);
     expect(summary).toEqual({
+      unavailable: null,
       total: 3,
       anaAuthored: 2,
       humanAuthored: 1,
@@ -144,7 +149,7 @@ function minimalLedger(): ArtifactLedger {
 
 function fixtureDossier(): DocumentLineageDossier {
   const decisions = [
-    decision({ id: 'dec_ana', authoredBy: 'ana', decidedBy: 'human', approvedById: 3 }),
+    decision({ id: 'dec_ana', authoredBy: 'ana', decidedBy: 'human', actionState: 'approved' }),
   ];
   return {
     schemaVersion: DOSSIER_SCHEMA_VERSION,
@@ -278,5 +283,30 @@ describe('serializeDocumentLineageDossierXml', () => {
   it('CDATA-wraps JSON detail payloads', () => {
     expect(xml).toContain('<![CDATA[');
     expect(xml).toContain('"tokens":900');
+  });
+});
+
+describe('serializeDocumentLineageDossierXml — retained turn records', () => {
+  const sha = 'c'.repeat(64);
+  it('lists each retained record by id and hash', () => {
+    const xml = serializeDocumentLineageDossierXml({
+      ...fixtureDossier(),
+      retainedTurnRecords: [
+        { id: 'rec-1', outcome: 'answered', actorUserId: 7, startedAt: '2026-09-26T00:00:00.000Z', endedAt: '2026-09-26T00:00:05.000Z', recordSha256: sha },
+      ],
+    });
+    expect(xml).toContain('<RetainedTurnRecords status="read" count="1">');
+    expect(xml).toContain(`<TurnRecord id="rec-1" outcome="answered" actorUserId="7"`);
+    expect(xml).toContain(`sha256="${sha}"`);
+  });
+
+  it('says the store could not be read, rather than listing none', () => {
+    const xml = serializeDocumentLineageDossierXml({ ...fixtureDossier(), retainedTurnRecords: null });
+    expect(xml).toContain('<RetainedTurnRecords status="unavailable">');
+    expect(xml).not.toMatch(/<RetainedTurnRecords[^>]*count=/);
+  });
+
+  it('omits the section for a dossier assembled before it existed', () => {
+    expect(serializeDocumentLineageDossierXml(fixtureDossier())).not.toContain('RetainedTurnRecords');
   });
 });

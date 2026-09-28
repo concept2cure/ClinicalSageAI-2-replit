@@ -27,7 +27,7 @@ import {
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import { ok, clientError, orgRequired, notFoundInTenant, serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
-import auditService from '../services/auditService';
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { resolveEffectiveProjectContext } from '../services/industry-context/resolver';
 
 const router = Router();
@@ -88,6 +88,23 @@ router.get('/industry-profile', async (req: Request, res: Response) => {
   }
 });
 
+/** Partial update: only fields present in the request body are written, so a
+ *  single-field PATCH cannot null out the rest. primaryIndustry is required. */
+function profileFields(body: Record<string, unknown>, p: z.infer<typeof orgPatch>): Record<string, unknown> {
+  const fields: Record<string, unknown> = { primaryIndustry: p.primaryIndustry };
+  if ('mdxSpecialization' in body) fields.mdxSpecialization = p.mdxSpecialization ?? null;
+  if ('defaultMarkets' in body) fields.defaultMarkets = p.defaultMarkets ?? [];
+  if ('defaultPathways' in body) fields.defaultPathways = p.defaultPathways ?? [];
+  if ('defaultApprovalRigor' in body) fields.defaultApprovalRigor = p.defaultApprovalRigor ?? null;
+  return fields;
+}
+
+/** The trimmed reason for change, or null when it is missing or under 3 characters. */
+function reasonForChange(body: Record<string, unknown>): string | null {
+  const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
+  return reason.length >= 3 ? reason : null;
+}
+
 router.patch('/industry-profile', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
@@ -95,15 +112,20 @@ router.patch('/industry-profile', async (req: Request, res: Response) => {
   const parsed = orgPatch.safeParse(body);
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const p = parsed.data;
+  /* A governed change carries its reason for change into the audit row, as
+     PATCH /api/organizations/:id/profile does. This route took none: Setup's
+     client-type chips saved the org's industry on one click, with no reason
+     and no confirmation, under a page promising every change is saved "and
+     written to the audit trail" with a reason (launch sweep finding 122). */
+  const reason = reasonForChange(body);
+  if (!reason) {
+    return clientError(res, 422, 'A reason for change of at least 3 characters is required — it is written to the audit record.', {
+      reason: ['required, at least 3 characters'],
+    });
+  }
   const userId = getUserId(req);
   try {
-    // Partial update: only fields present in the request body are written, so a
-    // single-field PATCH cannot null out the rest. primaryIndustry is required.
-    const fields: Record<string, unknown> = { primaryIndustry: p.primaryIndustry };
-    if ('mdxSpecialization' in body) fields.mdxSpecialization = p.mdxSpecialization ?? null;
-    if ('defaultMarkets' in body) fields.defaultMarkets = p.defaultMarkets ?? [];
-    if ('defaultPathways' in body) fields.defaultPathways = p.defaultPathways ?? [];
-    if ('defaultApprovalRigor' in body) fields.defaultApprovalRigor = p.defaultApprovalRigor ?? null;
+    const fields = profileFields(body, p);
     const now = new Date();
     const db = requestDb(req);
     const [row] = await db
@@ -114,15 +136,19 @@ router.patch('/industry-profile', async (req: Request, res: Response) => {
         set: { ...fields, updatedBy: userId, updatedAt: now },
       })
       .returning();
-    await auditService.logAction({
+    /* WO-16C. Was `await auditService.logAction(…)` with the outcome thrown
+       away, so a profile saved with no §11.10(e) row answered like one with a
+       row. The upsert stands either way; `meta.auditTrail` says which, and the
+       client transport shows the "not recorded" notice when it was lost. */
+    const auditTrail = await recordAuditRow({
       organizationId: orgId,
       userId: userId ?? undefined,
       action: 'update',
       resourceType: 'organization_industry_profile',
       resourceId: orgId,
-      details: { primaryIndustry: p.primaryIndustry, mdxSpecialization: p.mdxSpecialization ?? null },
+      details: { primaryIndustry: p.primaryIndustry, mdxSpecialization: p.mdxSpecialization ?? null, reason },
     });
-    return ok(res, row);
+    return ok(res, row, { auditTrail });
   } catch (err) {
     return serverError(res, log, 'patch-org-profile', err);
   }
@@ -217,7 +243,8 @@ router.patch('/projects/:programId/industry-profile', async (req: Request, res: 
     if (!row) {
       return clientError(res, 409, 'Project profile is owned by another tenant');
     }
-    await auditService.logAction({
+    // WO-16C: the outcome is carried, as on the organisation profile above.
+    const auditTrail = await recordAuditRow({
       organizationId: orgId,
       userId: userId ?? undefined,
       action: 'update',
@@ -225,7 +252,7 @@ router.patch('/projects/:programId/industry-profile', async (req: Request, res: 
       resourceId: programId,
       details: { vertical: p.vertical ?? null, specialization: p.specialization ?? null },
     });
-    return ok(res, row);
+    return ok(res, row, { auditTrail });
   } catch (err) {
     return serverError(res, log, 'patch-project-profile', err);
   }

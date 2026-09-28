@@ -1,0 +1,21 @@
+# ci:ai-tenant-binding self-test
+  ✓ control — literal names organizationId
+  ✓ control — identifier declared with organizationId
+  ✓ control — forwarded request with a reasoned annotation
+  ✓ control — a comment names the call
+  ✓ literal without organizationId (the stream.ts defect)
+  ✓ identifier declared without organizationId
+  ✓ forwarded spread without an annotation
+  ✓ a bare annotation with no reason
+  ✓ getGateway() receiver without organizationId
+  ✓ control — allowlisted module declares public
+  ✓ control — a comment names public
+  ✓ a non-allowlisted module declares public
+  ✓ end to end — the walk finds the unbound call and the public declaration, skips tests
+
+✓ self-test: 13 cases, every violation caught and the controls clean
+exit=0
+
+# ci:ai-tenant-binding on this change
+✓ ai-tenant-binding: every AnA gateway call binds its tenant; payloadProvenance 'public' only in allowlisted modules
+exit=0

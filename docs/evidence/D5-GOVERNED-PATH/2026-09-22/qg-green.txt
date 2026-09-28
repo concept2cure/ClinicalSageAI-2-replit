@@ -1,0 +1,7 @@
+# quality-gating-not-assessed.pglite.integration.test.ts against the fix
+ Test Files  1 passed (1)
+      Tests  28 passed (28)
+
+# client: qmpWorkspace.test.tsx + qmpWorkspaceGoverned.test.tsx against the fix
+ Test Files  2 passed (2)
+      Tests  18 passed (18)

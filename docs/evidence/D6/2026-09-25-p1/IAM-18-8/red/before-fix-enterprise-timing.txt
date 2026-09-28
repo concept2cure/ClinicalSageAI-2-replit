@@ -1,0 +1,45 @@
+# HEAD 7fbe51c5, sources unchanged (tests only), 2026-09-26T13:13Z
+$ NODE_OPTIONS=--max-old-space-size=1536 npx vitest run server/routes/__tests__/authEnterprise-unknown-email-timing.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/routes/__tests__/authEnterprise-unknown-email-timing.test.ts > POST /api/auth/enterprise/verify-password > an unknown e-mail pays exactly one bcrypt comparison, at the stored hashes' cost, and is still 401 INVALID_CREDENTIALS 37ms
+   → no comparison ran for the unknown e-mail: the answer time says the address is not enrolled: expected "compare" to be called 1 times, but got 0 times
+ × server/routes/__tests__/authEnterprise-unknown-email-timing.test.ts > POST /api/auth/enterprise/verify-password > a known account with no stored password pays the same one comparison, and is 401 6ms
+   → no comparison ran for the account without a password: expected "compare" to be called 1 times, but got 0 times
+ ✓ server/routes/__tests__/authEnterprise-unknown-email-timing.test.ts > POST /api/auth/enterprise/verify-password > control: a known account with the wrong password is compared against its own hash only, never the pad 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authEnterprise-unknown-email-timing.test.ts > POST /api/auth/enterprise/verify-password > an unknown e-mail pays exactly one bcrypt comparison, at the stored hashes' cost, and is still 401 INVALID_CREDENTIALS
+AssertionError: no comparison ran for the unknown e-mail: the answer time says the address is not enrolled: expected "compare" to be called 1 times, but got 0 times
+ ❯ server/routes/__tests__/authEnterprise-unknown-email-timing.test.ts:126:115
+    124|     expect(r.status).toBe(401);
+    125|     expect(r.body).toMatchObject({ error: 'INVALID_CREDENTIALS' });
+    126|     expect(compare, 'no comparison ran for the unknown e-mail: the ans…
+       |                                                                                                                   ^
+    127|     expect(String(compare.mock.calls[0][1]), 'the pad does not cost wh…
+    128|     expect(authEvents).toHaveBeenCalledWith(expect.objectContaining({ …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/routes/__tests__/authEnterprise-unknown-email-timing.test.ts > POST /api/auth/enterprise/verify-password > a known account with no stored password pays the same one comparison, and is 401
+AssertionError: no comparison ran for the account without a password: expected "compare" to be called 1 times, but got 0 times
+ ❯ server/routes/__tests__/authEnterprise-unknown-email-timing.test.ts:135:77
+    133|     const r = await verifyPassword('a@acme.test', 'whatever-it-is');
+    134|     expect(r.status).toBe(401);
+    135|     expect(compare, 'no comparison ran for the account without a passw…
+       |                                                                             ^
+    136|     expect(String(compare.mock.calls[0][1])).toMatch(STORED_HASH_COST);
+    137|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  13:13:10
+   Duration  2.05s (transform 872ms, setup 85ms, import 1.63s, tests 52ms, environment 0ms)
+
+exit=1

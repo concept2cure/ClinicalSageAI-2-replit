@@ -22,6 +22,7 @@
  * @compliance ICH eCTD v3.2.2
  */
 
+import { setAuditRowHeaders } from '../services/audit/audit-write-outcome';
 import { Router, Request, Response } from 'express';
 import { createHash, randomUUID } from 'crypto';
 import { z } from 'zod';
@@ -326,6 +327,13 @@ router.get('/by-run/:runId/signed', async (req: Request, res: Response) => {
       payloadDigest: d.payloadDigest,
       signatureId: d.signatureId,
       sealVerdict: d.sealVerdict,
+      // §11.50 manifestation. Null means the signature row does not hold it;
+      // the client says so rather than filling it in.
+      signerId: d.signerId,
+      signerName: d.signerName,
+      signerTitle: d.signerTitle,
+      signatureMeaning: d.signatureMeaning,
+      signedAt: d.signedAt,
     },
     // The signed manifest. Checksums are the content fingerprint a transmit
     // hop must re-verify rendered bytes against.
@@ -526,6 +534,9 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
         errors: validation.errors.slice(0, 50),
         sequenceNumber: result.sequenceNumber,
         region: result.region,
+        // The assembly's audit rows were written (or not) before the package was
+        // refused; the refusal does not unwrite them. WO-16C.
+        auditTrail: result.auditTrail,
       });
     }
 
@@ -537,6 +548,9 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
 
     // Set headers for file download
     res.setHeader('Content-Type', 'application/zip');
+    // WO-16C: a ZIP body cannot carry the assembly's audit outcome, so it
+    // travels as the header pair the client transport reads.
+    setAuditRowHeaders(res, result.auditTrail);
     res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
     res.setHeader('X-ECTD-Total-Modules', String(result.stats.totalModules));
     res.setHeader('X-ECTD-Total-Files', String(result.stats.totalFiles));

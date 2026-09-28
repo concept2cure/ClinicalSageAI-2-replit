@@ -1,0 +1,11 @@
+set_program_metadata | confirm | - | AnaToolExecutor.ts:7815 | UPDATE regulatory_programs.metadata
+set_protocol_budget_params | confirm | - | protocol-budget-service.ts:42 | UPSERT protocol_budget_params + governed-action row
+set_protocol_milestone_status | confirm | - | protocol-milestones-service.ts:42 | UPDATE protocol_milestones + governed-action row
+set_qtl | confirm | - | rbm/rbm-actuator.ts:195 | INSERT rbm_qtls
+set_soa_cell | confirm | - | protocol-soa-service.ts:46 | UPSERT protocol_soa_cells + governed-action row
+simulate_reviewer_challenges | confirm | - | submission-twin-service.ts:507 | INSERT submission_twin_challenges
+start_deep_investigation | confirm | - | ana/deep-investigation.ts:148 | INSERT ana_deep_investigations and starts an unattended background run
+start_war_game | self | - | AnaToolExecutor.ts:19340 | her own WAR_GAME_RUN audit entry; engine is pure
+suggest_predicate_devices | confirm | - | AnaToolExecutor.ts:6234 | POST to the shadow review service with an admin token (unverified whether it persists; fail closed)
+transmit_submission | refuse | - | AnaToolExecutor.ts:8660 | none; the handler already refuses (transmission is a person's signed act)
+triage_signal | confirm | - | rbm/rbm-actuator.ts:253 | UPDATE rbm_signals status/severity

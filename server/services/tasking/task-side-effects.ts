@@ -6,7 +6,9 @@
  * @module server/services/tasking/task-side-effects
  */
 import { and, eq, ne, or, isNull, inArray, sql } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/node-postgres';
 import { db } from '../../db';
+import * as schema from '../../../shared/schema';
 import { unifiedTasks, taskDependencies } from '../../../shared/schema';
 import { createNotification } from '../notifications/notification-service';
 import type { AuditTaskActionParams } from './task-audit';
@@ -53,10 +55,11 @@ export function notifyTaskEvent(params: {
 // dependent is out of its reach, as on every other task write: a Part 11
 // tombstone is never re-written, and never ledgered as having moved.
 //
-// Two modes, two entry points over one walk. With no transaction (the AnA
-// command executor), cascadeUnblockOnCompletion runs on `db` after the caller's
-// write and records nothing. Given the completion's own transaction
-// (PATCH /api/tasks/tasks/:id and /api/regulatory/tasks/:id/status),
+// Two modes over one walk. With no transaction, cascadeUnblockOnCompletion runs
+// on `db` after the caller's write and records nothing; no production caller
+// uses it any more. Given the completion's own transaction
+// (PATCH /api/tasks/tasks/:id and /api/regulatory/tasks/:id/status, or AnA's
+// update_task through cascadeUnblockOnCompletionOnClient),
 // cascadeUnblockOnCompletionInTx runs every read and UPDATE on it, and hands
 // back one ledger row per dependent whose record it changed — a status move or
 // only a blockedBy[] rewrite — and the notifications, for the caller to write
@@ -130,6 +133,20 @@ export async function cascadeUnblockOnCompletionInTx(
     if (next.unblocked) out.notices.push(unblockedNotice(organizationId, row, next.unblocked));
   });
   return out;
+}
+
+/**
+ * The same, on a pg client inside a transaction the caller opened itself (AnA's
+ * boardWriteWithLineage): Drizzle over that one connection, so every read and
+ * UPDATE is on the caller's transaction.
+ */
+export async function cascadeUnblockOnCompletionOnClient(
+  organizationId: number,
+  completedTaskId: string,
+  onClient: { client: { query: (...args: never[]) => unknown }; actorUserId: number }
+): Promise<CascadeResult> {
+  const tx = drizzle(onClient.client as never, { schema }) as unknown as CascadeRunner;
+  return cascadeUnblockOnCompletionInTx(organizationId, completedTaskId, { tx, actorUserId: onClient.actorUserId });
 }
 
 /** The "Unblocked" notification for a dependent whose status moved. */

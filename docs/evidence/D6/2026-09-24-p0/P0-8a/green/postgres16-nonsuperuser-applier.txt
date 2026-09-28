@@ -1,0 +1,204 @@
+# PostgreSQL 16.13 scratch cluster (port 54329), HEAD af833c44 working tree, 2026-09-25T02:19:54Z
+# The amended db/migrations/20260617_audit_logs_immutability.sql (sha256 7785f054592f5dcb…) applied by a NON-SUPERUSER applier with CREATEROLE — the shape of an RDS master user — into a fresh database whose audit_logs is the baseline DDL (repro/ddl-from-0000.sql). Run BEFORE the Phase A replay (postgres16-door-after-amendment.txt) so this applier is the one that creates the cluster-wide role audit_archiver. The migration's own text is not echoed (\set ECHO none around \i); its NOTICEs are.
+
+## B.0 (as postgres) the runtime role app_service and a NON-SUPERUSER applier with CREATEROLE (the RDS master-user shape); a fresh database owned by the applier
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='app_service') THEN CREATE ROLE app_service LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS NOREPLICATION PASSWORD 'p08a'; END IF; END $$;
+DO
+DROP DATABASE IF EXISTS c2c_audit_p08a;
+DROP DATABASE
+DROP DATABASE IF EXISTS c2c_audit_p08a_2;
+DROP DATABASE
+DROP ROLE IF EXISTS applier_p08a;
+DROP ROLE
+DROP ROLE IF EXISTS applier_p08a_2;
+DROP ROLE
+DROP ROLE IF EXISTS audit_archiver;
+DROP ROLE
+CREATE ROLE applier_p08a LOGIN CREATEROLE NOSUPERUSER NOBYPASSRLS PASSWORD 'p08a';
+CREATE ROLE
+CREATE ROLE applier_p08a_2 LOGIN CREATEROLE NOSUPERUSER NOBYPASSRLS PASSWORD 'p08a';
+CREATE ROLE
+CREATE DATABASE c2c_audit_p08a OWNER applier_p08a;
+CREATE DATABASE
+CREATE DATABASE c2c_audit_p08a_2 OWNER applier_p08a_2;
+CREATE DATABASE
+SELECT rolname, rolsuper, rolcreaterole, rolcanlogin FROM pg_roles WHERE rolname IN ('applier_p08a','applier_p08a_2','app_service','audit_archiver') ORDER BY 1;
+    rolname     | rolsuper | rolcreaterole | rolcanlogin 
+----------------+----------+---------------+-------------
+ app_service    | f        | f             | t
+ applier_p08a   | f        | t             | t
+ applier_p08a_2 | f        | t             | t
+(3 rows)
+
+## B.1 (as applier_p08a, not a superuser) audit_logs from the baseline, the recipe grants for app_service, then the amended migration — FIRST run: the applier creates audit_archiver and must be able to hand it the door
+SELECT current_user, (SELECT rolsuper FROM pg_roles WHERE rolname = current_user) AS applier_is_superuser;
+ current_user | applier_is_superuser 
+--------------+----------------------
+ applier_p08a | f
+(1 row)
+
+CREATE TABLE "audit_logs" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"tenant_id" integer NOT NULL,
+	"user_id" integer,
+	"action" text NOT NULL,
+	"table_name" text NOT NULL,
+	"record_id" text NOT NULL,
+	"old_values" json,
+	"new_values" json,
+	"ip_address" text,
+	"user_agent" text,
+	"created_at" timestamp DEFAULT now() NOT NULL
+);
+CREATE TABLE
+GRANT USAGE ON SCHEMA public TO app_service;
+GRANT
+GRANT SELECT, INSERT, UPDATE, DELETE ON audit_logs TO app_service;
+GRANT
+psql:/tmp/p08a-migration.sql:477: NOTICE:  [audit_logs] role audit_archiver created (NOLOGIN)
+psql:/tmp/p08a-migration.sql:477: NOTICE:  trigger "trg_audit_log_archives_no_update" for relation "public.audit_log_archives" does not exist, skipping
+psql:/tmp/p08a-migration.sql:477: NOTICE:  trigger "trg_audit_log_archives_no_delete" for relation "public.audit_log_archives" does not exist, skipping
+psql:/tmp/p08a-migration.sql:477: NOTICE:  trigger "trg_audit_log_archives_no_truncate" for relation "public.audit_log_archives" does not exist, skipping
+psql:/tmp/p08a-migration.sql:477: NOTICE:  trigger "trg_audit_logs_no_update" for relation "public.audit_logs" does not exist, skipping
+psql:/tmp/p08a-migration.sql:477: NOTICE:  trigger "trg_audit_logs_no_delete" for relation "public.audit_logs" does not exist, skipping
+psql:/tmp/p08a-migration.sql:477: NOTICE:  trigger "trg_audit_logs_no_truncate" for relation "public.audit_logs" does not exist, skipping
+DO
+psql:/tmp/p08a-migration.sql:509: NOTICE:  [audit_logs] archive door EXECUTE granted to app_service
+DO
+psql:/tmp/p08a-migration.sql:565: NOTICE:  public.audit_logs immutability enforced: 3 triggers installed (UPDATE, DELETE-except-archive-door, TRUNCATE)
+psql:/tmp/p08a-migration.sql:565: NOTICE:  public.audit_logs archive door verified: SECURITY DEFINER, owner audit_archiver, not executable by PUBLIC
+DO
+## B.2 what the first run left: role, membership the applier granted itself, door owner, ACL
+SELECT rolname, rolcanlogin, rolsuper, rolinherit, rolbypassrls FROM pg_roles WHERE rolname = 'audit_archiver';
+    rolname     | rolcanlogin | rolsuper | rolinherit | rolbypassrls 
+----------------+-------------+----------+------------+--------------
+ audit_archiver | f           | f        | f          | f
+(1 row)
+
+SELECT roleid::regrole AS role, member::regrole AS member, admin_option, inherit_option, set_option FROM pg_auth_members WHERE roleid = 'audit_archiver'::regrole ORDER BY 2, 3;
+      role      |    member    | admin_option | inherit_option | set_option 
+----------------+--------------+--------------+----------------+------------
+ audit_archiver | applier_p08a | f            | t              | t
+ audit_archiver | applier_p08a | t            | f              | f
+(2 rows)
+
+SELECT proname, prosecdef, pg_get_userbyid(proowner) AS owner, proacl FROM pg_proc WHERE proname = 'audit_logs_archive_delete';
+          proname          | prosecdef |     owner      |                             proacl                             
+---------------------------+-----------+----------------+----------------------------------------------------------------
+ audit_logs_archive_delete | t         | audit_archiver | {audit_archiver=X/audit_archiver,app_service=X/audit_archiver}
+(1 row)
+
+## B.3 SECOND run (every deploy replays the file): must be a no-op that leaves the same shape
+psql:/tmp/p08a-migration.sql:477: NOTICE:  relation "audit_log_archives" already exists, skipping
+psql:/tmp/p08a-migration.sql:477: NOTICE:  relation "audit_log_archives_archived_at_idx" already exists, skipping
+DO
+psql:/tmp/p08a-migration.sql:509: NOTICE:  [audit_logs] archive door EXECUTE granted to app_service
+DO
+psql:/tmp/p08a-migration.sql:565: NOTICE:  public.audit_logs immutability enforced: 3 triggers installed (UPDATE, DELETE-except-archive-door, TRUNCATE)
+psql:/tmp/p08a-migration.sql:565: NOTICE:  public.audit_logs archive door verified: SECURITY DEFINER, owner audit_archiver, not executable by PUBLIC
+DO
+SELECT proname, prosecdef, pg_get_userbyid(proowner) AS owner, proacl FROM pg_proc WHERE proname = 'audit_logs_archive_delete';
+          proname          | prosecdef |     owner      |                             proacl                             
+---------------------------+-----------+----------------+----------------------------------------------------------------
+ audit_logs_archive_delete | t         | audit_archiver | {audit_archiver=X/audit_archiver,app_service=X/audit_archiver}
+(1 row)
+
+SELECT count(*) AS audit_logs_triggers FROM pg_trigger t JOIN pg_class c ON t.tgrelid = c.oid WHERE c.relname = 'audit_logs' AND t.tgname LIKE 'trg_audit_logs_no_%' AND NOT t.tgisinternal;
+ audit_logs_triggers 
+---------------------
+                   3
+(1 row)
+
+SELECT count(*) AS archive_ledger_triggers FROM pg_trigger t JOIN pg_class c ON t.tgrelid = c.oid WHERE c.relname = 'audit_log_archives' AND NOT t.tgisinternal;
+ archive_ledger_triggers 
+-------------------------
+                       3
+(1 row)
+
+## B.4 seed (as applier): two rows 3 years old
+INSERT INTO audit_logs (tenant_id, action, table_name, record_id, created_at) VALUES (1,'x','x','p0-8a-B-old-1', now() - interval '3 years'), (2,'x','x','p0-8a-B-old-2', now() - interval '3 years');
+INSERT 0 2
+## B.5 (as app_service, logged in) the door works; performed_by is the login role
+SELECT current_user, session_user;
+ current_user | session_user 
+--------------+--------------
+ app_service  | app_service
+(1 row)
+
+SELECT public.audit_logs_archive_delete((SELECT array_agg(id) FROM audit_logs WHERE record_id LIKE 'p0-8a-B-old-%'), 's3://audit-archive/2026/09/25/B.json', repeat('a', 64), now() - interval '25 months') AS deleted;
+ deleted 
+---------
+       2
+(1 row)
+
+SELECT count(*) AS rows_left FROM audit_logs WHERE record_id LIKE 'p0-8a-B-old-%';
+ rows_left 
+-----------
+         0
+(1 row)
+
+SELECT row_count, locator, sha256, performed_by, cutoff <= now() - interval '24 months' AS cutoff_at_or_before_floor FROM audit_log_archives;
+ row_count |               locator                |                              sha256                              | performed_by | cutoff_at_or_before_floor 
+-----------+--------------------------------------+------------------------------------------------------------------+--------------+---------------------------
+         2 | s3://audit-archive/2026/09/25/B.json | aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | app_service  | t
+(1 row)
+
+
+# ── B2: an applier that did not create the role (verify by making the check fail) ──
+## B2.1 (as applier_p08a_2, a second non-superuser applier that did NOT create audit_archiver) the migration must fail closed with an actionable message, not install a door it cannot own
+SELECT current_user;
+  current_user  
+----------------
+ applier_p08a_2
+(1 row)
+
+CREATE TABLE "audit_logs" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"tenant_id" integer NOT NULL,
+	"user_id" integer,
+	"action" text NOT NULL,
+	"table_name" text NOT NULL,
+	"record_id" text NOT NULL,
+	"old_values" json,
+	"new_values" json,
+	"ip_address" text,
+	"user_agent" text,
+	"created_at" timestamp DEFAULT now() NOT NULL
+);
+CREATE TABLE
+psql:/tmp/p08a-migration.sql:477: ERROR:  [audit_logs] applier_p08a_2 cannot become a member of audit_archiver and so cannot install the archive door
+HINT:  Have a superuser run: GRANT audit_archiver TO applier_p08a_2; then re-run the migration set.
+CONTEXT:  PL/pgSQL function inline_code_block line 46 at RAISE
+DO
+psql:/tmp/p08a-migration.sql:565: WARNING:  Expected 3 immutability triggers on public.audit_logs (UPDATE, DELETE, TRUNCATE), found 0
+psql:/tmp/p08a-migration.sql:565: ERROR:  public.audit_logs_archive_delete is not installed: audit_logs has no archive path (see the error above)
+CONTEXT:  PL/pgSQL function inline_code_block line 31 at RAISE
+SELECT count(*) AS door_installed FROM pg_proc WHERE proname = 'audit_logs_archive_delete';
+ door_installed 
+----------------
+              0
+(1 row)
+
+## B2.2 (as postgres) the remedy the message names
+GRANT audit_archiver TO applier_p08a_2;
+GRANT ROLE
+## B2.3 (as applier_p08a_2) re-run: installs
+psql:/tmp/p08a-migration.sql:477: NOTICE:  trigger "trg_audit_log_archives_no_update" for relation "public.audit_log_archives" does not exist, skipping
+psql:/tmp/p08a-migration.sql:477: NOTICE:  trigger "trg_audit_log_archives_no_delete" for relation "public.audit_log_archives" does not exist, skipping
+psql:/tmp/p08a-migration.sql:477: NOTICE:  trigger "trg_audit_log_archives_no_truncate" for relation "public.audit_log_archives" does not exist, skipping
+psql:/tmp/p08a-migration.sql:477: NOTICE:  trigger "trg_audit_logs_no_update" for relation "public.audit_logs" does not exist, skipping
+psql:/tmp/p08a-migration.sql:477: NOTICE:  trigger "trg_audit_logs_no_delete" for relation "public.audit_logs" does not exist, skipping
+psql:/tmp/p08a-migration.sql:477: NOTICE:  trigger "trg_audit_logs_no_truncate" for relation "public.audit_logs" does not exist, skipping
+DO
+psql:/tmp/p08a-migration.sql:509: NOTICE:  [audit_logs] archive door EXECUTE granted to app_service
+DO
+psql:/tmp/p08a-migration.sql:565: NOTICE:  public.audit_logs immutability enforced: 3 triggers installed (UPDATE, DELETE-except-archive-door, TRUNCATE)
+psql:/tmp/p08a-migration.sql:565: NOTICE:  public.audit_logs archive door verified: SECURITY DEFINER, owner audit_archiver, not executable by PUBLIC
+DO
+SELECT proname, prosecdef, pg_get_userbyid(proowner) AS owner FROM pg_proc WHERE proname = 'audit_logs_archive_delete';
+          proname          | prosecdef |     owner      
+---------------------------+-----------+----------------
+ audit_logs_archive_delete | t         | audit_archiver
+(1 row)
+
+# end 2026-09-25T02:19:55Z

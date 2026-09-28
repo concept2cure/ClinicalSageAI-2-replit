@@ -91,15 +91,21 @@ router.get('/projects/:projectId/governance/summary', async (req: Request, res: 
  */
 router.get('/projects/:projectId/governance/artifacts/:artifactId/trace', async (req: Request, res: Response) => {
   try {
+    const organizationId = getOrganizationId(req);
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
     if (!hasAccess) return sendError(res, 404, 'Project not found');
 
     const { getArtifactDecisionTrace } = await import(
       '../../services/governed-decision-repository.js'
     );
+    // The only handler in this file that did not resolve the caller's org, so
+    // the trace queried `organization_id = NULL` and always came back empty
+    // (ledger L182). The org now comes from the authenticated request, as it
+    // does for every sibling route here.
     const trace = await getArtifactDecisionTrace(
       paramStr(req.params.projectId),
-      paramStr(req.params.artifactId)
+      paramStr(req.params.artifactId),
+      organizationId
     );
 
     return sendSuccess(res, { trace, count: trace.length });

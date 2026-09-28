@@ -1,0 +1,14 @@
+# P1-7b lint — warnings per touched file, HEAD (7fbe51c5) vs working tree (2026-09-26T13:01Z)
+# for f: git show HEAD:$f | npx eslint --stdin --stdin-filename $f   vs   npx eslint $f
+server/middleware/featureToggleMiddleware.ts  HEAD=0  now=0
+server/services/featureToggleService.ts  HEAD=0  now=0
+server/routes/cerv2-document-routes.ts  HEAD=4  now=4
+server/routes/regulatorySubmissions.ts  HEAD=1  now=1
+server/middleware/tenantContext.ts  HEAD=3  now=3
+scripts/check-security-patterns.ts  HEAD=1  now=1
+# new files (must be clean)
+server/middleware/__tests__/featureToggleMiddleware.workspace.test.ts  now=0
+server/services/__tests__/featureToggleService.workspace.test.ts  now=0
+server/routes/__tests__/cerv2-document-save-workspace.test.ts  now=0
+server/routes/__tests__/regulatory-submissions-workspace.test.ts  now=0
+tests/db/feature-toggle-workspace-header.dbtest.ts  now=0

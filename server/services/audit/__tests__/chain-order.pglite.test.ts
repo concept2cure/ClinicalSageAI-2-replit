@@ -34,13 +34,27 @@ const migrationSql = fs.readFileSync(MIGRATION, 'utf8');
 
 let pglite: PGlite;
 
+/**
+ * A strictly increasing instant for each row a test does not stamp itself.
+ * The legacy walk and the seal index order rows by (occurred_at, id), to the
+ * millisecond. Two rows written in the same millisecond were ordered by their
+ * random ids, so a pair written a-then-b was read b-then-a half the time, and
+ * four of these cases failed on the tie: "diagnoses the pre-fix fork" did so on
+ * CI on 2026-09-23 (run 35885373726).
+ */
+let lastInstant = 0;
+function nextInstant(): string {
+  lastInstant = Math.max(lastInstant + 1, Date.now());
+  return new Date(lastInstant).toISOString();
+}
+
 function row(tenantId: number, action: string, occurredAt?: string): ChainRow {
   return {
     action,
     actor_id: 1,
     target: `case:${tenantId}`,
     payload_hash: hashPayload({ action, tenantId }),
-    occurred_at: occurredAt ?? new Date().toISOString(),
+    occurred_at: occurredAt ?? nextInstant(),
     tenant_id: tenantId,
   };
 }

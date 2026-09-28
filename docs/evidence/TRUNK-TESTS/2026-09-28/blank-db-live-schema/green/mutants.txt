@@ -1,0 +1,18 @@
+=== mutant: no column list (the code before this change)
+ × tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > binds a CTE that names its columns 6ms
+ × tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > binds RECURSIVE and later column-list CTEs, however they are spaced 2ms
+ × tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > still reports the storage a column-list CTE reads 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 14 passed (17)
+=== mutant: no "(" required after AS
+ × tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > does not bind a function call or a column alias 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 16 passed (17)
+=== mutant: RECURSIVE not accepted
+ × tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > binds RECURSIVE and later column-list CTEs, however they are spaced 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 16 passed (17)
+=== mutant: space required before AS after the column list
+ × tests/schema-contract/migration-reachability-guard.contract.test.ts > a CTE is a name the query binds, however it is written > binds RECURSIVE and later column-list CTEs, however they are spaced 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 16 passed (17)

@@ -36,9 +36,13 @@ import { fingerprintPackageContent, sha256Hex, type PackageContentRow } from '..
 
 interface QueryRecord { sql: string; args: unknown[] }
 
-const { poolQueries, storedBundle, httpsRequests, mdnResponse, audit, recordGovernedAction } =
+const { poolQueries, storedBundle, httpsRequests, mdnResponse, audit, recordGovernedAction, signerOnFile } =
   vi.hoisted(() => ({
     poolQueries:   [] as QueryRecord[],
+    // Off by default, so every test above the §11.50 block sees the lookup it
+    // always saw. On, the signer resolves and electronic_signatures accepts the
+    // row, so the governed signature write runs to COMMIT (2026-09-28, GP-P-2).
+    signerOnFile:  { value: false },
     storedBundle:  { value: null as unknown },
     httpsRequests: [] as Array<{ options: any; body: Buffer }>,
     // `sent` is the body as delivered, with {{MESSAGE_ID}} echoing the request's
@@ -59,6 +63,12 @@ const CONTENT_FINGERPRINT = fingerprintPackageContent(CONTENT);
 
 function queryImpl(sql: string, args: unknown[] = []) {
   poolQueries.push({ sql, args });
+  if (signerOnFile.value && sql.includes('FROM users u')) {
+    return Promise.resolve({ rows: [{ name: 'Rena Author', email: 'rena@example.test', title: 'RA Lead' }], rowCount: 1 });
+  }
+  if (signerOnFile.value && sql.includes('INSERT INTO electronic_signatures')) {
+    return Promise.resolve({ rows: [{ id: 9001, signed_at: new Date() }], rowCount: 1 });
+  }
   if (sql.includes('FROM c2c_submission_packages')) {
     return Promise.resolve({ rows: [{ metadata: { bundle: storedBundle.value } }], rowCount: 1 });
   }
@@ -216,6 +226,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   _resetMdxToolRateLimitersForTests();
   poolQueries.length = 0;
+  signerOnFile.value = false;
   httpsRequests.length = 0;
   mdnResponse.statusCode = 200;
   mdnResponse.body =
@@ -548,5 +559,63 @@ describe('a check that failed without blocking is recorded, not dropped', () => 
     } finally {
       if (savedDtd === undefined) delete process.env.ECTD_REQUIRE_DTD; else process.env.ECTD_REQUIRE_DTD = savedDtd;
     }
+  });
+});
+
+/*
+ * §11.50(a)(3): the transmit records the meaning the signer DECLARED
+ * (coverage-gap sweep 2026-09-28, GP-P-2). The handler reads it from
+ * ctx.signoff.signaturePurpose, which POST /api/ana-ri/governed-action now sets
+ * from the signer's choice (governedActionConfirmTier.test.ts pins that); it
+ * stamped 'approval' for everyone before. These pin the rest of the path: the
+ * value reaches the sign ledger, the electronic_signatures row and the
+ * transmittal, and the route's mapping onto the canonical spelling is
+ * load-bearing — the dialog's raw token is refused by the signature writer.
+ */
+describe('the transmit records the declared signature meaning', () => {
+  const ctxDeclaring = (signaturePurpose: string) => ({
+    ...SIGNED_CTX,
+    signoff: { ...SIGNED_CTX.signoff, signaturePurpose },
+  });
+
+  it('a signer who declared Authorship is recorded as Authorship on the ledger, the signature row and the transmittal', async () => {
+    configureEsgCredentials();
+    signerOnFile.value = true;
+
+    const r = await esgTransmit(ctxDeclaring('authorship') as any, TRANSMIT_PARAMS);
+    expect(r.success, `handler refused: ${r.message}`).toBe(true);
+
+    const ledger = recordGovernedAction.mock.calls[0]![1] as any;
+    expect(ledger.payload.meaning).toBe('authorship');
+
+    const sig = poolQueries.find((q) => q.sql.includes('INSERT INTO electronic_signatures'));
+    expect(sig, 'no electronic_signatures row was written').toBeDefined();
+    // $16 signature_meaning, $17 signature_manifest (persistElectronicSignature).
+    expect(sig!.args[15]).toBe('authorship');
+    expect(JSON.parse(String(sig!.args[16])).meaning).toBe('authorship');
+    expect(sig!.args).not.toContain('approval');
+
+    const stamped = poolQueries.find(
+      (q) => q.sql.includes('UPDATE submission_transmittals') && String(q.args[0]).includes('"signature"'),
+    );
+    expect(JSON.parse(String(stamped!.args[0])).signature.meaning).toBe('authorship');
+    expect(poolQueries.some((q) => q.sql.trim() === 'COMMIT')).toBe(true);
+  });
+
+  it("the dialog's raw token is not a meaning the signature writer accepts — the route's mapping is what makes it one", async () => {
+    configureEsgCredentials();
+    signerOnFile.value = true;
+
+    await esgTransmit(ctxDeclaring('AUTHOR') as any, TRANSMIT_PARAMS);
+
+    // Refused before any signature INSERT, and the sign transaction rolled
+    // back — after the bytes had already reached the agency.
+    expect(httpsRequests).toHaveLength(1);
+    expect(poolQueries.some((q) => q.sql.includes('INSERT INTO electronic_signatures'))).toBe(false);
+    expect(poolQueries.some((q) => q.sql.trim() === 'ROLLBACK')).toBe(true);
+    const row = audit.logAction.mock.calls
+      .map((c: any[]) => c[0])
+      .find((e: any) => e?.action === 'agent.ana.k510_workflow.transmit');
+    expect(row?.details?.ledgerWriteFailed).toBe(true);
   });
 });

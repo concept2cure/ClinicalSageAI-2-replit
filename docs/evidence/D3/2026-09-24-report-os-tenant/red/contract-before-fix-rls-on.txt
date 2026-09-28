@@ -1,0 +1,270 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T16:55:37.656Z","pid":7727,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T16:55:37.658Z","pid":7727,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T16:55:37.658Z","pid":7727,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/two-tenant-application-rls.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/two-tenant-application-rls.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/two-tenant-application-rls.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > catalog and live session prove RLS is active for the runtime role 10ms
+stdout | tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal project-context endpoint cannot resolve Tenant B profile as Tenant A
+[database] Database connection successful { timestamp: '2026-09-24T16:55:39.126Z', poolSize: 1 }
+
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal project-context endpoint cannot resolve Tenant B profile as Tenant A 170ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal regulatory-content CRUD endpoints hide and protect Tenant B rows 145ms
+stdout | tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: list/filter, direct read and existence probe hide tenant B from A
+[database] Database connection successful { timestamp: '2026-09-24T16:55:39.328Z', poolSize: 2 }
+
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: list/filter, direct read and existence probe hide tenant B from A 45ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: update and delete of tenant B are indistinguishable not-found 19ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: WITH CHECK rejects planting a row into tenant B without leaking details 7ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: list/filter, direct read and existence probe hide tenant B from A 22ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: update and delete of tenant B are indistinguishable not-found 17ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: WITH CHECK rejects planting a row into tenant B without leaking details 7ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: list/filter, direct read and existence probe hide tenant B from A 30ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: update and delete of tenant B are indistinguishable not-found 17ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: WITH CHECK rejects planting a row into tenant B without leaking details 7ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: list/filter, direct read and existence probe hide tenant B from A 27ms
+{"level":30,"time":"2026-09-24T16:55:39.612Z","pid":7727,"hostname":"vm","context":{"code":"governed-fabric:e86923e1-75a8-47e5-9d93-c7adb77c783e","project":903010},"msg":"[decision-record] Creating decision record"}
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: update and delete of tenant B are indistinguishable not-found 18ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: WITH CHECK rejects planting a row into tenant B without leaking details 7ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: list/filter, direct read and existence probe hide tenant B from A 26ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: update and delete of tenant B are indistinguishable not-found 16ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: WITH CHECK rejects planting a row into tenant B without leaking details 6ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > pooled session context is reset and the wrong-context negative control is observable 14ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the recording evaluator persists the caller's own decision through the app role 1507ms
+{"level":30,"time":"2026-09-24T16:55:41.104Z","pid":7727,"hostname":"vm","context":{"code":"governed-fabric:89ce179e-a61f-47d1-ace0-a28de03365ac","project":903010},"msg":"[decision-record] Creating decision record"}
+{"level":40,"time":"2026-09-24T16:55:41.106Z","pid":7727,"hostname":"vm","context":{"operation":"recordGovernedDecision","error":"new row violates row-level security policy for table \"decision_records\""},"msg":"[governance-observability] Governance persistence failure"}
+{"level":40,"time":"2026-09-24T16:55:41.106Z","pid":7727,"hostname":"vm","context":{"decisionId":"89ce179e-a61f-47d1-ace0-a28de03365ac","error":"new row violates row-level security policy for table \"decision_records\""},"msg":"[governed-decision-repository] Governed decision durable write failed"}
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > WITH CHECK refuses a decision the recorder files for another tenant 1505ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the simulate route records nothing, for any tenant 1512ms
+{"level":50,"time":"2026-09-24T16:55:44.252Z","pid":7727,"hostname":"vm","context":{"err":"Failed query: insert into \"report_runs\" (\"id\", \"run_uuid\", \"organization_id\", \"client_workspace_id\", \"scope_type\", \"scope_id\", \"report_type_id\", \"status\", \"requested_by\", \"dependency_summary\", \"blockers\", \"confidence\", \"freshness\", \"error\", \"started_at\", \"completed_at\", \"created_at\", \"updated_at\") values (default, default, $1, default, $2, $3, $4, $5, $6, $7, $8, $9, $10, default, default, $11, default, default) returning \"id\", \"run_uuid\", \"organization_id\", \"client_workspace_id\", \"scope_type\", \"scope_id\", \"report_type_id\", \"status\", \"requested_by\", \"dependency_summary\", \"blockers\", \"confidence\", \"freshness\", \"error\", \"started_at\", \"completed_at\", \"created_at\", \"updated_at\"\nparams: 90301,project,41,wo03_7727_mufrwi3q.fixture_status,partial,27,{\"providers\":[{\"provider\":\"artifact_state\",\"observedAt\":\"2026-09-24T16:55:44.230Z\",\"status\":\"partial\",\"blocker\":\"No governed artifacts discovered for this scope\"},{\"provider\":\"submission_readiness\",\"observedAt\":\"2026-09-24T16:55:44.230Z\",\"status\":\"missing\",\"blocker\":\"No artifacts available to compute readiness\"},{\"provider\":\"compliance_audit\",\"observedAt\":\"2026-09-24T16:55:44.230Z\",\"status\":\"missing\",\"blocker\":\"No governed artifacts available for compliance evidence\"},{\"provider\":\"regional_registry_readiness\",\"observedAt\":\"2026-09-24T16:55:44.232Z\",\"status\":\"partial\",\"blocker\":\"Project is missing registryId/submissionType in metadata\"}],\"scopeLineage\":[{\"scopeType\":\"project\",\"scopeId\":\"41\"}],\"summary\":{\"scopeType\":\"project\",\"scopeId\":\"41\",\"artifactCount\":0,\"lifecycle\":{\"approvedOrLockedCount\":0,\"reviewCount\":0,\"draftCount\":0}},\"criticalBlockers\":[]},[\"No governed artifacts discovered for this scope\",\"No artifacts available to compute readiness\",\"No governed artifacts available for compliance evidence\",\"Regional readiness unavailable: project metadata has no registry context\"],25,{\"generatedAt\":\"2026-09-24T16:55:44.247Z\",\"freshnessBudgetMs\":1800000},2026-09-24T16:55:44.247Z","correlationId":null,"code":null},"msg":"[report-os] saving runs failed"}
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the reads show tenant A its decision and tenant B nothing of it 44ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > GET /runs never lists another tenant's run, whatever org the query names 12ms
+ × tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > GET /runs lists the session tenant's own runs 20ms
+   → tenant B's own run must be listed: the org is the session's: expected [] to include 23
+{"level":50,"time":"2026-09-24T16:55:44.281Z","pid":7727,"hostname":"vm","context":{"err":"Failed query: insert into \"report_runs\" (\"id\", \"run_uuid\", \"organization_id\", \"client_workspace_id\", \"scope_type\", \"scope_id\", \"report_type_id\", \"status\", \"requested_by\", \"dependency_summary\", \"blockers\", \"confidence\", \"freshness\", \"error\", \"started_at\", \"completed_at\", \"created_at\", \"updated_at\") values (default, default, $1, default, $2, $3, $4, $5, default, $6, $7, $8, $9, default, default, $10, default, default) returning \"id\", \"run_uuid\", \"organization_id\", \"client_workspace_id\", \"scope_type\", \"scope_id\", \"report_type_id\", \"status\", \"requested_by\", \"dependency_summary\", \"blockers\", \"confidence\", \"freshness\", \"error\", \"started_at\", \"completed_at\", \"created_at\", \"updated_at\"\nparams: 90301,project,40,wo03_7727_mufrwi3q.fixture_status,partial,{\"providers\":[{\"provider\":\"artifact_state\",\"observedAt\":\"2026-09-24T16:55:44.276Z\",\"status\":\"partial\",\"blocker\":\"No governed artifacts discovered for this scope\"},{\"provider\":\"submission_readiness\",\"observedAt\":\"2026-09-24T16:55:44.276Z\",\"status\":\"missing\",\"blocker\":\"No artifacts available to compute readiness\"},{\"provider\":\"compliance_audit\",\"observedAt\":\"2026-09-24T16:55:44.276Z\",\"status\":\"missing\",\"blocker\":\"No governed artifacts available for compliance evidence\"},{\"provider\":\"regional_registry_readiness\",\"observedAt\":\"2026-09-24T16:55:44.278Z\",\"status\":\"partial\",\"blocker\":\"Project is missing registryId/submissionType in metadata\"}],\"scopeLineage\":[{\"scopeType\":\"project\",\"scopeId\":\"40\"}],\"summary\":{\"scopeType\":\"project\",\"scopeId\":\"40\",\"artifactCount\":0,\"lifecycle\":{\"approvedOrLockedCount\":0,\"reviewCount\":0,\"draftCount\":0}},\"criticalBlockers\":[]},[\"No governed artifacts discovered for this scope\",\"No artifacts available to compute readiness\",\"No governed artifacts available for compliance evidence\",\"Regional readiness unavailable: project metadata has no registry context\"],25,{\"generatedAt\":\"2026-09-24T16:55:44.278Z\",\"freshnessBudgetMs\":1800000},2026-09-24T16:55:44.278Z","correlationId":null,"code":null},"msg":"[report-os] saving runs failed"}
+{"level":50,"time":"2026-09-24T16:55:44.291Z","pid":7727,"hostname":"vm","context":{"err":"Failed query: insert into \"report_program_groups\" (\"id\", \"group_uuid\", \"organization_id\", \"client_workspace_id\", \"name\", \"description\", \"status\", \"metadata\", \"created_by\", \"updated_by\", \"created_at\", \"updated_at\", \"archived_at\") values (default, default, $1, default, $2, default, default, default, $3, $4, default, default, default) returning \"id\", \"group_uuid\", \"organization_id\", \"client_workspace_id\", \"name\", \"description\", \"status\", \"metadata\", \"created_by\", \"updated_by\", \"created_at\", \"updated_at\", \"archived_at\"\nparams: 90301,wo03_7727_mufrwi3q-group-B,27,27","correlationId":null,"code":null},"msg":"[report-os] saving program groups failed"}
+{"level":50,"time":"2026-09-24T16:55:44.326Z","pid":7727,"hostname":"vm","context":{"err":"Failed query: insert into \"report_program_group_snapshots\" (\"id\", \"program_group_id\", \"organization_id\", \"snapshot_label\", \"snapshot_reason\", \"as_of\", \"project_set_hash\", \"project_ids\", \"created_by\", \"created_at\") values (default, $1, $2, $3, default, default, $4, $5, default, default) returning \"id\", \"program_group_id\", \"organization_id\", \"snapshot_label\", \"snapshot_reason\", \"as_of\", \"project_set_hash\", \"project_ids\", \"created_by\", \"created_at\"\nparams: 18,90301,wo03_7727_mufrwi3q-snap,4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945,[]","correlationId":null,"code":null},"msg":"[report-os] saving snapshots failed"}
+ × tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > POST /runs records for the session tenant and user, whatever the body names 53ms
+   → a run request naming another org must run for the caller, not reach the database as that org: expected 500 to be 201 // Object.is equality
+ × tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > POST /runs over another tenant's project is not found and computes nothing 25ms
+   → another tenant's project must read as not found: expected 500 to be 404 // Object.is equality
+ × tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a program group is made in the session tenant by the session user, whatever the body names 10ms
+   → a group request naming another org must be made for the caller: expected 500 to be 201 // Object.is equality
+ × tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a program group over another tenant's project is refused 13ms
+   → no group of tenant B may hold tenant A's project: expected 1 to be +0 // Object.is equality
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > another tenant's program group cannot be changed 10ms
+ × tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > another tenant's program group cannot be snapshotted 13ms
+   → another tenant's group must read as not found: expected 500 to be 404 // Object.is equality
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a bundle cannot take another tenant's run 16ms
+ × tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a bundle of the session tenant's own run is stored and records the session user 11ms
+   → tenant B must be able to bundle its own run whatever org the body names: expected 400 to be 201 // Object.is equality
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a delivery cannot take another tenant's run 9ms
+{"level":50,"time":"2026-09-24T16:55:44.385Z","pid":7727,"hostname":"vm","context":{"err":"Failed query: insert into \"project_intelligence_profiles\" (\"id\", \"project_id\", \"organization_id\", \"regulatory_strategy\", \"target_indication\", \"target_population\", \"primary_endpoints\", \"comparator_devices_or_drugs\", \"key_constraints\", \"submission_timeline\", \"learned_insights\", \"key_decisions\", \"open_questions\", \"risk_factors\", \"total_documents_ingested\", \"total_tokens_processed\", \"last_document_ingested_at\", \"project_persona\", \"custom_instructions\", \"target_regulatory_bodies\", \"project_type\", \"therapeutic_area\", \"drug_device_name\", \"mechanism_of_action\", \"development_phase\", \"profile_status\", \"last_enriched_at\", \"last_enriched_by\", \"created_by\", \"created_at\", \"updated_at\") values (default, $1, $2, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, $3, default, $4, $5, default, default) returning \"id\"\nparams: 40,90301,active,28,28","correlationId":null,"code":null},"msg":"[report-os] saving capture failed"}
+{"level":50,"time":"2026-09-24T16:55:44.400Z","pid":7727,"hostname":"vm","context":{"err":"Failed query: insert into \"project_intelligence_profiles\" (\"id\", \"project_id\", \"organization_id\", \"regulatory_strategy\", \"target_indication\", \"target_population\", \"primary_endpoints\", \"comparator_devices_or_drugs\", \"key_constraints\", \"submission_timeline\", \"learned_insights\", \"key_decisions\", \"open_questions\", \"risk_factors\", \"total_documents_ingested\", \"total_tokens_processed\", \"last_document_ingested_at\", \"project_persona\", \"custom_instructions\", \"target_regulatory_bodies\", \"project_type\", \"therapeutic_area\", \"drug_device_name\", \"mechanism_of_action\", \"development_phase\", \"profile_status\", \"last_enriched_at\", \"last_enriched_by\", \"created_by\", \"created_at\", \"updated_at\") values (default, $1, $2, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, $3, default, $4, $5, default, default) returning \"id\"\nparams: 41,90301,active,28,28","correlationId":null,"code":null},"msg":"[report-os] saving capture failed"}
+ × tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a delivery of the session tenant's own run records the session user 7ms
+   → tenant B must be able to deliver its own run: expected 404 to be 201 // Object.is equality
+ × tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > correspondence cannot be captured into another tenant's project 16ms
+   → another tenant's project must read as not found: expected 500 to be 404 // Object.is equality
+ × tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > correspondence is captured into the session tenant's own project and submission 14ms
+   → tenant B must be able to capture into its own project: expected 500 to be 201 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > GET /runs lists the session tenant's own runs
+AssertionError: tenant B's own run must be listed: the org is the session's: expected [] to include 23
+ ❯ tests/db/two-tenant-application-rls.dbtest.ts:908:83
+    906|     expect(list.status).toBe(200);
+    907|     const listed = (list.body.data as Array<{ id: number }>).map(r => …
+    908|     expect(listed, "tenant B's own run must be listed: the org is the …
+       |                                                                                   ^
+    909|   });
+    910|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > POST /runs records for the session tenant and user, whatever the body names
+AssertionError: a run request naming another org must run for the caller, not reach the database as that org: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ tests/db/two-tenant-application-rls.dbtest.ts:926:7
+    924|       created.status,
+    925|       'a run request naming another org must run for the caller, not r…
+    926|     ).toBe(201);
+       |       ^
+    927|     expect(created.body.data.run.organizationId).toBe(ORG_B);
+    928|     expect(created.body.data.run.requestedBy, 'the requester is the se…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > POST /runs over another tenant's project is not found and computes nothing
+AssertionError: another tenant's project must read as not found: expected 500 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 500
+
+ ❯ tests/db/two-tenant-application-rls.dbtest.ts:947:83
+    945|     expect(await count('report_runs', ORG_A), 'nothing may land in ten…
+    946|     expect(JSON.stringify(overForeign.body)).not.toContain('fixture-bo…
+    947|     expect(overForeign.status, "another tenant's project must read as …
+       |                                                                                   ^
+    948|   });
+    949|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a program group is made in the session tenant by the session user, whatever the body names
+AssertionError: a group request naming another org must be made for the caller: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ tests/db/two-tenant-application-rls.dbtest.ts:961:91
+    959|         createdBy: userA,
+    960|       });
+    961|     expect(made.status, 'a group request naming another org must be ma…
+       |                                                                                           ^
+    962|     expect(made.body.data.organizationId).toBe(ORG_B);
+    963|     expect(made.body.data.createdBy, 'the creator is the session user,…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a program group over another tenant's project is refused
+AssertionError: no group of tenant B may hold tenant A's project: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/db/two-tenant-application-rls.dbtest.ts:987:88
+    985|       [ORG_B, ids.A.projects]
+    986|     );
+    987|     expect(crossMembers.rows[0].n, "no group of tenant B may hold tena…
+       |                                                                                        ^
+    988|     expect(await count('report_program_groups', ORG_B)).toBe(groupsInB…
+    989|     expect(overForeign.status, "a group over another tenant's project …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > another tenant's program group cannot be snapshotted
+AssertionError: another tenant's group must read as not found: expected 500 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 500
+
+ ❯ tests/db/two-tenant-application-rls.dbtest.ts:1031:74
+    1029|     ).not.toContain(Number(ids.A.projects));
+    1030|     expect(await snapshotsOfA(), "no snapshot of tenant A's group may …
+    1031|     expect(snap.status, "another tenant's group must read as not found…
+       |                                                                          ^
+    1032|   });
+    1033|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a bundle of the session tenant's own run is stored and records the session user
+AssertionError: tenant B must be able to bundle its own run whatever org the body names: expected 400 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 400
+
+ ❯ tests/db/two-tenant-application-rls.dbtest.ts:1055:102
+    1053|       .set(auth(tokenB))
+    1054|       .send({ organizationId: ORG_A, name: `${TAG}-bundle-B`, runIds: …
+    1055|     expect(bundle.status, 'tenant B must be able to bundle its own run…
+       |                                                                                                      ^
+    1056|       201
+    1057|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > a delivery of the session tenant's own run records the session user
+AssertionError: tenant B must be able to deliver its own run: expected 404 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 404
+
+ ❯ tests/db/two-tenant-application-rls.dbtest.ts:1101:77
+    1099|         requestedBy: userA,
+    1100|       });
+    1101|     expect(delivery.status, 'tenant B must be able to deliver its own …
+       |                                                                             ^
+    1102|     expect(delivery.body.data.organizationId).toBe(ORG_B);
+    1103|     expect(delivery.body.data.requestedBy, 'the requester is the sessi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > correspondence cannot be captured into another tenant's project
+AssertionError: another tenant's project must read as not found: expected 500 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 500
+
+ ❯ tests/db/two-tenant-application-rls.dbtest.ts:1125:79
+    1123|       memoryInA
+    1124|     );
+    1125|     expect(foreign.status, "another tenant's project must read as not …
+       |                                                                               ^
+    1126|   });
+    1127|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  tests/db/two-tenant-application-rls.dbtest.ts > Report OS takes the tenant from the session, never the request (L184, D3) > correspondence is captured into the session tenant's own project and submission
+AssertionError: tenant B must be able to capture into its own project: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ tests/db/two-tenant-application-rls.dbtest.ts:1140:81
+    1138|         body: 'Deficiency letter: clarification requested on the stabi…
+    1139|       });
+    1140|     expect(own.status, 'tenant B must be able to capture into its own …
+       |                                                                                 ^
+    1141|     expect(own.body.data.persistedToPlatform).toBe(true);
+    1142|     expect(await count('c2c_correspondence', ORG_B)).toBe(inB + 1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 27 passed (37)
+   Start at  16:55:35
+   Duration  9.22s (transform 1.88s, setup 79ms, import 2.99s, tests 5.84s, environment 0ms)
+

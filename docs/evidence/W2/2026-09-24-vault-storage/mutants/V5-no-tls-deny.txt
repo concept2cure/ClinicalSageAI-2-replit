@@ -1,0 +1,36 @@
+tests/boot_contract.tftest.hcl... in progress
+  run "renders_the_boot_contract"... pass
+  run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use"... fail
+╷
+│ Error: Test assertion failed
+│ 
+│   on tests/boot_contract.tftest.hcl line 331, in run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use":
+│  331:     condition = anytrue([
+│  332:       for st in [for s in jsondecode(aws_s3_bucket_policy.vault.policy).Statement : s if s.Effect == "Deny"] :
+│  333:       try(st.Condition.Bool["aws:SecureTransport"], "") == "false"
+│  334:     ])
+│     ├────────────────
+│     │ aws_s3_bucket_policy.vault.policy is "{\"Statement\":[{\"Action\":[\"s3:ListBucket\"],\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::123456789012:role/mock\"},\"Resource\":\"8lmf9krt\",\"Sid\":\"TaskRoleListsTheVault\"},{\"Action\":[\"s3:GetObject\",\"s3:PutObject\",\"s3:DeleteObject\"],\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::123456789012:role/mock\"},\"Resource\":\"8lmf9krt/*\",\"Sid\":\"TaskRoleReadsAndWritesVaultObjects\"},{\"Action\":\"s3:*\",\"Condition\":{\"Bool\":{\"aws:SecureTransport\":\"true\"}},\"Effect\":\"Deny\",\"Principal\":\"*\",\"Resource\":[\"8lmf9krt\",\"8lmf9krt/*\"],\"Sid\":\"DenyInsecureTransport\"}],\"Version\":\"2012-10-17\"}"
+│ 
+│ The vault bucket must refuse requests that are not over TLS.
+╵
+  run "production_names_are_the_ones_the_deploy_workflow_targets"... pass
+  run "staging_carries_every_name_the_deploy_preflight_requires"... pass
+  run "staging_is_distinct_from_production"... pass
+  run "refuses_a_refresh_secret_equal_to_the_jwt_secret"... pass
+  run "refuses_a_short_audit_chain_secret"... pass
+  run "refuses_placement_approvals_that_are_not_a_json_object"... pass
+  run "refuses_equal_audit_seal_and_chain_keys"... pass
+  run "refuses_phi_approval_without_zero_retention"... pass
+  run "refuses_an_unknown_data_class"... pass
+  run "refuses_a_non_boolean_zero_retention_flag"... pass
+  run "refuses_a_non_string_intended_use"... pass
+  run "refuses_a_missing_region"... pass
+  run "accepts_the_fail_closed_interim_approvals"... pass
+  run "refuses_an_uppercase_domain_alias"... pass
+  run "refuses_a_domain_alias_with_a_scheme"... pass
+  run "refuses_a_domain_alias_with_a_trailing_dot"... pass
+tests/boot_contract.tftest.hcl... tearing down
+tests/boot_contract.tftest.hcl... fail
+
+Failure! 17 passed, 1 failed.

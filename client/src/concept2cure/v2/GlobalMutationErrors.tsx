@@ -20,13 +20,36 @@
  * this codebase's layering runs in, and would make the module unimportable from
  * a plain script or a test without a renderer. A DOM CustomEvent is the one
  * channel both sides already have.
+ *
+ * ── The second event: saved, but not in the audit trail ─────────────────────
+ * `apiRequest` / `apiUpload` raise `c2c:audit-row-not-persisted` when a write
+ * SUCCEEDED and the server reported that its 21 CFR Part 11 §11.10(e) audit row
+ * was not written (`findUnpersistedAuditRow`, client/src/lib/queryClient.ts).
+ * That is not a failed request, and saying otherwise would be its own false
+ * record, so it gets its own sentence rather than "The change was not saved".
+ * Nor does it say "saved": a 2xx can answer a refusal (a refused eCTD compile
+ * answers 200 with `status: 'failed'` and the refusal's audit outcome), and
+ * nothing was saved there. "Completed" is true of every 2xx.
+ *
+ * It is shown whether or not the surface handles its own
+ * errors: a surface's success path is exactly where it says "Saved", and no
+ * surface reads this signal itself.
  */
 
 import React from 'react';
-import { MUTATION_ERROR_EVENT, type MutationErrorDetail } from '@/lib/queryClient';
+import {
+  AUDIT_ROW_NOT_PERSISTED_EVENT,
+  MUTATION_ERROR_EVENT,
+  type AuditRowNotPersistedDetail,
+  type MutationErrorDetail,
+} from '@/lib/queryClient';
 import { ErrorState } from './dataConnect';
 
 interface Entry extends MutationErrorDetail {
+  id: number;
+}
+
+interface AuditNotice extends AuditRowNotPersistedDetail {
   id: number;
 }
 
@@ -36,7 +59,22 @@ const MAX_VISIBLE = 3;
 
 export function GlobalMutationErrors() {
   const [entries, setEntries] = React.useState<Entry[]>([]);
+  const [auditNotices, setAuditNotices] = React.useState<AuditNotice[]>([]);
   const nextId = React.useRef(0);
+
+  React.useEffect(() => {
+    const onUnpersisted = (e: Event) => {
+      const detail = (e as CustomEvent<AuditRowNotPersistedDetail>).detail;
+      if (!detail?.code) return;
+      setAuditNotices((prev) => {
+        // The same write retried is one missing record to report, not several.
+        if (prev.some((p) => p.method === detail.method && p.path === detail.path && p.code === detail.code)) return prev;
+        return [...prev, { ...detail, id: nextId.current++ }].slice(-MAX_VISIBLE);
+      });
+    };
+    window.addEventListener(AUDIT_ROW_NOT_PERSISTED_EVENT, onUnpersisted);
+    return () => window.removeEventListener(AUDIT_ROW_NOT_PERSISTED_EVENT, onUnpersisted);
+  }, []);
 
   React.useEffect(() => {
     const onError = (e: Event) => {
@@ -53,10 +91,21 @@ export function GlobalMutationErrors() {
     return () => window.removeEventListener(MUTATION_ERROR_EVENT, onError);
   }, []);
 
-  if (entries.length === 0) return null;
+  if (entries.length === 0 && auditNotices.length === 0) return null;
 
   return (
     <div className="c2c-global-errors" data-testid="global-mutation-errors">
+      {auditNotices.map((notice) => (
+        <ErrorState
+          key={`audit-${notice.id}`}
+          variant="inline"
+          title="The request completed, but the audit trail did not record it"
+          message="The server completed this request, but could not write the audit-trail entry that records who did it and when. Tell your administrator and give them the reference below."
+          correlationId={notice.correlationId}
+          onDismiss={() => setAuditNotices((prev) => prev.filter((p) => p.id !== notice.id))}
+          testId="global-audit-row-notice"
+        />
+      ))}
       {entries.map((entry) => (
         <ErrorState
           key={entry.id}

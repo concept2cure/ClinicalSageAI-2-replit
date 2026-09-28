@@ -1,0 +1,23 @@
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolSoaTargetSize.test.ts client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx   (after the fix)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>/
+
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaTargetSize.test.ts > the visit-header rename and remove buttons (A-C-8) > are each at least 24 × 24px 4ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaTargetSize.test.ts > the visit-header rename and remove buttons (A-C-8) > fit side by side inside the visit column, so the grid does not widen 2ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > is inert until a governed reason for change is entered 208ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > sets a cell through POST /api/protocol-soa/cells, carrying the numeric ids and the reason 85ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > clearing an already-set cell goes to /cells/clear, not back to /cells 42ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > reverts the tick when the server refuses — the grid never shows a cell the record lacks 59ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — every tick is a governed write > says the grid is read-only when the protocol has no governed id 8ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > names a ticked cell by its assessment and visit, not by its glyph 30ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > names an unticked cell the same way 28ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > keeps every grid cell a table cell, with the checkbox inside it 32ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > still takes a click anywhere in the cell, and Space on the focused checkbox 52ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolSoaPersists.test.tsx > SoaTab — each tick is a named checkbox inside a table cell (A-C-5) > gives the checkbox the whole cell and the focus ring the cell had 1ms
+
+ Test Files  2 passed (2)
+      Tests  12 passed (12)
+   Start at  05:06:18
+   Duration  2.93s (transform 1.19s, setup 228ms, import 1.54s, tests 561ms, environment 579ms)
+

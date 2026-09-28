@@ -1,10 +1,9 @@
 {
   "$comment": "Modules under server/ or client/src/ that nothing in the repository references. This list may only shrink: delete the module, or wire it up, then regenerate with npm run ci:unreferenced-modules:write-baseline. Adding an entry by hand is a regression, not a fix.",
   "generatedBy": "scripts/ci/check-unreferenced-modules.mjs --write-baseline",
-  "count": 89,
+  "count": 86,
   "modules": [
     "client/src/setupTests.js",
-    "server/academic-resource-upload.ts",
     "server/api/ectd/routes.ts",
     "server/api/labeling/routes.ts",
     "server/api/semantic-search.js",
@@ -23,7 +22,6 @@
     "server/db/queryBatcher.ts",
     "server/db/tenantRls.ts",
     "server/eval/doc-quality/run-eval.ts",
-    "server/eval/rag/run-eval.ts",
     "server/faers-bridge.js",
     "server/frontend/app.js",
     "server/integrations/firecrawl/crawl.ts",
@@ -42,7 +40,6 @@
     "server/routes/health.ts",
     "server/routes/reports/manifest-routes.ts",
     "server/routes/reports/subscriptions-routes.ts",
-    "server/routes/templates.ts",
     "server/scripts/batch_import.js",
     "server/scripts/check_db_count.js",
     "server/scripts/direct_import.js",

@@ -57,6 +57,7 @@ import {
   getRun,
   computeBoundPayloadDigestFromComponents,
   findActiveReleaseSignature,
+  type ActiveReleaseSignature,
   type SignedPackageSnapshot,
   type StepRecord,
 } from '../submission-package-orchestrator.js';
@@ -136,6 +137,13 @@ export interface SignedExportDescriptor {
   payloadDigest: string;
   /** electronic_signatures.id of the active signature. */
   signatureId: number;
+  /** §11.50 manifestation of the active signature, as the row holds it (null = not recorded). */
+  signerId: number | null;
+  signerName: string | null;
+  signerTitle: string | null;
+  signatureMeaning: string | null;
+  /** ISO-8601 instant of signing. */
+  signedAt: string | null;
   /** Seal posture: 'ok' when a seal verified, 'unsealed' in an unsealed (dev) posture. */
   sealVerdict: Extract<SealVerdict, 'ok' | 'unsealed'>;
   /** KMS envelope posture: 'ok' when the KMS signature verified, 'unsigned' under dev/hmac. */
@@ -351,7 +359,7 @@ export async function resolveSignedPackageForExport(params: {
   // 6 — an active, non-superseded signature still stands for this digest.
   //     Checked LAST because it is the only DB round-trip beyond getRun; the
   //     cheap in-memory checks above short-circuit the common refusals first.
-  let active: { id: number } | null;
+  let active: ActiveReleaseSignature | null;
   try {
     active = await findActiveReleaseSignature({
       organizationId,
@@ -388,6 +396,11 @@ export async function resolveSignedPackageForExport(params: {
       totalSizeBytes: snapshot.totalSizeBytes,
       payloadDigest: payload.payloadDigest,
       signatureId: active.id,
+      signerId: active.signerId,
+      signerName: active.signerName,
+      signerTitle: active.signerTitle,
+      signatureMeaning: active.meaning,
+      signedAt: active.signedAt,
       sealVerdict,
       signatureVerdict,
       gatewayReady: snapshot.validatorOutcome.gatewayReady,

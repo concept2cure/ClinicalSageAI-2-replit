@@ -56,6 +56,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { I } from '../icons';
 import { ApiRequestError, apiRequest, serverMessage } from '@/lib/queryClient';
 import type { FireToast } from '../toast';
+import { AnaActivity } from '../AnaActivity';
 
 /** `draft.metadata` as POST …/ai/draft returns it. Every field is optional:
  *  the metadata is a report, and a fact the server did not send is rendered
@@ -282,6 +283,8 @@ export function AuthoringAiDraft({
   const [changeReason, setChangeReason] = useState('');
 
   const [generating, setGenerating] = useState(false);
+  /** When the current generate began, for the live record's clock. */
+  const [generatingSince, setGeneratingSince] = useState<number | null>(null);
   const [accepting, setAccepting] = useState(false);
   const [draft, setDraft] = useState<PendingAiDraft | null>(null);
   /** The author's edit buffer, seeded from the generated text. Held apart from
@@ -311,6 +314,7 @@ export function AuthoringAiDraft({
 
   const generate = useCallback(async () => {
     setGenerating(true);
+    setGeneratingSince(Date.now());
     setRefusal(null);
     try {
       const res = await apiRequest(
@@ -502,6 +506,18 @@ export function AuthoringAiDraft({
         >
           {refusal}
         </div>
+      )}
+
+      {/* The wait, in the same live record AnA shows everywhere else: what is
+            running, a pulse, and a clock — never a percentage, which the
+            request cannot know. Its polite live region is what a screen-reader
+            user hears; the button label alone said nothing to them. */}
+      {generating && (
+        <AnaActivity
+          streaming
+          phase={`Retrieving Data Room evidence and drafting ${sectionCode}…`}
+          startedAt={generatingSince ?? undefined}
+        />
       )}
 
       {!draft && (

@@ -1,0 +1,2 @@
+[ci:unkeyed-request-tables] 1066 tables created; 592 read by a per-request path; 110 of those carry NO tenant column; 110 baselined, 104 still unreviewed
+[ci:unkeyed-request-tables] ✅ no new tables read without a tenant key.

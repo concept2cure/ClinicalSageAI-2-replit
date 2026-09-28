@@ -1,0 +1,73 @@
+# 2026-09-26T03:26:06Z — client half, before the fix (helpers exist; the wrappers, the guard, the provider and the sign-in page are unchanged)
+$ npx vitest run client/src/services/portal/__tests__/authService-session-end.test.ts client/src/lib/__tests__/api-request-session-end.test.ts client/src/concept2cure/components/session/__tests__/IdleSessionGuard.test.tsx
+  File: /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/components/session/__tests__/IdleSessionGuard.test.tsx:34:0
+  21 |  const __vi_import_0__ = await import("react/jsx-dev-runtime");
+  22 |  const __vi_import_1__ = await import("@testing-library/react");
+  23 |  const __vi_import_2__ = await import("../IdleSessionGuard");
+     |                                       ^
+  24 |  
+  25 |  
+ ❯ TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42658:41
+ ❯ TransformPluginContext.error node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42655:16
+ ❯ normalizeUrl node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40634:23
+ ❯ node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40753:37
+ ❯ TransformPluginContext.transform node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40680:7
+ ❯ EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42453:18
+ ❯ loadAndTransform node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:35845:27
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/lib/__tests__/api-request-session-end.test.ts > apiRequest on a 401 > announces SESSION_IDLE / SESSION_LIFETIME and still returns the response
+AssertionError: expected [] to deeply equal [ { reason: 'lifetime' } ]
+- Expected
++ Received
+- [
+-   {
+-     "reason": "lifetime",
+-   },
+- ]
++ []
+ ❯ client/src/lib/__tests__/api-request-session-end.test.ts:28:19
+     26|
+     27|     expect(res.status).toBe(401);
+     28|     expect(heard).toEqual([{ reason: 'lifetime' }]);
+       |                   ^
+     29|     expect(sessionStorage.getItem('trialsage_signout_reason')).toBe('l…
+     30|     expect((await res.json()).error.code).toBe('SESSION_LIFETIME'); //…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+ FAIL  client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > a 401 SESSION_IDLE on an API call ends the session: no refresh, storage cleared, reason kept, session_expired with the reason
+AssertionError: an idle session was refreshed: expected true to be false // Object.is equality
+- Expected
++ Received
+- false
++ true
+ ❯ client/src/services/portal/__tests__/authService-session-end.test.ts:75:90
+     73|
+     74|     expect(result.success).toBe(false);
+     75|     expect(calls.some(c => c.url.endsWith('/refresh')), 'an idle sessi…
+       |                                                                                          ^
+     76|     expect(authService.isAuthenticated()).toBe(false);
+     77|     expect(localStorage.getItem(KEYS.refreshToken)).toBeNull();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+ FAIL  client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > a refresh refused with SESSION_LIFETIME keeps that reason
+AssertionError: expected null to be 'lifetime' // Object.is equality
+- Expected:
+"lifetime"
++ Received:
+null
+ ❯ client/src/services/portal/__tests__/authService-session-end.test.ts:88:64
+     86|
+     87|     expect(await authService.refreshToken()).toBe(false);
+     88|     expect(sessionStorage.getItem('trialsage_signout_reason')).toBe('l…
+       |                                                                ^
+     89|     expect(authService.isAuthenticated()).toBe(false);
+     90|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+ FAIL  client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > remembers the session policy the probe reports and defaults to 15 minutes and 12 hours
+TypeError: authService.getSessionPolicy is not a function
+ ❯ client/src/services/portal/__tests__/authService-session-end.test.ts:114:24
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+ Test Files  3 failed (3)
+      Tests  4 failed | 2 passed (6)
+   Start at  03:26:06
+   Duration  1.06s (transform 484ms, setup 450ms, import 219ms, tests 193ms, environment 1.58s)
+exit=1

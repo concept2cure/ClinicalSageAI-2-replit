@@ -34,6 +34,8 @@ const AUTHOR = {
 };
 const PROGRAM_A = '11111111-1111-4111-8111-111111111111';
 const PROGRAM_B = '22222222-2222-4222-8222-222222222222';
+/** A project of ANOTHER organization. */
+const PROGRAM_FOREIGN = '33333333-3333-4333-8333-333333333333';
 
 async function mint(u: typeof AUTHOR) {
   return new SignJWT({
@@ -79,7 +81,7 @@ const PREREQ = `
     user_id INTEGER NOT NULL,
     role TEXT NOT NULL DEFAULT 'member'
   );
-  INSERT INTO organizations (id, name) VALUES (1, 'scope-org');
+  INSERT INTO organizations (id, name) VALUES (1, 'scope-org'), (2, 'other-org');
   INSERT INTO users (id, name, email) VALUES ('${AUTHOR.id}', '${AUTHOR.name}', '${AUTHOR.email}');
   INSERT INTO organization_users (organization_id, user_id, role)
     VALUES (${AUTHOR.organizationId}, ${AUTHOR_MEMBERSHIP_ID}, 'member');
@@ -94,6 +96,10 @@ beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: PREREQ,
     migrations: [
+      // The projects a document is anchored to. createDocument refuses a
+      // program its organization does not own (LX-20), so the programs must
+      // exist, in the real table, for a create to succeed.
+      'migrations/20260524_program_workbench_schema.sql',
       'db/migrations/20260725_authoring_document_loop_tables.sql',
       'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
       'db/migrations/20260730_authoring_comments_router_columns.sql',
@@ -102,6 +108,13 @@ beforeAll(async () => {
   });
   h.db = jdb.db;
   h.pool = jdb.pool;
+  await jdb.pool.query(
+    `INSERT INTO regulatory_programs (id, organization_id, name, code, program_type, product_type, primary_agency, product_name)
+     VALUES ($1, 1, 'Program A', 'PA-1', 'ind', 'drug', 'FDA', 'Alpha'),
+            ($2, 1, 'Program B', 'PB-1', 'ind', 'drug', 'FDA', 'Beta'),
+            ($3, 2, 'Other org program', 'OO-1', 'ind', 'drug', 'FDA', 'Other')`,
+    [PROGRAM_A, PROGRAM_B, PROGRAM_FOREIGN],
+  );
   token = await mint(AUTHOR);
 
   const { default: authoringRouter } = await import('../server/routes/authoring.router');
@@ -164,6 +177,18 @@ describe('authoring documents — program scoping (over HTTP, canonical DDL)', (
       request(app).get('/api/authoring/docs').query({ module: 'M3', status: 'draft' }),
     );
     expect(all.body.documents.length).toBe(2);
+  });
+
+  it('refuses another organization’s project with 404, and writes nothing', async () => {
+    const before = await jdb.pool.query(`SELECT count(*)::int AS n FROM authoring_documents`);
+    const res = await auth(request(app).post('/api/authoring/docs')).send({
+      title: 'Anchored to someone else',
+      module: 'M3',
+      client_program_id: PROGRAM_FOREIGN,
+    });
+    expect(res.status).toBe(404);
+    const after = await jdb.pool.query(`SELECT count(*)::int AS n FROM authoring_documents`);
+    expect((after.rows[0] as { n: number }).n).toBe((before.rows[0] as { n: number }).n);
   });
 
   it('rejects a malformed client_program_id with 400, not a 500', async () => {

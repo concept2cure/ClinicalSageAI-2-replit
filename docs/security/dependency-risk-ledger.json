@@ -9,7 +9,7 @@
     "resultArtifact": "dependency-audit-results.json"
   },
   "lockfileVersion": 3,
-  "lockfileSha256": "1f410d45d0d706e9778bc538e34126ba4c7eb67222a8553f13b658f8a33eaa8d",
+  "lockfileSha256": "7538ca81c4348e044fe7474ea65e02319b1a20be9feb5abb3c70dcc95ea37672",
   "rootPackageVersion": "1.0.0",
   "findings": [
     {

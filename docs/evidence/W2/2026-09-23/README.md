@@ -180,3 +180,124 @@ means it is an inference to confirm at plan or apply time.
 
 The founder runs `terraform apply` from the steps above. This session did not,
 and had no credentials to.
+
+## Follow-up (2026-09-24)
+
+B1–B3 and B5 are fixed in `docs/evidence/W2/2026-09-23b/`. Two corrections to
+this brief: B5's fix is `/healthz`, not `/readyz` (readiness in a container
+check replaces tasks it cannot heal); and B7's premise is wrong — `/readyz`'s
+`worker` is the API's in-process queue, so Redis (B6) decides it. The updated
+ordered list and founder decisions are in that folder's README.
+
+---
+
+## Stability records: every change is audited in its own transaction (row D1, same workstream)
+
+**Scope:** `server/src/routes/stability.router.ts` (mounted at `/api/stability`),
+`scripts/ci/check-column-reachability.mjs`. Reference database `c2c_full`
+(see the 2026-09-22 README for how it is built). The founder asked on
+2026-09-23 for the follow-up recorded in the 2026-09-22 README: "about twenty
+other stability handlers still audit after COMMIT".
+
+**Why D1:** the row requires that the provisioned schema answers the server's
+SQL and that governed records fail closed. The stability router is mounted in
+production. Several of its routes failed on every deployed database, and most
+of its writes were unaudited or audited after commit. No v2 client screen calls
+it; the regulated user-facing path is `/api/cmc/stability-studies`. It is still
+a live, authenticated API surface over GxP records.
+
+### What was proved (real database, before → after)
+
+| Claim | Evidence |
+|---|---|
+| **A failed audit left a committed, unaudited change; now it rolls the change back.** With the audit insert failing, the old router kept a condition edit, a result and a CAPA and wrote no audit record for any of them. The new router keeps none. | `stability-audit-failure-rolls-back.txt` |
+| **Every mutating route now writes exactly one audit record in the change's transaction.** Old: condition add/delete, timepoint add, actual sampling date, test spec change, result edit and delete were never audited, and an **unsigned** edit and an unsigned result **persisted** before the 500. New: `audit+1` on every write, and unsigned writes are refused (401) before a connection is taken. | `stability-audited-writes.txt` |
+| **Fabricated data is gone.** The excursion import ignored the file and stored two hard-coded readings (26.5, 28.2 °C); it now stores what the file says (31.5). The results import answered 200 "temporarily unavailable" with a transaction left open; it now imports, all or nothing. The sample barcode was 17 bytes of placeholder text served as `image/png`; it is now a real Code 128 PNG. `PATCH /capa/<unknown>` answered 200; now 404. | `stability-audited-writes.txt` |
+| **Saves that could never succeed now work.** In-use and OOT-rule saves used `ON CONFLICT` targets no migration creates (42P10, 42704) and failed on every call. They now update or insert under the study lock. | `stability-audited-writes.txt` |
+| **Linking a test to its method no longer wipes its specification.** The handler wrote all three fields from the body, so a method-only change set `spec_low` and `spec_high` to NULL. It now changes only the fields sent. | `stability-audited-writes.txt` ("patch test method only") |
+| **Cross-tenant writes are refused.** Foreign keys bypass RLS, and child rows take the caller's tenant, so tenant 1 could file a CAPA, a condition and an audit record under tenant 2's study. A 200/500 split also revealed whether a UUID was a study anywhere. Every study-scoped write now loads the study with an explicit tenant predicate first (`ownStudy`). The answer is 404 either way, and nothing is written. | `stability-review-findings.txt` |
+| **Protocol apply works, and applies whole or not at all.** Its timepoint insert used `$4` as both an integer and text (42P08), so every protocol with a timepoint failed after its conditions had already committed. The whole apply is now one transaction, and the audit record carries the applied content. | `stability-review-findings.txt` |
+| **A condition delete records the results it destroys by cascade.** Before, the audit record held only the condition row. | `stability-review-findings.txt` |
+| **Attribution comes from the signed-in principal only.** `collected_by` was taken from the body, so a sample could be recorded as collected by someone else. Now 400. | `stability-review-findings.txt` |
+| **A model no longer writes governed label text.** `POST /ai/label` gave the model only the study id, not its data. It then wrote the answer into `label_storage`, which feeds P.8, as a JSON object; on failure it wrote the "unavailable" placeholder. It is retired (410). | `stability-review-findings.txt` |
+| **The column guard missed columns added only by `_legacy` migrations.** Result review, the pending list and result-to-sample linking read or wrote five `stab_results` columns (`status`, `reviewed_by`, `reviewed_at`, `reject_reason`, `sample_id`) that only `db/migrations/_legacy/031` and `035` add. They failed with 42703 on every deployment, and nothing reported it, because the guard skipped `_legacy`. It now reads `_legacy` as never-applied. On the old router it names exactly those five columns; on this tree it is clean. Those four routes now return 501 and state that nothing was changed. | `ci:column-reachability`; contract test "knows a column added only by db/migrations/_legacy as never applied" |
+| **An earlier test of mine proved nothing.** `stability-router-honesty.test.ts` mocked `'../../db'`, which from that folder is `server/src/db`, a path that does not exist. So "no connection was taken" held vacuously. The mock now targets `server/db`. Against the old router 12 of its 20 cases fail, every one added by this change; all 20 pass on this one. | `server/src/routes/__tests__/stability-router-honesty.test.ts` |
+
+Merged with upstream `83849bfdd` (tenant-scoped result edit/delete, IAM-11) and
+`2b65d6f7c` (bounded, byte-checked uploads, IAM-14). Both are kept: the result
+handlers use upstream's tenant predicate and payload shape inside the one
+transaction pattern, and both imports use upstream's upload guard. Upstream's
+`stability-results-object-authz` and `stability-upload-guards` tests pass unchanged.
+
+Removed, each with its replacement named at the site:
+- `PATCH /tests/:id` was unreachable, because `PATCH /tests/:testId` matches first.
+- `PATCH`/`DELETE /studies/results/:id` were second copies of `/results/:resultId`. The PATCH also reset `created_at` on every edit.
+- `aiRecommendLabelStorage` is replaced by `simpleShelfLifeT90`.
+
+The unkeyed-tables baseline loses `capa`, which was a false positive: the error
+string "Failed to update CAPA" read as `UPDATE capa`.
+
+### Second adversarial review (24 agents; each finding verified or refuted independently)
+
+Every confirmed finding is fixed. `stability-second-review.txt` records each one on the reference database, upstream router against this change.
+
+| Finding | Before → after |
+|---|---|
+| **The shelf-life estimate was a constant.** `GET /ai/t90` read no data; it returned 61.5 months, "high — supports a 24-month shelf life claim", for any id. My first draft of this change had pointed the retired label route at it. | Now `estimateShelfLife` (`server/services/cmc/shelf-life.ts`, the platform's one ICH Q1E engine) runs on the study's recorded results against the test's recorded limit. It proposes 24 m (crossing 28.35 m, capped by Q1E's extrapolation limit), or answers 422 with the reason. `simpleShelfLifeT90` is removed. |
+| **Study create invented acceptance criteria.** Assay was set to 95–105 %, Water Content to NMT 5 %, every other unit to "Various", and CQA status by name. The audit record showed none of it. | Stores only what the request supplies; the audit record lists the tests with their limits, units and CQA status. |
+| **The study list showed a constant `progress_percent` of 45 %, with last timepoint 0M and next 3M.** | Computed from the timepoints' actual sampling dates. |
+| **P.8 push stored "Zone II", 24 months and "Store in a dry place at room temperature" when they were not recorded; refresh filled "IVb".** | These now read `[NOT RECORDED: …]`. The P.8 routes' 404 is no longer answered as a 500. |
+| **OOT surveillance invented values.** It set a specification limit (mean ± 3 SD), investigator "System" and a closure date 30 days out. It ran relaxed thresholds (2.5σ, 1.5σ) labelled as Western Electric rules. The study-scoped route returned raw results. | Both routes now use the platform's regression-control-chart engine (`server/services/cmc/stability-trending.ts`) against the recorded criterion, and refuse with a reason when no criterion is recorded. The router's own copy is deleted. |
+| **The AI routes gave the model only the study id, and turned a model failure into canned text answered 200.** | The model now gets the study's recorded rows and the deterministic assessments, with an instruction to state nothing else. A failure answers 502, "nothing was generated". Demo text still appears in development only, which is the gateway's own production guard. |
+| **Records misstated what was written.** `result_update` recorded the requested change rather than the resulting row. `bulk_assign` listed skipped entries. `results_import` recorded only a count. | Each record now holds what the database wrote. |
+| **Protocol apply invented and duplicated data.** Planned dates ran from the day of apply. A timepoint fell back to the first condition, filing a 40 °C pull under 25 °C. `on conflict do nothing` never fired (no unique keys), so a second apply duplicated rows. | Dates now run from the study's start date. An unknown condition is refused with 422 and rolls back. Rows the study already has are not written again, and the audit record holds exactly what was written. |
+| **Protocol templates were not audited.** | Recorded in the platform audit trail (`logAuditEvent`) before commit. If that record does not persist, the template is not created. |
+| **The excursion import stored in-limit readings as "MINOR" excursions and graded severity by an arbitrary 3-unit rule.** | Only out-of-limit readings are stored. Severity is left unclassified (a quality decision), and the deviation is recorded. |
+| **The sparkline plotted missing values as 0, and called any change under 0.5, in any unit, "stable".** | Numeric values only. Change and direction are reported within one storage condition. |
+| **Child-by-id writes relied on RLS alone.** PATCH/DELETE of conditions and timepoints, PATCH of tests, CAPAs and assignments, and chain-of-custody writes addressed rows by their own id. | `ownChild`: the row is located under the tenant, its study is locked through `ownStudy`, then the row is locked, so the tenant predicate is explicit and RLS is the second line. |
+| **Regressions I introduced in the first pass.** A blank value was stored as `''` (NULL again now). `month: ""` and `hold_time_days: ""` caused 500s. An upper-case UUID gave 404. A blank `collected_by` was refused. CSV rows were misnumbered, and a `,,,` line failed the import. | Fixed. CSV errors now name the true line; blank and delimiter-only rows are skipped. Pass/fail words are read case-insensitively ("Pass", "P", "Conforms"), and an unknown word is refused rather than stored as NULL. |
+| **Chain attachments.** The file was written before the sample was checked, and the client filename went into the path. (multer already strips directories, so this was a second line of defence, not an open traversal.) | Sample checked first. Name restricted to `[A-Za-z0-9._-]`. The file is removed if the record rolls back. |
+
+Refuted, 6 findings: the verifiers showed them already fixed in the reviewed file, or not defects.
+
+### Still open (founder decisions, not defects this change can close)
+
+1. **Result review and sample linking.** Making them real needs the five
+   columns on an applier (CMC schema work; CMC is outside RULE 2's launch
+   catalog). An approval also needs the Part 11 signing path, not a status write.
+2. **Two stability stores.** `/api/stability` (`stab_*`) and
+   `/api/cmc/stability-studies` (`stability_studies`, the one the v2 UI uses)
+   both exist. Zero-duplication says one should be migrated onto the other.
+3. **Two OOT methods remain.** Surveillance uses the platform engine. `GET
+   /studies/:id/oot/check` still applies the classic Western Electric rules a
+   user configures in `stab_oot_rules`, correctly thresholded and labelled.
+   Zero duplication says one should go; which one is a quality-method decision.
+4. **Attachments go to local disk** (`/mnt/data/uploads`), which does not
+   survive a container replacement. They belong in Vault.
+5. **Calendar push is not atomic**, because external events cannot join a
+   database transaction. Events that were created are now recorded, including
+   when a later one fails (502, with the created ids).
+
+#### Decisions, 2026-09-28 (delegated to this session by the founder)
+
+1. **Result review and sample linking stay 501.** CMC is outside RULE 2's launch
+   catalog; the refusals are honest, and an approval will need the Part 11
+   signing path, not a status write. No work until CMC is in scope.
+2. **The canonical stability store is `stability_studies`**
+   (`/api/cmc/stability-studies`), the one the v2 UI uses. `stab_*` is migrated
+   onto it and deleted in the CMC workstream — with the replacement named by path
+   and proven reachable, per the working agreement — not piecemeal before then.
+3. **The canonical OOT method is the platform's regression-based engine.**
+   Western Electric rules assume independent points about a stable mean;
+   stability data trend by design, which is why stability OOT is judged against
+   a regression control chart. `GET /studies/:id/oot/check` retires with the
+   `stab_*` store in (2).
+4. **Attachments: the upload is refused, not kept on disk.** `POST
+   /samples/:sampleId/chain/upload` wrote to container disk and recorded a
+   `/uploads/…` URL no route serves, so the chain-of-custody ledger pointed at
+   bytes nobody could ever retrieve; no client called it. It now answers 501,
+   reads no file and writes nothing, and says to file the document in Vault and
+   cite it in the chain entry's notes (`POST /samples/:sampleId/chain`). Wiring
+   samples to Vault needs a sample→regulatory-program link, which is CMC schema
+   work. `stability-router-honesty.test.ts` "the chain-of-custody upload keeps no
+   file it cannot keep": 500 before, 501 after.

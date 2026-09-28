@@ -35,11 +35,13 @@ import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { assessmentState } from '../assessmentState';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage, redactInternals } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { downloadBlob, downloadText, safeFileName } from '../download';
+import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
+import { signatureMeaningLabel } from '../../_shared/signatureMeaning';
 
 interface ModuleReadiness {
   moduleCode: string;
@@ -304,7 +306,18 @@ interface SignedPackageView {
   totalSizeBytes: number;
   gatewayReady: boolean;
   hardenedScore: number;
-  signature: { payloadDigest: string; signatureId: number; sealVerdict: string };
+  signature: {
+    payloadDigest: string;
+    signatureId: number;
+    sealVerdict: string;
+    /* §11.50 manifestation. Null means the signature row does not hold it; the
+       panel says so. Optional only for a server that predates 1de2678e5. */
+    signerId?: number | null;
+    signerName?: string | null;
+    signerTitle?: string | null;
+    signatureMeaning?: string | null;
+    signedAt?: string | null;
+  };
   leaves: Array<{ filePath: string }>;
 }
 
@@ -555,7 +568,7 @@ function EvalidatorImport({ identPath, row, onImported }: { identPath: string; r
       evalidatorReport: { compilationId: Number(row.id), fileName: file.name, text },
     });
     setBusy(false);
-    if (!ok) { setError(body?.error?.message ?? 'The report was not imported.'); return; }
+    if (!ok) { setError(serverMessage(body) ?? 'The report was not imported.'); return; }
     onImported();
   };
 
@@ -987,7 +1000,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
     } catch (e) {
       // apiRequest throws on a refused build (422: validation failure or the
       // completeness gate) with the server's own sentence — say it verbatim.
-      fireToast('The package was not returned — ' + (e instanceof Error ? e.message : String(e)), 'error');
+      fireToast('The package was not returned — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.', 'error');
     } finally {
       setBusy(null);
     }
@@ -1096,6 +1109,11 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
               signatureId: signed.signature.signatureId,
               payloadDigest: signed.signature.payloadDigest,
               sealVerdict: signed.signature.sealVerdict,
+              // Who signed, when, and what it meant (§11.50). null = not recorded.
+              signerName: signed.signature.signerName ?? null,
+              signerTitle: signed.signature.signerTitle ?? null,
+              signatureMeaning: signed.signature.signatureMeaning ?? null,
+              signedAt: signed.signature.signedAt ?? null,
               gatewayReady: signed.gatewayReady,
             }
           : null,
@@ -1486,6 +1504,32 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
                     <div style={{ fontSize: 22, fontWeight: 700 }}>{fmtSize(signed.totalSizeBytes)}</div>
                     <div style={{ fontSize: 12, color: 'var(--text-400)' }}>Package size</div>
                   </div>
+                </div>
+                {/* §11.50(b): the printed name, the date and time, and the meaning. */}
+                <div style={{ display: 'grid', gridTemplateColumns: '96px 1fr', gap: '4px 8px', fontSize: 12, marginBottom: 12 }}>
+                  <span style={{ color: 'var(--text-400)' }}>Signed by</span>
+                  <span>
+                    {signed.signature.signerName ? (
+                      <>
+                        <span>{signed.signature.signerName}</span>
+                        {signed.signature.signerTitle && (
+                          <span style={{ color: 'var(--text-400)' }}>{', ' + signed.signature.signerTitle}</span>
+                        )}
+                      </>
+                    ) : (
+                      'Printed name not recorded'
+                    )}
+                  </span>
+                  <span style={{ color: 'var(--text-400)' }}>Signed at</span>
+                  <span>
+                    {signed.signature.signedAt ? (
+                      <GovernedTimestamp value={signed.signature.signedAt} layout="inline" />
+                    ) : (
+                      'Not recorded'
+                    )}
+                  </span>
+                  <span style={{ color: 'var(--text-400)' }}>Meaning</span>
+                  <span>{signatureMeaningLabel(signed.signature.signatureMeaning)}</span>
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--text-400)', wordBreak: 'break-all' }}>
                   Bound digest <span className="mono">{signed.signature.payloadDigest}</span> · seal {signed.signature.sealVerdict}

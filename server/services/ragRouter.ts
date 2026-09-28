@@ -53,6 +53,18 @@ export type RagIntent = 'regulatory_qa' | 'foresight' | 'project_scoped';
 export interface RagRetrievalParams {
   query: string;
   intent?: RagIntent;
+  /**
+   * Pin the model that GENERATES the answer, by gateway model id. Only
+   * `ragQuery` uses it (`ragRetrieve` does not generate).
+   *
+   * This exists so a RAG run can be attributed to a model. Without it the
+   * answer came from whatever the gateway picked for the task type, so no RAG
+   * run could serve as a performance qualification of a named model — the
+   * blocker `ga-readiness-report` records against the PQ's `rag` component.
+   * Unset keeps the previous behaviour exactly, and an unapproved model on a
+   * high-risk task is still refused by the gateway rather than honoured.
+   */
+  model?: string;
   /** Tenant scope for org-level corpora (vault). */
   organizationUuid?: string;
   /** Project scope — routes retrieval through project-scoped atoms. */
@@ -152,6 +164,8 @@ export function optionsForIntent(params: RagRetrievalParams): RetrievalOptions {
 
   return {
     strategy: pick(params.strategy, defaults.strategy) ?? 'advanced',
+    // Forwarded so the generator is attributable; omitted when unset.
+    ...(params.model ? { model: params.model } : {}),
     limit: params.limit ?? 5,
     threshold: params.threshold,
     useReranking: pick(params.useReranking, defaults.useReranking),

@@ -30,6 +30,9 @@ import { eq, and, or, inArray, like, sql, desc, arrayOverlaps } from 'drizzle-or
 import auditService from './auditService.js';
 import { ai } from '../lib/unified-ai-client';
 import multer from 'multer';
+import type { NextFunction, Request, RequestHandler, Response } from 'express';
+import { makeUploadFileFilter, receiveUpload } from '../middleware/uploadAllowlist';
+import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
 import path from 'path';
 import fs from 'fs/promises';
 import crypto from 'crypto';
@@ -186,6 +189,17 @@ interface DocumentTags {
   generatedBy: { provider: string; model: string } | null;
 }
 
+/**
+ * Until 2026-09-25 the upload receiver below had a size limit and nothing else:
+ * any declared type was written to disk, and the private signature check in
+ * uploadDocument ran only after the file was stored and only if the route
+ * reached it; no malware scan ran (security audit 2026-09-24, IAM-14; plan
+ * P1-5). The declared type is now filtered at receipt against allowedMimeTypes,
+ * and getUploadMiddleware runs the shared byte check and scan on the stored
+ * file, removing it when refused.
+ */
+const UPLOAD_MAX_BYTES = 100 * 1024 * 1024; // 100MB limit
+
 class DocumentDataCenterService {
   private storage: multer.Multer;
   private uploadDir: string = path.join(process.cwd(), 'uploads', 'device-data-center');
@@ -227,7 +241,12 @@ class DocumentDataCenterService {
           cb(null, `${uniqueSuffix}-${file.originalname}`);
         }
       }),
-      limits: { fileSize: 100 * 1024 * 1024 }, // 100MB limit
+      limits: { fileSize: UPLOAD_MAX_BYTES, files: 1 },
+      fileFilter: makeUploadFileFilter({
+        extensions: [],
+        mimeTypes: [...this.allowedMimeTypes],
+        allowMimePrefixes: [],
+      }),
     });
     
     console.log('✅ DocumentDataCenterService initialized with AI-powered tagging');
@@ -969,10 +988,41 @@ class DocumentDataCenterService {
   }
 
   /**
-   * Get upload handler for Express routes
+   * Byte check + malware scan on the file multer has already written to disk.
+   * A refused file is removed before the response; a request with no file is
+   * left to the route, which has its own answer.
    */
-  getUploadMiddleware() {
-    return this.storage.single('file');
+  private readonly validateUploadedFile = async (req: Request, res: Response, next: NextFunction) => {
+    const file = req.file;
+    if (!file) return next();
+    try {
+      await assertUploadSafe(file.path, file.mimetype, file.originalname);
+    } catch (err) {
+      if (err instanceof UploadSafetyError) {
+        await fs.unlink(file.path).catch(() => undefined);
+        return res.status(err.status).json(err.body);
+      }
+      return next(err);
+    }
+    return next();
+  };
+
+  /**
+   * Get upload handler for Express routes: multer's outcomes as the 4xx they
+   * are (413 over the limit, 415 a refused type), then the byte check. One
+   * handler, not a pair: an array argument moves `router.post` onto the
+   * RequestHandlerParams overload, and the route's untyped inline handler then
+   * loses its contextual types (noImplicitAny). A route mounts it exactly as
+   * it mounted the single handler before.
+   */
+  getUploadMiddleware(): RequestHandler {
+    const receive = receiveUpload(this.storage.single('file'), { maxBytes: UPLOAD_MAX_BYTES });
+    return (req, res, next) => {
+      receive(req, res, (err?: unknown) => {
+        if (err) return next(err);
+        void this.validateUploadedFile(req, res, next).catch(next);
+      });
+    };
   }
 }
 

@@ -1,0 +1,34 @@
+F-40 — RED: the test run against the code with this fix reverted
+Signature manifest printed a content hash nobody compared; a sealed record nobody signed exported
+
+Fix commit: 7087ae5c4. Tree: 893a4750f with ONLY the lines below reverted to the pre-fix logic,
+then restored byte-for-byte after the run:
+  - server/routes/authoring.router.ts: remove/replace block from '    if (exportSignatures.length > 0 && !anySignatu' to '    // Create audit event'
+  - server/services/authoring/authoring-export.ts: replace '      lines.push(signatureVerdictLine(s.content_hash, currentHash));\n'...
+
+vitest exit code: 1 (non-zero = the test caught the defect)
+
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > prints the printed name, the meaning and the executed time 177ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > says so plainly when a document carries no signatures 18ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > does not print an email where the printed name goes 14ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > includes a signature element with the required lines 5ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > escapes the document title, which it never did 5ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > is parseable by a real XML parser 23ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — PDF carries the manifestation > renders the signature block into the PDF html 248ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > the dead renderer is gone > buildDocx no longer exists to be mistaken for the live path 2ms
+ × server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > states, per signature, that it covers the exported content 24ms
+   → expected '<?xml version="1.0" encoding="UTF-8" …' to contain 'Verification: this signature covers t…'
+ × server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > refuses the export when NO signature covers the content being filed 16ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > still exports, and marks the stale one, when a LATER signature covers it 16ms
+   → expected '<?xml version="1.0" encoding="UTF-8" …' to contain 'DOES NOT COVER this document'
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > an unsigned document is unaffected — nothing to verify, nothing to refuse 9ms
+ Test Files  1 failed (1)
+      Tests  3 failed | 9 passed (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > states, per signature, that it covers the exported content
+AssertionError: expected '<?xml version="1.0" encoding="UTF-8" …' to contain 'Verification: this signature covers t…'
+ FAIL  server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > refuses the export when NO signature covers the content being filed
+AssertionError: expected 200 to be 409 // Object.is equality
+ FAIL  server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > still exports, and marks the stale one, when a LATER signature covers it
+AssertionError: expected '<?xml version="1.0" encoding="UTF-8" …' to contain 'DOES NOT COVER this document'

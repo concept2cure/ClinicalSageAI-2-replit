@@ -1,0 +1,26 @@
+# The whole tests/db tier, c2c_d3b (from empty), app_service, RLS_ENFORCE=on, with this change: 715 of 732.
+# Every one of the 17 failures fails identically without it:
+#   7  the three suites failing since 2026-09-25 (two-tenant-application-rls 2, authoring-section-concurrency 3, control-plane-access 2);
+#   7  signup-launch-catalog, and 1 one-time-credentials: fixture passwords refused by dd6632dd's new rule (AUTH_001);
+#   2  mcp-connector: a query failure on this database.
+# The last 10 were run here with the policy and trigger removed: the same 10 fail.
+ × tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > refuses a save whose token is stale, and overwrites nothing 18ms
+ × tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > accepts a save that carries the current token 8ms
+ × tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > leaves a caller that sends no token exactly as it was 8ms
+ × tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the simulate route records nothing, for any tenant 12ms
+ × tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the reads show tenant A its decision and tenant B nothing of it 5ms
+ × tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > answers 201 and creates a free-tier organisation whose signing-up user is its admin 7ms
+ × tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > grants every launch module to the new organisation — enabled, perpetual, and nothing else 7ms
+ × tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > writes the grants as the platform, not a person (enabled_by NULL; the reason lives in the audit trail) 2ms
+ × tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > seeds the organization_industry_profiles row from the signup signals 4ms
+ × tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > gives the new organisation exactly one client workspace — its own, created by the signing-up user 3ms
+ × tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > the rail, launch scope enforced: every launch surface is available, every live launch module by its grant 16ms
+ × tests/db/signup-launch-catalog.dbtest.ts > a refused workspace write takes the whole organisation with it > answers 500 AUTH_010 and leaves no organisation, user, membership or workspace behind 7ms
+ × tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > the organization's administrator can 10ms
+ × tests/db/control-plane-access.dbtest.ts > The control plane gives platform data to platform operators and org data to org administrators (D3, L183) > a platform operator reads the kernel log 7ms
+ × tests/db/one-time-credentials.dbtest.ts > a password-reset token is used once > two resets racing one token: exactly one succeeds, and its password is the one set 16ms
+ × server/mcp/__tests__/mcp-connector.dbtest.ts > the governed write > files a DRAFT leaf pointing at a vault document, returns the sign-off link, and is audited with tool + org 30ms
+ × server/mcp/__tests__/mcp-connector.dbtest.ts > the governed write > refuses a vault document from another organisation verbatim (no cross-tenant pointer) 28ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  6 failed | 59 passed (65)
+      Tests  17 failed | 715 passed (732)

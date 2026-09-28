@@ -259,7 +259,7 @@ export function compareDocumentPin(
   return pinned === stored ? 'match' : 'mismatch';
 }
 
-/** The lookup key for one pointer, so the same document is read once per call. */
+/** The store-read key for one pointer: the document, not the pin. */
 function lookupKey(p: LeafDocumentPointer): string {
   return `${p.documentTable ?? ''}:${p.documentUuid ?? ''}:${p.documentId ?? ''}`;
 }
@@ -368,12 +368,9 @@ function resolutionFromStoreLookup(base: LeafResolutionBase, lookup: StoreLookup
  * Resolve one pointer. Exported for the Builder route and tests; the batch
  * form below is what the assessor uses.
  */
-export async function resolveLeafDocument(
-  pointer: LeafDocumentPointer,
-  organizationId: number,
-): Promise<LeafDocumentResolution> {
+function resolutionBase(pointer: LeafDocumentPointer): LeafResolutionBase {
   const documentTable = pointer.documentTable ?? null;
-  const base: LeafResolutionBase = {
+  return {
     keyKind: documentTableKeyKind(documentTable),
     documentTable,
     documentId: pointer.documentId ?? null,
@@ -381,7 +378,13 @@ export async function resolveLeafDocument(
     pinnedSha256: pointer.documentContentSha256 ?? null,
     storedSha256: null,
   };
+}
 
+export async function resolveLeafDocument(
+  pointer: LeafDocumentPointer,
+  organizationId: number,
+): Promise<LeafDocumentResolution> {
+  const base = resolutionBase(pointer);
   const unlookupable = classifyUnlookupablePointer(base);
   if (unlookupable) return unlookupable;
 
@@ -389,23 +392,35 @@ export async function resolveLeafDocument(
 }
 
 /**
- * Resolve every leaf's pointer, in input order. Identical pointers are read
- * once. Never throws for a leaf.
+ * Resolve every leaf's pointer, in input order. A document is read once however
+ * many leaves point at it; each leaf's pin is compared on its own. Never throws
+ * for a leaf.
+ *
+ * What is shared is the STORE READ, never the verdict. The cache used to hold
+ * the whole resolution under a key that omits the pin, so two leaves on one
+ * document took the first leaf's verdict. The assessor reads leaves with no
+ * ORDER BY, so a stale pin read as `resolved` whenever an unpinned or fresh
+ * leaf on the same document happened to come first, and dispatch and transmit
+ * Gate 2 cleared content its own placement never pinned (new-code audit
+ * 2026-09-24, finding 3).
  */
 export async function resolveLeafDocuments(
   leaves: readonly LeafDocumentPointer[],
   organizationId: number,
 ): Promise<LeafDocumentResolution[]> {
-  const cache = new Map<string, Promise<LeafDocumentResolution>>();
+  const reads = new Map<string, Promise<StoreLookup>>();
   return Promise.all(
-    leaves.map((leaf) => {
+    leaves.map(async (leaf) => {
+      const base = resolutionBase(leaf);
+      const unlookupable = classifyUnlookupablePointer(base);
+      if (unlookupable) return unlookupable;
       const key = lookupKey(leaf);
-      let pending = cache.get(key);
-      if (!pending) {
-        pending = resolveLeafDocument(leaf, organizationId);
-        cache.set(key, pending);
+      let read = reads.get(key);
+      if (!read) {
+        read = lookupDocumentInStore(base, organizationId);
+        reads.set(key, read);
       }
-      return pending;
+      return resolutionFromStoreLookup(base, await read);
     }),
   );
 }

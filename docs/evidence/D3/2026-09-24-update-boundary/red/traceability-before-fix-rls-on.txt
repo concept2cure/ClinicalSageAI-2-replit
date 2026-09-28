@@ -1,0 +1,64 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-24T17:31:47.457Z","pid":15844,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-24T17:31:47.458Z","pid":15844,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-24T17:31:47.458Z","pid":15844,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/traceability-update-boundary.dbtest.ts > A traceability update cannot move an item across the tenant boundary (D3) > an update naming another org leaves the item in its own tenant, and still applies
+[database] Database connection successful
+
+stdout | tests/db/traceability-update-boundary.dbtest.ts > A traceability update cannot move an item across the tenant boundary (D3) > an update naming another org leaves the item in its own tenant, and still applies
+[database] Database connection successful { timestamp: '2026-09-24T17:31:47.831Z', poolSize: 1 }
+
+{"level":50,"time":"2026-09-24T17:31:47.875Z","pid":15844,"hostname":"vm","context":{"error":{"query":"update \"qmp_traceability_matrix\" set \"organization_id\" = $1, \"notes\" = $2, \"updated_at\" = $3 where (\"qmp_traceability_matrix\".\"organization_id\" = $4 and \"qmp_traceability_matrix\".\"id\" = $5)","params":[90302,"wo03_15844_muft6zil-noted","2026-09-24T17:31:47.872Z",90301,6],"cause":{"length":146,"name":"error","severity":"ERROR","code":"42501","file":"execMain.c","line":"2234","routine":"ExecWithCheckOptions"}}},"msg":"[traceability-routes] Error updating traceability item"}
+ × tests/db/traceability-update-boundary.dbtest.ts > A traceability update cannot move an item across the tenant boundary (D3) > an update naming another org leaves the item in its own tenant, and still applies 131ms
+   → the rest of the update must go through, not be refused as a whole: expected 500 to be 200 // Object.is equality
+ × tests/db/traceability-update-boundary.dbtest.ts > A traceability update cannot move an item across the tenant boundary (D3) > an update cannot re-point the item at another tenant's QMP 43ms
+   → tenant A's item must not reference tenant B's QMP: expected 12 to be 11 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/traceability-update-boundary.dbtest.ts > A traceability update cannot move an item across the tenant boundary (D3) > an update naming another org leaves the item in its own tenant, and still applies
+AssertionError: the rest of the update must go through, not be refused as a whole: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ tests/db/traceability-update-boundary.dbtest.ts:83:93
+     81|     const after = await item();
+     82|     expect(after.organization_id, "tenant A's item must remain tenant …
+     83|     expect(res.status, 'the rest of the update must go through, not be…
+       |                                                                                             ^
+     84|       200
+     85|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/traceability-update-boundary.dbtest.ts > A traceability update cannot move an item across the tenant boundary (D3) > an update cannot re-point the item at another tenant's QMP
+AssertionError: tenant A's item must not reference tenant B's QMP: expected 12 to be 11 // Object.is equality
+
+- Expected
++ Received
+
+- 11
++ 12
+
+ ❯ tests/db/traceability-update-boundary.dbtest.ts:94:88
+     92|       .set(auth(tokenA))
+     93|       .send({ qmpId: qmpB });
+     94|     expect((await item()).qmp_id, "tenant A's item must not reference …
+       |                                                                                        ^
+     95|     expect(res.status, "another tenant's QMP must read as not found").…
+     96|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  17:31:45
+   Duration  2.95s (transform 1.03s, setup 84ms, import 1.94s, tests 644ms, environment 0ms)
+

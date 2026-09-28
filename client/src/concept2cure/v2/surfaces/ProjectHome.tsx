@@ -7,8 +7,9 @@ import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceAc
 import { getSegmentModules, getSurfaceMeta } from '../registryModel';
 import { isLaunchScopeLocked, useNavEntitlements } from '../navEntitlements';
 import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials, fileTone } from '../fixtures/project-home-data';
-import { useChatUpload, attachmentReadLabel as readLabel } from '../../hooks/useChatUpload';
+import { useChatUpload, readyAttachmentLabel } from '../../hooks/useChatUpload';
 import { updateShellProject } from '../shellProject';
+import { ProjectRecords } from './ProjectRecords';
 import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
 import { DEVICE_FAMILY_PRODUCT_TYPES } from '@shared/constants/domain/product-types';
 import '../styles/project-home-v2.css';
@@ -74,7 +75,11 @@ interface ProgramRow {
   intended_use: string | null;
   primary_agency: string | null;
   target_submission_date: string | null;
-  progress_percent: number | null;
+  /** The share of this program's governed sections that are approved or
+   *  locked — the figure its card in the Projects list reports. Null when the
+   *  server could not measure it. (This read `progress_percent` until
+   *  2026-09-24: a column written once as 0 and never updated.) */
+  readiness?: number | null;
   /** The device taxonomy intake stores for a device / IVD program
    *  (regulatory_programs columns + the metadata-held fields the read lifts).
    *  Every one is null for a drug program, and absent on a server that predates
@@ -111,6 +116,8 @@ interface ActivityRow {
   action: string | null;
   resource_type: string | null;
   actor_id: number | null;
+  /** COALESCE(users.name, users.email) for actor_id; null for system rows. */
+  actor_name: string | null;
   occurred_at: string | null;
 }
 
@@ -170,14 +177,20 @@ function Anchored<T>(props: {
   return <>{props.render(state.data)}</>;
 }
 
-/* ════ Lifecycle (canonical stage catalog — not data) ════ */
+/* ════ Lifecycle (canonical stage catalog — not data) ════
+   The tracker is navigation over the stage catalog, not a progress meter.
+   Every stage before the open tab used to be marked `done` — filled node,
+   filled connector — from the tab's POSITION alone. `stage` defaults to
+   'author', so Plan and Evidence rendered as completed on every project,
+   including with no project loaded at all, and opening Submit "completed"
+   Review. Nothing this surface reads records per-stage completion, so the one
+   state stated is the one that is true: which stage is open. */
 
 function StageTracker({ stage, setStage }: { stage: string; setStage: (s: string) => void }) {
-  const curIdx = PJ_LIFECYCLE.findIndex(s => s.id === stage);
   return (
     <div className="pj-lc" role="tablist" aria-label="Project lifecycle">
-      {PJ_LIFECYCLE.map((s, i) => {
-        const status = i < curIdx ? 'done' : (i === curIdx ? 'active' : 'upcoming');
+      {PJ_LIFECYCLE.map((s) => {
+        const status = s.id === stage ? 'active' : undefined;
         return (
           <button key={s.id} className="pj-lc-stage" data-status={status} aria-selected={stage === s.id || undefined}
             onClick={() => setStage(s.id)} title={s.blurb}>
@@ -230,6 +243,8 @@ interface SourceRow {
   artifactId: string | null;
   origin: string | null;
   extractionMethod: string | null;
+  /** False once a re-upload superseded it. Absent on a server that predates it. */
+  isCurrent?: boolean;
   /** Recorded citations of this source. Absent on a server that predates it. */
   usage?: { sections: number; documents: number; changedSections: number } | null;
 }
@@ -328,10 +343,10 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   const [dragging, setDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const state = useLiveData<{ sources: SourceRow[] }>(
+  const state = useLiveData<{ sources: SourceRow[]; window?: { shown: number; truncated: boolean } }>(
     pid ? `/api/c2c/projects/${pid}/sources` : null,
     [pid, reloadKey],
-    hasKeys<{ sources: SourceRow[] }>('sources'),
+    hasKeys<{ sources: SourceRow[]; window?: { shown: number; truncated: boolean } }>('sources'),
   );
 
   // Sections in this project drafted from a source that has since changed. Read
@@ -358,8 +373,12 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   const rows = sources.filter(s =>
     q.trim() ? (s.title || '').toLowerCase().includes(q.trim().toLowerCase()) : true,
   );
-  const total = sources.length;
-  const readable = sources.filter(s => s.extractionStatus === 'extracted').length;
+  /* One file re-uploaded is one source: its retired revision is listed but not
+     counted. A full window's count is a floor. */
+  const current = sources.filter(s => s.isCurrent !== false);
+  const total = current.length;
+  const readable = current.filter(s => s.extractionStatus === 'extracted').length;
+  const truncated = state.data?.window?.truncated === true;
 
   return (
     <section className="pj-sec">
@@ -371,7 +390,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
           {state.error
             ? "couldn't load this project's sources — the list below is incomplete"
             : total > 0
-              ? `${total} source${total === 1 ? '' : 's'} · ${readable} readable — what this project's documents are written from`
+              ? `${total}${truncated ? '+' : ''} source${total === 1 && !truncated ? '' : 's'} · ${readable} readable${truncated ? ` (newest ${sources.length} shown)` : ''} — what this project's documents are written from`
               : "the sources this project's documents are written from"}
         </span>
       </div>
@@ -419,7 +438,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
           className="sp-tone-warn"
           role="status"
           style={{
-            border: '1px solid var(--border,#d0d5dd)', borderRadius: 10,
+            border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
             padding: '10px 12px', marginBottom: 12, fontSize: 12.5,
           }}
         >
@@ -454,12 +473,10 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
             <span
               key={a.id}
               className={a.status === 'error' ? 'sp-tone-warn' : undefined}
-              style={{ fontSize: 12, border: '1px solid var(--border,#d0d5dd)', borderRadius: 999, padding: '2px 10px' }}
+              style={{ fontSize: 12, border: '1px solid var(--border)', borderRadius: 'var(--radius-full)', padding: '2px 10px' }}
             >
               {a.status === 'uploading' ? `Uploading ${a.name}…` : a.name}
-              {a.status === 'ready' && readLabel(a.extractionMethod, a.extractionWords)
-                ? ` · ${readLabel(a.extractionMethod, a.extractionWords)}`
-                : ''}
+              {a.status === 'ready' ? ` · ${readyAttachmentLabel(a.extractionMethod, a.extractionWords)}` : ''}
               {a.status === 'error' && a.error ? ` · ${a.error}` : ''}
             </span>
           ))}
@@ -768,7 +785,7 @@ function SchedulePanel({ pid, onAsk }: { pid: string | null; onAsk: (q: string) 
                         key={m.key || m.id}
                         style={{
                           display: 'flex', alignItems: 'baseline', gap: 10, padding: '7px 2px',
-                          borderBottom: '1px solid var(--border-subtle,#eaecf0)',
+                          borderBottom: '1px solid var(--border-subtle)',
                         }}
                       >
                         <span className={`rd-chip ${SCHED_STATUS_TONE[m.status] ?? 'tone-idle'}`} style={{ whiteSpace: 'nowrap' }}>
@@ -1025,6 +1042,15 @@ function AuthorWorkspace({
           </div>
         </section>
 
+        {/* Records in this project — REAL: GET /:id/records, every store read
+            by its project key (PF-17). A store it cannot read says so. */}
+        {pid && (
+          <section className="pj-sec" aria-label="Records in this project">
+            <div className="pj-sec-h"><h2>Records in this project</h2></div>
+            <ProjectRecords pid={pid} />
+          </section>
+        )}
+
         {/* Team & activity — REAL: project_members + audit_logs */}
         <section className="pj-sec">
           <div className="pj-sec-h"><h2>Team &amp; activity</h2></div>
@@ -1060,7 +1086,7 @@ function AuthorWorkspace({
                 <div className="pj-acts">
                   {(d.activity ?? []).map((a, i) => (
                     <div key={i} className="pj-act">
-                      <span className="pj-act-w">{a.actor_id != null ? 'User ' + a.actor_id : 'System'}</span>
+                      <span className="pj-act-w">{a.actor_name ?? (a.actor_id != null ? 'User ' + a.actor_id : 'System')}</span>
                       <span className="pj-act-t">{String(a.action ?? '').replace(/_/g, ' ')}{a.resource_type ? ' · ' + a.resource_type : ''}</span>
                       <span className="pj-act-n">{fmtWhen(a.occurred_at) ?? ''}</span>
                     </div>
@@ -1190,8 +1216,11 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
   // Header identity: sel is the live selection handoff; prog enriches it with
   // real regulatory_programs columns. Every value is null-safe — a chip is only
   // rendered when its column is present (never fabricated).
-  const title = sel?.title || prog?.name || 'Project';
-  const productName = sel?.product || prog?.product_name || String(title).split(' ')[0];
+  // No placeholder name. This fell back to the word 'Project', which the
+  // header then rendered as the project's name — "PROJECT Project" above an
+  // H1 "Project" — with no project selected at all.
+  const title = sel?.title || prog?.name || null;
+  const productName = sel?.product || prog?.product_name || (title ? title.split(' ')[0] : 'this project');
   const desc = prog?.description ?? null;
   const clientType = sel?.ws ?? null;
   const submissionType = sel?.code || prog?.code || prog?.program_type || null;
@@ -1209,7 +1238,7 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
   const status = sel?.status || prog?.status || null;
   const priority = prog?.priority ?? null;
   const phase = prog?.phase ?? null;
-  const completion = prog?.progress_percent ?? null;
+  const completion = typeof prog?.readiness === 'number' ? prog.readiness : null;
   /* The device taxonomy, read from the row only. A device / IVD program shows
      its class, path, product code, regulation, panel, predicate and flags —
      each field stated as absent when the row lacks it; a drug program shows
@@ -1270,7 +1299,7 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
     const drafts = draftsState.data?.drafts;
     return {
       summary:
-        `Project home for "${title}"${submissionType ? ` (${submissionType})` : ''}: ` +
+        `Project home for ${title ? `"${title}"` : 'an untitled project'}${submissionType ? ` (${submissionType})` : ''}: ` +
         [status && `status ${status}`, phase && `phase ${phase}`, priority && `priority ${priority}`,
          region && `primary agency ${region}`, indication && `indication ${indication}`,
          completion != null && `${completion}% complete`].filter(Boolean).join(', ') +
@@ -1359,13 +1388,17 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
     <div className="page-inner pj">
       <button className="pj-back" onClick={() => onNav('projects')}>{I.left} All projects</button>
 
-      <div className="pj-crumb">
-        <span className="pj-crumb-i" data-cur><span className="pj-crumb-k">Project</span>{title}</span>
-      </div>
+      {title && (
+        <div className="pj-crumb">
+          <span className="pj-crumb-i" data-cur><span className="pj-crumb-k">Project</span>{title}</span>
+        </div>
+      )}
 
       <div className="pj-top">
         <div className="pj-top-l">
-          <h1 className="pj-title">{title}</h1>
+          {/* The surface's own name when there is no project name to show —
+              a label for the screen, not a name posing as a project's. */}
+          <h1 className="pj-title">{title ?? 'Project home'}</h1>
           {progState.loading && <div role="status" className="pj-desc" style={{ color: 'var(--text-400)' }}>Loading project…</div>}
           {desc && <div className="pj-desc">{desc}</div>}
           <div className="pj-tags">
@@ -1422,13 +1455,21 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
             this is where the control belongs. */}
       </div>
 
-      <StageTracker stage={stage} setStage={setStage} />
-      <div className="pj-stageband">
-        <div className="pj-stageband-l">
-          <span className="pj-stageband-stage">{(PJ_LIFECYCLE.find(s => s.id === stage) ?? { label: '' }).label}</span>
-          <span className="pj-stageband-blurb">{(PJ_LIFECYCLE.find(s => s.id === stage) ?? { blurb: '' }).blurb}</span>
-        </div>
-      </div>
+      {/* A lifecycle belongs to a project. With none selected the tabs
+          switched nothing — the body below is "No project selected" whichever
+          is open — and AnA's set-stage already refuses in this state, so the
+          human's controls do not offer what hers cannot. */}
+      {!noProject && (
+        <>
+          <StageTracker stage={stage} setStage={setStage} />
+          <div className="pj-stageband">
+            <div className="pj-stageband-l">
+              <span className="pj-stageband-stage">{(PJ_LIFECYCLE.find(s => s.id === stage) ?? { label: '' }).label}</span>
+              <span className="pj-stageband-blurb">{(PJ_LIFECYCLE.find(s => s.id === stage) ?? { blurb: '' }).blurb}</span>
+            </div>
+          </div>
+        </>
+      )}
 
       {noProject ? (
         <EmptyState

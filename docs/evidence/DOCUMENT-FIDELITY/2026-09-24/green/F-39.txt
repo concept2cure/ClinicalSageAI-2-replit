@@ -1,0 +1,18 @@
+F-39 — GREEN: the same tests against 893a4750f as committed
+A draft cut off at the model token limit was accepted into coauthor_documents as finished
+
+vitest exit code: 0
+
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept (ledger L160) > records every clause of the accepted text as the acceptor's assertion, in the same transaction as the content and its audit row 53ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept (ledger L160) > refuses an accept with no identified user, and writes nothing 7ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "approved": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 9ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "finalized": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 9ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "signed": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 8ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "locked": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 7ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status " Approved ": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 6ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > a working row is still accepted (the refusal is the verdict, not the route) 13ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > refuses a draft the model cut off at its output limit, and writes nothing 6ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > refuses on the explicit truncated flag as well as the raw reason 3ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > accepts a completed draft that reports its finish reason 14ms
+ Test Files  1 passed (1)
+      Tests  11 passed (11)

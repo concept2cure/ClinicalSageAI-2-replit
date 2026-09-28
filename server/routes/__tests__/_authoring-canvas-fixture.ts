@@ -12,6 +12,7 @@ import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
 import { AUDIT_LOGS_PGLITE_DDL } from '../../db/pglite-harness';
+import { runWithTenantScope } from '../../db/tenantStore';
 
 export const JWT_SECRET = 'authoring-canvas-secret-0921';
 process.env.JWT_SECRET = JWT_SECRET;
@@ -94,6 +95,9 @@ export const VAULT_DDL = `
     content_hash TEXT NOT NULL,
     classification TEXT DEFAULT 'INTERNAL',
     retention_policy TEXT, parent_document_id UUID, supersedes_id UUID,
+    -- The retention clock the ingest now starts at admission (9f43e7e9, P1-22):
+    -- today plus the named, active policy's days (migrations/20260608_vault_retention.sql).
+    retention_until DATE,
     extracted_text TEXT, page_count INTEGER, word_count INTEGER,
     folder_id TEXT, evidence_kind TEXT, ctd_section TEXT,
     placement_status TEXT NOT NULL DEFAULT 'unfiled',
@@ -107,6 +111,15 @@ export const VAULT_DDL = `
     UNIQUE (program_id, document_code, version)
   );
   CREATE UNIQUE INDEX idx_vault_documents_program_hash_unique ON vault.documents (program_id, content_hash);
+  -- The policies the ingest reads the retention days from (the columns it
+  -- reads, from migrations/20260608_vault_retention.sql). Empty here: a document
+  -- that names no policy, or an unknown one, gets no date.
+  CREATE TABLE vault.retention_policies (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    policy_name TEXT NOT NULL UNIQUE,
+    retention_days INTEGER NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE
+  );
 `;
 
 export async function mint(u: { id: string; organizationId?: number; email: string; name: string }): Promise<string> {
@@ -122,9 +135,20 @@ export async function mint(u: { id: string; organizationId?: number; email: stri
     .sign(new TextEncoder().encode(JWT_SECRET));
 }
 
-export function makeApp(router: express.Router): express.Express {
+export function makeApp(router: express.Router, opts: { role?: string } = {}): express.Express {
   const app = express();
   app.use(express.json({ limit: '5mb' }));
+  /* The request's tenant scope, as production opens it: the global /api gate
+     (server/bootstrap/register-platform-routes.ts) runs authMiddleware ahead of
+     this router, which scopes the request with the caller's organization_users
+     role. The Vault write services read that role. 'member' is the role PREREQ
+     gives AUTHOR. */
+  app.use((_req, _res, next) =>
+    runWithTenantScope(
+      { tenantId: String(ORG), role: opts.role ?? 'member', source: 'request', caller: 'authoring-canvas-fixture' },
+      next,
+    ),
+  );
   // No auth shim: the router's OWN jose middleware verifies the token.
   app.use('/api/authoring', router);
   return app;

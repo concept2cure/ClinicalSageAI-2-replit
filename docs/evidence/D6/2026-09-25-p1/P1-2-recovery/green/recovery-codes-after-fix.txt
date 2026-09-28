@@ -1,0 +1,11 @@
+$ git diff --stat  # fix applied on top of e715ea1a
+ server/routes/authEnterprise.ts |  6 ++--
+ server/services/mfaService.ts   | 71 +++++++++++++++++++++++++++++++++++------
+ 2 files changed, 65 insertions(+), 12 deletions(-)
+ ✓ server/services/__tests__/mfa-recovery-code-redemption.pglite.integration.test.ts > verifyLoginSecondFactor: recovery codes > redeems a code the enrolment issued, and removes only that code 3822ms
+ ✓ server/services/__tests__/mfa-recovery-code-redemption.pglite.integration.test.ts > verifyLoginSecondFactor: recovery codes > of two simultaneous presentations of one code, exactly one is accepted 12ms
+ ✓ server/services/__tests__/mfa-recovery-code-redemption.pglite.integration.test.ts > verifyLoginSecondFactor: recovery codes > another account's code is not this account's 10ms
+ ✓ server/services/__tests__/mfa-recovery-code-redemption.pglite.integration.test.ts > verifyLoginSecondFactor: recovery codes > codes from a disabled enrolment are dead 10ms
+ Test Files  8 passed (8)
+      Tests  116 passed (116)
+exit=0

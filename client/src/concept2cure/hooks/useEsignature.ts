@@ -21,6 +21,7 @@
 
 import { useMutation } from '@tanstack/react-query';
 import { ApiRequestError, extractApiError } from '@/lib/queryClient';
+import { getAuthHeaders } from '@/utils/authToken';
 
 const BASE = '/api/esignature';
 
@@ -28,7 +29,16 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     method: 'POST',
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
+    /* THE SIGNER COULD NOT BE VERIFIED WITHOUT THIS — for anyone, anywhere.
+       `credentials: 'include'` is not authentication in this app: the /api
+       gate reads `req.headers.authorization` and has no cookie fallback.
+       /api/esignature carries no inline auth, so in production the gate
+       answered 401, and everywhere else it let the request through with no
+       user and the handler's own resolveUserId() answered 401 AUTH_REQUIRED.
+       <EsignModal> gates every governed confirm on verifyPassword, so every
+       e-signed action behind it was blocked. The validation OQ did not see it:
+       it signs through /api/c2c/actions/sign with its own bearer token. */
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
     body: JSON.stringify(body),
   });
   const payload = (await res.json().catch(() => ({}))) as Record<string, unknown>;

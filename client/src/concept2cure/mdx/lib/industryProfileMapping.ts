@@ -53,6 +53,19 @@ export const CLIENT_TYPE_OPTIONS = [
 ] as const;
 export type ClientTypeOption = (typeof CLIENT_TYPE_OPTIONS)[number];
 
+/** What each chip is called on screen. The keys are a vocabulary for code;
+ *  Setup printed them ("medtech", "cro", "health"), finding 123. Kept beside
+ *  PICKER_TO_GOVERNED so a label cannot drift from what the chip saves. */
+export const CLIENT_TYPE_LABEL: Record<ClientTypeOption, string> = {
+  medtech: 'Medical device',
+  diagnostics: 'Diagnostics (IVD)',
+  biotech: 'Biotech',
+  pharma: 'Pharma',
+  cro: 'CRO',
+  consulting: 'Regulatory consulting',
+  health: 'Health system or academic',
+};
+
 export interface GovernedIndustryPair {
   primaryIndustry: PrimaryIndustry;
   /** null = the picker chip implies no device/IVD specialization. */

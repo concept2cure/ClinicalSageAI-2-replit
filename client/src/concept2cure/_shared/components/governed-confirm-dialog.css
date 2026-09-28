@@ -40,5 +40,5 @@
 .c2c-confirm-btn:disabled{ cursor:not-allowed; }
 .c2c-confirm-btn:focus-visible{ outline:2px solid var(--border-focus); outline-offset:1px; }
 .c2c-confirm-btn.pri{ border-color:transparent; background:var(--accent-strong); color:var(--accent-on-strong); }
-.c2c-confirm-btn.pri:hover:not(:disabled){ background:var(--accent-hover); }
+.c2c-confirm-btn.pri:hover:not(:disabled){box-shadow:var(--shadow-sm);transform:translateY(-1px);}
 .c2c-confirm-btn.pri:disabled{ background:var(--muted); color:var(--text-300); }

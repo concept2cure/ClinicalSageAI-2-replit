@@ -53,9 +53,16 @@
  *                 than being papered over. `GET /api/c2c/actions/verify-chain`
  *                 is the authoritative verdict.
  *   • sig       = a genuine 21 CFR §11.50 signed status. audit_events stores
- *                 one (signature_status = 'signed'); audit_logs does not carry
- *                 a signature status column, so its rows report sig=false and
- *                 a signing event shows through `kind: 'esign'`.
+ *                 one (signature_status = 'signed'). audit_logs carries no
+ *                 signature column, so an audit_logs row is signed exactly when
+ *                 a signature row names it: an `electronic_signatures` row whose
+ *                 manifest records this row's id (the QMS approve / retire
+ *                 ceremonies write both in one transaction), or the
+ *                 `authoring_signatures` row a document e-sign records by id
+ *                 (signatureId, same document). Until 2026-09-28 every
+ *                 audit_logs row reported sig=false, so an SOP approved under
+ *                 password re-authentication read "C2c Work Approve", unsigned,
+ *                 with no meaning (#24; sweep finding 53's remainder).
  *   • meaning   = the stored signature_meaning (audit_events) or the meaning
  *                 recorded in the governed row's payload; reason = the stored
  *                 reason. Nothing is invented. `event`, `target` and `kind` are
@@ -72,11 +79,11 @@ import type { Pool, PoolClient } from 'pg';
 
 import { createScopedLogger } from '../utils/logger.js';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
+import { requireAuditReader } from '../services/audit/audit-api-authority.js';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context.js';
 import {
   AUDIT_CHAIN_HEAD_ORDER_SQL,
   AUDIT_CHAIN_ORDER_ASC_SQL,
-  verifyAuditChain,
   type ChainVerificationResult,
 } from '../services/audit/chain.js';
 
@@ -91,6 +98,12 @@ export interface AuditLedgerEntry {
   /** ISO-8601 instant the event was recorded; the merge order key. */
   at: string;
   actor: string;
+  /**
+   * The account that acted, as `user:<id>` (the form entry targets use), or
+   * null for the system. A display name is not an identity: two accounts may
+   * share one, and the ledger could not say which acted (VSR-001 F-42).
+   */
+  actorRef: string | null;
   event: string;
   target: string;
   kind: string;
@@ -104,6 +117,11 @@ export interface AuditLedgerEntry {
   source: AuditLedgerSource;
   /** The store's own order key: audit_logs.chain_seq (null for a legacy row) or audit_events.sequence_number. */
   seq: number | null;
+  /** The signature record this entry is, as `<table>:<id>`, or null. §11.70: the signature and the
+   *  record it signs are linked, so an inspector can go from the audit row to the signature row. */
+  signatureRef?: string | null;
+  /** The record's own reference (`qms-document:1`) when `target` names it for a reader instead. */
+  targetRef?: string | null;
 }
 
 // ─── Pure helpers (presentation derivations of REAL columns) ──────────────────
@@ -119,8 +137,10 @@ function metaString(meta: unknown, keys: string[]): string | null {
   return null;
 }
 
-/** Turn a dotted/underscored event_type token into a Title Case label. */
-function humanizeEventType(eventType: unknown): string {
+/** Turn a dotted/underscored event_type token into a Title Case label.
+ *  Exported for the admin console's audit band (mdx-admin.ts), which shows the
+ *  same audit_logs rows and must name them the same way. */
+export function humanizeEventType(eventType: unknown): string {
   const raw = typeof eventType === 'string' ? eventType.trim() : '';
   if (!raw) return 'Event';
   const words = raw
@@ -198,6 +218,11 @@ function seqOf(value: unknown): number | null {
 
 // ─── Row → entry ──────────────────────────────────────────────────────────────
 
+/** `user:<id>` for an account id, null for none: the reference entry targets already use. */
+function userRef(id: number | null): string | null {
+  return id != null && Number.isInteger(id) && id > 0 ? `user:${id}` : null;
+}
+
 function auditLogEntry(row: Record<string, unknown>): AuditLedgerEntry {
   const payload = row.new_values;
   const actorId = row.actor_id == null ? null : Number(row.actor_id);
@@ -209,6 +234,7 @@ function auditLogEntry(row: Record<string, unknown>): AuditLedgerEntry {
       nonEmpty(row.user_name) ??
       nonEmpty(row.user_email) ??
       (actorId != null && Number.isFinite(actorId) ? `user ${actorId}` : 'System'),
+    actorRef: userRef(actorId),
     event: metaString(payload, ['description', 'summary', 'title', 'message']) ?? humanizeEventType(row.action),
     target:
       nonEmpty(row.target) ??
@@ -232,6 +258,7 @@ function auditEventEntry(row: Record<string, unknown>): AuditLedgerEntry {
     when: typeof row.when_display === 'string' ? row.when_display : '',
     at: isoOf(row.at),
     actor: nonEmpty(row.user_name) ?? 'System',
+    actorRef: userRef(row.user_id == null ? null : Number(row.user_id)),
     event:
       metaString(row.metadata, ['description', 'summary', 'title', 'message']) ??
       humanizeEventType(row.event_type),
@@ -248,6 +275,173 @@ function auditEventEntry(row: Record<string, unknown>): AuditLedgerEntry {
     meaning: nonEmpty(row.signature_meaning),
     source: 'audit_events',
     seq: seqOf(row.sequence_number),
+  };
+}
+
+// ─── Signatures an audit_logs row records ────────────────────────────────────
+
+/** What a signature row says about the audit row it names. */
+export interface LinkedSignature {
+  ref: string;
+  meaning: string | null;
+  signerName: string | null;
+  ipAddress: string | null;
+  /** The signed act, named from the signature record's own type. */
+  event: string | null;
+  /** The signed record, named from the signature record's own manifest. */
+  subject: string | null;
+}
+
+/** Signature types → the act they record. Only types a writer mints; an unknown
+ *  type leaves the audit row's own event name in place. */
+const SIGNED_EVENT: Record<string, string> = {
+  'qms-document-approval': 'Controlled document approved (e-signature)',
+  'qms-document-retirement': 'Controlled document retired (e-signature)',
+};
+const AUTHORING_SIGNED_EVENT = 'Document e-signed';
+
+/**
+ * Which signature stores exist here. A deployment without one holds no
+ * signature of that kind. Asked with to_regclass rather than by catching
+ * 42P01: the ledger may read inside a transaction, which a failed statement
+ * aborts for everything after it.
+ */
+async function signatureStores(
+  client: Pick<PoolClient, 'query'>,
+): Promise<{ qms: boolean; authoring: boolean; authoringTitles: boolean }> {
+  const r = await client.query(
+    `SELECT to_regclass('electronic_signatures') IS NOT NULL AS qms,
+            to_regclass('authoring_signatures')  IS NOT NULL AS authoring,
+            to_regclass('authoring_documents')   IS NOT NULL AS authoring_titles`,
+  );
+  const row = (r.rows[0] ?? {}) as { qms?: boolean; authoring?: boolean; authoring_titles?: boolean };
+  return { qms: row.qms === true, authoring: row.authoring === true, authoringTitles: row.authoring_titles === true };
+}
+
+const QMS_SIGNATURES_SQL = `
+  SELECT es.id::text AS id, es.signature_type, es.signature_meaning, es.signer_name, es.ip_address,
+         es.signature_manifest::jsonb->>'auditId'   AS audit_id,
+         es.signature_manifest::jsonb->>'docNumber' AS doc_number,
+         es.signature_manifest::jsonb->>'version'   AS version
+    FROM electronic_signatures es
+   WHERE es.organization_id = $1
+     AND es.signature_manifest::jsonb->>'auditId' = ANY($2::text[])`;
+
+const AUTHORING_SIGNATURES_SQL = `
+  SELECT s.id::text AS id, s.doc_id::text AS doc_id, s.meaning, s.signer_name, s.ip_address,
+         NULL::text AS doc_title
+    FROM authoring_signatures s
+   WHERE s.tenant_id = $1
+     AND s.id::text = ANY($2::text[])`;
+
+/** The same, naming the signed document from its own record. */
+const AUTHORING_SIGNATURES_TITLED_SQL = `
+  SELECT s.id::text AS id, s.doc_id::text AS doc_id, s.meaning, s.signer_name, s.ip_address,
+         d.title AS doc_title
+    FROM authoring_signatures s
+    LEFT JOIN authoring_documents d ON d.id = s.doc_id AND d.tenant_id = s.tenant_id
+   WHERE s.tenant_id = $1
+     AND s.id::text = ANY($2::text[])`;
+
+/**
+ * For each audit_logs row, the signature row that names it, keyed by the audit
+ * row's id. Two stores, one query each for the whole page:
+ *
+ *   - electronic_signatures, by the audit id its manifest records — written in
+ *     the same transaction as the audit row (persistGovernedActionSignature);
+ *   - authoring_signatures, by the signatureId the e-sign audit row records,
+ *     and only when the signature is for the same document the row names.
+ *
+ * Nothing is inferred from timing, actor or target: a row with no recorded
+ * link stays unsigned, which is what rows written before the link was recorded
+ * honestly are on this surface. Exported for the admin console's audit band
+ * (mdx-admin.ts), which names the same rows and must name them the same way.
+ */
+export async function linkedSignatures(
+  client: Pick<PoolClient, 'query'>,
+  orgId: number,
+  rows: Record<string, unknown>[],
+): Promise<Map<string, LinkedSignature>> {
+  const out = new Map<string, LinkedSignature>();
+  if (rows.length === 0) return out;
+  const stores = await signatureStores(client);
+  if (stores.qms) await linkQmsSignatures(client, orgId, rows, out);
+  if (stores.authoring) await linkAuthoringSignatures(client, orgId, rows, stores.authoringTitles, out);
+  return out;
+}
+
+/** electronic_signatures rows, by the audit id their manifest records. */
+async function linkQmsSignatures(
+  client: Pick<PoolClient, 'query'>,
+  orgId: number,
+  rows: Record<string, unknown>[],
+  out: Map<string, LinkedSignature>,
+): Promise<void> {
+  const auditIds = rows.map((r) => String(r.id));
+  const found = (await client.query(QMS_SIGNATURES_SQL, [orgId, auditIds])).rows as Record<string, unknown>[];
+  for (const es of found) {
+    const docNumber = nonEmpty(es.doc_number);
+    const version = nonEmpty(es.version);
+    out.set(String(es.audit_id), {
+      ref: `electronic_signatures:${String(es.id)}`,
+      meaning: nonEmpty(es.signature_meaning),
+      signerName: nonEmpty(es.signer_name),
+      ipAddress: nonEmpty(es.ip_address),
+      event: SIGNED_EVENT[String(es.signature_type)] ?? null,
+      subject: docNumber ? `${docNumber}${version ? ` v${version}` : ''}` : null,
+    });
+  }
+}
+
+/** authoring_signatures rows, by the signatureId an e-sign audit row records — same document only. */
+async function linkAuthoringSignatures(
+  client: Pick<PoolClient, 'query'>,
+  orgId: number,
+  rows: Record<string, unknown>[],
+  withTitles: boolean,
+  out: Map<string, LinkedSignature>,
+): Promise<void> {
+  const bySignatureId = new Map<string, Record<string, unknown>>();
+  for (const r of rows) {
+    const sigId = metaString(r.new_values, ['signatureId']);
+    if (sigId) bySignatureId.set(sigId, r);
+  }
+  if (bySignatureId.size === 0) return;
+  const sql = withTitles ? AUTHORING_SIGNATURES_TITLED_SQL : AUTHORING_SIGNATURES_SQL;
+  const found = (await client.query(sql, [orgId, [...bySignatureId.keys()]])).rows as Record<string, unknown>[];
+  for (const s of found) {
+    const row = bySignatureId.get(String(s.id));
+    // The signature must be for the document this audit row names.
+    if (!row || String(row.record_id ?? '') !== String(s.doc_id)) continue;
+    out.set(String(row.id), {
+      ref: `authoring_signatures:${String(s.id)}`,
+      meaning: nonEmpty(s.meaning),
+      signerName: nonEmpty(s.signer_name),
+      ipAddress: nonEmpty(s.ip_address),
+      event: AUTHORING_SIGNED_EVENT,
+      subject: nonEmpty(s.doc_title),
+    });
+  }
+}
+
+/** An audit_logs entry with the signature that names it, when there is one. */
+function withSignature(entry: AuditLedgerEntry, sig: LinkedSignature | undefined): AuditLedgerEntry {
+  if (!sig) return { ...entry, signatureRef: null, targetRef: null };
+  return {
+    ...entry,
+    sig: true,
+    kind: 'esign',
+    event: sig.event ?? entry.event,
+    // Named for a reader from the signature's own record; the reference stays
+    // alongside, so the name never replaces what an inspector traces by.
+    target: sig.subject ?? entry.target,
+    targetRef: sig.subject ? entry.target : null,
+    // The meaning the signer declared, as the signature row records it.
+    meaning: sig.meaning ?? entry.meaning,
+    // The governed-action writer records no address on the audit row; the
+    // signature row, written in the same transaction, records the signer's.
+    ip: entry.ip || sig.ipAddress || '',
+    signatureRef: sig.ref,
   };
 }
 
@@ -283,6 +477,7 @@ const AUDIT_EVENTS_SQL = `
          event_type,
          entity_type,
          entity_id,
+         user_id,
          user_name,
          ip_address,
          "timestamp" AS at,
@@ -332,15 +527,11 @@ export interface AuditLedgerResponse {
  * verify-chain uses — never on the request's tenant-scoped client, which
  * would report every cross-linked legacy row as a break.
  */
-export type TenantChainVerifier = (orgId: number) => Promise<ChainVerificationResult>;
-
-async function verifyOnSuperAdminScope(orgId: number): Promise<ChainVerificationResult> {
-  const { withTenantConnection } = await import('../db/withTenantConnection.js');
-  return withTenantConnection(
-    { tenantId: '0', role: 'app_super_admin', source: 'request', caller: 'audit-trail-ledger/verdict' },
-    (c) => verifyAuditChain(c, { tenantId: orgId }),
-  );
-}
+export type { TenantChainVerifier } from '../services/audit/tenant-chain-verdict.js';
+import {
+  verifyTenantChainOnAdminScope as verifyOnSuperAdminScope,
+  type TenantChainVerifier,
+} from '../services/audit/tenant-chain-verdict.js';
 
 export async function readAuditLedger(
   client: Pick<PoolClient, 'query'>,
@@ -352,8 +543,9 @@ export async function readAuditLedger(
     client.query(AUDIT_LOGS_SQL, [orgId, limit]),
     client.query(AUDIT_EVENTS_SQL, [orgId, limit]),
   ]);
+  const signatures = await linkedSignatures(client, orgId, logs.rows as Record<string, unknown>[]);
   const merged = [
-    ...logs.rows.map((r: Record<string, unknown>) => auditLogEntry(r)),
+    ...logs.rows.map((r: Record<string, unknown>) => withSignature(auditLogEntry(r), signatures.get(String(r.id)))),
     ...events.rows.map((r: Record<string, unknown>) => auditEventEntry(r)),
   ]
     .sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0))
@@ -371,6 +563,77 @@ export async function readAuditLedger(
     ...(v.brokenAt ? { brokenAt: v.brokenAt } : {}),
   };
   return { success: true, data: merged, sources, meta: { chain } };
+}
+
+/**
+ * One record's rows from the chained ledger, newest first: a document's own
+ * audit trail (21 CFR 11.10(e), "available for review") without a second audit
+ * SQL. Same table, same row mapping and the same whole-chain verdict as
+ * readAuditLedger.
+ *
+ * The predecessor of each row is its predecessor in the TENANT chain, found by
+ * chain_seq. A LAG over the filtered rows would name the record's previous row
+ * instead, which is not what the chain links to whenever another record's event
+ * came between. A legacy row (chain_seq NULL) has no single predecessor the
+ * sequence can name; its prevHash is empty, and the verdict covers it.
+ */
+const RECORD_HISTORY_SQL = `
+  SELECT a.id, a.action, a.actor_id, a.target, a.table_name, a.record_id, a.reason,
+         a.ip_address, a.new_values, a.occurred_at, a.sha256_chain, a.chain_seq,
+         prev.sha256_chain AS prev_hash,
+         to_char(a.occurred_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI') AS when_display,
+         u.name  AS user_name,
+         u.email AS user_email
+    FROM audit_logs a
+    LEFT JOIN LATERAL (
+      SELECT p.sha256_chain
+        FROM audit_logs p
+       WHERE a.chain_seq IS NOT NULL
+         AND p.tenant_id = a.tenant_id
+         AND p.chain_seq < a.chain_seq
+       ORDER BY p.chain_seq DESC
+       LIMIT 1
+    ) prev ON TRUE
+    LEFT JOIN users u ON u.id = a.actor_id
+   WHERE a.tenant_id = $1
+     AND a.table_name = $2
+     AND a.record_id = $3
+     AND a.sha256_chain IS NOT NULL
+   ORDER BY a.chain_seq DESC NULLS LAST, a.occurred_at DESC, a.id DESC
+   LIMIT $4`;
+
+export interface RecordAuditHistory {
+  data: AuditLedgerEntry[];
+  meta: { chain: AuditLedgerChainVerdict };
+}
+
+export async function readRecordAuditHistory(
+  client: Pick<PoolClient, 'query'>,
+  orgId: number,
+  record: { tableName: string; recordId: string; limit?: number },
+  verifyTenantChain: TenantChainVerifier = verifyOnSuperAdminScope,
+): Promise<RecordAuditHistory> {
+  const limit = Math.min(Math.max(record.limit ?? 200, 1), 1000);
+  const rows = await client.query(RECORD_HISTORY_SQL, [orgId, record.tableName, record.recordId, limit]);
+  const signatures = await linkedSignatures(client, orgId, rows.rows as Record<string, unknown>[]);
+  const data = rows.rows.map((r: Record<string, unknown>) => ({
+    ...withSignature(auditLogEntry(r), signatures.get(String(r.id))),
+    prevHash: r.prev_hash == null ? '' : String(r.prev_hash),
+  }));
+  const v = await verifyTenantChain(orgId);
+  return {
+    data,
+    meta: {
+      chain: {
+        store: 'audit_logs',
+        ok: v.ok,
+        rowsChecked: v.rowsChecked,
+        legacyRows: v.legacyRows,
+        sequencedRows: v.sequencedRows,
+        ...(v.brokenAt ? { brokenAt: v.brokenAt } : {}),
+      },
+    },
+  };
 }
 
 // ─── Router Factory ───────────────────────────────────────────────────────────
@@ -398,6 +661,9 @@ export default function createAuditTrailLedgerRoutes(
   router.get('/ledger', async (req: Request, res: Response) => {
     const guard = requireAuthedOrgId(req, res);
     if (!guard.ok) return; // 403 already sent — tenant context is mandatory
+    // The ledger names every user in the organisation; it is read by owners,
+    // admins and managers, or a platform administrator (audit DP-18, P1-20).
+    if (!requireAuditReader(req, res)) return;
 
     const limit = Math.min(
       1000,

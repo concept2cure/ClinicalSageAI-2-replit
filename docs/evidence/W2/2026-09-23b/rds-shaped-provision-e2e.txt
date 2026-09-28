@@ -1,0 +1,65 @@
+# `npm run db:provision` on an EMPTY database, as an RDS-shaped master (2026-09-24)
+#
+# A fresh PostgreSQL 16.13 cluster (initdb, scram-sha-256 authentication, log_statement=ddl
+# as production's RDS parameter group sets it). Owner c2c_admin: LOGIN CREATEROLE CREATEDB,
+# NOT superuser, no BYPASSRLS: the RDS master's shape. The five extensions RDS allowlists
+# (vector, pg_trgm, pgcrypto, unaccent, uuid-ossp) were created BY c2c_admin (given superuser
+# for those five statements only, standing in for rds_superuser's create right, then revoked),
+# so c2c_admin owns them as the RDS master would. Everything below runs as the non-superuser.
+
+## Attempt 1: extensions created by the cluster superuser instead. Governed content fails:
+  ⚠ 059_gcc_vector_embeddings.sql: psql:/home/user/ClinicalSageAI-2-replit/db/migrations/059_gcc_vector_embeddings.sql:19: ERROR:  must be owner of extension vector
+   • governed content (Part 11 audit): 2 of 42 file(s) failed: 059_gcc_vector_embeddings.sql — psql:/home/user/ClinicalSageAI-2-replit/db/migrations/059_gcc_vector_embeddings.sql:19: ERROR:  must 
+❌ Install INCOMPLETE — not reporting success.
+exit=6
+# 059_gcc ran COMMENT ON EXTENSION vector, which needs the extension's OWNER; 067 then failed on
+# the schema 059 never created. provision.mjs's own advice for a non-superuser owner ("pre-create
+# it: psql -U postgres … CREATE EXTENSION vector") produces exactly this state, and an INCOMPLETE
+# install can only be repaired on an empty database. Fixed in db/migrations/059_gcc_vector_embeddings.sql
+# (amended in place, dated header): the cosmetic COMMENT runs only for the owner or a superuser.
+# Attempt 3 below is that same shape, after the fix.
+
+## Attempt 2: the RDS shape — every step green
+▶ 0/4 Connections
+▶ 1/4 Preflight (owner connection, nothing written except CREATE EXTENSION vector)
+▶ 2/4 install-fresh — base schema, RLS, authoring subsystem, governed content
+▶ 1/8 Prerequisites — schemas + extensions
+▶ 2/8 Tables — drizzle-kit push
+▶ 3/8 Complete schema — raw migration overlay
+▶ 4/8 Authoring subsystem (Part-11 unit)
+▶ 5/8 Row-Level Security policies (raw migrations)
+▶ 6/8 Governed content — Part 11 audit tree (*_gcc_*.sql)
+▶ 7/8 Runtime role — non-superuser grants
+▶ 8/8 Verify
+  runtime role app_service: LOGIN · non-superuser · NOBYPASSRLS · USAGE on all application schemas · can read tenant tables ✓
+✅ Application schema install complete.
+▶ 3/4 deploy-migrate — the C2C migration set (licenses, audit.tamper_proof_log, …) + grant refresh
+▶ 1/5 Preflight — database already provisioned?
+▶ 2/5 Acquire migration lock
+▶ 3/5 Apply migrations
+▶ 4/5 Runtime role — required schemas + refresh non-superuser grants
+  ✓ runtime role app_service minted (identified from APP_SERVICE_DB_PASSWORD)
+▶ 5/5 Verify readiness contract (incl. grant audit for app_service)
+✅ Schema migration complete — safe to roll services.
+▶ 4/4 Readiness contract — as the APP connection, the way /readyz will see it
+✅ Database provisioned and the /readyz schema contract holds.
+real	0m18.291s
+exit=0
+
+## The password never reached the server
+server log: 91240 lines, 5519 DDL statements logged
+lines containing APP_SERVICE_DB_PASSWORD's value: 0
+LOG:  statement: ALTER ROLE app_service WITH LOGIN NOCREATEDB NOCREATEROLE PASSWORD 'SCRAM-SHA-256$4096:<verifier elided>'
+LOG:  statement: ALTER ROLE app_service WITH LOGIN NOCREATEDB NOCREATEROLE PASSWORD 'SCRAM-SHA-256$4096:<verifier elided>'
+# Step 4/4 then logged in AS app_service over scram-sha-256 authentication (this cluster does
+# not trust local connections), which is the end-to-end proof the client-computed verifier is
+# the one the server authenticates against.
+
+## Attempt 3: extensions owned by the cluster superuser again (attempt 1's shape), 059 amended
+vector owner: postgres; provisioning as c2c_admin (non-superuser)
+▶ 2/4 install-fresh — base schema, RLS, authoring subsystem, governed content
+  ✓ governed content: 42/42 applied
+✅ Application schema install complete.
+✅ Schema migration complete — safe to roll services.
+✅ Database provisioned and the /readyz schema contract holds.
+exit=0

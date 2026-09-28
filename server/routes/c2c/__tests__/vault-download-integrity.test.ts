@@ -41,6 +41,7 @@ const legacy = (storageKey: string): VaultByteSource => ({
   storageVersionId: null,
   storageKey,
   organizationId: 7,
+  storageProvider: null,
 });
 
 beforeAll(async () => {
@@ -98,7 +99,7 @@ describe('readVerifiedVaultBytes', () => {
     // it, so it means a corrupt record — and serving a zero-byte file with a
     // 200 would present that corruption as an empty document.
     const r = await readVerifiedVaultBytes(
-      { storageVersionId: null, storageKey: null, organizationId: 7 },
+      { storageVersionId: null, storageKey: null, organizationId: 7, storageProvider: null },
       null,
       'doc-1',
     );

@@ -29,8 +29,11 @@ const NO_CANONICAL_SOURCES_HINT =
   'Upload and classify source documents first, then rebuild the section.';
 import { createSourceHash } from '../../services/cmc-module3-compiler';
 import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project';
+import { serverError } from '../../lib/api-response';
+import { createScopedLogger } from '../../utils/logger';
 
 const router = express.Router();
+const log = createScopedLogger('module3-convergence');
 
 function getOrgId(req: express.Request): number {
   const orgId = parseInt(
@@ -89,10 +92,7 @@ router.post('/classify-artifact/:projectId', async (req, res) => {
     if (String((error as Error)?.message || '').includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    return res.status(500).json({
-      success: false,
-      error: ((error instanceof Error ? error.message : String(error)) || 'Classification failed'),
-    });
+    return serverError(res, log, 'classifying the artifact', error);
   }
 });
 
@@ -192,10 +192,7 @@ router.post('/build-section/:projectId/:sectionKey', async (req, res) => {
     if (String((error as Error)?.message || '').includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    return res.status(500).json({
-      success: false,
-      error: ((error instanceof Error ? error.message : String(error)) || 'Section build failed'),
-    });
+    return serverError(res, log, 'building the section', error);
   } finally {
     client.release();
   }
@@ -275,10 +272,7 @@ router.get('/source-lineage/:projectId/:sectionKey', async (req, res) => {
     if (String((error as Error)?.message || '').includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    return res.status(500).json({
-      success: false,
-      error: ((error instanceof Error ? error.message : String(error)) || 'Lineage fetch failed'),
-    });
+    return serverError(res, log, 'loading source lineage', error);
   }
 });
 

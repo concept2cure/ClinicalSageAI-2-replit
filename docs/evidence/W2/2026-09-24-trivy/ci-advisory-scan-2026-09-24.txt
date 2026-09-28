@@ -1,0 +1,10 @@
+# CI run 36032786996 (ci.yml, concept2cure-v2 @ cda997a90), job 'Security Scan', step 'Trivy config scan (Dockerfile/IaC)'
+# Advisory in ci.yml (continue-on-error), so the job was green. The same action pin blocks the deploy's security-gate.
+# Extracted from the job log: per-file failures, then each rule and where it fired.
+
+infra/k8s/bff-with-predicate-shadow.yaml           5  HIGH: 5, CRITICAL: 0
+terraform/bootstrap/main.tf                        1  HIGH: 1, CRITICAL: 0
+terraform/modules/alb/main.tf                      4  HIGH: 4, CRITICAL: 0
+terraform/modules/cloudfront/main.tf               4  HIGH: 4, CRITICAL: 0
+terraform/modules/ecs-fargate/main.tf              2  HIGH: 0, CRITICAL: 2
+exit code of the step: 1  ("##[error]Process completed with exit code 1.")

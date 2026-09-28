@@ -1,0 +1,22 @@
+c2c_d3u after deploy-migrate (twice)
+        proname         | prosecdef |                                proconfig                                 |       args        
+------------------------+-----------+--------------------------------------------------------------------------+-------------------
+ invitations_for_member | t         | {"search_path=pg_catalog, public",app.current_user_role=app_super_admin} | p_user_id integer
+(1 row)
+
+   grantee   | privilege_type 
+-------------+----------------
+ app_service | EXECUTE
+ postgres    | EXECUTE
+(2 rows)
+
+ relrowsecurity | relforcerowsecurity |        policies         
+----------------+---------------------+-------------------------
+ t              | t                   | tenant_isolation_policy
+(1 row)
+
+   rolname   | rolsuper | rolbypassrls 
+-------------+----------+--------------
+ app_service | f        | f
+(1 row)
+

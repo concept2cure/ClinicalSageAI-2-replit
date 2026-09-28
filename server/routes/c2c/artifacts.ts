@@ -41,6 +41,7 @@ import {
   getOrganizationId,
   getUserId,
   logAuditEntry,
+  auditTrailFromEntry,
   logConcept2cureError,
   paramStr,
   sanitizeContent,
@@ -49,6 +50,7 @@ import {
   verifyIntegrityChain,
 } from './shared';
 import { verifyProjectAccess } from './project-access';
+import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project';
 import { clientIpKey } from '../../utils/client-ip';
 
 const logger = createScopedLogger('concept2cure-artifacts');
@@ -2510,8 +2512,20 @@ router.put(
       const organizationId = getOrganizationId(req);
       const userId = getUserId(req);
       const userRole = (req.userRole || 'user').toLowerCase();
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) return sendError(res, 404, 'Project not found');
+      /* The project the change is made in (PF-17). The URL names it as the
+         integer project or — as every v2 surface holds it — the program's
+         UUID; the one translation rule resolves either to the registry's
+         project of this organization. Access is decided on THAT project, and
+         the artifact must be one of its own. The access check parsed only an
+         integer, so "Route to review" answered 404 for every v2 project, and
+         the artifact was then loaded by id and organization alone, so access
+         to one project's URL changed another project's artifact. */
+      const urlProject = paramStr(req.params.projectId).replace(/^proj_/, '');
+      const spine = await resolveCmcArtifactProject(organizationId, urlProject);
+      const projectId = spine.state === 'linked' ? spine.artifactProjectId : null;
+      if (projectId === null || !(await verifyProjectAccess(req, String(projectId)))) {
+        return sendError(res, 404, 'Project not found');
+      }
 
       const { status, reason, attestation } = req.body;
       const validStatuses = ['draft', 'review', 'approved', 'locked'];
@@ -2547,7 +2561,8 @@ router.put(
         )
         .limit(1);
 
-      if (!artifact) return sendError(res, 404, 'Artifact not found');
+      // Another project's artifact is not found through this project's URL.
+      if (!artifact || artifact.projectId !== projectId) return sendError(res, 404, 'Artifact not found');
 
       const previousStatus = artifact.status || 'draft';
 
@@ -2636,7 +2651,7 @@ router.put(
           const { blocked, blockingFindings, warningFindings } =
             await contradictionEngineService.checkPromotionBlocked(
               organizationId,
-              Number(req.params.projectId),
+              projectId,
               artifact.id
             );
           if (blocked) {
@@ -2679,7 +2694,7 @@ router.put(
       // apply. A quorum that cannot be read throws, and the catch below
       // answers 500 before anything is written: an unread quorum is not met.
       if (previousStatus === 'review' && status === 'approved') {
-        const quorum = await reviewQuorumVerdict(pool, artifact.id, organizationId);
+        const quorum = await reviewQuorumVerdict(pool, artifact.id, organizationId, artifact.version);
         if (!quorum.met) {
           return sendError(res, 400, quorum.message);
         }
@@ -2943,7 +2958,8 @@ router.put(
         },
       });
 
-      await logAuditEntry(
+      // WO-16C: the outcome was discarded; it is now answered as `auditTrail`.
+      const statusAudit = await logAuditEntry(
         req,
         requiresAttestation ? 'APPROVE' : 'UPDATE',
         'artifact_status',
@@ -2987,6 +3003,7 @@ router.put(
         publishedVersionId: updated.publishedVersionId,
         publishedAt: updated.publishedAt,
         enforcedRole: userRole,
+        auditTrail: auditTrailFromEntry(statusAudit),
         signature: signatureRecord,
         snapshot: snapshotRecord,
       });

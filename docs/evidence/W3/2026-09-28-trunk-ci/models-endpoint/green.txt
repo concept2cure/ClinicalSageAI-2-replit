@@ -1,0 +1,9 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+ RUN  v4.1.7 .
+ ✓ tests/routes/ana-models-endpoint.test.ts > GET /api/claude/models > returns only enabled, approved models with derived label + recommendedEffort 22ms
+ ✓ tests/routes/ana-models-endpoint.test.ts > GET /api/claude/models > includes effortLevels + defaultEffort 5ms
+ ✓ tests/routes/ana-models-endpoint.test.ts > GET /api/claude/models > preserves the frameworks array and the {success,data} envelope 3ms
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  17:40:04
+   Duration  2.08s (transform 876ms, setup 82ms, import 1.77s, tests 34ms, environment 0ms)

@@ -76,6 +76,8 @@ export interface UploadedFileMetadata {
   fileName: string;
   mimeType: string;
   storagePath: string;
+  /** The SHA-256 recorded at upload (file_uploads.checksum_sha256); null for rows that predate it. */
+  checksumSha256: string | null;
 }
 
 /**
@@ -146,8 +148,9 @@ export async function loadUploadedFileMetadata(
     mime_type: string;
     storage_path: string;
     organization_id: number | string | null;
+    checksum_sha256: string | null;
   }>(
-    `SELECT id, original_name, mime_type, storage_path, organization_id
+    `SELECT id, original_name, mime_type, storage_path, organization_id, checksum_sha256
        FROM file_uploads WHERE id = ANY($1)`,
     [ids],
   );
@@ -165,6 +168,7 @@ export async function loadUploadedFileMetadata(
     fileName: row.original_name || row.id,
     mimeType: row.mime_type || 'application/octet-stream',
     storagePath: row.storage_path || '',
+    checksumSha256: row.checksum_sha256 ?? null,
   }));
 }
 

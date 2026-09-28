@@ -18,7 +18,7 @@ import {
   // module colours, status column definitions, type labels and source labels.
   // TB_TEAM / TB_OPTIMAL / TB_WORKFLOWS are gone: names come from the org
   // roster, and workflow templates from GET /api/task-management/templates.
-  TB_MOD, TB_COLS, TB_TYPE, TB_SRC,
+  TB_MOD, MODULE_COLOR_UNKNOWN, TB_COLS, TB_TYPE, TB_SRC,
   type TaskSource,
 } from '../fixtures/task-board-data';
 import '../styles/project-home-v2.css';
@@ -384,7 +384,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
         const wanted = params.project.trim();
         if (wanted.toLowerCase() === 'all') {
           setProj('all');
-          applied.push('all programmes');
+          applied.push('all projects');
         } else {
           const lower = wanted.toLowerCase();
           const exact = projectOpts.rows.find(
@@ -399,12 +399,12 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
               ok: false,
               reason:
                 contains.length > 1
-                  ? `"${params.project}" matches ${contains.length} programmes — name one exactly.`
-                  : `No programme named "${params.project}" on this board.`,
+                  ? `"${params.project}" matches ${contains.length} projects — name one exactly.`
+                  : `No project named "${params.project}" on this board.`,
             };
           }
           setProj(String(match.id));
-          applied.push(`programme ${match.name}`);
+          applied.push(`project ${match.name}`);
         }
       }
       if (params.module) {
@@ -685,7 +685,11 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   }, [list, stats, sel, view, liveTasks.loading, liveTasks.error]);
   usePublishSurfaceContext('tasks', anaContext);
 
-  /* Critical path: topological-ish chain over dependsOn, criticalPath:true */
+  /* The tasks a person marked critical-path (unified_tasks.critical_path), in
+     dependency order over dependsOn. Not a computed critical path: nothing here
+     weighs durations or finds a longest chain, and the header must not say it
+     does (it read "computed from the taskDependencies DAG (getCriticalPath)",
+     an endpoint this surface never calls). */
   const critChain = useMemo(() => {
     const crit = list.filter(t => t.criticalPath);
     const seen: Record<string, boolean> = {};
@@ -868,7 +872,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
                       }}
                     >
                       <div className="tb-card-top">
-                        <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span>
+                        <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span>
                         {t.criticalPath && <span className="tb-flag crit" title="On critical path">{I.zap}</span>}
                         {t.regulatoryImpact && <span className="tb-flag reg" title="Regulatory impact">{I.shieldCheck}</span>}
                       </div>
@@ -903,7 +907,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
 
       {view === 'path' && (
         <div className="tb-path">
-          <div className="tb-path-h">Critical path — {critChain.length} tasks — computed from the <code>taskDependencies</code> DAG (getCriticalPath)</div>
+          <div className="tb-path-h">Critical path — {critChain.length} {critChain.length === 1 ? 'task' : 'tasks'} marked critical-path, in dependency order</div>
           {critChain.map((t, i) => (
             <div
               key={t.taskId}
@@ -924,7 +928,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
             >
               <div className="tb-path-rail"><span className="tb-path-dot" data-status={t.status} aria-hidden="true" />{i < critChain.length - 1 && <span className="tb-path-line" />}</div>
               <div className="tb-path-card">
-                <div className="tb-path-t">{t.title}<span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span></div>
+                <div className="tb-path-t">{t.title}<span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span></div>
                 <div className="tb-path-m">
                   <span>{t.phase || '—'}</span><span className="tb-dot">--</span><span>{nameOf(t.assignee)}</span><span className="tb-dot">--</span>
                   <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span><span className="tb-dot">--</span><span>impact {t.impactScore ?? '—'}/10</span>
@@ -951,7 +955,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
               {Object.keys(stats.byMod).map(k => {
                 const max = Math.max(...Object.values(stats.byMod));
                 return (
-                  <div key={k} className="tb-an-row"><span className="tb-an-k"><span className="tb-an-dot" style={{ background: TB_MOD[k] || '#888' }} />{k}</span><div className="tb-an-bar"><span style={{ width: (stats.byMod[k] / max * 100) + '%', background: TB_MOD[k] || '#888' }} /></div><span className="tb-an-n">{stats.byMod[k]}</span></div>
+                  <div key={k} className="tb-an-row"><span className="tb-an-k"><span className="tb-an-dot" style={{ background: TB_MOD[k] || MODULE_COLOR_UNKNOWN }} />{k}</span><div className="tb-an-bar"><span style={{ width: (stats.byMod[k] / max * 100) + '%', background: TB_MOD[k] || MODULE_COLOR_UNKNOWN }} /></div><span className="tb-an-n">{stats.byMod[k]}</span></div>
                 );
               })}
             </div>
@@ -974,7 +978,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
             <button key={t.taskId} className="ct-row" style={{ gridTemplateColumns: '130px 1.7fr 120px 96px 90px 90px 84px' }} onClick={() => setSel(t)}>
               <div className="ct-strong mono" style={{ fontSize: 10.5 }}>{t.taskId}</div>
               <div style={{ fontSize: 11.5 }}>{t.title}{t.criticalPath && <span className="tb-flag crit inline">{I.zap}</span>}{t.blocked && <span className="tb-flag blk inline">{I.alertTriangle}</span>}</div>
-              <div><span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span></div>
+              <div><span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span></div>
               <div style={{ fontSize: 11 }}>{(TB_COLS.find(c => c.id === t.status) || { label: t.status }).label}</div>
               <div><span className={`tb-pri pri-${t.priority}`}>{t.priority}</span></div>
               <div style={{ fontSize: 11 }}>{nameOf(t.assignee)}</div>
@@ -1149,7 +1153,7 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onArch
           <button className="tb-detail-x" onClick={onClose} aria-label="Close">{I.close}</button>
         </div>
         <div className="tb-detail-chips">
-          <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span>
+          <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span>
           <span className="tb-type" data-t={t.taskType}>{TB_TYPE[t.taskType]}</span>
           <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span>
           {t.criticalPath && <span className="tb-flag crit lg">{I.zap} critical path</span>}
@@ -1635,7 +1639,7 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
    */
   const instantiate = async () => {
     if (!tpl || busy) return;
-    if (!project) { setErr('Choose a programme — the tasks are created against it.'); return; }
+    if (!project) { setErr('Choose a project — the tasks are created against it.'); return; }
     setBusy(true);
     setErr('');
     try {
@@ -1721,7 +1725,7 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
         <div className="tb-form">
           <div className="tb-frow">
             <div className="tb-field"><label htmlFor="tb-workflow-template">Workflow template</label><select id="tb-workflow-template" value={tid} onChange={e => setTid(e.target.value)}>{templates.rows.map(t => <option key={t.templateId} value={t.templateId}>{t.name}</option>)}</select></div>
-            <div className="tb-field"><label htmlFor="tb-project-2">Project</label><select id="tb-project-2" value={project} onChange={e => setProject(e.target.value)}><option value="">Select a programme…</option>{projects.rows.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>)}</select></div>
+            <div className="tb-field"><label htmlFor="tb-project-2">Project</label><select id="tb-project-2" value={project} onChange={e => setProject(e.target.value)}><option value="">Select a project…</option>{projects.rows.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>)}</select></div>
           </div>
           {tpl && (
             <>
@@ -1737,7 +1741,7 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
                   {tpl.tasks.map((t, i) => (
                     <div key={t.id || i} className="wf-task">
                       <span className="wf-task-n">{i + 1}</span>
-                      <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span>
+                      <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span>
                       <span className="wf-task-t">{t.title}</span>
                       <span className="wf-task-d">day +{t.dayOffset} — {t.duration}d</span>
                       <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span>
@@ -1751,7 +1755,7 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
             </>
           )}
           <button type="button" className={`tb-tog${autoAssign ? ' on' : ''}`} onClick={() => setAutoAssign(a => !a)}><span className="ico">{I.sparkles}</span>Workload-balanced auto-assign (a separate step, after the tasks are created)</button>
-          {err && <div className="scaf-note" role="alert" style={{ color: 'var(--danger, #b42318)' }}>{err}</div>}
+          {err && <div className="scaf-note" role="alert" style={{ color: 'var(--error)' }}>{err}</div>}
         </div>
         )}
 

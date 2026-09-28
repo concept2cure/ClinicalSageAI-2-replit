@@ -40,6 +40,7 @@
  *   node scripts/ci/check-eslint-warning-ratchet.mjs --list           # per-rule counts
  *   node scripts/ci/check-eslint-warning-ratchet.mjs --write-baseline # regenerate
  *   node scripts/ci/check-eslint-warning-ratchet.mjs --since <ref>    # which FILES grew
+ *   node scripts/ci/check-eslint-warning-ratchet.mjs --since <ref> --gate   # ... and exit 1 if they did
  *
  * Test seams (same pattern as check-dependency-risk.mjs / NPM_AUDIT_JSON —
  * a full `eslint .` takes minutes, so the self-test injects the report):
@@ -353,6 +354,15 @@ function runSinceMode(ref) {
         '  named as the new one. The line shown is the best candidate -- the one your\n' +
         '  diff actually touched. Read the whole function, not just that line.',
     );
+  }
+  // `--gate`: the same report, as a refusal. Without it this mode is a
+  // diagnostic and always exits 0; with it, growth across the changed files is
+  // a failure -- the push-time gate (check-pushed-lint-warnings.mjs) runs it so
+  // a warning is refused in the lane that wrote it, not found by the next lane
+  // to push after CI goes red.
+  if (process.argv.includes('--gate') && netGrowth > 0) {
+    console.error(`\n${TAG} FAIL -- the changed files gained ${netGrowth} warning(s) (listed above).`);
+    process.exit(1);
   }
   process.exit(0);
 }

@@ -1,0 +1,7 @@
+$ node scripts/ci/check-trivy-inline-ignores.mjs --root <terraform/ at 0db8c56f3, the parent>
+[ci:trivy-inline-ignores] OK — 4 inline exception(s), each on the block it names:
+  AWS-0053 → resource "aws_lb" "this"  (terraform/modules/alb/main.tf:23)
+  AWS-0132 → resource "aws_s3_bucket_server_side_encryption_configuration" "frontend"  (terraform/modules/cloudfront/main.tf:43)
+  AWS-0011 → resource "aws_cloudfront_distribution" "this"  (terraform/modules/cloudfront/main.tf:117)
+  AWS-0104 → egress  (terraform/modules/ecs-fargate/main.tf:110)
+exit 0

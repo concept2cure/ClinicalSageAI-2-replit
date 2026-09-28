@@ -1,0 +1,41 @@
+add_coverage_item	server/services/ana/AnaToolExecutor.ts:11949	gov:recordGovernedAction, verb:recordGovernedAction
+add_grant_budget_line	server/services/ana/AnaToolExecutor.ts:12307	gov:recordGovernedAction, verb:recordGovernedAction
+add_personnel_training	server/services/ana/AnaToolExecutor.ts:13143	gov:recordGovernedAction, verb:recordGovernedAction
+amend_schedule_of_events	server/services/ana/AnaToolExecutor.ts:2397	verb:scheduleToolContext
+approve_import	server/services/ana/AnaToolExecutor.ts:14420	gov:recordArtifactProvenance, sql:INSERT INTO, sql:UPDATE import_job_files SET, sql:UPDATE import_jobs SET, verb:recordArtifactProvenance
+bind_protocol_to_study_design	server/services/ana/AnaToolExecutor.ts:20383	gov:recordGovernedAction, verb:recordGovernedAction
+classify_ivd_device	server/services/ana/AnaToolExecutor.ts:8345	sql:INSERT INTO
+convene_committee_meeting	server/services/ana/AnaToolExecutor.ts:11774	gov:recordGovernedAction, verb:recordGovernedAction
+create_clinical_investigator	server/services/ana/AnaToolExecutor.ts:10008	gov:recordGovernedAction, verb:createInvestigatorTx, verb:recordGovernedAction
+create_consent_form	server/services/ana/AnaToolExecutor.ts:10995	verb:createConsentFormTx
+create_export_control_review	server/services/ana/AnaToolExecutor.ts:11264	verb:createReviewTx
+create_iacuc_protocol	server/services/ana/AnaToolExecutor.ts:10241	gov:recordGovernedAction, verb:createProtocolTx, verb:recordGovernedAction
+create_irb_submission	server/services/ana/AnaToolExecutor.ts:10348	gov:recordGovernedAction, verb:createSubmissionTx, verb:recordGovernedAction
+create_nonclinical_study	server/services/ana/AnaToolExecutor.ts:10557	gov:recordGovernedAction, verb:createStudyTx, verb:recordGovernedAction
+create_protocol_document	server/services/ana/AnaToolExecutor.ts:11448	gov:recordGovernedAction, verb:createProtocolDocumentTx, verb:recordGovernedAction
+create_regulatory_commitment	server/services/ana/AnaToolExecutor.ts:10179	gov:recordGovernedAction, verb:createCommitmentTx, verb:recordGovernedAction
+create_software_lifecycle_item	server/services/ana/AnaToolExecutor.ts:8061	sql:INSERT INTO
+edit_spreadsheet	server/services/ana/AnaToolExecutor.ts:4686	verb:applyWorkbookEdits, verb:saveDerivedUpload
+fulfill_regulatory_commitment	server/services/ana/AnaToolExecutor.ts:12586	gov:recordGovernedAction, verb:recordGovernedAction
+insert_clause_template	server/services/ana/AnaToolExecutor.ts:7362	fs:mkdir, fs:writeFile, verb:writeFile
+log_inspection_finding	server/services/ana/AnaToolExecutor.ts:12822	gov:recordGovernedAction, verb:recordGovernedAction
+open_device_capa	server/services/ana/AnaToolExecutor.ts:6393	verb:createCapaRecord
+place_into_sequence	server/services/ana/AnaToolExecutor.ts:9153	verb:upsertLeaf
+record_analytical_performance_study	server/services/ana/AnaToolExecutor.ts:8242	sql:INSERT INTO
+record_grant_award	server/services/ana/AnaToolExecutor.ts:12080	gov:recordGovernedAction, verb:createAwardTx, verb:recordGovernedAction
+record_literature	server/services/ana/AnaToolExecutor.ts:1766	verb:recordLiteratureEntries
+register_controlled_substance	server/services/ana/AnaToolExecutor.ts:12657	gov:recordGovernedAction, verb:createSubstanceTx, verb:recordGovernedAction
+remember_document_in_project	server/services/ana/AnaToolExecutor.ts:1506	verb:ingestProjectDocument
+resolve_validation_finding	server/services/ana/AnaToolExecutor.ts:8834	sql:UPDATE submission_validation_findings 
+review_cs_balance	server/services/ana/AnaToolExecutor.ts:12947	gov:recordGovernedAction
+review_inspection_readiness	server/services/ana/AnaToolExecutor.ts:12854	gov:recordGovernedAction
+review_protocol_portfolio	server/services/ana/AnaToolExecutor.ts:11855	gov:recordGovernedAction
+run_python_script	server/services/ana/AnaToolExecutor.ts:7102	fs:mkdir, fs:writeFile, verb:writeFile
+save_report_definition	server/services/ana/AnaToolExecutor.ts:20275	verb:createDefinition
+set_coverage_qualifying_determination	server/services/ana/AnaToolExecutor.ts:11913	gov:recordGovernedAction, verb:recordGovernedAction
+start_intelligence_flow	server/services/ana/AnaToolExecutor.ts:19043	verb:createInterviewSession
+triage_compliance_attention	server/services/ana/AnaToolExecutor.ts:12556	gov:recordGovernedAction, verb:recordGovernedAction
+update_export_control_review	server/services/ana/AnaToolExecutor.ts:11286	verb:updateReviewTx
+update_protocol_section	server/services/ana/AnaToolExecutor.ts:11480	gov:recordGovernedAction, verb:recordGovernedAction, verb:updateSectionTx
+update_vault_document	server/services/ana/AnaToolExecutor.ts:19796	gov:enforceAuthorLineage, gov:recordArtifactProvenance, gov:recordGovernedAction, orm:.update(c, sql:INSERT INTO, verb:createHash, verb:recordArtifactProvenance, verb:recordGovernedAction
+update_plan	find its registration (UPDATE_PLAN_TOOL_NAME, server/services/ana/turn-plan.ts)	NO_STATIC_SITE

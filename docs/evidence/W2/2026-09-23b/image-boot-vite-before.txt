@@ -1,0 +1,26 @@
+# The production image cannot load its own server bundle (found 2026-09-24).
+# dist/index.js built at 897d79579 by scripts/build-server.mjs, unchanged code.
+
+## 1. The bundle's first imports
+$ grep -o 'import[^;]{0,120}from"(vite|@vitejs/plugin-react)"' dist/index.js
+import{createServer as createViteServer,createLogger}from"vite"
+import{defineConfig}from"vite"
+import react from"@vitejs/plugin-react"
+
+## 2. Booting it the way the image resolves packages (npm ci --omit=dev)
+# A resolve hook refuses, from dist/, any package that is only a devDependency in package.json.
+# Controls: the same hook resolves a production dependency (express), and refuses 'vite'.
+$ env -i NODE_ENV=production node --import omit-dev-register.mjs dist/index.js
+Error: Cannot find package 'vite' imported from file:///home/user/ClinicalSageAI-2-replit/dist/index.js (devDependency, pruned by npm ci --omit=dev)
+  code: 'ERR_MODULE_NOT_FOUND'
+exit=1
+
+## 3. The new gate, on the same bundle
+$ node scripts/ci/check-server-bundle-prod-imports.mjs
+[server-bundle-prod-imports] FAIL
+dist/index.js imports packages the production image (npm ci --omit=dev) does not ship:
+  vite — imported at LOAD time (vite (import-statement)), and the image does not ship it (devDependency, or absent from package-lock.json). The container exits ERR_MODULE_NOT_FOUND before any application code runs. Import it dynamically inside the dev-only path, or move it to dependencies if production really uses it.
+  @vitejs/plugin-react — imported at LOAD time (@vitejs/plugin-react (import-statement)), and the image does not ship it (devDependency, or absent from package-lock.json). The container exits ERR_MODULE_NOT_FOUND before any application code runs. Import it dynamically inside the dev-only path, or move it to dependencies if production really uses it.
+  rollup-plugin-visualizer — imported at RUN time (rollup-plugin-visualizer (dynamic-import)), and the image does not ship it. Production crashes the first time that path executes. Move it to dependencies, or, if production can never reach it or handles its absence honestly, add it to RUNTIME_EXCEPTIONS with the reason.
+  RUNTIME_EXCEPTIONS lists vite, which the bundle no longer imports at run time. Remove the entry.
+exit=1

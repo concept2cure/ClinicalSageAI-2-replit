@@ -56,7 +56,7 @@ beforeEach(async () => {
         id: 1,
         organizationId: authState.orgId,
         email: 'principal@example.com',
-        role: 'reviewer',
+        role: 'manager',
       };
     next();
   });
@@ -111,7 +111,7 @@ describe('Tenant isolation — Audit writes', () => {
   it('POST /audit/events writes the JWT org, not body.organizationId', async () => {
     const res = await request(app)
       .post('/api/audit/events')
-      .send({ organizationId: ATTACKER_TARGET_ORG, eventType: 'x' });
+      .send({ organizationId: ATTACKER_TARGET_ORG, eventType: 'orchestration.gate_decision' });
     expect(res.status).toBe(201);
     const ins = auditInserts();
     expect(ins).toHaveLength(1);
@@ -131,7 +131,7 @@ describe('Tenant isolation — Audit writes', () => {
     const res = await request(app)
       .post('/api/audit/events')
       .send({
-        eventType: 'x',
+        eventType: 'orchestration.gate_decision',
         userId: 4242,
         user_name: 'Mallory',
         user_role: 'admin',
@@ -142,7 +142,7 @@ describe('Tenant isolation — Audit writes', () => {
     //                     user_id, user_name, user_role, ...
     expect(ins[0].params[4]).toBe(1); // principal id, not 4242
     expect(ins[0].params[5]).toBe('principal@example.com'); // principal email
-    expect(ins[0].params[6]).toBe('reviewer'); // principal role, not 'admin'
+    expect(ins[0].params[6]).toBe('manager'); // principal role, not the body's 'admin'
     expect(ins[0].params).not.toContain(4242);
     expect(ins[0].params).not.toContain('Mallory');
   });
@@ -150,13 +150,13 @@ describe('Tenant isolation — Audit writes', () => {
   it('F10: POST /audit/events requires a reason when regulatory/GxP significant', async () => {
     const res = await request(app)
       .post('/api/audit/events')
-      .send({ eventType: 'x', regulatorySignificant: true });
+      .send({ eventType: 'orchestration.gate_decision', regulatorySignificant: true });
     expect(res.status).toBe(400);
     expect(auditInserts()).toHaveLength(0);
 
     const ok = await request(app)
       .post('/api/audit/events')
-      .send({ eventType: 'x', gxpRelevant: true, reason: 'Corrected dosage typo' });
+      .send({ eventType: 'orchestration.gate_decision', gxpRelevant: true, reason: 'Corrected dosage typo' });
     expect(ok.status).toBe(201);
     expect(auditInserts()).toHaveLength(1);
   });
@@ -166,9 +166,9 @@ describe('Tenant isolation — Audit writes', () => {
       .post('/api/audit/events/batch')
       .send({
         events: [
-          { eventType: 'a' }, // gxp defaults true, no reason -> skipped
-          { eventType: 'b', reason: 'ok' }, // inserted
-          { eventType: 'c', gxpRelevant: false, regulatorySignificant: false }, // inserted
+          { eventType: 'orchestration.gate_decision' }, // gxp defaults true, no reason -> skipped
+          { eventType: 'coauthor_document.retaken', reason: 'ok' }, // inserted
+          { eventType: 'artifact.updated', gxpRelevant: false, regulatorySignificant: false }, // inserted
         ],
       });
     expect(res.status).toBe(201);
@@ -205,10 +205,10 @@ describe('Tenant isolation — Audit writes', () => {
 
   it('write endpoints 403 without an authenticated org', async () => {
     authState.orgId = null;
-    await request(app).post('/api/audit/events').send({ eventType: 'x' }).expect(403);
+    await request(app).post('/api/audit/events').send({ eventType: 'orchestration.gate_decision' }).expect(403);
     await request(app)
       .post('/api/audit/events/batch')
-      .send({ events: [{ eventType: 'x' }] })
+      .send({ events: [{ eventType: 'orchestration.gate_decision' }] })
       .expect(403);
     await request(app).post('/api/audit/signatures').send({ entityType: 'doc' }).expect(403);
     expect(auditInserts()).toHaveLength(0);

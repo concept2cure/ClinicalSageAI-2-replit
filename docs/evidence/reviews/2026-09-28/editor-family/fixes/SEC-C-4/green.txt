@@ -1,0 +1,70 @@
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx client/src/concept2cure/v2/__tests__/protocolDevSectionConflict.test.tsx client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx client/src/concept2cure/v2/__tests__/surfaceContextLoop.test.tsx   (after the fix)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>/
+
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > the registry says which surfaces claim the rail column > the four fixed surfaces no longer hide the rail they were writing to 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > admin-console — governed mutations reach the rail that draws the sign-off > "Invite member" opens the invite form rather than asking the rail 271ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > admin-console — governed mutations reach the rail that draws the sign-off > a member-level grant is a governed ask, not a local mutation 242ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > csr-workflow — its section rows reach the rail > opens a section through the shell conversation 16ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > protocol-dev — "Ask AnA" reaches the rail > hands the completeness question to the shell conversation 666ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > insights — no button hands a question to a rail it hides > renders the canvas with no "Ask AnA about this report" affordance 55ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx > the AnA buttons send no stored text as the person's words (SEC-C-4) > "Ask AnA" names the protocol on screen, not its stored number 658ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > adds a visit through the governed visit route and re-reads the protocol 1070ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx > the AnA buttons send no stored text as the person's words (SEC-C-4) > "Draft with AnA" names the section on screen, not its stored title or the protocol number 465ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx > the AnA buttons send no stored text as the person's words (SEC-C-4) > the empty state's ask names the programme open in the workspace, not its stored name 38ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx > the AnA buttons send no stored text as the person's words (SEC-C-4) > with no programme open, the empty state's ask does not claim one is 33ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx > the fenced screen context names what those sentences point at (SEC-C-4) > carries the protocol the header ask refers to 268ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx > the fenced screen context names what those sentences point at (SEC-C-4) > carries the section open on screen, and follows the outline when it changes 339ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevAskAnA.test.tsx > the fenced screen context names what those sentences point at (SEC-C-4) > carries the programme the empty state is for 24ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > renames a visit through the visit PATCH, carrying the visit id 559ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > removes a visit through the governed remove route 504ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx > the protocol section body is editable > mounts the canonical rich section editor on the stored content 412ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > adds an assessment through the SoA router 436ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx > the protocol section body is editable > refuses to save until a governed reason is given, and writes nothing 232ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx > the protocol section body is editable > saves through the section PATCH with the reason and the concurrency token 183ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx > the protocol section body is editable > reports a concurrent change as a refusal, and does not report a save 227ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > removes an assessment through the governed remove route 449ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionConflict.test.tsx > a refused content save carries the server’s reason > reports a concurrent change in the words the route used 313ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionConflict.test.tsx > a refused content save carries the server’s reason > reports any other refusal in the route’s own words too 81ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > renders the assembler’s findings rather than an empty list 267ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionConflict.test.tsx > a refused content save carries the server’s reason > reports a save the canvas refused with no server reason as exactly that 49ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > risk register — residual rating, owner and mitigation > writes the residual rating through the risk PATCH 683ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx > surface context reaches the shell > a surface’s published context is readable for that surface 32ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx > surface context reaches the shell > is NOT readable for a different active surface 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx > surface context reaches the shell > unmounting a surface clears its context 7ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx > surface context reaches the shell > a late unmount does not wipe a newer surface’s context 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx > surface context reaches the shell > the last publisher wins when surfaces swap 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx > surface context reaches the shell > a surface publishing null clears rather than sending an empty context 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx > surface context reaches the shell > updates the reader when the publisher’s context changes 8ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx > toModuleContext shapes the wire payload > returns null for no context, so module_context is omitted entirely 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx > toModuleContext shapes the wire payload > carries the surface, summary, facts and actions 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx > toModuleContext shapes the wire payload > omits empty facts and actions rather than sending empty containers 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > says plainly that no budget has been entered instead of printing a verdict 218ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContextLoop.test.tsx > the publish channel cannot drive an unbounded render loop > a content-equal re-publish does not notify the shell 37ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContextLoop.test.tsx > the publish channel cannot drive an unbounded render loop > a changed context still reaches the shell 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > adds a line item through the budget router 330ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > sets the feasibility parameters through the params PUT 325ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > requests a review through the reviewers route 319ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > assigns the review to a member's account, so the reviewer signs their own review 370ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > when the member list cannot be read it says so, and a reviewer can still be named without an account 335ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > neither an account nor a name: nothing is sent 361ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > a disposition is signed, not submitted: nothing is sent until the signer re-authenticates 490ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > finalize — the replacement for the deleted reason-only drawer is reachable > Finalize protocol opens the e-signature and posts the signed finalization 450ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > cover page — sponsor and principal investigator > writes both through the cover-page PATCH and re-reads 293ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > consent — the tab shows what the read model returns > reports the element the assembled consent form holds 223ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a governed write does not take the protocol off screen > stays on the register being edited while the record is re-read 381ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > an empty object reads as a failed load 7ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > an envelope around an object reads as a failed load 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > an error carried on a 200 reads as a failed load 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > rows with no fields reads as a failed load 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > a row with an id and nothing else reads as a failed load 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > a row whose fields are present but null reads as a failed load 6ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > a store that is not provisioned says so, and offers no start 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > empty state > names the open project and offers both a start and an AnA draft 31ms
+
+ Test Files  7 passed (7)
+      Tests  59 passed (59)
+   Start at  05:05:32
+   Duration  11.02s (transform 3.54s, setup 809ms, import 5.98s, tests 12.85s, environment 4.55s)
+

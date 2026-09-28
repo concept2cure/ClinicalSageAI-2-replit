@@ -1,0 +1,273 @@
+files in C2C_MIGRATION_FILES: 309
+self-transacting (not measured here): 58
+files taking ACCESS EXCLUSIVE on a table during a REPLAY (nothing to change): 114
+table locks: 196; distinct tables: 151
+
+per file (locks, ms uncontended, file):
+ 27   18ms db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql
+  8   16ms db/migrations/081_grdhe_regulatory_mapping_layer.sql
+  7    8ms db/migrations/20260902_clinical_ops_schema.sql
+  6   11ms db/migrations/20260730_fk_delete_policies_port.sql
+  6    7ms db/migrations/20260206_phase5_evidence_fabric.sql
+  6    8ms migrations/20260813c_ivdr_schema_reconciliation.sql
+  5    3ms db/migrations/20260220_ind_section_tracking.sql
+  4    4ms db/migrations/20260401_cmc_convergence_os.sql
+  4    1ms db/migrations/20260828_drop_orphaned_org_guc_policies.sql
+  3    2ms migrations/20260603_pv_operational.sql
+  3    2ms db/migrations/20260725_users_signing_lockout_columns.sql
+  3    1ms migrations/20260817_reconcile_declared_updated_at_columns.sql
+  3   12ms migrations/20260906_ivdr_history_tenant_isolation.sql
+  2    6ms migrations/20260524_program_workbench_schema.sql
+  2    2ms migrations/20260726_rbm_not_evaluated_backfill.sql
+  2    2ms db/migrations/20260220_user_intelligence_platform.sql
+  2    2ms db/migrations/20260801_consolidated_tree_reconciliation.sql
+  2    1ms db/migrations/20260807_task_graph_org_columns.sql
+  2    9ms db/migrations/20260617_audit_logs_immutability.sql
+  2    4ms migrations/20260905_document_catalog.sql
+  2    3ms migrations/20260905b_vault_document_chunks.sql
+  2    1ms db/migrations/20260902_cmc_impurity_dissolution_registers.sql
+  2    0ms migrations/20260918_rbm_author_attribution.sql
+  1    3ms migrations/20260506_kit_section_draft_provenance.sql
+  1    3ms migrations/20260609_audit_hmac_seal.sql
+  1    1ms migrations/20260921_audit_logs_chain_seq.sql
+  1    1ms migrations/20260603_ai_capability_governance.sql
+  1    1ms migrations/20260726_file_uploads_tenancy.sql
+  1    0ms migrations/20260726_cre_source_program_scope.sql
+  1    0ms migrations/20260727_authoring_document_program_scope.sql
+  1    1ms db/migrations/20260727_unified_tasks_mdx_metadata.sql
+  1    2ms db/migrations/20260728_artifacts_table.sql
+  1    1ms migrations/20260728_authoring_comments_threading.sql
+  1    1ms migrations/20260728_authoring_document_governed_binding.sql
+  1    0ms migrations/20260921_authoring_document_provenance.sql
+  1    2ms db/migrations/20260730_fix_atom_embedding_dimension.sql
+  1   11ms db/migrations/20260730_project_milestones_reconciliation.sql
+  1    0ms db/migrations/20260725_project_sections_content_columns.sql
+  1    0ms db/migrations/20260725_ectd_compilations_project_level.sql
+  1    1ms db/migrations/20260730_ectd_compilations_sequence_columns.sql
+  1    1ms db/migrations/20260730_ectd_compilations_leaf_manifest.sql
+  1    1ms db/migrations/20260923_ectd_compilations_external_validation.sql
+  1    1ms db/migrations/20260730_orchestrator_run_ledger_hardening.sql
+  1    1ms db/migrations/20260224_ai_claims_verifier_flags.sql
+  1    2ms db/migrations/20260730_cmc_projects_reconstruction.sql
+  1    1ms db/migrations/20260730_manufacturing_processes_reconstruction.sql
+  1    0ms db/migrations/20260730_c2c_ana_actions_command_vocab.sql
+  1    0ms migrations/20260730_estar_submission_project_link.sql
+  1    0ms migrations/20260903_regulatory_programs_estar_device_fields.sql
+  1    1ms migrations/20260903_estar_registration_correspondent.sql
+  1    0ms migrations/20260904_estar_registration_declaration_company_name.sql
+  1    0ms migrations/20260730_work_item_source_ref.sql
+  1    1ms db/migrations/20260730_graphrag_knowledge_tables.sql
+  1    2ms db/migrations/20260730_licensing_ip_tables.sql
+  1    1ms db/migrations/20260206_phase5_contradiction_scanner.sql
+  1    1ms db/migrations/20260225_ivdr_pack_warnings_artifact_hashes.sql
+  1    0ms db/migrations/20260716_nonclinical_display.sql
+  1    4ms db/migrations/20260211_phase6_6e_proof_pack_exports.sql
+  1    1ms db/migrations/20260331_regulatory_correspondence_os.sql
+  1    1ms db/migrations/20260621_weekly_usage_limits.sql
+  1    2ms db/migrations/20260617_precedent_org_isolation.sql
+  1    1ms db/migrations/20260809_source_attribution_draft_candidates.sql
+  1    2ms migrations/20260810b_eu_mdr_ivdr_outlines.sql
+  1    0ms migrations/20260902_ind_icsr_transmissions_transport_receipt.sql
+  1    1ms migrations/20260730_workflow_doc_versions_org_id.sql
+  1    1ms migrations/20260731_workflow_doc_versions_org_not_null.sql
+  1    0ms db/migrations/20260807_unified_tasks_soft_delete.sql
+  1    1ms migrations/20260813_tenant_offboarding_lifecycle.sql
+  1    7ms migrations/20260814_projects_regulatory_program_anchor.sql
+  1    1ms migrations/20260814d_document_alias_map.sql
+  1    0ms migrations/20260814e_submission_leaf_source_pin.sql
+  1    1ms migrations/20260829_cre_source_versioning.sql
+  1    0ms migrations/20260814i_draft_candidate_generator.sql
+  1    1ms migrations/20260906c_draft_candidate_assertions.sql
+  1    9ms db/migrations/20260222_audit_events_hash_chain.sql
+  1    2ms db/migrations/20260222_audit_events_immutability.sql
+  1    1ms migrations/20260820_working_memory_project_id.sql
+  1    0ms migrations/20260602_working_memory_embeddings.sql
+  1    6ms migrations/20260821_vault_documents_canonical_shape.sql
+  1    1ms migrations/20260823_vault_document_placement.sql
+  1    0ms db/migrations/20260905_gdpr_dsar_execution_evidence.sql
+  1    1ms db/migrations/20260824_module_grant_expiry.sql
+  1    1ms db/migrations/20260824_enforcement_mode_setting.sql
+  1    1ms db/migrations/20260821_regulatory_twin_simulations_tenant_scope.sql
+  1    1ms db/migrations/20260828_ectd_compilations_submission_id.sql
+  1    0ms db/migrations/20260830_reg_questions_response_doc.sql
+  1    0ms migrations/20260823_cmc_register_store_parity.sql
+  1    1ms db/migrations/20260902_manufacturing_responses.sql
+  1    4ms db/migrations/20260903_cmc_manufacturing_characterization_registers.sql
+  1    0ms db/migrations/20260903_cmc_impurity_route_of_administration.sql
+  1    1ms db/migrations/20260906_cmc_interview_sessions.sql
+  1    1ms db/migrations/20260906_cmc_impurity_m7_inputs.sql
+  1    0ms db/migrations/20260906_cmc_formulation_development.sql
+  1    0ms db/migrations/20260907_qc_testing_batch_attribution.sql
+  1    1ms migrations/20260905_vault_documents_organization_id.sql
+  1    2ms migrations/20260906b_vault_legal_holds.sql
+  1    1ms migrations/20260917_vault_documents_storage_version.sql
+  1    0ms migrations/20260917b_submission_leaf_document_uuid.sql
+  1    3ms migrations/20260911_vault_evidence_citations.sql
+  1    1ms migrations/20260917_project_charters_declared_columns.sql
+  1    0ms migrations/20260907_cmc_comparability_register_reachable.sql
+  1    0ms migrations/20260908_drug_substance_biologic_origin.sql
+  1    0ms migrations/20260907_regulatory_programs_application_number.sql
+  1    1ms migrations/20260908b_estar_submissions_filed_artifact.sql
+  1    0ms migrations/20260921_protocol_documents_sponsor_pi.sql
+  1    0ms migrations/20260922_protocol_document_study_design.sql
+  1    0ms migrations/20260922c_amendment_design_snapshot.sql
+  1    1ms migrations/20260922d_irb_submission_context.sql
+  1    0ms migrations/20260922e_amendment_declarations_nullable.sql
+  1    0ms migrations/20260923_users_mfa_totp_last_step.sql
+  1    0ms migrations/20260922f_protocol_deviation_assessment.sql
+  1    4ms db/migrations/20260919_c48_stage1_identity_org_bridge.sql
+  1    2ms migrations/20260924_license_requests.sql
+  1    3ms migrations/20260924_org_relationships_sponsor_rls.sql
+
+distinct tables:
+clinical_ops.deviations
+clinical_ops.endpoint_results
+clinical_ops.enrollment_records
+clinical_ops.milestones
+clinical_ops.monitoring_visits
+clinical_ops.sites
+clinical_ops.studies
+compliance.data_residency
+core.program_ownerships
+core.programs
+cortex.atoms
+evidence.claims
+evidence.contradiction_scans
+evidence.derivations
+evidence.hash_ledger
+evidence.provenance
+evidence.sources
+evidence.support
+federated_ml.safety_signals
+global_dossier.dossier_instances
+identity.org_relationships
+manufacturing.batch_execution_records
+manufacturing.digital_twins
+manufacturing.equipment_registry
+manufacturing.isa95_fhir_mappings
+manufacturing.quality_test_results
+manufacturing.responses
+precedent.regulatory_precedents
+predicate.proof_pack_audit_events
+public.adverse_events
+public.ai_claims
+public.ana_capability_registry
+public.artifacts
+public.audit_events
+public.audit_log_archives
+public.audit_logs
+public.authoring_ai_draft_candidates
+public.authoring_comments
+public.authoring_documents
+public.billing_alerts
+public.c2c_ana_actions
+public.c2c_correspondence_issues
+public.c2c_document_aliases
+public.c2c_documents
+public.c2c_project_work_items
+public.cerv2_510k_sections
+public.cerv2_section_versions
+public.client_workspaces
+public.cmc_batch_records
+public.cmc_comparability_assessments
+public.cmc_dissolution_profiles
+public.cmc_formulation_records
+public.cmc_impurity_profiles
+public.cmc_interview_sessions
+public.cmc_projects
+public.concept2cure_artifact_versions
+public.connector_credentials
+public.conversation_working_memory
+public.cre_evidence_sources
+public.cross_module_task_links
+public.device_audit_trail
+public.drug_substances
+public.ectd_compilations
+public.electronic_signatures
+public.estar_registrations
+public.estar_submissions
+public.file_uploads
+public.gdpr_data_subject_requests
+public.ind_icsr_transmissions
+public.irb_submissions
+public.ivdr_analytical_validations
+public.ivdr_cdx_status_history
+public.ivdr_cdx_workflows
+public.ivdr_classifications
+public.ivdr_clinical_evidence
+public.ivdr_evidence_result_history
+public.ivdr_packs
+public.ivdr_validation_parameter_history
+public.knowledge_graph_nodes
+public.license_requests
+public.licenses
+public.literature_entries
+public.lumen_data_atoms
+public.manufacturing_processes
+public.module_subscriptions
+public.nonclinical_studies
+public.organizations
+public.periodic_safety_reports
+public.platform_settings
+public.program_activity_log
+public.project_charters
+public.project_milestones
+public.project_notifications
+public.project_sections
+public.projects
+public.protocol_amendments
+public.protocol_deviations
+public.protocol_documents
+public.qc_testing
+public.quality_specifications
+public.rbm_kris
+public.rbm_monitoring_plans
+public.rbm_qtls
+public.rbm_risk_assessments
+public.reg_questions
+public.regulatory_programs
+public.regulatory_twin_simulations
+public.safety_signals
+public.section_comments
+public.section_status_log
+public.stability_studies
+public.submission_leaves
+public.submission_orchestrator_runs
+public.supply_chain_batches
+public.supply_chain_materials
+public.supply_chain_suppliers
+public.task_dependencies
+public.templates
+public.unified_tasks
+public.user_work_queue
+public.user_work_sessions
+public.users
+public.workflow_document_versions
+regulatory_harmonization.audit_log
+regulatory_harmonization.audit_log_y2026m01
+regulatory_harmonization.audit_log_y2026m02
+regulatory_harmonization.audit_log_y2026m03
+regulatory_harmonization.canonical_adverse_events
+regulatory_harmonization.canonical_products
+regulatory_harmonization.export_job_audit_log
+regulatory_harmonization.export_jobs
+regulatory_harmonization.gdpr_processing_records
+regulatory_harmonization.mapping_rule_history
+regulatory_harmonization.tenant_data_residency
+regulatory_intel.advisory_committee_patterns
+regulatory_intel.confidence_calibration_log
+regulatory_intel.crl_trajectory_records
+regulatory_intel.crl_trigger_patterns
+regulatory_intel.cross_jurisdictional_frameworks
+regulatory_intel.ema_question_patterns
+regulatory_intel.filing_sequence_strategies
+regulatory_intel.jurisdictional_divergence_map
+regulatory_intel.precedent_application_rules
+regulatory_intel.reliance_pathways
+regulatory_intel.rtf_trigger_patterns
+vault.document_catalog
+vault.document_chunks
+vault.document_read_receipts
+vault.documents
+vault.evidence_citations
+vault.legal_holds

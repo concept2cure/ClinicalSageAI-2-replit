@@ -1,3 +1,4 @@
+import { requestFullPath } from '../middleware/request-path';
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import type { PlatformBootstrapContext } from './types';
 import { runWithPreAuthScope } from '../db/tenantStore';
@@ -16,7 +17,9 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
     runWithPreAuthScope(`auth:${req.method} ${req.path}`, next);
   // CSP violation reporting — must match the report-uri set on the policy.
   // Mounted on the platform router so it's available before any auth-gated
-  // routes need it, and so it survives the validateTenantContext skip list.
+  // routes need it. It is reachable without a session because CSP_REPORT_URI is
+  // on the boundary's PUBLIC_API_ALLOWLIST (middleware/public-api-allowlist.ts);
+  // the impersonation detector behind the boundary keeps no skip list of its own.
   app.use(CSP_REPORT_URI, cspReportRouter);
 
   // Admin security-health endpoint. Lives under /api/admin so the
@@ -268,7 +271,7 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
       // the in-editor Simple Browser can probe connectivity.
       '/api/time', '/api/diag',
     ];
-    const fullPath = req.baseUrl + req.path;
+    const fullPath = requestFullPath(req);
     const isOpen = openPrefixes.some(p => fullPath === p || fullPath.startsWith(p + '/'));
     if (isOpen) return next();
     return authMiddleware(req, res, next);

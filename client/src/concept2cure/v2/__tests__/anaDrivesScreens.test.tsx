@@ -26,6 +26,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 
 import { Vault } from '../surfaces/Vault';
 import { Projects } from '../surfaces/Projects';
+import { AnaActionChip } from '../AnaActionChips';
 import {
   __resetSurfaceActionBus,
   applySurfaceAction,
@@ -203,6 +204,49 @@ describe('Vault — AnA operates the real surface', () => {
     expect(screen.getByText('stability-summary-24m')).toBeTruthy();
   });
 
+  it('vault.search on an empty vault is refused, not reported as a search nobody can see', async () => {
+    // An empty vault draws its empty state and no search box, so a query set
+    // there changes nothing on screen — AnA must not be told it searched.
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === `/api/c2c/project-vault/${PID}`) {
+        const empty = vaultPayload();
+        empty.data.documentCount = 0;
+        empty.data.tree = [{ id: 'cabinet', code: '', label: 'Source files · filing cabinet', children: [] }] as any;
+        return ok(empty);
+      }
+      return ok({ success: true, data: {} });
+    });
+    render(
+      <Vault surface={{ id: 'vault', label: 'Vault' } as any} onAsk={vi.fn()} onNav={vi.fn()} segment="biopharma" />,
+    );
+    await waitFor(() => expect(registeredSurfaceId()).toBe('vault'));
+    await screen.findByText("No documents in this project's vault yet");
+    let outcome: any;
+    act(() => {
+      outcome = applySurfaceAction(directive('vault.search', { query: 'stability' }), vi.fn());
+    });
+    expect(outcome.status).toBe('failed');
+    expect(outcome.reason).toBe('This vault has no documents yet, so there is nothing to search.');
+  });
+
+  it('with no program open, both vault operations say so rather than "no documents" or "no such folder"', async () => {
+    delete (window as any).C2C_PROJECT;
+    render(
+      <Vault surface={{ id: 'vault', label: 'Vault' } as any} onAsk={vi.fn()} onNav={vi.fn()} segment="biopharma" />,
+    );
+    await waitFor(() => expect(registeredSurfaceId()).toBe('vault'));
+    let search: any;
+    let folder: any;
+    act(() => {
+      search = applySurfaceAction(directive('vault.search', { query: 'stability' }), vi.fn());
+      folder = applySurfaceAction(directive('vault.open-folder', { folder: 'Module 3' }), vi.fn());
+    });
+    expect(search.status).toBe('failed');
+    expect(search.reason).toMatch(/^No program is open/);
+    expect(folder.status).toBe('failed');
+    expect(folder.reason).toMatch(/^No program is open/);
+  });
+
   it('vault.open-folder refuses an unknown folder honestly', async () => {
     render(
       <Vault surface={{ id: 'vault', label: 'Vault' } as any} onAsk={vi.fn()} onNav={vi.fn()} segment="biopharma" />,
@@ -280,6 +324,26 @@ describe('Projects — AnA opens a real program', () => {
     expect(onNav).toHaveBeenCalledWith('project-home');
   });
 
+  /* The server resolves act_on_screen's reference by id, code or title before
+     it sends the directive (drive-context.ts), and AnA is handed ids with
+     every program list. The screen matched code and title only, so a program
+     the server had found by id was refused here while it was on the page. */
+  it('opens a program named by its id, as the server resolves it', async () => {
+    const onNav = vi.fn();
+    render(<Projects surface={{ id: 'projects', label: 'Projects' } as any} onAsk={vi.fn()} onNav={onNav} segment="biopharma" />);
+    await waitFor(() => expect(registeredSurfaceId()).toBe('projects'));
+    await screen.findAllByText(/BX-204/);
+
+    let outcome: any;
+    act(() => {
+      outcome = applySurfaceAction(directive('projects.open-program', { program: 'P1' }), vi.fn());
+    });
+    expect(outcome.status).toBe('applied');
+    expect(outcome.detail).toContain('BX-204');
+    expect((window as any).C2C_PROJECT?.id).toBe('p1');
+    expect(onNav).toHaveBeenCalledWith('project-home');
+  });
+
   it('an unknown or ambiguous program is an honest refusal, never a guess', async () => {
     render(<Projects surface={{ id: 'projects', label: 'Projects' } as any} onAsk={vi.fn()} onNav={vi.fn()} segment="biopharma" />);
     await waitFor(() => expect(registeredSurfaceId()).toBe('projects'));
@@ -291,6 +355,8 @@ describe('Projects — AnA opens a real program', () => {
     });
     expect(unknown.status).toBe('failed');
     expect(unknown.reason).toContain('No program named');
+    // The refusal names what the portfolio lists, so AnA's next try is a real program.
+    expect(unknown.reason).toMatch(/Programs listed: "BX-204 — /);
     expect((window as any).C2C_PROJECT?.id).toBe(PID);
   });
 
@@ -304,5 +370,82 @@ describe('Projects — AnA opens a real program', () => {
     });
     expect(d).not.toBeNull();
     expect(d!.surfaceId).toBe('projects');
+  });
+});
+
+/* The page lists the 50 most recent programs; the server resolves a reference
+   across all of them and hands over the one it found. A program past the page
+   was refused here as "No program named" although it existed. */
+describe('Projects — the program the server found', () => {
+  it('opens the program the server found, even one past this page', async () => {
+    const onNav = vi.fn();
+    render(<Projects surface={{ id: 'projects', label: 'Projects' } as any} onAsk={vi.fn()} onNav={onNav} segment="biopharma" />);
+    await waitFor(() => expect(registeredSurfaceId()).toBe('projects'));
+    await screen.findAllByText(/BX-204/);
+
+    let outcome: any;
+    act(() => {
+      outcome = applySurfaceAction(
+        validateDriveAction({
+          ...directive('projects.open-program', { program: 'legacy-7' }),
+          program: { id: 'p-legacy-7', name: 'Zeta Device Study', code: 'LEGACY-7' },
+        })!,
+        vi.fn(),
+      );
+    });
+    expect(outcome.status).toBe('applied');
+    expect(outcome.detail).toBe('Opened LEGACY-7 — Zeta Device Study');
+    expect((window as any).C2C_PROJECT?.id).toBe('p-legacy-7');
+    expect(onNav).toHaveBeenCalledWith('project-home');
+  });
+
+  it('an open offered as a chip (Live Drive off) opens the program the server found', async () => {
+    const onNav = vi.fn();
+    render(
+      <>
+        <Projects surface={{ id: 'projects', label: 'Projects' } as any} onAsk={vi.fn()} onNav={onNav} segment="biopharma" />
+        <AnaActionChip
+          onNav={vi.fn()}
+          action={{
+            label: 'Open a program',
+            actionType: 'surface_action',
+            actionId: 'projects.open-program',
+            surfaceId: 'projects',
+            params: { program: 'legacy-7' },
+            program: { id: 'p-legacy-7', name: 'Zeta Device Study', code: 'LEGACY-7' },
+          }}
+        />
+      </>,
+    );
+    await waitFor(() => expect(registeredSurfaceId()).toBe('projects'));
+    await screen.findAllByText(/BX-204/);
+
+    act(() => {
+      screen.getByRole('button', { name: /Open a program/ }).click();
+    });
+    expect((window as any).C2C_PROJECT?.id).toBe('p-legacy-7');
+    expect(onNav).toHaveBeenCalledWith('project-home');
+  });
+
+  it('the server\'s program wins over a name the page reads differently', async () => {
+    const onNav = vi.fn();
+    render(<Projects surface={{ id: 'projects', label: 'Projects' } as any} onAsk={vi.fn()} onNav={onNav} segment="biopharma" />);
+    await waitFor(() => expect(registeredSurfaceId()).toBe('projects'));
+    await screen.findAllByText(/BX-204/);
+
+    let outcome: any;
+    act(() => {
+      outcome = applySurfaceAction(
+        validateDriveAction({
+          ...directive('projects.open-program', { program: 'ZZ-999' }),
+          program: { id: 'p1', name: 'x', code: 'y' },
+        })!,
+        vi.fn(),
+      );
+    });
+    // p1 is on the page: its own row is opened, with the page's own name.
+    expect(outcome.status).toBe('applied');
+    expect(outcome.detail).toContain('BX-204');
+    expect((window as any).C2C_PROJECT?.id).toBe('p1');
   });
 });

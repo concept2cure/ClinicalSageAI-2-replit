@@ -1,0 +1,14 @@
+$ git rev-parse --short HEAD  # route unchanged; tests added
+f47aa229
+ ✓ server/__tests__/security/well-known-security-txt.test.ts > RFC 9116 security.txt > serves a valid security.txt (Contact, Expires, Canonical) 24ms
+ × server/__tests__/security/well-known-security-txt.test.ts > RFC 9116 security.txt > Canonical is built on APP_URL, the origin Terraform sets, not on the Host header (P1-14 / INF-32) 10ms
+   → expected '# Vulnerability disclosure — please r…' to match /^Canonical: https:\/\/app\.example\.…/\
+ × server/__tests__/security/well-known-security-txt.test.ts > RFC 9116 security.txt > the Policy URL it advertises is served by this same router (P1-14 / INF-32) 9ms
+   → expected false to be true // Object.is equality
+ ✓ server/__tests__/security/well-known-security-txt.test.ts > RFC 9116 security.txt > Expires is a future date (never stale) 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected '# Vulnerability disclosure — please r…' to match /^Canonical: https:\/\/app\.example\.…/\
+AssertionError: expected false to be true // Object.is equality
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+exit=1

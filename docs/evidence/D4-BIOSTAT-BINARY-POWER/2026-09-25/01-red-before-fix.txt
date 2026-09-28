@@ -1,0 +1,7 @@
+ × tests/services/ana-biostats.test.ts > Layer 2: a binary design reports the power it computed > superiority sized for 80% reports a computed power at or just above 80%, not the target echoed 12ms
+   → expected 0.8 not to be 0.8 // Object.is equality
+ ✓ tests/services/ana-biostats.test.ts > Layer 2: a binary design reports the power it computed > non-inferiority sized for 90% reports ~90% 1ms
+ × tests/services/ana-biostats.test.ts > Layer 2: a binary design reports the power it computed > the conservative scenario has less power than the base case 1ms
+   → expected 1 to be greater than 1
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 1 passed | 118 skipped (121)

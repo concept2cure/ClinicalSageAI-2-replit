@@ -1,0 +1,57 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-28T18:16:57.326Z","pid":9717,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T18:16:57.327Z","pid":9717,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T18:16:57.328Z","pid":9717,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/invitation-acceptance.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > sees the invitation to the other organization
+[database] Database connection successful
+
+stdout | tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > sees the invitation to the other organization
+[database] Database connection successful { timestamp: '2026-09-28T18:16:57.874Z', poolSize: 1 }
+
+stdout | tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > sees the invitation to the other organization
+[database] Database connection successful { timestamp: '2026-09-28T18:16:57.913Z', poolSize: 2 }
+
+ ✓ tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > sees the invitation to the other organization 134ms
+ ✓ tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > accepts it: the membership is written, and the token for B is then admitted 43ms
+ ✓ tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > declines it: no membership, the invitation kept as declined 26ms
+ ✓ tests/db/invitation-acceptance.dbtest.ts > nobody else can see or answer it (D3) > another member of A cannot see, accept or decline an invitation that is not theirs 33ms
+ × tests/db/invitation-acceptance.dbtest.ts > nobody else can see or answer it (D3) > the lookup answers only about the calling organization's own members 21ms
+   → the lookup answered about a non-member: expected [ { id: 32 } ] to deeply equal []
+ ✓ tests/db/invitation-acceptance.dbtest.ts > nobody else can see or answer it (D3) > B's scope reads none of A's invitations directly (the table's own policy, unchanged) 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/invitation-acceptance.dbtest.ts > nobody else can see or answer it (D3) > the lookup answers only about the calling organization's own members
+AssertionError: the lookup answered about a non-member: expected [ { id: 32 } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "id": 32,
++   },
++ ]
+
+ ❯ tests/db/invitation-acceptance.dbtest.ts:178:81
+    176|       // person who is not B's member: nothing, whatever B's own rows …
+    177|       expect((await ask(ORG_A)).rows).toEqual([{ id }]);
+    178|       expect((await ask(ORG_B)).rows, 'the lookup answered about a non…
+       |                                                                                 ^
+    179|     } finally {
+    180|       await reset();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  18:16:55
+   Duration  2.65s (transform 1.01s, setup 71ms, import 1.78s, tests 534ms, environment 0ms)
+

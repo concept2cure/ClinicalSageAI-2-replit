@@ -42,6 +42,7 @@
  */
 
 import crypto from 'node:crypto';
+import { VAULT_DOCUMENT_TENANCY } from '../tenant/vault-tenancy';
 import type { Pool, PoolClient } from 'pg';
 import { createScopedLogger } from '../../utils/logger';
 
@@ -93,6 +94,22 @@ export const EXPORT_EXCLUDED_TABLES: readonly string[] = Object.freeze([
 
 /** Row cap per table, so one pathological table cannot exhaust memory. */
 const MAX_ROWS_PER_TABLE = 50_000;
+
+/**
+ * Tables whose tenant rows are NOT "the tenant column equals the org id", with
+ * the predicate that selects them instead — the SAME predicate the purge
+ * deletes by, so an export never contains less than the erasure it authorizes
+ * destroys. `$1` is the organization id as an integer.
+ *
+ * vault.document_chunks is deliberately absent: it has no tenant column, so it
+ * is not discovered, and it is derived — the passages are cut from the
+ * documents' extracted_text, which IS exported with each document. The purge
+ * removes chunks with their parent; the data return carries the text they were
+ * cut from.
+ */
+const EXPORT_SCOPED_PREDICATES: Readonly<Record<string, string>> = Object.freeze({
+  'vault.documents': VAULT_DOCUMENT_TENANCY,
+});
 
 export interface ExportedTable {
   table: string;
@@ -239,10 +256,19 @@ export async function exportTenantFull(
         tablesFailed.push({ table: label, error: 'unsafe identifier' });
         continue;
       }
-      const { rows } = await client.query(
-        `SELECT * FROM "${schema}"."${table}" WHERE "${tenantColumn}"::text = $1 LIMIT ${MAX_ROWS_PER_TABLE + 1}`,
-        [String(organizationId)]
-      );
+      // Own-key lookup: a bare index reaches Object.prototype.
+      const scoped = Object.prototype.hasOwnProperty.call(EXPORT_SCOPED_PREDICATES, label)
+        ? EXPORT_SCOPED_PREDICATES[label]
+        : null;
+      const { rows } = scoped
+        ? await client.query(
+            `SELECT * FROM "${schema}"."${table}" WHERE ${scoped} LIMIT ${MAX_ROWS_PER_TABLE + 1}`,
+            [organizationId]
+          )
+        : await client.query(
+            `SELECT * FROM "${schema}"."${table}" WHERE "${tenantColumn}"::text = $1 LIMIT ${MAX_ROWS_PER_TABLE + 1}`,
+            [String(organizationId)]
+          );
       const truncated = rows.length > MAX_ROWS_PER_TABLE;
       const kept = truncated ? rows.slice(0, MAX_ROWS_PER_TABLE) : rows;
       if (truncated) truncatedTables.push(label);
@@ -313,6 +339,13 @@ export interface ExportReceiptOutcome {
   recorded: boolean;
   /** True only when THIS call wrote the row (false on an ON CONFLICT no-op). */
   inserted: boolean;
+  /**
+   * Set when no receipt was written because the export was incomplete: a table
+   * failed to read, or one was truncated. The receipt is what authorizes a
+   * purge, and an incomplete return of a tenant's data must never authorize its
+   * destruction. Names the tables, so the operator knows what to fix.
+   */
+  incomplete?: { tablesFailed: string[]; truncatedTables: string[] };
 }
 
 export async function recordExportReceipt(
@@ -323,8 +356,25 @@ export async function recordExportReceipt(
     tableCount: number;
     rowCount: number;
     createdBy: number | null;
+    /** The export's own coverage report (`payload.coverage`). */
+    coverage: {
+      tablesFailed: ReadonlyArray<{ table: string } | string>;
+      truncatedTables: ReadonlyArray<string>;
+    };
   }
 ): Promise<ExportReceiptOutcome> {
+  const tablesFailed = params.coverage.tablesFailed.map((t) => (typeof t === 'string' ? t : t.table));
+  const truncatedTables = [...params.coverage.truncatedTables];
+  if (tablesFailed.length > 0 || truncatedTables.length > 0) {
+    // No receipt: this digest must not open a purge (tenant-purge.dbtest.ts).
+    logger.warn('Tenant export incomplete — no receipt recorded; this digest cannot authorize a purge', {
+      organizationId: params.organizationId,
+      digest: params.digest,
+      tablesFailed,
+      truncatedTables,
+    });
+    return { recorded: false, inserted: false, incomplete: { tablesFailed, truncatedTables } };
+  }
   try {
     const res = await client.query(
       `INSERT INTO tenant_export_receipts

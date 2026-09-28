@@ -1,0 +1,5 @@
+convert_docx_to_pdf | conditional | output path under tmp/ -> self; otherwise (uploads/) -> confirm | scripts/docx_pdf_pipeline.py:77 | writes or overwrites a PDF next to the input or at output_pdf_path
+define_kri | confirm | - | rbm/rbm-actuator.ts:117 | INSERT rbm_kris
+draft_authoring_document | confirm | - | authoring/authoring-from-draft.ts:229 | creates an authoring document, sections, revisions + audit
+draft_monitoring_plan | confirm | - | rbm/rbm-actuator.ts:289 | INSERT rbm_monitoring_plans (draft)
+establish_governed_fact | confirm | - | living-record/fact-change-orchestrator.ts:437 | inserts an active canonical fact + audit

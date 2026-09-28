@@ -86,7 +86,8 @@ const props = () => ({ surface: { id: 'protocol-dev', label: 'Protocol', navTier
 
 async function openStatistics(p = props()) {
   render(<Providers><ProtocolWorkspace {...p} /></Providers>);
-  fireEvent.click(await screen.findByRole('button', { name: /Statistics/ }));
+  // 2026-09-28 · GA-2: the protocol strip's entries are tabs (role="tab"), not plain buttons.
+  fireEvent.click(await screen.findByRole('tab', { name: /Statistics/ }));
   return p;
 }
 

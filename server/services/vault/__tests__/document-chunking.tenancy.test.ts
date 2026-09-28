@@ -4,6 +4,12 @@
  * organization_id of its own, so a bare `WHERE document_id = $1` would let a
  * guessed uuid from another tenant be re-indexed — or wiped — by anyone.
  *
+ * P0-11 (SECURITY_AUDIT_2026-09-24 DP-07) adds the ordering: the ownership
+ * check runs BEFORE the text is embedded, so a foreign document's text is
+ * never sent to an embedding provider under this caller's placement policy,
+ * and the embedding call runs under the verified organisation's tenant scope
+ * so the provider's placement gate sees that organisation.
+ *
  * @module server/services/vault/__tests__/document-chunking.tenancy.test
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -12,12 +18,18 @@ type Call = { sql: string; params: unknown[] };
 const calls: Call[] = [];
 let owned = true;
 
+function answerOwnership(sql: string) {
+  if (/SELECT 1 FROM vault\.documents/.test(sql)) {
+    return owned ? { rowCount: 1, rows: [{ '?column?': 1 }] } : { rowCount: 0, rows: [] };
+  }
+  return null;
+}
+
 const client = {
   query: vi.fn(async (sql: string, params: unknown[] = []) => {
     calls.push({ sql, params });
-    if (/SELECT 1 FROM vault\.documents/.test(sql)) {
-      return owned ? { rowCount: 1, rows: [{ '?column?': 1 }] } : { rowCount: 0, rows: [] };
-    }
+    const ownership = answerOwnership(sql);
+    if (ownership) return ownership;
     if (/INSERT INTO vault\.document_chunks/.test(sql)) return { rowCount: 1, rows: [] };
     return { rowCount: 0, rows: [] };
   }),
@@ -25,22 +37,30 @@ const client = {
 };
 
 const poolCalls: Call[] = [];
+const poolConnect = vi.fn(async () => client);
 
 vi.mock('../../../db.js', () => ({
   pool: {
-    connect: vi.fn(async () => client),
+    connect: poolConnect,
     query: vi.fn(async (sql: string, params: unknown[] = []) => {
       poolCalls.push({ sql, params });
-      return { rows: [], rowCount: 0 };
+      return answerOwnership(sql) ?? { rows: [], rowCount: 0 };
     }),
   },
 }));
 vi.mock('../../featureToggleService.js', () => ({
   FeatureToggleService: { isFeatureEnabled: vi.fn(async () => true) },
 }));
+
+/** Every embedding call the writer makes, with the tenant scope it ran under. */
+const embedCalls: Array<{ texts: string[]; tenantId: string | undefined }> = [];
 vi.mock('../../enhancedEmbeddingService.js', () => ({
   getEmbeddingService: () => ({
-    embedBatch: async (texts: string[]) => texts.map(() => ({ embedding: [0.1, 0.2, 0.3] })),
+    embedBatch: async (texts: string[]) => {
+      const { getTenantScope } = await import('../../../db/tenantStore.js');
+      embedCalls.push({ texts, tenantId: getTenantScope()?.tenantId });
+      return texts.map(() => ({ embedding: [0.1, 0.2, 0.3] }));
+    },
   }),
 }));
 
@@ -51,6 +71,8 @@ describe('vault chunk writer tenancy', () => {
   beforeEach(() => {
     calls.length = 0;
     poolCalls.length = 0;
+    embedCalls.length = 0;
+    poolConnect.mockClear();
     owned = true;
   });
 
@@ -61,7 +83,33 @@ describe('vault chunk writer tenancy', () => {
     expect(result.ok).toBe(false);
     expect(result.error).toMatch(/organization/);
     expect(calls.some(c => /INSERT INTO vault\.document_chunks|DELETE FROM vault\.document_chunks/.test(c.sql))).toBe(false);
-    expect(calls.map(c => c.sql)).toContain('ROLLBACK');
+    // Refused up front: no transaction is even opened for it.
+    expect(poolConnect).not.toHaveBeenCalled();
+    expect(calls.map(c => c.sql)).not.toContain('BEGIN');
+  });
+
+  /* DP-07: the text of a document the caller does not own was embedded — sent
+     to the configured provider under the CALLER's placement policy — before the
+     ownership check refused the write. Refusal must come before any egress. */
+  it('refuses a foreign document before any embedding call', async () => {
+    owned = false;
+    const { chunkAndEmbedDocument } = await import('../document-chunking.service');
+    const result = await chunkAndEmbedDocument({ documentId: DOC, organizationId: ORG, text: 'Some extracted text.' });
+    expect(result.ok).toBe(false);
+    expect(embedCalls).toHaveLength(0);
+    // The ownership question was asked, bound to the caller's organization.
+    const ownership = poolCalls.filter(c => /SELECT 1 FROM vault\.documents/.test(c.sql));
+    expect(ownership).toHaveLength(1);
+    expect(ownership[0].params).toEqual([DOC, ORG]);
+  });
+
+  it('embeds an owned document under that organization\'s tenant scope', async () => {
+    const { chunkAndEmbedDocument } = await import('../document-chunking.service');
+    const result = await chunkAndEmbedDocument({ documentId: DOC, organizationId: ORG, text: 'Some extracted text.' });
+    expect(result).toEqual({ ok: true, chunkCount: 1 });
+    expect(embedCalls).toHaveLength(1);
+    expect(embedCalls[0].texts).toEqual(['Some extracted text.']);
+    expect(embedCalls[0].tenantId).toBe(String(ORG));
   });
 
   it('every statement that touches vault.document_chunks is bound to the organization', async () => {
@@ -82,6 +130,8 @@ describe('vault chunking ledger tenancy', () => {
   beforeEach(() => {
     calls.length = 0;
     poolCalls.length = 0;
+    embedCalls.length = 0;
+    poolConnect.mockClear();
     owned = true;
   });
 

@@ -1,0 +1,17 @@
+
+❌ A server error response carries the underlying failure text.
+
+   server/routes/c2c/commitments.ts — 0 → 1
+       server/routes/c2c/commitments.ts:156  [503]
+
+   The reader of this body is a regulatory director, and the internal shape of a
+   governed store is an information-disclosure finding, not a formatting nicety.
+   Client-side redaction does not close it — the API still ships the string.
+
+   Send through the canonical helper instead:
+     import { serverError } from '../lib/api-response';
+     } catch (err) { return serverError(res, log, 'listing the register', err); }
+
+   It logs the detail against the request id and answers with a code, a sentence
+   and that id — so the operator can still find the real error.
+

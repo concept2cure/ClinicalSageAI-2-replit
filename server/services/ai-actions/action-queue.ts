@@ -19,6 +19,7 @@ import { dispatchAction } from './action-registry';
 import type { AIActionRequest, AIActionResponse } from '../../../shared/types/ai-actions';
 import type { DispatchOptions } from './action-registry';
 import { createScopedLogger } from '../../utils/logger';
+import { runWithTenantScope } from '../../db/tenantStore';
 
 const logger = createScopedLogger('action-queue');
 
@@ -52,6 +53,27 @@ const ASYNC_ACTION_TYPES = new Set([
 
 export function shouldQueueAction(actionType: string): boolean {
   return ASYNC_ACTION_TYPES.has(actionType);
+}
+
+/**
+ * Run a queued job in the tenant scope of the organization that enqueued it.
+ *
+ * A queued job has left the request that enqueued it, and with it the tenant
+ * scope. Re-open it, as the IVDR pack worker does: RLS_ENFORCE=on refuses
+ * unscoped queries, and the AI gateway binds the tenant's placement policy
+ * (vendor and substrate allow-lists, residency, zero retention) from this
+ * scope. A job with no organization stays unscoped, which fails closed in
+ * production rather than running as nobody's.
+ */
+export function inRequesterScope<T>(
+  request: Pick<AIActionRequest, 'requestedBy'>,
+  caller: string,
+  fn: () => Promise<T>,
+): Promise<T> {
+  const orgId = Number(request?.requestedBy?.organizationId);
+  return Number.isInteger(orgId) && orgId > 0
+    ? runWithTenantScope({ tenantId: String(orgId), role: null, source: 'job', caller }, fn)
+    : fn();
 }
 
 // ---------------------------------------------------------------------------
@@ -134,7 +156,9 @@ export async function initializeActionQueue(): Promise<boolean> {
         logger.info(`Processing queued action`, { jobId, actionType: request.actionType });
         await job.progress(10);
 
-        const response = await dispatchAction(request, { ...options, forceExecution: true });
+        const response = await inRequesterScope(request, `ai-action-queue:${jobId}`, () =>
+          dispatchAction(request, { ...options, forceExecution: true }),
+        );
 
         await job.progress(100);
         return response;

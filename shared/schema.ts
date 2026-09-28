@@ -2599,6 +2599,11 @@ export const users = pgTable('users', {
   emailOtpHash: text('email_otp_hash'),
   emailOtpExpiresAt: timestamp('email_otp_expires_at'),
   emailOtpAttempts: integer('email_otp_attempts').default(0),
+  // Codes re-issued to the current sign-in challenge (POST /mfa/resend), refused
+  // past emailOtpService.MAX_RESENDS and started again only by a fresh challenge
+  // (the password). migrations/20260923_users_mfa_totp_last_step.sql, amended
+  // in place 2026-09-26 (CLAUDE.md Rule 1).
+  emailOtpResends: integer('email_otp_resends').default(0),
   // Account lockout fields
   failedLoginAttempts: integer('failed_login_attempts').default(0),
   lockedUntil: timestamp('locked_until'),
@@ -7697,7 +7702,9 @@ export const crossModuleTaskLinks = pgTable(
     // Metadata
     metadata: json('metadata'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow(),
+    // No updated_at (removed 2026-09-23): no applier creates the column, and
+    // Drizzle names every modelled column in INSERT … RETURNING, so declaring
+    // it made every link fail on a migration-built database. Nothing reads it.
   },
   table => ({
     sourceIdx: index('link_source_idx').on(table.sourceTaskId),

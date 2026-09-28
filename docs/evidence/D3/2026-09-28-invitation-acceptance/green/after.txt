@@ -1,0 +1,143 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-28T18:21:12.426Z","pid":11771,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T18:21:12.428Z","pid":11771,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T18:21:12.428Z","pid":11771,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/memberships.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/memberships.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/memberships.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/memberships.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot place its user in B, so the gate never admits a token for B
+[database] Database connection successful { timestamp: '2026-09-28T18:21:13.650Z', poolSize: 1 }
+
+{"level":40,"time":"2026-09-28T18:21:13.657Z","pid":11771,"hostname":"vm","context":{"userId":891,"organizationId":90302},"msg":"[auth-middleware] Org membership revoked — rejecting authenticated request (fail-closed)"}
+{"level":40,"time":"2026-09-28T18:21:13.658Z","pid":11771,"hostname":"vm","context":{"method":"GET","path":"/api/organizations/90302","statusCode":403},"msg":"[auth-boundary] Unauthenticated request passed through auth boundary (mode=warn). This route would be rejected in enforce mode."}
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > positive control: the route admits A into its own organization 75ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot place its user in B, so the gate never admits a token for B 27ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot change or remove B's members 5ms
+ ✓ tests/db/memberships.dbtest.ts > no tenant can mint a platform-staff role, not even in its own organization (D3) > its own member cannot be made super_admin, platform_admin or app_super_admin 8ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > an organization manages its own members' ordinary roles 8ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > the platform scope writes any organization, staff roles included 4ms
+stdout | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > self-serve signup gives the new organization its first admin
+{
+  "timestamp": "2026-09-28T18:21:14.133Z",
+  "level": "info",
+  "message": "[launch-scope] launch catalog provisioned",
+  "context": {
+    "organizationId": 139,
+    "granted": 19
+  }
+}
+
+{"level":30,"time":"2026-09-28T18:21:14.138Z","pid":11771,"hostname":"vm","context":{"userId":897,"tenantId":139,"resourceId":"897"},"msg":"[audit-service] [AUDIT] user_signup user"}
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > self-serve signup gives the new organization its first admin 686ms
+stdout | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into
+[database] Database connection successful { timestamp: '2026-09-28T18:21:14.425Z', poolSize: 2 }
+
+stderr | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into
+{
+  "timestamp": "2026-09-28T18:21:14.451Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — invitation email not sent",
+  "context": {
+    "to": "w***@example.invalid"
+  }
+}
+
+{"level":30,"time":"2026-09-28T18:21:14.452Z","pid":11771,"hostname":"vm","context":{"userId":896,"tenantId":90302,"resourceId":"898"},"msg":"[audit-service] [AUDIT] user_invited user"}
+{"level":50,"time":"2026-09-28T18:21:14.458Z","pid":11771,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:287:3)\n    at AuditService.logAction (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:420:11)\n    at issueInvitation (/home/user/ClinicalSageAI-2-replit/server/services/tenant/invitation-delivery.ts:114:17)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/tenant-users.ts:485:22"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > a member sets their own persona (a write to their own membership row) 13ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into 189ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations changes a member's role in the one they are not signed into 18ms
+{"level":30,"time":"2026-09-28T18:21:15.701Z","pid":11791,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T18:21:15.703Z","pid":11791,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T18:21:15.703Z","pid":11791,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/users-rls.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/users-rls.dbtest.ts > tenant A's scope cannot reach tenant B's users (D3) > reads none of B's user rows, by id, by email, or by scanning 8ms
+ ✓ tests/db/users-rls.dbtest.ts > tenant A's scope cannot reach tenant B's users (D3) > cannot rewrite B's password hash, MFA secret or reset token, nor delete B's user 4ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > reads its own organization's members, the caller included 2ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > updates its own member's profile 5ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > INSERT … RETURNING of a non-member is refused, so tenant-users takes the id first 5ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > user_id_for_email answers an existing account’s id, and nothing else 3ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes keep the whole table (D3) > pre-auth: the sign-in lookup by email finds any tenant’s user, and writes it 4ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes keep the whole table (D3) > system: SCIM and platform administration read and write every tenant’s users 3ms
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful
+
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful { timestamp: '2026-09-28T18:21:15.997Z', poolSize: 1 }
+
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful { timestamp: '2026-09-28T18:21:15.998Z', poolSize: 2 }
+
+{"level":30,"time":"2026-09-28T18:21:16.041Z","pid":11791,"hostname":"vm","context":{"userId":904,"tenantId":90301,"resourceId":"906"},"msg":"[audit-service] [AUDIT] user_invited user"}
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account 216ms
+{"level":30,"time":"2026-09-28T18:21:16.213Z","pid":11791,"hostname":"vm","context":{"userId":904,"tenantId":90302,"resourceId":"907"},"msg":"[audit-service] [AUDIT] user_invited user"}
+{"level":50,"time":"2026-09-28T18:21:16.220Z","pid":11791,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:287:3)\n    at AuditService.logAction (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:420:11)\n    at issueInvitation (/home/user/ClinicalSageAI-2-replit/server/services/tenant/invitation-delivery.ts:114:17)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/tenant-users.ts:485:22"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > adding another tenant's account asks for its consent instead of failing or duplicating it 17ms
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator of both organizations lists and invites into the one they are not signed into 152ms
+{"level":30,"time":"2026-09-28T18:21:17.406Z","pid":11813,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T18:21:17.408Z","pid":11813,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T18:21:17.408Z","pid":11813,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/invitation-acceptance.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > sees the invitation to the other organization
+[database] Database connection successful
+
+stdout | tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > sees the invitation to the other organization
+[database] Database connection successful { timestamp: '2026-09-28T18:21:17.676Z', poolSize: 1 }
+
+stdout | tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > sees the invitation to the other organization
+[database] Database connection successful { timestamp: '2026-09-28T18:21:17.677Z', poolSize: 2 }
+
+ ✓ tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > sees the invitation to the other organization 107ms
+ ✓ tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > accepts it: the membership is written, and the token for B is then admitted 46ms
+ ✓ tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > declines it: no membership, the invitation kept as declined 22ms
+ ✓ tests/db/invitation-acceptance.dbtest.ts > nobody else can see or answer it (D3) > another member of A cannot see, accept or decline an invitation that is not theirs 33ms
+ ✓ tests/db/invitation-acceptance.dbtest.ts > nobody else can see or answer it (D3) > the lookup answers only about the calling organization's own members 18ms
+ ✓ tests/db/invitation-acceptance.dbtest.ts > nobody else can see or answer it (D3) > B's scope reads none of A's invitations directly (the table's own policy, unchanged) 4ms
+{"level":30,"time":"2026-09-28T18:21:18.989Z","pid":11830,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-28T18:21:18.990Z","pid":11830,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-28T18:21:18.990Z","pid":11830,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/organizations-writes.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > a tenant scope cannot write another organization at the database 5ms
+stdout | tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still updates its own organization's settings
+[database] Database connection successful
+
+stdout | tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still updates its own organization's settings
+[database] Database connection successful { timestamp: '2026-09-28T18:21:19.247Z', poolSize: 1 }
+
+stdout | tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still updates its own organization's settings
+[database] Database connection successful { timestamp: '2026-09-28T18:21:19.249Z', poolSize: 2 }
+
+{"level":30,"time":"2026-09-28T18:21:19.278Z","pid":11830,"hostname":"vm","context":{"userId":919,"tenantId":90301,"resourceId":"90301"},"msg":"[audit-service] [AUDIT] data_modify organization_settings"}
+{"level":20,"time":"2026-09-28T18:21:19.319Z","pid":11830,"hostname":"vm","context":{"caller":"system:PATCH /api/organizations/90302/settings"},"msg":"[establish-tenant-scope] Nesting system scope over an existing request scope"}
+{"level":30,"time":"2026-09-28T18:21:19.323Z","pid":11830,"hostname":"vm","context":{"userId":918,"tenantId":90302,"resourceId":"90302"},"msg":"[audit-service] [AUDIT] data_modify organization_settings"}
+{"level":20,"time":"2026-09-28T18:21:19.344Z","pid":11830,"hostname":"vm","context":{"caller":"system:PATCH /api/organizations/90302/profile"},"msg":"[establish-tenant-scope] Nesting system scope over an existing request scope"}
+{"level":30,"time":"2026-09-28T18:21:19.349Z","pid":11830,"hostname":"vm","context":{"userId":918,"tenantId":90302,"resourceId":"90302"},"msg":"[audit-service] [AUDIT] data_modify organization"}
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still updates its own organization's settings 97ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still cannot touch another organization's settings 12ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff edit another organization's settings, and the change is really there 25ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff edit another organization's profile 22ms
+{"level":20,"time":"2026-09-28T18:21:19.369Z","pid":11830,"hostname":"vm","context":{"caller":"system:PATCH /api/tenant-config/90302/settings"},"msg":"[establish-tenant-scope] Nesting system scope over an existing request scope"}
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff update another tenant's configuration through tenant-config 33ms
+
+ Test Files  4 passed (4)
+      Tests  33 passed (33)
+   Start at  18:21:10
+   Duration  8.96s (transform 1.62s, setup 163ms, import 4.56s, tests 3.50s, environment 0ms)
+

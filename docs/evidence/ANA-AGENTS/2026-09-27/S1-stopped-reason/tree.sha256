@@ -1,0 +1,23 @@
+# sha256 of the S1 files in the tree the red, green and mutation runs were recorded against (HEAD cd08aec79 + the S1 working tree).
+# source
+46e58865eda2a1fbc5bae0a6dd67b9d543e10bc476b0be729e0d7cfeddb3a72f  client/src/concept2cure/components/ana/anaProgress.ts
+59b0eff77c7afcfb3aef5d75b5ed0f06613b21a3033cd867e41050a4a6f665ff  client/src/concept2cure/components/ana/useAnaChat.ts
+29de253976177af6e1f084c82bfed7668d426d4048b434bc720f3ffdd2b4f6bf  client/src/concept2cure/components/ana/useAnaChat.types.ts
+6dc6e20543ac76ccac9b1dc434f50654d4ec1db757313e2af5a7e8dcea90f6b7  client/src/concept2cure/v2/AnaActivity.tsx
+71b78da2c5f0ddf50a2b3f2ccb6a49f8289477239858fb943d7d3d45b0fdd07f  client/src/concept2cure/v2/Shell.tsx
+79788799049c078d081f14d8487504176867cc07c8b759e90a8a8275758cdeb4  client/src/concept2cure/v2/anaWorkModel.ts
+83517a5b18b399370fccf0dff5238ca1f8cdece90039947e131442f688c35240  client/src/concept2cure/v2/styles/app-v2.css
+2ec3c1b78f296095b52b098033ae2224bfe9ea33ade1bbf91f4c89356c3bbf26  client/src/concept2cure/v2/surfaces/ConversationThread.tsx
+a4511eba7b8c0fdc65ab6cb0672626bda5de12188fed2f178407ba0d493e8532  server/routes/ana-ri/post-processing.ts
+3119193a2ba2144e46c347878ee11e7d69d2fd236bfbd11207469a0862b41b70  server/routes/ana-ri/stream.ts
+f852a29df67179ac1758d6c5d708e603294dba5bd1092037848c039afd368c3e  server/services/ana/run-status.ts
+e48c89e8c9ce306f5488f85ecacbf2b1d3246ee3fb49e662bf42419c361903ea  server/services/ana/tool-trace.ts
+# tests
+d83922f34083964ba8c854ab9a7ba5a4da753188867361f0dd335a661df2ada3  client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts
+cd122d670b3df686c775cbbcaf0bd1c377730a4b7ef589c10dcf73712cad069c  client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx
+ec8b95d54e4978f486b14051f1b14b921125ec8955d61f4b022095087065c798  client/src/concept2cure/v2/__tests__/anaActivity.test.tsx
+590daf1748fff418aafd6c3c8118649a73b375ef8a7d23630350e2922c08e0dd  client/src/concept2cure/v2/__tests__/anaStoppedNoteA11y.test.tsx
+01bc2a9f0fdd1ea9246131e4d3609df7892f063e2807b5cd6d55811c08677dee  client/src/concept2cure/v2/__tests__/anaMessageCarriage.test.ts
+59189bed9b04ec51ca0d3c11d88c16c50134c5b011394d4fac809cfa4fe0209c  client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx
+992de61812b13bdae335513e5b8c12f3960845441321ea8e7cc18b178bb55467  server/services/ana/__tests__/tool-trace-stopped-turn.test.ts
+088d8a309b7bd107b2f4fcf2b96a27fbede80cbe449093f966305e498e187934  server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts

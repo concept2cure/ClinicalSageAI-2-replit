@@ -74,6 +74,12 @@ interface VaultVersionsPayload {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function toStatus(status: string, lockedAt: string | null): VaultFileStatus {
+  /* FIRST, and before the lock check: an ingested file has no authoring
+     lifecycle to be at a stage of. This was the third layer of the same defect
+     — the server sent 'final' for an indexed upload and this function did not
+     recognise it (only 'approved' maps to final), so it fell through to the
+     'draft' default. Fixing the server alone changed nothing here. */
+  if (status === 'uploaded') return 'uploaded';
   if (lockedAt || status === 'locked') return 'locked';
   if (status === 'approved') return 'final';
   if (status === 'review') return 'review';
@@ -175,11 +181,18 @@ export function deriveVaultKpis(files: VaultFile[]): VaultKpi[] {
   const locked = files.filter((f) => f.status === 'locked' || f.status === 'final');
   const review = files.filter((f) => f.status === 'review');
   const signed = files.filter((f) => f.esig);
+  /* COUNTED, not inferred by subtraction. This was
+     `files.length - locked.length - review.length`, which makes "Drafts" mean
+     "everything I could not classify" — so every uploaded PDF was reported as a
+     working copy under the label "Working copies". A residual is not a count. */
+  const drafts = files.filter((f) => f.status === 'draft');
+  const uploads = files.filter((f) => f.status === 'uploaded');
   return [
     { label: 'Artifacts in vault', metric: String(files.length), meta: `${signed.length} e-signed` },
     { label: 'Locked + final', metric: String(locked.length), meta: 'Content hash sealed', tone: 'ok' },
     { label: 'In review', metric: String(review.length), meta: 'Awaiting approval', tone: review.length ? 'warn' : 'ok' },
-    { label: 'Drafts', metric: String(files.length - locked.length - review.length), meta: 'Working copies' },
+    { label: 'Drafts', metric: String(drafts.length), meta: 'Working copies' },
+    { label: 'Uploaded files', metric: String(uploads.length), meta: 'No authoring lifecycle' },
   ];
 }
 

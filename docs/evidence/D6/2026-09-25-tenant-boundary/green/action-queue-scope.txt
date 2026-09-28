@@ -1,0 +1,6 @@
+ ✓ server/services/ai-actions/__tests__/action-queue-tenant-scope.test.ts > inRequesterScope > runs the job in the tenant scope of the requesting organization 4ms
+ ✓ server/services/ai-actions/__tests__/action-queue-tenant-scope.test.ts > inRequesterScope > a job with no organization is not given one 1ms
+ ✓ server/services/ai-actions/__tests__/action-queue-tenant-scope.test.ts > inRequesterScope > a non-positive or non-integer organization id is not trusted as a tenant 1ms
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+exit=0

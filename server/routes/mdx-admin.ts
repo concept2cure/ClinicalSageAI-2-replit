@@ -11,16 +11,31 @@
  *   audit                      → audit_logs (this tenant, most recent)
  *   settings                   → organizations.settings + org columns
  *   sso                        → organizations.settings.security + scim_tenants
- * Every facet is fail-closed per store: a missing table degrades that facet
- * to empty rather than 500-ing the whole payload. Fields with no real source
- * (per-IdP user distribution, key rotation policy) are honest empties — never
- * fabricated.
+ * Every facet degrades on its own. A missing table (42P01) is a deployment
+ * state and an empty facet is a true statement about it. Any OTHER failure is
+ * a fault: the facet comes back empty AND is named in `meta.unavailable`, so
+ * the surface renders "couldn't be read" for it instead of "0 API keys" or "No
+ * admin audit entries yet" (the pattern mdx-engineering.ts panel() set). A
+ * failed organizations read also withholds the settings and SSO rows derived
+ * from it rather than reporting their defaults ("SSO: Disabled") as the org's
+ * configuration. Fields with no real source (per-IdP user distribution, key
+ * rotation policy) are honest empties — never fabricated.
+ *
+ * The "second factor at sign-in" row states what POST /api/auth/login does
+ * (routes/auth.ts), not a stored preference: password sign-in always
+ * challenges, except on a development server with dev auth on
+ * (isDevAuthAllowed). It used to read `settings.security.mfaEnabled !== false`,
+ * a flag nothing at sign-in reads, and said "Yes (all roles)" beside audit rows
+ * recording "second factor skipped" (2026-09-23 launch sweep, D2).
  */
 
 import { Router, Request, Response } from 'express';
 import { createScopedLogger } from '../utils/logger';
 import { ok, orgRequired, serverError } from '../lib/api-response';
 import { pool } from '../db';
+import { isDevAuthAllowed } from '../auth/dev-auth-policy';
+import { mfaEnrolmentOf } from '../services/mfa-enrolment';
+import { humanizeEventType, linkedSignatures, type LinkedSignature } from './audit-trail-ledger.routes';
 
 const router = Router();
 const log = createScopedLogger('mdx-admin');
@@ -57,23 +72,46 @@ const initials = (name: string | null, email: string | null): string => {
 };
 const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
-/** Best-effort SELECT: returns [] when the table is not provisioned (42P01)
- *  or any facet query fails, so one missing store can't sink the payload. */
-async function facet<T>(sql: string, params: unknown[]): Promise<T[]> {
+/** The payload facets a read can fail for, as named in `meta.unavailable`. */
+type Facet = 'apiKeys' | 'audit' | 'settings' | 'sso';
+
+/** Per-facet SELECT. A table that is not provisioned (42P01) is an empty facet.
+ *  Any other failure is recorded in `unavailable` (per request, never module
+ *  state) so the surface can say the read failed; the rows are still [] so one
+ *  broken store can't sink the payload. */
+async function facet<T>(name: Facet, sql: string, params: unknown[], unavailable: Facet[]): Promise<T[]> {
   try {
     const { rows } = await pool.query(sql, params);
     return rows as T[];
   } catch (err: unknown) {
     if ((err as { code?: string }).code === '42P01') return [];
-    log.warn('admin facet query failed', { err: err instanceof Error ? err.message : String(err) });
+    unavailable.push(name);
+    log.warn(`admin facet ${name} failed`, { err: err instanceof Error ? err.message : String(err) });
     return [];
   }
+}
+
+/** A display name for an account, never its id. */
+const accountName = (name: string | null, email: string | null): string | null =>
+  (name && name.trim()) || (email && email.trim()) || null;
+
+/** What an audit row acted on, named for a reader: an account by its name, this
+ *  organization by its name, anything else by its humanized table. */
+function auditTargetName(
+  a: { table_name: string | null; record_id: string | null; target_name: string | null; target_email: string | null },
+  orgId: number,
+  orgName: string | null,
+): string {
+  const table = (a.table_name ?? '').toLowerCase();
+  if (table === 'user' || table === 'users') return accountName(a.target_name, a.target_email) ?? 'A user account';
+  if ((table === 'organization' || table === 'organizations') && a.record_id === String(orgId) && orgName) return orgName;
+  return a.table_name ? humanizeEventType(a.table_name) : '—';
 }
 
 interface MemberRow {
   user_id: number; name: string | null; email: string | null;
   role: string | null; status: string | null; mfa_enabled: boolean | null;
-  last_login: Date | string | null; permissions: unknown;
+  mfa_method: string | null; last_login: Date | string | null; permissions: unknown;
 }
 
 router.get('/admin', async (req: Request, res: Response) => {
@@ -88,7 +126,7 @@ router.get('/admin', async (req: Request, res: Response) => {
   try {
     const { rows } = await pool.query<MemberRow>(
       `SELECT ou.user_id, u.name, u.email, ou.role, u.status, u.mfa_enabled,
-              u.last_login, ou.permissions
+              u.mfa_method, u.last_login, ou.permissions
          FROM organization_users ou
          JOIN users u ON u.id = ou.user_id
         WHERE ou.organization_id = $1
@@ -104,7 +142,10 @@ router.get('/admin', async (req: Request, res: Response) => {
       role: cap(r.role ?? 'member'),
       groups: [] as string[],
       sso: '',
-      mfa: Boolean(r.mfa_enabled),
+      // An authenticator app is enrolled and confirmed — the same rule the
+      // sign-in challenge applies (services/mfa-enrolment.ts). Without one,
+      // password sign-in asks this account for an emailed code instead.
+      mfa: mfaEnrolmentOf({ mfaEnabled: r.mfa_enabled, mfaMethod: r.mfa_method }).mfaEnabled,
       lastSeen: r.last_login ? new Date(r.last_login).toISOString() : '',
       state: r.status ?? 'active',
       programs: [] as string[],
@@ -128,21 +169,36 @@ router.get('/admin', async (req: Request, res: Response) => {
       granted: `Org ${r.role ?? 'member'}`,
     }));
 
+    /* Facets whose read FAILED (not merely empty), per request. Reported in
+       meta.unavailable so the surface never renders a failed read as "none". */
+    const unavailable: Facet[] = [];
+
     // ── API keys (real, org-scoped; hashed at rest — only the prefix is shown) ──
     const keyRows = await facet<{
-      id: number; name: string; scopes: unknown; created_at: Date | string | null;
+      id: number; name: string; key_prefix: string | null; scopes: unknown; created_at: Date | string | null;
       last_used_at: Date | string | null; created_by: number | null; status: string | null;
+      owner_name: string | null; owner_email: string | null;
     }>(
-      `SELECT id, name, scopes, created_at, last_used_at, created_by, status
-         FROM api_keys WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 50`,
+      'apiKeys',
+      `SELECT k.id, k.name, k.key_prefix, k.scopes, k.created_at, k.last_used_at, k.created_by, k.status,
+              u.name AS owner_name, u.email AS owner_email
+         FROM api_keys k
+         LEFT JOIN users u ON u.id = k.created_by
+        WHERE k.organization_id = $1 ORDER BY k.created_at DESC LIMIT 50`,
       [orgId],
+      unavailable,
     );
     const apiKeys = keyRows
       .filter((k) => k.status !== 'revoked')
       .map((k) => ({
         id: `key-${k.id}`,
+        /** The id DELETE /api/api-keys/:id takes (it parseInt()s the param, so
+         *  `id` above — "key-7" — was refused as "Invalid key ID"). */
+        keyId: k.id,
+        /** The key's public prefix — what identifies it to a person. */
+        prefix: k.key_prefix ?? '',
         name: k.name,
-        owner: k.created_by ? `u-${k.created_by}` : '',
+        owner: accountName(k.owner_name, k.owner_email) ?? '',
         scopes: Array.isArray(k.scopes)
           ? k.scopes
           : typeof k.scopes === 'string'
@@ -154,57 +210,111 @@ router.get('/admin', async (req: Request, res: Response) => {
       }));
 
     // ── Admin audit (real, this tenant, most recent) ──
+    /* In the words the Audit trail surface uses for the same rows
+       (audit-trail-ledger.routes.ts): the account's name, the event's recorded
+       description (or its humanized action), and the target named rather than
+       given as table · id. The row id is the React key only; it was shown cut
+       to 12 characters of a UUID, which identified nothing. `when` stays an ISO
+       instant — the surface formats it for the reader's locale. */
     const auditRows = await facet<{
       id: string; user_id: number | null; action: string; table_name: string | null;
       record_id: string | null; created_at: Date | string; sha256_chain: string | null;
+      new_values: unknown;
+      description: string | null; actor_name: string | null; actor_email: string | null;
+      target_name: string | null; target_email: string | null;
     }>(
-      `SELECT id, user_id, action, table_name, record_id, created_at, sha256_chain
-         FROM audit_logs WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 20`,
+      'audit',
+      `SELECT a.id, a.user_id, a.action, a.table_name, a.record_id, a.created_at, a.sha256_chain,
+              a.new_values, a.new_values->>'description' AS description,
+              ua.name AS actor_name, ua.email AS actor_email,
+              ut.name AS target_name, ut.email AS target_email
+         FROM audit_logs a
+         LEFT JOIN users ua ON ua.id = a.user_id
+         LEFT JOIN users ut ON a.table_name IN ('user', 'users') AND ut.id::text = a.record_id
+        WHERE a.tenant_id = $1 ORDER BY a.created_at DESC LIMIT 20`,
       [orgId],
+      unavailable,
     );
-    const audit = auditRows.map((a) => ({
-      id: String(a.id).slice(0, 12),
-      when: new Date(a.created_at).toISOString(),
-      actor: a.user_id ? `u-${a.user_id}` : 'system',
-      action: a.action,
-      target: [a.table_name, a.record_id].filter(Boolean).join(' · ') || '—',
-      sha: a.sha256_chain ? `${a.sha256_chain.slice(0, 4)}…${a.sha256_chain.slice(-4)}` : '',
-    }));
 
     // ── Org settings + SSO/SCIM (real; organizations.settings + scim_tenants) ──
     const orgRows = await facet<{ name: string | null; domain: string | null; settings: unknown }>(
+      'settings',
       `SELECT name, domain, settings FROM organizations WHERE id = $1`,
       [orgId],
+      unavailable,
     );
+    // A failed organizations read is not an org with SSO off and no timeout:
+    // the rows derived from it are withheld, and SSO (which reads it) with them.
+    const orgRead = !unavailable.includes('settings');
+    if (!orgRead) unavailable.push('sso');
     const org = orgRows[0] ?? { name: null, domain: null, settings: null };
     const orgSettings = (org.settings && typeof org.settings === 'object' ? org.settings : {}) as Record<string, any>;
     const security = (orgSettings.security && typeof orgSettings.security === 'object' ? orgSettings.security : {}) as Record<string, any>;
-    const mfaOn = security.mfaEnabled !== false; // default-on posture
     const ssoOn = security.ssoEnabled === true;
     const sessionMins = typeof security.sessionTimeout === 'number' ? security.sessionTimeout : null;
 
     const scimRows = await facet<{ enabled: boolean; updated_at: Date | string | null }>(
+      'sso',
       `SELECT enabled, updated_at FROM scim_tenants WHERE organization_id = $1 ORDER BY updated_at DESC`,
       [orgId],
+      unavailable,
     );
     const scimActive = scimRows.some((s) => s.enabled);
 
+    /* A signed act is named from its signature row, as the audit-trail ledger
+       names it: "Controlled document approved (e-signature)" on C2C-SOP-001
+       v1.0, not "C2c Work Approve" on "Qms Document" (#24). A failed lookup
+       leaves each row's own label — a lower-fidelity name, never a claim. */
+    let signedActs = new Map<string, LinkedSignature>();
+    try {
+      signedActs = await linkedSignatures(pool, orgId, auditRows as unknown as Record<string, unknown>[]);
+    } catch (err: unknown) {
+      log.warn('admin audit band: signature names unavailable', { err: err instanceof Error ? err.message : String(err) });
+    }
+
+    const audit = auditRows.map((a) => {
+      const signed = signedActs.get(String(a.id));
+      const target = auditTargetName(a, orgId, org.name);
+      return {
+        id: String(a.id),
+        when: new Date(a.created_at).toISOString(),
+        actor: a.user_id ? accountName(a.actor_name, a.actor_email) ?? 'Unknown account' : 'system',
+        action: signed?.event ?? ((a.description && a.description.trim()) || humanizeEventType(a.action)),
+        target: signed?.subject ?? target,
+        sha: a.sha256_chain ? `${a.sha256_chain.slice(0, 4)}…${a.sha256_chain.slice(-4)}` : '',
+      };
+    });
+
+    /* What password sign-in actually asks for (routes/auth.ts POST /login):
+       every sign-in is challenged — the authenticator app when one is
+       enrolled, an emailed code otherwise — unless this is a development
+       server with dev auth on, where the challenge is skipped. No org setting
+       changes that, so this row is not presented as a toggle. */
+    const secondFactorSkipped = isDevAuthAllowed();
+    const secondFactor = secondFactorSkipped
+      ? {
+          id: 'mfa-required', label: 'Second factor at sign-in', kind: 'policy',
+          value: 'Skipped on this development server',
+          desc: 'Development sign-in is on here, so password sign-in does not ask for a second factor. A deployed server always asks for one.',
+        }
+      : {
+          id: 'mfa-required', label: 'Second factor at sign-in', kind: 'policy',
+          value: 'Required for every member',
+          desc: 'Password sign-in asks for the authenticator app when one is enrolled, otherwise an emailed code. Supports 21 CFR 11.10(d), limiting system access to authorized individuals.',
+        };
+
     // Settings tab — only rows with a real backing value (honesty over completeness).
     const settings = [
-      mfaOn !== undefined && {
-        id: 'mfa-required', label: 'MFA required', kind: 'toggle',
-        value: mfaOn ? 'Yes (all roles)' : 'Optional',
-        desc: '21 CFR Part 11 §11.10(d) compliance',
-      },
-      sessionMins != null && {
+      secondFactor,
+      orgRead && sessionMins != null && {
         id: 'session-ttl', label: 'Session timeout', kind: 'duration',
         value: `${sessionMins} minutes`, desc: 'Idle re-authentication interval',
       },
-      {
+      orgRead && {
         id: 'sso', label: 'Single sign-on', kind: 'toggle',
         value: ssoOn ? 'Enabled' : 'Disabled', desc: 'SAML / OIDC via your IdP',
       },
-      org.name && {
+      orgRead && org.name && {
         id: 'branding', label: 'Org branding', kind: 'text',
         value: org.name, desc: 'Appears on PDF exports + cover letters',
       },
@@ -213,33 +323,41 @@ router.get('/admin', async (req: Request, res: Response) => {
     // SSO object — truthful reflection of the org's real config. No fabricated
     // provider topology: primary/fallback describe the actual enabled state,
     // scim reflects real scim_tenants, and counts with no real source stay 0.
+    // null when either store it reads could not be read (meta.unavailable).
     const memberCount = members.length;
-    const sso = {
+    const sso = unavailable.includes('sso') ? null : {
       primary: ssoOn
         ? { kind: 'SAML/OIDC', provider: 'Configured IdP', status: 'connected', domain: org.domain ?? '', users: memberCount, lastSync: '' }
         : { kind: '—', provider: 'Not configured', status: 'disabled', domain: org.domain ?? '', users: 0, lastSync: 'never' },
       fallback: { kind: 'Local', provider: 'Local users', status: 'enabled', domain: org.domain ?? '', users: ssoOn ? 0 : memberCount, lastSync: 'real-time' },
       proposed: { kind: '—', provider: 'None staged', status: 'none', domain: '', users: 0, lastSync: 'never' },
       scim: { provider: scimActive ? 'SCIM 2.0' : 'Not configured', enabled: scimActive, provisionedAttrs: 0, lastEvent: '' },
-      mfaRequired: mfaOn,
+      mfaRequired: !secondFactorSkipped,
       sessionTtl: sessionMins != null ? `${sessionMins}m` : '',
     };
 
     const active = members.filter((m) => m.state === 'active').length;
+    const keysRead = !unavailable.includes('apiKeys');
     const kpis = [
       { label: 'Members', metric: String(members.length), meta: `${active} active` },
       { label: 'Roles', metric: String(roles.length), meta: 'Distinct org roles' },
-      { label: 'MFA enabled', metric: String(members.filter((m) => m.mfa).length), meta: `of ${members.length} members` },
-      { label: 'API keys', metric: String(apiKeys.length), meta: 'active, org-scoped' },
+      { label: 'Authenticator app', metric: String(members.filter((m) => m.mfa).length), meta: `of ${members.length} members enrolled` },
+      { label: 'API keys', metric: keysRead ? String(apiKeys.length) : '--', meta: keysRead ? 'active, org-scoped' : 'could not be read' },
     ];
 
     return ok(res, {
       kpis, members, roles, grants, apiKeys, audit, settings, sso,
-    }, { count: members.length });
+    }, {
+      count: members.length,
+      /* Names the facets whose read FAILED, so the surface renders an error for
+         those and a true empty for the rest. Always present, so a consumer
+         never has to tell an absent key from an empty list. */
+      unavailable: [...new Set(unavailable)],
+    });
   } catch (err: unknown) {
     const code = (err as { code?: string }).code;
     if (code === '42P01') {
-      return ok(res, { kpis: [], members: [], roles: [], grants: [], apiKeys: [], audit: [], settings: [], sso: null }, { count: 0 });
+      return ok(res, { kpis: [], members: [], roles: [], grants: [], apiKeys: [], audit: [], settings: [], sso: null }, { count: 0, unavailable: [] });
     }
     return serverError(res, log, 'admin', err);
   }

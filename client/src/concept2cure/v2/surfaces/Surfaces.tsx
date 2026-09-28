@@ -30,7 +30,7 @@ import { consumeNavParams } from '../navParams';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/surfaces-v2.css';
-import { useChatUpload } from '../../hooks/useChatUpload';
+import { useChatUpload, composeTurn } from '../../hooks/useChatUpload';
 import { AppMentionMenu, useAppMentions } from '../appMentions';
 import { CapabilityBrowser } from './CapabilityBrowser';
 
@@ -105,19 +105,42 @@ function HomeLeadProgram({ onNav }: { onNav: (id: string) => void }) {
   );
 }
 
+/**
+ * The engine the next turn runs on, as a pair or not at all. V2App passes
+ * `prefs.anaMode` — the value the shell chat reads its effort from — and its
+ * setter. Half a binding is not one: with a mode and no setter the pill showed
+ * the host's mode while a choice wrote state nothing read.
+ */
+type HomeModeBinding =
+  | { mode: string; setMode: (m: string) => void }
+  | { mode?: undefined; setMode?: undefined };
+
 export function Home({
   onNav,
   onAsk,
   segment,
+  mode: boundMode,
+  setMode: setBoundMode,
 }: {
   onNav: (id: string) => void;
   onAsk: (text: string) => void;
   segment: string;
-}) {
+} & HomeModeBinding) {
   const { user } = useAuth();
   const [draft, setDraft] = React.useState('');
   const [modeOpen, setModeOpen] = React.useState(false);
-  const [mode, setMode] = React.useState('standard');
+  /* The engine pill used to live here alone — `useState('standard')`, never
+     sent. Home's question is seeded into ConversationThread on the SHELL chat,
+     whose effort is effortForMode(prefs.anaMode), so a person who picked Deep
+     research here was answered at whatever that preference said, under a pill
+     claiming Deep research. Bound to the preference when the host passes it:
+     V2App, the one production host, does, with the same pair it gives the
+     rail. Local state remains only so a host that passes neither (the tests)
+     still renders a working menu — and so does one that passes half. */
+  const [localMode, setLocalMode] = React.useState('standard');
+  const bound = boundMode !== undefined && setBoundMode !== undefined;
+  const mode = bound ? boundMode : localMode;
+  const setMode = bound ? setBoundMode : setLocalMode;
   const [plusOpen, setPlusOpen] = React.useState(false);
 
   /* Both landing popovers opened on click and closed on nothing but a second
@@ -167,10 +190,8 @@ export function Home({
        a failed upload keeps its chip and its error and is never described as
        attached. */
     if (upload.uploading) return;
-    const ready = upload.attachments.filter((a) => a.status === 'ready').map((a) => a.name);
-    if (!t && ready.length === 0) return;
-    const line = ready.length ? `Attached: ${ready.join(', ')}` : '';
-    const seedText = t && line ? `${t}\n\n${line}` : t || line;
+    const { body: seedText, files } = composeTurn(t, upload.attachments);
+    if (!seedText) return;
     /*
      * Seed the thread, do not `onAsk`.
      *
@@ -189,7 +210,7 @@ export function Home({
      * already uses (ProjectHome.tsx:570). The seed is sent on mount, into the
      * thread the user is actually looking at.
      */
-    (window as any).C2C_CONVO = { id: 'new', seed: seedText };
+    (window as any).C2C_CONVO = { id: 'new', seed: seedText, seedFiles: files };
     setDraft('');
     upload.clear();
     onNav('conversation-thread');

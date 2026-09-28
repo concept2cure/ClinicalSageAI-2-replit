@@ -48,7 +48,7 @@ export function DocumentContextCard({ doc, defaultOpen }: DocumentContextCardPro
   return (
     <div className={'adc' + (uncertain ? ' uncertain' : '')}>
       <div className="adc-head">
-        <span className="adc-ic">{I.fileText || I.file || '§'}</span>
+        <span className="adc-ic">{I.fileText}</span>
         <div className="adc-head-main">
           <div className="adc-kicker">{uncertain ? 'Likely — confirm before I draft' : 'Understood — drafting to this structure'}</div>
           <div className="adc-name">{uncertain ? 'Likely: ' + doc.displayName : doc.displayName}</div>

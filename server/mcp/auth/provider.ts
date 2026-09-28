@@ -145,7 +145,7 @@ export class ConceptToCureOAuthProvider implements OAuthServerProvider {
     resource: string,
     rotatedFrom: string | null,
   ): Promise<OAuthTokens> {
-    const access = mintAccessToken({
+    const access = await mintAccessToken({
       membership,
       clientId,
       scopes,

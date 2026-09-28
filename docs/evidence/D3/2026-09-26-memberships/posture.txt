@@ -1,0 +1,13 @@
+# c2c_d3b after this change
+rls | force
+t | t
+(1 row)
+policyname | cmd | qual | with_check
+organization_users_own_delete | DELETE | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text) OR ((organization_id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::integer) OR (organization_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9]+$'::text))::integer))) | 
+organization_users_own_insert | INSERT |  | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text) OR ((organization_id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::integer) OR (organization_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9]+$'::text))::integer)))
+organization_users_own_update | UPDATE | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text) OR ((organization_id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::integer) OR (organization_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9]+$'::text))::integer))) | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text) OR ((organization_id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::integer) OR (organization_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9]+$'::text))::integer)))
+organization_users_read | SELECT | true | 
+(4 rows)
+tgname | tgenabled | pg_get_triggerdef
+organization_users_staff_role_platform_only | O | CREATE TRIGGER organization_users_staff_role_platform_only BEFORE INSERT OR UPDATE OF role ON public.organization_users FOR EACH ROW EXECUTE FUNCTION organization_users_staff_role_platform_only()
+(1 row)

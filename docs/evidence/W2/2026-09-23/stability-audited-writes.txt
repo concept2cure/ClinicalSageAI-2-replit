@@ -1,0 +1,78 @@
+# Every mutating /api/stability route against the reference DB (c2c_full), inside a real tenant scope (tenant 1), signed-in actor unless '(anon)'.
+# 'audit+N' = stab_audit rows the request added; 'data=' = the row state after it. BEFORE = the router at 712993b0b (pre-change); AFTER = this change.
+== BEFORE  study SWEEP-B-14238
+add condition INT                  -> 200 audit+0 data="3"
+add timepoint 3M                   -> 200 audit+0 data="13"
+set actual sampling date           -> 200 audit+0 data="2026-04-02"
+patch condition (anon)             -> 500 audit+0 data="ANON-EDIT" Failed to update condition
+patch condition                    -> 200 audit+1 data="edited"
+patch timepoint                    -> 200 audit+1 data="3M*"
+patch test spec only               -> 200 audit+0 data={"spec_low":"95","spec_high":"105","method_id":null}
+patch test method only             -> 200 audit+0 data={"spec_low":null,"spec_high":null}
+in-use config                      -> 500 audit+0 data="0" Failed to update in-use config
+in-use config again                -> 500 audit+0 data={"count":"0","max":null} Failed to update in-use config
+OOT rules                          -> 500 audit+0 data="0" Failed to update OOT rules
+OOT rules again                    -> 500 audit+0 data="0" Failed to update OOT rules
+add result (anon)                  -> 500 audit+0 data="1" Failed to create result
+add result                         -> 200 audit+1 data="2"
+patch result                       -> 200 audit+0 data="98.7"
+patch result (studies/ path)       -> 200 audit+0 data={"value":"97.0","unit":null}
+pending results                    -> 500 audit+0 Failed to fetch pending results
+review result                      -> 500 audit+0 UNHANDLED column r.sample_id does not exist
+create sample                      -> 200 audit+1 data="1"
+collect sample                     -> 200 audit+1 data=true
+link result to sample              -> 500 audit+0 UNHANDLED column "sample_id" of relation "stab_results" does not exist
+chain of custody add               -> 200 audit+1 data="1"
+barcode.png                        -> 200 image/png bytes=17 png=false
+CAPA create                        -> 200 audit+1 data="1"
+CAPA patch unknown id              -> 200 audit+0
+assign                             -> 200 audit+1
+bulk-assign                        -> 200 audit+1
+timepoints bulk-assign             -> 200 audit+1
+P.8 push                           -> 200 audit+1 data="1"  P.8 content pushed to authoring successfully
+P.8 export txt                     -> 200 audit+0
+excursion import (1 real row)      -> 200 audit+2 data=["26.5","28.2"]
+results import                     -> 200 audit+0 data="2"  CSV import feature temporarily unavailable
+delete result                      -> 200 audit+0 data="0"
+delete timepoint                   -> 200 audit+1
+delete condition                   -> 200 audit+0
+audit actions: CREATE_STUDY:1 assign_add:1 bulk_assign:2 capa_create:1 coc_add:1 condition_update:1 excursions_import:1 p8_export:1 p8_push_authoring:1 result_add:1 sample_collect:1 sample_create:1 tp_delete:1 tp_update:1
+
+== AFTER  study SWEEP-A-14284
+add condition INT                  -> 200 audit+1 data="3"
+add timepoint 3M                   -> 200 audit+1 data="13"
+set actual sampling date           -> 200 audit+1 data="2026-04-02"
+patch condition (anon)             -> 401 audit+0 data="LT storage condition" Actor identity required
+patch condition                    -> 200 audit+1 data="edited"
+patch timepoint                    -> 200 audit+1 data="3M*"
+patch test spec only               -> 200 audit+1 data={"spec_low":"95","spec_high":"105","method_id":null}
+patch test method only             -> 200 audit+1 data={"spec_low":"95","spec_high":"105"}
+in-use config                      -> 200 audit+1 data="1"
+in-use config again                -> 200 audit+1 data={"count":"1","max":14}
+OOT rules                          -> 200 audit+1 data="1"
+OOT rules again                    -> 200 audit+1 data="1"
+add result (anon)                  -> 401 audit+0 data="0" Actor identity required
+add result                         -> 200 audit+1 data="1"
+patch result                       -> 200 audit+1 data="98.7"
+patch result (studies/ path)       -> 404 audit+0 data={"value":"98.7","unit":"%"}
+pending results                    -> 501 audit+0 NOT_IMPLEMENTED Result review and result-to-sample linking are not available: the result workflow columns do not exist on this database. Nothing was changed.
+review result                      -> 501 audit+0 NOT_IMPLEMENTED Result review and result-to-sample linking are not available: the result workflow columns do not exist on this database. Nothing was changed.
+create sample                      -> 200 audit+1 data="1"
+collect sample                     -> 200 audit+1 data=true
+link result to sample              -> 501 audit+0 NOT_IMPLEMENTED Result review and result-to-sample linking are not available: the result workflow columns do not exist on this database. Nothing was changed.
+chain of custody add               -> 200 audit+1 data="1"
+barcode.png                        -> 200 image/png bytes=15235 png=true
+CAPA create                        -> 200 audit+1 data="1"
+CAPA patch unknown id              -> 404 audit+0 CAPA not found
+assign                             -> 200 audit+1
+bulk-assign                        -> 200 audit+1
+timepoints bulk-assign             -> 200 audit+1
+P.8 push                           -> 200 audit+1 data="1"  P.8 content pushed to authoring successfully
+P.8 export txt                     -> 200 audit+1
+excursion import (1 real row)      -> 200 audit+1 data=["31.5"]
+results import                     -> 200 audit+1 data="2"
+delete result                      -> 200 audit+1 data="0"
+delete timepoint                   -> 200 audit+1
+delete condition                   -> 200 audit+1
+audit actions: CREATE_STUDY:1 assign_add:1 bulk_assign:2 capa_create:1 coc_add:1 condition_add:1 condition_delete:1 condition_update:1 excursions_import:1 inuse_update:2 oot_rules_update:2 p8_export:1 p8_push_authoring:1 result_add:1 result_delete:1 result_update:1 results_import:1 sample_collect:1 sample_create:1 test_update:2 tp_actual_date:1 tp_add:1 tp_delete:1 tp_update:1
+

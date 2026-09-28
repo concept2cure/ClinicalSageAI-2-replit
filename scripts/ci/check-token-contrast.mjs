@@ -79,6 +79,12 @@ function deref(palette, name) {
   return m ? palette[m[1]] : v;
 }
 
+/** The module identity tokens (design-system/colors_and_type.css). */
+const MODULE_TOKENS = [
+  'cmc', 'ind', 'device', 'ectd', 'vault', 'protocol', 'nonclinical', 'biostatistics',
+  'safety', 'submission', 'quality', 'labeling', 'market-access', 'evidence', 'meetings', 'intelligence',
+];
+
 /** Pairs that must meet AA for normal text, in BOTH themes. */
 const ENFORCED = [
   ['text-100', 'bg-000'],
@@ -128,6 +134,16 @@ const ENFORCED = [
      future edit that darkens the fill without darkening the label, or lightens
      one side only, fails here rather than in a customer's VPAT. */
   ['accent-on-strong', 'accent-strong'],
+  /* The same pairing for the three semantic fills: a label on a success,
+     warning or error ground. White is the label in light; in dark the fills
+     lift lighter and the label must turn to ink. Asserting the PAIR keeps
+     the two halves flipping together. */
+  ['on-success', 'success'],
+  ['on-warning', 'warning'],
+  ['on-error', 'error'],
+  /* Module identity (2026-09-28, design-system G2): rendered as chip TEXT on
+     the page and the sidebar, so each is asserted on both, in both themes. */
+  ...MODULE_TOKENS.flatMap((m) => [[`module-${m}`, 'bg-000'], [`module-${m}`, 'bg-100']]),
 ];
 
 /**

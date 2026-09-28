@@ -157,7 +157,7 @@ const FORMS: Record<PdevFormKind, C2CFormConfig> = {
     fields: [
       // Options and help text come from the member list (reviewerFieldFor).
       { key: 'reviewerUserId', label: 'Reviewer account', type: 'select', options: [] },
-      { key: 'reviewerName', label: 'Reviewer name', type: 'text', placeholder: 'Defaults to the account’s name; required when there is no account' },
+      { key: 'reviewerName', label: 'Reviewer name', type: 'text', placeholder: 'Only for a reviewer with no account here; leave blank for an account' },
       { key: 'role', label: 'Review role', type: 'select', options: REVIEW_ROLE, default: 'scientific', half: true },
       { key: 'dueDate', label: 'Due date', type: 'date', half: true },
       REASON,
@@ -211,7 +211,8 @@ const candidateLabel = (m: ReviewerCandidate) => `${m.name || m.email} · ${m.ro
 /** The reviewer-account select for the member list's current state. It never
  *  shows a failed read as an organization with no one to assign. */
 function reviewerFieldFor(field: C2CFormField, choice: ReviewerChoice): C2CFormField {
-  const signsOwn = 'The assigned account signs its own review, as review or approval.';
+  // The server stores an account's own name and refuses a different one (SEC-C-7).
+  const signsOwn = 'The assigned account signs its own review, as review or approval, and the review is listed under the account’s own name.';
   switch (choice.state) {
     case 'ready':
       return {

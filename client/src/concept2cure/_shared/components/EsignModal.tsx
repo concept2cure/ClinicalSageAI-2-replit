@@ -220,7 +220,12 @@ export function EsignModal({
   const restoreFocusRef = React.useRef<HTMLElement | null>(null);
 
   // Reset state when opened; remember the trigger to restore focus on close.
-  React.useEffect(() => {
+  // A layout effect, so the reset lands in the same commit that shows the
+  // dialog. As a passive effect it could run after the signer's first input
+  // (React yields before passive effects when a render overruns its slice), and
+  // then wiped that input: a reason entered as the dialog appeared was lost
+  // while the password beside it was kept (esignModalOpenReset.test.tsx).
+  React.useLayoutEffect(() => {
     if (open) {
       restoreFocusRef.current = document.activeElement as HTMLElement | null;
       setMeaning(initialMeaning);

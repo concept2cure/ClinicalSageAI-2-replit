@@ -1,0 +1,81 @@
+A model that thinks is not a stalled stream — 2026-09-28 (third pass)
+
+What a real model does that the stand-in did not: Opus 5.5 always thinks
+before it writes, and Opus 5 and Sonnet 5 do unless told not to. With the
+default display ("omitted"), none of the thinking is streamed: the API opens a
+thinking block, sends only `ping` events while the model thinks, then closes
+the block. The Anthropic SDK drops ping events before they reach the caller
+(@anthropic-ai/sdk 0.82.0, core/streaming.js: `if (sse.event === 'ping')
+continue;`), so the gateway saw nothing at all.
+
+The gateway aborted any stream silent for 30 s. The SDK ends an aborted stream
+without an error (core/streaming.js: an AbortError returns), so the gateway
+returned content "" with no tool call as a success. No fallback model was
+tried. The turn closed with an empty bubble, and Progress read "Finished".
+
+Reproduced by teaching the stand-in to think silently as the API does
+(FAKE_THINK_MS: open the thinking block, send a ping every 5 s, then continue),
+35 s on "take me to biostatistics", with a real app restart for each run:
+
+  Before (the gateway as pushed, e2be656b):
+    FAIL  take me to biostatistics → Biostatistics opens  — /concept2cure/conversation-thread
+    app log: [AI Gateway] Stream stalled — no chunk received for 30s. Accumulated 0 chars so far. Aborting stream.
+    silent-thinking-before.png: an empty AnA bubble; Progress "Finished in 30s".
+
+  After (this change):
+    PASS  take me to biostatistics → Biostatistics opens  — /concept2cure/conversation-thread → /concept2cure/biostatistics
+    app log: no stall.
+    silent-thinking-after.png: AnA has opened Biostatistics and is 35 s into
+    thinking on her next round ("Still working · 40s"); the drive strip reads
+    "AnA is driving → Biostatistics".
+
+The change (server/services/ai-gateway/stream-stall.ts, used by both stream
+paths in gateway.ts):
+  - Silence is a stall only while text is streaming: 30 s, as before. Text
+    arrives as it is written, so a pause there is a dead stream.
+  - Anywhere else — thinking, a tool's arguments (buffered until complete:
+    no tool here sets eager input streaming), the gap between blocks, a local
+    server reading the prompt — silence is the model working, up to 5 minutes.
+  - A stall before any text or tool call throws GatewayStreamStalledError
+    instead of returning an empty answer, so the next model in the fallback
+    chain is tried, and a turn nothing could answer ends as an error the
+    person sees. Partial text after a stall is still returned as
+    finishReason "chunk_timeout", as before.
+  - The browser was never the limit: the stream route already sends an SSE
+    heartbeat every 15 s, which resets the client's 90 s idle timer.
+
+── The whole battery with silent thinking on every round (FAKE_THINK_MS=3000) ──
+PASS  take me to biostatistics → Biostatistics opens  — /concept2cure/conversation-thread → /concept2cure/biostatistics
+PASS  biostat: no tool-missing / error text
+PASS  take me to the vault → a program's Vault opens  — /concept2cure/conversation-thread → /concept2cure/vault
+PASS  vault: a real program is open (no "open a program" state)
+PASS  open program BX-301 → its project home  — /concept2cure/conversation-thread → /concept2cure/projects → /concept2cure/project-home
+PASS  open program: BX-301 is the program shown
+PASS  search the vault for stability → Vault opens  — /concept2cure/conversation-thread → /concept2cure/vault
+PASS  vault search: the query is in the search box, or an empty vault is refused out loud  — ["stability"]
+PASS  rail: take me to biostatistics → Biostatistics opens  — /concept2cure/projects → /concept2cure/biostatistics
+PASS  rail: the conversation is still there after the move
+PASS  training demo visits every stop in order  — seen: /concept2cure/conversation-thread → /concept2cure/projects → /concept2cure/project-home → /concept2cure/vault → /concept2cure/authorin
+PASS  training demo shows "AnA is demonstrating"
+PASS  training demo reaches its end
+PASS  sales demo visits its stops  — seen: /concept2cure/conversation-thread → /concept2cure/projects → /concept2cure/project-home → /concept2cure/authoring → /concept2cure/protocol-dev → 
+PASS  sales demo: a guessed document name is refused with the real titles, and AnA retries with one  — Could not open a document for authoring: No document matching "Quarterly summary" in scope (sta
+PASS  sales demo reaches its end
+PASS  drive off: the ask does not move the screen  — /concept2cure/conversation-thread
+PASS  drive off: a Biostatistics chip is offered and works  — chip=true after=/concept2cure/biostatistics
+PASS  no uncaught page errors
+19/19 passed
+  43 streamed rounds thought silently; the strict stand-in refused none; no stall.
+
+── Tests (server/services/ai-gateway/__tests__/gateway-stream-stall.test.ts) ──
+Against the gateway as pushed, five fail, each the behaviour this changes:
+  × a model thinking silently for longer than the text limit is not cut off
+  × a tool's arguments buffered for longer than the text limit are not cut off
+  × a stream silent past the working limit with nothing produced is an error,
+    not an empty answer
+  × (OpenAI-compatible) a server that reads the prompt or reasons for longer
+    than the text limit is not cut off
+  × (OpenAI-compatible) once it is writing, the text limit applies, and
+    nothing produced is an error
+and three pass on both (text stopping mid-block was already a stall; the
+watch's own two unit tests). With this change: 8 of 8 pass.

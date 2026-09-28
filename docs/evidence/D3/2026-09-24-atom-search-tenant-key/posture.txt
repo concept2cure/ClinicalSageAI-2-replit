@@ -1,0 +1,14 @@
+# Read from c2c_d3x (provisioned from empty by scripts/db/provision-test-db.sh: install-fresh + deploy-migrate, 1235 base tables) on 2026-09-24T21:20:32Z, after every mutation was reverted
+rolname|rolsuper|rolbypassrls
+app_service|f|f
+(1 row)
+rel|rls|force
+lumen_data_atoms|t|t
+(1 row)
+policyname|cmd|qual
+tenant_isolation_policy|ALL|((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (organization_id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::integer) OR (organization_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9]+$'::text))::integer) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text))
+(1 row)
+proname|security_definer
+search_atoms_hybrid|f
+(1 row)
+RLS_ENFORCE=on for every run (tests/setup.db.ts default, and set explicitly). 'RLS off' runs: ALTER TABLE lumen_data_atoms NO FORCE / DISABLE ROW LEVEL SECURITY, restored to ENABLE + FORCE after each (rls=t force=t above).

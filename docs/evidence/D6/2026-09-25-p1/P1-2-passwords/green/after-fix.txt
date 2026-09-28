@@ -1,0 +1,36 @@
+ ✓ server/services/__tests__/password-blocklist.test.ts > isCommonPassword > finds a common password as typed and behind its decorations 5ms
+ ✓ server/services/__tests__/password-blocklist.test.ts > isCommonPassword > does not flag a passphrase that is not on the list 0ms
+ ✓ server/services/__tests__/password-blocklist.test.ts > isCommonPassword > never compares a core shorter than four characters 1ms
+ ✓ server/services/__tests__/password-blocklist.test.ts > context words > are the address local part, the name and the organisation, four characters and up, and the product 3ms
+ ✓ server/services/__tests__/password-blocklist.test.ts > context words > are found inside a password, decorated or not 1ms
+ ✓ server/services/__tests__/password-blocklist.test.ts > validatePasswordPolicy with the list and the context > refuses a common password however decorated, and says so 1ms
+ ✓ server/services/__tests__/password-blocklist.test.ts > validatePasswordPolicy with the list and the context > refuses a password built from the account holder or the organisation 1ms
+ ✓ server/services/__tests__/password-blocklist.test.ts > validatePasswordPolicy with the list and the context > accepts a strong passphrase with context present 1ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > GET /status reports not-initialized on an empty install 23ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > GET /status reports initialized once a user exists 8ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize rejects a missing organization name 17ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize rejects a weak password 4ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > creates the account pending verification, mails the link, and answers without a token 408ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > refuses sign-up when the deployment cannot send mail, and creates nothing 7ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize creates the first org + admin on an empty install 350ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > on a development server with dev auth allowed, the account is active and the token is returned (as before) 320ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/verify-email > moves the account from pending to active, once, and never from any other status 18ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/verify-email > refuses a token of another class, a forged one, and a missing one alike 10ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/resend-verification > answers 202 for every address; mails only an account that is pending 11ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/login for an unconfirmed account > refuses with AUTH_EMAIL_UNVERIFIED after the password is checked, and records the refusal 13ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize writes the org, its admin, and the org's own workspace under the org's tenant, in one transaction 330ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize fails closed when the workspace write is refused — no 201, no token 315ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize is self-closing once a user exists 9ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > requesting a password reset is audited > records the request for a real account 27ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > requesting a password reset is audited > records an attempt against an address with no account 5ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > requesting a password reset is audited > still says exactly the same thing either way 7ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > a reset link is built on the deployment's address, never the request's Host (D6) > in production, a forged Host does not become the link the victim is emailed 4ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > a reset link is built on the deployment's address, never the request's Host (D6) > in production without APP_URL, every address is refused alike and no token is issued 7ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records the change itself, which used to be only a logger line 331ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > refuses, and records, a token another request used first — no second success 324ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records a token that matched no account 4ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records an expired token 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > does not audit a change it refused before looking anything up 2ms
+ Test Files  4 passed (4)
+      Tests  33 passed (33)
+exit=0
