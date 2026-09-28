@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-28T19:35:27.378Z",
+  "generatedAt": "2026-09-28T23:17:37.056Z",
   "git": {
-    "sha": "f61a8e6cb69d283e0fc1b065f833b60f47fd5c65",
+    "sha": "3b3803d69216e6b4962cca6da3253fd29f3eae90",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2398,6 +2398,10 @@
         "lines": 1968
       },
       {
+        "file": "server/routes/ectd-compile.ts",
+        "lines": 1949
+      },
+      {
         "file": "server/routes/c2c/projects.ts",
         "lines": 1934
       },
@@ -2408,10 +2412,6 @@
       {
         "file": "server/services/ana/evidence-literature-tool-defs.ts",
         "lines": 1924
-      },
-      {
-        "file": "server/routes/ectd-compile.ts",
-        "lines": 1907
       },
       {
         "file": "server/routes/regulatory-digital-twin.ts",
@@ -2566,6 +2566,10 @@
         "lines": 1602
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
+        "lines": 1601
+      },
+      {
         "file": "server/routes/mdx-qms.ts",
         "lines": 1576
       },
@@ -2580,10 +2584,6 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
         "lines": 1551
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
-        "lines": 1550
       },
       {
         "file": "server/services/grdhe/grdheService.ts",

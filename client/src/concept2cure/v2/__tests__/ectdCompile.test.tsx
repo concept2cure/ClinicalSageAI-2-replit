@@ -496,3 +496,84 @@ describe('EctdCompile — an imported agency-validator report', () => {
     expect(screen.queryByRole('region', { name: 'eValidator report — sequence 0001' })).toBeNull();
   });
 });
+
+/* ── WO-9 Click 6: a rehearsal (JM's decision, 2026-09-23) ─────────────────── */
+
+describe('EctdCompile — a rehearsal is asked for, and says it is one', () => {
+  beforeEach(() => { (window as any).C2C_PROJECT = { id: 42 }; });
+
+  const STATUS_0001 = { ...SPINE_STATUS, sequence: { sequenceNumber: '0001', region: 'fda', leafCount: 2 } };
+  const REHEARSAL_COMPILE = {
+    ...SPINE_COMPILE,
+    sequenceNumber: '0001',
+    lifecycle: {
+      priorSequence: '0000', priorState: 'rehearsal', unfiledPriorSequences: ['0000'], leftOut: [],
+      operations: [
+        { operation: 'replace', ctdSection: '3.2.S.1', fileName: 'general.pdf', href: 'm3/32s1/general.pdf', modifiedFile: '../0000/m3/32s1/general.pdf' },
+      ],
+    },
+  };
+
+  function serve(status: unknown, compile: unknown, history: unknown[] = []) {
+    const calls: Array<{ method: string; url: string; body: any }> = [];
+    apiRequest.mockReset();
+    apiRequest.mockImplementation(async (method: string, url: string, body?: any) => {
+      calls.push({ method, url, body });
+      if (method === 'GET' && url === '/api/ectd-compile/42/status') return ok(status);
+      if (method === 'GET' && url === '/api/ectd-compile/42/history') return ok({ compilations: history });
+      if (method === 'POST' && url === '/api/ectd-compile/42/compile') return ok(compile);
+      if (method === 'POST' && url === '/api/ectd/export/55') {
+        return { ok: true, status: 200, headers: new Headers({ 'Content-Disposition': 'attachment; filename="p-rehearsal.zip"' }), blob: async () => new Blob(['zip']) } as unknown as Response;
+      }
+      return ok({});
+    });
+    return calls;
+  }
+
+  it('is offered only for a follow-up sequence — an original has nothing to rehearse against', async () => {
+    serve(SPINE_STATUS, SPINE_COMPILE);
+    const { unmount } = render(<EctdCompile {...props()} />);
+    await screen.findByText(/recorded on sequence 0000/);
+    expect(screen.queryByRole('checkbox', { name: /Rehearsal/ })).toBeNull();
+    unmount();
+
+    serve(STATUS_0001, SPINE_COMPILE);
+    render(<EctdCompile {...props()} />);
+    expect(await screen.findByRole('checkbox', { name: /Rehearsal/ })).toBeTruthy();
+  });
+
+  it('compiles as a rehearsal when asked, says which sequences were never filed, and exports the same', async () => {
+    const urlCreate = vi.fn(() => 'blob:x');
+    (URL as any).createObjectURL = urlCreate;
+    (URL as any).revokeObjectURL = vi.fn();
+    const calls = serve(STATUS_0001, REHEARSAL_COMPILE);
+    render(<EctdCompile {...props()} />);
+
+    fireEvent.click(await screen.findByRole('checkbox', { name: /Rehearsal/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Compile eCTD/ }));
+
+    const life = await screen.findByRole('region', { name: 'Lifecycle' });
+    expect(calls.find((c) => c.url === '/api/ectd-compile/42/compile')?.body).toMatchObject({ rehearsal: true });
+    expect(life.textContent).toMatch(/Rehearsal/);
+    expect(life.textContent).toMatch(/0000.*never filed/);
+    expect(life.textContent).toMatch(/transmit binds only against filed sequences/);
+
+    fireEvent.click(screen.getByRole('button', { name: /Download package/ }));
+    await waitFor(() => expect(calls.find((c) => c.url === '/api/ectd/export/55')?.body).toMatchObject({ sequenceNumber: '0001', rehearsal: true }));
+  });
+
+  it('a compile without the toggle asks for no rehearsal', async () => {
+    const calls = serve(STATUS_0001, { ...REHEARSAL_COMPILE, lifecycle: { ...REHEARSAL_COMPILE.lifecycle, priorState: 'filed', unfiledPriorSequences: [] } });
+    render(<EctdCompile {...props()} />);
+    await screen.findByRole('checkbox', { name: /Rehearsal/ });
+    fireEvent.click(screen.getByRole('button', { name: /Compile eCTD/ }));
+    await screen.findByRole('region', { name: 'Lifecycle' });
+    expect(calls.find((c) => c.url === '/api/ectd-compile/42/compile')?.body).not.toHaveProperty('rehearsal');
+  });
+
+  it('the history names a rehearsal compilation for what it is', async () => {
+    serve(STATUS_0001, SPINE_COMPILE, [{ ...ROW_0001, compilation_type: 'rehearsal' }]);
+    render(<EctdCompile {...props()} />);
+    expect(await screen.findByText('rehearsal — prior not filed')).toBeTruthy();
+  });
+});
