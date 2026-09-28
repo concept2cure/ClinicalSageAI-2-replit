@@ -69,8 +69,15 @@ function answerWith(opts: {
     if (/COUNT\(\*\) as count FROM organization_users WHERE organization_id/.test(q)) {
       return { rows: [{ count: String(opts.members ?? 0) }] };
     }
-    if (/^SELECT id FROM users WHERE email/.test(q)) {
-      return { rows: opts.existingUserId ? [{ id: opts.existingUserId }] : [] };
+    // The existing-account check answers one row, its id or null
+    // (public.user_id_for_email, migrations/20260928_users_membership_rls.sql).
+    if (/^SELECT public\.user_id_for_email\(\$1\) AS id$/.test(q)) {
+      return { rows: [{ id: opts.existingUserId ?? null }] };
+    }
+    // A new account's id comes from the sequence before the insert: RETURNING
+    // is held to the users SELECT policy, which a non-member does not pass.
+    if (/^SELECT nextval\(pg_get_serial_sequence\('public\.users', 'id'\)\)/.test(q)) {
+      return { rows: [{ id: 901 }] };
     }
     if (/^SELECT id FROM organization_users WHERE user_id/.test(q)) return { rows: [] };
     if (/^SELECT id FROM organization_invitations/.test(q)) return { rows: [] };
@@ -81,7 +88,7 @@ function answerWith(opts: {
       if (opts.insertFails) return new Error('relation "projects" does not exist');
       return { rows: [{ id: 555, name: params[0], created_by_id: params[8], owner_id: params[9] }] };
     }
-    if (/^INSERT INTO users/.test(q)) return { rows: [{ id: 901 }] };
+    if (/^INSERT INTO users/.test(q)) return { rows: [], rowCount: 1 };
     if (/^INSERT INTO organization_invitations/.test(q)) return { rows: [{ id: 31 }] };
     if (/^INSERT INTO organization_users/.test(q)) return { rows: [] };
     if (/^UPDATE organization_invitations/.test(q)) return { rows: [] };
