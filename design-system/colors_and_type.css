@@ -194,6 +194,32 @@
   --info:                    var(--ai);
   --info-muted:              var(--ai-muted);
 
+  /* Module identity — the colour a task, card or chip carries for the module
+     it belongs to (Task Board, the collaboration layer). Minted 2026-09-28
+     (design-system G2): these were seventeen raw hex values in two fixture
+     maps (TB_MOD, CL_MOD), with no dark pair, and eight of them below AA as
+     the 10px chip TEXT they are rendered as (3.50–4.12:1 on the page). Each
+     keeps its original hue, darkened here and lifted in the dark block until
+     it clears 4.5:1 both on the page/sidebar and on its own 12% chip tint —
+     "worst" is the lowest of those four ratios. check-token-contrast enforces
+     every one against bg-000 and bg-100. */
+  --module-cmc:              #695e4d;   /* worst 4.67 */
+  --module-ind:              #266589;   /* worst 4.66 */
+  --module-device:           #42684d;   /* worst 4.64 */
+  --module-ectd:             #794f89;   /* worst 4.67 */
+  --module-vault:            #755c2d;   /* worst 4.62 */
+  --module-protocol:         #894f4f;   /* worst 4.67 */
+  --module-nonclinical:      #4d6741;   /* worst 4.63 */
+  --module-biostatistics:    #4d5f86;   /* worst 4.67 */
+  --module-safety:           #944b35;   /* worst 4.61 */
+  --module-submission:       #326674;   /* worst 4.68 */
+  --module-quality:          #6c5f2f;   /* worst 4.65 */
+  --module-labeling:         #705390;   /* worst 4.62 */
+  --module-market-access:    #43665a;   /* worst 4.69 */
+  --module-evidence:         #55607b;   /* worst 4.61 */
+  --module-meetings:         #7b5847;   /* worst 4.63 */
+  --module-intelligence:     #4c665a;   /* worst 4.61 */
+
   /* Stone scale (linear ramp alias) */
   --stone-0:                 #ffffff;
   --stone-50:                #faf9f5;
@@ -442,6 +468,24 @@
      failure the note above describes for the other six. */
   --ai:                      #6a9bcc;   /* 5.17 / 4.51 */
   --ai-muted:                #24313f;   /* badge 4.51:1 */
+
+  /* Module identity, lifted for the dark page (see the light block). */
+  --module-cmc:              #b3aba0;   /* worst 4.64 */
+  --module-ind:              #8ab0c6;   /* worst 4.62 */
+  --module-device:           #90b49b;   /* worst 4.62 */
+  --module-ectd:             #bda3c8;   /* worst 4.65 */
+  --module-vault:            #bfa980;   /* worst 4.62 */
+  --module-protocol:         #c8a3a3;   /* worst 4.64 */
+  --module-nonclinical:      #9ab38f;   /* worst 4.63 */
+  --module-biostatistics:    #a1adc7;   /* worst 4.68 */
+  --module-safety:           #cea092;   /* worst 4.61 */
+  --module-submission:       #8cb1ba;   /* worst 4.63 */
+  --module-quality:          #b6ad86;   /* worst 4.68 */
+  --module-labeling:         #b6a4c9;   /* worst 4.61 */
+  --module-market-access:    #94b3a9;   /* worst 4.66 */
+  --module-evidence:         #a3adc2;   /* worst 4.68 */
+  --module-meetings:         #c2a699;   /* worst 4.64 */
+  --module-intelligence:     #9cafa6;   /* worst 4.61 */
 }
 
 /* ═══════════════════════════════════════════════════════════

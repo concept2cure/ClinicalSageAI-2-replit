@@ -212,6 +212,26 @@ describe('routes whose columns no deployed database has say so', () => {
   });
 });
 
+/* 2026-09-28. The chain-of-custody upload wrote the file to /mnt/data/uploads
+   — container disk, gone at the next replacement — and recorded a /uploads/…
+   URL that no route serves, so the ledger pointed at bytes nobody could ever
+   retrieve. No client calls it. Attachments belong in Vault, which stability
+   samples cannot yet reach (a Vault document needs a regulatory program; that
+   link is CMC schema work, outside the launch catalog). Until then it refuses
+   and says where the file goes; a chain entry can cite the Vault document in
+   its notes (POST /samples/:id/chain). */
+describe('the chain-of-custody upload keeps no file it cannot keep', () => {
+  it('is 501, reads no file, writes nothing, and names Vault', async () => {
+    const res = await request(app())
+      .post('/api/stability/samples/11111111-1111-4111-8111-111111111111/chain/upload')
+      .attach('file', Buffer.from('%PDF-1.4 test'), 'coc.pdf');
+    expect(res.status).toBe(501);
+    expect(res.body.message).toMatch(/Nothing was stored/);
+    expect(res.body.message).toMatch(/Vault/);
+    expect(connect).not.toHaveBeenCalled();
+  });
+});
+
 /** Review of 2026-09-23: the findings its verifiers were cut off from confirming, each confirmed and fixed. */
 describe('study-scoped writes act only on the tenant\'s own study', () => {
   const scoped = () => {
