@@ -184,7 +184,7 @@ Each domain returns a `KernelDecision` of `allow` | `review` | `deny`, a rationa
 
 # 7. The AI Gateway and approved-model governance
 
-The AI Gateway is the governed path for model calls, and a CI guard (`npm run ci:gateway-bypass`) prevents new bypasses from being added. Nineteen legacy files still reach providers directly and are tracked in `scripts/ci/gateway-bypass-baseline.json` as an explicit burndown list.
+The AI Gateway is the governed path for model calls, and a CI guard (`npm run ci:gateway-bypass`) prevents new bypasses from being added. Legacy files that still reach providers directly are tracked in `scripts/ci/gateway-bypass-baseline.json` as an explicit burndown list, each entry stating the governance it loses: nineteen on 2026-09-08, eight on 2026-09-28.
 
 **Provider lanes.** The gateway routes to seven: `anthropic`, `openai`, `moonshot` (Kimi), `bedrock`, `vertex`, `azure` and `local` (`server/services/ai-gateway/types.ts`). Having lanes is not the product. Which model may answer is.
 
@@ -194,7 +194,7 @@ The AI Gateway is the governed path for model calls, and a CI guard (`npm run ci
 
 **Residency.** Sensitive dispatch is governed by `AI_PROVIDER_PLACEMENT_APPROVALS`. A tenant's residency or zero-data-retention policy decides which providers it may reach, and the fallback ladder never fails over across that boundary.
 
-**Fallback and retry.** Within that boundary, the gateway consults `getFallbackModels()` for the request's task type (nine of them, from `chat` and `document_drafting` through `structured_output` and `embedding`) and walks the ladder. Retries use exponential backoff with jitter (base delay × 2^attempt + 0–30% jitter), and non-transient errors (400, 401, 403) abort immediately. A production deploy with no provider configured fails closed rather than serving placeholder text. Canned responses exist for development and tests, behind an explicit opt-in.
+**Fallback and retry.** Within that boundary, the gateway consults `getFallbackModels()` for the request's task type (nine of them, from `chat` and `document_drafting` through `structured_output` and `embedding`) and walks the ladder. Retries use exponential backoff with jitter (base delay × 2^attempt + 0–30% jitter), and non-transient errors (400, 401, 403) abort immediately. A production deploy with no provider configured fails closed rather than serving placeholder text. Canned responses exist for development and tests. Since 2026-09-28 production refuses the explicit opt-in as well — at boot, per request and in the deploy preflight — unless a written acceptance records the risk, and the deploy pipeline refuses that acceptance.
 
 **What is measured.** `GatewayAuditLogger` persists requests and responses; `GatewayPolicyEngine` enforces policy before dispatch; per-provider health is tracked with `recordSuccess()` / `recordFailure()` so routing can down-weight a struggling provider. Structured logs flow through `createScopedLogger('ai-gateway')`.
 
