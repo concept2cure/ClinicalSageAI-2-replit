@@ -1,7 +1,7 @@
 # Concept2Cure.RI — Investor Technical Brief
 
 **Confidential. Prepared for prospective investors.**
-**Version:** 2026-09-08
+**Version:** 2026-09-08, revised 2026-09-28
 **Codebase branch:** `concept2cure-v2` (the sole production branch)
 **Audience:** technical diligence readers and their principals
 
@@ -12,10 +12,10 @@
 1. Executive summary
 2. What the product is, and what it replaces
 3. The regulated use cases we address
-4. The nine end-to-end workstreams that ship
+4. The engineered workstreams in the tree
 5. System architecture at a glance
 6. The control plane: kernel, decisions, and adaptive policy
-7. The AI Gateway and multi-provider routing
+7. The AI Gateway and approved-model governance
 8. Retrieval: the 9-step provenance-tracked RAG pipeline
 9. The intelligence layer: RIM, CORTEX Prime, Precedent Engine
 10. The three-layer memory system
@@ -25,9 +25,9 @@
 14. Security, identity, and 21 CFR Part 11 compliance
 15. The frontend surface, design system, and design governance
 16. The harness: our engineering discipline as a moat
-17. Testing, observability, and reliability posture
+17. Validation, testing, observability, and reliability
 18. The competitive moat, in one page
-19. Roadmap and near-term milestones
+19. The launch definition, and where each row stands
 20. Appendix — quantitative inventory
 
 ---
@@ -36,7 +36,9 @@
 
 Concept2Cure.RI is a regulated-industry operating system for life-sciences submission work. It replaces the eCTD authoring silo, the regulatory intelligence silo, the QMS/audit silo, and the shared-drive-plus-Word workflow with a single, governed, memory-carrying environment in which the AI is a first-class participant — but never an unchecked one.
 
-Where competitors sell either an AI chat wrapper over a document store, or a static submission tool with a chatbot bolted on, we have built the missing middle: a **governance kernel** that decides which action is allowed, an **AI gateway** that routes work across Claude, GPT-4, and fallbacks with full audit, an **intelligence stack** (RIM, CORTEX Prime, Precedent Engine, Submission Twin) that reasons across the submission as a graph rather than a folder, and a **three-layer memory** that carries what the team has decided across sessions and users.
+Where competitors sell either an AI chat wrapper over a document store, or a static submission tool with a chatbot bolted on, we have built the missing middle. **Deterministic engines** produce the numbers and verdicts, and the model narrates them. An **AI gateway** serves only approved, version-pinned models. A **governance kernel** returns allow, review or deny per domain. A **three-layer memory** carries what the team has decided across sessions and users.
+
+What ships first is deliberately narrow: six apps — Projects, Vault, Authoring, Submission Center, Submission Readiness and QMS controlled documents. The wider tree, covering device, EU MDR, CSR, post-market and RIM work, stays behind a flag that is off in production until the ten launch rows in §19 are green. The validation package for those six apps has been executed on a clean install in the production posture: operational qualification 101 pass, 0 fail, 2 deviations of 103.
 
 The verified size of what we have built:
 
@@ -73,13 +75,27 @@ What it replaces, workstream by workstream:
 - **Cortellis / Citeline** as the regulatory intelligence lookup tool, superseded by a stack that reads *your* project's evidence against the regulator corpus and gives you a next best action rather than a search result.
 - The **spreadsheet-and-Word workflow** that most small sponsors still use for pre-IND, pre-sub, and CRL response drafting — collapsed into one governed surface.
 
-The product is used before, during, and after submission. Before: gap register, precedent mining, protocol design. During: co-authored eCTD Modules 1–5, section-level readiness, reviewer-simulation adversarial review. After: PSUR/DSUR periodic reporting, CAPA, deficiency response, RIM registration and label lifecycle.
+The product is used before, during, and after submission. Before: gap register, precedent mining, protocol design. During: co-authored eCTD Modules 1–5, section-level readiness, reviewer-simulation adversarial review. After: PSUR/DSUR periodic reporting, CAPA, deficiency response, RIM registration and label lifecycle. The launch release covers the middle of that arc — authoring, eCTD assembly, submission readiness and QMS controlled documents — and so replaces the first two rows above. Intelligence and post-market work is in the tree, behind the flag.
 
 ---
 
 # 3. The regulated use cases we address
 
-The platform ships against nine primary use cases, each of which is a full workstream (not a demo), and each of which is a distinct commercial anchor. Four have dedicated golden-journey suites in `tests/golden-journeys/`; the remaining five are covered by route, service and integration suites.
+The tree covers nine regulated use cases. Each is built as a workstream with its own routes, services and schema, and each is a distinct commercial anchor. Not all nine are in the launch release. Since 2026-09-25 the API refuses surfaces outside it in production (`server/services/entitlements/launch-scope-api.ts`), and since 2026-09-26 so do AnA's in-process tools (`server/services/ana/ana-launch-scope.ts`). Four use cases have dedicated golden-journey suites in `tests/golden-journeys/`; the others are covered by route, service and integration suites.
+
+| Use case | In the launch release | How it reaches a user at launch |
+|---|---|---|
+| 3.1 IND / NDA / BLA authoring | Yes | Authoring (including protocol development) and Submission Center |
+| 3.2 510(k) / De Novo | No | In the tree, behind the flag |
+| 3.3 CER, EU MDR / IVDR | No | In the tree, behind the flag |
+| 3.4 CMC Module 3 | Partly | eCTD co-authoring in Submission Center; the dedicated CMC workspace is behind the flag |
+| 3.5 CSR | No | In the tree, behind the flag |
+| 3.6 Deficiency and CRL response | No dedicated app | AnA is always on, but tools that serve hidden apps are refused in production |
+| 3.7 Regulatory intelligence | No | In the tree, behind the flag |
+| 3.8 Post-market | No | In the tree, behind the flag |
+| 3.9 RIM operations | No | In the tree, behind the flag |
+| QMS controlled documents | Yes | The QMS app (quality, QMP) |
+| Submission readiness | Yes | The deterministic dispatch gate, keyed to the program's sequence |
 
 **3.1 IND / NDA / BLA authoring (drug).** The user opens a program, ingests their nonclinical, CMC, and clinical data, and the platform composes IND Module 2 summaries and Module 3 CMC narratives with sentence-level provenance to source. Golden journey: `tests/golden-journeys/drug-nda-ectd.journey.test.ts`, `ind-authoring.journey.test.ts`.
 
@@ -99,13 +115,13 @@ The platform ships against nine primary use cases, each of which is a full works
 
 **3.9 Regulatory operations at scale.** RIM product/registration/label lifecycle (`shared/schema/rim.ts`), submission gateway management (`server/services/submission-gateways/`), CAPA, inspection readiness (`shared/schema/inspection.ts`), IACUC/IBC/IRB (`shared/schema/iacuc.ts`, `ibc.ts`, `irb.ts`).
 
-The commercial reality: most competitors do one of these; **we do all nine, on one governance kernel, sharing one memory, one audit chain, one design system.**
+Most competitors cover one of these. The tree covers all nine on one governance kernel, one audit chain and one design system. The launch release is the narrow slice a first customer needs, validated end to end.
 
 ---
 
-# 4. The nine end-to-end workstreams that ship
+# 4. The engineered workstreams in the tree
 
-The nine use cases above map onto nine engineered workstreams, each with its own routes, services, schema domain, and tests. They are not features — they are wall-to-wall vertical slices:
+The use cases above map onto nine engineered workstreams, each with its own routes, services, schema domain and tests. Each is a vertical slice rather than a feature. The launch release draws chiefly on workstreams 1, 2, 3, 5, 6 and 8; 4, 7 and 9 stay behind the flag.
 
 1. **Program & Charter** — `shared/schema/project-charter.ts` (38 KB), `programs.ts` (21 KB). A program has objectives, target markets, target regulators (16 supported bodies plus a multi-regional profile), and a chartered plan.
 2. **Evidence Ingestion & Vault** — `server/services/vault/`. Documents are ingested, chunked (`document-chunking.service.ts`), embedded, and made available for retrieval and lineage.
@@ -117,7 +133,7 @@ The nine use cases above map onto nine engineered workstreams, each with its own
 8. **Audit, Compliance & Attestation** — `server/services/audit/` (9 services), signed audit exports, chain-integrity sweep job.
 9. **Analytics & Reporting** — the Intelligent Report Engine (3,562 lines, 12 report domains) plus the Submission Twin (1,430 lines).
 
-Each workstream shares four cross-cutting services: **AI Gateway**, **Kernel** (policy + decisions), **Memory** (working/client/project), and **Precedent Engine**. That shared core is why we can add a tenth workstream (early: gene-therapy CMC, ATMP) in weeks, not quarters.
+Each workstream shares four cross-cutting services: **AI Gateway**, **Kernel** (policy + decisions), **Memory** (working/client/project), and **Precedent Engine**. `CLAUDE.md` Rule 2 holds any new workstream until the launch rows are green.
 
 ---
 
@@ -166,21 +182,23 @@ Each domain returns a `KernelDecision` of `allow` | `review` | `deny`, a rationa
 
 ---
 
-# 7. The AI Gateway and multi-provider routing
+# 7. The AI Gateway and approved-model governance
 
 The AI Gateway is the governed path for model calls, and a CI guard (`npm run ci:gateway-bypass`) prevents new bypasses from being added. Nineteen legacy files still reach providers directly and are tracked in `scripts/ci/gateway-bypass-baseline.json` as an explicit burndown list.
 
-**Providers, in order of quality-weighted preference:**
+**Provider lanes.** The gateway routes to seven: `anthropic`, `openai`, `moonshot` (Kimi), `bedrock`, `vertex`, `azure` and `local` (`server/services/ai-gateway/types.ts`). Having lanes is not the product. Which model may answer is.
 
-- **Anthropic** — `claude-opus-4` (200K context, quality score 99 internally), `claude-sonnet-4` (97), `claude-haiku-4` (85).
-- **OpenAI** — `gpt-4o` (128K, quality 95), `gpt-4o-mini` (82).
-- **Kimi** — available as tertiary fallback.
+**The approved-models registry.** `server/services/ai-governance/approved-models.ts` holds 16 entries. Each carries a pinned version, a written rationale, an evaluation reference and a performance-qualification (PQ) status, and nothing outside the registry is selectable. Approval is enforced at every gateway selection point for drafting and review. Routes and tools that store model-authored content refuse an unapproved serving model, and a refusal leaves an audit trace naming the models withheld. The primary for high-risk authoring and review is Claude Opus 5.5, pinned as `claude-opus-5-5` since 2026-09-25. Opus 5 is retained directly beneath it, so a request the primary cannot serve keeps the reviewed behaviour rather than falling to a smaller model. GPT, Kimi and the local lane ship with their risk tier capped below high-risk until their PQ executes.
 
-**Fallback and retry.** The gateway does not simply retry on failure — it consults `getFallbackModels()` for the request's task type (nine of them, from `chat` and `document_drafting` through `structured_output` and `embedding`), and it walks the ladder. Retries use exponential backoff with jitter (base delay × 2^attempt + 0–30% jitter). Non-transient errors (400, 401, 403) abort immediately rather than burning budget. A final deterministic-demo mode returns canned responses when no key is available, so that unit tests and dev environments do not depend on live vendors.
+**Where qualification stands.** The PQ is executable (`npm run pq:run`), and a claim that a model passed it is checked against its record. The protocol (PQ-DRAFT-001) is still a draft awaiting owner approval. No registry entry has passed PQ yet, so high-risk drafting in production waits on it. That is a named item under launch row D4 (§19).
 
-**What is measured.** `GatewayAuditLogger` persists every request and response to the database; `GatewayPolicyEngine` enforces policy before dispatch; per-provider health is tracked with `recordSuccess()` / `recordFailure()` so health-aware routing can down-weight a struggling provider before it degrades user experience. Structured logs flow through `createScopedLogger('ai-gateway')`.
+**Residency.** Sensitive dispatch is governed by `AI_PROVIDER_PLACEMENT_APPROVALS`. A tenant's residency or zero-data-retention policy decides which providers it may reach, and the fallback ladder never fails over across that boundary.
 
-**Why this matters commercially.** The AI Gateway is the difference between "we use Claude" and "we are vendor-independent." Enterprise buyers assume providers will fail, get expensive, or change terms. Our answer is: our runtime does not care which model served your last request. Their evidence lives in our schema, not in a vendor's chat history.
+**Fallback and retry.** Within that boundary, the gateway consults `getFallbackModels()` for the request's task type (nine of them, from `chat` and `document_drafting` through `structured_output` and `embedding`) and walks the ladder. Retries use exponential backoff with jitter (base delay × 2^attempt + 0–30% jitter), and non-transient errors (400, 401, 403) abort immediately. A production deploy with no provider configured fails closed rather than serving placeholder text. Canned responses exist for development and tests, behind an explicit opt-in.
+
+**What is measured.** `GatewayAuditLogger` persists requests and responses; `GatewayPolicyEngine` enforces policy before dispatch; per-provider health is tracked with `recordSuccess()` / `recordFailure()` so routing can down-weight a struggling provider. Structured logs flow through `createScopedLogger('ai-gateway')`.
+
+**Why this matters commercially.** A GxP buyer is not buying "several models." They are buying approved-model governance with evidence: a short list of models, each pinned, justified and qualified, and a record of every time a model was withheld. The same discipline runs the other way. Numbers, verdicts and governed content come from deterministic engines, and the model frames, drafts and explains (§18). Because the model narrates rather than decides, an approved model can be substituted without changing an answer.
 
 ---
 
@@ -247,7 +265,7 @@ Path: `server/services/precedent-engine.ts` — 2,081 lines. Nine operations:
 
 Backing tables actually queried: `precedent.regulatory_precedents` (the unified corpus), `adversarial.regulatory_adversarial_precedents` (historical FDA questions) and `predicate.predicate_safety_signals`, plus the CSR knowledge tables. The unified corpus is tenant-scoped by construction through `precedent-isolation.ts`, which returns public rows plus the caller's own organization's rows.
 
-What ships today: a sponsor's draft claims can be checked against the precedent corpus (`authoring.check`), and CRL and RTF trigger patterns are scored with calibrated confidence. That is the point at which the ROI conversation usually turns.
+What ships today: a sponsor's draft claims can be checked against the precedent corpus (`authoring.check`), and CRL and RTF trigger patterns are scored with calibrated confidence. One caution the launch plan states plainly: the corpus is the platform's memory, and it is empty until ingested. A precedent engine over empty tables is a chat wrapper, so corpus ingestion is launch-critical rather than advisory.
 
 ## 9.4 Foresight — what we removed and why
 
@@ -278,6 +296,8 @@ Everything a competitor does with "remember my chat" we do with a memory system 
 ---
 
 # 11. Submission Twin and the Intelligent Report Engine
+
+Neither service is in the launch release. Both stay in the tree behind the flag, and they are described here because they show where the architecture goes once launch is done.
 
 Two services that only make sense once the layers above exist:
 
@@ -382,21 +402,34 @@ The frontend is a governed React application, not a design free-for-all.
 
 # 16. The harness: our engineering discipline as a moat
 
-An investor should read `CLAUDE.md` in the root of the repo before making a decision. It is a two-page document that establishes the engineering culture, and it is the single most differentiating asset in the codebase after the kernel.
+An investor should read `CLAUDE.md` in the root of the repo before making a decision. It is a short document that sets the engineering culture, and every session — human or AI — works under it.
 
 **Rule 0 — one branch.** `concept2cure-v2` is the only branch anyone (human, agent, worktree, CI job) may push to. Non-canonical pushes are refused at the pre-push hook. The rule is enforced, and the exception path is narrow (external refs like `dependabot/*` and `revert-*`; agent-shaped branches are refused unconditionally). This eliminates an entire category of failure — divergent branches, stale mirrors, "which one is truth?" — that consumes the middle years of most startups.
 
 **Rule 1 — migrations re-execute.** Every migration is re-executed on every deploy, unconditionally. This is a design choice that trades one thing (a small amount of DB work at deploy) for two things (a) an idempotent, replayable schema definition, and (b) a hard rule that DROPs are not the way to remove things — you amend the creating migration in place, and the CI drop-safety gate blocks the alternative.
 
-Both rules are cultural artifacts codified as enforced gates — `CLAUDE.md` is not a wiki page, it is authoritative, and the hooks cite it. That is how you get an engineering organization that ships fast without breaking regulated data.
+**Rule 2 — no new capability until the launch rows are green.** Each session works on one launch workstream, names the row it moves and the evidence it will file, and reports blocked rather than done when it cannot produce that evidence. No session adds a surface, module, tool, model or integration outside the launch catalog. This is the rule that keeps a large tree from turning into a larger one while the first customer waits (§19).
 
-**The agents.** Alongside the engineers, the repo ships seven specialized reviewer agents in `.claude/agents/` (`a11y-auditor`, `design-reviewer`, `design-system-auditor`, `motion-auditor`, `microcopy-reviewer`, `honest-state-auditor`, `part11-ux-auditor`), run on demand against UI changes. Wiring them into `pr-checks.yml` is outstanding. This is how we scale review coverage across 439 client React components without hiring a design-review team.
+The rules are cultural artifacts codified as enforced gates. `CLAUDE.md` is not a wiki page: it is authoritative, and the hooks cite it. That is how an engineering organization ships quickly without breaking regulated data.
+
+**The agents.** Alongside the engineers, the repo ships eight specialized reviewer agents in `.claude/agents/` (`a11y-auditor`, `design-reviewer`, `design-system-auditor`, `motion-auditor`, `microcopy-reviewer`, `honest-state-auditor`, `part11-ux-auditor`, `security-auditor`), run on demand. The launch plan schedules the Part 11 UX, honest-state, design-system and security auditors weekly against the launch catalog, with reports filed as periodic-review evidence. Wiring them into `pr-checks.yml` is outstanding. This is how we scale review coverage across 439 client React components without hiring a design-review team.
 
 **The doc discipline.** 672 markdown files in 55 subdirectories of `docs/` — architecture, audits, runbooks, roadmap, deployment, release, standards, AI governance, compliance, security. Design decisions are written down. Retirements are written down. Trade-offs are written down. An investor is invited to sample five random docs from `docs/architecture/` or `docs/reports/` to verify.
 
 ---
 
-# 17. Testing, observability, and reliability posture
+# 17. Validation, testing, observability, and reliability
+
+**The validation package.** A computer-software-assurance validation package is drafted and executed for the six launch apps (`docs/validation/`, evidence under `docs/evidence/W3/`). It comprises a validation plan, one user-requirements specification per launch app, a risk assessment, installation qualification, six operational-qualification protocols, a traceability matrix generated from the test runs, and a summary report (VSR-001). The latest run, on 2026-09-27 at commit `89ee3a81`, used an installation provisioned from empty, in the production posture and with production authentication. Every identity except the run identity was created through user administration: each colleague set their own password through the activation link and enrolled their own authenticator.
+
+| Protocol | Pass | Fail | Deviation |
+|---|---:|---:|---:|
+| Installation qualification | 12 | 0 | 3 |
+| Operational qualification (six protocols, 103 steps) | 101 | 0 | 2 |
+| Traceability (TM-001, 71 requirements) | 69 | 0 uncovered | 2 partial |
+
+Each run has found defects, and each defect is fixed and shown failing first before it is closed. The latest found that a colleague's sign-in events were written outside their organization (F-41), and that the ledger identified an account by display name alone when two accounts shared one (F-42). The package still owes a staging execution with the production image, a PQ-passed model for the drafting step, and signatures from the founder and a qualified contractor (§19, D4).
+
 
 **Automated tests.** 2,299 product test files: 1,522 under `server/`, 302 under `client/`, 448 in the dedicated `tests/` tree, 24 under `shared/` and 3 under `scripts/` (a further 53 belong to the agent harness under `.claude/`) that houses integration and end-to-end suites — including `tests/e2e/` (design tokens, submission ops, governed lifecycle, RC-beta path, biotech modules, golden customer journey, beta pulse, submission-ops UI, diff history) and `tests/golden-journeys/` (CER EU-MDR, device 510(k) eSTAR, drug NDA eCTD, IND authoring). Playwright is configured (`playwright.config.ts`, targeting `tests/e2e/`) and runs in the `tier5-browser-smoke` workflow, which installs `@playwright/test` on demand. The `gstack` QA harness (`.claude/skills/gstack/`) runs headless browser dogfooding of live surfaces.
 
@@ -410,31 +443,42 @@ Both rules are cultural artifacts codified as enforced gates — `CLAUDE.md` is 
 
 # 18. The competitive moat, in one page
 
-Ask a diligence reader to list three things a competitor would need to have to be a peer, and it is roughly these:
+Three things are hard to copy, and each is evidenced in the repository rather than asserted.
 
-**A governance kernel.** Not a chatbot, not a policy config file — a set of pure decision functions (`server/src/control-plane/kernel.ts`) that evaluate a request against governance, security and observability domains and return an `allow | review | deny` verdict per domain, with rationale, timestamp and regulatory reference, re-derivable from source months later. We have this. Competitors selling AI to regulated buyers do not, and the sales pitch that follows an inspection question they cannot answer is short.
+**Engines decide; the model narrates.** Numbers, verdicts and governed content come from deterministic engines: the eCTD packager, validators, regulatory clocks, conformance checkers, the substantial-equivalence flowchart, sample-size solvers and rule packs. The model frames, drafts and explains, and a tool that asks a model for a figure is treated as a defect. Only approved, version-pinned models may serve drafting or review (§7). A competitor can wrap a model in an afternoon. Building the engines the model has to defer to is the work.
 
-**A memory system with a supersession lifecycle.** Not "chat history," not a vector store, but a three-layer memory (working, client, project) that carries locked facts, decisions, open questions, and next actions, with entries that transition `active → superseded` with successor pointers. This is what turns an AI from a session into a collaborator. Everyone can add short-term memory. Adding memory that is safe to keep across users is the hard part.
+**Part 11 evidence that is executed, not claimed.** Every signing path re-verifies the signer through one ceremony (`server/services/part11/reverify-signer.ts`): the account's standing, its lockout, the password and the enrolled second factor. It records what it verified. The audit trail is one HMAC-sealed chain per tenant with an ordered sequence, and the local verifier reads 262 of 262 records OK. An exported signature manifest verifies each printed hash against the content it is printed on, and refuses a sealed record that no signature covers. The validation package — plan, six URS, risk assessment, IQ, six OQ protocols, a traceability matrix generated from the runs, and a summary report — has been executed on a clean install in the production posture (§17).
 
-**A submission twin.** A live in-database model of the submission with claim-to-evidence integrity, drift detection, change-consequence intelligence, and readiness modeling. This is the piece that turns "we drafted your Module 2" into "we know your submission is 68% ready, we know which four blockers dominate the risk, and we know which Module 3 spec change will invalidate a Module 5 claim."
+**Tenant isolation proven as the production role.** Isolation is tested by a two-tenant contract run as the non-superuser `app_service` role with row-level security enforcing, on an install built from empty. Every cross-tenant path it found was reproduced before its fix and shown holding after: request schemas that took the tenant from the client, child tables with row security off, a membership table with no policy at all, and a vault retrieval pipeline that trusted its caller's organization id. A CI rule now fails on any child table left open.
 
-Add to that the design system, the harness, the 21 CFR Part 11 signature, re-authentication and audit wiring implemented across `server/services/part11/` and `server/services/audit/`, and 261 migrations on the deploy applier (of 554 SQL files in tree, the remainder legacy or laptop-only), and the picture is a platform with a compounding structural lead.
+Underneath all three is a discipline, written into `CLAUDE.md` and enforced by hooks: a gate that has only ever been seen to pass has not been tested. Several of the gates named here — `ci:migration-drop-safety` and `ci:launch-scope` among them — ship with self-tests that show them failing on the case they exist to catch.
+
+The three-layer memory (§10) supports this. AnA's memory is always on, because a user must be able to see what AnA remembers. The Submission Twin (§11) and the Intelligent Report Engine are in the tree but outside the launch release.
 
 ---
 
-# 19. Roadmap and near-term milestones
+# 19. The launch definition, and where each row stands
 
-Roadmap themes for the four quarters ahead, in the order they will land:
+This brief carries no roadmap beyond what the repository already commits to. `docs/LAUNCH_DEFINITION_OF_DONE.md`, binding from 2026-09-20, defines "commercially deployed" as ten rows, each with named evidence filed under `docs/evidence/`. `CLAUDE.md` Rule 2 forbids new capability until every row is green. The state below is taken from that file and the evidence it cites, as of 2026-09-27.
 
-**Q1: Deeper regulator coverage.** Expand precedent depth for EMA and PMDA. Add German-language Notified Body correspondence to the CER pathway. First production sponsor on the platform across all nine workstreams.
+| Row | Done means | Where it stands | Still owed |
+|---|---|---|---|
+| **D1** Hosted production | One AWS environment, image promoted by the deploy workflow, `/readyz` green on schema, AnA, Redis and worker | Application side proven: a database provisioned from empty, one Terraform stack with production and staging roots under test on every push, production refusing to boot without durable document storage | The AWS account, IAM, DNS, secrets and the apply itself; founder decisions on AI placement, Redis, worker and a WAF |
+| **D2** Launch catalog | Six apps on by default; every other surface behind a flag off in production; no fixture reachable in production | Green on a local instance with enforcement on: 6 apps, 41 surfaces, 21 modules, and a CI gate with a self-test | The staging run, with D1 |
+| **D3** Tenant isolation | Runtime as the non-superuser role, `RLS_ENFORCE=on`, the two-tenant contract passing on staging with the production image | Passing locally as `app_service` with RLS enforcing, after the fixes listed in §18 | The staging run, with D1 |
+| **D4** Validation package | CSA-aligned plan, URS per launch app, risk assessment, IQ, OQ with executed Playwright evidence, generated traceability, summary report, signed | Drafted and executed locally at one commit: IQ 12 pass / 0 fail / 3 deviations; OQ 101 pass / 0 fail / 2 deviations of 103; traceability 69 of 71 requirements pass, 0 uncovered | Staging execution; a PQ-passed model for the drafting step; signatures by the founder and a qualified contractor |
+| **D5** Part 11 evidence | Seal and MFA keys in KMS, a KMS-backed signer, the audit-chain verifier run on production | Signer modes and the KMS envelope implemented against a test KMS; per-tenant chain; local verifier 262/262 | The KMS key, one live signed release, the production verifier run |
+| **D6** Security posture | SOC 2 Type II window open, third-party pen test closed, questionnaire answered, Anthropic BAA, retention and residency statement | Policy set, questionnaire and trust statement drafted; sign-in defects closed, each reproduced first | SOC 2 platform, pen test, BAA, signatures |
+| **D7** One real sequence | One test sequence accepted by FDA's test environment for a real sponsor, with the acknowledgement chain | One AS2 transport for ESG and ICSR; PDF/A output fixed; the regional backbone refuses rather than guesses an application type | Agency DTDs (downloads are refused by the build environment's egress policy), agency accounts, the test submission |
+| **D8** Connector for Claude | A remote MCP server with 15–20 curated tools, submitted to the Connectors Directory | Built and proven locally: 19 tools, OAuth 2.1 with PKCE, tenant scoping under RLS, shown failing on a seeded mutation | Staging, a second machine's client, the directory submission |
+| **D9** Commercial paper | Pilot, subscription and data-processing agreements, order form, pricing, onboarding and support | Drafts complete under `docs/commercial/` | Lawyer review; the pricing decision |
+| **D10** One customer | A signed, paid pilot with logo rights, and a named regulatory user who has filed a governed document on production | Not yet | Founder |
 
-**Q2: Advanced twin capabilities.** Full change-consequence propagation across Modules 1–5. Real-time regulator challenge simulation surfaced as a live sidecar during authoring. Deeper reviewer-simulation model, tenant-tunable.
+**Gates.** At week 8, D10 must be signed and D1 staging green; without D10, building stops and the founder spends four weeks only on conversations. At week 16, the pilot user must have filed on production and the D7 sequence must be accepted. If not, the launch date moves and the pilot and any investor are told.
 
-**Q3: Federated learning and multi-sponsor precedent.** With sponsor opt-in, precedent depth increases via de-identified outcome sharing. A federated-learning coordinator is scaffolded (`server/services/cognitive-ecosystem/federated-learning.service.ts`, MELLODDY-style model lifecycle, participant registry, gradient aggregation, privacy-budget ledger). It has no call sites yet, so the work here is technical as well as contractual.
+**The dashboard.** `node scripts/ops/ga-readiness-report.mjs` checks the environment and asset presence behind these rows. The most recent filed run (`docs/evidence/W5/2026-09-24-package-spine-lifecycle/`) reads 5 of 41 ready, with 19 blockers outstanding. Most of the 19 are production secrets and licensed or vendored agency artifacts: eCTD DTDs, MedDRA and WHODrug, the ESG connection, an agency-grade validator. They are procurement and deployment items rather than code.
 
-**Q4: Platform extensibility.** MDX-host and pdev-app surface types will graduate into a first-class app SDK so sponsors and partners can ship their own governed apps on our kernel. This is the platform play — the same kernel that grants an internal action can grant a partner's action.
-
-Each quarter delivers commercial anchors, not just features. Each anchor is measurable, and each will be reported to investors against the milestone plan.
+**Out of scope until launch.** The regulatory digital twin, the epistemic, causal and self-evolving engines, federated learning and the manufacturing digital twin stay in the tree behind flags and receive no work until D1–D10 are green.
 
 ---
 
@@ -516,3 +560,5 @@ The numbers below are the ones an engineering diligence reader will want in one 
 *Prepared on branch `concept2cure-v2`, the sole production branch, per repository policy.*
 
 *On 2026-09-08 every factual claim in this document was audited against source: 447 claims checked, 354 confirmed exactly, 91 corrected — including file sizes, one cited path that did not exist, and several capabilities that are scaffolded rather than shipped. Where something is provisioned but not yet wired, this document now says so. Counts were measured that day and the repository is active; re-run the commands in §20 and expect larger numbers.*
+
+*Revised 2026-09-28 to align with `docs/LAUNCH_DEFINITION_OF_DONE.md`, which became binding on 2026-09-20. The brief now distinguishes the six-app launch release from the wider tree, frames the gateway as approved-model governance, replaces an earlier roadmap that the repository did not support with the launch rows and their status as of 2026-09-27, and adds the executed validation package. The code counts in §1 and §20 remain those of 2026-09-08.*
