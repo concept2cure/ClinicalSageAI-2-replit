@@ -1,0 +1,30 @@
+  "context": {}
+}
+stdout | server/services/ai-gateway/__tests__/zz-deterministic-red-demo.test.ts
+[database] Database connection successful
+stdout | server/services/ai-gateway/__tests__/zz-deterministic-red-demo.test.ts > RED on the unfixed code: production + AI_GATEWAY_DETERMINISTIC, no acceptance > what production actually returns today
+RETURNED: "**AnA (Demo Mode):** I'm running without an AI provider. Set `ANTHROPIC_API_KEY` in your `.env` file to enable full regulatory intelligence. All governance features (promotion, contradictions, readiness) work independently of the AI provider." | THREW: nothing
+ ✓ server/services/ai-gateway/__tests__/zz-deterministic-red-demo.test.ts > RED on the unfixed code: production + AI_GATEWAY_DETERMINISTIC, no acceptance > what production actually returns today 8ms
+ × server/services/ai-gateway/__tests__/zz-deterministic-red-demo.test.ts > RED on the unfixed code: production + AI_GATEWAY_DETERMINISTIC, no acceptance > must refuse to serve a fixed response 8ms
+   → promise resolved "'**AnA (Demo Mode):** I\'m running wit…'" instead of rejecting
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ai-gateway/__tests__/zz-deterministic-red-demo.test.ts > RED on the unfixed code: production + AI_GATEWAY_DETERMINISTIC, no acceptance > must refuse to serve a fixed response
+AssertionError: promise resolved "'**AnA (Demo Mode):** I\'m running wit…'" instead of rejecting
+- Expected:
+Error {
+  "message": "rejected promise",
+}
++ Received:
+"**AnA (Demo Mode):** I'm running without an AI provider. Set `ANTHROPIC_API_KEY` in your `.env` file to enable full regulatory intelligence. All governance features (promotion, contradictions, readiness) work independently of the AI provider."
+ ❯ server/services/ai-gateway/__tests__/zz-deterministic-red-demo.test.ts:17:54
+     15|     process.env.NODE_ENV = 'production';
+     16|     delete process.env.AI_GATEWAY_ACCEPT_DETERMINISTIC;
+     17|     await expect(gw().complete('Draft section 2.7.3')).rejects.toThrow…
+       |                                                      ^
+     18|   });
+     19| });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  16:38:32
+   Duration  3.16s (transform 1.88s, setup 100ms, import 2.72s, tests 20ms, environment 0ms)
