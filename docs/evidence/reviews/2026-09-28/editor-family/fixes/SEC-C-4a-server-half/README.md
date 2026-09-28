@@ -17,7 +17,7 @@ reads `module_context`. `buildChatContext`, this block's only caller, has no
 production caller. So the whole observed-screen-state block reaches no model
 today, not only the selection: see `stream-drops-module-context.txt`. It was
 found by this lane's adversarial reviewer, confirmed at `37f21ed0`, and handed
-on as work-orders item 15.
+on as work-orders item 14.
 - The client half (`useAnaChat`, `RichSectionEditor`, the hosts, and
   `DocumentCanvas`, which the completeness critic found) must not land before
   the stream route renders the block. Otherwise the selection would move into
