@@ -15,14 +15,20 @@
  * Tool durations and the inputs she passed are in the transcript, behind each
  * step's own disclosure (AnaActivity), not repeated here.
  *
+ * Also the run-control strip (RunControlStrip): pause, resume, steer, stop,
+ * and Manual's hold — one strip for every host that shows a live run.
+ *
  * @module client/src/concept2cure/v2/AnaWorkSections
  */
 
 import React from 'react';
 
 import { I } from './icons';
-import type { AnaChatMessage, AnaToolCall } from '../components/ana/useAnaChat';
-import type { AnaPlanStep, AnaProgressPhase } from '../components/ana/useAnaChat.types';
+import type { AnaChatMessage, AnaToolCall, RunControlStatus } from '../components/ana/useAnaChat';
+import type { AnaPlanStep, AnaProgressPhase, AnaRunHold } from '../components/ana/useAnaChat.types';
+import { MAX_INTERJECTION_CHARS, type AnaRunPolicy } from '@shared/ana/run-control-limits';
+import { PAUSE_WORDS } from '@shared/ana/run-policy';
+import { SR_ONLY_STYLE } from '../hooks/useChatUpload';
 import { currentStep, formatElapsed, formatStepDuration } from '../components/ana/anaProgress';
 import type { AgentActivityView } from './useAgentActivity';
 import { clip, formatClock, SENDING_PLACEHOLDER, type UsedRow } from './anaWorkModel';
@@ -274,5 +280,290 @@ export function BackgroundQueue({ q }: { q: AgentActivityView | undefined }) {
       </ul>
       {q.readAt !== null && <div className="ana-work-asof">As of {formatClock(q.readAt)}</div>}
     </Section>
+  );
+}
+
+/* ── Run control ──────────────────────────────────────────────────────────── */
+
+/** "Next: A; B; C; +2" — the steps a Manual hold is waiting to run, three at most. */
+function nextLine(next: string[]): string {
+  const shown = next.slice(0, 3).join('; ');
+  return `Next: ${shown}${next.length > 3 ? `; +${next.length - 3}` : ''}`;
+}
+
+export interface RunControlStripProps {
+  streaming: boolean;
+  runStatus: RunControlStatus;
+  /** Why the run is held, when it is: a Manual hold gets its own copy and answers. */
+  runHold?: AnaRunHold | null;
+  /** The policy the turn in flight was sent with: under Manual a steer replaces her next step. */
+  runPolicy?: AnaRunPolicy | null;
+  onPause?: () => void;
+  onResume?: () => void;
+  onStop?: () => void;
+  /** Splices a steer into the next round (under a Manual hold: replaces the step). Capped server-side. */
+  /* Returns whether the server ACCEPTED the steer, so the box can keep the
+     text on a refusal instead of silently eating it. `void` is still allowed:
+     a caller that reports nothing is treated as accepted, which is the
+     pre-existing behaviour rather than a fabricated failure. */
+  onSteer?: (message: string) => void | boolean | Promise<boolean | void>;
+}
+
+/**
+ * Mid-run control: the one strip, rendered by the rail (Shell.tsx AnaRail) and
+ * above the conversation screen's composer (ConversationThread), which the
+ * rail is not drawn beside. Moved here from the rail (row 74, S4) so a Manual
+ * hold can be answered wherever AnA is waiting.
+ *
+ * The three actions have three different scopes, and the copy says which is
+ * which rather than one blanket promise:
+ *   Stop   cuts the step in flight — the model call and the tools are
+ *          aborted, so it is "Stopping…", acknowledged by the server.
+ *   Pause  holds at the next ROUND BOUNDARY, deliberately: killing a tool to
+ *          pause throws the work away and then redoes it, so "after this
+ *          step" is the honest label and stays.
+ *   Steer  applies at the next round.
+ * Steering is the reason this exists: a reviewer watching AnA work a question
+ * the wrong way could previously only wait for her to finish, while the server
+ * has spliced steers into the next round, and recorded them in the decision
+ * lineage, all along. Pause and Steer are offered only when the run is durably
+ * controllable; Stop is always offered because aborting the request needs no
+ * run record.
+ *
+ * Under Manual, AnA stops herself before each further step: the strip says she
+ * is waiting, names the step, and offers the three answers the server takes —
+ * Run this step (resume), Do this instead (a steer, which REPLACES the step:
+ * it will not run), and Stop. A hold that ran out ended the turn: it says so,
+ * with nothing left to press.
+ */
+export function RunControlStrip({ streaming, runStatus, runHold, runPolicy, onPause, onResume, onStop, onSteer }: RunControlStripProps) {
+  const nextId = React.useId();
+  if (runHold?.reason === 'expired') return streaming ? <HoldEndedStrip /> : null;
+  if (!streaming || !(onPause || onStop || onSteer)) return null;
+  const manual = runStatus === 'paused' && runHold?.reason === 'manual';
+  const next = manual && runHold ? runHold.next : [];
+  const nextRef = next.length > 0 ? nextId : undefined;
+  return (
+    <div className="ana-runctl" role="group" aria-label="Control this run">
+      <HoldLines manual={manual} next={next} nextId={nextRef} runStatus={runStatus} />
+      {onSteer && <SteerForm manual={manual} help={steerHelpFor(manual, runPolicy, runStatus)} nextId={nextRef} onSteer={onSteer} />}
+      <RunStripActions runStatus={runStatus} manual={manual} nextId={nextRef} onPause={onPause} onResume={onResume} onStop={onStop} />
+    </div>
+  );
+}
+
+/**
+ * What the steer box says: that it replaces the held step, or — while a
+ * Manual turn is working — that a steer sent now takes the place of her next
+ * step (the server's early steer, filed `superseded`). Nothing otherwise.
+ */
+function steerHelpFor(manual: boolean, runPolicy: AnaRunPolicy | null | undefined, runStatus: RunControlStatus): string | null {
+  if (manual) return 'The step shown will not run.';
+  return runPolicy === 'manual' && runStatus === 'running'
+    ? 'Under Manual, a steer sent now replaces her next step unless that step needs your approval; a replaced step does not run.'
+    : null;
+}
+
+/**
+ * The strip's state line, and under a Manual hold what she waits to run and
+ * when the wait ends. The polite region is mounted with the strip and filled
+ * when she starts waiting: a region that appears with its first words is the
+ * case assistive technology misses.
+ */
+function HoldLines({
+  manual,
+  next,
+  nextId,
+  runStatus,
+}: {
+  manual: boolean;
+  next: string[];
+  nextId?: string;
+  runStatus: RunControlStatus;
+}) {
+  const waiting = next.length > 0 ? next.join('; ') : 'her next step';
+  return (
+    <>
+      <span aria-live="polite" style={SR_ONLY_STYLE}>
+        {manual ? `AnA is waiting for you before: ${waiting}` : ''}
+      </span>
+      <RunStripState runStatus={runStatus} manual={manual} />
+      {nextId && (
+        <span id={nextId} className="ana-runctl-next">
+          {nextLine(next)}
+        </span>
+      )}
+      {manual && <span className="ana-runctl-help">{`If nobody answers within ${PAUSE_WORDS}, the turn ends.`}</span>}
+    </>
+  );
+}
+
+/** Pause or Resume (under Manual, Run this step), and Stop. Each only when its handler is given. */
+function RunStripActions({
+  runStatus,
+  manual,
+  nextId,
+  onPause,
+  onResume,
+  onStop,
+}: Pick<RunControlStripProps, 'runStatus' | 'onPause' | 'onResume' | 'onStop'> & { manual: boolean; nextId?: string }) {
+  return (
+    <div className="ana-runctl-actions">
+      {runStatus === 'paused'
+        ? onResume && (
+            <button
+              type="button"
+              className={manual ? 'ana-runctl-btn is-primary' : 'ana-runctl-btn'}
+              aria-describedby={manual ? nextId : undefined}
+              onClick={onResume}
+            >
+              {manual ? 'Run this step' : 'Resume'}
+            </button>
+          )
+        : onPause && (
+            <button type="button" className="ana-runctl-btn" onClick={onPause}>
+              Pause
+            </button>
+          )}
+      {onStop && (
+        <button type="button" className="ana-runctl-btn is-stop" onClick={onStop}>
+          Stop
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** A Manual hold nobody answered ended the turn: said, with nothing left to press. */
+function HoldEndedStrip() {
+  return (
+    <div className="ana-runctl" role="group" aria-label="Control this run">
+      <span className="ana-runctl-state">
+        <span className="ana-runctl-dot is-paused" aria-hidden="true">{I.pause}</span>
+        Stopped waiting for you
+      </span>
+    </div>
+  );
+}
+
+/** Where the run is: working, paused by the person, waiting for them (Manual), or stopping. */
+function RunStripState({ runStatus, manual }: { runStatus: RunControlStatus; manual: boolean }) {
+  return (
+    <span className="ana-runctl-state">
+      <span
+        className={runStatus === 'paused' || runStatus === 'cancelled' ? 'ana-runctl-dot is-paused' : 'ana-runctl-dot'}
+        aria-hidden="true"
+      >
+        {runStatus === 'paused' ? I.pause : I.dot}
+      </span>
+      {/* Pause still lands at a round boundary — deliberately: killing a
+          tool to pause throws the work away and then redoes it. Stop now
+          cuts the step in flight, so the copy must stop saying "after this
+          step" for BOTH, and must not claim stopped before the server says
+          so. Under Manual nobody paused: she is waiting for the person. */}
+      {manual
+        ? 'Waiting for you before the next step'
+        : runStatus === 'paused'
+          ? 'Paused after this step'
+          : runStatus === 'cancelled'
+            ? 'Stopping…'
+            : 'Working'}
+    </span>
+  );
+}
+
+/**
+ * The steer box. Under a Manual hold it is "Do this instead": the steer
+ * REPLACES the held step, and the box says the step shown will not run.
+ *
+ * ── The box used to empty whether or not the steer was accepted ──
+ * `onSteer(v); setSteer('')` cleared the input synchronously, before anything
+ * knew the server's answer — and `interject` answers with a boolean that every
+ * call site discarded. A 404 (run already gone), a 409, a validation refusal
+ * and a dropped connection all looked identical to success: the sentence
+ * vanished from the box, which is the only acknowledgement this control has,
+ * and nothing anywhere recorded it. The person had typed an instruction into
+ * nothing. Now the text is only cleared once the server has accepted it, and a
+ * refusal says so and leaves the sentence where it is, so it can be sent again
+ * without retyping.
+ */
+function SteerForm({
+  manual,
+  help,
+  nextId,
+  onSteer,
+}: {
+  manual: boolean;
+  /** Said under the box (and read with it): what a steer sent now does to her next step. */
+  help: string | null;
+  /** The held step's line, which the box's steer would replace. */
+  nextId?: string;
+  onSteer: NonNullable<RunControlStripProps['onSteer']>;
+}) {
+  /* The steer field is separate from the composer's draft on purpose: a steer
+     joins the RUNNING turn, a draft starts the next one, and sharing one buffer
+     would make it ambiguous which a half-typed sentence was about to do. */
+  const [steer, setSteer] = React.useState('');
+  /* `steerRefused` exists because the only acknowledgement this control has is
+     the box emptying, so a refusal has to say something rather than look like
+     a send. */
+  const [steerBusy, setSteerBusy] = React.useState(false);
+  const [steerRefused, setSteerRefused] = React.useState(false);
+  const errId = React.useId();
+  const helpId = React.useId();
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const v = steer.trim();
+    if (!v || steerBusy) return;
+    setSteerBusy(true);
+    setSteerRefused(false);
+    void Promise.resolve(onSteer(v))
+      .then((accepted) => {
+        // `undefined` means the handler reports nothing either way; treating
+        // that as accepted keeps the old behaviour for any caller that has not
+        // been widened, rather than telling the person their steer failed on
+        // no evidence.
+        if (accepted === false) {
+          setSteerRefused(true);
+          return;
+        }
+        setSteer('');
+      })
+      .catch(() => setSteerRefused(true))
+      .finally(() => setSteerBusy(false));
+  };
+  const describedBy = [steerRefused ? errId : '', manual ? (nextId ?? '') : '', help ? helpId : ''].filter(Boolean).join(' ');
+  return (
+    <>
+      <form className="ana-runctl-steer" onSubmit={submit}>
+        <input
+          type="text"
+          className="ana-runctl-input"
+          value={steer}
+          maxLength={MAX_INTERJECTION_CHARS}
+          onChange={(e) => {
+            setSteer(e.target.value);
+            if (steerRefused) setSteerRefused(false);
+          }}
+          placeholder={manual ? 'Or tell AnA what to do instead' : 'Steer this run…'}
+          aria-label={manual ? 'Tell AnA what to do instead' : 'Steer this run'}
+          aria-invalid={steerRefused || undefined}
+          aria-describedby={describedBy || undefined}
+        />
+        <button type="submit" className="ana-runctl-go" disabled={!steer.trim() || steerBusy}>
+          {steerBusy ? 'Sending…' : manual ? 'Do this instead' : 'Steer'}
+        </button>
+      </form>
+      {help && (
+        <span id={helpId} className="ana-runctl-help">
+          {help}
+        </span>
+      )}
+      {steerRefused && (
+        <span id={errId} className="ana-runctl-err" role="status">
+          Not sent — AnA did not accept this steer. The text is still here.
+        </span>
+      )}
+    </>
   );
 }

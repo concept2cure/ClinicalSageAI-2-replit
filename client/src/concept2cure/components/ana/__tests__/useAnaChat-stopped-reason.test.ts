@@ -120,15 +120,16 @@ describe('the done frame says why the turn stopped — behavioural', () => {
     expect(fractional.settled.rounds).toBeUndefined();
   });
 
-  it('does not accept the reasons later slices reserve before anything produces them', async () => {
-    // budget_exhausted, approval_timeout, hold_expired and hold_unavailable are
-    // named in the types so later work does not reshape them. Nothing on the
-    // server produces them yet and no surface has words for them, so a stray
-    // one must not reach a surface that would fall through to "Finished". The
-    // slice that produces each one adds it to the known set with its copy.
-    for (const reserved of ['budget_exhausted', 'approval_timeout', 'hold_expired', 'hold_unavailable']) {
-      const { settled } = await turnEnding({ stoppedReason: reserved, rounds: 3 });
-      expect(settled.stoppedReason, reserved).toBeUndefined();
+  it('accepts the run-policy reasons now that the server produces them and every surface has words for them', async () => {
+    // budget_exhausted, approval_timeout, hold_expired and hold_unavailable were
+    // named in S1 and ignored until something produced them. Row 74's S4 is
+    // that producer (the stream's run policy), and it added each one's copy to
+    // stateLineFor and the stopped note in the same change, so none of them
+    // can fall through to "Finished" (useAnaChat-run-policy.test.ts,
+    // anaRunPolicyStops.test.tsx).
+    for (const reason of ['budget_exhausted', 'approval_timeout', 'hold_expired', 'hold_unavailable']) {
+      const { settled } = await turnEnding({ stoppedReason: reason, rounds: 3 });
+      expect(settled.stoppedReason, reason).toBe(reason);
     }
   });
 

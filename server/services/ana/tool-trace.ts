@@ -15,7 +15,8 @@
  * continuity note. The DB persistence and route wiring live elsewhere.
  */
 
-import type { HumanControlEvent, TurnStoppedReason } from './run-status.js';
+import { parseRunPolicy, type AnaRunPolicy, type HumanControlEvent, type PolicyHold, type TurnStoppedReason } from './run-status.js';
+import { AUTO_TIME_WORDS, PAUSE_WORDS, isPolicyHoldOutcome, stepLabels } from '@shared/ana/run-policy';
 import type { TurnPlanStep } from './turn-plan.js';
 
 export interface ToolTraceEntry {
@@ -210,12 +211,42 @@ export interface AssistantMessageMetadata {
   stoppedReason?: TurnStoppedReason;
   /** Tool rounds the turn ran. Kept only when there was at least one. */
   rounds?: number;
+  /** The run policy the turn ran under (row 74). Absent for a turn that sent none. */
+  runPolicy?: AnaRunPolicy;
+  /**
+   * The steps she had chosen that did not run because the turn stopped first
+   * (a Manual hold nobody answered, or Manual that could not hold), by label.
+   */
+  pendingSteps?: string[];
+  /**
+   * AnA's own holds under Manual, kept apart from `humanControls`: the pause
+   * was the policy's, the resume after it the person's. The lineage dossier
+   * reads both.
+   */
+  policyHolds?: PolicyHold[];
 }
 
 /** How the turn's agentic loop ended, as the stream observed it. */
 export interface TurnEnding {
   stoppedReason?: TurnStoppedReason | null;
   rounds?: number | null;
+  runPolicy?: AnaRunPolicy | null;
+  pendingSteps?: readonly string[] | null;
+  policyHolds?: readonly PolicyHold[] | null;
+}
+
+/** A policy hold as the stream wrote it; anything malformed is dropped rather than stored. */
+function isPolicyHold(raw: unknown): raw is PolicyHold {
+  const h = raw as Partial<PolicyHold> | null;
+  return (
+    !!h &&
+    typeof h === 'object' &&
+    Number.isInteger(h.round) &&
+    h.reason === 'manual' &&
+    Array.isArray(h.next) &&
+    isPolicyHoldOutcome(h.outcome) &&
+    typeof h.at === 'string'
+  );
 }
 
 /** Cap on persisted reasoning so a pathological turn can't bloat a message row. */
@@ -277,7 +308,27 @@ export function withTurnEnding(
   if (reason && reason !== 'no_more_tools') out.stoppedReason = reason;
   const rounds = ending?.rounds;
   if (typeof rounds === 'number' && Number.isInteger(rounds) && rounds > 0) out.rounds = rounds;
+  withPolicyEnding(out, ending);
   return Object.keys(out).length > 0 ? out : undefined;
+}
+
+/** The run policy's part of the ending (row 74): the policy, the steps not run, her own holds. Only well-formed values. */
+function withPolicyEnding(out: AssistantMessageMetadata, ending: TurnEnding | null | undefined): void {
+  const runPolicy = parseRunPolicy(ending?.runPolicy);
+  if (runPolicy) out.runPolicy = runPolicy;
+  const pending = stepLabels(ending?.pendingSteps);
+  if (pending.length > 0) out.pendingSteps = pending;
+  const holds = (ending?.policyHolds ?? []).filter(isPolicyHold);
+  if (holds.length > 0) out.policyHolds = holds.map(h => ({ ...h, next: stepLabels(h.next) }));
+}
+
+/** How the turn record names a policy. */
+const POLICY_NAME: Record<AnaRunPolicy, string> = { manual: 'Manual', auto: 'Auto' };
+
+/** The steps a stop left unrun, as the record says them. */
+function notRunSentence(pendingSteps: readonly string[] | null | undefined): string {
+  const steps = stepLabels(pendingSteps);
+  return steps.length > 0 ? ` Steps not run: ${steps.join('; ')}.` : '';
 }
 
 /**
@@ -287,7 +338,36 @@ export function withTurnEnding(
  * does not read it as a concluded analysis. '' for `no_more_tools`, which is
  * not a stop anyone needs warning of.
  */
-export function turnStopWarning(reason: TurnStoppedReason, rounds: number): string {
+export function turnStopWarning(
+  reason: TurnStoppedReason,
+  rounds: number,
+  context?: {
+    runPolicy?: AnaRunPolicy | null;
+    pendingSteps?: readonly string[] | null;
+    /** Her own holds this turn: an expired one means SHE was waiting, not a person's pause. */
+    policyHolds?: readonly PolicyHold[] | null;
+  },
+): string {
+  const heldByHer = (context?.policyHolds ?? []).some(h => h.outcome === 'expired');
+  const words = stopWords(reason, rounds, context?.pendingSteps, heldByHer);
+  const policy = parseRunPolicy(context?.runPolicy);
+  return words && policy ? `${words} Run policy: ${POLICY_NAME[policy]}.` : words;
+}
+
+/** The record's words for a hold that expired: hers under Manual, or a person's own pause. */
+function expiredWords(ran: string, heldByHer: boolean): string {
+  return heldByHer
+    ? `Manual: AnA waited ${PAUSE_WORDS} for the person before her next step and nobody answered, so the turn ended${ran}`
+    : `Manual: the run was paused and nobody resumed it within ${PAUSE_WORDS}, so the turn ended${ran}`;
+}
+
+/** The record's words for a stop, before the policy is named. */
+function stopWords(
+  reason: TurnStoppedReason,
+  rounds: number,
+  pendingSteps?: readonly string[] | null,
+  heldByHer = false,
+): string {
   // The round limit and the repeat guard fire only after a round has run
   // (agentic-loop: round++ precedes both). A cancel can land at the first
   // checkpoint, before any round — so "after N rounds" is said only when
@@ -301,22 +381,68 @@ export function turnStopWarning(reason: TurnStoppedReason, rounds: number): stri
     case 'duplicate_thrash':
       return `The turn stopped${ran} because AnA was repeating the same step. The answer was written from the work done up to that point.`;
     case 'cancelled':
-      return rounds > 0
-        ? `The run was stopped between rounds${ran}, before AnA said she was done.`
-        : 'The run was stopped before its first tool round.';
+      return (
+        (rounds > 0
+          ? `The run was stopped between rounds${ran}, before AnA said she was done.`
+          : 'The run was stopped before its first tool round.') + notRunSentence(pendingSteps)
+      );
+    case 'budget_exhausted':
+      return (
+        `The turn stopped at its time limit${ran} (${AUTO_TIME_WORDS}), before AnA ` +
+        'said she was done. The answer was written from the work done up to that point.'
+      );
+    case 'approval_timeout':
+      return (
+        `The turn stopped${ran} because an approval AnA asked for was not answered within ${PAUSE_WORDS}. ` +
+        'That action was not taken; the answer was written from the work done up to that point.'
+      );
+    case 'hold_expired':
+      return `${expiredWords(ran, heldByHer)}, before she said she was done.${notRunSentence(pendingSteps)}`;
+    case 'hold_unavailable':
+      return (
+        `Manual was asked for, but run control was not available for this turn, so AnA stopped${ran} ` +
+        `where she would have asked the person.${notRunSentence(pendingSteps)}`
+      );
     default:
-      // A reserved run-policy reason: nothing produces one yet. Said plainly
-      // rather than dropped, so a record can never be silent about a stop.
+      // A reason this module has no words for. Said plainly rather than
+      // dropped, so a record can never be silent about a stop.
       return `The turn stopped (${reason})${ran}, before AnA said she was done.`;
+  }
+}
+
+/**
+ * The turn record's line for one of AnA's own holds under Manual: what she
+ * held before, and what the person did. The pause is the policy's, so it is
+ * not in the record's controls; this is where it is written down.
+ */
+export function policyHoldWarning(hold: PolicyHold): string {
+  const next = stepLabels(hold.next);
+  const steps = next.length > 0 ? ` (${next.join('; ')})` : '';
+  const before = `Manual: AnA stopped before round ${hold.round}${steps}`;
+  switch (hold.outcome) {
+    case 'continued':
+      return `${before} and waited; the person said to run it.`;
+    case 'redirected':
+      return `${before}; the person replaced the step with an instruction, and it was not run.`;
+    case 'superseded':
+      // Not a hold: nothing paused and no Next was shown. Never "she stopped".
+      return (
+        `Manual: before round ${hold.round}, a steer the person sent while AnA was working replaced her next ` +
+        `step${steps} before it was shown; it was not run.`
+      );
+    case 'expired':
+      return `${before} and nobody answered within ${PAUSE_WORDS}, so the turn ended there.`;
+    case 'stopped':
+      return `${before}; the run was stopped while she waited, and the step was not run.`;
+    case 'disconnected':
+      return `${before}; the page was closed while she waited, and the step was not run.`;
   }
 }
 
 /**
  * The stops that leave a turn's work unfinished, in the words the next turn is
  * told. `no_more_tools` (she said she was done) and `cancelled` (the person
- * stopped it, and asks again if they want more) are not here. The reserved
- * run-policy reasons are not here either: nothing produces them yet, and each
- * gets its words with the change that does.
+ * stopped it, and asks again if they want more) are not here.
  *
  * A Map, not an object literal: the reason is read back from a stored row, and
  * a string naming an Object.prototype member (`constructor`, `toString`) would
@@ -328,6 +454,11 @@ const UNFINISHED_STOP: ReadonlyMap<string, (rounds: number | null) => string> = 
 >([
   ['max_rounds', (rounds) => `stopped at the round limit${rounds ? ` (${rounds} rounds)` : ''}`],
   ['duplicate_thrash', () => 'was stopped because it was repeating the same step,'],
+  // The run policy's stops (row 74, S4).
+  ['budget_exhausted', () => 'stopped at its time limit'],
+  ['approval_timeout', () => 'stopped when an approval you asked for went unanswered, so that action was not taken,'],
+  ['hold_expired', () => `stopped after waiting ${PAUSE_WORDS} for the person to say whether to go on,`],
+  ['hold_unavailable', () => 'stopped where it would have asked the person (Manual could not hold this turn)'],
 ]);
 
 /**
@@ -361,13 +492,18 @@ export function formatStoppedTurnNote(history: HistoryMessage[]): string {
       break;
     }
   }
-  const meta = last?.metadata as { stoppedReason?: unknown; rounds?: unknown } | null | undefined;
+  const meta = last?.metadata as { stoppedReason?: unknown; rounds?: unknown; pendingSteps?: unknown } | null | undefined;
   const reason = typeof meta?.stoppedReason === 'string' ? meta.stoppedReason : null;
   const words = reason ? UNFINISHED_STOP.get(reason) : undefined;
   if (!words) return '';
   const rounds = typeof meta?.rounds === 'number' && Number.isInteger(meta.rounds) && meta.rounds > 0 ? meta.rounds : null;
+  const pending = stepLabels(meta?.pendingSteps);
+  const unrun =
+    pending.length > 0
+      ? ` Steps you had chosen that did not run: ${pending.join('; ')}. Nothing from them was used.`
+      : '';
   return (
-    `Your previous turn ${words(rounds)} before it was finished. Its answer was ` +
+    `Your previous turn ${words(rounds)} before it was finished.${unrun} Its answer was ` +
     'written from the work done up to that point. Do not reuse that turn\'s ' +
     'findings as complete or present its answer as a finished analysis: say ' +
     'what it did not cover, and if the person asks you to continue, pick up ' +

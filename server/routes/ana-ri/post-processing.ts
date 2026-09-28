@@ -14,7 +14,7 @@ import type { Response } from 'express';
 import type { GatewayMessage } from '../../services/ai-gateway/types.js';
 import type { UserRole } from '../../services/ana-ri/persona.js';
 import { buildAssistantMetadata, withTurnEnding, type ToolTraceEntry } from '../../services/ana/tool-trace.js';
-import type { HumanControlEvent, TurnStoppedReason } from '../../services/ana/run-status.js';
+import type { AnaRunPolicy, HumanControlEvent, PolicyHold, TurnStoppedReason } from '../../services/ana/run-status.js';
 import {
   checkEvidenceDiscipline,
   validateResponseStructure,
@@ -79,6 +79,14 @@ export interface StreamPostProcessingContext {
    */
   stoppedReason?: TurnStoppedReason;
   rounds?: number;
+  /**
+   * The run policy the turn ran under, the steps a stop left unrun, and AnA's
+   * own Manual holds (row 74) — persisted with the message beside the stop, so
+   * the dossier can tell her holds from a person's controls.
+   */
+  runPolicy?: AnaRunPolicy | null;
+  pendingSteps?: string[];
+  policyHolds?: PolicyHold[];
   /** Raw tool output this turn — evidence corpus for the grounding round. */
   toolEvidenceCorpus: string[];
   /** Provenance envelopes from evidence tools this turn — persisted to the lineage trail. */
@@ -297,6 +305,9 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     plan,
     stoppedReason,
     rounds,
+    runPolicy,
+    pendingSteps,
+    policyHolds,
     toolEvidenceCorpus,
     collectedProvenance,
     collectedNavigation,
@@ -424,7 +435,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
             threadId, 'assistant', finalAssistantContent, undefined, undefined,
             withTurnEnding(
               buildAssistantMetadata(toolTrace, streamGrounding, reasoning, humanControls, plan),
-              { stoppedReason, rounds },
+              { stoppedReason, rounds, runPolicy, pendingSteps, policyHolds },
             ) as Record<string, unknown> | undefined,
           )
             .then((id) => {

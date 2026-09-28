@@ -11,7 +11,8 @@
  */
 
 import type { AnaChatMessage, AnaToolCall, RunControlStatus } from '../components/ana/useAnaChat';
-import type { AnaProgressPhase, AnaStoppedReason } from '../components/ana/useAnaChat.types';
+import type { AnaProgressPhase, AnaRunHold, AnaStoppedReason } from '../components/ana/useAnaChat.types';
+import { AUTO_TIME_WORDS, MANUAL_UNAVAILABLE_TEXT, PAUSE_WORDS, stepLabels } from '@shared/ana/run-policy';
 import {
   formatElapsed,
   formatStepDuration,
@@ -32,19 +33,43 @@ export interface AnaWorkContext {
   pinnedTools?: string[];
 }
 
+/**
+ * The stops a turn's loop or its run policy made, in the panel's words. Each
+ * says the stop and then its cause, so none can be read as good news; none is
+ * "Finished". `cancelled` (a Stop) is said by its own branch.
+ */
+const STOP_LINES: ReadonlyMap<string, string> = new Map<AnaStoppedReason, string>([
+  ['max_rounds', 'Stopped at the round limit'],
+  ['duplicate_thrash', 'Stopped: repeating a step'],
+  // The run policy's (row 74, S4).
+  ['budget_exhausted', 'Stopped at the time limit'],
+  ['approval_timeout', 'Stopped: an approval was not answered'],
+  ['hold_expired', 'Stopped waiting for you'],
+  ['hold_unavailable', 'Stopped: Manual was unavailable'],
+]);
+
+/** A live turn's state line: working, paused, waiting for you, or stopping. */
+function liveStateLine(runStatus: RunControlStatus, runHold: AnaRunHold | null | undefined, elapsed: string): string {
+  // Under Manual AnA stopped herself: nobody pressed Pause, so it is not
+  // "Paused" — she is waiting for the person to say what comes next.
+  if (runStatus === 'paused' && runHold?.reason === 'manual') return `Waiting for you · ${elapsed}`;
+  if (runStatus === 'paused') return `Paused · ${elapsed}`;
+  // Between hold_expired and the stream's close: the turn has ended.
+  if (runHold?.reason === 'expired') return `Stopped waiting for you · ${elapsed}`;
+  if (runStatus === 'cancelled') return `Stopping · ${elapsed}`;
+  return `Still working · ${elapsed}`;
+}
+
 /** The header's one-line state: in flight, paused, stopped or finished, with its clock. */
 export function stateLineFor(
   turn: AnaChatMessage | null,
   live: boolean,
   runStatus: RunControlStatus,
   elapsed: string,
+  runHold?: AnaRunHold | null,
 ): string {
   if (!turn) return '';
-  if (live) {
-    if (runStatus === 'paused') return `Paused · ${elapsed}`;
-    if (runStatus === 'cancelled') return `Stopping · ${elapsed}`;
-    return `Still working · ${elapsed}`;
-  }
+  if (live) return liveStateLine(runStatus, runHold, elapsed);
   if (turn.stopped) return `Stopped after ${elapsed}`;
   // A timeout or a lost connection never sets `stopped` (that flag is the
   // person's own stop). Both are turns that did not finish, and neither may
@@ -59,16 +84,67 @@ export function stateLineFor(
   // `cancelled` from the server is the same Stop: when its done and post_done
   // land before this client's own abort, `stopped` is never set.
   if (turn.stoppedReason === 'cancelled') return elapsed ? `Stopped after ${elapsed}` : 'Stopped';
-  // The loop ended the turn, not AnA: the round limit forced the answer, or
-  // she was repeating a step. The stream closed cleanly and every phase
-  // completed, so nothing above can see it — and a capped turn must never
-  // read "Finished". Each says the stop and then its cause, so neither can be
-  // read as good news ("stopped repeating" would say she quit repeating and
-  // carried on).
-  if (turn.stoppedReason === 'max_rounds') return clocked('Stopped at the round limit');
-  if (turn.stoppedReason === 'duplicate_thrash') return clocked('Stopped: repeating a step');
+  // The loop or the run policy ended the turn, not AnA: the round limit or
+  // the time limit forced the answer, she was repeating a step, an approval
+  // went unanswered, or Manual's hold ran out or could not be made. The stream
+  // closed cleanly and every phase completed, so nothing above can see it —
+  // and a stopped turn must never read "Finished" ("stopped repeating" would
+  // say she quit repeating and carried on, hence the colon).
+  const stopLine = turn.stoppedReason ? STOP_LINES.get(turn.stoppedReason) : undefined;
+  if (stopLine) return clocked(stopLine);
   if (typeof turn.completedAt === 'number') return `Finished in ${elapsed}`;
   return '';
+}
+
+/** The steps a stop left unrun, as the note lists them ('' when there are none). */
+function stepList(pendingSteps: readonly string[] | undefined): string {
+  return stepLabels(pendingSteps).join('; ');
+}
+
+/** What the transcript says of the steps a steer replaced (null when none). */
+export function replacedNoteText(replacedSteps: readonly string[] | undefined): string | null {
+  const steps = stepList(replacedSteps);
+  return steps ? `Not run — your steer replaced it: ${steps}.` : null;
+}
+
+/**
+ * What the transcript says under a turn the loop or the run policy stopped
+ * before she was done, or null when there is nothing to say: she finished
+ * (`no_more_tools`), or the person pressed Stop (`cancelled`) with nothing
+ * held — they know. The numbers are the shared ceilings and the turn's own
+ * rounds; the steps are the ones a Manual stop left unrun.
+ */
+export function stoppedNoteText(
+  reason: AnaStoppedReason | undefined,
+  rounds?: number,
+  pendingSteps?: readonly string[],
+): string | null {
+  const steps = stepList(pendingSteps);
+  switch (reason) {
+    case 'max_rounds':
+      return typeof rounds === 'number' && rounds > 0
+        ? `AnA reached this turn's round limit (${rounds} ${rounds === 1 ? 'round' : 'rounds'}) before she said she was done.`
+        : "AnA reached this turn's round limit before she said she was done.";
+    case 'duplicate_thrash':
+      return 'AnA stopped because she was repeating the same step. Tell her what to change.';
+    case 'budget_exhausted':
+      return `AnA reached this turn's time limit (${AUTO_TIME_WORDS}) before she said she was done.`;
+    case 'approval_timeout':
+      return `Nobody answered AnA's request within ${PAUSE_WORDS}, so that change was not made and she stopped.`;
+    case 'hold_expired':
+      return `AnA waited ${PAUSE_WORDS} for you, then stopped before her next step${steps ? `: ${steps}` : ''}.`;
+    case 'hold_unavailable':
+      // Continue under Manual fails the same way when the cause is lasting
+      // (a run with no owner), so the way on is Auto, then Continue.
+      return `${MANUAL_UNAVAILABLE_TEXT} ${steps ? `Next step: ${steps}. ` : ''}To let her go on, switch to Auto, then Continue.`;
+    case 'cancelled':
+      // A Stop with nothing held needs no note (the person pressed it). One
+      // that ended a Manual hold — or a page closed during it — names what
+      // did not run, so a reopened turn does not read as a plain Stop.
+      return steps ? `The run was stopped while AnA waited for you before her next step, so it did not run: ${steps}.` : null;
+    default:
+      return null;
+  }
 }
 
 /**
@@ -208,13 +284,30 @@ export interface ProgressChip {
  * total, so the chip says what is true — she is working, or here is the
  * record — and counts nothing.
  */
-export function progressChip(turn: AnaChatMessage | null, live: boolean): ProgressChip {
+export function progressChip(
+  turn: AnaChatMessage | null,
+  live: boolean,
+  runStatus: RunControlStatus = null,
+  runHold: AnaRunHold | null = null,
+): ProgressChip {
+  // With the panel closed this is all there is to see: a hold is said, not
+  // counted as work ("Working" while she waits for you would be untrue).
+  const held = live ? heldChipText(runStatus, runHold) : null;
+  if (held) return { text: held };
   const pos = planPosition(turn?.plan);
   if (pos) {
     if (live) return { text: `Step ${pos.current} of ${pos.total}` };
     return { text: `${pos.completed} of ${pos.total} done` };
   }
   return { text: live ? 'Working' : 'Progress' };
+}
+
+/** The chip's words while the run is held, or null when it is not. */
+function heldChipText(runStatus: RunControlStatus, runHold: AnaRunHold | null): string | null {
+  // Short: the strip beside it says why ("Stopped waiting for you").
+  if (runHold?.reason === 'expired') return 'Stopped';
+  if (runStatus !== 'paused') return null;
+  return runHold?.reason === 'manual' ? 'Waiting for you' : 'Paused';
 }
 
 /* ── Used in this session ─────────────────────────────────────────────────── */

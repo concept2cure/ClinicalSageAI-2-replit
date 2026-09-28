@@ -16,6 +16,11 @@
  *   grounding_strip — evidence verdict stored for the grounding chip on the reply
  *   tool_use / tool_result — tool-call transparency rows
  *   artifact_draft — an editor-openable draft produced by a generating tool
+ *   run_started  — the run id the controls address (pause / steer / stop)
+ *   paused / resumed / cancelled — the run's control state; `paused` says why
+ *                  (reason 'manual': AnA holding before `next` under Manual)
+ *   hold_expired — a Manual hold nobody answered ended the turn
+ *   interjected  — a steer reached a round (`replaced`: the held step it replaced)
  *   error        — surface via console + last-message flag
  *
  * @module client/src/concept2cure/components/ana/useAnaChat
@@ -59,6 +64,7 @@ export type {
   AnaPlanChange,
   AnaContextUsed,
   AnaTurnRecordStatus,
+  AnaRunHold,
 } from './useAnaChat.types';
 
 import {
@@ -73,6 +79,8 @@ import {
   CLIENT_PHASE_LABELS,
 } from './anaProgress';
 import { getAnaLockedScreens } from './anaLockedScreens';
+import { isAnaRunPolicy, stepLabels } from '@shared/ana/run-policy';
+import type { AnaRunPolicy } from '@shared/ana/run-control-limits';
 
 import type {
   AnaChatAction,
@@ -90,6 +98,7 @@ import type {
   DriveSseEvent,
   DriveTurnControls,
   AnaSendOptions,
+  AnaRunHold,
 } from './useAnaChat.types';
 
 
@@ -107,6 +116,19 @@ const RECORD_CONFIRM_WAITS_MS = [1_500, 4_000];
 
 /** Client-side cap on the tool result kept for the inspect disclosure (state size). */
 const TOOL_RESULT_VIEW_CAP = 4000;
+
+/** Step labels from a frame: the non-empty strings, in order (shared/ana/run-policy.ts). */
+const frameLabels = stepLabels;
+
+/**
+ * Why a `paused` frame says the run is held (row 74): AnA's own Manual hold,
+ * with the steps she is waiting to run, or — absent a reason — a person's pause.
+ */
+function readRunHold(event: { reason?: unknown; next?: unknown }): AnaRunHold {
+  return event.reason === 'manual'
+    ? { reason: 'manual', next: frameLabels(event.next) }
+    : { reason: 'person', next: [] };
+}
 
 /**
  * What POST /api/ana-ri/stream/:runId/control accepts. The first four are a
@@ -420,6 +442,11 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   const runIdRef = useRef<string | null>(null);
   // Control status of the in-flight run, driving the composer's pause/resume UI.
   const [runStatus, setRunStatus] = useState<RunControlStatus>(null);
+  // Why the run is held, when it is (row 74): the strip's Manual copy reads it.
+  const [runHold, setRunHold] = useState<AnaRunHold | null>(null);
+  // The policy the turn in flight was SENT with (what the strip's steer help
+  // reads) — not the preference now, which applies to the next message.
+  const [turnRunPolicy, setTurnRunPolicy] = useState<AnaRunPolicy | null>(null);
 
   /**
    * Send a mid-run control action for a run. `pause` holds AnA at the next
@@ -461,6 +488,8 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         if (action === 'pause') setRunStatus('paused');
         else if (action === 'resume') setRunStatus('running');
         else if (action === 'cancel') setRunStatus('cancelled');
+        // Run this step and Stop both answer a hold; the server's frame follows.
+        if (action === 'resume' || action === 'cancel') setRunHold(null);
         return true;
       } catch {
         return false;
@@ -770,6 +799,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       // Fresh run: clear any prior run's control id/status until `run_started`.
       runIdRef.current = null;
       setRunStatus(null);
+      setRunHold(null);
+      const sentPolicy = sendOpts?.runPolicy ?? options.runPolicy;
+      setTurnRunPolicy(isAnaRunPolicy(sentPolicy) ? sentPolicy : null);
 
       const abortCtl = new AbortController();
       abortRef.current = abortCtl;
@@ -933,6 +965,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         // default routing (effort='balanced', no model pin).
         effort_level: options.effortLevel ?? undefined,
         model_override: options.modelOverride ?? undefined,
+        // What AnA does between steps (row 74). Omitted when unset, so a host
+        // that chooses nothing keeps today's turn; a send's own choice wins.
+        run_policy: (sendOpts?.runPolicy ?? options.runPolicy) ?? undefined,
         // Live Drive opt-in — sent only while the toggle is on, so the common
         // case stays byte-identical and the server does zero extra work.
         // Screens closed to this person (launch scope, plan, grants) — AnA's
@@ -1145,10 +1180,18 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               }
             } else if (event.type === 'paused') {
               setRunStatus('paused');
+              setRunHold(readRunHold(event));
             } else if (event.type === 'resumed') {
               setRunStatus('running');
+              setRunHold(null);
             } else if (event.type === 'cancelled') {
               setRunStatus('cancelled');
+              setRunHold(null);
+            } else if (event.type === 'hold_expired') {
+              // A Manual hold nobody answered ENDED the turn (the server wrote
+              // it finished): no run left to control, and these did not run.
+              setRunStatus(null);
+              setRunHold({ reason: 'expired', next: frameLabels(event.next) });
             } else if (event.type === 'interjected') {
               // Surface the accepted steer as a small note on the assistant turn.
               const msg: string = typeof event.message === 'string' ? event.message : '';
@@ -1159,10 +1202,16 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 // matched by position, not text, because the echo is trimmed
                 // and capped server-side and a long steer would never match.
                 setPendingSteers(prev => (prev.length > 0 ? prev.slice(1) : prev));
+                // Under Manual a steer may REPLACE the held step: it never ran.
+                const replaced = frameLabels(event.replaced);
                 setMessages(prev =>
                   prev.map(m =>
                     m.id === assistantId
-                      ? { ...m, interjections: [...(m.interjections ?? []), msg] }
+                      ? {
+                          ...m,
+                          interjections: [...(m.interjections ?? []), msg],
+                          ...(replaced.length > 0 ? { replacedSteps: [...(m.replacedSteps ?? []), ...replaced] } : {}),
+                        }
                       : m
                   )
                 );
@@ -1178,6 +1227,15 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               // the server produces; see readTurnEnding. A turn the round limit
               // cut short is not a finished one, and every surface says so.
               const ending = readTurnEnding(event);
+              // A turn the loop or the policy stopped has no run left to
+              // control or hold: the strip must not offer to resume it.
+              if (ending.stoppedReason && ending.stoppedReason !== 'no_more_tools') {
+                setRunStatus(null);
+                // An expired hold is KEPT until the stream closes: done lands
+                // at once after hold_expired and post-processing runs on, and
+                // a cleared hold read as "Working" for all of it.
+                if (ending.stoppedReason !== 'hold_expired') setRunHold(null);
+              }
               // The answer has landed; the server's background finishing work
               // (evidence check, actions, persistence) runs until `post_done`.
               const at = Date.now();
@@ -1306,7 +1364,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               }
             } else if (event.type === 'warning') {
               const msg: string = event.message || '';
-              if (msg) {
+              // Manual that could not hold is said by the turn's stopped note
+              // (with what to do); repeated here it would be said twice.
+              if (msg && event.code !== 'MANUAL_UNAVAILABLE') {
                 setMessages(prev =>
                   prev.map(m =>
                     m.id === assistantId
@@ -1714,6 +1774,8 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           // pause/resume affordances (a stale run id can never be controlled).
           runIdRef.current = null;
           setRunStatus(null);
+          setRunHold(null);
+          setTurnRunPolicy(null);
           // A steer the run never reached is not pending anymore; it was lost
           // with the run, and the transcript's interjections say which landed.
           setPendingSteers([]);
@@ -1732,6 +1794,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       options.selectedTools,
       options.effortLevel,
       options.modelOverride,
+      options.runPolicy,
       options.liveDrive,
       options.onDriveEvent,
       options.onArtifactSaved,
@@ -1747,6 +1810,8 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     send,
     stop,
     runStatus,
+    runHold,
+    turnRunPolicy,
     pause,
     resume,
     interject,

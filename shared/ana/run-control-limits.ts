@@ -47,3 +47,26 @@ export type AnaRunPolicy = (typeof ANA_RUN_POLICIES)[number];
  * extension stops here, and a demonstration promoted mid-turn cannot lift it.
  */
 export const AUTO_MAX_ROUNDS = 20;
+
+/**
+ * An Auto turn's work budget: 15 minutes of ACTIVE time — the turn's clock
+ * less the time it spent held for a person (a pause) or waiting on an
+ * approval. Past it, the next model call is the closing answer and the turn
+ * reports `budget_exhausted`, with Continue.
+ */
+export const AUTO_ACTIVE_MS = 15 * 60_000;
+
+/**
+ * An Auto turn's wall-clock ceiling, whatever it spent waiting: twice the work
+ * budget plus one full pause (40 minutes). A turn that keeps being held or
+ * kept waiting still ends, and says so.
+ */
+export const AUTO_WALL_MS = 2 * AUTO_ACTIVE_MS + MAX_PAUSE_MS;
+
+/**
+ * The delegation tool's name (row 74). Named here, where the run policy reads
+ * it — Manual also stops before a round that would START an agent, even the
+ * first — ahead of the slice that registers the tool itself. Until then no
+ * model is offered it, and nothing matches it.
+ */
+export const RUN_AGENT_TOOL = 'run_agent';

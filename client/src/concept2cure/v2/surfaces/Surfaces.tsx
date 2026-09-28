@@ -10,6 +10,7 @@
  * Styles: styles/surfaces-v2.css (+ shell classes from app-v2.css).
  */
 import { LiveDriveSwitch } from '../LiveDriveSwitch';
+import { RunPolicySwitch } from '../RunPolicySwitch';
 import React from 'react';
 import { useAuth } from '@/services/portal/authService';
 import { useGlobalRiCatalog } from '@/hooks/useGlobalRiCatalog';
@@ -321,6 +322,7 @@ export function Home({
           <div className="landing-crow">
             <div className="landing-crow-l">
               <LiveDriveSwitch />
+              <RunPolicySwitch variant="foot" />
               <button
                 type="button"
                 className="landing-tool"

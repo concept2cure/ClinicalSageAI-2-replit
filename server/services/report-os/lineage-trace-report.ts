@@ -19,6 +19,7 @@
 import type {
   DocumentLineageDossier,
   DossierDataLineage,
+  DossierPolicyHold,
 } from '../ana/lineage-dossier.js';
 import type {
   ProvenanceRef,
@@ -102,6 +103,32 @@ function dataLineageRef(l: DossierDataLineage): ProvenanceRef {
 // ─────────────────────────────────────────────────────────────────────────────
 // Mapper
 // ─────────────────────────────────────────────────────────────────────────────
+
+/** What happened at each of her Manual steps, in words (the dossier keeps the codes). */
+const HOLD_OUTCOME_WORDS: Record<DossierPolicyHold['outcome'], string> = {
+  continued: 'The person said to run it',
+  redirected: 'The person replaced it; not run',
+  superseded: 'Not held: a steer sent while she worked replaced it before it was shown; not run',
+  expired: 'Nobody answered; the turn ended; not run',
+  stopped: 'The run was stopped while she waited; not run',
+  disconnected: 'The page was closed while she waited; not run',
+};
+
+/** "AnA's own holds (Manual)": one row per hold, by turn and round, or null when there were none. */
+function policyHoldsSection(dossier: DocumentLineageDossier): ReportSection | null {
+  const holds = dossier.policyHolds ?? [];
+  const unreadable = dossier.policyHoldsUnreadable ?? 0;
+  if (holds.length === 0 && unreadable === 0) return null;
+  const blocks: ReportSection['blocks'] = [
+    table(
+      ['Turn', 'Round', 'Next step', 'Outcome', 'When'],
+      holds.map((h) => [h.turn, h.round, truncate(h.next.join('; '), 120), HOLD_OUTCOME_WORDS[h.outcome], h.at ?? '']),
+    ),
+  ];
+  // Counted, never dropped in silence: a corrupt record must not read as fewer holds.
+  if (unreadable > 0) blocks.push(metric('Stored hold records that could not be read (not shown)', unreadable));
+  return { id: 'policy-holds', title: `AnA's own holds (Manual) (${holds.length})`, blocks };
+}
 
 export interface LineageReportMeta {
   reportTypeId: string;
@@ -285,6 +312,11 @@ export function dossierToRenderedReport(
       ],
     });
   }
+
+  // 7b. AnA's own holds under Manual (row 74), kept apart from the human
+  // controls: the pause was the run policy's; the resume after it, a person's.
+  const holds = policyHoldsSection(dossier);
+  if (holds) sections.push(holds);
 
   // 8. Gaps — pending decisions + absent lineage (honest, non-fabricated).
   const gapItems: Array<{ title: string; severity?: 'critical' | 'high' | 'medium' | 'low'; message?: string }> = [];

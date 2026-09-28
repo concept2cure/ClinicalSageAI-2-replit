@@ -15,198 +15,51 @@
  *     and the round then runs.
  *
  * The run row is scripted at the run-control seam; the loop, the checkpoint
- * and the hold are real. The harness is the live-drive-turn.test.ts pattern
- * (that file is inside another lane's window, so it is not touched here).
+ * and the hold are real. The harness is support/stream-route-harness.ts (row
+ * 74, slice S4), the live-drive-turn.test.ts pattern moved into one place.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import express from 'express';
-import request from 'supertest';
 
-const h = vi.hoisted(() => {
-  const state = {
-    script: [] as Array<Array<{ id: string; name: string; input: Record<string, unknown> }> | string>,
-    gatewayCalls: 0,
-    /** Status reads, in order; the last repeats. */
-    statuses: [] as string[],
-    /** Once set, every status read returns this. */
-    forced: null as string | null,
-    wakes: [] as number[],
-    /** Added to Date.now(): each wait "takes" the time it was allowed. */
-    clockOffset: 0,
-    toolRuns: 0,
-    resumeAbandoned: 0,
-    stops: 0,
-  };
-  const pool = {
-    query: async () => ({ rows: [], rowCount: 0 }),
-    connect: async () => {
-      throw new Error('no dedicated client in this test');
-    },
-  };
-  const gateway = {
-    isDeterministic: () => false,
-    getEnabledProviders: () => ['anthropic'],
-    getModels: () => [],
-    route: async (req: any) => {
-      state.gatewayCalls++;
-      const step = state.script.shift();
-      if (Array.isArray(step)) return { content: '', toolUses: step, model: 'm', provider: 'p', usage: {}, latencyMs: 1 };
-      const text = step ?? 'Done.';
-      req.onStream?.(text, undefined);
-      return { content: text, toolUses: [], model: 'm', provider: 'p', usage: {}, latencyMs: 1 };
-    },
-  };
-  const handlers: Record<string, (input: any) => Promise<string>> = {
-    list_app_screens: async () => {
-      state.toolRuns++;
-      return JSON.stringify({ screens: ['vault'] });
-    },
-  };
-  return { state, pool, gateway, handlers };
-});
-
-vi.mock('../../../db.js', () => ({ getPool: () => h.pool, pool: h.pool, db: {} }));
-vi.mock('../shared.js', async importOriginal => ({
-  ...(await importOriginal<typeof import('../shared.js')>()),
-  ensureGateway: () => h.gateway,
-}));
-vi.mock('../post-processing.js', () => ({
-  runStreamPostProcessing: async (ctx: any) => {
-    ctx.res.end();
-  },
-}));
-vi.mock('../../../services/ana/AnaToolExecutor.js', () => ({
-  getToolHandler: (name: string) => h.handlers[name],
-  servedModelOf: (r: { provider?: string | null; model?: string | null; requestId?: string | null } | null) => ({
-    provider: r?.provider ?? null,
-    model: r?.model ?? null,
-    requestId: r?.requestId ?? null,
-  }),
-}));
-vi.mock('../../../services/ana/governed-toolset.js', () => ({
-  governedToolsetFor: async () => [
-    { name: 'list_app_screens', description: 'list_app_screens', input_schema: { type: 'object', properties: {} } },
-  ],
-}));
-vi.mock('../../../services/ana/run-control.js', async importOriginal => {
-  const real = await importOriginal<typeof import('../../../services/ana/run-control.js')>();
-  return {
-    readMoveId: real.readMoveId,
-    beginRun: async () => ({
-      runId: 'run_test',
-      handle: {
-        runId: 'run_test',
-        cancelSignal: new AbortController().signal,
-        wake: async (ms: number) => {
-          h.state.wakes.push(ms);
-          h.state.clockOffset += ms;
-        },
-        heartbeat: async () => {},
-      },
-    }),
-    localOnlyRunHandle: () => ({ runId: '', cancelSignal: new AbortController().signal, wake: async () => {}, heartbeat: async () => {} }),
-    endRun: async () => {},
-    readStatus: async () => {
-      if (h.state.forced) return h.state.forced;
-      return (h.state.statuses.length > 1 ? h.state.statuses.shift() : h.state.statuses[0]) ?? 'running';
-    },
-    readRun: async () => null,
-    releaseLocalRun: () => {},
-    consumeInterjections: async () => [],
-    requestApproval: async () => false,
-    recordApprovalDecision: async () => false,
-    readApprovalDecision: async () => null,
-    stopRunInternally: async () => {
-      h.state.stops++;
-    },
-    resumeAbandonedRun: async () => {
-      h.state.resumeAbandoned++;
-      h.state.forced = 'running';
-    },
-    reapOrphanedRuns: async () => 0,
-    applyControl: async () => ({ ok: true, status: 'running' }),
-  };
-});
-vi.mock('../../../services/ana-ri/orchestrator.js', () => ({
-  orchestrate: () => ({
-    systemPrompt: 'You are AnA.',
-    detectedIntent: { lens: 'general', confidence: 0.9 },
-    detectedSubmissionType: undefined,
-    detectedDocumentTemplate: null,
-    appliedRole: 'regulatory_affairs',
-    activeWorkstream: null,
-    workstreamHandoff: null,
-    suggestedActions: [],
-  }),
-}));
-vi.mock('../../../services/ana-ri/chat-context-builder.js', async importOriginal => ({
-  ...(await importOriginal<typeof import('../../../services/ana-ri/chat-context-builder.js')>()),
-  prefetchRouteIntelligenceContext: async () => ({}),
-}));
-vi.mock('../../../services/lumen-context-builder.js', () => ({
-  getIntelligencePrefix: async () => '',
-  buildSectionSpecificPrompt: () => '',
-}));
-vi.mock('../../../services/memory-context-assembler.js', () => ({
-  buildMemoryContextForChat: async () => ({ memoryBlock: '', atoms: [], diagnostics: null }),
-}));
-vi.mock('../../../services/ana-ri/context-enrichment.js', () => ({
-  enrichContextForChat: async () => ({ block: '', sources: [] }),
-}));
-vi.mock('../../../services/chat-thread-helpers.js', () => ({
-  getOrCreateThread: async () => 'thread-1',
-  getThreadMessages: async () => [],
-  saveChatMessage: async () => {},
-  programIdForThread: () => null,
-  ThreadAccessError: class ThreadAccessError extends Error {},
-}));
-vi.mock('../../../services/ana-session-bootstrap.js', () => ({ sessionBootstrapBlockFor: async () => '' }));
-vi.mock('../../../services/kernel-adaptive-policy.js', () => ({ getKernelPolicyHint: async () => null }));
-vi.mock('../../../services/ana/ana-input-guard.js', () => ({
-  guardUserInput: async (text: string) => ({ encapsulated: false, text }),
-  PromptInjectionError: class PromptInjectionError extends Error {},
-}));
-vi.mock('../../../services/auditService.js', () => ({ default: { logAction: async () => {} } }));
-vi.mock('../../../services/toolRegistry.js', () => ({ logToolRun: async () => {} }));
-vi.mock('../../../services/ana-ri/relational-profile-service.js', () => ({ reflectAfterTurn: async () => {} }));
-vi.mock('../../../services/ana/tool-telemetry.js', () => ({ getUnhealthyTools: () => [] }));
-vi.mock('../../../services/ana-ri-metrics.js', () => ({ recordAnaTurn: () => {} }));
-vi.mock('../../../services/anthropic-files.js', () => ({
-  isPdfIntakeEnabled: () => false,
-  readLocalUploadBuffer: async () => null,
-}));
+// The mocks are the shared route harness's (support/stream-route-harness.ts);
+// each factory is reached through a dynamic import, so the harness and the
+// mocked modules share one state.
+const harnessModule = vi.hoisted(() => () => import('./support/stream-route-harness.js'));
+vi.mock('../../../db.js', async () => (await harnessModule()).mocks.db());
+vi.mock('../shared.js', async importOriginal =>
+  (await harnessModule()).mocks.shared(await importOriginal<Record<string, unknown>>()),
+);
+vi.mock('../post-processing.js', async () => (await harnessModule()).mocks.postProcessing());
+vi.mock('../../../services/ana/AnaToolExecutor.js', async () => (await harnessModule()).mocks.toolExecutor());
+vi.mock('../../../services/ana/governed-toolset.js', async () => (await harnessModule()).mocks.governedToolset());
+vi.mock('../../../services/ana/run-control.js', async importOriginal =>
+  (await harnessModule()).mocks.runControl(await importOriginal<typeof import('../../../services/ana/run-control.js')>()),
+);
+vi.mock('../../../services/ana-ri/orchestrator.js', async () => (await harnessModule()).mocks.orchestrator());
+vi.mock('../../../services/ana-ri/chat-context-builder.js', async importOriginal =>
+  (await harnessModule()).mocks.chatContextBuilder(await importOriginal<Record<string, unknown>>()),
+);
+vi.mock('../../../services/lumen-context-builder.js', async () => (await harnessModule()).mocks.lumen());
+vi.mock('../../../services/memory-context-assembler.js', async () => (await harnessModule()).mocks.memory());
+vi.mock('../../../services/ana-ri/context-enrichment.js', async () => (await harnessModule()).mocks.enrichment());
+vi.mock('../../../services/chat-thread-helpers.js', async () => (await harnessModule()).mocks.chatThreads());
+vi.mock('../../../services/ana-session-bootstrap.js', async () => (await harnessModule()).mocks.sessionBootstrap());
+vi.mock('../../../services/kernel-adaptive-policy.js', async () => (await harnessModule()).mocks.kernelPolicy());
+vi.mock('../../../services/ana/ana-input-guard.js', async () => (await harnessModule()).mocks.inputGuard());
+vi.mock('../../../services/auditService.js', async () => (await harnessModule()).mocks.audit());
+vi.mock('../../../services/toolRegistry.js', async () => (await harnessModule()).mocks.toolRegistry());
+vi.mock('../../../services/ana-ri/relational-profile-service.js', async () => (await harnessModule()).mocks.relationalProfile());
+vi.mock('../../../services/ana/tool-telemetry.js', async () => (await harnessModule()).mocks.toolTelemetry());
+vi.mock('../../../services/ana-ri-metrics.js', async () => (await harnessModule()).mocks.metrics());
+vi.mock('../../../services/anthropic-files.js', async () => (await harnessModule()).mocks.anthropicFiles());
 
 import { mountStreamRoute } from '../stream.js';
 import { MAX_PAUSE_MS } from '../../../services/ana/run-status.js';
+import { harness as h, resetHarness, streamApp, turn as streamTurn, type SseEvent } from './support/stream-route-harness.js';
 
-const app = express();
-app.use(express.json());
-app.use((req, _res, next) => {
-  (req as any).tenantId = 7;
-  (req as any).user = { id: 3, organizationId: 7 };
-  next();
-});
-const router = express.Router();
-mountStreamRoute(router);
-app.use('/api/ana-ri', router);
+const app = streamApp(mountStreamRoute);
 
-type SseEvent = Record<string, any> & { type: string };
-
-async function turn(): Promise<SseEvent[]> {
-  const res = await request(app)
-    .post('/api/ana-ri/stream')
-    .send({ message: 'which screens are there?' })
-    .buffer(true)
-    .parse((r, cb) => {
-      let data = '';
-      r.setEncoding('utf8');
-      r.on('data', (chunk: string) => (data += chunk));
-      r.on('end', () => cb(null, data));
-    });
-  return String(res.body)
-    .split('\n\n')
-    .filter(frame => frame.startsWith('data: '))
-    .map(frame => JSON.parse(frame.slice('data: '.length)) as SseEvent);
+function turn(): Promise<SseEvent[]> {
+  return streamTurn(app, { message: 'which screens are there?' });
 }
 
 const CONTROL = new Set(['paused', 'resumed', 'cancelled']);
@@ -214,17 +67,8 @@ const controlFrames = (events: SseEvent[]) => events.filter(e => CONTROL.has(e.t
 const ONE_ROUND = () => [[{ id: 'tu_1', name: 'list_app_screens', input: {} }], 'Here they are.'];
 
 beforeEach(() => {
-  Object.assign(h.state, {
-    script: ONE_ROUND(),
-    gatewayCalls: 0,
-    statuses: [],
-    forced: null,
-    wakes: [],
-    clockOffset: 0,
-    toolRuns: 0,
-    resumeAbandoned: 0,
-    stops: 0,
-  });
+  resetHarness();
+  h.state.script = ONE_ROUND();
   const realNow = Date.now.bind(Date);
   vi.spyOn(Date, 'now').mockImplementation(() => realNow() + h.state.clockOffset);
 });

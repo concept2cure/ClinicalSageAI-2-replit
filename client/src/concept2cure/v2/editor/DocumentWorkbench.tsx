@@ -50,6 +50,7 @@ import { EmptyState } from '../dataConnect';
 import { useAnaChat } from '../../components/ana/useAnaChat';
 import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
 import { AnaActivity, activityPropsFor } from '../AnaActivity';
+import { RunPolicyDockNote } from '../RunPolicySwitch';
 import { AnaGrounding } from '../AnaGrounding';
 import { AnaOutputCards } from '../AnaOutputs';
 import { useAgentActivity } from '../useAgentActivity';
@@ -4380,6 +4381,8 @@ export function DocumentWorkbench({
                 {ana.isStreaming ? 'Answering…' : 'Send'}
               </button>
             </div>
+            {/* This dock's chat sends no run policy: Manual does not reach it (row 74). */}
+            <RunPolicyDockNote />
           </div>
         </aside>
       )}

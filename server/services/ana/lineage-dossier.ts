@@ -18,6 +18,8 @@
  *                       (concept2cure_provenance_events)
  *   - reasoning       — AnA's persisted thought process per turn
  *                       (chat_messages.metadata.reasoning for the artifact thread)
+ *   - policyHolds     — AnA's own holds under Manual, apart from the human
+ *                       controls (chat_messages.metadata.policyHolds; row 74)
  *   - dataLineage     — evidence source → content links
  *                       (data_lineage_records targeting the artifact / its thread)
  *
@@ -31,6 +33,9 @@
  */
 import { getPool } from '../../db/runtime.js';
 import { listTurnRecords } from './turn-record-verify.js';
+import { policyHoldsOf, type DossierPolicyHold } from './lineage-dossier-holds.js';
+
+export type { DossierPolicyHold } from './lineage-dossier-holds.js';
 import {
   collectArtifactLedger,
   type ArtifactLedger,
@@ -186,6 +191,16 @@ export interface DocumentLineageDossier {
   reasoning: DossierReasoningTurn[];
   /** Human control actions (pause/interject/redirect/cancel) across the turns. */
   humanControls: DossierHumanControl[];
+  /**
+   * AnA's own Manual holds across the turns, kept apart from the human
+   * controls (row 74). Absent from dossiers assembled before this field.
+   */
+  policyHolds?: DossierPolicyHold[];
+  /**
+   * Stored hold entries that could not be read (malformed), counted rather
+   * than dropped in silence: a corrupt record must not read as "no holds".
+   */
+  policyHoldsUnreadable?: number;
   dataLineage: DossierDataLineage[];
   /**
    * The retained turn records of the document's conversation, oldest first.
@@ -441,8 +456,8 @@ function parseMetadata(raw: unknown): Record<string, unknown> | null {
  */
 async function loadTurnRecords(
   threadId: string | null,
-): Promise<{ reasoning: DossierReasoningTurn[]; humanControls: DossierHumanControl[] }> {
-  if (!threadId) return { reasoning: [], humanControls: [] };
+): Promise<TurnRecordsRead> {
+  if (!threadId) return { reasoning: [], humanControls: [], policyHolds: [], policyHoldsUnreadable: 0 };
   try {
     const { rows } = await getPool().query(
       `SELECT metadata, model, created_at
@@ -454,6 +469,8 @@ async function loadTurnRecords(
     );
     const reasoning: DossierReasoningTurn[] = [];
     const humanControls: DossierHumanControl[] = [];
+    const policyHolds: DossierPolicyHold[] = [];
+    let policyHoldsUnreadable = 0;
     let turn = 0;
     for (const r of rows as any[]) {
       turn += 1;
@@ -486,12 +503,22 @@ async function loadTurnRecords(
           });
         }
       }
+      const held = policyHoldsOf(meta, turn);
+      policyHolds.push(...held.holds);
+      policyHoldsUnreadable += held.unreadable;
     }
-    return { reasoning, humanControls };
+    return { reasoning, humanControls, policyHolds, policyHoldsUnreadable };
   } catch (err) {
     warnUnless42P01('turn-records', err);
-    return { reasoning: [], humanControls: [] };
+    return { reasoning: [], humanControls: [], policyHolds: [], policyHoldsUnreadable: 0 };
   }
+}
+
+interface TurnRecordsRead {
+  reasoning: DossierReasoningTurn[];
+  humanControls: DossierHumanControl[];
+  policyHolds: DossierPolicyHold[];
+  policyHoldsUnreadable: number;
 }
 
 async function loadDataLineage(
@@ -599,6 +626,8 @@ export async function buildDocumentLineageDossier(
     provenanceEvents,
     reasoning: turnRecords.reasoning,
     humanControls: turnRecords.humanControls,
+    policyHolds: turnRecords.policyHolds,
+    policyHoldsUnreadable: turnRecords.policyHoldsUnreadable,
     dataLineage,
     retainedTurnRecords,
   };

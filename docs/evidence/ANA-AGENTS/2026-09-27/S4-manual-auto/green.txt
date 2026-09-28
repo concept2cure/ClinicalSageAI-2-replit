@@ -1,0 +1,310 @@
+# S4 green evidence (row 74), review follow-through, 2026-09-28. ANSI stripped.
+# Working tree = HEAD 39b3027cc + the S4 files hashed in tree.sha256 (nothing else modified).
+
+======================================================================================
+1. NEIGHBOUR SUITES on the finished tree — the 212 files in neighbours.txt (every test file that
+   reads an S4 file, plus the previous 182), one vitest run, nothing else running.
+   An earlier run of the same list showed 1 failure that was this session's own interference: the
+   eslint ratchet, run at the same time, writes a temporary `__eslint_ratchet_prev__.Shell.tsx`
+   (HEAD's Shell, with the old strip) that the "one strip in the codebase" walk found. The run
+   below was made with nothing else running; that file no longer exists.
+======================================================================================
+ Test Files  212 passed (212)
+      Tests  3235 passed (3235)
+   Duration  423.19s (transform 104.31s, setup 13.27s, import 147.11s, tests 684.71s, environment 66.33s)
+exit 0
+
+Per file:
+client/src/concept2cure/components/ana/__tests__/anaProgress.test.ts  passed 15
+client/src/concept2cure/components/ana/__tests__/briefing-book.test.tsx  passed 11
+client/src/concept2cure/components/ana/__tests__/consistency-parse.test.ts  passed 10
+client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts  passed 11
+client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts  passed 28
+client/src/concept2cure/components/ana/__tests__/useAnaChat-effort.test.ts  passed 4
+client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts  passed 3
+client/src/concept2cure/components/ana/__tests__/useAnaChat-plan.test.ts  passed 7
+client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts  passed 6
+client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts  passed 7
+client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts  passed 17
+client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts  passed 6
+client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts  passed 10
+client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts  passed 7
+client/src/concept2cure/components/ana/__tests__/verification-parse.test.ts  passed 5
+client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx  passed 7
+client/src/concept2cure/v2/__tests__/adminSetupClientTypeGoverned.test.tsx  passed 4
+client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx  passed 14
+client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx  passed 15
+client/src/concept2cure/v2/__tests__/anaActivity.test.tsx  passed 47
+client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx  passed 7
+client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx  passed 6
+client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx  passed 8
+client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx  passed 8
+client/src/concept2cure/v2/__tests__/anaDrivesWave3.test.tsx  passed 5
+client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx  passed 9
+client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx  passed 6
+client/src/concept2cure/v2/__tests__/anaDrivesWave6.test.tsx  passed 6
+client/src/concept2cure/v2/__tests__/anaEffortMode.test.ts  passed 6
+client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx  passed 14
+client/src/concept2cure/v2/__tests__/anaMessageCarriage.test.ts  passed 10
+client/src/concept2cure/v2/__tests__/anaPremortemMount.test.tsx  passed 4
+client/src/concept2cure/v2/__tests__/anaRailActions.test.tsx  passed 14
+client/src/concept2cure/v2/__tests__/anaRailAttach.test.tsx  passed 8
+client/src/concept2cure/v2/__tests__/anaRailContextHonesty.test.tsx  passed 13
+client/src/concept2cure/v2/__tests__/anaRailWorkDock.test.tsx  passed 6
+client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx  passed 19
+client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx  passed 12
+client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx  passed 20
+client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx  passed 14
+client/src/concept2cure/v2/__tests__/anaStoppedNoteA11y.test.tsx  passed 4
+client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx  passed 32
+client/src/concept2cure/v2/__tests__/appMentions.test.tsx  passed 10
+client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx  passed 9
+client/src/concept2cure/v2/__tests__/appsLive.test.tsx  passed 4
+client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts  passed 5
+client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx  passed 5
+client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx  passed 14
+client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx  passed 8
+client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx  passed 11
+client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx  passed 8
+client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx  passed 4
+client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx  passed 8
+client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx  passed 7
+client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx  passed 13
+client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx  passed 4
+client/src/concept2cure/v2/__tests__/conversationThreadStarters.test.tsx  passed 4
+client/src/concept2cure/v2/__tests__/designControlsPendingStore.test.tsx  passed 6
+client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx  passed 7
+client/src/concept2cure/v2/__tests__/dockRunPolicyNote.test.tsx  passed 7
+client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx  passed 11
+client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx  passed 14
+client/src/concept2cure/v2/__tests__/ectdCoauthorEmptyStateAction.test.tsx  passed 3
+client/src/concept2cure/v2/__tests__/ectdCoauthorFinalizedRefusal.test.tsx  passed 1
+client/src/concept2cure/v2/__tests__/ectdCoauthorHonesty.test.tsx  passed 8
+client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx  passed 11
+client/src/concept2cure/v2/__tests__/emptyState.contract.test.tsx  passed 7
+client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx  passed 8
+client/src/concept2cure/v2/__tests__/homeEngine.test.tsx  passed 9
+client/src/concept2cure/v2/__tests__/homeNoFixtureProgram.test.tsx  passed 6
+client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx  passed 123
+client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx  passed 13
+client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx  passed 20
+client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts  passed 9
+client/src/concept2cure/v2/__tests__/navParams.test.ts  passed 9
+client/src/concept2cure/v2/__tests__/navTargets.test.tsx  passed 2
+client/src/concept2cure/v2/__tests__/navigationReachability.test.ts  passed 2
+client/src/concept2cure/v2/__tests__/orchestrationRunControls.test.tsx  passed 11
+client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx  passed 9
+client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx  passed 24
+client/src/concept2cure/v2/__tests__/registryModel.test.ts  passed 18
+client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx  passed 19
+client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx  passed 8
+client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx  passed 5
+client/src/concept2cure/v2/__tests__/surfaceContext.test.tsx  passed 10
+client/src/concept2cure/v2/__tests__/surfaceContextIds.test.ts  passed 5
+client/src/concept2cure/v2/__tests__/surfaceContextLoop.test.tsx  passed 2
+client/src/concept2cure/v2/__tests__/surfaceReachability.test.ts  passed 1
+client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx  passed 259
+client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx  passed 23
+client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx  passed 7
+client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx  passed 4
+client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx  passed 6
+server/__tests__/routes/smoke.test.ts  passed 18
+server/__tests__/security/document-attachments-audit-honesty.contract.test.ts  passed 29
+server/__tests__/security/document-attachments-routes.contract.test.ts  passed 12
+server/__tests__/services/extract-text.test.ts  passed 8
+server/mcp/__tests__/mcp-auth-contract.test.ts  passed 8
+server/middleware/__tests__/audit-outcome-headers-exposed.test.ts  passed 2
+server/middleware/__tests__/establishRequestTenantScope.test.ts  passed 13
+server/middleware/__tests__/redisRateLimiter-category.test.ts  passed 11
+server/middleware/__tests__/storageQuotaGuard.test.ts  passed 19
+server/middleware/__tests__/uploadAllowlist.test.ts  passed 6
+server/routes/__tests__/chat-path-parity.test.ts  passed 13
+server/routes/__tests__/coauthorDocumentsListTotal.test.ts  passed 2
+server/routes/__tests__/coauthorPutStatus.test.ts  passed 37
+server/routes/__tests__/data-origins-document.test.ts  passed 9
+server/routes/__tests__/module-subscriptions.test.ts  passed 8
+server/routes/__tests__/task-dependency-blocks.test.ts  passed 5
+server/routes/__tests__/vault-ingest-refusal-status.test.ts  passed 3
+server/routes/ana-ri/__tests__/draft-persistence-authoring-doc.test.ts  passed 4
+server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts  passed 10
+server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts  passed 4
+server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts  passed 30
+server/routes/ana-ri/__tests__/live-drive-turn.test.ts  passed 27
+server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts  passed 5
+server/routes/ana-ri/__tests__/stream-model-override.test.ts  passed 7
+server/routes/ana-ri/__tests__/stream-run-hold.test.ts  passed 4
+server/routes/ana-ri/__tests__/stream-run-policy.test.ts  passed 40
+server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts  passed 8
+server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts  passed 7
+server/services/__tests__/ana-ri.test.ts  passed 256
+server/services/__tests__/chat-thread-program-key.test.ts  passed 5
+server/services/__tests__/memory-consolidation.pglite.integration.test.ts  passed 8
+server/services/__tests__/memory-context-assembler-mode.test.ts  passed 6
+server/services/ai-gateway/__tests__/gateway-abort.test.ts  passed 10
+server/services/ai-gateway/__tests__/gateway-server-tools.test.ts  passed 11
+server/services/ai-gateway/__tests__/gateway-stream-tool-input.test.ts  passed 5
+server/services/ai-gateway/__tests__/gateway-terminal-round-cache.test.ts  passed 6
+server/services/ai-gateway/__tests__/gateway.test.ts  passed 37
+server/services/ai-gateway/__tests__/high-risk-model-approval.test.ts  passed 25
+server/services/ai-gateway/__tests__/local-provider-tools.test.ts  passed 9
+server/services/ai-gateway/__tests__/openai-stream.test.ts  passed 10
+server/services/ai-gateway/__tests__/openai-tool-calls.test.ts  passed 27
+server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts  passed 6
+server/services/ana-ri/__tests__/document-action-labels.test.ts  passed 1
+server/services/ana-ri/__tests__/live-drive.test.ts  passed 27
+server/services/ana-ri/__tests__/pdev-command-handlers.test.ts  passed 17
+server/services/ana-ri/__tests__/response-register.test.ts  passed 42
+server/services/ana-ri/__tests__/surface-context-block.test.ts  passed 19
+server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts  passed 13
+server/services/ana/__tests__/agentic-loop-rounds-control.test.ts  passed 30
+server/services/ana/__tests__/agentic-loop-rounds.test.ts  passed 17
+server/services/ana/__tests__/auto-never-approves.test.ts  passed 8
+server/services/ana/__tests__/client-journey.test.ts  passed 21
+server/services/ana/__tests__/council-tool.test.ts  passed 12
+server/services/ana/__tests__/deep-investigation.test.ts  passed 19
+server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts  passed 9
+server/services/ana/__tests__/drive-program-resolution.test.ts  passed 25
+server/services/ana/__tests__/executor-agentic-loop-options.test.ts  passed 23
+server/services/ana/__tests__/executor-agentic-loop.test.ts  passed 8
+server/services/ana/__tests__/governed-tool-gate.test.ts  passed 15
+server/services/ana/__tests__/governed-write-gate.test.ts  passed 41
+server/services/ana/__tests__/intelligence-flow-sessions.test.ts  passed 18
+server/services/ana/__tests__/lineage-dossier-policy-holds.test.ts  passed 10
+server/services/ana/__tests__/lineage-dossier.test.ts  passed 16
+server/services/ana/__tests__/lost-tool-input.test.ts  passed 5
+server/services/ana/__tests__/model-call-linkage.test.ts  passed 8
+server/services/ana/__tests__/run-control-tenant-scope.test.ts  passed 5
+server/services/ana/__tests__/run-control.pglite.integration.test.ts  passed 56
+server/services/ana/__tests__/run-control.test.ts  passed 3
+server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts  passed 10
+server/services/ana/__tests__/run-hold.test.ts  passed 25
+server/services/ana/__tests__/run-status-policy.test.ts  passed 24
+server/services/ana/__tests__/run-status.test.ts  passed 14
+server/services/ana/__tests__/self-drive-regressions.test.ts  passed 32
+server/services/ana/__tests__/server-tool-steps.test.ts  passed 20
+server/services/ana/__tests__/tool-plan-labels.test.ts  passed 7
+server/services/ana/__tests__/tool-run-cancelled.test.ts  passed 9
+server/services/ana/__tests__/tool-trace-run-policy.test.ts  passed 24
+server/services/ana/__tests__/tool-trace-stopped-turn.test.ts  passed 15
+server/services/ana/__tests__/turn-plan-and-context.test.ts  passed 25
+server/services/ana/__tests__/turn-run-policy.test.ts  passed 1
+server/services/authoring/__tests__/m2-summary-qc.test.ts  passed 10
+server/services/clinical-regulatory-evidence/__tests__/machine-draft-unaccepted.pglite.integration.test.ts  passed 6
+server/services/ectd/__tests__/core-to-packager.test.ts  passed 9
+server/services/ectd/__tests__/leaf-pdf-security.tamper.test.ts  passed 18
+server/services/forms/__tests__/incremental-update.test.ts  passed 11
+server/services/forms/__tests__/pdf-object-store.test.ts  passed 11
+server/services/memory/__tests__/document-text-extraction.test.ts  passed 6
+server/services/ocr/__tests__/documentIntake.test.ts  passed 6
+server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts  passed 44
+server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts  passed 11
+server/services/pdev/__tests__/pdev-activity-registry.test.ts  passed 16
+server/services/report-os/__tests__/lineage-trace-report.test.ts  passed 8
+server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts  passed 65
+server/utils/__tests__/binary-body.test.ts  passed 7
+server/utils/__tests__/fileSignature.test.ts  passed 29
+shared/navigation/__tests__/demo-scripts.test.ts  passed 15
+tests/ai-safety/ana-input-guard.test.ts  passed 5
+tests/ana-single-brain.test.ts  passed 33
+tests/artifact-status-project-scope.test.ts  passed 5
+tests/ci/no-ghost-globals.contract.test.ts  passed 26
+tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx  passed 5
+tests/concept2cure/module-shells-smoke.test.tsx  passed 10
+tests/concept2cure/use-chat-upload.test.tsx  passed 15
+tests/founder-critical-path-proof.test.ts  passed 8
+tests/golden-journeys/drug-nda-ectd.journey.test.ts  passed 1
+tests/lineage/founder-path-lineage.pglite.test.ts  passed 14
+tests/regulatory-programs-routes.test.ts  passed 38
+tests/routes/ana-ri-health.test.ts  passed 7
+tests/routes/ana-ri-resilience.test.ts  passed 1
+tests/schema-contract/chat-thread-access.contract.test.ts  passed 9
+tests/services/agentic-loop.test.ts  passed 18
+tests/services/tool-trace.test.ts  passed 14
+tests/ui-readiness/ui-surface-registry.test.ts  passed 14
+tests/ui/ana-rail-phone-drawer.test.ts  passed 4
+tests/ui/one-shell.test.ts  passed 8
+tests/ui/pj-title-authority.test.ts  passed 3
+tests/ui/shell-kit-lazy.test.ts  passed 3
+tests/ui/surface-registry-coverage.test.ts  passed 4
+tests/ui/token-authority.test.ts  passed 8
+
+The 14 S4 test files hold 200 tests: stream-run-policy 40, stream-run-hold 4, stream-stopped-reason 8,
+run-status-policy 24, auto-never-approves 8, tool-trace-run-policy 24, lineage-dossier-policy-holds 10,
+turn-run-policy 1, useAnaChat-run-policy 17, useAnaChat-stopped-reason 6, anaRunPolicyStops 20,
+runPolicySwitch 19, anaRunControlStrip 12, dockRunPolicyNote 7.
+
+======================================================================================
+2. npx tsc --noEmit (whole tree)
+======================================================================================
+(no output)
+exit 0, 0 errors
+
+======================================================================================
+3. LINT
+======================================================================================
+$ node scripts/ci/check-eslint-warning-ratchet.mjs --since HEAD      (HEAD = 39b3027cc; S4's files only)
+[ci:eslint-warning-ratchet] --since HEAD (39b3027cc) -- 26 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since HEAD.
+
+$ npm run --silent ci:pushed-lint-warnings      (merge-base with the upstream ref = c82c056be)
+[ci:eslint-warning-ratchet] --since c82c056be8d7c2cb419239e82ececd97a16eb721 (c82c056be) -- 44 lintable file(s) changed; linting both versions of each...
+
+    -3  server/services/intelligence/cross-artifact-consistency.ts  (4 -> 1)
+
+[ci:eslint-warning-ratchet] net -3 warning(s) across the files changed since c82c056be8d7c2cb419239e82ececd97a16eb721.
+(the -3 is another session's cross-artifact-consistency.ts, committed in eea56da2c; no S4 file moved)
+
+During this pass the ratchet first read +3 on S4 files (RunControlStrip complexity 22,
+serializeDocumentLineageDossierXml complexity 17, lineage-dossier.ts 510 lines); each was split
+(HoldLines/steerHelpFor; policyHoldsXml; lineage-dossier-holds.ts) back to its HEAD count.
+
+$ npx eslint --format json <the 16 new S4 files>
+client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts  errors 0 warnings 1  (ignored by the repo eslint config)
+client/src/concept2cure/v2/RunPolicySwitch.tsx  errors 0 warnings 0
+client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx  errors 0 warnings 0
+client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx  errors 0 warnings 0
+client/src/concept2cure/v2/__tests__/dockRunPolicyNote.test.tsx  errors 0 warnings 0
+client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx  errors 0 warnings 0
+server/routes/ana-ri/__tests__/stream-run-policy.test.ts  errors 0 warnings 0
+server/routes/ana-ri/__tests__/support/stream-route-harness.ts  errors 0 warnings 0
+server/services/ana/__tests__/auto-never-approves.test.ts  errors 0 warnings 0
+server/services/ana/__tests__/lineage-dossier-policy-holds.test.ts  errors 0 warnings 0
+server/services/ana/__tests__/run-status-policy.test.ts  errors 0 warnings 0
+server/services/ana/__tests__/tool-trace-run-policy.test.ts  errors 0 warnings 0
+server/services/ana/__tests__/turn-run-policy.test.ts  errors 0 warnings 0
+server/services/ana/lineage-dossier-holds.ts  errors 0 warnings 0
+server/services/ana/turn-run-policy.ts  errors 0 warnings 0
+shared/ana/run-policy.ts  errors 0 warnings 0
+0 errors, 0 warnings
+
+======================================================================================
+4. CSS / DESIGN GATES
+======================================================================================
+$ npm run --silent ci:design-system
+[design-system] OK — no icon-library, spring/bounce or inline <style> violations on live concept2cure surfaces.
+
+$ npm run --silent ci:check-phantom-tokens
+[ci:phantom-tokens] 9 phantom token(s) across 53 site(s) (baseline 9).
+[ci:phantom-tokens] OK — no new phantom tokens.
+
+$ npm run --silent ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+
+$ npm run --silent ci:check-css-selector-shadowing
+[css-shadowing] OK — 42 stylesheets, 21 known shadowed selector(s), 0 new.
+
+$ npm run --silent ci:check-shell-css-collisions
+[ci:shell-css-collisions] 22 class name(s) defined in more than one shell tree (baseline 22) — pdev+v2:22
+[ci:shell-css-collisions] OK — no new cross-shell collisions.
+
+Seen red first — ci:undefined-css-classes with the two new rules removed (then restored, sha256 re-checked):
+[ci:undefined-css-classes] FAIL — class names no stylesheet defines:
+  ana-activity-replaced
+    client/src/concept2cure/v2/AnaActivity.tsx
+  ana-policy-short
+    client/src/concept2cure/v2/RunPolicySwitch.tsx
+
+  These style NOTHING. The element renders unstyled and no test will say so.
+  Either use the existing vocabulary (grep the v2 styles/ folder for the
+  shape you want) or, if the class is a deliberate semantic hook with no
+  rule, add it to scripts/ci/undefined-css-classes-baseline.json WITH A REASON.

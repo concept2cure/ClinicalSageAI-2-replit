@@ -33,6 +33,9 @@ import type { OnboardingWelcome } from './onboardingWelcome';
 import { AnaActivity, type AnaActivityProps } from './AnaActivity';
 import { CONTINUE_PROMPT, continueTurnIndex } from './anaWorkModel';
 import { AnaProgressChip, AnaWorkPanel } from './AnaWorkPanel';
+import { RunControlStrip } from './AnaWorkSections';
+import { RunPolicySwitch, useRunPolicyLabel } from './RunPolicySwitch';
+import type { AnaRunPolicy } from '@shared/ana/run-control-limits';
 import { AnaOutputCards, type AnaOutput } from './AnaOutputs';
 import { useAgentActivity } from './useAgentActivity';
 import { useProgressDock } from './workDock';
@@ -40,11 +43,10 @@ import { segmentForShellProject, shellProgramName, useShellProject } from './she
 import { availableDemoScripts } from '../components/ana/anaLockedScreens';
 import { AnaActionChips } from './AnaActionChips';
 import { AnaGrounding, type AnaGroundingEvidence } from './AnaGrounding';
-import { MAX_INTERJECTION_CHARS } from '@shared/ana/run-control-limits';
 import { CrlPremortemPanel, type CrlPremortemArtifact } from '../components/ana/CrlPremortemPanel';
 import { SignoffList } from './SignoffList';
 import type { PendingSignoff } from '../components/ana/useGovernedAction';
-import type { AnaChatAction, AnaChatMessage } from '../components/ana/useAnaChat';
+import type { AnaChatAction, AnaChatMessage, AnaRunHold } from '../components/ana/useAnaChat';
 import {
   AI_ACTIONS,
   ANA_MODES,
@@ -601,6 +603,8 @@ export function AnaRail({
   onNav,
   projectId = null,
   runStatus = null,
+  runHold = null,
+  turnRunPolicy = null,
   streaming = false,
   onPause,
   onResume,
@@ -638,6 +642,10 @@ export function AnaRail({
    * wait for her to finish. Absent handlers simply hide the affordance.
    */
   runStatus?: 'running' | 'paused' | 'cancelled' | null;
+  /** Why the run is held, when it is: a Manual hold is answered from the strip (row 74). */
+  runHold?: AnaRunHold | null;
+  /** The policy the turn in flight was sent with: the strip says what a steer does under Manual. */
+  turnRunPolicy?: AnaRunPolicy | null;
   streaming?: boolean;
   onPause?: () => void;
   onResume?: () => void;
@@ -673,15 +681,6 @@ export function AnaRail({
 }) {
   const [draft, setDraft] = React.useState('');
 
-  /* The steer field is separate from `draft` on purpose: a steer joins the
-     RUNNING turn, a draft starts the next one, and sharing one buffer would
-     make it ambiguous which a half-typed sentence was about to do. */
-  const [steer, setSteer] = React.useState('');
-  /* Steer submit state. `steerRefused` exists because the only
-     acknowledgement this control has is the box emptying, so a refusal has to
-     say something rather than look like a send. */
-  const [steerBusy, setSteerBusy] = React.useState(false);
-  const [steerRefused, setSteerRefused] = React.useState(false);
   /* Ask / Agent IS the Live Drive preference, said as what it means for the
      person. It used to be its own local flag that prefixed "[Agent] " to the
      message — which the shell stripped before sending (V2App ask), so the two
@@ -692,6 +691,9 @@ export function AnaRail({
      and Ask is AnA answering with the moves offered as buttons. One
      preference, the same one the composer's "AnA drives" switch sets. */
   const agent = Boolean(liveDrive?.on && !liveDrive.locked);
+  /* What AnA does between steps (row 74) — a separate question from Ask /
+     Agent, which is who operates the screens. Null outside the shell. */
+  const policyLabel = useRunPolicyLabel();
   const [plusOpen, setPlusOpen] = React.useState(false);
   const [modeOpen, setModeOpen] = React.useState(false);
   /* The progress panel: shown by default, hidden by one shared per-browser
@@ -848,6 +850,7 @@ export function AnaRail({
             messages={work.messages}
             streaming={streaming}
             runStatus={runStatus}
+            runHold={runHold}
             pendingSteers={work.pendingSteers}
             queue={agentActivity}
             context={{
@@ -1131,133 +1134,19 @@ export function AnaRail({
             </div>
           </div>
         )}
-        {/* Mid-run control.
-            The three actions have three different scopes, and the copy below
-            says which is which rather than one blanket promise:
-              Stop   cuts the step in flight — the model call and the tools are
-                     aborted, so it is "Stopping…", acknowledged by the server.
-              Pause  holds at the next ROUND BOUNDARY, deliberately: killing a
-                     tool to pause throws the work away and then redoes it, so
-                     "after this step" is the honest label and stays.
-              Steer  applies at the next round.
-            Steering is the reason this exists: a reviewer watching AnA work a
-            question the wrong way could previously only wait for her to finish,
-            while the server has spliced steers into the next round, and
-            recorded them in the decision lineage, all along.
-            Pause and Steer are offered only when the run is durably
-            controllable; Stop is always offered because aborting the request
-            needs no run record. */}
-        {streaming && (onPause || onStop || onSteer) && (
-          <div className="ana-runctl" role="group" aria-label="Control this run">
-            <span className="ana-runctl-state">
-              <span
-                className={
-                  runStatus === 'paused' || runStatus === 'cancelled'
-                    ? 'ana-runctl-dot is-paused'
-                    : 'ana-runctl-dot'
-                }
-                aria-hidden="true"
-              >
-                {runStatus === 'paused' ? I.pause : I.dot}
-              </span>
-              {/* Pause still lands at a round boundary — deliberately: killing a
-                  tool to pause throws the work away and then redoes it. Stop
-                  now cuts the step in flight, so the copy must stop saying
-                  "after this step" for BOTH, and must not claim stopped before
-                  the server says so. */}
-              {runStatus === 'paused'
-                ? 'Paused after this step'
-                : runStatus === 'cancelled'
-                  ? 'Stopping…'
-                  : 'Working'}
-            </span>
-
-            {/* ── The box used to empty whether or not the steer was accepted ──
-                `onSteer(v); setSteer('')` cleared the input synchronously, before
-                anything knew the server's answer — and `interject` answers with a
-                boolean that every call site discarded. A 404 (run already gone), a
-                409, a validation refusal and a dropped connection all looked
-                identical to success: the sentence vanished from the box, which is
-                the only acknowledgement this control has, and nothing anywhere
-                recorded it. The person had typed an instruction into nothing.
-
-                Now the text is only cleared once the server has accepted it, and a
-                refusal says so and leaves the sentence where it is, so it can be
-                sent again without retyping. */}
-            {onSteer && (
-              <form
-                className="ana-runctl-steer"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const v = steer.trim();
-                  if (!v || steerBusy) return;
-                  setSteerBusy(true);
-                  setSteerRefused(false);
-                  void Promise.resolve(onSteer(v))
-                    .then((accepted) => {
-                      // `undefined` means the handler reports nothing either way;
-                      // treating that as accepted keeps the old behaviour for any
-                      // caller that has not been widened, rather than telling the
-                      // person their steer failed on no evidence.
-                      if (accepted === false) {
-                        setSteerRefused(true);
-                        return;
-                      }
-                      setSteer('');
-                    })
-                    .catch(() => setSteerRefused(true))
-                    .finally(() => setSteerBusy(false));
-                }}
-              >
-                <input
-                  type="text"
-                  className="ana-runctl-input"
-                  value={steer}
-                  maxLength={MAX_INTERJECTION_CHARS}
-                  onChange={(e) => {
-                    setSteer(e.target.value);
-                    if (steerRefused) setSteerRefused(false);
-                  }}
-                  placeholder="Steer this run…"
-                  aria-label="Steer this run"
-                  aria-invalid={steerRefused || undefined}
-                  aria-describedby={steerRefused ? 'ana-runctl-steer-err' : undefined}
-                />
-                <button
-                  type="submit"
-                  className="ana-runctl-go"
-                  disabled={!steer.trim() || steerBusy}
-                >
-                  {steerBusy ? 'Sending…' : 'Steer'}
-                </button>
-              </form>
-            )}
-            {steerRefused && (
-              <span id="ana-runctl-steer-err" className="ana-runctl-err" role="status">
-                Not sent — AnA did not accept this steer. The text is still here.
-              </span>
-            )}
-
-            <div className="ana-runctl-actions">
-              {runStatus === 'paused'
-                ? onResume && (
-                    <button type="button" className="ana-runctl-btn" onClick={onResume}>
-                      Resume
-                    </button>
-                  )
-                : onPause && (
-                    <button type="button" className="ana-runctl-btn" onClick={onPause}>
-                      Pause
-                    </button>
-                  )}
-              {onStop && (
-                <button type="button" className="ana-runctl-btn is-stop" onClick={onStop}>
-                  Stop
-                </button>
-              )}
-            </div>
-          </div>
-        )}
+        {/* Mid-run control — pause, resume, steer, stop, and Manual's hold. One
+            strip, shared with the conversation screen (AnaWorkSections.tsx),
+            where the rail is not drawn; its docblock says what each does. */}
+        <RunControlStrip
+          streaming={streaming}
+          runStatus={runStatus}
+          runHold={runHold}
+          runPolicy={turnRunPolicy}
+          onPause={onPause}
+          onResume={onResume}
+          onStop={onStop}
+          onSteer={onSteer}
+        />
         <div className="ana-composer">
           {attachments.length > 0 && (
             <div className="ana-files">
@@ -1372,6 +1261,7 @@ export function AnaRail({
                 <span className="ana-modepull-ic">{agent ? I.wand : I.sparkles}</span>
                 <span>
                   {agent ? 'Agent' : 'Ask'} · {ANA_MODES.find((m) => m.id === mode)?.model}
+                  {policyLabel ? ` · ${policyLabel}` : null}
                 </span>
                 {I.down}
               </button>
@@ -1582,6 +1472,14 @@ export function AnaRail({
                       <span className="mh">{`≈${d.minutes} min · ${d.steps} stops · AnA drives, you can interrupt`}</span>
                     </button>
                   ))}
+                </>
+              )}
+              {policyLabel && (
+                <>
+                  {/* Between steps: Manual or Auto. Its own section, apart
+                      from Ask / Agent above, which it does not change. */}
+                  <div className="ana-menu-sec">Between steps</div>
+                  <RunPolicySwitch variant="menu" />
                 </>
               )}
               <div className="ana-menu-sec">Engine</div>
