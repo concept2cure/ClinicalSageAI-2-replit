@@ -1,0 +1,31 @@
+Two moves in one round — 2026-09-28 (fifth pass): checked, no defect
+
+The question: real models batch independent tool calls. Asked to "search the
+vault for stability", a model may send navigate_to (the Vault, naming the
+program) and act_on_screen (the search) in the same response, where the
+stand-in had always made one call per round. stream.ts runs a round's tools
+concurrently and emits each drive event when its tool finishes, so the moves
+reach the screen in completion order, not call order. If the search overtook
+the navigation, it would land on a Vault with no program open.
+
+Checked in the browser, on the branch head, with the stand-in sending both
+calls in one response (harness/ FAKE_PARALLEL=1, FAKE_DEMO_PROGRAM=vorelinib),
+three runs:
+
+  stand-in: #1 -> navigate_to {"target":"vault","program":"vorelinib"} + act_on_screen {"action":"vault.search","params":{"query":"stability"}}
+  PASS  search the vault for stability → Vault opens
+  PASS  vault search: the query is in the search box ...  — ["stability"]
+  PASS  no uncaught page errors
+  (the same three passes on each of the three runs)
+
+batched-moves.png: Vorelinib's Vault, "Search "stability"" in the breadcrumb,
+the query in the box, "No documents match your search" (true: the program's
+one document does not mention stability), Progress "Running 2 steps".
+
+Why the order holds here: the search is an operation on a one-program screen,
+so act_on_screen waits for the program the same round's navigation is opening
+(turnState.pendingProgram). It therefore finishes, and is emitted, after it.
+Two moves that do not depend on each other can still finish in either order.
+There a reordering is benign: an operation whose screen is not showing takes
+its own screen first (surfaceActions.applySurfaceAction). So nothing was
+changed without a failure to show for it.
