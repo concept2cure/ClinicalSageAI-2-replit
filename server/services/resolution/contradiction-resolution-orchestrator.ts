@@ -537,7 +537,7 @@ async function markRealReapproval(
       UPDATE ${table}
       SET metadata = jsonb_set(
         jsonb_set(
-          COALESCE(metadata, '{}'::jsonb),
+          COALESCE(metadata::jsonb, '{}'::jsonb),
           '{needsReapproval}',
           'true'::jsonb
         ),
