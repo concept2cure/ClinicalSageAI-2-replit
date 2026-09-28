@@ -21,6 +21,7 @@
  */
 
 import type { EstimandInput, EstimandStrategy } from '../estimand-sap-section';
+import type { SoaActivityLocation } from './dct-profile';
 
 export type { EstimandInput, EstimandStrategy, IntercurrentEventInput } from '../estimand-sap-section';
 
@@ -244,6 +245,33 @@ export interface InterimDesign {
   dmcRole?: string;
 }
 
+/**
+ * The sponsor's planning assumptions for an MMRM-analysed continuous
+ * endpoint — the inputs an MMRM sample size needs and the design cannot infer.
+ * See mmrm-sizing.ts; every value is a sponsor assumption, none is defaulted.
+ */
+export interface MmrmAssumptions {
+  /** The design endpoint the MMRM analyses (by name). */
+  endpointName: string;
+  /** Post-baseline visits in the model. */
+  visits: number;
+  covariance: 'compound_symmetry' | 'ar1';
+  /** Within-subject correlation, 0 ≤ ρ < 1 (CS: common; AR(1): lag-1). */
+  rho: number;
+  /** SD of the response at each visit, same units as `delta`. */
+  sigma: number;
+  /** Between-arm difference in mean at the target visit. */
+  delta: number;
+  /** Fraction still observed at each visit, monotone non-increasing, length = visits. */
+  retention: number[];
+  /** 1-based visit the contrast is tested at; the final visit when absent. */
+  targetVisit?: number;
+  /** n₂/n₁; 1 when absent. */
+  allocationRatio?: number;
+  /** Where the assumptions came from (prior study, literature). */
+  source?: string;
+}
+
 export interface StatisticalPlan {
   /** One/two-sided alpha for the primary test. */
   alpha?: number;
@@ -259,6 +287,8 @@ export interface StatisticalPlan {
   /** Missing-data strategy; must align with the estimand (no LOCF-as-primary). */
   missingDataStrategy?: string;
   interim?: InterimDesign;
+  /** Planning assumptions for an MMRM-analysed endpoint. See mmrm-sizing.ts. */
+  mmrmAssumptions?: MmrmAssumptions;
   /** Whether sensitivity analyses across assumption ranges were specified. */
   sensitivityAnalysesSpecified?: boolean;
   /** Power assumptions, with provenance, feeding the §6 red-flags. */
@@ -274,12 +304,41 @@ export interface StatisticalPlan {
   };
 }
 
+/**
+ * The dose-escalation design of a dose-finding study. Only BOIN (Liu & Yuan
+ * 2015) is modelled because it is the method this repository has a
+ * deterministic engine for (`stats/dose-finding-boin.ts`); a design using
+ * another method records none of this and the projection says so.
+ */
+export interface DoseEscalationDesign {
+  method: 'boin';
+  /** Target DLT rate φ, strictly between 0 and 1. */
+  targetToxicity: number;
+  /** Ordered dose levels, lowest first. */
+  doseLevels: Array<{ label: string; dose?: string }>;
+  /** Patients per cohort. */
+  cohortSize: number;
+  /** Maximum number of patients in the escalation. */
+  maxSampleSize: number;
+  /** 0-based index into `doseLevels` of the starting dose. */
+  startingDoseIndex?: number;
+  /** Stop once this many patients have been treated at the current dose. */
+  stopWhenAtDoseN?: number;
+  /** BOIN neighbourhood; the engine's defaults are 0.6φ and 1.4φ when absent. */
+  phi1?: number;
+  phi2?: number;
+  /** Posterior P(p > φ) above which a dose is eliminated; engine default 0.95 when absent. */
+  eliminationThreshold?: number;
+}
+
 export interface SafetyDesign {
   aeDefinitions?: string;
   /** Stopping rules (individual and study-level). */
   stoppingRules?: string;
   /** Dose-limiting toxicity logic for early phase. */
   dltDefinition?: string;
+  /** The dose-escalation rules a dose-finding study follows (FDA dosage-optimization guidance, 2024). */
+  doseEscalation?: DoseEscalationDesign;
   /** DSMB/DMC charter summary. */
   dmcCharter?: {
     present: boolean;
@@ -348,6 +407,13 @@ export interface SoaActivity {
   footnoteIds?: string[];
   /** Row order within the grid. */
   order: number;
+  /**
+   * Where the activity is performed (FDA decentralized-elements guidance, 2024).
+   * Optional and additive: ABSENT means the design does not say — the DCT
+   * profile reports it `unstated`, never `site` — so every design persisted
+   * before this field existed reads exactly as it did. See dct-profile.ts.
+   */
+  location?: SoaActivityLocation;
 }
 
 /** One filled intersection of the (activity × visit) grid. The grid is sparse. */
@@ -442,6 +508,57 @@ export interface RegulatoryStrategy {
   oncology?: boolean;
 }
 
+/**
+ * The sponsor's planned accrual — the input an enrollment forecast needs and
+ * the design cannot infer. Every rate is a SPONSOR input (site feasibility,
+ * prior studies); nothing on the platform assumes one.
+ */
+export interface AccrualPlan {
+  /** The unit every rate and activation time is expressed in. */
+  timeUnit: 'week' | 'month';
+  sites: Array<{
+    id: string;
+    country?: string;
+    /** Mean patients recruited per time unit once the site is active. */
+    meanRate: number;
+    /** Between-site coefficient of variation of the rate (Gamma); 0 ⇒ a fixed rate. */
+    rateCv?: number;
+    /** Time units after study start at which the site begins recruiting. */
+    activationTime?: number;
+  }>;
+  /** Where the rates came from, e.g. "site feasibility questionnaires, 2026-08". */
+  rateSource?: string;
+  /** Fixed Monte Carlo seed; when absent the engine derives one from the inputs. */
+  seed?: number;
+}
+
+/**
+ * A pre-specified plan to borrow from an external (historical / real-world)
+ * control. Every value is the sponsor's; see external-control-plan.ts.
+ */
+export interface ExternalControlPlan {
+  /** Where the external control comes from (named study, registry, RWD source). */
+  source: string;
+  /** The design endpoint the borrowing is for. */
+  endpointName: string;
+  /** Summary of the external control on that endpoint. */
+  historical: { n: number; mean: number; se: number };
+  /** How strength is borrowed. */
+  method: 'power_prior' | 'commensurate';
+  /** Power-prior discount, 0 ≤ a0 ≤ 1 (power_prior only). */
+  a0?: number;
+  /** Commensurability variance τ² ≥ 0 (commensurate only). */
+  tau2?: number;
+  /** Planned concurrent (randomised) control size; 0 for a fully external control. */
+  plannedConcurrentControlN: number;
+  /** Assumed SD of the endpoint, to express the planned concurrent control's precision. */
+  assumedSd?: number;
+  /** A tipping-point sensitivity analysis is pre-specified. */
+  tippingPointAnalysisPlanned?: boolean;
+  /** Covariate balance between the populations is pre-specified (e.g. SMDs, weighting). */
+  covariateBalancePlanned?: boolean;
+}
+
 export interface StudyDesign {
   /** Stable id (set once persisted; optional for an in-memory/proposed design). */
   id?: string;
@@ -468,6 +585,10 @@ export interface StudyDesign {
   scheduleOfActivities?: ScheduleOfActivities;
   statisticalPlan: StatisticalPlan;
   safety?: SafetyDesign;
+  /** The planned site accrual an enrollment forecast runs on. See enrollment-projection.ts. */
+  accrualPlan?: AccrualPlan;
+  /** A pre-specified external-control borrowing plan. See external-control-plan.ts. */
+  externalControlPlan?: ExternalControlPlan;
 
   /**
    * Regulatory-strategy attributes the regional rules read. Absent fields are

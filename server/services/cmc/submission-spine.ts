@@ -17,7 +17,15 @@
  *
  * @module server/services/cmc/submission-spine
  */
+import type { PoolClient } from 'pg';
 import { pool } from '../../db';
+
+/**
+ * Anything that can run a query: the shared pool, or a client already inside a
+ * transaction. Declared here rather than imported from module3-compile, which
+ * imports this module.
+ */
+type Queryable = Pick<PoolClient, 'query'>;
 
 /**
  * Application types whose programs carry a canonical submission spine — the
@@ -66,10 +74,10 @@ interface SpineRow {
  * statement, not folded into the submissions query: the eCTD compile harness
  * routes statements by table (tests/routes/ectd-compile-spine.harness.ts).
  */
-async function anotherProgramClaims(row: SpineRow, anchor: SpineAnchor, appType: string, orgId: number): Promise<boolean> {
+async function anotherProgramClaims(row: SpineRow, anchor: SpineAnchor, appType: string, orgId: number, executor: Queryable): Promise<boolean> {
   const subKeys = [row.product_name, row.title].map(normKey).filter(Boolean);
   if (subKeys.length === 0) return true;
-  const { rows } = await pool.query(
+  const { rows } = await executor.query(
     `SELECT id FROM regulatory_programs
       WHERE organization_id = $1 AND deleted_at IS NULL AND lower(program_type) = $2
         AND (lower(coalesce(product_name, '')) = ANY($3) OR lower(coalesce(name, '')) = ANY($3)
@@ -88,9 +96,11 @@ async function findProgramSubmission(
   anchor: SpineAnchor & { programId: string },
   appType: string,
   orgId: number,
+  /** The caller's connection — see the note on resolveSubmissionSpine. */
+  executor: Queryable,
 ): Promise<{ row: SpineRow; match: SubmissionSpine['match'] } | null> {
   const identityKeys = [...new Set([anchor.productName, anchor.title, anchor.programCode].map(normKey).filter(Boolean))];
-  const { rows } = await pool.query(
+  const { rows } = await executor.query(
     `SELECT id, application_type, primary_region, product_name, title, (program_id IS NOT NULL) AS anchored
        FROM submissions
       WHERE organization_id = $1 AND deleted_at IS NULL AND lower(application_type) = $2
@@ -106,7 +116,7 @@ async function findProgramSubmission(
   if (first.anchored === true) return { row: first, match: 'program' };
   // Legacy: exactly one unanchored candidate, and no other program claims it.
   if (rows.length !== 1) return null;
-  if (await anotherProgramClaims(first, anchor, appType, orgId)) return null;
+  if (await anotherProgramClaims(first, anchor, appType, orgId, executor)) return null;
   return { row: first, match: 'legacy-name' };
 }
 
@@ -119,18 +129,36 @@ async function findProgramSubmission(
 export async function resolveSubmissionSpine(
   anchor: SpineAnchor,
   orgId: number,
+  /**
+   * Where to run these three reads.
+   *
+   * Callers inside an open transaction MUST pass their own client. This
+   * function used to reach for the shared pool unconditionally, so a caller
+   * holding a transaction on one connection took a SECOND connection here —
+   * and when the pool had no slot free, the read waited while the caller's
+   * transaction sat idle holding its locks. Measured: the Module 3 compile
+   * route (module3OperatingSystemRoutes POST /compile/:projectId) opens a
+   * transaction, calls composeProjectModule3 -> resolveProjectRegionCode ->
+   * here, and with the 20-connection dev pool saturated the transaction stalled
+   * on Client/ClientRead while a concurrent compile's INSERT INTO
+   * cmc_module3_sections waited on its uncommitted rows until the 30s
+   * statement_timeout cancelled it. Raising the pool ceiling hid it; passing
+   * the client removes the second connection altogether, and the reads then
+   * also see the caller's own snapshot.
+   */
+  executor: Queryable = pool,
 ): Promise<SubmissionSpine | null> {
   if (anchor.programId === null) return null;
   const appType = (anchor.programType ?? '').trim().toLowerCase();
   if (!DRUG_APPLICATION_TYPES.has(appType)) return null;
   try {
-    const found = await findProgramSubmission({ ...anchor, programId: anchor.programId }, appType, orgId);
+    const found = await findProgramSubmission({ ...anchor, programId: anchor.programId }, appType, orgId, executor);
     if (!found) return null;
     const { row: sub, match } = found;
     const submissionId = Number(sub.id);
     const primaryRegion = sub.primary_region == null ? null : String(sub.primary_region);
 
-    const seqRes = await pool.query(
+    const seqRes = await executor.query(
       `SELECT id, sequence_number, region FROM ectd_sequences
         WHERE submission_id = $1 AND organization_id = $2 AND deleted_at IS NULL
         ORDER BY sequence_number DESC, id DESC
@@ -142,7 +170,7 @@ export async function resolveSubmissionSpine(
       return { submissionId, match, applicationType: String(sub.application_type), primaryRegion, sequence: null };
     }
 
-    const leafRes = await pool.query(
+    const leafRes = await executor.query(
       `SELECT count(*)::int AS n FROM submission_leaves
         WHERE sequence_id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
       [Number(seq.id), orgId],

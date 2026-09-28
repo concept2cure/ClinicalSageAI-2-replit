@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-28T14:05:03.971Z",
+  "generatedAt": "2026-09-28T15:46:33.291Z",
   "git": {
-    "sha": "48337a4291fec7a25d89120c2bb335032f5b650b",
+    "sha": "048cb50a23aedc73db01d205b74080ce58d10165",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1977,7 +1977,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1078807
+        "bytes": 1090009
       },
       {
         "file": "shared/schema.ts",
@@ -2009,7 +2009,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 190911
+        "bytes": 191827
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2081,7 +2081,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 130893
+        "bytes": 131337
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2159,7 +2159,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 20835
+        "lines": 21022
       },
       {
         "file": "shared/schema.ts",
@@ -2195,7 +2195,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 4465
+        "lines": 4478
       },
       {
         "file": "server/storage.ts",
@@ -2259,7 +2259,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2861
+        "lines": 2867
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
