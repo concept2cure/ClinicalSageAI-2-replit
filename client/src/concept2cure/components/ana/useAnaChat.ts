@@ -9,7 +9,8 @@
  *   thread_id    — captured for continuity across turns
  *   orchestration — metadata (noop at this layer)
  *   text         — token chunk appended to the streaming message
- *   done         — captures latencyMs + provider (fallback detection)
+ *   done         — captures latencyMs + provider (fallback detection), and why
+ *                  the loop stopped (stoppedReason) with its rounds
  *   post_done    — cleaned response + executedActions chips
  *   warning      — degraded-mode signal appended to the message's warnings
  *   grounding_strip — evidence verdict stored for the grounding chip on the reply
@@ -66,6 +67,7 @@ import {
   closeProgress,
   readContextUsed,
   readPlanSteps,
+  readTurnEnding,
   readTurnRecord,
   settleRunningCalls,
   CLIENT_PHASE_LABELS,
@@ -629,6 +631,8 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
             toolTrace?: Array<{ tool?: string; label?: string; status?: string; resultSummary?: string }>;
             humanControls?: Array<{ action?: string; message?: string }>;
             plan?: unknown;
+            stoppedReason?: unknown;
+            rounds?: unknown;
           } | null;
         }>;
       };
@@ -665,11 +669,15 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           // list is persisted, not when each step changed, so no plan changes
           // are invented for it.
           const plan = m.role === 'assistant' ? readPlanSteps(m.metadata?.plan) : null;
+          // Why the turn stopped, when it was not because she was done — so a
+          // turn the round limit cut short does not reopen as a finished one.
+          const ending = m.role === 'assistant' ? readTurnEnding(m.metadata) : {};
           return {
             id: `t-${threadId}-${idx}`,
             role: m.role as 'user' | 'assistant',
             text: m.content as string,
             ...(plan ? { plan } : {}),
+            ...ending,
             ...(reasoning ? { thinking: reasoning } : {}),
             ...(toolCalls.length > 0 ? { toolCalls } : {}),
             ...(interjections.length > 0 ? { interjections } : {}),
@@ -1166,6 +1174,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               // the request when a governance policyHint pinned the strategy).
               capturedEffortUsed =
                 typeof event.effortUsed === 'string' ? event.effortUsed : undefined;
+              // Why the loop stopped and how many rounds it ran — only values
+              // the server produces; see readTurnEnding. A turn the round limit
+              // cut short is not a finished one, and every surface says so.
+              const ending = readTurnEnding(event);
               // The answer has landed; the server's background finishing work
               // (evidence check, actions, persistence) runs until `post_done`.
               const at = Date.now();
@@ -1174,6 +1186,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                   m.id === assistantId
                     ? {
                         ...m,
+                        ...ending,
                         progress: advanceProgress(m.progress, 'finalizing', CLIENT_PHASE_LABELS.finalizing, at),
                       }
                     : m

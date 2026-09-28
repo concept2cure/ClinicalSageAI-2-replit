@@ -41,6 +41,12 @@ export const LIVE_RUN_STATUSES: readonly RunStatus[] = [
  * `cancelled` and `client_disconnected` are deliberately separate. A dropped
  * socket is not a human decision, and recording one as the other would put a
  * choice nobody made into the decision lineage the dossier reads.
+ *
+ * RESERVED, produced by nothing yet: `budget_exhausted`, `approval_timeout`,
+ * `hold_expired` and `hold_unavailable` are named now so the run-policy work
+ * that will produce them does not reshape this type (row 74, slice S1 of the
+ * run-policy design). Until a writer exists for one, no surface has words for
+ * it and the client ignores it.
  */
 export type RunStoppedReason =
   | 'cancelled'
@@ -50,7 +56,22 @@ export type RunStoppedReason =
   | 'max_rounds'
   | 'duplicate_thrash'
   | 'no_more_tools'
-  | 'error';
+  | 'error'
+  | 'budget_exhausted'
+  | 'approval_timeout'
+  | 'hold_expired'
+  | 'hold_unavailable';
+
+/**
+ * Why a TURN's work stopped — the subset of {@link RunStoppedReason} that the
+ * turn's own loop decides, as the `done` frame and the assistant message's
+ * metadata carry it. The rest (a dropped socket, a restart, a refused gate, an
+ * error) end the RUN and are recorded on the run row, not on the answer.
+ */
+export type TurnStoppedReason = Exclude<
+  RunStoppedReason,
+  'client_disconnected' | 'orphaned' | 'approval_denied' | 'error'
+>;
 
 const ALLOWED_TRANSITIONS: Record<RunStatus, readonly RunStatus[]> = {
   running: ['paused', 'awaiting_approval', 'cancelled', 'finished', 'failed'],
