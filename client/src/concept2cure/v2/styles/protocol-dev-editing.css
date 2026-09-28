@@ -102,6 +102,12 @@
      its own button label is a grid nobody can read. */
   .pde-soa-vh{display:flex;justify-content:center;gap:1px;margin-top:5px;}
   .pde-soa-vh .pde-rowbtn,.pde-soa-rh .pde-rowbtn{padding:2px 4px;line-height:0;}
+  /* The visit header's rename and remove sit 1px apart, so each has to be a
+     24px target on its own: 12px icon + 5px padding + 1px border a side. The
+     pair is 49px, inside the 64px minimum column, so the grid does not widen
+     (WCAG 2.2 SC 2.5.8; periodic review 2026-09-28, A-C-8). The row header's
+     single remove button has the spacing instead and keeps its size. */
+  .pde-soa-vh .pde-rowbtn{padding:5px;}
   /* The row header is label + category stacked (research-v2 sets both to
      block); the remove control sits beside that stack rather than under it,
      so the row keeps the height of its label. */
