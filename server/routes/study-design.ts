@@ -38,6 +38,8 @@ import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 import {
   validateDesign,
   simulateTrial,
@@ -75,6 +77,7 @@ import { recordPlanningInput } from './study-design-planning';
 import { requireEditorAccess } from '../middleware/orgMembership';
 
 const router = Router();
+const logger = createScopedLogger('study-design');
 
 // ─── Request context helpers (polymorphic per the auth middleware) ────────────
 
@@ -538,8 +541,7 @@ router.post('/persist', requireEditorAccess, async (req: Request, res: Response)
     if (err instanceof StudyDesignPersistRefusal) {
       return res.status(STUDY_DESIGN_REFUSAL_STATUS[err.code]).json({ error: err.code, detail: err.message });
     }
-    console.error('[study-design/persist]', err?.message);
-    return res.status(500).json({ error: 'PERSIST_FAILED', detail: err?.message });
+    return serverError(res, logger, 'saving the study design', err);
   } finally {
     client.release();
   }
@@ -631,8 +633,7 @@ router.delete('/:studyId', requireEditorAccess, async (req: Request, res: Respon
     return res.json({ deleted: studyId, ...gov });
   } catch (err: any) {
     await client.query('ROLLBACK').catch(() => undefined);
-    console.error('[study-design/delete]', err?.message);
-    return res.status(500).json({ error: 'DELETE_FAILED', detail: err?.message });
+    return serverError(res, logger, 'deleting the study design', err);
   } finally {
     client.release();
   }

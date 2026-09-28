@@ -215,8 +215,10 @@ export const REVIEW_ENROLLMENT_FORECAST: AnaTool = {
     'engine, the probability of reaching the target at all, the closed-form expectation, and the sites by country. ' +
     DESIGN_REQUIRED + ' ' +
     'Report every figure VERBATIM with its time unit. Site recruitment rates are SPONSOR INPUTS: with no accrual plan the engine returns missing — say ' +
-    'the forecast needs site feasibility rates, and never supply or assume a rate. The interval is among simulations that reached the target; when ' +
-    'none did the times are null — say the target is not reached, never quote a time.',
+    'the forecast needs site feasibility rates, and never supply or assume a rate. A site with no rate variability or activation time recorded is a ' +
+    'gap, never read as zero. The median and 80% interval are reported only when every simulation reached the target: null times with ' +
+    'probReached above 0 mean some simulations never reached it — say the times are not reported, never quote one; probReached 0 means the target ' +
+    'is not reached. Report forecast.seedSource: a seed derived from the inputs is not the sponsor\'s.',
   input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
 };
 
@@ -229,8 +231,10 @@ export const REVIEW_INTERIM_OPERATING_CHARACTERISTICS: AnaTool = {
     'figure from the platform\'s exact engine (stats/group-sequential-oc.ts). ' +
     DESIGN_REQUIRED + ' ' +
     'The characteristics are OF the boundaries the protocol records when it records them; a recorded boundary that departs from the named spending ' +
-    'function is a DISCREPANCY — report it verbatim, never quietly substitute the solved value. Report every gap verbatim, including an assumed ' +
-    'sidedness; a null power means alpha or power is not recorded — never supply one.',
+    'function is a DISCREPANCY — report it verbatim, never quietly substitute the solved value. The type I error is ONE-SIDED and computed with ' +
+    'futility NON-BINDING; the binding figure (typeIErrorIfFutilityBinding) is reported separately and is never the type I error. A type I error ' +
+    'above the design\'s alpha is a gap. Report every gap verbatim, including an assumed sidedness; a null power or expected sample size is ' +
+    'explained by a gap — never supply alpha, power or N.',
   input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
 };
 
@@ -243,7 +247,9 @@ export const REVIEW_MMRM_SIZING: AnaTool = {
     'engine (stats/mmrm-design.ts). ' +
     DESIGN_REQUIRED + ' ' +
     'Report every figure and gap VERBATIM. The assumptions (covariance, correlation, SD, effect, per-visit retention, power) are the SPONSOR\'S: when ' +
-    'one is not recorded nothing is sized — say which assumption is missing, and never supply one or fall back to complete data.',
+    'one is not recorded nothing is sized — say which assumption is missing, and never supply one or fall back to complete data. The allocation ' +
+    '(sizing.allocationRatio, sizing.allocationSource) is the design\'s, never an assumed 1:1: nPerArm is the first arm\'s n and nSecondArm the ' +
+    'second\'s. A non-inferiority, equivalence or unrecorded inferential frame is not sized as a superiority test — report the gap.',
   input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
 };
 
@@ -251,13 +257,15 @@ export const REVIEW_EXTERNAL_CONTROL_PLAN: AnaTool = {
   name: 'review_external_control_plan',
   description:
     'READ-ONLY. Review the external-control borrowing plan of the study design bound to a protocol document (projectExternalControlPlan; FDA draft ' +
-    'guidance on externally controlled trials, 2023; ICH E10 §2.5): each element the protocol is expected to pre-specify — source, borrowing method ' +
-    'and strength, prior-data conflict handling, covariate comparability, tipping-point sensitivity — stated or not, and the borrowing strength at the ' +
+    'guidance on externally controlled trials, 2023; ICH E10 §2.5): ten elements the guidance discusses (not its full list) — among them the source ' +
+    'and its fitness, the borrowing method and strength, prior-data conflict handling, covariate comparability and tipping-point sensitivity — each ' +
+    'stated or not (several have no field on the design yet and say so), and the borrowing strength at the ' +
     'planned concurrent-control size (effective historical N, share of control precision borrowed) from the platform\'s engine ' +
     '(stats/external-control.ts). ' +
     DESIGN_REQUIRED + ' ' +
     'Report every element and figure VERBATIM. No posterior or treatment effect is computed at protocol stage — never quote one. A fixed power-prior ' +
-    'discount does not handle prior-data conflict; say so rather than calling the plan conflict-robust.',
+    'discount does not handle prior-data conflict, and neither does a FIXED commensurate τ² (it equals a power prior with a0 = seH²/(seH²+τ²)); ' +
+    'say so rather than calling the plan conflict-robust. A plan is at best partial until every element can be stated.',
   input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
 };
 
@@ -270,7 +278,10 @@ export const REVIEW_MULTIPLICITY_CONTROL: AnaTool = {
     'engine (stats/multiplicity.ts). ' +
     DESIGN_REQUIRED + ' ' +
     'Report every rate, verdict, note and gap VERBATIM. The simulation assumes independent p-values: say so, and never present it as proof of control ' +
-    'under the trial\'s actual dependence. A procedure the engine cannot check (graphical without weights, gatekeeping) is a gap — never substitute another.',
+    'under the trial\'s actual dependence. The alpha allocation is each hypothesis\'s initial significance level (Bretz et al. 2009), totalling at ' +
+    'most alpha, and the RECORDED allocation is what is simulated (procedure.simulated says whether a textbook split was used instead); Hochberg is ' +
+    'valid only under positive dependence. A procedure the engine cannot check (graphical without weights, gatekeeping, weighted Hochberg) is a gap — ' +
+    'never substitute another.',
   input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
 };
 
