@@ -93,8 +93,8 @@ Gates: all pass.
 
 ## Still open
 
-- **A link racing a completion can deadlock.** The two take the same pair's
-  locks in opposite orders. Postgres aborts one side (40P01), which rolls back
-  whole (D5 governed-path README).
+- ~~**A link racing a completion can deadlock.**~~ Closed the same day: a link
+  locks its source first, the order a completion takes
+  (`docs/evidence/D5/2026-09-28-link-completion-lock-order/`).
 - **The executor's other board-changing commands** were not re-read for this
   change; it covers `update_task` only.
