@@ -49,9 +49,11 @@ function allowlistedEmails(): Set<string> {
  * Which authentication surface issued the request's token, when the
  * authenticator recorded it: `req.identity.provider` on the server/auth.ts
  * path ('local-jwt' for a password session, 'saml' for a federated one), else
- * a `provider` field on req.user. Empty when neither is set.
+ * a `provider` field on req.user. Empty when neither is set. Exported so the
+ * owner grant's e-mail allowlist (services/entitlements/master-admin.ts)
+ * refuses a federated e-mail by the same reading.
  */
-function tokenProvider(req: Request): string {
+export function tokenProvider(req: Request): string {
   const fromUser = (req.user as { provider?: unknown } | undefined)?.provider;
   return String(req.identity?.provider ?? fromUser ?? '').toLowerCase();
 }
@@ -109,8 +111,9 @@ async function hasActivePlatformGrant(userId: number): Promise<boolean> {
  */
 export async function resolvePlatformAdmin(req: Request): Promise<boolean> {
   if (isPlatformAdmin(req)) return true;
-  if (req.userId == null) return false;
-  return hasActivePlatformGrant(Number(req.userId));
+  const userId = Number(req.userId ?? NaN);
+  if (!Number.isFinite(userId)) return false;
+  return hasActivePlatformGrant(userId);
 }
 
 /**
