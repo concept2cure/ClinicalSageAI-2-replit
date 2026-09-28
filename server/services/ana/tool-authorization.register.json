@@ -3015,9 +3015,11 @@
    "site": "AnaToolExecutor.ts:19204"
   },
   "retire_qms_document": {
-   "class": "confirm",
-   "writes": "retires a controlled document (terminal); the handler requires a reason of 8+ characters and records a governed action",
-   "site": "AnaToolExecutor.ts:13707"
+   "class": "refuse",
+   "writes": "none; the handler refuses (e-signed route, 2026-09-28 Q-0928-1 / SEC-0928-1: was confirm and retired the document with a reason only)",
+   "site": "AnaToolExecutor.ts:13751",
+   "refusedBy": "handler",
+   "why": "Retiring a controlled document is an e-signed act: the person does it with the document's Retire action in the Quality register, which asks for their password and second factor."
   },
   "review_amendment": {
    "class": "read",
@@ -3227,8 +3229,8 @@
   },
   "revise_qms_document": {
    "class": "confirm",
-   "writes": "opens a controlled revision (reason required): document back to draft, approval cleared; the effective version is withdrawn in place (hand-on) + governed-action row",
-   "site": "AnaToolExecutor.ts:13653"
+   "writes": "opens a controlled revision (reason of 8+ characters required; caller must hold an editor role in organization_users, 2026-09-28 Q-0928-2): document back to draft, approval cleared; the effective version is withdrawn in place (hand-on) + governed-action row",
+   "site": "AnaToolExecutor.ts:13678"
   },
   "run_cdisc_pipeline": {
    "class": "read",

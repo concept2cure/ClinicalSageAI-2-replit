@@ -303,8 +303,10 @@ function DocumentHistory({ projectId, documentUuid }: { projectId: string; docum
   let body: React.ReactNode;
   if (st.loading) body = <div className="vd-d-idx">Loading history…</div>;
   else if (st.error || !st.data) {
+    /* 2026-09-28 (M-0928-3): was role="status" — a failed read announced
+       politely, unlike the ChainVerdict and Data room failures beside it. */
     body = (
-      <div className="vd-dr-err" role="status">
+      <div className="vd-dr-err" role="alert">
         {I.alertTriangle} This document's history could not be read. Nothing is shown rather than an
         incomplete history.
       </div>

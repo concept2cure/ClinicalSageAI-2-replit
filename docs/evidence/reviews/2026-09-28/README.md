@@ -47,18 +47,39 @@ Each report's own "What I did NOT get to" section names what it did not cover. T
 - Projects, Vault and QMS were spot-checked, not re-read;
 - no live AWS or GitHub for the infrastructure items.
 
-## Remediation
+## Remediation (same day; five fix agents in parallel on disjoint files, each test shown failing first)
 
-In progress in the same session, one fix per finding, each shown failing first. The table below is
-updated when the fixes land.
+| Finding | Outcome | Red → green |
+|---|---|---|
+| **Q-0928-1 / SEC-0928-1**: AnA `retire_qms_document` retired a controlled document with no signature ceremony | **Fixed.** The handler refuses through `refuseSignatureInChat` and points to the Retire action, which asks for password and second factor. The register entry is now `refuse`. The model-facing description reads "AnA cannot sign". Pinned in `ana-cannot-sign.test.ts` (`SIGNING_TOOLS`), which also covers the description. | 13 failed → 115 passed across the five QMS/tool test files |
+| **Q-0928-2**: AnA `revise_qms_document` had no editor-role check, and its reason floor was 3 characters | **Fixed.** The role comes from `organization_users` for the verified principal and is checked against `GOVERNED_WRITE_ROLES`, the set `requireEditorAccess` uses. A failed lookup refuses. The floor is now `QMS_REASON_MIN` (8). | `revise-qms-document-role.test.ts` (new) |
+| **SEC-0928-2**: enterprise sign-in recorded refusals for membership-only accounts in the platform chain (tenant 0) | **Fixed** at the four refusal events via `auditOrganizationOf`, as F-41 did in `auth.ts`. The challenge event is left on the token's organisation on purpose, so one sign-in is not split across two ledgers (see open items). | 4 of 7 failed → 8 of 8 passed (`authEnterprise-audit-organisation.test.ts`) |
+| **HS-0928-1**: `GET /api/coauthor/documents` returned the page length as `total`, so a truncated backbone could read "All documents approved" | **Fixed.** Returns the organisation's real `count(*)` under the same predicate, plus a new `returned` field. | 1 failed → 2 passed on PGlite (`coauthorDocumentsListTotal.test.ts`) |
+| **M-0928-1**: gateway transmittals turned every refusal into "HTTP 0" | **Fixed.** `readData` keeps the `ApiRequestError` status and payload, so the 409/412/422/400/404 branches are reachable. | new thrown-error tests failed on the old code |
+| **Q-0928-3**: the §11.50 meaning declared at transmit was never shown back | **Fixed.** The success message names the signer and meaning, and says nothing about a signature when the ledger rolled back. The meaning is stamped on the transmittal (`metadata.signature`) in the signature's own transaction and shown on the log row. | client and server tests failed first; three guard tests also pass on the old code, as their agent reported |
+| **A-0928-1**: the required placement reason was not announced as required | **Fixed.** `aria-required`, the asterisk hidden from screen readers, and the requirement stated before anything is typed. | 6 failed → 80 passed |
+| **A-0928-2** (low): the Vault history read failure used `role="status"` | **Fixed** (`role="alert"`). `vaultSurface.test.tsx`'s mock now answers the history read with a real empty history, where a wrong shape had been hidden by the polite region. | as above |
+| **M-0928-3** (low): two bare empty states in Publishing Center | **Fixed.** Hints say this is what the service returned, not a failed read. | as above |
+| **G2**: TaskBoard raw-hex module palette | **Open.** It needs `--module-*` tokens minted, which is a control-tower decision. | — |
 
-| Finding | Status |
-|---|---|
-| Q-0928-1 / SEC-0928-1, Q-0928-2 (AnA QMS tools) | in progress |
-| SEC-0928-2 (enterprise sign-in audit tenant) | in progress |
-| HS-0928-1 (coauthor `total`) | in progress |
-| M-0928-1, Q-0928-3 (gateway transmittals) | in progress |
-| A-0928-1, A-0928-2, M-0928-3 | in progress |
-| G2 | open — needs `--module-*` tokens minted (control-tower decision) |
+Checks on the whole batch:
+- `ci:typecheck-no-regression`: 0 errors.
+- `check-security-patterns`: 0 violations.
+- `ci:server-error-leaks`, `ci:unkeyed-request-tables`, `ci:column-reachability`, `ci:insert-columns-declared`: green.
+- 64 test files, 1,544 tests: pass.
+
+### Open items raised by the fixes (for the control session)
+
+1. **Class-level role gap in AnA's confirmed writes.** The QMS fix agent matched each confirm or
+   conditional register entry against its handler: 93 of 179 write a governed record with no role
+   check, and service-routed writers are also unchecked. Seventeen of them are in the launch catalog,
+   among them `create_qms_document`, `save_document_to_vault`, `update_vault_document`,
+   `create_protocol_document` and `create_regulatory_commitment`. `/api/ana-ri` is mounted with
+   `authenticateToken` only, so a `viewer` can confirm any of them. One check in the registry wrapper,
+   for every write-class tool, is the proportionate fix. Taken up next in this session.
+2. **Enterprise sign-in session organisation.** `verify-password` should choose the session's
+   organisation with `signInMembership`, so that the token, the challenge event and `verify-mfa` agree
+   for a membership-only account. As it stands, such an account is refused `NO_ORGANIZATION` at that
+   door, and nothing is recorded.
 
 - **Performed by:** session `session_01KiDof7JE6LiaZhRvh2hJrb`, on `concept2cure-v2` directly per Rule 0.
