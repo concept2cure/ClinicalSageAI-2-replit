@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-28T05:22:34.659Z",
+  "generatedAt": "2026-09-28T06:48:14.400Z",
   "git": {
-    "sha": "e1ce55015888d76370e272e71c12cee780ecc92e",
+    "sha": "b4cd68746a925a6c0d36f9f0ac2d3f562ea2cf72",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2037,7 +2037,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 152030
+        "bytes": 154047
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2246,12 +2246,12 @@
         "lines": 3116
       },
       {
-        "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
-        "lines": 3067
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 3078
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3040
+        "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
+        "lines": 3067
       },
       {
         "file": "server/routes/concept2cure.ts",
