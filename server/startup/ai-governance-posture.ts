@@ -60,6 +60,14 @@ import {
   resolvePiiEnforcement,
   type PiiEnforcement,
 } from '../services/ai-gateway/pii-screen';
+import {
+  AI_GATEWAY_ACCEPT_DETERMINISTIC_VAR,
+  AI_GATEWAY_DETERMINISTIC_VAR,
+  DETERMINISTIC_MODE_LEGACY_VAR,
+  DETERMINISTIC_PRODUCTION_RISK,
+  acceptsDeterministicMode,
+  isDeterministicModeRequested,
+} from '../services/ai-gateway/deterministic-mode';
 
 export type { PiiEnforcement };
 
@@ -176,4 +184,57 @@ export function assertAiGovernancePostureForProduction(
       'set AI_GOVERNANCE_REQUIRE_ENFORCE=true once strict so it cannot regress',
   });
   return { ...base, posture: 'permissive-accepted' };
+}
+
+// ── Deterministic mode (2026-09-28, launch row D2) ───────────────────────────
+//
+// AI_GATEWAY_DETERMINISTIC (legacy alias DETERMINISTIC_MODE) makes AnA answer
+// with fixed responses. Production refused neither it nor its output until
+// 2026-09-28; /readyz reported the process ready. It now has its own boot gate,
+// evaluated in the same order as the gates above:
+//   1. NODE_ENV != production                 → no-op.
+//   2. flag not set                           → 'live'.
+//   3. AI_GOVERNANCE_REQUIRE_ENFORCE=true     → FAIL-CLOSED, acceptance or not.
+//   4. no AI_GATEWAY_ACCEPT_DETERMINISTIC     → REFUSING TO BOOT.
+//   5. accepted                               → boots, one structured warning.
+// AI_GOVERNANCE_ACCEPT_PERMISSIVE does not accept it: that variable accepts a
+// permissive screen, not fixed responses. The predicates live beside the
+// gateway (services/ai-gateway/deterministic-mode.ts), which enforces the same
+// rule at request time.
+
+export type DeterministicBootPosture = 'non-production' | 'live' | 'deterministic-accepted';
+
+export function assertDeterministicModePostureForProduction(
+  env: NodeJS.ProcessEnv = process.env,
+  logger: AiGovernancePostureLogger = { warn: (m, meta) => console.warn(m, meta ?? '') },
+): DeterministicBootPosture {
+  if (!isProductionEnv(env)) return 'non-production';
+  if (!isDeterministicModeRequested(env)) return 'live';
+
+  const message =
+    `${AI_GATEWAY_DETERMINISTIC_VAR} is set in production, so ${DETERMINISTIC_PRODUCTION_RISK}.`;
+
+  if (requiresStrictAiGovernance(env)) {
+    throw new Error(
+      `[ai-governance-posture] FAIL-CLOSED: ${message} AI_GOVERNANCE_REQUIRE_ENFORCE=true forbids it here ` +
+        `regardless of ${AI_GATEWAY_ACCEPT_DETERMINISTIC_VAR}.`,
+    );
+  }
+
+  if (!acceptsDeterministicMode(env)) {
+    throw new Error(
+      `[ai-governance-posture] REFUSING TO BOOT: ${message} Unset ${AI_GATEWAY_DETERMINISTIC_VAR} ` +
+        `(and ${DETERMINISTIC_MODE_LEGACY_VAR}) to run against a live provider. Set ` +
+        `${AI_GATEWAY_ACCEPT_DETERMINISTIC_VAR}=true only in a throwaway environment that serves no user, ` +
+        'such as the CI boot job.',
+    );
+  }
+
+  logger.warn(`⚠️  ${message}`, {
+    controlledBy: `${AI_GATEWAY_DETERMINISTIC_VAR} / ${DETERMINISTIC_MODE_LEGACY_VAR}`,
+    acceptedVia: `${AI_GATEWAY_ACCEPT_DETERMINISTIC_VAR}=true`,
+    acceptedRisk: DETERMINISTIC_PRODUCTION_RISK,
+    remediation: `unset ${AI_GATEWAY_DETERMINISTIC_VAR} and ${AI_GATEWAY_ACCEPT_DETERMINISTIC_VAR} before any user is served`,
+  });
+  return 'deterministic-accepted';
 }

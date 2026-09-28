@@ -54,6 +54,10 @@ export interface AuditEntry {
   ip: string;
   reason: string | null;
   meaning: string | null;
+  /** The record's own reference when `target` names it for a reader (server: audit-trail-ledger). */
+  targetRef?: string | null;
+  /** The signature record this entry is, `<table>:<id>` (§11.70 link), or null. */
+  signatureRef?: string | null;
 }
 
 export interface AuditKind {

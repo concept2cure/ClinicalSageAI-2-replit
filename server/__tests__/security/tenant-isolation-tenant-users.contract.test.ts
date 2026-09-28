@@ -71,11 +71,10 @@ async function fakeQuery(sql: string, params: unknown[] = []) {
   if (/SELECT COUNT\(\*\) as count FROM organization_users WHERE organization_id/i.test(sql)) {
     return { rows: [{ count: '1' }] };
   }
-  // invite dedupe: look up an existing user by email
-  if (/SELECT id FROM users WHERE email/i.test(sql)) {
-    return {
-      rows: dbState.existingUserIdByEmail ? [{ id: dbState.existingUserIdByEmail }] : [],
-    };
+  // invite dedupe: does this address already have an account? One row, the id
+  // or null (public.user_id_for_email — the id is all that crosses tenants).
+  if (/SELECT public\.user_id_for_email\(\$1\) AS id/i.test(sql)) {
+    return { rows: [{ id: dbState.existingUserIdByEmail ?? null }] };
   }
   // invite dedupe: is the invited user already in the target org?
   if (/SELECT id FROM organization_users WHERE user_id/i.test(sql)) {
@@ -92,14 +91,18 @@ async function fakeQuery(sql: string, params: unknown[] = []) {
   if (/INSERT INTO organization_invitations/i.test(sql)) {
     return { rows: [{ id: 501 }] };
   }
-  // new-user creation path returns the created id
-  if (/INSERT INTO users/i.test(sql)) {
+  // new-user creation path: the id is drawn from the sequence first (RETURNING
+  // is held to the users SELECT policy), then inserted explicitly
+  if (/SELECT nextval\(pg_get_serial_sequence\('public\.users', 'id'\)\)/i.test(sql)) {
     return { rows: [{ id: 88 }] };
+  }
+  if (/INSERT INTO users/i.test(sql)) {
+    return { rows: [], rowCount: 1 };
   }
   // invitation issuance: storing the activation token hash on the user row
   if (/UPDATE users SET reset_token/i.test(sql)) {
     if (dbState.tokenStoreFails) throw new Error('connection terminated');
-    return { rows: [] };
+    return { rows: [], rowCount: 1 };
   }
   // invitation issuance: the organization's display name for the email
   if (/SELECT name FROM organizations WHERE id/i.test(sql)) {

@@ -17,7 +17,14 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { buildAssistantMetadata, formatStoppedTurnNote, turnStopWarning, withTurnEnding, type ToolTraceEntry } from '../tool-trace';
+import {
+  buildAssistantMetadata,
+  formatStoppedTurnNote,
+  turnEndingReason,
+  turnStopWarning,
+  withTurnEnding,
+  type ToolTraceEntry,
+} from '../tool-trace';
 
 const trace: ToolTraceEntry[] = [
   { tool: 'search_documents', label: 'Searching your documents', status: 'success', resultSummary: '4 results' },
@@ -142,5 +149,42 @@ describe('turnStopWarning — what the turn record says about a stop', () => {
 
   it('says nothing for a turn she finished', () => {
     expect(turnStopWarning('no_more_tools', 3)).toBe('');
+  });
+});
+
+/*
+ * The stream route never read why the model stopped writing. An answer that
+ * hit the length limit — or a stream that stalled mid-answer — reached the
+ * person under "Finished", and was handed to the next turn as a complete one.
+ */
+describe('turnEndingReason — a cut-off answer is not a finished turn', () => {
+  it('a loop that ended for want of tools, on an answer that was cut off, did not finish', () => {
+    expect(turnEndingReason('no_more_tools', 'max_tokens')).toBe('answer_cut_off');
+    expect(turnEndingReason('no_more_tools', 'length')).toBe('answer_cut_off');
+    expect(turnEndingReason('no_more_tools', 'chunk_timeout')).toBe('answer_cut_off');
+  });
+
+  it('an answer that ended on its own, or whose ending is unknown, leaves the reason as it was', () => {
+    expect(turnEndingReason('no_more_tools', 'end_turn')).toBe('no_more_tools');
+    expect(turnEndingReason('no_more_tools', 'tool_use')).toBe('no_more_tools');
+    // Unknown is not evidence of a cut (finish-reason.ts): asserting one would be its own fabrication.
+    expect(turnEndingReason('no_more_tools', undefined)).toBe('no_more_tools');
+    expect(turnEndingReason('no_more_tools', 'unknown')).toBe('no_more_tools');
+  });
+
+  it('a stop the loop already reports stands — it already says the turn stopped short', () => {
+    expect(turnEndingReason('max_rounds', 'max_tokens')).toBe('max_rounds');
+    expect(turnEndingReason('cancelled', 'max_tokens')).toBe('cancelled');
+  });
+
+  it('the next turn is told, and the record says, that the answer was cut off', () => {
+    const note = formatStoppedTurnNote([
+      { role: 'user', content: 'Summarise the protocol' },
+      { role: 'assistant', content: 'The primary endpoint is', metadata: { stoppedReason: 'answer_cut_off', rounds: 1 } },
+    ]);
+    expect(note).toContain('Your previous turn had its answer cut off before it was finished.');
+    expect(turnStopWarning('answer_cut_off', 1)).toBe(
+      'The answer was cut off after 1 round, before AnA finished writing it. What the person saw ends where it stopped.',
+    );
   });
 });

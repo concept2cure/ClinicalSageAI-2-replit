@@ -603,6 +603,17 @@ describe('AnaActivity — a turn the loop cut short says so, unfolded', () => {
     expect(stoppedNote(container)?.textContent).toContain("AnA reached this turn's round limit before she said she was done.");
   });
 
+  it('a cut-off answer says so, outside the folded body, and offers Continue', () => {
+    const onContinue = vi.fn();
+    const { container } = render(<AnaActivity {...settled} stoppedReason="answer_cut_off" rounds={1} onContinue={onContinue} />);
+    const note = stoppedNote(container)!;
+    expect(note, 'a cut-off answer was left to read as a finished one').toBeTruthy();
+    expect(outsideBody(container, note)).toBe(true);
+    expect(note.textContent).toContain("AnA's answer was cut off before she finished it. It ends where it stopped.");
+    fireEvent.click(within(note).getByRole('button', { name: 'Continue' }));
+    expect(onContinue).toHaveBeenCalledTimes(1);
+  });
+
   it('a repeated-step stop says so, and offers no Continue — continuing would repeat it', () => {
     const onContinue = vi.fn();
     const { container } = render(<AnaActivity {...settled} stoppedReason="duplicate_thrash" rounds={3} onContinue={onContinue} />);

@@ -67,6 +67,7 @@ export function stateLineFor(
   // carried on).
   if (turn.stoppedReason === 'max_rounds') return clocked('Stopped at the round limit');
   if (turn.stoppedReason === 'duplicate_thrash') return clocked('Stopped: repeating a step');
+  if (turn.stoppedReason === 'answer_cut_off') return clocked('Stopped: answer cut off');
   if (typeof turn.completedAt === 'number') return `Finished in ${elapsed}`;
   return '';
 }
@@ -81,6 +82,7 @@ export function stateLineFor(
 export function isContinuable(reason: AnaStoppedReason | undefined): boolean {
   switch (reason) {
     case 'max_rounds':
+    case 'answer_cut_off':
     case 'budget_exhausted':
     case 'approval_timeout':
     case 'hold_expired':

@@ -294,6 +294,12 @@ export async function recordGovernedDecision(
       decisionContext: {
         governedDecisionId: decisionId,
         kind: GOVERNED_FABRIC_KIND,
+        /* The artifact this decision governs, as the platform addresses it.
+           Without it the row is unlinkable: executed_artifact_id is NULL on
+           every governed-fabric row (412 of 412 on the reference database), so
+           the lineage dossier's artifact join matched nothing and reported
+           zero decisions for a document that had them. */
+        artifactId: evaluation.context.artifactId ?? null,
         // The addressable project reference. See the projectId note above.
         projectRef: String(evaluation.context.projectId ?? ''),
         intent: evaluation.context.intendedAction,

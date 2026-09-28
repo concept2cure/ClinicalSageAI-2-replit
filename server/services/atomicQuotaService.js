@@ -182,16 +182,19 @@ export async function atomicCreateUser(organizationId, userData) {
       return quotaExceeded('User', currentCount, maxUsers);
     }
 
-    // Check if user already exists
+    // Check if user already exists. The account may belong to another
+    // organization, whose users row this tenant scope cannot read (users RLS,
+    // migrations/20260928_users_membership_rls.sql), so the question goes
+    // through user_id_for_email(), which answers with the id and nothing else.
     // tenant-isolation-safe: pre-membership identity resolution — users is a global identity keyed by email; org membership lives in organization_users and cross-org joins require a consented invitation (below).
-    const existingUserResult = await client.query('SELECT id FROM users WHERE email = $1', [
+    const existingUserResult = await client.query('SELECT public.user_id_for_email($1) AS id', [
       userData.email,
     ]);
 
     let userId;
     let createdNewUser = false;
 
-    if (existingUserResult.rows.length > 0) {
+    if (existingUserResult.rows[0].id !== null) {
       userId = existingUserResult.rows[0].id;
 
       // Check if already in this organization
@@ -280,14 +283,21 @@ export async function atomicCreateUser(organizationId, userData) {
       // sign in. Before this the INSERT omitted password_hash and every
       // invitation of a new address died on the NOT NULL constraint.
       //
+      // The id comes from the sequence first, not RETURNING: RETURNING is held
+      // to the users SELECT policy, and the new row is not this organization's
+      // member until the membership below is written.
+      //
       // tenant-isolation-safe: user creation is org-less by design — a users row is a global identity; org membership is added separately via organization_users after the quota check above.
-      const createUserResult = await client.query(
+      const idResult = await client.query(
+        `SELECT nextval(pg_get_serial_sequence('public.users', 'id'))::integer AS id`
+      );
+      userId = idResult.rows[0].id;
+      await client.query(
         `INSERT INTO users (
-           email, name, title, department, status,
+           id, email, name, title, department, status,
            password_hash, must_change_password, created_at, updated_at
          )
-         VALUES ($1, $2, $3, $4, $5, $6, true, NOW(), NOW())
-         RETURNING id`,
+         VALUES ($7, $1, $2, $3, $4, $5, $6, true, NOW(), NOW())`,
         [
           userData.email,
           userData.name,
@@ -295,9 +305,9 @@ export async function atomicCreateUser(organizationId, userData) {
           userData.department || null,
           'active',
           unusableInvitePasswordHash(),
+          userId,
         ]
       );
-      userId = createUserResult.rows[0].id;
       createdNewUser = true;
     }
 
