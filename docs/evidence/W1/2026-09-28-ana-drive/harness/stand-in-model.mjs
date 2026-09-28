@@ -3,13 +3,15 @@
 // way the prompts ask, it refuses requests the real API refuses (see
 // ../contract-audit.txt for each rule's source), and it streams the way a
 // real adaptive model does: a thinking block first, pings, and — with
-// FAKE_THINK_MS — thinking in silence. See README.md for how to run it.
+// FAKE_THINK_MS — thinking in silence. On Opus 5.5 and Fable 5.x a long note
+// written between tool calls comes back as a progress-update thinking block,
+// as the API documents. See README.md for how to run it.
 import http from 'node:http';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { thinks, validate } from './api-contract.mjs';
+import { progressDisplay, thinks, validate } from './api-contract.mjs';
 
 const REQ_DIR = process.env.FAKE_REQ_DIR || path.join(os.tmpdir(), 'ana-drive-stand-in', 'requests');
 fs.mkdirSync(REQ_DIR, { recursive: true });
@@ -148,7 +150,9 @@ function guessName(t) {
 function nextStop(t, steps, program) {
   if (demo.idx >= steps.length) return { text: `That is the whole demonstration: ${steps.length} stops. Ask me about any of them.` };
   const s = steps[demo.idx++];
-  const say = `Stop ${demo.idx}: ${String(s.say).split('.')[0]}.`;
+  // The whole talking point, and a word on the move: two sentences at most
+  // stops, three where the talking point has two.
+  const say = `Stop ${demo.idx}: ${String(s.say).trim()} Here it is on screen.`;
   if (s.navigate) return t.tool('navigate_to', { target: s.navigate.target, ...(program ? { program } : {}) }, say);
   const opensProgram = s.act.actionId === 'projects.open-program' && program;
   const params = { ...(s.act.params || {}), ...(opensProgram ? { program } : {}) };
@@ -324,6 +328,29 @@ function streamToolCall(res, tool, id, index) {
   sse(res, 'content_block_stop', { type: 'content_block_stop', index });
 }
 
+const sentences = text => (String(text).match(/[.!?](?=\s|$)/g) || []).length;
+const firstSentence = text => /^.*?[.!?](?=\s|$)/s.exec(String(text))?.[0] ?? String(text);
+
+// Opus 5.5 and Fable 5.x: a note longer than a sentence or two, written
+// before a tool call, is a progress-update thinking block — empty under the
+// default display, a short summary (here, its first sentence) under
+// "updates" and "summarized". Null when the note stays text.
+function progressNote(body, p, n) {
+  const display = progressDisplay(body);
+  if (!display || !p.tool || !p.text || sentences(p.text) < 3) return null;
+  const note = { display, text: display === 'omitted' ? '' : firstSentence(p.text) };
+  log(`#${n} note as a progress block (display ${display}): ${note.text ? JSON.stringify(note.text.slice(0, 60)) : 'empty'}`);
+  return note;
+}
+
+function streamProgressNote(res, note, n, index) {
+  sse(res, 'content_block_start', { type: 'content_block_start', index, content_block: { type: 'thinking', thinking: '', signature: '' } });
+  if (note.text) sse(res, 'content_block_delta', { type: 'content_block_delta', index, delta: { type: 'thinking_delta', thinking: note.text } });
+  sse(res, 'content_block_delta', { type: 'content_block_delta', index, delta: { type: 'signature_delta', signature: `sig_note_${n}` } });
+  sse(res, 'content_block_stop', { type: 'content_block_stop', index });
+  return index + 1;
+}
+
 async function streamReply(res, body, p, n) {
   const stop = p.stop ?? (p.tool ? 'tool_use' : 'end_turn');
   res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive' });
@@ -331,7 +358,9 @@ async function streamReply(res, body, p, n) {
   sse(res, 'ping', { type: 'ping' });
   let index = 0;
   if (thinks(body)) index = await streamThinking(res, body, n, index);
-  if (p.text) index = await streamText(res, p.text, index);
+  const note = progressNote(body, p, n);
+  if (note) index = streamProgressNote(res, note, n, index);
+  else if (p.text) index = await streamText(res, p.text, index);
   toolCallsOf(p).forEach((call, k) => streamToolCall(res, call, toolUseId(n, k), index + k));
   sse(res, 'message_delta', { type: 'message_delta', delta: { stop_reason: stop, stop_sequence: null }, usage: { output_tokens: 20 } });
   sse(res, 'message_stop', { type: 'message_stop' });
@@ -341,7 +370,9 @@ async function streamReply(res, body, p, n) {
 function replyContent(body, p, n) {
   const content = [];
   if (thinks(body)) content.push({ type: 'thinking', thinking: '', signature: `sig_fake_${n}` });
-  if (p.text) content.push({ type: 'text', text: p.text });
+  const note = progressNote(body, p, n);
+  if (note) content.push({ type: 'thinking', thinking: note.text, signature: `sig_note_${n}` });
+  else if (p.text) content.push({ type: 'text', text: p.text });
   toolCallsOf(p).forEach((call, k) => content.push({ type: 'tool_use', id: toolUseId(n, k), name: call.name, input: call.input }));
   return content;
 }

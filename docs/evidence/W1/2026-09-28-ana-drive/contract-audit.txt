@@ -149,3 +149,21 @@ The first tiered run scored 18/19: the battery read the stand-in's log from a
 file name this run did not write to, so the check could not see a retry the
 log (fake-strict.log, round #35) shows AnA made. The path was made
 configurable (FAKE_LOG) and the run repeated, above.
+
+── Added the same day, with narration.txt ──
+One more rule, from shared/model-migration.md (Migrating to Claude Fable 5.1,
+addition 3; Migrating to Claude Opus 5.5):
+  - thinking.display "updates" without the beta
+    thinking-display-updates-2026-08-18 -> 400. The docs say it "is rejected
+    as an unknown display value" and quote no wording, so the stand-in's
+    wording is its own.
+And one more documented behaviour the stand-in now plays: on Opus 5.5 and
+Fable 5.x, a note longer than a sentence or two written before a tool call
+comes back as a progress-update thinking block, empty under the default
+display "omitted".
+PASS 400 (want 400) display "updates" without its beta — thinking.display: 'updates' is not a known display value
+PASS 200 (want 200) valid: display "updates" with its beta
+all 27 cases as expected
+With the rule neutered: FAIL 200 (want 400) display "updates" without its
+beta, 1 FAILED. What AnA sent in both configurations afterwards, and that none
+of it was refused, is in narration.txt.

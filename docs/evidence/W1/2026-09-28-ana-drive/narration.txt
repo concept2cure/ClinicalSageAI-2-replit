@@ -1,0 +1,172 @@
+D2 — what AnA says between moves reaches the person, one stop to a paragraph
+2026-09-28, concept2cure-v2, local stand-in model (harness/), headless Chromium
+
+── What the API documents ───────────────────────────────────────────────────
+claude-api skill, shared/model-migration.md, "Text between tool calls comes
+back in thinking blocks" (Migrating to Claude Opus 5.5):
+
+  "On Claude Opus 5, the short notes the model writes between tool calls
+  (what it just found, what it's doing next) come back as `text` blocks. On
+  Claude Opus 5.5, as on Claude Fable 5.1, notes longer than a sentence or two
+  come back as progress-update `thinking` blocks, at most one before each tool
+  call, and under the default `display: "omitted"` their text is empty - no
+  request fails, but a client that renders only `text` blocks goes quiet for
+  the length of a long agentic turn. Fix: set `thinking.display: "updates"`
+  (beta `thinking-display-updates-2026-08-18`) ..."
+
+  Under "updates": "any `thinking` block with non-empty text is a progress
+  update"; a block whose text is exactly "This part of the response was
+  interrupted before it finished." stands in for unfinished work; without the
+  beta, "updates" is rejected as an unknown display value.
+
+A demonstration is narrated exactly that way: start_product_demo tells AnA,
+for each stop, to "narrate its talking point in your own voice ... then make
+its move". Opus 5.5 serves AnA's rounds when tiering is off, on a Thorough or
+high-risk turn, and when a person picks it. With the default tiering, drive
+rounds go to Sonnet 5, which writes its notes as text.
+
+── The stand-in, made to do what the docs say ───────────────────────────────
+  - It narrates each stop's whole talking point, "Stop N: <talking point>
+    Here it is on screen." That is two sentences at nine of the training
+    demonstration's twelve stops and three at the other three (1, 2, 12).
+  - On claude-opus-5-5 (and fable-5-1, fable-5), a note of three or more
+    sentences before a tool call comes back as a progress-update thinking
+    block: empty under "omitted", its first sentence (the summary) under
+    "updates" and "summarized".
+  - It refuses display "updates" without the beta. The docs quote no wording
+    for that refusal, so the stand-in's wording is its own.
+  selftest.mjs, 27 cases, all as expected. The new rule neutered: "display
+  'updates' without its beta" came back 200 (want 400), 1 FAILED; restored,
+  all 27 as expected.
+
+The battery's training-demonstration scenario gained two checks, read from
+the page: every stop's "Stop N:" is in AnA's words, and nothing runs straight
+on into "Stop N:" or the closing line.
+
+── Before (unchanged tree) ──────────────────────────────────────────────────
+Default tiering (drive rounds on Sonnet 5):
+PASS  training demo visits every stop in order
+PASS  training demo shows "AnA is demonstrating"
+PASS  training demo reaches its end
+PASS  training demo: every stop is narrated in AnA's words  — 12 stops; not narrated: none
+FAIL  training demo: each round's words start their own paragraph  — run together after: "demonstration.", "screen.", "screen."
+PASS  no uncaught page errors
+5/6 passed
+
+  The saved message (chat_messages 243):
+  "Let me find the right demonstration.Starting the demonstration.Stop 1:
+  Projects is the front door: ... Here it is on screen.Stop 2: Open one o..."
+  narration-before-default.png: the rail, one block of text, "…Here it is on
+  screen.Stop 5: Authoring is…".
+
+  Every model shows this. Each round's words were appended to the answer as
+  they streamed, with nothing between the rounds, and a model ends a note
+  without a line break.
+
+Tiering off (every round on Opus 5.5):
+PASS  training demo visits every stop in order
+PASS  training demo shows "AnA is demonstrating"
+PASS  training demo reaches its end
+FAIL  training demo: every stop is narrated in AnA's words  — 12 stops; not narrated: 1, 2, 12
+FAIL  training demo: each round's words start their own paragraph  — run together after: "demonstration.", "screen.", "screen."
+PASS  no uncaught page errors
+4/6 passed
+
+  The stand-in's side:
+  18:35:03.864 #3 note as a progress block (display omitted): empty
+  18:35:04.734 #4 note as a progress block (display omitted): empty
+  18:35:20.421 #14 note as a progress block (display omitted): empty
+  The saved message (chat_messages 247) opens: "Let me find the right
+  demonstration.Starting the demonstration.Stop 3: Project home is ...".
+  Stops 1 and 2 were never said. The screen moved to Projects and opened a
+  program in silence. narration-before-opus.png shows it.
+
+── The fix ──────────────────────────────────────────────────────────────────
+  server/services/ai-gateway/progress-updates.ts (new), used by both
+  Anthropic paths in gateway.ts:
+  - A model that returns its notes as thinking blocks says so in the registry
+    (ModelConfig.progressUpdatesInThinking; Opus 5.5 is the only such entry).
+  - On such a model, a request that carries tools and has not asked for
+    visible reasoning gets thinking {type: adaptive, display: updates} and the
+    beta.
+  - A thinking block with text is then her note. It is returned as text, in
+    its own paragraph, and never as reasoning. The API's placeholder for
+    unfinished work is never shown.
+  - A turn that asked for visible reasoning keeps display "summarized" and its
+    reasoning panel. Its notes arrive there, mixed into the summary.
+  server/routes/ana-ri/stream.ts: a round's first words start a new paragraph
+  when the text so far does not end in whitespace. The model is still handed
+  back its own words as it wrote them.
+
+── Tests, each first seen failing ───────────────────────────────────────────
+server/services/ai-gateway/__tests__/gateway-progress-notes.test.ts, 11 tests.
+With the gateway and type changes set aside (git stash), 6 failed:
+ × the registry says so for Opus 5.5, and for no model the docs do not name
+ × asks for display "updates", with the beta that display needs
+ × a note comes back as text, before the move it introduces, and is not reasoning
+ ✓ the API's placeholder for unfinished work is never shown as hers
+ × text around a note keeps to its own paragraph
+ × the non-streamed path reads the same notes
+ ✓ Opus 5 writes its notes as text: no display, no beta, its thinking is reasoning
+ ✓ a turn that asked for visible reasoning keeps its summary in the reasoning panel
+ × a request with no tools has no notes between calls to ask for
+ ✓ asParagraph breaks only text that would run on
+ ✓ addBetaHeader keeps a beta already on the request
+      Tests  6 failed | 5 passed (11)
+The five that pass hold with or without the change. Each was made to fail by
+breaking the fix the way it guards:
+  placeholder shown             → "the API's placeholder ... never shown as hers" failed
+  reasoning request ignored     → "a turn that asked for visible reasoning ..." failed
+  applied to every adaptive model → "Opus 5 writes its notes as text ..." failed
+Restored: 11 passed.
+
+server/routes/ana-ri/__tests__/live-drive-turn.test.ts, "narration — each
+round starts its own paragraph" (the real route over HTTP, three rounds). With
+stream.ts set aside:
+AssertionError: the person read "…front door.Stop 2: …"
+- Stop 1: Projects is the front door.
+- Stop 2: the Vault holds every source.
+- That is the whole demonstration.
++ Stop 1: Projects is the front door.Stop 2: the Vault holds every source.That is the whole demonstration.
+Restored: 28 passed.
+
+flagship-opus-5-5.test.ts pins the new field with the rest of Opus 5.5's
+documented surface.
+
+── After (this tree) ────────────────────────────────────────────────────────
+Tiering off (every round on Opus 5.5), the whole battery: 21/21 passed.
+  PASS  training demo: every stop is narrated in AnA's words  — 12 stops; not narrated: none
+  PASS  training demo: each round's words start their own paragraph
+  requests 45, refused by the contract 0
+    claude-opus-5-5 stream 43: thinking {"type":"adaptive","display":"updates"},
+                               anthropic-beta thinking-display-updates-2026-08-18
+    claude-opus-5-5 single  2: no thinking param, no beta (no tools on them)
+  notes returned as progress blocks and shown: 5, e.g.
+    #15 note as a progress block (display updates): "Stop 1: Projects is the front door: every regulatory program"
+    #26 note as a progress block (display updates): "Stop 12: End where an inspector would start: the audit trail"
+  The saved message (chat_messages 269) opens:
+    Let me find the right demonstration.
+
+    Starting the demonstration.
+
+    Stop 1: Projects is the front door: every regulatory program with its workstream, stage, readiness and blockers.
+
+    Stop 2: Open one of their real programs (pick it from the portfolio on screen — C2C-101 in the demo workspace).
+
+    Stop 3: Project home is the program cockpit: ... Here it is on screen.
+  narration-after-opus.png. Stops 1 and 2 read as the API's one-sentence
+  summaries of the notes, which is what "updates" returns.
+
+Default tiering (drive rounds on Sonnet 5), the whole battery: 21/21 passed.
+  requests 45, refused 0: claude-sonnet-5 stream 43 and claude-opus-5-5
+  single 2, none with a thinking param or a beta. Unchanged.
+  narration-after-default.png: every stop in full, one paragraph each.
+
+── Not shown ────────────────────────────────────────────────────────────────
+  - A real model. The stand-in plays the documented behaviour. How long a
+    real model's notes are decides how many stops Opus 5.5 turns into progress
+    blocks, and how its summaries read.
+  - On Opus 5.5, a turn that asked for visible reasoning (Thorough effort, or
+    a high-risk turn) keeps display "summarized". Its notes appear in the
+    reasoning panel, not as her words. Choosing "updates" there would empty
+    that panel. That choice is left open.

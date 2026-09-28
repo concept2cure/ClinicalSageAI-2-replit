@@ -60,6 +60,17 @@ async function watchUrls(page, { until, timeout = 45000 }) {
 async function stripText(page) {
   return (await page.locator('.ana-drive-strip').allTextContents().catch(() => [])).join(' | ');
 }
+// What AnA said at each stop reaches the person, each stop in its own
+// paragraph. The stand-in narrates a stop as "Stop N: <talking point> …".
+function recordNarration(text) {
+  const total = Number(/That is the whole demonstration: (\d+) stops/.exec(text)?.[1] ?? 0);
+  const said = new Set([...text.matchAll(/Stop (\d+):/g)].map(m => Number(m[1])));
+  const unsaid = Array.from({ length: total }, (_, i) => i + 1).filter(k => !said.has(k));
+  const runOn = [...text.matchAll(/\S{0,24}\S(?=Stop \d+:|That is the whole demonstration)/g)].map(m => m[0]);
+  record('training demo: every stop is narrated in AnA\'s words', total > 0 && unsaid.length === 0, `${total} stops; not narrated: ${unsaid.join(', ') || 'none'}`);
+  record('training demo: each round\'s words start their own paragraph', runOn.length === 0, runOn.length ? `run together after: ${runOn.slice(0, 3).map(r => JSON.stringify(r)).join(', ')}` : '');
+}
+
 async function bodyText(page) {
   return page.evaluate(() => document.body.innerText);
 }
@@ -147,6 +158,7 @@ const SCENARIOS = {
     record('training demo visits every stop in order', missing.length === 0, `seen: ${seen.join(' → ')}${missing.length ? '  missing: ' + missing.join(',') : ''}`);
     record('training demo shows "AnA is demonstrating"', sawDemoStrip);
     record('training demo reaches its end', /That is the whole demonstration/.test(await bodyText(page)));
+    recordNarration(await bodyText(page));
   },
   async salesDemo(page) {
     const fs = await import('node:fs');
