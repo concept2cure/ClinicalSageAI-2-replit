@@ -71,6 +71,8 @@ import { burdenProfileForDesign } from '../services/study-design/burden-adapters
 import { compareBurden } from '../services/study-design/burden-delta';
 import { DESIGN_ENGINES } from '../services/protocol-development/protocol-industry-service';
 import { assessSpiritConformance } from '../services/study-design/spirit-conformance';
+import { recordPlanningInput } from './study-design-planning';
+import { requireEditorAccess } from '../middleware/orgMembership';
 
 const router = Router();
 
@@ -587,6 +589,14 @@ router.get('/:studyId', async (req: Request, res: Response) => {
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
 });
+
+// ─── POST /:studyId/planning (governed partial write) ────────────────────────
+//
+// One block of sponsor planning inputs; the handler and its contract are in
+// study-design-planning.ts. Gated here, because this router's POST projections
+// are reads a viewer may use.
+
+router.post('/:studyId/planning', requireEditorAccess, recordPlanningInput);
 
 // ─── DELETE /:studyId (governed mutation) ─────────────────────────────────────
 

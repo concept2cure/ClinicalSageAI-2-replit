@@ -40,6 +40,23 @@ as JSON byte for byte.
 `protocol-development/protocol-industry-service.ts`. A path, a response key
 and an engine cannot drift apart.
 
+### Recording the planning inputs the engines read
+
+Six engines read inputs only a sponsor can supply: the BOIN rules, the site
+accrual plan, the MMRM assumptions, the external-control plan, the
+master-protocol structure, and each SoA activity's location and specimen.
+Until this change nothing on screen could record them, so those engines
+could only ever report "not recorded".
+
+| Piece | Where |
+|---|---|
+| Strict block schemas, one per block (unknown keys refused at every depth; cross-field checks such as a start dose that is a recorded level, retention never rising, a power prior with its a0) and the pure `applyPlanningInput` (null clears a block) | `server/services/study-design/planning-inputs.ts` |
+| `POST /api/study-design/:studyId/planning` — `requireEditorAccess`; reason ≥ 8 and the block validated **before** a connection is taken; tenant context set; the design read `FOR UPDATE` by `study_id` **and** `tenant_id`; written back through the one writer (`persistStudyDesignTx`); a governed-action row carrying the reason, the block and whether it was cleared; 404 and 409 roll back | `server/routes/study-design-planning.ts`, mounted in `server/routes/study-design.ts` |
+| One governed `C2CForm` per block and per SoA activity, prefilled from what the design records; list fields are one entry per line with line-numbered errors; a value that does not parse is refused, never coerced; a blank optional field is left out, never defaulted; "none" states there is no shared control | `client/…/surfaces/planningInputForms.ts`, `planningStructureForms.ts`, `ProtocolDevPlanningInputs.tsx` (mounted in `ProtocolDevDesign.tsx` above the projections pane) |
+
+The panel re-reads the design after every write, so a block shows as recorded
+only once the server has confirmed it.
+
 ### Withdrawn, not shipped: a second protocol DOCX renderer
 
 A structured `GET /api/protocol-export/:id/docx` was built early in this session
@@ -105,6 +122,9 @@ only), the CAPA join anchored on the scoped row, input bounds, route order
 | `protocol-development/__tests__/protocol-industry-service.pglite.integration.test.ts` | 17 |
 | `ana/__tests__/protocol-industry-tools.test.ts` | 8 |
 | `client/…/__tests__/protocolDevIndustryProjections.test.ts` | 20 |
+| `study-design/__tests__/planning-inputs.test.ts` | 13 |
+| `routes/__tests__/study-design-planning.route.test.ts` | 5 |
+| `client/…/__tests__/planningInputForms.test.ts` | 9 |
 
 Regression: `server/services/study-design/__tests__` + `protocol-development/__tests__`
 + the study-design and protocol-development route suites — 44 files, 833 tests,
@@ -158,6 +178,14 @@ red, the file was restored byte for byte, and the suite re-ran green.
 | Service | version lookup without its org filter | `a label not recorded for this org is NOT_FOUND — including one another org recorded` (`promise resolved … instead of rejecting`) |
 | AnA tools | one handler unregistered | `review_protocol_redline handler registered: expected undefined to be type of 'function'` |
 | Client pane | a null off-site share rendered as `0%` | `a null off-site share reads "not assessed", never 0%` |
+| Planning write | the editor gate removed from the route | `refuses a viewer` (`expected 200 to be 403`) |
+| Planning write | `FOR UPDATE` removed from the read | `reads the design FOR UPDATE, tenant-scoped…` |
+| Planning write | the `tenant_id` predicate removed | same test — **survived at first** (the params were still asserted); caught after asserting the predicate itself |
+| Planning write | the reason check skipped | `refuses a short reason and an invalid block… before a connection is taken` (`expected 200 to be 400`) |
+| Planning schema | `.strict()` dropped from a nested dose level | **survived at first**; caught by the added `refuses an unknown key inside a nested entry` |
+| Planning forms | a non-number coerced to 0 | four parser tests, incl. `refuses a non-number with its label` |
+| Planning forms | a blank optional field defaulted to 0 | five tests, incl. `leaves a blank optional field out rather than defaulting it` |
+| Planning forms | "none" kept as an arm name | `"none" states no shared control` (`expected 'none' to be null`) |
 
 ---
 
@@ -191,10 +219,10 @@ same way; their rows are added here as they land.
 - **USDM conformance stays `unverified`.** Vendoring the CDISC USDM JSON schema
   and validating against it needs network access this environment does not
   have.
-- **Nothing on screen edits a design's SoA activities**, so the new
-  `location` attribute travels the channel SoA categories already travel (the
-  design API and AnA drafting); the DCT profile reports every activity without
-  one as `unstated`.
+- **An activity's location and specimen are recorded one activity at a time**
+  (the planning-inputs panel); the SoA grid itself is still edited through the
+  design API and AnA drafting. The DCT profile reports every activity without
+  a location as `unstated`.
 - **WHO item 9 (public title)** stays `missing` until the design carries a
   distinct public title (`publicTitle?` on the spine).
 - **Win ratio / RMST are deliberately not wired**: analysis-on-data engines have

@@ -171,6 +171,16 @@ tool and a surface to land honestly:
 | Multiplicity procedures: Bonferroni, Holm, Hochberg, fixed-sequence, graphical | `stats/multiplicity.ts` | **Wired in this change.** `study-design/multiplicity-check.ts` simulates the named procedure's family-wise error over the confirmatory family (with the unadjusted rate for contrast and the Monte Carlo SE), decides "controlled" against a stated tolerance, checks the alpha allocation covers the family, states the independence assumption, and refuses to approximate a graphical or gatekeeping procedure the spine does not parameterise. MUL-001 still gates presence; this checks substance. Reachable at `/api/study-design/:id/multiplicity`, in the projections pane, and as AnA's `review_multiplicity_control` |
 | Win ratio, RMST | `stats/win-ratio.ts`, `stats/rmst.ts` | **Deliberately not wired at protocol stage.** Both are analysis-on-data engines (subject-level pairs; Kaplan–Meier curves): before data exist there is nothing for them to compute, and a projection that ran them on assumed data would be the fabrication the guardrails forbid. What a protocol owes here is pre-specification — the RMST horizon τ, the win-ratio hierarchy — which belongs in the design gates once the spine records them |
 
+**Recording the inputs.** Five of these blocks (and the Tier 3 biospecimen and
+master-protocol inputs) are sponsor inputs no engine may assume. They are
+recorded, one governed block at a time, through
+`POST /api/study-design/:id/planning` (`routes/study-design-planning.ts`,
+editor role, reason, `FOR UPDATE`, the one writer, a governed-action row) and
+the **Planning inputs** panel on the Design tab
+(`ProtocolDevPlanningInputs.tsx`). The server validates each block strictly
+(`study-design/planning-inputs.ts`); the forms refuse what does not parse and
+default nothing.
+
 `sample-size.ts` solves continuous endpoints exactly and binary /
 time-to-event on the normal approximation, with margins for non-inferiority
 and equivalence reported as caveats rather than solved. The solvers above close
