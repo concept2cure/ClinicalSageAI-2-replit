@@ -50,7 +50,10 @@ export function Outline({ doc, activeSec, onSec, onFinalize }: OutlineProps) {
       <div className="pd-outline-h"><span>Sections</span><span className="pd-outline-c">{counts.complete}/{counts.total}</span></div>
       <div className="pd-tree">
         {sections.map((s) => (
-          <button key={str(s.id)} className={'pd-tree-row' + (activeSec === s.id ? ' on' : '')} onClick={() => onSec(s)}>
+          /* The open section was `.on` alone; `aria-current` exposes it
+             (periodic review 2026-09-28, A-C-2). */
+          <button key={str(s.id)} className={'pd-tree-row' + (activeSec === s.id ? ' on' : '')}
+            aria-current={activeSec === s.id ? 'true' : undefined} onClick={() => onSec(s)}>
             {/* Section completion was this dot's colour alone, in the outline
                 a protocol author navigates by. */}
             <span className="pd-tree-dot" data-status={str(s.status)} aria-hidden="true" />

@@ -1,0 +1,98 @@
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx   (before the fix)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>/
+
+ × client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx > the tab strip exposes the open tab (A-C-2) > marks the open tab, and only that one, as current 715ms
+   → expected null to be 'true' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx > the tab strip exposes the open tab (A-C-2) > moves the mark when another tab is opened 482ms
+   → expected null to be 'true' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx > the section outline exposes the open section (A-C-2) > marks the open section as current, and moves the mark with the selection 207ms
+   → expected null to be 'true' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx > the section outline exposes the open section (A-C-2) > never has more than one current tab and one current section 247ms
+   → expected [] to have a length of 2 but got +0
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx > the tab strip exposes the open tab (A-C-2) > marks the open tab, and only that one, as current
+AssertionError: expected null to be 'true' // Object.is equality
+
+- Expected:
+"true"
+
++ Received:
+null
+
+ ❯ client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx:75:51
+     73|     await mount();
+     74|     const document = screen.getByRole('button', { name: 'Document' });
+     75|     expect(document.getAttribute('aria-current')).toBe('true');
+       |                                                   ^
+     76|     expect(screen.getByRole('button', { name: 'Objectives' }).hasAttri…
+     77|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx > the tab strip exposes the open tab (A-C-2) > moves the mark when another tab is opened
+AssertionError: expected null to be 'true' // Object.is equality
+
+- Expected:
+"true"
+
++ Received:
+null
+
+ ❯ client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx:82:106
+     80|     await mount();
+     81|     fireEvent.click(screen.getByRole('button', { name: 'Schedule of as…
+     82|     expect(screen.getByRole('button', { name: 'Schedule of assessments…
+       |                                                                                                          ^
+     83|     expect(screen.getByRole('button', { name: 'Document' }).hasAttribu…
+     84|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx > the section outline exposes the open section (A-C-2) > marks the open section as current, and moves the mark with the selection
+AssertionError: expected null to be 'true' // Object.is equality
+
+- Expected:
+"true"
+
++ Received:
+null
+
+ ❯ client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx:91:51
+     89|     await mount();
+     90|     const synopsis = screen.getByRole('button', { name: /1\s*Synopsis/…
+     91|     expect(synopsis.getAttribute('aria-current')).toBe('true');
+       |                                                   ^
+     92|     fireEvent.click(screen.getByRole('button', { name: /2\s*Background…
+     93|     expect(screen.getByRole('button', { name: /2\s*Background/ }).getA…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx > the section outline exposes the open section (A-C-2) > never has more than one current tab and one current section
+AssertionError: expected [] to have a length of 2 but got +0
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx:99:23
+     97|   it('never has more than one current tab and one current section', as…
+     98|     await mount();
+     99|     expect(current()).toHaveLength(2);
+       |                       ^
+    100|     fireEvent.click(screen.getByRole('button', { name: 'Risk register'…
+    101|     fireEvent.click(screen.getByRole('button', { name: /2\s*Background…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  04:48:08
+   Duration  4.40s (transform 1.38s, setup 213ms, import 1.74s, tests 1.66s, environment 591ms)
+
