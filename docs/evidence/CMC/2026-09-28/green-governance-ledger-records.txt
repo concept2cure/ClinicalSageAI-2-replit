@@ -75,3 +75,20 @@ another tenant sees: 0
 --
 --   fix, ledger write active, pool max 20, spine on the caller's client
 --     : 118 passed, 0 failed   (decision_records 248 -> 280)
+
+-- Re-verified after merging origin/concept2cure-v2 (1719 commits), which had
+-- independently fixed the same two CHECK violations. Converged on their
+-- discriminator -- decision_context->>'kind', a shared constant in
+-- shared/constants/operating-system-vocab.ts that three places must agree on --
+-- and on their recommendation_type. Kept what they do not have: the CTD-derived
+-- discipline (a Module 3 decision records as cmc, not a flat regulatory), the
+-- projectRef filter (their per-project read passes Number(uuid) = NaN, which
+-- search() reads as "no project filter" and answers with every project's
+-- decisions), the id-to-primary-key resolution, and the health denominator.
+-- DOMAIN_TRACKS and the recommendation types moved into their shared vocabulary
+-- file, which the schema-contract tier asserts against the real DDL.
+--
+-- Post-merge, same database, after node scripts/db/deploy-migrate.mjs:
+--   server/services/cmc + server/api/cmc + the gate : 44 files, 445 tests green
+--   CMC staff simulation                            : 118 passed, 0 failed
+--   decision_records                                : 312 -> 344
