@@ -1,9 +1,9 @@
 # D2 — the launch boundary on a fresh organisation, surface by surface
 
 **Date:** 2026-09-23 · **Row:** D2 (Launch catalog) · **Workstream:** W1
-**Status of this folder:** interim. The boundary sweep and the gate rule below
-are complete. Fixes for the in-scope findings are in progress; this README is
-updated with their dispositions when they land.
+**Status of this folder:** the boundary sweep and the gate rule are complete;
+29 of the 55 in-scope findings are closed (25 here, 3 by other sessions, 1
+deferred as a decision) and 26 are open, listed below by name.
 
 ## What was run
 
@@ -49,13 +49,49 @@ in a copy of `surfaceViews.ts` and requires exit 1 naming it and only it.
 An earlier sweep of the same kind (enforcement off, older commit) produced 141
 findings. They split by what production can reach:
 
-- **55 on launch or shell surfaces** — reachable by a customer. Being verified
-  and fixed; dispositions to follow here.
+- **55 on launch or shell surfaces** — reachable by a customer. Dispositions
+  below.
 - **86 on out-of-scope surfaces** (5 critical, 27 high, 36 medium, 18 low) —
   not reachable in production with enforcement on. They are **not** fixed
   here: Rule 2 gives those surfaces no sessions. They are listed below so that
   any surface later admitted to the catalog arrives with its known defects.
   **All five critical findings are in this group.**
+
+### In-scope findings — disposition (2026-09-28, on `b50d45577` + the commits named)
+
+Every fix below was re-verified against the code current on 2026-09-28 (1,054
+commits after the sweep), pinned by a test, and **shown failing first**: each
+cluster's tests were run against the upstream sources (fail) and the fixed
+sources (pass). The full client, route and middleware suites were run over the
+combined change: 7,796 pass; the one unrelated failure
+(`submissionCenterGovernedWorkspaces` › "offers the governed freeze…") fails
+identically on the upstream source and is not this change's.
+
+| Finding | Surface | Disposition |
+|---|---|---|
+| 111 (high), 116, 125 | Part 11 console | Fixed, `53237f620` — 15/15 fail → pass |
+| 118 | QMP | Fixed, `7ca532c54` — 6/6 fail → pass |
+| 45, 46, 51, 52 | Admin console | Fixed, `270724d99` — 24/32 fail → 32/32 pass; also fixes API-key revoke sending an id the route refused |
+| 78 (high), 82, 120 | Project home, Projects, Vault | Fixed, `00a4ec8e0` — 6/13 fail → 13/13 pass |
+| 100, 103, 107, 115, 124 | eCTD co-author, editor, Submission Center, Publishing, Gateways | Fixed, `af7067b96` — 10/12 fail → 12/12 pass |
+| 48, 49, 55, 69 | Access requests, AnA memory, conversation | Fixed, `aafe9de7f` — 10/14 fail → 14/14 pass |
+| 22, 127 (high), 133, 138, 140 | Shell (account menu, AnA rail, tray) | Fixed, `b9cabbf5a` — 25/31 fail → 31/31 pass |
+| 112 (high), 113 (high) | QMS SOP register | Fixed upstream by `12e12240c` (HS-1) before this landed; this session's parallel fix was discarded rather than duplicated |
+| 119 | Vault header count | Fixed upstream (count renders only over a read vault) |
+| 43 (high) | Master licensing owner identity | **Deferred — a security decision.** Making the console honour the hard-coded `DEFAULT_MASTER_ADMIN_EMAILS` would admit whoever self-signs-up that address first (signup does not verify email) to Master Administration. Proposal: `resolveMasterAdmin` true only when `resolvePlatformAdmin` is; delete the hard-coded default; add email verification to signup before any email-keyed grant is honoured. |
+
+**Open — not yet addressed** (their fix agents stopped on a usage limit before
+editing; none re-verified on the current code yet):
+
+| Finding | Surface |
+|---|---|
+| 18 (high), 110 (high), 114, 20 | Identity console: a 403 on the SCIM reads is shown as "no allowlist rules — not enforced" / "didn't respond"; writes toast "HTTP 0" |
+| 19 (high) | Identity console: an org admin is sent there to manage their own SCIM, and every SCIM route is platform-admin only — a product decision |
+| 42 (high), 6, 7, 9 | AnA command: an empty org is shown as a failed read blaming sign-in or plan (the rollup answers 404 for zero programs) |
+| 85 | Onboarding: "New organization" renames and re-profiles the signed-in org |
+| 44, 53, 54, 122, 123 | Apps catalog, Audit trail, Setup: contradictory lock copy, raw ids, a governed profile change with no reason |
+| 128, 129, 131, 132 | Shell header: breadcrumb domain crumb, empty middle crumb, dead org switcher and Help |
+| 130, 134, 135, 136, 137, 139, 47 | Shell layout: rail highlight, header squeeze, squashed logo, floating button overlap, modal copy, audit-trail column headers |
 
 ### Out-of-scope findings (must be resolved before that surface joins the catalog)
 
