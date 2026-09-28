@@ -1,0 +1,48 @@
+-- The same six, after the fix.
+
+-- 1. Both writes are AWAITED, and a failure refuses rather than returning an id
+--    for a record that was never written.
+-- 2. The receipt names its own tenant as a bound parameter; the column DEFAULT
+--    of 1 is never relied on.
+-- 3. transitionDecision advances the durable row. It resolves it by
+--    decision_code, because `create` lets the database mint the primary key --
+--    the same id/primary-key mismatch the governed-fabric writer had, and the
+--    reason getByDecisionCode exists.
+-- 4. The lifecycle status is mapped onto the ledger's action_state CHECK
+--    vocabulary explicitly. 'provisional' has no ledger equivalent and maps to
+--    nothing, so the transition stays in memory rather than being written as
+--    something it is not.
+-- 5. persistReceipt's catch no longer says "table may not exist". It warns,
+--    names the tenant, and the caller refuses.
+-- 6. The eight route-level swallow points log at error naming the route.
+
+-- ── Red to green ────────────────────────────────────────────────────────────
+-- Restoring the fire-and-forget writes and the DEFAULT-1 INSERT fails exactly
+-- the four tests that exist to catch them, and leaves the happy path passing:
+--
+--   x names organization_id in the INSERT rather than leaving it to DEFAULT 1
+--   x refuses the decision when its durable write fails
+--   x refuses the decision when no tenant was supplied, rather than attributing it
+--   x refuses the receipt when its durable write fails
+--   ✓ returns the record when both writes land
+--   Tests  4 failed | 1 passed (5)
+--
+-- Restored: 5 passed.
+
+-- ── What this changed for an existing test ──────────────────────────────────
+-- decisionReadsTenantScoped asserted that an UNATTRIBUTED decision was excluded
+-- from a tenant's reads. One cannot be created any more -- persistDecision
+-- refuses a decision with no organizationId rather than fabricating
+-- attribution, and the service no longer reports a decision it could not
+-- record. The test asserts the stronger property now.
+
+-- server/routes + server/services: 466 files, 4645 tests green. tsc clean.
+
+-- ── Owed, and named rather than half-done ───────────────────────────────────
+-- A receipt that cannot be written now REFUSES, and the route logs it at error,
+-- but the act it describes is not rolled back: these routes have no transaction
+-- boundary spanning the mutation and the governance record. Making the promote
+-- and approve paths atomic with their receipt is the remaining half, and it is
+-- the shape server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts
+-- already holds for controlled documents ("FAILS CLOSED -- a broken audit write
+-- rolls the document back").
