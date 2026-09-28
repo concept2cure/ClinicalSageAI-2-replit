@@ -418,11 +418,13 @@ export function AccessRequestQueue({ scope }: { scope: 'organization' | 'all' })
             hint={
               showAnswered
                 ? 'When somebody asks for an app they cannot open, the request appears here.'
-                : 'Everything asked for so far has been answered.'
+                : WAITING_EMPTY[past.pastAsks].hint
             }
             icon={I.clipboardList}
             regulation="Serves the 21 CFR Part 11 record of who was granted an app, by whom, and why."
-            {...(!showAnswered
+            {...(/* Offered only over answered requests that exist: on a
+                    workspace where nobody has asked it opened another empty list. */
+                 !showAnswered && past.pastAsks === 'answered'
               ? { action: { label: 'Show answered requests', onAct: () => setShowAnswered(true) } }
               : {})}
             {...(!showAnswered && past.pastAsks === 'unknown'
