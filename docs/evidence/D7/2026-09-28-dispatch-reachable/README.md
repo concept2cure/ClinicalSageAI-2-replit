@@ -79,12 +79,33 @@ matched "Run dispatch QC". The selector names the governed control.
 - client: dispatch/freeze/honesty/readiness suites — 30 passed
 - `tsc --noEmit` clean on the touched files
 
+## Follow-up, same day: on the real schema
+
+`server/services/ectd/__tests__/dispatch-on-signing.pglite.integration.test.ts`
+runs the COMPOSITE resolver on PGlite with the real migrations — including the
+orchestrator store (`db/migrations/20260725_submission_orchestrator_store_port.sql`),
+present and empty — and `composeStepVerdicts`, for a never-signed NDA:
+
+- never signed → `unsigned`, `decidedBy: 'sequence'`, dispatch-now blocked,
+  dispatch-on-signing open (the button is offered);
+- the dispatch-intent signature the click records → `signed`, dispatch-now clears;
+- a freeze-intent signature is not the release;
+- a leaf added after the dispatch signature → `invalid`, nothing offered.
+
+4 passed. Probes: without the orchestrator store the lookup cannot run and all
+4 fail (the resolver reads `undetermined`, the button would stay hidden — the
+defect returning silently); with `signingNowResolvesRelease` returning false,
+the two "offered" cases fail.
+
+Separation of duties, checked: `/api/c2c/actions/sign` calls
+`assertSignerIsNotAuthor` for every sign/lock, un-disableable, and for
+`ectd-sequence:` targets the author is `ectd_sequences.created_by`
+(`separation-of-duties.ts:271`, tested at `separation-of-duties.test.ts:102`).
+Open policy question, not changed: a user who placed every leaf but did not
+create the sequence is not treated as its author.
+
 ## Not done
 
-- Not exercised against a live server or real PostgreSQL end to end; the
-  server path is proven by the resolver through mocked spines, the pure
-  composition, and reading Gate 2. A pglite case driving
-  sign → dispatch for an IND is owed.
+- The route and the client were not driven together against a live server;
+  the signing HTTP call itself is exercised by its own suites, not here.
 - `transmit` UI gating was not re-examined.
-- Separation of duties (signer ≠ author) remains unconfirmed; the route comment
-  says `/api/c2c/actions/sign` enforces it, which was not verified here.
