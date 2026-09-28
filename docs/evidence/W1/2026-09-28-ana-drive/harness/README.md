@@ -79,6 +79,7 @@ it.
 | `FAKE_DELAY_MS` | stand-in | pacing of a reply (default 600) |
 | `FAKE_DEMO_PROGRAM` | stand-in | the program a demonstration uses, by name or code |
 | `FAKE_THINK_MS`, `FAKE_THINK_MATCH` | stand-in | think silently for that long (pings only), optionally only on asks matching a pattern — how the 30-second cut-off in `../silent-thinking.txt` was reproduced |
+| `FAKE_CUT_OFF` | stand-in | on asks matching the pattern, the final answer stops halfway with `stop_reason: "max_tokens"`; run the battery's `cutOff` scenario by name with it — how `../answer-cut-off.txt` was made |
 | `FAKE_SLOW_TOOL` | stand-in | `name:ms` holds a round that calls `name` |
 | `FAKE_REQ_DIR` | stand-in | where request bodies are saved |
 | `APP_URL` | battery | the app (default `http://localhost:5000`) |

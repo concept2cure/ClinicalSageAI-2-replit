@@ -83,6 +83,11 @@ describe('post-processing stores how the turn ended — behavioural', () => {
     expect(saved.metadata[0]).toMatchObject({ stoppedReason: 'max_rounds', rounds: 12 });
   });
 
+  it('an answer that was cut off is stored as one', async () => {
+    await runStreamPostProcessing(ctx({ stoppedReason: 'answer_cut_off', rounds: 1 }));
+    expect(saved.metadata[0]).toMatchObject({ stoppedReason: 'answer_cut_off', rounds: 1 });
+  });
+
   it('a turn she finished stores its rounds and no reason', async () => {
     await runStreamPostProcessing(ctx({ stoppedReason: 'no_more_tools', rounds: 2 }));
     const meta = saved.metadata[0] as Record<string, unknown>;
@@ -127,5 +132,18 @@ describe('stream.ts carries the loop outcome — carriage', () => {
     expect(near).toMatch(/const stoppedNote = formatStoppedTurnNote\(previousMsgs\);/);
     // Pushed as a system message, after the trace note it qualifies.
     expect(near).toMatch(/messages\.push\(\s*\.\.\.\[traceNote, stoppedNote\]\.filter\(Boolean\)\.map\(\(content\) => \(\{ role: 'system' as const, content \}\)\)/);
+  });
+
+  // The last model call wrote the answer the person reads. If it was cut off,
+  // the turn ended short however the loop ended — and the frame, the record
+  // and the saved message must all read that, so it is decided before them.
+  it('decides a cut-off answer from the last call, before anything reads the reason', () => {
+    expect(src).toMatch(/lastFinishReason = gwResponse\.finishReason;/);
+    expect(src).toMatch(/lastFinishReason = roundResponse\.finishReason;/);
+    const decided = src.indexOf('loopStoppedReason = turnEndingReason(loopStoppedReason, lastFinishReason);');
+    expect(decided, 'the turn ending is never decided').toBeGreaterThan(-1);
+    expect(decided).toBeGreaterThan(src.indexOf('loopStoppedReason = loopResult.stoppedReason;'));
+    expect(decided).toBeLessThan(src.search(/type: 'done',\s*\n\s*model: gwResponse\.model,/));
+    expect(decided).toBeLessThan(src.indexOf("if (loopStoppedReason !== 'no_more_tools') {"));
   });
 });

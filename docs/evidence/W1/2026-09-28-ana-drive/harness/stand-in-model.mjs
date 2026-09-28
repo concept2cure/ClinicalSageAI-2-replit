@@ -209,9 +209,17 @@ function planNav(t) {
 function plan(body) {
   const t = turnOf(body);
   const planned = planReport(t) ?? planDemo(t) ?? planVaultSearch(t) ?? planOpenProgram(t) ?? planNav(t);
-  if (planned) return planned;
+  if (planned) return cutOff(t, planned);
   if (/title|summar/i.test(t.all.slice(0, 400)) && !body.stream) return { text: 'Live Drive test' };
   return { text: 'Understood.' };
+}
+
+// FAKE_CUT_OFF: on asks matching the pattern, the final answer stops halfway
+// with stop_reason "max_tokens", as the real API ends one at the length limit.
+function cutOff(t, planned) {
+  const match = process.env.FAKE_CUT_OFF ? new RegExp(process.env.FAKE_CUT_OFF, 'i') : null;
+  if (!match || planned.tool || !match.test(t.ask)) return planned;
+  return { text: planned.text.slice(0, Math.ceil(planned.text.length / 2)), stop: 'max_tokens' };
 }
 
 // ── The wire ──────────────────────────────────────────────────────────────────
@@ -301,7 +309,7 @@ function streamToolCall(res, tool, n, index) {
 }
 
 async function streamReply(res, body, p, n) {
-  const stop = p.tool ? 'tool_use' : 'end_turn';
+  const stop = p.stop ?? (p.tool ? 'tool_use' : 'end_turn');
   res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive' });
   sse(res, 'message_start', { type: 'message_start', message: { id: `msg_fake_${n}`, type: 'message', role: 'assistant', model: body.model, content: [], stop_reason: null, stop_sequence: null, usage: { input_tokens: 100, output_tokens: 1 } } });
   sse(res, 'ping', { type: 'ping' });
@@ -346,7 +354,7 @@ async function handle(req, res) {
   await sleep(DELAY / 3);
   await holdSlowTool(p);
   if (body.stream) return streamReply(res, body, p, n);
-  const stop = p.tool ? 'tool_use' : 'end_turn';
+  const stop = p.stop ?? (p.tool ? 'tool_use' : 'end_turn');
   return sendJson(res, 200, { id: `msg_fake_${n}`, type: 'message', role: 'assistant', model: body.model, content: replyContent(body, p, n), stop_reason: stop, stop_sequence: null, usage: { input_tokens: 100, output_tokens: 20 } });
 }
 
