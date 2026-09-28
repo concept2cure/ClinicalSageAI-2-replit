@@ -730,6 +730,31 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
    carry the person's own reason. `41e7c539` already closes this path's role
    door (the P11-C-1 "AnA door").
 
+### Found by the D5 lane's CI check (`…01P6GWSv`, 2026-09-28) — handed on
+
+Trunk CI's Test and Integration jobs fail the same 8 tests on every run from
+12541 (`9d2134b52`) to 12547 (`c3a783010`). The D5 lane's own suites are green
+in all of them. Reproduced locally at `6bd237ca9`.
+
+1. **→ The D7 / P11-28b lane (`…01VB8JEG`, `f07edd7c8` / `a0011b738`, inside
+   its 24 h window, so not edited here).**
+   - `assess-dispatch-readiness.ts:306` now calls `signingNowResolvesRelease`.
+     The `vi.mock('../release-signature-status')` in two suites does not
+     define it, so both fail with *"No 'signingNowResolvesRelease' export is
+     defined on the mock"*: `assess-dispatch-readiness.vault-leaf.pglite.test.ts`
+     (2 tests) and `withdrawal-approval-binding.pglite.test.ts` (4).
+   - `submissionCenterGovernedWorkspaces.test.tsx` › "offers the governed
+     freeze…" no longer finds the *Freeze sequence (Part 11 e-signature)*
+     button.
+2. **Fixed here.** `scripts/ci/unreferenced-modules-baseline.json` still listed
+   `server/eval/rag/run-eval.ts`, which `7cfba3ab6` (D4) wired up. It was
+   regenerated with `npm run ci:unreferenced-modules:write-baseline`
+   (87 → 86, exactly that entry). `unreferenced-modules.contract.test.ts` is
+   20/20.
+3. **Coverage (ratchet)** fails only because the coverage run fails on (1).
+   Blank DB's `ci:purge-coverage` is item 4 of the hand-ons above
+   (`ana_turn_records`).
+
 ## 1. The rules come first
 
 `CLAUDE.md` at the repo root is authoritative and overrides any instruction in a
