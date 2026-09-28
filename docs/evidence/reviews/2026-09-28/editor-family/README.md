@@ -68,7 +68,7 @@ is one defect:
 | P11-C-1 / SEC-C-1 | A viewer could make every ProtocolDev governed write except the two signatures | confirmed | **fixed** `10ad41a2` (`fixes/P11-C-1/`). AnA's door is closed by `41e7c539` (another lane) |
 | SEC-C-2 | A finalized, signed protocol's schedule of assessments could still change | confirmed | **fixed** `29d80fe9` (`fixes/SEC-C-2-3-8/`) |
 | SEC-A-1 | "Re-read source" re-baselined any citation in the tenant, sealed documents included, unaudited | confirmed | _in progress_ |
-| SEC-B-3 | A comment anchor saved unrelated prose under a system reason, and could anchor the wrong words | confirmed | _in progress_ |
+| SEC-B-3 | A comment anchor saved unrelated prose under a system reason, and could anchor the wrong words | confirmed | **fixed** `b43ec3af` (`fixes/SEC-B-3_V-2_P11-B-4_SEC-A-6/`); a server-side anchor-only check is a follow-on |
 | P11-B-1 | The co-author body is overwritten with no reason, no audit entry and no copy of the old text | partly confirmed; blocker per its verifier | handed on, board item 5 |
 
 ### Highs
@@ -77,8 +77,8 @@ is one defect:
 |---|---|---|---|
 | P11-A-1 / SEC-A-8 | No citation act reaches the document's audit trail; overwrites and deletes keep no before-image | partly confirmed / confirmed | _in progress_ |
 | SEC-A-2 | A comment and its audit row were filed against the document named in the body | confirmed | _in progress_ |
-| SEC-A-3 | The project files viewer framed server-typed HTML as a PDF, in the app's origin | confirmed | _in progress_ |
-| SEC-A-6 / SEC-B-4 | "Insert reference" parsed a vault title as markup | confirmed; raised from medium | _in progress_ |
+| SEC-A-3 | The project files viewer framed server-typed HTML as a PDF, in the app's origin | confirmed | **fixed** `49f5ad82` (`fixes/SEC-A-3/`) |
+| SEC-A-6 / SEC-B-4 | "Insert reference" parsed a vault title as markup | confirmed; raised from medium | **fixed** `b43ec3af` (`fixes/SEC-B-3_V-2_P11-B-4_SEC-A-6/`) |
 | SEC-A-7 / SEC-B-7 | AI authorship is a client claim the ledger records as fact | confirmed; raised from medium | open: needs a server record of AnA's outputs to verify against |
 | SEC-B-1 | An image reference with `..` segments got an authenticated GET to any API route from every viewer | confirmed | _in progress_ |
 | SEC-B-2 / SEC-A-11 | External images fetched from third parties by every viewer; a figure could change after approval | confirmed | _in progress_ |
@@ -86,7 +86,7 @@ is one defect:
 | SEC-C-4 | Stored text spliced into the chat turn as the user's own words | confirmed; raised from medium | _in progress_ |
 | SEC-C-7 | A signed disposition is shown under a free-text label, not the signer | confirmed; raised from medium | _in progress_ |
 | HS-B-1 | A failed Data Room read is shown as "no sources" | partly confirmed | partly fixed by `59b0d8f9` (GE-H-1: the Sources rail's "Record a source" picker). The rest is handed on, board item 6: the Cite picker, the Vault rail, and citations painted "unresolved" |
-| V-2 | Source mode: text typed during a save was reported saved, and neither saved nor cached | confirmed (found by HS-B-2's verifier) | _in progress_ |
+| V-2 | Source mode: text typed during a save was reported saved, and neither saved nor cached | confirmed (found by HS-B-2's verifier) | **fixed** `b43ec3af` (`fixes/SEC-B-3_V-2_P11-B-4_SEC-A-6/`) |
 
 ### Mediums
 
@@ -95,12 +95,12 @@ is one defect:
 | P11-A-2 | Freeze asks for no re-authentication | partly confirmed | founder decision P1-32 |
 | P11-B-2 | The editing ribbon is shown, and only refused at the server | confirmed | open |
 | P11-B-3 | The co-author canvas never reflects the document's lock state | confirmed | open, with board item 5 |
-| P11-B-4 | Undo outlives a recorded tracked-change decision | confirmed | _in progress_ |
+| P11-B-4 | Undo outlives a recorded tracked-change decision | confirmed | **fixed** `b43ec3af` (`fixes/SEC-B-3_V-2_P11-B-4_SEC-A-6/`); a reviewer's own tracked typing can still be undone after accept |
 | P11-C-2 | The §11.50 manifestation is shown once, then nowhere | confirmed | _in progress_ |
 | P11-C-3 | No audit trail or version history is reachable from the protocol | confirmed | open |
 | P11-C-4 | Finalize and Record disposition offer a signature the server will refuse | confirmed | _in progress_ |
 | HS-A-1, HS-A-2 | History, Sources and Comments counts go stale after a write | confirmed | handed on, board item 6 |
-| HS-B-2 | The save footer's caching claim is not tied to a cache | confirmed | _in progress, with V-2_ |
+| HS-B-2 | The save footer's caching claim is not tied to a cache | confirmed | partly fixed with V-2 (`b43ec3af`): the cache is now kept whenever the buffer is dirty. The footer wording is open |
 | HS-C-1 | An unreadable protocol was shown as "no protocol" or "ready to finalize" | confirmed | **fixed** `670865e9` (`fixes/HS-C-1/`) |
 | HS-C-3 | A malformed derivation read is shown as "everything reconciled" | confirmed | _in progress_ |
 | SEC-A-4 | Stored text could write itself into AnA's system prompt | confirmed | **fixed** `44a48357` (`fixes/SEC-A-4/`) |
