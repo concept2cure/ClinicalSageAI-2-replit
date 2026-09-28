@@ -102,8 +102,10 @@ import type { ProvenanceRecord } from '../../services/evidence/provenance.js';
 import {
   buildTraceEntry,
   collectTracesFromHistory,
+  formatStoppedTurnNote,
   formatTraceForContext,
   refusalOf,
+  turnStopWarning,
   type ToolTraceEntry,
 } from '../../services/ana/tool-trace.js';
 import { runStreamPostProcessing } from './post-processing.js';
@@ -294,6 +296,10 @@ export function mountStreamRoute(router: Router): void {
     // whose first answer called no tools never enters the loop, and ends for
     // want of tools.
     let loopStoppedReason: StoppedReason = 'no_more_tools';
+    // How many tool rounds the loop ran (0 when it never entered). Carried with
+    // the reason on `done` and into the message metadata, so "stopped at the
+    // round limit" can say which limit.
+    let loopRounds = 0;
     // The run is closed exactly once, by whichever of the disconnect handler and
     // the finally block gets there first.
     let runSettled = false;
@@ -991,14 +997,25 @@ export function mountStreamRoute(router: Router): void {
             // already ran in earlier turns (stored on each assistant message's
             // metadata) so she reuses prior findings instead of re-running them.
             const traceNote = formatTraceForContext(collectTracesFromHistory(previousMsgs));
-            if (traceNote) {
-              messages.push({ role: 'system', content: traceNote });
-            }
+            // …except the work of a turn that did not finish. The trace note
+            // says "reuse these findings"; when the last turn was cut short by
+            // the round limit or the repeat guard, this one says its findings
+            // are not complete, so she neither presents them as settled nor
+            // starts over when asked to continue. Each is sent only when it
+            // has something to say.
+            const stoppedNote = formatStoppedTurnNote(previousMsgs);
+            messages.push(
+              ...[traceNote, stoppedNote].filter(Boolean).map((content) => ({ role: 'system' as const, content })),
+            );
           }
         } catch {
           /* fall through to client history */
         }
       }
+      // Client history carries role and content, not the metadata a stop is
+      // stored in: a turn served from it gets neither the trace note nor the
+      // stopped-turn note, so a capped predecessor is not named here (a known
+      // limit, handed on with row 74 — the client does not send it).
       if (!streamHistoryLoaded && conversation_history && Array.isArray(conversation_history)) {
         const MAX_HISTORY_MSGS = 20;
         const MAX_MSG_LENGTH = 50000;
@@ -2709,6 +2726,7 @@ export function mountStreamRoute(router: Router): void {
           }
         );
         loopStoppedReason = loopResult.stoppedReason;
+        loopRounds = loopResult.rounds;
       }
 
       // RIM interception moved to the background post-processing block below,
@@ -2786,6 +2804,15 @@ export function mountStreamRoute(router: Router): void {
           latencyMs: gwResponse.latencyMs,
           response: fullContent || undefined,
           telemetry: streamTelemetry,
+          // Why the loop stopped and how many tool rounds it ran. Until these
+          // were sent, a turn the round cap or the repeat guard cut short was
+          // indistinguishable on the client from one she finished: the work
+          // panel said "Finished in" and the transcript showed an ordinary
+          // answer. `runPolicy` is reserved for the run-policy work (row 74)
+          // and is null until a turn can carry one. Additive fields.
+          stoppedReason: loopStoppedReason,
+          rounds: loopRounds,
+          runPolicy: null,
         })}\n\n`
       );
 
@@ -2806,6 +2833,13 @@ export function mountStreamRoute(router: Router): void {
       turnRecorder?.setModel({ provider: gwResponse.provider, model: gwResponse.model, effort: effortUsed });
       turnRecorder?.setReasoning(fullThinking);
       turnRecorder?.setAnswer({ streamed: fullContent });
+      // A turn whose loop did not end by her choice says so in its record. The
+      // answer the record holds was forced from the work so far (round limit,
+      // repeat guard) or the run was stopped between rounds; an inspector
+      // reading the record must not take it for a concluded analysis.
+      if (loopStoppedReason !== 'no_more_tools') {
+        turnRecorder?.warn(turnStopWarning(loopStoppedReason, loopRounds));
+      }
       void runStreamPostProcessing({
         res,
         fullContent,
@@ -2821,6 +2855,8 @@ export function mountStreamRoute(router: Router): void {
         reasoning: fullThinking,
         humanControls: await readControlEvents(),
         plan: lastPlan,
+        stoppedReason: loopStoppedReason,
+        rounds: loopRounds,
         toolEvidenceCorpus,
         collectedProvenance,
         // The moves Live Drive could not make lead, so they are the chips the

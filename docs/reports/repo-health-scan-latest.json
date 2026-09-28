@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-28T05:01:18.333Z",
+  "generatedAt": "2026-09-28T05:12:17.986Z",
   "git": {
-    "sha": "407930f5e421ffd6341a2740ff7580323fa6215b",
+    "sha": "85cb5654b1ef1554c47db082aba15d510d92146e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2036,12 +2036,12 @@
         "bytes": 155947
       },
       {
-        "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
-        "bytes": 150437
+        "file": "server/routes/ana-ri/stream.ts",
+        "bytes": 152030
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 149801
+        "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
+        "bytes": 150437
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
@@ -2250,12 +2250,12 @@
         "lines": 3067
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "lines": 3007
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 3040
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3004
+        "file": "server/routes/concept2cure.ts",
+        "lines": 3007
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2390,16 +2390,16 @@
         "lines": 2000
       },
       {
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1931
+      },
+      {
         "file": "server/routes/c2c/projects.ts",
         "lines": 1928
       },
       {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
         "lines": 1927
-      },
-      {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1926
       },
       {
         "file": "server/services/ana/evidence-literature-tool-defs.ts",
@@ -2506,16 +2506,16 @@
         "lines": 1773
       },
       {
+        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
+        "lines": 1760
+      },
+      {
         "file": "server/services/ana/submission-chat-handler.ts",
         "lines": 1756
       },
       {
         "file": "server/routes/submissions.ts",
         "lines": 1749
-      },
-      {
-        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
-        "lines": 1747
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",

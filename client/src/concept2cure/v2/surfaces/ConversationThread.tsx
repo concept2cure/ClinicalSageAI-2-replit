@@ -14,6 +14,7 @@ import { readShellProject, shellProgramName } from '../shellProject';
 import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
 import { useAgentActivity } from '../useAgentActivity';
 import { AnaActivity, activityPropsFor, hasReportableWork, type AnaActivityProps } from '../AnaActivity';
+import { CONTINUE_PROMPT, continueTurnIndex } from '../anaWorkModel';
 import { useProgressDock } from '../workDock';
 import { C2CToast, useToast, type FireToast } from '../toast';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
@@ -143,6 +144,8 @@ interface AnaTurnProps {
   /** Starts a demonstration from a "Start demonstration" chip — on every turn,
    *  not only the ones that drafted a document (which is all `canvas` covers). */
   onStartDemo?: (demoId: string, title: string) => void;
+  /** Continue, offered on the latest settled turn only (anaWorkModel.continueTurnIndex). */
+  onContinue?: () => void;
   /** The document canvas beneath this turn, when the turn drafted a document. */
   canvas?: {
     conversationId: string | null;
@@ -154,7 +157,7 @@ interface AnaTurnProps {
   };
 }
 
-function AnaTurn({ turn, onRefine, onNav, onStartDemo, canvas }: AnaTurnProps) {
+function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas }: AnaTurnProps) {
   const a = turn.activity;
   return (
     <div className="ct-turn ct-ana">
@@ -184,7 +187,7 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, canvas }: AnaTurnProps) {
             reportable) or together with `streaming: false` — so the state
             "streaming with nothing to show" cannot occur, and a renderer for
             it would be the fifth dead one on this surface. */}
-        {a && <AnaActivity {...a} />}
+        {a && <AnaActivity {...a} onContinue={onContinue} />}
         {/* ── The proposal block was unreachable, and it advertised a
             workflow this surface does not have ───────────────────────────────
             It rendered a diff with Accept / Refine / Discard, and a chip for a
@@ -796,6 +799,10 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
 
   const turns: CtTurn[] = anaChat.messages.map(toTurn);
   const busy = anaChat.isStreaming;
+  /* The one turn Continue may be offered on: the latest, settled, with nothing
+     in flight. It sends a new turn on this conversation; the stopped run is
+     over, so there is nothing to resume. */
+  const continueAt = continueTurnIndex(anaChat.messages, busy);
   /* This was `const artifacts: CtArtifact[] = []` — a literal, so the panel
      below it, the whole `ArtifactCard` component and every control on it were
      unreachable code that nonetheless looked finished. The drafts were already
@@ -1065,6 +1072,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
                     onRefine={() => { void anaChat.send('Refine that — keep it tighter and more declarative.'); }}
                     onNav={onNav}
                     onStartDemo={liveDrive?.onStartDemo}
+                    onContinue={i === continueAt ? () => { void anaChat.send(CONTINUE_PROMPT); } : undefined}
                     canvas={t.authoringDoc ? {
                       conversationId: anaChat.threadId ?? (isNew || isCurrent ? null : sel.id),
                       expanded: expandedDocId === t.authoringDoc.docId,

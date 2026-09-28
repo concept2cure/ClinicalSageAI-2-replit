@@ -78,8 +78,8 @@ export function SignatureLine({ facet, expected, style }: { facet: unknown; expe
 }
 
 /** The disposition control: the signature on offer, or the signed state. */
-function DispositionAction({ name, signed, someoneElses, onSign }: {
-  name: string; signed: boolean; someoneElses: boolean; onSign: () => void;
+function DispositionAction({ name, signed, someoneElses, whyId, onSign }: {
+  name: string; signed: boolean; someoneElses: boolean; whyId: string; onSign: () => void;
 }) {
   const who = name || 'this reviewer';
   return (
@@ -94,7 +94,7 @@ function DispositionAction({ name, signed, someoneElses, onSign }: {
         </button>
       ) : (
         <button type="button" className="pg-btn outline" aria-label={'Record disposition for ' + who} disabled={someoneElses}
-          title={someoneElses ? 'Assigned to another user. Only they can sign this disposition.' : undefined} onClick={onSign}>
+          aria-describedby={someoneElses ? whyId : undefined} onClick={onSign}>
           <PG.Ic n="penLine" s={14} />Record disposition
         </button>
       )}
@@ -114,6 +114,11 @@ function ReviewerRow({ r, onEdit }: { r: Row; onEdit?: ReviewPaneProps['onEdit']
   // refuses a second one. Offering it again spent the signer's password and
   // code on a certain refusal (periodic review 2026-09-28, editor family, P11-C-4).
   const signed = disposition !== '' || str(r.status) === 'completed';
+  /* 2026-09-28 · GA-7 (coverage-gap sweep): the reason lived only in the
+     disabled button's `title`, which a keyboard user cannot reach (a disabled
+     button takes no focus) and most screen readers do not announce. It is now
+     visible text on the row, and the button is described by it. */
+  const whyId = React.useId();
   return (
     <div className="pde-review-row">
       <span className="pde-review-name">{name || 'Unnamed reviewer'}</span>
@@ -122,10 +127,11 @@ function ReviewerRow({ r, onEdit }: { r: Row; onEdit?: ReviewPaneProps['onEdit']
         {str(r.role) ? PG.labelize(str(r.role)) : 'No review role recorded'}
         {due ? ' · due ' + due : ' · no due date'}
         {disposition ? ' · ' + PG.labelize(disposition) : ' · no disposition recorded'}
+        {someoneElses && !signed && <>{' · '}<span id={whyId}>Assigned to another user. Only they can sign this disposition.</span></>}
       </span>
       {onEdit && (
         <DispositionAction
-          name={name} signed={signed} someoneElses={someoneElses}
+          name={name} signed={signed} someoneElses={someoneElses} whyId={whyId}
           onSign={() => onEdit('review-disposition', { id: Number(r.id), label: name, reviewerUserId: assignedTo })}
         />
       )}

@@ -31,6 +31,7 @@ import { AppMentionMenu, useAppMentions } from './appMentions';
 import { TaskTray } from './TaskTray';
 import type { OnboardingWelcome } from './onboardingWelcome';
 import { AnaActivity, type AnaActivityProps } from './AnaActivity';
+import { CONTINUE_PROMPT, continueTurnIndex } from './anaWorkModel';
 import { AnaProgressChip, AnaWorkPanel } from './AnaWorkPanel';
 import { AnaOutputCards, type AnaOutput } from './AnaOutputs';
 import { useAgentActivity } from './useAgentActivity';
@@ -770,6 +771,10 @@ export function AnaRail({
     clearAttachments();
   };
 
+  /* Continue is offered on the latest settled turn only, through the rail's
+     own send path, as a new turn (anaWorkModel.continueTurnIndex). */
+  const continueAt = continueTurnIndex(messages.map((t) => ({ role: t.role, streaming: t.activity?.streaming })), streaming);
+
   if (!open) {
     return (
       <aside className="ana-seam" aria-label="AnA (collapsed)">
@@ -997,7 +1002,7 @@ export function AnaRail({
                   plain: it is never parsed as markup. */}
               {/* Her work first, then the answer it produced, then the output —
                   the order every host renders a turn in, and the reference's. */}
-              {m.role === 'ana' && m.activity && <AnaActivity {...m.activity} />}
+              {m.role === 'ana' && m.activity && <AnaActivity {...m.activity} onContinue={i === continueAt ? () => onSend(CONTINUE_PROMPT) : undefined} />}
               {m.role === 'ana' ? (
                 <div className="ana-msg-bd ana-md" dangerouslySetInnerHTML={{ __html: renderSafeMarkdown(m.body ?? '') }} />
               ) : (

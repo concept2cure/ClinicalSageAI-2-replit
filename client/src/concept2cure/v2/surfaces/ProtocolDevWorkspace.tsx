@@ -305,10 +305,35 @@ function StaleNotice() {
   );
 }
 
+/* 2026-09-28 · GA-2 (coverage-gap sweep): these sixteen tabs were plain
+   buttons and the open one was a CSS class only, so assistive technology heard
+   sixteen identical buttons and never which was selected (WCAG 4.1.2, 1.4.1).
+   Now the WAI-ARIA tabs pattern, as in quality/App.tsx: a named tablist, one
+   tab stop (roving tabindex) on the selected tab, Left/Right/Home/End move and
+   select, and each tab controls the one panel, which is labelled by it. */
+const PD_TABPANEL_ID = 'pd-tabpanel';
+const pdTabId = (id: string) => 'pd-tab-' + id;
+
 function TabStrip({ tab, onTab }: { tab: string; onTab: (id: string) => void }) {
+  const onKey = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    const idx = TABS.findIndex((t) => t.id === tab);
+    let next = -1;
+    if (e.key === 'ArrowRight') next = (idx + 1) % TABS.length;
+    else if (e.key === 'ArrowLeft') next = (idx - 1 + TABS.length) % TABS.length;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = TABS.length - 1;
+    if (next < 0) return;
+    e.preventDefault();
+    onTab(TABS[next].id);
+    (e.currentTarget.parentElement?.children[next] as HTMLElement | undefined)?.focus();
+  };
   return (
-    <div className="pd-tabs">{TABS.map((t) => (
-      <button key={t.id} className={'pd-tab' + (tab === t.id ? ' on' : '')} onClick={() => onTab(t.id)}>
+    <div className="pd-tabs" role="tablist" aria-label="Protocol sections">{TABS.map((t) => (
+      <button
+        key={t.id} type="button" role="tab" id={pdTabId(t.id)}
+        aria-selected={tab === t.id} aria-controls={PD_TABPANEL_ID} tabIndex={tab === t.id ? 0 : -1}
+        className={'pd-tab' + (tab === t.id ? ' on' : '')} onClick={() => onTab(t.id)} onKeyDown={onKey}
+      >
         <Ic n={t.icon} s={14} />{t.label}</button>))}</div>
   );
 }
@@ -381,7 +406,7 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
       <TabStrip tab={tab} onTab={setTab} />
       <div className="pd-grid">
         <Outline doc={doc} activeSec={activeSec} onSec={onSec} onFinalize={openFinalize} />
-        <div className="pd-work">
+        <div className="pd-work" role="tabpanel" id={PD_TABPANEL_ID} aria-labelledby={pdTabId(tab)}>
           <TabBody
             tab={tab} doc={doc} sec={sec} canWrite={canWrite} onAsk={onAsk} onNav={onNav}
             onReg={openReg} onEdit={openForm}

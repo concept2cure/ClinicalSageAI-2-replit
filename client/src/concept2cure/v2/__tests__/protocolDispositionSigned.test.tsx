@@ -63,6 +63,9 @@ describe('the disposition control on a review row', () => {
     pane(review({ reviewerUserId: 21, reviewer: 'Dr Amara Okafor' }));
     const btn = screen.getByRole('button', { name: /Record disposition for Dr Amara Okafor/ }) as HTMLButtonElement;
     expect(btn.disabled).toBe(true);
-    expect(btn.title).toMatch(/Assigned to another user/);
+    // The reason is visible text the button is described by (GA-7, 780a0639),
+    // not a title a disabled button never exposes.
+    const why = document.getElementById(btn.getAttribute('aria-describedby') ?? '');
+    expect(why?.textContent).toMatch(/Assigned to another user/);
   });
 });

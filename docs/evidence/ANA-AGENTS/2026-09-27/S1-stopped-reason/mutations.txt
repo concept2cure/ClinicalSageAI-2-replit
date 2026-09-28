@@ -1,0 +1,64 @@
+# Mutations, S1 set, against the tree at 2026-09-28T04:28:23Z (HEAD cd08aec79 + the S1 working tree; sha256 of every S1 file in tree.sha256). Each mutation is applied, the named test file run, and the file restored.
+== hook accepts any reason: RED ['Tests  3 failed | 3 passed (6)']
+    × client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > ignores a reason it does not know, and a round count tha
+    × client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > does not accept the reasons later slices reserve before 
+    × client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > a reopened thread > restores why each turn stopped, and its rounds, from the persisted metadata 4ms
+== done handler drops the ending: RED ['Tests  3 failed | 3 passed (6)']
+    × client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > keeps a round-limit stop and the round count on the turn
+    × client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > keeps a repeated-step stop 59ms
+    × client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > ignores a reason it does not know, and a round count tha
+== stateLineFor loses max_rounds branch: RED ['Tests  2 failed | 30 passed (32)']
+    × client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — a turn the loop cut short > says a turn stopped at the round limit stopped there — never "Finished" 24ms
+    × client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — a turn the loop cut short > says it for a reopened turn too, which has no clock to show 5ms
+== Continue ignores isContinuable: RED ['Tests  1 failed | 46 passed (47)']
+    × client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > a repeated-step stop says so, and offers no Continue — continuing would repeat
+== note moved inside the folded body: RED ['Tests  2 failed | 45 passed (47)']
+    × client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > a round-limit stop is a note outside the folded body, with Continue, and Conti
+    × client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > a repeated-step stop says so, and offers no Continue — continuing would repeat
+== activityPropsFor drops stoppedReason: RED ['Tests  1 failed | 9 passed (10)']
+    × client/src/concept2cure/v2/__tests__/anaMessageCarriage.test.ts > adaptChatMessage — the turn reaches the rail intact > carries why the turn stopped, and how many rounds it ran 9ms
+== rail offers Continue on every turn: RED ['Tests  3 failed | 5 passed (8)']
+    × client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the rail > offers Continue on the latest settled turn only, and sends the fixed sentence 147ms
+    × client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the rail > offers nothing while a turn is in flight 43ms
+    × client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the rail > keeps keyboard focus in the transcript when the send withdraws Continue 54ms
+== thread offers Continue on every turn: RED ['Tests  3 failed | 5 passed (8)']
+    × client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the conversation screen > offers Continue on the latest settled turn only, and sends it on the same conversation 82ms
+    × client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the conversation screen > offers nothing while a turn is in flight 54ms
+    × client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the conversation screen > keeps keyboard focus in the transcript when the send withdraws Continue 83ms
+== done frame drops stoppedReason: RED ['Tests  1 failed | 6 passed (7)']
+    × server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > the turn's done frame carries stoppedReason, rounds and a null runPolicy 5ms
+== post-processing skips withTurnEnding: RED ['Tests  2 failed | 5 passed (7)']
+    × server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message 6542ms
+    × server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a turn she finished stores its rounds and no reason 3ms
+== metadata keeps no_more_tools: RED ['Tests  2 failed | 13 passed (15)']
+    × server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > omits the reason when she finished herself, and keeps the rounds 9ms
+    × server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > stores nothing new for a turn that ran no tools and ended normally 3ms
+== note reads the first assistant turn: RED ['Tests  1 failed | 14 passed (15)']
+    × server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > reads only the LAST assistant turn — an earlier stop was al
+== note given for cancelled: RED ['Tests  1 failed | 14 passed (15)']
+    × server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > says nothing for a turn she finished, or one the person sto
+
+# Mutations, review-fix set, against the tree at 2026-09-28T04:29:21Z (HEAD cd08aec79 + the S1 working tree; sha256 of every S1 file in tree.sha256). [n] is the review objection each pins.
+== [6] turnStopWarning silent for max_rounds: RED ['Tests  1 failed | 14 passed (15)']
+    × server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnStopWarning — what the turn record says about a stop > says the answer was written from the work so far, for the round limit and the repeat guard 7ms
+== [6] turnStopWarning silent for every reason: RED ['Tests  2 failed | 13 passed (15)']
+    × server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnStopWarning — what the turn record says about a stop > says the answer was written from the work so far, for the round limit and the repeat guard 6ms
+    × server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnStopWarning — what the turn record says about a stop > says a stop between rounds as one, and a stop before the first round without claiming a round 1ms
+== [6] stream warn guard dropped: RED ['Tests  1 failed | 6 passed (7)']
+    × server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > records a warning on the turn record when the loop did not end by her choice 8ms
+== [4] cancel at round 0 back to 'between rounds before': RED ['Tests  1 failed | 14 passed (15)']
+    × server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnStopWarning — what the turn record says about a stop > says a stop between rounds as one, and a stop before the first round without claiming a round 9ms
+== [7]/[14] words table indexed as a plain object: RED ['Tests  1 failed | 14 passed (15)']
+    × server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > says nothing for a stored reason that names an Object.prototype member 7ms
+== [1] duplicate_thrash line back to 'Stopped repeating a step': RED ['Tests  1 failed | 31 passed (32)']
+    × client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — a turn the loop cut short > says a turn stopped for repeating a step stopped there 21ms
+== [8] server cancelled ahead of interrupted: RED ['Tests  1 failed | 31 passed (32)']
+    × client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — a turn the loop cut short > a server-side stop whose stream then dropped did not finish — the stop does not outrank the lost connection 24ms
+== [5] short branch without the polite region: RED ['Tests  1 failed | 3 passed (4)']
+    × client/src/concept2cure/v2/__tests__/anaStoppedNoteA11y.test.tsx > AnaActivity — the stop note is spoken, and Continue keeps its place > speaks the stop when a turn with nothing to report settles — the polite region stays mounte
+== [11] Continue does not move focus: RED ['Tests  3 failed | 9 passed (12)']
+    × client/src/concept2cure/v2/__tests__/anaStoppedNoteA11y.test.tsx > AnaActivity — the stop note is spoken, and Continue keeps its place > keeps keyboard focus in place when Continue unmounts itself 55ms
+    × client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the rail > keeps keyboard focus in the transcript when the send withdraws Continue 91ms
+    × client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the conversation screen > keeps keyboard focus in the transcript when the send withdraws Continue 121ms
+== [12] Continue not described: RED ['Tests  1 failed | 3 passed (4)']
+    × client/src/concept2cure/v2/__tests__/anaStoppedNoteA11y.test.tsx > AnaActivity — the stop note is spoken, and Continue keeps its place > names what Continue answers: the button is described by the stop sentence 180ms
