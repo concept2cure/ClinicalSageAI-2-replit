@@ -408,12 +408,32 @@ export interface SoaActivity {
   /** Row order within the grid. */
   order: number;
   /**
+   * The specimen this activity collects, when it collects one. Optional and
+   * additive: absent means the design does not say; the biospecimen profile
+   * reports a sampling activity without one as unspecified. See
+   * biospecimen-profile.ts.
+   */
+  specimen?: SoaSpecimen;
+  /**
    * Where the activity is performed (FDA decentralized-elements guidance, 2024).
    * Optional and additive: ABSENT means the design does not say — the DCT
    * profile reports it `unstated`, never `site` — so every design persisted
    * before this field existed reads exactly as it did. See dct-profile.ts.
    */
   location?: SoaActivityLocation;
+}
+
+/** A specimen an SoA activity collects: what the lab manual and the consent are written from. */
+export interface SoaSpecimen {
+  type: 'blood' | 'urine' | 'tissue' | 'csf' | 'saliva' | 'stool' | 'swab' | 'other';
+  /** Volume per collection in mL (required for blood to total draw volumes). */
+  volumeMl?: number;
+  /** Processing (e.g. "centrifuge within 30 min, aliquot 2 × 1 mL plasma"). */
+  processing?: string;
+  /** Storage and shipping (e.g. "−80 °C, batch-shipped on dry ice"). */
+  storage?: string;
+  /** How long it is kept and for what; future research use needs consent. */
+  retention?: string;
 }
 
 /** One filled intersection of the (activity × visit) grid. The grid is sparse. */

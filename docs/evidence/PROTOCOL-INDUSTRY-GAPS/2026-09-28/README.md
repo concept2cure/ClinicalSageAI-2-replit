@@ -1,4 +1,4 @@
-# Protocol build — industry gaps closed (Tier 1 and six Tier 2 rows)
+# Protocol build — industry gaps closed (Tier 1, six Tier 2 rows, one Tier 3 item)
 
 **Date:** 2026-09-28 · **Binding design:** `docs/design/PROTOCOL_INDUSTRY_GAPS.md`
 **Prompted by:** the founder — *"What is missing in our protocol build solutions
@@ -27,9 +27,10 @@ narrates.
 | MMRM sample size from sponsor assumptions (Tier 2) | ICH E9(R1) | `study-design/mmrm-sizing.ts` over `stats/mmrm-design.ts` + `StatisticalPlan.mmrmAssumptions?` | `…/:id/mmrm` | `review_mmrm_sizing` |
 | External-control borrowing plan (Tier 2) | FDA draft guidance on externally controlled trials (2023); ICH E10 §2.5 | `study-design/external-control-plan.ts` over `stats/external-control.ts` + `StudyDesign.externalControlPlan?` | `…/:id/external-control` | `review_external_control_plan` |
 | Multiplicity control over the confirmatory family (Tier 2) | ICH E9 §5.6; FDA Multiple Endpoints guidance (2022) | `study-design/multiplicity-check.ts` over `stats/multiplicity.ts` | `…/:id/multiplicity` | `review_multiplicity_control` |
+| Specimens and blood volume (Tier 3) | OHRP expedited category (2) reference points; ICH E6(R3) | `study-design/biospecimen-profile.ts` + `SoaActivity.specimen?` | `…/:id/biospecimens` | `review_biospecimen_profile` |
 
 Every design engine is also a `POST /api/study-design/<path>` for an unsaved
-design. All fourteen engines are in the Protocol Development surface's
+design. All fifteen engines are in the Protocol Development surface's
 **Projections of this design** pane (`ProtocolDevProjections.tsx` →
 `ProtocolDevIndustryProjections.ts`), and every one downloads its engine output
 as JSON byte for byte.
@@ -98,9 +99,10 @@ only), the CAPA join anchored on the scoped row, input bounds, route order
 | `study-design/__tests__/mmrm-sizing.test.ts` | 11 |
 | `study-design/__tests__/external-control-plan.test.ts` | 9 |
 | `study-design/__tests__/multiplicity-check.test.ts` | 10 |
+| `study-design/__tests__/biospecimen-profile.test.ts` | 9 |
 | `protocol-development/__tests__/protocol-industry-service.pglite.integration.test.ts` | 17 |
 | `ana/__tests__/protocol-industry-tools.test.ts` | 8 |
-| `client/…/__tests__/protocolDevIndustryProjections.test.ts` | 18 |
+| `client/…/__tests__/protocolDevIndustryProjections.test.ts` | 19 |
 
 Regression: `server/services/study-design/__tests__` + `protocol-development/__tests__`
 + the study-design and protocol-development route suites — 44 files, 833 tests,
@@ -146,6 +148,8 @@ red, the file was restored byte for byte, and the suite re-ran green.
 | External control | a borrowing ratio approximated for a fully external control | `a fully external control has no ratio to compute` (`expected 'hybrid' to be 'fully_external'`) |
 | Multiplicity | Holm silently replaced by testing each hypothesis at full alpha | `Holm holds the family-wise error at alpha…` and two allocation tests |
 | Multiplicity | a graphical procedure approximated by Holm | `a graphical procedure without weights and a transition matrix is not approximated` (`expected 'rendered' to be 'partial'`) |
+| Biospecimens | a missing blood volume defaulted to a "usual" 5 mL | `a draw with no volume makes totals lower bounds…` (`expected false to be true`) |
+| Biospecimens | conditional draws counted as scheduled | `sums recorded volumes per visit… conditional draws only in the upper bound` |
 | Service | CAPA join without its org anchor | `excludes other organisations' … CAPA` (`expected 1 to be 0`) — after strengthening the test so the only open action is another org's |
 | Service | version lookup without its org filter | `a label not recorded for this org is NOT_FOUND — including one another org recorded` (`promise resolved … instead of rejecting`) |
 | AnA tools | one handler unregistered | `review_protocol_redline handler registered: expected undefined to be type of 'function'` |
@@ -167,7 +171,8 @@ red, the file was restored byte for byte, and the suite re-ran green.
   one as `unstated`.
 - **WHO item 9 (public title)** stays `missing` until the design carries a
   distinct public title (`publicTitle?` on the spine).
-- **Tier 2 remaining:** win ratio / RMST. **Tier 3** as listed in the design document.
+- **Win ratio / RMST are deliberately not wired**: analysis-on-data engines have
+  nothing to compute before data exist; see the design document's Tier 2 table. **Tier 3** as listed in the design document.
 - **The legacy `/api/protocol` optimizer** (model-generated figures outside the
   governed gateway) is entangled with `analytics-routes.ts`; its retirement is
   its own reviewed change under the deletion rule.

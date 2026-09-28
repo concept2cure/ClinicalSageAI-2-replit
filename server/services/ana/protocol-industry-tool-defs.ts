@@ -23,6 +23,7 @@
  *   • `projectMmrmSizing`           — MMRM sample size from sponsor assumptions (Tier 2)
  *   • `projectExternalControlPlan`  — external-control borrowing plan (Tier 2)
  *   • `checkMultiplicity`           — family-wise error control over the confirmatory family (Tier 2)
+ *   • `profileBiospecimens`         — specimens and blood volume from the SoA (Tier 3)
  *
  * Word export is not here: the Protocol Development surface already renders
  * MD, DOCX and PDF from the one assembled Markdown, signature block included
@@ -39,7 +40,7 @@
  *  4. No prose, no filing: nothing here writes into `protocol_sections`,
  *     generates protocol text, or claims a registration or transmission.
  *
- * All fourteen are READ-ONLY, so none carries a reason-for-change: nothing is
+ * All fifteen are READ-ONLY, so none carries a reason-for-change: nothing is
  * mutated and no governed-action row is written.
  *
  * @module server/services/ana/protocol-industry-tool-defs
@@ -262,6 +263,19 @@ export const REVIEW_MULTIPLICITY_CONTROL: AnaTool = {
   input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
 };
 
+export const REVIEW_BIOSPECIMEN_PROFILE: AnaTool = {
+  name: 'review_biospecimen_profile',
+  description:
+    'READ-ONLY. Profile what the Schedule of Activities bound to a protocol document collects (profileBiospecimens): each specimen with what the lab ' +
+    'manual still needs (type, volume, processing, storage), and the blood a participant gives — per visit, in total, over the worst 8-week window and ' +
+    'the busiest week — summed from the recorded volumes. ' +
+    DESIGN_REQUIRED + ' ' +
+    'Report every figure and gap VERBATIM. A draw with no volume makes totals LOWER BOUNDS: say so. The OHRP expedited-review figures (550 mL; 50 mL) ' +
+    'are reference points for minimal-risk research, NOT safety limits and not a bar a drug trial must clear — never call a protocol unsafe or ' +
+    'non-compliant for exceeding them, and never assume a volume for a sampling activity with no specimen recorded.',
+  input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
+};
+
 /** In the order a human would reach for them: draw it, check it, derive from it, export it, compare it. */
 export const PROTOCOL_INDUSTRY_TOOLS: AnaTool[] = [
   REVIEW_TRIAL_SCHEMA,
@@ -278,4 +292,5 @@ export const PROTOCOL_INDUSTRY_TOOLS: AnaTool[] = [
   REVIEW_MMRM_SIZING,
   REVIEW_EXTERNAL_CONTROL_PLAN,
   REVIEW_MULTIPLICITY_CONTROL,
+  REVIEW_BIOSPECIMEN_PROFILE,
 ];
