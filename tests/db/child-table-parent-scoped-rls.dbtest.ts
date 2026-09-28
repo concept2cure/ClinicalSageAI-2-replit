@@ -86,6 +86,17 @@ interface Case {
   countOwn: string;
 }
 
+/** One regulatory program for a tenant, its uuid as text (the text-keyed children compare as text). */
+async function seedProgram(q: Parameters<Case['seed']>[0], org: number, name: string, code: string) {
+  const p = await q(
+    `INSERT INTO public.regulatory_programs
+       (organization_id, name, code, program_type, product_type, primary_agency, product_name)
+     VALUES ($1, $2, $3, 'device', 'samd', 'FDA', $2) RETURNING id::text AS id`,
+    [org, name, code],
+  );
+  return String(p.rows[0].id);
+}
+
 const CASES: Case[] = [
   {
     child: 'chat_messages',
@@ -187,21 +198,36 @@ const CASES: Case[] = [
     fk: 'program_id',
     parentTenant: 'organization_id',
     seed: async (q, org, tag) => {
-      const p = await q(
-        `INSERT INTO public.regulatory_programs
-           (organization_id, name, code, program_type, product_type, primary_agency, product_name)
-         VALUES ($1, $2, $3, 'device', 'samd', 'FDA', $2) RETURNING id::text AS id`,
-        [org, `program ${tag}`, tag.slice(-40)],
-      );
+      const programId = await seedProgram(q, org, `program ${tag}`, tag.slice(-40));
       await q(
         `INSERT INTO public.complaints
            (program_id, complaint_code, source, channel, received_at, event_narrative)
          VALUES ($1, $2, 'customer', 'email', now(), $3)`,
-        [p.rows[0].id, tag.slice(-40), `complaint narrative for org ${org}`],
+        [programId, tag.slice(-40), `complaint narrative for org ${org}`],
       );
-      return p.rows[0].id; // complaints.program_id
+      return programId; // complaints.program_id
     },
     countOwn: `SELECT count(*)::int AS n FROM public.complaints WHERE program_id = $1`,
+  },
+  {
+    // Added 2026-09-28 (D3). A generated draft names its program by a TEXT
+    // project_id with no foreign key and no organization column, like a
+    // complaint; its routes filtered by program ownership and the table did
+    // not (docs/evidence/D3/2026-09-28-drafting-tasks/).
+    child: 'drafting_tasks',
+    parent: 'regulatory_programs',
+    fk: 'project_id',
+    parentTenant: 'organization_id',
+    seed: async (q, org, tag) => {
+      const programId = await seedProgram(q, org, `program ${tag}`, tag.slice(-40));
+      await q(
+        `INSERT INTO public.drafting_tasks (task_id, project_id, ectd_section, document_title, draft_content)
+         VALUES ($1, $2, '2.5', 'clinical overview', $3)`,
+        [tag, programId, `draft for org ${org}`],
+      );
+      return programId; // drafting_tasks.project_id
+    },
+    countOwn: `SELECT count(*)::int AS n FROM public.drafting_tasks WHERE project_id = $1`,
   },
   {
     // Added 2026-09-24 (ledger L201). The AnA command pdev.activity.set_state
@@ -212,18 +238,13 @@ const CASES: Case[] = [
     fk: 'program_id',
     parentTenant: 'organization_id',
     seed: async (q, org, tag) => {
-      const p = await q(
-        `INSERT INTO public.regulatory_programs
-           (organization_id, name, code, program_type, product_type, primary_agency, product_name)
-         VALUES ($1, $2, $3, 'device', 'samd', 'FDA', $2) RETURNING id::text AS id`,
-        [org, `pdev program ${tag}`, `P${tag.slice(-39)}`],
-      );
+      const programId = await seedProgram(q, org, `pdev program ${tag}`, `P${tag.slice(-39)}`);
       await q(
         `INSERT INTO public.pdev_program_activities (program_id, activity_key, workstream, stage)
          VALUES ($1::uuid, $2, 'clinical', 'planning')`,
-        [p.rows[0].id, `activity ${org}`],
+        [programId, `activity ${org}`],
       );
-      return p.rows[0].id;
+      return programId;
     },
     countOwn: `SELECT count(*)::int AS n FROM public.pdev_program_activities WHERE program_id = $1::uuid`,
   },
@@ -300,6 +321,9 @@ const ALL_CHILD_TABLES = [
   'csr_knowledge_edges', 'ctd_cross_references',
   // Added 2026-09-24 (ledger L201): post-market data keyed by a text program id.
   'complaints', 'mdr_events', 'vigilance_events',
+  // Added 2026-09-28 (D3): generated drafts, the same text-program-id shape
+  // (docs/evidence/D3/2026-09-28-drafting-tasks/).
+  'drafting_tasks',
   // Added 2026-09-24 (ledger L201): every child with a foreign key into a
   // tenant-keyed parent that had row security OFF, bar the four grandchildren
   // named in scripts/db/rls-coverage-check.sql's carve-out.
@@ -525,6 +549,10 @@ async function ensureAddedTables(pool: { query: (sql: string) => Promise<unknown
       channel         VARCHAR NOT NULL,
       received_at     TIMESTAMPTZ NOT NULL,
       event_narrative TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS public.drafting_tasks (
+      id SERIAL PRIMARY KEY, task_id TEXT NOT NULL, project_id TEXT NOT NULL,
+      ectd_section TEXT NOT NULL, document_title TEXT NOT NULL, draft_content TEXT
     );
   `);
 }
