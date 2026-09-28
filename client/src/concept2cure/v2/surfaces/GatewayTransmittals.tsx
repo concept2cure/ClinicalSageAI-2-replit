@@ -166,8 +166,36 @@ export function parseWithdrawals(raw: string | undefined): Array<{ ctdSection: s
     .filter((w) => w.ctdSection && w.fileName);
 }
 
-const REGIONS = ['fda', 'ema', 'pmda', 'ca'];
-const GATEWAYS = ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg'];
+/* ── Gateway names ───────────────────────────────────────────────────────────
+   GET /api/mdx/gateways answers { region, gateway, transport, configured } — a
+   registry key, no display name — and the table rendered `g.name ?? g.gateway`,
+   so the operator read "pmda_gateway", "hc_cesg", "swissmedic_egateway". The
+   names below are the ones each implementation's own header gives
+   (server/services/submission-gateways/*.ts). A key not listed here is shown
+   as sent, never guessed at. */
+const GATEWAY_LABEL: Record<string, string> = {
+  esg: 'FDA ESG',
+  cesp: 'CESP',
+  eudamed: 'EUDAMED',
+  pmda_gateway: 'PMDA Gateway',
+  hc_cesg: 'Health Canada CESG',
+  mhra_gateway: 'MHRA Gateway',
+  nmpa_gateway: 'NMPA Gateway',
+  tga_ebs: 'TGA eBusiness Services',
+  swissmedic_egateway: 'Swissmedic eGateway',
+  anvisa_gateway: 'ANVISA Gateway',
+  cdsco_sugam: 'CDSCO SUGAM',
+  mfds_dbio: 'MFDS dBio',
+  hsa_prism: 'HSA PRISM',
+};
+const gatewayLabel = (key: string | null | undefined): string =>
+  key ? (GATEWAY_LABEL[key] ?? key) : '—';
+
+/* The transmit form's options carry the route's keys as values and a name as
+   the label — it offered the raw keys ("pmda_gateway") and lowercase region
+   slugs ("fda") as the choices themselves. */
+const REGIONS = ['fda', 'ema', 'pmda', 'ca'].map((value) => ({ value, label: value.toUpperCase() }));
+const GATEWAYS = ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg'].map((value) => ({ value, label: gatewayLabel(value) }));
 
 async function readData<T = any>(method: 'GET' | 'POST' | 'PUT', path: string, body?: unknown): Promise<{ ok: boolean; status: number; data: T | null; raw: any }> {
   try {
@@ -354,7 +382,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
       ? ''
       : ' Signed by ' + (signerName ?? 'you') + ' — meaning: ' + meaning + '.';
     fireToast(
-      'Transmitted via ' + region.toUpperCase() + '/' + gateway + (txId ? ' · gateway ref ' + txId : '') + '.' + signed + ledgerLost + contentChanged,
+      'Transmitted via ' + region.toUpperCase() + ' / ' + gatewayLabel(gateway) + (txId ? ' · gateway ref ' + txId : '') + '.' + signed + ledgerLost + contentChanged,
       ledgerLost || contentChanged ? 'error' : undefined,
     );
     void load();
@@ -657,7 +685,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
             : <table className="reg-tbl"><thead><tr><th>Gateway</th><th>Region</th><th>Environment</th><th style={{ textAlign: 'right' }}>Credentials</th></tr></thead>
               <tbody>{gateways.map((g, i) => (
                 <tr key={i}>
-                  <td style={{ fontWeight: 600 }}>{String(g.name ?? g.gateway ?? '—')}</td>
+                  <td style={{ fontWeight: 600 }}>{g.name != null ? String(g.name) : gatewayLabel(g.gateway)}</td>
                   <td className="mono">{String(g.region ?? '—').toUpperCase()}</td>
                   <td>{String(g.environment ?? '—')}</td>
                   <td style={{ textAlign: 'right' }}><span className={'rd-chip tone-' + (g.configured ? 'ok' : 'warn')}>{g.configured ? 'configured' : 'not configured'}</span></td>
@@ -675,7 +703,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
                   <td className="mono">#{t.id}</td>
                   {/* region is nullable on partially-migrated transmittal rows; the gateways
                       table above already renders the same field the same way when it is absent. */}
-                  <td>{String(t.region ?? '—').toUpperCase()} / {t.gateway}{t.submission_type ? ' · ' + t.submission_type : ''}</td>
+                  <td>{String(t.region ?? '—').toUpperCase()} / {gatewayLabel(t.gateway)}{t.submission_type ? ' · ' + t.submission_type : ''}</td>
                   <td className="mono" style={{ fontSize: 12 }}>{t.transmission_id ?? '—'}</td>
                   {/* status is likewise nullable (a row written before its gateway replied);
                       no chip is honest, an invented tone is not — same guard as error_message below. */}

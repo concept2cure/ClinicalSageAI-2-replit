@@ -985,9 +985,15 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
      "0%", a portfolio-mean readiness computed over no programs. A director
      reading the header learned they run nothing and have nothing blocked. */
   const kv = (v: string) => (live.loading || live.error ? '—' : v);
+  /* A mean over no programmes has no value. `kv` covers a read that has not
+     settled; this covers one that settled with zero rows, where the `|| 1`
+     divisor still produced a confident "0%". */
+  const meanReadiness = projects.length
+    ? Math.round(projects.reduce((s, p) => s + p.readiness, 0) / projects.length) + '%'
+    : '—';
   const health = [
     { l: 'Active programs', n: kv(countFloor(projects.length, truncated)), m: 'across MDX, Biotech, Pharma', t: '' },
-    { l: 'Average readiness', n: kv(Math.round(projects.reduce((s, p) => s + p.readiness, 0) / (projects.length || 1)) + '%'), m: 'portfolio mean', t: '' },
+    { l: 'Average readiness', n: kv(meanReadiness), m: 'portfolio mean', t: '' },
     { l: 'Blocked', n: kv(String(projects.filter(p => p.status === 'blocked').length)), m: 'need attention', t: 'err' },
     { l: 'Filing < 60 days', n: kv(String(projects.filter(p => /days/.test(p.due)).length)), m: 'near-term submissions', t: 'warn' },
   ];

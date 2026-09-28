@@ -37,6 +37,7 @@ import {
 } from '../services/user-intelligence.js';
 import { resolveNavEntitlements } from '../services/entitlements/navigation-entitlements.js';
 import { resolveMasterAdmin } from '../services/entitlements/master-admin.js';
+import { resolvePlatformAdmin } from '../middleware/requirePlatformAdmin.js';
 import { writeModuleGrant } from '../services/entitlements/module-grants.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { pool } from '../db.js';
@@ -106,6 +107,14 @@ router.get('/enabled', async (req: Request, res: Response) => {
 // here — unlike /catalog and /license, this handler reads the identity (email
 // and roles) to decide the platform-owner grant, so the request must have been
 // through real authentication rather than merely carrying a tenant context.
+//
+// `platformAdmin` rides along because the account menu needs it and has no
+// other honest source: it is `resolvePlatformAdmin`, the exact function the
+// Master Administration guard admits with, applied to this request. It is NOT
+// `masterAdmin` — that is the commercial-unlock grant, a different set (a
+// `support` designation opens the console without unlocking modules). Before
+// it existed the menu offered the console to every customer org admin, and the
+// console refused all of them. Wayfinding only; the guard stays authoritative.
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/navigation', authenticateToken, async (req: Request, res: Response) => {
   try {
@@ -113,14 +122,17 @@ router.get('/navigation', authenticateToken, async (req: Request, res: Response)
     if (!orgId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
-    return res.json(
-      await resolveNavEntitlements(Number(orgId), {
-        // resolveMasterAdmin, not isMasterAdmin: the sync check cannot see a
-        // designation made in the Access Management console, and answering "no"
-        // here would grey the rail for somebody the owner has designated.
-        masterAdmin: await resolveMasterAdmin(req),
-      }),
-    );
+    const [masterAdmin, platformAdmin] = await Promise.all([
+      // resolveMasterAdmin, not isMasterAdmin: the sync check cannot see a
+      // designation made in the Access Management console, and answering "no"
+      // here would grey the rail for somebody the owner has designated.
+      resolveMasterAdmin(req),
+      resolvePlatformAdmin(req),
+    ]);
+    return res.json({
+      ...(await resolveNavEntitlements(Number(orgId), { masterAdmin })),
+      platformAdmin,
+    });
   } catch (error) {
     logger.error('navigation error', {
       err: error instanceof Error ? error.message : String(error),

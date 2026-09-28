@@ -664,15 +664,16 @@
 .c2c-v2 .pj-lc-stage::before{left:0;right:50%;}
 .c2c-v2 .pj-lc-stage::after{left:50%;right:0;}
 .c2c-v2 .pj-lc-stage:first-child::before, .c2c-v2 .pj-lc-stage:last-child::after{display:none;}
-.c2c-v2 .pj-lc-stage[data-status="done"]::before, .c2c-v2 .pj-lc-stage[data-status="done"]::after, .c2c-v2 .pj-lc-stage[data-status="active"]::before{background:var(--accent-100);}
+/* No progress fill. The `done` node/connector rules and the filled connector
+   into the open stage are gone: ProjectHome.tsx derived "done" from the open
+   tab's position, not from anything recorded, so the fill stated completion no
+   data backs (2026-09-23). The tracker marks the open stage and nothing else. */
 .c2c-v2 .pj-lc-node{position:relative;z-index:1;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--bg-100);border:2px solid var(--border);color:var(--text-400);transition:background var(--dur), border-color var(--dur), box-shadow var(--dur), color var(--dur);}
 .c2c-v2 .pj-lc-ic{display:flex;}.c2c-v2 .pj-lc-ic svg{width:14px;height:14px;}
 .c2c-v2 .pj-lc-l{font-size:11.5px;font-weight:500;color:var(--text-400);white-space:nowrap;}
 .c2c-v2 .pj-lc-stage:hover .pj-lc-node{border-color:var(--accent-100);color:var(--accent-200);}
-.c2c-v2 .pj-lc-stage[data-status="done"] .pj-lc-node{background:var(--accent-strong);border-color:var(--accent-strong);color:var(--accent-on-strong);}
 .c2c-v2 .pj-lc-stage[data-status="active"] .pj-lc-node{background:var(--accent-000);border-color:var(--accent-100);color:var(--accent-200);box-shadow:0 0 0 4px var(--accent-000);}
 .c2c-v2 .pj-lc-stage[data-status="active"] .pj-lc-l{color:var(--text-100);font-weight:600;}
-.c2c-v2 .pj-lc-stage[data-status="done"] .pj-lc-l{color:var(--text-200);}
 
 .c2c-v2 .pj-stageband{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;padding:13px 16px;margin:0 0 18px;background:var(--bg-100);border:1px solid var(--border);border-radius:var(--radius-lg);}
 .c2c-v2 .pj-stageband-l{display:flex;flex-direction:column;gap:2px;}

@@ -28,6 +28,22 @@ import {
 import type { CtTurn, CtArtifact } from '../fixtures/conversation-thread-data';
 
 
+/* The starters a new conversation opens on. They are the product speaking
+   before the person has said anything, and they are shown to every
+   organisation, so they presuppose nothing about its programs, documents or
+   dossier. They used to be demo copy — "File a 510(k) for our glucose
+   monitoring patch", "Is the section 2.5.4 efficacy claim defensible?", "What
+   blocks the Module 3 freeze?" — read aloud to a new Biotech & Pharma
+   workspace with no projects: a device claimed as "ours", and a 2.5.4 claim
+   and a Module 3 freeze that existed nowhere (2026-09-23, launch row D2).
+   Each of these is answerable from whatever the workspace really holds,
+   including nothing. Pinned by conversationThreadStarters.test.tsx. */
+const STARTER_ASKS = [
+  'What can you help me with in this workspace?',
+  'What does this workspace hold so far?',
+  'How does a regulatory submission come together here?',
+] as const;
+
 /* Adapt one real AnA turn (useAnaChat → /api/ana-ri/stream) into the CtTurn
    shape this surface renders — the model's answer, the record of how she got
    there, and the grounding sources she actually used. Never a fabricated tool
@@ -1057,7 +1073,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
                   <h2>Talk to AnA</h2>
                   <p>Ask a question, or ask AnA to do the work. AnA thinks, pulls from the evidence, and streams a grounded answer — every turn is saved to your governed conversation store.</p>
                   <div className="ct-empty-chips">
-                    {['File a 510(k) for our glucose monitoring patch', 'Is the section 2.5.4 efficacy claim defensible?', 'What blocks the Module 3 freeze?'].map((q, i) => (
+                    {STARTER_ASKS.map((q, i) => (
                       <button key={i} className="ct-empty-chip" onClick={() => { void anaChat.send(q); }}>{q}</button>
                     ))}
                   </div>

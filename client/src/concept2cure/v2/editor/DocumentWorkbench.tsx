@@ -3509,13 +3509,18 @@ export function DocumentWorkbench({
               title={
                 docSealed
                   ? 'This document is frozen — its content cannot be edited.'
-                  : dirty && changeReason.trim().length < 8
-                    ? 'Say why this section changed, in at least 8 characters — it is recorded with the revision.'
-                    : undefined
+                  : !activeSection
+                    ? 'Open a section to edit and save it.'
+                    : dirty && changeReason.trim().length < 8
+                      ? 'Say why this section changed, in at least 8 characters — it is recorded with the revision.'
+                      : undefined
               }
               data-testid="save-section"
             >
-              {I.check} {saving ? 'Saving…' : docSealed ? 'Frozen' : dirty ? 'Save' : 'Saved'}
+              {/* "Saved" is a claim about a section's save state. It fell through
+                  to that word whenever nothing was dirty — including with no
+                  document or section open ("eCTD › No document" … "Saved"). */}
+              {I.check} {saving ? 'Saving…' : docSealed ? 'Frozen' : dirty ? 'Save' : activeSection ? 'Saved' : 'Save'}
             </button>
             <button
               className="btn ghost"

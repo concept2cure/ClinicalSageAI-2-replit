@@ -140,6 +140,29 @@ const EMPTY_TREE: VaultFolder[] = [];
    It goes through `readShellProject` (v2/shellProject.ts), the ONE reader for
    window.C2C_PROJECT. This surface used to hand-roll its own copy of that
    read, which is exactly the per-surface drift that module exists to stop. */
+/* Why the vault read failed, said as what happened. A 401/403/404 is an answer
+   from the server — expired session, access refused, project not in this
+   organization — and a retry cannot change it; anything else (5xx, network,
+   no status at all) is a failure to answer, which a retry can. */
+function vaultReadFailure(status: number | undefined): { hint: string; retryable: boolean } {
+  switch (status) {
+    case 401:
+      return { hint: 'Your session has expired. Sign in again to load this project’s documents.', retryable: false };
+    case 403:
+      return {
+        hint: 'You don’t have access to this project’s documents. Ask an administrator in your organization to grant it.',
+        retryable: false,
+      };
+    case 404:
+      return { hint: 'This project wasn’t found in your organization. Open a project from Projects.', retryable: false };
+    default:
+      return {
+        hint: 'The document store didn’t respond, so nothing was read. Try again, or check the service is reachable.',
+        retryable: true,
+      };
+  }
+}
+
 function currentProjectId(): string | null {
   const p = readShellProject();
   const id = p && p.id != null ? String(p.id).trim() : '';
@@ -1112,7 +1135,12 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
             picker can never offer a type the server refuses. MODULE_3 is how
             an uploaded CMC document declares itself and gets handled as one
             downstream; the default stays OTHER rather than a guess from the
-            filename. */}
+            filename.
+            Options are NAMED by vaultIngestTypeLabel, the label map kept
+            beside the enum: the wire token ("OTHER", "MODULE 3") is not a
+            reader's vocabulary. The width is the content's, not the row's —
+            `.c2c-input` is `width:100%`, which in this wrapping header pushed
+            the picker onto a line of its own with the buttons below it. */}
         <select
           className="c2c-input"
           aria-label="Document type for uploaded files"
@@ -1120,6 +1148,8 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           onChange={(e) => setDocType(e.target.value as VaultIngestDocumentType)}
           disabled={uploading}
           data-testid="vault-upload-type"
+          title="Document type for uploaded files"
+          style={{ width: 'auto', maxWidth: 260 }}
         >
           {VAULT_INGEST_DOCUMENT_TYPES.map((t) => (
             <option key={t} value={t}>
@@ -1236,23 +1266,35 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         </button>
       </div>
 
+      {/* The state panels sit on the header's 24px gutter. As bare children of
+          `.vd-wrap` they ran edge to edge, flush against the nav rail and out
+          of line with everything above them. */}
       {!projectId ? (
-        <EmptyState
-          icon={I.folder}
-          title="Open a project to see its vault"
-          hint="The Vault (DMS) shows the governed document tree for the project you have open. Open a project from Projects or Project management to load its CTD / eSTAR / IVDR / TMF spine."
-        />
+        <div style={{ padding: '16px 24px' }}>
+          <EmptyState
+            icon={I.folder}
+            title="Open a project to see its vault"
+            hint="The Vault (DMS) shows the governed document tree for the project you have open. Open a project from Projects or Project management to load its CTD / eSTAR / IVDR / TMF spine."
+          />
+        </div>
       ) : vaultState.loading ? (
-        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
+        <div role="status" className="scaf-note" style={{ padding: '18px 24px' }}>
           Loading the project vault…
         </div>
       ) : vaultState.error ? (
-        <EmptyState
-          tone="error"
-          icon={I.alertTriangle}
-          title="Couldn't load the project vault"
-          hint="The governed document store didn't respond. This is the project's real CTD / eSTAR / IVDR / TMF document tree — sign in and retry, or check the service is reachable."
-        />
+        <div style={{ padding: '16px 24px' }}>
+          {/* A refusal is said as a refusal. Every failure used to read "the
+              governed document store didn't respond" — false for a 403, where
+              it answered and said no, and for a 404, where the open project is
+              not in this organization. Only a failure retry can fix offers one. */}
+          <EmptyState
+            tone="error"
+            icon={I.alertTriangle}
+            title="Couldn't load the project vault"
+            hint={vaultReadFailure(vaultState.status).hint}
+            retry={vaultReadFailure(vaultState.status).retryable ? () => setVaultEpoch((n) => n + 1) : undefined}
+          />
+        </div>
       ) : (
         <>
           <DataRoomLane
@@ -1283,15 +1325,17 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
             </div>
           )}
           {allDocs.length === 0 ? (
-            <EmptyState
-              icon={I.fileText}
-              title="No documents in this project's vault yet"
-              hint={
-                vault?.pendingStore
-                  ? "The governed document store isn't provisioned for this environment yet. Documents built here organize by build type into the CTD / eSTAR / IVDR / TMF spine, each classified and version-tracked."
-                  : "Nothing has been filed into this project's vault yet. Upload a file — it is classified and auto-filed to a suggested dossier folder — or start a document build; both organize into the submission spine, version-tracked."
-              }
-            />
+            <div style={{ padding: '16px 24px' }}>
+              <EmptyState
+                icon={I.fileText}
+                title="No documents in this project's vault yet"
+                hint={
+                  vault?.pendingStore
+                    ? "The governed document store isn't provisioned for this environment yet. Documents built here organize by build type into the CTD / eSTAR / IVDR / TMF spine, each classified and version-tracked."
+                    : "Nothing has been filed into this project's vault yet. Upload a file — it is classified and auto-filed to a suggested dossier folder — or start a document build; both organize into the submission spine, version-tracked."
+                }
+              />
+            </div>
           ) : (
         <div className="vd-grid">
           <aside className="vd-tree">
