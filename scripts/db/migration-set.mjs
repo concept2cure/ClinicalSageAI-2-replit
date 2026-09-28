@@ -2695,6 +2695,22 @@ export const C2C_MIGRATION_FILES = [
   // note in the file for why the integer FK could not hold a Module 3 project.
   'migrations/0011_governed_decision_transitions.sql',
 
+  // ── Data lineage + evidence chain (2026-09-28) ───────────────────────────
+  // Same class as 0011 above: the only DDL for data_lineage_records and
+  // evidence_chain_records, on NO applier, so neither table existed on a
+  // deployed database. lineage-dossier's loadDataLineage hits 42P01, which
+  // isMissingTable DOES match, so it silently returns [] and
+  // computeLineageConfidence silently withholds its +10 — a sealed lineage
+  // report scoring lower for a table that was never provisioned rather than
+  // for evidence that was never recorded. GET /api/data-lineage/coverage/:type/:id
+  // answers 500.
+  //
+  // Fully IF NOT EXISTS-guarded (13 guarded statements, no unguarded CREATE),
+  // so it is replay-safe as-is and needs no in-place amendment. Public schema,
+  // organization_id INTEGER NOT NULL on both tables, so the sweep below
+  // polices them — which it could not while they were invisible to it.
+  'migrations/20260327_data_lineage_tracking.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───
