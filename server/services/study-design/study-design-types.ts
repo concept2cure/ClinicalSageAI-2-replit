@@ -680,6 +680,18 @@ export interface StudyDesign {
 }
 
 /** Endpoint roles that require a complete estimand before the design can advance. */
+/**
+ * Study day → zero-based day index under the design model's day-1 convention
+ * with no day 0 (`SoaVisit.studyDay`: day 1 → 0, day −1 → −1), so the days
+ * between two visits is a difference of indices. null when the value is not a
+ * usable study day: absent, not an integer, or day 0 (which the convention does
+ * not define). The one implementation of the rule.
+ */
+export function studyDayIndex(studyDay: unknown): number | null {
+  if (typeof studyDay !== 'number' || !Number.isInteger(studyDay) || studyDay === 0) return null;
+  return studyDay > 0 ? studyDay - 1 : studyDay;
+}
+
 export const ESTIMAND_REQUIRED_ROLES: readonly EndpointRole[] = ['primary', 'key_secondary'] as const;
 
 /** Convenience: the primary endpoint(s) of a design. */

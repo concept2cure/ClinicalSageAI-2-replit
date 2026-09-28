@@ -59,7 +59,7 @@
  *  - The twice-weekly frequency counts visits with a PERFORMED draw; the
  *    count with conditional and optional draws is a separate upper bound.
  *  - Windows are measured in consecutive calendar days under the design
- *    model's day-1 convention with no day 0 (the rule `usdm-schedule.ts`
+ *    model's day-1 convention with no day 0 (`studyDayIndex`, which `usdm-schedule.ts` also
  *    applies): day −1 is followed by day 1. A recorded day 0, a non-integer or
  *    an absent study day is not usable; a scheduled draw at such a visit makes
  *    the scheduled window figures null, any draw there the upper-bound ones,
@@ -70,7 +70,7 @@
  * @module server/services/study-design/biospecimen-profile
  */
 
-import type { ScheduleOfActivities, SoaActivity, SoaActivityCategory, SoaCell, SoaSpecimen, SoaVisit, StudyDesign } from './study-design-types';
+import { studyDayIndex, type ScheduleOfActivities, type SoaActivity, type SoaActivityCategory, type SoaCell, type SoaSpecimen, type SoaVisit, type StudyDesign } from './study-design-types';
 import { present } from './usdm-types';
 
 export const BIOSPECIMEN_BASIS =
@@ -180,16 +180,6 @@ const REFERENCES: ReadonlyArray<Pick<VolumeReferencePoint, 'appliesTo' | 'eightW
 /** The one rule for a recorded volume: a finite number of mL above zero. */
 function validVolume(v: unknown): v is number {
   return typeof v === 'number' && Number.isFinite(v) && v > 0;
-}
-
-/**
- * Study day → zero-based index under the no-day-0 convention (day 1 → 0,
- * day −1 → −1), the rule `usdm-schedule.ts` applies; null when the day is not
- * usable (absent, not an integer, or day 0).
- */
-function dayIndexOf(studyDay: unknown): number | null {
-  if (typeof studyDay !== 'number' || !Number.isInteger(studyDay) || studyDay === 0) return null;
-  return studyDay > 0 ? studyDay - 1 : studyDay;
 }
 
 function listOf<T>(v: unknown): T[] {
@@ -311,7 +301,7 @@ function perVisitVolumes(grid: BloodGrid, isUnscheduled: (v: SoaVisit) => boolea
 
 /** The largest total over any `days` consecutive days (no day 0), or null when a contributing visit has no usable day. */
 function maxInWindow(rows: VisitBloodVolume[], days: number, value: (v: VisitBloodVolume) => number): number | null {
-  const placed = rows.map((v) => ({ v, idx: dayIndexOf(v.studyDay) }));
+  const placed = rows.map((v) => ({ v, idx: studyDayIndex(v.studyDay) }));
   if (placed.some((p) => p.idx === null)) return null;
   let max = 0;
   for (const start of placed) {
@@ -378,7 +368,7 @@ const names = (rows: VisitBloodVolume[]) => rows.map((v) => v.name).join(', ');
 
 function timingGaps(perVisit: VisitBloodVolume[]): string[] {
   const placeable = perVisit.filter((v) => !v.unscheduled);
-  const undated = (v: VisitBloodVolume) => dayIndexOf(v.studyDay) === null;
+  const undated = (v: VisitBloodVolume) => studyDayIndex(v.studyDay) === null;
   const scheduled = placeable.filter((v) => v.scheduledDraws > 0 && undated(v));
   const other = placeable.filter((v) => v.scheduledDraws === 0 && v.conditionalDraws > 0 && undated(v));
   const gaps = placeable
