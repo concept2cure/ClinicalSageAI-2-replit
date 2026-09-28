@@ -1,0 +1,21 @@
+# SG overcorrection: HEAD 85cb5654b with the conversion keyed on nothing (every provider error treated as a cancel). The guard must go red: a real outage would be hidden. Recorded 2026-09-28T05:12:48Z
+diff --git a/server/services/ai-gateway/gateway.ts b/server/services/ai-gateway/gateway.ts
+index b3cb08cbb..3f1d675f0 100644
+--- a/server/services/ai-gateway/gateway.ts
++++ b/server/services/ai-gateway/gateway.ts
+@@ -1879,7 +1879,7 @@ export class AIGateway {
+            chokepoint every primary and fallback call passes through, inside the
+            retry loop, so the retry loop and both route() catches all see the
+            terminal type they already honour. */
+-        if (request.signal?.aborted && !(error instanceof GatewayAbortedError)) {
++        if (!(error instanceof GatewayAbortedError)) {
+           throw new GatewayAbortedError('in_flight');
+         }
+         throw error;
+ × server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors 6ms
+   → a real outage was hidden: expected "recordFailure" to be called at least once
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: a real outage was hidden: expected "recordFailure" to be called at least once
+    341|     expect(recordFailure, 'a real outage was hidden').toHaveBeenCalled…
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)

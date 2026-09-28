@@ -1,0 +1,248 @@
+# S0 red: HEAD 85cb5654b with 97465528b's source change reverse-applied to: client/src/concept2cure/components/ana/useAnaChat.ts client/src/concept2cure/components/ana/useAnaChat.types.ts server/routes/ana-ri/stream.ts server/services/ana/server-tool-steps.ts (the test file as committed). Recorded 2026-09-28T05:11:46Z
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > two calls, paired by id
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > two calls, paired by id 95ms
+   → expected [ { asked: 'X', got: 'Y' }, …(1) ] to deeply equal [ { asked: 'X', got: 'X' }, …(1) ]
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > three calls, paired by id — the first and last were the ones that swapped
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > keeps the id on the row, so a later correlation can use it
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > three calls, paired by id — the first and last were the ones that swapped 57ms
+   → expected [ { asked: 'A', got: 'C' }, …(2) ] to deeply equal [ { asked: 'A', got: 'A' }, …(2) ]
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > without ids (an older server), still pairs correctly — the fallback is first-in, not last-in
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > keeps the id on the row, so a later correlation can use it 58ms
+   → expected [ undefined, undefined ] to deeply equal [ 'toolu_0', 'toolu_1' ]
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > without ids (an older server), still pairs correctly — the fallback is first-in, not last-in 56ms
+   → expected [ { asked: 'X', got: 'Y' }, …(1) ] to deeply equal [ { asked: 'X', got: 'X' }, …(1) ]
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > without ids, a call an earlier step left running does not take a later step's result
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > every call settles — none is left running
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > without ids, a call an earlier step left running does not take a later step's result 83ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > a result whose id matches no call does not steal a sibling that has its own id 56ms
+   → expected [ 'running', 'success' ] to deeply equal [ 'running', 'running' ]
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > every call settles — none is left running 59ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > the server sends the id the client pairs on — carriage > the round's tool_use announcement carries toolUseId 3ms
+   → expected 'type: \'tool_use\',\n                …' to match /toolUseId:\s*toolUse\.id/
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > the server sends the id the client pairs on — carriage > the server-run steps (web search / fetch) carry their own id on both events 2ms
+   → server-tool path does not spread stepId onto both events: expected null not to be null
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > the server sends the id the client pairs on — carriage > the round's tool_result carries toolUseId 2ms
+   → expected 'type: \'tool_result\',\n             …' to match /toolUseId:\s*toolUse\.id/
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > two calls, paired by id
+AssertionError: expected [ { asked: 'X', got: 'Y' }, …(1) ] to deeply equal [ { asked: 'X', got: 'X' }, …(1) ]
+
+- Expected
++ Received
+
+  [
+    {
+      "asked": "X",
+-     "got": "X",
++     "got": "Y",
+    },
+    {
+      "asked": "Y",
+-     "got": "Y",
++     "got": "X",
+    },
+  ]
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts:114:28
+    112|   it('two calls, paired by id', async () => {
+    113|     const calls = await pairedCalls(['X', 'Y'], true);
+    114|     expect(pairing(calls)).toEqual([
+       |                            ^
+    115|       { asked: 'X', got: 'X' },
+    116|       { asked: 'Y', got: 'Y' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > three calls, paired by id — the first and last were the ones that swapped
+AssertionError: expected [ { asked: 'A', got: 'C' }, …(2) ] to deeply equal [ { asked: 'A', got: 'A' }, …(2) ]
+
+- Expected
++ Received
+
+  [
+    {
+      "asked": "A",
+-     "got": "A",
++     "got": "C",
+    },
+    {
+      "asked": "B",
+      "got": "B",
+    },
+    {
+      "asked": "C",
+-     "got": "C",
++     "got": "A",
+    },
+  ]
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts:122:28
+    120|   it('three calls, paired by id — the first and last were the ones tha…
+    121|     const calls = await pairedCalls(['A', 'B', 'C'], true);
+    122|     expect(pairing(calls)).toEqual([
+       |                            ^
+    123|       { asked: 'A', got: 'A' },
+    124|       { asked: 'B', got: 'B' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > keeps the id on the row, so a later correlation can use it
+AssertionError: expected [ undefined, undefined ] to deeply equal [ 'toolu_0', 'toolu_1' ]
+
+- Expected
++ Received
+
+  [
+-   "toolu_0",
+-   "toolu_1",
++   undefined,
++   undefined,
+  ]
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts:131:41
+    129|   it('keeps the id on the row, so a later correlation can use it', asy…
+    130|     const calls = await pairedCalls(['X', 'Y'], true);
+    131|     expect(calls.map(c => c.toolUseId)).toEqual(['toolu_0', 'toolu_1']…
+       |                                         ^
+    132|   });
+    133|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > without ids (an older server), still pairs correctly — the fallback is first-in, not last-in
+AssertionError: expected [ { asked: 'X', got: 'Y' }, …(1) ] to deeply equal [ { asked: 'X', got: 'X' }, …(1) ]
+
+- Expected
++ Received
+
+  [
+    {
+      "asked": "X",
+-     "got": "X",
++     "got": "Y",
+    },
+    {
+      "asked": "Y",
+-     "got": "Y",
++     "got": "X",
+    },
+  ]
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts:138:28
+    136|     // the one a result belongs to. Last-in matching was the defect.
+    137|     const calls = await pairedCalls(['X', 'Y'], false);
+    138|     expect(pairing(calls)).toEqual([
+       |                            ^
+    139|       { asked: 'X', got: 'X' },
+    140|       { asked: 'Y', got: 'Y' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > a result whose id matches no call does not steal a sibling that has its own id
+AssertionError: expected [ 'running', 'success' ] to deeply equal [ 'running', 'running' ]
+
+- Expected
++ Received
+
+  [
+    "running",
+-   "running",
++   "success",
+  ]
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts:190:58
+    188|     const mid: any = [...result.current.messages].reverse().find(m => …
+    189|     // Neither real call was handed the stray result.
+    190|     expect((mid.toolCalls as Call[]).map(c => c.status)).toEqual(['run…
+       |                                                          ^
+    191|     expect((mid.toolCalls as Call[]).every(c => c.result === undefined…
+    192|     await act(async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > the server sends the id the client pairs on — carriage > the round's tool_use announcement carries toolUseId
+AssertionError: expected 'type: \'tool_use\',\n                …' to match /toolUseId:\s*toolUse\.id/
+
+- Expected:
+/toolUseId:\s*toolUse\.id/
+
++ Received:
+"type: 'tool_use',
+                round,
+                name: toolUse.name,
+                label: describeToolPlan([toolUse])[0].label,
+                input: toolUse.input,
+              })}"
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts:219:19
+    217|     const m = stream.match(/type:\s*'tool_use',\s*\n\s*round,\s*\n\s*n…
+    218|     expect(m, 'concurrent-path tool_use emit not found').not.toBeNull(…
+    219|     expect(m![0]).toMatch(/toolUseId:\s*toolUse\.id/);
+       |                   ^
+    220|   });
+    221|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > the server sends the id the client pairs on — carriage > the server-run steps (web search / fetch) carry their own id on both events
+AssertionError: server-tool path does not spread stepId onto both events: expected null not to be null
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts:226:79
+    224|     // back; the id keeps pairing correct if that ordering ever change…
+    225|     const m = stream.match(/const stepId = [\s\S]{0,300}?\n[\s\S]{0,20…
+    226|     expect(m, 'server-tool path does not spread stepId onto both event…
+       |                                                                               ^
+    227|   });
+    228|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > the server sends the id the client pairs on — carriage > the round's tool_result carries toolUseId
+AssertionError: expected 'type: \'tool_result\',\n             …' to match /toolUseId:\s*toolUse\.id/
+
+- Expected:
+/toolUseId:\s*toolUse\.id/
+
++ Received:
+"type: 'tool_result',
+                round,
+                name: toolUse.name,
+                label: stepLabel,
+                status: toolStatus,
+                latencyMs,
+                ...(humanMessage ? { message: humanMessage } : {}),
+                result: resultStr"
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts:232:19
+    230|     const m = stream.match(/type:\s*'tool_result',\s*\n\s*round,\s*\n\…
+    231|     expect(m, 'concurrent-path tool_result emit not found').not.toBeNu…
+    232|     expect(m![0]).toMatch(/toolUseId:\s*toolUse\.id/);
+       |                   ^
+    233|   });
+    234| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 2 passed (10)
+   Start at  05:11:47
+   Duration  2.11s (transform 457ms, setup 222ms, import 504ms, tests 477ms, environment 665ms)
+
