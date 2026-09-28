@@ -224,7 +224,9 @@ export function biospecimenView(payload: Obj): ProjectionView {
       ? [
         `Blood per participant: ${num(b.totalScheduledMl)} mL scheduled, up to ${num(b.totalUpperBoundMl)} mL with conditional draws` +
           (b.totalsAreLowerBounds ? ' — LOWER BOUNDS: a draw records no volume.' : '.'),
-        `Worst 8-week window: ${known(b.maxEightWeekScheduledMl, ' mL')}; most draw visits in one week: ${known(b.maxDrawVisitsInAnyWeek, '')}.`,
+        // Under lower-bound totals, the window is a lower bound too, and is printed as one.
+        `Worst 8-week window: ${b.totalsAreLowerBounds && typeof b.maxEightWeekScheduledMl === 'number' ? `at least ${b.maxEightWeekScheduledMl} mL (lower bound)` : known(b.maxEightWeekScheduledMl, ' mL')}; ` +
+          `most draw visits in one week: ${known(b.maxDrawVisitsInAnyWeek, '')}.`,
         ...refs.map((r) => `Reference ${num(r.eightWeekLimitMl)} mL / 8 weeks (${str(r.appliesTo)}): ` +
           (r.exceededScheduled === null ? 'not known.' : r.exceededScheduled ? 'above.' : 'within.')),
         str(b.meaning),
