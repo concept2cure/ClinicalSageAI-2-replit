@@ -1,0 +1,93 @@
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx server/routes/__tests__/vault-ingest-type-binding.test.ts server/middleware/__tests__/uploadSafety.test.ts server/utils/__tests__/fileSignature.t
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PDF > accepts a buffer starting with %PDF 7ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PDF > rejects a buffer that declares pdf but starts with PNG bytes 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PDF > rejects an executable masquerading as pdf 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > accepts a real PNG 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > rejects a JPEG-marked buffer that is actually PDF bytes 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > accepts real JPEG (ff d8 ff) 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — PNG / JPEG / GIF > accepts both GIF87a and GIF89a 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > accepts a docx-declared buffer that starts with PK 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > rejects a docx-declared buffer that does not start with PK 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > accepts .xlsx and .pptx (same container) 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > accepts plain application/zip 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > accepts plain ASCII text/plain 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > accepts CSV 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > accepts JSON 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > rejects binary content declared as text/plain 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — text-shaped formats > rejects a buffer with embedded null bytes (classic binary tell) 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — legacy Office (.doc, .xls) > accepts OLE compound for application/msword 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — legacy Office (.doc, .xls) > rejects a .doc-declared buffer that is actually a ZIP (real-world bug case) 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — edge cases > rejects an empty buffer 5ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — edge cases > rejects unknown / unhandled MIME types 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — edge cases > rejects a buffer too short to contain the magic 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > the SEC-A-3 upload passes the declared-type check on its own — the gap this closes 0ms
+ × server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses a .pdf declared text/html, naming the type a .pdf must be declared as 10ms
+   → verifyDeclaredTypeForName is not a function
+ × server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses a .pdf whose bytes are not a PDF, whatever was declared 1ms
+   → verifyDeclaredTypeForName is not a function
+ × server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > accepts a real PDF, whatever the case of its extension 3ms
+   → verifyDeclaredTypeForName is not a function
+ × server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > binds rather than blacklists: text/html is refused for .txt and .md, and left alone for .html 1ms
+   → verifyDeclaredTypeForName is not a function
+ × server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > accepts the types a text file is actually sent as, parameters and case aside 0ms
+   → verifyDeclaredTypeForName is not a function
+ × server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses one Office format declared as another 1ms
+   → verifyDeclaredTypeForName is not a function
+ × server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > leaves a name it does not bind to the caller’s own allowlist 0ms
+   → verifyDeclaredTypeForName is not a function
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — signature check > rejects bytes that do not match the declared MIME (400) 9ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — signature check > rejects an empty buffer (400) 1ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — AV scan > rejects on a virus FOUND without leaking the signature name (400) 28ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — AV scan > resolves on a clean scan 8ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — fail-closed in production > rejects (503) when scanner is not configured and NODE_ENV=production 7ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — fail-closed in production > resolves (permissive) when scanner is not configured and NODE_ENV=test 1ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — fail-closed in production > resolves (permissive) in development 0ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — path input > reads bytes from a filesystem path 4ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — platform-generated bytes > does not reject in production when no scanner is configured 6ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — platform-generated bytes > still rejects bytes that do not match the declared type (400) 1ms
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — platform-generated bytes > leaves an upload with no stated origin fail-closed in production 1ms
+ × server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — the file name binds the declared type > refuses HTML declared text/html under a .pdf name (400 FILE_TYPE_MISMATCH) 20ms
+   → expected undefined to be an instance of UploadSafetyError
+ × server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — the file name binds the declared type > binds platform-generated bytes too — what a name promises does not depend on origin 8ms
+   → promise resolved "undefined" instead of rejecting
+ ✓ server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — the file name binds the declared type > admits a real PDF under a .pdf name, as before 1ms
+ × server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > refuses HTML declared text/html under a .pdf name: 400 FILE_TYPE_MISMATCH, and nothing is stored 95ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > refuses HTML declared text/html under a .txt name — a binding, not a .pdf special case 38ms
+   → expected 201 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > admits a real PDF declared application/pdf, through to storage and a 201 20ms
+ × client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > does not frame HTML saved under a .pdf name and served as text/html; it downloads it and says why 481ms
+   → expected <iframe …(3)></iframe> to be null
+ × client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > does not frame HTML the server typed application/pdf 105ms
+   → expected <iframe …(3)></iframe> to be null
+ × client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > frames %PDF bytes as application/pdf even when the server typed them text/html 101ms
+   → expected 'text/html' to be 'application/pdf' // Object.is equality
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > still opens a real PDF in the viewer, with the served hash 93ms
+ × client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > opens a real PDF the server typed as octet-stream under a name without .pdf — the bytes decide 70ms
+   → expected null not to be null
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > downloads a file that is not a PDF and does not claim to be, as before 41ms
+ FAIL  server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — the file name binds the declared type > refuses HTML declared text/html under a .pdf name (400 FILE_TYPE_MISMATCH)
+AssertionError: expected undefined to be an instance of UploadSafetyError
+ FAIL  server/middleware/__tests__/uploadSafety.test.ts > assertUploadSafe — the file name binds the declared type > binds platform-generated bytes too — what a name promises does not depend on origin
+AssertionError: promise resolved "undefined" instead of rejecting
+ FAIL  server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > refuses HTML declared text/html under a .pdf name: 400 FILE_TYPE_MISMATCH, and nothing is stored
+AssertionError: expected 201 to be 400 // Object.is equality
+ FAIL  server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > refuses HTML declared text/html under a .txt name — a binding, not a .pdf special case
+AssertionError: expected 201 to be 400 // Object.is equality
+ FAIL  server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses a .pdf declared text/html, naming the type a .pdf must be declared as
+ FAIL  server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses a .pdf whose bytes are not a PDF, whatever was declared
+ FAIL  server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > accepts a real PDF, whatever the case of its extension
+ FAIL  server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > binds rather than blacklists: text/html is refused for .txt and .md, and left alone for .html
+ FAIL  server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > accepts the types a text file is actually sent as, parameters and case aside
+ FAIL  server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > refuses one Office format declared as another
+ FAIL  server/utils/__tests__/fileSignature.test.ts > verifyDeclaredTypeForName — the extension binds the declared type and the bytes > leaves a name it does not bind to the caller’s own allowlist
+ FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > does not frame HTML saved under a .pdf name and served as text/html; it downloads it and says why
+AssertionError: expected <iframe …(3)></iframe> to be null
+ FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > does not frame HTML the server typed application/pdf
+AssertionError: expected <iframe …(3)></iframe> to be null
+ FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > frames %PDF bytes as application/pdf even when the server typed them text/html
+AssertionError: expected 'text/html' to be 'application/pdf' // Object.is equality
+ FAIL  client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx > Project files — what the viewer frames > opens a real PDF the server typed as octet-stream under a name without .pdf — the bytes decide
+AssertionError: expected null not to be null
+ Test Files  4 failed (4)
+      Tests  15 failed | 37 passed (52)
