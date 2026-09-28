@@ -5818,11 +5818,21 @@ registerToolHandler('check_dossier_consistency', async (input: Record<string, un
       error: 'check_dossier_consistency requires draft_content and project_id',
     });
   }
+  // A project id that names no project is an input to correct, not a result:
+  // answering it with a 'not_assessed' verdict would read as an assessment of
+  // the draft (row 74, track H review). The engine keeps 'no_project' for
+  // direct callers.
+  if (!Number.isInteger(projectId) || projectId <= 0) {
+    return JSON.stringify({
+      error: 'check_dossier_consistency requires a positive integer project_id.',
+    });
+  }
 
   try {
-    const { checkDossierConsistency } = await import(
-      '../intelligence/cross-artifact-consistency.js'
-    );
+    const [{ checkDossierConsistency }, { recommendationFor }] = await Promise.all([
+      import('../intelligence/cross-artifact-consistency.js'),
+      import('../intelligence/consistency-verdict.js'),
+    ]);
     const report = await checkDossierConsistency({
       projectId,
       organizationId,
@@ -5830,8 +5840,9 @@ registerToolHandler('check_dossier_consistency', async (input: Record<string, un
       draftCtdSection: ctdSection,
       excludeArtifactId,
     });
-    // The documents could not be read: nothing was compared, so there is no
-    // verdict to give. Its empty report says 'clean' (row 74, S3).
+    // The documents could not be read: nothing was compared. Its report is
+    // verdict 'not_assessed' with `unavailable` set; answer with an error, not
+    // a verdict (row 74, S3; track H).
     if (report.unavailable) {
       return JSON.stringify({
         error: 'The project documents could not be read, so nothing was compared.',
@@ -5841,11 +5852,16 @@ registerToolHandler('check_dossier_consistency', async (input: Record<string, un
 
     // Summarize for AnA — keep the response compact. Full divergences
     // stay in the structured report; the summary gives AnA enough to
-    // decide whether to recommend revisions.
+    // decide whether to recommend revisions. Nothing compared is verdict
+    // 'not_assessed' with its reason, never 'clean' (row 74, track H).
     return JSON.stringify({
       verdict: report.verdict,
+      notAssessedReason: report.notAssessedReason,
       artifactsCompared: report.artifactsCompared,
+      draftCopiesSetAside: report.draftCopiesSetAside,
       draftFactsExtracted: report.draftFactsExtracted,
+      figuresCompared: report.figuresCompared,
+      crossReferencesChecked: report.crossReferencesChecked,
       divergenceCount: report.divergences.length,
       bySeverity: {
         critical: report.divergences.filter(d => d.severity === 'critical').length,
@@ -5862,14 +5878,7 @@ registerToolHandler('check_dossier_consistency', async (input: Record<string, un
         existingArtifact: d.existingArtifactTitle,
         existingCtdSection: d.existingCtdSection,
       })),
-      recommendation:
-        report.verdict === 'clean'
-          ? 'No consistency issues detected against the existing dossier.'
-          : report.verdict === 'minor_issues'
-            ? 'Minor consistency issues detected — review before finalizing.'
-            : report.verdict === 'needs_review'
-              ? 'Material consistency issues detected — resolve or justify before recommending for dossier.'
-              : 'BLOCKER — critical consistency divergences detected. Revise before proceeding.',
+      recommendation: recommendationFor(report),
     });
   } catch (err: any) {
     return JSON.stringify({

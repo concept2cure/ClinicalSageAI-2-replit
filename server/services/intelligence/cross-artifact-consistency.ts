@@ -20,6 +20,18 @@
  * now marked `unavailable: 'artifacts_unreadable'`, and check_dossier_consistency
  * answers with an error instead of a verdict.
  *
+ * 2026-09-28 (row 74, track H): nothing compared is no longer 'clean'. The
+ * early returns (no project, a draft under 100 characters, no labelled figures)
+ * and a read that leaves nothing to compare (no other documents, or no figure
+ * shared under the same label) report verdict 'not_assessed' with
+ * `notAssessedReason`. 'clean' needs at least one labelled figure compared
+ * (`figuresCompared`). The verdict and its copy live in consistency-verdict.ts;
+ * the vocabulary, with DivergenceSeverity, in shared/ana/dossier-consistency.ts.
+ * A project document whose text is the draft's own (the draft, saved, found
+ * because no exclude_artifact_id was given) is set aside
+ * (`draftCopiesSetAside`): comparing the draft with itself agrees by
+ * construction, and used to read as 'clean'.
+ *
  * @module server/services/intelligence/cross-artifact-consistency
  */
 
@@ -27,10 +39,17 @@ import { db } from '../../db.js';
 import { eq, and, ne } from 'drizzle-orm';
 import { concept2cureArtifacts } from '../../../shared/schema.js';
 import { createScopedLogger } from '../../utils/logger';
+import {
+  DOSSIER_CHECK_MIN_DRAFT_LENGTH,
+  type DivergenceSeverity,
+  type DossierConsistencyVerdict,
+  type DossierNotAssessedReason,
+} from '../../../shared/ana/dossier-consistency.js';
+import { verdictFor } from './consistency-verdict.js';
 
 const logger = createScopedLogger('cross-artifact-consistency');
 
-export type DivergenceSeverity = 'critical' | 'high' | 'medium' | 'low';
+export type { DivergenceSeverity };
 
 export interface NumericalFact {
   /** The label or key this number is attached to (e.g. "sample size", "LSM difference"). */
@@ -67,15 +86,28 @@ export interface ConsistencyReport {
   readonly projectId: number;
   readonly organizationId: number;
   readonly draftCtdSection?: string;
+  /** Other project documents read and compared with the draft. Saved copies of the draft are not counted. */
   readonly artifactsCompared: number;
+  /** Project documents whose text is the draft's own, set aside rather than compared. */
+  readonly draftCopiesSetAside: number;
   readonly draftFactsExtracted: number;
+  /**
+   * Labelled-figure comparisons made: one draft figure against the same label
+   * in one other document. 0 means no figure was compared, whatever was read.
+   */
+  readonly figuresCompared: number;
+  /** Draft cross-references resolved, or flagged, against the project's documents. */
+  readonly crossReferencesChecked: number;
   readonly divergences: readonly ConsistencyDivergence[];
-  readonly verdict: 'clean' | 'minor_issues' | 'needs_review' | 'blocker';
+  /** 'not_assessed' when nothing was compared: see `notAssessedReason`, or `unavailable`. */
+  readonly verdict: DossierConsistencyVerdict;
+  /** Why nothing was compared, when the check could tell. */
+  readonly notAssessedReason?: DossierNotAssessedReason;
   readonly generatedAt: string;
   /**
    * Set when the project's artifacts could not be read, so nothing was
-   * compared. The verdict of such a report means nothing and must not be
-   * shown as one.
+   * compared. That is an error, not an assessment: the verdict is
+   * 'not_assessed' and must not be shown as a result.
    */
   readonly unavailable?: 'artifacts_unreadable';
 }
@@ -231,7 +263,7 @@ function valuesMatch(a: string, b: string): boolean {
   return false;
 }
 
-export async function checkDossierConsistency(params: {
+interface DossierCheckParams {
   projectId: number;
   organizationId: number;
   draftContent: string;
@@ -240,99 +272,93 @@ export async function checkDossierConsistency(params: {
   excludeArtifactId?: number;
   /** Max related artifacts to pull for comparison. Default 25. */
   maxArtifacts?: number;
-}): Promise<ConsistencyReport> {
-  const { projectId, organizationId, draftContent, draftCtdSection, excludeArtifactId } = params;
-  const maxArtifacts = params.maxArtifacts ?? 25;
+}
 
-  const emptyReport: ConsistencyReport = {
-    projectId,
-    organizationId,
-    draftCtdSection,
+interface RelatedArtifact {
+  id: number;
+  artifactId: string;
+  title: string;
+  content: string;
+  ctdSection: string | null;
+  status: string;
+}
+
+type ReportScope = Pick<ConsistencyReport, 'projectId' | 'organizationId' | 'draftCtdSection'>;
+
+/** A report that compared nothing. Its verdict is 'not_assessed', never 'clean'. */
+function nothingCompared(scope: ReportScope, draftFactsExtracted: number): ConsistencyReport {
+  return {
+    ...scope,
     artifactsCompared: 0,
-    draftFactsExtracted: 0,
+    draftCopiesSetAside: 0,
+    draftFactsExtracted,
+    figuresCompared: 0,
+    crossReferencesChecked: 0,
     divergences: [],
-    verdict: 'clean',
+    verdict: 'not_assessed',
     generatedAt: new Date().toISOString(),
   };
+}
 
-  if (!Number.isFinite(projectId) || projectId <= 0) return emptyReport;
-  if (!draftContent || draftContent.length < 100) return emptyReport;
+async function loadRelatedArtifacts(params: DossierCheckParams): Promise<RelatedArtifact[]> {
+  const { projectId, organizationId, excludeArtifactId } = params;
+  const sameProject = and(
+    eq(concept2cureArtifacts.projectId, projectId),
+    eq(concept2cureArtifacts.organizationId, organizationId),
+  );
+  return db
+    .select({
+      id: concept2cureArtifacts.id,
+      artifactId: concept2cureArtifacts.artifactId,
+      title: concept2cureArtifacts.title,
+      content: concept2cureArtifacts.content,
+      ctdSection: concept2cureArtifacts.ctdSection,
+      status: concept2cureArtifacts.status,
+    })
+    .from(concept2cureArtifacts)
+    .where(excludeArtifactId ? and(sameProject, ne(concept2cureArtifacts.id, excludeArtifactId)) : sameProject)
+    .limit(params.maxArtifacts ?? 25);
+}
 
-  const draftFacts = extractNumericalFacts(draftContent);
-  if (draftFacts.length === 0 && !draftCtdSection) return emptyReport;
-
-  let relatedArtifacts: Array<{
-    id: number;
-    artifactId: string;
-    title: string;
-    content: string;
-    ctdSection: string | null;
-    status: string;
-  }> = [];
-
-  try {
-    const rows = await db
-      .select({
-        id: concept2cureArtifacts.id,
-        artifactId: concept2cureArtifacts.artifactId,
-        title: concept2cureArtifacts.title,
-        content: concept2cureArtifacts.content,
-        ctdSection: concept2cureArtifacts.ctdSection,
-        status: concept2cureArtifacts.status,
-      })
-      .from(concept2cureArtifacts)
-      .where(
-        excludeArtifactId
-          ? and(
-              eq(concept2cureArtifacts.projectId, projectId),
-              eq(concept2cureArtifacts.organizationId, organizationId),
-              ne(concept2cureArtifacts.id, excludeArtifactId),
-            )
-          : and(
-              eq(concept2cureArtifacts.projectId, projectId),
-              eq(concept2cureArtifacts.organizationId, organizationId),
-            ),
-      )
-      .limit(maxArtifacts);
-    relatedArtifacts = rows;
-  } catch (err) {
-    logger.warn(
-      `[cross-artifact] Failed to load related artifacts: ${err instanceof Error ? err.message : 'unknown'}`,
-    );
-    // Not the empty report: its verdict is 'clean', and nothing was compared.
-    return { ...emptyReport, unavailable: 'artifacts_unreadable' };
+/** The first occurrence of each label. */
+function firstByLabel(facts: readonly NumericalFact[]): Map<string, NumericalFact> {
+  const byLabel = new Map<string, NumericalFact>();
+  for (const f of facts) {
+    if (!byLabel.has(f.label)) byLabel.set(f.label, f);
   }
+  return byLabel;
+}
 
+const withUnit = (f: NumericalFact): string => `${f.value}${f.unit ? ' ' + f.unit : ''}`;
+
+/**
+ * 1. Numeric divergences — same labelled quantity, different values.
+ *
+ * Compares the FIRST occurrence of each label in both documents. This
+ * intentionally avoids the n^2 explosion of comparing every fact against every
+ * other fact, which would produce a lot of within-document noise (e.g. a
+ * document naming two sample sizes for two different study arms). `compared`
+ * counts every label the draft shares with a document, agreeing or not.
+ */
+function compareFigures(
+  draftFacts: readonly NumericalFact[],
+  relatedArtifacts: readonly RelatedArtifact[],
+): { divergences: ConsistencyDivergence[]; compared: number } {
   const divergences: ConsistencyDivergence[] = [];
-
-  // 1. Numeric divergences — same labelled quantity, different values
+  let compared = 0;
+  const draftByLabel = firstByLabel(draftFacts);
   for (const existing of relatedArtifacts) {
-    const existingFacts = extractNumericalFacts(existing.content);
-    if (existingFacts.length === 0) continue;
-
-    // Group facts by label. Compare the FIRST occurrence of each label in
-    // both documents. This intentionally avoids the n^2 explosion of
-    // comparing every fact against every other fact, which would produce a
-    // lot of within-document noise (e.g. a document naming two sample
-    // sizes for two different study arms).
-    const draftByLabel = new Map<string, NumericalFact>();
-    for (const f of draftFacts) {
-      if (!draftByLabel.has(f.label)) draftByLabel.set(f.label, f);
-    }
-    const existingByLabel = new Map<string, NumericalFact>();
-    for (const f of existingFacts) {
-      if (!existingByLabel.has(f.label)) existingByLabel.set(f.label, f);
-    }
-
+    const existingByLabel = firstByLabel(extractNumericalFacts(existing.content));
     for (const [label, draftFact] of draftByLabel) {
       const existingFact = existingByLabel.get(label);
       if (!existingFact) continue;
+      compared += 1;
       if (valuesMatch(draftFact.value, existingFact.value)) continue;
 
       divergences.push({
         kind: 'numeric_divergence',
         severity: severityFor(label),
-        description: `${humanLabel(label)} differs: draft says ${draftFact.value}${draftFact.unit ? ' ' + draftFact.unit : ''}, existing artifact "${existing.title}" says ${existingFact.value}${existingFact.unit ? ' ' + existingFact.unit : ''}.`,
+        description: `${humanLabel(label)} differs: draft says ${withUnit(draftFact)}, existing artifact "${existing.title}" says ${withUnit(existingFact)}.`,
         draftValue: draftFact.value,
         existingValue: existingFact.value,
         existingArtifactId: existing.artifactId,
@@ -343,41 +369,121 @@ export async function checkDossierConsistency(params: {
       });
     }
   }
+  return { divergences, compared };
+}
 
-  // 2. Missing cross-references — draft points to a Module X.Y that no
-  //    artifact in the project covers.
-  const draftSectionRefs = extractSectionReferences(draftContent);
-  if (draftSectionRefs.length > 0) {
-    const coveredSections = new Set<string>();
-    for (const a of relatedArtifacts) {
-      if (a.ctdSection) coveredSections.add(a.ctdSection);
-    }
-    for (const ref of draftSectionRefs) {
-      // Allow prefix match (e.g. ref "3.2.S" is covered by artifact section "3.2.S.1")
-      const covered = Array.from(coveredSections).some(
-        s => s === ref || s.startsWith(`${ref}.`) || ref.startsWith(`${s}.`),
-      );
-      if (!covered && ref !== draftCtdSection) {
-        divergences.push({
-          kind: 'missing_cross_reference',
-          severity: 'medium',
-          description: `Draft references Module/Section ${ref} but no artifact in this project currently covers it.`,
-          draftValue: ref,
-        });
-      }
-    }
+/** Whether a document filed under one of `sections` covers section `ref` (prefix match either way). */
+function sectionCovered(sections: readonly string[], ref: string): boolean {
+  // e.g. ref "3.2.S" is covered by artifact section "3.2.S.1"
+  return sections.some(s => s === ref || s.startsWith(`${ref}.`) || ref.startsWith(`${s}.`));
+}
+
+const sectionsOf = (docs: readonly RelatedArtifact[]): string[] =>
+  docs.map(a => a.ctdSection).filter((s): s is string => !!s);
+
+/**
+ * 2. Missing cross-references — the draft points to a Module X.Y that no
+ * artifact in the project covers. A reference to the draft's own section, or
+ * one that only a saved copy of the draft covers, is the draft pointing at
+ * itself: not flagged, and not counted as checked unless another document
+ * covers it.
+ */
+function checkCrossReferences(
+  draftContent: string,
+  draft: { readonly section: string | undefined; readonly copies: readonly RelatedArtifact[] },
+  relatedArtifacts: readonly RelatedArtifact[],
+): { divergences: ConsistencyDivergence[]; checked: number } {
+  const divergences: ConsistencyDivergence[] = [];
+  let checked = 0;
+  const otherSections = sectionsOf(relatedArtifacts);
+  const draftSections = sectionsOf(draft.copies);
+  for (const ref of extractSectionReferences(draftContent)) {
+    const covered = sectionCovered(otherSections, ref);
+    if (!covered && (ref === draft.section || sectionCovered(draftSections, ref))) continue;
+    checked += 1;
+    if (covered) continue;
+    divergences.push({
+      kind: 'missing_cross_reference',
+      severity: 'medium',
+      description: `Draft references Module/Section ${ref} but no artifact in this project currently covers it.`,
+      draftValue: ref,
+    });
+  }
+  return { divergences, checked };
+}
+
+/** The early returns: nothing is read, nothing is compared. */
+function reasonNotToRead(projectId: number, draftContent: string | undefined): DossierNotAssessedReason | null {
+  if (!Number.isInteger(projectId) || projectId <= 0) return 'no_project';
+  if (!draftContent || draftContent.length < DOSSIER_CHECK_MIN_DRAFT_LENGTH) return 'draft_too_short';
+  return null;
+}
+
+/** Whitespace-insensitive text, so a saved copy that was re-flowed still reads as the draft. */
+const normalisedText = (text: string): string => text.replace(/\s+/g, ' ').trim();
+
+/**
+ * Project documents whose text is the draft's own: the draft, saved, and found
+ * because the caller gave no excludeArtifactId. Comparing the draft with itself
+ * agrees by construction, so such a copy is set aside, not compared. A saved
+ * copy in another format, or an earlier version, is not detected here.
+ */
+function setAsideDraftCopies(
+  rows: readonly RelatedArtifact[],
+  draftContent: string,
+): { others: RelatedArtifact[]; draftCopies: RelatedArtifact[] } {
+  const draft = normalisedText(draftContent);
+  const others: RelatedArtifact[] = [];
+  const draftCopies: RelatedArtifact[] = [];
+  for (const row of rows) {
+    (typeof row.content === 'string' && normalisedText(row.content) === draft ? draftCopies : others).push(row);
+  }
+  return { others, draftCopies };
+}
+
+export async function checkDossierConsistency(params: DossierCheckParams): Promise<ConsistencyReport> {
+  const { projectId, organizationId, draftContent, draftCtdSection } = params;
+  const scope: ReportScope = { projectId, organizationId, draftCtdSection };
+
+  const early = reasonNotToRead(projectId, draftContent);
+  if (early) return { ...nothingCompared(scope, 0), notAssessedReason: early };
+
+  const draftFacts = extractNumericalFacts(draftContent);
+  if (draftFacts.length === 0 && !draftCtdSection) {
+    return { ...nothingCompared(scope, 0), notAssessedReason: 'no_figures_in_draft' };
   }
 
-  const verdict = computeVerdict(divergences);
+  let rows: RelatedArtifact[];
+  try {
+    rows = await loadRelatedArtifacts(params);
+  } catch (err) {
+    logger.warn(
+      `[cross-artifact] Failed to load related artifacts: ${err instanceof Error ? err.message : 'unknown'}`,
+    );
+    // An error, not an assessment: nothing was compared (row 74, S3).
+    return { ...nothingCompared(scope, draftFacts.length), unavailable: 'artifacts_unreadable' };
+  }
+
+  const { others, draftCopies } = setAsideDraftCopies(rows, draftContent);
+  const figures = compareFigures(draftFacts, others);
+  const references = checkCrossReferences(draftContent, { section: draftCtdSection, copies: draftCopies }, others);
+  const divergences = [...figures.divergences, ...references.divergences];
 
   return {
-    projectId,
-    organizationId,
-    draftCtdSection,
-    artifactsCompared: relatedArtifacts.length,
+    ...scope,
+    artifactsCompared: others.length,
+    draftCopiesSetAside: draftCopies.length,
     draftFactsExtracted: draftFacts.length,
+    figuresCompared: figures.compared,
+    crossReferencesChecked: references.checked,
     divergences,
-    verdict,
+    ...verdictFor({
+      divergences,
+      relatedArtifacts: others.length,
+      draftCopies: draftCopies.length,
+      draftFacts: draftFacts.length,
+      figuresCompared: figures.compared,
+    }),
     generatedAt: new Date().toISOString(),
   };
 }
@@ -412,15 +518,6 @@ function humanLabel(label: string): string {
     rpn: 'Risk priority number',
   };
   return map[label] ?? label;
-}
-
-function computeVerdict(divergences: ConsistencyDivergence[]): ConsistencyReport['verdict'] {
-  if (divergences.length === 0) return 'clean';
-  const anyCritical = divergences.some(d => d.severity === 'critical');
-  const anyHigh = divergences.some(d => d.severity === 'high');
-  if (anyCritical) return 'blocker';
-  if (anyHigh) return 'needs_review';
-  return 'minor_issues';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

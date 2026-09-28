@@ -52,7 +52,9 @@ describe('checkDossierConsistency when the project artifacts cannot be read', ()
   it('a read that succeeds and finds nothing is still an ordinary report, not unavailable', async () => {
     const report = await checkDossierConsistency({ projectId: 12, organizationId: 7, draftContent: DRAFT });
     expect(report.unavailable).toBeUndefined();
-    expect(report.verdict).toBe('clean');
+    // Nothing to compare is not 'clean' either (row 74, track H).
+    expect(report.verdict).toBe('not_assessed');
+    expect(report.notAssessedReason).toBe('no_related_artifacts');
   });
 });
 
@@ -75,7 +77,10 @@ describe('the check_dossier_consistency tool', () => {
 
   it('still reports a verdict when the documents were read', async () => {
     const out = await runTool({ draft_content: DRAFT, project_id: 12 });
-    expect(out.verdict).toBe('clean');
+    // The read found no other document: a verdict, 'not_assessed', not an error
+    // and not 'clean' (row 74, track H).
+    expect(out.verdict).toBe('not_assessed');
     expect(out).not.toHaveProperty('unavailable');
+    expect(out).not.toHaveProperty('error');
   }, 30_000);
 });

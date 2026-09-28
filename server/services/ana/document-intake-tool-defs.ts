@@ -401,7 +401,7 @@ export const GENERATE_STATISTICAL_DOCUMENT: AnaTool = {
 export const CHECK_DOSSIER_CONSISTENCY: AnaTool = {
   name: 'check_dossier_consistency',
   description:
-    "Cross-check a drafted artifact against other artifacts in the same project for factual consistency — sample sizes, p-values, dose levels, NOAEL, shelf life, endpoint definitions, and CTD section cross-references. Surfaces the class of divergences that cause FDA RTFs and EMA IRs: the same labelled quantity stated with different values across Module 2 and Module 5, section references that point to non-existent targets, dose mismatches between nonclinical and clinical sections. Call this AFTER drafting a CTD section or regulatory document but BEFORE recommending it for the dossier. Returns a verdict (clean | minor_issues | needs_review | blocker) with per-divergence severity, the conflicting values, and a pointer to the source artifact — so the author can resolve the inconsistency or justify it explicitly.",
+    "Cross-check a drafted artifact against other artifacts in the same project for factual consistency — sample sizes, p-values, dose levels, NOAEL, shelf life, endpoint definitions, and CTD section cross-references. Surfaces the class of divergences that cause FDA RTFs and EMA IRs: the same labelled quantity stated with different values across Module 2 and Module 5, section references that point to non-existent targets, dose mismatches between nonclinical and clinical sections. Call this AFTER drafting a CTD section or regulatory document but BEFORE recommending it for the dossier. Returns a verdict (clean | minor_issues | needs_review | blocker | not_assessed) with per-divergence severity, the conflicting values, and a pointer to the source artifact — so the author can resolve the inconsistency or justify it explicitly. not_assessed means nothing was compared (notAssessedReason says why); it is not a clean result, so never call such a draft consistent.",
   input_schema: {
     type: 'object',
     properties: {
@@ -419,7 +419,7 @@ export const CHECK_DOSSIER_CONSISTENCY: AnaTool = {
       },
       exclude_artifact_id: {
         type: 'number',
-        description: 'Optional numeric artifact id to exclude from comparison — used when re-checking a revision of an existing artifact so it does not compare against its prior version.',
+        description: "Optional numeric artifact id to exclude from comparison — used when re-checking a revision of an existing artifact so it does not compare against its prior version. A project document whose text is exactly the draft's is set aside without it (draftCopiesSetAside); an earlier version with different text is not, so pass its id.",
       },
     },
     required: ['draft_content', 'project_id'],
