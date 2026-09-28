@@ -698,3 +698,17 @@ export const ESTIMAND_REQUIRED_ROLES: readonly EndpointRole[] = ['primary', 'key
 export function primaryEndpoints(design: StudyDesign): Endpoint[] {
   return (design.endpoints ?? []).filter(e => e.role === 'primary');
 }
+
+/**
+ * The confirmatory family: every primary and key-secondary endpoint
+ * (ESTIMAND_REQUIRED_ROLES) in design order — the hypotheses a family-wise
+ * type I error covers. Total over a persisted design whose endpoints are not a
+ * list or hold non-records. The one implementation; the design gates, the SAP
+ * projection and the multiplicity check all read it.
+ */
+export function confirmatoryEndpoints(design: StudyDesign): Endpoint[] {
+  const endpoints: unknown = design.endpoints;
+  if (!Array.isArray(endpoints)) return [];
+  return endpoints.filter((e): e is Endpoint =>
+    typeof e === 'object' && e !== null && (ESTIMAND_REQUIRED_ROLES as readonly unknown[]).includes((e as { role?: unknown }).role));
+}

@@ -60,7 +60,7 @@
 
 import { estimateFWER, fixedSequenceReject, graphicalReject, hochbergReject, holmReject } from '../stats/multiplicity';
 import { reproducibleProvenance, type ReproducibleProvenance } from '../stats/computation-provenance';
-import { ESTIMAND_REQUIRED_ROLES, type MultiplicityStrategy, type StudyDesign } from './study-design-types';
+import { confirmatoryEndpoints, type MultiplicityStrategy, type StudyDesign } from './study-design-types';
 
 export const MULTIPLICITY_CHECK_BASIS =
   'ICH E9 §5.6 (multiplicity); FDA guidance: Multiple Endpoints in Clinical Trials (2022); ' +
@@ -200,12 +200,7 @@ function rate(rule: FwerRate['rule'], reject: RejectFn, m: number, alpha: number
 interface Member { name: string; role: unknown }
 
 function confirmatoryMembers(design: StudyDesign): Member[] {
-  const endpoints: unknown = design.endpoints;
-  if (!Array.isArray(endpoints)) return [];
-  return endpoints
-    .filter(isRecord)
-    .filter((e) => (ESTIMAND_REQUIRED_ROLES as readonly unknown[]).includes(e.role))
-    .map((e) => ({ name: String(e.name), role: e.role }));
+  return confirmatoryEndpoints(design).map((e) => ({ name: String(e.name), role: e.role }));
 }
 
 function familySize(family: string[]): MultiplicityCheck | null {
