@@ -21,6 +21,7 @@ import {
   projectAllRegistrations,
   type RegistrationRecord,
   type RegistrationField,
+  CTGOV_TITLE_LIMITS,
 } from '../registration-projection';
 import { type StudyDesign } from '../study-design-types';
 
@@ -62,6 +63,33 @@ function clone(d: StudyDesign): StudyDesign {
 function fieldOf(rec: RegistrationRecord, name: string): RegistrationField | undefined {
   return rec.modules.flatMap(m => m.fields).find(f => f.name === name);
 }
+
+describe('projectRegistration — titles', () => {
+  it('never shows the official title as the lay brief title; renders a recorded public title and acronym', () => {
+    const bare = projectRegistration(regDesign(), 'ctgov');
+    expect(fieldOf(bare, 'Brief title')).toMatchObject({ status: 'missing', value: null, required: true });
+    expect(fieldOf(bare, 'Brief title')!.gap).toMatch(/official title is not reused/);
+    expect(fieldOf(bare, 'Official title')).toMatchObject({ status: 'rendered', value: 'A phase 3 study of Drug X in type 2 diabetes' });
+    expect(fieldOf(bare, 'Acronym')).toMatchObject({ status: 'missing', required: false });
+
+    const d = { ...regDesign(), publicTitle: 'A study of Drug X for adults with type 2 diabetes', acronym: 'DX-T2D' };
+    const rec = projectRegistration(d, 'ctgov');
+    expect(fieldOf(rec, 'Brief title')).toMatchObject({ status: 'rendered', value: d.publicTitle });
+    expect(fieldOf(rec, 'Acronym')).toMatchObject({ status: 'rendered', value: 'DX-T2D' });
+    expect(fieldOf(projectRegistration(d, 'ctis'), 'Public title')).toMatchObject({ status: 'rendered', value: d.publicTitle, required: false });
+    expect(fieldOf(projectRegistration(regDesign(), 'ctis'), 'Public title')).toMatchObject({ status: 'missing', required: false });
+  });
+
+  it('a title longer than ClinicalTrials.gov accepts is partial with its length, never truncated', () => {
+    const long = 'x'.repeat(CTGOV_TITLE_LIMITS.brief + 1);
+    const rec = projectRegistration({ ...regDesign(), publicTitle: long, acronym: 'A-VERY-LONG-ACRONYM' }, 'ctgov');
+    expect(fieldOf(rec, 'Brief title')).toMatchObject({ status: 'partial', value: long });
+    expect(fieldOf(rec, 'Brief title')!.gap).toMatch(/301 characters; ClinicalTrials\.gov accepts at most 300/);
+    expect(fieldOf(rec, 'Acronym')!.status).toBe('partial');
+    const exact = projectRegistration({ ...regDesign(), publicTitle: 'y'.repeat(CTGOV_TITLE_LIMITS.brief) }, 'ctgov');
+    expect(fieldOf(exact, 'Brief title')!.status).toBe('rendered');
+  });
+});
 
 describe('projectRegistration — ClinicalTrials.gov', () => {
   it('is deterministic', () => {

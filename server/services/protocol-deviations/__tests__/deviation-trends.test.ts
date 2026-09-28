@@ -8,20 +8,28 @@
  * AND both the ≥ 3 and ≥ 2 × mean rules; the severity rise fires at exactly
  * +0.2 and not below; ageing buckets split at 30/31 and 90/91 days; a share
  * with nothing to measure is null, never 0; a closure date or CAPA count that
- * was not supplied is null with a note, never 0; the output is deterministic.
+ * was not supplied, or is impossible, is null or excluded with a note, never
+ * 0; nothing is read in the host's zone; the output is deterministic and the
+ * input is not mutated. Row reading (legacy defaults, ids, vocabulary) is
+ * pinned in ./deviation-trends-rows.test.ts.
  */
 import { describe, it, expect } from 'vitest';
 import {
   trendDeviations,
   utcDayOf,
+  AGING_FROM_RECORD_DATE_NOTE,
   DEVIATION_TRENDS_BASIS,
   DEVIATION_TREND_DEFAULT_WINDOW_MONTHS,
+  MAX_LISTED_IDS,
+  REPORTABLE_SHARE_MEANING,
   SITE_BREAKDOWN_UNAVAILABLE_REASON,
   type DeviationRow,
   type DeviationTrends,
 } from '../deviation-trends';
 
 const TODAY = '2026-09-28';
+/** A person's assessment is on record, so a stored minor / false is an assessment, not a legacy default. */
+const ASSESSED = '2026-09-27T09:00:00Z';
 
 let nextId = 1;
 function dev(createdAt: string, over: Partial<DeviationRow> = {}): DeviationRow {
@@ -32,6 +40,7 @@ function dev(createdAt: string, over: Partial<DeviationRow> = {}): DeviationRow 
     status: 'open',
     isReportable: false,
     createdAt,
+    assessedAt: ASSESSED,
     closedAt: null,
     capaActionsOpen: 0,
     capaActionsTotal: 0,
@@ -46,6 +55,14 @@ function inMonth(month: string, count: number, over: Partial<DeviationRow> = {})
 
 const signalsOf = (t: DeviationTrends, code: string) => t.signals.filter((s) => s.code === code);
 const monthTotal = (t: DeviationTrends, month: string) => t.byMonth.find((b) => b.month === month)?.total;
+const notes = (t: DeviationTrends) => t.notAssessed.join(' ');
+
+/** Run `fn` with the host zone set to `zone`, restoring it after. */
+function inZone<T>(zone: string, fn: () => T): T {
+  const prev = process.env.TZ;
+  process.env.TZ = zone;
+  try { return fn(); } finally { if (prev === undefined) delete process.env.TZ; else process.env.TZ = prev; }
+}
 
 // ─── Window and month bucketing ──────────────────────────────────────────────
 
@@ -75,6 +92,12 @@ describe('window and month bucketing', () => {
     expect(t.byMonth.map((b) => b.total)).toEqual([2, 0, 2, 0, 0, 1]);
     expect(t.notAssessed.join(' ')).toMatch(new RegExp(`#${rows[6].id}.*recorded after today`));
     expect(t.notAssessed.join(' ')).not.toMatch(new RegExp(`#${rows[0].id}\\b`));
+    // Nothing is read in the host's zone: the same answer west and east of UTC.
+    for (const zone of ['America/Los_Angeles', 'Pacific/Kiritimati']) {
+      const z = inZone(zone, () => trendDeviations(rows, { today: TODAY }));
+      expect(z.byMonth.map((b) => b.total), zone).toEqual([2, 0, 2, 0, 0, 1]);
+      expect(z.window.from, zone).toBe('2026-04-01');
+    }
   });
 
   it('crosses a year boundary', () => {
@@ -97,7 +120,10 @@ describe('window and month bucketing', () => {
     for (const bad of ['2026-02-30', '2026-9-1', 'today', '2026-09-28T00:00:00Z', '', undefined]) {
       expect(() => trendDeviations([], { today: bad as string })).toThrow(TypeError);
     }
-    expect(() => trendDeviations([], { today: TODAY, windowMonths: Number.NaN })).toThrow(TypeError);
+    for (const bad of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, '6']) {
+      expect(() => trendDeviations([], { today: TODAY, windowMonths: bad as number })).toThrow(TypeError);
+    }
+    expect(() => trendDeviations(null as unknown as DeviationRow[], { today: TODAY })).toThrow(TypeError);
   });
 
   it('a row whose createdAt cannot be read is named, not bucketed and not dropped silently', () => {
@@ -150,7 +176,7 @@ describe('shares — null when there is nothing to measure, never 0', () => {
     expect(t.rates.reportableShare).toBeNull();
     expect(t.rates.denominators).toEqual({ windowTotal: 4, reportabilityDetermined: 0, severityAssessed: 0 });
     expect(t.notAssessed.join(' ')).toMatch(/not counted as minor/);
-    expect(t.notAssessed.join(' ')).toMatch(/not counted as not reportable/);
+    expect(t.notAssessed.join(' ')).toMatch(/not counted as no-prompt-report-indicated/);
   });
 
   it('shares are over determined / assessed deviations only; the unknown are in neither numerator nor denominator', () => {
@@ -166,11 +192,10 @@ describe('shares — null when there is nothing to measure, never 0', () => {
     expect(t.rates.denominators).toEqual({ windowTotal: 4, reportabilityDetermined: 3, severityAssessed: 3 });
   });
 
-  it('a minor recorded on or before 2026-09-22 is flagged as possibly the legacy default', () => {
-    const legacy = trendDeviations([dev('2026-09-10T00:00:00Z')], { today: TODAY });
-    expect(legacy.notAssessed.join(' ')).toMatch(/on or before 2026-09-22 carry severity 'minor'/);
-    const current = trendDeviations([dev('2026-09-25T00:00:00Z')], { today: TODAY });
-    expect(current.notAssessed.join(' ')).not.toMatch(/2026-09-22/);
+  it('reportableShare carries what it measures: a prompt IRB report indicated, not "the rest need not be reported"', () => {
+    const t = trendDeviations([dev('2026-08-01T00:00:00Z', { isReportable: true })], { today: TODAY });
+    expect(t.rates.reportableShareMeaning).toBe(REPORTABLE_SHARE_MEANING);
+    expect(REPORTABLE_SHARE_MEANING).toMatch(/prompt IRB report is indicated.*every deviation is documented and reported to the sponsor/);
   });
 });
 
@@ -250,7 +275,7 @@ describe('DEV-SEVERITY-RISE — latest full month vs the earlier window months',
   // Spread over categories so no category spike muddies the fixtures.
   const earlierFive = (majors: number): DeviationRow[] => [
     ...inMonth('2026-05', majors, { severity: 'major', category: 'data' }),
-    ...inMonth('2026-06', 5 - majors, { severity: 'minor', category: 'other' }),
+    ...inMonth('2026-06', 5 - majors, { severity: 'minor', category: 'enrollment' }),
   ];
 
   it('fires at a rise of exactly 0.2 (0.4 → 0.6) — no floating-point loss at the boundary', () => {
@@ -264,6 +289,7 @@ describe('DEV-SEVERITY-RISE — latest full month vs the earlier window months',
     expect(rises[0].evidence).toMatchObject({
       month: '2026-08', latestMajorOrCritical: 3, latestAssessed: 5, latestShare: 0.6,
       earlierMonths: '2026-04..2026-07', earlierMajorOrCritical: 2, earlierAssessed: 5, earlierShare: 0.4, rise: 0.2,
+      unassessedExcluded: 0, legacyMinorExcluded: 0,
     });
   });
 
@@ -290,6 +316,41 @@ describe('DEV-SEVERITY-RISE — latest full month vs the earlier window months',
     const t = trendDeviations([...earlierFive(0), ...latest], { today: TODAY });
     expect(signalsOf(t, 'DEV-SEVERITY-RISE')).toHaveLength(0);
     expect(t.notAssessed.join(' ')).toMatch(/2026-08 has 3 deviation\(s\) but only 2 with an assessed severity/);
+  });
+
+  it('earlier months holding only UNASSESSED deviations → not evaluated; never a rise from 0 of 0', () => {
+    const earlier = [...inMonth('2026-05', 4, { severity: null }), ...inMonth('2026-07', 2, { severity: null })];
+    const t = trendDeviations([...earlier, ...inMonth('2026-08', 3, { severity: 'critical' })], { today: TODAY });
+    expect(signalsOf(t, 'DEV-SEVERITY-RISE')).toHaveLength(0);
+    expect(notes(t)).toMatch(/DEV-SEVERITY-RISE not evaluated: the earlier window months 2026-04\.\.2026-07 hold no deviation with an assessed severity/);
+  });
+
+  it('unassessed deviations in the latest month are excluded, and the note says over how many it was measured', () => {
+    const latest = [...inMonth('2026-08', 3, { severity: 'critical' }), ...inMonth('2026-08', 1, { severity: null })];
+    const t = trendDeviations([...earlierFive(0), ...latest], { today: TODAY });
+    const rises = signalsOf(t, 'DEV-SEVERITY-RISE');
+    expect(rises).toHaveLength(1);
+    expect(rises[0].evidence).toMatchObject({ latestAssessed: 3, latestMajorOrCritical: 3, unassessedExcluded: 1 });
+    expect(notes(t)).toMatch(/DEV-SEVERITY-RISE for 2026-08 is over its 3 assessed deviation\(s\); 1 unassessed are excluded/);
+  });
+
+  it('legacy minors in the earlier months cannot manufacture a rise', () => {
+    // The earlier minors are pre-fix rows with no assessment recorded: the writer
+    // of that time stored 'minor' by default. Counted as minor they give 20% → 60%.
+    const rows = [
+      ...inMonth('2026-07', 2, { severity: 'major', category: 'data' }),
+      ...inMonth('2026-08', 8, { severity: 'minor', category: 'enrollment', assessedAt: null }),
+      ...inMonth('2026-10', 3, { severity: 'major', category: 'consent' }),
+      ...inMonth('2026-10', 2, { severity: 'minor', category: 'safety' }),
+    ];
+    const t = trendDeviations(rows, { today: '2026-11-05' });
+    expect(signalsOf(t, 'DEV-SEVERITY-RISE')).toHaveLength(0);
+    expect(notes(t)).toMatch(/DEV-SEVERITY-RISE is evaluated without the 8 legacy 'minor' in 2026-06\.\.2026-10/);
+    // The same minors with an assessment on record ARE assessed, and the rise is real.
+    const assessed = rows.map((r) => ({ ...r, assessedAt: ASSESSED }));
+    const rise = signalsOf(trendDeviations(assessed, { today: '2026-11-05' }), 'DEV-SEVERITY-RISE');
+    expect(rise).toHaveLength(1);
+    expect(rise[0].evidence).toMatchObject({ earlierShare: 0.2, latestShare: 0.6, legacyMinorExcluded: 0 });
   });
 
   it('a two-month window has nothing earlier to compare against', () => {
@@ -324,6 +385,42 @@ describe('ageing — open deviations at today, in whole UTC days', () => {
     expect(t.aging.buckets['>90']).toBe(1);
     expect(signalsOf(t, 'DEV-AGING')).toHaveLength(1);
   });
+
+  it('an open row dated after today or unreadable is in open but in no bucket, and raises nothing', () => {
+    const future = dev('2026-10-05T00:00:00Z');
+    const unreadable = dev('garbage');
+    const t = trendDeviations([future, unreadable], { today: TODAY });
+    expect(t.aging).toEqual({ open: 2, buckets: { '0-30': 0, '31-90': 0, '>90': 0 } });
+    expect(t.signals).toEqual([]);
+    expect(notes(t)).toMatch(new RegExp(`#${future.id} are recorded after today`));
+    expect(notes(t)).toMatch(new RegExp(`#${unreadable.id} have a createdAt that cannot be read`));
+    expect(t.notAssessed).not.toContain(AGING_FROM_RECORD_DATE_NOTE);
+  });
+
+  it('an unrecognised status is neither open nor closed: not aged, no DEV-AGING, named', () => {
+    const odd = dev('2025-01-01T00:00:00Z', { status: 'CLOSED' as DeviationRow['status'] });
+    const t = trendDeviations([odd], { today: TODAY });
+    expect(t.aging).toEqual({ open: 0, buckets: { '0-30': 0, '31-90': 0, '>90': 0 } });
+    expect(signalsOf(t, 'DEV-AGING')).toHaveLength(0);
+    expect(t.capa.openWithoutActions).toBeNull();
+    expect(t.capa.closureLagDaysMedian).toBeNull();
+    expect(notes(t)).toMatch(new RegExp(`#${odd.id} carry an unrecognised status value`));
+  });
+
+  it('says that age is counted from the record date, which can understate it', () => {
+    expect(trendDeviations([at30()], { today: TODAY }).notAssessed).toContain(AGING_FROM_RECORD_DATE_NOTE);
+    expect(AGING_FROM_RECORD_DATE_NOTE).toMatch(/record date \(createdAt\), not the discovery date.*may understate age/);
+  });
+
+  it('a very large overdue set does not throw, and the id list is capped with its remainder', () => {
+    const many = Array.from({ length: 150_000 }, () => dev('2025-01-01T00:00:00Z'));
+    const t = trendDeviations(many, { today: TODAY });
+    const aging = signalsOf(t, 'DEV-AGING')[0];
+    expect(aging.evidence.openOverThreshold).toBe(150_000);
+    expect(aging.evidence.oldestAgeDays).toBe(635);
+    expect(String(aging.evidence.deviationIds).split(', ')).toHaveLength(MAX_LISTED_IDS + 1);
+    expect(String(aging.evidence.deviationIds)).toMatch(new RegExp(`… \\(\\+${150_000 - MAX_LISTED_IDS} more\\)$`));
+  });
 });
 
 // ─── CAPA ────────────────────────────────────────────────────────────────────
@@ -354,6 +451,18 @@ describe('CAPA — closure lag and open actions; not known is null, never 0', ()
     expect(t.capa.note).toMatch(/not known for 2 of 3 .*over the 1 with one/);
   });
 
+  it('a createdAt or closedAt after today is not a lag: excluded and named, never a median', () => {
+    const futureCreated = dev('2027-01-01', { status: 'closed', closedAt: '2027-03-01' });
+    const futureClosed = dev('2026-09-01', { status: 'closed', closedAt: '2030-01-01' });
+    for (const row of [futureCreated, futureClosed]) {
+      const t = trendDeviations([row], { today: TODAY });
+      expect(t.capa.closureLagDaysMedian).toBeNull();
+      expect(t.capa.note).toMatch(new RegExp(`not known for 1 of 1 .*after today \\(2026-09-28\\): #${row.id}.*null, not 0`));
+    }
+    const mixed = trendDeviations([futureClosed, closed('2026-08-01', '2026-08-11')], { today: TODAY });
+    expect(mixed.capa.closureLagDaysMedian).toBe(10);
+  });
+
   it('no closed deviation → lag null with a stated reason', () => {
     const t = trendDeviations([dev('2026-08-01')], { today: TODAY });
     expect(t.capa.closureLagDaysMedian).toBeNull();
@@ -367,6 +476,14 @@ describe('CAPA — closure lag and open actions; not known is null, never 0', ()
     expect(t.capa.withOpenActions).toBeNull();
     expect(t.capa.openWithoutActions).toBeNull();
     expect(t.capa.note).toMatch(new RegExp(`not known for deviation\\(s\\) #${unknown.id}; withOpenActions is null \\(at least 1 have open actions\\), not 0`));
+  });
+
+  it('more open CAPA actions than actions in total is not known, not a deviation that both has and lacks actions', () => {
+    const bad = dev('2026-09-01', { capaActionsOpen: 3, capaActionsTotal: 0 });
+    const t = trendDeviations([bad, dev('2026-09-02', { capaActionsOpen: 1, capaActionsTotal: 1 })], { today: TODAY });
+    expect(t.capa.withOpenActions).toBeNull();
+    expect(t.capa.openWithoutActions).toBeNull();
+    expect(t.capa.note).toMatch(new RegExp(`#${bad.id} report more open CAPA actions than CAPA actions in total`));
   });
 
   it('CAPA counts supplied → counted', () => {
@@ -396,14 +513,15 @@ describe('determinism and the fixed parts of the output', () => {
   };
 
   it('same input → deep-equal output, whatever the row order; the input is not mutated', () => {
-    const rows = fixture();
-    const snapshot = JSON.stringify(rows);
-    const a = trendDeviations(rows, { today: TODAY });
+    const a = trendDeviations(fixture(), { today: TODAY });
     const b = trendDeviations(fixture(), { today: TODAY });
-    const c = trendDeviations([...fixture()].reverse(), { today: TODAY });
+    // Out of id order and frozen: an in-place sort or a write to a row would throw or show.
+    const reversed = Object.freeze(fixture().reverse().map((r) => Object.freeze(r)));
+    const snapshot = JSON.stringify(reversed);
+    const c = trendDeviations(reversed, { today: TODAY });
     expect(b).toEqual(a);
     expect(JSON.stringify(c)).toBe(JSON.stringify(a));
-    expect(JSON.stringify(rows)).toBe(snapshot);
+    expect(JSON.stringify(reversed)).toBe(snapshot);
     expect(a.signals.map((s) => s.code)).toEqual(['DEV-CATEGORY-SPIKE', 'DEV-SEVERITY-RISE', 'DEV-AGING']);
   });
 

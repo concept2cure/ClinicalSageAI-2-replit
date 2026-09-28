@@ -10,7 +10,7 @@
  * no model, no clock, no RNG.
  *
  *   • `projectTrialSchema`          — ICH M11 §1.2 trial schema (model + SVG)
- *   • `assessSpiritConformance`     — SPIRIT 2013, 33 items
+ *   • `assessSpiritConformance`     — SPIRIT 2013, 33 items (superseded by SPIRIT 2025; said on every output)
  *   • `deriveCtqFactors`            — ICH E6(R3) critical-to-quality factors
  *   • `projectUsdm`                 — CDISC USDM-shaped export, conformance unverified
  *   • `profileDecentralization`     — decentralised-element profile of the SoA
@@ -85,7 +85,8 @@ export const REVIEW_SPIRIT_CONFORMANCE: AnaTool = {
     'Report each item\'s status — met, partial, missing, not_assessable — with its evidence and gap VERBATIM, and the summary counts exactly as returned. ' +
     'NOT_ASSESSABLE means the item can only be judged from a protocol section the engine was not given: it is not missing and it is not met. ' +
     'Never total the counts yourself, never compute a conformance percentage, and never say the protocol "meets SPIRIT" — the engine returns per-item ' +
-    'statuses, not a verdict. If no design is bound, the design-evidenced items come back missing with that reason; say so.',
+    'statuses, not a verdict. SPIRIT 2013 HAS BEEN SUPERSEDED by the SPIRIT 2025 statement: report the output\'s supersededBy verbatim, and never present ' +
+    '2013 conformance as conformance to the current guideline. If no design is bound, the tool returns an error and no checklist; say so.',
   input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
 };
 
@@ -97,8 +98,9 @@ export const DERIVE_CTQ_FACTORS: AnaTool = {
     'biomarker sampling, IMP administration, dose-modification rules, blinding, stopping rules and DMC, interim analyses, DLT definitions — each with ' +
     'derivedFrom provenance naming the element. ' +
     DESIGN_REQUIRED + ' ' +
-    'Every likelihood and impact is a DEFAULT SEED (ratingSource: "default_seed") from a documented category table, not an assessment: report them as ' +
-    'starting values a sponsor rates, never as the study\'s assessed risk. Report notAssessed — the design areas the engine could not read — verbatim. ' +
+    'Every likelihood and impact is a DEFAULT SEED (ratingSource: "default_seed"), not an assessment — taken from the RBM catalogue row for the same ' +
+    'factor where one exists, otherwise from the documented category table; each row\'s ratingFrom names which. Report them as starting values a ' +
+    'sponsor rates, never as the study\'s assessed risk. Report notAssessed — the design areas the engine could not read — verbatim. ' +
     'The output drops into the RBM module\'s risk assessment as seeds; this tool does not write it there.',
   input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
 };
@@ -106,13 +108,17 @@ export const DERIVE_CTQ_FACTORS: AnaTool = {
 export const EXPORT_USDM_PROJECTION: AnaTool = {
   name: 'export_usdm_projection',
   description:
-    'READ-ONLY. Project the study design bound to a protocol document as a CDISC USDM-shaped object graph (projectUsdm) — Study, StudyVersion, StudyDesign, ' +
+    'READ-ONLY. Project the study design bound to a protocol document as an object graph shaped to CDISC USDM v4.0.0 (projectUsdm) — Study, StudyVersion, ' +
+    'InterventionalStudyDesign, ' +
     'arms, epochs, cells, activities, encounters, the main schedule timeline, eligibility criteria, objectives, endpoints, estimands, interventions — with ' +
     'deterministic identifiers. ' +
     DESIGN_REQUIRED + ' ' +
     'CONFORMANCE IS UNVERIFIED and the engine says so: the CDISC USDM JSON schema is not vendored, so the graph follows USDM entity naming and has NOT been ' +
     'validated against the standard. Report conformance.status and its reason verbatim; never call the export "valid", "conformant" or "USDM-compliant". ' +
-    'Report unmappedDesignFields and unfilledUsdmEntities in full — they are the honest boundary of what was exported. The engine invents no sponsor, ' +
+    'Report unmappedDesignFields and unfilledUsdmEntities in full — they are the honest boundary of what was exported; a required attribute the design ' +
+    'lacks is exported null and named there, so the graph is deliberately not schema-valid until the design is complete. When the arm-to-epoch ' +
+    'assignment is undetermined (crossover, a second treatment epoch, dose-ranging, adaptive or master-protocol designs) no StudyElement is exported and ' +
+    'the ledger says why — never describe the arms\' interventions as given together. The engine invents no sponsor, ' +
     'registry identifier, date or timing the design does not carry.',
   input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
 };
@@ -122,8 +128,9 @@ export const REVIEW_DCT_PROFILE: AnaTool = {
   description:
     'READ-ONLY. Profile the decentralised elements of the Schedule of Activities bound to a protocol document (profileDecentralization; FDA guidance on ' +
     'decentralized elements, 2024; EMA/HMA recommendation paper, 2022): where each activity happens, the share of activities with a stated off-site ' +
-    'location, the visits every performed activity of which is off-site capable, and findings on IMP administration at home, remote-only safety ' +
-    'assessments, off-site PK or biomarker sampling and remote consent. ' +
+    'location, the visits every performed activity of which is off-site capable, and findings on off-site IMP administration, remote-only safety ' +
+    'assessments, off-site PK or biomarker sampling and remote consent. A duplicated activity id or a cell naming an undefined visit is reported as ' +
+    'a structural defect and those rows come back unstated — never resolved to a guessed location. ' +
     DESIGN_REQUIRED + ' ' +
     'An activity with NO stated location is "unstated" — it is not at the site, it is not decentralised, and it is excluded from the off-site share. ' +
     'When nothing has a stated location the share is null and notAssessed says why; report null as "not assessed", never as 0% or as "conducted at site". ' +
@@ -150,6 +157,8 @@ export const REVIEW_DEVIATION_TRENDS: AnaTool = {
     'TransCelerate KRI methodology): counts by month, category and severity; the reportable and major-or-critical shares; open-deviation ageing; CAPA ' +
     'closure lag; and any signals the engine\'s documented rules raise (DEV-CATEGORY-SPIKE, DEV-SEVERITY-RISE, DEV-AGING) with their evidence. ' +
     'Report every number and signal verbatim. A null share means there were no deviations to measure — say "no deviations recorded", never "0%". ' +
+    'Values the replaced writer may have defaulted (byMonth[].legacyDefaults) are kept out of the shares and named; report them. The reportable share means a prompt IRB ' +
+    'report is indicated (rates.reportableShareMeaning); every deviation is still reported to the sponsor. ' +
     'A spike the engine declined to declare for lack of prior months is not the absence of a problem; report the reason in the evidence. ' +
     'siteBreakdown.available is false because protocol_deviations carries no site linkage — say a per-site view is not available, and never attribute a ' +
     'deviation to a site.',
@@ -167,11 +176,12 @@ export const REVIEW_PROTOCOL_REDLINE: AnaTool = {
   name: 'review_protocol_redline',
   description:
     'READ-ONLY. Compare two recorded versions of a protocol document section by section (redlineVersions): each section unchanged, modified, added, removed, ' +
-    'reordered or retitled, with a line-level diff for modified sections and the summary counts. This is the tracked-changes comparison an amendment package ' +
-    '(EU CTR substantial modification, 21 CFR 312.30, an IRB amendment) requires. ' +
+    'reordered or retitled, with a line-level diff for modified sections and the summary counts. EU CTR 536/2014 Annex II asks for the previous and new ' +
+    'wording in track changes for a substantial modification; a 21 CFR 312.30 amendment must describe the change, which a redline supports. ' +
     'Report the summary and the per-section changes verbatim; quote the diff ops rather than paraphrasing what changed. If either version label is not ' +
-    'recorded for this document, or is recorded twice, the tool returns an error and no comparison — say the redline did not run. A section that comes back with a note has no diff — it was above the ' +
-    'engine\'s line cap or edit budget; report the note. A null line total means a section could not be counted: say unknown, never 0. This compares the DOCUMENT\'s versions; the study DESIGN\'s changes come from ' +
+    'recorded for this document, or is recorded twice, the tool returns an error and no comparison — say the redline did not run. Report every section note: it explains an absent diff or absent ' +
+    'counts (the engine\'s line cap or edit budget), or that a position rests on row order. A non-empty summary.positionsFromRowOrder means a moved or ' +
+    'reordered verdict may reflect row order rather than an edit; say so. A null line total means a section could not be counted: say unknown, never 0. This compares the DOCUMENT\'s versions; the study DESIGN\'s changes come from ' +
     'the amendment substantiality engine.',
   input_schema: {
     type: 'object',

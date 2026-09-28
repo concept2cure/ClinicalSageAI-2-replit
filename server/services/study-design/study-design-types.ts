@@ -620,7 +620,17 @@ export interface StudyDesign {
   programId?: string;
   organizationId?: number;
 
+  /** The official (scientific) title — the title of the protocol. */
   title: string;
+  /**
+   * The lay-language title registries publish for the public: the
+   * ClinicalTrials.gov Brief Title, WHO TRDS item 9 Public Title, the EU CTIS
+   * public title. Recorded by a person; never derived from `title`, and a
+   * projection never shows `title` in its place as if it were one.
+   */
+  publicTitle?: string;
+  /** The acronym the study is publicly known by, if it has one (ClinicalTrials.gov Acronym; WHO TRDS item 10). */
+  acronym?: string;
   phase: StudyPhase;
   indication: string;
   /** Product type — drug/biologic/device/ivd drive domain-specific rules. */

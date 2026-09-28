@@ -2,8 +2,10 @@
  * Tests for the SPIRIT 2013 conformance projection. The engine judges every row of the
  * 33-item (51-row) checklist deterministically: design-evidenced rows from the design
  * object, document-evidenced rows from section presence in the authored protocol, and
- * never fabricates — a row the design cannot show is missing (with a gap) and a row only
- * a document can show is not_assessable, never missing, when no document is passed.
+ * never fabricates — a row the design cannot show is missing (with a gap), a row only
+ * a document can show is not_assessable, never missing, when no document is passed, and
+ * a row whose SPIRIT wording asks for something the design has no field for is partial
+ * (with that element named), never met. Section titles are matched on whole words.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -13,6 +15,7 @@ import {
   SPIRIT_2013_NUMBERED_ITEM_COUNT,
   SPIRIT_BASIS,
   SPIRIT_DOCUMENT_TOPICS,
+  SPIRIT_SUPERSEDED_BY,
   type SpiritConformance,
   type SpiritProtocolDocument,
 } from '../spirit-conformance';
@@ -67,7 +70,7 @@ function spiritDesign(): StudyDesign {
     },
     arms: [
       { name: 'Drug X', interventions: [{ name: 'Drug X', role: 'investigational', dose: '10 mg', route: 'oral', regimen: 'once daily', duration: '24 weeks' }], doseModificationRules: 'reduce to 5 mg for grade 2 GI events' },
-      { name: 'Placebo', interventions: [{ name: 'Placebo', role: 'placebo' }] },
+      { name: 'Placebo', interventions: [{ name: 'Placebo', role: 'placebo', route: 'oral', regimen: 'once daily' }] },
     ],
     randomization: { ratio: [1, 1], allocationMethod: 'stratified', stratificationFactors: ['baseline HbA1c'], blinding: 'double', emergencyUnblindingProcedure: 'IWRS code break by the investigator' },
     scheduleOfActivities: {
@@ -138,6 +141,11 @@ function doc(sections: SpiritProtocolDocument['sections']): SpiritProtocolDocume
   return { sections };
 }
 
+/** One complete section with content, keyed so that only its TITLE can match a topic. */
+function titled(title: string): SpiritProtocolDocument {
+  return doc([{ sectionKey: 'sec_x', title, content: 'Authored text.', status: 'complete' }]);
+}
+
 const DESIGN_ITEMS = SPIRIT_2013_ITEMS.filter(i => i.evidencedBy === 'design').map(i => i.item);
 const EITHER_ITEMS = SPIRIT_2013_ITEMS.filter(i => i.evidencedBy === 'either').map(i => i.item);
 const DOC_ONLY_ITEMS = SPIRIT_2013_ITEMS.filter(i => i.evidencedBy === 'protocol_document').map(i => i.item);
@@ -157,8 +165,7 @@ describe('SPIRIT_2013_ITEMS catalogue', () => {
   });
 
   it('gives every row a section, title, description and evidence source', () => {
-    const sections = new Set(SPIRIT_2013_ITEMS.map(i => i.section));
-    expect(sections.size).toBe(8);
+    expect(new Set(SPIRIT_2013_ITEMS.map(i => i.section)).size).toBe(8);
     for (const i of SPIRIT_2013_ITEMS) {
       expect(i.title.length).toBeGreaterThan(0);
       expect(i.description.length).toBeGreaterThan(20);
@@ -169,18 +176,29 @@ describe('SPIRIT_2013_ITEMS catalogue', () => {
   it('registers a document topic for exactly the rows a document can evidence', () => {
     expect(Object.keys(SPIRIT_DOCUMENT_TOPICS).sort()).toEqual([...DOC_ONLY_ITEMS, ...EITHER_ITEMS].sort());
   });
+
+  it('keeps design-only exactly the rows the design object can answer in full', () => {
+    expect(DESIGN_ITEMS).toEqual(['6b', '7', '8', '10', '11a', '13', '14', '16a', '20a', '20c']);
+    expect(EITHER_ITEMS).toEqual(['1', '3', '9', '11b', '12', '17a', '17b', '18a', '20b', '21a', '21b', '22']);
+  });
 });
 
-describe('assessSpiritConformance — determinism and shape', () => {
+describe('assessSpiritConformance — determinism, shape and basis', () => {
   it('is deterministic and does not mutate its input', () => {
     const d = spiritDesign();
     const before = clone(d);
     const a = assessSpiritConformance(d, doc([{ sectionKey: 'funding', title: 'Funding', content: 'NIH', status: 'complete' }]));
     const b = assessSpiritConformance(d, doc([{ sectionKey: 'funding', title: 'Funding', content: 'NIH', status: 'complete' }]));
-    expect(a).toEqual(b);
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
     expect(d).toEqual(before);
-    expect(a.basis).toBe(SPIRIT_BASIS);
+  });
+
+  it('says on every output that SPIRIT 2025 superseded the 2013 checklist it assesses', () => {
+    const c = assessSpiritConformance(spiritDesign());
+    expect(c.basis).toBe(SPIRIT_BASIS);
+    expect(c.basis).toMatch(/SPIRIT 2013.*Superseded by the SPIRIT 2025 statement \(34 items\); this engine assesses the 2013 checklist only/);
+    expect(c.supersededBy).toBe(SPIRIT_SUPERSEDED_BY);
+    expect(c.supersededBy).toMatch(/BMJ 2025;389:e081477.*34 minimum items.*not conformance to SPIRIT 2025/);
   });
 
   it('returns one row per catalogue item and summary counts that sum to the total', () => {
@@ -201,15 +219,27 @@ describe('assessSpiritConformance — determinism and shape', () => {
   });
 
   it('has a judge for every design-evidenced row and a topic for every document row (fails closed otherwise)', () => {
-    const c = assessSpiritConformance(emptyDesign(), doc([]));
-    for (const r of c.items) {
+    for (const r of assessSpiritConformance(emptyDesign(), doc([])).items) {
       expect(r.gap ?? '').not.toMatch(/No design judge is registered|No document topic is registered/);
     }
+  });
+
+  it('is total over null entries in every array it reads and over a non-object design', () => {
+    const d = spiritDesign() as unknown as Record<string, unknown[]> & StudyDesign;
+    for (const k of ['endpoints', 'objectives', 'arms', 'estimands'] as const) (d[k] as unknown[]).unshift(null);
+    (d.population.eligibility as unknown[]).unshift(null);
+    (d.arms[1].interventions as unknown[]).push(null);
+    (d.statisticalPlan.plannedAnalyses as unknown[]).push(null);
+    const sections = [null, 7, { sectionKey: 'funding', title: 'Funding', content: 'NIH', status: 'complete' }] as unknown as SpiritProtocolDocument['sections'];
+    const c = assessSpiritConformance(d, doc(sections));
+    expect(row(c, '4').status).toBe('met');
+    expect(row(c, '11a').status).toBe('met');
+    for (const bad of [null, undefined, 42]) expect(assessSpiritConformance(bad as unknown as StudyDesign).summary.total).toBe(51);
   });
 });
 
 describe('assessSpiritConformance — the design as evidence', () => {
-  it('meets every design-evidenced row on a complete design, with design evidence', () => {
+  it('meets every design-only row on a complete design, with design evidence', () => {
     const c = assessSpiritConformance(spiritDesign());
     for (const item of DESIGN_ITEMS) {
       const r = row(c, item);
@@ -218,12 +248,16 @@ describe('assessSpiritConformance — the design as evidence', () => {
     }
   });
 
-  it('never leaves an either-evidenced row missing on a complete design', () => {
+  it('pins every either row on a complete design: partial where SPIRIT asks for what the design has no field for', () => {
     const c = assessSpiritConformance(spiritDesign());
-    for (const item of EITHER_ITEMS) expect(['met', 'partial']).toContain(row(c, item).status);
-    expect(row(c, '17b').status).toBe('met');
-    expect(row(c, '3').status).toBe('partial');
-    expect(row(c, '3').gap).toMatch(/no protocol date/i);
+    const expected: Record<string, [string, RegExp?]> = {
+      '1': ['partial', /identifies the study design/], '3': ['partial', /no protocol date/], '9': ['partial', /study setting type/],
+      '11b': ['partial', /discontinuing the allocated intervention/], '12': ['partial', /analysis metric .* not carried/], '17a': ['partial', /which parties are blinded/],
+      '17b': ['met'], '18a': ['partial', /data-quality processes/], '20b': ['partial', /Subgroup and adjusted analyses/],
+      '21a': ['partial', /independent from the sponsor/], '21b': ['partial', /final decision to terminate/], '22': ['partial', /collecting, assessing, reporting and managing/],
+    };
+    expect(Object.fromEntries(EITHER_ITEMS.map(i => [i, row(c, i).status]))).toEqual(Object.fromEntries(Object.entries(expected).map(([i, [s]]) => [i, s])));
+    for (const [item, [, gap]] of Object.entries(expected)) if (gap) expect(row(c, item).gap, item).toMatch(gap);
   });
 
   it('reports every design- and either-evidenced row missing, with a gap, on an empty design', () => {
@@ -245,14 +279,17 @@ describe('assessSpiritConformance — the design as evidence', () => {
     expect(r.gap).toMatch(/Drug X/);
   });
 
-  it('falls back to the Schedule of Activities for an outcome time point, and flags it when neither exists (SPIRIT 12)', () => {
+  it('checks a recorded acronym appears in the title, and says when none is recorded (SPIRIT 1)', () => {
     const d = spiritDesign();
-    delete d.endpoints[0].timepoint;
-    expect(row(assessSpiritConformance(d), '12').status).toBe('met');
-    delete d.scheduleOfActivities;
-    const r = row(assessSpiritConformance(d), '12');
-    expect(r.status).toBe('partial');
-    expect(r.gap).toMatch(/"HbA1c change" lacks time point/);
+    expect(row(assessSpiritConformance(d), '1').gap).toMatch(/nor does the design record whether the trial has an acronym/);
+    d.acronym = 'DX-T2D';
+    const missingAcronym = row(assessSpiritConformance(d), '1');
+    expect(missingAcronym.gap).toMatch(/does not identify the recorded acronym "DX-T2D"/);
+    d.title = `${d.title} (DX-T2D)`;
+    const named = row(assessSpiritConformance(d), '1');
+    expect(named.gap).not.toMatch(/acronym "DX-T2D"|nor does the design record/);
+    expect(named.evidence).toContain('design: acronym "DX-T2D"');
+    expect(named.status).toBe('partial');
   });
 
   it('flags a schedule whose visits carry no study day (SPIRIT 13)', () => {
@@ -263,12 +300,18 @@ describe('assessSpiritConformance — the design as evidence', () => {
     expect(r.gap).toMatch(/1 scheduled visit\(s\) have no study day/);
   });
 
-  it('never fabricates the sample-size determination (SPIRIT 14)', () => {
+  it('never fabricates the sample-size determination, and uses only usable values (SPIRIT 14)', () => {
     const d = spiritDesign();
     delete d.statisticalPlan.powerAssumptions;
-    const partial = row(assessSpiritConformance(d), '14');
-    expect(partial.status).toBe('partial');
-    expect(partial.gap).toMatch(/assumptions/);
+    expect(row(assessSpiritConformance(d), '14')).toMatchObject({ status: 'partial', gap: expect.stringMatching(/assumptions/) });
+    d.statisticalPlan.powerAssumptions = { effectSize: 0.4 };
+    d.statisticalPlan.power = 90;
+    d.statisticalPlan.alpha = 5;
+    const r = row(assessSpiritConformance(d), '14');
+    expect(r.status).toBe('partial');
+    expect(r.gap).toMatch(/recorded power 90 is not a probability.*recorded alpha 5 is not a probability/);
+    d.statisticalPlan.plannedSampleSize = Number.NaN;
+    expect(row(assessSpiritConformance(d), '14')).toMatchObject({ status: 'missing', evidence: [] });
     delete d.statisticalPlan.plannedSampleSize;
     expect(row(assessSpiritConformance(d), '14').status).toBe('missing');
   });
@@ -279,10 +322,8 @@ describe('assessSpiritConformance — the design as evidence', () => {
     delete d.randomization!.emergencyUnblindingProcedure;
     delete d.arms[0].interventions[0].route;
     const c = assessSpiritConformance(d);
-    expect(row(c, '16a').status).toBe('partial');
-    expect(row(c, '16a').gap).toMatch(/stratification factors/);
-    expect(row(c, '11a').status).toBe('partial');
-    expect(row(c, '11a').gap).toMatch(/"Drug X" in arm "Drug X" lacks route/);
+    expect(row(c, '16a')).toMatchObject({ status: 'partial', gap: expect.stringMatching(/stratification factors/) });
+    expect(row(c, '11a')).toMatchObject({ status: 'partial', gap: expect.stringMatching(/"Drug X" in arm "Drug X" lacks route/) });
     expect(row(c, '17b').status).toBe('missing');
   });
 
@@ -291,10 +332,92 @@ describe('assessSpiritConformance — the design as evidence', () => {
     delete d.statisticalPlan.missingDataStrategy;
     d.safety!.dmcCharter = { present: false };
     const c = assessSpiritConformance(d);
-    expect(row(c, '20c').status).toBe('partial');
-    expect(row(c, '20c').gap).toMatch(/missing-data/);
-    expect(row(c, '21a').status).toBe('partial');
-    expect(row(c, '21a').gap).toMatch(/why a DMC is not needed/);
+    expect(row(c, '20c')).toMatchObject({ status: 'partial', gap: expect.stringMatching(/missing-data/) });
+    expect(row(c, '21a')).toMatchObject({ status: 'partial', evidence: ['design: safety.dmcCharter.present = false'], gap: expect.stringMatching(/why a DMC is not needed/) });
+  });
+});
+
+describe('assessSpiritConformance — SPIRIT 12 judges every outcome', () => {
+  it('judges exploratory and safety outcomes too, and names what each lacks', () => {
+    const d = spiritDesign();
+    d.endpoints.push({ name: 'QoL', role: 'exploratory', type: 'patient_reported', definition: '' }, { name: 'Hypoglycaemia', role: 'safety', type: 'count', definition: 'events < 3.0 mmol/L' });
+    const r = row(assessSpiritConformance(d), '12');
+    expect(r.status).toBe('partial');
+    expect(r.evidence.some(e => e.includes('exploratory endpoint "QoL"'))).toBe(true);
+    expect(r.evidence.some(e => e.includes('safety endpoint "Hypoglycaemia"'))).toBe(true);
+    expect(r.gap).toMatch(/"QoL" \(exploratory\) lacks measurement variable\/definition, method of aggregation.*time point/);
+    expect(r.gap).toMatch(/"Hypoglycaemia" \(safety\) lacks method of aggregation.*time point/);
+  });
+
+  it('requires a method of aggregation for every outcome, primary included', () => {
+    const complete = row(assessSpiritConformance(spiritDesign()), '12');
+    expect(complete.gap).not.toMatch(/"HbA1c change" \(primary\) lacks/);
+    expect(complete.gap).toMatch(/"body weight change" \(secondary\) lacks method of aggregation/);
+    const d = spiritDesign();
+    delete (d.estimands[0] as { summaryMeasure?: string }).summaryMeasure;
+    expect(row(assessSpiritConformance(d), '12').gap).toMatch(/"HbA1c change" \(primary\) lacks method of aggregation/);
+  });
+
+  it('labels a time frame taken from the Schedule of Activities as derived, and flags it when neither exists', () => {
+    const d = spiritDesign();
+    delete d.endpoints[0].timepoint;
+    const derived = row(assessSpiritConformance(d), '12');
+    expect(derived.evidence[0]).toMatch(/time frame derived from the Schedule of Activities: Baseline \(day 1\), Week 24 \(day 169\)/);
+    expect(derived.gap).not.toMatch(/"HbA1c change" \(primary\) lacks[^;]*time point/);
+    delete d.scheduleOfActivities;
+    expect(row(assessSpiritConformance(d), '12').gap).toMatch(/"HbA1c change" \(primary\) lacks time point/);
+  });
+});
+
+describe('assessSpiritConformance — design judges never overclaim', () => {
+  it('requires a placebo to say how and when it is given (SPIRIT 11a)', () => {
+    const d = spiritDesign();
+    d.arms[1].interventions[0] = { name: 'Placebo', role: 'placebo' };
+    expect(row(assessSpiritConformance(d), '11a')).toMatchObject({ status: 'partial', gap: expect.stringMatching(/"Placebo" in arm "Placebo" lacks route, regimen/) });
+  });
+
+  it('never reads an unrecorded DMC presence as a recorded "no DMC" (SPIRIT 21a)', () => {
+    const d = spiritDesign();
+    d.safety!.dmcCharter = { composition: 'three independent clinicians' } as never;
+    const r = row(assessSpiritConformance(d), '21a');
+    expect(r.status).toBe('missing');
+    expect(r.gap).toMatch(/without safety\.dmcCharter\.present, so it does not state whether the trial has a DMC/);
+    expect(JSON.stringify(r)).not.toMatch(/present = false|records that there is no DMC/);
+  });
+
+  it('flags analyses that name no endpoint the design carries (SPIRIT 20a)', () => {
+    const d = spiritDesign();
+    d.statisticalPlan.plannedAnalyses.push({ endpointName: 'ghost', method: 'ANCOVA' });
+    expect(row(assessSpiritConformance(d), '20a')).toMatchObject({ status: 'partial', gap: expect.stringMatching(/name no endpoint the design carries: "ghost"/) });
+    d.endpoints = [];
+    expect(row(assessSpiritConformance(d), '20a').gap).toMatch(/records no primary endpoint/);
+  });
+
+  it('reads the allocation ratio against the arms, and a null boundary as no boundary (SPIRIT 8, 21b)', () => {
+    const d = spiritDesign();
+    d.arms.push({ name: 'Drug X 5 mg', interventions: [{ name: 'Drug X', role: 'investigational', dose: '5 mg', route: 'oral', regimen: 'once daily' }] });
+    expect(row(assessSpiritConformance(d), '8')).toMatchObject({ status: 'partial', gap: expect.stringMatching(/2 part\(s\) but the design records 3 arm\(s\)/) });
+    delete d.safety!.stoppingRules;
+    d.statisticalPlan.interim = { informationFractions: [0.5], futilityBoundaries: [null] };
+    const r = row(assessSpiritConformance(d), '21b');
+    expect(r.gap).toMatch(/without a numeric stopping boundary or stopping rules/);
+    expect(r.evidence.join(' ')).not.toMatch(/boundaries recorded/);
+  });
+
+  it('names the instrument when the measurement method is blank, and does not call open-label "no party blinded" (SPIRIT 18a, 17a)', () => {
+    const d = spiritDesign();
+    d.endpoints[0].measurementMethod = '';
+    d.endpoints[0].validatedInstrument = 'Lab kit A';
+    d.randomization!.blinding = 'open';
+    const c = assessSpiritConformance(d);
+    expect(row(c, '18a').evidence).toContain('design: "HbA1c change" measured by Lab kit A');
+    expect(row(c, '17a')).toMatchObject({ status: 'partial', gap: expect.stringMatching(/open-label but not whether any party .* is nonetheless blinded/) });
+    expect(row(c, '17a').evidence.join(' ')).not.toMatch(/no party is blinded/);
+  });
+
+  it('lets authored sections complete the rows the design cannot answer in full (SPIRIT 1, 12, 21a, 21b, 22)', () => {
+    const c = assessSpiritConformance(spiritDesign(), doc(['Title Page', 'Study Endpoints', 'Data Monitoring Committee', 'Interim Analyses and Stopping Rules', 'Adverse Events'].map((title, n) => ({ sectionKey: `s${n}`, title, content: 'Authored.', status: 'complete' }))));
+    for (const item of ['1', '12', '21a', '21b', '22']) expect({ item, status: row(c, item).status }).toEqual({ item, status: 'met' });
   });
 });
 
@@ -312,19 +435,30 @@ describe('assessSpiritConformance — applicability', () => {
     }
   });
 
-  it('meets 17a and marks 17b not applicable for an open-label design', () => {
+  it('marks 17b not applicable for an open-label design but still assesses 17a', () => {
     const d = spiritDesign();
     d.randomization!.blinding = 'open';
     const c = assessSpiritConformance(d);
-    expect(row(c, '17a').status).toBe('met');
-    expect(row(c, '17b').status).toBe('not_assessable');
-    expect(row(c, '17b').notAssessableReason).toBe('not_applicable');
+    expect(row(c, '17a').status).toBe('partial');
+    expect(row(c, '17b')).toMatchObject({ status: 'not_assessable', notAssessableReason: 'not_applicable' });
   });
 
-  it('never treats an unknown design as inapplicable', () => {
-    const c = assessSpiritConformance(emptyDesign());
-    expect(row(c, '16a').status).toBe('missing');
-    expect(row(c, '17b').status).toBe('missing');
+  it('never treats an unknown, arm-less or multi-group design as inapplicable', () => {
+    expect(row(assessSpiritConformance(emptyDesign()), '16a').status).toBe('missing');
+    expect(row(assessSpiritConformance(emptyDesign()), '17b').status).toBe('missing');
+    const d = spiritDesign();
+    d.framework = { inferentialFrame: 'superiority', structuralDesign: 'parallel_group', controlType: 'none' };
+    delete d.randomization;
+    for (const arms of [[], [d.arms[0]]]) {
+      d.arms = arms;
+      const c = assessSpiritConformance(d);
+      for (const item of ['16a', '16b', '16c', '17a', '17b']) expect(row(c, item).notAssessableReason, `${item} with ${arms.length} arm(s)`).not.toBe('not_applicable');
+      expect(row(c, '16a').status).toBe('missing');
+    }
+    d.framework.structuralDesign = 'dose_ranging';
+    expect(row(assessSpiritConformance(d), '16a').notAssessableReason).toBe('not_applicable');
+    d.arms = [];
+    expect(row(assessSpiritConformance(d), '16a'), 'dose_ranging, no control, arms not entered yet').toMatchObject({ status: 'missing' });
   });
 });
 
@@ -348,17 +482,13 @@ describe('assessSpiritConformance — the protocol document as evidence', () => 
       { sectionKey: 'specimens', title: 'Biological specimens', content: '', status: 'not_started' },
     ]));
     expect(c.documentProvided).toBe(true);
-    expect(row(c, '4').status).toBe('met');
-    expect(row(c, '4').evidence).toEqual(['document: section "funding" ("Funding") status complete, 28 characters']);
-    expect(row(c, '26a').status).toBe('partial');
-    expect(row(c, '26a').gap).toMatch(/not in status "complete"|none is in status "complete"/);
-    expect(row(c, '33').status).toBe('missing');
-    expect(row(c, '33').gap).toMatch(/have no content/);
-    expect(row(c, '19').status).toBe('missing');
-    expect(row(c, '19').gap).toMatch(/no section keyed or titled to data management/);
+    expect(row(c, '4')).toMatchObject({ status: 'met', evidence: ['document: section "funding" ("Funding") status complete, 28 characters'] });
+    expect(row(c, '26a')).toMatchObject({ status: 'partial', gap: expect.stringMatching(/none is in status "complete"/) });
+    expect(row(c, '33')).toMatchObject({ status: 'missing', gap: expect.stringMatching(/have no content/) });
+    expect(row(c, '19')).toMatchObject({ status: 'missing', gap: expect.stringMatching(/no section keyed or titled to data management/) });
   });
 
-  it('matches by normalised key or by title, and scores an umbrella section at most partial', () => {
+  it('matches by normalised key or title, and holds an umbrella-keyed section at partial even when its title names the topic', () => {
     const c = assessSpiritConformance(spiritDesign(), doc([
       { sectionKey: 'Funding-Sources', title: 'Support', content: 'Grant 123', status: 'complete' },
       { sectionKey: 'sec-07', title: 'Data Management Plan', content: 'EDC with range checks', status: 'complete' },
@@ -366,23 +496,37 @@ describe('assessSpiritConformance — the protocol document as evidence', () => 
     ]));
     expect(row(c, '4').status).toBe('met');
     expect(row(c, '19').status).toBe('met');
-    expect(row(c, '26a').status).toBe('met');
-    expect(row(c, '25').status).toBe('partial');
-    expect(row(c, '25').gap).toMatch(/cannot confirm/);
-    expect(row(c, '24').status).toBe('partial');
+    for (const item of ['24', '25', '26a']) expect(row(c, item)).toMatchObject({ status: 'partial', gap: expect.stringMatching(/cannot confirm/) });
+  });
+
+  it.each([
+    ['Dose Conversion Table', '3'], ['Ancillary and Post-Trial Care', '26b'], ['Data Monitoring Committee', '5d'], ['Compliance with GCP', '11c'],
+    ['Statement of Compliance', '11c'], ['Patient Registration', '2a'], ['Data Management & Audit Trail', '23'], ['Blinded Independent Central Review', '17a'],
+    ['Emergency Unblinding', '17a'], ['Safety Follow-up', '18b'], ["Investigator's Brochure", '5a'], ['Intervention Implementation', '16c'],
+    ['Study Records Retention', '18b'], ['Role of the Sponsor', '5b'], ['Endpoint Adjudication Committee', '12'], ['Early Termination Visit', '21b'],
+  ])('does not let a section titled "%s" evidence SPIRIT %s', (title, item) => {
+    const r = row(assessSpiritConformance(spiritDesign(), titled(title)), item);
+    expect(r.status).not.toBe('met');
+    expect(r.evidence.join(' ')).not.toContain(`("${title}")`);
+  });
+
+  it.each([
+    ['Protocol Version History', '3'], ['Consent for Ancillary Studies', '26b'], ['Ancillary and Post-Trial Care', '30'], ['Steering Committee', '5d'],
+    ['Data Monitoring Committee', '21a'], ['Treatment Adherence', '11c'], ['Compliance with Study Drug', '11c'], ['Trial Registration', '2a'],
+    ['Auditing', '23'], ['Data Management & Audit Trail', '19'], ['Blinding and Masking', '17a'], ['Emergency Unblinding', '17b'],
+    ['Participant Retention', '18b'], ['Protocol Contributors', '5a'], ['Implementation of the Allocation Sequence', '16c'], ['Role of the Sponsor', '5c'],
+  ])('lets a section titled "%s" evidence SPIRIT %s', (title, item) => {
+    const r = row(assessSpiritConformance(spiritDesign(), titled(title)), item);
+    expect(r.status).toBe('met');
+    expect(r.evidence.join(' ')).toContain(`("${title}")`);
   });
 
   it('lets a document section complete an either-evidenced row the design only partly carries', () => {
     const d = spiritDesign();
     const withSection = assessSpiritConformance(d, doc([{ sectionKey: 'version', title: 'Protocol version', content: 'v2.0, 2026-09-01', status: 'complete' }]));
-    expect(row(withSection, '3').status).toBe('met');
-    expect(row(withSection, '3').evidence).toEqual([
-      'design: version 2',
-      'document: section "version" ("Protocol version") status complete, 16 characters',
-    ]);
+    expect(row(withSection, '3')).toMatchObject({ status: 'met', evidence: ['design: version 2', 'document: section "version" ("Protocol version") status complete, 16 characters'] });
     const without = assessSpiritConformance(d, doc([]));
-    expect(row(without, '3').status).toBe('partial');
-    expect(row(without, '3').gap).toMatch(/no protocol date.*Document: The document has no section/);
+    expect(row(without, '3')).toMatchObject({ status: 'partial', gap: expect.stringMatching(/no protocol date.*Document: The document has no section/) });
   });
 
   it('never lets a document override a design-evidenced row', () => {

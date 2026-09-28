@@ -1,0 +1,30 @@
+c2c_d3u after deploy-migrate (twice), PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
+ rls | force 
+-----+-------
+ t   | t
+(1 row)
+
+     policyname      |  cmd   |                                                                                                                                               qual                                                                                                                                                |                                                                                                                                            with_check                                                                                                                                             
+---------------------+--------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ users_any_insert    | INSERT |                                                                                                                                                                                                                                                                                                   | true
+ users_member_delete | DELETE | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text) = '0'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text) OR (EXISTS ( SELECT 1+| 
+                     |        |    FROM organization_users ou                                                                                                                                                                                                                                                                    +| 
+                     |        |   WHERE ((ou.user_id = users.id) AND ((ou.organization_id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::integer) OR (ou.organization_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9]+$'::text))::integer))))))                         | 
+ users_member_read   | SELECT | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text) = '0'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text) OR (EXISTS ( SELECT 1+| 
+                     |        |    FROM organization_users ou                                                                                                                                                                                                                                                                    +| 
+                     |        |   WHERE ((ou.user_id = users.id) AND ((ou.organization_id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::integer) OR (ou.organization_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9]+$'::text))::integer))))))                         | 
+ users_member_update | UPDATE | ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text) = '0'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text) OR (EXISTS ( SELECT 1+| ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text) = '0'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text) OR (EXISTS ( SELECT 1+
+                     |        |    FROM organization_users ou                                                                                                                                                                                                                                                                    +|    FROM organization_users ou                                                                                                                                                                                                                                                                    +
+                     |        |   WHERE ((ou.user_id = users.id) AND ((ou.organization_id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::integer) OR (ou.organization_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9]+$'::text))::integer))))))                         |   WHERE ((ou.user_id = users.id) AND ((ou.organization_id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::integer) OR (ou.organization_id = ("substring"(current_setting('app.current_org_id'::text, true), '^[0-9]+$'::text))::integer))))))
+(4 rows)
+
+      proname      | prosecdef |                                proconfig                                 
+-------------------+-----------+--------------------------------------------------------------------------
+ user_id_for_email | t         | {"search_path=pg_catalog, public",app.current_user_role=app_super_admin}
+(1 row)
+
+   rolname   | rolsuper | rolbypassrls 
+-------------+----------+--------------
+ app_service | f        | f
+(1 row)
+

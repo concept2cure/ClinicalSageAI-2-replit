@@ -1,6 +1,6 @@
 /**
  * USDM export, schedule half — the design's Schedule of Activities as USDM
- * StudyEpoch, Encounter, Activity, the main ScheduleTimeline with its
+ * v4.0.0 StudyEpoch, Encounter, Activity, the main ScheduleTimeline with its
  * ScheduledActivityInstances and Timings, and the arm × epoch StudyCell grid.
  *
  * Split from `usdm-projection.ts` (the entry point, `projectUsdm`) for the file
@@ -13,12 +13,21 @@
  *     placed; it is reported. A visit whose epoch does not resolve gets a null
  *     `epochId`, reported. Conditional/optional cell state is reported as
  *     unmapped: the activity is listed without its condition.
- *   - Timings are built only from recorded study days, relative to ONE anchor:
- *     the unique dated visit marked baseline, else the unique study-day-1 visit.
- *     The design model defines study days against day 1 with no day 0, so the
- *     offset from day a to day b is idx(b) − idx(a) with idx(d) = d − 1 for
- *     d > 0 and d for d < 0. A recorded day 0, an ambiguous or missing anchor,
- *     or an undated visit yields no timing — never a guessed one.
+ *   - Timings are built only from recorded study days of scheduled visits,
+ *     relative to ONE anchor: the unique dated visit marked baseline, else the
+ *     unique study-day-1 visit. The design model defines study days against
+ *     day 1 with no day 0, so the offset from day a to day b is
+ *     idx(b) − idx(a) with idx(d) = d − 1 for d > 0 and d for d < 0. A recorded
+ *     day 0, an ambiguous or missing anchor, an undated or an unscheduled visit
+ *     yields no timing — never a guessed one — and every encounter left without
+ *     one is named.
+ *   - An arm's StudyElement is placed ONLY where the design determines it: an
+ *     intervention model under which each arm receives all its interventions
+ *     together through the treatment period (parallel group, single arm,
+ *     factorial — ICH E9 design configuration) AND exactly one epoch of kind
+ *     `treatment`. A crossover, a second treatment epoch (an open-label
+ *     extension where an arm switches), or an unrecorded model leaves the
+ *     assignment undetermined: no element is built and the reason is named.
  *   - No Schedule of Activities → every schedule-derived entity is named in
  *     `unfilledUsdmEntities` and no timeline is emitted.
  *
@@ -29,10 +38,15 @@
 
 import type { ScheduleOfActivities, SoaEpoch, SoaVisit } from './study-design-types';
 import {
-  humanize,
+  codeOr,
+  gap,
   nextId,
+  NO_HOME,
+  present,
+  textOr,
   uniqueIndex,
   usdmCode,
+  type SweepSpec,
   type UsdmActivity,
   type UsdmContext,
   type UsdmEncounter,
@@ -47,15 +61,35 @@ import {
 
 export const USDM_NO_SOA = 'the design carries no Schedule of Activities';
 
-/** The schedule-derived USDM entities; each is named as unfilled when the design has no SoA. */
+/** The schedule-derived USDM entities (with the StudyDesign attribute that holds them); each is named as unfilled when the design has no SoA. */
 export const SOA_DERIVED_ENTITIES: readonly string[] = [
-  'StudyEpoch',
-  'Encounter',
-  'Activity',
-  'ScheduleTimeline / ScheduledActivityInstance',
-  'StudyCell',
+  'StudyDesign.epochs / StudyEpoch',
+  'StudyDesign.encounters / Encounter',
+  'StudyDesign.activities / Activity',
+  'StudyDesign.scheduleTimelines / ScheduleTimeline / ScheduledActivityInstance',
+  'StudyDesign.studyCells / StudyCell',
   'Timing',
 ];
+
+/** Intervention models under which every arm receives all its interventions together through the treatment period. */
+const CONCURRENT_MODELS: ReadonlySet<string> = new Set(['parallel_group', 'single_arm', 'factorial']);
+
+/**
+ * Why an arm's element cannot be placed in exactly one cell; null when it can
+ * (a concurrent intervention model and exactly one treatment epoch).
+ */
+export function elementPlacementBlocker(soa: ScheduleOfActivities | undefined, structural: unknown): string | null {
+  if (!soa) return 'the design carries no Schedule of Activities, so there is no epoch to place an element in';
+  if (!present(structural)) return 'the design records no structural design, so which intervention is given in which epoch is not determined';
+  if (!CONCURRENT_MODELS.has(structural)) {
+    return `the ${structural} design does not record which intervention is given in which epoch`;
+  }
+  const n = (soa.epochs ?? []).filter(e => e.kind === 'treatment').length;
+  if (n === 1) return null;
+  return n === 0
+    ? 'no epoch is of kind treatment'
+    : `${n} epochs are of kind treatment and the design does not record which intervention is given in which`;
+}
 
 export interface ScheduleResult {
   epochs: UsdmStudyEpoch[];
@@ -101,6 +135,28 @@ function chain<T extends { id: string; previousId: string | null; nextId: string
   return items;
 }
 
+function mapEntities(soa: ScheduleOfActivities, ctx: UsdmContext): Sorted {
+  const epochsIn = byOrder(soa.epochs);
+  const visitsIn = byOrder(soa.visits);
+  const activitiesIn = byOrder(soa.activities);
+  const epochs = chain(epochsIn.map(e => {
+    const id = nextId(ctx, 'StudyEpoch');
+    return { id, instanceType: 'StudyEpoch' as const, name: textOr(ctx, 'StudyEpoch.name', id, e.name), type: codeOr(ctx, 'StudyEpoch.type', id, e.kind), previousId: null, nextId: null };
+  }));
+  const encounters: UsdmEncounter[] = chain(visitsIn.map(v => {
+    const id = nextId(ctx, 'Encounter');
+    return { id, instanceType: 'Encounter' as const, name: textOr(ctx, 'Encounter.name', id, v.name), type: null, previousId: null, nextId: null, scheduledAtId: null };
+  }));
+  const activities: UsdmActivity[] = chain(activitiesIn.map(a => {
+    const id = nextId(ctx, 'Activity');
+    return {
+      id, instanceType: 'Activity' as const, name: textOr(ctx, 'Activity.name', id, a.name), previousId: null, nextId: null,
+      childIds: [], definedProcedures: [] as [], biomedicalConceptIds: [] as [],
+    };
+  }));
+  return { epochsIn, visitsIn, epochs, encounters, activities, activityIndex: uniqueIndex(activitiesIn, a => a.id) };
+}
+
 /** Map the Schedule of Activities onto USDM schedule entities. */
 export function mapSchedule(
   soa: ScheduleOfActivities | undefined,
@@ -112,57 +168,30 @@ export function mapSchedule(
     ctx.unfilled.push(...SOA_DERIVED_ENTITIES.map(e => `${e}: ${USDM_NO_SOA}`));
     return { epochs: [], encounters: [], activities: [], cells: [], timelines: [], timed: false };
   }
-  const epochsIn = byOrder(soa.epochs);
-  const visitsIn = byOrder(soa.visits);
-  const activitiesIn = byOrder(soa.activities);
-  const epochs = chain(epochsIn.map(e => ({
-    id: nextId(ctx, 'StudyEpoch'),
-    instanceType: 'StudyEpoch' as const,
-    name: e.name,
-    type: usdmCode(e.kind, humanize(e.kind)),
-    previousId: null,
-    nextId: null,
-  })));
-  const encounters: UsdmEncounter[] = chain(visitsIn.map(v => ({
-    id: nextId(ctx, 'Encounter'),
-    instanceType: 'Encounter' as const,
-    name: v.name,
-    type: null,
-    previousId: null,
-    nextId: null,
-    scheduledAtId: null,
-  })));
-  const activities: UsdmActivity[] = chain(activitiesIn.map(a => ({
-    id: nextId(ctx, 'Activity'),
-    instanceType: 'Activity' as const,
-    name: a.name,
-    previousId: null,
-    nextId: null,
-    childIds: [],
-    definedProcedures: [] as [],
-    biomedicalConceptIds: [] as [],
-  })));
-  const sorted: Sorted = { epochsIn, visitsIn, epochs, encounters, activities, activityIndex: uniqueIndex(activitiesIn, a => a.id) };
+  const sorted = mapEntities(soa, ctx);
   const instances = mapInstances(soa, sorted, ctx);
-  const timings = mapTimings(visitsIn, instances, encounters, ctx);
+  const timings = mapTimings(sorted.visitsIn, instances, sorted.encounters, ctx);
   const cells = mapCells(arms, sorted, elementByArm, ctx);
   reportEmpty(sorted, instances.length, ctx);
   const timelines: UsdmScheduleTimeline[] = [];
   if (instances.length > 0) {
     const id = nextId(ctx, 'ScheduleTimeline');
-    timelines.push({ id, instanceType: 'ScheduleTimeline', name: id, mainTimeline: true, entryId: instances[0].id, instances, timings });
+    timelines.push({ id, instanceType: 'ScheduleTimeline', name: id, mainTimeline: true, entryCondition: null, entryId: instances[0].id, instances, timings });
+    ctx.unfilled.push('ScheduleTimeline.entryCondition: the design records no entry condition for the main timeline');
   }
-  return { epochs, encounters, activities, cells, timelines, timed: timings.length > 0 };
+  return { epochs: sorted.epochs, encounters: sorted.encounters, activities: sorted.activities, cells, timelines, timed: timings.length > 0 };
 }
 
 function reportEmpty(s: Sorted, instanceCount: number, ctx: UsdmContext): void {
-  if (s.epochs.length === 0) ctx.unfilled.push('StudyEpoch: the Schedule of Activities defines no epochs');
-  if (s.encounters.length === 0) ctx.unfilled.push('Encounter: the Schedule of Activities defines no visits');
-  if (s.activities.length === 0) ctx.unfilled.push('Activity: the Schedule of Activities defines no activities');
-  if (instanceCount === 0) ctx.unfilled.push('ScheduleTimeline / ScheduledActivityInstance: the Schedule of Activities defines no visits to schedule');
-  if (s.encounters.length > 0) ctx.unfilled.push('Encounter.type / contactModes / environmentalSettings: not recorded');
+  if (s.epochs.length === 0) ctx.unfilled.push('StudyDesign.epochs / StudyEpoch: the Schedule of Activities defines no epochs');
+  if (s.encounters.length === 0) ctx.unfilled.push('StudyDesign.encounters / Encounter: the Schedule of Activities defines no visits');
+  if (s.activities.length === 0) ctx.unfilled.push('StudyDesign.activities / Activity: the Schedule of Activities defines no activities');
+  if (instanceCount === 0) {
+    ctx.unfilled.push('StudyDesign.scheduleTimelines / ScheduleTimeline / ScheduledActivityInstance: the Schedule of Activities defines no visits to schedule');
+  }
+  if (s.encounters.length > 0) ctx.unfilled.push('Encounter.type / Encounter.environmentalSettings / Encounter.contactModes: not recorded');
   if (s.activities.length > 0) {
-    ctx.unfilled.push('Activity.definedProcedures / biomedicalConceptIds: the design records no procedures or biomedical concepts');
+    ctx.unfilled.push('Activity.definedProcedures / Activity.biomedicalConceptIds: the design records no procedures or biomedical concepts');
   }
 }
 
@@ -174,8 +203,8 @@ function mapInstances(soa: ScheduleOfActivities, s: Sorted, ctx: UsdmContext): U
   const cells = soa.cells ?? [];
   const dangling: string[] = [];
   for (const c of cells) {
-    const a = s.activityIndex.get(c.activityId);
-    const v = visitIndex.get(c.visitId);
+    const a = present(c.activityId) ? s.activityIndex.get(c.activityId) : undefined;
+    const v = present(c.visitId) ? visitIndex.get(c.visitId) : undefined;
     if (a === undefined || v === undefined) dangling.push(`${c.activityId} × ${c.visitId}`);
     else perVisit[v].add(a);
   }
@@ -193,7 +222,7 @@ function mapInstances(soa: ScheduleOfActivities, s: Sorted, ctx: UsdmContext): U
   const badEpoch: string[] = [];
   const instances = s.visitsIn.map((v, i) => {
     const id = nextId(ctx, 'ScheduledActivityInstance');
-    const ep = epochIndex.get(v.epochId);
+    const ep = present(v.epochId) ? epochIndex.get(v.epochId) : undefined;
     if (ep === undefined) badEpoch.push(`${id} (visit "${v.name}", epoch "${v.epochId}")`);
     return {
       id,
@@ -230,6 +259,8 @@ function pickAnchor(dated: Placed[], ctx: UsdmContext): Placed | null {
   return null;
 }
 
+const WINDOW_GAP = 'Timing.windowLower / Timing.windowUpper / Timing.windowLabel';
+
 function buildTiming(x: Placed, anchor: Placed, instances: UsdmScheduledActivityInstance[], ctx: UsdmContext): UsdmTiming {
   const id = nextId(ctx, 'Timing');
   const day = x.v.studyDay as number;
@@ -237,11 +268,13 @@ function buildTiming(x: Placed, anchor: Placed, instances: UsdmScheduledActivity
   const kind: UsdmTimingType = x === anchor ? 'fixed_reference' : offset < 0 ? 'before' : 'after';
   const w = x.v.windowDays;
   const window = typeof w === 'number' && Number.isInteger(w) && w >= 0 ? w : null;
+  if (window === null) gap(ctx, WINDOW_GAP, id, 'the visit records no window that is a non-negative integer number of days');
   return {
     id,
     instanceType: 'Timing',
     name: id,
-    type: usdmCode(kind, TIMING_DECODE[kind]),
+    type: usdmCode(ctx, kind, TIMING_DECODE[kind]),
+    relativeToFrom: null,
     value: `P${Math.abs(offset)}D`,
     valueLabel: `Day ${day}`,
     relativeFromScheduledInstanceId: instances[x.i].id,
@@ -253,6 +286,23 @@ function buildTiming(x: Placed, anchor: Placed, instances: UsdmScheduledActivity
 }
 
 function mapTimings(
+  visits: SoaVisit[],
+  instances: UsdmScheduledActivityInstance[],
+  encounters: UsdmEncounter[],
+  ctx: UsdmContext,
+): UsdmTiming[] {
+  const timings = computeTimings(visits, instances, encounters, ctx);
+  encounters.forEach((e, i) => {
+    if (e.scheduledAtId !== null) return;
+    const why = visits[i].unscheduled === true
+      ? 'an unscheduled visit; USDM Encounter has no unscheduled flag and no Timing is invented'
+      : 'no Timing could be built for the visit (see Timing)';
+    gap(ctx, 'Encounter.scheduledAtId', e.id, why);
+  });
+  return timings;
+}
+
+function computeTimings(
   visits: SoaVisit[],
   instances: UsdmScheduledActivityInstance[],
   encounters: UsdmEncounter[],
@@ -304,7 +354,11 @@ function reportTimingLeftovers(visits: SoaVisit[], byVisit: Map<number, UsdmTimi
 
 // ─── Cells ──────────────────────────────────────────────────────────────────
 
-/** The full arm × epoch grid (the schedule is common to all arms); an arm's element sits in its treatment-epoch cells. */
+/**
+ * The full arm × epoch grid (the schedule is common to all arms). An arm's
+ * element exists only when its placement is determined (see
+ * {@link elementPlacementBlocker}) and then sits in the one treatment-epoch cell.
+ */
 function mapCells(arms: UsdmStudyArm[], s: Sorted, elementByArm: Array<string | null>, ctx: UsdmContext): UsdmStudyCell[] {
   const cells = arms.flatMap((arm, ai) =>
     s.epochs.map((ep, ei) => {
@@ -319,14 +373,28 @@ function mapCells(arms: UsdmStudyArm[], s: Sorted, elementByArm: Array<string | 
     }),
   );
   if (cells.length === 0) {
-    ctx.unfilled.push(`StudyCell: no arm × epoch grid (${arms.length} arms, ${s.epochs.length} epochs)`);
+    ctx.unfilled.push(`StudyDesign.studyCells / StudyCell: no arm × epoch grid (${arms.length} arms, ${s.epochs.length} epochs)`);
     return cells;
   }
-  if (!s.epochsIn.some(e => e.kind === 'treatment')) {
-    ctx.unfilled.push('StudyCell.elementIds: no epoch is of kind treatment, so no cell carries an element');
-  }
-  if (s.epochsIn.some(e => e.kind !== 'treatment')) {
-    ctx.unfilled.push('StudyElement (non-treatment epochs): the design records no screening, run-in or follow-up element; those cells carry none');
+  if (elementByArm.some(e => e !== null) && s.epochsIn.some(e => e.kind !== 'treatment')) {
+    ctx.unfilled.push(
+      'StudyCell.elementIds: the design records no screening, run-in or follow-up element, so cells of non-treatment epochs carry none (USDM requires at least one)',
+    );
   }
   return cells;
+}
+
+// ─── Unmapped-field sweep specs for the schedule ────────────────────────────
+
+/** Which Schedule of Activities fields this mapping carries; the rest are swept as unmapped. */
+export function scheduleSweepSpecs(soa: ScheduleOfActivities | undefined, timed: boolean): SweepSpec[] {
+  if (!soa) return [];
+  const timingKeys = timed ? ['studyDay', 'windowDays', 'isBaseline'] : [];
+  return [
+    { path: 'scheduleOfActivities', each: false, items: [soa], mapped: ['epochs', 'visits', 'activities', 'cells'], reason: 'SoA footnotes have no home in this mapping (no USDM Condition or note is emitted)', overrides: { id: 'internal schedule id; the timeline takes a positional id' } },
+    { path: 'scheduleOfActivities.epochs', each: true, items: soa.epochs ?? [], mapped: ['id', 'name', 'kind', 'order'], reason: NO_HOME },
+    { path: 'scheduleOfActivities.visits', each: true, items: soa.visits ?? [], mapped: ['id', 'name', 'epochId', 'order', ...timingKeys], reason: 'no Timing could be built (see unfilledUsdmEntities)', overrides: { unscheduled: 'USDM v4 Encounter has no unscheduled flag; not mapped (a visit flagged unscheduled gets no Timing)' } },
+    { path: 'scheduleOfActivities.activities', each: true, items: soa.activities ?? [], mapped: ['id', 'name', 'order'], reason: 'USDM v4 Activity has no attribute for it in this mapping', overrides: { location: 'USDM carries setting and contact mode on the Encounter, not the Activity; not mapped' } },
+    { path: 'scheduleOfActivities.cells', each: true, items: soa.cells ?? [], mapped: ['activityId', 'visitId', 'state'], reason: 'cell footnotes have no home in this mapping' },
+  ];
 }

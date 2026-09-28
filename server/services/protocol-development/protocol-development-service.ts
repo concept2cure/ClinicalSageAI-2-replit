@@ -374,7 +374,7 @@ export async function getCompleteness(orgId: number, docId: number): Promise<Com
 export async function snapshotVersionTx(client: Queryable, orgId: number, userId: number, docId: number, changeSummary?: string | null): Promise<{ version: string }> {
   const doc = await loadDoc(client, orgId, docId);
   assertEditable(doc.status);
-  const sections = await client.query(`SELECT section_key, title, content, status, order_index FROM protocol_sections WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index`, [docId, orgId]);
+  const sections = await client.query(`SELECT section_key, title, content, status, order_index FROM protocol_sections WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index, section_key, id`, [docId, orgId]);
   const version = nextVersion(doc.version, false);
   const snapshot = JSON.stringify({ version, sections: sections.rows });
   await client.query(
@@ -395,7 +395,7 @@ export async function finalizeProtocolTx(client: Queryable, orgId: number, userI
     throw new ProtocolDevError('INVALID_STATE', `Cannot finalize — ${completeness.findings.filter((f) => f.severity === 'critical').map((f) => f.message).join(' ')}`);
   }
   const version = nextVersion(doc.version, true);
-  const sections = await client.query(`SELECT section_key, title, content, status, order_index FROM protocol_sections WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index`, [docId, orgId]);
+  const sections = await client.query(`SELECT section_key, title, content, status, order_index FROM protocol_sections WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index, section_key, id`, [docId, orgId]);
   await client.query(
     `INSERT INTO protocol_versions (organization_id, protocol_document_id, version, change_summary, snapshot, created_by) VALUES ($1,$2,$3,$4,$5,$6)`,
     [orgId, docId, version, 'Finalized', JSON.stringify({ version, sections: sections.rows }), userId],
@@ -419,7 +419,7 @@ export async function getProtocolDocument(orgId: number, docId: number): Promise
   const d = await pool.query(`SELECT * FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [docId, orgId]);
   if (d.rows.length === 0) return null;
   const [sections, objectives, eligibility, visits, team, versions] = await Promise.all([
-    pool.query(`SELECT id, section_key, title, content, required, status, order_index FROM protocol_sections WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index`, [docId, orgId]),
+    pool.query(`SELECT id, section_key, title, content, required, status, order_index FROM protocol_sections WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index, section_key, id`, [docId, orgId]),
     pool.query(`SELECT id, objective_type, objective, endpoint, timepoint FROM protocol_objectives WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index, id`, [docId, orgId]),
     pool.query(`SELECT id, kind, criterion FROM protocol_eligibility_criteria WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY kind, order_index, id`, [docId, orgId]),
     pool.query(`SELECT id, visit_name, timepoint, procedures FROM protocol_schedule_visits WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index, id`, [docId, orgId]),

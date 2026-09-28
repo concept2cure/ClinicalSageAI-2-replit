@@ -208,8 +208,8 @@ export const COMMAND_AUTHORIZATION: Readonly<Record<string, CommandAuthorization
   // That decision depends on params.dataSubjectId, so it is completed in the
   // handler (against rbacService, NOT against a self-asserted ctx.userRole).
   export_personal_data: { effect: 'read', object: 'personal_data', handlerAuthorized: true },
-  // erase_personal_data destroys personal data and overwrites regulated
-  // artifact content. Security audit 2026-09-24 (DP-08, DP-09; plan P0-12): it
+  // erase_personal_data destroys personal data (regulated artifact content is
+  // retained under GDPR Art. 17(3)(b) since 2026-09-28). Security audit 2026-09-24 (DP-08, DP-09; plan P0-12): it
   // was an ordinary handler-authorized write, so a model response containing
   // the command ran it with no person in the loop. It is now a Part 11 e-sign
   // tier command (part11-governance.ts), which puts it in PROPOSE_ONLY_COMMANDS:

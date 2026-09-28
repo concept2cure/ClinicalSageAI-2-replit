@@ -277,3 +277,27 @@ Refuted, 6 findings: the verifiers showed them already fixed in the reviewed fil
 5. **Calendar push is not atomic**, because external events cannot join a
    database transaction. Events that were created are now recorded, including
    when a later one fails (502, with the created ids).
+
+#### Decisions, 2026-09-28 (delegated to this session by the founder)
+
+1. **Result review and sample linking stay 501.** CMC is outside RULE 2's launch
+   catalog; the refusals are honest, and an approval will need the Part 11
+   signing path, not a status write. No work until CMC is in scope.
+2. **The canonical stability store is `stability_studies`**
+   (`/api/cmc/stability-studies`), the one the v2 UI uses. `stab_*` is migrated
+   onto it and deleted in the CMC workstream — with the replacement named by path
+   and proven reachable, per the working agreement — not piecemeal before then.
+3. **The canonical OOT method is the platform's regression-based engine.**
+   Western Electric rules assume independent points about a stable mean;
+   stability data trend by design, which is why stability OOT is judged against
+   a regression control chart. `GET /studies/:id/oot/check` retires with the
+   `stab_*` store in (2).
+4. **Attachments: the upload is refused, not kept on disk.** `POST
+   /samples/:sampleId/chain/upload` wrote to container disk and recorded a
+   `/uploads/…` URL no route serves, so the chain-of-custody ledger pointed at
+   bytes nobody could ever retrieve; no client called it. It now answers 501,
+   reads no file and writes nothing, and says to file the document in Vault and
+   cite it in the chain entry's notes (`POST /samples/:sampleId/chain`). Wiring
+   samples to Vault needs a sample→regulatory-program link, which is CMC schema
+   work. `stability-router-honesty.test.ts` "the chain-of-custody upload keeps no
+   file it cannot keep": 500 before, 501 after.

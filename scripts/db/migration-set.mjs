@@ -2635,6 +2635,28 @@ export const C2C_MIGRATION_FILES = [
   // Evidence docs/evidence/D3/2026-09-26-memberships/.
   'migrations/20260926_organization_users_own_writes.sql',
 
+  // ── public.users: a tenant scope reaches its own members only (D3) ────────
+  // The table holds every account's password hash, MFA secret, backup codes,
+  // reset token and OTP hash, and had no RLS: tenant A's scope read and
+  // rewrote tenant B's. SELECT/UPDATE/DELETE now need a membership
+  // (organization_users, the entry above, whose reads stay open) in the scope's
+  // organization, or a tenant-less scope — pre-auth (sign-in, reset, OTP) and
+  // system (SCIM, platform administration). INSERT from any scope. Plus
+  // user_id_for_email(), id only, for tenant-users' existing-account check.
+  // Not org-keyed, so the sweep below neither covers nor heals it.
+  // Evidence docs/evidence/D3/2026-09-28-users-rls/.
+  'migrations/20260928_users_membership_rls.sql',
+
+  // ── public.platform_role_grants: platform-scope writes only (D3) ─────────
+  // One active row makes a user a platform operator (requirePlatformAdmin,
+  // requireBusinessAdmin, master-admin). No RLS, runtime role may write it: a
+  // plain member's tenant scope wrote itself super_admin and the Access
+  // Management console admitted it. SELECT stays open (the check runs in the
+  // caller's tenant scope); INSERT/UPDATE/DELETE need app_super_admin — the
+  // console runs in the system scope. No tenant column: the sweep skips it.
+  // Evidence docs/evidence/D3/2026-09-28-platform-role-grants/.
+  'migrations/20260928_platform_role_grants_platform_writes.sql',
+
   // ── submissions.program_id: a submission carries its project (LX-22) ─────
   // The project → submission link was guessed from product names; two projects
   // for one product shared a filing spine. Additive column, a composite
