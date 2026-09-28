@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-28T00:44:29.573Z",
+  "generatedAt": "2026-09-28T01:47:21.426Z",
   "git": {
-    "sha": "7ddc06389795b1e79f2b3d566b7c04b5987df467",
+    "sha": "97465528bc4faa0a8ae0eaf2d9250fd924940c98",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2056,12 +2056,12 @@
         "bytes": 138123
       },
       {
-        "file": "server/services/biosimilar/biosimilar-knowledge.ts",
-        "bytes": 136488
+        "file": "server/routes/ana-ri/stream.ts",
+        "bytes": 137240
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 136331
+        "file": "server/services/biosimilar/biosimilar-knowledge.ts",
+        "bytes": 136488
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -2090,6 +2090,10 @@
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
         "bytes": 126270
+      },
+      {
+        "file": "server/src/routes/stability.router.ts",
+        "bytes": 125488
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2150,10 +2154,6 @@
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
         "bytes": 105559
-      },
-      {
-        "file": "server/src/routes/stability.router.ts",
-        "bytes": 102387
       }
     ],
     "largeFilesByLines": [
@@ -2230,6 +2230,10 @@
         "lines": 3228
       },
       {
+        "file": "server/src/routes/stability.router.ts",
+        "lines": 3204
+      },
+      {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
         "lines": 3119
       },
@@ -2250,10 +2254,6 @@
         "lines": 3007
       },
       {
-        "file": "server/src/routes/stability.router.ts",
-        "lines": 2934
-      },
-      {
         "file": "server/services/ana/AnaToolDefinitions.ts",
         "lines": 2861
       },
@@ -2263,7 +2263,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 2766
+        "lines": 2780
       },
       {
         "file": "server/routes/auth.ts",
@@ -2539,7 +2539,7 @@
       },
       {
         "file": "server/services/advancedRAGPipeline.ts",
-        "lines": 1651
+        "lines": 1665
       },
       {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
@@ -2556,6 +2556,10 @@
       {
         "file": "server/services/toxicology/toxicology-knowledge.ts",
         "lines": 1602
+      },
+      {
+        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
+        "lines": 1582
       },
       {
         "file": "server/routes/mdx-qms.ts",
@@ -2580,10 +2584,6 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
         "lines": 1550
-      },
-      {
-        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
-        "lines": 1541
       },
       {
         "file": "server/services/grdhe/grdheService.ts",

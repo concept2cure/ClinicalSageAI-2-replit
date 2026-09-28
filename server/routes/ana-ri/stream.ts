@@ -174,6 +174,7 @@ import {
   describeServerToolStep,
   serverToolEvidence,
   summariseServerToolResult,
+  serverToolStepIdField,
 } from '../../services/ana/server-tool-steps.js';
 import type { GatewayServerToolUse } from '../../services/ai-gateway/types.js';
 import { resolveOrgId, resolveUserId } from '../../types/auth-request.js';
@@ -418,12 +419,15 @@ export function mountStreamRoute(router: Router): void {
       for (const step of steps) {
         const label = describeServerToolStep(step);
         const status = step.isError ? 'error' : 'success';
-        res.write(`data: ${JSON.stringify({ type: 'tool_use', round, name: step.name, label, input: step.input ?? {} })}\n\n`);
+        // The step's own id as the pairing key (see serverToolStepIdField).
+        const stepId = serverToolStepIdField(step);
+        res.write(`data: ${JSON.stringify({ type: 'tool_use', round, name: step.name, ...stepId, label, input: step.input ?? {} })}\n\n`);
         res.write(
           `data: ${JSON.stringify({
             type: 'tool_result',
             round,
             name: step.name,
+            ...stepId,
             label,
             status,
             ...(step.isError ? { message: 'This search did not return results.' } : {}),
@@ -1874,6 +1878,10 @@ export function mountStreamRoute(router: Router): void {
                 type: 'tool_use',
                 round,
                 name: toolUse.name,
+                // The call's own id, so the client pairs each result with the
+                // call that produced it. Several calls of one tool run in the
+                // same step, so a name cannot tell them apart (see tool_result).
+                toolUseId: toolUse.id,
                 label: describeToolPlan([toolUse])[0].label,
                 input: toolUse.input,
               })}\n\n`
@@ -2081,6 +2089,12 @@ export function mountStreamRoute(router: Router): void {
                 type: 'tool_result',
                 round,
                 name: toolUse.name,
+                /* Pairing key. Results are emitted in CALL order (mapWithConcurrency
+                   fills results[i] by input index), and the client used to match
+                   the most recent running call of the same name — so two
+                   same-named calls in one step were swapped every time, each
+                   query shown against the other's results. The id ends that. */
+                toolUseId: toolUse.id,
                 label: stepLabel,
                 status: toolStatus,
                 latencyMs,

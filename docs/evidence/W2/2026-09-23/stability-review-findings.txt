@@ -1,0 +1,21 @@
+# Findings of the first 2026-09-23 adversarial review (its verifiers were cut off; each is reproduced here instead), on the reference DB. Tenant 2's study is created directly; the requests run as tenant 1.
+== BEFORE
+tenant 1 files a CAPA under tenant 2's study        -> 200; CAPAs under it: 1; audit rows under it: 1
+tenant 1 adds a condition to tenant 2's study        -> 200; conditions under it: 1
+same, for a study id that exists in no tenant         -> 500  (a 200/500 split here was an existence oracle)
+apply a protocol with one timepoint                    -> 500; INT conditions: 1; 6M timepoints: 2
+delete a condition holding a result (99.4 %)          -> 200; audit record keeps the destroyed result value: false
+mark a sample collected "by" someone else              -> 200; stored collector: someone.else@example.test
+AI label recommendation                               -> 200; label_storage changed: true -> {"recommendation":"Automated storage recommendation is temporarily una
+build the sampling schedule                           -> 200; audit rows for it: 0
+
+== AFTER
+tenant 1 files a CAPA under tenant 2's study        -> 404; CAPAs under it: 0; audit rows under it: 0
+tenant 1 adds a condition to tenant 2's study        -> 404; conditions under it: 0
+same, for a study id that exists in no tenant         -> 404  (a 200/500 split here was an existence oracle)
+apply a protocol with one timepoint                    -> 200; INT conditions: 1; 6M timepoints: 3
+delete a condition holding a result (99.4 %)          -> 200; audit record keeps the destroyed result value: true
+mark a sample collected "by" someone else              -> 400; stored collector: (none)
+AI label recommendation                               -> 410; label_storage changed: false
+build the sampling schedule                           -> 200; audit rows for it: 1
+

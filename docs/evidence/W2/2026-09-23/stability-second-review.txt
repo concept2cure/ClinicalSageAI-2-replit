@@ -1,0 +1,32 @@
+# Second adversarial review (2026-09-23), on the reference DB. BEFORE = the current upstream router (origin/concept2cure-v2 at merge time), AFTER = this change. Tenant 1, signed-in actor.
+# The Assay series (0/3/6/9/12 m: 100.1, 99.6, 99.0, 98.7, 98.1 %, NLT 95 %) is written directly; everything else goes through the API. /mnt/data/uploads exists for the attachment step.
+== BEFORE (upstream)
+create study with tests Assay, Water Content (no limits sent) -> stored: Assay [95..105 %]; Water Content [-..5 %]
+study list, nothing sampled yet                               -> progress 45, last 0M, next 3M
+shelf life for Assay (100.1→98.1 over 12 m, NLT 95)            -> 200 t90 61.5 months "high — supports a 24-month shelf life claim"
+shelf life for a test with no results and no limits            -> 200 t90 61.5 months
+study OOT surveillance                                        -> 200 returned 5 raw result rows
+tenant OOT surveillance                                       -> 200 spec "96.8 - 101.4", investigator "System", closure 2026-10-28
+excursion log: one in-limit, one out-of-limit, one ",,,," line -> 200; stored: ["26.5/MINOR","28.2/MAJOR"]
+result with blank value and pass "Pass"                       -> 200; stored value NULL, pass null
+tenant OOT surveillance after that blank result               -> 200
+chain attachment (stored name sanitised)                      -> 200 /uploads/uploads/coc_c856a2ae-57eb-4b81-b666-751e2db8ef24_1790557582352_escape.txt
+create a protocol template                                    -> 200; platform audit rows for it: 0
+apply it: a 6M timepoint for ACC, which this study lacks       -> 500 Failed to apply protocol; LT timepoints labelled 6M now: 1
+AI explanation, production, no model configured               -> 200 {"explanation":"Unable to generate AI explanation at this time. Please
+
+== AFTER
+create study with tests Assay, Water Content (no limits sent) -> stored: Assay [-..- ]; Water Content [-..- ]
+study list, nothing sampled yet                               -> progress 0, last null, next 0M
+shelf life for Assay (100.1→98.1 over 12 m, NLT 95)            -> 200 proposable 24 m (crossing 28.35 m, limit 24 m)
+shelf life for a test with no results and no limits            -> 422 No results recorded for Water Content at LT
+study OOT surveillance                                        -> 200 method: PhRMA CMC Statistics and Stability Exper…; series: 1
+tenant OOT surveillance                                       -> 200 no invented limit, owner or date
+excursion log: one in-limit, one out-of-limit, one ",,,," line -> 200; stored: ["26.5/unclassified"]
+result with blank value and pass "Pass"                       -> 200; stored value NULL, pass true
+tenant OOT surveillance after that blank result               -> 200
+chain attachment (stored name sanitised)                      -> 200 /uploads/uploads/coc_d3054c92-7679-42a6-958a-b192915ea212_1790557587155_escape.txt
+create a protocol template                                    -> 200; platform audit rows for it: 1
+apply it: a 6M timepoint for ACC, which this study lacks       -> 422 The protocol has a 6M timepoint for condition ACC, which this study does not have; LT timepoints labelled 6M now: 1
+AI explanation, production, no model configured               -> 502 The model could not be reached; nothing was generated.
+
