@@ -93,15 +93,24 @@ function elementsOf(plan: ExternalControlPlan): ExternalControlProjection['eleme
   ];
 }
 
+/** The borrowing method's own parameter, checked; one gap or none. */
+function methodGaps(plan: ExternalControlPlan): string[] {
+  if (plan.method === 'power_prior') {
+    return typeof plan.a0 === 'number' && plan.a0 >= 0 && plan.a0 <= 1 ? [] : ['the power-prior discount a0 must be recorded, between 0 and 1'];
+  }
+  if (plan.method === 'commensurate') {
+    return typeof plan.tau2 === 'number' && plan.tau2 >= 0 ? [] : ['the commensurability variance τ² must be recorded and non-negative'];
+  }
+  return [`borrowing method "${String(plan.method)}" has no engine here`];
+}
+
 /** Every defect in the recorded plan that stops the engine from running. */
 function inputGaps(design: StudyDesign, plan: ExternalControlPlan): string[] {
   const gaps: string[] = [];
   if (!(design.endpoints ?? []).some((e) => e.name === plan.endpointName)) gaps.push(`endpoint "${plan.endpointName}" is not an endpoint of this design`);
   const h = plan.historical;
   if (!(h && positive(h.n) && positive(h.se) && Number.isFinite(h.mean))) gaps.push('the external control summary (n, mean, standard error) is incomplete');
-  if (plan.method === 'power_prior' && !(typeof plan.a0 === 'number' && plan.a0 >= 0 && plan.a0 <= 1)) gaps.push('the power-prior discount a0 must be recorded, between 0 and 1');
-  if (plan.method === 'commensurate' && !(typeof plan.tau2 === 'number' && plan.tau2 >= 0)) gaps.push('the commensurability variance τ² must be recorded and non-negative');
-  if (plan.method !== 'power_prior' && plan.method !== 'commensurate') gaps.push(`borrowing method "${String(plan.method)}" has no engine here`);
+  gaps.push(...methodGaps(plan));
   if (!(Number.isInteger(plan.plannedConcurrentControlN) && plan.plannedConcurrentControlN >= 0)) gaps.push('the planned concurrent control size must be a whole number (0 for a fully external control)');
   return gaps;
 }
