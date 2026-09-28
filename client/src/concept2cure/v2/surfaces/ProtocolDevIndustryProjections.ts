@@ -347,6 +347,28 @@ export function interimOcView(payload: Obj): ProjectionView {
   };
 }
 
+/* ── MMRM sizing (Tier 2) ────────────────────────────────────────────────── */
+
+export function mmrmView(payload: Obj): ProjectionView {
+  const m = (payload.mmrm ?? {}) as Obj;
+  const z = (m.sizing ?? null) as Obj | null;
+  const pvr = (m.plannedVsRequired ?? null) as Obj | null;
+  return {
+    standard: str(m.basis),
+    percent: null,
+    status: str(m.status),
+    gaps: strings(m.gaps),
+    note: [
+      m.endpointName ? `Endpoint: ${str(m.endpointName)}.` : '',
+      z ? `Required: ${num(z.nPerArm)} per arm, ${num(z.nTotal)} in total (two-sided alpha ${num(z.alphaTwoSided)}); achieved power ${num(z.achievedPower)}.` : '',
+      z ? `Variance factor ${num(z.varianceFactor)}; efficiency over a completers-only analysis ${num(z.efficiencyVsCompleters)}.` : '',
+      pvr ? (pvr.covered ? `The planned ${num(pvr.planned)} covers the requirement.` : `The planned ${num(pvr.planned)} is ${num(pvr.shortfall)} below the requirement.`) : '',
+      typeof m.soaVisitCount === 'number' ? `The Schedule of Activities schedules the endpoint at ${m.soaVisitCount} post-baseline visit(s).` : '',
+    ].filter(Boolean).join(' '),
+    entries: [],
+  };
+}
+
 /** In the order the design document names them. */
 export const INDUSTRY_PROJECTIONS: ProjectionSpec[] = [
   {
@@ -393,5 +415,10 @@ export const INDUSTRY_PROJECTIONS: ProjectionSpec[] = [
     id: 'interim-oc', label: 'Interim analysis characteristics', path: 'interim-oc',
     of: 'Type I error, power and expected sample size of the study design object’s interim plan, computed exactly. A recorded boundary that departs from the spending function is shown as a discrepancy.',
     normalize: interimOcView,
+  },
+  {
+    id: 'mmrm', label: 'MMRM sample size', path: 'mmrm',
+    of: 'The sample size the MMRM-analysed endpoint needs under the sponsor’s recorded assumptions, checked against the planned N. No assumption is supplied when one is missing.',
+    normalize: mmrmView,
   },
 ];

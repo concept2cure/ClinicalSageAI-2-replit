@@ -17,7 +17,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  ctqView, dctView, doseEscalationView, enrollmentView, INDUSTRY_PROJECTIONS, interimOcView, spiritView, trialSchemaView, usdmView, whoIctrpView,
+  ctqView, dctView, doseEscalationView, enrollmentView, INDUSTRY_PROJECTIONS, interimOcView, mmrmView, spiritView, trialSchemaView, usdmView, whoIctrpView,
 } from '../surfaces/ProtocolDevIndustryProjections';
 
 describe('trial schema', () => {
@@ -238,6 +238,17 @@ describe('interim-analysis characteristics', () => {
     expect(v.note).toContain('Characteristics of the recorded boundaries: type I error 0.031; power not computed (alpha or power not recorded).');
     expect(v.entries[0]).toMatchObject({ status: 'discrepancy', text: 'Recorded 2.5 · solved 2.963 · difference -0.463' });
     expect(v.entries[1].text).toContain('P(stop for efficacy) 0.006 under H0');
+  });
+});
+
+describe('MMRM sizing', () => {
+  it('states a shortfall against the planned N, and prints nothing sized when nothing was', () => {
+    const v = mmrmView({ mmrm: { status: 'partial', endpointName: 'HbA1c change', gaps: ['g'], sizing: { nPerArm: 180, nTotal: 360, alphaTwoSided: 0.05, achievedPower: 0.901, varianceFactor: 1.08, efficiencyVsCompleters: 1.09 }, plannedVsRequired: { planned: 300, required: 360, covered: false, shortfall: 60 }, soaVisitCount: 3 } });
+    expect(v.note).toContain('Required: 180 per arm, 360 in total (two-sided alpha 0.05)');
+    expect(v.note).toContain('The planned 300 is 60 below the requirement.');
+    const none = mmrmView({ mmrm: { status: 'partial', endpointName: 'HbA1c change', gaps: ['the target power is not recorded'], sizing: null, plannedVsRequired: null, soaVisitCount: null } });
+    expect(none.note).toBe('Endpoint: HbA1c change.');
+    expect(none.gaps).toEqual(['the target power is not recorded']);
   });
 });
 

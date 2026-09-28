@@ -245,6 +245,33 @@ export interface InterimDesign {
   dmcRole?: string;
 }
 
+/**
+ * The sponsor's planning assumptions for an MMRM-analysed continuous
+ * endpoint — the inputs an MMRM sample size needs and the design cannot infer.
+ * See mmrm-sizing.ts; every value is a sponsor assumption, none is defaulted.
+ */
+export interface MmrmAssumptions {
+  /** The design endpoint the MMRM analyses (by name). */
+  endpointName: string;
+  /** Post-baseline visits in the model. */
+  visits: number;
+  covariance: 'compound_symmetry' | 'ar1';
+  /** Within-subject correlation, 0 ≤ ρ < 1 (CS: common; AR(1): lag-1). */
+  rho: number;
+  /** SD of the response at each visit, same units as `delta`. */
+  sigma: number;
+  /** Between-arm difference in mean at the target visit. */
+  delta: number;
+  /** Fraction still observed at each visit, monotone non-increasing, length = visits. */
+  retention: number[];
+  /** 1-based visit the contrast is tested at; the final visit when absent. */
+  targetVisit?: number;
+  /** n₂/n₁; 1 when absent. */
+  allocationRatio?: number;
+  /** Where the assumptions came from (prior study, literature). */
+  source?: string;
+}
+
 export interface StatisticalPlan {
   /** One/two-sided alpha for the primary test. */
   alpha?: number;
@@ -260,6 +287,8 @@ export interface StatisticalPlan {
   /** Missing-data strategy; must align with the estimand (no LOCF-as-primary). */
   missingDataStrategy?: string;
   interim?: InterimDesign;
+  /** Planning assumptions for an MMRM-analysed endpoint. See mmrm-sizing.ts. */
+  mmrmAssumptions?: MmrmAssumptions;
   /** Whether sensitivity analyses across assumption ranges were specified. */
   sensitivityAnalysesSpecified?: boolean;
   /** Power assumptions, with provenance, feeding the §6 red-flags. */

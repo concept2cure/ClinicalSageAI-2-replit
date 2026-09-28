@@ -5,7 +5,7 @@
  * `docs/design/PROTOCOL_INDUSTRY_GAPS.md` Tier 1 added eight pure engines
  * (trial schema, SPIRIT 2013, CtQ factors, USDM export, DCT profile, WHO TRDS,
  * deviation trends, section redline), and Tier 2 put the BOIN dose-escalation
- * Poisson–Gamma enrollment and exact group-sequential engines on the spine. Each is deterministic and reads no
+ * Poisson–Gamma enrollment, exact group-sequential and MMRM engines on the spine. Each is deterministic and reads no
  * database. This module is the boundary: it reads the rows an engine needs,
  * for ONE protocol of ONE organisation, and hands them over unchanged. AnA's
  * tools (`AnaToolExecutor.ts`) and the HTTP routes both call these functions,
@@ -49,6 +49,7 @@ import { projectWhoIctrp } from '../study-design/who-ictrp-registration';
 import { projectDoseEscalation } from '../study-design/dose-escalation';
 import { projectEnrollment } from '../study-design/enrollment-projection';
 import { projectInterimOperatingCharacteristics } from '../study-design/interim-oc';
+import { projectMmrmSizing } from '../study-design/mmrm-sizing';
 import { trendDeviations, type DeviationRow, type DeviationTrends } from '../protocol-deviations/deviation-trends';
 
 /** The caller's tenant-scoped connection: `requestPgClient(req)` or an AnA read transaction. */
@@ -129,6 +130,7 @@ export const DESIGN_ENGINES = {
   'dose-escalation': (d: StudyDesign) => ({ doseEscalation: projectDoseEscalation(d) }),
   enrollment: (d: StudyDesign) => ({ enrollment: projectEnrollment(d) }),
   'interim-oc': (d: StudyDesign) => ({ interimOc: projectInterimOperatingCharacteristics(d) }),
+  mmrm: (d: StudyDesign) => ({ mmrm: projectMmrmSizing(d) }),
 } as const;
 
 export type DesignEngineName = keyof typeof DESIGN_ENGINES;

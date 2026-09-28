@@ -474,7 +474,7 @@ import {
 // other protocol-development handlers.
 import { PROTOCOL_DESIGN_TOOLS } from './protocol-design-tool-defs.js';
 // Tier 1 of docs/design/PROTOCOL_INDUSTRY_GAPS.md: trial schema, SPIRIT, CtQ, USDM,
-// DCT profile, WHO ICTRP, deviation trends, redline; Tier 2 dose escalation, enrollment, interim OC. All read-only.
+// DCT profile, WHO ICTRP, deviation trends, redline; Tier 2 dose escalation, enrollment, interim OC, MMRM. All read-only.
 import { PROTOCOL_INDUSTRY_TOOLS } from './protocol-industry-tool-defs.js';
 import { ANA_ADVISORY_TOOL_SPECS, SUBMISSION_PLAN_TOOL_SPEC, PMA_ADVISORY_TOOL_SPEC, EU_TECHDOC_TOOL_SPEC, IVD_KNOWLEDGE_TOOL_SPEC } from '../ana-advisory';
 import { GLOBAL_RI_TOOL_SPECS } from '../global-ri/ana-tools';
@@ -2716,7 +2716,7 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   // Protocol ⇄ study-design loop: bind, review the derivation, apply accepted
   // paths, read the rule pack and the design gates. See protocol-design-tool-defs.ts.
   ...PROTOCOL_DESIGN_TOOLS,
-  // The eleven industry-gap engines, reached read-only. See protocol-industry-tool-defs.ts.
+  // The twelve industry-gap engines, reached read-only. See protocol-industry-tool-defs.ts.
   ...PROTOCOL_INDUSTRY_TOOLS,
 ];
 
