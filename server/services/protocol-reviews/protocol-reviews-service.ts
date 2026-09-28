@@ -14,6 +14,7 @@
 import { pool } from '../../db';
 // The roles that can sign here (routes/protocol-reviews.ts runs requireEditorAccess).
 import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
+import { requireProtocolForWriteTx } from '../protocol-development/protocol-development-service';
 import {
   summarizeReviewConsensus,
   evaluateReviewReadiness,
@@ -57,6 +58,7 @@ export async function assignReviewerTx(
   if (!input.reviewerName || !input.reviewerName.trim()) throw new ProtocolReviewError('BAD_INPUT', 'reviewer_name is required.');
   const role = input.role ?? 'general';
   if (!ROLES.includes(role)) throw new ProtocolReviewError('BAD_INPUT', `Invalid review role "${role}".`);
+  await requireProtocolForWriteTx(client, orgId, protocolDocumentId, { signedContent: false });
   if (input.reviewerUserId != null) {
     // Only the assigned user can sign the disposition, and nothing reassigns a
     // review, so an assignment to someone who can never sign is a review that
@@ -192,6 +194,7 @@ export async function addCommentTx(
   if (!Number.isInteger(protocolDocumentId) || protocolDocumentId <= 0) throw new ProtocolReviewError('BAD_INPUT', 'A valid protocol_document_id is required.');
   if (!input.comment || !input.comment.trim()) throw new ProtocolReviewError('BAD_INPUT', 'comment is required.');
   if (input.severity != null && !SEVERITIES.includes(input.severity)) throw new ProtocolReviewError('BAD_INPUT', `Invalid severity "${input.severity}".`);
+  await requireProtocolForWriteTx(client, orgId, protocolDocumentId, { signedContent: false });
   if (input.assignmentId != null) {
     const a = await client.query(
       `SELECT id FROM protocol_review_assignments WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,

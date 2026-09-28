@@ -11,9 +11,10 @@
  * with a source beside the page: read it, cite it, refer to it.
  *
  * ── What each action actually does ───────────────────────────────────────────
- *   Open           A PDF is fetched through the vault's audited download route
- *                  (every download is recorded) and shown in a viewer pane
- *                  here. Anything else is downloaded.
+ *   Open           The file is fetched through the vault's audited download
+ *                  route (every download is recorded). Bytes that are a PDF
+ *                  are shown in a viewer pane here; anything else is
+ *                  downloaded, and the toast says why.
  *   Cite           Only a vault upload that IS a data-room source — same
  *                  bytes: the source's checksum equals the upload's content
  *                  hash — can be cited, because a citation node claims a
@@ -43,6 +44,7 @@ import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import { downloadBlob, safeFileName } from '../download';
+import { pdfViewerBlob } from './pdfBytes';
 import type { FireToast } from '../toast';
 import { isVaultDoc, vaultStatus, vaultFileIconKey, type VaultDoc, type VaultFolder } from '../fixtures/vault-data';
 import type { ProjectSource } from './DocumentWorkbench';
@@ -113,11 +115,14 @@ function storedFileIdFor(doc: VaultDoc): string | null {
   return doc.docId ?? (doc.src === 'upload' ? doc.id : null);
 }
 
-/** Whether the fetched bytes belong in the rail's viewer; everything else is
- *  handed to the browser, because the viewer here shows PDFs only. */
-function servesAsPdf(mime: string, title: string): boolean {
+/** Whether the row says it is a PDF. What is framed is decided by the bytes
+ *  (pdfBytes.ts, SEC-A-3); this only words why a claimed PDF was downloaded. */
+function claimsToBePdf(mime: string, title: string): boolean {
   return /pdf/i.test(mime) || /\.pdf$/i.test(title);
 }
+
+/** The toast's reason when a file says it is a PDF and its bytes are not. */
+const CLAIMED_PDF_NOT_SHOWN = 'it is named or typed as a PDF, but its contents are not a PDF, so it is not shown here';
 
 /** The vault's own filename for a download, falling back to a safe name made
  *  from the title when the route sends no Content-Disposition. */
@@ -185,10 +190,10 @@ async function searchProjectVault(programId: string, q: string): Promise<VaultSe
 }
 
 /** What one audited download turned out to be: a PDF for the viewer, bytes
- *  for the browser, or the vault's refusal. */
+ *  for the browser with the reason they were not shown, or the vault's refusal. */
 type OpenedFile =
   | { kind: 'pdf'; blob: Blob; hash: string | null }
-  | { kind: 'download'; blob: Blob; name: string }
+  | { kind: 'download'; blob: Blob; name: string; why: string }
   | { kind: 'refused'; message: string };
 
 /** One download through the vault's audited route, classified — so the caller
@@ -200,12 +205,12 @@ async function downloadVaultFile(programId: string, docId: string, doc: VaultDoc
     const j = await res.json().catch(() => null);
     return { kind: 'refused', message: serverMessage(j) ?? `the vault refused it (HTTP ${res.status})` };
   }
-  const blob = await res.blob();
-  const mime = responseHeader(res, 'Content-Type') ?? blob.type ?? '';
-  if (servesAsPdf(mime, doc.title)) {
-    return { kind: 'pdf', blob, hash: responseHeader(res, 'X-Content-SHA256') ?? doc.hash ?? null };
-  }
-  return { kind: 'download', blob, name: downloadNameFor(res, doc) };
+  const bytes = new Uint8Array(await res.arrayBuffer());
+  const pdf = pdfViewerBlob(bytes);
+  if (pdf) return { kind: 'pdf', blob: pdf, hash: responseHeader(res, 'X-Content-SHA256') ?? doc.hash ?? null };
+  const mime = responseHeader(res, 'Content-Type') ?? '';
+  const why = claimsToBePdf(mime, doc.title) ? CLAIMED_PDF_NOT_SHOWN : 'the viewer here shows PDFs only';
+  return { kind: 'download', blob: new Blob([bytes], { type: mime }), name: downloadNameFor(res, doc), why };
 }
 
 /** The other half of Open — show it, hand it over, or say why it did not
@@ -219,7 +224,7 @@ function presentOpenedFile(opts: {
   if (file.kind === 'pdf') return showPdf(doc, file.blob, file.hash);
   const ok = downloadBlob(file.name, file.blob);
   fireToast(
-    ok ? `Downloaded ${doc.title} — the viewer here shows PDFs only.`
+    ok ? `Downloaded ${doc.title} — ${file.why}.`
       : `${doc.title} was fetched but the browser refused the download.`,
     ok ? 'ok' : 'error',
   );
@@ -288,9 +293,10 @@ function useVaultPdfViewer() {
     if (viewerUrlRef.current) URL.revokeObjectURL(viewerUrlRef.current);
   }, []);
 
+  /* `blob` is pdfViewerBlob's: bytes that begin %PDF, typed application/pdf. */
   const showPdf = useCallback((doc: VaultDoc, blob: Blob, hash: string | null) => {
     if (viewerUrlRef.current) URL.revokeObjectURL(viewerUrlRef.current);
-    const url = URL.createObjectURL(blob.type ? blob : new Blob([blob], { type: 'application/pdf' }));
+    const url = URL.createObjectURL(blob);
     viewerUrlRef.current = url;
     setViewer({ doc, url, hash });
   }, []);
@@ -534,7 +540,16 @@ function SectionActions(props: {
 }
 
 /** The PDF pane: the served hash it was verified against, the document, and
- *  the same two section actions a row offers. */
+ *  the same two section actions a row offers.
+ *
+ *  The frame has no `sandbox`, on purpose. Chromium will not show a PDF in a
+ *  sandboxed frame at all: every value, including "allow-scripts
+ *  allow-same-origin" and every other allow-* token, gives its error page
+ *  instead of the viewer, and the `csp` attribute stops the viewer's own
+ *  script (Chromium 141, checked 2026-09-28). What makes the frame safe is its
+ *  input: only bytes that begin %PDF, always typed application/pdf
+ *  (pdfBytes.ts), which the browser hands to its PDF viewer and never to the
+ *  HTML parser. */
 function PdfViewerPane(props: {
   viewer: ViewerState; sectionOpen: boolean; sectionCode: string | null; source: ProjectSource | null;
   onBack: () => void; onCite: () => void; onInsertRef: () => void;

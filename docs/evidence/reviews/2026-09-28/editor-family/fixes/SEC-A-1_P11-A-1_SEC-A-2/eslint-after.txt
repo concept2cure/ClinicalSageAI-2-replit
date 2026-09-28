@@ -1,0 +1,32 @@
+server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts errors=0 warnings=0 {}
+server/routes/authoring.router.ts errors=0 warnings=28 {"complexity":14,"max-params":3,"no-console":1,"max-lines":1,"max-lines-per-function":8,"max-depth":1}
+server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts errors=0 warnings=0 {}
+server/services/clinical-regulatory-evidence/source-usage.service.ts errors=0 warnings=0 {}
+  server/routes/authoring.router.ts:117 complexity Arrow function has a complexity of 21. Maximum allowed is 15.
+  server/routes/authoring.router.ts:678 max-params Async arrow function has too many parameters (10). Maximum allowed is 5.
+  server/routes/authoring.router.ts:725 max-params Async arrow function has too many parameters (7). Maximum allowed is 5.
+  server/routes/authoring.router.ts:901 max-params Arrow function has too many parameters (7). Maximum allowed is 5.
+  server/routes/authoring.router.ts:973 no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+  server/routes/authoring.router.ts:977 max-lines File has too many lines (4211). Maximum allowed is 500.
+  server/routes/authoring.router.ts:1673 max-lines-per-function Async arrow function has too many lines (248). Maximum allowed is 100.
+  server/routes/authoring.router.ts:1673 complexity Async arrow function has a complexity of 61. Maximum allowed is 15.
+  server/routes/authoring.router.ts:2402 complexity Async arrow function has a complexity of 21. Maximum allowed is 15.
+  server/routes/authoring.router.ts:3021 max-lines-per-function Async arrow function has too many lines (224). Maximum allowed is 100.
+  server/routes/authoring.router.ts:3021 complexity Async arrow function has a complexity of 32. Maximum allowed is 15.
+  server/routes/authoring.router.ts:3344 max-lines-per-function Async arrow function has too many lines (140). Maximum allowed is 100.
+  server/routes/authoring.router.ts:3344 complexity Async arrow function has a complexity of 26. Maximum allowed is 15.
+  server/routes/authoring.router.ts:3570 max-lines-per-function Async arrow function has too many lines (158). Maximum allowed is 100.
+  server/routes/authoring.router.ts:3874 max-lines-per-function Async arrow function has too many lines (131). Maximum allowed is 100.
+  server/routes/authoring.router.ts:3874 complexity Async arrow function has a complexity of 31. Maximum allowed is 15.
+  server/routes/authoring.router.ts:4090 max-lines-per-function Async arrow function has too many lines (121). Maximum allowed is 100.
+  server/routes/authoring.router.ts:4090 complexity Async arrow function has a complexity of 22. Maximum allowed is 15.
+  server/routes/authoring.router.ts:4912 max-lines-per-function Async arrow function has too many lines (114). Maximum allowed is 100.
+  server/routes/authoring.router.ts:4912 complexity Async arrow function has a complexity of 27. Maximum allowed is 15.
+  server/routes/authoring.router.ts:5023 max-depth Blocks are nested too deeply (5). Maximum allowed is 4.
+  server/routes/authoring.router.ts:5420 max-lines-per-function Async arrow function has too many lines (104). Maximum allowed is 100.
+  server/routes/authoring.router.ts:5420 complexity Async arrow function has a complexity of 19. Maximum allowed is 15.
+  server/routes/authoring.router.ts:5750 complexity Async arrow function has a complexity of 18. Maximum allowed is 15.
+  server/routes/authoring.router.ts:6135 complexity Async arrow function has a complexity of 23. Maximum allowed is 15.
+  server/routes/authoring.router.ts:6229 complexity Async arrow function has a complexity of 20. Maximum allowed is 15.
+  server/routes/authoring.router.ts:6379 complexity Async arrow function has a complexity of 16. Maximum allowed is 15.
+  server/routes/authoring.router.ts:6515 complexity Async arrow function has a complexity of 16. Maximum allowed is 15.
