@@ -48,7 +48,7 @@ apps (Projects, Vault, Authoring, Submission Center, Submission Readiness, QMS c
 | `honest-state.md` | last week's fixes hold | HS-0928-1 (high) | — | — |
 | `security.md` | DP-36, DP-37, DP-38, DP-39 closed; IAM-19 per report | SEC-0928-1 (= Q-0928-1), SEC-0928-2 (high) | — | — |
 | `a11y.md` | last week's fixes hold | A-0928-1 (verifier: major, not blocker) | — | A-0928-2 |
-| `design-system.md` | G2 (TaskBoard raw-hex palette) **still open**, a token decision | none | — | — |
+| `design-system.md` | G2 (TaskBoard raw-hex palette), **fixed 2026-09-28** | none | — | — |
 | `microcopy.md` | M1, M2 hold | M-0928-1 (high) | M-0928-2 | M-0928-3 |
 
 Distinct confirmed defects: **seven**. Q-0928-1 and SEC-0928-1 are the same defect: AnA's
@@ -75,7 +75,7 @@ Each report's own "What I did NOT get to" section names what it did not cover. T
 | **A-0928-1**: the required placement reason was not announced as required | **Fixed.** `aria-required`, the asterisk hidden from screen readers, and the requirement stated before anything is typed. | 6 failed → 80 passed |
 | **A-0928-2** (low): the Vault history read failure used `role="status"` | **Fixed** (`role="alert"`). `vaultSurface.test.tsx`'s mock now answers the history read with a real empty history, where a wrong shape had been hidden by the polite region. | as above |
 | **M-0928-3** (low): two bare empty states in Publishing Center | **Fixed.** Hints say this is what the service returned, not a failed read. | as above |
-| **G2**: TaskBoard raw-hex module palette | **Open.** It needs `--module-*` tokens minted, which is a control-tower decision. | — |
+| **G2**: TaskBoard raw-hex module palette | **Fixed 2026-09-28** (decision taken). Sixteen `--module-*` tokens minted in `design-system/colors_and_type.css`, light and dark, each keeping its original hue and cleared to ≥4.6:1 as chip text on the page, the sidebar and its own 12% tint (eight originals were 3.50–4.12:1). `TB_MOD` and `CL_MOD` (which carried the palette to every surface through `CollabLayer`) now name the tokens; the unknown-module grey is `var(--text-300)`. `check-token-contrast` enforces all 32 module pairs in both themes — shown failing at 3.58:1 / 3.25:1 with the original Device green restored. | `ci:token-contrast` 131 pairs; phantom-tokens, design-system and token-cascade gates clean |
 
 Checks on the whole batch:
 - `ci:typecheck-no-regression`: 0 errors.

@@ -108,13 +108,13 @@ export const SURFACE_CTX: Record<string, SurfaceContextDef> = {
 
 export const CL_MOD: Record<string, string> = {
   ...TB_MOD,
-  Submission:      '#3c7a8a',
-  Quality:         '#8a7a3c',
-  Labeling:        '#7a5a9c',
-  'Market Access': '#5a8a7a',
-  Evidence:        '#6b7a9c',
-  Meetings:        '#9c6f5a',
-  Intelligence:    '#5a7a6b',
+  Submission:      'var(--module-submission)',
+  Quality:         'var(--module-quality)',
+  Labeling:        'var(--module-labeling)',
+  'Market Access': 'var(--module-market-access)',
+  Evidence:        'var(--module-evidence)',
+  Meetings:        'var(--module-meetings)',
+  Intelligence:    'var(--module-intelligence)',
 };
 
 /* ── Module choices a NEW task offers ──
