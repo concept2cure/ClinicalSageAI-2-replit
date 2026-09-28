@@ -205,6 +205,8 @@ red, the file was restored byte for byte, and the suite re-ran green.
 | Titles | WHO item 9 back to always missing; item 10 drops the acronym | `item 9 renders a recorded public title; item 10 carries a recorded acronym…` |
 | Titles | USDM public title typed as official; an official title invented from the public one | `emits a recorded public title and acronym as their own typed titles…`, `no official title: no official StudyTitle is invented from the public one` |
 | Titles | SPIRIT 1 ignores a recorded acronym | `checks a recorded acronym appears in the title…` |
+| Titles block | an empty block accepted; an omitted acronym kept; an empty block read as recorded; the public title prefilled from the official one | one test each in `planning-inputs.test.ts` and `planningInputForms.test.ts` |
+| Master protocol | the schema refusing `biomarker: null`; the schema dropping the justification; the form ignoring the not-biomarker list | `a sub-study stated as not biomarker-defined … are recorded and read as stated` and the form round-trip |
 | Service | CAPA join without its org anchor | `excludes other organisations' … CAPA` (`expected 1 to be 0`) — after strengthening the test so the only open action is another org's |
 | Service | version lookup without its org filter | `a label not recorded for this org is NOT_FOUND — including one another org recorded` (`promise resolved … instead of rejecting`) |
 | AnA tools | one handler unregistered | `review_protocol_redline handler registered: expected undefined to be type of 'function'` |
@@ -305,10 +307,11 @@ because those engines have other consumers.
   (the planning-inputs panel); the SoA grid itself is still edited through the
   design API and AnA drafting. The DCT profile reports every activity without
   a location as `unstated`.
-- **A public title and acronym can be carried by the design but not yet
-  entered on screen**: they travel the design API and AnA drafting until the
-  planning-inputs panel gains a titles block (after that path's adversarial
-  review lands).
+- **The public title and acronym are entered in the planning-inputs panel**
+  (a `registrationTitles` block: both titles are one block, so a title left
+  out is removed, and null clears both). Registry length limits are not refused
+  at entry; the ClinicalTrials.gov projection reports a longer title with its
+  length.
 - **Win ratio / RMST are deliberately not wired**: analysis-on-data engines have
   nothing to compute before data exist; see the design document's Tier 2 table. **Tier 3** as listed in the design document.
 - **The legacy `/api/protocol` optimizer** (model-generated figures outside the

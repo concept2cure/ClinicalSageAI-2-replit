@@ -33,7 +33,7 @@ import * as React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
-import { ACCRUAL_FORM, DOSE_FORM, MMRM_FORM, MMRM_MAX_VISITS, drawerFor, losses, withGovernance, type PlanningFormSpec } from '../surfaces/planningInputForms';
+import { ACCRUAL_FORM, DOSE_FORM, MMRM_FORM, MMRM_MAX_VISITS, TITLES_FORM, drawerFor, losses, withGovernance, type PlanningFormSpec } from '../surfaces/planningInputForms';
 import { EXTERNAL_FORM, LOCATIONS, MASTER_FORM, SPECIMENS, activityFields, activityRecorded, parseActivity } from '../surfaces/planningStructureForms';
 import { biospecimenView } from '../surfaces/ProtocolDevPlanningProjections';
 import { PlanningInputsPanel } from '../surfaces/ProtocolDevPlanningInputs';
@@ -172,6 +172,23 @@ describe('external control', () => {
     expect(edited(EXTERNAL_FORM, EC, { method: 'commensurate', tau2: '1' })).toEqual({ ok: true, value: { ...(({ a0: _a0, ...rest }) => rest)(EC), method: 'commensurate', tau2: 1 } });
     expect(edited(EXTERNAL_FORM, EC, { method: 'commensurate', tau2: '' })).toEqual({ ok: false, error: 'τ² (commensurate prior) is required.' });
     expect(edited(EXTERNAL_FORM, EC, { a0: '1.5' })).toEqual({ ok: false, error: 'a0 (power prior) must be between 0 and 1: "1.5".' });
+  });
+});
+
+describe('registration titles', () => {
+  const OFFICIAL: Obj = { ...DESIGN, title: 'A randomised, double-blind study of Drug X versus placebo' };
+
+  it('round-trips recorded titles, and never prefills the public title from the official one', () => {
+    const t = { publicTitle: 'A study of Drug X for adults', acronym: 'DX-T2D' };
+    expect(TITLES_FORM.parse(prefill(withGovernance(TITLES_FORM.fields(t, OFFICIAL))), OFFICIAL)).toEqual({ ok: true, value: t });
+    const fresh = prefill(withGovernance(TITLES_FORM.fields(null, OFFICIAL)));
+    expect(fresh.publicTitle).toBe('');
+    expect(TITLES_FORM.fields(null, OFFICIAL)[0].desc).toContain('never used in its place');
+  });
+
+  it('refuses a record with neither title, and leaves a blank one out', () => {
+    expect(TITLES_FORM.parse({ action: 'record', reason: 'r', publicTitle: ' ', acronym: '' }, OFFICIAL)).toEqual({ ok: false, error: 'Record a public title or an acronym, or choose Clear.' });
+    expect(TITLES_FORM.parse({ action: 'record', reason: 'r', publicTitle: '', acronym: 'DX' }, OFFICIAL)).toEqual({ ok: true, value: { acronym: 'DX' } });
   });
 });
 

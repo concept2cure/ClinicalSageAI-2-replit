@@ -27,6 +27,8 @@ import { projectEnrollment } from '../enrollment-projection';
 import { projectMmrmSizing } from '../mmrm-sizing';
 import { projectExternalControlPlan } from '../external-control-plan';
 import { checkMasterProtocol } from '../master-protocol';
+import { projectRegistration } from '../registration-projection';
+import { projectWhoIctrp } from '../who-ictrp-registration';
 
 function design(): StudyDesign {
   return {
@@ -257,6 +259,37 @@ describe('applyPlanningInput — one block, nothing else, and its engine reads i
     const before = JSON.stringify(d);
     applyPlanningInput(d, input('activityAttributes', { activityId: 'pk', location: 'home' }));
     expect(JSON.stringify(d)).toBe(before);
+  });
+});
+
+describe('registration titles — recorded by a person, read by the registries, never derived', () => {
+  it('accepts a public title, an acronym or both; refuses neither, a line break and an unknown key', () => {
+    expect(parsePlanningInput({ block: 'registrationTitles', value: { publicTitle: 'A study of Drug X for adults with type 2 diabetes' } }).ok).toBe(true);
+    expect(parsePlanningInput({ block: 'registrationTitles', value: { acronym: 'DX-T2D' } }).ok).toBe(true);
+    expect(issuesOf('registrationTitles', {})).toEqual(['value: record a public title or an acronym, or clear the block']);
+    expect(issuesOf('registrationTitles', { publicTitle: 'A study\nof Drug X' })).toEqual(['value.publicTitle: must be one line']);
+    expect(issuesOf('registrationTitles', { publicTitle: 'x', officialTitle: 'y' })).toEqual(["value: Unrecognized key(s) in object: 'officialTitle'"]);
+  });
+
+  it('writes both titles as one block — a title left out is removed, null clears both — and the registries read them', () => {
+    const d = design();
+    const both = applyPlanningInput(d, input('registrationTitles', { publicTitle: 'A study of Drug X for adults', acronym: 'DX-T2D' }));
+    expect({ publicTitle: both.publicTitle, acronym: both.acronym, title: both.title }).toEqual({ publicTitle: 'A study of Drug X for adults', acronym: 'DX-T2D', title: d.title });
+    const brief = projectRegistration(both, 'ctgov').modules.flatMap((m) => m.fields).find((f) => f.name === 'Brief title');
+    expect(brief).toMatchObject({ status: 'rendered', value: 'A study of Drug X for adults' });
+    expect(projectWhoIctrp(both).items.find((i) => i.number === 9)).toMatchObject({ status: 'rendered' });
+    const onlyTitle = applyPlanningInput(both, input('registrationTitles', { publicTitle: 'A study of Drug X for adults' }));
+    expect(onlyTitle).not.toHaveProperty('acronym');
+    const cleared = applyPlanningInput(both, { block: 'registrationTitles', value: null } as PlanningInput);
+    expect(cleared).not.toHaveProperty('publicTitle');
+    expect(cleared).not.toHaveProperty('acronym');
+    expect(cleared.title).toBe(d.title);
+  });
+
+  it('recordedBlock: null when neither title is recorded, the titles when either is', () => {
+    expect(recordedBlock(design(), input('registrationTitles', null))).toBeNull();
+    const d = { ...design(), acronym: 'DX' } as StudyDesign;
+    expect(sameRecorded(recordedBlock(d, input('registrationTitles', null)), { acronym: 'DX' })).toBe(true);
   });
 });
 

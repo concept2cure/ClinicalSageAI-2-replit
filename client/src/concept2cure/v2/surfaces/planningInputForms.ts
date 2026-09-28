@@ -33,7 +33,7 @@ type Obj = Record<string, unknown>;
 export type Values = Record<string, string>;
 export type Parsed = { ok: true; value: Obj | null } | { ok: false; error: string };
 
-export type PlanningBlock = 'doseEscalation' | 'accrualPlan' | 'mmrmAssumptions' | 'externalControlPlan' | 'masterProtocol';
+export type PlanningBlock = 'doseEscalation' | 'accrualPlan' | 'mmrmAssumptions' | 'externalControlPlan' | 'masterProtocol' | 'registrationTitles';
 
 /** Mirrors the server's MMRM_MAX_VISITS (planning-inputs.ts); a test pins the two together. */
 export const MMRM_MAX_VISITS = 100;
@@ -367,6 +367,33 @@ function parseMmrm(v: Values): Parsed {
   });
 }
 
+/* ── Registration titles ──────────────────────────────────────────────────── */
+
+/** ClinicalTrials.gov's limits (PRS data element definitions), shown so the author sees them while typing. */
+const BRIEF_TITLE_LIMIT = 300;
+const ACRONYM_LIMIT = 14;
+
+function titlesFields(cur: Obj | null, design: Obj): C2CFormField[] {
+  const official = str(design.title);
+  return [
+    {
+      key: 'publicTitle', label: 'Public (lay-language) title', type: 'text', default: str(cur?.publicTitle),
+      desc: `What registries publish for the public (ClinicalTrials.gov Brief Title, at most ${BRIEF_TITLE_LIMIT} characters; WHO item 9; the EU CTIS public title). ` +
+        `Written for the lay public — not the official title${official ? ` ("${official}")` : ''}, which is never used in its place.`,
+    },
+    { key: 'acronym', label: 'Acronym', type: 'text', half: true, default: str(cur?.acronym), desc: `If the study has one (ClinicalTrials.gov accepts at most ${ACRONYM_LIMIT} characters).` },
+  ];
+}
+
+function parseTitles(v: Values): Parsed {
+  return run(v, () => {
+    const publicTitle = opt(v.publicTitle);
+    const acronym = opt(v.acronym);
+    if (publicTitle === undefined && acronym === undefined) throw new ParseError('Record a public title or an acronym, or choose Clear.');
+    return { publicTitle, acronym };
+  });
+}
+
 /** One block's form. `design` is the design the block belongs to (a sub-study names the design's own arms). */
 export interface PlanningFormSpec {
   block: PlanningBlock;
@@ -379,6 +406,7 @@ export interface PlanningFormSpec {
 export const DOSE_FORM: PlanningFormSpec = { block: 'doseEscalation', title: 'Dose-escalation rules (BOIN)', sub: 'The BOIN engine computes the boundaries and the decision table from these.', fields: doseFields, parse: parseDose };
 export const ACCRUAL_FORM: PlanningFormSpec = { block: 'accrualPlan', title: 'Site accrual plan', sub: 'Sponsor inputs: nothing here is assumed. The enrollment forecast runs on these rates.', fields: accrualFields, parse: parseAccrual };
 export const MMRM_FORM: PlanningFormSpec = { block: 'mmrmAssumptions', title: 'MMRM planning assumptions', sub: 'Sponsor assumptions for the MMRM-analysed endpoint. Nothing is sized from a missing one.', fields: mmrmFields, parse: parseMmrm };
+export const TITLES_FORM: PlanningFormSpec = { block: 'registrationTitles', title: 'Registration titles', sub: 'The public title and acronym registries publish beside the official title. Nothing is derived from the official title.', fields: titlesFields, parse: parseTitles };
 
 export function withGovernance(fields: C2CFormField[]): C2CFormField[] {
   return [ACTION, ...fields, REASON];

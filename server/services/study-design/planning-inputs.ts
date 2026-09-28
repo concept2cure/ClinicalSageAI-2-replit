@@ -230,7 +230,20 @@ const activityAttributes = z
   .strict()
   .refine((v) => 'location' in v || 'specimen' in v, 'name a location or a specimen to record or clear');
 
-export const PLANNING_BLOCKS = ['doseEscalation', 'accrualPlan', 'mmrmAssumptions', 'externalControlPlan', 'masterProtocol', 'activityAttributes'] as const;
+/**
+ * The titles a registry publishes beside the official one: the lay-language
+ * public title (ClinicalTrials.gov Brief Title, WHO TRDS item 9, EU CTIS public
+ * title) and the acronym. One line each. Registry length limits are not refused
+ * here: the registration projection reports a title longer than a registry
+ * accepts, with its length, so the author sees which registry it fails.
+ */
+const titleLine = text.refine((s) => !/[\r\n]/.test(s), 'must be one line');
+const registrationTitles = z
+  .object({ publicTitle: titleLine.optional(), acronym: titleLine.optional() })
+  .strict()
+  .refine((v) => v.publicTitle !== undefined || v.acronym !== undefined, 'record a public title or an acronym, or clear the block');
+
+export const PLANNING_BLOCKS = ['doseEscalation', 'accrualPlan', 'mmrmAssumptions', 'externalControlPlan', 'masterProtocol', 'registrationTitles', 'activityAttributes'] as const;
 export type PlanningBlock = (typeof PLANNING_BLOCKS)[number];
 
 const planningInput = z.discriminatedUnion('block', [
@@ -239,6 +252,7 @@ const planningInput = z.discriminatedUnion('block', [
   z.object({ block: z.literal('mmrmAssumptions'), value: mmrmAssumptions.nullable() }).strict(),
   z.object({ block: z.literal('externalControlPlan'), value: externalControlPlan.nullable() }).strict(),
   z.object({ block: z.literal('masterProtocol'), value: masterProtocol.nullable() }).strict(),
+  z.object({ block: z.literal('registrationTitles'), value: registrationTitles.nullable() }).strict(),
   z.object({ block: z.literal('activityAttributes'), value: activityAttributes }).strict(),
 ]);
 
@@ -292,6 +306,9 @@ export function applyPlanningInput(design: StudyDesign, input: PlanningInput): S
       return setOrClear(design, 'externalControlPlan', input.value);
     case 'masterProtocol':
       return setOrClear(design, 'masterProtocol', input.value);
+    case 'registrationTitles':
+      // The block is both titles: one left out of the value is removed, as a cleared block removes both.
+      return setOrClear(setOrClear(design, 'publicTitle', input.value?.publicTitle ?? null), 'acronym', input.value?.acronym ?? null);
     case 'activityAttributes':
       return applyActivity(design, input.value);
   }
@@ -317,6 +334,7 @@ const BLOCK_READERS: Record<Exclude<PlanningBlock, 'activityAttributes'>, (d: St
   accrualPlan: (d) => d.accrualPlan,
   externalControlPlan: (d) => d.externalControlPlan,
   masterProtocol: (d) => d.masterProtocol,
+  registrationTitles: (d) => (d.publicTitle === undefined && d.acronym === undefined ? undefined : { publicTitle: d.publicTitle, acronym: d.acronym }),
 };
 
 /** Same recorded content, whatever the key order (the one canonical serializer). */

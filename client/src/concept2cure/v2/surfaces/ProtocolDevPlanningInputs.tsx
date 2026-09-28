@@ -23,7 +23,7 @@ import * as PG from './ProtocolGov';
 import { apiRequest, ApiRequestError } from '@/lib/queryClient';
 import { C2CForm } from '../C2CForm';
 import { str } from './projectionFormat';
-import { ACCRUAL_FORM, DOSE_FORM, MMRM_FORM, drawerFor, type Drawer, type PlanningFormSpec, type Values } from './planningInputForms';
+import { ACCRUAL_FORM, DOSE_FORM, MMRM_FORM, TITLES_FORM, drawerFor, type Drawer, type PlanningFormSpec, type Values } from './planningInputForms';
 import { EXTERNAL_FORM, MASTER_FORM, activityFields, activityRecorded, parseActivity } from './planningStructureForms';
 
 type Obj = Record<string, unknown>;
@@ -37,6 +37,8 @@ const BLOCKS: Array<{ spec: PlanningFormSpec; read: (d: Obj) => unknown }> = [
   { spec: MMRM_FORM, read: (d) => (d.statisticalPlan as Obj | undefined)?.mmrmAssumptions },
   { spec: EXTERNAL_FORM, read: (d) => d.externalControlPlan },
   { spec: MASTER_FORM, read: (d) => d.masterProtocol },
+  // As the server reads it (planning-inputs.ts BLOCK_READERS): both titles, or nothing when neither is recorded.
+  { spec: TITLES_FORM, read: (d) => (d.publicTitle === undefined && d.acronym === undefined ? undefined : { publicTitle: d.publicTitle, acronym: d.acronym }) },
 ];
 
 /** The server's refusal in sentences: its field-level details, else its detail. An error code is not a sentence and is not shown as one. */
