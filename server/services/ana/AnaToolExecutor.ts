@@ -7938,7 +7938,7 @@ async function mergeProgramMetadata(
      trims any keys the caller explicitly passed as null (delete semantics). */
   const { rows } = await pool.query<{ id: string; metadata: Record<string, unknown> }>(
     `UPDATE regulatory_programs
-        SET metadata   = jsonb_strip_nulls(COALESCE(metadata, '{}'::jsonb) || $3::jsonb),
+        SET metadata   = jsonb_strip_nulls(COALESCE(metadata::jsonb, '{}'::jsonb) || $3::jsonb),
             updated_at = NOW()
       WHERE id = $1 AND organization_id = $2
       RETURNING id, metadata`,
