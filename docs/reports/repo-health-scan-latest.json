@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-28T16:20:39.419Z",
+  "generatedAt": "2026-09-28T16:50:30.618Z",
   "git": {
-    "sha": "790883923ca3311badc15fbddb017aaba646c4ff",
+    "sha": "d417639585a630b2aafcdfaec5182a6fc813d117",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1993,7 +1993,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 300644
+        "bytes": 300656
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2149,7 +2149,7 @@
       },
       {
         "file": "server/api/cmc/routes.ts",
-        "bytes": 106260
+        "bytes": 107305
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
@@ -2298,12 +2298,12 @@
         "lines": 2379
       },
       {
-        "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
-        "lines": 2348
+        "file": "server/api/cmc/routes.ts",
+        "lines": 2358
       },
       {
-        "file": "server/api/cmc/routes.ts",
-        "lines": 2336
+        "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
+        "lines": 2348
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2390,6 +2390,10 @@
         "lines": 2000
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
+        "lines": 1990
+      },
+      {
         "file": "client/src/concept2cure/v2/Shell.tsx",
         "lines": 1968
       },
@@ -2404,10 +2408,6 @@
       {
         "file": "server/services/ana/evidence-literature-tool-defs.ts",
         "lines": 1924
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
-        "lines": 1912
       },
       {
         "file": "server/routes/ectd-compile.ts",

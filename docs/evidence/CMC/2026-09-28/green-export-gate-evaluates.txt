@@ -1,0 +1,55 @@
+-- The same three failures, after the fix. Same database, same server.
+
+-- ── 1. The file is on the applier, and replays safely ───────────────────────
+
+$ node scripts/db/deploy-migrate.mjs
+  ✓ applied: migrations/0011_governed_decision_transitions.sql
+  ✅ Schema migration complete — safe to roll services.
+
+-- Shape unchanged by the replay (the converge block is a no-op the second time):
+project_id  null=YES      (relaxed, never dropped -- this same file created it)
+project_ref null=NO
+
+$ npm run ci:migration-set-order
+  OK — 317 migrations, sweep last, uuid step in the final pair, all present, no duplicates.
+$ npm run ci:migration-drop-safety
+  OK — 317 migrations, 34 DROP(s), none re-created by the set.
+
+-- A side effect worth naming: the tenant-isolation sweep runs LAST and polices
+-- every table the set created. A table on no applier is invisible to it, so
+-- this one carried no RLS policy at all. After the fix:
+relrowsecurity = t, policies = 1
+
+-- ── 2. The write accepts a uuid-keyed Module 3 project ──────────────────────
+
+recordTransitionEvent({ projectRef: 'f50f5093-216b-47a0-8664-d4705493d295', … })
+  row actually in the table:
+    {"id":"541db6ca-…","project_ref":"f50f5093-216b-47a0-8664-d4705493d295",
+     "to_state":"under_review"}
+
+-- ── 3. The review queue resolves per project, not one shared bucket ─────────
+
+getProjectReviewQueue('f50f5093-216b-47a0-8664-d4705493d295', 1)
+  pending = 1   escalated = 0
+getProjectReviewQueue('87cd7aa6-dad6-4d08-ad4b-dc275dbda446', 1)
+  pending = 0        <- a DIFFERENT project. Both were bucket 0 before.
+
+-- ── Red-to-green on the constraint itself ──────────────────────────────────
+-- Restoring exactly the old shape inside a transaction and making the insert
+-- the old writer made:
+
+BEGIN;
+ALTER TABLE governed_decision_transitions
+  ADD CONSTRAINT governed_decision_transitions_project_id_fkey
+  FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE;
+ALTER TABLE governed_decision_transitions ALTER COLUMN project_id SET NOT NULL;
+INSERT INTO governed_decision_transitions (… project_id …) VALUES (…, 0, …);
+
+ERROR:  insert or update on table "governed_decision_transitions" violates
+        foreign key constraint "governed_decision_transitions_project_id_fkey"
+DETAIL:  Key (project_id)=(0) is not present in table "projects".
+ROLLBACK;
+
+-- CMC staff simulation on the fix: 118 passed, 0 failed.
+-- Note: the simulation does NOT exercise a decision transition, which is why
+-- the write path is verified directly above rather than through it.
