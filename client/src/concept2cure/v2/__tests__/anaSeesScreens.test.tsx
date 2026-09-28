@@ -8,7 +8,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -376,6 +376,7 @@ describe('audit: audit-trail never publishes an actor name or a reason free-text
       id: 'AE-1', when: '1h ago', actor: 'ACTOR-NAME-SENTINEL', event: 'Document approved',
       target: 'CSR §2.5', kind: 'approval', sig: true, hash: 'h1', prevHash: 'h0',
       ip: '10.0.0.9', reason: 'REASON-FREETEXT-SENTINEL', meaning: 'APPROVAL',
+      actorRef: 'user:4242',
     };
     apiRequest.mockImplementation(async (_m: string, url: string) => {
       if (url === '/api/audit-trail/ledger') return ok({ data: [ENTRY] });
@@ -394,6 +395,29 @@ describe('audit: audit-trail never publishes an actor name or a reason free-text
     expect(payload, 'audit-trail leaked the actor name').not.toContain('ACTOR-NAME-SENTINEL');
     expect(payload, 'audit-trail leaked the reason free-text').not.toContain('REASON-FREETEXT-SENTINEL');
     expect(payload, 'audit-trail leaked the ip').not.toContain('10.0.0.9');
+    expect(payload, 'audit-trail leaked the actor reference').not.toContain('user:4242');
+  });
+});
+
+/* The ledger row names the account beside the actor's name: two accounts may
+   share a display name (VSR-001 F-42). The reference is for the person reading
+   the ledger; like the name, it is not published to AnA (above). */
+describe('audit: the ledger row names the account that acted (F-42)', () => {
+  beforeEach(() => apiRequest.mockReset());
+
+  it('shows each entry\'s account reference beside a display name two accounts share', async () => {
+    const entry = (id: string, actorRef: string) => ({
+      id, when: '1h ago', actor: 'JM Smith', event: `Created by ${actorRef}`,
+      target: 'regulatory_program:p-1', kind: 'admin', sig: false, hash: `h-${id}`, prevHash: 'h0',
+      ip: '', reason: null, meaning: null, actorRef,
+    });
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url === '/api/audit-trail/ledger') return ok({ data: [entry('AE-1', 'user:11'), entry('AE-2', 'user:12')] });
+      return ok({ data: [] });
+    });
+    render(<AuditTrail {...svProps('audit-trail')} />);
+    expect(await screen.findByText('user:11')).toBeTruthy();
+    expect(screen.getByText('user:12')).toBeTruthy();
   });
 });
 

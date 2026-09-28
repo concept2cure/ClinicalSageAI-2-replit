@@ -43,6 +43,8 @@ export interface AuditEntry {
   id: string;
   when: string;
   actor: string;
+  /** The account that acted, `user:<id>`; null for the system (VSR-001 F-42). */
+  actorRef?: string | null;
   event: string;
   target: string;
   kind: string;

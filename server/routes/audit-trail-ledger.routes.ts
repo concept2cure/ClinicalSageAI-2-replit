@@ -91,6 +91,12 @@ export interface AuditLedgerEntry {
   /** ISO-8601 instant the event was recorded; the merge order key. */
   at: string;
   actor: string;
+  /**
+   * The account that acted, as `user:<id>` (the form entry targets use), or
+   * null for the system. A display name is not an identity: two accounts may
+   * share one, and the ledger could not say which acted (VSR-001 F-42).
+   */
+  actorRef: string | null;
   event: string;
   target: string;
   kind: string;
@@ -198,6 +204,11 @@ function seqOf(value: unknown): number | null {
 
 // ─── Row → entry ──────────────────────────────────────────────────────────────
 
+/** `user:<id>` for an account id, null for none: the reference entry targets already use. */
+function userRef(id: number | null): string | null {
+  return id != null && Number.isInteger(id) && id > 0 ? `user:${id}` : null;
+}
+
 function auditLogEntry(row: Record<string, unknown>): AuditLedgerEntry {
   const payload = row.new_values;
   const actorId = row.actor_id == null ? null : Number(row.actor_id);
@@ -209,6 +220,7 @@ function auditLogEntry(row: Record<string, unknown>): AuditLedgerEntry {
       nonEmpty(row.user_name) ??
       nonEmpty(row.user_email) ??
       (actorId != null && Number.isFinite(actorId) ? `user ${actorId}` : 'System'),
+    actorRef: userRef(actorId),
     event: metaString(payload, ['description', 'summary', 'title', 'message']) ?? humanizeEventType(row.action),
     target:
       nonEmpty(row.target) ??
@@ -232,6 +244,7 @@ function auditEventEntry(row: Record<string, unknown>): AuditLedgerEntry {
     when: typeof row.when_display === 'string' ? row.when_display : '',
     at: isoOf(row.at),
     actor: nonEmpty(row.user_name) ?? 'System',
+    actorRef: userRef(row.user_id == null ? null : Number(row.user_id)),
     event:
       metaString(row.metadata, ['description', 'summary', 'title', 'message']) ??
       humanizeEventType(row.event_type),
@@ -283,6 +296,7 @@ const AUDIT_EVENTS_SQL = `
          event_type,
          entity_type,
          entity_id,
+         user_id,
          user_name,
          ip_address,
          "timestamp" AS at,
