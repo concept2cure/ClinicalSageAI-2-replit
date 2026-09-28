@@ -14,14 +14,17 @@ import {
   aiFixPlanFromIssues,
   aiDraftP8,
   aiRootCauseOOS,
-  aiRecommendLabelStorage,
-  simpleShelfLifeT90,
   aiDraftProtocol,
   aiCAPAFromOOT,
+  type StabilityContext,
 } from '../services/ai/stability.js';
-// Temporarily commented out missing csv-parse dependency
-// import { parse } from 'csv-parse/sync';
-import { addMonths, format } from 'date-fns';
+import { estimateShelfLife } from '../../services/cmc/shelf-life';
+import { assessTrend, OOT_METHOD } from '../../services/cmc/stability-trending';
+import type { ParsedAcceptanceCriterion } from '../../services/cmc/recorded-stability';
+import { logAuditEvent } from '../../services/audit/auditLogger';
+import { parse } from 'csv-parse/sync';
+import { toBuffer as barcodePng } from 'bwip-js/node';
+import { format } from 'date-fns';
 import { insertAllDayEvent, calendarEnabled } from '../services/calendar';
 import { authedActorName } from '../../utils/authedActor';
 import { serverError } from '../../lib/api-response';
@@ -42,11 +45,6 @@ function requireActor(req: any): string {
   if (!actor) throw new Error('Actor identity required');
   return actor;
 }
-
-// Stub for barcode generation - would import BWIPJS from "bwip-js" in production
-const BWIPJS = {
-  toBuffer: (options: any) => Promise.resolve(Buffer.from('mock-barcode-data')),
-};
 
 const logger = createScopedLogger('stability-router');
 
@@ -269,7 +267,7 @@ function auditActor(req: any): string {
   return String(req.user?.email ?? req.user?.id ?? req.user?.userId ?? '');
 }
 
-async function audit(studyId: string, action: string, payload: any, req: any, txClient?: any) {
+async function audit(studyId: string, action: string, payload: any, req: any, tx: PoolClient) {
   // 21 CFR Part 11 §11.10(e) / ICH Q1A: the audit actor is the VERIFIED
   // principal. This read `x-user-name || x-user-email || 'user'` — both
   // client-supplied — so any authenticated caller could attribute a stability
@@ -282,36 +280,348 @@ async function audit(studyId: string, action: string, payload: any, req: any, tx
   if (!actor) {
     throw new Error('Actor identity required for audit');
   }
-  // Inside the caller's transaction when one is passed: the audit record and
-  // the change it records commit together or not at all.
-  if (txClient) {
-    await txClient.query(
-      `INSERT INTO stab_audit (study_id, actor, action, payload_json) VALUES ($1,$2,$3,$4)`,
-      [studyId, actor, action, JSON.stringify(payload)]
-    );
-    return;
-  }
-  const client = await pool.connect();
-  try {
-    // Set tenant context for audit — derive from JWT-validated context, not raw headers
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-    if (!tenantId) {
-      throw new Error('Tenant context required');
-    }
-    const safeTenantId = parseInt(tenantId.toString());
-    if (!safeTenantId) {
-      throw new Error('Invalid tenant ID');
-    }
-    await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(safeTenantId)]);
+  // Always inside the caller's transaction: the audit record and the change it
+  // records commit together or not at all. Until 2026-09-23 the transaction was
+  // optional and every handler but the study create wrote its audit record AFTER
+  // its change had committed, on another connection — so a failed audit left a
+  // committed, unaudited change and told the caller the change had failed
+  // (docs/evidence/W2/2026-09-23/stability-audited-writes.txt).
+  await tx.query(
+    `INSERT INTO stab_audit (study_id, actor, action, payload_json) VALUES ($1,$2,$3,$4)`,
+    [studyId, actor, action, JSON.stringify(payload)]
+  );
+}
 
-    await client.query(
-      `INSERT INTO stab_audit (study_id, actor, action, payload_json) VALUES ($1,$2,$3,$4)`,
-      [studyId, actor, action, JSON.stringify(payload)]
-    );
-  } finally {
-    client.release();
+/**
+ * A refusal decided inside a transaction. Thrown, so the transaction rolls back
+ * and nothing it wrote persists; answered with its own status by `fail`.
+ */
+class StabRefusal extends Error {
+  constructor(
+    readonly status: number,
+    message: string,
+    readonly detail?: unknown
+  ) {
+    super(message);
   }
 }
+
+/** One answer for every failure on this router: a refusal says why, anything else is a 500. */
+function fail(res: any, error: unknown, what: string) {
+  if (error instanceof StabRefusal) {
+    return res
+      .status(error.status)
+      .json(error.detail === undefined ? { error: error.message } : { error: error.message, detail: error.detail });
+  }
+  return serverError(res, logger, what, error);
+}
+
+/**
+ * A model call that failed says so. The service functions returned canned
+ * text on failure, which these routes answered 200 with; a refusal (unknown
+ * study) keeps its own status.
+ */
+function aiFail(res: any, error: unknown, what: string) {
+  if (error instanceof StabRefusal) return fail(res, error, what);
+  logger.error(`stability model call failed while ${what}`, { error: String((error as any)?.message ?? error) });
+  return res.status(502).json({ error: 'The model could not be reached; nothing was generated.' });
+}
+
+/** The first row, or a 404 refusal that rolls the transaction back. */
+function found<T>(rows: T[], what: string): T {
+  if (!rows[0]) throw new StabRefusal(404, `${what} not found`);
+  return rows[0];
+}
+
+/**
+ * The rows a condition or timepoint delete destroys by cascade: its timepoints
+ * (for a condition) and every result under it, with values. Read before the
+ * delete so the audit record can say what went.
+ */
+async function cascadeOf(tx: PoolClient, key: 'cond_id' | 'tp_id', id: string) {
+  const cols = 'result_id, cond_id, tp_id, test_id, value, unit, pass, remarks, created_at';
+  const results = (
+    await tx.query(
+      key === 'cond_id'
+        ? `select ${cols} from stab_results where cond_id = $1 order by created_at`
+        : `select ${cols} from stab_results where tp_id = $1 order by created_at`,
+      [id]
+    )
+  ).rows;
+  const timepoints =
+    key === 'cond_id'
+      ? (await tx.query(`select * from stab_timepoints where cond_id = $1 order by month`, [id])).rows
+      : undefined;
+  // stab_reminders.tp_id is ON DELETE CASCADE too.
+  const reminders = (
+    await tx.query(
+      key === 'cond_id'
+        ? `select r.* from stab_reminders r join stab_timepoints tp on tp.tp_id = r.tp_id where tp.cond_id = $1`
+        : `select * from stab_reminders where tp_id = $1`,
+      [id]
+    )
+  ).rows;
+  return timepoints ? { timepoints, results, reminders } : { results, reminders };
+}
+
+/**
+ * The study in the path, locked for update, if it is this tenant's; otherwise a
+ * 404 that rolls the transaction back. Every write scoped to /studies/:id calls
+ * this first. Foreign keys do not see RLS, and a child row takes the CALLER's
+ * tenant_id by default, so before this a write naming another tenant's study_id
+ * was accepted: conditions, CAPAs, assignments and audit records filed under a
+ * study the caller could not read, and a 200/500 split that told any tenant
+ * whether a UUID was a study anywhere (review of 2026-09-23, reproduced on the
+ * reference database as the non-bypass role with RLS enforced). The tenant
+ * predicate is explicit; RLS is the second line. The lock serialises writes to
+ * one study, which the in-use, OOT-rule and sample-sequence writes rely on.
+ */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+async function ownStudy(
+  tx: PoolClient,
+  studyId: string,
+  { lock = true }: { lock?: boolean } = {}
+): Promise<Record<string, any> & { study_id: string; code: string; name: string }> {
+  // Not a UUID ⇒ not a study (404), rather than a 22P02 cast error (500).
+  // Compared as a uuid, so an upper-case id in the path names the same study.
+  if (!UUID_RE.test(String(studyId))) throw new StabRefusal(404, 'study not found');
+  const tenantId = parseInt(String(getTenantScope()?.tenantId ?? ''), 10);
+  return found(
+    (
+      await tx.query(
+        `select * from stab_studies where study_id = $1::uuid and tenant_id = $2${lock ? ' for update' : ''}`,
+        [String(studyId), tenantId]
+      )
+    ).rows,
+    'study'
+  );
+}
+
+/**
+ * A study's child row, addressed by its own id, if it is this tenant's:
+ * located, then its study locked through ownStudy (study first — the order
+ * every /studies/:id write takes, so two writes cannot deadlock), then the row
+ * locked with an explicit tenant predicate. These routes locked and wrote by
+ * the child id alone, leaving tenancy to RLS, which the router's own rule makes
+ * the second line (review of 2026-09-23).
+ */
+const CHILD_KEY = {
+  stab_conditions: 'cond_id',
+  stab_timepoints: 'tp_id',
+  stab_tests: 'test_id',
+  stab_capa: 'capa_id',
+  stab_assignments: 'assign_id',
+  stab_samples: 'sample_id',
+} as const;
+async function ownChild(tx: PoolClient, table: keyof typeof CHILD_KEY, id: string, what: string): Promise<Record<string, any>> {
+  if (!UUID_RE.test(String(id))) throw new StabRefusal(404, `${what} not found`);
+  const tenantId = parseInt(String(getTenantScope()?.tenantId ?? ''), 10);
+  const key = CHILD_KEY[table];
+  const located = found(
+    (await tx.query(`select study_id from ${table} where ${key} = $1::uuid and tenant_id = $2`, [id, tenantId])).rows,
+    what
+  );
+  await ownStudy(tx, located.study_id);
+  return found(
+    (await tx.query(`select * from ${table} where ${key} = $1::uuid and tenant_id = $2 for update`, [id, tenantId])).rows,
+    what
+  );
+}
+
+/** A recorded value as a finite number, or null. '' and 'n/a' are not zero. */
+function num(v: unknown): number | null {
+  if (v === null || v === undefined) return null;
+  const t = String(v).trim();
+  if (!/^[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?$/.test(t)) return null;
+  const n = Number(t);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * The acceptance criterion a test RECORDS, in the shape the canonical engines
+ * take (the same mapping recorded-stability's parser gives a range or a
+ * one-sided limit). No recorded limit ⇒ null, and the engines refuse rather
+ * than assume one.
+ */
+function criterionOf(test: { spec_low?: unknown; spec_high?: unknown }): ParsedAcceptanceCriterion | null {
+  const lo = num(test.spec_low);
+  const hi = num(test.spec_high);
+  if (lo !== null && hi !== null && lo < hi) return { limit: lo, direction: 'decreasing', upperLimit: hi, twoSided: true };
+  if (lo !== null && hi === null) return { limit: lo, direction: 'decreasing', upperLimit: null, twoSided: false };
+  if (hi !== null && lo === null) return { limit: hi, direction: 'increasing', upperLimit: null, twoSided: false };
+  return null;
+}
+
+/**
+ * The study's numeric series, one per (test, storage condition), with the
+ * test's recorded criterion. Non-numeric and missing values are counted, not
+ * turned into anything.
+ */
+async function studySeries(tx: PoolClient, studyId: string, testName?: string) {
+  const { rows } = await tx.query(
+    `select t.test_id, t.name as test_name, t.unit as test_unit, t.spec_low, t.spec_high,
+            c.kind as condition_kind, tp.month, tp.label, r.value
+       from stab_results r
+       join stab_tests t on t.test_id = r.test_id
+       join stab_conditions c on c.cond_id = r.cond_id
+       join stab_timepoints tp on tp.tp_id = r.tp_id
+      where r.study_id = $1 and ($2::text is null or lower(t.name) = lower($2))
+      order by t.name, c.kind, tp.month`,
+    [studyId, testName || null]
+  );
+  const groups = new Map<string, any>();
+  for (const r of rows) {
+    const key = `${r.test_id}|${r.condition_kind}`;
+    if (!groups.has(key)) {
+      groups.set(key, {
+        test_id: r.test_id,
+        test_name: r.test_name,
+        unit: r.test_unit,
+        condition: r.condition_kind,
+        criterion: criterionOf(r),
+        points: [] as { time: number; value: number }[],
+        nonNumeric: 0,
+      });
+    }
+    const g = groups.get(key);
+    const v = num(r.value);
+    if (v === null) g.nonNumeric++;
+    else g.points.push({ time: Number(r.month), value: v });
+  }
+  return [...groups.values()];
+}
+
+/** The study as recorded, with the deterministic assessments, for the model to narrate. */
+async function studyContext(tx: PoolClient, studyId: string): Promise<StabilityContext> {
+  const study = await ownStudy(tx, studyId, { lock: false });
+  const q = async (sql: string) => (await tx.query(sql, [studyId])).rows;
+  const [conditions, timepoints, tests, results] = [
+    await q(`select kind, temp, rh, description from stab_conditions where study_id = $1 order by kind`),
+    await q(
+      `select tp.label, tp.month, tp.planned_date, tp.actual_date, c.kind as condition
+         from stab_timepoints tp join stab_conditions c on c.cond_id = tp.cond_id
+        where tp.study_id = $1 order by c.kind, tp.month`
+    ),
+    await q(`select name, unit, spec_low, spec_high, is_cqa from stab_tests where study_id = $1 order by name`),
+    await q(
+      `select t.name as test, c.kind as condition, tp.label as timepoint, tp.month, r.value, r.unit, r.pass
+         from stab_results r
+         join stab_tests t on t.test_id = r.test_id
+         join stab_conditions c on c.cond_id = r.cond_id
+         join stab_timepoints tp on tp.tp_id = r.tp_id
+        where r.study_id = $1 order by t.name, c.kind, tp.month`
+    ),
+  ];
+  const assessments = (await studySeries(tx, studyId)).map(g => ({
+    test: g.test_name,
+    condition: g.condition,
+    nonNumericResults: g.nonNumeric,
+    outOfTrend: assessTrend(g.points, g.criterion),
+  }));
+  return { study, conditions, timepoints, tests, results, assessments };
+}
+
+/** The upload's CSV rows with the line each starts on. Blank and delimiter-only rows (",,,") are skipped. */
+function readCsv(buffer: Buffer): { line: number; record: Record<string, string> }[] {
+  const rows = parse(buffer.toString('utf8'), {
+    columns: (header: string[]) => header.map(h => h.trim().toLowerCase()),
+    skip_empty_lines: true,
+    skip_records_with_empty_values: true,
+    trim: true,
+    bom: true,
+    info: true,
+  }) as { record: Record<string, string>; info: { lines: number } }[];
+  return rows.map(r => ({ line: r.info.lines, record: r.record }));
+}
+
+/**
+ * pass as recorded: true, false, or null when not stated. Any other word is
+ * refused — 'Pass', 'P', 'Conforms' and the like became NULL silently.
+ */
+const PASS_WORDS: Record<string, boolean> = {
+  '1': true, true: true, y: true, yes: true, pass: true, passed: true, p: true, conforms: true, complies: true,
+  '0': false, false: false, n: false, no: false, fail: false, failed: false, f: false, 'does not conform': false, 'does not comply': false,
+};
+function passOf(v: unknown): boolean | null | undefined {
+  if (v === null || v === undefined || v === '') return null;
+  if (typeof v === 'boolean') return v;
+  const w = String(v).trim().toLowerCase();
+  return w in PASS_WORDS ? PASS_WORDS[w] : undefined;
+}
+
+/**
+ * These routes read or write stab_results columns — status, reviewed_by,
+ * reviewed_at, reject_reason, sample_id — that only
+ * db/migrations/_legacy/031_stability_workflow.sql and
+ * _legacy/035_stability_sample_link_coc.sql add. Neither is on any applier, so on
+ * every deployed database each of these routes failed with 42703 (review failed
+ * without an answer at all). They say so instead. Making result review real is
+ * schema work for the CMC workstream, outside the launch catalog (CLAUDE.md
+ * RULE 2), and an approval needs the Part 11 signing path, as the sign-off route
+ * below records.
+ */
+function resultReviewUnavailable(_req: any, res: any) {
+  return res.status(501).json({
+    error: 'NOT_IMPLEMENTED',
+    message:
+      'Result review and result-to-sample linking are not available: the result workflow columns do not exist on this database. Nothing was changed.',
+  });
+}
+
+/**
+ * Record one result against a study. Keys may be ids or the human keys
+ * (cond_kind, label, test_name); either way each must belong to THIS study — an
+ * id from another study was accepted before and filed the result under a
+ * condition, timepoint or test the study does not have. Returns the inserted row,
+ * or the reason the row was refused. Shared by POST /results and the CSV import.
+ */
+async function insertResult(tx: PoolClient, studyId: string, b: any): Promise<any | string> {
+  const one = async (sql: string, v: unknown) =>
+    v === undefined || v === null || v === '' ? undefined : (await tx.query(sql, [studyId, String(v)])).rows[0];
+  const cond =
+    (await one(`select cond_id from stab_conditions where study_id=$1 and cond_id::text=$2`, b.cond_id)) ??
+    (await one(`select cond_id from stab_conditions where study_id=$1 and kind=upper($2) limit 1`, b.cond_kind));
+  const tp =
+    (await one(`select tp_id from stab_timepoints where study_id=$1 and tp_id::text=$2`, b.tp_id)) ??
+    (b.label === undefined || b.label === null || b.label === ''
+      ? undefined
+      : (
+          await tx.query(
+            `select tp_id from stab_timepoints
+              where study_id=$1 and upper(label)=upper($2) and ($3::uuid is null or cond_id=$3::uuid)
+              order by month limit 1`,
+            [studyId, String(b.label), cond?.cond_id ?? null]
+          )
+        ).rows[0]);
+  const test =
+    (await one(`select test_id from stab_tests where study_id=$1 and test_id::text=$2`, b.test_id)) ??
+    (await one(`select test_id from stab_tests where study_id=$1 and lower(name)=lower($2) limit 1`, b.test_name));
+  if (!cond || !tp || !test) {
+    return 'cond_id/tp_id/test_id (or cond_kind/label/test_name) of this study required';
+  }
+  const pass = passOf(b.pass);
+  if (pass === undefined) return `pass "${String(b.pass)}" is not a recognised pass/fail value`;
+  // A blank value is no value (NULL), not the empty string: '' broke every
+  // numeric read of the tenant's results (/oot-surveillance cast it to float).
+  const value = b.value === undefined || b.value === null || String(b.value).trim() === '' ? null : String(b.value).trim();
+  const { rows } = await tx.query(
+    `insert into stab_results (study_id,cond_id,tp_id,test_id,value,unit,pass,raw_json)
+     values ($1,$2,$3,$4,$5,$6,$7,$8)
+     returning *`,
+    [studyId, cond.cond_id, tp.tp_id, test.test_id, value, b.unit || null, pass, JSON.stringify(b)]
+  );
+  return rows[0];
+}
+
+// Every write on this router is attributable or it does not happen. Checked
+// before any handler takes a connection, so an unsigned request writes nothing:
+// before this, an unsigned PATCH /conditions or POST /results committed its
+// change and then failed on the audit record, leaving the change unaudited.
+router.use((req, res, next) => {
+  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') return next();
+  if (!auditActor(req)) return res.status(401).json({ error: 'Actor identity required' });
+  return next();
+});
 
 // GET /api/stability/studies - List all studies
 router.get('/studies', async (req, res) => {
@@ -361,15 +671,33 @@ router.get('/studies', async (req, res) => {
       });
     }
 
+    // Progress from the timepoints as recorded: sampled = has an actual date.
+    // These were a constant 45 %, '0M' and '3M' for every study.
+    const progress = new Map<string, any>();
+    if (ids.length) {
+      const { rows: tp } = await client.query(
+        `select study_id,
+                count(*)::int as total,
+                count(*) filter (where actual_date is not null)::int as sampled,
+                (array_agg(label order by month desc) filter (where actual_date is not null))[1] as last_label,
+                (array_agg(label order by month) filter (where actual_date is null))[1] as next_label
+           from stab_timepoints where study_id = any($1) group by study_id`,
+        [ids]
+      );
+      tp.forEach((t: any) => progress.set(t.study_id, t));
+    }
+
     // Add compatibility fields for frontend
     const out = rows.map((r: any) => ({
       ...r,
       product_name: r.name,
       batch_number: r.code,
       storage_condition: (condMap.get(r.study_id) || []).join('; '),
-      progress_percent: 45, // Mock progress
-      last_timepoint: '0M',
-      next_timepoint: '3M',
+      progress_percent: progress.get(r.study_id)?.total
+        ? Math.round((100 * progress.get(r.study_id).sampled) / progress.get(r.study_id).total)
+        : null,
+      last_timepoint: progress.get(r.study_id)?.last_label ?? null,
+      next_timepoint: progress.get(r.study_id)?.next_label ?? null,
       latest_assay_result: null,
       latest_impurities_result: null,
       latest_water_result: null,
@@ -464,7 +792,7 @@ router.post('/studies', async (req, res) => {
         strength,
         duration,
         scope || 'Standard',
-        climaticZone || 'IVa',
+        climaticZone || null, // not recorded is not Zone IVa
         startDate,
         mappedStatus,
         tenantId,
@@ -525,9 +853,14 @@ router.post('/studies', async (req, res) => {
       }
     }
 
-    // Insert test parameters
+    // Insert test parameters. A test is a name, or { name, unit?, spec_low?,
+    // spec_high?, is_cqa? }. Nothing is filled in: this set Assay to 95–105 %,
+    // Water Content to NMT 5 %, every other unit to 'Various' and CQA status by
+    // name — acceptance criteria no one entered, which OOT, validation and P.8
+    // then treated as the product's specification.
     const tests = [];
-    for (const test of testParameters) {
+    for (const raw of Array.isArray(testParameters) ? testParameters : []) {
+      const test = typeof raw === 'string' ? { name: raw } : (raw ?? {});
       const testResult = await client.query(
         `INSERT INTO stab_tests (
           study_id,
@@ -541,11 +874,13 @@ router.post('/studies', async (req, res) => {
          RETURNING *`,
         [
           study.study_id,
-          test,
-          test === 'Assay' ? '%' : test === 'Water Content' ? '%' : 'Various',
-          test === 'Assay' ? 95.0 : null,
-          test === 'Assay' ? 105.0 : test === 'Water Content' ? 5.0 : null,
-          ['Assay', 'Related Substances'].includes(test),
+          String(test.name ?? ''),
+          test.unit ?? null,
+          test.spec_low ?? null,
+          test.spec_high ?? null,
+          // The column's own default: every test is treated as critical until
+          // someone records otherwise.
+          test.is_cqa ?? true,
         ]
       );
       tests.push(testResult.rows[0]);
@@ -562,9 +897,10 @@ router.post('/studies', async (req, res) => {
         batchNumber,
         scope,
         duration,
-        conditionCount: conditions.length,
-        timepointCount: timepoints.length,
-        testCount: tests.length,
+        climaticZone: climaticZone || null,
+        conditions: conditions.map(c => ({ kind: c.kind, temp: c.temp, rh: c.rh })),
+        timepoints: timepointLabels,
+        tests: tests.map(t => ({ name: t.name, unit: t.unit, spec_low: t.spec_low, spec_high: t.spec_high, is_cqa: t.is_cqa })),
       },
       req,
       client
@@ -584,7 +920,7 @@ router.post('/studies', async (req, res) => {
       timepoints: timepointLabels,
       study_status: study.status, // what was stored, not a recomputation
       compliance_status: 'Not Started',
-      latest_timepoint: '0M',
+      latest_timepoint: null, // nothing is sampled at creation
       latest_assay_result: null,
       latest_impurities_result: null,
       latest_water_result: null,
@@ -729,65 +1065,42 @@ router.get('/studies/:id', async (req, res) => {
 
 // POST /api/stability/studies/:id/conditions - Add condition
 router.post('/studies/:id/conditions', async (req, res) => {
-  const client = await pool.connect();
   try {
     const { id } = req.params;
-    const { kind, temp, rh, description } = req.body;
-
-    // Set tenant context for RLS policies — derive from JWT-validated context, not raw headers
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-    if (!tenantId) {
-      return res.status(401).json({ error: 'Tenant context required' });
-    }
-    const safeTenantId = parseInt(tenantId.toString());
-    if (!safeTenantId) {
-      return res.status(401).json({ error: 'Invalid tenant ID' });
-    }
-    await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(safeTenantId)]);
-
-    const result = await client.query(
-      `
-      INSERT INTO stab_conditions (study_id, kind, temp, rh, description)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING *
-    `,
-      [id, kind, temp, rh, description]
-    );
-
-    res.json(result.rows[0]);
-  } catch (error: any) {
-    console.error('Error adding condition:', error);
-    return serverError(res, logger, 'saving conditions', error);
-  } finally {
-    client.release();
+    const { kind, temp, rh, description } = req.body || {};
+    const row = await withTenantClient(async tx => {
+      await ownStudy(tx, id);
+      const { rows } = await tx.query(
+        `INSERT INTO stab_conditions (study_id, kind, temp, rh, description)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *`,
+        [id, kind, temp, rh, description]
+      );
+      await audit(id, 'condition_add', rows[0], req, tx);
+      return rows[0];
+    });
+    res.json(row);
+  } catch (error) {
+    return fail(res, error, 'saving conditions');
   }
 });
 
 // DELETE /api/stability/conditions/:condId - Delete condition
 router.delete('/conditions/:condId', async (req, res) => {
-  const client = await pool.connect();
   try {
     const { condId } = req.params;
-
-    // Set tenant context for RLS policies — derive from JWT-validated context, not raw headers
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-    if (!tenantId) {
-      return res.status(401).json({ error: 'Tenant context required' });
-    }
-    const safeTenantId = parseInt(tenantId.toString());
-    if (!safeTenantId) {
-      return res.status(401).json({ error: 'Invalid tenant ID' });
-    }
-    await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(safeTenantId)]);
-
-    await client.query('DELETE FROM stab_conditions WHERE cond_id = $1', [condId]);
-
+    await withTenantClient(async tx => {
+      // Its timepoints and their results go with it (ON DELETE CASCADE). The
+      // audit record keeps all of them: it kept only the condition row, so the
+      // result values a delete destroyed were recorded nowhere.
+      await ownChild(tx, 'stab_conditions', condId, 'condition');
+      const cascaded = await cascadeOf(tx, 'cond_id', condId);
+      const removed = (await tx.query(`DELETE FROM stab_conditions WHERE cond_id = $1 RETURNING *`, [condId])).rows[0];
+      await audit(removed.study_id, 'condition_delete', { removed, ...cascaded }, req, tx);
+    });
     res.json({ success: true });
-  } catch (error: any) {
-    console.error('Error deleting condition:', error);
-    return serverError(res, logger, 'deleting conditions', error);
-  } finally {
-    client.release();
+  } catch (error) {
+    return fail(res, error, 'deleting conditions');
   }
 });
 
@@ -795,54 +1108,66 @@ router.delete('/conditions/:condId', async (req, res) => {
 router.post('/studies/:id/timepoints', async (req, res) => {
   try {
     const { id } = req.params;
-    const { label, month, planned_date } = req.body;
-
-    // Get all conditions for this study
-    const conditionsResult = await pool.query(
-      'SELECT cond_id FROM stab_conditions WHERE study_id = $1',
-      [id]
-    );
-
-    const timepoints = [];
-    for (const condition of conditionsResult.rows) {
-      const result = await pool.query(
-        `
-        INSERT INTO stab_timepoints (study_id, cond_id, label, month, planned_date)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING *
-      `,
-        [id, condition.cond_id, label, month, planned_date]
-      );
-      timepoints.push(result.rows[0]);
-    }
-
+    const { label, month, planned_date } = req.body || {};
+    const timepoints = await withTenantClient(async tx => {
+      await ownStudy(tx, id);
+      const conditions = (
+        await tx.query('SELECT cond_id FROM stab_conditions WHERE study_id = $1', [id])
+      ).rows;
+      if (!conditions.length) {
+        throw new StabRefusal(409, 'The study has no storage conditions to add a timepoint to');
+      }
+      const added = [];
+      for (const condition of conditions) {
+        const { rows } = await tx.query(
+          `INSERT INTO stab_timepoints (study_id, cond_id, label, month, planned_date)
+           VALUES ($1, $2, $3, $4, $5)
+           RETURNING *`,
+          [id, condition.cond_id, label, month, planned_date]
+        );
+        added.push(rows[0]);
+      }
+      await audit(id, 'tp_add', { label, month, planned_date, count: added.length }, req, tx);
+      return added;
+    });
     res.json(timepoints);
   } catch (error) {
-    console.error('Error adding timepoint:', error);
-    res.status(500).json({ error: 'Failed to add timepoint' });
+    return fail(res, error, 'adding timepoint');
   }
 });
 
 // POST /api/stability/studies/:id/timepoints/:tpId/sample - Set actual sampling date
 router.post('/studies/:id/timepoints/:tpId/sample', async (req, res) => {
   try {
-    const { tpId } = req.params;
-    const { actual_date } = req.body;
-
-    const result = await pool.query(
-      `
-      UPDATE stab_timepoints
-      SET actual_date = $1
-      WHERE tp_id = $2
-      RETURNING *
-    `,
-      [actual_date, tpId]
-    );
-
-    res.json(result.rows[0]);
+    const { id, tpId } = req.params;
+    const { actual_date } = req.body || {};
+    const row = await withTenantClient(async tx => {
+      await ownStudy(tx, id);
+      const before = found(
+        (
+          await tx.query(
+            `SELECT actual_date FROM stab_timepoints WHERE tp_id = $1 AND study_id = $2 FOR UPDATE`,
+            [tpId, id]
+          )
+        ).rows,
+        'timepoint'
+      );
+      const { rows } = await tx.query(
+        `UPDATE stab_timepoints SET actual_date = $1 WHERE tp_id = $2 AND study_id = $3 RETURNING *`,
+        [actual_date, tpId, id]
+      );
+      await audit(
+        id,
+        'tp_actual_date',
+        { tpId, before: before.actual_date, after: rows[0].actual_date },
+        req,
+        tx
+      );
+      return rows[0];
+    });
+    res.json(row);
   } catch (error) {
-    console.error('Error updating sampling date:', error);
-    res.status(500).json({ error: 'Failed to update sampling date' });
+    return fail(res, error, 'updating sampling date');
   }
 });
 
@@ -851,21 +1176,32 @@ router.post('/studies/:id/schedule', async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Get study details
-    const studyResult = await pool.query('SELECT * FROM stab_studies WHERE study_id = $1', [id]);
-    const study = studyResult.rows[0];
-
-    // Get timepoints with planned dates
-    const timepointsResult = await pool.query(
-      `
-      SELECT tp.*, c.kind as condition_kind
-      FROM stab_timepoints tp
-      JOIN stab_conditions c ON tp.cond_id = c.cond_id
-      WHERE tp.study_id = $1 AND tp.planned_date IS NOT NULL
-      ORDER BY tp.planned_date
-    `,
-      [id]
-    );
+    // The study, its planned timepoints, the reminders and their audit record in
+    // one transaction. An unknown study was a TypeError on study.name (500);
+    // the reminders were written with no record.
+    const { study, timepointsResult } = await withTenantClient(async tx => {
+      const study = await ownStudy(tx, id);
+      const timepointsResult = await tx.query(
+        `SELECT tp.*, c.kind as condition_kind
+           FROM stab_timepoints tp
+           JOIN stab_conditions c ON tp.cond_id = c.cond_id
+          WHERE tp.study_id = $1 AND tp.planned_date IS NOT NULL
+          ORDER BY tp.planned_date`,
+        [id]
+      );
+      let created = 0;
+      for (const tp of timepointsResult.rows) {
+        const r = await tx.query(
+          `INSERT INTO stab_reminders (study_id, tp_id, due_date, channel)
+           VALUES ($1, $2, $3, 'ICS')
+           ON CONFLICT DO NOTHING`,
+          [id, tp.tp_id, tp.planned_date]
+        );
+        created += r.rowCount ?? 0;
+      }
+      await audit(id, 'schedule_reminders', { timepoints: timepointsResult.rows.length, reminders_created: created }, req, tx);
+      return { study, timepointsResult };
+    });
 
     // Generate ICS content
     const icsEvents = timepointsResult.rows.map(tp => {
@@ -890,18 +1226,6 @@ router.post('/studies/:id/schedule', async (req, res) => {
       'END:VCALENDAR',
     ].join('\r\n');
 
-    // Create reminders in database
-    for (const tp of timepointsResult.rows) {
-      await pool.query(
-        `
-        INSERT INTO stab_reminders (study_id, tp_id, due_date, channel)
-        VALUES ($1, $2, $3, 'ICS')
-        ON CONFLICT DO NOTHING
-      `,
-        [id, tp.tp_id, tp.planned_date]
-      );
-    }
-
     res.setHeader('Content-Type', 'text/calendar');
     res.setHeader(
       'Content-Disposition',
@@ -909,50 +1233,70 @@ router.post('/studies/:id/schedule', async (req, res) => {
     );
     res.send(icsContent);
   } catch (error) {
-    console.error('Error generating schedule:', error);
-    res.status(500).json({ error: 'Failed to generate schedule' });
+    return fail(res, error, 'generating schedule');
   }
 });
 
 // POST /api/stability/studies/:id/results/import - Import CSV results
+//
+// Columns are the POST /results keys: cond_id|cond_kind, tp_id|label,
+// test_id|test_name, value, unit, pass. All or nothing: a file with any row this
+// study cannot place is refused whole, with the rows and reasons, and nothing is
+// written. This answered 200 "temporarily unavailable" with imported: 0 — a
+// failure presented as a result — and did so after BEGIN, returning the pooled
+// connection with its transaction still open.
 router.post(
   '/studies/:id/results/import',
   receiveSingleFile,
   validateUploadedFile,
   async (req, res) => {
-    const client = await pool.connect();
-
+    const id = req.params.id as string;
+    const csvData = req.file?.buffer.toString('utf8');
+    if (!csvData) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    let records: { line: number; record: Record<string, string> }[];
     try {
-      await client.query('BEGIN');
-
-      const { id } = req.params;
-      const csvData = req.file?.buffer.toString();
-      if (!csvData) {
-        return res.status(400).json({ error: 'No file uploaded' });
-      }
-
-      // Parse CSV - temporarily disabled until papaparse is available
-      // const parseResult = Papa.parse(csvData, {
-      //   header: true,
-      //   skipEmptyLines: true
-      // });
-      // const records = parseResult.data;
-
-      // CSV import is disabled until a CSV parser (papaparse) is wired in.
-      // The parse + per-row upsert into stab_results lived here; it was removed
-      // as dead code once the early return above made it unreachable. Restore it
-      // alongside the parser when the feature is re-enabled.
-      return res.status(200).json({
-        message: 'CSV import feature temporarily unavailable',
-        imported: 0,
-        errors: ['CSV parsing library not available'],
+      records = readCsv(req.file!.buffer);
+    } catch (error: any) {
+      return res.status(400).json({ error: 'The file is not valid CSV', detail: String(error?.message ?? error) });
+    }
+    if (!records.length) {
+      return res.status(400).json({ error: 'The file has no result rows' });
+    }
+    try {
+      const imported = await withTenantClient(async tx => {
+        await ownStudy(tx, id);
+        const refused: { line: number; error: string }[] = [];
+        const created: any[] = [];
+        for (const { line, record } of records) {
+          const outcome = await insertResult(tx, id, record);
+          if (typeof outcome === 'string') refused.push({ line, error: outcome });
+          else created.push(outcome);
+        }
+        if (refused.length) {
+          throw new StabRefusal(422, 'No results were imported: some rows cannot be placed in this study', refused);
+        }
+        // The values created, not only their count.
+        await audit(
+          id,
+          'results_import',
+          {
+            file: req.file?.originalname ?? null,
+            count: created.length,
+            results: created.map(r => ({
+              result_id: r.result_id, cond_id: r.cond_id, tp_id: r.tp_id, test_id: r.test_id,
+              value: r.value, unit: r.unit, pass: r.pass,
+            })),
+          },
+          req,
+          tx
+        );
+        return created.length;
       });
+      res.json({ imported });
     } catch (error) {
-      await client.query('ROLLBACK');
-      console.error('Error importing results:', error);
-      res.status(500).json({ error: 'Failed to import results' });
-    } finally {
-      client.release();
+      return fail(res, error, 'importing results');
     }
   }
 );
@@ -994,23 +1338,20 @@ router.get('/studies/:id/trends', async (req, res) => {
     const result = await pool.query(query, params);
     const trendData = result.rows;
 
-    // Process data for sparklines
-    const sparklineData = trendData.map(row => ({
-      month: row.month,
-      value: parseFloat(row.value) || 0,
-      label: row.timepoint,
-      condition: row.condition,
-    }));
+    // Numeric results only: a missing or non-numeric value was plotted as 0.
+    const sparklineData = trendData
+      .map(row => ({ month: row.month, value: num(row.value), label: row.timepoint, condition: row.condition }))
+      .filter(p => p.value !== null);
 
-    // Calculate trend direction
-    const getTrendDirection = (data: any[]) => {
-      if (data.length < 2) return 'stable';
-      const first = parseFloat(data[0].value) || 0;
-      const last = parseFloat(data[data.length - 1].value) || 0;
-      const diff = last - first;
-      if (Math.abs(diff) < 0.5) return 'stable';
-      return diff > 0 ? 'increasing' : 'decreasing';
-    };
+    // Direction of the recorded change, within ONE condition only (across
+    // conditions it compares a 25 °C point with a 40 °C one). It was 'stable'
+    // for any change under 0.5 in whatever unit the test uses, a verdict with no
+    // basis; the change is reported and its sign named.
+    const conditionsSeen = new Set(sparklineData.map(p => p.condition));
+    const change =
+      conditionsSeen.size === 1 && sparklineData.length >= 2
+        ? (sparklineData[sparklineData.length - 1].value as number) - (sparklineData[0].value as number)
+        : null;
 
     res.json({
       raw: trendData,
@@ -1018,7 +1359,9 @@ router.get('/studies/:id/trends', async (req, res) => {
       summary: {
         count: trendData.length,
         latest_value: trendData.length > 0 ? trendData[trendData.length - 1].value : null,
-        trend_direction: getTrendDirection(trendData),
+        numeric_count: sparklineData.length,
+        change,
+        trend_direction: change === null ? null : change > 0 ? 'increasing' : change < 0 ? 'decreasing' : 'unchanged',
         last_updated: trendData.length > 0 ? trendData[trendData.length - 1].created_at : null,
       },
     });
@@ -1062,42 +1405,11 @@ router.get('/studies/:id/results', async (req, res) => {
   }
 });
 
-// PATCH /api/stability/studies/results/:id - Update result
-router.patch('/studies/results/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { value, unit, pass } = req.body;
-
-    const result = await pool.query(
-      `
-      UPDATE stab_results
-      SET value = $2, unit = $3, pass = $4, created_at = NOW()
-      WHERE result_id = $1
-      RETURNING *
-    `,
-      [id, value, unit, pass]
-    );
-
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error('Error updating result:', error);
-    res.status(500).json({ error: 'Failed to update result' });
-  }
-});
-
-// DELETE /api/stability/studies/results/:id - Delete result
-router.delete('/studies/results/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    await pool.query('DELETE FROM stab_results WHERE result_id = $1', [id]);
-
-    res.json({ ok: true });
-  } catch (error) {
-    console.error('Error deleting result:', error);
-    res.status(500).json({ error: 'Failed to delete result' });
-  }
-});
+// PATCH and DELETE /api/stability/studies/results/:id — REMOVED 2026-09-23.
+// Second copies of PATCH/DELETE /results/:resultId (below), which are the
+// canonical, audited paths. This PATCH also set created_at = NOW() on every edit,
+// erasing when a result was first recorded, and nulled any field not sent. No
+// client called either copy.
 
 // GET /api/stability/studies/:id/validate - Validate study design
 router.get('/studies/:id/validate', async (req, res) => {
@@ -1208,15 +1520,18 @@ router.post('/studies/:id/p8/push', async (req, res) => {
     const tokens = {
       STUDY_NAME: study.name,
       STUDY_CODE: study.code,
-      CLIMATIC_ZONE: study.climatic_zone || 'Zone II',
+      // Unrecorded study facts are marked as such, not filled in: these were
+      // 'Zone II', 24 months and "Store in a dry place at room temperature",
+      // stored in stab_exports and pushed into the authoring markdown.
+      CLIMATIC_ZONE: study.climatic_zone || '[NOT RECORDED: climatic zone]',
       STORAGE_CONDITIONS: conds
         .map((c: any) => `${c.kind}: ${c.temp}${c.rh ? '/' + c.rh : ''}`)
         .join('; '),
       TEST_PARAMETERS: tests
         .map((t: any) => `${t.name}${t.unit ? ' (' + t.unit + ')' : ''}`)
         .join(', '),
-      DURATION_MONTHS: study.duration_months || 24,
-      LABEL_STORAGE: study.label_storage || 'Store in a dry place at room temperature',
+      DURATION_MONTHS: study.duration_months ?? '[NOT RECORDED: duration]',
+      LABEL_STORAGE: study.label_storage || '[NOT RECORDED: label storage statement]',
       // Do not certify a compliance verdict in a regulated submission document:
       // conformance to ICH Q1A(R2) is determined by evaluating completed results
       // against acceptance criteria, which this token generator does not do.
@@ -1253,8 +1568,10 @@ This stability study follows ICH Q1A(R2) guidelines for ${tokens.CLIMATIC_ZONE} 
 Recommended label storage: ${tokens.LABEL_STORAGE}
 `;
 
-    // Store export record
-    await pool.query(
+    // Store the export record and its audit record together.
+    await withTenantClient(async tx => {
+      await ownStudy(tx, id);
+      await tx.query(
       `
       -- Column names corrected: the table declares tokens / markdown /
       -- created_at (db/migrations/030_stability_results.sql), not tokens_json /
@@ -1266,9 +1583,9 @@ Recommended label storage: ${tokens.LABEL_STORAGE}
       VALUES ($1, 'p8_authoring', $2, $3)
     `,
       [id, JSON.stringify(tokens), markdown]
-    );
-
-    await audit(id, 'p8_push_authoring', { tokens_count: Object.keys(tokens).length }, req);
+      );
+      await audit(id, 'p8_push_authoring', { tokens_count: Object.keys(tokens).length }, req, tx);
+    });
 
     res.json({
       ok: true,
@@ -1277,8 +1594,7 @@ Recommended label storage: ${tokens.LABEL_STORAGE}
       message: 'P.8 content pushed to authoring successfully',
     });
   } catch (error) {
-    console.error('Error pushing P.8 to authoring:', error);
-    res.status(500).json({ error: 'Failed to push P.8 to authoring' });
+    return fail(res, error, 'pushing P.8 to authoring');
   }
 });
 
@@ -1312,7 +1628,7 @@ router.post('/studies/:id/p8/refresh', async (req, res) => {
       '[STUDY_CODE]': study.code,
       '[DOSAGE_FORM]': study.dosage_form || 'Not specified',
       '[STRENGTH]': study.strength || 'Not specified',
-      '[CLIMATIC_ZONE]': study.climatic_zone || 'IVb',
+      '[CLIMATIC_ZONE]': study.climatic_zone || '[NOT RECORDED: climatic zone]', // was 'IVb'
       '[DURATION]': `${study.duration_months} months`,
       '[STATUS]': study.status,
       '[RESULTS_SUMMARY]': resultsResult.rows
@@ -1327,26 +1643,43 @@ router.post('/studies/:id/p8/refresh', async (req, res) => {
   }
 });
 
-// PATCH /api/stability/tests/:testId - Update test (link to analytical method)
+// PATCH /api/stability/tests/:testId - Update a test's method link and/or spec limits
+//
+// Only the fields sent change; a field sent as null clears it. This wrote all
+// three from the body, so linking a method (the only field the second copy of
+// this route, now removed, ever sent) set both specification limits to NULL.
+const TEST_FIELDS = ['method_id', 'spec_low', 'spec_high'] as const;
 router.patch('/tests/:testId', async (req, res) => {
   try {
     const { testId } = req.params;
-    const { method_id, spec_low, spec_high } = req.body;
-
-    const result = await pool.query(
-      `
-      UPDATE stab_tests
-      SET method_id = $1, spec_low = $2, spec_high = $3
-      WHERE test_id = $4
-      RETURNING *
-    `,
-      [method_id, spec_low, spec_high, testId]
-    );
-
-    res.json(result.rows[0]);
+    const body = req.body || {};
+    const fields = TEST_FIELDS.filter(f => Object.prototype.hasOwnProperty.call(body, f));
+    if (!fields.length) {
+      return res.status(400).json({ error: 'Nothing to update', allowed: TEST_FIELDS });
+    }
+    const row = await withTenantClient(async tx => {
+      const before = await ownChild(tx, 'stab_tests', testId, 'test');
+      const { rows } = await tx.query(
+        `UPDATE stab_tests SET ${fields.map((f, i) => `${f} = $${i + 2}`).join(', ')}
+         WHERE test_id = $1 RETURNING *`,
+        [testId, ...fields.map(f => body[f] ?? null)]
+      );
+      await audit(
+        before.study_id,
+        'test_update',
+        {
+          testId,
+          before: Object.fromEntries(fields.map(f => [f, before[f]])),
+          after: Object.fromEntries(fields.map(f => [f, rows[0][f]])),
+        },
+        req,
+        tx
+      );
+      return rows[0];
+    });
+    res.json(row);
   } catch (error) {
-    console.error('Error updating test:', error);
-    res.status(500).json({ error: 'Failed to update test' });
+    return fail(res, error, 'updating test');
   }
 });
 
@@ -1356,31 +1689,24 @@ router.patch('/tests/:testId', async (req, res) => {
 router.patch('/conditions/:condId', async (req, res) => {
   try {
     const condId = req.params.condId;
-    const { kind, temp, rh, description } = req.body;
-
-    await pool.query(
-      `
-      UPDATE stab_conditions
-      SET kind = COALESCE($2, kind),
-          temp = COALESCE($3, temp),
-          rh = COALESCE($4, rh),
-          description = COALESCE($5, description)
-      WHERE cond_id = $1`,
-      [condId, kind || null, temp || null, rh || null, description || null]
-    );
-
-    // Find study_id for audit
-    const result = await pool.query(`SELECT study_id FROM stab_conditions WHERE cond_id = $1`, [
-      condId,
-    ]);
-    if (result.rows[0]) {
-      await audit(result.rows[0].study_id, 'condition_update', { condId, body: req.body }, req);
-    }
-
+    const { kind, temp, rh, description } = req.body || {};
+    await withTenantClient(async tx => {
+      const before = await ownChild(tx, 'stab_conditions', condId, 'condition');
+      const { rows } = await tx.query(
+        `UPDATE stab_conditions
+            SET kind = COALESCE($2, kind),
+                temp = COALESCE($3, temp),
+                rh = COALESCE($4, rh),
+                description = COALESCE($5, description)
+          WHERE cond_id = $1
+          RETURNING *`,
+        [condId, kind || null, temp || null, rh || null, description || null]
+      );
+      await audit(before.study_id, 'condition_update', { condId, before, after: rows[0] }, req, tx);
+    });
     res.json({ ok: true });
   } catch (error) {
-    console.error('Error updating condition:', error);
-    res.status(500).json({ error: 'Failed to update condition' });
+    return fail(res, error, 'updating condition');
   }
 });
 
@@ -1388,29 +1714,24 @@ router.patch('/conditions/:condId', async (req, res) => {
 router.patch('/timepoints/:tpId', async (req, res) => {
   try {
     const tpId = req.params.tpId;
-    const { label, month, planned_date } = req.body;
-
-    await pool.query(
-      `
-      UPDATE stab_timepoints
-      SET label = COALESCE($2, label),
-          month = COALESCE($3, month),
-          planned_date = COALESCE($4::date, planned_date)
-      WHERE tp_id = $1`,
-      [tpId, label || null, month || null, planned_date || null]
-    );
-
-    const result = await pool.query(`SELECT study_id FROM stab_timepoints WHERE tp_id = $1`, [
-      tpId,
-    ]);
-    if (result.rows[0]) {
-      await audit(result.rows[0].study_id, 'tp_update', { tpId, body: req.body }, req);
-    }
-
+    const { label, month, planned_date } = req.body || {};
+    await withTenantClient(async tx => {
+      const before = await ownChild(tx, 'stab_timepoints', tpId, 'timepoint');
+      const { rows } = await tx.query(
+        `UPDATE stab_timepoints
+            SET label = COALESCE($2, label),
+                month = COALESCE($3, month),
+                planned_date = COALESCE($4::date, planned_date)
+          WHERE tp_id = $1
+          RETURNING *`,
+        // '' is "not sent" for every field here; month 0 is a month.
+        [tpId, label || null, month === '' || month === undefined || month === null ? null : month, planned_date || null]
+      );
+      await audit(before.study_id, 'tp_update', { tpId, before, after: rows[0] }, req, tx);
+    });
     res.json({ ok: true });
   } catch (error) {
-    console.error('Error updating timepoint:', error);
-    res.status(500).json({ error: 'Failed to update timepoint' });
+    return fail(res, error, 'updating timepoint');
   }
 });
 
@@ -1418,20 +1739,16 @@ router.patch('/timepoints/:tpId', async (req, res) => {
 router.delete('/timepoints/:tpId', async (req, res) => {
   try {
     const tpId = req.params.tpId;
-
-    const result = await pool.query(`SELECT study_id FROM stab_timepoints WHERE tp_id = $1`, [
-      tpId,
-    ]);
-    await pool.query(`DELETE FROM stab_timepoints WHERE tp_id = $1`, [tpId]);
-
-    if (result.rows[0]) {
-      await audit(result.rows[0].study_id, 'tp_delete', { tpId }, req);
-    }
-
+    await withTenantClient(async tx => {
+      await ownChild(tx, 'stab_timepoints', tpId, 'timepoint');
+      // Its results go with it (ON DELETE CASCADE); the record keeps them.
+      const cascaded = await cascadeOf(tx, 'tp_id', tpId);
+      const removed = (await tx.query(`DELETE FROM stab_timepoints WHERE tp_id = $1 RETURNING *`, [tpId])).rows[0];
+      await audit(removed.study_id, 'tp_delete', { tpId, removed, ...cascaded }, req, tx);
+    });
     res.json({ ok: true });
   } catch (error) {
-    console.error('Error deleting timepoint:', error);
-    res.status(500).json({ error: 'Failed to delete timepoint' });
+    return fail(res, error, 'deleting timepoint');
   }
 });
 
@@ -1460,36 +1777,41 @@ router.post('/studies/:id/inuse', async (req, res) => {
       microbial_limits,
       preservative,
       start_on,
-    } = req.body;
+    } = req.body || {};
+    const values = [
+      !!multi_dose,
+      opened_frequency || null,
+      hold_time_days === '' || hold_time_days === undefined ? null : hold_time_days,
+      microbial_limits || null,
+      preservative || null,
+      start_on || null,
+    ];
 
-    await pool.query(
-      `
-      INSERT INTO stab_inuse (study_id, multi_dose, opened_frequency, hold_time_days, microbial_limits, preservative, start_on, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, now())
-      ON CONFLICT (study_id) DO UPDATE SET
-        multi_dose = $2,
-        opened_frequency = $3,
-        hold_time_days = $4,
-        microbial_limits = $5,
-        preservative = $6,
-        start_on = $7,
-        updated_at = now()`,
-      [
-        id,
-        !!multi_dose,
-        opened_frequency || null,
-        hold_time_days || null,
-        microbial_limits || null,
-        preservative || null,
-        start_on || null,
-      ]
-    );
-
-    await audit(id, 'inuse_update', req.body, req);
+    // One in-use configuration per study. This was `ON CONFLICT (study_id)`, and
+    // stab_inuse has no unique constraint on study_id on any deployed database,
+    // so every save failed (42P10). The study row is locked instead, which
+    // serialises concurrent saves for the study without new schema.
+    await withTenantClient(async tx => {
+      await ownStudy(tx, id);
+      const before = (await tx.query(`SELECT * FROM stab_inuse WHERE study_id = $1`, [id])).rows[0] ?? null;
+      const { rows } = before
+        ? await tx.query(
+            `UPDATE stab_inuse SET multi_dose = $2, opened_frequency = $3, hold_time_days = $4,
+                    microbial_limits = $5, preservative = $6, start_on = $7, updated_at = now()
+              WHERE study_id = $1 RETURNING *`,
+            [id, ...values]
+          )
+        : await tx.query(
+            `INSERT INTO stab_inuse (study_id, multi_dose, opened_frequency, hold_time_days,
+                                     microbial_limits, preservative, start_on, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, now()) RETURNING *`,
+            [id, ...values]
+          );
+      await audit(id, 'inuse_update', { before, after: rows[0] }, req, tx);
+    });
     res.json({ ok: true });
   } catch (error) {
-    console.error('Error updating in-use config:', error);
-    res.status(500).json({ error: 'Failed to update in-use config' });
+    return fail(res, error, 'updating in-use config');
   }
 });
 
@@ -1514,22 +1836,40 @@ router.get('/studies/:id/oot/rules', async (req, res) => {
 router.post('/studies/:id/oot/rules', async (req, res) => {
   try {
     const id = req.params.id;
-    const { test_id, rules } = req.body;
+    const { test_id, rules } = req.body || {};
+    const testId = test_id || null;
 
-    await pool.query(
-      `
-      INSERT INTO stab_oot_rules (study_id, test_id, rules)
-      VALUES ($1, $2, $3)
-      ON CONFLICT ON CONSTRAINT stab_oot_rules_study_unique
-      DO UPDATE SET rules = $3`,
-      [id, test_id || null, JSON.stringify(rules || [])]
-    );
-
-    await audit(id, 'oot_rules_update', req.body, req);
+    // One rule set per (study, test), the study-wide set being test_id NULL —
+    // the key idx_stab_oot_rules_unique indexes. This was `ON CONFLICT ON
+    // CONSTRAINT stab_oot_rules_study_unique`, a constraint no migration creates,
+    // so every save failed (42704). Update-or-insert under the study row lock.
+    await withTenantClient(async tx => {
+      await ownStudy(tx, id);
+      const before =
+        (
+          await tx.query(
+            `SELECT rules FROM stab_oot_rules WHERE study_id = $1 AND test_id IS NOT DISTINCT FROM $2::uuid`,
+            [id, testId]
+          )
+        ).rows[0]?.rules ?? null;
+      const json = JSON.stringify(rules || []);
+      if (before !== null) {
+        await tx.query(
+          `UPDATE stab_oot_rules SET rules = $3 WHERE study_id = $1 AND test_id IS NOT DISTINCT FROM $2::uuid`,
+          [id, testId, json]
+        );
+      } else {
+        await tx.query(`INSERT INTO stab_oot_rules (study_id, test_id, rules) VALUES ($1, $2, $3)`, [
+          id,
+          testId,
+          json,
+        ]);
+      }
+      await audit(id, 'oot_rules_update', { test_id: testId, before, after: rules || [] }, req, tx);
+    });
     res.json({ ok: true });
   } catch (error) {
-    console.error('Error updating OOT rules:', error);
-    res.status(500).json({ error: 'Failed to update OOT rules' });
+    return fail(res, error, 'updating OOT rules');
   }
 });
 
@@ -1652,7 +1992,16 @@ router.post('/studies/:id/p8/export', async (req, res) => {
       `Label storage: ${study.label_storage || 'TBD'}`,
     ].join('\n');
 
-    if (fmt === 'pdf') {
+    // Record the export before any byte of it leaves. It was audited after the
+    // response had been sent, so an audit failure could not be reported and the
+    // export went unrecorded.
+    const exportFmt = fmt === 'pdf' ? 'pdf' : 'txt';
+    await withTenantClient(async tx => {
+      await ownStudy(tx, id);
+      await audit(id, 'p8_export', { fmt: exportFmt }, req, tx);
+    });
+
+    if (exportFmt === 'pdf') {
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="P8_${study.code}.pdf"`);
 
@@ -1665,19 +2014,18 @@ router.post('/studies/:id/p8/export', async (req, res) => {
       doc.moveDown();
       doc.fontSize(11).text(p8Content);
       doc.end();
-
-      await audit(id, 'p8_export', { fmt: 'pdf' }, req);
     } else {
       // Return as text for now (ZIP functionality temporarily disabled)
       res.setHeader('Content-Type', 'text/plain');
       res.setHeader('Content-Disposition', `attachment; filename="P8_${study.code}.txt"`);
       res.send(p8Content);
-
-      await audit(id, 'p8_export', { fmt: 'txt' }, req);
     }
   } catch (error) {
-    console.error('Error exporting P.8:', error);
-    res.status(500).json({ error: 'Failed to export P.8' });
+    if (res.headersSent) {
+      logger.error('P.8 export failed after the response began', { error: String((error as any)?.message ?? error) });
+      return res.end();
+    }
+    return fail(res, error, 'exporting P.8');
   }
 });
 
@@ -1704,286 +2052,177 @@ router.get('/studies/:id/audit', async (req, res) => {
 // AI Services endpoints
 router.post('/studies/:id/ai/explain', async (req, res) => {
   try {
-    const { id } = req.params;
-    const explanation = await aiExplainStability(id);
-    res.json({ explanation });
+    const ctx = await withTenantClient(tx => studyContext(tx, req.params.id));
+    const explanation = await aiExplainStability(ctx);
+    res.json({ explanation, grounded_on: { results: ctx.results.length, assessments: ctx.assessments.length } });
   } catch (error) {
-    console.error('Error generating explanation:', error);
-    res.status(500).json({ error: 'Failed to generate explanation' });
+    return aiFail(res, error, 'explaining the study');
   }
 });
 
 router.get('/studies/:id/ai/coach', async (req, res) => {
   try {
-    const { id } = req.params;
-    const priorities = await aiCoachPriorities(id);
-    res.json({ priorities });
+    const ctx = await withTenantClient(tx => studyContext(tx, req.params.id));
+    const priorities = await aiCoachPriorities(ctx);
+    res.json({ priorities, grounded_on: { results: ctx.results.length, assessments: ctx.assessments.length } });
   } catch (error) {
-    console.error('Error getting AI coaching:', error);
-    res.status(500).json({ error: 'Failed to get AI coaching' });
+    return aiFail(res, error, 'prioritising the study');
   }
 });
 
 router.post('/studies/:id/ai/fix', async (req, res) => {
   try {
-    const { id } = req.params;
-    const { issues } = req.body;
-    const fixPlan = await aiFixPlanFromIssues(id, issues);
-    res.json({ fixPlan });
+    const ctx = await withTenantClient(tx => studyContext(tx, req.params.id));
+    const fixPlan = await aiFixPlanFromIssues(ctx, req.body?.issues);
+    res.json({ fixPlan, grounded_on: { results: ctx.results.length, assessments: ctx.assessments.length } });
   } catch (error) {
-    console.error('Error generating fix plan:', error);
-    res.status(500).json({ error: 'Failed to generate fix plan' });
+    return aiFail(res, error, 'drafting a fix plan');
   }
 });
 
 router.post('/studies/:id/ai/draft-p8', async (req, res) => {
   try {
-    const { id } = req.params;
-    const draft = await aiDraftP8(id);
-    res.json({ draft });
+    const ctx = await withTenantClient(tx => studyContext(tx, req.params.id));
+    const draft = await aiDraftP8(ctx);
+    res.json({ draft, grounded_on: { results: ctx.results.length, assessments: ctx.assessments.length } });
   } catch (error) {
-    console.error('Error drafting P.8:', error);
-    res.status(500).json({ error: 'Failed to draft P.8' });
+    return aiFail(res, error, 'drafting P.8');
   }
 });
 
 router.post('/studies/:id/ai/root-cause', async (req, res) => {
   try {
-    const { id } = req.params;
-    const { oosData } = req.body;
-    const analysis = await aiRootCauseOOS(id, oosData);
-    res.json({ analysis });
+    const ctx = await withTenantClient(tx => studyContext(tx, req.params.id));
+    const analysis = await aiRootCauseOOS(ctx, req.body?.oosData);
+    res.json({ analysis, grounded_on: { results: ctx.results.length, assessments: ctx.assessments.length } });
   } catch (error) {
-    console.error('Error performing root cause analysis:', error);
-    res.status(500).json({ error: 'Failed to perform root cause analysis' });
+    return aiFail(res, error, 'analysing the OOS');
   }
 });
 
-router.post('/studies/:id/ai/label', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const recommendation = await aiRecommendLabelStorage(id);
-
-    // Update study with recommendation
-    await pool.query(
-      `
-      UPDATE stab_studies
-      SET label_storage = $1
-      WHERE study_id = $2
-    `,
-      [recommendation, id]
-    );
-
-    res.json({ recommendation });
-  } catch (error) {
-    console.error('Error generating label recommendation:', error);
-    res.status(500).json({ error: 'Failed to generate label recommendation' });
-  }
+router.post('/studies/:id/ai/label', (_req, res) => {
+  // RETIRED 2026-09-23. This asked a model to "recommend the labelled storage
+  // conditions and shelf life based on the stability data" while passing it only
+  // the study id — no data — and wrote what came back into stab_studies.
+  // label_storage, unaudited: an object (serialised as JSON) on success, and the
+  // "temporarily unavailable" placeholder text on failure. label_storage feeds the
+  // P.8 push and export tokens. A shelf life and label statement are conclusions
+  // from ICH Q1E evaluation of the study's results, a deterministic calculation
+  // (GET /studies/:id/ai/t90, server/services/cmc/shelf-life.ts) and a human
+  // decision; a model does not supply them
+  // (CLAUDE.md RULE 2). Nothing was changed.
+  res.status(410).json({
+    error: 'STABILITY_LABEL_RECOMMENDATION_RETIRED',
+    message:
+      'Label storage is not set from a model recommendation. The ICH Q1E shelf-life estimate from this study\'s results is GET /studies/:id/ai/t90?test=<name>; the label statement is a reviewed decision. Nothing was changed.',
+  });
 });
 
+// GET /studies/:id/ai/t90?test=<name>&condition=LT
+//
+// The ICH Q1E shelf-life estimate from the study's OWN recorded results for one
+// test at one storage condition (long-term by default), against the limit the
+// test records: server/services/cmc/shelf-life.ts, the platform's one Q1E
+// engine. This returned a constant — 61.5 months, "high — supports a 24-month
+// shelf life claim" — for any study and any id (simpleShelfLifeT90, removed).
 router.get('/studies/:id/ai/t90', async (req, res) => {
+  const testName = String(req.query.test ?? '').trim();
+  const condition = String(req.query.condition ?? 'LT').toUpperCase();
+  if (!testName) return res.status(400).json({ error: 'test required (the test name as recorded)' });
   try {
-    const { id } = req.params;
-    const { test, condition } = req.query;
-    const t90 = await simpleShelfLifeT90(id, test as string, condition as string);
-    res.json({ t90 });
+    const series = await withTenantClient(async tx => {
+      await ownStudy(tx, req.params.id, { lock: false });
+      return (await studySeries(tx, req.params.id, testName)).find(g => g.condition === condition) ?? null;
+    });
+    if (!series) {
+      return res.status(422).json({ error: `No results recorded for ${testName} at ${condition}` });
+    }
+    if (!series.criterion) {
+      return res.status(422).json({ error: `${testName} records no acceptance criterion; a shelf life cannot be estimated against an assumed one` });
+    }
+    let estimate;
+    try {
+      estimate = estimateShelfLife({
+        data: series.points,
+        specLimit: series.criterion.limit,
+        direction: series.criterion.direction,
+      });
+    } catch (error: any) {
+      // Too few points, or no variation in time: the engine says which.
+      return res.status(422).json({ error: 'Shelf life not estimated', detail: String(error?.message ?? error) });
+    }
+    res.json({
+      test: series.test_name,
+      condition,
+      criterion: series.criterion,
+      pointsUsed: series.points.length,
+      nonNumericResults: series.nonNumeric,
+      estimate,
+    });
   } catch (error) {
-    console.error('Error calculating T90:', error);
-    res.status(500).json({ error: 'Failed to calculate T90' });
+    return fail(res, error, 'estimating shelf life');
   }
 });
-// --- OOT Surveillance engine (Western Electric rules) ---
-function mean(a: number[]) {
-  return a.reduce((s, v) => s + v, 0) / a.length;
-}
-function sd(a: number[]) {
-  const m = mean(a);
-  const n = a.length;
-  return n > 1 ? Math.sqrt(a.reduce((s, v) => s + (v - m) * (v - m), 0) / (n - 1)) : 0;
-}
-function checkWE(series: number[], rules: string[]) {
-  const b: any = {};
-  const m = mean(series),
-    s = sd(series);
-  if (series.length < 3) return { m, s, b }; // Relaxed from 5 to 3
 
-  // Lower thresholds for pharmaceutical stability data detection
-  // WE1: any beyond 2.5σ (relaxed from 3σ for stability data)
-  if (rules.includes('WE1') && series.some(v => v > m + 2.5 * s || v < m - 2.5 * s)) b.WE1 = true;
-
-  // WE2: 2 of 3 beyond 1.5σ same side (relaxed from 2σ)
-  if (rules.includes('WE2'))
-    for (let i = 2; i < series.length; i++) {
-      const w = series.slice(i - 2, i + 1);
-      const above = w.filter(v => v > m + 1.5 * s).length;
-      const below = w.filter(v => v < m - 1.5 * s).length;
-      if (above >= 2 || below >= 2) {
-        b.WE2 = true;
-        break;
-      }
-    }
-
-  // WE3: 3 of 4 beyond 1σ same side (relaxed from 4 of 5)
-  if (rules.includes('WE3') && series.length >= 4) {
-    for (let i = 3; i < series.length; i++) {
-      const w = series.slice(i - 3, i + 1);
-      const hi = w.filter(v => v > m + s).length,
-        lo = w.filter(v => v < m - s).length;
-      if (hi >= 3 || lo >= 3) {
-        b.WE3 = true;
-        break;
-      }
+// --- OOT surveillance ---
+//
+// One method, the platform's: the PhRMA regression control chart in
+// server/services/cmc/stability-trending.ts, against each test's RECORDED
+// acceptance criterion. This router had its own "Western Electric" check with
+// thresholds relaxed to 2.5σ / 1.5σ / 3-of-4 / 5-in-a-row while still calling
+// them WE1–WE4, and it filled each flagged item with a specification limit it
+// invented (mean ± 3 SD), investigator 'System' and a closure date 30 days out.
+// The study-scoped alias returned the study's raw results. A signal here is a
+// detection for review; investigation state, owner and dates belong to a CAPA.
+async function ootItems(tx: PoolClient, studyIds: string[], testName?: string) {
+  const items: any[] = [];
+  for (const studyId of studyIds) {
+    for (const g of await studySeries(tx, studyId, testName)) {
+      const assessment = assessTrend(g.points, g.criterion);
+      items.push({
+        study_id: studyId,
+        test: g.test_name,
+        condition: g.condition,
+        unit: g.unit,
+        nonNumericResults: g.nonNumeric,
+        assessment,
+        signal: assessment.ok ? assessment.outOfTrend.length > 0 : null,
+      });
     }
   }
-
-  // WE4: 5 consecutive on one side of mean (relaxed from 8)
-  if (rules.includes('WE4')) {
-    let run = 0;
-    for (const v of series) {
-      run = v > m ? (run >= 0 ? run + 1 : 1) : v < m ? (run <= 0 ? run - 1 : -1) : 0;
-      if (Math.abs(run) >= 5) {
-        b.WE4 = true;
-        break;
-      }
-    }
-  }
-
-  // Additional trend detection for degradation patterns
-  if (rules.includes('TREND') || rules.includes('WE1')) {
-    const degradationTrend =
-      series.length >= 4 &&
-      (series[series.length - 1] < series[0] - s || series[series.length - 1] > series[0] + s);
-    if (degradationTrend) b.TREND = true;
-  }
-
-  return { m, s, b };
+  return items;
 }
 
-// ALIAS 1: global surveillance over all studies (optional study filter)
+// ALIAS 1: across the tenant's studies (optional study filter)
 // GET /api/stability/oot-surveillance?studyId=<uuid>&test=<name>
 router.get('/oot-surveillance', async (req, res) => {
-  const studyId = (req.query.studyId as string) || '';
-  const testNm = ((req.query.test as string) || '').toLowerCase();
-
+  const studyId = String(req.query.studyId ?? '');
+  const testName = String(req.query.test ?? '') || undefined;
   try {
-    // Build query to get time series data
-    let sql = `
-      SELECT
-        s.study_id, s.code, s.name as study_name,
-        t.name as test_name, c.kind as condition_kind,
-        ARRAY_AGG(r.value::float ORDER BY tp.month) as values,
-        ARRAY_AGG(tp.month ORDER BY tp.month) as timepoints
-      FROM stab_studies s
-      JOIN stab_results r ON s.study_id = r.study_id
-      JOIN stab_timepoints tp ON r.tp_id = tp.tp_id
-      JOIN stab_conditions c ON r.cond_id = c.cond_id
-      JOIN stab_tests t ON r.test_id = t.test_id
-      WHERE r.value IS NOT NULL
-    `;
-
-    const params: any[] = [];
-    if (studyId) {
-      sql += ` AND s.study_id = $${params.length + 1}`;
-      params.push(studyId);
-    }
-
-    if (testNm) {
-      sql += ` AND LOWER(t.name) = $${params.length + 1}`;
-      params.push(testNm);
-    }
-
-    sql += `
-      GROUP BY s.study_id, s.code, s.name, t.name, c.kind
-      HAVING COUNT(r.result_id) >= 5
-      ORDER BY s.name, t.name, c.kind
-    `;
-
-    const { rows } = await pool.query(sql, params);
-
-    const items: any[] = [];
-
-    for (const row of rows) {
-      const series = row.values as number[];
-      const rules = ['WE1', 'WE2', 'WE3']; // Default rules
-
-      const { m, s, b } = checkWE(series, rules);
-
-      // Flag a series only when a real signal is present: a Western Electric
-      // rule break from checkWE (b), or a genuine trend — first-to-last shift
-      // beyond 2 SD, or any point beyond 2.5 SD from the mean. (An earlier
-      // version's comment claimed it "forced" a trigger for demonstration; it
-      // does not — detection is computed from the real series statistics.)
-      const hasSignificantTrend =
-        series.length >= 5 &&
-        (Math.abs(series[0] - series[series.length - 1]) > s * 2 ||
-          series.some(v => Math.abs(v - m) > s * 2.5));
-
-      if (Object.keys(b).length > 0 || hasSignificantTrend) {
-        const triggeredRules = Object.keys(b);
-        if (hasSignificantTrend && triggeredRules.length === 0) {
-          triggeredRules.push('TREND');
-        }
-
-        items.push({
-          id: `${row.study_id}-${row.test_name.replace(/\s+/g, '')}-${row.condition_kind}`,
-          study_id: row.study_id,
-          code: row.code,
-          study_name: row.study_name,
-          test_parameter: row.test_name,
-          condition: `${row.condition_kind}: Storage Condition`,
-          rules_triggered: triggeredRules,
-          stats: {
-            mean: parseFloat(m.toFixed(3)),
-            sd: parseFloat(s.toFixed(3)),
-            n: series.length,
-          },
-          // Auto-detected statistical signal — NOT yet investigated/confirmed.
-          // 'confirmed' would overstate the investigation state of an OOT signal
-          // in a regulated stability surface; it is 'detected' until reviewed.
-          status: 'detected',
-          detected_date: new Date().toISOString(),
-          result_value: parseFloat(series[series.length - 1].toFixed(2)),
-          specification_limit: `${(m - 3 * s).toFixed(1)} - ${(m + 3 * s).toFixed(1)}`,
-          deviation_percent: parseFloat(
-            Math.abs(((series[series.length - 1] - m) / m) * 100).toFixed(1)
-          ),
-          investigator: 'System',
-          capa_required: triggeredRules.includes('WE1'),
-          target_closure_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          investigation_notes: `Triggered rules: ${triggeredRules.join(', ')}. Series: [${series
-            .map(v => v.toFixed(1))
-            .join(', ')}]. Statistics: mean=${m.toFixed(2)}, sd=${s.toFixed(2)}`,
-          timepoints: row.timepoints,
-          values: series.map(v => parseFloat(v.toFixed(2))),
-        });
-      }
-    }
-
-    res.json(items);
+    const items = await withTenantClient(async tx => {
+      const ids = studyId
+        ? [(await ownStudy(tx, studyId, { lock: false })).study_id]
+        : (await tx.query(`select study_id from stab_studies order by name`)).rows.map((r: any) => r.study_id);
+      return ootItems(tx, ids, testName);
+    });
+    res.json({ method: OOT_METHOD, items });
   } catch (error) {
-    console.error('Error in OOT surveillance:', error);
-    res.status(500).json({ error: 'Failed to perform OOT surveillance' });
+    return fail(res, error, 'performing OOT surveillance');
   }
 });
 
 // ALIAS 2: study-scoped
 // GET /api/stability/studies/:id/oot/surveillance?test=<name>
 router.get('/studies/:id/oot/surveillance', async (req, res) => {
-  req.query.studyId = req.params.id;
-  // Redirect to the main OOT surveillance handler
-  const { id } = req.params;
-  const { test } = req.query;
-
-  // Implement OOT surveillance for specific study
+  const testName = String(req.query.test ?? '') || undefined;
   try {
-    const results = await pool.query(
-      `SELECT * FROM stab_results WHERE study_id = $1 ORDER BY created_at DESC`,
-      [id]
-    );
-    res.json(results.rows);
+    const items = await withTenantClient(async tx => {
+      await ownStudy(tx, req.params.id, { lock: false });
+      return ootItems(tx, [req.params.id], testName);
+    });
+    res.json({ method: OOT_METHOD, items });
   } catch (error) {
-    console.error('Error in OOT surveillance:', error);
-    res.status(500).json({ error: 'Failed to perform OOT surveillance' });
+    return fail(res, error, 'performing OOT surveillance');
   }
 });
 
@@ -1994,62 +2233,28 @@ router.post('/studies/:id/results', async (req, res) => {
   try {
     const id = req.params.id;
     const b = req.body || {};
-
-    // resolve cond_id
-    let cond_id = b.cond_id;
-    if (!cond_id && b.cond_kind) {
-      const { rows } = await pool.query(
-        `select cond_id from stab_conditions where study_id=$1 and kind=$2 limit 1`,
-        [id, String(b.cond_kind).toUpperCase()]
-      );
-      cond_id = rows[0]?.cond_id;
-    }
-    // resolve tp_id
-    let tp_id = b.tp_id;
-    if (!tp_id && b.label) {
-      const { rows } = await pool.query(
-        `select tp_id from stab_timepoints where study_id=$1 and upper(label)=upper($2) limit 1`,
-        [id, b.label]
-      );
-      tp_id = rows[0]?.tp_id;
-    }
-    // resolve test_id
-    let test_id = b.test_id;
-    if (!test_id && b.test_name) {
-      const { rows } = await pool.query(
-        `select test_id from stab_tests where study_id=$1 and lower(name)=lower($2) limit 1`,
-        [id, b.test_name]
-      );
-      test_id = rows[0]?.test_id;
-    }
-    if (!cond_id || !tp_id || !test_id) {
-      return res
-        .status(400)
-        .json({ error: 'cond_id/tp_id/test_id (or cond_kind/label/test_name) required' });
-    }
-
-    await pool.query(
-      `insert into stab_results (study_id,cond_id,tp_id,test_id,value,unit,pass,raw_json)
-       values ($1,$2,$3,$4,$5,$6,
-         case when $7 in ('1','true','TRUE','Y','Yes','PASS') then true
-              when $7 in ('0','false','FALSE','N','No','FAIL') then false else null end,
-         $8)`,
-      [
+    const row = await withTenantClient(async tx => {
+      await ownStudy(tx, id);
+      const outcome = await insertResult(tx, id, b);
+      if (typeof outcome === 'string') throw new StabRefusal(400, outcome);
+      await audit(
         id,
-        cond_id,
-        tp_id,
-        test_id,
-        b.value || null,
-        b.unit || null,
-        b.pass || null,
-        JSON.stringify(b),
-      ]
-    );
-    await audit(id, 'result_add', { cond_id, tp_id, test_id, value: b.value }, req);
-    res.json({ ok: true });
+        'result_add',
+        {
+          result_id: outcome.result_id,
+          cond_id: outcome.cond_id,
+          tp_id: outcome.tp_id,
+          test_id: outcome.test_id,
+          value: outcome.value,
+        },
+        req,
+        tx
+      );
+      return outcome;
+    });
+    res.json({ ok: true, result_id: row.result_id });
   } catch (error) {
-    console.error('Error creating result:', error);
-    res.status(500).json({ error: 'Failed to create result' });
+    return fail(res, error, 'creating result');
   }
 });
 
@@ -2059,7 +2264,7 @@ router.post('/studies/:id/results', async (req, res) => {
  * tenant-isolation migration keeps on every stab_* row; RLS is the second
  * line, not the first. Audit finding IAM-11 (plan P1-8): PATCH and DELETE
  * below wrote by result_id alone, answered ok whether or not a row existed,
- * and recorded nothing, while result_add and result_review beside them audit.
+ * and recorded nothing, while result_add beside them audits.
  */
 type StabResultRow = { result_id: string; study_id: string; value: string | null; unit: string | null; pass: boolean | null; remarks: string | null };
 async function ownResultForUpdate(client: PoolClient, resultId: string, tenantId: number): Promise<StabResultRow | null> {
@@ -2087,43 +2292,42 @@ function resultChangesOf(b: any): Partial<Pick<StabResultRow, 'value' | 'unit' |
   return out;
 }
 
-// PATCH /api/stability/results/:resultId  { value?, unit?, pass?, remarks? }
+const previousOf = (r: StabResultRow) => ({ value: r.value, unit: r.unit, pass: r.pass, remarks: r.remarks });
+
+// PATCH /api/stability/results/:resultId  { value?, unit?, pass?, remarks?, reason? }
 // One transaction: the tenant's own row read for update, the change, and the
 // audit record carrying the previous values (21 CFR 11.10(e)).
 router.patch('/results/:resultId', async (req, res) => {
   const rid = String(req.params.resultId);
-  if (!auditActor(req)) return res.status(401).json({ error: 'Actor identity required' });
   const tenantId = requestTenantId(req);
   if (!tenantId) return res.status(401).json({ error: 'Tenant context required' });
   const changes = resultChangesOf(req.body || {});
-  const client = await pool.connect();
   try {
-    await client.query('BEGIN');
-    const previous = await ownResultForUpdate(client, rid, tenantId);
-    if (!previous) {
-      await client.query('ROLLBACK');
-      return res.status(404).json({ error: 'Result not found' });
-    }
-    await client.query(
-      `update stab_results set value=coalesce($3,value), unit=coalesce($4,unit), pass=coalesce($5,pass), remarks=coalesce($6,remarks)
-        where result_id=$1 and tenant_id=$2`,
-      [rid, tenantId, changes.value ?? null, changes.unit ?? null, changes.pass ?? null, changes.remarks ?? null]
-    );
-    await audit(
-      previous.study_id,
-      'result_update',
-      { resultId: rid, previous: { value: previous.value, unit: previous.unit, pass: previous.pass, remarks: previous.remarks }, changes },
-      req,
-      client
-    );
-    await client.query('COMMIT');
+    await withTenantClient(async tx => {
+      const previous = await ownResultForUpdate(tx, rid, tenantId);
+      if (!previous) throw new StabRefusal(404, 'Result not found');
+      const after = (
+        await tx.query<StabResultRow>(
+          `update stab_results set value=coalesce($3,value), unit=coalesce($4,unit), pass=coalesce($5,pass), remarks=coalesce($6,remarks)
+            where result_id=$1 and tenant_id=$2
+            returning result_id, study_id, value, unit, pass, remarks`,
+          [rid, tenantId, changes.value ?? null, changes.unit ?? null, changes.pass ?? null, changes.remarks ?? null]
+        )
+      ).rows[0];
+      // `changes` is what was asked; `after` is what the row became. They differ
+      // where a field was sent as null, which leaves the recorded value in place
+      // — the audit record said otherwise when it held only `changes`.
+      await audit(
+        previous.study_id,
+        'result_update',
+        { resultId: rid, previous: previousOf(previous), changes, after: previousOf(after), reason: req.body?.reason ?? null },
+        req,
+        tx
+      );
+    });
     res.json({ ok: true });
   } catch (error) {
-    await client.query('ROLLBACK').catch(() => {});
-    console.error('Error updating result:', error);
-    res.status(500).json({ error: 'Failed to update result' });
-  } finally {
-    client.release();
+    return fail(res, error, 'updating result');
   }
 });
 
@@ -2132,90 +2336,33 @@ router.patch('/results/:resultId', async (req, res) => {
 // audit record of what was deleted.
 router.delete('/results/:resultId', async (req, res) => {
   const rid = String(req.params.resultId);
-  if (!auditActor(req)) return res.status(401).json({ error: 'Actor identity required' });
   const tenantId = requestTenantId(req);
   if (!tenantId) return res.status(401).json({ error: 'Tenant context required' });
-  const client = await pool.connect();
   try {
-    await client.query('BEGIN');
-    const previous = await ownResultForUpdate(client, rid, tenantId);
-    if (!previous) {
-      await client.query('ROLLBACK');
-      return res.status(404).json({ error: 'Result not found' });
-    }
-    await client.query(`delete from stab_results where result_id=$1 and tenant_id=$2`, [rid, tenantId]);
-    await audit(
-      previous.study_id,
-      'result_delete',
-      { resultId: rid, previous: { value: previous.value, unit: previous.unit, pass: previous.pass, remarks: previous.remarks } },
-      req,
-      client
-    );
-    await client.query('COMMIT');
+    await withTenantClient(async tx => {
+      const previous = await ownResultForUpdate(tx, rid, tenantId);
+      if (!previous) throw new StabRefusal(404, 'Result not found');
+      await tx.query(`delete from stab_results where result_id=$1 and tenant_id=$2`, [rid, tenantId]);
+      await audit(
+        previous.study_id,
+        'result_delete',
+        { resultId: rid, previous: previousOf(previous), reason: req.body?.reason ?? null },
+        req,
+        tx
+      );
+    });
     res.json({ ok: true });
   } catch (error) {
-    await client.query('ROLLBACK').catch(() => {});
-    console.error('Error deleting result:', error);
-    res.status(500).json({ error: 'Failed to delete result' });
-  } finally {
-    client.release();
+    return fail(res, error, 'deleting result');
   }
 });
 
 // ============= STEP 6: WORKFLOW & AI AUTOMATIONS =============
 
-// GET /studies/:id/results/pending
-router.get('/studies/:id/results/pending', async (req, res) => {
-  try {
-    const { rows } = await pool.query<any>(
-      `select * from stab_results where study_id=$1 and status in ('PENDING','REVIEWED') order by created_at desc nulls last`,
-      [req.params.id]
-    );
-    res.json(rows);
-  } catch (error) {
-    console.error('Error fetching pending results:', error);
-    res.status(500).json({ error: 'Failed to fetch pending results' });
-  }
-});
-
-// POST /results/:resultId/review  { status:'REVIEWED'|'APPROVED'|'REJECTED', reason? }
-router.post('/results/:resultId/review', async (req, res) => {
-  const rid = req.params.resultId;
-  const b = req.body || {};
-  const { rows: r0 } = await pool.query<any>(
-    `
-    select r.study_id, r.sample_id, s.collected_at
-    from stab_results r
-    left join stab_samples s on s.sample_id=r.sample_id
-    where r.result_id=$1`,
-    [rid]
-  );
-  if (!r0[0]) return res.status(404).json({ error: 'result not found' });
-
-  // Guard: cannot APPROVE unless linked to a sample that is COLLECTED
-  if ((b.status || '').toUpperCase() === 'APPROVED') {
-    if (!r0[0].sample_id) return res.status(412).json({ error: 'Result not linked to a sample' });
-    if (!r0[0].collected_at) return res.status(412).json({ error: 'Sample not marked COLLECTED' });
-  }
-
-  await pool.query(
-    `update stab_results set status=$2, reviewed_by=$3, reviewed_at=now(), reject_reason=coalesce($4, reject_reason)
-     where result_id=$1`,
-    [
-      rid,
-      (b.status || 'REVIEWED').toUpperCase(),
-      requireActor(req),
-      b.reason || null,
-    ]
-  );
-  await audit(
-    r0[0].study_id,
-    'result_review',
-    { resultId: rid, status: b.status, reason: b.reason },
-    req
-  );
-  res.json({ ok: true });
-});
+// GET /studies/:id/results/pending and POST /results/:resultId/review
+// { status: 'REVIEWED'|'APPROVED'|'REJECTED', reason? } — see resultReviewUnavailable.
+router.get('/studies/:id/results/pending', resultReviewUnavailable);
+router.post('/results/:resultId/review', resultReviewUnavailable);
 
 // GET /studies/:id/capa
 router.get('/studies/:id/capa', async (req, res) => {
@@ -2236,25 +2383,30 @@ router.post('/studies/:id/capa', async (req, res) => {
   try {
     const id = req.params.id;
     const b = req.body || {};
-    const { rows } = await pool.query<any>(
+    if (!b.title) return res.status(400).json({ error: 'title required' });
+    const row = await withTenantClient(async tx => {
+      await ownStudy(tx, id);
+      const { rows } = await tx.query(
       `insert into stab_capa (study_id,title,why,actions,owner,due_date,status,linked_result_id,linked_oot)
        values ($1,$2,$3,$4,$5,$6,'OPEN',$7,$8) returning *`,
       [
         id,
         b.title,
         b.why || null,
-        b.actions || [],
+        // jsonb: node-pg would send a JS array as a Postgres array literal.
+        JSON.stringify(b.actions || []),
         b.owner || null,
         b.due_date || null,
         b.linked_result_id || null,
         b.linked_oot || null,
       ]
-    );
-    await audit(id, 'capa_create', rows[0], req);
-    res.json(rows[0]);
+      );
+      await audit(id, 'capa_create', rows[0], req, tx);
+      return rows[0];
+    });
+    res.json(row);
   } catch (error) {
-    console.error('Error creating CAPA:', error);
-    res.status(500).json({ error: 'Failed to create CAPA' });
+    return fail(res, error, 'creating CAPA');
   }
 });
 
@@ -2263,65 +2415,108 @@ router.patch('/capa/:id', async (req, res) => {
   try {
     const id = req.params.id;
     const b = req.body || {};
-    const { rows: s } = await pool.query<any>(`select study_id from stab_capa where capa_id=$1`, [
-      id,
-    ]);
-    await pool.query(
-      `update stab_capa set status=coalesce($2,status), owner=coalesce($3,owner), due_date=coalesce($4::date,due_date), actions=coalesce($5,actions), updated_at=now() where capa_id=$1`,
-      [id, b.status || null, b.owner || null, b.due_date || null, b.actions || null]
-    );
-    if (s[0]) await audit(s[0].study_id, 'capa_update', { capa_id: id, body: b }, req);
+    await withTenantClient(async tx => {
+      // An unknown CAPA answered { ok: true } having changed nothing.
+      const before = await ownChild(tx, 'stab_capa', id, 'CAPA');
+      const { rows } = await tx.query(
+        `update stab_capa set status=coalesce($2,status), owner=coalesce($3,owner), due_date=coalesce($4::date,due_date), actions=coalesce($5,actions), updated_at=now()
+          where capa_id=$1 returning *`,
+        [id, b.status || null, b.owner || null, b.due_date || null, b.actions ? JSON.stringify(b.actions) : null]
+      );
+      await audit(before.study_id, 'capa_update', { capa_id: id, before, after: rows[0] }, req, tx);
+    });
     res.json({ ok: true });
   } catch (error) {
-    console.error('Error updating CAPA:', error);
-    res.status(500).json({ error: 'Failed to update CAPA' });
+    return fail(res, error, 'updating CAPA');
   }
 });
 
-// POST /studies/:id/excursions/import  CSV columns: timestamp,metric(TEMP|RH),value,low,high
+// POST /studies/:id/excursions/import
+// CSV columns: timestamp, metric (TEMP|RH), value, low, high, duration_min?
+//
+// Until 2026-09-23 this ignored the uploaded file and inserted two hard-coded
+// rows (26.5 °C and 28.2 °C on 2025-01-28) into the study's excursion record,
+// timestamped now(), whatever the upload said — fabricated storage excursions in
+// a GxP record. It now reads the file, refuses it whole if any row is unusable,
+// and records each excursion at the time the file gives.
+const EXCURSION_METRICS = new Set(['TEMP', 'RH']);
 router.post(
   '/studies/:id/excursions/import',
   receiveSingleFile,
   validateUploadedFile,
   async (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'csv missing' });
+    const id = req.params.id as string;
+    let records: { line: number; record: Record<string, string> }[];
     try {
-      if (!req.file) return res.status(400).json({ error: 'csv missing' });
-      const id = req.params.id as string;
-      const rows: any[] = JSON.parse(
-        '[{"timestamp":"2025-01-28T10:00:00Z","metric":"TEMP","value":"26.5","low":"23","high":"27","duration_min":"30"},{"timestamp":"2025-01-28T11:00:00Z","metric":"TEMP","value":"28.2","low":"23","high":"27","duration_min":"15"}]'
-      );
-      let inserted = 0;
-      for (const r0 of rows) {
-        const val = Number(r0.value);
-        const lo = Number(r0.low);
-        const hi = Number(r0.high);
-        const severe =
-          val < lo || val > hi
-            ? Math.abs(val - (val > hi ? hi : lo)) > 3
-              ? 'CRITICAL'
-              : 'MAJOR'
-            : 'MINOR';
-        await pool.query(
-          `insert into stab_excursions (study_id,metric,value,limit_low,limit_high,duration_min,severity,raw_json)
-               values ($1,$2,$3,$4,$5,$6,$7,$8)`,
-          [
-            id,
-            (r0.metric || 'TEMP').toUpperCase(),
-            val,
-            isFinite(lo) ? lo : null,
-            isFinite(hi) ? hi : null,
-            Number(r0.duration_min) || null,
-            severe,
-            r0,
-          ]
+      records = readCsv(req.file.buffer);
+    } catch (error: any) {
+      return res.status(400).json({ error: 'The file is not valid CSV', detail: String(error?.message ?? error) });
+    }
+    if (!records.length) return res.status(400).json({ error: 'The file has no excursion rows' });
+
+    const refused: { line: number; error: string }[] = [];
+    const readings = records.map(({ line, record: r }) => {
+      const ts = new Date(r.timestamp ?? '');
+      const metric = String(r.metric || '').toUpperCase();
+      const val = num(r.value);
+      const lo = num(r.low);
+      const hi = num(r.high);
+      const duration = r.duration_min === undefined || r.duration_min === '' ? null : Number(r.duration_min);
+      const problems = [
+        isNaN(ts.getTime()) && 'timestamp is not a date',
+        !EXCURSION_METRICS.has(metric) && 'metric must be TEMP or RH',
+        val === null && 'value is not a number',
+        lo === null && 'low is not a number',
+        hi === null && 'high is not a number',
+        lo !== null && hi !== null && lo > hi && 'low is above high',
+        duration !== null && !(Number.isInteger(duration) && duration >= 0) && 'duration_min is not a whole number of minutes',
+      ].filter(Boolean) as string[];
+      if (problems.length) refused.push({ line, error: problems.join('; ') });
+      return { ts: isNaN(ts.getTime()) ? null : ts.toISOString(), metric, val, lo, hi, duration, raw: r };
+    });
+    if (refused.length) {
+      return res
+        .status(422)
+        .json({ error: 'No excursions were imported: some rows are not usable', detail: refused });
+    }
+    // An excursion is a reading OUTSIDE its limits. A logger file carries every
+    // reading; the in-limit ones were stored as "MINOR" excursions. Severity is
+    // not classified here: it was set by an arbitrary 3-unit rule, and grading a
+    // storage excursion is a quality decision. The deviation is recorded instead.
+    const excursions = readings
+      .filter(r => (r.val as number) < (r.lo as number) || (r.val as number) > (r.hi as number))
+      .map(r => ({
+        ...r,
+        deviation: (r.val as number) > (r.hi as number) ? (r.val as number) - (r.hi as number) : (r.val as number) - (r.lo as number),
+      }));
+
+    try {
+      const inserted = await withTenantClient(async tx => {
+        await ownStudy(tx, id);
+        for (const r of excursions) {
+          await tx.query(
+            `insert into stab_excursions (study_id,ts,metric,value,limit_low,limit_high,duration_min,severity,raw_json)
+             values ($1,$2,$3,$4,$5,$6,$7,NULL,$8)`,
+            [id, r.ts, r.metric, r.val, r.lo, r.hi, r.duration, JSON.stringify({ ...r.raw, deviation: r.deviation })]
+          );
+        }
+        await audit(
+          id,
+          'excursions_import',
+          {
+            file: req.file?.originalname ?? null,
+            readings: readings.length,
+            excursions: excursions.map(e => ({ ts: e.ts, metric: e.metric, value: e.val, low: e.lo, high: e.hi, duration_min: e.duration })),
+          },
+          req,
+          tx
         );
-        inserted++;
-      }
-      await audit(id, 'excursions_import', { count: inserted }, req);
-      res.json({ inserted });
+        return excursions.length;
+      });
+      res.json({ readings: readings.length, inserted, withinLimits: readings.length - inserted });
     } catch (error) {
-      console.error('Error importing excursions:', error);
-      res.status(500).json({ error: 'Failed to import excursions' });
+      return fail(res, error, 'importing excursions');
     }
   }
 );
@@ -2345,14 +2540,32 @@ router.post('/protocols', async (req, res) => {
     const b = req.body || {};
     if (!b.name || !b.payload_json)
       return res.status(400).json({ error: 'name,payload_json required' });
-    const { rows } = await pool.query<any>(
-      `insert into stab_protocols (name,product_scope,payload_json) values ($1,$2,$3) returning *`,
-      [b.name, b.product_scope || null, b.payload_json]
-    );
-    res.json(rows[0]);
+    const row = await withTenantClient(async tx => {
+      const { rows } = await tx.query(
+        `insert into stab_protocols (name,product_scope,payload_json) values ($1,$2,$3) returning *`,
+        [b.name, b.product_scope || null, b.payload_json]
+      );
+      // Organisation-level, so the platform audit trail rather than stab_audit
+      // (keyed by study). Written before COMMIT and required: if it cannot be
+      // persisted the template is not created. (The one ordering that remains —
+      // recorded, then the COMMIT fails — over-records; it never under-records.)
+      const recorded = await logAuditEvent({
+        category: 'data_change',
+        severity: 'info',
+        action: 'stability_protocol_create',
+        userId: auditActor(req),
+        organizationId: String(getTenantScope()?.tenantId ?? ''),
+        resourceType: 'stab_protocol',
+        resourceId: rows[0].proto_id,
+        newValue: { name: rows[0].name, product_scope: rows[0].product_scope, payload_json: rows[0].payload_json },
+        success: true,
+      });
+      if (!recorded.persisted) throw new StabRefusal(503, 'The audit trail is unavailable; the protocol was not created');
+      return rows[0];
+    });
+    res.json(row);
   } catch (error) {
-    console.error('Error creating protocol:', error);
-    res.status(500).json({ error: 'Failed to create protocol' });
+    return fail(res, error, 'creating protocol');
   }
 });
 
@@ -2361,87 +2574,95 @@ router.post('/studies/:id/apply-protocol', async (req, res) => {
   try {
     const id = req.params.id;
     const pid = req.body?.proto_id;
-    const { rows: proto } = await pool.query<any>(
-      `select payload_json from stab_protocols where proto_id=$1`,
-      [pid]
-    );
-    if (!proto[0]) return res.status(404).json({ error: 'protocol not found' });
-    const p = proto[0].payload_json || {};
-
-    // apply conditions
-    for (const c of p.conditions || []) {
-      await pool.query(
-        `insert into stab_conditions (study_id,kind,temp,rh,description) values ($1,$2,$3,$4,$5) on conflict do nothing`,
-        [id, c.kind, c.temp, c.rh || null, c.description || null]
+    // One transaction: a protocol is applied whole, with its audit record, or not
+    // at all. Each insert used to commit on its own, so a failure part-way left a
+    // study with some of the protocol's conditions, timepoints and tests.
+    await withTenantClient(async tx => {
+      await ownStudy(tx, id);
+      const proto = found(
+        (await tx.query(`select payload_json from stab_protocols where proto_id=$1`, [pid])).rows,
+        'protocol'
       );
-    }
-    const { rows: conds } = await pool.query<any>(
-      `select * from stab_conditions where study_id=$1`,
-      [id]
-    );
-    const findCond = (k: string) => conds.find((c: any) => c.kind === k);
+      const p = proto.payload_json || {};
 
-    // apply timepoints
-    for (const t of p.timepoints || []) {
-      const cid = findCond(t.kind)?.cond_id || conds[0]?.cond_id;
-      if (!cid) continue;
-      await pool.query(
-        `insert into stab_timepoints (study_id,cond_id,label,month,planned_date) values ($1,$2,$3,$4,current_date + ($4||' months')::interval) on conflict do nothing`,
-        [id, cid, t.label, t.month]
-      );
-    }
+      const written: { conditions: any[]; timepoints: any[]; tests: any[] } = { conditions: [], timepoints: [], tests: [] };
+      for (const c of p.conditions || []) {
+        // stab_conditions has no unique (study, kind), so "on conflict do
+        // nothing" never fired and a second apply duplicated every condition.
+        const { rows } = await tx.query(
+          `insert into stab_conditions (study_id,kind,temp,rh,description)
+           select $1,$2,$3,$4,$5
+            where not exists (select 1 from stab_conditions where study_id = $1 and kind = $2)
+           returning *`,
+          [id, c.kind, c.temp, c.rh || null, c.description || null]
+        );
+        written.conditions.push(...rows);
+      }
+      const conds = (await tx.query(`select * from stab_conditions where study_id=$1`, [id])).rows;
+      const findCond = (k: string) => conds.find((c: any) => c.kind === k);
 
-    // apply tests
-    for (const tst of p.tests || []) {
-      await pool.query(
-        `insert into stab_tests (study_id,name,unit,spec_low,spec_high,is_cqa) values ($1,$2,$3,$4,$5,$6) on conflict do nothing`,
-        [
-          id,
-          tst.name,
-          tst.unit || null,
-          tst.spec_low || null,
-          tst.spec_high || null,
-          tst.is_cqa !== false,
-        ]
-      );
-    }
+      for (const t of p.timepoints || []) {
+        // A timepoint belongs to the condition it names. It fell back to the
+        // study's first condition, filing a 40 °C pull under 25 °C.
+        const cid = findCond(t.kind)?.cond_id;
+        if (!cid) {
+          throw new StabRefusal(422, `The protocol has a ${t.label} timepoint for condition ${t.kind}, which this study does not have`);
+        }
+        // Planned from the study's own start date, not from the day the protocol
+        // was applied. $4 is both the integer month and the interval: untyped,
+        // Postgres deduces two types for it and refuses every call (42P08).
+        const { rows } = await tx.query(
+          `insert into stab_timepoints (study_id,cond_id,label,month,planned_date)
+           select $1,$2,$3,$4::int, s.start_date + make_interval(months => $4::int)
+             from stab_studies s
+            where s.study_id = $1
+              and not exists (select 1 from stab_timepoints where study_id = $1 and cond_id = $2 and upper(label) = upper($3))
+           returning *`,
+          [id, cid, t.label, t.month]
+        );
+        written.timepoints.push(...rows);
+      }
 
-    await audit(id, 'protocol_apply', { proto_id: pid }, req);
+      for (const tst of p.tests || []) {
+        const { rows } = await tx.query(
+          `insert into stab_tests (study_id,name,unit,spec_low,spec_high,is_cqa)
+           select $1,$2,$3,$4,$5,$6
+            where not exists (select 1 from stab_tests where study_id = $1 and lower(name) = lower($2))
+           returning *`,
+          [id, tst.name, tst.unit || null, tst.spec_low ?? null, tst.spec_high ?? null, tst.is_cqa !== false]
+        );
+        written.tests.push(...rows);
+      }
+
+      // What was written, not the template: rows the study already had are not
+      // written again, and the template can change after this.
+      await audit(id, 'protocol_apply', { proto_id: pid, written }, req, tx);
+    });
     res.json({ ok: true });
   } catch (error) {
-    console.error('Error applying protocol:', error);
-    res.status(500).json({ error: 'Failed to apply protocol' });
+    return fail(res, error, 'applying protocol');
   }
 });
 
 // POST /studies/:id/protocol/draft (AI markdown)
 router.post('/studies/:id/protocol/draft', async (req, res) => {
   try {
-    const id = req.params.id;
-    const [{ rows: s }, { rows: conds }, { rows: tps }, { rows: tests }] = await Promise.all([
-      pool.query<any>(`select * from stab_studies where study_id=$1`, [id]),
-      pool.query<any>(`select * from stab_conditions where study_id=$1`, [id]),
-      pool.query<any>(`select * from stab_timepoints where study_id=$1 order by month`, [id]),
-      pool.query<any>(`select * from stab_tests where study_id=$1`, [id]),
-    ]);
-    const ctx = { study: s[0], conditions: conds, timepoints: tps, tests };
+    const ctx = await withTenantClient(tx => studyContext(tx, req.params.id));
     const draft = await aiDraftProtocol(ctx);
     res.json({ draft });
   } catch (error) {
-    console.error('Error drafting protocol:', error);
-    res.status(500).json({ error: 'Failed to draft protocol' });
+    return aiFail(res, error, 'drafting the protocol');
   }
 });
 
 // POST /studies/:id/capa/ai-suggest  { oot_data }
 router.post('/studies/:id/capa/ai-suggest', async (req, res) => {
   try {
-    const ctx = req.body || {};
-    const suggestion = await aiCAPAFromOOT(ctx);
+    const ctx = await withTenantClient(tx => studyContext(tx, req.params.id));
+    const suggestion = await aiCAPAFromOOT(ctx, req.body?.oot ?? req.body ?? null);
     res.json(suggestion);
   } catch (error) {
-    console.error('Error generating AI CAPA suggestion:', error);
-    res.status(500).json({ error: 'Failed to generate CAPA suggestion' });
+    return aiFail(res, error, 'suggesting a CAPA');
   }
 });
 
@@ -2484,18 +2705,10 @@ router.get('/studies/:id/tests/with-methods', async (req, res) => {
   }
 });
 
-// PATCH /api/stability/tests/:id - link method
-router.patch('/tests/:id', async (req, res) => {
-  try {
-    const id = req.params.id;
-    const { method_id } = req.body;
-    await pool.query(`update stab_tests set method_id=$1 where test_id=$2`, [method_id, id]);
-    res.json({ ok: true });
-  } catch (error) {
-    console.error('Error linking method:', error);
-    res.status(500).json({ error: 'Failed to link method' });
-  }
-});
+// PATCH /api/stability/tests/:id (link method) — REMOVED 2026-09-23. It could
+// never run: PATCH /tests/:testId above matches the same path first. That route
+// now updates only the fields sent, so linking a method there no longer clears
+// the specification limits.
 
 // Assignments API
 // GET assignments for a study
@@ -2522,17 +2735,19 @@ router.post('/studies/:id/assign', async (req, res) => {
     const id = req.params.id;
     const b = req.body || {};
     if (!b.user_id || !b.role) return res.status(400).json({ error: 'user_id, role required' });
-    const { rows } = await pool.query<any>(
-      `
-      insert into stab_assignments (study_id,user_id,role,due_date)
-      values ($1,$2,$3,$4) returning *`,
-      [id, b.user_id, b.role, b.due_date || null]
-    );
-    await audit(id, 'assign_add', { assignment: rows[0] }, req);
-    res.json(rows[0]);
+    const row = await withTenantClient(async tx => {
+      await ownStudy(tx, id);
+      const { rows } = await tx.query(
+        `insert into stab_assignments (study_id,user_id,role,due_date)
+         values ($1,$2,$3,$4) returning *`,
+        [id, b.user_id, b.role, b.due_date || null]
+      );
+      await audit(id, 'assign_add', { assignment: rows[0] }, req, tx);
+      return rows[0];
+    });
+    res.json(row);
   } catch (error) {
-    console.error('Error creating assignment:', error);
-    res.status(500).json({ error: 'Failed to create assignment' });
+    return fail(res, error, 'creating assignment');
   }
 });
 
@@ -2545,24 +2760,32 @@ router.post('/studies/:id/bulk-assign', async (req, res) => {
       return res.status(400).json({ error: 'assignments array required' });
     }
 
-    const results = [];
-    for (const assignment of b.assignments) {
-      if (!assignment.user || !assignment.task) continue;
-
-      const { rows } = await pool.query<any>(
-        `
-        insert into stab_assignments (study_id,user_id,role,due_date)
-        values ($1,$2,$3,$4) returning *`,
-        [id, assignment.user, assignment.role || 'Reviewer', assignment.due || null]
+    const results = await withTenantClient(async tx => {
+      await ownStudy(tx, id);
+      const added = [];
+      for (const assignment of b.assignments) {
+        if (!assignment.user || !assignment.task) continue;
+        const { rows } = await tx.query(
+          `insert into stab_assignments (study_id,user_id,role,due_date)
+           values ($1,$2,$3,$4) returning *`,
+          [id, assignment.user, assignment.role || 'Reviewer', assignment.due || null]
+        );
+        added.push(rows[0]);
+      }
+      // What was stored, and how many entries were not (no user or task) — the
+      // record listed every entry sent, including the skipped ones.
+      await audit(
+        id,
+        'bulk_assign',
+        { count: added.length, skipped: b.assignments.length - added.length, assignments: added },
+        req,
+        tx
       );
-      results.push(rows[0]);
-    }
-
-    await audit(id, 'bulk_assign', { count: results.length, assignments: b.assignments }, req);
+      return added;
+    });
     res.json({ assigned: results.length, items: results });
   } catch (error) {
-    console.error('Error creating bulk assignment:', error);
-    res.status(500).json({ error: 'Failed to create bulk assignment' });
+    return fail(res, error, 'creating bulk assignment');
   }
 });
 
@@ -2571,19 +2794,18 @@ router.patch('/assignments/:assignId', async (req, res) => {
   try {
     const a = req.params.assignId;
     const b = req.body || {};
-    const { rows: s } = await pool.query<any>(
-      `select study_id from stab_assignments where assign_id=$1`,
-      [a]
-    );
-    await pool.query(
-      `update stab_assignments set status=coalesce($2,status), due_date=coalesce($3::date,due_date) where assign_id=$1`,
-      [a, b.status || null, b.due_date || null]
-    );
-    if (s[0]) await audit(s[0].study_id, 'assign_update', { assign_id: a, body: b }, req);
+    await withTenantClient(async tx => {
+      const before = await ownChild(tx, 'stab_assignments', a, 'assignment');
+      const { rows } = await tx.query(
+        `update stab_assignments set status=coalesce($2,status), due_date=coalesce($3::date,due_date)
+          where assign_id=$1 returning *`,
+        [a, b.status || null, b.due_date || null]
+      );
+      await audit(before.study_id, 'assign_update', { assign_id: a, before, after: rows[0] }, req, tx);
+    });
     res.json({ ok: true });
   } catch (error) {
-    console.error('Error updating assignment:', error);
-    res.status(500).json({ error: 'Failed to update assignment' });
+    return fail(res, error, 'updating assignment');
   }
 });
 
@@ -2666,21 +2888,35 @@ router.post('/studies/:id/timepoints/bulk-assign', async (req, res) => {
   const b = req.body || {};
   if (!b.user_id) return res.status(400).json({ error: 'user_id required' });
   const count = Number(b.count || 3);
-  const { rows: tps } = await pool.query<any>(
-    `select * from v_stab_upcoming_tp where study_id=$1 limit $2`,
-    [id, count]
-  );
-  const ins: any[] = [];
-  for (const tp of tps) {
-    const due = tp.planned_date || addMonths(new Date(), tp.month);
-    const { rows } = await pool.query<any>(
-      `insert into stab_assignments (study_id,tp_id,user_id,role,due_date) values ($1,$2,$3,$4,$5) returning *`,
-      [id, tp.tp_id, b.user_id, b.role || 'Sampler', due]
-    );
-    ins.push(rows[0]);
+  try {
+    const ins = await withTenantClient(async tx => {
+      await ownStudy(tx, id);
+      const tps = (
+        await tx.query(`select * from v_stab_upcoming_tp where study_id=$1 limit $2`, [id, count])
+      ).rows;
+      const added: any[] = [];
+      const unplanned: string[] = [];
+      for (const tp of tps) {
+        // A timepoint with no planned date gets no invented one (it was
+        // today + month); it is reported for someone to plan.
+        if (!tp.planned_date) {
+          unplanned.push(tp.label);
+          continue;
+        }
+        const due = tp.planned_date;
+        const { rows } = await tx.query(
+          `insert into stab_assignments (study_id,tp_id,user_id,role,due_date) values ($1,$2,$3,$4,$5) returning *`,
+          [id, tp.tp_id, b.user_id, b.role || 'Sampler', due]
+        );
+        added.push(rows[0]);
+      }
+      await audit(id, 'bulk_assign', { count: added.length, user_id: b.user_id, assignments: added, unplanned }, req, tx);
+      return { added, unplanned };
+    });
+    res.json({ assigned: ins.added.length, items: ins.added, unplanned: ins.unplanned });
+  } catch (error) {
+    return fail(res, error, 'assigning timepoints');
   }
-  await audit(id, 'bulk_assign', { count: ins.length, user_id: b.user_id }, req);
-  res.json({ assigned: ins.length, items: ins });
 });
 
 /** POST push upcoming timepoints to Google Calendar  body: { count=10, timezone? } */
@@ -2688,28 +2924,57 @@ router.post('/studies/:id/timepoints/push-calendar', async (req, res) => {
   const id = req.params.id;
   const count = Number(req.body?.count || 10);
   const tz = req.body?.timezone || 'America/Los_Angeles';
-  const { rows: tps } = await pool.query<any>(
-    `select * from v_stab_upcoming_tp where study_id=$1 limit $2`,
-    [id, count]
-  );
-  let created = 0;
-  const ids: any[] = [];
-  if (calendarEnabled()) {
-    for (const tp of tps) {
-      const date = format(tp.planned_date ? new Date(tp.planned_date) : new Date(), 'yyyy-MM-dd');
-      const ev = await insertAllDayEvent({
-        summary: `Stability sampling ${tp.kind} ${tp.label}`,
-        description: `Study ${id} — ${tp.kind} ${tp.label}`,
-        date,
-        timezone: tz,
-      });
-      created++;
-      ids.push(ev?.id);
-    }
-    await audit(id, 'calendar_push', { created, ids }, req);
-    return res.json({ ok: true, created, ids });
+  if (!calendarEnabled()) {
+    // Nothing was pushed, so this is not a success.
+    return res.status(503).json({ error: 'Calendar integration is not configured; use the ICS schedule instead' });
   }
-  return res.status(200).json({ ok: false, reason: 'GOOGLE_* env not set — ICS fallback remains' });
+  try {
+    const tps = await withTenantClient(async tx => {
+      await ownStudy(tx, id);
+      return (await tx.query(`select * from v_stab_upcoming_tp where study_id=$1 limit $2`, [id, count])).rows;
+    });
+    // The events are outside the database and cannot share its transaction.
+    // Whatever was created is recorded, including when a later event fails:
+    // it failed with nothing recorded, leaving events behind a 500.
+    const ids: any[] = [];
+    let failure: unknown = null;
+    const unplanned: string[] = [];
+    for (const tp of tps) {
+      if (!tp.planned_date) {
+        // No planned date: no event (it was put on today's date).
+        unplanned.push(tp.label);
+        continue;
+      }
+      try {
+        const date = format(new Date(tp.planned_date), 'yyyy-MM-dd');
+        const ev = await insertAllDayEvent({
+          summary: `Stability sampling ${tp.kind} ${tp.label}`,
+          description: `Study ${id} — ${tp.kind} ${tp.label}`,
+          date,
+          timezone: tz,
+        });
+        ids.push(ev?.id);
+      } catch (error) {
+        failure = error;
+        break;
+      }
+    }
+    if (ids.length) {
+      await withTenantClient(tx =>
+        audit(id, 'calendar_push', { created: ids.length, ids, unplanned, incomplete: failure !== null }, req, tx)
+      );
+    }
+    if (failure) {
+      return res.status(502).json({
+        error: 'The calendar refused an event; the ones created before it are recorded',
+        created: ids.length,
+        ids,
+      });
+    }
+    return res.json({ ok: true, created: ids.length, ids, unplanned });
+  } catch (error) {
+    return fail(res, error, 'pushing calendar');
+  }
 });
 
 // ========== SAMPLING WORKBENCH ==========
@@ -2730,54 +2995,77 @@ router.post('/studies/:id/samples', async (req, res) => {
   const id = req.params.id;
   const b = req.body || {};
   if (!b.tp_id) return res.status(400).json({ error: 'tp_id required' });
-
-  // Build sample_code: <code>-<kind>-<label>-<YYYYMMDD>-NN
-  const { rows: s } = await pool.query<any>(`select code from stab_studies where study_id=$1`, [
-    id,
-  ]);
-  const { rows: tp } = await pool.query<any>(
-    `
-    select t.tp_id, t.label, c.kind, coalesce(t.planned_date,current_date) as dt
-    from stab_timepoints t join stab_conditions c on c.cond_id=t.cond_id
-    where t.tp_id=$1 and t.study_id=$2`,
-    [b.tp_id, id]
-  );
-  if (!tp[0]) return res.status(404).json({ error: 'timepoint not found' });
-
-  const dateStr = new Date(tp[0].dt).toISOString().slice(0, 10);
-  const base = `${s[0].code}-${tp[0].kind}-${tp[0].label}-${dateStr}`;
-  // find next seq
-  const { rows: cnt } = await pool.query<any>(
-    `select count(*)::int as n from stab_samples where study_id=$1 and sample_code ilike $2||'%'`,
-    [id, base]
-  );
-  const seq = String(cnt[0].n + 1).padStart(2, '0');
-  const sample_code = `${base}-${seq}`;
-
-  const { rows: ins } = await pool.query<any>(
-    `insert into stab_samples (study_id,tp_id,sample_code,storage,notes)
-     values ($1,$2,$3,$4,$5) returning *`,
-    [id, b.tp_id, sample_code, b.storage || null, b.notes || null]
-  );
-  await audit(id, 'sample_create', ins[0], req);
-  res.json(ins[0]);
+  try {
+    const sample = await withTenantClient(async tx => {
+      // Build sample_code: <code>-<kind>-<label>-<YYYYMMDD>-NN. The study row is
+      // locked so two samples for one timepoint cannot take the same sequence.
+      const study = await ownStudy(tx, id);
+      const tp = found(
+        (
+          await tx.query(
+            `select t.tp_id, t.label, c.kind, coalesce(t.planned_date,current_date) as dt
+               from stab_timepoints t join stab_conditions c on c.cond_id=t.cond_id
+              where t.tp_id=$1 and t.study_id=$2`,
+            [b.tp_id, id]
+          )
+        ).rows,
+        'timepoint'
+      );
+      const dateStr = new Date(tp.dt).toISOString().slice(0, 10);
+      const base = `${study.code}-${tp.kind}-${tp.label}-${dateStr}`;
+      const n = (
+        await tx.query(
+          `select count(*)::int as n from stab_samples where study_id=$1 and sample_code ilike $2||'%'`,
+          [id, base]
+        )
+      ).rows[0].n;
+      const sample_code = `${base}-${String(n + 1).padStart(2, '0')}`;
+      const { rows } = await tx.query(
+        `insert into stab_samples (study_id,tp_id,sample_code,storage,notes)
+         values ($1,$2,$3,$4,$5) returning *`,
+        [id, b.tp_id, sample_code, b.storage || null, b.notes || null]
+      );
+      await audit(id, 'sample_create', rows[0], req, tx);
+      return rows[0];
+    });
+    res.json(sample);
+  } catch (error) {
+    return fail(res, error, 'creating sample');
+  }
 });
 
-// POST mark collected  body:{ sample_id, collected_by?, collected_at? }
+// POST mark collected  body:{ sample_id, collected_at? }
+//
+// collected_by is the verified principal, never the body: it read
+// `b.collected_by || requireActor(req)`, so any caller could record someone else
+// as the collector, in the sample and in its audit record (ledger C-18). A body
+// naming a different collector is refused rather than silently overridden.
 router.post('/studies/:id/samples/collect', async (req, res) => {
   const id = req.params.id;
   const b = req.body || {};
   if (!b.sample_id) return res.status(400).json({ error: 'sample_id required' });
-  await pool.query(
-    `update stab_samples set collected_at=coalesce($2::timestamptz, now()), collected_by=coalesce($3,collected_by) where sample_id=$1`,
-    [
-      b.sample_id,
-      b.collected_at || null,
-      b.collected_by || requireActor(req),
-    ]
-  );
-  await audit(id, 'sample_collect', { sample_id: b.sample_id }, req);
-  res.json({ ok: true });
+  if (b.collected_by !== undefined && b.collected_by !== null && b.collected_by !== '' && b.collected_by !== requireActor(req)) {
+    return res
+      .status(400)
+      .json({ error: 'collected_by is the signed-in user; a sample cannot be recorded as collected by someone else' });
+  }
+  try {
+    await withTenantClient(async tx => {
+      await ownStudy(tx, id);
+      // Scoped to the study in the path: any sample of the tenant could be
+      // marked collected here and audited under this study.
+      const { rows } = await tx.query(
+        `update stab_samples set collected_at=coalesce($2::timestamptz, now()), collected_by=coalesce($3,collected_by)
+          where sample_id=$1 and study_id=$4 returning collected_at, collected_by`,
+        [b.sample_id, b.collected_at || null, requireActor(req), id]
+      );
+      const done = found(rows, 'sample');
+      await audit(id, 'sample_collect', { sample_id: b.sample_id, ...done }, req, tx);
+    });
+    res.json({ ok: true });
+  } catch (error) {
+    return fail(res, error, 'collecting sample');
+  }
 });
 
 // GET samples for a study
@@ -2798,7 +3086,7 @@ router.get('/samples/:sampleId/barcode.png', async (req, res) => {
   );
   if (!rows[0]) return res.status(404).send('not found');
   try {
-    const png = await BWIPJS.toBuffer({
+    const png = await barcodePng({
       bcid: 'code128',
       text: rows[0].sample_code,
       scale: 3,
@@ -2816,47 +3104,11 @@ router.get('/samples/:sampleId/barcode.png', async (req, res) => {
 
 // ===== Results ↔ Sample Link =====
 
-// POST /api/stability/studies/:id/results/link-sample
-// body: { result_id, sample_id }
-router.post('/studies/:id/results/link-sample', async (req, res) => {
-  const id = req.params.id;
-  const b = req.body || {};
-  if (!b.result_id || !b.sample_id)
-    return res.status(400).json({ error: 'result_id, sample_id required' });
-  await pool.query(`update stab_results set sample_id=$2 where result_id=$1 and study_id=$3`, [
-    b.result_id,
-    b.sample_id,
-    id,
-  ]);
-  await audit(id, 'result_link_sample', { result_id: b.result_id, sample_id: b.sample_id }, req);
-  res.json({ ok: true });
-});
-
-// Optional: allow linking by sample_code for CSV or UI helper
-// POST /api/stability/studies/:id/results/link-by-code  body:{ result_id, sample_code }
-router.post('/studies/:id/results/link-by-code', async (req, res) => {
-  const id = req.params.id;
-  const b = req.body || {};
-  if (!b.result_id || !b.sample_code)
-    return res.status(400).json({ error: 'result_id, sample_code required' });
-  const { rows } = await pool.query<any>(
-    `select sample_id from stab_samples where study_id=$1 and lower(sample_code)=lower($2)`,
-    [id, b.sample_code]
-  );
-  if (!rows[0]) return res.status(404).json({ error: 'sample_code not found' });
-  await pool.query(`update stab_results set sample_id=$2 where result_id=$1 and study_id=$3`, [
-    b.result_id,
-    rows[0].sample_id,
-    id,
-  ]);
-  await audit(
-    id,
-    'result_link_sample_code',
-    { result_id: b.result_id, sample_code: b.sample_code },
-    req
-  );
-  res.json({ ok: true, sample_id: rows[0].sample_id });
-});
+// POST /api/stability/studies/:id/results/link-sample  body: { result_id, sample_id }
+// POST /api/stability/studies/:id/results/link-by-code  body: { result_id, sample_code }
+// Both write stab_results.sample_id — see resultReviewUnavailable.
+router.post('/studies/:id/results/link-sample', resultReviewUnavailable);
+router.post('/studies/:id/results/link-by-code', resultReviewUnavailable);
 
 // ===== Chain of Custody =====
 
@@ -2887,19 +3139,22 @@ router.post('/samples/:sampleId/chain', async (req, res) => {
     ].includes(action)
   )
     return res.status(400).json({ error: 'invalid action' });
-  // find study for audit
-  const { rows: find } = await pool.query<any>(
-    `select study_id from stab_samples where sample_id=$1`,
-    [sid]
-  );
-  await pool.query(`insert into stab_chain (sample_id,action,actor,notes) values ($1,$2,$3,$4)`, [
-    sid,
-    action,
-    requireActor(req),
-    b.notes || null,
-  ]);
-  if (find[0]) await audit(find[0].study_id, 'coc_add', { sample_id: sid, action }, req);
-  res.json({ ok: true });
+  try {
+    await withTenantClient(async tx => {
+      // An unknown sample was recorded in the chain anyway and left unaudited.
+      const sample = await ownChild(tx, 'stab_samples', sid, 'sample');
+      await tx.query(`insert into stab_chain (sample_id,action,actor,notes) values ($1,$2,$3,$4)`, [
+        sid,
+        action,
+        requireActor(req),
+        b.notes || null,
+      ]);
+      await audit(sample.study_id, 'coc_add', { sample_id: sid, action }, req, tx);
+    });
+    res.json({ ok: true });
+  } catch (error) {
+    return fail(res, error, 'recording chain of custody');
+  }
 });
 
 // POST /api/stability/samples/:sampleId/chain/upload  (multipart file=attachment)
@@ -2908,25 +3163,40 @@ router.post(
   receiveSingleFile,
   validateUploadedFile,
   async (req, res) => {
-    const sid = req.params.sampleId;
+    const sid = String(req.params.sampleId);
     if (!req.file) return res.status(400).json({ error: 'file missing' });
+    if (!UUID_RE.test(sid)) return res.status(404).json({ error: 'sample not found' });
     const fs = await import('fs');
-    const path = `/mnt/data/uploads/coc_${sid}_${Date.now()}_${req.file.originalname.replace(
-      /\s+/g,
-      '_'
-    )}`;
-    fs.writeFileSync(path, req.file.buffer);
+    // The stored name is built only from characters that cannot form a path.
+    // It was the client's filename with whitespace replaced; multer strips
+    // directory parts by default (preservePath: false), so this is the second
+    // line, not the only one, for a name that goes into a filesystem path.
+    const safeName = (req.file.originalname.split(/[\\/]/).pop() || 'attachment')
+      .replace(/[^A-Za-z0-9._-]/g, '_')
+      .replace(/^\.+/, '_')
+      .slice(-120);
+    const path = `/mnt/data/uploads/coc_${sid}_${Date.now()}_${safeName}`;
     const url = path.replace('/mnt/data', '/uploads');
-    const { rows: find } = await pool.query<any>(
-      `select study_id from stab_samples where sample_id=$1`,
-      [sid]
-    );
-    await pool.query(
-      `insert into stab_chain (sample_id,action,actor,attachment_url) values ($1,'OTHER',$2,$3)`,
-      [sid, requireActor(req), url]
-    );
-    if (find[0]) await audit(find[0].study_id, 'coc_upload', { sample_id: sid, url }, req);
-    res.json({ ok: true, url });
+    let written = false;
+    try {
+      await withTenantClient(async tx => {
+        // The sample is checked before a byte is written: an unknown sample
+        // left an orphaned, unrecorded file behind a 404.
+        const sample = await ownChild(tx, 'stab_samples', sid, 'sample');
+        fs.writeFileSync(path, req.file!.buffer, { flag: 'wx' });
+        written = true;
+        await tx.query(
+          `insert into stab_chain (sample_id,action,actor,attachment_url) values ($1,'OTHER',$2,$3)`,
+          [sid, requireActor(req), url]
+        );
+        await audit(sample.study_id, 'coc_upload', { sample_id: sid, url, bytes: req.file!.size }, req, tx);
+      });
+      res.json({ ok: true, url });
+    } catch (error) {
+      // The record rolled back; the file it would have pointed to goes too.
+      if (written) fs.rmSync(path, { force: true });
+      return fail(res, error, 'recording chain-of-custody attachment');
+    }
   }
 );
 
