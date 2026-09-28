@@ -1,0 +1,38 @@
+client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts errors=0 warnings=1
+    undefined:undefined warning null File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning.
+client/src/concept2cure/components/ana/renderSafeMarkdown.ts errors=0 warnings=1
+    undefined:undefined warning null File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning.
+client/src/concept2cure/v2/__tests__/imageEditing.test.ts errors=0 warnings=0
+client/src/concept2cure/v2/editor/AuthoredHtml.tsx errors=0 warnings=0
+client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx errors=0 warnings=0
+client/src/concept2cure/v2/editor/imageNode.ts errors=0 warnings=0
+server/routes/authoring.router.ts errors=0 warnings=28
+    117:53 warning complexity Arrow function has a complexity of 21. Maximum allowed is 15.
+    678:3 warning max-params Async arrow function has too many parameters (10). Maximum allowed is 5.
+    725:3 warning max-params Async arrow function has too many parameters (7). Maximum allowed is 5.
+    901:3 warning max-params Arrow function has too many parameters (7). Maximum allowed is 5.
+    973:5 warning no-console Unexpected console statement. Only these console methods are allowed: warn, error, info.
+    977:1 warning max-lines File has too many lines (4197). Maximum allowed is 500.
+    1673:74 warning max-lines-per-function Async arrow function has too many lines (233). Maximum allowed is 100.
+    1673:74 warning complexity Async arrow function has a complexity of 58. Maximum allowed is 15.
+    2385:74 warning complexity Async arrow function has a complexity of 21. Maximum allowed is 15.
+    3004:82 warning max-lines-per-function Async arrow function has too many lines (224). Maximum allowed is 100.
+    3004:82 warning complexity Async arrow function has a complexity of 32. Maximum allowed is 15.
+    3327:89 warning max-lines-per-function Async arrow function has too many lines (140). Maximum allowed is 100.
+    3327:89 warning complexity Async arrow function has a complexity of 26. Maximum allowed is 15.
+    3553:92 warning max-lines-per-function Async arrow function has too many lines (158). Maximum allowed is 100.
+    3857:72 warning max-lines-per-function Async arrow function has too many lines (131). Maximum allowed is 100.
+    3857:72 warning complexity Async arrow function has a complexity of 31. Maximum allowed is 15.
+    4073:72 warning max-lines-per-function Async arrow function has too many lines (121). Maximum allowed is 100.
+    4073:72 warning complexity Async arrow function has a complexity of 22. Maximum allowed is 15.
+    4895:80 warning max-lines-per-function Async arrow function has too many lines (114). Maximum allowed is 100.
+    4895:80 warning complexity Async arrow function has a complexity of 27. Maximum allowed is 15.
+    5006:9 warning max-depth Blocks are nested too deeply (5). Maximum allowed is 4.
+    5403:72 warning max-lines-per-function Async arrow function has too many lines (104). Maximum allowed is 100.
+    5403:72 warning complexity Async arrow function has a complexity of 19. Maximum allowed is 15.
+    5733:70 warning complexity Async arrow function has a complexity of 18. Maximum allowed is 15.
+    6118:92 warning complexity Async arrow function has a complexity of 23. Maximum allowed is 15.
+    6212:97 warning complexity Async arrow function has a complexity of 20. Maximum allowed is 15.
+    6362:82 warning complexity Async arrow function has a complexity of 16. Maximum allowed is 15.
+    6498:39 warning complexity Async arrow function has a complexity of 16. Maximum allowed is 15.
+server/services/authoring/authoring-html-sanitizer.ts errors=0 warnings=0

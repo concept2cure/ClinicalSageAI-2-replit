@@ -1794,6 +1794,29 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
     let recordRevision = false;
 
     if (content !== undefined) {
+      /* AN IMAGE IN A SECTION IS AN UPLOADED FIGURE OR NOTHING (periodic review
+         2026-09-28, editor family, SEC-B-1, SEC-B-2). This save stored any
+         `<img src>` it was sent, so one editor could plant a request that every
+         later reader's browser made in the reader's own name (dot segments walk
+         `/api/authoring/images/` out to any API route), or an image on another
+         site that every reader's browser fetched. Refused with the images named,
+         before anything is written, and never rewritten: a governed record's
+         content changes only when its author changes it. */
+      const { refusedFigures, describeRefusedFigures } = await import(
+        '../services/authoring/authoring-html-sanitizer'
+      );
+      const refused = await refusedFigures(typeof content === 'string' ? content : String(content ?? ''));
+      if (refused.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'FIGURE_NOT_UPLOADED', message: describeRefusedFigures(refused) },
+          field: 'content',
+          refusedImages: refused.map(({ position, src }) => ({
+            position,
+            src: src.length > 200 ? `${src.slice(0, 200)}…` : src,
+          })),
+        });
+      }
       paramCount++;
       // `$$` is the placeholder's `$` followed by the interpolation. fde9d704 lost
       // it, so the SQL read `content = 1` with the bound value unused, Postgres
