@@ -494,8 +494,11 @@ router.post('/burden/compare', (req: Request, res: Response) => {
 
 
 // ─── POST /persist (governed mutation) ────────────────────────────────────────
+//
+// Writes are gated per route: the router is mounted behind authMiddleware
+// only, and its POST projections are reads a viewer may use.
 
-router.post('/persist', async (req: Request, res: Response) => {
+router.post('/persist', requireEditorAccess, async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
   const orgId = resolveOrgId(req);
   if (!userId || !orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
@@ -600,12 +603,16 @@ router.post('/:studyId/planning', requireEditorAccess, recordPlanningInput);
 
 // ─── DELETE /:studyId (governed mutation) ─────────────────────────────────────
 
-router.delete('/:studyId', async (req: Request, res: Response) => {
+router.delete('/:studyId', requireEditorAccess, async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
   const orgId = resolveOrgId(req);
   if (!userId || !orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
   const studyId = String(req.params.studyId);
-  const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : 'Deleted study design';
+  // The caller's reason, never one supplied for them: a governed delete says why.
+  const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : '';
+  if (reason.length < 8) {
+    return res.status(400).json({ error: 'REASON_REQUIRED', detail: 'Provide a reason of at least 8 characters.' });
+  }
 
   const client = await pool.connect();
   try {
