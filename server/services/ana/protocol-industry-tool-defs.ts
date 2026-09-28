@@ -292,7 +292,11 @@ export const REVIEW_BIOSPECIMEN_PROFILE: AnaTool = {
     'manual still needs (type, volume, processing, storage), and the blood a participant gives — per visit, in total, over the worst 8-week window and ' +
     'the busiest week — summed from the recorded volumes. ' +
     DESIGN_REQUIRED + ' ' +
-    'Report every figure and gap VERBATIM. A draw with no volume makes totals LOWER BOUNDS: say so. The OHRP expedited-review figures (550 mL; 50 mL) ' +
+    'Report every figure and gap VERBATIM. A draw with no volume makes totals LOWER BOUNDS (scheduledIsLowerBound, totalsAreLowerBounds): say so. ' +
+    'Draws at unscheduled visits are in the upper bound only and in no 8-week or weekly figure. Each activity × visit cell counts as ONE collection ' +
+    '(countingRule): serial samples within a visit are not counted unless each is its own activity — say so rather than presenting a PK-heavy total ' +
+    'as complete. The 50 mL / 3 mL/kg reference can only be shown EXCEEDED without a recorded weight (withinUnknownBecause). ' +
+    'The OHRP expedited-review figures (550 mL; 50 mL) ' +
     'are reference points for minimal-risk research, NOT safety limits and not a bar a drug trial must clear — never call a protocol unsafe or ' +
     'non-compliant for exceeding them, and never assume a volume for a sampling activity with no specimen recorded.',
   input_schema: { type: 'object', properties: { document_id: DOCUMENT_ID_PROPERTY }, required: ['document_id'] },
