@@ -73,7 +73,7 @@ to one line; edit only your own row to limit merge conflicts.
 | **D4 / W3 — the validation package at head.** IQ-001 and all six OQ protocols executed on a from-blank install at one commit: the first execution since `bfdb0a08` (2026-09-23c), across the P0/P1 tranches. The second signer is created through user administration (`POST /api/tenant-users`, the activation link, the colleague's own password and authenticator), the local half of D4's "real second account". A failing step is fixed failing-first only where no lane holds the file; otherwise it is handed to that lane here. `tests/validation/**`, `docs/validation/**`, `docs/evidence/W3/2026-09-27/` | `…session_01TTTQ1hpdMr1yAMVYH4nYdE` | **released** 2026-09-28 — row **D4**. Final at `89ee3a81`: IQ 12/0/3, OQ 101 pass / 0 fail / 2 deviation of 103; TM-001 69 of 71 pass, 0 uncovered (`docs/evidence/W3/2026-09-27/`, VSR-001 §18). Fixed, each failing first: F-41 `f339a445`/`81eb7491` (a user-administration member's sign-in and credential events went to tenant 0, not its organisation) and F-42 `af305e8a` (the ledger named its actor by display name alone). OQ-004 v0.4, OQ-001 v0.9, URS-001 v0.6, URS-004 v0.2; the harness waits out the sign-in limiter. **Hand-ons below: → D6 (the sign-in limiter counts per client IP), → D6/D3 (user-administration members have no default organisation).** |
 | **Founder-directed 2026-09-27, moves no D-row: AnA runs multiple agents, and Manual/Auto is a real run policy.** The founder, 2026-09-27: *"can AnA run multiple agents and if not, she must"*, and asked for Claude's Manual/Auto control. RULE 2 says a session that moves no D-row reports blocked; this is recorded as the founder's explicit exception, not a reading around the rule. Measured first (13-agent map, every gap claim adversarially checked, all upheld): in production AnA cannot run more than one agent. `start_deep_investigation` is the only child loop, launch scope strips it, and it is fire-and-forget. `convene_drafting_council` is sequential. `/api/agent-swarm` claims parallel LangGraph and is a sequential loop with no org scope and no callers. **Scope:** (1) a launch-scoped delegation tool that runs bounded child agent loops concurrently and joins their results into the parent's round. Children are propose-only, run on approved models, carry tenant scope and `parentRunId` explicitly, and cannot recurse. `/api/agent-swarm` is retired in the same change (zero duplication). (2) Manual/Auto becomes a server-side run policy on run-control's existing pause/wake. The Ask/Agent control is visible but inert today and gets wired to it. `stoppedReason` reaches the client, so a round-capped turn says it was cut short instead of reading as finished. The Home mode pill that is never sent gets wired. (3) `model_override` gains the approved-models check it lacks. **Not in scope:** the progress-panel deltas (fold earlier steps, Connectors and Web search rows), which are row 59's. The child turn-record chain is row 60's slice; this lane sets `parentRunId` on the gateway ledger and leaves the chain to that lane. Touches files in rows 59/60's scope (`stream.ts`, `useAnaChat.ts`, `AnaActivity.tsx`). All were cold (>24h) at claim; edits are additive and disclosed here. Evidence `docs/evidence/ANA-AGENTS/2026-09-27/` | `…session_019ZvHmh63vQ2C66VAwZg2kc` | **claimed** 2026-09-27 |
 | **D4 / W3 follow-up — trunk CI: Blank DB Provisioning is red, and the one step red in it is a parser false positive.** Red on every run read, 2026-09-27 and 28 (`00870fe4`, `d224ecff`, `7ddc0638`), each at the same step: the live-schema ratchet (`ci:tables-live-schema`). It reads the CTE `WITH expected(schema_name, table_name, trigger_name) AS (…)` in `server/services/audit/audit-immutability-triggers.ts` (`e8724680`, 2026-09-25) as a table named `expected` that no database has; reproduced locally, it is the only new absence. `cteNames` binds `WITH x AS (` and, since `5fd4b79b`, `AS MATERIALIZED (`, but not a CTE with a column list. While the job is red, any real absence it exists to catch lands unseen. Scope: `scripts/ci/check-migration-reachability.mjs` (`cteNames` only) and `tests/schema-contract/migration-reachability-guard.contract.test.ts` | `…session_01TTTQ1hpdMr1yAMVYH4nYdE` | **claimed** 2026-09-28 — row D4: trunk CI red that this lane met on its own push, fixed at its cause as VSR-001 §16.7 records. Evidence: `docs/evidence/TRUNK-TESTS/2026-09-28/blank-db-live-schema/` |
-| **D4 — periodic review: the editor family, line by line.** The weekly reviews of 2026-09-24 and 2026-09-28 both record that `DocumentWorkbench.tsx` (5,134 lines), `RichSectionEditor.tsx` (2,716) and the `ProtocolDev*` family (15 files, about 4,250) were not read line by line. They are the surface every regulated draft passes through. Six lenses, read-only: Part 11 UX, honest state, security and accessibility, one agent each per file group; design system and microcopy across all three. Each blocker, high or medium finding goes to a separate agent told to refute it. Reports are filed beside the canonical review in `docs/evidence/reviews/2026-09-28/editor-family/`, with a pointer from its README. Confirmed findings are fixed failing-first where no lane holds the file. `DocumentWorkbench.tsx` was changed by the W1/D2 AnA-drive lane in `a75e3845` (2026-09-28 01:16), so its findings go to that lane until 24 hours have passed | `…session_01TTTQ1hpdMr1yAMVYH4nYdE` | **claimed** 2026-09-28 — row D4 (periodic review is a validation activity) |
+| **D4 — periodic review: the editor family, line by line.** The weekly reviews of 2026-09-24 and 2026-09-28 both record that `DocumentWorkbench.tsx` (5,134 lines), `RichSectionEditor.tsx` (2,716) and the `ProtocolDev*` family (15 files, about 4,250) were not read line by line. They are the surface every regulated draft passes through. Six lenses, read-only: Part 11 UX, honest state, security and accessibility, one agent each per file group; design system and microcopy across all three. Each blocker, high or medium finding goes to a separate agent told to refute it. Reports are filed beside the canonical review in `docs/evidence/reviews/2026-09-28/editor-family/`, with a pointer from its README. Confirmed findings are fixed failing-first where no lane holds the file. `DocumentWorkbench.tsx` was changed by the W1/D2 AnA-drive lane in `a75e3845` (2026-09-28 01:16), so its findings go to that lane until 24 hours have passed | `…session_01TTTQ1hpdMr1yAMVYH4nYdE` | **claimed** 2026-09-28 — row D4 (periodic review is a validation activity). **Read and verified:** 14 lens reports; every blocker, high and medium went to a refuting verifier, and three were refuted (M-1, HS-A-4, A-C-1). **Fixed and pushed, each failing first:** P11-C-1 (`10ad41a2`, a viewer could change a protocol), HS-C-1 (`670865e9`), SEC-C-2/3/8 (`29d80fe9`, a signed protocol's schedule still changed; six protocol writes never proved the document). **In progress in this lane, disjoint files:** SEC-A-1, SEC-A-2, P11-A-1/SEC-A-8, SEC-A-9 (`authoring.router.ts` citation, comment and revert handlers, `source-usage.service.ts`); SEC-B-3, V-2, P11-B-4, SEC-A-6 (`RichSectionEditor.tsx`, `suggestions.ts`); SEC-B-1, SEC-B-2 (`imageNode.ts`, `AuthoredHtml.tsx`, `renderSafeMarkdown.ts`, `authoring-html-sanitizer.ts`, the section PATCH's content check); SEC-A-3 (`ProjectFilesPanel.tsx`, `vault-ingest.ts`, `fileSignature.ts`, `uploadSafety.ts`). Handed on: items 5–7 of this lane's list below. |
 | **D7 / D5 — P11-28b: the Dispatch button is gated on a signature its own click creates.** From `docs/evidence/reviews/2026-09-28/ectd-lane-second-pass/part11-ux.md`. For IND / NDA / BLA / MAA the Submission Center's Dispatch button reads `gate`, which requires a release signature to already exist, and the signature it would accept is the one the click records — so no such sequence can be dispatched through the product's own screen, which D7's test sequence needs. Fix: the server states whether signing now clears the dispatch gate (the resolver's spine precedence lives there, and re-deriving it in the client is how P11-28a happened); the client reads that. `server/services/ectd/{assess-dispatch-readiness,release-signature-status}.ts` (the resolver's return and the assessment's verdicts only), `SubmissionSeqWorkspaces.tsx` (`DispatchWorkspace` only), their tests | `…session_01VB8JEGfy93uohAfBxSwmYx` | **released** 2026-09-28 — row **D7**. Done: server reports `dispatchGateOnSigning` (`composeStepVerdicts`, `signingNowResolvesRelease`), Dispatch reads it; 12 probes red-then-green (`docs/evidence/D7/2026-09-28-dispatch-reachable/`). Owed: a pglite sign→dispatch case for an IND |
 
 If you are one of the sessions above, correct your own row. If a lane you want
@@ -616,6 +616,12 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
        (`_omitted` unused).
    - **Not edited here:** each file was changed by its lane within the last
      24 hours.
+   - **One more since, 2026-09-28 04:00:** 6,428. `f07edd7c` (`…01VB8JEG`, D7)
+     adds `client/src/concept2cure/v2/__tests__/dispatchWorkspaceDispatchGate.test.tsx:141`
+     (`_omitted` unused), the same pattern as `daae5ad4`'s. Found by this lane's
+     local run of CI's whole Lint job at `d481f7b2`: that step is the only red
+     one of 114, and `--since origin/concept2cure-v2` shows this lane's own
+     pushed files unchanged.
    - **Open question:** the pre-push hook has refused net warning growth in
      pushed files since `936277fc`. How these passed it is not known here.
 4. **→ `…01T2wooC` (D5, every AnA turn is an immutable record), 2026-09-28 —
@@ -639,6 +645,65 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
      It bears on the lane's own hand-on to P0-8 (both tables into
      `APPEND_ONLY_TABLES`): keeping a table append-only and deleting from it
      at purge are two answers to the same question.
+5. **→ `…01KiDof7` (holds `server/routes/coauthor.ts` since `e2d36a2b`),
+   2026-09-28 — the eCTD co-author document body is overwritten with no reason
+   for change, no audit entry for the record, and no copy of the text it
+   replaces.** Editor-family review P11-B-1, graded **blocker** by its verifier
+   (`docs/evidence/reviews/2026-09-28/editor-family/`).
+   - **What happens.** The client sends `{ content }` only
+     (`EctdCoauthor.tsx:363`), and the route reads no reason (`coauthor.ts:297`).
+     The write's transaction (`coauthor-status-write.ts:276-303`) makes no audit
+     call, and nothing writes `coauthor_document_versions`.
+   - **What the code already says.** `batch-draft-routes.ts:334-335` records it:
+     this PUT "neither snapshots the content it replaces nor records who
+     replaced it". The global request observer's row reads
+     `PUT /documents/5 → 200` and is fire-and-forget, so it is not the
+     document's trail.
+   - **Fix, per the verifier.**
+     - In the shared writer `applyCoauthorDocumentPut`, inside its FOR UPDATE
+       transaction:
+       - version the replaced content (as `batch-draft-routes.ts:470-485`
+         does);
+       - record a `coauthor_document.updated` event with the reason and the
+         before and after hashes (as `coauthor-snapshot.ts:450-470` does).
+       - Do both on status-only PUTs too: one can withdraw an approved
+         filing copy to draft.
+     - In both routes (`coauthor.ts`, `ectd-documents.ts`), require
+       `requireGovernedReason(req.body?.changeReason)`.
+     - In `EctdCoauthor.tsx`, collect the author's reason before Save.
+6. **→ `…01KZK3jg` (AnA drive; changed `DocumentWorkbench.tsx` at `a75e3845` and
+   `df10de68`, 2026-09-28 01:16 and 01:58), until 2026-09-29 01:58 — the
+   editor-family findings in `DocumentWorkbench.tsx`.** After that time, this
+   lane takes back whatever is still open. Each was confirmed by a
+   refuting verifier; the verification record names the lines.
+   - **HS-B-1 (high).** A failed Data Room read is shown as "no sources". The
+     Cite picker, the Sources rail's picker and the Vault rail all say it, and
+     existing citations are painted "unresolved".
+   - **HS-A-1, HS-A-2 (medium).** After a save, a revert, a remove or a reply,
+     the History, Sources and Comments counts keep their old numbers.
+   - **A-A-1 (medium).** The reason-for-change field has no required or
+     invalid state and no lasting note. ⌘S typed in that field opens the
+     browser's own Save dialog.
+   - **A-A-2 (medium).** Escape in any of four `useDialog` dialogs also closes
+     the AnA pane. Fix: at the top of `closeOnEscape`, return when the event
+     is `defaultPrevented` or an `[aria-modal="true"]` panel is open.
+   - **A-A-4 (medium).** The icon-only Move up / Move down pair is 12×12 px,
+     and the two buttons touch (WCAG 2.5.8).
+   - **A-A-5 (medium).** The "has a draft" dot on the governed outline has no
+     style, so it is invisible, and its title reads the governed status
+     ("todo").
+   - **SEC-A-5 (medium).** The device draft cache is keyed by section only
+     (`storageKey={activeSection.id}`) and outlives sign-out. The editor half,
+     purging `dc::*` on sign-out and gating restore on read-only, is this
+     lane's.
+7. **→ The AnA lanes (`AnaToolExecutor.ts` changed by `…01KiDof7` at
+   `41e7c539`), 2026-09-28 — SEC-C-5 (medium).** `update_protocol_section`
+   records `fcoiReason(input, 'Protocol section edited via AnA')`: a reason
+   the model wrote, or a fixed sentence that reads like one. The HTTP twin
+   refuses a reason under 8 characters. Fix: make `reason` required in the
+   tool schema, refuse rather than substitute, and have the confirmation step
+   carry the person's own reason. `41e7c539` already closes this path's role
+   door (the P11-C-1 "AnA door").
 
 ## 1. The rules come first
 
