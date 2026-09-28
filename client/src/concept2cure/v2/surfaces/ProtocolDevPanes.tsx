@@ -45,6 +45,7 @@ export function Outline({ doc, activeSec, onSec, onFinalize }: OutlineProps) {
     reqComplete: sections.filter((s) => s.required && s.status === 'complete').length,
   }), [sections]);
   const ready = !findings.some((f) => ['critical', 'blocking'].includes(str(f.sev)));
+  const terminal = terminalState(str(doc.status));
   return (
     <div className="pd-outline">
       <div className="pd-outline-h"><span>Sections</span><span className="pd-outline-c">{counts.complete}/{counts.total}</span></div>
@@ -64,11 +65,47 @@ export function Outline({ doc, activeSec, onSec, onFinalize }: OutlineProps) {
           </button>))}
       </div>
       <div className="pd-outline-gate">
-        <PG.CompletenessGate pct={Number(doc.completeness ?? 0)} complete={counts.reqComplete} total={counts.reqTotal}
-          findings={findings as never} ready={ready} readyLabel="Finalization readiness"
-          actionLabel="Finalize protocol" onAction={onFinalize} />
+        {terminal
+          ? <TerminalGate state={terminal} version={str(doc.version)} findings={findings} />
+          : <PG.CompletenessGate pct={Number(doc.completeness ?? 0)} complete={counts.reqComplete} total={counts.reqTotal}
+              findings={findings as never} ready={ready} readyLabel="Finalization readiness"
+              actionLabel="Finalize protocol" onAction={onFinalize} />}
       </div>
     </div>);
+}
+
+interface TerminalState { label: string; why: string }
+
+/**
+ * The two statuses the server refuses to finalize (`finalizeProtocolTx`), and
+ * what the outline says instead of offering the action.
+ *
+ * The gate was gated on completeness alone, and a finalized protocol still
+ * passes the check it passed to be finalized: it read "Ready to finalize" with
+ * a live button, and the signer spent a password, an authenticator code and a
+ * signing attempt before the server refused (periodic review 2026-09-28,
+ * editor family, P11-C-4).
+ */
+function terminalState(status: string): TerminalState | null {
+  if (status === 'finalized') {
+    return { label: 'Finalized', why: 'This version was finalized under an electronic signature, so there is nothing left to finalize.' };
+  }
+  if (status === 'superseded') {
+    return { label: 'Superseded', why: 'A later version replaces this one, so it cannot be finalized.' };
+  }
+  return null;
+}
+
+function TerminalGate({ state, version, findings }: { state: TerminalState; version: string; findings: Row[] }) {
+  return (
+    <div className="pg-gate">
+      <div className="pg-gate-meta">
+        <div className="pg-gate-title">{state.label + (version ? ' — v' + version : '')}</div>
+        <div className="pg-gate-sub">{state.why}</div>
+      </div>
+      <PG.FindingsList findings={findings as never} dense />
+    </div>
+  );
 }
 
 /* ---- Objectives ---- */
