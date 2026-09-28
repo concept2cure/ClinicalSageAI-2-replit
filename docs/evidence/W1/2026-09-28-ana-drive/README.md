@@ -158,6 +158,9 @@ API does (`silent-thinking-before.png`).
 
 ## Evidence
 
+- `harness/`: the stand-in model, its self-test and the browser battery that
+  produced every run below, with how to repeat them. Run from this folder on
+  the current tree, it passed 19/19, with the stand-in refusing nothing.
 - `silent-thinking.txt`, `silent-thinking-before.png`,
   `silent-thinking-after.png`: the silent-thinking cut-off, before and after.
 - `contract-audit.txt`: the rules, their sources, the stand-in failing each
